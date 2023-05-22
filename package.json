@@ -1,0 +1,45 @@
+{
+  "name": "@axelar-network/axelar-contract-deployments",
+  "version": "0.1.0",
+  "description": "Axelar contract deployment scripts",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint '**/*.js'",
+    "prettier": "prettier --write '**/*.js'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/axelarnetwork/axelar-contract-deployments.git"
+  },
+  "keywords": [
+    "axelar",
+    "ethereum"
+  ],
+  "author": "axelar-network",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/axelarnetwork/axelar-contract-deployments/issues"
+  },
+  "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@axelar-network/axelar-cgp-solidity": "4.5.0",
+    "@axelar-network/axelar-gmp-sdk-solidity": "3.3.0",
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "chai": "^4.3.7",
+    "dotenv": "^16.0.1",
+    "eslint": "^8.36.0",
+    "eslint-config-richardpringle": "^2.0.0",
+    "ethers": "^5.7.2",
+    "fs-extra": "^11.1.1",
+    "hardhat": "^2.13.0",
+    "lodash": "^4.17.21",
+    "mocha": "^10.2.0",
+    "prettier": "^2.8.7",
+    "readline-sync": "^1.4.10"
+  },
+  "engines": {
+    "node": "^16.0.0 || ^18.0.0"
+  }
+}
