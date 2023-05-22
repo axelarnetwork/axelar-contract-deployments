@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint '**/*.js'",
-    "prettier": "prettier --write '**/*.js'"
+    "prettier": "prettier --write '**/*.js' '**/*.json'"
   },
   "repository": {
     "type": "git",
@@ -21,8 +21,7 @@
     "url": "https://github.com/axelarnetwork/axelar-contract-deployments/issues"
   },
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "@axelar-network/axelar-cgp-solidity": "4.5.0",
     "@axelar-network/axelar-gmp-sdk-solidity": "3.3.0",
