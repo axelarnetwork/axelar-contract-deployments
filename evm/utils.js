@@ -1,4 +1,7 @@
-const { ContractFactory } = require('ethers');
+'use strict';
+
+const { ethers } = require('hardhat');
+const { ContractFactory } = ethers;
 const http = require('http');
 const { outputJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
@@ -20,7 +23,7 @@ const printObj = (obj) => {
     console.log(JSON.stringify(obj, null, 2));
 };
 
-const setJSON = (data, name) => {
+const writeJSON = (data, name) => {
     outputJsonSync(name, data, {
         spaces: 2,
         EOL: '\n',
@@ -91,12 +94,17 @@ const importNetworks = (chains, keys) => {
             id: chain.id,
             url: chain.rpc,
             blockGasLimit: chain.gasOptions?.gasLimit,
-            accounts: keys.accounts || keys.chains[name]?.accounts,
         };
+
+        if (keys) {
+            networks[name].accounts = keys.accounts || keys.chains[name]?.accounts;
+        }
 
         // Add contract verification keys
         if (chain.explorer) {
-            etherscan.apiKey[name] = keys.chains[name]?.api;
+            if (keys) {
+                etherscan.apiKey[name] = keys.chains[name]?.api;
+            }
 
             etherscan.customChains.push({
                 network: name,
@@ -143,7 +151,7 @@ const verifyContract = async (env, chain, contract, args) => {
 
 module.exports = {
     deployContract,
-    setJSON,
+    writeJSON,
     httpGet,
     importNetworks,
     verifyContract,
