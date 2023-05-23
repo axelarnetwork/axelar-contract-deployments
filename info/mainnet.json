@@ -99,6 +99,9 @@
     "explorer": {
       "url": "https://ftmscan.com",
       "api": "https://api.ftmscan.com/api"
+    },
+    "gasOptions": {
+      "gasLimit": 5000000
     }
   },
   {
