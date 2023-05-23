@@ -1,7 +1,6 @@
 'use strict';
 
-const { ethers } = require('hardhat');
-const { ContractFactory } = ethers;
+const { ContractFactory } = require('ethers');
 const http = require('http');
 const { outputJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
