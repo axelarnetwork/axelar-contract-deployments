@@ -82,7 +82,7 @@ async function deploy(env, chains, wallet, artifactPath, contractName, deployTo)
         console.log(`Gas override for chain ${chain.name}:`, chain.gasOptions);
 
         if (chain[contractName] && chain[contractName].address) {
-            const contract = getProxy(wallet.connect(provider), chain[contractName]['address']);
+            const contract = getProxy(wallet.connect(provider), chain[contractName].address);
             const owner = await contract.owner();
             console.log(`Proxy already exists for ${chain.name}: ${contract.address}`);
             console.log(`Existing implementation ${await contract.implementation()}`);
@@ -99,17 +99,17 @@ async function deploy(env, chains, wallet, artifactPath, contractName, deployTo)
 
             await upgradeUpgradable(
                 wallet.connect(provider),
-                chain[contractName]['address'],
+                chain[contractName].address,
                 implementationJson,
                 args,
                 getUpgradeArgs(contractName, chain),
                 get('gasOptions.gasLimit', chain),
             );
 
-            chain[contractName]['implementation'] = await contract.implementation();
+            chain[contractName].implementation = await contract.implementation();
 
             setJSON(chains, `../info/${env}.json`);
-            console.log(`${chain.name} | New Implementation for ${contractName} is at ${chain[contractName]['implementation']}`);
+            console.log(`${chain.name} | New Implementation for ${contractName} is at ${chain[contractName].implementation}`);
             console.log(`${chain.name} | Upgraded.`);
         } else {
             const key = env.includes('devnet') ? `${contractName}-${env}` : contractName;
@@ -134,14 +134,14 @@ async function deploy(env, chains, wallet, artifactPath, contractName, deployTo)
                 get('gasOptions.gasLimit', chain),
             );
 
-            chain[contractName]['salt'] = key;
-            chain[contractName]['address'] = contract.address;
-            chain[contractName]['implementation'] = await contract.implementation();
-            chain[contractName]['deployer'] = wallet.address;
+            chain[contractName].salt = key;
+            chain[contractName].address = contract.address;
+            chain[contractName].implementation = await contract.implementation();
+            chain[contractName].deployer = wallet.address;
 
             setJSON(chains, `../info/${env}.json`);
             console.log(`${chain.name} | ConstAddressDeployer is at ${chain.constAddressDeployer}`);
-            console.log(`${chain.name} | Implementation for ${contractName} is at ${chain[contractName]['implementation']}`);
+            console.log(`${chain.name} | Implementation for ${contractName} is at ${chain[contractName].implementation}`);
             console.log(`${chain.name} | Proxy for ${contractName} is at ${contract.address}`);
         }
     }
@@ -154,8 +154,8 @@ if (require.main === module) {
 
     const chains = require(`../info/${env}.json`);
 
-    const private_key = process.env.PRIVATE_KEY;
-    const wallet = new Wallet(private_key);
+    const privateKey = process.env.PRIVATE_KEY;
+    const wallet = new Wallet(privateKey);
 
     const artifactPath = process.argv[3];
 
