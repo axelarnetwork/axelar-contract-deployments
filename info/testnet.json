@@ -27,6 +27,9 @@
       "wrappedSymbol": "WETH",
       "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF"
     },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+    },
     "explorer": {
       "url": "https://goerli.etherscan.io",
       "api": "https://api-goerli.etherscan.io/api"
@@ -60,6 +63,9 @@
       "wrappedSymbol": "WAVAX",
       "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF"
     },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+    },
     "explorer": {
       "url": "https://testnet.snowtrace.io",
       "api": "https://api-testnet.snowtrace.io/api"
@@ -92,6 +98,9 @@
       "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
       "wrappedSymbol": "WFTM",
       "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF"
+    },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
     },
     "explorer": {
       "url": "https://testnet.ftmscan.com",
@@ -129,6 +138,9 @@
       "wrappedSymbol": "WMATIC",
       "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF"
     },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+    },
     "explorer": {
       "url": "https://mumbai.polygonscan.com",
       "api": "https://api-testnet.polygonscan.com/api"
@@ -165,6 +177,9 @@
       "wrappedSymbol": "WDEV",
       "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF"
     },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+    },
     "explorer": {
       "url": "https://moonbase.moonscan.io",
       "api": "https://api-moonbase.moonscan.io/api"
@@ -197,6 +212,9 @@
       "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
       "wrappedSymbol": "WBNB",
       "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF"
+    },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
     },
     "explorer": {
       "url": "https://testnet.bscscan.com",
@@ -231,6 +249,9 @@
       "wrappedSymbol": "",
       "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF"
     },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+    },
     "explorer": {
       "url": "https://testnet.aurorascan.dev",
       "api": "https://api-testnet.aurorascan.dev/api"
@@ -263,6 +284,9 @@
       "address": "0xc1DCb196BA862B337Aa23eDA1Cb9503C0801b955",
       "implementation": "0xb6241272C569767072e0587098415DF6BA0aaEe9",
       "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
+    },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
     },
     "gasOptions": {
       "gasLimit": 20000000
@@ -300,6 +324,9 @@
       "implementation": "0xb6241272C569767072e0587098415DF6BA0aaEe9",
       "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
     },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+    },
     "explorer": {
       "url": "https://alfajores.celoscan.io",
       "api": "https://api-alfajores.celoscan.io/api"
@@ -336,6 +363,9 @@
       "implementation": "0xb6241272C569767072e0587098415DF6BA0aaEe9",
       "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
     },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+    },
     "explorer": {
       "url": "https://explorer.evm-alpha.kava.io"
     }
@@ -367,6 +397,9 @@
       "address": "0xc1DCb196BA862B337Aa23eDA1Cb9503C0801b955",
       "implementation": "0xb6241272C569767072e0587098415DF6BA0aaEe9",
       "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
+    },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
     },
     "explorer": {
       "url": "https://goerli-optimism.etherscan.io",
@@ -403,6 +436,9 @@
       "address": "0xc1DCb196BA862B337Aa23eDA1Cb9503C0801b955",
       "implementation": "0xd883C8bA523253c93d97b6C7a5087a7B5ff23d79",
       "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
+    },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
     },
     "explorer": {
       "url": "https://goerli.basescan.org",
@@ -444,6 +480,9 @@
       "implementation": "0xd883C8bA523253c93d97b6C7a5087a7B5ff23d79",
       "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
     },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+    },
     "explorer": {
       "url": "https://hyperspace.filfox.info"
     },
@@ -469,6 +508,9 @@
       "salt": "AxelarDepositService",
       "wrappedSymbol": "",
       "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF"
+    },
+    "ExpressService": {
+      "expressOperator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
     },
     "explorer": {
       "url": "https://explorer.goerli.linea.build"
