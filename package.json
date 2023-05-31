@@ -4,7 +4,6 @@
   "description": "Axelar contract deployment scripts",
   "main": "index.js",
   "scripts": {
-    "build": "rm -rf artifacts && rm -rf cache && hardhat compile",
     "lint": "eslint '**/*.js'",
     "prettier": "prettier --write '**/*.js' '**/*.json'"
   },
