@@ -77,6 +77,8 @@ const importNetworks = (chains, keys) => {
     const networks = {
         hardhat: {
             chainId: 31337, // default hardhat network chain id
+            id: 'hardhat',
+            confirmations: 1,
         },
     };
 
@@ -93,6 +95,7 @@ const importNetworks = (chains, keys) => {
             id: chain.id,
             url: chain.rpc,
             blockGasLimit: chain.gasOptions?.gasLimit,
+            confirmations: (chain.confirmations || 1),
         };
 
         if (keys) {
