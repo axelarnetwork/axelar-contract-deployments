@@ -5,7 +5,7 @@ const fs = require('fs');
 const env = process.env.ENV || 'testnet';
 const { importNetworks } = require('@axelar-network/axelar-contract-deployments');
 const chains = require(`@axelar-network/axelar-contract-deployments/info/${env}.json`);
-const keys = fs.existsSync('keys.json') ? require('keys.json') : undefined; // Load keys if they exist
+const keys = fs.existsSync(`${__dirname}/keys.json`) ? require(`./keys.json`) : undefined; // Load keys if they exist
 const { networks, etherscan } = importNetworks(chains, keys);
 
 module.exports = {
