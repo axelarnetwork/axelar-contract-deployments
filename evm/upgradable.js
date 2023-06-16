@@ -1,9 +1,9 @@
 'use strict';
 
 const {
-  Contract,
-  ContractFactory,
-  utils: { keccak256 },
+    Contract,
+    ContractFactory,
+    utils: { keccak256 },
 } = require('ethers');
 const { deployAndInitContractConstant, deployCreate3Contract } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/dist/IUpgradable.json');
@@ -21,196 +21,133 @@ async function deployCreateUpgradable(
     env = 'testnet',
     chain = 'ethereum',
     shouldVerifyContract = false,
-  ) {
-    const implementationFactory = new ContractFactory(
-      implementationJson.abi,
-      implementationJson.bytecode,
-      wallet,
-    );
-  
-    const proxyFactory = new ContractFactory(
-        proxyJson.abi,
-        proxyJson.bytecode,
-        wallet,
-    );
-    
-    const implementation = await implementationFactory.deploy(
-      ...implementationConstructorArgs,
-    );
-    await implementation.deployed();
-  
+) {
+    const implementationFactory = new ContractFactory(implementationJson.abi, implementationJson.bytecode, wallet);
 
-    const proxy = await proxyFactory.deploy(
-        ...proxyConstructorArgs,
-        { gasLimit: gasLimit },
-      );
+    const proxyFactory = new ContractFactory(proxyJson.abi, proxyJson.bytecode, wallet);
+
+    const implementation = await implementationFactory.deploy(...implementationConstructorArgs);
+    await implementation.deployed();
+
+    const proxy = await proxyFactory.deploy(...proxyConstructorArgs, { gasLimit: gasLimit });
     await proxy.deployed();
 
     await proxy.init(implementation.address, wallet.address, setupParams).then((tx) => tx.wait());
-  
+
     if (shouldVerifyContract) {
-      await verifyContract(
-        env,
-        chain,
-        implementation.address,
-        implementationConstructorArgs,
-      );
-      await verifyContract(env, chain, proxy.address, proxyConstructorArgs);
+        await verifyContract(env, chain, implementation.address, implementationConstructorArgs);
+        await verifyContract(env, chain, proxy.address, proxyConstructorArgs);
     }
-  
+
     return new Contract(proxy.address, implementationJson.abi, wallet);
-  }
-  
+}
+
 async function deployCreate2Upgradable(
-  constAddressDeployerAddress,
-  wallet,
-  implementationJson,
-  proxyJson,
-  implementationConstructorArgs = [],
-  proxyConstructorArgs = [],
-  setupParams = '0x',
-  key = Date.now(),
-  gasLimit = null,
-  env = 'testnet',
-  chain = 'ethereum',
-  shouldVerifyContract = false,
-) {
-  const implementationFactory = new ContractFactory(
-    implementationJson.abi,
-    implementationJson.bytecode,
-    wallet,
-  );
-
-  const implementation = await implementationFactory.deploy(
-    ...implementationConstructorArgs,
-  );
-  await implementation.deployed();
-
-  const proxy = await deployAndInitContractConstant(
     constAddressDeployerAddress,
     wallet,
+    implementationJson,
     proxyJson,
-    key,
-    proxyConstructorArgs,
-    [implementation.address, wallet.address, setupParams],
-    gasLimit,
-  );
+    implementationConstructorArgs = [],
+    proxyConstructorArgs = [],
+    setupParams = '0x',
+    key = Date.now(),
+    gasLimit = null,
+    env = 'testnet',
+    chain = 'ethereum',
+    shouldVerifyContract = false,
+) {
+    const implementationFactory = new ContractFactory(implementationJson.abi, implementationJson.bytecode, wallet);
 
-  if (shouldVerifyContract) {
-    await verifyContract(
-      env,
-      chain,
-      implementation.address,
-      implementationConstructorArgs,
+    const implementation = await implementationFactory.deploy(...implementationConstructorArgs);
+    await implementation.deployed();
+
+    const proxy = await deployAndInitContractConstant(
+        constAddressDeployerAddress,
+        wallet,
+        proxyJson,
+        key,
+        proxyConstructorArgs,
+        [implementation.address, wallet.address, setupParams],
+        gasLimit,
     );
-    await verifyContract(env, chain, proxy.address, proxyConstructorArgs);
-  }
 
-  return new Contract(proxy.address, implementationJson.abi, wallet);
+    if (shouldVerifyContract) {
+        await verifyContract(env, chain, implementation.address, implementationConstructorArgs);
+        await verifyContract(env, chain, proxy.address, proxyConstructorArgs);
+    }
+
+    return new Contract(proxy.address, implementationJson.abi, wallet);
 }
 
 async function deployCreate3Upgradable(
-  create3DeployerAddress,
-  wallet,
-  implementationJson,
-  proxyJson,
-  implementationConstructorArgs = [],
-  additionalProxyConstructorArgs = [],
-  setupParams = '0x',
-  key = Date.now().toString(),
-  gasLimit = null,
-  env = 'testnet',
-  chain = 'ethereum',
-  shouldVerifyContract = false,
-) {
-  const implementationFactory = new ContractFactory(
-    implementationJson.abi,
-    implementationJson.bytecode,
-    wallet,
-  );
-
-  const implementation = await implementationFactory.deploy(
-    ...implementationConstructorArgs,
-  );
-  await implementation.deployed();
-
-  const proxy = await deployCreate3Contract(
     create3DeployerAddress,
     wallet,
+    implementationJson,
     proxyJson,
-    key,
-    [
-      implementation.address,
-      wallet.address,
-      setupParams,
-      ...additionalProxyConstructorArgs,
-    ],
-    gasLimit,
-  );
+    implementationConstructorArgs = [],
+    additionalProxyConstructorArgs = [],
+    setupParams = '0x',
+    key = Date.now().toString(),
+    gasLimit = null,
+    env = 'testnet',
+    chain = 'ethereum',
+    shouldVerifyContract = false,
+) {
+    const implementationFactory = new ContractFactory(implementationJson.abi, implementationJson.bytecode, wallet);
 
-  if (shouldVerifyContract) {
-    await verifyContract(
-      env,
-      chain,
-      implementation.address,
-      implementationConstructorArgs,
+    const implementation = await implementationFactory.deploy(...implementationConstructorArgs);
+    await implementation.deployed();
+
+    const proxy = await deployCreate3Contract(
+        create3DeployerAddress,
+        wallet,
+        proxyJson,
+        key,
+        [implementation.address, wallet.address, setupParams, ...additionalProxyConstructorArgs],
+        gasLimit,
     );
-    await verifyContract(env, chain, proxy.address, additionalProxyConstructorArgs);
-  }
 
-  return new Contract(proxy.address, implementationJson.abi, wallet);
+    if (shouldVerifyContract) {
+        await verifyContract(env, chain, implementation.address, implementationConstructorArgs);
+        await verifyContract(env, chain, proxy.address, additionalProxyConstructorArgs);
+    }
+
+    return new Contract(proxy.address, implementationJson.abi, wallet);
 }
 
 async function upgradeUpgradable(
-  proxyAddress,
-  wallet,
-  contractJson,
-  implementationConstructorArgs = [],
-  setupParams = '0x',
-  env = 'testnet',
-  chain = 'ethereum',
-  shouldVerifyContract = false,
-) {
-  const proxy = new Contract(proxyAddress, IUpgradable.abi, wallet);
-
-  const implementationFactory = new ContractFactory(
-    contractJson.abi,
-    contractJson.bytecode,
+    proxyAddress,
     wallet,
-  );
+    contractJson,
+    implementationConstructorArgs = [],
+    setupParams = '0x',
+    env = 'testnet',
+    chain = 'ethereum',
+    shouldVerifyContract = false,
+) {
+    const proxy = new Contract(proxyAddress, IUpgradable.abi, wallet);
 
-  const implementation = await implementationFactory.deploy(
-    ...implementationConstructorArgs,
-  );
-  await implementation.deployed();
+    const implementationFactory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
-  const implementationCode = await wallet.provider.getCode(
-    implementation.address,
-  );
-  const implementationCodeHash = keccak256(implementationCode);
+    const implementation = await implementationFactory.deploy(...implementationConstructorArgs);
+    await implementation.deployed();
 
-  const tx = await proxy.upgrade(
-    implementation.address,
-    implementationCodeHash,
-    setupParams,
-  );
-  await tx.wait();
+    const implementationCode = await wallet.provider.getCode(implementation.address);
+    const implementationCodeHash = keccak256(implementationCode);
 
-  if (shouldVerifyContract) {
-    await verifyContract(
-      env,
-      chain,
-      implementation.address,
-      implementationConstructorArgs,
-    );
-  }
+    const tx = await proxy.upgrade(implementation.address, implementationCodeHash, setupParams);
+    await tx.wait();
 
-  return tx;
+    if (shouldVerifyContract) {
+        await verifyContract(env, chain, implementation.address, implementationConstructorArgs);
+    }
+
+    return tx;
 }
 
 module.exports = {
     deployCreateUpgradable,
-  deployCreate2Upgradable,
-  deployCreate3Upgradable,
-  upgradeUpgradable,
+    deployCreate2Upgradable,
+    deployCreate3Upgradable,
+    upgradeUpgradable,
 };

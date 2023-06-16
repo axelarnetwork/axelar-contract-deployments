@@ -110,7 +110,7 @@ async function deploy(env, chains, wallet, artifactPath, contractName, deployTo)
                 getUpgradeArgs(contractName, chain),
                 get('gasOptions.gasLimit', chain),
                 env,
-                chain = chain.name,
+                (chain = chain.name),
                 shouldVerifyContract,
             );
 
@@ -141,7 +141,7 @@ async function deploy(env, chains, wallet, artifactPath, contractName, deployTo)
                 key,
                 get('gasOptions.gasLimit', chain),
                 env,
-                chain = chain.name,
+                (chain = chain.name),
                 shouldVerifyContract,
             );
 
