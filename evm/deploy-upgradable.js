@@ -1,5 +1,7 @@
 'use strict';
+
 require('dotenv').config();
+
 const { get, getOr, isEmpty } = require('lodash/fp');
 const {
     Contract,
@@ -9,8 +11,10 @@ const {
 } = require('ethers');
 const readlineSync = require('readline-sync');
 const { outputJsonSync } = require('fs-extra');
-const { deployUpgradable, upgradeUpgradable, predictContractConstant } = require('@axelar-network/axelar-gmp-sdk-solidity');
+const { predictContractConstant } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/dist/IUpgradable.json');
+
+const { deployCreate2Upgradable, upgradeUpgradable } = require('./upgradable');
 
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
@@ -60,6 +64,7 @@ async function deploy(env, chains, wallet, artifactPath, contractName, deployTo)
     const proxyPath = artifactPath + contractName + 'Proxy.sol/' + contractName + 'Proxy.json';
     const implementationJson = require(implementationPath);
     const proxyJson = require(proxyPath);
+    const shouldVerifyContract = process.env.VERIFY_CONTRACT === 'true';
     console.log(`Deployer address ${wallet.address}`);
 
     for (const chain of chains) {
@@ -104,6 +109,9 @@ async function deploy(env, chains, wallet, artifactPath, contractName, deployTo)
                 args,
                 getUpgradeArgs(contractName, chain),
                 get('gasOptions.gasLimit', chain),
+                env,
+                (chain = chain.name),
+                shouldVerifyContract,
             );
 
             chain[contractName].implementation = await contract.implementation();
@@ -122,7 +130,7 @@ async function deploy(env, chains, wallet, artifactPath, contractName, deployTo)
             const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? (y/n) `);
             if (anwser !== 'y') return;
 
-            const contract = await deployUpgradable(
+            const contract = await deployCreate2Upgradable(
                 chain.constAddressDeployer,
                 wallet.connect(provider),
                 implementationJson,
@@ -132,6 +140,9 @@ async function deploy(env, chains, wallet, artifactPath, contractName, deployTo)
                 setupArgs,
                 key,
                 get('gasOptions.gasLimit', chain),
+                env,
+                (chain = chain.name),
+                shouldVerifyContract,
             );
 
             chain[contractName].salt = key;

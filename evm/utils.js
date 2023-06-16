@@ -95,7 +95,7 @@ const importNetworks = (chains, keys) => {
             id: chain.id,
             url: chain.rpc,
             blockGasLimit: chain.gasOptions?.gasLimit,
-            confirmations: (chain.confirmations || 1),
+            confirmations: chain.confirmations || 1,
         };
 
         if (keys) {
