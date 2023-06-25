@@ -2,7 +2,7 @@
 
 const { ContractFactory } = require('ethers');
 const http = require('http');
-const { outputJsonSync } = require('fs-extra');
+const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
@@ -21,6 +21,22 @@ const deployContract = async (wallet, contractJson, args = [], options = {}) => 
 const printObj = (obj) => {
     console.log(JSON.stringify(obj, null, 2));
 };
+
+const readJSON = (filePath, require = false) => {
+    let data;
+
+    try {
+        data = readJsonSync(filePath, 'utf8');
+    } catch (err) {
+        if (err.code === 'ENOENT' && !require) {
+            return undefined;
+        } else {
+            throw err;
+        }
+    }
+
+    return data;
+}
 
 const writeJSON = (data, name) => {
     outputJsonSync(name, data, {
@@ -153,6 +169,7 @@ const verifyContract = async (env, chain, contract, args) => {
 
 module.exports = {
     deployContract,
+    readJSON,
     writeJSON,
     httpGet,
     importNetworks,

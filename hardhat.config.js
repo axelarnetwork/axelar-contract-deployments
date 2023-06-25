@@ -1,10 +1,9 @@
 require('@nomicfoundation/hardhat-toolbox');
 
-const fs = require('fs');
 const env = process.env.NETWORK || 'testnet';
-const { importNetworks } = require('./evm/utils');
-const chains = require(`./info/${env}.json`);
-const keys = fs.existsSync(`${__dirname}/info/keys.json`) ? require(`./info/keys.json`) : undefined; // Load keys if they exist
+const { importNetworks, readJSON } = require('./evm/utils');
+const chains = require(`${__dirname}/info/${env}.json`);
+const keys = readJSON(`${__dirname}/info/keys.json`);
 const { networks, etherscan } = importNetworks(chains, keys);
 
 /**

@@ -23,8 +23,6 @@
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {},
   "devDependencies": {
-    "@axelar-network/axelar-cgp-solidity": "4.5.0",
-    "@axelar-network/axelar-gmp-sdk-solidity": "3.3.0",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "chai": "^4.3.7",
     "dotenv": "^16.0.1",
