@@ -1,11 +1,12 @@
 'use strict';
 
-const { ContractFactory } = require('ethers');
+const { ContractFactory, utils: { keccak256 } } = require('ethers');
 const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
+const zkevm = require("@0xpolygonhermez/zkevm-commonjs");
 
 const execAsync = promisify(exec);
 const writeFileAsync = promisify(writeFile);
@@ -167,6 +168,33 @@ const verifyContract = async (env, chain, contract, args) => {
         });
 };
 
+/**
+ * Compute bytecode hash for a deployed contract or contract factory
+ * @param {Object} contractObject - An instance of the contract or a contract factory (ethers.js Contract or ContractFactory object)
+ * @returns {Promise<string>} - The keccak256 hash of the contract bytecode
+ */
+async function getBytecodeHash(contractObject, chain = '') {
+    let bytecode;
+
+    if (contractObject.address) {
+        // Contract instance
+        const provider = contractObject.provider;
+        bytecode = await provider.getCode(contractObject.address);
+    } else if (contractObject.bytecode) {
+        // Contract factory
+        bytecode = contractObject.bytecode;
+    } else {
+        throw new Error('Invalid contract object. Expected ethers.js Contract or ContractFactory.');
+    }
+
+    if (chain.toLowerCase() === 'polygon-zkevm') {
+        const codehash = await zkevm.smtUtils.hashContractBytecode(bytecode);
+        return codehash;
+    }
+
+    return keccak256(bytecode);
+}
+
 module.exports = {
     deployContract,
     readJSON,
@@ -175,4 +203,5 @@ module.exports = {
     importNetworks,
     verifyContract,
     printObj,
+    getBytecodeHash,
 };
