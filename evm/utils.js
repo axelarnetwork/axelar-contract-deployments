@@ -36,7 +36,7 @@ const readJSON = (filePath, require = false) => {
     }
 
     return data;
-}
+};
 
 const writeJSON = (data, name) => {
     outputJsonSync(name, data, {
@@ -102,6 +102,11 @@ const importNetworks = (chains, keys) => {
         apiKey: {},
         customChains: [],
     };
+
+    if (chains.chains) {
+        // Use new info format
+        chains = Object.values(chains.chains);
+    }
 
     // Add custom networks
     chains.forEach((chain) => {
