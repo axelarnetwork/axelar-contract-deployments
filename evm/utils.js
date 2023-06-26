@@ -35,9 +35,9 @@ const readJSON = (filePath, require = false) => {
     } catch (err) {
         if (err.code === 'ENOENT' && !require) {
             return undefined;
-        } else {
-            throw err;
         }
+
+        throw err;
     }
 
     return data;

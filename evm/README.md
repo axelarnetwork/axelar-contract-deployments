@@ -2,6 +2,10 @@
 
 This folder contains deployment scripts for the following contracts.
 
+#### Setup
+
+`npm ci`
+
 ### AxelarGateway
 
 TODO

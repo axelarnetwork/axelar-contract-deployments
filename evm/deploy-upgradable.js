@@ -2,7 +2,6 @@
 
 require('dotenv').config();
 
-const { get, isEmpty } = require('lodash/fp');
 const {
     Contract,
     Wallet,
@@ -28,26 +27,31 @@ async function getImplementationArgs(contractName, config) {
     switch (contractName) {
         case 'AxelarGasService': {
             const collector = contractConfig.collector;
+
             if (!isAddress(collector)) {
                 throw new Error(`Missing AxelarGasService.collector in the chain info.`);
             }
 
             return [collector];
         }
+
         case 'AxelarDepositService': {
             const symbol = contractConfig.wrappedSymbol;
+
             if (symbol === undefined) {
                 throw new Error(`Missing AxelarDepositService.wrappedSymbol in the chain info.`);
-            } else if (isEmpty(symbol)) {
+            } else if (symbol === '') {
                 console.log(`${config.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
             }
 
             const refundIssuer = contractConfig.refundIssuer;
+
             if (!isAddress(refundIssuer)) {
                 throw new Error(`${config.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
             }
 
-            const gateway = config['AxelarGateway']?.address;
+            const gateway = config.AxelarGateway?.address;
+
             if (!isAddress(gateway)) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
             }
@@ -64,6 +68,7 @@ function getInitArgs(contractName, config) {
         case 'AxelarGasService': {
             return '0x';
         }
+
         case 'AxelarDepositService': {
             return '0x';
         }
@@ -77,6 +82,7 @@ function getUpgradeArgs(contractName, config) {
         case 'AxelarGasService': {
             return '0x';
         }
+
         case 'AxelarDepositService': {
             return '0x';
         }
@@ -100,16 +106,19 @@ async function deploy(options, chain) {
 
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
+
     console.log(
-        `Deployer has ${(await provider.getBalance(wallet.address)) / 1e18} ${
-            chalk.green(chain.tokenSymbol)
-        } and nonce ${await provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
+        `Deployer has ${(await provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
+            chain.tokenSymbol,
+        )} and nonce ${await provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
     );
 
     const contracts = chain.contracts;
+
     if (!contracts[contractName]) {
         contracts[contractName] = {};
     }
+
     const contractConfig = contracts[contractName];
     const implArgs = await getImplementationArgs(contractName, contracts);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
