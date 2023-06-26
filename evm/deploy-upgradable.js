@@ -2,7 +2,6 @@
 
 require('dotenv').config();
 
-const { get, getOr, isEmpty } = require('lodash/fp');
 const {
     Contract,
     Wallet,
@@ -10,169 +9,236 @@ const {
     utils: { isAddress },
 } = require('ethers');
 const readlineSync = require('readline-sync');
-const { outputJsonSync } = require('fs-extra');
 const { predictContractConstant } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/dist/IUpgradable.json');
+const { Command, Option } = require('commander');
+const chalk = require('chalk');
 
 const { deployCreate2Upgradable, upgradeUpgradable } = require('./upgradable');
+const { printInfo, writeJSON } = require('./utils');
 
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
 }
 
-async function getImplementationArgs(contractName, chain, wallet) {
-    if (contractName === 'AxelarGasService') {
-        const collector = get('AxelarGasService.collector', chain);
-        if (!isAddress(collector)) throw new Error(`Missing AxelarGasService.collector in the chain info.`);
-        return [collector];
+async function getImplementationArgs(contractName, config) {
+    const contractConfig = config[contractName];
+
+    switch (contractName) {
+        case 'AxelarGasService': {
+            const collector = contractConfig.collector;
+
+            if (!isAddress(collector)) {
+                throw new Error(`Missing AxelarGasService.collector in the chain info.`);
+            }
+
+            return [collector];
+        }
+
+        case 'AxelarDepositService': {
+            const symbol = contractConfig.wrappedSymbol;
+
+            if (symbol === undefined) {
+                throw new Error(`Missing AxelarDepositService.wrappedSymbol in the chain info.`);
+            } else if (symbol === '') {
+                console.log(`${config.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
+            }
+
+            const refundIssuer = contractConfig.refundIssuer;
+
+            if (!isAddress(refundIssuer)) {
+                throw new Error(`${config.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
+            }
+
+            const gateway = config.AxelarGateway?.address;
+
+            if (!isAddress(gateway)) {
+                throw new Error(`Missing AxelarGateway address in the chain info.`);
+            }
+
+            return [gateway, symbol, refundIssuer];
+        }
     }
 
-    if (contractName === 'AxelarDepositService') {
-        const symbol = getOr('', 'AxelarDepositService.wrappedSymbol', chain);
-        if (isEmpty(symbol)) console.log(`${chain.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
+    throw new Error(`${contractName} is not supported.`);
+}
 
-        const refundIssuer = get('AxelarDepositService.refundIssuer', chain);
-        if (!isAddress(refundIssuer)) throw new Error(`${chain.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
+function getInitArgs(contractName, config) {
+    switch (contractName) {
+        case 'AxelarGasService': {
+            return '0x';
+        }
 
-        return [chain.gateway, symbol, refundIssuer];
+        case 'AxelarDepositService': {
+            return '0x';
+        }
     }
 
     throw new Error(`${contractName} is not supported.`);
 }
 
-function getInitArgs(contractName, chain) {
-    if (contractName === 'AxelarGasService') return '0x';
-    if (contractName === 'AxelarDepositService') return '0x';
+function getUpgradeArgs(contractName, config) {
+    switch (contractName) {
+        case 'AxelarGasService': {
+            return '0x';
+        }
+
+        case 'AxelarDepositService': {
+            return '0x';
+        }
+    }
+
     throw new Error(`${contractName} is not supported.`);
 }
 
-function getUpgradeArgs(contractName, chain) {
-    if (contractName === 'AxelarGasService') return '0x';
-    if (contractName === 'AxelarDepositService') return '0x';
-    throw new Error(`${contractName} is not supported.`);
-}
-
-async function deploy(env, chains, wallet, artifactPath, contractName, deployTo) {
-    const setJSON = (data, name) => {
-        outputJsonSync(name, data, {
-            spaces: 2,
-            EOL: '\n',
-        });
-    };
+/*
+ * Deploy or upgrade an upgradable contract that's based on the init proxy pattern.
+ */
+async function deploy(options, chain) {
+    const { env, artifactPath, contractName, privateKey, upgrade, verify } = options;
+    const wallet = new Wallet(privateKey);
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
     const proxyPath = artifactPath + contractName + 'Proxy.sol/' + contractName + 'Proxy.json';
     const implementationJson = require(implementationPath);
     const proxyJson = require(proxyPath);
-    const shouldVerifyContract = process.env.VERIFY_CONTRACT === 'true';
-    console.log(`Deployer address ${wallet.address}`);
+    printInfo('Deployer address', wallet.address);
 
-    for (const chain of chains) {
-        if (deployTo.length > 0 && !deployTo.find((name) => chain.name === name)) continue;
-        const rpc = chain.rpc;
-        const provider = getDefaultProvider(rpc);
-        console.log(
-            `Deployer has ${(await provider.getBalance(wallet.address)) / 1e18} ${
-                chain.tokenSymbol
-            } and nonce ${await provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
-        );
+    const rpc = chain.rpc;
+    const provider = getDefaultProvider(rpc);
+
+    console.log(
+        `Deployer has ${(await provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
+            chain.tokenSymbol,
+        )} and nonce ${await provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
+    );
+
+    const contracts = chain.contracts;
+
+    if (!contracts[contractName]) {
+        contracts[contractName] = {};
     }
 
+    const contractConfig = contracts[contractName];
+    const implArgs = await getImplementationArgs(contractName, contracts);
+    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    printInfo(`Implementation args for chain ${chain.name}`, implArgs);
+    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+
+    if (upgrade) {
+        if (!contractConfig.address) {
+            throw new Error(`${chain.name} | Contract ${contractName} is not deployed.`);
+        }
+
+        const contract = getProxy(wallet.connect(provider), contractConfig.address);
+        const owner = await contract.owner();
+        printInfo(`Upgrading proxy on ${chain.name}`, contract.address);
+        printInfo('Existing implementation', await contract.implementation());
+        printInfo('Existing owner', owner);
+
+        if (wallet.address !== owner) {
+            throw new Error(
+                `${chain.name} | Signer ${wallet.address} does not match contract owner ${owner} for chain ${chain.name} in info.`,
+            );
+        }
+
+        const anwser = readlineSync.question(`Perform an upgrade for ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+
+        await upgradeUpgradable(
+            contractConfig.address,
+            wallet.connect(provider),
+            implementationJson,
+            implArgs,
+            getUpgradeArgs(contractName, chain),
+            gasOptions,
+            env,
+            chain.name,
+            verify,
+        );
+
+        contractConfig.implementation = await contract.implementation();
+
+        console.log(`${chain.name} | New Implementation for ${contractName} is at ${contractConfig.implementation}`);
+        console.log(`${chain.name} | Upgraded.`);
+    } else {
+        const salt = options.salt || contractName;
+        const setupArgs = getInitArgs(contractName, contracts);
+        printInfo('Proxy setup args', setupArgs);
+        printInfo('Proxy deployment salt', salt);
+
+        const constAddressDeployer = contracts.ConstAddressDeployer.address;
+        const proxyAddress = await predictContractConstant(constAddressDeployer, wallet.connect(provider), proxyJson, salt);
+        printInfo('Proxy will be deployed to', proxyAddress);
+
+        console.log('Does this match any existing deployments?');
+        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+
+        const contract = await deployCreate2Upgradable(
+            constAddressDeployer,
+            wallet.connect(provider),
+            implementationJson,
+            proxyJson,
+            implArgs,
+            [],
+            setupArgs,
+            salt,
+            gasOptions,
+            env,
+            chain.name,
+            verify,
+        );
+
+        contractConfig.salt = salt;
+        contractConfig.address = contract.address;
+        contractConfig.implementation = await contract.implementation();
+        contractConfig.deployer = wallet.address;
+
+        printInfo(`${chain.name} | ConstAddressDeployer:`, constAddressDeployer);
+        printInfo(`${chain.name} | Implementation for ${contractName}`, contractConfig.implementation);
+        printInfo(`${chain.name} | Proxy for ${contractName}`, contractConfig.address);
+    }
+}
+
+async function main(options) {
+    const config = require(`${__dirname}/../info/${options.env}.json`);
+
+    const chains = options.chainNames.split(',');
+
     for (const chain of chains) {
-        if (deployTo.length > 0 && !deployTo.find((name) => chain.name === name)) continue;
-        const rpc = chain.rpc;
-        const provider = getDefaultProvider(rpc);
-        const args = await getImplementationArgs(contractName, chain);
-        console.log(`Implementation args for chain ${chain.name}: ${args}`);
-        console.log(`Gas override for chain ${chain.name}:`, chain.gasOptions);
-
-        if (chain[contractName] && chain[contractName].address) {
-            const contract = getProxy(wallet.connect(provider), chain[contractName].address);
-            const owner = await contract.owner();
-            console.log(`Proxy already exists for ${chain.name}: ${contract.address}`);
-            console.log(`Existing implementation ${await contract.implementation()}`);
-            console.log(`Existing owner ${owner}`);
-
-            if (wallet.address !== owner) {
-                throw new Error(
-                    `${chain.name} | Signer ${wallet.address} does not match contract owner ${owner} for chain ${chain.name} in info.`,
-                );
-            }
-
-            const anwser = readlineSync.question(`Perform an upgrade for ${chain.name}? (y/n) `);
-            if (anwser !== 'y') continue;
-
-            await upgradeUpgradable(
-                wallet.connect(provider),
-                chain[contractName].address,
-                implementationJson,
-                args,
-                getUpgradeArgs(contractName, chain),
-                get('gasOptions.gasLimit', chain),
-                env,
-                (chain = chain.name),
-                shouldVerifyContract,
-            );
-
-            chain[contractName].implementation = await contract.implementation();
-
-            setJSON(chains, `../info/${env}.json`);
-            console.log(`${chain.name} | New Implementation for ${contractName} is at ${chain[contractName].implementation}`);
-            console.log(`${chain.name} | Upgraded.`);
-        } else {
-            const key = env.includes('devnet') ? `${contractName}-${env}` : contractName;
-            const setupArgs = getInitArgs(contractName, chain);
-            console.log(`Proxy setup args: ${setupArgs}`);
-            console.log(`Proxy deployment salt: '${key}'`);
-
-            const proxyAddress = await predictContractConstant(chain.constAddressDeployer, wallet.connect(provider), proxyJson, key);
-            console.log(`Proxy will be deployed to ${proxyAddress}. Does this match any existing deployments?`);
-            const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? (y/n) `);
-            if (anwser !== 'y') return;
-
-            const contract = await deployCreate2Upgradable(
-                chain.constAddressDeployer,
-                wallet.connect(provider),
-                implementationJson,
-                proxyJson,
-                args,
-                [],
-                setupArgs,
-                key,
-                get('gasOptions.gasLimit', chain),
-                env,
-                (chain = chain.name),
-                shouldVerifyContract,
-            );
-
-            chain[contractName].salt = key;
-            chain[contractName].address = contract.address;
-            chain[contractName].implementation = await contract.implementation();
-            chain[contractName].deployer = wallet.address;
-
-            setJSON(chains, `../info/${env}.json`);
-            console.log(`${chain.name} | ConstAddressDeployer is at ${chain.constAddressDeployer}`);
-            console.log(`${chain.name} | Implementation for ${contractName} is at ${chain[contractName].implementation}`);
-            console.log(`${chain.name} | Proxy for ${contractName} is at ${contract.address}`);
+        if (config.chains[chain.toLowerCase()] === undefined) {
+            throw new Error(`Chain ${chain} is not defined in the info file`);
         }
     }
+
+    for (const chain of chains) {
+        await deploy(options, config.chains[chain.toLowerCase()]);
+        writeJSON(config, `${__dirname}/../info/${options.env}.json`);
+    }
 }
 
-if (require.main === module) {
-    const env = process.argv[2];
-    if (env === null || (env !== 'local' && !env.includes('devnet') && env !== 'testnet' && env !== 'mainnet'))
-        throw new Error('Need to specify local | devnet* | testnet | mainnet as an argument to this script.');
+const program = new Command();
 
-    const chains = require(`../info/${env}.json`);
+program.name('deploy-upgradable').description('Deploy upgradable contracts');
 
-    const privateKey = process.env.PRIVATE_KEY;
-    const wallet = new Wallet(privateKey);
+program.addOption(
+    new Option('-e, --env <env>', 'environment')
+        .choices(['local', 'devnet', 'testnet', 'mainnet'])
+        .default('testnet')
+        .makeOptionMandatory(true)
+        .env('ENV'),
+);
+program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true));
+program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
+program.addOption(new Option('-u, --upgrade', 'upgrade a deployed contract'));
+program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
 
-    const artifactPath = process.argv[3];
+program.action((options) => {
+    main(options);
+});
 
-    const contractName = process.argv[4];
-
-    const deployTo = process.argv.slice(5);
-
-    deploy(env, chains, wallet, artifactPath, contractName, deployTo);
-}
+program.parse();

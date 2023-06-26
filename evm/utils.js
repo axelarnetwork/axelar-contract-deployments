@@ -6,6 +6,7 @@ const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
+const chalk = require('chalk');
 
 const execAsync = promisify(exec);
 const writeFileAsync = promisify(writeFile);
@@ -22,6 +23,10 @@ const printObj = (obj) => {
     console.log(JSON.stringify(obj, null, 2));
 };
 
+const printInfo = (msg, info) => {
+    console.log(`${msg}: ${chalk.green(info)}`);
+};
+
 const readJSON = (filePath, require = false) => {
     let data;
 
@@ -30,13 +35,13 @@ const readJSON = (filePath, require = false) => {
     } catch (err) {
         if (err.code === 'ENOENT' && !require) {
             return undefined;
-        } else {
-            throw err;
         }
+
+        throw err;
     }
 
     return data;
-}
+};
 
 const writeJSON = (data, name) => {
     outputJsonSync(name, data, {
@@ -102,6 +107,11 @@ const importNetworks = (chains, keys) => {
         apiKey: {},
         customChains: [],
     };
+
+    if (chains.chains) {
+        // Use new info format
+        chains = Object.values(chains.chains);
+    }
 
     // Add custom networks
     chains.forEach((chain) => {
@@ -175,4 +185,5 @@ module.exports = {
     importNetworks,
     verifyContract,
     printObj,
+    printInfo,
 };
