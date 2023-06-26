@@ -6,6 +6,7 @@ const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
+const chalk = require('chalk');
 
 const execAsync = promisify(exec);
 const writeFileAsync = promisify(writeFile);
@@ -20,6 +21,10 @@ const deployContract = async (wallet, contractJson, args = [], options = {}) => 
 
 const printObj = (obj) => {
     console.log(JSON.stringify(obj, null, 2));
+};
+
+const printInfo = (msg, info) => {
+    console.log(`${msg}: ${chalk.green(info)}`);
 };
 
 const readJSON = (filePath, require = false) => {
@@ -180,4 +185,5 @@ module.exports = {
     importNetworks,
     verifyContract,
     printObj,
+    printInfo,
 };

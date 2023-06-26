@@ -21,12 +21,12 @@
     "url": "https://github.com/axelarnetwork/axelar-contract-deployments/issues"
   },
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
-  "dependencies": {
-    "commander": "^11.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@axelar-network/axelar-gmp-sdk-solidity": "^3.3.0",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "chalk": "^4.1.2",
+    "commander": "^11.0.0",
     "chai": "^4.3.7",
     "dotenv": "^16.0.1",
     "eslint": "^8.36.0",

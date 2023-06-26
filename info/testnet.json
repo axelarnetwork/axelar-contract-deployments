@@ -91,7 +91,10 @@
           "implementation": "0xb6241272C569767072e0587098415DF6BA0aaEe9",
           "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
           "wrappedSymbol": "WFTM",
-          "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF"
+          "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF",
+          "gasOptions": {
+            "gasLimit": 4000000
+          }
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
@@ -100,9 +103,6 @@
       "explorer": {
         "url": "https://testnet.ftmscan.com",
         "api": "https://api-testnet.ftmscan.com/api"
-      },
-      "gasOptions": {
-        "gasLimit": 5000000
       }
     },
     "polygon": {

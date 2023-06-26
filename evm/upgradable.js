@@ -17,10 +17,10 @@ async function deployCreateUpgradable(
     implementationConstructorArgs = [],
     proxyConstructorArgs = [],
     setupParams = '0x',
-    gasLimit = null,
+    gasOptions = null,
     env = 'testnet',
     chain = 'ethereum',
-    shouldVerifyContract = false,
+    verify = false,
 ) {
     const implementationFactory = new ContractFactory(implementationJson.abi, implementationJson.bytecode, wallet);
 
@@ -29,12 +29,12 @@ async function deployCreateUpgradable(
     const implementation = await implementationFactory.deploy(...implementationConstructorArgs);
     await implementation.deployed();
 
-    const proxy = await proxyFactory.deploy(...proxyConstructorArgs, { gasLimit: gasLimit });
+    const proxy = await proxyFactory.deploy(...proxyConstructorArgs, gasOptions);
     await proxy.deployed();
 
     await proxy.init(implementation.address, wallet.address, setupParams).then((tx) => tx.wait());
 
-    if (shouldVerifyContract) {
+    if (verify) {
         await verifyContract(env, chain, implementation.address, implementationConstructorArgs);
         await verifyContract(env, chain, proxy.address, proxyConstructorArgs);
     }
@@ -51,10 +51,10 @@ async function deployCreate2Upgradable(
     proxyConstructorArgs = [],
     setupParams = '0x',
     key = Date.now(),
-    gasLimit = null,
+    gasOptions = null,
     env = 'testnet',
     chain = 'ethereum',
-    shouldVerifyContract = false,
+    verify = false,
 ) {
     const implementationFactory = new ContractFactory(implementationJson.abi, implementationJson.bytecode, wallet);
 
@@ -68,10 +68,10 @@ async function deployCreate2Upgradable(
         key,
         proxyConstructorArgs,
         [implementation.address, wallet.address, setupParams],
-        gasLimit,
+        gasOptions?.gasLimit,
     );
 
-    if (shouldVerifyContract) {
+    if (verify) {
         await verifyContract(env, chain, implementation.address, implementationConstructorArgs);
         await verifyContract(env, chain, proxy.address, proxyConstructorArgs);
     }
@@ -88,10 +88,10 @@ async function deployCreate3Upgradable(
     additionalProxyConstructorArgs = [],
     setupParams = '0x',
     key = Date.now().toString(),
-    gasLimit = null,
+    gasOptions = null,
     env = 'testnet',
     chain = 'ethereum',
-    shouldVerifyContract = false,
+    verify = false,
 ) {
     const implementationFactory = new ContractFactory(implementationJson.abi, implementationJson.bytecode, wallet);
 
@@ -104,10 +104,10 @@ async function deployCreate3Upgradable(
         proxyJson,
         key,
         [implementation.address, wallet.address, setupParams, ...additionalProxyConstructorArgs],
-        gasLimit,
+        gasOptions?.gasLimit,
     );
 
-    if (shouldVerifyContract) {
+    if (verify) {
         await verifyContract(env, chain, implementation.address, implementationConstructorArgs);
         await verifyContract(env, chain, proxy.address, additionalProxyConstructorArgs);
     }
@@ -121,15 +121,16 @@ async function upgradeUpgradable(
     contractJson,
     implementationConstructorArgs = [],
     setupParams = '0x',
+    gasOptions = null,
     env = 'testnet',
     chain = 'ethereum',
-    shouldVerifyContract = false,
+    verify = false,
 ) {
     const proxy = new Contract(proxyAddress, IUpgradable.abi, wallet);
 
     const implementationFactory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
-    const implementation = await implementationFactory.deploy(...implementationConstructorArgs);
+    const implementation = await implementationFactory.deploy(...implementationConstructorArgs, gasOptions);
     await implementation.deployed();
 
     const implementationCode = await wallet.provider.getCode(implementation.address);
@@ -138,7 +139,7 @@ async function upgradeUpgradable(
     const tx = await proxy.upgrade(implementation.address, implementationCodeHash, setupParams);
     await tx.wait();
 
-    if (shouldVerifyContract) {
+    if (verify) {
         await verifyContract(env, chain, implementation.address, implementationConstructorArgs);
     }
 
