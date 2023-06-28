@@ -53,13 +53,13 @@ async function deployCreate2(
     chain = 'ethereum',
     verify = false,
 ) {
-    const implementation = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasOptions?.gasLimit);
+    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasOptions?.gasLimit);
 
     if (verify) {
-        await verifyContract(env, chain, implementation.address, args);
+        await verifyContract(env, chain, contract.address, args);
     }
 
-    return new Contract(implementation.address, contractJson.abi, wallet);
+    return new Contract(contract.address, contractJson.abi, wallet);
 }
 
 async function deployCreate2Upgradable(
