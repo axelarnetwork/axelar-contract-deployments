@@ -1,6 +1,9 @@
 'use strict';
 
-const { ContractFactory } = require('ethers');
+const {
+    ContractFactory,
+    utils: { getContractAddress },
+} = require('ethers');
 const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
@@ -177,6 +180,15 @@ const verifyContract = async (env, chain, contract, args) => {
         });
 };
 
+const predictAddressCreate = async (from, nonce) => {
+    const address = getContractAddress({
+        from,
+        nonce,
+    });
+
+    return address;
+};
+
 module.exports = {
     deployContract,
     readJSON,
@@ -186,4 +198,5 @@ module.exports = {
     verifyContract,
     printObj,
     printInfo,
+    predictAddressCreate,
 };
