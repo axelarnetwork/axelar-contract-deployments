@@ -32,8 +32,6 @@ async function deploy(options, chain) {
 
     if (!contracts[contractName]) {
         contracts[contractName] = {};
-    } else {
-        throw new Error(`Create3 deployer is already deployed on ${chain.name} ${env} at address: ${contracts[contractName].address}.`);
     }
 
     const contractConfig = contracts[contractName];

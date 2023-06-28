@@ -107,6 +107,7 @@ async function deploy(options, chain) {
     printInfo('Contract deployment salt', salt);
 
     let create3Deployer;
+
     if (contracts.Create3Deployer && isAddress(contracts.Create3Deployer.address)) {
         create3Deployer = contracts.Create3Deployer.address;
     } else {

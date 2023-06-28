@@ -191,7 +191,7 @@ const isNumber = (arg) => {
 const isAddressArray = (arg) => {
     if (!Array.isArray(arg)) return false;
 
-    for (let ele of arg) {
+    for (const ele of arg) {
         if (!isAddress(ele)) {
             return false;
         }
