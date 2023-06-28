@@ -1,6 +1,9 @@
 'use strict';
 
-const { ContractFactory } = require('ethers');
+const {
+    ContractFactory,
+    utils: { isAddress },
+} = require('ethers');
 const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
@@ -177,6 +180,26 @@ const verifyContract = async (env, chain, contract, args) => {
         });
 };
 
+const isString = (arg) => {
+    return typeof arg === 'string';
+};
+
+const isNumber = (arg) => {
+    return Number.isInteger(arg);
+};
+
+const isAddressArray = (arg) => {
+    if (!Array.isArray(arg)) return false;
+
+    for (let ele of arg) {
+        if (!isAddress(ele)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 module.exports = {
     deployContract,
     readJSON,
@@ -186,4 +209,7 @@ module.exports = {
     verifyContract,
     printObj,
     printInfo,
+    isString,
+    isNumber,
+    isAddressArray,
 };
