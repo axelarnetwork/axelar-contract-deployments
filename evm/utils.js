@@ -9,7 +9,7 @@ const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
-const zkevm = require("@0xpolygonhermez/zkevm-commonjs");
+const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
 
 const execAsync = promisify(exec);
@@ -119,7 +119,7 @@ const importNetworks = (chains, keys) => {
                 obj[chain.name.toLowerCase()] = chain;
                 return obj;
             }, {}),
-        }
+        };
     }
 
     // Add custom networks
