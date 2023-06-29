@@ -75,7 +75,8 @@ async function getConstructorArgs(contractName, config) {
  * Deploy a non-upgradable smart contract using the create3 deployment method.
  */
 async function deploy(options, chain) {
-    const { env, artifactPath, contractName, privateKey, verify } = options;
+    const { artifactPath, contractName, privateKey, verifyEnv } = options;
+    const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
     const wallet = new Wallet(privateKey);
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
@@ -111,7 +112,7 @@ async function deploy(options, chain) {
     if (contracts.Create3Deployer && isAddress(contracts.Create3Deployer.address)) {
         create3Deployer = contracts.Create3Deployer.address;
     } else {
-        throw new Error(`Create3 deployer does not exist on ${chain.name} ${env}.`);
+        throw new Error(`Create3 deployer does not exist on ${chain.name}.`);
     }
 
     const contractAddress = await getCreate3Address(create3Deployer, wallet.connect(provider), salt);
@@ -128,9 +129,7 @@ async function deploy(options, chain) {
         salt,
         constructorArgs,
         gasOptions,
-        env,
-        chain.name,
-        verify,
+        verifyOptions,
     );
 
     contractConfig.salt = salt;
