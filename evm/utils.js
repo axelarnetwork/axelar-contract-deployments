@@ -112,9 +112,14 @@ const importNetworks = (chains, keys) => {
         customChains: [],
     };
 
-    if (chains.chains) {
-        // Use new info format
-        chains = Object.values(chains.chains);
+    if (!chains.chains) {
+        // Use new format
+        chains = {
+            chains: chains.reduce((obj, chain) => {
+                obj[chain.name.toLowerCase()] = chain;
+                return obj;
+            }, {}),
+        }
     }
 
     // Add custom networks
