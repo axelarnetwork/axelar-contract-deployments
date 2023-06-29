@@ -1,12 +1,16 @@
 'use strict';
 
-const { ContractFactory, utils: { keccak256 } } = require('ethers');
+const {
+    ContractFactory,
+    utils: { getContractAddress, keccak256 },
+} = require('ethers');
 const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
 const zkevm = require("@0xpolygonhermez/zkevm-commonjs");
+const chalk = require('chalk');
 
 const execAsync = promisify(exec);
 const writeFileAsync = promisify(writeFile);
@@ -23,6 +27,10 @@ const printObj = (obj) => {
     console.log(JSON.stringify(obj, null, 2));
 };
 
+const printInfo = (msg, info) => {
+    console.log(`${msg}: ${chalk.green(info)}`);
+};
+
 const readJSON = (filePath, require = false) => {
     let data;
 
@@ -31,13 +39,13 @@ const readJSON = (filePath, require = false) => {
     } catch (err) {
         if (err.code === 'ENOENT' && !require) {
             return undefined;
-        } else {
-            throw err;
         }
+
+        throw err;
     }
 
     return data;
-}
+};
 
 const writeJSON = (data, name) => {
     outputJsonSync(name, data, {
@@ -103,6 +111,11 @@ const importNetworks = (chains, keys) => {
         apiKey: {},
         customChains: [],
     };
+
+    if (chains.chains) {
+        // Use new info format
+        chains = Object.values(chains.chains);
+    }
 
     // Add custom networks
     chains.forEach((chain) => {
@@ -195,6 +208,15 @@ async function getBytecodeHash(contractObject, chain = '') {
     return keccak256(bytecode);
 }
 
+const predictAddressCreate = async (from, nonce) => {
+    const address = getContractAddress({
+        from,
+        nonce,
+    });
+
+    return address;
+};
+
 module.exports = {
     deployContract,
     readJSON,
@@ -204,4 +226,6 @@ module.exports = {
     verifyContract,
     printObj,
     getBytecodeHash,
+    printInfo,
+    predictAddressCreate,
 };
