@@ -2,13 +2,14 @@
 
 const {
     ContractFactory,
-    utils: { getContractAddress },
+    utils: { getContractAddress, keccak256 },
 } = require('ethers');
 const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
+const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
 
 const execAsync = promisify(exec);
@@ -111,14 +112,19 @@ const importNetworks = (chains, keys) => {
         customChains: [],
     };
 
-    if (chains.chains) {
-        // Use new info format
-        chains = Object.values(chains.chains);
+    if (!chains.chains) {
+        // Use new format
+        chains = {
+            chains: chains.reduce((obj, chain) => {
+                obj[chain.name.toLowerCase()] = chain;
+                return obj;
+            }, {}),
+        };
     }
 
     // Add custom networks
-    chains.forEach((chain) => {
-        const name = chain.name.toLowerCase();
+    Object.entries(chains.chains).forEach(([chainName, chain]) => {
+        const name = chainName.toLowerCase();
         networks[name] = {
             chainId: chain.chainId,
             id: chain.id,
@@ -180,6 +186,34 @@ const verifyContract = async (env, chain, contract, args) => {
         });
 };
 
+/**
+ * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
+ * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
+ * @param {Object} contractObject - An instance of the contract or a contract factory (ethers.js Contract or ContractFactory object)
+ * @returns {Promise<string>} - The keccak256 hash of the contract bytecode
+ */
+async function getBytecodeHash(contractObject, chain = '') {
+    let bytecode;
+
+    if (contractObject.address) {
+        // Contract instance
+        const provider = contractObject.provider;
+        bytecode = await provider.getCode(contractObject.address);
+    } else if (contractObject.bytecode) {
+        // Contract factory
+        bytecode = contractObject.bytecode;
+    } else {
+        throw new Error('Invalid contract object. Expected ethers.js Contract or ContractFactory.');
+    }
+
+    if (chain.toLowerCase() === 'polygon-zkevm') {
+        const codehash = await zkevm.smtUtils.hashContractBytecode(bytecode);
+        return codehash;
+    }
+
+    return keccak256(bytecode);
+}
+
 const predictAddressCreate = async (from, nonce) => {
     const address = getContractAddress({
         from,
@@ -197,6 +231,7 @@ module.exports = {
     importNetworks,
     verifyContract,
     printObj,
+    getBytecodeHash,
     printInfo,
     predictAddressCreate,
 };
