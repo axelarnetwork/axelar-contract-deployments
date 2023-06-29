@@ -1,6 +1,6 @@
 'use strict';
 
-const { printObj, readJSON, writeJSON, importNetworks, verifyContract } = require('./utils');
+const { printObj, readJSON, writeJSON, importNetworks, verifyContract, getBytecodeHash } = require('./utils');
 
 module.exports = {
     printObj,
@@ -8,4 +8,5 @@ module.exports = {
     writeJSON,
     importNetworks,
     verifyContract,
+    getBytecodeHash,
 };
