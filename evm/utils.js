@@ -123,8 +123,8 @@ const importNetworks = (chains, keys) => {
     }
 
     // Add custom networks
-    Object.values(chains.chains).map((chain) => {
-        const name = chain.name.toLowerCase();
+    Object.entries(chains.chains).forEach(([chainName, chain]) => {
+        const name = chainName.toLowerCase();
         networks[name] = {
             chainId: chain.chainId,
             id: chain.id,
