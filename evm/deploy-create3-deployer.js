@@ -14,7 +14,8 @@ const implementationJson = require('../artifacts/contracts/deploy/Create3Deploye
 const contractName = 'Create3Deployer';
 
 async function deploy(options, chain) {
-    const { env, privateKey, verify } = options;
+    const { privateKey, verifyEnv } = options;
+    const verifyOptions = verifyEnv ? {env: verifyEnv, chain: chain.name} : null;
     const wallet = new Wallet(privateKey);
 
     printInfo('Deployer address', wallet.address);
@@ -56,9 +57,7 @@ async function deploy(options, chain) {
         salt,
         [],
         gasOptions,
-        env,
-        chain.name,
-        verify,
+        verifyOptions,
     );
 
     contractConfig.salt = salt;
