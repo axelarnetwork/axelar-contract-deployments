@@ -1,13 +1,17 @@
 'use strict';
 
-const { ContractFactory } = require('ethers');
+const {
+    Wallet,
+    ContractFactory,
+    utils: { isAddress },
+} = require('ethers');
 const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
 const chalk = require('chalk');
-const { deployCreate3Contract } = require('@axelar-network/axelar-gmp-sdk-solidity');
+const { deployCreate3Contract, deployContractConstant } = require('@axelar-network/axelar-gmp-sdk-solidity');
 
 const execAsync = promisify(exec);
 const writeFileAsync = promisify(writeFile);
@@ -17,28 +21,44 @@ const deployContract = async (wallet, contractJson, args = [], options = {}, ver
 
     const contract = await factory.deploy(...args, { ...options });
     await contract.deployed();
-    if(verifyOptions) {
-        await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
-    }
-    return contract;
-};
 
-const deployCreate2 = async (constAddressDeployerAddress, wallet, contractJson, args = [], options = {}, verifyOptions = null) => {
-    
-    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasOptions?.gasLimit);
-
-    if(verifyOptions) {
+    if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
     }
 
     return contract;
 };
 
-const deployCreate3 = async (create3DeployerAddress, wallet, contractJson, args = [], options = {}, verifyOptions = null) => {
-    
-    const contract = await deployCreate3Contract(constAddressDeployerAddress, wallet, contractJson, key, args, gasOptions?.gasLimit);
+const deployCreate2 = async (
+    constAddressDeployerAddress,
+    wallet,
+    contractJson,
+    args = [],
+    key = Date.now(),
+    gasLimit = null,
+    verifyOptions = null,
+) => {
+    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasLimit);
 
-    if(verifyOptions) {
+    if (verifyOptions) {
+        await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
+    }
+
+    return contract;
+};
+
+const deployCreate3 = async (
+    create3DeployerAddress,
+    wallet,
+    contractJson,
+    args = [],
+    key = Date.now(),
+    gasLimit = null,
+    verifyOptions = null,
+) => {
+    const contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, key, args, gasLimit);
+
+    if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
     }
 
@@ -203,10 +223,64 @@ const verifyContract = async (env, chain, contract, args) => {
         });
 };
 
+const isString = (arg) => {
+    return typeof arg === 'string';
+};
+
+const isNumber = (arg) => {
+    return Number.isInteger(arg);
+};
+
+const isAddressArray = (arg) => {
+    if (!Array.isArray(arg)) return false;
+
+    for (const ele of arg) {
+        if (!isAddress(ele)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+const deployMultiple = async (options, chain, deployments) => {
+    const { privateKey, contractName, skipExisting } = options;
+
+    const rpc = chain.rpc;
+    const provider = getDefaultProvider(rpc);
+    const wallet = new Wallet(privateKey, provider);
+
+    printInfo('Deployer address', wallet.address);
+
+    console.log(
+        `Deployer has ${(await provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
+            chain.tokenSymbol,
+        )} and nonce ${await provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
+    );
+
+    const contracts = chain.contracts;
+    const contractConfig = contracts[contractName] || {};
+    for(const key in deployments) {
+        if(skipExisting && isAddress(contractConfig[key])) continue;
+
+        console.log(`Deploying ${key}.`);
+
+        const contract = await deployments[key](wallet);
+        if(Array.isArray(contract)) {
+            contractConfig[key] = contract.map(val => val.address);
+        } else {
+            contractConfig[key] = contract.address;
+        }
+
+        constole.log(`Deployed ${key} at ${contract.address}`);
+    }
+}
+
 module.exports = {
     deployContract,
     deployCreate2,
     deployCreate3,
+    deployMultiple,
     readJSON,
     writeJSON,
     httpGet,
@@ -214,4 +288,7 @@ module.exports = {
     verifyContract,
     printObj,
     printInfo,
+    isString,
+    isNumber,
+    isAddressArray,
 };
