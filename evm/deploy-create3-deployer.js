@@ -15,7 +15,7 @@ const contractName = 'Create3Deployer';
 
 async function deploy(options, chain) {
     const { privateKey, verifyEnv } = options;
-    const verifyOptions = verifyEnv ? {env: verifyEnv, chain: chain.name} : null;
+    const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
     const wallet = new Wallet(privateKey);
 
     printInfo('Deployer address', wallet.address);

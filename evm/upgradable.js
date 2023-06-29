@@ -54,7 +54,7 @@ async function deployCreate2Upgradable(
     gasOptions = null,
     verifyOptions,
 ) {
-    const implementation = await deployContract(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions)
+    const implementation = await deployContract(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
 
     const proxy = await deployAndInitContractConstant(
         constAddressDeployerAddress,
@@ -85,7 +85,7 @@ async function deployCreate3Upgradable(
     gasOptions = null,
     verifyOptions = null,
 ) {
-    const implementation = await deployContract(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions)
+    const implementation = await deployContract(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
 
     const proxy = await deployCreate3Contract(
         create3DeployerAddress,
@@ -114,7 +114,13 @@ async function upgradeUpgradable(
 ) {
     const proxy = new Contract(proxyAddress, IUpgradable.abi, wallet);
 
-    const implementation = await deployContract(wallet, contractJson, implementationConstructorArgs, implementationDeploymentOptions, verifyOptions)
+    const implementation = await deployContract(
+        wallet,
+        contractJson,
+        implementationConstructorArgs,
+        implementationDeploymentOptions,
+        verifyOptions,
+    );
 
     const implementationCode = await wallet.provider.getCode(implementation.address);
     const implementationCodeHash = keccak256(implementationCode);

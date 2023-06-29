@@ -17,17 +17,16 @@ const deployContract = async (wallet, contractJson, args = [], options = {}, ver
 
     const contract = await factory.deploy(...args, { ...options });
     await contract.deployed();
-    if(verifyOptions) {
+    if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
     }
     return contract;
 };
 
 const deployCreate2 = async (constAddressDeployerAddress, wallet, contractJson, args = [], options = {}, verifyOptions = null) => {
-    
     const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasOptions?.gasLimit);
 
-    if(verifyOptions) {
+    if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
     }
 
@@ -35,10 +34,9 @@ const deployCreate2 = async (constAddressDeployerAddress, wallet, contractJson, 
 };
 
 const deployCreate3 = async (create3DeployerAddress, wallet, contractJson, args = [], options = {}, verifyOptions = null) => {
-    
     const contract = await deployCreate3Contract(constAddressDeployerAddress, wallet, contractJson, key, args, gasOptions?.gasLimit);
 
-    if(verifyOptions) {
+    if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
     }
 
