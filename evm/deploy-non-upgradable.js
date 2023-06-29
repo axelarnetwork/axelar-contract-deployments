@@ -12,8 +12,7 @@ const { getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity')
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
-const { deployCreate3 } = require('./upgradable');
-const { printInfo, writeJSON, isString, isNumber, isAddressArray } = require('./utils');
+const { printInfo, writeJSON, isString, isNumber, isAddressArray, deployCreate3 } = require('./utils');
 
 async function getConstructorArgs(contractName, config) {
     const contractConfig = config[contractName];
@@ -100,7 +99,7 @@ async function deploy(options, chain) {
 
     const contractConfig = contracts[contractName];
     const constructorArgs = await getConstructorArgs(contractName, contracts);
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = contractConfig.gasOptions || chain.gasOptions || null;
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
@@ -126,8 +125,8 @@ async function deploy(options, chain) {
         create3Deployer,
         wallet.connect(provider),
         implementationJson,
-        salt,
         constructorArgs,
+        salt,
         gasOptions,
         verifyOptions,
     );

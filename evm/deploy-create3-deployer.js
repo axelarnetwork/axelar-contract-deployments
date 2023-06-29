@@ -8,8 +8,7 @@ const { predictContractConstant } = require('@axelar-network/axelar-gmp-sdk-soli
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
-const { deployCreate2 } = require('./upgradable');
-const { printInfo, writeJSON } = require('./utils');
+const { printInfo, writeJSON, deployCreate2 } = require('./utils');
 const implementationJson = require('../artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
 const contractName = 'Create3Deployer';
 
@@ -36,7 +35,7 @@ async function deploy(options, chain) {
     }
 
     const contractConfig = contracts[contractName];
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = contractConfig.gasOptions || chain.gasOptions || null;
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
     const salt = options.salt || contractName;
@@ -54,8 +53,8 @@ async function deploy(options, chain) {
         constAddressDeployer,
         wallet.connect(provider),
         implementationJson,
-        salt,
         [],
+        salt,
         gasOptions,
         verifyOptions,
     );

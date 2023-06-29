@@ -151,9 +151,8 @@ async function deploy(options, chain) {
             wallet.connect(provider),
             implementationJson,
             implArgs,
-            getUpgradeArgs(contractName, chain),
             {},
-            gasOptions,
+            getUpgradeArgs(contractName, chain),
             verifyOptions,
         );
 
