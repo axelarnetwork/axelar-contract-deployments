@@ -187,7 +187,8 @@ const verifyContract = async (env, chain, contract, args) => {
 };
 
 /**
- * Compute bytecode hash for a deployed contract or contract factory
+ * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
+ * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
  * @param {Object} contractObject - An instance of the contract or a contract factory (ethers.js Contract or ContractFactory object)
  * @returns {Promise<string>} - The keccak256 hash of the contract bytecode
  */
