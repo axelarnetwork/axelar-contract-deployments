@@ -33,10 +33,7 @@ async function deployUpgradable(
     await proxy.init(implementation.address, wallet.address, setupParams).then((tx) => tx.wait());
 
     if (verifyOptions) {
-        const env = verifyOptions.env;
-        const chain = verifyOptions.chain;
-        await verifyContract(env, chain, implementation.address, implementationConstructorArgs);
-        await verifyContract(env, chain, proxy.address, proxyConstructorArgs);
+        await verifyContract(verifyOptions.env, verifyOptions.chain, proxy.address, proxyConstructorArgs);
     }
 
     return new Contract(proxy.address, implementationJson.abi, wallet);
