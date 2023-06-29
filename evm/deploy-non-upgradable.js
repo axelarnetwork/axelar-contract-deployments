@@ -76,6 +76,7 @@ async function getConstructorArgs(contractName, config) {
 async function deploy(options, chain) {
     const { artifactPath, contractName, privateKey, verifyEnv } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
+
     const wallet = new Wallet(privateKey);
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
