@@ -7,7 +7,7 @@ const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
 const chalk = require('chalk');
-const { deployCreate3Contract } = require('@axelar-network/axelar-gmp-sdk-solidity');
+const { deployCreate3Contract, deployContractConstant } = require('@axelar-network/axelar-gmp-sdk-solidity');
 
 const execAsync = promisify(exec);
 const writeFileAsync = promisify(writeFile);
@@ -17,14 +17,6 @@ const deployContract = async (wallet, contractJson, args = [], options = {}, ver
 
     const contract = await factory.deploy(...args, { ...options });
     await contract.deployed();
-    if (verifyOptions) {
-        await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
-    }
-    return contract;
-};
-
-const deployCreate2 = async (constAddressDeployerAddress, wallet, contractJson, args = [], options = {}, verifyOptions = null) => {
-    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasOptions?.gasLimit);
 
     if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
@@ -33,8 +25,19 @@ const deployCreate2 = async (constAddressDeployerAddress, wallet, contractJson, 
     return contract;
 };
 
-const deployCreate3 = async (create3DeployerAddress, wallet, contractJson, args = [], options = {}, verifyOptions = null) => {
-    const contract = await deployCreate3Contract(constAddressDeployerAddress, wallet, contractJson, key, args, gasOptions?.gasLimit);
+
+const deployCreate2 = async (constAddressDeployerAddress, wallet, contractJson, args = [], key = Date.now(), gasLimit = null, verifyOptions = null) => {
+    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasLimit);
+
+    if (verifyOptions) {
+        await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
+    }
+
+    return contract;
+};
+
+const deployCreate3 = async (create3DeployerAddress, wallet, contractJson, args = [], key = Date.now(), gasLimit = null, verifyOptions = null) => {
+    const contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, key, args, gasLimit);
 
     if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
