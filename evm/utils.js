@@ -246,7 +246,7 @@ const isAddressArray = (arg) => {
     }
 
     return true;
-}
+};
 
 /**
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
