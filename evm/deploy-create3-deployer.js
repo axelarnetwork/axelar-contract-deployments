@@ -8,9 +8,8 @@ const { predictContractConstant } = require('@axelar-network/axelar-gmp-sdk-soli
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
-const { deployCreate2 } = require('./upgradable');
-const { printInfo, writeJSON } = require('./utils');
-const implementationJson = require('../artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
+const { printInfo, writeJSON, deployCreate2 } = require('./utils');
+const implementationJson = require('../artifacts/axelar-gmp-sdk-solidity/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
 const contractName = 'Create3Deployer';
 
 async function deploy(options, chain) {
@@ -49,14 +48,13 @@ async function deploy(options, chain) {
     console.log('Does this match any existing deployments?');
     const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
     if (anwser !== 'y') return;
-
     const contract = await deployCreate2(
         constAddressDeployer,
         wallet.connect(provider),
         implementationJson,
-        salt,
         [],
-        gasOptions,
+        salt,
+        gasOptions.gasLimit,
         verifyOptions,
     );
 
@@ -85,24 +83,28 @@ async function main(options) {
     }
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('deploy-create3-deployer').description('Deploy create3 deployer');
+    program.name('deploy-create3-deployer').description('Deploy create3 deployer');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
-program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+    program.addOption(
+        new Option('-e, --env <env>', 'environment')
+            .choices(['local', 'devnet', 'testnet', 'mainnet'])
+            .default('testnet')
+            .makeOptionMandatory(true)
+            .env('ENV'),
+    );
+    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+    program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
+    program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+} else {
+    module.exports = { deploy };
+}

@@ -10,19 +10,6 @@ const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/dist/IUpgra
 
 const { verifyContract, deployContract } = require('./utils');
 
-async function deployCreate(wallet, contractJson, args = [], gasOptions = null, env = 'testnet', chain = 'ethereum', verify = false) {
-    const contractFactory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
-
-    const contract = await contractFactory.deploy(...args, gasOptions);
-    await contract.deployed();
-
-    if (verify) {
-        await verifyContract(env, chain, contract.address, args);
-    }
-
-    return new Contract(contract.address, contractJson.abi, wallet);
-}
-
 async function deployCreateUpgradable(
     wallet,
     implementationJson,
@@ -139,7 +126,6 @@ async function upgradeUpgradable(
 }
 
 module.exports = {
-    deployCreate,
     deployCreateUpgradable,
     deployCreate2Upgradable,
     deployCreate3Upgradable,

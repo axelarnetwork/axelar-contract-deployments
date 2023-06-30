@@ -2,7 +2,7 @@
 
 const {
     ContractFactory,
-    utils: { getContractAddress, keccak256 },
+    utils: { getContractAddress, keccak256, isAddress },
 } = require('ethers');
 const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
@@ -265,6 +265,29 @@ const predictAddressCreate = async (from, nonce) => {
 
     return address;
 };
+
+const deployMultiple = async (options, chain, deployments) => {
+    const { contractName, skipExisting } = options;
+
+    const contracts = chain.contracts;
+    const contractConfig = contracts[contractName] || {};
+    for(const key in deployments) {
+        if(skipExisting && ( isAddress(contractConfig[key]) || Array.isArray(contractConfig[key]))) continue;
+
+        console.log(`Deploying ${key}.`);
+
+        const contract = await deployments[key]();
+        if(Array.isArray(contract)) {
+            const addresses = contract.map(val => val.address);
+            contractConfig[key] = addresses
+            console.log(`Deployed ${key} at ${JSON.stringify(addresses)}`);
+        } else {
+            contractConfig[key] = contract.address;
+            console.log(`Deployed ${key} at ${contract.address}`);
+        }
+
+    }
+}
 
 module.exports = {
     deployContract,
