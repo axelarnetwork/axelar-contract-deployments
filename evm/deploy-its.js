@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { getCreate3Address } = require("@axelar-network/axelar-gmp-sdk-solidity");
 const { deployContract, deployCreate3, deployMultiple } = require("./utils");
 const { ethers } = require('hardhat');
@@ -16,11 +18,10 @@ const TokenManagerMintBurn = require('../artifacts/interchain-token-service/cont
 const TokenManagerLiquidityPool = require('../artifacts/interchain-token-service/contracts/token-manager/implementations/TokenManagerLiquidityPool.sol/TokenManagerLiquidityPool.json');
 const InterchainTokenService = require('../artifacts/interchain-token-service/contracts/interchain-token-service/InterchainTokenService.sol/InterchainTokenService.json');
 const InterchainTokenServiceProxy = require('../artifacts/interchain-token-service/contracts/proxies/InterchainTokenServiceProxy.sol/InterchainTokenServiceProxy.json');
+const { getDefaultProvider } = require("ethers");
+const { Command, Option } = require("commander");
 
-async function deployITS(wallet, options, chain) {
-    const { privateKey, verifyEnv, deploymentKey, operatorAddress, skipExisting } = options;
-    const verifyOptions = verifyEnv ? {env: verifyEnv, chain: chain.name} : null;
-
+async function deployITS(wallet, chain, deploymentKey, operatorAddress = wallet.address, skipExisting = true, verifyOptions = null) {
     const contractName = 'InterchainTokenService';
     
     
@@ -83,34 +84,65 @@ async function deployITS(wallet, options, chain) {
         },
     }
     const deploymentOptions = {
-        privateKey,
         contractName,
         skipExisting,
     };
     await deployMultiple(deploymentOptions, chain, deployments);
 }
 
-(async () => {
-    const [funder, operator] = await ethers.getSigners();
-    const privateKey = keccak256('0x123456');
-    console.log(privateKey);
-    const wallet = new Wallet(privateKey, funder.provider);
-    await (await funder.sendTransaction({to: wallet.address, value: BigInt(1e21)})).wait();
-    const options = { 
-        privateKey : privateKey, 
-        deploymentKey: 'ITS', 
-        operatorAddress: operator.address, 
-        skipExisting: true
-    };
-    const info = require('../info/testnet.json');
-    const chain = info.chains.ethereum;
+async function main(options) {
+    const config = require(`${__dirname}/../info/${options.env}.json`);
 
-    const create3Deployer = await deployContract(wallet, Create3Deployer);
-    chain.contracts.create3Deployer = {address: create3Deployer.address};
+    const chains = options.chainNames.split(',');
 
-    console.log(chain);
-    await deployITS(wallet, options, chain);
-    console.log(chain);
-    await deployITS(wallet, options, chain);
-    console.log(chain);
-})();
+    for (const chain of chains) {
+        if (config.chains[chain.toLowerCase()] === undefined) {
+            throw new Error(`Chain ${chain} is not defined in the info file`);
+        }
+    }
+
+    for (const chainName of chains) {
+        //const provider = getDefaultProvider(chain.rpc);
+        const [funder] = await ethers.getSigners();
+        const wallet = new Wallet(options.privateKey, funder.provider);
+        await (await funder.sendTransaction({to: wallet.address, value: BigInt(1e21)})).wait();
+
+        const chain = config.chains[chainName.toLowerCase()]
+
+        const create3Deployer = await deployContract(wallet, Create3Deployer);
+        chain.contracts.create3Deployer = {address: create3Deployer.address};
+
+        const verifyOptions = options.verify ? {env: options.env, chain: chain.name} : null;
+        await deployITS(wallet, chain, options.key, options.operatorAddress, options.skipExisting, verifyOptions);
+        //writeJSON(config, `${__dirname}/../info/${options.env}.json`);
+    }
+}
+
+if (require.main === module) {
+    const program = new Command();
+
+    program.name('deploy-create3-deployer').description('Deploy create3 deployer');
+
+    program.addOption(
+        new Option('-e, --env <env>', 'environment')
+            .choices(['local', 'devnet', 'testnet', 'mainnet'])
+            .default('testnet')
+            .makeOptionMandatory(true)
+            .env('ENV'),
+    );
+    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+    program.addOption(new Option('-k, --key <key>', 'deployment key to use for create3 deployment').makeOptionMandatory(true).env('DEPLOYMENT_KEY'));
+    program.addOption(new Option('-v, --verify <boolean>', 'verify the deployed contract on the explorer').env('VERIFY'));
+    program.addOption(new Option('-s, --skipExisting <boolean>', 'skip deploying contracts if they already exist').env('SKIP_EXISTING'));
+    program.addOption(new Option('-o, --operator', 'address of the ITS operator').env('OPERATOR_ADDRESS'));
+
+    program.action((options) => {
+        console.log(options)
+        main(options);
+    });
+
+    program.parse();
+} else {
+    module.exports = { deployITS };
+}
