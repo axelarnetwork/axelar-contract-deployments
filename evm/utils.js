@@ -229,6 +229,26 @@ const verifyContract = async (env, chain, contract, args) => {
         });
 };
 
+const isString = (arg) => {
+    return typeof arg === 'string';
+};
+
+const isNumber = (arg) => {
+    return Number.isInteger(arg);
+};
+
+const isAddressArray = (arg) => {
+    if (!Array.isArray(arg)) return false;
+
+    for (const ele of arg) {
+        if (!isAddress(ele)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 /**
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
  * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
@@ -303,4 +323,7 @@ module.exports = {
     getBytecodeHash,
     printInfo,
     predictAddressCreate,
+    isString,
+    isNumber,
+    isAddressArray,
 };

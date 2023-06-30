@@ -14,7 +14,7 @@ const contractName = 'Create3Deployer';
 
 async function deploy(options, chain) {
     const { privateKey, verifyEnv } = options;
-    const verifyOptions = verifyEnv ? {env: verifyEnv, chain: chain.name} : null;
+    const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
     const wallet = new Wallet(privateKey);
 
     printInfo('Deployer address', wallet.address);
@@ -35,7 +35,7 @@ async function deploy(options, chain) {
     }
 
     const contractConfig = contracts[contractName];
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = contractConfig.gasOptions || chain.gasOptions || null;
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
     const salt = options.salt || contractName;
