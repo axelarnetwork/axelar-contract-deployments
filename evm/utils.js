@@ -1,15 +1,15 @@
 'use strict';
 
 const {
-    Wallet,
     ContractFactory,
-    utils: { isAddress },
+    utils: { getContractAddress, keccak256 },
 } = require('ethers');
 const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
+const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
 const { deployCreate3Contract, deployContractConstant } = require('@axelar-network/axelar-gmp-sdk-solidity');
 
@@ -154,20 +154,26 @@ const importNetworks = (chains, keys) => {
         customChains: [],
     };
 
-    if (chains.chains) {
-        // Use new info format
-        chains = Object.values(chains.chains);
+    if (!chains.chains) {
+        // Use new format
+        chains = {
+            chains: chains.reduce((obj, chain) => {
+                obj[chain.name.toLowerCase()] = chain;
+                return obj;
+            }, {}),
+        };
     }
 
     // Add custom networks
-    chains.forEach((chain) => {
-        const name = chain.name.toLowerCase();
+    Object.entries(chains.chains).forEach(([chainName, chain]) => {
+        const name = chainName.toLowerCase();
         networks[name] = {
             chainId: chain.chainId,
             id: chain.id,
             url: chain.rpc,
             blockGasLimit: chain.gasOptions?.gasLimit,
             confirmations: chain.confirmations || 1,
+            contracts: chain.contracts,
         };
 
         if (keys) {
@@ -223,58 +229,42 @@ const verifyContract = async (env, chain, contract, args) => {
         });
 };
 
-const isString = (arg) => {
-    return typeof arg === 'string';
-};
+/**
+ * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
+ * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
+ * @param {Object} contractObject - An instance of the contract or a contract factory (ethers.js Contract or ContractFactory object)
+ * @returns {Promise<string>} - The keccak256 hash of the contract bytecode
+ */
+async function getBytecodeHash(contractObject, chain = '') {
+    let bytecode;
 
-const isNumber = (arg) => {
-    return Number.isInteger(arg);
-};
-
-const isAddressArray = (arg) => {
-    if (!Array.isArray(arg)) return false;
-
-    for (const ele of arg) {
-        if (!isAddress(ele)) {
-            return false;
-        }
+    if (contractObject.address) {
+        // Contract instance
+        const provider = contractObject.provider;
+        bytecode = await provider.getCode(contractObject.address);
+    } else if (contractObject.bytecode) {
+        // Contract factory
+        bytecode = contractObject.bytecode;
+    } else {
+        throw new Error('Invalid contract object. Expected ethers.js Contract or ContractFactory.');
     }
 
-    return true;
-};
-
-const deployMultiple = async (options, chain, deployments) => {
-    const { privateKey, contractName, skipExisting } = options;
-
-    const rpc = chain.rpc;
-    const provider = getDefaultProvider(rpc);
-    const wallet = new Wallet(privateKey, provider);
-
-    printInfo('Deployer address', wallet.address);
-
-    console.log(
-        `Deployer has ${(await provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
-            chain.tokenSymbol,
-        )} and nonce ${await provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
-    );
-
-    const contracts = chain.contracts;
-    const contractConfig = contracts[contractName] || {};
-    for(const key in deployments) {
-        if(skipExisting && isAddress(contractConfig[key])) continue;
-
-        console.log(`Deploying ${key}.`);
-
-        const contract = await deployments[key](wallet);
-        if(Array.isArray(contract)) {
-            contractConfig[key] = contract.map(val => val.address);
-        } else {
-            contractConfig[key] = contract.address;
-        }
-
-        constole.log(`Deployed ${key} at ${contract.address}`);
+    if (chain.toLowerCase() === 'polygon-zkevm') {
+        const codehash = await zkevm.smtUtils.hashContractBytecode(bytecode);
+        return codehash;
     }
+
+    return keccak256(bytecode);
 }
+
+const predictAddressCreate = async (from, nonce) => {
+    const address = getContractAddress({
+        from,
+        nonce,
+    });
+
+    return address;
+};
 
 module.exports = {
     deployContract,
@@ -287,8 +277,7 @@ module.exports = {
     importNetworks,
     verifyContract,
     printObj,
+    getBytecodeHash,
     printInfo,
-    isString,
-    isNumber,
-    isAddressArray,
+    predictAddressCreate,
 };
