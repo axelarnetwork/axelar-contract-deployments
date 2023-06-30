@@ -12,8 +12,7 @@ const { getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity')
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
-const { deployCreate3 } = require('./upgradable');
-const { printInfo, writeJSON, isString, isNumber, isAddressArray } = require('./utils');
+const { printInfo, writeJSON, isString, isNumber, isAddressArray, deployCreate3 } = require('./utils');
 
 async function getConstructorArgs(contractName, config) {
     const contractConfig = config[contractName];
@@ -75,7 +74,9 @@ async function getConstructorArgs(contractName, config) {
  * Deploy a non-upgradable smart contract using the create3 deployment method.
  */
 async function deploy(options, chain) {
-    const { env, artifactPath, contractName, privateKey, verify } = options;
+    const { artifactPath, contractName, privateKey, verifyEnv } = options;
+    const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
+
     const wallet = new Wallet(privateKey);
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
@@ -99,7 +100,7 @@ async function deploy(options, chain) {
 
     const contractConfig = contracts[contractName];
     const constructorArgs = await getConstructorArgs(contractName, contracts);
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = contractConfig.gasOptions || chain.gasOptions || null;
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
@@ -111,7 +112,7 @@ async function deploy(options, chain) {
     if (contracts.Create3Deployer && isAddress(contracts.Create3Deployer.address)) {
         create3Deployer = contracts.Create3Deployer.address;
     } else {
-        throw new Error(`Create3 deployer does not exist on ${chain.name} ${env}.`);
+        throw new Error(`Create3 deployer does not exist on ${chain.name}.`);
     }
 
     const contractAddress = await getCreate3Address(create3Deployer, wallet.connect(provider), salt);
@@ -125,12 +126,10 @@ async function deploy(options, chain) {
         create3Deployer,
         wallet.connect(provider),
         implementationJson,
-        salt,
         constructorArgs,
+        salt,
         gasOptions,
-        env,
-        chain.name,
-        verify,
+        verifyOptions,
     );
 
     contractConfig.salt = salt;
