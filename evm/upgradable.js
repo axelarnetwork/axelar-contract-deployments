@@ -70,26 +70,6 @@ async function deployCreate2Upgradable(
     return new Contract(proxy.address, implementationJson.abi, wallet);
 }
 
-async function deployCreate3(
-    create3DeployerAddress,
-    wallet,
-    contractJson,
-    key = Date.now(),
-    args = [],
-    gasOptions = null,
-    env = 'testnet',
-    chain = 'ethereum',
-    verify = false,
-) {
-    const implementation = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions?.gasLimit);
-
-    if (verify) {
-        await verifyContract(env, chain, implementation.address, args);
-    }
-
-    return new Contract(implementation.address, contractJson.abi, wallet);
-}
-
 async function deployCreate3Upgradable(
     create3DeployerAddress,
     wallet,
@@ -145,7 +125,6 @@ async function upgradeUpgradable(
 module.exports = {
     deployUpgradable,
     deployCreate2Upgradable,
-    deployCreate3,
     deployCreate3Upgradable,
     upgradeUpgradable,
 };
