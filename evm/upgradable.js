@@ -5,7 +5,7 @@ const {
     ContractFactory,
     utils: { keccak256 },
 } = require('ethers');
-const { deployContractConstant, deployAndInitContractConstant, deployCreate3Contract } = require('@axelar-network/axelar-gmp-sdk-solidity');
+const { deployAndInitContractConstant, deployCreate3Contract } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/dist/IUpgradable.json');
 
 const { verifyContract, deployContract } = require('./utils');
@@ -33,10 +33,7 @@ async function deployCreateUpgradable(
     await proxy.init(implementation.address, wallet.address, setupParams).then((tx) => tx.wait());
 
     if (verifyOptions) {
-        const env = verifyOptions.env;
-        const chain = verifyOptions.chain;
-        await verifyContract(env, chain, implementation.address, implementationConstructorArgs);
-        await verifyContract(env, chain, proxy.address, proxyConstructorArgs);
+        await verifyContract(verifyOptions.env, verifyOptions.chain, proxy.address, proxyConstructorArgs);
     }
 
     return new Contract(proxy.address, implementationJson.abi, wallet);
@@ -54,7 +51,7 @@ async function deployCreate2Upgradable(
     gasOptions = null,
     verifyOptions,
 ) {
-    const implementation = await deployContract(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions)
+    const implementation = await deployContract(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
 
     const proxy = await deployAndInitContractConstant(
         constAddressDeployerAddress,
