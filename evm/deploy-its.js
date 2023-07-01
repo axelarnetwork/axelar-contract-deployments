@@ -1,10 +1,10 @@
 require('dotenv').config();
 
 const { getCreate3Address } = require("@axelar-network/axelar-gmp-sdk-solidity");
-const { deployContract, deployCreate3, deployMultiple } = require("./utils");
+const { deployContract, deployCreate3, isAddressArray, writeJSON, deployCreate2 } = require("./utils");
 const { ethers } = require('hardhat');
-const { Wallet, utils: { defaultAbiCoder } } = ethers;
-const { keccak256 } = require("ethers/lib/utils");
+const { Wallet, utils: { defaultAbiCoder, isAddress } } = ethers;
+const chalk = require('chalk');
 
 const Create3Deployer = require('../artifacts/axelar-gmp-sdk-solidity/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
 const TokenManagerDeployer = require('../artifacts/interchain-token-service/contracts/utils/TokenManagerDeployer.sol/TokenManagerDeployer.json');
@@ -20,80 +20,138 @@ const InterchainTokenService = require('../artifacts/interchain-token-service/co
 const InterchainTokenServiceProxy = require('../artifacts/interchain-token-service/contracts/proxies/InterchainTokenServiceProxy.sol/InterchainTokenServiceProxy.json');
 const { getDefaultProvider } = require("ethers");
 const { Command, Option } = require("commander");
+const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
+const { keccak256 } = require('ethers/lib/utils');
+const { deployCreate3Deployer } = require('./deploy-create3-deployer');
 
-async function deployITS(wallet, chain, deploymentKey, operatorAddress = wallet.address, skipExisting = true, verifyOptions = null) {
+/**
+ * Function that handles the ITS deployment.
+ * @param {*} wallet 
+ * @param {*} chain 
+ * @param {*} deploymentKey 
+ * @param {*} operatorAddress 
+ * @param {*} skipExisting 
+ * @param {*} verifyOptions 
+ * @param {*} saveFunc 
+ */
+async function deployITS(wallet, chain, deploymentKey, operatorAddress = wallet.address, skipExisting = true, verifyOptions = null, saveFunc = null) {
     const contractName = 'InterchainTokenService';
     
-    
+    console.log(
+        `Deployer has ${(await wallet.provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
+            chain.tokenSymbol,
+        )} and nonce ${await wallet.provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
+    );
+
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName] || {};
     contracts[contractName] = contractConfig;
-    const interchainTokenServiceAddress = await getCreate3Address(contracts.create3Deployer.address, wallet, deploymentKey);
+    const interchainTokenServiceAddress = await getCreate3Address(contracts.Create3Deployer.address, wallet, deploymentKey);
 
     const deployments = {
-        tokenManagerDeployer: async () => {
-            return await deployContract(wallet, TokenManagerDeployer, [contracts.create3Deployer.address], {}, verifyOptions);
+        tokenManagerDeployer: {
+            name: 'Token Manager Deployer',
+            deploy: async () => {
+                return await deployContract(wallet, TokenManagerDeployer, [contracts.Create3Deployer.address], {}, verifyOptions);
+            },
         },
-        standardizedTokenLockUnlock: async () => {
-            return await deployContract(wallet, StandardizedTokenLockUnlock, [], {}, verifyOptions);
+        standardizedTokenLockUnlock: {
+            name: 'Standardized Token Lock Unlock',
+            deploy: async () => {
+                return await deployContract(wallet, StandardizedTokenLockUnlock, [], {}, verifyOptions);
+            },
         },
-        standardizedTokenMintBurn: async () => {
-            return await deployContract(wallet, StandardizedTokenMintBurn, [], {}, verifyOptions);
+        standardizedTokenMintBurn: {
+            name: 'Standardized Token Mint Burn',
+            deploy: async () => {
+                return await deployContract(wallet, StandardizedTokenMintBurn, [], {}, verifyOptions);
+            },
         },
-        standardizedTokenDeployer: async () => {
-            return await deployContract(wallet, StandardizedTokenDeployer, [
-                contracts.create3Deployer.address,
-                contractConfig.standardizedTokenLockUnlock,
-                contractConfig.standardizedTokenMintBurn,
-            ], {}, verifyOptions);
+        standardizedTokenDeployer: {
+            name: 'Standardized Token Deployer',
+                deploy: async () => {
+                return await deployContract(wallet, StandardizedTokenDeployer, [
+                    contracts.Create3Deployer.address,
+                    contractConfig.standardizedTokenLockUnlock,
+                    contractConfig.standardizedTokenMintBurn,
+                ], {}, verifyOptions);
+            },
         },
-        linkerRouterImplementation : async () => {
-            return await deployContract(wallet, LinkerRouter, [interchainTokenServiceAddress], {}, verifyOptions);
+        linkerRouterImplementation : {
+            name: 'Linker Router Implementations',
+            deploy: async () => {
+                return await deployContract(wallet, LinkerRouter, [interchainTokenServiceAddress], {}, verifyOptions);
+            },
         },
-        linkerRouter: async () => {
-            const params = defaultAbiCoder.encode(['string[]', 'string[]'], [[], []]);
-            return await deployContract(wallet, LinkerRouterProxy, [contractConfig.linkerRouterImplementation, wallet.address, params], {}, verifyOptions);
+        linkerRouter: {
+            name: 'Linker Router Proxy',
+            deploy: async () => {
+                const params = defaultAbiCoder.encode(['string[]', 'string[]'], [[], []]);
+                return await deployContract(wallet, LinkerRouterProxy, [contractConfig.linkerRouterImplementation, wallet.address, params], {}, verifyOptions);
+            },
         },
-        tokenManagerImplementations: async () => {
-            const implementations = [];
+        tokenManagerImplementations: {
+            name: 'Token Manager Implementations',
+            deploy: async () => {
+                const implementations = [];
 
-            for (const type of ['LockUnlock', 'MintBurn', 'LiquidityPool']) {
-                const impl = await deployContract(wallet, eval(`TokenManager${type}`), [interchainTokenServiceAddress], {}, verifyOptions);
-                implementations.push(impl);
-            }
-        
-            return implementations;
+                for (const contractJson of [TokenManagerLockUnlock, TokenManagerMintBurn, TokenManagerLiquidityPool]) {
+                    const impl = await deployContract(wallet, contractJson, [interchainTokenServiceAddress], {}, verifyOptions);
+                    implementations.push(impl);
+                }
+            
+                return implementations;
+            },
         },
-        implementation: async () => {
-            return await deployContract(wallet, InterchainTokenService, [
-                contractConfig.tokenManagerDeployer,
-                contractConfig.standardizedTokenDeployer,
-                contracts.AxelarGateway.address,
-                contracts.AxelarGasService.address,
-                contractConfig.linkerRouter,
-                contractConfig.tokenManagerImplementations,
-                chain.name,
-            ], {}, verifyOptions);
+        implementation: {
+            name: 'Interchain Token Service Implementation',
+            deploy: async () => {
+                return await deployContract(wallet, InterchainTokenService, [
+                    contractConfig.tokenManagerDeployer,
+                    contractConfig.standardizedTokenDeployer,
+                    contracts.AxelarGateway.address,
+                    contracts.AxelarGasService.address,
+                    contractConfig.linkerRouter,
+                    contractConfig.tokenManagerImplementations,
+                    chain.name,
+                ], {}, verifyOptions);
+            },
         },
-        address: async () => {
-            return await deployCreate3(contracts.create3Deployer.address, wallet, InterchainTokenServiceProxy, [
-                contractConfig.implementation,
-                wallet.address,
-                operatorAddress,
-            ], deploymentKey, null, verifyOptions);
+        address: {
+            name: 'Interchain Token Service Proxy',
+            deploy: async () => {
+                return await deployCreate3(contracts.Create3Deployer.address, wallet, InterchainTokenServiceProxy, [
+                    contractConfig.implementation,
+                    wallet.address,
+                    operatorAddress,
+                ], deploymentKey, null, verifyOptions);
+            },
         },
     }
-    const deploymentOptions = {
-        contractName,
-        skipExisting,
-    };
-    await deployMultiple(deploymentOptions, chain, deployments);
+
+    for(const key in deployments) {
+        if(skipExisting && ( isAddress(contractConfig[key]) || isAddressArray(contractConfig[key]))) continue;
+
+        const deployment = deployments[key];
+        console.log(`Deploying ${deployment.name}.`);
+        
+        const contract = await deployment.deploy();
+        if(Array.isArray(contract)) {
+            const addresses = contract.map(val => val.address);
+            contractConfig[key] = addresses
+            console.log(`Deployed ${deployment.name} at ${JSON.stringify(addresses)}`);
+        } else {
+            contractConfig[key] = contract.address;
+            console.log(`Deployed ${deployment.name} at ${contract.address}`);
+        }
+        if (saveFunc) await saveFunc();
+    }
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../info/${options.env}.json`);
+    const config = require(`${__dirname}/../info/${options.env === 'local' ? 'testnet' : options.env}.json`);
 
-    const chains = options.chainNames.split(',');
+    const chains = options.chainNames.split(',').map(str => str.trim());
 
     for (const chain of chains) {
         if (config.chains[chain.toLowerCase()] === undefined) {
@@ -102,19 +160,22 @@ async function main(options) {
     }
 
     for (const chainName of chains) {
-        //const provider = getDefaultProvider(chain.rpc);
-        const [funder] = await ethers.getSigners();
-        const wallet = new Wallet(options.privateKey, funder.provider);
-        await (await funder.sendTransaction({to: wallet.address, value: BigInt(1e21)})).wait();
+        const chain = config.chains[chainName.toLowerCase()];
 
-        const chain = config.chains[chainName.toLowerCase()]
-
-        const create3Deployer = await deployContract(wallet, Create3Deployer);
-        chain.contracts.create3Deployer = {address: create3Deployer.address};
+        let wallet;
+        if(options.env === 'local') {
+            const [funder] = await ethers.getSigners();
+            wallet = new Wallet(options.privateKey, funder.provider);
+            await (await funder.sendTransaction({to: wallet.address, value: BigInt(1e21)})).wait();
+            await deployConstAddressDeployer(wallet, chain, keccak256('0x1234'), verifyOptions);
+            await deployCreate3Deployer(wallet, chain, keccak256('0x0123'), verifyOptions);
+        } else {
+            const provider = getDefaultProvider(chain.rpc);
+            wallet = new Wallet(options.privateKey, provider);
+        }
 
         const verifyOptions = options.verify ? {env: options.env, chain: chain.name} : null;
-        await deployITS(wallet, chain, options.key, options.operatorAddress, options.skipExisting, verifyOptions);
-        //writeJSON(config, `${__dirname}/../info/${options.env}.json`);
+        await deployITS(wallet, chain, options.key, options.operatorAddress, options.skipExisting, verifyOptions, () => writeJSON(config, `${__dirname}/../info/${options.env}.json`));
     }
 }
 
@@ -137,9 +198,8 @@ if (require.main === module) {
     program.addOption(new Option('-s, --skipExisting <boolean>', 'skip deploying contracts if they already exist').env('SKIP_EXISTING'));
     program.addOption(new Option('-o, --operator', 'address of the ITS operator').env('OPERATOR_ADDRESS'));
 
-    program.action((options) => {
-        console.log(options)
-        main(options);
+    program.action(async(options) => {
+        await main(options);
     });
 
     program.parse();

@@ -61,6 +61,18 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "salt": "Create3Deployer",
+          "address": "0xFcccfEE8384d303197a7861BCE0A7A148815cd04",
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+        },
+        "InterchainTokenService": {
+          "tokenManagerDeployer": "0xEb78A281c07C1f7db9A5f7651aAaEA2986b56Ad4",
+          "standardizedTokenLockUnlock": "0x0ecb3BEB1084B2926Ad9ff6BfB27EDA40f23a54B",
+          "standardizedTokenMintBurn": "0x8631C831ee1f9FC0187B919Df0B11D1d65081059",
+          "standardizedTokenDeployer": "0xFF3de2ee3DF0cb25518bE948990902d4A17DE996",
+          "linkerRouterImplementation": "0x43c3d08f03aa43A8f49e98c9Ab9EB733ce65B11F"
         }
       },
       "explorer": {
