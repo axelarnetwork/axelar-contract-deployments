@@ -72,7 +72,15 @@
           "standardizedTokenLockUnlock": "0x0ecb3BEB1084B2926Ad9ff6BfB27EDA40f23a54B",
           "standardizedTokenMintBurn": "0x8631C831ee1f9FC0187B919Df0B11D1d65081059",
           "standardizedTokenDeployer": "0xFF3de2ee3DF0cb25518bE948990902d4A17DE996",
-          "linkerRouterImplementation": "0x43c3d08f03aa43A8f49e98c9Ab9EB733ce65B11F"
+          "linkerRouterImplementation": "0x43c3d08f03aa43A8f49e98c9Ab9EB733ce65B11F",
+          "linkerRouter": "0xf4d6Bbc48425c7D8F2f9a0473bb12144fd9Cb11E",
+          "tokenManagerImplementations": [
+            "0x9237cB58050ED56d347899b168d7DdfB7541d188",
+            "0x1B1dE578b064FFF7A8528Ecf28c4dcA9Dd054767",
+            "0xaDDD1630d5F66d74C8dA6a5a4609bBb2cE90aBA4"
+          ],
+          "implementation": "0x5a6257d128CcBe796Dc37C875829b2FF39E5425E",
+          "address": "0xA4c905B10E15899FDD8558cf768E120372C6560E"
         }
       },
       "explorer": {
