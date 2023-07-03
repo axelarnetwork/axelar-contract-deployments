@@ -29,15 +29,7 @@ const deployContract = async (wallet, contractJson, args = [], options = {}, ver
     return contract;
 };
 
-const deployCreate2 = async (
-    constAddressDeployerAddress,
-    wallet,
-    contractJson,
-    args = [],
-    salt = Date.now(),
-    gasLimit = null,
-    verifyOptions = null,
-) => {
+const deployCreate2 = async (constAddressDeployerAddress, wallet, contractJson, args = [], salt, gasLimit = null, verifyOptions = null) => {
     const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args, gasLimit);
 
     if (verifyOptions) {
@@ -47,15 +39,7 @@ const deployCreate2 = async (
     return contract;
 };
 
-const deployCreate3 = async (
-    create3DeployerAddress,
-    wallet,
-    contractJson,
-    args = [],
-    salt = Date.now(),
-    gasLimit = null,
-    verifyOptions = null,
-) => {
+const deployCreate3 = async (create3DeployerAddress, wallet, contractJson, args = [], salt, gasLimit = null, verifyOptions = null) => {
     const contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, salt, args, gasLimit);
 
     if (verifyOptions) {

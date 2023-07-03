@@ -47,7 +47,7 @@ async function deployCreate2Upgradable(
     implementationConstructorArgs = [],
     proxyConstructorArgs = [],
     setupParams = '0x',
-    salt = Date.now(),
+    salt,
     gasOptions = null,
     verifyOptions,
 ) {
@@ -78,7 +78,7 @@ async function deployCreate3Upgradable(
     implementationConstructorArgs = [],
     additionalProxyConstructorArgs = [],
     setupParams = '0x',
-    salt = Date.now().toString(),
+    salt,
     gasOptions = null,
     verifyOptions = null,
 ) {
