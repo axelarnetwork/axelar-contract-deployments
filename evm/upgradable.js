@@ -47,7 +47,7 @@ async function deployCreate2Upgradable(
     implementationConstructorArgs = [],
     proxyConstructorArgs = [],
     setupParams = '0x',
-    key = Date.now(),
+    salt = Date.now(),
     gasOptions = null,
     verifyOptions,
 ) {
@@ -57,7 +57,7 @@ async function deployCreate2Upgradable(
         constAddressDeployerAddress,
         wallet,
         proxyJson,
-        key,
+        salt,
         proxyConstructorArgs,
         [implementation.address, wallet.address, setupParams],
         gasOptions?.gasLimit,
@@ -78,14 +78,14 @@ async function deployCreate3Upgradable(
     implementationConstructorArgs = [],
     additionalProxyConstructorArgs = [],
     setupParams = '0x',
-    key = Date.now().toString(),
+    salt = Date.now().toString(),
     gasOptions = null,
     verifyOptions = null,
 ) {
     const implementation = await deployContract(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
 
     const proxyConstructorArgs = [implementation.address, wallet.address, setupParams, ...additionalProxyConstructorArgs];
-    const proxy = await deployCreate3Contract(create3DeployerAddress, wallet, proxyJson, key, proxyConstructorArgs, gasOptions?.gasLimit);
+    const proxy = await deployCreate3Contract(create3DeployerAddress, wallet, proxyJson, salt, proxyConstructorArgs, gasOptions?.gasLimit);
 
     if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, proxy.address, proxyConstructorArgs);

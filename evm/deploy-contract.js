@@ -71,11 +71,11 @@ async function getConstructorArgs(contractName, config) {
 }
 
 /*
- * Deploy a non-upgradable smart contract using the create3 deployment method.
+ * Deploy a smart contract using the create3 deployment method.
  */
 async function deploy(options, chain) {
-    const { artifactPath, contractName, privateKey, verifyEnv } = options;
-    const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
+    const { artifactPath, contractName, privateKey, verify, verifyEnv } = options;
+    const verifyOptions = verify && verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
 
     const wallet = new Wallet(privateKey);
 
@@ -107,11 +107,9 @@ async function deploy(options, chain) {
     const salt = options.salt || contractName;
     printInfo('Contract deployment salt', salt);
 
-    let create3Deployer;
+    const create3Deployer = contracts.Create3Deployer?.address;
 
-    if (contracts.Create3Deployer && isAddress(contracts.Create3Deployer.address)) {
-        create3Deployer = contracts.Create3Deployer.address;
-    } else {
+    if (!create3Deployer) {
         throw new Error(`Create3 deployer does not exist on ${chain.name}.`);
     }
 
@@ -159,7 +157,7 @@ async function main(options) {
 
 const program = new Command();
 
-program.name('deploy-non-upgradable').description('Deploy non-upgradable contracts');
+program.name('deploy-contract').description('Deploy contracts using create3');
 
 program.addOption(
     new Option('-e, --env <env>', 'environment')
@@ -174,6 +172,7 @@ program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').mak
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
 program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+program.addOption(new Option('-ve, --verifyEnv <verifyEnv>', 'environment for contract verification'));
 
 program.action((options) => {
     main(options);
