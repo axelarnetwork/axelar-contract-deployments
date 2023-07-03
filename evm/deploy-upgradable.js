@@ -95,7 +95,8 @@ function getUpgradeArgs(contractName, config) {
  * Deploy or upgrade an upgradable contract that's based on the init proxy pattern.
  */
 async function deploy(options, chain) {
-    const { env, artifactPath, contractName, privateKey, upgrade, verify } = options;
+    const { artifactPath, contractName, privateKey, upgrade, verifyEnv } = options;
+    const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
     const wallet = new Wallet(privateKey);
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
@@ -150,11 +151,9 @@ async function deploy(options, chain) {
             wallet.connect(provider),
             implementationJson,
             implArgs,
+            {},
             getUpgradeArgs(contractName, chain),
-            gasOptions,
-            env,
-            chain.name,
-            verify,
+            verifyOptions,
         );
 
         contractConfig.implementation = await contract.implementation();
@@ -185,9 +184,7 @@ async function deploy(options, chain) {
             setupArgs,
             salt,
             gasOptions,
-            env,
-            chain.name,
-            verify,
+            verifyOptions,
         );
 
         contractConfig.salt = salt;

@@ -2,7 +2,7 @@
 
 const {
     ContractFactory,
-    utils: { getContractAddress, keccak256 },
+    utils: { isAddress, getContractAddress, keccak256 },
 } = require('ethers');
 const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
@@ -11,15 +11,41 @@ const { writeFile } = require('fs');
 const { promisify } = require('util');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
+const { deployCreate3Contract, deployContractConstant } = require('@axelar-network/axelar-gmp-sdk-solidity');
 
 const execAsync = promisify(exec);
 const writeFileAsync = promisify(writeFile);
 
-const deployContract = async (wallet, contractJson, args = [], options = {}) => {
+const deployContract = async (wallet, contractJson, args = [], options = {}, verifyOptions = null) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
     const contract = await factory.deploy(...args, { ...options });
     await contract.deployed();
+
+    if (verifyOptions) {
+        await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
+    }
+
+    return contract;
+};
+
+const deployCreate2 = async (constAddressDeployerAddress, wallet, contractJson, args = [], salt, gasLimit = null, verifyOptions = null) => {
+    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args, gasLimit);
+
+    if (verifyOptions) {
+        await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
+    }
+
+    return contract;
+};
+
+const deployCreate3 = async (create3DeployerAddress, wallet, contractJson, args = [], salt, gasLimit = null, verifyOptions = null) => {
+    const contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, salt, args, gasLimit);
+
+    if (verifyOptions) {
+        await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
+    }
+
     return contract;
 };
 
@@ -187,6 +213,26 @@ const verifyContract = async (env, chain, contract, args) => {
         });
 };
 
+const isString = (arg) => {
+    return typeof arg === 'string';
+};
+
+const isNumber = (arg) => {
+    return Number.isInteger(arg);
+};
+
+const isAddressArray = (arg) => {
+    if (!Array.isArray(arg)) return false;
+
+    for (const ele of arg) {
+        if (!isAddress(ele)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 /**
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
  * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
@@ -226,6 +272,8 @@ const predictAddressCreate = async (from, nonce) => {
 
 module.exports = {
     deployContract,
+    deployCreate2,
+    deployCreate3,
     readJSON,
     writeJSON,
     httpGet,
@@ -235,4 +283,7 @@ module.exports = {
     getBytecodeHash,
     printInfo,
     predictAddressCreate,
+    isString,
+    isNumber,
+    isAddressArray,
 };
