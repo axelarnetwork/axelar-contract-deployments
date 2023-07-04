@@ -5,6 +5,7 @@ const { deployContract, deployCreate3, isAddressArray, writeJSON } = require('./
 const { ethers } = require('hardhat');
 const {
     Wallet,
+    Contract,
     utils: { defaultAbiCoder, isAddress },
 } = ethers;
 const chalk = require('chalk');
@@ -20,6 +21,7 @@ const TokenManagerMintBurn = require('../artifacts/interchain-token-service/cont
 const TokenManagerLiquidityPool = require('../artifacts/interchain-token-service/contracts/token-manager/implementations/TokenManagerLiquidityPool.sol/TokenManagerLiquidityPool.json');
 const InterchainTokenService = require('../artifacts/interchain-token-service/contracts/interchain-token-service/InterchainTokenService.sol/InterchainTokenService.json');
 const InterchainTokenServiceProxy = require('../artifacts/interchain-token-service/contracts/proxies/InterchainTokenServiceProxy.sol/InterchainTokenServiceProxy.json');
+const IInterchainTokenService = require('../artifacts/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
 const { getDefaultProvider } = require('ethers');
 const { Command, Option } = require('commander');
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
@@ -180,6 +182,8 @@ async function deployITS(
 
         if (saveFunc) await saveFunc();
     }
+    
+    return new Contract(deployments.address, IInterchainTokenService.abi, wallet);
 }
 
 async function main(options) {
