@@ -2,12 +2,12 @@ require('dotenv').config();
 
 const { getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const { deployContract, deployCreate3, isAddressArray, writeJSON } = require('./utils');
-const { ethers } = require('hardhat');
 const {
     Wallet,
     Contract,
-    utils: { defaultAbiCoder, isAddress },
-} = ethers;
+    getDefaultProvider,
+    utils: { defaultAbiCoder, isAddress, keccak256 },
+} = require('ethers');
 const chalk = require('chalk');
 
 const TokenManagerDeployer = require('../artifacts/interchain-token-service/contracts/utils/TokenManagerDeployer.sol/TokenManagerDeployer.json');
@@ -22,10 +22,8 @@ const TokenManagerLiquidityPool = require('../artifacts/interchain-token-service
 const InterchainTokenService = require('../artifacts/interchain-token-service/contracts/interchain-token-service/InterchainTokenService.sol/InterchainTokenService.json');
 const InterchainTokenServiceProxy = require('../artifacts/interchain-token-service/contracts/proxies/InterchainTokenServiceProxy.sol/InterchainTokenServiceProxy.json');
 const IInterchainTokenService = require('../artifacts/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
-const { getDefaultProvider } = require('ethers');
 const { Command, Option } = require('commander');
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
-const { keccak256 } = require('ethers/lib/utils');
 const { deployCreate3Deployer } = require('./deploy-create3-deployer');
 
 /**
@@ -182,7 +180,7 @@ async function deployITS(
 
         if (saveFunc) await saveFunc();
     }
-    
+
     return new Contract(deployments.address, IInterchainTokenService.abi, wallet);
 }
 
@@ -202,13 +200,14 @@ async function main(options) {
 
         let wallet;
         const verifyOptions = options.verify ? { env: options.env, chain: chain.name } : null;
-
+        console.log(options);
         if (options.env === 'local') {
-            const [funder] = await ethers.getSigners();
+            const [funder] = await require('hardhat').ethers.getSigners();
             wallet = new Wallet(options.privateKey, funder.provider);
             await (await funder.sendTransaction({ to: wallet.address, value: BigInt(1e21) })).wait();
             await deployConstAddressDeployer(wallet, chain, keccak256('0x1234'), verifyOptions);
             await deployCreate3Deployer(wallet, chain, keccak256('0x0123'), verifyOptions);
+            
         } else {
             const provider = getDefaultProvider(chain.rpc);
             wallet = new Wallet(options.privateKey, provider);
