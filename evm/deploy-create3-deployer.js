@@ -10,7 +10,7 @@ const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
 const { printInfo, writeJSON, deployCreate2 } = require('./utils');
-const implementationJson = require('../artifacts/axelar-gmp-sdk-solidity/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
+const implementationJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/Create3Deployer.json');
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
 const { keccak256 } = require('ethers/lib/utils');
 const contractName = 'Create3Deployer';
