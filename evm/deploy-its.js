@@ -14,8 +14,8 @@ const TokenManagerDeployer = require('../artifacts/interchain-token-service/cont
 const StandardizedTokenLockUnlock = require('../artifacts/interchain-token-service/contracts/token-implementations/StandardizedTokenLockUnlock.sol/StandardizedTokenLockUnlock.json');
 const StandardizedTokenMintBurn = require('../artifacts/interchain-token-service/contracts/token-implementations/StandardizedTokenMintBurn.sol/StandardizedTokenMintBurn.json');
 const StandardizedTokenDeployer = require('../artifacts/interchain-token-service/contracts/utils/StandardizedTokenDeployer.sol/StandardizedTokenDeployer.json');
-const LinkerRouter = require('../artifacts/interchain-token-service/contracts/linker-router/LinkerRouter.sol/LinkerRouter.json');
-const LinkerRouterProxy = require('../artifacts/interchain-token-service/contracts/proxies/LinkerRouterProxy.sol/LinkerRouterProxy.json');
+const RemoteAddressValidator = require('../artifacts/interchain-token-service/contracts/linker-router/RemoteAddressValidator.sol/RemoteAddressValidator.json');
+const RemoteAddressValidatorProxy = require('../artifacts/interchain-token-service/contracts/proxies/LinkerRouterProxy.sol/RemoteAddressValidatorProxy.json');
 const TokenManagerLockUnlock = require('../artifacts/interchain-token-service/contracts/token-manager/implementations/TokenManagerLockUnlock.sol/TokenManagerLockUnlock.json');
 const TokenManagerMintBurn = require('../artifacts/interchain-token-service/contracts/token-manager/implementations/TokenManagerMintBurn.sol/TokenManagerMintBurn.json');
 const TokenManagerLiquidityPool = require('../artifacts/interchain-token-service/contracts/token-manager/implementations/TokenManagerLiquidityPool.sol/TokenManagerLiquidityPool.json');
@@ -93,20 +93,20 @@ async function deployITS(
                 );
             },
         },
-        linkerRouterImplementation: {
+        remoteAddressValidatorImplementation: {
             name: 'Linker Router Implementations',
             async deploy() {
-                return await deployContract(wallet, LinkerRouter, [interchainTokenServiceAddress], {}, verifyOptions);
+                return await deployContract(wallet, RemoteAddressValidator, [interchainTokenServiceAddress], {}, verifyOptions);
             },
         },
-        linkerRouter: {
+        remoteAddressValidator: {
             name: 'Linker Router Proxy',
             async deploy() {
                 const params = defaultAbiCoder.encode(['string[]', 'string[]'], [[], []]);
                 return await deployContract(
                     wallet,
-                    LinkerRouterProxy,
-                    [contractConfig.linkerRouterImplementation, wallet.address, params],
+                    RemoteAddressValidatorProxy,
+                    [contractConfig.remoteAddressValidatorImplementation, wallet.address, params],
                     {},
                     verifyOptions,
                 );
@@ -136,7 +136,7 @@ async function deployITS(
                         contractConfig.standardizedTokenDeployer,
                         contracts.AxelarGateway.address,
                         contracts.AxelarGasService.address,
-                        contractConfig.linkerRouter,
+                        contractConfig.remoteAddressValidator,
                         contractConfig.tokenManagerImplementations,
                         chain.name,
                     ],
