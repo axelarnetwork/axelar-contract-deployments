@@ -5,13 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint '**/*.js'",
-    "prettier": "prettier --write '**/*.js' 'info/*.json' 'package.json' 'evm/**/*.json'",
-    "install-gmp-sdk": "cd node_modules/@axelar-network/axelar-gmp-sdk-solidity && npm i",
-    "install-its": "cd node_modules/@axelar-network/interchain-token-service && npm i",
-    "install-all": "npm run install-its && npm run install-gmp-sdk",
-    "compile-gmp-sdk": "rm -rf artifacts/axelar-gmp-sdk-solidity/contracts && cd node_modules/@axelar-network/axelar-gmp-sdk-solidity && npm run build && cp -r ./artifacts/contracts ../../../artifacts/axelar-gmp-sdk-solidity",
-    "compile-its": "rm -rf artifacts/interchain-token-service/contracts && cd node_modules/@axelar-network/interchain-token-service && npm run build && cp -r ./artifacts/contracts ../../../artifacts/interchain-token-service",
-    "compile": "npm run compile-its && npm run compile-gmp-sdk"
+    "prettier": "prettier --write '**/*.js' 'info/*.json' 'package.json' 'evm/**/*.json'"
   },
   "repository": {
     "type": "git",
@@ -32,7 +26,7 @@
   },
   "devDependencies": {
     "@axelar-network/axelar-gmp-sdk-solidity": "^3.3.0",
-    "@axelar-network/interchain-token-service": "github:axelarnetwork/interchain-token-service",
+    "@axelar-network/interchain-token-service": "^0.1.0",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "chai": "^4.3.7",
     "chalk": "^4.1.2",
