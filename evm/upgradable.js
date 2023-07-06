@@ -10,7 +10,7 @@ const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/dist/IUpgra
 
 const { verifyContract, deployContract } = require('./utils');
 
-async function deployCreateUpgradable(
+async function deployUpgradable(
     wallet,
     implementationJson,
     proxyJson,
@@ -47,7 +47,7 @@ async function deployCreate2Upgradable(
     implementationConstructorArgs = [],
     proxyConstructorArgs = [],
     setupParams = '0x',
-    key = Date.now(),
+    salt,
     gasOptions = null,
     verifyOptions,
 ) {
@@ -57,7 +57,7 @@ async function deployCreate2Upgradable(
         constAddressDeployerAddress,
         wallet,
         proxyJson,
-        key,
+        salt,
         proxyConstructorArgs,
         [implementation.address, wallet.address, setupParams],
         gasOptions?.gasLimit,
@@ -78,7 +78,7 @@ async function deployCreate3Upgradable(
     implementationConstructorArgs = [],
     additionalProxyConstructorArgs = [],
     setupParams = '0x',
-    key = Date.now().toString(),
+    salt,
     gasOptions = null,
     verifyOptions = null,
 ) {
@@ -122,7 +122,7 @@ async function upgradeUpgradable(
 }
 
 module.exports = {
-    deployCreateUpgradable,
+    deployUpgradable,
     deployCreate2Upgradable,
     deployCreate3Upgradable,
     upgradeUpgradable,
