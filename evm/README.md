@@ -8,7 +8,13 @@ This folder contains deployment scripts for the following contracts.
 
 ### AxelarGateway
 
-TODO
+1. Compile the contracts from the source repo
+2. Copy the `artifacts` folder at the root level of this repo
+3. Add the deployer private key in `.env` folder (see `.example.env` for reference)
+4. Add additional params in `.env` such as admin addresses, governance etc.
+5. If you'd like to auto-verify the contract on the explorer, then add the explorer API key under `info/keys.json` (see `.example.keys.json`), and add `--verify` flag
+6. Run the following depending on the service,
+`node evm/deploy-gateway-v5.x.js --env testnet -n fantom`
 
 ### AxelarGasService and AxelarDepositService
 

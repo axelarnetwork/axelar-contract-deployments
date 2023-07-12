@@ -4,7 +4,7 @@ const {
     ContractFactory,
     utils: { isAddress, getContractAddress, keccak256 },
 } = require('ethers');
-const http = require('http');
+const https = require('https');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
@@ -57,6 +57,10 @@ const printInfo = (msg, info) => {
     console.log(`${msg}: ${chalk.green(info)}`);
 };
 
+function printLog(log) {
+    console.log(JSON.stringify({ log }, null, 2));
+}
+
 const readJSON = (filePath, require = false) => {
     let data;
 
@@ -82,7 +86,7 @@ const writeJSON = (data, name) => {
 
 const httpGet = (url) => {
     return new Promise((resolve, reject) => {
-        http.get(url, (res) => {
+        https.get(url, (res) => {
             const { statusCode } = res;
             const contentType = res.headers['content-type'];
             let error;
@@ -270,6 +274,22 @@ const predictAddressCreate = async (from, nonce) => {
     return address;
 };
 
+const getProxy = async (config, chain) => {
+    const address = (await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/gateway_address/${chain}`)).address;
+    return address;
+}
+
+const getEVMAddresses = async (config, chain) => {
+    const evmAddresses = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}`);
+    const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
+
+    const addresses = sortedAddresses.map((weightedAddress) => weightedAddress.address);
+    const weights = sortedAddresses.map((weightedAddress) => Number(weightedAddress.weight));
+    const threshold = Number(evmAddresses.threshold);
+
+    return { addresses, weights, threshold };
+}
+
 module.exports = {
     deployContract,
     deployCreate2,
@@ -280,10 +300,13 @@ module.exports = {
     importNetworks,
     verifyContract,
     printObj,
-    getBytecodeHash,
+    printLog,
     printInfo,
+    getBytecodeHash,
     predictAddressCreate,
     isString,
     isNumber,
     isAddressArray,
+    getProxy,
+    getEVMAddresses,
 };
