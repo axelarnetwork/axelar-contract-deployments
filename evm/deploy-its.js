@@ -55,6 +55,10 @@ async function deployITS(
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName] || {};
+
+    contractConfig.salt = deploymentKey;
+    contractConfig.deployer = wallet.address;
+
     contracts[contractName] = contractConfig;
     const interchainTokenServiceAddress = await getCreate3Address(contracts.Create3Deployer.address, wallet, deploymentKey);
 
