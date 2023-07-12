@@ -9,7 +9,7 @@ const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
 const { printInfo, writeJSON, deployCreate2 } = require('./utils');
-const implementationJson = require('../artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
+const implementationJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/Create3Deployer.json');
 const contractName = 'Create3Deployer';
 
 async function deploy(options, chain) {
