@@ -12,7 +12,7 @@ const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/Const
 const contractName = 'ConstAddressDeployer';
 
 async function deploy(options, chain) {
-    const { env, privateKey, ignore, verify } = options;
+    const { privateKey, ignore, verify } = options;
     const wallet = new Wallet(privateKey);
 
     printInfo('Deployer address', wallet.address);

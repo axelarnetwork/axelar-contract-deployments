@@ -1,7 +1,7 @@
 'use strict';
 
 const { printObj, readJSON, writeJSON, importNetworks, verifyContract, getBytecodeHash } = require('./utils');
-const { deployGatewayv4_3 } = require('./deploy-gateway-v4.3.x');
+const { deployGatewayv43 } = require('./deploy-gateway-v4.3.x');
 const { deployGatewayv5 } = require('./deploy-gateway-v5.x');
 
 module.exports = {
@@ -11,6 +11,6 @@ module.exports = {
     importNetworks,
     verifyContract,
     getBytecodeHash,
-    deployGatewayv4_3,
+    deployGatewayv43,
     deployGatewayv5,
 };
