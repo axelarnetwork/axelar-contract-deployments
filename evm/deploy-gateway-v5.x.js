@@ -39,8 +39,8 @@ async function deploy(config, options) {
 
     const contractName = 'AxelarGateway';
 
-    const chain = config.chains[chainName];
-    const rpc = chain.rpc;
+    const chain = config.chains[chainName] || { contracts: {}, id: chainName, tokenSymbol: 'ETH' };
+    const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
     const wallet = new Wallet(privateKey).connect(provider);
@@ -249,7 +249,8 @@ async function programHandler() {
             .makeOptionMandatory(true)
             .env('ENV'),
     );
-    program.addOption(new Option('-n, --chainName <chainName>', 'chain name').makeOptionMandatory(true));
+    program.addOption(new Option('-n, --chainName <chainName>', 'chain name').makeOptionMandatory(true).env('CHAIN'));
+    program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
     program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment').env('REUSE_PROXY'));
