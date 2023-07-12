@@ -5,6 +5,7 @@ const {
     utils: { isAddress, getContractAddress, keccak256 },
 } = require('ethers');
 const https = require('https');
+const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
@@ -86,7 +87,7 @@ const writeJSON = (data, name) => {
 
 const httpGet = (url) => {
     return new Promise((resolve, reject) => {
-        https.get(url, (res) => {
+        (url.startsWith('https://') ? https : http).get(url, (res) => {
             const { statusCode } = res;
             const contentType = res.headers['content-type'];
             let error;
@@ -277,7 +278,7 @@ const predictAddressCreate = async (from, nonce) => {
 const getProxy = async (config, chain) => {
     const address = (await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/gateway_address/${chain}`)).address;
     return address;
-}
+};
 
 const getEVMAddresses = async (config, chain) => {
     const evmAddresses = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}`);
@@ -288,7 +289,7 @@ const getEVMAddresses = async (config, chain) => {
     const threshold = Number(evmAddresses.threshold);
 
     return { addresses, weights, threshold };
-}
+};
 
 module.exports = {
     deployContract,

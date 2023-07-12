@@ -7,13 +7,12 @@ const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
-const { deployCreate } = require('./upgradable');
-const { printInfo, writeJSON, predictAddressCreate } = require('./utils');
-const contractJson = require('../artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json');
+const { printInfo, writeJSON, predictAddressCreate, deployContract } = require('./utils');
+const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
 const contractName = 'ConstAddressDeployer';
 
 async function deploy(options, chain) {
-    const { env, privateKey, ignore, verify } = options;
+    const { privateKey, ignore, verify } = options;
     const wallet = new Wallet(privateKey);
 
     printInfo('Deployer address', wallet.address);
@@ -50,7 +49,7 @@ async function deploy(options, chain) {
     const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
     if (anwser !== 'y') return;
 
-    const contract = await deployCreate(wallet.connect(provider), contractJson, [], gasOptions, env, chain.name, verify);
+    const contract = await deployContract(wallet.connect(provider), contractJson, [], gasOptions, verify);
 
     contractConfig.address = contract.address;
     contractConfig.deployer = wallet.address;

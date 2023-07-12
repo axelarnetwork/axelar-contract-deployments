@@ -2,16 +2,7 @@
 
 require('dotenv').config();
 
-const {
-    printObj,
-    writeJSON,
-    getBytecodeHash,
-    verifyContract,
-    printInfo,
-    printLog,
-    getProxy,
-    getEVMAddresses,
-} = require('./utils');
+const { printObj, writeJSON, getBytecodeHash, verifyContract, printInfo, printLog, getProxy, getEVMAddresses } = require('./utils');
 const { ethers } = require('hardhat');
 const {
     getContractFactory,
@@ -35,7 +26,7 @@ function getProxyParams(governance, mintLimiter) {
 }
 
 async function deploy(config, options) {
-    const { chainName, privateKey, reuseProxy, verify } = options;
+    const { env, chainName, privateKey, reuseProxy, verify } = options;
 
     const contractName = 'AxelarGateway';
 
@@ -87,7 +78,7 @@ async function deploy(config, options) {
 
     if (reuseProxy) {
         printLog(`reusing gateway proxy contract`);
-        const gatewayProxy = chain.contracts.AxelarGateway?.address || await getProxy(config, chain.id);
+        const gatewayProxy = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.id));
         printLog(`proxy address ${gatewayProxy}`);
         gateway = gatewayFactory.attach(gatewayProxy);
     }
@@ -134,7 +125,7 @@ async function deploy(config, options) {
 
     contractsToVerify.push({
         address: gatewayImplementation.address,
-        params: [auth.address, tokenDeployer.address]
+        params: [auth.address, tokenDeployer.address],
     });
 
     if (!reuseProxy) {
@@ -147,7 +138,7 @@ async function deploy(config, options) {
 
         contractsToVerify.push({
             address: gatewayProxy.address,
-            params: [gatewayImplementation.address, params]
+            params: [gatewayImplementation.address, params],
         });
     }
 
@@ -160,6 +151,7 @@ async function deploy(config, options) {
     var error = false;
     const governanceModule = await gateway.governance();
     printLog(`Existing governance ${governanceModule}`);
+
     if (!reuseProxy && governanceModule !== governance) {
         printLog(`ERROR: Retrieved governance address is different:`);
         printLog(`   Actual:   ${governanceModule}`);
@@ -169,6 +161,7 @@ async function deploy(config, options) {
 
     const mintLimiterModule = await gateway.mintLimiter();
     printLog(`Existing mintLimiter ${mintLimiterModule}`);
+
     if (!reuseProxy && mintLimiterModule !== mintLimiter) {
         printLog(`ERROR: Retrieved mintLimiter address is different:`);
         printLog(`   Actual:   ${mintLimiterModule}`);
@@ -177,12 +170,14 @@ async function deploy(config, options) {
     }
 
     const authModule = await gateway.authModule();
+
     if (authModule !== auth.address) {
         printLog(`ERROR: Auth module retrieved from gateway ${authModule} doesn't match deployed contract ${auth.address}`);
         error = true;
     }
 
     const tokenDeployerAddress = await gateway.tokenDeployer();
+
     if (tokenDeployerAddress !== tokenDeployer.address) {
         printLog(
             `ERROR: Token deployer retrieved from gateway ${tokenDeployerAddress} doesn't match deployed contract ${tokenDeployer.address}`,
@@ -191,12 +186,14 @@ async function deploy(config, options) {
     }
 
     const authOwner = await auth.owner();
+
     if (authOwner !== gateway.address) {
         printLog(`ERROR: Auth module owner is set to ${authOwner} instead of proxy address ${gateway.address}`);
         error = true;
     }
 
     const implementation = await gateway.implementation();
+
     if (implementation !== gatewayImplementation.address) {
         printLog(
             `ERROR: Implementation contract retrieved from gateway ${implementation} doesn't match deployed contract ${gatewayImplementation.address}`,
@@ -222,7 +219,7 @@ async function deploy(config, options) {
     if (verify) {
         // Verify contracts at the end to avoid deployment failures in the middle
         for (const contract of contractsToVerify) {
-            await verifyContract(network, chain, contract.address, contract.params);
+            await verifyContract(env, chain, contract.address, contract.params);
         }
 
         printLog('Verified all contracts!');
@@ -262,7 +259,7 @@ async function programHandler() {
     });
 
     program.parse();
-};
+}
 
 if (require.main === module) {
     programHandler();
@@ -270,4 +267,4 @@ if (require.main === module) {
 
 module.exports = {
     deployGatewayv5: deploy,
-}
+};

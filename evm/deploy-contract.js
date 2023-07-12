@@ -33,7 +33,7 @@ async function getConstructorArgs(contractName, config) {
 
             const governanceAddress = contractConfig.governanceAddress;
 
-            if (!isAddress(governanceAddress)) {
+            if (!isString(governanceAddress)) {
                 throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
             }
 
