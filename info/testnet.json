@@ -98,7 +98,10 @@
       "tokenSymbol": "FTM",
       "contracts": {
         "AxelarGateway": {
-          "address": "0x97837985Ec0494E7b9C71f5D3f9250188477ae14"
+          "address": "0x97837985Ec0494E7b9C71f5D3f9250188477ae14",
+          "gasOptions": {
+            "gasLimit": 5e6
+          }
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -603,5 +606,12 @@
         "gasLimit": 5000000
       }
     }
+  },
+  "axelar": {
+    "id": "Axelarnet",
+    "rpc": "https://rpc-axelar-testnet.imperator.co:443",
+    "lcd": "https://lcd-axelar-testnet.imperator.co:443",
+    "grpc": "grpc-axelar-testnet.imperator.co:2062",
+    "tokenSymbol": "AXL"
   }
 }
