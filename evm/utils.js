@@ -278,7 +278,7 @@ const predictAddressCreate = async (from, nonce) => {
 const getProxy = async (config, chain) => {
     const address = (await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/gateway_address/${chain}`)).address;
     return address;
-}
+};
 
 const getEVMAddresses = async (config, chain) => {
     const evmAddresses = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}`);
@@ -289,7 +289,7 @@ const getEVMAddresses = async (config, chain) => {
     const threshold = Number(evmAddresses.threshold);
 
     return { addresses, weights, threshold };
-}
+};
 
 module.exports = {
     deployContract,
