@@ -143,7 +143,7 @@ async function deploy(config, options) {
     const admins = `${await gateway.admins(epoch)}`.split(',');
     printLog(`Existing admins ${admins}`);
     const encodedAdmins = JSON.parse(adminAddresses);
-    
+
     if (!reuseProxy && `${admins}` !== `${encodedAdmins}`) {
         printLog(`ERROR: Retrieved admins are different:`);
         printLog(`   Actual:   ${admins}`);
