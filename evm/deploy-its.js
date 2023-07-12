@@ -204,14 +204,13 @@ async function main(options) {
 
         let wallet;
         const verifyOptions = options.verify ? { env: options.env, chain: chain.name } : null;
-        console.log(options);
+
         if (options.env === 'local') {
             const [funder] = await require('hardhat').ethers.getSigners();
             wallet = new Wallet(options.privateKey, funder.provider);
             await (await funder.sendTransaction({ to: wallet.address, value: BigInt(1e21) })).wait();
             await deployConstAddressDeployer(wallet, chain, keccak256('0x1234'), verifyOptions);
             await deployCreate3Deployer(wallet, chain, keccak256('0x0123'), verifyOptions);
-            
         } else {
             const provider = getDefaultProvider(chain.rpc);
             wallet = new Wallet(options.privateKey, provider);
