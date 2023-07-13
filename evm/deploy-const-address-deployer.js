@@ -12,7 +12,7 @@ const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/Const
 const contractName = 'ConstAddressDeployer';
 
 async function deploy(options, chain) {
-    const { privateKey, ignore, verify } = options;
+    const { privateKey, ignore, verify, yes } = options;
     const wallet = new Wallet(privateKey);
 
     printInfo('Deployer address', wallet.address);
@@ -45,9 +45,11 @@ async function deploy(options, chain) {
     const constAddressDeployerAddress = await predictAddressCreate(wallet.address, nonce);
     printInfo('ConstAddressDeployer will be deployed to', constAddressDeployerAddress);
 
-    console.log('Does this match any existing deployments?');
-    const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-    if (anwser !== 'y') return;
+    if (!yes) {
+        console.log('Does this match any existing deployments?');
+        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+    }
 
     const contract = await deployContract(wallet.connect(provider), contractJson, [], gasOptions, verify);
 
@@ -89,6 +91,7 @@ program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').mak
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-i, --ignore', 'ignore the nonce value check'));
 program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
 program.action((options) => {
     main(options);

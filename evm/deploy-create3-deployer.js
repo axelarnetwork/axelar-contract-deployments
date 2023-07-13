@@ -13,7 +13,7 @@ const implementationJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist
 const contractName = 'Create3Deployer';
 
 async function deploy(options, chain) {
-    const { privateKey, verifyEnv } = options;
+    const { privateKey, verifyEnv, yes } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
     const wallet = new Wallet(privateKey);
 
@@ -45,9 +45,11 @@ async function deploy(options, chain) {
     const create3DeployerAddress = await predictContractConstant(constAddressDeployer, wallet.connect(provider), implementationJson, salt);
     printInfo('Create3 deployer will be deployed to', create3DeployerAddress);
 
-    console.log('Does this match any existing deployments?');
-    const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-    if (anwser !== 'y') return;
+    if (!yes) {
+        console.log('Does this match any existing deployments?');
+        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+    }
 
     const contract = await deployCreate2(
         constAddressDeployer,
@@ -99,6 +101,7 @@ program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').mak
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
 program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
 program.action((options) => {
     main(options);
