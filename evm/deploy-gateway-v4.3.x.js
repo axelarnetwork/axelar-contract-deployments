@@ -27,7 +27,7 @@ function getProxyParams(adminAddresses, adminThreshold) {
 }
 
 async function deploy(config, options) {
-    const { chainName, privateKey, reuseProxy, adminAddresses, adminThreshold, verify } = options;
+    const { env, chainName, privateKey, reuseProxy, adminAddresses, adminThreshold, verify } = options;
 
     const contractName = 'AxelarGateway';
 
