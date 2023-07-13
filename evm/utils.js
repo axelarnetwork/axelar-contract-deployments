@@ -2,7 +2,7 @@
 
 const {
     ContractFactory,
-    utils: { isAddress, getContractAddress, keccak256 },
+    utils: { getContractAddress, keccak256, isAddress },
 } = require('ethers');
 const https = require('https');
 const http = require('http');
@@ -30,8 +30,16 @@ const deployContract = async (wallet, contractJson, args = [], options = {}, ver
     return contract;
 };
 
-const deployCreate2 = async (constAddressDeployerAddress, wallet, contractJson, args = [], salt, gasLimit = null, verifyOptions = null) => {
-    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args, gasLimit);
+const deployCreate2 = async (
+    constAddressDeployerAddress,
+    wallet,
+    contractJson,
+    args = [],
+    key = Date.now(),
+    gasLimit = null,
+    verifyOptions = null,
+) => {
+    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasLimit);
 
     if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
@@ -40,8 +48,16 @@ const deployCreate2 = async (constAddressDeployerAddress, wallet, contractJson, 
     return contract;
 };
 
-const deployCreate3 = async (create3DeployerAddress, wallet, contractJson, args = [], salt, gasLimit = null, verifyOptions = null) => {
-    const contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, salt, args, gasLimit);
+const deployCreate3 = async (
+    create3DeployerAddress,
+    wallet,
+    contractJson,
+    args = [],
+    key = Date.now(),
+    gasLimit = null,
+    verifyOptions = null,
+) => {
+    const contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, key, args, gasLimit);
 
     if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);

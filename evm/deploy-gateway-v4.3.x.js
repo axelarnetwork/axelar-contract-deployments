@@ -199,7 +199,7 @@ async function deploy(config, options) {
     if (verify) {
         // Verify contracts at the end to avoid deployment failures in the middle
         for (const contract of contractsToVerify) {
-            await verifyContract(env, chain, contract.address, contract.params);
+            await verifyContract(options.env, chain, contract.address, contract.params);
         }
 
         printLog('Verified all contracts!');
@@ -246,5 +246,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-    deployGatewayv43: deploy,
+    deployGatewayv4_3: deploy,
 };
