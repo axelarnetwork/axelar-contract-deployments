@@ -95,7 +95,7 @@ function getUpgradeArgs(contractName, config) {
  * Deploy or upgrade an upgradable contract that's based on the init proxy pattern.
  */
 async function deploy(options, chain) {
-    const { artifactPath, contractName, privateKey, upgrade, verifyEnv } = options;
+    const { artifactPath, contractName, privateKey, upgrade, verifyEnv, yes } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
     const wallet = new Wallet(privateKey);
 
@@ -143,8 +143,10 @@ async function deploy(options, chain) {
             );
         }
 
-        const anwser = readlineSync.question(`Perform an upgrade for ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+        if (!yes) {
+            const anwser = readlineSync.question(`Perform an upgrade for ${chain.name}? ${chalk.green('(y/n)')} `);
+            if (anwser !== 'y') return;
+        }
 
         await upgradeUpgradable(
             contractConfig.address,
@@ -170,9 +172,11 @@ async function deploy(options, chain) {
         const proxyAddress = await predictContractConstant(constAddressDeployer, wallet.connect(provider), proxyJson, salt);
         printInfo('Proxy will be deployed to', proxyAddress);
 
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+        if (!yes) {
+            console.log('Does this match any existing deployments?');
+            const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
+            if (anwser !== 'y') return;
+        }
 
         const contract = await deployCreate2Upgradable(
             constAddressDeployer,
@@ -233,6 +237,7 @@ program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').mak
 program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
 program.addOption(new Option('-u, --upgrade', 'upgrade a deployed contract'));
 program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
 program.action((options) => {
     main(options);

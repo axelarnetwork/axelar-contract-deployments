@@ -33,7 +33,7 @@ async function getConstructorArgs(contractName, config) {
 
             const governanceAddress = contractConfig.governanceAddress;
 
-            if (!isAddress(governanceAddress)) {
+            if (!isString(governanceAddress)) {
                 throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
             }
 
@@ -74,7 +74,7 @@ async function getConstructorArgs(contractName, config) {
  * Deploy a smart contract using the create3 deployment method.
  */
 async function deploy(options, chain) {
-    const { env, artifactPath, contractName, privateKey, verify } = options;
+    const { env, artifactPath, contractName, privateKey, verify, yes } = options;
     const verifyOptions = verify ? { env, chain: chain.name } : null;
 
     const wallet = new Wallet(privateKey);
@@ -116,9 +116,11 @@ async function deploy(options, chain) {
     const contractAddress = await getCreate3Address(create3Deployer, wallet.connect(provider), salt);
     printInfo(`${contractName} will be deployed to`, contractAddress);
 
-    console.log('Does this match any existing deployments?');
-    const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-    if (anwser !== 'y') return;
+    if (!yes) {
+        console.log('Does this match any existing deployments?');
+        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+    }
 
     const contract = await deployCreate3(
         create3Deployer,
@@ -172,6 +174,7 @@ program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').mak
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
 program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
 program.action((options) => {
     main(options);
