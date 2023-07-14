@@ -12,13 +12,27 @@ const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/Const
 const contractName = 'ConstAddressDeployer';
 
 async function deploy(options, chain) {
-    const { privateKey, ignore, verify, yes } = options;
+    const { privateKey, ignore, verify, yes, force } = options;
     const wallet = new Wallet(privateKey);
 
     printInfo('Deployer address', wallet.address);
 
+    const contracts = chain.contracts;
+
+    if (!contracts[contractName]) {
+        contracts[contractName] = {};
+    }
+
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
+    const expectedAddress = contracts[contractName].address
+        ? contracts[contractName].address
+        : await predictAddressCreate(wallet.address, 0);
+
+    if (!force && (await provider.getCode(expectedAddress)) !== '0x') {
+        console.log(`ConstAddressDeployer already deployed at address ${expectedAddress}`);
+        return;
+    }
 
     const nonce = await provider.getTransactionCount(wallet.address);
 
@@ -26,17 +40,13 @@ async function deploy(options, chain) {
         throw new Error(`Nonce value must be zero.`);
     }
 
-    console.log(
-        `Deployer has ${(await provider.getBalance(wallet.address)) / 1e18} ${chalk.green(chain.tokenSymbol)} and nonce ${nonce} on ${
-            chain.name
-        }.`,
-    );
+    const balance = await provider.getBalance(wallet.address);
 
-    const contracts = chain.contracts;
-
-    if (!contracts[contractName]) {
-        contracts[contractName] = {};
+    if (balance.lte(0)) {
+        throw new Error(`Deployer account has no funds.`);
     }
+
+    console.log(`Deployer has ${balance / 1e18} ${chalk.green(chain.tokenSymbol)} and nonce ${nonce} on ${chain.name}.`);
 
     const contractConfig = contracts[contractName];
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
@@ -90,6 +100,7 @@ program.addOption(
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-i, --ignore', 'ignore the nonce value check'));
+program.addOption(new Option('-f, --force', 'proceed with contract deployment even if address already returns a bytecode'));
 program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
 program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
