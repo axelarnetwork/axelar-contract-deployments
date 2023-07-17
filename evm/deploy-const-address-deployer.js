@@ -23,9 +23,11 @@ async function deploy(options, chain) {
         contracts[contractName] = {};
     }
 
+    const contractConfig = contracts[contractName];
+
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
-    const expectedAddress = contracts[contractName].address
+    const expectedAddress = contractConfig.address
         ? contracts[contractName].address
         : await predictAddressCreate(wallet.address, 0);
 
@@ -50,7 +52,6 @@ async function deploy(options, chain) {
 
     console.log(`Deployer has ${balance / 1e18} ${chalk.green(chain.tokenSymbol)} and nonce ${nonce} on ${chain.name}.`);
 
-    const contractConfig = contracts[contractName];
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
