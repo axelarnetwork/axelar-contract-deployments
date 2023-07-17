@@ -12,25 +12,40 @@ const { printInfo, writeJSON, predictAddressCreate, deployContract } = require('
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
 const contractName = 'ConstAddressDeployer';
 
-async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptions) {
-    const deployerWallet = new Wallet(privateKey, wallet.provider);
+async function deploy(options, chain) {
+    const { privateKey, ignore, verify, yes, force } = options;
+    const wallet = new Wallet(privateKey);
 
     printInfo('Deployer address', wallet.address);
-
-    const nonce = await wallet.provider.getTransactionCount(wallet.address);
-
-    if (nonce !== 0) {
-        throw new Error(`Nonce value must be zero.`);
-    }
-
-    const balance = await wallet.provider.getBalance(deployerWallet.address);
-    console.log(`Deployer has ${balance / 1e18} ${chalk.green(chain.tokenSymbol)} and nonce ${nonce} on ${chain.name}.`);
 
     const contracts = chain.contracts;
 
     if (!contracts[contractName]) {
         contracts[contractName] = {};
     }
+
+    const rpc = chain.rpc;
+    const provider = getDefaultProvider(rpc);
+    const expectedAddress = contracts[contractName].address
+        ? contracts[contractName].address
+        : await predictAddressCreate(wallet.address, 0);
+
+    if (!force && (await provider.getCode(expectedAddress)) !== '0x') {
+        console.log(`ConstAddressDeployer already deployed at address ${expectedAddress}`);
+        return;
+    }
+
+    if (nonce !== 0) {
+        throw new Error(`Nonce value must be zero.`);
+    }
+  
+    const balance = await provider.getBalance(wallet.address);
+
+    if (balance.lte(0)) {
+        throw new Error(`Deployer account has no funds.`);
+    }
+
+    console.log(`Deployer has ${balance / 1e18} ${chalk.green(chain.tokenSymbol)} and nonce ${nonce} on ${chain.name}.`);
 
     const contractConfig = contracts[contractName];
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
