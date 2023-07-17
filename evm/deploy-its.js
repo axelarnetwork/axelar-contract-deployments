@@ -62,23 +62,25 @@ async function deployITS(
     contracts[contractName] = contractConfig;
     const interchainTokenServiceAddress = await getCreate3Address(contracts.Create3Deployer.address, wallet, deploymentKey);
 
+    const gasOptions = chain.gasOptions || {};
+
     const deployments = {
         tokenManagerDeployer: {
             name: 'Token Manager Deployer',
             async deploy() {
-                return await deployContract(wallet, TokenManagerDeployer, [contracts.Create3Deployer.address], {}, verifyOptions);
+                return await deployContract(wallet, TokenManagerDeployer, [contracts.Create3Deployer.address], gasOptions, verifyOptions);
             },
         },
         standardizedTokenLockUnlock: {
             name: 'Standardized Token Lock Unlock',
             async deploy() {
-                return await deployContract(wallet, StandardizedTokenLockUnlock, [], {}, verifyOptions);
+                return await deployContract(wallet, StandardizedTokenLockUnlock, [], gasOptions, verifyOptions);
             },
         },
         standardizedTokenMintBurn: {
             name: 'Standardized Token Mint Burn',
             async deploy() {
-                return await deployContract(wallet, StandardizedTokenMintBurn, [], {}, verifyOptions);
+                return await deployContract(wallet, StandardizedTokenMintBurn, [], gasOptions, verifyOptions);
             },
         },
         standardizedTokenDeployer: {
@@ -92,7 +94,7 @@ async function deployITS(
                         contractConfig.standardizedTokenLockUnlock,
                         contractConfig.standardizedTokenMintBurn,
                     ],
-                    {},
+                    gasOptions,
                     verifyOptions,
                 );
             },
@@ -100,7 +102,7 @@ async function deployITS(
         remoteAddressValidatorImplementation: {
             name: 'Linker Router Implementations',
             async deploy() {
-                return await deployContract(wallet, RemoteAddressValidator, [interchainTokenServiceAddress], {}, verifyOptions);
+                return await deployContract(wallet, RemoteAddressValidator, [interchainTokenServiceAddress], gasOptions, verifyOptions);
             },
         },
         remoteAddressValidator: {
@@ -111,7 +113,7 @@ async function deployITS(
                     wallet,
                     RemoteAddressValidatorProxy,
                     [contractConfig.remoteAddressValidatorImplementation, wallet.address, params],
-                    {},
+                    gasOptions,
                     verifyOptions,
                 );
             },
@@ -122,7 +124,7 @@ async function deployITS(
                 const implementations = [];
 
                 for (const contractJson of [TokenManagerLockUnlock, TokenManagerMintBurn, TokenManagerLiquidityPool]) {
-                    const impl = await deployContract(wallet, contractJson, [interchainTokenServiceAddress], {}, verifyOptions);
+                    const impl = await deployContract(wallet, contractJson, [interchainTokenServiceAddress], gasOptions, verifyOptions);
                     implementations.push(impl);
                 }
 
@@ -144,7 +146,7 @@ async function deployITS(
                         contractConfig.tokenManagerImplementations,
                         chain.name,
                     ],
-                    {},
+                    gasOptions,
                     verifyOptions,
                 );
             },
@@ -158,7 +160,7 @@ async function deployITS(
                     InterchainTokenServiceProxy,
                     [contractConfig.implementation, wallet.address, operatorAddress],
                     deploymentKey,
-                    null,
+                    gasOptions,
                     verifyOptions,
                 );
             },
@@ -216,7 +218,7 @@ async function main(options) {
             wallet = new Wallet(options.privateKey, provider);
         }
 
-        await deployITS(wallet, chain, options.key, options.operatorAddress, options.skipExisting, verifyOptions, () =>
+        await deployITS(wallet, chain, options.salt, options.operatorAddress, options.skipExisting, verifyOptions, () =>
             writeJSON(config, `${__dirname}/../info/${options.env}.json`),
         );
     }

@@ -317,7 +317,28 @@
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
-        "Create3Deployer": {}
+        "Create3Deployer": {
+          "salt": "Create3Deployer",
+          "address": "0xFcccfEE8384d303197a7861BCE0A7A148815cd04",
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v0.1.0",
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "tokenManagerDeployer": "0x1013A1AcDd3afe3dE2eDA6b3258fE19A0ED92541",
+          "standardizedTokenLockUnlock": "0x09d321A4fADBd01B7D5E19933Aae9cA3C6e4af9E",
+          "standardizedTokenMintBurn": "0xF76B41706B06164a496641977F8D6B1aeD2bB076",
+          "standardizedTokenDeployer": "0x59A953d456D753Bf66522EB1169d3a1213FAd4A8",
+          "remoteAddressValidatorImplementation": "0x113F41Ab4AB99570E7CC35a91737959df7EbAad4",
+          "remoteAddressValidator": "0xcC2d91791b8197e8f9d5a4C0076B2CB08Aa75942",
+          "tokenManagerImplementations": [
+            "0xc02854ed902b7b4864BEbb8De539fD66B1F474Cf",
+            "0x4D125eb7de0C314b20927c7D6bF55f4dC00b17c5",
+            "0x1DCf9b2e4e01AEcFD845bd77140e6c7Df0544B3e"
+          ],
+          "implementation": "0xF07B0Fc33115f02E62884ceBf125C6DFB4c22A5d",
+          "address": "0x37ED6be138653B3029c3c6c2Aa7e8B7DcD372A11"
+        }
       },
       "explorer": {
         "url": "https://testnet.bscscan.com",
@@ -748,9 +769,6 @@
       "explorer": {
         "url": "https://explorer.goerli.linea.build",
         "api": "https://explorer.goerli.linea.build/api"
-      },
-      "gasOptions": {
-        "gasLimit": 5000000
       }
     }
   },
