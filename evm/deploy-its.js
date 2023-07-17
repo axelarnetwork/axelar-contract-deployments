@@ -236,9 +236,7 @@ if (require.main === module) {
     );
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-    program.addOption(
-        new Option('-k, --key <key>', 'deployment key to use for create3 deployment').makeOptionMandatory(true).env('DEPLOYMENT_KEY'),
-    );
+    program.addOption(new Option('-k, --key <key>', 'deployment key to use for create3 deployment').makeOptionMandatory(true).env('SALT'));
     program.addOption(new Option('-v, --verify <boolean>', 'verify the deployed contract on the explorer').env('VERIFY'));
     program.addOption(new Option('-s, --skipExisting <boolean>', 'skip deploying contracts if they already exist').env('SKIP_EXISTING'));
     program.addOption(new Option('-o, --operator', 'address of the ITS operator').env('OPERATOR_ADDRESS'));

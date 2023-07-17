@@ -39,11 +39,9 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
     const constAddressDeployerAddress = await predictAddressCreate(deployerWallet.address, 0);
     printInfo('ConstAddressDeployer will be deployed to', constAddressDeployerAddress);
 
-    if (!yes) {
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
-    }
+    console.log('Does this match any existing deployments?');
+    const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
+    if (anwser !== 'y') return;
 
     if (!gasOptions.gasLimit) {
         const contractFactory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
