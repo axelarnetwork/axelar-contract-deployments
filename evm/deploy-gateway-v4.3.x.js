@@ -246,5 +246,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-    deployGatewayv4_3: deploy,
+    deployGatewayv4: deploy,
 };
