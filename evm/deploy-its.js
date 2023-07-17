@@ -36,24 +36,17 @@ const { deployCreate3Deployer } = require('./deploy-create3-deployer');
  * @param {*} verifyOptions
  * @param {*} saveFunc
  */
-async function deployITS(
+
+async function deployImplementation(
     wallet,
-    chain,
+    contracts,
     deploymentKey,
-    operatorAddress = wallet.address,
     skipExisting = true,
     verifyOptions = null,
     saveFunc = null,
 ) {
     const contractName = 'InterchainTokenService';
 
-    console.log(
-        `Deployer has ${(await wallet.provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
-            chain.tokenSymbol,
-        )} and nonce ${await wallet.provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
-    );
-
-    const contracts = chain.contracts;
     const contractConfig = contracts[contractName] || {};
 
     contractConfig.salt = deploymentKey;
@@ -151,20 +144,6 @@ async function deployITS(
                 );
             },
         },
-        address: {
-            name: 'Interchain Token Service Proxy',
-            async deploy() {
-                return await deployCreate3(
-                    contracts.Create3Deployer.address,
-                    wallet,
-                    InterchainTokenServiceProxy,
-                    [contractConfig.implementation, wallet.address, operatorAddress],
-                    deploymentKey,
-                    gasOptions,
-                    verifyOptions,
-                );
-            },
-        },
     };
 
     for (const key in deployments) {
@@ -188,6 +167,59 @@ async function deployITS(
     }
 
     return new Contract(deployments.address, IInterchainTokenService.abi, wallet);
+}
+
+async function deployITS(
+    wallet,
+    chain,
+    deploymentKey,
+    operatorAddress = wallet.address,
+    skipExisting = true,
+    verifyOptions = null,
+    saveFunc = null,
+) {
+
+    const contractName = 'InterchainTokenService';
+
+    console.log(
+        `Deployer has ${(await wallet.provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
+            chain.tokenSymbol,
+        )} and nonce ${await wallet.provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
+    );
+
+    const contracts = chain.contracts;
+    const contractConfig = contracts[contractName] || {};
+
+    contractConfig.salt = deploymentKey;
+    contractConfig.deployer = wallet.address;
+
+    contracts[contractName] = contractConfig;
+
+    deployImplementation(wallet, contracts, deploymentKey, skipExisting, verifyOptions, saveFunc);
+
+    if (skipExisting && (isAddress(contractConfig.address) || isAddressArray(contractConfig[key]))) return;
+
+    console.log(`Deploying Interchain Token Service.`);
+
+    const contract = await deployCreate3(
+        contracts.Create3Deployer.address,
+        wallet,
+        InterchainTokenServiceProxy,
+        [contractConfig.implementation, wallet.address, operatorAddress],
+        deploymentKey,
+        gasOptions,
+        verifyOptions,
+    )
+
+    contractConfig.address = contract.address;
+    console.log(`Deployed Interchain Token Service at ${contract.address}`);
+
+    if (saveFunc) await saveFunc();
+    
+}
+
+async function upgradeITS(wallet, chain) {
+
 }
 
 async function main(options) {

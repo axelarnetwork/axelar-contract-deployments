@@ -25,18 +25,16 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
 
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
-    const expectedAddress = contracts[contractName].address
-        ? contracts[contractName].address
-        : await predictAddressCreate(wallet.address, 0);
+    const expectedAddress = await predictAddressCreate(deployerWallet.address, 0);
 
-    if (!force && (await provider.getCode(expectedAddress)) !== '0x') {
+    if (await provider.getCode(expectedAddress) !== '0x') {
         console.log(`ConstAddressDeployer already deployed at address ${expectedAddress}`);
         return;
     }
 
-    const nonce = await provider.getTransactionCount(wallet.address);
+    const nonce = await provider.getTransactionCount(deployerWallet.address);
 
-    if (nonce !== 0 && !ignore) {
+    if (nonce !== 0) {
         throw new Error(`Nonce value must be zero.`);
     }
 
@@ -52,7 +50,7 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
-    const constAddressDeployerAddress = await predictAddressCreate(wallet.address, nonce);
+    const constAddressDeployerAddress = await predictAddressCreate(deployerWallet.address, nonce);
     printInfo('ConstAddressDeployer will be deployed to', constAddressDeployerAddress);
 
     if (!yes) {
@@ -61,7 +59,7 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
         if (anwser !== 'y') return;
     }
 
-    const contract = await deployContract(wallet.connect(provider), contractJson, [], gasOptions, verify);
+    const contract = await deployContract(deployerWallet, contractJson, [], gasOptions, verify);
 
     contractConfig.address = contract.address;
     contractConfig.deployer = wallet.address;
