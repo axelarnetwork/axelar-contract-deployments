@@ -36,10 +36,10 @@ const deployCreate2 = async (
     contractJson,
     args = [],
     key = Date.now(),
-    gasLimit = null,
+    gasOptions = null,
     verifyOptions = null,
 ) => {
-    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasLimit);
+    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasOptions?.gasLimit);
 
     if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
@@ -54,10 +54,10 @@ const deployCreate3 = async (
     contractJson,
     args = [],
     key = Date.now(),
-    gasLimit = null,
+    gasOptions = null,
     verifyOptions = null,
 ) => {
-    const contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, key, args, gasLimit);
+    const contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions.gasLimit);
 
     if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);

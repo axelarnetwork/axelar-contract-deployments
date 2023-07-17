@@ -36,23 +36,16 @@ const { deployCreate3Deployer } = require('./deploy-create3-deployer');
  * @param {*} verifyOptions
  * @param {*} saveFunc
  */
-async function deployITS(
+
+async function deployImplementation(
     wallet,
     chain,
     deploymentKey,
-    operatorAddress = wallet.address,
     skipExisting = true,
     verifyOptions = null,
     saveFunc = null,
 ) {
     const contractName = 'InterchainTokenService';
-
-    console.log(
-        `Deployer has ${(await wallet.provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
-            chain.tokenSymbol,
-        )} and nonce ${await wallet.provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
-    );
-
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName] || {};
 
@@ -62,23 +55,25 @@ async function deployITS(
     contracts[contractName] = contractConfig;
     const interchainTokenServiceAddress = await getCreate3Address(contracts.Create3Deployer.address, wallet, deploymentKey);
 
+    const gasOptions = chain.gasOptions || {};
+
     const deployments = {
         tokenManagerDeployer: {
             name: 'Token Manager Deployer',
             async deploy() {
-                return await deployContract(wallet, TokenManagerDeployer, [contracts.Create3Deployer.address], {}, verifyOptions);
+                return await deployContract(wallet, TokenManagerDeployer, [contracts.Create3Deployer.address], gasOptions, verifyOptions);
             },
         },
         standardizedTokenLockUnlock: {
             name: 'Standardized Token Lock Unlock',
             async deploy() {
-                return await deployContract(wallet, StandardizedTokenLockUnlock, [], {}, verifyOptions);
+                return await deployContract(wallet, StandardizedTokenLockUnlock, [], gasOptions, verifyOptions);
             },
         },
         standardizedTokenMintBurn: {
             name: 'Standardized Token Mint Burn',
             async deploy() {
-                return await deployContract(wallet, StandardizedTokenMintBurn, [], {}, verifyOptions);
+                return await deployContract(wallet, StandardizedTokenMintBurn, [], gasOptions, verifyOptions);
             },
         },
         standardizedTokenDeployer: {
@@ -92,7 +87,7 @@ async function deployITS(
                         contractConfig.standardizedTokenLockUnlock,
                         contractConfig.standardizedTokenMintBurn,
                     ],
-                    {},
+                    gasOptions,
                     verifyOptions,
                 );
             },
@@ -100,7 +95,7 @@ async function deployITS(
         remoteAddressValidatorImplementation: {
             name: 'Linker Router Implementations',
             async deploy() {
-                return await deployContract(wallet, RemoteAddressValidator, [interchainTokenServiceAddress], {}, verifyOptions);
+                return await deployContract(wallet, RemoteAddressValidator, [interchainTokenServiceAddress], gasOptions, verifyOptions);
             },
         },
         remoteAddressValidator: {
@@ -111,7 +106,7 @@ async function deployITS(
                     wallet,
                     RemoteAddressValidatorProxy,
                     [contractConfig.remoteAddressValidatorImplementation, wallet.address, params],
-                    {},
+                    gasOptions,
                     verifyOptions,
                 );
             },
@@ -122,7 +117,7 @@ async function deployITS(
                 const implementations = [];
 
                 for (const contractJson of [TokenManagerLockUnlock, TokenManagerMintBurn, TokenManagerLiquidityPool]) {
-                    const impl = await deployContract(wallet, contractJson, [interchainTokenServiceAddress], {}, verifyOptions);
+                    const impl = await deployContract(wallet, contractJson, [interchainTokenServiceAddress], gasOptions, verifyOptions);
                     implementations.push(impl);
                 }
 
@@ -144,21 +139,7 @@ async function deployITS(
                         contractConfig.tokenManagerImplementations,
                         chain.name,
                     ],
-                    {},
-                    verifyOptions,
-                );
-            },
-        },
-        address: {
-            name: 'Interchain Token Service Proxy',
-            async deploy() {
-                return await deployCreate3(
-                    contracts.Create3Deployer.address,
-                    wallet,
-                    InterchainTokenServiceProxy,
-                    [contractConfig.implementation, wallet.address, operatorAddress],
-                    deploymentKey,
-                    null,
+                    gasOptions,
                     verifyOptions,
                 );
             },
@@ -184,8 +165,103 @@ async function deployITS(
 
         if (saveFunc) await saveFunc();
     }
+}
 
-    return new Contract(deployments.address, IInterchainTokenService.abi, wallet);
+async function deployITS(
+    wallet,
+    chain,
+    deploymentKey,
+    operatorAddress = wallet.address,
+    skipExisting = true,
+    verifyOptions = null,
+    saveFunc = null,
+) {
+
+    const contractName = 'InterchainTokenService';
+
+    console.log(
+        `Deployer has ${(await wallet.provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
+            chain.tokenSymbol,
+        )} and nonce ${await wallet.provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
+    );
+
+    const contracts = chain.contracts;
+    const contractConfig = contracts[contractName] || {};
+
+    contractConfig.salt = deploymentKey;
+    contractConfig.deployer = wallet.address;
+
+    contracts[contractName] = contractConfig;
+
+    await deployImplementation(wallet, chain, deploymentKey, skipExisting, verifyOptions, saveFunc);
+
+    if (skipExisting && (isAddress(contractConfig.address) || isAddressArray(contractConfig[key]))) return;
+
+    console.log(`Deploying Interchain Token Service.`);
+
+    const gasOptions = chain.gasOptions || {};
+    const contract = await deployCreate3(
+        contracts.Create3Deployer.address,
+        wallet,
+        InterchainTokenServiceProxy,
+        [contractConfig.implementation, wallet.address, operatorAddress],
+        deploymentKey,
+        gasOptions,
+        verifyOptions,
+    )
+
+    contractConfig.address = contract.address;
+    console.log(`Deployed Interchain Token Service at ${contract.address}`);
+
+    if (saveFunc) await saveFunc();
+    
+}
+
+async function upgradeITS(
+    wallet,
+    chain,
+    deploymentKey,
+    operatorAddress = wallet.address,
+    verifyOptions = null,
+    saveFunc = null,
+) {
+
+    const contractName = 'InterchainTokenService';
+
+    console.log(
+        `Deployer has ${(await wallet.provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
+            chain.tokenSymbol,
+        )} and nonce ${await wallet.provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
+    );
+
+    const contracts = chain.contracts;
+    const contractConfig = contracts[contractName] || {};
+
+    contractConfig.salt = deploymentKey;
+    contractConfig.deployer = wallet.address;
+
+    contracts[contractName] = contractConfig;
+
+    await deployImplementation(wallet, chain, deploymentKey, false, verifyOptions, saveFunc);
+
+    console.log(`Upgrading Interchain Token Service.`);
+
+    const gasOptions = chain.gasOptions || {};
+    const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
+
+    const codehash = keccak256(await wallet.provider.getCode(contractConfig.implementation));
+    console.log(codehash);
+    await (await contract.upgrade(
+        contractConfig.implementation,
+        codehash,
+        '0x',
+        gasOptions,
+    )).wait();
+
+    console.log(`Deployed Interchain Token Service`);
+
+    if (saveFunc) await saveFunc();
+    
 }
 
 async function main(options) {
@@ -216,9 +292,10 @@ async function main(options) {
             wallet = new Wallet(options.privateKey, provider);
         }
 
-        await deployITS(wallet, chain, options.key, options.operatorAddress, options.skipExisting, verifyOptions, () =>
+        await deployITS(wallet, chain, options.salt, options.operatorAddress, options.skipExisting, verifyOptions, () =>
             writeJSON(config, `${__dirname}/../info/${options.env}.json`),
         );
+        await upgradeITS(wallet, chain, options.salt, options.operatorAddress, verifyOptions);
     }
 }
 
@@ -242,6 +319,7 @@ if (require.main === module) {
     program.addOption(new Option('-o, --operator', 'address of the ITS operator').env('OPERATOR_ADDRESS'));
 
     program.action(async (options) => {
+        options.skipExisting = options.skipExisting == 'true';
         await main(options);
     });
 
