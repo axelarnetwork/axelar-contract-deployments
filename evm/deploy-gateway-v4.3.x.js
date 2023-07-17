@@ -3,7 +3,7 @@
 require('dotenv').config();
 
 const { printObj, writeJSON, getBytecodeHash, verifyContract, printInfo, printLog, getProxy, getEVMAddresses } = require('./utils');
-const { ethers } = require('hardhat');
+const ethers = require('ethers');
 const {
     getContractFactory,
     Wallet,

@@ -45,6 +45,7 @@ async function deployCreate3Deployer(wallet, chain, salt = null, verifyOptions =
     console.log('Does this match any existing deployments?');
     const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
     if (anwser !== 'y') return;
+
     const contract = await deployCreate2(constAddressDeployer, wallet, implementationJson, [], salt, gasOptions.gasLimit, verifyOptions);
 
     contractConfig.salt = salt;

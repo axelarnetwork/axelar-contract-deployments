@@ -192,7 +192,7 @@ async function main(options) {
     const config = require(`${__dirname}/../info/${options.env === 'local' ? 'testnet' : options.env}.json`);
 
     const chains = options.chainNames.split(',').map((str) => str.trim());
-
+ 
     for (const chain of chains) {
         if (config.chains[chain.toLowerCase()] === undefined) {
             throw new Error(`Chain ${chain} is not defined in the info file`);
