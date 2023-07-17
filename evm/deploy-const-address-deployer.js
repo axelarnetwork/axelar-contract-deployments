@@ -31,6 +31,8 @@ async function deploy(options, chain) {
 
     if (!force && (await provider.getCode(expectedAddress)) !== '0x') {
         console.log(`ConstAddressDeployer already deployed at address ${expectedAddress}`);
+        contractConfig.address = expectedAddress;
+        contractConfig.deployer = wallet.address;
         return;
     }
 
