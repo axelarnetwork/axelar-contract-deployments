@@ -3,7 +3,7 @@
 require('dotenv').config();
 
 const { ethers } = require('hardhat');
-const { Wallet, ContractFactory, getDefaultProvider } = ethers;
+const { Wallet, getDefaultProvider } = require('ethers');
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
@@ -12,7 +12,7 @@ const { printInfo, writeJSON, predictAddressCreate, deployContract } = require('
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
 const contractName = 'ConstAddressDeployer';
 
-async function deploy(options, chain) {
+async function deployConstAddressDeployer(options, chain) {
     const { privateKey, ignore, verify, yes, force } = options;
     const wallet = new Wallet(privateKey);
 
@@ -35,10 +35,12 @@ async function deploy(options, chain) {
         return;
     }
 
-    if (nonce !== 0) {
+    const nonce = await provider.getTransactionCount(wallet.address);
+
+    if (nonce !== 0 && !ignore) {
         throw new Error(`Nonce value must be zero.`);
     }
-  
+
     const balance = await provider.getBalance(wallet.address);
 
     if (balance.lte(0)) {
@@ -51,37 +53,21 @@ async function deploy(options, chain) {
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
-    const constAddressDeployerAddress = await predictAddressCreate(deployerWallet.address, 0);
+    const constAddressDeployerAddress = await predictAddressCreate(wallet.address, nonce);
     printInfo('ConstAddressDeployer will be deployed to', constAddressDeployerAddress);
 
-    console.log('Does this match any existing deployments?');
-    const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-    if (anwser !== 'y') return;
-
-    if (!gasOptions.gasLimit) {
-        const contractFactory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
-        const tx = contractFactory.getDeployTransaction();
-        gasOptions.gasLimit = Math.floor((await wallet.provider.estimateGas(tx)) * 1.5);
+    if (!yes) {
+        console.log('Does this match any existing deployments?');
+        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
     }
 
-    if (!gasOptions.gasPrice) {
-        gasOptions.gasPrice = Math.floor((await wallet.provider.getGasPrice()) * 1.2);
-    }
-
-    const requiredBalance = gasOptions.gasLimit * gasOptions.gasPrice;
-
-    if (balance < requiredBalance) {
-        await (await wallet.sendTransaction({ to: deployerWallet.address, value: requiredBalance - balance })).wait();
-    }
-
-    const contract = await deployContract(deployerWallet, contractJson, [], gasOptions, verifyOptions);
+    const contract = await deployContract(wallet.connect(provider), contractJson, [], gasOptions, verify);
 
     contractConfig.address = contract.address;
-    contractConfig.deployer = deployerWallet.address;
+    contractConfig.deployer = wallet.address;
 
-    printInfo(`${chain.name} | ConstAddressDeployer`, contractConfig.address);
-
-    return constAddressDeployerAddress;
+    printInfo(`${chain.name} | ConstAddressDeployer:`, contractConfig.address);
 }
 
 async function main(options) {
