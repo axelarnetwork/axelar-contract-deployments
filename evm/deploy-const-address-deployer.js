@@ -3,7 +3,7 @@
 require('dotenv').config();
 
 const { ethers } = require('hardhat');
-const { Wallet, getDefaultProvider } = require('ethers');
+const { Wallet, getDefaultProvider, ContractFactory } = require('ethers');
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
@@ -23,28 +23,23 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
         contracts[contractName] = {};
     }
 
-    const rpc = chain.rpc;
-    const provider = getDefaultProvider(rpc);
+    const provider = wallet.provider;
     const expectedAddress = contracts[contractName].address
         ? contracts[contractName].address
         : await predictAddressCreate(wallet.address, 0);
 
-    if (!force && (await provider.getCode(expectedAddress)) !== '0x') {
+    if (await provider.getCode(expectedAddress) !== '0x') {
         console.log(`ConstAddressDeployer already deployed at address ${expectedAddress}`);
         return;
     }
 
-    const nonce = await provider.getTransactionCount(wallet.address);
+    const nonce = await provider.getTransactionCount(deployerWallet.address);
 
-    if (nonce !== 0 && !ignore) {
+    if (nonce !== 0) {
         throw new Error(`Nonce value must be zero.`);
     }
 
-    const balance = await provider.getBalance(wallet.address);
-
-    if (balance.lte(0)) {
-        throw new Error(`Deployer account has no funds.`);
-    }
+    const balance = await provider.getBalance(deployerWallet.address)
 
     console.log(`Deployer has ${balance / 1e18} ${chalk.green(chain.tokenSymbol)} and nonce ${nonce} on ${chain.name}.`);
 
@@ -61,7 +56,25 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
         if (anwser !== 'y') return;
     }
 
-    const contract = await deployContract(wallet.connect(provider), contractJson, [], gasOptions, verify);
+    
+    if (!gasOptions.gasLimit) {
+        const contractFactory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
+        const tx = contractFactory.getDeployTransaction();
+        gasOptions.gasLimit = Math.floor((await wallet.provider.estimateGas(tx)) * 1.5);
+    }
+
+    if (!gasOptions.gasPrice) {
+        gasOptions.gasPrice = Math.floor((await wallet.provider.getGasPrice()) * 1.2);
+    }
+
+    const requiredBalance = gasOptions.gasLimit * gasOptions.gasPrice;
+
+    if (balance < requiredBalance) {
+        await (await wallet.sendTransaction({ to: deployerWallet.address, value: requiredBalance - balance })).wait();
+    }
+    
+    const contract = await deployContract(deployerWallet, contractJson, [], gasOptions, verifyOptions);
+
 
     contractConfig.address = contract.address;
     contractConfig.deployer = wallet.address;
