@@ -39,7 +39,7 @@ const deployCreate2 = async (
     gasOptions = null,
     verifyOptions = null,
 ) => {
-    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasOptions.gasLimit);
+    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, key, args, gasOptions?.gasLimit);
 
     if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
