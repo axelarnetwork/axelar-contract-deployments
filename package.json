@@ -16,15 +16,15 @@
     "ethereum"
   ],
   "author": "axelar-network",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/axelarnetwork/axelar-contract-deployments/issues"
   },
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
     "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v1.0.0",
-    "@axelar-network/axelar-gmp-sdk-solidity": "^3.3.0",
-    "@axelar-network/interchain-token-service": "^0.1.0",
+    "@axelar-network/axelar-gmp-sdk-solidity": "^4.0.0",
+    "@axelar-network/interchain-token-service": "^0.2.0",
     "ethers": "^5.7.2"
   },
   "devDependencies": {

@@ -26,7 +26,7 @@ function getProxyParams(governance, mintLimiter) {
 }
 
 async function deploy(config, options) {
-    const { env, chainName, privateKey, reuseProxy, verify } = options;
+    const { chainName, privateKey, reuseProxy, verify } = options;
 
     const contractName = 'AxelarGateway';
 
