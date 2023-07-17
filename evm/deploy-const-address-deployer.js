@@ -27,7 +27,7 @@ async function deploy(options, chain) {
 
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
-    const expectedAddress = contractConfig.address ? contracts[contractName].address : await predictAddressCreate(wallet.address, 0);
+    const expectedAddress = contractConfig.address ? contractConfig.address : await predictAddressCreate(wallet.address, 0);
 
     if (!force && (await provider.getCode(expectedAddress)) !== '0x') {
         console.log(`ConstAddressDeployer already deployed at address ${expectedAddress}`);
