@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint '**/*.js'",
-    "prettier": "prettier --write '**/*.js' 'info/*.json' 'package.json' 'evm/**/*.json'"
+    "prettier": "prettier --write '**/*.js' 'info/*.json' 'package.json' 'evm/**/*.json'",
+    "test": "hardhat test"
   },
   "repository": {
     "type": "git",

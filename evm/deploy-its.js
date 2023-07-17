@@ -195,7 +195,7 @@ async function deployITS(
 
     await deployImplementation(wallet, chain, deploymentKey, skipExisting, verifyOptions, saveFunc);
 
-    if (skipExisting && (isAddress(contractConfig.address) || isAddressArray(contractConfig[key]))) return;
+    if (skipExisting && (isAddress(contractConfig.address) || isAddressArray(contractConfig.address))) return;
 
     console.log(`Deploying Interchain Token Service.`);
 

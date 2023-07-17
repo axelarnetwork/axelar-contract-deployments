@@ -15,7 +15,7 @@ const { deployConstAddressDeployer } = require('./deploy-const-address-deployer'
 const { keccak256 } = require('ethers/lib/utils');
 const contractName = 'Create3Deployer';
 
-async function deployCreate3Deployer(wallet, chain, salt = null, verifyOptions = null) {
+async function deployCreate3Deployer(wallet, chain, salt = null, verifyOptions = null, yes = true) {
     printInfo('Deployer address', wallet.address);
 
     console.log(
@@ -42,9 +42,11 @@ async function deployCreate3Deployer(wallet, chain, salt = null, verifyOptions =
     const create3DeployerAddress = await predictContractConstant(constAddressDeployer, wallet, implementationJson, salt);
     printInfo('Create3 deployer will be deployed to', create3DeployerAddress);
 
-    console.log('Does this match any existing deployments?');
-    const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-    if (anwser !== 'y') return;
+    if(!yes) {
+        console.log('Does this match any existing deployments?');
+        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+    }
 
     const contract = await deployCreate2(constAddressDeployer, wallet, implementationJson, [], salt, gasOptions.gasLimit, verifyOptions);
 

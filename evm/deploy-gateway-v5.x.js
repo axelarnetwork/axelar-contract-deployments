@@ -25,16 +25,13 @@ function getProxyParams(governance, mintLimiter) {
     return defaultAbiCoder.encode(['address', 'address', 'bytes'], [governance, mintLimiter, '0x']);
 }
 
-async function deploy(config, options) {
-    const { chainName, privateKey, reuseProxy, verify } = options;
+async function deploy(wallet, chain, options) {
+    const { chainName, reuseProxy, verify } = options;
 
     const contractName = 'AxelarGateway';
 
-    const chain = config.chains[chainName] || { contracts: {}, id: chainName, tokenSymbol: 'ETH' };
-    const rpc = options.rpc || chain.rpc;
-    const provider = getDefaultProvider(rpc);
+    const provider = wallet.provider;
 
-    const wallet = new Wallet(privateKey).connect(provider);
     printInfo('Deployer address', wallet.address);
 
     console.log(
