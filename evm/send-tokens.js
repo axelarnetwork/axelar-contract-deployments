@@ -6,14 +6,35 @@ const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
+const { printInfo } = require('./utils');
+const readlineSync = require('readline-sync');
 
 async function sendTokens(chain, options) {
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(options.privateKey, provider);
 
+    printInfo('Wallet address', wallet.address);
+    const balance = await wallet.provider.getBalance(wallet.address);
+    const amount = ethers.utils.parseEther(options.amount);
+
+    console.log(
+        `Wallet has ${balance / 1e18} ${chalk.green(
+            chain.tokenSymbol,
+        )} and nonce ${await wallet.provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
+    );
+
+    if (balance.lte(amount)) {
+        throw new Error(`Wallet has insufficient funds.`);
+    }
+
+    if (!options.yes) {
+        const anwser = readlineSync.question(`Proceed with the transfer of ${chalk.green(options.amount)} ${chalk.green(chain.tokenSymbol)} to ${options.recipient} on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+    }
+
     const tx = await wallet.sendTransaction({
         to: options.recipient,
-        value: ethers.utils.parseEther(options.amount),
+        value: amount,
     });
 
     console.log(`Transaction hash: ${chalk.green(tx.hash)}`);
@@ -55,6 +76,7 @@ if (require.main === module) {
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-r, --recipient <recipient>', 'recipient of tokens').makeOptionMandatory(true));
     program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)').makeOptionMandatory(true));
+    program.addOption(new Option('-y, --yes', 'skip prompts'));
 
     program.action((options) => {
         main(options);
