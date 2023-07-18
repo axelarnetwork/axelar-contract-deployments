@@ -148,8 +148,8 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xFcccfEE8384d303197a7861BCE0A7A148815cd04",
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x3413CCa96E70f9A9Dd73e0505d0d89D0b803637f"
         },
         "InterchainTokenService": {
           "salt": "ITS v0.1.0",
