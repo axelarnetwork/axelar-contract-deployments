@@ -24,6 +24,18 @@ async function verifyContracts(chain, options) {
 
             await verifyContract(env, chain.name, contract.address, []);
             break;
+        };
+        case 'CreateDeployer': {
+            const CreateDeployer = require('../artifacts/contracts/deploy/Create3.sol/CreateDeployer.json');
+
+            const contractFactory = await getContractAt(CreateDeployer.abi, wallet);
+
+            const contract = contractFactory.attach(options.address || chain.CreateDeployer.address);
+
+            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
+
+            await verifyContract(env, chain.name, contract.address, []);
+            break;
         }
     }
 }
@@ -46,7 +58,11 @@ async function main(options) {
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
-        await verifyContracts(chain, options);
+        try {
+            await verifyContracts(chain, options);
+        } catch (e) {
+            console.log(`FAILED VERIFICATION: ${e}`);
+        }
     }
 }
 
