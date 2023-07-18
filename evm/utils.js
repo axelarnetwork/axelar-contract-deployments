@@ -12,7 +12,8 @@ const { writeFile } = require('fs');
 const { promisify } = require('util');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
-const { deployCreate3Contract, deployContractConstant } = require('@axelar-network/axelar-gmp-sdk-solidity');
+const { deployCreate3Contract, deployContractConstant, predictContractConstant, getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity');
+const { getCreate2Address } = require('ethers/lib/utils');
 
 const execAsync = promisify(exec);
 const writeFileAsync = promisify(writeFile);
@@ -23,8 +24,13 @@ const deployContract = async (wallet, contractJson, args = [], options = {}, ver
     const contract = await factory.deploy(...args, { ...options });
     await contract.deployed();
 
-    if (verifyOptions) {
-        await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
+    if (verifyOptions?.env) {
+        sleep(10000);
+        try {
+            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions.contractPath);
+        } catch (e) {
+            console.log('FAILED VERIFICATION!!');
+        }
     }
 
     return contract;
@@ -39,11 +45,22 @@ const deployCreate2 = async (
     gasOptions = null,
     verifyOptions = null,
 ) => {
-    const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args, gasOptions?.gasLimit);
+    let contract;
 
-    if (verifyOptions) {
-        sleep(5000);
-        await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
+    if (!verifyOptions?.only) {
+        contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args, gasOptions?.gasLimit);
+    } else {
+        contract = { address: await predictContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args) };
+    }
+
+    if (verifyOptions?.env) {
+        sleep(2000);
+
+        try {
+            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions.contractPath);
+        } catch (e) {
+            console.log(`FAILED VERIFICATION!! ${e}`);
+        }
     }
 
     return contract;
@@ -58,11 +75,22 @@ const deployCreate3 = async (
     gasOptions = null,
     verifyOptions = null,
 ) => {
-    const contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions.gasLimit);
+    let contract;
 
-    if (verifyOptions) {
-        sleep(5000);
-        await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
+    if (!verifyOptions?.only) {
+        contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions.gasLimit);
+    } else {
+        contract = {address: await getCreate3Address(create3DeployerAddress, wallet, key)};
+    }
+
+    if (verifyOptions?.env) {
+        sleep(2000);
+
+        try {
+            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions.contractPath);
+        } catch (e) {
+            console.log(`FAILED VERIFICATION!! ${e}`);
+        }
     }
 
     return contract;
@@ -218,11 +246,12 @@ const importNetworks = (chains, keys) => {
  * @param {any[]} args
  * @returns {Promise<void>}
  */
-const verifyContract = async (env, chain, contract, args) => {
+const verifyContract = async (env, chain, contract, args, contractPath = null) => {
     const stringArgs = args.map((arg) => JSON.stringify(arg));
     const content = `module.exports = [\n    ${stringArgs.join(',\n    ')}\n];`;
     const file = 'temp-arguments.js';
-    const cmd = `ENV=${env} npx hardhat verify --network ${chain.toLowerCase()} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
+    const contractArg = (contractPath) ? `--contract ${contractPath}` : '';
+    const cmd = `ENV=${env} npx hardhat verify --network ${chain.toLowerCase()} ${contractArg} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
 
     return writeFileAsync(file, content, 'utf-8')
         .then(() => {
