@@ -18,9 +18,9 @@ async function sendTokens(chain, options) {
     const amount = ethers.utils.parseEther(options.amount);
 
     console.log(
-        `Wallet has ${balance / 1e18} ${chalk.green(
-            chain.tokenSymbol,
-        )} and nonce ${await wallet.provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
+        `Wallet has ${balance / 1e18} ${chalk.green(chain.tokenSymbol)} and nonce ${await wallet.provider.getTransactionCount(
+            wallet.address,
+        )} on ${chain.name}.`,
     );
 
     if (balance.lte(amount)) {
@@ -28,7 +28,11 @@ async function sendTokens(chain, options) {
     }
 
     if (!options.yes) {
-        const anwser = readlineSync.question(`Proceed with the transfer of ${chalk.green(options.amount)} ${chalk.green(chain.tokenSymbol)} to ${options.recipient} on ${chain.name}? ${chalk.green('(y/n)')} `);
+        const anwser = readlineSync.question(
+            `Proceed with the transfer of ${chalk.green(options.amount)} ${chalk.green(chain.tokenSymbol)} to ${options.recipient} on ${
+                chain.name
+            }? ${chalk.green('(y/n)')} `,
+        );
         if (anwser !== 'y') return;
     }
 

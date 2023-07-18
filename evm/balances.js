@@ -7,7 +7,6 @@ const { Wallet, getDefaultProvider } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo } = require('./utils');
 
-
 async function balances(chain, options) {
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(options.privateKey, provider);

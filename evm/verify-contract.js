@@ -7,7 +7,6 @@ const { Wallet, getDefaultProvider, getContractAt } = ethers;
 const { Command, Option } = require('commander');
 const { verifyContract } = require('./utils');
 
-
 async function verifyContracts(chain, options) {
     const { env, contractName } = options;
     const provider = getDefaultProvider(chain.rpc);

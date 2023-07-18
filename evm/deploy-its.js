@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const { getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity');
-const { deployContract, deployCreate3, deployCreate2, isAddressArray, writeJSON, predictAddressCreate } = require('./utils');
+const { deployCreate3, deployCreate2, writeJSON } = require('./utils');
 const {
     Wallet,
     Contract,
@@ -61,19 +61,43 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
         tokenManagerDeployer: {
             name: 'Token Manager Deployer',
             async deploy() {
-                return await deployCreate2(create2Deployer, wallet, TokenManagerDeployer, [contracts.Create3Deployer.address], deploymentKey, gasOptions, verifyOptions);
+                return await deployCreate2(
+                    create2Deployer,
+                    wallet,
+                    TokenManagerDeployer,
+                    [contracts.Create3Deployer.address],
+                    deploymentKey,
+                    gasOptions,
+                    verifyOptions,
+                );
             },
         },
         standardizedTokenLockUnlock: {
             name: 'Standardized Token Lock Unlock',
             async deploy() {
-                return await deployCreate2(create2Deployer, wallet, StandardizedTokenLockUnlock, [], deploymentKey, gasOptions, verifyOptions);
+                return await deployCreate2(
+                    create2Deployer,
+                    wallet,
+                    StandardizedTokenLockUnlock,
+                    [],
+                    deploymentKey,
+                    gasOptions,
+                    verifyOptions,
+                );
             },
         },
         standardizedTokenMintBurn: {
             name: 'Standardized Token Mint Burn',
             async deploy() {
-                return await deployCreate2(create2Deployer, wallet, StandardizedTokenMintBurn, [], deploymentKey, gasOptions, verifyOptions);
+                return await deployCreate2(
+                    create2Deployer,
+                    wallet,
+                    StandardizedTokenMintBurn,
+                    [],
+                    deploymentKey,
+                    gasOptions,
+                    verifyOptions,
+                );
             },
         },
         standardizedTokenDeployer: {
@@ -97,7 +121,15 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
         remoteAddressValidatorImplementation: {
             name: 'Remote Address Validator Implementation',
             async deploy() {
-                return await deployCreate2(create2Deployer, wallet, RemoteAddressValidator, [interchainTokenServiceAddress], deploymentKey, gasOptions, verifyOptions);
+                return await deployCreate2(
+                    create2Deployer,
+                    wallet,
+                    RemoteAddressValidator,
+                    [interchainTokenServiceAddress],
+                    deploymentKey,
+                    gasOptions,
+                    verifyOptions,
+                );
             },
         },
         remoteAddressValidator: {
@@ -111,9 +143,9 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                     [contractConfig.remoteAddressValidatorImplementation, wallet.address, params],
                     deploymentKey,
                     gasOptions,
-                    { 
+                    {
                         ...verifyOptions,
-                        contractPath: 'contracts/proxies/RemoteAddressValidatorProxy.sol:RemoteAddressValidatorProxy'
+                        contractPath: 'contracts/proxies/RemoteAddressValidatorProxy.sol:RemoteAddressValidatorProxy',
                     },
                 );
             },
@@ -122,9 +154,39 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
             name: 'Token Manager Implementations',
             async deploy() {
                 const implementations = {
-                    tokenManagerLockUnlock: (await deployCreate2(create2Deployer, wallet, TokenManagerLockUnlock, [interchainTokenServiceAddress], deploymentKey, gasOptions, verifyOptions)).address,
-                    tokenManagerMintBurn: (await deployCreate2(create2Deployer, wallet, TokenManagerMintBurn, [interchainTokenServiceAddress], deploymentKey, gasOptions, verifyOptions)).address,
-                    tokenManagerLiquidityPool: (await deployCreate2(create2Deployer, wallet, TokenManagerLiquidityPool, [interchainTokenServiceAddress], deploymentKey, gasOptions, verifyOptions)).address,
+                    tokenManagerLockUnlock: (
+                        await deployCreate2(
+                            create2Deployer,
+                            wallet,
+                            TokenManagerLockUnlock,
+                            [interchainTokenServiceAddress],
+                            deploymentKey,
+                            gasOptions,
+                            verifyOptions,
+                        )
+                    ).address,
+                    tokenManagerMintBurn: (
+                        await deployCreate2(
+                            create2Deployer,
+                            wallet,
+                            TokenManagerMintBurn,
+                            [interchainTokenServiceAddress],
+                            deploymentKey,
+                            gasOptions,
+                            verifyOptions,
+                        )
+                    ).address,
+                    tokenManagerLiquidityPool: (
+                        await deployCreate2(
+                            create2Deployer,
+                            wallet,
+                            TokenManagerLiquidityPool,
+                            [interchainTokenServiceAddress],
+                            deploymentKey,
+                            gasOptions,
+                            verifyOptions,
+                        )
+                    ).address,
                 };
 
                 return implementations;
