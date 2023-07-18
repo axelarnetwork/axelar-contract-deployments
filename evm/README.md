@@ -6,6 +6,10 @@ This folder contains deployment scripts for the following contracts.
 
 `npm ci`
 
+For contract verification to work, copy over the appropriate build `artifacts` and `contracts` folder from the source repo into this repo. And update the hardhat config to use the same compiler version and optimizer runs setting.
+
+You also need to create a `info/keys.json` file. See `evm/.example.keys.json` for an example.
+
 ### AxelarGateway
 
 1. Compile the contracts from the source repo
