@@ -12,7 +12,6 @@ const { printInfo, writeJSON, predictAddressCreate, deployContract } = require('
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
 const contractName = 'ConstAddressDeployer';
 
-
 async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptions, yes = true, force = false, ignore = false) {
     const deployerWallet = new Wallet(privateKey, wallet.provider);
 
@@ -30,7 +29,7 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
     const provider = getDefaultProvider(rpc);
     const expectedAddress = contractConfig.address ? contractConfig.address : await predictAddressCreate(wallet.address, 0);
 
-    if (!force && await provider.getCode(expectedAddress) !== '0x') {
+    if (!force && (await provider.getCode(expectedAddress)) !== '0x') {
         console.log(`ConstAddressDeployer already deployed at address ${expectedAddress}`);
         contractConfig.address = expectedAddress;
         contractConfig.deployer = wallet.address;
@@ -43,7 +42,7 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
         throw new Error(`Nonce value must be zero.`);
     }
 
-    const balance = await provider.getBalance(deployerWallet.address)
+    const balance = await provider.getBalance(deployerWallet.address);
 
     if (balance.lte(0)) {
         throw new Error(`Deployer account has no funds.`);
@@ -113,7 +112,14 @@ async function main(options) {
         }
 
         const verifyOptions = options.verify ? { env: options.env, chain: chain.name } : null;
-        await deployConstAddressDeployer(wallet, config.chains[chainName.toLowerCase()], options.privateKey, verifyOptions, options.force, options.ignore);
+        await deployConstAddressDeployer(
+            wallet,
+            config.chains[chainName.toLowerCase()],
+            options.privateKey,
+            verifyOptions,
+            options.force,
+            options.ignore,
+        );
         writeJSON(config, `${__dirname}/../info/${options.env}.json`);
     }
 }

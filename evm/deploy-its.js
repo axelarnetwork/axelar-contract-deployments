@@ -36,14 +36,7 @@ const { deployCreate3Deployer } = require('./deploy-create3-deployer');
  * @param {*} saveFunc
  */
 
-async function deployImplementation(
-    wallet,
-    chain,
-    deploymentKey,
-    skipExisting = true,
-    verifyOptions = null,
-    saveFunc = null,
-) {
+async function deployImplementation(wallet, chain, deploymentKey, skipExisting = true, verifyOptions = null, saveFunc = null) {
     const contractName = 'InterchainTokenService';
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName] || {};
@@ -206,24 +199,15 @@ async function deployITS(
         deploymentKey,
         gasOptions,
         verifyOptions,
-    )
+    );
 
     contractConfig.address = contract.address;
     console.log(`Deployed Interchain Token Service at ${contract.address}`);
 
     if (saveFunc) await saveFunc();
-    
 }
 
-async function upgradeITS(
-    wallet,
-    chain,
-    deploymentKey,
-    operatorAddress = wallet.address,
-    verifyOptions = null,
-    saveFunc = null,
-) {
-
+async function upgradeITS(wallet, chain, deploymentKey, operatorAddress = wallet.address, verifyOptions = null, saveFunc = null) {
     const contractName = 'InterchainTokenService';
 
     console.log(
@@ -249,24 +233,18 @@ async function upgradeITS(
 
     const codehash = keccak256(await wallet.provider.getCode(contractConfig.implementation));
     console.log(codehash);
-    await (await contract.upgrade(
-        contractConfig.implementation,
-        codehash,
-        '0x',
-        gasOptions,
-    )).wait();
+    await (await contract.upgrade(contractConfig.implementation, codehash, '0x', gasOptions)).wait();
 
     console.log(`Deployed Interchain Token Service`);
 
     if (saveFunc) await saveFunc();
-    
 }
 
 async function main(options) {
     const config = require(`${__dirname}/../info/${options.env === 'local' ? 'testnet' : options.env}.json`);
 
     const chains = options.chainNames.split(',').map((str) => str.trim());
- 
+
     for (const chain of chains) {
         if (config.chains[chain.toLowerCase()] === undefined) {
             throw new Error(`Chain ${chain} is not defined in the info file`);
