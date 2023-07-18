@@ -69,7 +69,7 @@ async function main(options) {
 
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
-        const verifyOptions = options.verify ? { env: options.env, chain: chain.name } : null;
+        const verifyOptions = options.verify ? { env: options.env, chain: chain.name, only: options.verify } : null;
 
         let wallet;
 
@@ -103,7 +103,7 @@ if (require.main === module) {
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
-    program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+    program.addOption(new Option('-v, --verify <verify>', 'verify the deployed contract on the explorer').env('VERIFY'));
 
     program.action((options) => {
         main(options);
