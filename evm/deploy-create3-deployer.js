@@ -10,7 +10,7 @@ const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
 const { printInfo, writeJSON, deployCreate2 } = require('./utils');
-const implementationJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/Create3Deployer.json');
+const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/Create3Deployer.json');
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
 const { keccak256 } = require('ethers/lib/utils');
 const contractName = 'Create3Deployer';
@@ -39,14 +39,14 @@ async function deployCreate3Deployer(wallet, chain, salt = null, verifyOptions =
 
     const constAddressDeployer = contracts.ConstAddressDeployer.address;
 
-    const create3DeployerAddress = await predictContractConstant(constAddressDeployer, wallet, implementationJson, salt);
+    const create3DeployerAddress = await predictContractConstant(constAddressDeployer, wallet, contractJson, salt);
     printInfo('Create3 deployer will be deployed to', create3DeployerAddress);
 
     console.log('Does this match any existing deployments?');
     const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
     if (anwser !== 'y') return;
 
-    const contract = await deployCreate2(constAddressDeployer, wallet, implementationJson, [], salt, gasOptions.gasLimit, verifyOptions);
+    const contract = await deployCreate2(constAddressDeployer, wallet, contractJson, [], salt, gasOptions.gasLimit, verifyOptions);
 
     contractConfig.salt = salt;
     contractConfig.address = contract.address;

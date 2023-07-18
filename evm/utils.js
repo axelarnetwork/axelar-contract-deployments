@@ -42,6 +42,7 @@ const deployCreate2 = async (
     const contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args, gasOptions?.gasLimit);
 
     if (verifyOptions) {
+        sleep(5000);
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
     }
 
@@ -60,6 +61,7 @@ const deployCreate3 = async (
     const contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions.gasLimit);
 
     if (verifyOptions) {
+        sleep(5000);
         await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args);
     }
 
@@ -307,6 +309,10 @@ const getEVMAddresses = async (config, chain) => {
     return { addresses, weights, threshold };
 };
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 module.exports = {
     deployContract,
     deployCreate2,
@@ -326,4 +332,5 @@ module.exports = {
     isAddressArray,
     getProxy,
     getEVMAddresses,
+    sleep,
 };
