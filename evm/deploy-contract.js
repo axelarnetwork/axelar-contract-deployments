@@ -28,6 +28,46 @@ async function getConstructorArgs(contractName, config) {
     const contractConfig = config[contractName];
 
     switch (contractName) {
+        case 'AxelarServiceGovernance': {
+            const gateway = config.AxelarGateway?.address;
+
+            if (!isAddress(gateway)) {
+                throw new Error(`Missing AxelarGateway address in the chain info.`);
+            }
+
+            const governanceChain = contractConfig.governanceChain;
+
+            if (!isString(governanceChain)) {
+                throw new Error(`Missing AxelarServiceGovernance.governanceChain in the chain info.`);
+            }
+
+            const governanceAddress = contractConfig.governanceAddress;
+
+            if (!isString(governanceAddress)) {
+                throw new Error(`Missing AxelarServiceGovernance.governanceAddress in the chain info.`);
+            }
+
+            const minimumTimeDelay = contractConfig.minimumTimeDelay;
+
+            if (!isNumber(minimumTimeDelay)) {
+                throw new Error(`Missing AxelarServiceGovernance.minimumTimeDelay in the chain info.`);
+            }
+
+            const cosigners = contractConfig.cosigners;
+
+            if (!isAddressArray(cosigners)) {
+                throw new Error(`Missing AxelarServiceGovernance.cosigners in the chain info.`);
+            }
+
+            const threshold = contractConfig.threshold;
+
+            if (!isNumber(threshold)) {
+                throw new Error(`Missing AxelarServiceGovernance.threshold in the chain info.`);
+            }
+
+            return [gateway, governanceChain, governanceAddress, minimumTimeDelay, cosigners, threshold];
+        }
+
         case 'InterchainGovernance': {
             const gateway = config.AxelarGateway?.address;
 
