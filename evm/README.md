@@ -37,7 +37,9 @@ npm ci && cp example.env .env
 To test the Interchain Token Service deployment
 
 ```
-node evm/deploy-its -n ${chain-name}
+node evm/deploy-its -n ${chain-name} -s [salt]
 ```
+
+Run again with `-v only` to verify deployed contracts.
 
 You can change `.env` to run the above script to testnet instead of local. Change the `SALT` to get a new address.
