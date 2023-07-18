@@ -83,7 +83,7 @@ async function main(options) {
             wallet = new Wallet(options.privateKey, provider);
         }
 
-        await deployCreate3Deployer(wallet, chain, verifyOptions);
+        await deployCreate3Deployer(wallet, chain, options.salt, verifyOptions);
         writeJSON(config, `${__dirname}/../info/${options.env}.json`);
     }
 }
