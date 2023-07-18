@@ -2,7 +2,8 @@
 
 require('dotenv').config();
 
-const { Wallet, getDefaultProvider } = require('ethers');
+const { ethers } = require('hardhat');
+const { Wallet, getDefaultProvider, ContractFactory } = require('ethers');
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
@@ -11,9 +12,8 @@ const { printInfo, writeJSON, predictAddressCreate, deployContract } = require('
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
 const contractName = 'ConstAddressDeployer';
 
-async function deploy(options, chain) {
-    const { privateKey, ignore, verify, yes, force } = options;
-    const wallet = new Wallet(privateKey);
+async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptions, yes = true, force = false, ignore = false) {
+    const deployerWallet = new Wallet(privateKey, wallet.provider);
 
     printInfo('Deployer address', wallet.address);
 
@@ -36,13 +36,13 @@ async function deploy(options, chain) {
         return;
     }
 
-    const nonce = await provider.getTransactionCount(wallet.address);
+    const nonce = await provider.getTransactionCount(deployerWallet.address);
 
     if (nonce !== 0 && !ignore) {
         throw new Error(`Nonce value must be zero.`);
     }
 
-    const balance = await provider.getBalance(wallet.address);
+    const balance = await provider.getBalance(deployerWallet.address);
 
     if (balance.lte(0)) {
         throw new Error(`Deployer account has no funds.`);
@@ -62,7 +62,23 @@ async function deploy(options, chain) {
         if (anwser !== 'y') return;
     }
 
-    const contract = await deployContract(wallet.connect(provider), contractJson, [], gasOptions, verify);
+    if (!gasOptions.gasLimit) {
+        const contractFactory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
+        const tx = contractFactory.getDeployTransaction();
+        gasOptions.gasLimit = Math.floor((await wallet.provider.estimateGas(tx)) * 1.5);
+    }
+
+    if (!gasOptions.gasPrice) {
+        gasOptions.gasPrice = Math.floor((await wallet.provider.getGasPrice()) * 1.2);
+    }
+
+    const requiredBalance = gasOptions.gasLimit * gasOptions.gasPrice;
+
+    if (!ignore && balance < requiredBalance) {
+        await (await wallet.sendTransaction({ to: deployerWallet.address, value: requiredBalance - balance })).wait();
+    }
+
+    const contract = await deployContract(deployerWallet, contractJson, [], gasOptions, verifyOptions);
 
     contractConfig.address = contract.address;
     contractConfig.deployer = wallet.address;
@@ -71,42 +87,69 @@ async function deploy(options, chain) {
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../info/${options.env}.json`);
+    const config = require(`${__dirname}/../info/${options.env === 'local' ? 'testnet' : options.env}.json`);
 
-    const chains = options.chainNames.split(',');
+    const chains = options.chainNames.split(',').map((str) => str.trim());
 
-    for (const chain of chains) {
-        if (config.chains[chain.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chain} is not defined in the info file`);
+    for (const chainName of chains) {
+        if (config.chains[chainName.toLowerCase()] === undefined) {
+            throw new Error(`Chain ${chainName} is not defined in the info file`);
         }
     }
 
-    for (const chain of chains) {
-        await deploy(options, config.chains[chain.toLowerCase()]);
+    for (const chainName of chains) {
+        const chain = config.chains[chainName.toLowerCase()];
+
+        let wallet;
+
+        if (options.env === 'local') {
+            const [funder] = await ethers.getSigners();
+            wallet = new Wallet(options.privateKey, funder.provider);
+            await (await funder.sendTransaction({ to: wallet.address, value: BigInt(1e21) })).wait();
+        } else {
+            const provider = getDefaultProvider(chain.rpc);
+            wallet = new Wallet(options.privateKey, provider);
+        }
+
+        const verifyOptions = options.verify ? { env: options.env, chain: chain.name } : null;
+        await deployConstAddressDeployer(
+            wallet,
+            config.chains[chainName.toLowerCase()],
+            options.privateKey,
+            verifyOptions,
+            options.force,
+            options.ignore,
+        );
         writeJSON(config, `${__dirname}/../info/${options.env}.json`);
     }
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('deploy-const-address-deployer').description('Deploy const address deployer');
+    program.name('deploy-const-address-deployer').description('Deploy const address deployer');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-i, --ignore', 'ignore the nonce value check'));
-program.addOption(new Option('-f, --force', 'proceed with contract deployment even if address already returns a bytecode'));
-program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    program.addOption(
+        new Option('-e, --env <env>', 'environment')
+            .choices(['local', 'devnet', 'testnet', 'mainnet'])
+            .default('testnet')
+            .makeOptionMandatory(true)
+            .env('ENV'),
+    );
+    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+    program.addOption(new Option('-i, --ignore', 'ignore the nonce value check'));
+    program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+    program.addOption(new Option('-f, --force', 'proceed with contract deployment even if address already returns a bytecode'));
+    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+} else {
+    module.exports = {
+        deployConstAddressDeployer,
+    };
+}

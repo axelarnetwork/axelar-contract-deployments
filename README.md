@@ -1,3 +1,6 @@
 # Contract deployments for Axelar
 
-Contract deployment scripts and resources for Axelar
+Install dependencies via
+`npm ci`
+
+[EVM deployment instructions](./evm/README.md)

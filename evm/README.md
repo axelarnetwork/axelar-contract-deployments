@@ -25,3 +25,21 @@ This folder contains deployment scripts for the following contracts.
 5. Use the `--upgrade` flag to upgrade the contract instead
 6. Run the following depending on the service,
 `node evm/deploy-upgradable.js deploy --env testnet -n fantom -c AxelarGasService -a ../artifacts/contracts/gas-service/`
+
+### InterchainTokenService
+
+Install and copy default setting with
+
+```
+npm ci && cp example.env .env
+```
+
+To test the Interchain Token Service deployment
+
+```
+node evm/deploy-its -n ${chain-name} -s [salt]
+```
+
+Run again with `-v only` to verify deployed contracts.
+
+You can change `.env` to run the above script to testnet instead of local. Change the `SALT` to get a new address.

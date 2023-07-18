@@ -83,7 +83,6 @@ async function deployCreate3Upgradable(
     verifyOptions = null,
 ) {
     const implementation = await deployContract(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
-
     const proxyConstructorArgs = [implementation.address, wallet.address, setupParams, ...additionalProxyConstructorArgs];
     const proxy = await deployCreate3Contract(create3DeployerAddress, wallet, proxyJson, salt, proxyConstructorArgs, gasOptions?.gasLimit);
 
