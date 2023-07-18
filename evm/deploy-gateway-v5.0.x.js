@@ -26,7 +26,7 @@ function getProxyParams(governance, mintLimiter) {
 }
 
 async function deploy(config, options) {
-    const { env, chainName, privateKey, reuseProxy, verify } = options;
+    const { chainName, privateKey, reuseProxy, verify } = options;
 
     const contractName = 'AxelarGateway';
 
@@ -219,7 +219,7 @@ async function deploy(config, options) {
     if (verify) {
         // Verify contracts at the end to avoid deployment failures in the middle
         for (const contract of contractsToVerify) {
-            await verifyContract(env, chain, contract.address, contract.params);
+            await verifyContract(options.env, chain, contract.address, contract.params);
         }
 
         printLog('Verified all contracts!');

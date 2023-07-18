@@ -16,24 +16,25 @@
     "ethereum"
   ],
   "author": "axelar-network",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/axelarnetwork/axelar-contract-deployments/issues"
   },
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
-    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v1.0.0"
+    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v1.0.0",
+    "@axelar-network/axelar-gmp-sdk-solidity": "^4.0.0",
+    "@axelar-network/interchain-token-service": "^0.3.0",
+    "ethers": "^5.7.2"
   },
   "devDependencies": {
-    "@axelar-network/axelar-gmp-sdk-solidity": "^3.3.0",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "chai": "^4.3.7",
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
-    "chai": "^4.3.7",
     "dotenv": "^16.0.1",
     "eslint": "^8.36.0",
     "eslint-config-richardpringle": "^2.0.0",
-    "ethers": "^5.7.2",
     "fs-extra": "^11.1.1",
     "hardhat": "^2.13.0",
     "mocha": "^10.2.0",

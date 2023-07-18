@@ -1,7 +1,7 @@
 require('@nomicfoundation/hardhat-toolbox');
 
 const env = process.env.NETWORK || 'testnet';
-const { importNetworks, readJSON } = require('./evm/utils');
+const { importNetworks, readJSON } = require('./evm/utils.js');
 const chains = require(`${__dirname}/info/${env}.json`);
 const keys = readJSON(`${__dirname}/info/keys.json`);
 const { networks, etherscan } = importNetworks(chains, keys);
@@ -11,19 +11,19 @@ const { networks, etherscan } = importNetworks(chains, keys);
  */
 module.exports = {
     solidity: {
-        version: '0.8.9',
+        version: '0.8.18',
         settings: {
             evmVersion: process.env.EVM_VERSION || 'london',
             optimizer: {
                 enabled: true,
-                runs: 1000,
+                runs: 99999,
                 details: {
-                    peephole: true,
-                    inliner: true,
+                    peephole: process.env.COVERAGE === undefined,
+                    inliner: process.env.COVERAGE === undefined,
                     jumpdestRemover: true,
                     orderLiterals: true,
                     deduplicate: true,
-                    cse: true,
+                    cse: process.env.COVERAGE === undefined,
                     constantOptimizer: true,
                     yul: true,
                     yulDetails: {
