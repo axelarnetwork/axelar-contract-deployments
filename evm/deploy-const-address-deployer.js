@@ -13,7 +13,7 @@ const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/Const
 const contractName = 'ConstAddressDeployer';
 
 
-async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptions, yes = true) {
+async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptions, yes = true, force = false, ignore = false) {
     const deployerWallet = new Wallet(privateKey, wallet.provider);
 
     printInfo('Deployer address', wallet.address);
@@ -30,7 +30,7 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
     const provider = getDefaultProvider(rpc);
     const expectedAddress = contractConfig.address ? contractConfig.address : await predictAddressCreate(wallet.address, 0);
 
-    if (await provider.getCode(expectedAddress) !== '0x') {
+    if (!force && await provider.getCode(expectedAddress) !== '0x') {
         console.log(`ConstAddressDeployer already deployed at address ${expectedAddress}`);
         contractConfig.address = expectedAddress;
         contractConfig.deployer = wallet.address;
@@ -39,11 +39,14 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
 
     const nonce = await provider.getTransactionCount(deployerWallet.address);
 
-    if (nonce !== 0) {
+    if (nonce !== 0 && !ignore) {
         throw new Error(`Nonce value must be zero.`);
     }
 
     const balance = await provider.getBalance(deployerWallet.address)
+    if (balance.lte(0)) {
+        throw new Error(`Deployer account has no funds.`);
+    }
 
     console.log(`Deployer has ${balance / 1e18} ${chalk.green(chain.tokenSymbol)} and nonce ${nonce} on ${chain.name}.`);
 
@@ -59,7 +62,6 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
         if (anwser !== 'y') return;
     }
 
-    
     if (!gasOptions.gasLimit) {
         const contractFactory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
         const tx = contractFactory.getDeployTransaction();
@@ -72,19 +74,17 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
 
     const requiredBalance = gasOptions.gasLimit * gasOptions.gasPrice;
 
-    if (balance < requiredBalance) {
+    if (!ignore && balance < requiredBalance) {
         await (await wallet.sendTransaction({ to: deployerWallet.address, value: requiredBalance - balance })).wait();
     }
-    
-    const contract = await deployContract(deployerWallet, contractJson, [], gasOptions, verifyOptions);
 
+    const contract = await deployContract(deployerWallet, contractJson, [], gasOptions, verifyOptions);
 
     contractConfig.address = contract.address;
     contractConfig.deployer = wallet.address;
 
     printInfo(`${chain.name} | ConstAddressDeployer:`, contractConfig.address);
 }
-
 
 async function main(options) {
     const config = require(`${__dirname}/../info/${options.env === 'local' ? 'testnet' : options.env}.json`);
@@ -112,7 +112,7 @@ async function main(options) {
         }
 
         const verifyOptions = options.verify ? { env: options.env, chain: chain.name } : null;
-        await deployConstAddressDeployer(wallet, config.chains[chainName.toLowerCase()], options.privateKey, verifyOptions);
+        await deployConstAddressDeployer(wallet, config.chains[chainName.toLowerCase()], options.privateKey, verifyOptions, options.force, options.ignore);
         writeJSON(config, `${__dirname}/../info/${options.env}.json`);
     }
 }
@@ -133,6 +133,8 @@ if (require.main === module) {
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-i, --ignore', 'ignore the nonce value check'));
     program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+    program.addOption(new Option('-f, --force', 'proceed with contract deployment even if address already returns a bytecode'));
+    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
     program.action((options) => {
         main(options);
