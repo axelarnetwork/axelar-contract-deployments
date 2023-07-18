@@ -21,7 +21,6 @@ const TokenManagerMintBurn = require('@axelar-network/interchain-token-service/d
 const TokenManagerLiquidityPool = require('@axelar-network/interchain-token-service/dist/token-manager/implementations/TokenManagerLiquidityPool.sol/TokenManagerLiquidityPool.json');
 const InterchainTokenService = require('@axelar-network/interchain-token-service/dist/interchain-token-service/InterchainTokenService.sol/InterchainTokenService.json');
 const InterchainTokenServiceProxy = require('@axelar-network/interchain-token-service/dist/proxies/InterchainTokenServiceProxy.sol/InterchainTokenServiceProxy.json');
-const IInterchainTokenService = require('@axelar-network/interchain-token-service/dist/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
 const { Command, Option } = require('commander');
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
 const { deployCreate3Deployer } = require('./deploy-create3-deployer');
@@ -176,7 +175,6 @@ async function deployITS(
     verifyOptions = null,
     saveFunc = null,
 ) {
-
     const contractName = 'InterchainTokenService';
 
     console.log(
@@ -195,7 +193,7 @@ async function deployITS(
 
     await deployImplementation(wallet, chain, deploymentKey, skipExisting, verifyOptions, saveFunc);
 
-    if (skipExisting && (isAddress(contractConfig.address) || isAddressArray(contractConfig[key]))) return;
+    if (skipExisting && isAddress(contractConfig.address)) return;
 
     console.log(`Deploying Interchain Token Service.`);
 
@@ -319,7 +317,7 @@ if (require.main === module) {
     program.addOption(new Option('-o, --operator', 'address of the ITS operator').env('OPERATOR_ADDRESS'));
 
     program.action(async (options) => {
-        options.skipExisting = options.skipExisting == 'true';
+        options.skipExisting = options.skipExisting === 'true';
         await main(options);
     });
 

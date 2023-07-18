@@ -44,6 +44,7 @@ async function deployConstAddressDeployer(wallet, chain, privateKey, verifyOptio
     }
 
     const balance = await provider.getBalance(deployerWallet.address)
+
     if (balance.lte(0)) {
         throw new Error(`Deployer account has no funds.`);
     }
