@@ -165,7 +165,7 @@ async function deploy(options, chain) {
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
-    let salt;
+    let salt = options.salt || contractName;
     let constAddressDeployer;
     let create3Deployer;
 
@@ -178,7 +178,6 @@ async function deploy(options, chain) {
         }
 
         case 'create2': {
-            salt = salt || contractName;
             printInfo(`${contractName} deployment salt`, salt);
 
             constAddressDeployer = contracts.ConstAddressDeployer?.address;
@@ -187,13 +186,12 @@ async function deploy(options, chain) {
                 throw new Error(`ConstAddressDeployer deployer does not exist on ${chain.name}.`);
             }
 
-            const contractAddress = await predictContractConstant(constAddressDeployer, wallet, implementationJson, salt);
+            const contractAddress = await predictContractConstant(constAddressDeployer, wallet, implementationJson, salt, constructorArgs);
             printInfo(`${contractName} deployer will be deployed to`, contractAddress);
             break;
         }
 
         case 'create3': {
-            salt = options.salt || contractName;
             printInfo(`${contractName} deployment salt`, salt);
 
             create3Deployer = contracts.Create3Deployer?.address;
@@ -218,15 +216,15 @@ async function deploy(options, chain) {
 
     switch (deployMethod) {
         case 'create': {
-            contract = await deployContract(wallet, implementationJson, [], gasOptions, verifyOptions);
+            contract = await deployContract(wallet, implementationJson, constructorArgs, gasOptions, verifyOptions);
             break;
         }
 
         case 'create2': {
-            contract = await deployCreate2(constAddressDeployer, wallet, implementationJson, [], salt, gasOptions.gasLimit, verifyOptions);
+            contract = await deployCreate2(constAddressDeployer, wallet, implementationJson, constructorArgs, salt, gasOptions.gasLimit, verifyOptions);
 
             contractConfig.salt = salt;
-            printInfo(`${chain.name} | ConstAddressDeployer:`, constAddressDeployer);
+            printInfo(`${chain.name} | ConstAddressDeployer`, constAddressDeployer);
             break;
         }
 
@@ -242,7 +240,7 @@ async function deploy(options, chain) {
             );
 
             contractConfig.salt = salt;
-            printInfo(`${chain.name} | Create3Deployer:`, create3Deployer);
+            printInfo(`${chain.name} | Create3Deployer`, create3Deployer);
             break;
         }
     }
@@ -287,8 +285,7 @@ program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').mak
 program.addOption(
     new Option('-m, --deployMethod <deployMethod>', 'deployment method')
         .choices(['create', 'create2', 'create3'])
-        .default('create3')
-        .makeOptionMandatory(true),
+        .default('create2')
 );
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
