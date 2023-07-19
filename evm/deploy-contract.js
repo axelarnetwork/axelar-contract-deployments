@@ -165,7 +165,7 @@ async function deploy(options, chain) {
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
-    let salt = options.salt || contractName;
+    const salt = options.salt || contractName;
     let constAddressDeployer;
     let create3Deployer;
 
@@ -221,7 +221,15 @@ async function deploy(options, chain) {
         }
 
         case 'create2': {
-            contract = await deployCreate2(constAddressDeployer, wallet, implementationJson, constructorArgs, salt, gasOptions.gasLimit, verifyOptions);
+            contract = await deployCreate2(
+                constAddressDeployer,
+                wallet,
+                implementationJson,
+                constructorArgs,
+                salt,
+                gasOptions.gasLimit,
+                verifyOptions,
+            );
 
             contractConfig.salt = salt;
             printInfo(`${chain.name} | ConstAddressDeployer`, constAddressDeployer);
@@ -283,9 +291,7 @@ program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
 program.addOption(
-    new Option('-m, --deployMethod <deployMethod>', 'deployment method')
-        .choices(['create', 'create2', 'create3'])
-        .default('create2')
+    new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
 );
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
