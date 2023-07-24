@@ -5,7 +5,7 @@ require('dotenv').config();
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddress },
+    utils: { isAddres, keccak256 },
 } = require('ethers');
 const readlineSync = require('readline-sync');
 const { predictContractConstant, getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity');
@@ -138,7 +138,7 @@ async function deploy(options, chain) {
     const wallet = new Wallet(privateKey, provider);
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
-    const implementationJson = require(implementationPath);
+    const contractJson = require(implementationPath);
     printInfo('Deployer address', wallet.address);
 
     const balance = await provider.getBalance(wallet.address);
@@ -152,6 +152,9 @@ async function deploy(options, chain) {
             chain.tokenSymbol,
         )} and nonce ${await provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
     );
+
+    printInfo('Contract name', contractName);
+    printInfo('Contract bytecode hash', keccak256(contractJson.bytecode))
 
     const contracts = chain.contracts;
 
@@ -186,7 +189,7 @@ async function deploy(options, chain) {
                 throw new Error(`ConstAddressDeployer deployer does not exist on ${chain.name}.`);
             }
 
-            const contractAddress = await predictContractConstant(constAddressDeployer, wallet, implementationJson, salt, constructorArgs);
+            const contractAddress = await predictContractConstant(constAddressDeployer, wallet, contractJson, salt, constructorArgs);
             printInfo(`${contractName} deployer will be deployed to`, contractAddress);
             break;
         }
@@ -216,7 +219,7 @@ async function deploy(options, chain) {
 
     switch (deployMethod) {
         case 'create': {
-            contract = await deployContract(wallet, implementationJson, constructorArgs, gasOptions, verifyOptions);
+            contract = await deployContract(wallet, contractJson, constructorArgs, gasOptions, verifyOptions);
             break;
         }
 
@@ -224,7 +227,7 @@ async function deploy(options, chain) {
             contract = await deployCreate2(
                 constAddressDeployer,
                 wallet,
-                implementationJson,
+                contractJson,
                 constructorArgs,
                 salt,
                 gasOptions.gasLimit,
@@ -240,7 +243,7 @@ async function deploy(options, chain) {
             contract = await deployCreate3(
                 create3Deployer,
                 wallet.connect(provider),
-                implementationJson,
+                contractJson,
                 constructorArgs,
                 salt,
                 gasOptions,

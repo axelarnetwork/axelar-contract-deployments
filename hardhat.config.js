@@ -11,12 +11,12 @@ const { networks, etherscan } = importNetworks(chains, keys);
  */
 module.exports = {
     solidity: {
-        version: '0.8.18',
+        version: '0.8.9',
         settings: {
             evmVersion: process.env.EVM_VERSION || 'london',
             optimizer: {
                 enabled: true,
-                runs: 99999,
+                runs: 1000,
                 details: {
                     peephole: process.env.COVERAGE === undefined,
                     inliner: process.env.COVERAGE === undefined,

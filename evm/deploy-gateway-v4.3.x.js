@@ -2,19 +2,19 @@
 
 require('dotenv').config();
 
-const { printObj, writeJSON, getBytecodeHash, verifyContract, printInfo, printLog, getProxy, getEVMAddresses } = require('./utils');
-const ethers = require('ethers');
+const { printObj, getBytecodeHash, verifyContract, printInfo, printWarn, printError, getProxy, getEVMAddresses, saveConfig, loadConfig, printWalletInfo } = require('./utils');
+const { ethers } = require('hardhat');
 const {
     getContractFactory,
     Wallet,
     utils: { defaultAbiCoder, getContractAddress },
     getDefaultProvider,
 } = ethers;
+const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
 async function getAuthParams(config, chain) {
-    printLog('retrieving addresses');
     const { addresses, weights, threshold } = await getEVMAddresses(config, chain);
     printObj(JSON.stringify({ addresses, weights, threshold }));
     const paramsAuth = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
@@ -27,22 +27,17 @@ function getProxyParams(adminAddresses, adminThreshold) {
 }
 
 async function deploy(config, options) {
-    const { chainName, privateKey, reuseProxy, adminAddresses, adminThreshold, verify } = options;
+    const { chainName, privateKey, reuseProxy, skipExisting, adminAddresses, adminThreshold, verify, yes } = options;
 
     const contractName = 'AxelarGateway';
 
-    const chain = config.chains[chainName] || { contracts: {}, id: chainName, tokenSymbol: 'ETH' };
+    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
     const wallet = new Wallet(privateKey).connect(provider);
-    printInfo('Deployer address', wallet.address);
 
-    console.log(
-        `Deployer has ${(await provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
-            chain.tokenSymbol,
-        )} and nonce ${await provider.getTransactionCount(wallet.address)} on ${chainName}.`,
-    );
+    await printWalletInfo(wallet);
 
     if (chain.contracts[contractName] === undefined) {
         chain.contracts[contractName] = {};
@@ -56,15 +51,27 @@ async function deploy(config, options) {
     });
     printInfo('Predicted proxy address', proxyAddress);
 
+    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
+    printInfo('Is verification enabled?', verify ? 'y' : 'n');
+    printInfo('Skip existing contracts?', skipExisting ? 'y' : 'n');
+
     const gatewayFactory = await getContractFactory('AxelarGateway', wallet);
     const authFactory = await getContractFactory('AxelarAuthWeighted', wallet);
     const tokenDeployerFactory = await getContractFactory('TokenDeployer', wallet);
     const gatewayProxyFactory = await getContractFactory('AxelarGatewayProxy', wallet);
 
-    var gateway;
-    var auth;
-    var tokenDeployer;
-    var contractsToVerify = [];
+    let gateway;
+    let auth;
+    let tokenDeployer;
+    let implementation;
+    let contractsToVerify = [];
+
+    if (!yes) {
+        console.log('Does this match any existing deployments?');
+        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+    }
 
     if (reuseProxy) {
         printLog(`reusing gateway proxy contract`);
@@ -80,7 +87,9 @@ async function deploy(config, options) {
         const params = await getAuthParams(config, chain.id);
         printLog(`auth deployment args: ${params}`);
 
-        auth = await authFactory.deploy(params).then((d) => d.deployed());
+        // auth = await authFactory.deploy(params);
+        // await auth.deployTransaction.wait(chain.confirmations);
+        auth = authFactory.attach("0xe1cE95479C84e9809269227C7F8524aE051Ae77a");
         printLog(`deployed auth at address ${auth.address}`);
 
         contractsToVerify.push({
@@ -93,7 +102,11 @@ async function deploy(config, options) {
         tokenDeployer = tokenDeployerFactory.attach(await gateway.tokenDeployer());
     } else {
         printLog(`deploying token deployer contract`);
-        tokenDeployer = await tokenDeployerFactory.deploy().then((d) => d.deployed());
+
+        // tokenDeployer = await tokenDeployerFactory.deploy();
+        // await tokenDeployer.deployTransaction.wait(chain.confirmations);
+        tokenDeployer = tokenDeployerFactory.attach("0xE36ae4eb5248e2Acbc7E3113dB590c8883DFa659");
+
         printLog(`deployed token deployer at address ${tokenDeployer.address}`);
 
         contractsToVerify.push({
@@ -107,7 +120,9 @@ async function deploy(config, options) {
     printLog(`tokenDeployer: ${tokenDeployer.address}`);
     printLog(`implementation deployment args: ${auth.address},${tokenDeployer.address}`);
 
-    const gatewayImplementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address).then((d) => d.deployed());
+    // const gatewayImplementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address);
+    // await gatewayImplementation.deployTransaction.wait(chain.confirmations);
+    const gatewayImplementation = gatewayFactory.attach("0xe2396E236e9a5332d61Ea1a463958E0D60E3d310");
     printLog(`implementation: ${gatewayImplementation.address}`);
     const implementationCodehash = await getBytecodeHash(gatewayImplementation, chainName);
 
@@ -122,7 +137,9 @@ async function deploy(config, options) {
         const params = getProxyParams(adminAddresses, adminThreshold);
         printLog(`deploying gateway proxy contract`);
         printLog(`proxy deployment args: ${gatewayImplementation.address},${params}`);
-        const gatewayProxy = await gatewayProxyFactory.deploy(gatewayImplementation.address, params).then((d) => d.deployed());
+        const gatewayProxy = await gatewayProxyFactory.deploy(gatewayImplementation.address, params);
+        await gatewayProxy.deployTransaction.wait(chain.confirmations);
+
         printLog(`deployed gateway proxy at address ${gatewayProxy.address}`);
         gateway = gatewayFactory.attach(gatewayProxy.address);
 
@@ -134,7 +151,7 @@ async function deploy(config, options) {
 
     if (!reuseProxy) {
         printLog('transferring auth ownership');
-        await auth.transferOwnership(gateway.address, chain.contracts.AxelarGateway?.gasOptions || {}).then((tx) => tx.wait());
+        await auth.transferOwnership(gateway.address, chain.contracts.AxelarGateway?.gasOptions || {}).then((tx) => tx.wait(chain.confirmations));
         printLog('transferred auth ownership. All done!');
     }
 
@@ -196,10 +213,12 @@ async function deploy(config, options) {
 
     printLog(`Deployment completed`);
 
+    writeJSON(config, `${__dirname}/../info/${options.env}.json`);
+
     if (verify) {
         // Verify contracts at the end to avoid deployment failures in the middle
         for (const contract of contractsToVerify) {
-            await verifyContract(options.env, chain, contract.address, contract.params);
+            await verifyContract(options.env, chain.name, contract.address, contract.params);
         }
 
         printLog('Verified all contracts!');
@@ -210,8 +229,6 @@ async function main(options) {
     const config = require(`${__dirname}/../info/${options.env}.json`);
 
     await deploy(config, options);
-
-    writeJSON(config, `${__dirname}/../info/${options.env}.json`);
 }
 
 async function programHandler() {
@@ -233,6 +250,7 @@ async function programHandler() {
     program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment').env('REUSE_PROXY'));
     program.addOption(new Option('-a, --adminAddresses <adminAddresses>', 'admin addresses').env('ADMIN_ADDRESSES'));
     program.addOption(new Option('-t, --adminThreshold <adminThreshold>', 'admin threshold').env('ADMIN_THRESHOLD'));
+    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
     program.action((options) => {
         main(options);

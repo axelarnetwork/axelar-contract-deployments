@@ -60,7 +60,7 @@ async function deployCreate2Upgradable(
         salt,
         proxyConstructorArgs,
         [implementation.address, wallet.address, setupParams],
-        gasOptions?.gasLimit,
+        gasOptions,
     );
 
     if (verifyOptions) {
@@ -77,14 +77,13 @@ async function deployCreate3Upgradable(
     proxyJson,
     implementationConstructorArgs = [],
     proxyConstructorArgs = [],
-    additionalProxyInitArgs = [],
     setupParams = '0x',
     salt,
     gasOptions = null,
     verifyOptions = null,
 ) {
     const implementation = await deployContract(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
-    const proxyInitArgs = [implementation.address, wallet.address, setupParams, ...additionalProxyInitArgs];
+    const proxyInitArgs = [implementation.address, wallet.address, setupParams];
     const proxy = await deployCreate3AndInitContract(
         create3DeployerAddress,
         wallet,
@@ -92,7 +91,7 @@ async function deployCreate3Upgradable(
         salt,
         proxyConstructorArgs,
         proxyInitArgs,
-        gasOptions?.gasLimit,
+        gasOptions,
     );
 
     if (verifyOptions) {

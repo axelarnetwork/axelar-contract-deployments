@@ -15,7 +15,7 @@ const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
-const { printInfo, writeJSON, predictAddressCreate } = require('./utils');
+const { printInfo, saveConfig, loadConfig, predictAddressCreate, printWalletInfo } = require('./utils');
 
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
@@ -101,18 +101,12 @@ async function deploy(options, chain) {
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
     const wallet = new Wallet(privateKey, provider);
+    await printWalletInfo(wallet);
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
     const proxyPath = artifactPath + contractName + 'Proxy.sol/' + contractName + 'Proxy.json';
     const implementationJson = require(implementationPath);
     const proxyJson = require(proxyPath);
-    printInfo('Deployer address', wallet.address);
-
-    console.log(
-        `Deployer has ${(await provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
-            chain.tokenSymbol,
-        )} and nonce ${await provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
-    );
 
     const contracts = chain.contracts;
 
@@ -172,7 +166,7 @@ async function deploy(options, chain) {
 
         switch (deployMethod) {
             case 'create': {
-                const nonce = await provider.getTransactionCount(wallet.address);
+                const nonce = (await provider.getTransactionCount(wallet.address)) + 1;
                 const proxyAddress = await predictAddressCreate(wallet.address, nonce);
                 printInfo(`Proxy will be deployed to`, proxyAddress);
                 break;
@@ -187,7 +181,7 @@ async function deploy(options, chain) {
                     throw new Error(`ConstAddressDeployer deployer does not exist on ${chain.name}.`);
                 }
 
-                const proxyAddress = await predictContractConstant(constAddressDeployer, wallet, implementationJson, salt, implArgs);
+                const proxyAddress = await predictContractConstant(constAddressDeployer, wallet, proxyJson, salt);
                 printInfo(`Proxy deployer will be deployed to`, proxyAddress);
                 break;
             }
@@ -245,7 +239,7 @@ async function deploy(options, chain) {
                 );
 
                 contractConfig.salt = salt;
-                printInfo(`${chain.name} | ConstAddressDeployer:`, constAddressDeployer);
+                printInfo(`${chain.name} | ConstAddressDeployer`, constAddressDeployer);
                 break;
             }
 
@@ -256,7 +250,6 @@ async function deploy(options, chain) {
                     implementationJson,
                     proxyJson,
                     implArgs,
-                    [],
                     [],
                     setupArgs,
                     salt,
@@ -280,7 +273,7 @@ async function deploy(options, chain) {
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../info/${options.env}.json`);
+    const config = loadConfig(options.env);
 
     const chains = options.chainNames.split(',');
 
@@ -292,7 +285,7 @@ async function main(options) {
 
     for (const chain of chains) {
         await deploy(options, config.chains[chain.toLowerCase()]);
-        writeJSON(config, `${__dirname}/../info/${options.env}.json`);
+        saveConfig(config, options.env);
     }
 }
 

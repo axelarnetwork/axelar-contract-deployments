@@ -105,8 +105,28 @@ const printObj = (obj) => {
     console.log(JSON.stringify(obj, null, 2));
 };
 
-const printInfo = (msg, info) => {
-    console.log(`${msg}: ${chalk.green(info)}`);
+const printInfo = (msg, info = '') => {
+    if (info) {
+        console.log(`${msg}: ${chalk.green(info)}\n`);
+    } else {
+        console.log(`${msg}\n`);
+    }
+};
+
+const printWarn = (msg, info = '') => {
+    if (info) {
+        msg = msg + ': ' + info;
+    }
+
+    console.log(`${chalk.yellow(msg)}\n`);
+};
+
+const printError = (msg, info = '') => {
+    if (info) {
+        msg = msg + ': ' + info;
+    }
+
+    console.log(`${chalk.red(msg)}\n`);
 };
 
 function printLog(log) {
@@ -296,12 +316,18 @@ const isAddressArray = (arg) => {
  * @param {Object} contractObject - An instance of the contract or a contract factory (ethers.js Contract or ContractFactory object)
  * @returns {Promise<string>} - The keccak256 hash of the contract bytecode
  */
-async function getBytecodeHash(contractObject, chain = '') {
+async function getBytecodeHash(contractObject, chain = '', provider = null) {
     let bytecode;
 
-    if (contractObject.address) {
+    if (isString(contractObject)) {
+        if (provider === null) {
+            throw new Error('Provider must be provided for chain');
+        }
+
+        bytecode = await provider.getCode(contractObject);
+    } else if (contractObject.address) {
         // Contract instance
-        const provider = contractObject.provider;
+        provider = contractObject.provider;
         bytecode = await provider.getCode(contractObject.address);
     } else if (contractObject.bytecode) {
         // Contract factory
@@ -332,8 +358,8 @@ const getProxy = async (config, chain) => {
     return address;
 };
 
-const getEVMAddresses = async (config, chain) => {
-    const evmAddresses = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}`);
+const getEVMAddresses = async (config, chain, keyID = '') => {
+    const evmAddresses = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
 
     const addresses = sortedAddresses.map((weightedAddress) => weightedAddress.address);
@@ -345,6 +371,25 @@ const getEVMAddresses = async (config, chain) => {
 
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function loadConfig(env) {
+    return require(`${__dirname}/../info/${env}.json`);
+}
+
+function saveConfig(config, env) {
+    writeJSON(config, `${__dirname}/../info/${env}.json`);
+}
+
+async function printWalletInfo(wallet) {
+    printInfo('Wallet address', wallet.address);
+    const balance = await wallet.provider.getBalance(wallet.address);
+    printInfo('Wallet balance', `${balance / 1e18}`);
+    printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(wallet.address)).toString());
+
+    if (balance.isZero()) {
+        printError('Wallet balance is 0');
+    }
 }
 
 module.exports = {
@@ -359,6 +404,8 @@ module.exports = {
     printObj,
     printLog,
     printInfo,
+    printWarn,
+    printError,
     getBytecodeHash,
     predictAddressCreate,
     isString,
@@ -367,4 +414,7 @@ module.exports = {
     getProxy,
     getEVMAddresses,
     sleep,
+    loadConfig,
+    saveConfig,
+    printWalletInfo,
 };
