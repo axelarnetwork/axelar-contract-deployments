@@ -15,7 +15,7 @@ const { deployConstAddressDeployer } = require('./deploy-const-address-deployer'
 const { keccak256 } = require('ethers/lib/utils');
 const contractName = 'Create3Deployer';
 
-async function deployCreate3Deployer(wallet, chain, salt = null, verifyOptions = null) {
+async function deployCreate3Deployer(wallet, chain, options = null, verifyOptions = null) {
     printInfo('Deployer address', wallet.address);
 
     console.log(
@@ -34,7 +34,7 @@ async function deployCreate3Deployer(wallet, chain, salt = null, verifyOptions =
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
-    salt = salt || contractName;
+    const salt = options.salt || contractName;
     printInfo('Create3 deployer deployment salt', salt);
 
     const constAddressDeployer = contracts.ConstAddressDeployer.address;
@@ -42,9 +42,11 @@ async function deployCreate3Deployer(wallet, chain, salt = null, verifyOptions =
     const create3DeployerAddress = await predictContractConstant(constAddressDeployer, wallet, contractJson, salt);
     printInfo('Create3 deployer will be deployed to', create3DeployerAddress);
 
-    console.log('Does this match any existing deployments?');
-    const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-    if (anwser !== 'y') return;
+    if (!options.yes) {
+        console.log('Does this match any existing deployments?');
+        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+    }
 
     const contract = await deployCreate2(constAddressDeployer, wallet, contractJson, [], salt, gasOptions.gasLimit, verifyOptions);
 
@@ -83,7 +85,7 @@ async function main(options) {
             wallet = new Wallet(options.privateKey, provider);
         }
 
-        await deployCreate3Deployer(wallet, chain, options.salt, verifyOptions);
+        await deployCreate3Deployer(wallet, chain, { salt: options.salt, yes: options.yes }, verifyOptions);
         writeJSON(config, `${__dirname}/../info/${options.env}.json`);
     }
 }
@@ -104,6 +106,7 @@ if (require.main === module) {
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
     program.addOption(new Option('-v, --verify <verify>', 'verify the deployed contract on the explorer').env('VERIFY'));
+    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
     program.action((options) => {
         main(options);
