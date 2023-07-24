@@ -24,7 +24,8 @@ async function verifyContracts(chain, options) {
 
             await verifyContract(env, chain.name, contract.address, []);
             break;
-        };
+        }
+
         case 'CreateDeployer': {
             const CreateDeployer = require('../artifacts/contracts/deploy/Create3.sol/CreateDeployer.json');
 
