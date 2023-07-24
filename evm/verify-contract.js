@@ -3,14 +3,20 @@
 require('dotenv').config();
 
 const { ethers } = require('hardhat');
-const { Wallet, getDefaultProvider, getContractAt, getContractFactory, utils: { defaultAbiCoder, keccak256 } } = ethers;
+const {
+    Wallet,
+    getDefaultProvider,
+    getContractAt,
+    getContractFactory,
+    utils: { defaultAbiCoder },
+} = ethers;
 const { Command, Option } = require('commander');
 const { verifyContract, getEVMAddresses } = require('./utils');
 
 async function verifyContracts(config, chain, options) {
     const { env, contractName } = options;
     const provider = getDefaultProvider(chain.rpc);
-    const wallet = new Wallet.createRandom().connect(provider);
+    const wallet = Wallet.createRandom().connect(provider);
 
     switch (contractName) {
         case 'Create3Deployer': {
@@ -38,6 +44,7 @@ async function verifyContracts(config, chain, options) {
             await verifyContract(env, chain.name, contract.address, []);
             break;
         }
+
         case 'AxelarGateway': {
             const gatewayFactory = await getContractFactory('AxelarGateway', wallet);
             const gateway = gatewayFactory.attach(options.address || chain.contracts.AxelarGateway.address);
@@ -67,22 +74,28 @@ async function verifyContracts(config, chain, options) {
 
         case 'AxelarGasService': {
             const gasServiceFactory = await getContractFactory(contractName, wallet);
-            const contractConfig = chain.contracts[contractName]
+            const contractConfig = chain.contracts[contractName];
             const gasService = gasServiceFactory.attach(options.address || contractConfig.address);
 
             const implementation = await gasService.implementation();
             await verifyContract(env, chain.name, implementation, [contractConfig.collector]);
             await verifyContract(env, chain.name, gasService.address, []);
+            break;
         }
 
         case 'AxelarDepositService': {
             const depositServiceFactory = await getContractFactory(contractName, wallet);
-            const contractConfig = chain.contracts[contractName]
+            const contractConfig = chain.contracts[contractName];
             const gasService = depositServiceFactory.attach(options.address || contractConfig.address);
 
             const implementation = await gasService.implementation();
-            await verifyContract(env, chain.name, implementation, [chain.contracts.AxelarGateway.address, contractConfig.wrappedSymbol, contractConfig.refundIssuer]);
+            await verifyContract(env, chain.name, implementation, [
+                chain.contracts.AxelarGateway.address,
+                contractConfig.wrappedSymbol,
+                contractConfig.refundIssuer,
+            ]);
             await verifyContract(env, chain.name, gasService.address, []);
+            break;
         }
 
         case 'BurnableMintableCappedERC20': {

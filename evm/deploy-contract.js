@@ -5,7 +5,7 @@ require('dotenv').config();
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddres, keccak256 },
+    utils: { isAddress },
 } = require('ethers');
 const readlineSync = require('readline-sync');
 const { predictContractConstant, getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity');
@@ -22,6 +22,7 @@ const {
     deployContract,
     deployCreate2,
     deployCreate3,
+    getBytecodeHash,
 } = require('./utils');
 
 async function getConstructorArgs(contractName, config) {
@@ -154,7 +155,7 @@ async function deploy(options, chain) {
     );
 
     printInfo('Contract name', contractName);
-    printInfo('Contract bytecode hash', keccak256(contractJson.bytecode))
+    printInfo('Contract bytecode hash', getBytecodeHash(contractJson));
 
     const contracts = chain.contracts;
 
