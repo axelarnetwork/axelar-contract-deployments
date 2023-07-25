@@ -33,7 +33,7 @@ async function verifyContracts(config, chain, options) {
         }
 
         case 'ConstAddressDeployer': {
-            const ConstAddressDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
+            const ConstAddressDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json');
 
             const contractFactory = await getContractAt(ConstAddressDeployer.abi, wallet);
 
@@ -46,7 +46,7 @@ async function verifyContracts(config, chain, options) {
         }
 
         case 'CreateDeployer': {
-            const CreateDeployer = require('../artifacts/contracts/deploy/Create3.sol/CreateDeployer.json');
+            const CreateDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3.sol/CreateDeployer.json');
 
             const contractFactory = await getContractAt(CreateDeployer.abi, wallet);
 
