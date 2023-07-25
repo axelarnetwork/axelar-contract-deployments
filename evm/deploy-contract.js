@@ -8,21 +8,20 @@ const {
     utils: { isAddress },
 } = require('ethers');
 const readlineSync = require('readline-sync');
-const { predictContractConstant, getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
 const {
     printInfo,
-    writeJSON,
     isString,
     isNumber,
     isAddressArray,
-    predictAddressCreate,
-    deployContract,
-    deployCreate2,
-    deployCreate3,
     getBytecodeHash,
+    printWalletInfo,
+    getDeployedAddress,
+    deployContract,
+    loadConfig,
+    saveConfig,
 } = require('./utils');
 
 async function getConstructorArgs(contractName, config) {
@@ -137,25 +136,13 @@ async function deploy(options, chain) {
     const provider = getDefaultProvider(rpc);
 
     const wallet = new Wallet(privateKey, provider);
+    await printWalletInfo(wallet);
 
-    const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
-    const contractJson = require(implementationPath);
-    printInfo('Deployer address', wallet.address);
-
-    const balance = await provider.getBalance(wallet.address);
-
-    if (balance.lte(0)) {
-        throw new Error(`Deployer account has no funds.`);
-    }
-
-    console.log(
-        `Deployer has ${(await provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
-            chain.tokenSymbol,
-        )} and nonce ${await provider.getTransactionCount(wallet.address)} on ${chain.name}.`,
-    );
+    const contractPath = artifactPath + contractName + '.sol/' + contractName + '.json';
+    const contractJson = require(contractPath);
 
     printInfo('Contract name', contractName);
-    printInfo('Contract bytecode hash', await getBytecodeHash(contractJson));
+    printInfo('Contract bytecode hash', await getBytecodeHash(contractJson, chain.id));
 
     const contracts = chain.contracts;
 
@@ -170,45 +157,27 @@ async function deploy(options, chain) {
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
     const salt = options.salt || contractName;
-    let constAddressDeployer;
-    let create3Deployer;
+    let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
 
-    switch (deployMethod) {
-        case 'create': {
-            const nonce = (await provider.getTransactionCount(wallet.address)) + 1;
-            const contractAddress = await predictAddressCreate(wallet.address, nonce);
-            printInfo(`${contractName} will be deployed to`, contractAddress);
-            break;
-        }
-
-        case 'create2': {
-            printInfo(`${contractName} deployment salt`, salt);
-
-            constAddressDeployer = contracts.ConstAddressDeployer?.address;
-
-            if (!constAddressDeployer) {
-                throw new Error(`ConstAddressDeployer deployer does not exist on ${chain.name}.`);
-            }
-
-            const contractAddress = await predictContractConstant(constAddressDeployer, wallet, contractJson, salt, constructorArgs);
-            printInfo(`${contractName} deployer will be deployed to`, contractAddress);
-            break;
-        }
-
-        case 'create3': {
-            printInfo(`${contractName} deployment salt`, salt);
-
-            create3Deployer = contracts.Create3Deployer?.address;
-
-            if (!create3Deployer) {
-                throw new Error(`Create3 deployer does not exist on ${chain.name}.`);
-            }
-
-            const contractAddress = await getCreate3Address(create3Deployer, wallet.connect(provider), salt);
-            printInfo(`${contractName} will be deployed to`, contractAddress);
-            break;
-        }
+    if (deployMethod === 'create') {
+        deployerContract = null;
     }
+
+    const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
+        salt,
+        deployerContract,
+        contractJson,
+        constructorArgs,
+        provider: wallet.provider,
+    });
+
+    if (deployMethod !== 'create') {
+        printInfo(`${contractName} deployment salt`, salt);
+    }
+
+    printInfo('Deployment method', deployMethod);
+    printInfo('Deployer contract', deployerContract);
+    printInfo(`${contractName} will be deployed to`, predictedAddress);
 
     if (!yes) {
         console.log('Does this match any existing deployments?');
@@ -216,46 +185,15 @@ async function deploy(options, chain) {
         if (anwser !== 'y') return;
     }
 
-    let contract;
-
-    switch (deployMethod) {
-        case 'create': {
-            contract = await deployContract(wallet, contractJson, constructorArgs, gasOptions, verifyOptions);
-            break;
-        }
-
-        case 'create2': {
-            contract = await deployCreate2(
-                constAddressDeployer,
-                wallet,
-                contractJson,
-                constructorArgs,
-                salt,
-                gasOptions.gasLimit,
-                verifyOptions,
-            );
-
-            contractConfig.salt = salt;
-            printInfo(`${chain.name} | ConstAddressDeployer`, constAddressDeployer);
-            break;
-        }
-
-        case 'create3': {
-            contract = await deployCreate3(
-                create3Deployer,
-                wallet.connect(provider),
-                contractJson,
-                constructorArgs,
-                salt,
-                gasOptions,
-                verifyOptions,
-            );
-
-            contractConfig.salt = salt;
-            printInfo(`${chain.name} | Create3Deployer`, create3Deployer);
-            break;
-        }
-    }
+    const contract = await deployContract(
+        deployMethod,
+        wallet,
+        contractJson,
+        constructorArgs,
+        { salt, deployerContract },
+        gasOptions,
+        verifyOptions,
+    );
 
     contractConfig.address = contract.address;
     contractConfig.deployer = wallet.address;
@@ -264,9 +202,13 @@ async function deploy(options, chain) {
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../info/${options.env}.json`);
+    const config = loadConfig(options.env);
 
-    const chains = options.chainNames.split(',');
+    let chains = options.chainNames.split(',').map((str) => str.trim());
+
+    if (options.chainNames === 'all') {
+        chains = Object.keys(config.chains);
+    }
 
     for (const chain of chains) {
         if (config.chains[chain.toLowerCase()] === undefined) {
@@ -276,7 +218,7 @@ async function main(options) {
 
     for (const chain of chains) {
         await deploy(options, config.chains[chain.toLowerCase()]);
-        writeJSON(config, `${__dirname}/../info/${options.env}.json`);
+        saveConfig(config, options.env);
     }
 }
 

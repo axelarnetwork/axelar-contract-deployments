@@ -2,7 +2,8 @@
 
 const {
     ContractFactory,
-    utils: { getContractAddress, keccak256, isAddress },
+    Contract,
+    utils: { getContractAddress, keccak256, isAddress, getCreate2Address, Interface, defaultAbiCoder },
 } = require('ethers');
 const https = require('https');
 const http = require('http');
@@ -22,7 +23,11 @@ const {
 const execAsync = promisify(exec);
 const writeFileAsync = promisify(writeFile);
 
-const deployContract = async (wallet, contractJson, args = [], options = {}, verifyOptions = null) => {
+const getSaltFromKey = (key) => {
+    return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
+};
+
+const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
     const contract = await factory.deploy(...args, { ...options });
@@ -351,6 +356,112 @@ const predictAddressCreate = async (from, nonce) => {
     return address;
 };
 
+/**
+ *
+ * @param {string} deployer - Sender address that's triggering the contract deployment
+ * @param {string} deployMethod - 'create', 'create2', 'create3'
+ * @param {Object} options - Options for the deployment
+ * @param {string} options.deployerContract - Address of the contract that will deploy the contract
+ * @param {string} options.contractJson - Compiled contract to be deployed
+ * @param {any[]} options.constructorArgs - Arguments for the contract constructor
+ * @param {string} options.salt - Salt for the deployment
+ * @param {number} options.nonce - Nonce for the deployment
+ * @param {boolean} options.offline - Whether to compute address offline or use an online provider to get the nonce/deployed address
+ * @param {Object} options.provider - Provider to use for online deployment
+ * @returns {Promise<string>} - The predicted contract address
+ */
+const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
+    switch (deployMethod) {
+        case 'create': {
+            let nonce = options.nonce;
+
+            if (!nonce && !options.offline) {
+                nonce = await options.provider.getTransactionCount(deployer);
+            } else if (!isNumber(nonce)) {
+                throw new Error('Nonce must be provided for create deployment');
+            }
+
+            return getContractAddress({
+                from: deployer,
+                nonce,
+            });
+        }
+
+        case 'create2': {
+            let salt = getSaltFromKey(options.salt);
+
+            const deployerContract = options.deployerContract;
+
+            if (!isString(deployerContract)) {
+                throw new Error('Deployer contract address was not provided');
+            }
+
+            const contractJson = options.contractJson;
+            const constructorArgs = options.constructorArgs;
+            const factory = new ContractFactory(contractJson.abi, contractJson.bytecode);
+            const initCode = factory.getDeployTransaction(...constructorArgs).data;
+
+            if (!options.offline) {
+                const deployerInterface = new Contract(
+                    deployerContract,
+                    new Interface([
+                        'function deployedAddress(bytes calldata bytecode, address sender, bytes32 salt) external view returns (address deployedAddress_)',
+                    ]),
+                    options.provider,
+                );
+
+                return await deployerInterface.deployedAddress(initCode, deployer, salt);
+            }
+
+            salt = keccak256(defaultAbiCoder.encode(['address', 'bytes32'], [deployer, salt]));
+
+            return getCreate2Address(deployerContract, salt, keccak256(initCode));
+        }
+
+        case 'create3': {
+            const deployerContract = options.deployerContract;
+
+            if (!isString(deployerContract)) {
+                throw new Error('Deployer contract address was not provided');
+            }
+
+            if (!options.offline) {
+                const salt = getSaltFromKey(options.salt);
+
+                const deployerInterface = new Contract(
+                    deployerContract,
+                    new Interface([
+                        'function deployedAddress(address sender, bytes32 salt) external view returns (address deployedAddress_)',
+                    ]),
+                    options.provider,
+                );
+
+                return await deployerInterface.deployedAddress(deployer, salt);
+            }
+
+            const CreateDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3.sol/CreateDeployer.json');
+
+            const createDeployer = await getDeployedAddress(deployer, 'create2', {
+                salt: options.salt,
+                deployerContract,
+                contractJson: CreateDeployer,
+                constructorArgs: [],
+            });
+
+            const contractAddress = getContractAddress({
+                from: createDeployer,
+                nonce: 1,
+            });
+
+            return contractAddress;
+        }
+
+        default: {
+            throw new Error(`Invalid deployment method: ${deployMethod}`);
+        }
+    }
+};
+
 const getProxy = async (config, chain) => {
     const address = (await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/gateway_address/${chain}`)).address;
     return address;
@@ -390,10 +501,76 @@ async function printWalletInfo(wallet) {
     }
 }
 
+const deployContract = async (
+    deployMethod,
+    wallet,
+    contractJson,
+    constructorArgs,
+    deployOptions = {},
+    gasOptions = {},
+    verifyOptions = {},
+) => {
+    switch (deployMethod) {
+        case 'create': {
+            const contract = await deployCreate(wallet, contractJson, constructorArgs, gasOptions, verifyOptions);
+            return contract;
+        }
+
+        case 'create2': {
+            if (!isString(deployOptions.deployerContract)) {
+                throw new Error('Deployer contract address was not provided');
+            }
+
+            if (!isString(deployOptions.salt)) {
+                throw new Error('Salt was not provided');
+            }
+
+            const contract = await deployCreate2(
+                deployOptions.deployerContract,
+                wallet,
+                contractJson,
+                constructorArgs,
+                deployOptions.salt,
+                gasOptions.gasLimit,
+                verifyOptions,
+            );
+
+            return contract;
+        }
+
+        case 'create3': {
+            if (!isString(deployOptions.deployerContract)) {
+                throw new Error('Deployer contract address was not provided');
+            }
+
+            if (!isString(deployOptions.salt)) {
+                throw new Error('Salt was not provided');
+            }
+
+            const contract = await deployCreate3(
+                deployOptions.deployerContract,
+                wallet,
+                contractJson,
+                constructorArgs,
+                deployOptions.salt,
+                gasOptions,
+                verifyOptions,
+            );
+
+            return contract;
+        }
+
+        default: {
+            throw new Error(`Invalid deployment method: ${deployMethod}`);
+        }
+    }
+};
+
 module.exports = {
-    deployContract,
+    deployCreate,
     deployCreate2,
     deployCreate3,
+    deployContract,
     readJSON,
     writeJSON,
     httpGet,
@@ -406,6 +583,7 @@ module.exports = {
     printError,
     getBytecodeHash,
     predictAddressCreate,
+    getDeployedAddress,
     isString,
     isNumber,
     isAddressArray,
