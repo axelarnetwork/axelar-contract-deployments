@@ -10,6 +10,7 @@ const {
     utils: { defaultAbiCoder, getContractAddress },
     getDefaultProvider,
 } = ethers;
+const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
@@ -26,11 +27,11 @@ function getProxyParams(governance, mintLimiter) {
 }
 
 async function deploy(config, options) {
-    const { chainName, privateKey, reuseProxy, verify } = options;
+    const { chainName, privateKey, reuseProxy, verify, yes } = options;
 
     const contractName = 'AxelarGateway';
 
-    const chain = config.chains[chainName] || { contracts: {}, id: chainName, tokenSymbol: 'ETH' };
+    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
@@ -75,6 +76,12 @@ async function deploy(config, options) {
     var auth;
     var tokenDeployer;
     var contractsToVerify = [];
+
+    if (!yes) {
+        console.log('Does this match any existing deployments?');
+        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+    }
 
     if (reuseProxy) {
         printLog(`reusing gateway proxy contract`);
@@ -219,7 +226,7 @@ async function deploy(config, options) {
     if (verify) {
         // Verify contracts at the end to avoid deployment failures in the middle
         for (const contract of contractsToVerify) {
-            await verifyContract(options.env, chain, contract.address, contract.params);
+            await verifyContract(options.env, chain.name, contract.address, contract.params);
         }
 
         printLog('Verified all contracts!');
@@ -253,6 +260,7 @@ async function programHandler() {
     program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment').env('REUSE_PROXY'));
     program.addOption(new Option('-g, --governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('-m, --mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
+    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
     program.action((options) => {
         main(options);

@@ -27,23 +27,29 @@ async function sendTokens(chain, options) {
         throw new Error(`Wallet has insufficient funds.`);
     }
 
+    const recipients = options.recipients.split(',').map((str) => str.trim());
+
     if (!options.yes) {
         const anwser = readlineSync.question(
-            `Proceed with the transfer of ${chalk.green(options.amount)} ${chalk.green(chain.tokenSymbol)} to ${options.recipient} on ${
+            `Proceed with the transfer of ${chalk.green(options.amount)} ${chalk.green(chain.tokenSymbol)} to ${recipients} on ${
                 chain.name
             }? ${chalk.green('(y/n)')} `,
         );
         if (anwser !== 'y') return;
     }
 
-    const tx = await wallet.sendTransaction({
-        to: options.recipient,
-        value: amount,
-    });
+    for (const recipient of recipients) {
+        printInfo('Recipient', recipient);
 
-    console.log(`Transaction hash: ${chalk.green(tx.hash)}`);
+        const tx = await wallet.sendTransaction({
+            to: recipient,
+            value: amount,
+        });
 
-    await tx.wait();
+        printInfo('Transaction hash', tx.hash);
+
+        await tx.wait();
+    }
 }
 
 async function main(options) {
@@ -78,7 +84,7 @@ if (require.main === module) {
     );
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-    program.addOption(new Option('-r, --recipient <recipient>', 'recipient of tokens').makeOptionMandatory(true));
+    program.addOption(new Option('-r, --recipients <recipients>', 'comma-separated recipients of tokens').makeOptionMandatory(true));
     program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)').makeOptionMandatory(true));
     program.addOption(new Option('-y, --yes', 'skip prompts'));
 

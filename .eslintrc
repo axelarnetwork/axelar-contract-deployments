@@ -6,5 +6,6 @@
   },
   "rules": {
     "no-unused-expressions": "off"
-  }
+  },
+  "ignorePatterns": ["temp-arguments.js"]
 }
