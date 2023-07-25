@@ -155,7 +155,7 @@ async function deploy(options, chain) {
     );
 
     printInfo('Contract name', contractName);
-    printInfo('Contract bytecode hash', getBytecodeHash(contractJson));
+    printInfo('Contract bytecode hash', await getBytecodeHash(contractJson));
 
     const contracts = chain.contracts;
 

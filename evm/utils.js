@@ -214,13 +214,11 @@ const importNetworks = (chains, keys) => {
         customChains: [],
     };
 
-    if (!chains.chains) {
+    if (!(chains.chains)) {
         // Use new format
+        delete chains.chains;
         chains = {
-            chains: chains.reduce((obj, chain) => {
-                obj[chain.name.toLowerCase()] = chain;
-                return obj;
-            }, {}),
+            chains: chains,
         };
     }
 

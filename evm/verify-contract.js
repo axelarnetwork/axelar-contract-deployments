@@ -24,7 +24,20 @@ async function verifyContracts(config, chain, options) {
 
             const contractFactory = await getContractAt(Create3Deployer.abi, wallet);
 
-            const contract = contractFactory.attach(options.address || chain.Create3Deployer.address);
+            const contract = contractFactory.attach(options.address || chain.contracts.Create3Deployer.address);
+
+            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
+
+            await verifyContract(env, chain.name, contract.address, []);
+            break;
+        }
+
+        case 'ConstAddressDeployer': {
+            const ConstAddressDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
+
+            const contractFactory = await getContractAt(ConstAddressDeployer.abi, wallet);
+
+            const contract = contractFactory.attach(options.address || chain.contracts.ConstAddressDeployer.address);
 
             console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
 
@@ -37,7 +50,7 @@ async function verifyContracts(config, chain, options) {
 
             const contractFactory = await getContractAt(CreateDeployer.abi, wallet);
 
-            const contract = contractFactory.attach(options.address || chain.CreateDeployer.address);
+            const contract = contractFactory.attach(options.address || chain.contracts.CreateDeployer.address);
 
             console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
 
@@ -111,12 +124,13 @@ async function verifyContracts(config, chain, options) {
             const tokenContract = token.attach(tokenAddress);
             const name = await tokenContract.name();
             const decimals = await tokenContract.decimals();
+            const cap = await tokenContract.cap();
 
-            console.log(defaultAbiCoder.encode(['string', 'string', 'uint8', 'uint256'], [name, symbol, decimals, 0]));
+            console.log(defaultAbiCoder.encode(['string', 'string', 'uint8', 'uint256'], [name, symbol, decimals, cap]));
 
             console.log(`Verifying ${name} (${symbol}) decimals ${decimals} on ${chain.name}...`);
 
-            await verifyContract(env, chain.name, tokenContract.address, [name, symbol, decimals, 0]);
+            await verifyContract(env, chain.name, tokenContract.address, [name, symbol, decimals, cap]);
             break;
         }
     }
