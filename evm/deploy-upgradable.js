@@ -182,7 +182,7 @@ async function deploy(options, chain) {
         printInfo('Deployment method', deployMethod);
         printInfo('Deployer contract', deployerContract);
         printInfo(`${contractName} will be deployed to`, predictedAddress);
-    
+
         if (!yes) {
             console.log('Does this match any existing deployments?');
             const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
@@ -221,7 +221,7 @@ async function deploy(options, chain) {
                 );
 
                 contractConfig.salt = salt;
-                printInfo(`${chain.name} | ConstAddressDeployer`, constAddressDeployer);
+                printInfo(`${chain.name} | ConstAddressDeployer`, deployerContract);
                 break;
             }
 
@@ -240,7 +240,7 @@ async function deploy(options, chain) {
                 );
 
                 contractConfig.salt = salt;
-                printInfo(`${chain.name} | Create3Deployer`, create3Deployer);
+                printInfo(`${chain.name} | Create3Deployer`, deployerContract);
                 break;
             }
 
