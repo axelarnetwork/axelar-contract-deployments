@@ -175,7 +175,7 @@ async function deploy(options, chain) {
 
     switch (deployMethod) {
         case 'create': {
-            const nonce = await provider.getTransactionCount(wallet.address) + 1;
+            const nonce = (await provider.getTransactionCount(wallet.address)) + 1;
             const contractAddress = await predictAddressCreate(wallet.address, nonce);
             printInfo(`${contractName} will be deployed to`, contractAddress);
             break;
