@@ -9,13 +9,12 @@ const {
     utils: { isAddress },
 } = require('ethers');
 const readlineSync = require('readline-sync');
-const { predictContractConstant, getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/dist/IUpgradable.json');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
-const { printInfo, saveConfig, loadConfig, predictAddressCreate, printWalletInfo } = require('./utils');
+const { printInfo, saveConfig, loadConfig, printWalletInfo, getDeployedAddress } = require('./utils');
 
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
@@ -161,45 +160,28 @@ async function deploy(options, chain) {
         const setupArgs = getInitArgs(contractName, contracts);
         printInfo('Proxy setup args', setupArgs);
 
-        let constAddressDeployer;
-        let create3Deployer;
+        let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
 
-        switch (deployMethod) {
-            case 'create': {
-                const nonce = (await provider.getTransactionCount(wallet.address)) + 1;
-                const proxyAddress = await predictAddressCreate(wallet.address, nonce);
-                printInfo(`Proxy will be deployed to`, proxyAddress);
-                break;
-            }
-
-            case 'create2': {
-                printInfo(`Proxy deployment salt`, salt);
-
-                constAddressDeployer = contracts.ConstAddressDeployer?.address;
-
-                if (!constAddressDeployer) {
-                    throw new Error(`ConstAddressDeployer deployer does not exist on ${chain.name}.`);
-                }
-
-                const proxyAddress = await predictContractConstant(constAddressDeployer, wallet, proxyJson, salt);
-                printInfo(`Proxy deployer will be deployed to`, proxyAddress);
-                break;
-            }
-
-            case 'create3': {
-                printInfo(`Proxy deployment salt`, salt);
-
-                create3Deployer = contracts.Create3Deployer?.address;
-
-                if (!create3Deployer) {
-                    throw new Error(`Create3 deployer does not exist on ${chain.name}.`);
-                }
-
-                const proxyAddress = await getCreate3Address(create3Deployer, wallet.connect(provider), salt);
-                printInfo(`Proxy will be deployed to`, proxyAddress);
-                break;
-            }
+        if (deployMethod === 'create') {
+            deployerContract = null;
         }
+
+        const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
+            salt,
+            deployerContract,
+            contractJson: proxyJson,
+            constructorArgs: [],
+            provider: wallet.provider,
+            nonce: (await wallet.provider.getTransactionCount(wallet.address)) + 1,
+        });
+
+        if (deployMethod !== 'create') {
+            printInfo(`${contractName} deployment salt`, salt);
+        }
+
+        printInfo('Deployment method', deployMethod);
+        printInfo('Deployer contract', deployerContract);
+        printInfo(`${contractName} will be deployed to`, predictedAddress);
 
         if (!yes) {
             console.log('Does this match any existing deployments?');
@@ -226,8 +208,8 @@ async function deploy(options, chain) {
 
             case 'create2': {
                 contract = await deployCreate2Upgradable(
-                    constAddressDeployer,
-                    wallet.connect(provider),
+                    deployerContract,
+                    wallet,
                     implementationJson,
                     proxyJson,
                     implArgs,
@@ -239,14 +221,14 @@ async function deploy(options, chain) {
                 );
 
                 contractConfig.salt = salt;
-                printInfo(`${chain.name} | ConstAddressDeployer`, constAddressDeployer);
+                printInfo(`${chain.name} | ConstAddressDeployer`, deployerContract);
                 break;
             }
 
             case 'create3': {
                 contract = await deployCreate3Upgradable(
-                    create3Deployer,
-                    wallet.connect(provider),
+                    deployerContract,
+                    wallet,
                     implementationJson,
                     proxyJson,
                     implArgs,
@@ -258,8 +240,12 @@ async function deploy(options, chain) {
                 );
 
                 contractConfig.salt = salt;
-                printInfo(`${chain.name} | Create3Deployer`, create3Deployer);
+                printInfo(`${chain.name} | Create3Deployer`, deployerContract);
                 break;
+            }
+
+            default: {
+                throw new Error(`Unknown deployment method ${deployMethod}`);
             }
         }
 
@@ -275,7 +261,11 @@ async function deploy(options, chain) {
 async function main(options) {
     const config = loadConfig(options.env);
 
-    const chains = options.chainNames.split(',');
+    let chains = options.chainNames.split(',').map((str) => str.trim());
+
+    if (options.chainNames === 'all') {
+        chains = Object.keys(config.chains);
+    }
 
     for (const chain of chains) {
         if (config.chains[chain.toLowerCase()] === undefined) {
