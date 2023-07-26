@@ -117,6 +117,7 @@ async function main(options) {
             config.chains[chainName.toLowerCase()],
             options.privateKey,
             verifyOptions,
+            options.yes,
             options.force,
             options.ignore,
         );
