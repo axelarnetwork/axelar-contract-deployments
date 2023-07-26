@@ -197,6 +197,11 @@ async function deploy(options, chain) {
 
     contractConfig.address = contract.address;
     contractConfig.deployer = wallet.address;
+    contractConfig.deploymentMethod = deployMethod;
+
+    if (deployMethod !== 'create') {
+        contractConfig.salt = salt;
+    }
 
     printInfo(`${chain.name} | ${contractName}`, contractConfig.address);
 }
