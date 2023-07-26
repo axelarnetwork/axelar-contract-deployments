@@ -79,7 +79,7 @@ async function main(options) {
             const [funder] = await ethers.getSigners();
             wallet = new Wallet(options.privateKey, funder.provider);
             await (await funder.sendTransaction({ to: wallet.address, value: BigInt(1e21) })).wait();
-            await deployConstAddressDeployer(wallet, config.chains[chains[0].toLowerCase()], keccak256('0x9123'));
+            await deployConstAddressDeployer(wallet, config.chains[chains[0].toLowerCase()]);
         } else {
             const provider = getDefaultProvider(chain.rpc);
             wallet = new Wallet(options.privateKey, provider);
