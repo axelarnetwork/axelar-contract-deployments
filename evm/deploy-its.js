@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const { getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity');
-const { deployCreate3, deployCreate2, writeJSON } = require('./utils');
+const { deployCreate3, deployCreate2 } = require('./utils');
 const {
     Wallet,
     Contract,
@@ -10,7 +10,7 @@ const {
 } = require('ethers');
 const readlineSync = require('readline-sync');
 const chalk = require('chalk');
-const { printInfo } = require('./utils');
+const { printInfo, loadConfig, saveConfig } = require('./utils');
 
 const TokenManagerDeployer = require('@axelar-network/interchain-token-service/dist/utils/TokenManagerDeployer.sol/TokenManagerDeployer.json');
 const StandardizedTokenLockUnlock = require('@axelar-network/interchain-token-service/dist/token-implementations/StandardizedTokenLockUnlock.sol/StandardizedTokenLockUnlock.json');
@@ -318,7 +318,7 @@ async function upgradeITS(wallet, chain, deploymentKey, operatorAddress = wallet
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../info/${options.env === 'local' ? 'testnet' : options.env}.json`);
+    const config = loadConfig(options.env);
 
     const chains = options.chainNames.split(',').map((str) => str.trim());
 
@@ -352,9 +352,7 @@ async function main(options) {
             return;
         }
 
-        await deployITS(wallet, chain, options.salt, operator, options.skipExisting, verifyOptions, () =>
-            writeJSON(config, `${__dirname}/../info/${options.env}.json`),
-        );
+        await deployITS(wallet, chain, options.salt, operator, options.skipExisting, verifyOptions, () => saveConfig(config, options.env));
     }
 }
 
