@@ -12,7 +12,6 @@ const chalk = require('chalk');
 const { printInfo, writeJSON, deployCreate2 } = require('./utils');
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/Create3Deployer.json');
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
-const { keccak256 } = require('ethers/lib/utils');
 const contractName = 'Create3Deployer';
 
 async function deployCreate3Deployer(wallet, chain, options = null, verifyOptions = null) {
