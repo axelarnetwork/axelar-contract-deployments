@@ -75,6 +75,7 @@ async function deployConstAddressDeployer(wallet, chain, options = null, verifyO
     if (!options.ignore && balance < requiredBalance) {
         await (await wallet.sendTransaction({ to: wallet.address, value: requiredBalance - balance })).wait();
     }
+
     const contract = await deployCreate(wallet, contractJson, [], gasOptions, verifyOptions);
 
     contractConfig.address = contract.address;
