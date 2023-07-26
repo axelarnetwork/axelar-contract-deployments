@@ -338,8 +338,8 @@ async function main(options) {
             const [funder] = await require('hardhat').ethers.getSigners();
             wallet = new Wallet(options.privateKey, funder.provider);
             await (await funder.sendTransaction({ to: wallet.address, value: BigInt(1e21) })).wait();
-            await deployConstAddressDeployer(wallet, chain, keccak256('0x1234'), verifyOptions);
-            await deployCreate3Deployer(wallet, chain, keccak256('0x0123'), verifyOptions);
+            await deployConstAddressDeployer(wallet, chain, null, verifyOptions);
+            await deployCreate3Deployer(wallet, chain, null, verifyOptions);
         } else {
             const provider = getDefaultProvider(chain.rpc);
             wallet = new Wallet(options.privateKey, provider);
