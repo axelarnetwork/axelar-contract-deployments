@@ -8,7 +8,7 @@ const {
 const { deployAndInitContractConstant, deployCreate3AndInitContract } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/dist/IUpgradable.json');
 
-const { verifyContract, deployContract } = require('./utils');
+const { verifyContract, deployCreate } = require('./utils');
 
 async function deployUpgradable(
     wallet,
@@ -51,7 +51,7 @@ async function deployCreate2Upgradable(
     gasOptions = null,
     verifyOptions,
 ) {
-    const implementation = await deployContract(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
+    const implementation = await deployCreate(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
 
     const proxy = await deployAndInitContractConstant(
         constAddressDeployerAddress,
@@ -82,7 +82,7 @@ async function deployCreate3Upgradable(
     gasOptions = null,
     verifyOptions = null,
 ) {
-    const implementation = await deployContract(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
+    const implementation = await deployCreate(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
     const proxyInitArgs = [implementation.address, wallet.address, setupParams];
     const proxy = await deployCreate3AndInitContract(
         create3DeployerAddress,
@@ -112,7 +112,7 @@ async function upgradeUpgradable(
 ) {
     const proxy = new Contract(proxyAddress, IUpgradable.abi, wallet);
 
-    const implementation = await deployContract(
+    const implementation = await deployCreate(
         wallet,
         contractJson,
         implementationConstructorArgs,
