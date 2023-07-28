@@ -233,7 +233,7 @@ program.name('deploy-contract').description('Deploy contracts using create, crea
 
 program.addOption(
     new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'testnet', 'mainnet'])
+        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
         .default('testnet')
         .makeOptionMandatory(true)
         .env('ENV'),
