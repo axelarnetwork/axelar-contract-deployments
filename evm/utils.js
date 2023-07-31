@@ -294,7 +294,7 @@ const verifyContract = async (env, chain, contract, args, contractPath = null) =
 };
 
 const isString = (arg) => {
-    return typeof arg === 'string';
+    return typeof arg === 'string' && arg !== "";
 };
 
 const isNumber = (arg) => {
