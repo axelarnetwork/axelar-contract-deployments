@@ -285,7 +285,7 @@ program.name('deploy-upgradable').description('Deploy upgradable contracts');
 
 program.addOption(
     new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'testnet', 'mainnet'])
+        .choices(['local', 'devnet', 'stagenet', 'stagenet', 'testnet', 'mainnet'])
         .default('testnet')
         .makeOptionMandatory(true)
         .env('ENV'),
