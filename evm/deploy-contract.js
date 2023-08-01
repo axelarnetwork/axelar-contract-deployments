@@ -24,7 +24,7 @@ const {
     saveConfig,
 } = require('./utils');
 
-async function getConstructorArgs(contractName, config) {
+async function getConstructorArgs(contractName, config, wallet) {
     const contractConfig = config[contractName];
 
     switch (contractName) {
@@ -113,10 +113,13 @@ async function getConstructorArgs(contractName, config) {
         }
 
         case 'Operators': {
-            const owner = contractConfig.owner;
+            let owner = contractConfig.owner;
 
-            if (!isAddress(owner)) {
-                throw new Error(`Missing Operators.owner in the chain info.`);
+            if (!contractConfig.owner) {
+                owner = wallet.address;
+                contractConfig.owner = owner;
+            } else if (!isAddress(owner)) {
+                throw new Error(`Invalid Operators.owner in the chain info.`);
             }
 
             return [owner];
@@ -157,7 +160,7 @@ async function deploy(options, chain) {
     }
 
     const contractConfig = contracts[contractName];
-    const constructorArgs = await getConstructorArgs(contractName, contracts);
+    const constructorArgs = await getConstructorArgs(contractName, contracts, wallet);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
