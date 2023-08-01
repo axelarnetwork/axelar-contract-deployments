@@ -113,7 +113,13 @@ async function getConstructorArgs(contractName, config) {
         }
 
         case 'Operators': {
-            return [];
+            const owner = contractConfig.owner;
+
+            if (!isAddress(owner)) {
+                throw new Error(`Missing Operators.owner in the chain info.`);
+            }
+
+            return [owner];
         }
 
         case 'ConstAddressDeployer': {
