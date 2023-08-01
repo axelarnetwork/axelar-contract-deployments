@@ -32,6 +32,13 @@
           "address": "0x3413CCa96E70f9A9Dd73e0505d0d89D0b803637f",
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -71,6 +78,13 @@
           "address": "0x3413CCa96E70f9A9Dd73e0505d0d89D0b803637f",
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -110,6 +124,13 @@
           "address": "0x3413CCa96E70f9A9Dd73e0505d0d89D0b803637f",
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -149,6 +170,13 @@
           "address": "0x3413CCa96E70f9A9Dd73e0505d0d89D0b803637f",
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -188,6 +216,13 @@
           "address": "0x3413CCa96E70f9A9Dd73e0505d0d89D0b803637f",
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -227,6 +262,13 @@
           "address": "0x3413CCa96E70f9A9Dd73e0505d0d89D0b803637f",
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -269,6 +311,13 @@
           "address": "0x3413CCa96E70f9A9Dd73e0505d0d89D0b803637f",
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -308,6 +357,13 @@
           "address": "0x3413CCa96E70f9A9Dd73e0505d0d89D0b803637f",
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -346,6 +402,13 @@
           "address": "0x3413CCa96E70f9A9Dd73e0505d0d89D0b803637f",
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -387,6 +450,13 @@
           "address": "0x3413CCa96E70f9A9Dd73e0505d0d89D0b803637f",
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "salt": "Operators"
         }
       },
       "explorer": {
