@@ -24,7 +24,7 @@ const {
     saveConfig,
 } = require('./utils');
 
-async function getConstructorArgs(contractName, config) {
+async function getConstructorArgs(contractName, config, wallet) {
     const contractConfig = config[contractName];
 
     switch (contractName) {
@@ -113,7 +113,16 @@ async function getConstructorArgs(contractName, config) {
         }
 
         case 'Operators': {
-            return [];
+            let owner = contractConfig.owner;
+
+            if (!owner) {
+                owner = wallet.address;
+                contractConfig.owner = owner;
+            } else if (!isAddress(owner)) {
+                throw new Error(`Invalid Operators.owner in the chain info.`);
+            }
+
+            return [owner];
         }
 
         case 'ConstAddressDeployer': {
@@ -128,7 +137,21 @@ async function getConstructorArgs(contractName, config) {
     throw new Error(`${contractName} is not supported.`);
 }
 
-async function deploy(options, chain) {
+async function checkContract(contractName, contract, contractConfig) {
+    switch (contractName) {
+        case 'Operators': {
+            const owner = await contract.owner();
+
+            if (owner !== contractConfig.owner) {
+                throw new Error(`Expected owner ${contractConfig.owner} but got ${owner}.`);
+            }
+
+            break;
+        }
+    }
+}
+
+async function deploy(options, chain, config) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes } = options;
     const verifyOptions = verify ? { env, chain: chain.name } : null;
 
@@ -151,7 +174,7 @@ async function deploy(options, chain) {
     }
 
     const contractConfig = contracts[contractName];
-    const constructorArgs = await getConstructorArgs(contractName, contracts);
+    const constructorArgs = await getConstructorArgs(contractName, contracts, wallet);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
@@ -203,7 +226,11 @@ async function deploy(options, chain) {
         contractConfig.salt = salt;
     }
 
+    saveConfig(config, options.env);
+
     printInfo(`${chain.name} | ${contractName}`, contractConfig.address);
+
+    await checkContract(contractName, contract, contractConfig);
 }
 
 async function main(options) {
@@ -222,7 +249,7 @@ async function main(options) {
     }
 
     for (const chain of chains) {
-        await deploy(options, config.chains[chain.toLowerCase()]);
+        await deploy(options, config.chains[chain.toLowerCase()], config);
         saveConfig(config, options.env);
     }
 }
