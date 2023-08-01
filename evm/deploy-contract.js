@@ -13,6 +13,7 @@ const chalk = require('chalk');
 
 const {
     printInfo,
+    printError,
     isString,
     isNumber,
     isAddressArray,
@@ -143,7 +144,7 @@ async function checkContract(contractName, contract, contractConfig) {
             const owner = await contract.owner();
 
             if (owner !== contractConfig.owner) {
-                throw new Error(`Expected owner ${contractConfig.owner} but got ${owner}.`);
+                printError(`Expected owner ${contractConfig.owner} but got ${owner}.`);
             }
 
             break;
@@ -155,18 +156,6 @@ async function deploy(options, chain, config) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes } = options;
     const verifyOptions = verify ? { env, chain: chain.name } : null;
 
-    const rpc = chain.rpc;
-    const provider = getDefaultProvider(rpc);
-
-    const wallet = new Wallet(privateKey, provider);
-    await printWalletInfo(wallet);
-
-    const contractPath = artifactPath + contractName + '.sol/' + contractName + '.json';
-    const contractJson = require(contractPath);
-
-    printInfo('Contract name', contractName);
-    printInfo('Contract bytecode hash', await getBytecodeHash(contractJson, chain.id));
-
     const contracts = chain.contracts;
 
     if (!contracts[contractName]) {
@@ -174,6 +163,27 @@ async function deploy(options, chain, config) {
     }
 
     const contractConfig = contracts[contractName];
+
+    if (contractConfig.address && options.skipExisting) {
+        printInfo(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
+        return;
+    }
+
+    const rpc = chain.rpc;
+    const provider = getDefaultProvider(rpc);
+
+    const wallet = new Wallet(privateKey, provider);
+    await printWalletInfo(wallet);
+
+    printInfo('Contract name', contractName);
+
+    const contractPath = artifactPath + contractName + '.sol/' + contractName + '.json';
+    printInfo('Contract path', contractPath);
+
+    const contractJson = require(contractPath);
+
+    printInfo('Contract bytecode hash', await getBytecodeHash(contractJson, chain.id));
+
     const constructorArgs = await getConstructorArgs(contractName, contracts, wallet);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
@@ -275,6 +285,7 @@ program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').mak
 program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
 program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
 program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain').env('YES'));
 
 program.action((options) => {
     main(options);
