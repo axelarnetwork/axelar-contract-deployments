@@ -115,7 +115,7 @@ async function getConstructorArgs(contractName, config, wallet) {
         case 'Operators': {
             let owner = contractConfig.owner;
 
-            if (!contractConfig.owner) {
+            if (!owner) {
                 owner = wallet.address;
                 contractConfig.owner = owner;
             } else if (!isAddress(owner)) {
@@ -137,7 +137,21 @@ async function getConstructorArgs(contractName, config, wallet) {
     throw new Error(`${contractName} is not supported.`);
 }
 
-async function deploy(options, chain) {
+async function checkContract(contractName, contract, contractConfig) {
+    switch (contractName) {
+        case 'Operators': {
+            const owner = await contract.owner();
+
+            if (owner !== contractConfig.owner) {
+                throw new Error(`Expected owner ${contractConfig.owner} but got ${owner}.`);
+            }
+
+            break;
+        }
+    }
+}
+
+async function deploy(options, chain, config) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes } = options;
     const verifyOptions = verify ? { env, chain: chain.name } : null;
 
@@ -212,7 +226,11 @@ async function deploy(options, chain) {
         contractConfig.salt = salt;
     }
 
+    saveConfig(config, options.env);
+
     printInfo(`${chain.name} | ${contractName}`, contractConfig.address);
+
+    await checkContract(contractName, contract, contractConfig);
 }
 
 async function main(options) {
@@ -231,7 +249,7 @@ async function main(options) {
     }
 
     for (const chain of chains) {
-        await deploy(options, config.chains[chain.toLowerCase()]);
+        await deploy(options, config.chains[chain.toLowerCase()], config);
         saveConfig(config, options.env);
     }
 }
