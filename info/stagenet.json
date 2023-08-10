@@ -13,9 +13,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0xb0D90eEd481cCA3Ba68978762f5920567AC0eA6E",
+          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x378b2d388b1665b63089553251C18aA8684e4245"
+          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -59,9 +59,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0xb0D90eEd481cCA3Ba68978762f5920567AC0eA6E",
+          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x378b2d388b1665b63089553251C18aA8684e4245"
+          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -105,9 +105,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0xb0D90eEd481cCA3Ba68978762f5920567AC0eA6E",
+          "implementation": "0x7199983dFa2F395dd7edE9FCC97FfD5fea09E57d",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x378b2d388b1665b63089553251C18aA8684e4245"
+          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -151,9 +151,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0xb0D90eEd481cCA3Ba68978762f5920567AC0eA6E",
+          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x378b2d388b1665b63089553251C18aA8684e4245"
+          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -197,9 +197,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0xb0D90eEd481cCA3Ba68978762f5920567AC0eA6E",
+          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x378b2d388b1665b63089553251C18aA8684e4245"
+          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -243,9 +243,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0xb0D90eEd481cCA3Ba68978762f5920567AC0eA6E",
+          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x378b2d388b1665b63089553251C18aA8684e4245"
+          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -289,9 +289,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0xb0D90eEd481cCA3Ba68978762f5920567AC0eA6E",
+          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x378b2d388b1665b63089553251C18aA8684e4245"
+          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -338,9 +338,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0xb0D90eEd481cCA3Ba68978762f5920567AC0eA6E",
+          "implementation": "0x571Ac97CeDDe864E15e03aeE82BB09e63459bCcD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x378b2d388b1665b63089553251C18aA8684e4245"
+          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -383,9 +383,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0xb0D90eEd481cCA3Ba68978762f5920567AC0eA6E",
+          "implementation": "0x571Ac97CeDDe864E15e03aeE82BB09e63459bCcD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x378b2d388b1665b63089553251C18aA8684e4245"
+          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -432,9 +432,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0xb0D90eEd481cCA3Ba68978762f5920567AC0eA6E",
+          "implementation": "0x571Ac97CeDDe864E15e03aeE82BB09e63459bCcD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x378b2d388b1665b63089553251C18aA8684e4245"
+          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
