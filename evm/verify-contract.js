@@ -58,6 +58,19 @@ async function verifyContracts(config, chain, options) {
             break;
         }
 
+        case 'Operators': {
+            const Operators = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/utils/Operators.sol/Operators.json');
+
+            const contractFactory = await getContractAt(Operators.abi, wallet);
+
+            const contract = contractFactory.attach(options.address || chain.contracts.Operators.address);
+
+            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
+
+            await verifyContract(env, chain.name, contract.address, [chain.contracts.Operators.owner]);
+            break;
+        }
+
         case 'AxelarGateway': {
             const gatewayFactory = await getContractFactory('AxelarGateway', wallet);
             const gateway = gatewayFactory.attach(options.address || chain.contracts.AxelarGateway.address);
@@ -132,6 +145,10 @@ async function verifyContracts(config, chain, options) {
 
             await verifyContract(env, chain.name, tokenContract.address, [name, symbol, decimals, cap]);
             break;
+        }
+
+        default: {
+            throw new Error(`Contract ${contractName} is not supported`);
         }
     }
 }
