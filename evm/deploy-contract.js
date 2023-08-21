@@ -177,7 +177,7 @@ async function deploy(options, chain, config) {
 
     printInfo('Contract name', contractName);
 
-    const contractPath = artifactPath + contractName + '.sol/' + contractName + '.json';
+    const contractPath = artifactPath.charAt(0) === '@' ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
     printInfo('Contract path', contractPath);
 
     const contractJson = require(contractPath);
