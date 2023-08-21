@@ -853,7 +853,7 @@
       "name": "Centrifuge",
       "id": "centrifuge",
       "chainId": 2089,
-      "rpc": "https://fullnode.algol.cntrfg.com/",
+      "rpc": "https://fullnode.algol.cntrfg.com",
       "tokenSymbol": "ALGL",
       "contracts": {},
       "explorer": {
