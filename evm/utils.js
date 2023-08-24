@@ -1,10 +1,11 @@
 'use strict';
 
+const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
     utils: { getContractAddress, keccak256, isAddress, getCreate2Address, Interface, defaultAbiCoder },
-} = require('ethers');
+} = ethers;
 const https = require('https');
 const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
@@ -313,6 +314,11 @@ const isAddressArray = (arg) => {
     return true;
 };
 
+const isContract = async (target) => {
+    const code = await ethers.provider.getCode(target);
+    return code !== '0x';
+};
+
 /**
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
  * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
@@ -566,6 +572,40 @@ const deployContract = async (
     }
 };
 
+/**
+ * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
+ *
+ * @param {string} timeString - The input time string.
+ * @return {boolean} - Returns true if the format matches, false otherwise.
+ */
+function isValidTimeFormat(timeString) {
+    const regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
+    return regex.test(timeString);
+}
+
+const etaToUnixTimestamp = (utcTimeString) => {
+    const date = new Date(utcTimeString + 'Z');
+    return Math.floor(date.getTime() / 1000);
+};
+
+const getCurrentTimeInSeconds = () => {
+    return Date.now() / 1000;
+};
+
+/**
+ * Check if a specific event was emitted in a transaction receipt.
+ *
+ * @param {object} receipt - The transaction receipt object.
+ * @param {object} contract - The ethers.js contract instance.
+ * @param {string} eventName - The name of the event.
+ * @return {boolean} - Returns true if the event was emitted, false otherwise.
+ */
+function wasEventEmitted(receipt, contract, eventName) {
+    const event = contract.filters[eventName]();
+
+    return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -587,10 +627,15 @@ module.exports = {
     isString,
     isNumber,
     isAddressArray,
+    isContract,
     getProxy,
     getEVMAddresses,
     sleep,
     loadConfig,
     saveConfig,
     printWalletInfo,
+    isValidTimeFormat,
+    etaToUnixTimestamp,
+    getCurrentTimeInSeconds,
+    wasEventEmitted,
 };
