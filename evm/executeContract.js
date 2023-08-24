@@ -146,7 +146,7 @@ async function executeContract(
             printLog('Function successfully called with return value as: ');
             printObj(result);
         } catch (error) {
-          printError('Calling executeContract method failed with Error: ', error);
+            printError('Calling executeContract method failed with Error: ', error);
         }
     })();
 }
