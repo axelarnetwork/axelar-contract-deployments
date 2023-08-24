@@ -11,7 +11,7 @@ const {
 
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-const { isNumber, isString, loadConfig, saveConfig, printObj } = require('./utils');
+const { isNumber, isString, loadConfig, saveConfig, printObj, printLog, printError } = require('./utils');
 
 async function getCallData(methodName, targetContract, inputRecipient, inputAmount) {
     var recipient, amount;
@@ -143,10 +143,10 @@ async function executeContract(
     (async () => {
         try {
             const result = await contract.executeContract(targetContractAddress, callData, tokenValue);
-            console.log('Function successfully called with return value as: ');
+            printLog('Function successfully called with return value as: ');
             printObj(result);
         } catch (error) {
-            console.error('Calling executeContract method failed with Error: ', error);
+          printError('Calling executeContract method failed with Error: ', error);
         }
     })();
 }
