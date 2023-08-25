@@ -6,9 +6,9 @@ const {
     utils: { keccak256 },
 } = require('ethers');
 const { deployAndInitContractConstant, create3DeployAndInitContract } = require('@axelar-network/axelar-gmp-sdk-solidity');
-const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/dist/IUpgradable.json');
+const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 
-const { verifyContract, deployCreate } = require('./utils');
+const { verifyContract, deployCreate, getBytecodeHash } = require('./utils');
 
 async function deployUpgradable(
     wallet,
@@ -17,7 +17,7 @@ async function deployUpgradable(
     implementationConstructorArgs = [],
     proxyConstructorArgs = [],
     setupParams = '0x',
-    gasOptions = null,
+    txOptions = null,
     verifyOptions = null,
 ) {
     const implementationFactory = new ContractFactory(implementationJson.abi, implementationJson.bytecode, wallet);
@@ -27,7 +27,7 @@ async function deployUpgradable(
     const implementation = await implementationFactory.deploy(...implementationConstructorArgs);
     await implementation.deployed();
 
-    const proxy = await proxyFactory.deploy(...proxyConstructorArgs, gasOptions);
+    const proxy = await proxyFactory.deploy(...proxyConstructorArgs, txOptions);
     await proxy.deployed();
 
     await proxy.init(implementation.address, wallet.address, setupParams).then((tx) => tx.wait());
@@ -48,7 +48,7 @@ async function deployCreate2Upgradable(
     proxyConstructorArgs = [],
     setupParams = '0x',
     salt,
-    gasOptions = null,
+    txOptions = null,
     verifyOptions,
 ) {
     const implementation = await deployCreate(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
@@ -60,7 +60,7 @@ async function deployCreate2Upgradable(
         salt,
         proxyConstructorArgs,
         [implementation.address, wallet.address, setupParams],
-        gasOptions,
+        txOptions,
     );
 
     if (verifyOptions) {
@@ -79,7 +79,7 @@ async function deployCreate3Upgradable(
     proxyConstructorArgs = [],
     setupParams = '0x',
     salt,
-    gasOptions = null,
+    txOptions = null,
     verifyOptions = null,
 ) {
     const implementation = await deployCreate(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
@@ -91,7 +91,7 @@ async function deployCreate3Upgradable(
         salt,
         proxyConstructorArgs,
         proxyInitArgs,
-        gasOptions,
+        txOptions,
     );
 
     if (verifyOptions) {
@@ -119,9 +119,7 @@ async function upgradeUpgradable(
         implementationDeploymentOptions,
         verifyOptions,
     );
-
-    const implementationCode = await wallet.provider.getCode(implementation.address);
-    const implementationCodeHash = keccak256(implementationCode);
+    const implementationCodeHash = await getBytecodeHash(implementation);
 
     const tx = await proxy.upgrade(implementation.address, implementationCodeHash, setupParams);
     await tx.wait();
