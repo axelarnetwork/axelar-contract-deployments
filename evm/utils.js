@@ -301,6 +301,20 @@ const isNumber = (arg) => {
     return Number.isInteger(arg);
 };
 
+const isNumberArray = (arr) => {
+    if (!Array.isArray(arr)) {
+        return false;
+    }
+
+    for (const item of arr) {
+        if (!isNumber(item)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 const isAddressArray = (arg) => {
     if (!Array.isArray(arg)) return false;
 
@@ -312,6 +326,24 @@ const isAddressArray = (arg) => {
 
     return true;
 };
+
+/**
+ * Determines if a given input is a valid keccak256 hash.
+ *
+ * @param {string} input - The string to validate.
+ * @returns {boolean} - Returns true if the input is a valid keccak256 hash, false otherwise.
+ */
+function isKeccak256Hash(input) {
+    // Ensure it's a string of 66 characters length and starts with '0x'
+    if (typeof input !== 'string' || input.length !== 66 || input.slice(0, 2) !== '0x') {
+        return false;
+    }
+
+    // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
+    const hexPattern = /^[a-fA-F0-9]{64}$/;
+
+    return hexPattern.test(input.slice(2));
+}
 
 /**
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
@@ -586,7 +618,9 @@ module.exports = {
     getDeployedAddress,
     isString,
     isNumber,
+    isNumberArray,
     isAddressArray,
+    isKeccak256Hash,
     getProxy,
     getEVMAddresses,
     sleep,

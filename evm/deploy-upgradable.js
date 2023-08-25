@@ -257,10 +257,9 @@ async function deploy(options, chain) {
         printInfo(`${chain.name} | Proxy for ${contractName}`, contractConfig.address);
 
         const owner = await contract.owner();
+
         if (owner !== wallet.address) {
-            printError(
-                `${chain.name} | Signer ${wallet.address} does not match contract owner ${owner} for chain ${chain.name} in info.`,
-            );
+            printError(`${chain.name} | Signer ${wallet.address} does not match contract owner ${owner} for chain ${chain.name} in info.`);
         }
     }
 }
