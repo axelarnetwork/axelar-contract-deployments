@@ -15,7 +15,7 @@ const { promisify } = require('util');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
 const {
-    deployCreate3Contract,
+    create3DeployContract,
     deployContractConstant,
     predictContractConstant,
     getCreate3Address,
@@ -89,7 +89,7 @@ const deployCreate3 = async (
     let contract;
 
     if (!verifyOptions?.only) {
-        contract = await deployCreate3Contract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions.gasLimit);
+        contract = await create3DeployContract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions.gasLimit);
     } else {
         contract = { address: await getCreate3Address(create3DeployerAddress, wallet, key) };
     }
