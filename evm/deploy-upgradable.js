@@ -9,7 +9,7 @@ const {
     utils: { isAddress },
 } = require('ethers');
 const readlineSync = require('readline-sync');
-const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/dist/IUpgradable.json');
+const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 

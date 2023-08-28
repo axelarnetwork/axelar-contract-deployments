@@ -20,7 +20,7 @@ async function verifyContracts(config, chain, options) {
 
     switch (contractName) {
         case 'Create3Deployer': {
-            const Create3Deployer = require('@axelar-network/axelar-gmp-sdk-solidity/dist/Create3Deployer.json');
+            const Create3Deployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
 
             const contractFactory = await getContractAt(Create3Deployer.abi, wallet);
 
