@@ -9,7 +9,7 @@ const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
 const { printInfo, writeJSON, predictAddressCreate, deployCreate } = require('./utils');
-const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
+const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json');
 const contractName = 'ConstAddressDeployer';
 
 async function deployConstAddressDeployer(wallet, chain, options = null, verifyOptions = null) {
