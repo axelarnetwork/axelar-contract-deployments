@@ -3,7 +3,7 @@
 const {
     ContractFactory,
     Contract,
-    utils: { getContractAddress, keccak256, isAddress, getCreate2Address, Interface, defaultAbiCoder },
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, Interface, defaultAbiCoder },
 } = require('ethers');
 const https = require('https');
 const http = require('http');
@@ -19,6 +19,7 @@ const {
     predictContractConstant,
     getCreate3Address,
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
+const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 const execAsync = promisify(exec);
 const writeFileAsync = promisify(writeFile);
@@ -467,8 +468,11 @@ const getProxy = async (config, chain) => {
     return address;
 };
 
-const getEVMAddresses = async (config, chain, keyID = '') => {
-    const evmAddresses = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+const getEVMAddresses = async (config, chain, keyID = '', amplifier = false) => {
+    const evmAddresses = amplifier
+        ? await getAmplifierKeyAddresses(config, keyID)
+        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
 
     const addresses = sortedAddresses.map((weightedAddress) => weightedAddress.address);
@@ -476,6 +480,21 @@ const getEVMAddresses = async (config, chain, keyID = '') => {
     const threshold = Number(evmAddresses.threshold);
 
     return { addresses, weights, threshold };
+};
+
+const getAmplifierKeyAddresses = async (config, keyID = '') => {
+    const client = await CosmWasmClient.connect(config.axelar.rpc);
+    const key = await client.queryContractSmart(config.axelar.contracts.Multisig.address, {
+        get_key: { key_id: { owner: config.axelar.contracts.MultisigProver.address, subkey: keyID } },
+    });
+    const pubkeys = new Map(Object.entries(key.pub_keys));
+
+    const weightedAddresses = Object.values(key.snapshot.participants).map((participant) => ({
+        address: computeAddress(`0x${pubkeys.get(participant.address)}`),
+        weight: participant.weight,
+    }));
+
+    return { addresses: weightedAddresses, threshold: key.snapshot.quorum };
 };
 
 function sleep(ms) {
