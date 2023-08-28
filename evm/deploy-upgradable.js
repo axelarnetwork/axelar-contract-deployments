@@ -9,12 +9,12 @@ const {
     utils: { isAddress },
 } = require('ethers');
 const readlineSync = require('readline-sync');
-const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/dist/IUpgradable.json');
+const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
-const { printInfo, saveConfig, loadConfig, printWalletInfo, getDeployedAddress } = require('./utils');
+const { printInfo, printError, saveConfig, loadConfig, printWalletInfo, getDeployedAddress } = require('./utils');
 
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
@@ -255,6 +255,13 @@ async function deploy(options, chain) {
 
         printInfo(`${chain.name} | Implementation for ${contractName}`, contractConfig.implementation);
         printInfo(`${chain.name} | Proxy for ${contractName}`, contractConfig.address);
+
+        const owner = await contract.owner();
+        if (owner !== wallet.address) {
+            printError(
+                `${chain.name} | Signer ${wallet.address} does not match contract owner ${owner} for chain ${chain.name} in info.`,
+            );
+        }
     }
 }
 
