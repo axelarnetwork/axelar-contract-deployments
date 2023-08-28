@@ -93,7 +93,7 @@ async function getCallData(methodName, targetContract, inputRecipient, inputAmou
         }
 
         default: {
-            throw new Error('The method name do not matches with any of the specified choices');
+            throw new Error('The method name does not match any of the specified choices');
         }
     }
 }
