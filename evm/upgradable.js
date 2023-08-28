@@ -1,10 +1,6 @@
 'use strict';
 
-const {
-    Contract,
-    ContractFactory,
-    utils: { keccak256 },
-} = require('ethers');
+const { Contract, ContractFactory } = require('ethers');
 const { deployAndInitContractConstant, create3DeployAndInitContract } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 
