@@ -11,7 +11,7 @@ const {
 
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-const { isNumber, isString, loadConfig, saveConfig, printObj, printLog, printError } = require('./utils');
+const { isNumber, isString, loadConfig, saveConfig, printObj, printLog, printError, printInfo } = require('./utils');
 
 async function getCallData(methodName, targetContract, inputRecipient, inputAmount) {
     var recipient, amount;
@@ -98,18 +98,27 @@ async function getCallData(methodName, targetContract, inputRecipient, inputAmou
     }
 }
 
-async function executeContract(
-    callContractPath,
-    targetContractPath,
-    callContractAddress,
-    targetContractAddress,
-    wallet,
-    inputCallData,
-    inputNativeValue,
-    methodName,
-    recipient,
-    amount,
-) {
+async function executeContract(options, chain, wallet) {
+    const {
+        callContractPath,
+        targetContractPath,
+        callContractName,
+        targetContractName,
+        targetContractAddress,
+        callData,
+        nativeValue,
+        methodName,
+        recipientAddress,
+        amount,
+    } = options;
+    const contracts = chain.contracts;
+
+    if (!contracts[callContractName]) {
+        throw new Error('Missing call contract address in the info file');
+    }
+
+    const callContractAddress = contracts[callContractName].address;
+
     if (!isAddress(callContractAddress)) {
         throw new Error('Missing call contract address in the address info.');
     }
@@ -122,27 +131,36 @@ async function executeContract(
         throw new Error('Missing method name from the user info.');
     }
 
-    if (!isNumber(inputNativeValue)) {
-        throw new Error('Missing token value from user info');
+    if (!isNumber(Number(nativeValue))) {
+        throw new Error('Missing native value from user info');
     }
 
-    const IContractExecutor = require(callContractPath);
+    var contractPath =
+        callContractPath.charAt(0) === '@' ? callContractPath : callContractPath + callContractName + '.sol/' + callContractName + '.json';
+    printInfo('Call Contract path', contractPath);
+
+    const IContractExecutor = require(contractPath);
     const contract = new Contract(callContractAddress, IContractExecutor.abi, wallet);
-    var callData, tokenValue;
+    var finalCallData, finalNativeValue;
 
     if (methodName === 'default') {
-        callData = inputCallData;
-        tokenValue = inputNativeValue;
+        finalCallData = callData;
+        finalNativeValue = nativeValue;
     } else {
-        const ITargetContract = require(targetContractPath);
+        contractPath =
+            targetContractPath.charAt(0) === '@'
+                ? targetContractPath
+                : targetContractPath + targetContractName + '.sol/' + targetContractName + '.json';
+        printInfo('Target Contract path', contractPath);
+        const ITargetContract = require(contractPath);
         const targetContract = new Contract(targetContractAddress, ITargetContract.abi, wallet);
-        callData = await getCallData(methodName, targetContract, recipient, amount);
-        tokenValue = Number(0);
+        finalCallData = await getCallData(methodName, targetContract, recipientAddress, Number(amount));
+        finalNativeValue = Number(0);
     }
 
     (async () => {
         try {
-            const result = await contract.executeContract(targetContractAddress, callData, tokenValue);
+            const result = await contract.executeContract(targetContractAddress, finalCallData, finalNativeValue);
             printLog('Function successfully called with return value as: ');
             printObj(result);
         } catch (error) {
@@ -175,18 +193,7 @@ async function main(options) {
         }
 
         const wallet = new Wallet(privateKey, provider);
-        await executeContract(
-            options.pathCallContract,
-            options.pathTargetContract,
-            options.callContractAddress,
-            options.targetAddress,
-            wallet,
-            options.callData,
-            Number(options.nativeValue),
-            options.methodName,
-            options.recipientAddress,
-            Number(options.amount),
-        );
+        await executeContract(options, config.chains[chain.toLowerCase()], wallet);
         saveConfig(config, options.env);
     }
 }
@@ -204,31 +211,35 @@ program.addOption(
 );
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
 program.addOption(
-    new Option('-pc, --pathCallContract <pathCallContract>', 'artifact path for the called contract').makeOptionMandatory(true),
+    new Option('-pc, --callContractPath <callContractPath>', 'artifact path for the called contract').makeOptionMandatory(true),
+);
+program.addOption(new Option('-cn, --callContractName <callContractName>', 'name of the called contract').makeOptionMandatory(true));
+program.addOption(
+    new Option('-pt, --targetContractPath <targetContractPath>', 'artifact path for the target contract').makeOptionMandatory(true),
 );
 program.addOption(
-    new Option('-pt, --pathTargetContract <pathTargetContract>', 'artifact path for the target contract').makeOptionMandatory(true),
+    new Option(
+        '-tn, --targetContractName <targetContractName>',
+        'name of the target contract that is called through executeContract',
+    ).makeOptionMandatory(false),
 );
+// program.addOption(
+//     new Option('-a, --callContractAddress <contractAddress>', 'Contract address for the executeContract call.')
+//         .makeOptionMandatory(false)
+//         .env('CONTRACT_ADDR'),
+// );
 program.addOption(
-    new Option('-a, --callContractAddress <contractAddress>', 'Contract address for the executeContract call.')
-        .makeOptionMandatory(true)
-        .env('CONTRACT_ADDR'),
-);
-program.addOption(
-    new Option('-t, --targetAddress <targetAddress>', 'The address of the contract to be called')
+    new Option('-ta, --targetContractAddress <targetContractAddress>', 'The address of the contract to be called')
         .makeOptionMandatory(true)
         .env('TARGET_ADDR'),
 );
 program.addOption(
-    new Option('-v, --nativeValue <nativeValue>', 'The amount of native token (e.g., Ether) to be sent along with the call')
-        .default(0)
-        .env('NATIVE_VALUE'),
+    new Option('-v, --nativeValue <nativeValue>', 'The amount of native token (e.g., Ether) to be sent along with the call').default(0),
 );
 program.addOption(
     new Option('-m, --methodName <methodName>', 'method name to call in executeContract')
         .choices(['withdraw', 'transfer', 'approve', 'default'])
-        .default('default')
-        .env('METHOD_NAME'),
+        .default('default'),
 );
 program.addOption(
     new Option('-k, --privateKey <privateKey>', 'The private key of the caller').makeOptionMandatory(true).env('PRIVATE_KEY'),
