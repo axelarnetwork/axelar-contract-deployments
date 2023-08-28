@@ -346,6 +346,38 @@ function isKeccak256Hash(input) {
 }
 
 /**
+ * Parses the input string into an array of arguments, recognizing and converting
+ * to the following types: boolean, number, array, and string.
+ *
+ * @param {string} input - The string of arguments to parse.
+ *
+ * @returns {Array} - An array containing parsed arguments.
+ *
+ * @example
+ * const input = "hello true 123 [1,2,3]";
+ * const output = parseArgs(input);
+ * console.log(output); // Outputs: [ 'hello', true, 123, [ 1, 2, 3] ]
+ */
+const parseArgs = (args) => {
+    return args
+        .split(/\s+/)
+        .filter((item) => item !== '')
+        .map((arg) => {
+            if (arg.startsWith('[') && arg.endsWith(']')) {
+                return JSON.parse(arg);
+            } else if (arg === 'true') {
+                return true;
+            } else if (arg === 'false') {
+                return false;
+            } else if (!isNaN(arg) && !arg.startsWith('0x')) {
+                return Number(arg);
+            }
+
+            return arg;
+        });
+};
+
+/**
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
  * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
  * @param {Object} contractObject - An instance of the contract or a contract factory (ethers.js Contract or ContractFactory object)
@@ -621,6 +653,7 @@ module.exports = {
     isNumberArray,
     isAddressArray,
     isKeccak256Hash,
+    parseArgs,
     getProxy,
     getEVMAddresses,
     sleep,
