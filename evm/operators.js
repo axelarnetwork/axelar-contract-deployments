@@ -10,47 +10,29 @@ const {
     ContractFactory,
 } = ethers;
 const { Command, Option } = require('commander');
+const {
+    printInfo,
+    printWalletInfo,
+    loadConfig,
+    saveConfig,
+    isNumber,
+    isAddressArray,
+    isNumberArray,
+    isKeccak256Hash,
+    parseArgs,
+} = require('./utils');
+const gasServiceJson = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/interfaces/IAxelarGasService.sol/IAxelarGasService.json');
 
-const { printInfo, printWalletInfo, loadConfig, saveConfig, isNumber, isAddressArray, isNumberArray, isKeccak256Hash } = require('./utils');
+async function processCommand(options, chain) {
+    const { artifactPath, contractName, operatorAction, privateKey, args } = options;
 
-function getGasServiceInterface(contracts, wallet) {
-    const gasServiceJson = require('../artifacts/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json');
-    const gasServiceFactory = new ContractFactory(gasServiceJson.abi, gasServiceJson.bytecode, wallet);
-    const gasServiceContract = gasServiceFactory.attach(contracts[gasServiceJson.contractName].address);
-    const gasServiceInterface = new ethers.utils.Interface(gasServiceContract.interface.fragments);
-
-    return gasServiceInterface;
-}
-
-async function processCommand(options, chain, config) {
-    const {
-        artifactPath,
-        contractName,
-        operatorAction,
-        privateKey,
-        operatorAddress,
-        receiver,
-        tokens,
-        amounts,
-        txHash,
-        logIndex,
-        token,
-        amount,
-    } = options;
-
-    if (contractName !== 'Operators') {
-        throw new Error(`Invalid Operators contract: ${contractName}`);
-    }
+    const argsArray = parseArgs(args);
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
 
     if (contractConfig && !contractConfig.address) {
         throw new Error(`Contract ${contractName} is not deployed on ${chain}`);
-    }
-
-    if (operatorAddress && !isAddress(operatorAddress)) {
-        throw new Error(`Invalid operator address: ${operatorAddress}.`);
     }
 
     const rpc = chain.rpc;
@@ -75,8 +57,10 @@ async function processCommand(options, chain, config) {
 
     switch (operatorAction) {
         case 'isOperator': {
-            if (!operatorAddress) {
-                throw new Error('Operator address is mandatory for this action.');
+            const operatorAddress = argsArray[0];
+
+            if (!isAddress(operatorAddress)) {
+                throw new Error(`Invalid operator address: ${operatorAddress}.`);
             }
 
             const isOperator = await operatorsContract.isOperator(operatorAddress);
@@ -86,14 +70,15 @@ async function processCommand(options, chain, config) {
         }
 
         case 'addOperator': {
+            const operatorAddress = argsArray[0];
             const owner = await operatorsContract.owner();
 
             if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
                 throw new Error(`Caller ${wallet.address} is not the contract owner.`);
             }
 
-            if (!operatorAddress) {
-                throw new Error('Operator address is mandatory for this action.');
+            if (!isAddress(operatorAddress)) {
+                throw new Error(`Invalid operator address: ${operatorAddress}.`);
             }
 
             let isOperator = await operatorsContract.isOperator(operatorAddress);
@@ -115,14 +100,15 @@ async function processCommand(options, chain, config) {
         }
 
         case 'removeOperator': {
+            const operatorAddress = argsArray[0];
             const owner = await operatorsContract.owner();
 
             if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
                 throw new Error(`Caller ${wallet.address} is not the contract owner.`);
             }
 
-            if (!operatorAddress) {
-                throw new Error('Operator address is mandatory for this action.');
+            if (!isAddress(operatorAddress)) {
+                throw new Error(`Invalid operator address: ${operatorAddress}.`);
             }
 
             let isOperator = await operatorsContract.isOperator(operatorAddress);
@@ -144,6 +130,10 @@ async function processCommand(options, chain, config) {
         }
 
         case 'collectGas': {
+            const receiver = argsArray[0];
+            const tokens = argsArray[1];
+            const amounts = argsArray[2];
+
             const isOperator = await operatorsContract.isOperator(wallet.address);
 
             if (!isOperator) {
@@ -172,7 +162,7 @@ async function processCommand(options, chain, config) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = getGasServiceInterface(contracts, wallet);
+            const gasServiceInterface = new ethers.utils.Interface(gasServiceJson.abi);
             const collectGasCalldata = gasServiceInterface.encodeFunctionData('collectFees', [receiver, tokens, amounts]);
 
             await operatorsContract.executeContract(target, collectGasCalldata, 0, gasOptions).then((tx) => tx.wait());
@@ -181,6 +171,12 @@ async function processCommand(options, chain, config) {
         }
 
         case 'refund': {
+            const txHash = argsArray[0];
+            const logIndex = argsArray[1];
+            const receiver = argsArray[2];
+            const token = argsArray[3];
+            const amount = argsArray[4];
+
             const isOperator = await operatorsContract.isOperator(wallet.address);
 
             if (!isOperator) {
@@ -213,7 +209,7 @@ async function processCommand(options, chain, config) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = getGasServiceInterface(wallet);
+            const gasServiceInterface = new ethers.utils.Interface(gasServiceJson.abi);
             const refundCalldata = gasServiceInterface.encodeFunctionData('refund', [txHash, logIndex, receiver, token, amount]);
 
             await operatorsContract.executeContract(target, refundCalldata, 0, gasOptions).then((tx) => tx.wait());
@@ -251,8 +247,13 @@ program.addOption(
         .makeOptionMandatory(true)
         .env('ENV'),
 );
-program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true));
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+
+program.addOption(
+    new Option('-a, --artifactPath <artifactPath>', 'artifact path')
+        .default('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/utils/')
+        .makeOptionMandatory(false),
+);
+program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators').makeOptionMandatory(false));
 program.addOption(new Option('-n, --chain <chain>', 'chain name').makeOptionMandatory(true));
 program.addOption(
     new Option('-o, --operatorAction <operatorAction>', 'operator action').choices([
@@ -264,14 +265,7 @@ program.addOption(
     ]),
 );
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-d, --operatorAddress <operatorAddress>', 'operatorAddress').makeOptionMandatory(false));
-program.addOption(new Option('-r, --receiver <receiver>', 'receiver address').makeOptionMandatory(false).env('RECEIVER'));
-program.addOption(new Option('-ts, --tokens <tokens>', 'token addresses').makeOptionMandatory(false).env('TOKEN_ADDRESSES'));
-program.addOption(new Option('-ms, --amounts <amounts>', 'token amounts').makeOptionMandatory(false).env('TOKEN_AMOUNTS'));
-program.addOption(new Option('-x, --txHash <txHash>', 'tx hash').makeOptionMandatory(false).env('TX_HASH'));
-program.addOption(new Option('-l, --logIndex <logIndex>', 'log index').makeOptionMandatory(false).env('LOG_INDEX'));
-program.addOption(new Option('-t, --token <token>', 'token address').makeOptionMandatory(false).env('TOKEN_ADDRESS'));
-program.addOption(new Option('-m, --amount <amount>', 'token amount').makeOptionMandatory(false).env('TOKEN_AMOUNT'));
+program.addOption(new Option('-r, --args <args>', 'operator action arguments').makeOptionMandatory(true));
 
 program.action((options) => {
     main(options);
