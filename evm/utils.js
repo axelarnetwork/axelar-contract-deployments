@@ -3,7 +3,7 @@
 const {
     ContractFactory,
     Contract,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, Interface, defaultAbiCoder },
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder },
 } = require('ethers');
 const https = require('https');
 const http = require('http');
@@ -405,11 +405,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
             const initCode = factory.getDeployTransaction(...constructorArgs).data;
 
             if (!options.offline) {
-                const deployerInterface = new Contract(
-                    deployerContract,
-                    IDeployer.abi,
-                    options.provider,
-                );
+                const deployerInterface = new Contract(deployerContract, IDeployer.abi, options.provider);
 
                 return await deployerInterface.deployedAddress(initCode, deployer, salt);
             }
@@ -429,11 +425,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
             if (!options.offline) {
                 const salt = getSaltFromKey(options.salt);
 
-                const deployerInterface = new Contract(
-                    deployerContract,
-                    IDeployer.abi,
-                    options.provider,
-                );
+                const deployerInterface = new Contract(deployerContract, IDeployer.abi, options.provider);
 
                 return await deployerInterface.deployedAddress('0x', deployer, salt);
             }
