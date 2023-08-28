@@ -223,11 +223,6 @@ program.addOption(
         'name of the target contract that is called through executeContract',
     ).makeOptionMandatory(false),
 );
-// program.addOption(
-//     new Option('-a, --callContractAddress <contractAddress>', 'Contract address for the executeContract call.')
-//         .makeOptionMandatory(false)
-//         .env('CONTRACT_ADDR'),
-// );
 program.addOption(
     new Option('-ta, --targetContractAddress <targetContractAddress>', 'The address of the contract to be called')
         .makeOptionMandatory(true)
