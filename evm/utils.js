@@ -19,6 +19,8 @@ const {
     predictContractConstant,
     getCreate3Address,
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
+const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
+const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 
 const execAsync = promisify(exec);
 const writeFileAsync = promisify(writeFile);
@@ -421,7 +423,7 @@ const predictAddressCreate = async (from, nonce) => {
 };
 
 /**
- *
+ * Get the predicted address of a contract deployment using one of create/create2/create3 deployment method.
  * @param {string} deployer - Sender address that's triggering the contract deployment
  * @param {string} deployMethod - 'create', 'create2', 'create3'
  * @param {Object} options - Options for the deployment
@@ -468,9 +470,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
             if (!options.offline) {
                 const deployerInterface = new Contract(
                     deployerContract,
-                    new Interface([
-                        'function deployedAddress(bytes calldata bytecode, address sender, bytes32 salt) external view returns (address deployedAddress_)',
-                    ]),
+                    IDeployer.abi,
                     options.provider,
                 );
 
@@ -494,21 +494,17 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
 
                 const deployerInterface = new Contract(
                     deployerContract,
-                    new Interface([
-                        'function deployedAddress(address sender, bytes32 salt) external view returns (address deployedAddress_)',
-                    ]),
+                    IDeployer.abi,
                     options.provider,
                 );
 
-                return await deployerInterface.deployedAddress(deployer, salt);
+                return await deployerInterface.deployedAddress('0x', deployer, salt);
             }
-
-            const CreateDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3.sol/CreateDeployer.json');
 
             const createDeployer = await getDeployedAddress(deployer, 'create2', {
                 salt: options.salt,
                 deployerContract,
-                contractJson: CreateDeployer,
+                contractJson: CreateDeploy,
                 constructorArgs: [],
             });
 
