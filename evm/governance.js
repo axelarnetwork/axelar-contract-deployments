@@ -161,8 +161,14 @@ async function processCommand(options, chain, config) {
                 throw new Error(`TimeLock proposal is not yet eligible for execution.`);
             }
 
-            const tx = await governanceContract.executeProposal(target, calldata, nativeValue, gasOptions);
-            const receipt = tx.wait();
+            let receipt;
+
+            try {
+                const tx = await governanceContract.executeProposal(target, calldata, nativeValue, gasOptions);
+                receipt = tx.wait();
+            } catch (error) {
+                console.log(error);
+            }
 
             const eventEmitted = wasEventEmitted(receipt, governanceContract, 'ProposalExecuted');
 
@@ -206,8 +212,14 @@ async function processCommand(options, chain, config) {
             const signerVoteCount = await governanceContract.getSignerVotesCount(topic);
             console.log(`${signerVoteCount} signers have already voted.`);
 
-            const tx = await governanceContract.executeMultisigProposal(target, calldata, nativeValue, gasOptions);
-            const receipt = await tx.wait();
+            let receipt;
+
+            try {
+                const tx = await governanceContract.executeMultisigProposal(target, calldata, nativeValue, gasOptions);
+                receipt = await tx.wait();
+            } catch (error) {
+                console.log(error);
+            }
 
             const eventEmitted = wasEventEmitted(receipt, governanceContract, 'MultisigExecuted');
 
@@ -241,7 +253,7 @@ async function main(options) {
 
 const program = new Command();
 
-program.name('deploy-contract').description('Deploy contracts using create, create2, or create3');
+program.name('governance-script').description('Script to manage interchain governance actions');
 
 program.addOption(
     new Option('-e, --env <env>', 'environment')
