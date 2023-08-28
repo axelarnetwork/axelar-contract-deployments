@@ -210,7 +210,7 @@ program.addOption(
     new Option('-pt, --pathTargetContract <pathTargetContract>', 'artifact path for the target contract').makeOptionMandatory(true),
 );
 program.addOption(
-    new Option('-a, --callContractAddress <contractAddress>', 'The contract address in which we will call executeContract function')
+    new Option('-a, --callContractAddress <contractAddress>', 'Contract address for the executeContract call.')
         .makeOptionMandatory(true)
         .env('CONTRACT_ADDR'),
 );
