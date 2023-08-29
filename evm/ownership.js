@@ -25,8 +25,8 @@ async function processCommand(options, chain) {
     if (isAddress(address)) {
         ownershipAddress = address;
     } else {
-        if (contractConfig && !contractConfig.address) {
-            throw new Error(`Contract ${contractName} is not deployed on ${chain}`);
+        if (!contractConfig?.address) {
+            throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
         }
 
         ownershipAddress = contractConfig.address;

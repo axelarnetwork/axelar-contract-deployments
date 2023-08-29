@@ -2,13 +2,12 @@
 
 require('dotenv').config();
 
-const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddress },
-    ContractFactory,
-} = ethers;
+    utils: { isAddress, Interface },
+    Contract,
+} = require('ethers');
 const { Command, Option } = require('commander');
 const {
     printInfo,
@@ -21,18 +20,27 @@ const {
     isKeccak256Hash,
     parseArgs,
 } = require('./utils');
-const gasService = require('@axelar-network/axelar-cgp-solidity/interfaces/IAxelarGasService.json');
+const IGasService = require('@axelar-network/axelar-cgp-solidity/interfaces/IAxelarGasService.json');
+const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
 
 async function processCommand(options, chain) {
-    const { artifactPath, contractName, operatorAction, privateKey, args } = options;
+    const { contractName, address, operatorAction, privateKey, args } = options;
 
     const argsArray = parseArgs(args);
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
 
-    if (contractConfig && !contractConfig.address) {
-        throw new Error(`Contract ${contractName} is not deployed on ${chain}`);
+    let operatorsAddress;
+
+    if (isAddress(address)) {
+        operatorsAddress = address;
+    } else {
+        if (!contractConfig?.address) {
+            throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
+        }
+
+        operatorsAddress = contractConfig.address;
     }
 
     const rpc = chain.rpc;
@@ -43,12 +51,7 @@ async function processCommand(options, chain) {
 
     printInfo('Contract name', contractName);
 
-    const contractPath = artifactPath + contractName + '.sol/' + contractName + '.json';
-    printInfo('Contract path', contractPath);
-
-    const contractJson = require(contractPath);
-    const operatorsFactory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
-    const operatorsContract = operatorsFactory.attach(contractConfig.address);
+    const operatorsContract = new Contract(operatorsAddress, IOperators.abi, wallet);
 
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
@@ -162,7 +165,7 @@ async function processCommand(options, chain) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = new ethers.utils.Interface(gasService.abi);
+            const gasServiceInterface = new Interface(IGasService.abi);
             const collectFeesCalldata = gasServiceInterface.encodeFunctionData('collectFees', [receiver, tokens, amounts]);
 
             try {
@@ -213,7 +216,7 @@ async function processCommand(options, chain) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = new ethers.utils.Interface(gasService.abi);
+            const gasServiceInterface = new Interface(IGasService.abi);
             const refundCalldata = gasServiceInterface.encodeFunctionData('refund', [txHash, logIndex, receiver, token, amount]);
 
             try {
@@ -254,13 +257,8 @@ program.addOption(
         .makeOptionMandatory(true)
         .env('ENV'),
 );
-
-program.addOption(
-    new Option('-a, --artifactPath <artifactPath>', 'artifact path')
-        .default('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/utils/')
-        .makeOptionMandatory(false),
-);
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators').makeOptionMandatory(false));
+program.addOption(new Option('-a, --address <address>', 'override address').makeOptionMandatory(false));
 program.addOption(new Option('-n, --chain <chain>', 'chain name').makeOptionMandatory(true));
 program.addOption(
     new Option('-o, --operatorAction <operatorAction>', 'operator action').choices([
