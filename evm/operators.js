@@ -12,16 +12,16 @@ const {
 const { Command, Option } = require('commander');
 const {
     printInfo,
+    printError,
     printWalletInfo,
     loadConfig,
-    saveConfig,
     isNumber,
     isAddressArray,
     isNumberArray,
     isKeccak256Hash,
     parseArgs,
 } = require('./utils');
-const gasServiceJson = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/interfaces/IAxelarGasService.sol/IAxelarGasService.json');
+const gasService = require('@axelar-network/axelar-cgp-solidity/interfaces/IAxelarGasService.json');
 
 async function processCommand(options, chain) {
     const { artifactPath, contractName, operatorAction, privateKey, args } = options;
@@ -64,7 +64,7 @@ async function processCommand(options, chain) {
             }
 
             const isOperator = await operatorsContract.isOperator(operatorAddress);
-            console.log(`Is ${operatorAddress} an operator? ${isOperator}`);
+            printInfo(`Is ${operatorAddress} an operator? ${isOperator}`);
 
             break;
         }
@@ -78,7 +78,7 @@ async function processCommand(options, chain) {
             }
 
             if (!isAddress(operatorAddress)) {
-                throw new Error(`Invalid operator address: ${operatorAddress}.`);
+                throw new Error(`Invalid operator address: ${operatorAddress}`);
             }
 
             let isOperator = await operatorsContract.isOperator(operatorAddress);
@@ -92,9 +92,9 @@ async function processCommand(options, chain) {
 
             if (!isOperator) {
                 throw new Error('Add operator action failed.');
-            } else {
-                console.log(`Address ${operatorAddress} added as an operator.`);
             }
+
+            printInfo(`Address ${operatorAddress} added as an operator.`);
 
             break;
         }
@@ -108,7 +108,7 @@ async function processCommand(options, chain) {
             }
 
             if (!isAddress(operatorAddress)) {
-                throw new Error(`Invalid operator address: ${operatorAddress}.`);
+                throw new Error(`Invalid operator address: ${operatorAddress}`);
             }
 
             let isOperator = await operatorsContract.isOperator(operatorAddress);
@@ -122,14 +122,14 @@ async function processCommand(options, chain) {
 
             if (isOperator) {
                 throw new Error('Remove operator action failed.');
-            } else {
-                console.log(`Address ${operatorAddress} removed as an operator.`);
             }
+
+            printInfo(`Address ${operatorAddress} removed as an operator.`);
 
             break;
         }
 
-        case 'collectGas': {
+        case 'collectFees': {
             const receiver = argsArray[0];
             const tokens = argsArray[1];
             const amounts = argsArray[2];
@@ -141,7 +141,7 @@ async function processCommand(options, chain) {
             }
 
             if (!isAddress(receiver)) {
-                throw new Error(`Invalid receiver address ${receiver}.`);
+                throw new Error(`Invalid receiver address: ${receiver}`);
             }
 
             if (!isAddressArray(tokens)) {
@@ -162,10 +162,14 @@ async function processCommand(options, chain) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = new ethers.utils.Interface(gasServiceJson.abi);
-            const collectGasCalldata = gasServiceInterface.encodeFunctionData('collectFees', [receiver, tokens, amounts]);
+            const gasServiceInterface = new ethers.utils.Interface(gasService.abi);
+            const collectFeesCalldata = gasServiceInterface.encodeFunctionData('collectFees', [receiver, tokens, amounts]);
 
-            await operatorsContract.executeContract(target, collectGasCalldata, 0, gasOptions).then((tx) => tx.wait());
+            try {
+                await operatorsContract.executeContract(target, collectFeesCalldata, 0, gasOptions).then((tx) => tx.wait());
+            } catch (error) {
+                printError(error);
+            }
 
             break;
         }
@@ -192,15 +196,15 @@ async function processCommand(options, chain) {
             }
 
             if (!isAddress(receiver)) {
-                throw new Error(`Invalid receiver address ${receiver}.`);
+                throw new Error(`Invalid receiver address: ${receiver}`);
             }
 
             if (!isAddress(token)) {
-                throw new Error(`Invalid token address.`);
+                throw new Error(`Invalid token address: ${token}`);
             }
 
             if (!isNumber(amount)) {
-                throw new Error('Invalid token amount.');
+                throw new Error(`Invalid token amount: ${amount}`);
             }
 
             const target = chain.contracts.AxelarGasService?.address;
@@ -209,16 +213,20 @@ async function processCommand(options, chain) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = new ethers.utils.Interface(gasServiceJson.abi);
+            const gasServiceInterface = new ethers.utils.Interface(gasService.abi);
             const refundCalldata = gasServiceInterface.encodeFunctionData('refund', [txHash, logIndex, receiver, token, amount]);
 
-            await operatorsContract.executeContract(target, refundCalldata, 0, gasOptions).then((tx) => tx.wait());
+            try {
+                await operatorsContract.executeContract(target, refundCalldata, 0, gasOptions).then((tx) => tx.wait());
+            } catch (error) {
+                printError(error);
+            }
 
             break;
         }
 
         default: {
-            throw new Error(`Unknown operator action ${operatorAction}`);
+            throw new Error(`Unknown operator action: ${operatorAction}`);
         }
     }
 }
@@ -232,8 +240,7 @@ async function main(options) {
         throw new Error(`Chain ${chain} is not defined in the info file`);
     }
 
-    await processCommand(options, config.chains[chain.toLowerCase()], config);
-    saveConfig(config, options.env);
+    await processCommand(options, config.chains[chain.toLowerCase()]);
 }
 
 const program = new Command();
@@ -260,7 +267,7 @@ program.addOption(
         'isOperator',
         'addOperator',
         'removeOperator',
-        'collectGas',
+        'collectFees',
         'refund',
     ]),
 );
