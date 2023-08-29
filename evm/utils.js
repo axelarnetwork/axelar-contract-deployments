@@ -1,11 +1,11 @@
 'use strict';
 
-const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
+    provider,
     utils: { getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder },
-} = ethers;
+} = require('ethers');
 const https = require('https');
 const http = require('http');
 const { outputJsonSync, readJsonSync } = require('fs-extra');
@@ -317,7 +317,7 @@ const isAddressArray = (arg) => {
 };
 
 const isContract = async (target) => {
-    const code = await ethers.provider.getCode(target);
+    const code = await provider.getCode(target);
     return code !== '0x';
 };
 
@@ -568,11 +568,25 @@ const deployContract = async (
  */
 function isValidTimeFormat(timeString) {
     const regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
+
+    if (timeString === '0') {
+        return true;
+    }
+
     return regex.test(timeString);
 }
 
 const etaToUnixTimestamp = (utcTimeString) => {
+    if (utcTimeString === '0') {
+        return 0;
+    }
+
     const date = new Date(utcTimeString + 'Z');
+
+    if (isNaN(date.getTime())) {
+        throw new Error(`Invalid date format provided: ${utcTimeString}`);
+    }
+
     return Math.floor(date.getTime() / 1000);
 };
 

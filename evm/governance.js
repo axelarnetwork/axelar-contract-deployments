@@ -2,13 +2,13 @@
 
 require('dotenv').config();
 
-const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddress, defaultAbiCoder, keccak256 },
-    ContractFactory,
-} = ethers;
+    utils: { isAddress, defaultAbiCoder, keccak256, Interface },
+    Contract,
+    BigNumber,
+} = require('ethers');
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 
@@ -16,16 +16,18 @@ const {
     printInfo,
     printWalletInfo,
     loadConfig,
-    saveConfig,
     isNumber,
     isValidTimeFormat,
     etaToUnixTimestamp,
     getCurrentTimeInSeconds,
     wasEventEmitted,
+    printWarn,
+    printError,
 } = require('./utils');
+const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 
-async function processCommand(options, chain, config) {
-    const { artifactPath, contractName, governanceAction, calldata, nativeValue, eta, privateKey, yes } = options;
+async function processCommand(options, chain) {
+    const { contractName, address, governanceAction, calldata, nativeValue, eta, privateKey, yes } = options;
 
     if (contractName !== 'AxelarServiceGovernance' && contractName !== 'InterchainGovernance') {
         throw new Error(`Invalid governance contract: ${contractName}`);
@@ -34,8 +36,16 @@ async function processCommand(options, chain, config) {
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
 
-    if (contractConfig && !contractConfig.address) {
-        throw new Error(`Contract ${contractName} is not deployed on ${chain}`);
+    let governanceAddress;
+
+    if (isAddress(address)) {
+        governanceAddress = address;
+    } else {
+        if (!contractConfig?.address) {
+            throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
+        }
+
+        governanceAddress = contractConfig.address;
     }
 
     const target = chain.contracts.AxelarGateway?.address;
@@ -60,12 +70,7 @@ async function processCommand(options, chain, config) {
 
     printInfo('Contract name', contractName);
 
-    const contractPath = artifactPath + contractName + '.sol/' + contractName + '.json';
-    printInfo('Contract path', contractPath);
-
-    const contractJson = require(contractPath);
-    const governanceFactory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
-    const governanceContract = governanceFactory.attach(contractConfig.address);
+    const governanceContract = new Contract(governanceAddress, IGovernance.abi, wallet);
 
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
@@ -82,16 +87,14 @@ async function processCommand(options, chain, config) {
     switch (governanceAction) {
         case 'scheduleTimeLock': {
             if (unixEta < getCurrentTimeInSeconds() + contractConfig.minimumTimeDelay && !yes) {
-                console.log(`${eta} is less than the minimum time delay.`);
-                const anwser = readlineSync.question(`Proceed with ${governanceAction}?`);
-                if (anwser !== 'y') return;
+                printWarn(`${eta} is less than the minimum eta.`);
+                const answer = readlineSync.question(`Proceed with ${governanceAction}?`);
+                if (answer !== 'y') return;
             }
 
             gmpPayload = defaultAbiCoder.encode(types, values);
 
-            console.log(
-                `Destination chain: ${chain.name}\nDestination governance address: ${contractConfig.address}\nGMP payload: ${gmpPayload}`,
-            );
+            printInfo(`Destination chain: ${chain.name}\nDestination governance address: ${governanceAddress}\nGMP payload: ${gmpPayload}`);
 
             break;
         }
@@ -99,18 +102,22 @@ async function processCommand(options, chain, config) {
         case 'cancelTimeLock': {
             const commandType = 1;
 
-            if (unixEta < getCurrentTimeInSeconds() + contractConfig.minimumTimeDelay && !yes) {
-                console.log(`${eta} is less than the minimum time delay.`);
-                const anwser = readlineSync.question(`Proceed with ${governanceAction}?`);
-                if (anwser !== 'y') return;
+            if (unixEta < getCurrentTimeInSeconds() && !yes) {
+                printWarn(`${eta} has already passed.`);
+                const answer = readlineSync.question(`Proceed with ${governanceAction}?`);
+                if (answer !== 'y') return;
+            }
+
+            const proposalEta = await governanceContract.getProposalEta(target, calldata, nativeValue);
+
+            if (proposalEta.eq(BigNumber.from(0))) {
+                throw new Error(`Proposal does not exist.`);
             }
 
             values[0] = commandType;
             gmpPayload = defaultAbiCoder.encode(types, values);
 
-            console.log(
-                `Destination chain: ${chain.name}\nDestination governance address: ${contractConfig.address}\nGMP payload: ${gmpPayload}`,
-            );
+            printInfo(`Destination chain: ${chain.name}\nDestination governance address: ${governanceAddress}\nGMP payload: ${gmpPayload}`);
 
             break;
         }
@@ -125,9 +132,7 @@ async function processCommand(options, chain, config) {
             values[0] = commandType;
             gmpPayload = defaultAbiCoder.encode(types, values);
 
-            console.log(
-                `Destination chain: ${chain.name}\nDestination governance address: ${contractConfig.address}\nGMP payload: ${gmpPayload}`,
-            );
+            printInfo(`Destination chain: ${chain.name}\nDestination governance address: ${governanceAddress}\nGMP payload: ${gmpPayload}`);
 
             break;
         }
@@ -142,9 +147,7 @@ async function processCommand(options, chain, config) {
             values[0] = commandType;
             gmpPayload = defaultAbiCoder.encode(types, values);
 
-            console.log(
-                `Destination chain: ${chain.name}\nDestination governance address: ${contractConfig.address}\nGMP payload: ${gmpPayload}`,
-            );
+            printInfo(`Destination chain: ${chain.name}\nDestination governance address: ${governanceAddress}\nGMP payload: ${gmpPayload}`);
 
             break;
         }
@@ -167,16 +170,16 @@ async function processCommand(options, chain, config) {
                 const tx = await governanceContract.executeProposal(target, calldata, nativeValue, gasOptions);
                 receipt = tx.wait();
             } catch (error) {
-                console.log(error);
+                printError(error);
             }
 
             const eventEmitted = wasEventEmitted(receipt, governanceContract, 'ProposalExecuted');
 
-            if (eventEmitted) {
-                console.log('Proposal executed');
-            } else {
-                console.log('Proposal execution failed');
+            if (!eventEmitted) {
+                throw new Error('Proposal execution failed.');
             }
+
+            printInfo('Proposal executed.');
 
             break;
         }
@@ -199,7 +202,7 @@ async function processCommand(options, chain, config) {
                 throw new Error(`Caller is not a valid signer address: ${wallet.address}`);
             }
 
-            const executeInterface = new ethers.utils.Interface(governanceContract.interface.fragments);
+            const executeInterface = new Interface(governanceContract.interface.fragments);
             const executeCalldata = executeInterface.encodeFunctionData('executeMultisigProposal', [target, calldata, nativeValue]);
             const topic = keccak256(executeCalldata);
 
@@ -210,7 +213,7 @@ async function processCommand(options, chain, config) {
             }
 
             const signerVoteCount = await governanceContract.getSignerVotesCount(topic);
-            console.log(`${signerVoteCount} signers have already voted.`);
+            printInfo(`${signerVoteCount} signers have already voted.`);
 
             let receipt;
 
@@ -218,16 +221,16 @@ async function processCommand(options, chain, config) {
                 const tx = await governanceContract.executeMultisigProposal(target, calldata, nativeValue, gasOptions);
                 receipt = await tx.wait();
             } catch (error) {
-                console.log(error);
+                printError(error);
             }
 
             const eventEmitted = wasEventEmitted(receipt, governanceContract, 'MultisigExecuted');
 
-            if (eventEmitted) {
-                console.log('Multisig proposal executed');
-            } else {
-                console.log('Multisig proposal execution failed');
+            if (!eventEmitted) {
+                throw new Error('Multisig proposal execution failed.');
             }
+
+            printInfo('Multisig proposal executed.');
 
             break;
         }
@@ -247,8 +250,7 @@ async function main(options) {
         throw new Error(`Destination chain ${chain} is not defined in the info file`);
     }
 
-    await processCommand(options, config.chains[chain.toLowerCase()], config);
-    saveConfig(config, options.env);
+    await processCommand(options, config.chains[chain.toLowerCase()]);
 }
 
 const program = new Command();
@@ -262,8 +264,8 @@ program.addOption(
         .makeOptionMandatory(true)
         .env('ENV'),
 );
-program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true));
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+program.addOption(new Option('-a, --address <address>', 'override address').makeOptionMandatory(false));
 program.addOption(new Option('-n, --destinationChain <destinationChain>', 'destination chain').makeOptionMandatory(true));
 program.addOption(
     new Option('-g, --governanceAction <governanceAction>', 'governance action')
@@ -272,7 +274,7 @@ program.addOption(
 );
 program.addOption(new Option('-d, --calldata <calldata>', 'calldata').makeOptionMandatory(true));
 program.addOption(new Option('-v, --nativeValue <nativeValue>', 'nativeValue').makeOptionMandatory(false).default(0));
-program.addOption(new Option('-t, --eta <eta>', 'calldata').makeOptionMandatory(true));
+program.addOption(new Option('-t, --eta <eta>', 'eta').makeOptionMandatory(false).default('0'));
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
