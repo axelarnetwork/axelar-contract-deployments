@@ -5,7 +5,7 @@ require('dotenv').config();
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddress, parseUnits },
+    utils: { isAddress },
 } = require('ethers');
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
