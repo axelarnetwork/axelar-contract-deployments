@@ -69,6 +69,21 @@ async function getConstructorArgs(contractName, config, wallet) {
             return [gateway, governanceChain, governanceAddress, minimumTimeDelay, cosigners, threshold];
         }
 
+        case 'InterchainProposalSender': {
+            const gateway = config.AxelarGateway?.address;
+            const gasService = config.AxelarGasService?.address;
+
+            if (!isAddress(gateway)) {
+                throw new Error(`Missing AxelarGateway address in the chain info.`);
+            }
+
+            if (!isAddress(gasService)) {
+                throw new Error(`Missing AxelarGasService address in the chain info.`);
+            }
+
+            return [gateway, gasService];
+        }
+
         case 'InterchainGovernance': {
             const gateway = config.AxelarGateway?.address;
 
