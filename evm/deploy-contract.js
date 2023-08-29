@@ -5,7 +5,7 @@ require('dotenv').config();
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddress },
+    utils: { isAddress, parseUnits },
 } = require('ethers');
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
@@ -169,13 +169,15 @@ async function checkContract(contractName, contract, contractConfig) {
 
 async function deploy(options, chain, config) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes } = options;
-    const verifyOptions = verify ? { env, chain: chain.name } : null;
+    const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
 
     const contracts = chain.contracts;
 
     if (!contracts[contractName]) {
         contracts[contractName] = {};
     }
+
+    printInfo(`Deploying on ${chain.name}`);
 
     const contractConfig = contracts[contractName];
 
@@ -298,7 +300,7 @@ program.addOption(
 );
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
-program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+program.addOption(new Option('-v, --verify <verify>', 'verify the deployed contract on the explorer').env('VERIFY'));
 program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain').env('YES'));
 
