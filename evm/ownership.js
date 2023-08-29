@@ -8,19 +8,28 @@ const {
     getDefaultProvider,
     utils: { isAddress },
     constants: { AddressZero },
-    ContractFactory,
+    Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, printWalletInfo, loadConfig, saveConfig } = require('./utils');
+const { printInfo, printWalletInfo, loadConfig } = require('./utils');
+const IOwnableJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 
 async function processCommand(options, chain) {
-    const { artifactPath, contractName, ownershipAction, privateKey, newOwner } = options;
+    const { contractName, address, ownershipAction, privateKey, newOwner } = options;
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
 
-    if (contractConfig && !contractConfig.address) {
-        throw new Error(`Contract ${contractName} is not deployed on ${chain}`);
+    let ownershipAddress;
+
+    if (isAddress(address)) {
+        ownershipAddress = address;
+    } else {
+        if (contractConfig && !contractConfig.address) {
+            throw new Error(`Contract ${contractName} is not deployed on ${chain}`);
+        }
+
+        ownershipAddress = contractConfig.address;
     }
 
     const rpc = chain.rpc;
@@ -31,12 +40,7 @@ async function processCommand(options, chain) {
 
     printInfo('Contract name', contractName);
 
-    const contractPath = artifactPath + contractName + '.sol/' + contractName + '.json';
-    printInfo('Contract path', contractPath);
-
-    const contractJson = require(contractPath);
-    const ownershipFactory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
-    const ownershipContract = ownershipFactory.attach(contractConfig.address);
+    const ownershipContract = new Contract(ownershipAddress, IOwnableJson.abi, wallet);
 
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
@@ -44,20 +48,20 @@ async function processCommand(options, chain) {
     printInfo('Ownership Action', ownershipAction);
 
     switch (ownershipAction) {
-        case 'getOwner': {
+        case 'owner': {
             const owner = await ownershipContract.owner();
-            console.log(`Contract owner: ${owner}`);
+            printInfo(`Contract owner: ${owner}`);
 
             break;
         }
 
-        case 'getPendingOwner': {
+        case 'pendingOwner': {
             const pendingOwner = await ownershipContract.pendingOwner();
 
             if (pendingOwner === AddressZero) {
-                console.log('There is no pending owner.');
+                printInfo('There is no pending owner.');
             } else {
-                console.log(`Pending owner: ${pendingOwner}`);
+                printInfo(`Pending owner: ${pendingOwner}`);
             }
 
             break;
@@ -84,9 +88,9 @@ async function processCommand(options, chain) {
 
             if (owner.toLowerCase() !== newOwner.toLowerCase()) {
                 throw new Error('Ownership transfer failed.');
-            } else {
-                console.log(`New contract owner: ${owner}`);
             }
+
+            printInfo(`New contract owner: ${owner}`);
 
             break;
         }
@@ -112,9 +116,9 @@ async function processCommand(options, chain) {
 
             if (pendingOwner.toLowerCase() !== newOwner.toLowerCase()) {
                 throw new Error('Propose ownership failed.');
-            } else {
-                console.log(`New pending owner: ${pendingOwner}`);
             }
+
+            printInfo(`New pending owner: ${pendingOwner}`);
 
             break;
         }
@@ -140,9 +144,9 @@ async function processCommand(options, chain) {
 
             if (newOwner.toLowerCase() !== pendingOwner.toLowerCase()) {
                 throw new Error('Accept ownership failed.');
-            } else {
-                console.log(`New contract owner: ${newOwner}`);
             }
+
+            printInfo(`New contract owner: ${newOwner}`);
 
             break;
         }
@@ -162,8 +166,7 @@ async function main(options) {
         throw new Error(`Chain ${chain} is not defined in the info file`);
     }
 
-    await processCommand(options, config.chains[chain.toLowerCase()], config);
-    saveConfig(config, options.env);
+    await processCommand(options, config.chains[chain.toLowerCase()]);
 }
 
 const program = new Command();
@@ -178,13 +181,13 @@ program.addOption(
         .env('ENV'),
 );
 
-program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true));
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+program.addOption(new Option('-a, --address <address>', 'override address').makeOptionMandatory(false));
 program.addOption(new Option('-n, --chain <chain>', 'chain name').makeOptionMandatory(true));
 program.addOption(
     new Option('-o, --ownershipAction <ownershipAction>', 'ownership action').choices([
-        'getOwner',
-        'getPendingOwner',
+        'owner',
+        'pendingOwner',
         'transferOwnership',
         'proposeOwnership',
         'acceptOwnership',
