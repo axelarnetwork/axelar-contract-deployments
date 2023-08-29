@@ -14,9 +14,9 @@ const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
-async function getAuthParams(config, chain, options) {
+async function getAuthParams(config, chainName, options) {
     printLog('retrieving addresses');
-    const { addresses, weights, threshold } = await getEVMAddresses(config, chain, options.keyId, options.amplifier);
+    const { addresses, weights, threshold } = await getEVMAddresses(config, chainName, options.keyId, options.amplifier);
     printObj(JSON.stringify({ addresses, weights, threshold }));
     const paramsAuth = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
     return paramsAuth;
@@ -94,7 +94,7 @@ async function deploy(config, options) {
         auth = authFactory.attach(await gateway.authModule());
     } else {
         printLog(`deploying auth contract`);
-        const params = await getAuthParams(config, chain.id, options);
+        const params = await getAuthParams(config, chainName, options);
         printLog(`auth deployment args: ${params}`);
 
         auth = await authFactory.deploy(params).then((d) => d.deployed());
