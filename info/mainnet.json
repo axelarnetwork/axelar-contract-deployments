@@ -27,6 +27,18 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        },
+        "InterchainProposalSender": {
+          "address": "0x29abdf2246557226f31c7f112b6030c5CAbA084b",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "salt": "InterchainProposalSender v1"
         }
       },
       "explorer": {
@@ -61,6 +73,18 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        },
+        "InterchainProposalSender": {
+          "address": "0x29abdf2246557226f31c7f112b6030c5CAbA084b",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "salt": "InterchainProposalSender v1"
         }
       },
       "explorer": {
@@ -95,6 +119,12 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
         }
       },
       "explorer": {
@@ -109,7 +139,7 @@
       "name": "Polygon",
       "id": "Polygon",
       "chainId": 137,
-      "rpc": "https://matic-mainnet.chainstacklabs.com",
+      "rpc": "https://polygon-rpc.com",
       "tokenSymbol": "MATIC",
       "contracts": {
         "AxelarGateway": {
@@ -132,6 +162,12 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
         }
       },
       "explorer": {
@@ -169,6 +205,18 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        },
+        "InterchainProposalSender": {
+          "address": "0x29abdf2246557226f31c7f112b6030c5CAbA084b",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "salt": "InterchainProposalSender v1"
         }
       },
       "explorer": {
@@ -204,46 +252,23 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        },
+        "InterchainProposalSender": {
+          "address": "0x29abdf2246557226f31c7f112b6030c5CAbA084b",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "salt": "InterchainProposalSender v1"
         }
       },
       "explorer": {
         "url": "https://bscscan.com",
         "api": "https://api.bscscan.com/api"
-      }
-    },
-    "aurora": {
-      "name": "Aurora",
-      "id": "aurora",
-      "chainId": 1313161554,
-      "rpc": "https://mainnet.aurora.dev/",
-      "tokenSymbol": "ETH",
-      "wrappedSymbol": "WETH",
-      "contracts": {
-        "AxelarGateway": {
-          "address": "0x304acf330bbE08d1e512eefaa92F6a57871fD895"
-        },
-        "AxelarGasService": {
-          "salt": "AxelarGasService",
-          "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xE622B1D44F5061DB10ABa2594F1A8eb2DC1fC1d4",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90"
-        },
-        "AxelarDepositService": {
-          "salt": "AxelarDepositService",
-          "wrappedSymbol": "",
-          "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF",
-          "address": "0xc1DCb196BA862B337Aa23eDA1Cb9503C0801b955",
-          "implementation": "0xd883C8bA523253c93d97b6C7a5087a7B5ff23d79",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
-        },
-        "ConstAddressDeployer": {
-          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
-        }
-      },
-      "explorer": {
-        "url": "https://aurorascan.dev",
-        "api": "https://api.aurorascan.dev/api"
       }
     },
     "arbitrum": {
@@ -273,6 +298,18 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        },
+        "InterchainProposalSender": {
+          "address": "0x29abdf2246557226f31c7f112b6030c5CAbA084b",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "salt": "InterchainProposalSender v1"
         }
       },
       "explorer": {
@@ -310,6 +347,18 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        },
+        "InterchainProposalSender": {
+          "address": "0x29abdf2246557226f31c7f112b6030c5CAbA084b",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "salt": "InterchainProposalSender v1"
         }
       },
       "explorer": {
@@ -344,6 +393,18 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        },
+        "InterchainProposalSender": {
+          "address": "0x29abdf2246557226f31c7f112b6030c5CAbA084b",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "salt": "InterchainProposalSender v1"
         }
       },
       "explorer": {
@@ -382,6 +443,18 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        },
+        "InterchainProposalSender": {
+          "address": "0x29abdf2246557226f31c7f112b6030c5CAbA084b",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "salt": "InterchainProposalSender v1"
         }
       },
       "explorer": {
@@ -422,6 +495,18 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        },
+        "InterchainProposalSender": {
+          "address": "0x29abdf2246557226f31c7f112b6030c5CAbA084b",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "salt": "InterchainProposalSender v1"
         }
       },
       "explorer": {
@@ -464,6 +549,18 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        },
+        "InterchainProposalSender": {
+          "address": "0x29abdf2246557226f31c7f112b6030c5CAbA084b",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "salt": "InterchainProposalSender v1"
         }
       },
       "explorer": {
@@ -502,6 +599,18 @@
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        },
+        "InterchainProposalSender": {
+          "address": "0x29abdf2246557226f31c7f112b6030c5CAbA084b",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "salt": "InterchainProposalSender v1"
         }
       },
       "explorer": {
