@@ -97,6 +97,11 @@ async function deploy(options, chain) {
     const { artifactPath, contractName, deployMethod, privateKey, upgrade, verifyEnv, yes } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
 
+    if (deployMethod === 'create3' && (contractName === 'AxelarGasService' || contractName === 'AxelarDepositService')) {
+        printError(`${deployMethod} not supported for ${contractName}`);
+        return;
+    }
+
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
     const wallet = new Wallet(privateKey, provider);
