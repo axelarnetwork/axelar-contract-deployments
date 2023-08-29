@@ -12,7 +12,7 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, printWalletInfo, loadConfig } = require('./utils');
-const IOwnableJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
+const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 
 async function processCommand(options, chain) {
     const { contractName, address, ownershipAction, privateKey, newOwner } = options;
@@ -40,7 +40,7 @@ async function processCommand(options, chain) {
 
     printInfo('Contract name', contractName);
 
-    const ownershipContract = new Contract(ownershipAddress, IOwnableJson.abi, wallet);
+    const ownershipContract = new Contract(ownershipAddress, IOwnable.abi, wallet);
 
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
@@ -160,18 +160,26 @@ async function processCommand(options, chain) {
 async function main(options) {
     const config = loadConfig(options.env);
 
-    const chain = options.chain;
+    let chains = options.chainNames.split(',').map((str) => str.trim());
 
-    if (config.chains[chain.toLowerCase()] === undefined) {
-        throw new Error(`Chain ${chain} is not defined in the info file`);
+    if (options.chainNames === 'all') {
+        chains = Object.keys(config.chains);
     }
 
-    await processCommand(options, config.chains[chain.toLowerCase()]);
+    for (const chain of chains) {
+        if (config.chains[chain.toLowerCase()] === undefined) {
+            throw new Error(`Chain ${chain} is not defined in the info file`);
+        }
+    }
+
+    for (const chain of chains) {
+        await processCommand(options, config.chains[chain.toLowerCase()]);
+    }
 }
 
 const program = new Command();
 
-program.name('ownership-script').description('script to manage contract ownership');
+program.name('ownership').description('script to manage contract ownership');
 
 program.addOption(
     new Option('-e, --env <env>', 'environment')
