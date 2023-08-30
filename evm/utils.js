@@ -304,6 +304,20 @@ const isNumber = (arg) => {
     return Number.isInteger(arg);
 };
 
+const isNumberArray = (arr) => {
+    if (!Array.isArray(arr)) {
+        return false;
+    }
+
+    for (const item of arr) {
+        if (!isNumber(item)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 const isAddressArray = (arg) => {
     if (!Array.isArray(arg)) return false;
 
@@ -314,6 +328,56 @@ const isAddressArray = (arg) => {
     }
 
     return true;
+};
+
+/**
+ * Determines if a given input is a valid keccak256 hash.
+ *
+ * @param {string} input - The string to validate.
+ * @returns {boolean} - Returns true if the input is a valid keccak256 hash, false otherwise.
+ */
+function isKeccak256Hash(input) {
+    // Ensure it's a string of 66 characters length and starts with '0x'
+    if (typeof input !== 'string' || input.length !== 66 || input.slice(0, 2) !== '0x') {
+        return false;
+    }
+
+    // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
+    const hexPattern = /^[a-fA-F0-9]{64}$/;
+
+    return hexPattern.test(input.slice(2));
+}
+
+/**
+ * Parses the input string into an array of arguments, recognizing and converting
+ * to the following types: boolean, number, array, and string.
+ *
+ * @param {string} input - The string of arguments to parse.
+ *
+ * @returns {Array} - An array containing parsed arguments.
+ *
+ * @example
+ * const input = "hello true 123 [1,2,3]";
+ * const output = parseArgs(input);
+ * console.log(output); // Outputs: [ 'hello', true, 123, [ 1, 2, 3] ]
+ */
+const parseArgs = (args) => {
+    return args
+        .split(/\s+/)
+        .filter((item) => item !== '')
+        .map((arg) => {
+            if (arg.startsWith('[') && arg.endsWith(']')) {
+                return JSON.parse(arg);
+            } else if (arg === 'true') {
+                return true;
+            } else if (arg === 'false') {
+                return false;
+            } else if (!isNaN(arg) && !arg.startsWith('0x')) {
+                return Number(arg);
+            }
+
+            return arg;
+        });
 };
 
 /**
@@ -595,7 +659,10 @@ module.exports = {
     getDeployedAddress,
     isString,
     isNumber,
+    isNumberArray,
     isAddressArray,
+    isKeccak256Hash,
+    parseArgs,
     getProxy,
     getEVMAddresses,
     sleep,
