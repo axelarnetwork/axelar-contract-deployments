@@ -16,7 +16,7 @@ const chalk = require('chalk');
 
 async function getAuthParams(config, chainName, options) {
     printLog('retrieving addresses');
-    const { addresses, weights, threshold } = await getEVMAddresses(config, chainName, options.keyId, options.amplifier);
+    const { addresses, weights, threshold } = await getEVMAddresses(config, chainName, options);
     printObj(JSON.stringify({ addresses, weights, threshold }));
     const paramsAuth = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
     return paramsAuth;
