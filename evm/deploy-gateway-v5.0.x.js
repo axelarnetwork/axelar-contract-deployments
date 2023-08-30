@@ -29,7 +29,7 @@ function getProxyParams(governance, mintLimiter) {
 async function deploy(config, options) {
     const { chainName, privateKey, reuseProxy, verify, yes } = options;
 
-    const contractName = options.amplifier ? 'AxelarAmplifierGateway' : 'AxelarGateway';
+    const contractName = 'AxelarGateway';
 
     const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
