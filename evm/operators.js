@@ -20,7 +20,7 @@ const {
     isKeccak256Hash,
     parseArgs,
 } = require('./utils');
-const IGasService = require('@axelar-network/axelar-cgp-solidity/interfaces/IAxelarGasService.json');
+const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
 const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
 
 async function processCommand(options, chain) {
@@ -67,7 +67,7 @@ async function processCommand(options, chain) {
             }
 
             const isOperator = await operatorsContract.isOperator(operatorAddress);
-            printInfo(`Is ${operatorAddress} an operator? ${isOperator}`);
+            printInfo(`Is ${operatorAddress} an operator?`, `${isOperator}`);
 
             break;
         }
@@ -165,7 +165,7 @@ async function processCommand(options, chain) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = new Interface(IGasService.abi);
+            const gasServiceInterface = new Interface(IAxelarGasService.abi);
             const collectFeesCalldata = gasServiceInterface.encodeFunctionData('collectFees', [receiver, tokens, amounts]);
 
             try {
@@ -216,7 +216,7 @@ async function processCommand(options, chain) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = new Interface(IGasService.abi);
+            const gasServiceInterface = new Interface(IAxelarGasService.abi);
             const refundCalldata = gasServiceInterface.encodeFunctionData('refund', [txHash, logIndex, receiver, token, amount]);
 
             try {
@@ -237,18 +237,26 @@ async function processCommand(options, chain) {
 async function main(options) {
     const config = loadConfig(options.env);
 
-    const chain = options.chain;
+    let chains = options.chainNames.split(',').map((str) => str.trim());
 
-    if (config.chains[chain.toLowerCase()] === undefined) {
-        throw new Error(`Chain ${chain} is not defined in the info file`);
+    if (options.chainNames === 'all') {
+        chains = Object.keys(config.chains);
     }
 
-    await processCommand(options, config.chains[chain.toLowerCase()]);
+    for (const chain of chains) {
+        if (config.chains[chain.toLowerCase()] === undefined) {
+            throw new Error(`Chain ${chain} is not defined in the info file`);
+        }
+    }
+
+    for (const chain of chains) {
+        await processCommand(options, config.chains[chain.toLowerCase()]);
+    }
 }
 
 const program = new Command();
 
-program.name('operators-script').description('script to manage operators contract');
+program.name('operators').description('script to manage operators contract');
 
 program.addOption(
     new Option('-e, --env <env>', 'environment')
