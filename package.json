@@ -26,6 +26,7 @@
     "@axelar-network/axelar-cgp-solidity": "^5.0.1",
     "@axelar-network/axelar-gmp-sdk-solidity": "5.1.1",
     "@axelar-network/interchain-token-service": "0.3.0",
+    "@cosmjs/cosmwasm-stargate": "^0.31.1",
     "ethers": "^5.7.2"
   },
   "devDependencies": {

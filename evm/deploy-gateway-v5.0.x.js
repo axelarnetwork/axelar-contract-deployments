@@ -14,9 +14,9 @@ const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
-async function getAuthParams(config, chain) {
+async function getAuthParams(config, chainName, options) {
     printLog('retrieving addresses');
-    const { addresses, weights, threshold } = await getEVMAddresses(config, chain);
+    const { addresses, weights, threshold } = await getEVMAddresses(config, chainName, options);
     printObj(JSON.stringify({ addresses, weights, threshold }));
     const paramsAuth = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
     return paramsAuth;
@@ -94,7 +94,7 @@ async function deploy(config, options) {
         auth = authFactory.attach(await gateway.authModule());
     } else {
         printLog(`deploying auth contract`);
-        const params = await getAuthParams(config, chain.id);
+        const params = await getAuthParams(config, chainName, options);
         printLog(`auth deployment args: ${params}`);
 
         auth = await authFactory.deploy(params).then((d) => d.deployed());
@@ -261,6 +261,8 @@ async function programHandler() {
     program.addOption(new Option('-g, --governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('-m, --mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    program.addOption(new Option('-k, --keyId <keyId>', 'key ID').env('KEY_ID'));
+    program.addOption(new Option('-a, --amplifier', 'deploy amplifier gateway').env('AMPLIFIER'));
 
     program.action((options) => {
         main(options);
