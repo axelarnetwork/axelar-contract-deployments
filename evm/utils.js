@@ -456,7 +456,7 @@ const getProxy = async (config, chain) => {
     return address;
 };
 
-const getEVMAddresses = async (config, chainName, options) => {
+const getEVMAddresses = async (config, chainName, options = {}) => {
     const keyID = options.keyId || '';
 
     const evmAddresses = options.amplifier
