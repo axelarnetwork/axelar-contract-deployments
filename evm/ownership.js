@@ -15,7 +15,7 @@ const { printInfo, printWalletInfo, loadConfig } = require('./utils');
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 
 async function processCommand(options, chain) {
-    const { contractName, address, ownershipAction, privateKey, newOwner } = options;
+    const { contractName, address, action, privateKey, newOwner } = options;
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -45,9 +45,9 @@ async function processCommand(options, chain) {
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
-    printInfo('Ownership Action', ownershipAction);
+    printInfo('Ownership Action', action);
 
-    switch (ownershipAction) {
+    switch (action) {
         case 'owner': {
             const owner = await ownershipContract.owner();
             printInfo(`Contract owner: ${owner}`);
@@ -152,7 +152,7 @@ async function processCommand(options, chain) {
         }
 
         default: {
-            throw new Error(`Unknown ownership action ${ownershipAction}`);
+            throw new Error(`Unknown ownership action ${action}`);
         }
     }
 }
@@ -189,11 +189,12 @@ program.addOption(
         .env('ENV'),
 );
 
+program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-program.addOption(new Option('-a, --address <address>', 'override address').makeOptionMandatory(false));
 program.addOption(new Option('-n, --chain <chain>', 'chain name').makeOptionMandatory(true));
+program.addOption(new Option('--address <address>', 'override address').makeOptionMandatory(false));
 program.addOption(
-    new Option('-o, --ownershipAction <ownershipAction>', 'ownership action').choices([
+    new Option('--action <action>', 'ownership action').choices([
         'owner',
         'pendingOwner',
         'transferOwnership',
@@ -201,7 +202,6 @@ program.addOption(
         'acceptOwnership',
     ]),
 );
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-d, --newOwner <newOwner>', 'new owner address').makeOptionMandatory(false));
 
 program.action((options) => {

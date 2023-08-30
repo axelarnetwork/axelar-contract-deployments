@@ -24,7 +24,7 @@ const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/inter
 const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
 
 async function processCommand(options, chain) {
-    const { contractName, address, operatorAction, privateKey, args } = options;
+    const { contractName, address, action, privateKey, args } = options;
 
     const argsArray = parseArgs(args);
 
@@ -56,9 +56,9 @@ async function processCommand(options, chain) {
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
-    printInfo('Operator Action', operatorAction);
+    printInfo('Operator Action', action);
 
-    switch (operatorAction) {
+    switch (action) {
         case 'isOperator': {
             const operatorAddress = argsArray[0];
 
@@ -229,7 +229,7 @@ async function processCommand(options, chain) {
         }
 
         default: {
-            throw new Error(`Unknown operator action: ${operatorAction}`);
+            throw new Error(`Unknown operator action: ${action}`);
         }
     }
 }
@@ -265,20 +265,14 @@ program.addOption(
         .makeOptionMandatory(true)
         .env('ENV'),
 );
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators').makeOptionMandatory(false));
-program.addOption(new Option('-a, --address <address>', 'override address').makeOptionMandatory(false));
-program.addOption(new Option('-n, --chain <chain>', 'chain name').makeOptionMandatory(true));
-program.addOption(
-    new Option('-o, --operatorAction <operatorAction>', 'operator action').choices([
-        'isOperator',
-        'addOperator',
-        'removeOperator',
-        'collectFees',
-        'refund',
-    ]),
-);
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-r, --args <args>', 'operator action arguments').makeOptionMandatory(true));
+program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators').makeOptionMandatory(false));
+program.addOption(new Option('-n, --chain <chain>', 'chain name').makeOptionMandatory(true));
+program.addOption(new Option('--address <address>', 'override address').makeOptionMandatory(false));
+program.addOption(
+    new Option('--action <action>', 'operator action').choices(['isOperator', 'addOperator', 'removeOperator', 'collectFees', 'refund']),
+);
+program.addOption(new Option('--args <args>', 'operator action arguments').makeOptionMandatory(true));
 
 program.action((options) => {
     main(options);
