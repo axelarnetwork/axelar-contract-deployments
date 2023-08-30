@@ -520,12 +520,12 @@ const getProxy = async (config, chain) => {
     return address;
 };
 
-const getEVMAddresses = async (config, chainName, options = {}) => {
-    const keyID = options.keyId || '';
+const getEVMAddresses = async (config, chain, options = {}) => {
+    const keyID = options.keyID || '';
 
     const evmAddresses = options.amplifier
-        ? await getAmplifierKeyAddresses(config, chainName, keyID)
-        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${config.chains[chainName].id}?key_id=${keyID}`);
+        ? await getAmplifierKeyAddresses(config, chain, keyID)
+        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
 
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
 
@@ -536,10 +536,10 @@ const getEVMAddresses = async (config, chainName, options = {}) => {
     return { addresses, weights, threshold };
 };
 
-const getAmplifierKeyAddresses = async (config, chainName, keyID = '') => {
+const getAmplifierKeyAddresses = async (config, chain, keyID = '') => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
     const key = await client.queryContractSmart(config.axelar.contracts.Multisig.address, {
-        get_key: { key_id: { owner: config.axelar.contracts.MultisigProver[chainName].address, subkey: keyID } },
+        get_key: { key_id: { owner: config.axelar.contracts.MultisigProver[chain].address, subkey: keyID } },
     });
     const pubkeys = new Map(Object.entries(key.pub_keys));
 
