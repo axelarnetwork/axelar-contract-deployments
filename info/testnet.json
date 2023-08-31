@@ -181,6 +181,9 @@
       "explorer": {
         "url": "https://testnet.ftmscan.com",
         "api": "https://api-testnet.ftmscan.com/api"
+      },
+      "gasOptions": {
+        "gasLimit": 5000000
       }
     },
     "polygon": {
@@ -302,6 +305,9 @@
       "explorer": {
         "url": "https://moonbase.moonscan.io",
         "api": "https://api-moonbase.moonscan.io/api"
+      },
+      "gasOptions": {
+        "gasLimit": 5000000
       }
     },
     "binance": {
@@ -859,6 +865,9 @@
       "explorer": {
         "url": "https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Ffullnode.algol.cntrfg.com%2Fpublic-ws#/explorer",
         "api": ""
+      },
+      "gasOptions": {
+        "gasLimit": 5000000
       }
     }
   },
