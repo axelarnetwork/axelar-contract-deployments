@@ -69,6 +69,21 @@ async function getConstructorArgs(contractName, config, wallet) {
             return [gateway, governanceChain, governanceAddress, minimumTimeDelay, cosigners, threshold];
         }
 
+        case 'InterchainProposalSender': {
+            const gateway = config.AxelarGateway?.address;
+            const gasService = config.AxelarGasService?.address;
+
+            if (!isAddress(gateway)) {
+                throw new Error(`Missing AxelarGateway address in the chain info.`);
+            }
+
+            if (!isAddress(gasService)) {
+                throw new Error(`Missing AxelarGasService address in the chain info.`);
+            }
+
+            return [gateway, gasService];
+        }
+
         case 'InterchainGovernance': {
             const gateway = config.AxelarGateway?.address;
 
@@ -154,13 +169,15 @@ async function checkContract(contractName, contract, contractConfig) {
 
 async function deploy(options, chain, config) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes } = options;
-    const verifyOptions = verify ? { env, chain: chain.name } : null;
+    const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
 
     const contracts = chain.contracts;
 
     if (!contracts[contractName]) {
         contracts[contractName] = {};
     }
+
+    printInfo(`Deploying on ${chain.name}`);
 
     const contractConfig = contracts[contractName];
 
@@ -177,7 +194,7 @@ async function deploy(options, chain, config) {
 
     printInfo('Contract name', contractName);
 
-    const contractPath = artifactPath + contractName + '.sol/' + contractName + '.json';
+    const contractPath = artifactPath.charAt(0) === '@' ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
     printInfo('Contract path', contractPath);
 
     const contractJson = require(contractPath);
@@ -283,7 +300,7 @@ program.addOption(
 );
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
-program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+program.addOption(new Option('-v, --verify <verify>', 'verify the deployed contract on the explorer').env('VERIFY'));
 program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain').env('YES'));
 

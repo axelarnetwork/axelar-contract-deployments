@@ -20,7 +20,7 @@ async function verifyContracts(config, chain, options) {
 
     switch (contractName) {
         case 'Create3Deployer': {
-            const Create3Deployer = require('@axelar-network/axelar-gmp-sdk-solidity/dist/Create3Deployer.json');
+            const Create3Deployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
 
             const contractFactory = await getContractAt(Create3Deployer.abi, wallet);
 
@@ -85,7 +85,7 @@ async function verifyContracts(config, chain, options) {
             const adminThreshold = await gateway.adminThreshold(1);
             const setupParams = defaultAbiCoder.encode(['address[]', 'uint8', 'bytes'], [admins, adminThreshold, '0x']);
 
-            const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, `evm-${chain.id}-genesis`);
+            const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, { keyID: `evm-${chain.id}-genesis` });
             const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
 
             console.log(`Verifying ${contractName} on ${chain.name} at address ${gateway.address}...`);
