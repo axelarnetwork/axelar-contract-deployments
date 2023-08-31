@@ -202,6 +202,9 @@
       "explorer": {
         "url": "https://testnet.ftmscan.com",
         "api": "https://api-testnet.ftmscan.com/api"
+      },
+      "gasOptions": {
+        "gasLimit": 5000000
       }
     },
     "polygon": {
@@ -337,6 +340,9 @@
       "explorer": {
         "url": "https://moonbase.moonscan.io",
         "api": "https://api-moonbase.moonscan.io/api"
+      },
+      "gasOptions": {
+        "gasLimit": 5000000
       }
     },
     "binance": {
@@ -992,6 +998,21 @@
       },
       "gasOptions": {
         "gasLimit": 8000000
+      }
+    },
+    "centrifuge": {
+      "name": "Centrifuge",
+      "id": "centrifuge",
+      "chainId": 2089,
+      "rpc": "https://node-7097280690952949760.lh.onfinality.io/rpc?apikey=e80bc7d3-17d9-49b7-8b7a-9ffd6c3da93c",
+      "tokenSymbol": "ALGL",
+      "contracts": {},
+      "explorer": {
+        "url": "https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Ffullnode.algol.cntrfg.com%2Fpublic-ws#/explorer",
+        "api": ""
+      },
+      "gasOptions": {
+        "gasLimit": 5000000
       }
     }
   },
