@@ -1004,15 +1004,36 @@
       "name": "Centrifuge",
       "id": "centrifuge",
       "chainId": 2089,
-      "rpc": "https://node-7097280690952949760.lh.onfinality.io/rpc?apikey=e80bc7d3-17d9-49b7-8b7a-9ffd6c3da93c",
+      "rpc": "https://node-7103415746313531392.lh.onfinality.io/rpc?apikey=f8ccfe8f-da25-4a8b-ab42-b68eb2e3fb3d",
       "tokenSymbol": "ALGL",
-      "contracts": {},
+      "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
+          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
+          "tokenDeployer": "0x8A156bCA562FB75385c4d41ea6903E270A34B727"
+        },
+        "AxelarGasService": {
+          "collector": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
+          "implementation": "0xCD6b34FaF1FD1056C728A27426AB6807f84BAa1b",
+          "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
+        },
+        "AxelarDepositService": {
+          "wrappedSymbol": "",
+          "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF"
+        },
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        }
+      },
       "explorer": {
         "url": "https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Ffullnode.algol.cntrfg.com%2Fpublic-ws#/explorer",
         "api": ""
       },
       "gasOptions": {
-        "gasLimit": 5000000
+        "gasLimit": 8000000
       }
     }
   },
