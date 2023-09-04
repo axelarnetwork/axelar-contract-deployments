@@ -37,6 +37,17 @@ async function verifyContracts(config, chain, options) {
             break;
         }
 
+        case 'InterchainProposalSender': {
+            const contractFactory = await getContractFactory('InterchainProposalSender', wallet);
+
+            const contract = contractFactory.attach(options.address || chain.contracts.InterchainProposalSender.address);
+
+            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
+
+            await verifyContract(env, chain.name, contract.address, [chain.contracts.AxelarGateway.address, chain.contracts.AxelarGasService.address], verifyOptions);
+            break;
+        }
+
         case 'ConstAddressDeployer': {
             const ConstAddressDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json');
 
