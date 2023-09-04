@@ -30,7 +30,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -96,7 +96,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -169,7 +169,7 @@
         "Create3Deployer": {
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deploymentMethod": "create2"
         },
         "InterchainTokenService": {
@@ -237,7 +237,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -306,7 +306,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -375,7 +375,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -444,7 +444,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -507,7 +507,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -573,7 +573,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -638,7 +638,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -708,7 +708,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -780,7 +780,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -850,7 +850,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -916,7 +916,7 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2"
         },
@@ -986,7 +986,7 @@
         },
         "skipRevertTests": true,
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -1004,7 +1004,7 @@
       "name": "Centrifuge",
       "id": "centrifuge",
       "chainId": 2089,
-      "rpc": "https://fullnode.algol.cntrfg.com/rpc",
+      "rpc": "https://node-7103415746313531392.lh.onfinality.io/rpc?apikey=f8ccfe8f-da25-4a8b-ab42-b68eb2e3fb3d",
       "tokenSymbol": "ALGL",
       "contracts": {
         "AxelarGateway": {
