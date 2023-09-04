@@ -40,7 +40,7 @@ const deployCreate = async (wallet, contractJson, args = [], options = {}, verif
         sleep(10000);
 
         try {
-            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions.contractPath);
+            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
             console.log('FAILED VERIFICATION!!');
         }
@@ -70,7 +70,7 @@ const deployCreate2 = async (
         sleep(2000);
 
         try {
-            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions.contractPath);
+            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
             console.log(`FAILED VERIFICATION!! ${e}`);
         }
@@ -100,7 +100,7 @@ const deployCreate3 = async (
         sleep(2000);
 
         try {
-            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions.contractPath);
+            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
             console.log(`FAILED VERIFICATION!! ${e}`);
         }
@@ -247,7 +247,7 @@ const importNetworks = (chains, keys) => {
         }
 
         // Add contract verification keys
-        if (chain.explorer) {
+        if (chain.explorer?.api) {
             if (keys) {
                 etherscan.apiKey[name] = keys.chains[name]?.api;
             }
@@ -277,12 +277,13 @@ const importNetworks = (chains, keys) => {
  * @param {any[]} args
  * @returns {Promise<void>}
  */
-const verifyContract = async (env, chain, contract, args, contractPath = null) => {
+const verifyContract = async (env, chain, contract, args, options = {}) => {
     const stringArgs = args.map((arg) => JSON.stringify(arg));
     const content = `module.exports = [\n    ${stringArgs.join(',\n    ')}\n];`;
     const file = 'temp-arguments.js';
-    const contractArg = contractPath ? `--contract ${contractPath}` : '';
-    const cmd = `ENV=${env} npx hardhat verify --network ${chain.toLowerCase()} ${contractArg} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
+    const contractArg = options.contractPath ? `--contract ${options.contractPath}` : '';
+    const dirPrefix = options.dir ? `cd ${options.dir};` : '';
+    const cmd = `${dirPrefix} ENV=${env} npx hardhat verify --network ${chain.toLowerCase()} ${contractArg} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
 
     return writeFileAsync(file, content, 'utf-8')
         .then(() => {

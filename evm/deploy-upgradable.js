@@ -123,6 +123,12 @@ async function deploy(options, chain) {
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    const salt = options.salt || contractName;
+    let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
+
+    if (deployMethod === 'create') {
+        deployerContract = null;
+    }
 
     if (upgrade) {
         if (!contractConfig.address) {
@@ -147,13 +153,19 @@ async function deploy(options, chain) {
         }
 
         await upgradeUpgradable(
+            deployMethod,
             contractConfig.address,
             wallet.connect(provider),
             implementationJson,
             implArgs,
-            {},
             getUpgradeArgs(contractName, chain),
+            {
+                deployerContract,
+                salt: `${salt} Implementation`,
+            },
+            gasOptions,
             verifyOptions,
+            chain.name,
         );
 
         contractConfig.implementation = await contract.implementation();
@@ -161,15 +173,8 @@ async function deploy(options, chain) {
         console.log(`${chain.name} | New Implementation for ${contractName} is at ${contractConfig.implementation}`);
         console.log(`${chain.name} | Upgraded.`);
     } else {
-        const salt = options.salt || contractName;
         const setupArgs = getInitArgs(contractName, contracts);
         printInfo('Proxy setup args', setupArgs);
-
-        let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
-
-        if (deployMethod === 'create') {
-            deployerContract = null;
-        }
 
         const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
             salt,
