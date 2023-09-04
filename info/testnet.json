@@ -1022,7 +1022,11 @@
         },
         "AxelarDepositService": {
           "wrappedSymbol": "",
-          "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF"
+          "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF",
+          "salt": "AxelarDepositService",
+          "address": "0xc1DCb196BA862B337Aa23eDA1Cb9503C0801b955",
+          "implementation": "0xd883C8bA523253c93d97b6C7a5087a7B5ff23d79",
+          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
