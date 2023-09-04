@@ -1004,7 +1004,7 @@
       "name": "Centrifuge",
       "id": "centrifuge",
       "chainId": 2089,
-      "rpc": "https://node-7103415746313531392.lh.onfinality.io/rpc?apikey=f8ccfe8f-da25-4a8b-ab42-b68eb2e3fb3d",
+      "rpc": "https://fullnode.algol.cntrfg.com/rpc",
       "tokenSymbol": "ALGL",
       "contracts": {
         "AxelarGateway": {
