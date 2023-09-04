@@ -29,7 +29,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -75,7 +75,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -121,7 +121,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -170,7 +170,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -219,7 +219,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -266,7 +266,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -312,7 +312,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -361,7 +361,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -407,7 +407,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -457,7 +457,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -509,7 +509,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -563,7 +563,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -613,7 +613,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0x1a2Bf81BB73f7AC55CeE94d6216Bf62165586049",
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "salt": "Create3Deployer"
@@ -662,7 +662,13 @@
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
-        "skipRevertTests": true
+        "skipRevertTests": true,
+        "Create3Deployer": {
+          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "salt": "Create3Deployer"
+        }
       },
       "explorer": {
         "url": "https://explorer.mantle.xyz",
