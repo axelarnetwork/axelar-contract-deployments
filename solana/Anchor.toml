@@ -2,7 +2,6 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
-gateway = "5cLTE6W6juWSW8cDvDonh6NRXPHvJwoLr3Kt9NFh3Wdp"
 registry = "9fH45E6rSfwx71HEgDnmhR5fZwj3vvJpExRvHQbU6Z2X"
 
 [registry]
