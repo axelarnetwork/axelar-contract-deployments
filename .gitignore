@@ -1,0 +1,7 @@
+.DS_Store
+solana/.anchor
+solana/target
+solana/node_modules
+solana/dist
+solana/build
+solana/test-ledger
