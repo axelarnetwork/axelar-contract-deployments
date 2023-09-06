@@ -4,7 +4,7 @@ const { Contract, ContractFactory } = require('ethers');
 const { deployAndInitContractConstant, create3DeployAndInitContract } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 
-const { verifyContract, deployCreate, getBytecodeHash, deployContract, printInfo, getDeployedAddress } = require('./utils');
+const { verifyContract, deployCreate, getBytecodeHash, deployContract, printInfo } = require('./utils');
 
 async function deployUpgradable(
     wallet,

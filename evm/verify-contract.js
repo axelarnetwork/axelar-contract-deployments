@@ -44,7 +44,13 @@ async function verifyContracts(config, chain, options) {
 
             console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
 
-            await verifyContract(env, chain.name, contract.address, [chain.contracts.AxelarGateway.address, chain.contracts.AxelarGasService.address], verifyOptions);
+            await verifyContract(
+                env,
+                chain.name,
+                contract.address,
+                [chain.contracts.AxelarGateway.address, chain.contracts.AxelarGasService.address],
+                verifyOptions,
+            );
             break;
         }
 
