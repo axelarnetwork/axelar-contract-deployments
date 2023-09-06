@@ -277,8 +277,9 @@ async function main(options) {
 
     for (const chain of chains) {
         await deploy(options, config.chains[chain.toLowerCase()], config);
-        saveConfig(config, options.env);
     }
+
+    saveConfig(config, options.env);
 }
 
 const program = new Command();

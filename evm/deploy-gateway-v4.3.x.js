@@ -38,7 +38,8 @@ function getProxyParams(adminAddresses, adminThreshold) {
 }
 
 async function deploy(config, options) {
-    const { chainName, privateKey, skipExisting, adminAddresses, adminThreshold, verify, yes } = options;
+    const { privateKey, skipExisting, adminAddresses, adminThreshold, verify, yes } = options;
+    const chainName = options.chainName.toLowerCase();
 
     const contractName = 'AxelarGateway';
 
@@ -162,9 +163,7 @@ async function deploy(config, options) {
 
     if (!(skipExisting && contractConfig.address)) {
         printInfo('Transferring auth ownership');
-        await auth
-            .transferOwnership(gateway.address, chain.contracts.AxelarGateway?.gasOptions || {})
-            .then((tx) => tx.wait(chain.confirmations));
+        await auth.transferOwnership(gateway.address, gasOptions).then((tx) => tx.wait(chain.confirmations));
         printInfo('Transferred auth ownership. All done!');
     }
 

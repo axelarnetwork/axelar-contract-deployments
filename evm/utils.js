@@ -4,7 +4,7 @@ const {
     ContractFactory,
     Contract,
     provider,
-    utils: { getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder },
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder },
 } = require('ethers');
 const https = require('https');
 const http = require('http');
@@ -20,6 +20,7 @@ const {
     predictContractConstant,
     getCreate3Address,
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
+const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 
@@ -40,7 +41,7 @@ const deployCreate = async (wallet, contractJson, args = [], options = {}, verif
         sleep(10000);
 
         try {
-            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions.contractPath);
+            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
             console.log('FAILED VERIFICATION!!');
         }
@@ -70,7 +71,7 @@ const deployCreate2 = async (
         sleep(2000);
 
         try {
-            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions.contractPath);
+            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
             console.log(`FAILED VERIFICATION!! ${e}`);
         }
@@ -100,7 +101,7 @@ const deployCreate3 = async (
         sleep(2000);
 
         try {
-            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions.contractPath);
+            await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
             console.log(`FAILED VERIFICATION!! ${e}`);
         }
@@ -247,7 +248,7 @@ const importNetworks = (chains, keys) => {
         }
 
         // Add contract verification keys
-        if (chain.explorer) {
+        if (chain.explorer?.api) {
             if (keys) {
                 etherscan.apiKey[name] = keys.chains[name]?.api;
             }
@@ -277,12 +278,13 @@ const importNetworks = (chains, keys) => {
  * @param {any[]} args
  * @returns {Promise<void>}
  */
-const verifyContract = async (env, chain, contract, args, contractPath = null) => {
+const verifyContract = async (env, chain, contract, args, options = {}) => {
     const stringArgs = args.map((arg) => JSON.stringify(arg));
     const content = `module.exports = [\n    ${stringArgs.join(',\n    ')}\n];`;
     const file = 'temp-arguments.js';
-    const contractArg = contractPath ? `--contract ${contractPath}` : '';
-    const cmd = `ENV=${env} npx hardhat verify --network ${chain.toLowerCase()} ${contractArg} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
+    const contractArg = options.contractPath ? `--contract ${options.contractPath}` : '';
+    const dirPrefix = options.dir ? `cd ${options.dir};` : '';
+    const cmd = `${dirPrefix} ENV=${env} npx hardhat verify --network ${chain.toLowerCase()} ${contractArg} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
 
     return writeFileAsync(file, content, 'utf-8')
         .then(() => {
@@ -304,6 +306,20 @@ const isNumber = (arg) => {
     return Number.isInteger(arg);
 };
 
+const isNumberArray = (arr) => {
+    if (!Array.isArray(arr)) {
+        return false;
+    }
+
+    for (const item of arr) {
+        if (!isNumber(item)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 const isAddressArray = (arg) => {
     if (!Array.isArray(arg)) return false;
 
@@ -319,6 +335,56 @@ const isAddressArray = (arg) => {
 const isContract = async (target) => {
     const code = await provider.getCode(target);
     return code !== '0x';
+};
+
+/**
+ * Determines if a given input is a valid keccak256 hash.
+ *
+ * @param {string} input - The string to validate.
+ * @returns {boolean} - Returns true if the input is a valid keccak256 hash, false otherwise.
+ */
+function isKeccak256Hash(input) {
+    // Ensure it's a string of 66 characters length and starts with '0x'
+    if (typeof input !== 'string' || input.length !== 66 || input.slice(0, 2) !== '0x') {
+        return false;
+    }
+
+    // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
+    const hexPattern = /^[a-fA-F0-9]{64}$/;
+
+    return hexPattern.test(input.slice(2));
+}
+
+/**
+ * Parses the input string into an array of arguments, recognizing and converting
+ * to the following types: boolean, number, array, and string.
+ *
+ * @param {string} input - The string of arguments to parse.
+ *
+ * @returns {Array} - An array containing parsed arguments.
+ *
+ * @example
+ * const input = "hello true 123 [1,2,3]";
+ * const output = parseArgs(input);
+ * console.log(output); // Outputs: [ 'hello', true, 123, [ 1, 2, 3] ]
+ */
+const parseArgs = (args) => {
+    return args
+        .split(/\s+/)
+        .filter((item) => item !== '')
+        .map((arg) => {
+            if (arg.startsWith('[') && arg.endsWith(']')) {
+                return JSON.parse(arg);
+            } else if (arg === 'true') {
+                return true;
+            } else if (arg === 'false') {
+                return false;
+            } else if (!isNaN(arg) && !arg.startsWith('0x')) {
+                return Number(arg);
+            }
+
+            return arg;
+        });
 };
 
 /**
@@ -461,8 +527,13 @@ const getProxy = async (config, chain) => {
     return address;
 };
 
-const getEVMAddresses = async (config, chain, keyID = '') => {
-    const evmAddresses = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+const getEVMAddresses = async (config, chain, options = {}) => {
+    const keyID = options.keyID || '';
+
+    const evmAddresses = options.amplifier
+        ? await getAmplifierKeyAddresses(config, chain, keyID)
+        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
 
     const addresses = sortedAddresses.map((weightedAddress) => weightedAddress.address);
@@ -470,6 +541,21 @@ const getEVMAddresses = async (config, chain, keyID = '') => {
     const threshold = Number(evmAddresses.threshold);
 
     return { addresses, weights, threshold };
+};
+
+const getAmplifierKeyAddresses = async (config, chain, keyID = '') => {
+    const client = await CosmWasmClient.connect(config.axelar.rpc);
+    const key = await client.queryContractSmart(config.axelar.contracts.Multisig.address, {
+        get_key: { key_id: { owner: config.axelar.contracts.MultisigProver[chain].address, subkey: keyID } },
+    });
+    const pubkeys = new Map(Object.entries(key.pub_keys));
+
+    const weightedAddresses = Object.values(key.snapshot.participants).map((participant) => ({
+        address: computeAddress(`0x${pubkeys.get(participant.address)}`),
+        weight: participant.weight,
+    }));
+
+    return { addresses: weightedAddresses, threshold: key.snapshot.quorum };
 };
 
 function sleep(ms) {
@@ -628,8 +714,11 @@ module.exports = {
     getDeployedAddress,
     isString,
     isNumber,
+    isNumberArray,
     isAddressArray,
     isContract,
+    isKeccak256Hash,
+    parseArgs,
     getProxy,
     getEVMAddresses,
     sleep,
