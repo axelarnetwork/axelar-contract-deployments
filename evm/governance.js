@@ -29,10 +29,6 @@ const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 async function processCommand(options, chain) {
     const { contractName, address, governanceAction, calldata, nativeValue, eta, privateKey, yes } = options;
 
-    if (contractName !== 'AxelarServiceGovernance' && contractName !== 'InterchainGovernance') {
-        throw new Error(`Invalid governance contract: ${contractName}`);
-    }
-
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
 
@@ -54,7 +50,7 @@ async function processCommand(options, chain) {
         throw new Error(`Missing AxelarGateway address in the chain info.`);
     }
 
-    if (!isNumber(nativeValue)) {
+    if (!isNumber(parseFloat(nativeValue))) {
         throw new Error(`Invalid native value: ${nativeValue}`);
     }
 
@@ -264,7 +260,11 @@ program.addOption(
         .makeOptionMandatory(true)
         .env('ENV'),
 );
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+program.addOption(
+    new Option('-c, --contractName <contractName>', 'contract name')
+        .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+        .default('InterchainGovernance'),
+);
 program.addOption(new Option('-a, --address <address>', 'override address').makeOptionMandatory(false));
 program.addOption(new Option('-n, --destinationChain <destinationChain>', 'destination chain').makeOptionMandatory(true));
 program.addOption(
