@@ -58,7 +58,7 @@ async function deployCreate3Deployer(wallet, chain, options = null, verifyOption
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../info/${options.env === 'local' ? 'testnet' : options.env}.json`);
+    const config = require(`${__dirname}/../axelar-chains-info/info/${options.env === 'local' ? 'testnet' : options.env}.json`);
 
     const chains = options.chainNames.split(',').map((str) => str.trim());
 
@@ -85,7 +85,7 @@ async function main(options) {
         }
 
         await deployCreate3Deployer(wallet, chain, { salt: options.salt, yes: options.yes }, verifyOptions);
-        writeJSON(config, `${__dirname}/../info/${options.env}.json`);
+        writeJSON(config, `${__dirname}/../axelar-chains-info/info/${options.env}.json`);
     }
 }
 

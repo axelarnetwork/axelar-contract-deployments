@@ -557,11 +557,11 @@ function sleep(ms) {
 }
 
 function loadConfig(env) {
-    return require(`${__dirname}/../info/${env}.json`);
+    return require(`${__dirname}/../axelar-chains-info/info/${env}.json`);
 }
 
 function saveConfig(config, env) {
-    writeJSON(config, `${__dirname}/../info/${env}.json`);
+    writeJSON(config, `${__dirname}/../axelar-chains-info/info/${env}.json`);
 }
 
 async function printWalletInfo(wallet) {

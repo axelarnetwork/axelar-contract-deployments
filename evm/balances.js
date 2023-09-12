@@ -17,7 +17,7 @@ async function balances(chain, options) {
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../info/${options.env === 'local' ? 'testnet' : options.env}.json`);
+    const config = require(`${__dirname}/../axelar-chains-info/info/${options.env === 'local' ? 'testnet' : options.env}.json`);
 
     let chains = options.chainNames.split(',').map((str) => str.trim());
 
