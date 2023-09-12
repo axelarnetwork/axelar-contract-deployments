@@ -27,7 +27,8 @@
     "@axelar-network/axelar-gmp-sdk-solidity": "5.3.1",
     "@axelar-network/interchain-token-service": "0.3.0",
     "@cosmjs/cosmwasm-stargate": "^0.31.1",
-    "ethers": "^5.7.2"
+    "ethers": "^5.7.2",
+    "@ethersproject/hardware-wallets": "^5.5.0"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",

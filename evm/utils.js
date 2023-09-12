@@ -3,8 +3,11 @@
 const {
     ContractFactory,
     Contract,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder },
+    provider,
+    BigNumber,
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, serializeTransaction },
 } = require('ethers');
+const { LedgerSigner } = require('@ethersproject/hardware-wallets');
 const https = require('https');
 const http = require('http');
 const { outputJsonSync } = require('fs-extra');
