@@ -579,6 +579,8 @@ async function printWalletInfo(wallet) {
     if (balance.isZero()) {
         printError('Wallet balance is 0');
     }
+
+    return balance;
 }
 
 const deployContract = async (
