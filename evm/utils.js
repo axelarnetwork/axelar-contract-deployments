@@ -3,6 +3,7 @@
 const {
     ContractFactory,
     Contract,
+    provider,
     utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder },
 } = require('ethers');
 const https = require('https');
@@ -331,6 +332,11 @@ const isAddressArray = (arg) => {
     return true;
 };
 
+const isContract = async (target) => {
+    const code = await provider.getCode(target);
+    return code !== '0x';
+};
+
 /**
  * Determines if a given input is a valid keccak256 hash.
  *
@@ -642,6 +648,54 @@ const deployContract = async (
     }
 };
 
+/**
+ * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
+ *
+ * @param {string} timeString - The input time string.
+ * @return {boolean} - Returns true if the format matches, false otherwise.
+ */
+function isValidTimeFormat(timeString) {
+    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+
+    if (timeString === '0') {
+        return true;
+    }
+
+    return regex.test(timeString);
+}
+
+const etaToUnixTimestamp = (utcTimeString) => {
+    if (utcTimeString === '0') {
+        return 0;
+    }
+
+    const date = new Date(utcTimeString + 'Z');
+
+    if (isNaN(date.getTime())) {
+        throw new Error(`Invalid date format provided: ${utcTimeString}`);
+    }
+
+    return Math.floor(date.getTime() / 1000);
+};
+
+const getCurrentTimeInSeconds = () => {
+    return Date.now() / 1000;
+};
+
+/**
+ * Check if a specific event was emitted in a transaction receipt.
+ *
+ * @param {object} receipt - The transaction receipt object.
+ * @param {object} contract - The ethers.js contract instance.
+ * @param {string} eventName - The name of the event.
+ * @return {boolean} - Returns true if the event was emitted, false otherwise.
+ */
+function wasEventEmitted(receipt, contract, eventName) {
+    const event = contract.filters[eventName]();
+
+    return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -664,6 +718,7 @@ module.exports = {
     isNumber,
     isNumberArray,
     isAddressArray,
+    isContract,
     isKeccak256Hash,
     parseArgs,
     getProxy,
@@ -672,4 +727,8 @@ module.exports = {
     loadConfig,
     saveConfig,
     printWalletInfo,
+    isValidTimeFormat,
+    etaToUnixTimestamp,
+    getCurrentTimeInSeconds,
+    wasEventEmitted,
 };
