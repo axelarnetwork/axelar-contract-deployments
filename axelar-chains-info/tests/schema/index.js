@@ -24,7 +24,7 @@ export const contractSchema = {
     id: '/info.chains.contracts',
     type: 'object',
     patternProperties: {
-        // capitalized words e.g. 'AxelarGasService', 'AxelarGateway', 'InterchainGovernanceExecutor', etc.
+        // PascalName e.g. 'AxelarGasService', 'AxelarGateway', 'InterchainGovernanceExecutor', etc.
         '\b[A-Z][a-z]*([A-Z][a-z]*)*\b': {
             $ref: contractValueSchema.id,
         },
