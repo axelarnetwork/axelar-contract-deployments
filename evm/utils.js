@@ -543,7 +543,7 @@ const getAmplifierKeyAddresses = async (config, chain) => {
     });
 
     const weightedAddresses = workerSet.signers.map((signer) => ({
-        address: computeAddress(`0x${signer.pub_key.e_c_d_s_a}`),
+        address: computeAddress(`0x${signer.pub_key.ecdsa}`),
         weight: signer.weight,
     }));
 
