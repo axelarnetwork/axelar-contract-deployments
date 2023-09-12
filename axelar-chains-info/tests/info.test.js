@@ -1,4 +1,3 @@
-// sum.test.js
 import { describe, expect, it, beforeAll } from 'vitest';
 import fs from 'fs';
 import { Validator } from 'jsonschema';

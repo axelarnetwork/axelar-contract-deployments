@@ -1,3 +1,1 @@
-// utility functions for chain configs
-
-
+export * from './utils';

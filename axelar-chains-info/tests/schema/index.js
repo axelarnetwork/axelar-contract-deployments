@@ -56,23 +56,28 @@ export const gasOptionSchema = {
     required: ['gasLimit'],
 };
 
+export const chainValueSchema = {
+    id: '/info.chains.value',
+    type: 'object',
+    properties: {
+        name: { type: 'string' },
+        id: { type: 'string' },
+        chainId: { type: 'number' },
+        rpc: { type: 'string' },
+        tokenSymbol: { type: 'string' },
+        contracts: { $ref: contractSchema.id },
+        explorer: { $ref: explorerSchema.id },
+        gasOptions: { $ref: gasOptionSchema.id },
+    },
+    required: ['name', 'id', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
+};
+
 export const chainsSchema = {
     id: '/info.chains',
     type: 'object',
     patternProperties: {
         '^[a-z]+$': {
-            type: 'object',
-            properties: {
-                name: { type: 'string' },
-                id: { type: 'string' },
-                chainId: { type: 'number' },
-                rpc: { type: 'string' },
-                tokenSymbol: { type: 'string' },
-                contracts: { $ref: contractSchema.id },
-                explorer: { $ref: explorerSchema.id },
-                gasOptions: { $ref: gasOptionSchema.id },
-            },
-            required: ['name', 'id', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
+            $ref: chainValueSchema.id,
         },
     },
 };
@@ -90,6 +95,7 @@ export const schema = {
 export function addAllSchema(validator) {
     validator.addSchema(axelarSchema, axelarSchema.id);
     validator.addSchema(chainsSchema, chainsSchema.id);
+    validator.addSchema(chainValueSchema, chainValueSchema.id);
     validator.addSchema(contractValueSchema, contractValueSchema.id);
     validator.addSchema(contractSchema, contractSchema.id);
     validator.addSchema(explorerSchema, explorerSchema.id);
