@@ -109,7 +109,7 @@ async function deploy(config, options) {
     } else {
         printInfo(`Deploying token deployer contract`);
 
-        tokenDeployer = await tokenDeployerFactory.deploy(gasOptions).then((d) => d.deployed());
+        tokenDeployer = await tokenDeployerFactory.deploy(gasOptions);
         await tokenDeployer.deployTransaction.wait(chain.confirmations);
 
         contractsToVerify.push({
@@ -127,7 +127,7 @@ async function deploy(config, options) {
     if (skipExisting && contractConfig.implementation) {
         implementation = gatewayFactory.attach(contractConfig.implementation);
     } else {
-        implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address).then((d) => d.deployed());
+        implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address);
         await implementation.deployTransaction.wait(chain.confirmations);
     }
 

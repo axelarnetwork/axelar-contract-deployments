@@ -2,10 +2,22 @@
 
 require('dotenv').config();
 
-const { printObj, writeJSON, getBytecodeHash, verifyContract, printInfo, printLog, getProxy, getEVMAddresses } = require('./utils');
+const {
+    saveConfig,
+    loadConfig,
+    getBytecodeHash,
+    verifyContract,
+    printInfo,
+    getProxy,
+    getEVMAddresses,
+    httpGet,
+    printError,
+    printWalletInfo,
+} = require('./utils');
 const { ethers } = require('hardhat');
 const {
-    getContractFactory,
+    ContractFactory,
+    Contract,
     Wallet,
     utils: { defaultAbiCoder, getContractAddress },
     getDefaultProvider,
@@ -14,12 +26,37 @@ const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
+const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
+const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
+const AxelarAuthWeighted = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json');
+const TokenDeployer = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/TokenDeployer.sol/TokenDeployer.json');
+
 async function getAuthParams(config, chain, options) {
-    printLog('retrieving addresses');
+    printInfo('Retrieving auth key');
+
+    if (!options.amplifier) {
+        // check if key rotation is in progress
+        try {
+            const resp = await httpGet(`${config.axelar.lcd}/axelar/multisig/v1beta1/next_key_id/${chain}`);
+            throw new Error(`Key rotation is in progress for ${chain.name}: ${resp}`);
+        } catch (err) {}
+    }
+
+    const params = [];
+
+    if (options.prevKeyIDs) {
+        for (const keyID of options.prevKeyIDs.split(',')) {
+            const { addresses, weights, threshold } = await getEVMAddresses(config, chain, { ...options, keyID });
+            printInfo(JSON.stringify({ keyID, addresses, weights, threshold }));
+            params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
+        }
+    }
+
     const { addresses, weights, threshold } = await getEVMAddresses(config, chain, options);
-    printObj(JSON.stringify({ addresses, weights, threshold }));
-    const paramsAuth = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
-    return paramsAuth;
+    printInfo(JSON.stringify({ keyID: 'latest', addresses, weights, threshold }));
+    params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
+
+    return params;
 }
 
 function getProxyParams(governance, mintLimiter) {
@@ -27,7 +64,7 @@ function getProxyParams(governance, mintLimiter) {
 }
 
 async function deploy(config, options) {
-    const { privateKey, reuseProxy, verify, yes } = options;
+    const { privateKey, reuseProxy, reuseHelpers, verify, yes } = options;
     const chainName = options.chainName.toLowerCase();
 
     const contractName = 'AxelarGateway';
@@ -37,13 +74,7 @@ async function deploy(config, options) {
     const provider = getDefaultProvider(rpc);
 
     const wallet = new Wallet(privateKey).connect(provider);
-    printInfo('Deployer address', wallet.address);
-
-    console.log(
-        `Deployer has ${(await provider.getBalance(wallet.address)) / 1e18} ${chalk.green(
-            chain.tokenSymbol,
-        )} and nonce ${await provider.getTransactionCount(wallet.address)} on ${chainName}.`,
-    );
+    await printWalletInfo(wallet);
 
     if (chain.contracts[contractName] === undefined) {
         chain.contracts[contractName] = {};
@@ -68,15 +99,20 @@ async function deploy(config, options) {
     });
     printInfo('Predicted proxy address', proxyAddress);
 
-    const gatewayFactory = await getContractFactory('AxelarGateway', wallet);
-    const authFactory = await getContractFactory('AxelarAuthWeighted', wallet);
-    const tokenDeployerFactory = await getContractFactory('TokenDeployer', wallet);
-    const gatewayProxyFactory = await getContractFactory('AxelarGatewayProxy', wallet);
+    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
+    printInfo('Is verification enabled?', verify ? 'y' : 'n');
 
-    var gateway;
-    var auth;
-    var tokenDeployer;
-    var contractsToVerify = [];
+    const gatewayFactory = new ContractFactory(AxelarGateway.abi, AxelarGateway.bytecode, wallet);
+    const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
+    const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
+    const gatewayProxyFactory = new ContractFactory(AxelarGatewayProxy.abi, AxelarGatewayProxy.bytecode, wallet);
+
+    let gateway;
+    let auth;
+    let tokenDeployer;
+    let implementation;
+    const contractsToVerify = [];
 
     if (!yes) {
         console.log('Does this match any existing deployments?');
@@ -84,22 +120,26 @@ async function deploy(config, options) {
         if (anwser !== 'y') return;
     }
 
+    contractConfig.deployer = wallet.address;
+
     if (reuseProxy) {
-        printLog(`reusing gateway proxy contract`);
+        printInfo('Reusing gateway proxy contract');
+
         const gatewayProxy = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.id));
-        printLog(`proxy address ${gatewayProxy}`);
+        printInfo('Proxy address', gatewayProxy);
         gateway = gatewayFactory.attach(gatewayProxy);
     }
 
-    if (reuseProxy) {
+    if (reuseProxy && reuseHelpers) {
         auth = authFactory.attach(await gateway.authModule());
     } else {
-        printLog(`deploying auth contract`);
-        const params = await getAuthParams(config, chain.id, options);
-        printLog(`auth deployment args: ${params}`);
+        printInfo(`Deploying auth contract`);
 
-        auth = await authFactory.deploy(params).then((d) => d.deployed());
-        printLog(`deployed auth at address ${auth.address}`);
+        const params = await getAuthParams(config, chain.id, options);
+        printInfo('Auth deployment args', params);
+
+        auth = await authFactory.deploy(params, gasOptions);
+        await auth.deployTransaction.wait(chain.confirmations);
 
         contractsToVerify.push({
             address: auth.address,
@@ -107,12 +147,13 @@ async function deploy(config, options) {
         });
     }
 
-    if (reuseProxy) {
+    if (reuseProxy && reuseHelpers) {
         tokenDeployer = tokenDeployerFactory.attach(await gateway.tokenDeployer());
     } else {
-        printLog(`deploying token deployer contract`);
-        tokenDeployer = await tokenDeployerFactory.deploy().then((d) => d.deployed());
-        printLog(`deployed token deployer at address ${tokenDeployer.address}`);
+        printInfo(`Deploying token deployer contract`);
+
+        tokenDeployer = await tokenDeployerFactory.deploy(gasOptions);
+        await tokenDeployer.deployTransaction.wait(chain.confirmations);
 
         contractsToVerify.push({
             address: tokenDeployer.address,
@@ -120,74 +161,90 @@ async function deploy(config, options) {
         });
     }
 
-    printLog(`deploying gateway implementation contract`);
-    printLog(`authModule: ${auth.address}`);
-    printLog(`tokenDeployer: ${tokenDeployer.address}`);
-    printLog(`implementation deployment args: ${auth.address},${tokenDeployer.address}`);
+    printInfo('Auth address', auth.address);
+    printInfo('Token Deployer address', tokenDeployer.address);
 
-    const gatewayImplementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address).then((d) => d.deployed());
-    printLog(`implementation: ${gatewayImplementation.address}`);
-    const implementationCodehash = await getBytecodeHash(gatewayImplementation, chainName);
+    printInfo(`Deploying gateway implementation contract`);
+    printInfo('Gateway Implementation args', `${auth.address},${tokenDeployer.address}`);
 
-    printLog(`implementation codehash: ${implementationCodehash}`);
+    implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address);
+    await implementation.deployTransaction.wait(chain.confirmations);
+
+    printInfo('Gateway Implementation', implementation.address);
+
+    const implementationCodehash = await getBytecodeHash(implementation, chainName);
+    printInfo('Gateway Implementation codehash', implementationCodehash);
 
     contractsToVerify.push({
-        address: gatewayImplementation.address,
+        address: implementation.address,
         params: [auth.address, tokenDeployer.address],
     });
 
     if (!reuseProxy) {
         const params = getProxyParams(governance, mintLimiter);
-        printLog(`deploying gateway proxy contract`);
-        printLog(`proxy deployment args: ${gatewayImplementation.address},${params}`);
-        const gatewayProxy = await gatewayProxyFactory.deploy(gatewayImplementation.address, params).then((d) => d.deployed());
-        printLog(`deployed gateway proxy at address ${gatewayProxy.address}`);
+        printInfo('Deploying gateway proxy contract');
+        printInfo('Proxy deployment args', `${implementation.address},${params}`);
+
+        const gatewayProxy = await gatewayProxyFactory.deploy(implementation.address, params, gasOptions);
+        await gatewayProxy.deployTransaction.wait(chain.confirmations);
+
+        printInfo('Gateway Proxy', gatewayProxy.address);
+
         gateway = gatewayFactory.attach(gatewayProxy.address);
 
         contractsToVerify.push({
             address: gatewayProxy.address,
-            params: [gatewayImplementation.address, params],
+            params: [implementation.address, params],
         });
     }
 
-    if (!reuseProxy) {
-        printLog('transferring auth ownership');
-        await auth.transferOwnership(gateway.address, chain.contracts.AxelarGateway?.gasOptions || {}).then((tx) => tx.wait());
-        printLog('transferred auth ownership. All done!');
+    if (!(reuseProxy && reuseHelpers)) {
+        printInfo('Transferring auth ownership');
+        await auth.transferOwnership(gateway.address, { gasLimit: 5e6, ...gasOptions }).then((tx) => tx.wait(chain.confirmations));
+        printInfo('Transferred auth ownership. All done!');
     }
 
-    var error = false;
-    const governanceModule = await gateway.governance();
-    printLog(`Existing governance ${governanceModule}`);
+    let error = false;
+    let governanceModule;
+    let mintLimiterModule;
+
+    try {
+        governanceModule = await gateway.governance();
+    } catch (e) {
+    }
+    printInfo(`Existing governance`, governanceModule);
 
     if (!reuseProxy && governanceModule !== governance) {
-        printLog(`ERROR: Retrieved governance address is different:`);
-        printLog(`   Actual:   ${governanceModule}`);
-        printLog(`   Expected: ${governance}`);
+        printError(`ERROR: Retrieved governance address is different:`);
+        printError(`   Actual:   ${governanceModule}`);
+        printError(`   Expected: ${governance}`);
         error = true;
     }
 
-    const mintLimiterModule = await gateway.mintLimiter();
-    printLog(`Existing mintLimiter ${mintLimiterModule}`);
+    try {
+        mintLimiterModule = await gateway.mintLimiter();
+    } catch (e) {
+    }
+    printInfo('Existing mintLimiter', mintLimiterModule);
 
     if (!reuseProxy && mintLimiterModule !== mintLimiter) {
-        printLog(`ERROR: Retrieved mintLimiter address is different:`);
-        printLog(`   Actual:   ${mintLimiterModule}`);
-        printLog(`   Expected: ${mintLimiter}`);
+        printError(`ERROR: Retrieved mintLimiter address is different:`);
+        printError(`   Actual:   ${mintLimiterModule}`);
+        printError(`   Expected: ${mintLimiter}`);
         error = true;
     }
 
     const authModule = await gateway.authModule();
 
-    if (authModule !== auth.address) {
-        printLog(`ERROR: Auth module retrieved from gateway ${authModule} doesn't match deployed contract ${auth.address}`);
+    if (!reuseProxy && authModule !== auth.address) {
+        printError(`ERROR: Auth module retrieved from gateway ${authModule} doesn't match deployed contract ${auth.address}`);
         error = true;
     }
 
     const tokenDeployerAddress = await gateway.tokenDeployer();
 
-    if (tokenDeployerAddress !== tokenDeployer.address) {
-        printLog(
+    if (!reuseProxy && tokenDeployerAddress !== tokenDeployer.address) {
+        printError(
             `ERROR: Token deployer retrieved from gateway ${tokenDeployerAddress} doesn't match deployed contract ${tokenDeployer.address}`,
         );
         error = true;
@@ -196,33 +253,35 @@ async function deploy(config, options) {
     const authOwner = await auth.owner();
 
     if (authOwner !== gateway.address) {
-        printLog(`ERROR: Auth module owner is set to ${authOwner} instead of proxy address ${gateway.address}`);
+        printError(`ERROR: Auth module owner is set to ${authOwner} instead of proxy address ${gateway.address}`);
         error = true;
     }
 
-    const implementation = await gateway.implementation();
+    const gatewayImplementation = await gateway.implementation();
 
-    if (implementation !== gatewayImplementation.address) {
-        printLog(
-            `ERROR: Implementation contract retrieved from gateway ${implementation} doesn't match deployed contract ${gatewayImplementation.address}`,
+    if (!reuseProxy && gatewayImplementation !== implementation.address) {
+        printError(
+            `ERROR: Implementation contract retrieved from gateway ${gatewayImplementation} doesn't match deployed contract ${implementation.address}`,
         );
         error = true;
     }
 
     if (error) {
-        printLog('Deployment failed!');
+        printError('Deployment status', 'FAILED');
         return;
     }
 
     contractConfig.address = gateway.address;
-    contractConfig.implementation = gatewayImplementation.address;
+    contractConfig.implementation = implementation.address;
     contractConfig.authModule = auth.address;
     contractConfig.tokenDeployer = tokenDeployer.address;
     contractConfig.governance = governance;
     contractConfig.mintLimiter = mintLimiter;
     contractConfig.deployer = wallet.address;
 
-    printLog(`Deployment completed`);
+    printInfo('Deployment status', 'SUCCESS');
+
+    saveConfig(config, options.env);
 
     if (verify) {
         // Verify contracts at the end to avoid deployment failures in the middle
@@ -230,16 +289,78 @@ async function deploy(config, options) {
             await verifyContract(options.env, chain.name, contract.address, contract.params);
         }
 
-        printLog('Verified all contracts!');
+        printInfo('Verified all contracts!');
     }
 }
 
+async function upgrade(config, options) {
+    const { chainName, privateKey, yes } = options;
+
+    const contractName = 'AxelarGateway';
+
+    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, tokenSymbol: 'ETH' };
+    const rpc = options.rpc || chain.rpc;
+    const provider = getDefaultProvider(rpc);
+
+    const wallet = new Wallet(privateKey).connect(provider);
+    await printWalletInfo(wallet);
+
+    const contractConfig = chain.contracts[contractName];
+
+    const gateway = new Contract(contractConfig.address, AxelarGateway.abi, wallet);
+    const implementationCodehash = await getBytecodeHash(contractConfig.implementation, chainName, provider);
+    let governance = options.governance || contractConfig.governance;
+    let mintLimiter = options.mintLimiter || contractConfig.mintLimiter;
+    let setupParams = '0x';
+
+    if (governance || mintLimiter) {
+        governance = governance || AddressZero;
+        mintLimiter = mintLimiter || AddressZero;
+        setupParams = getProxyParams(governance, mintLimiter);
+    }
+
+    printInfo('Chain', chain.name);
+    printInfo('Gateway Proxy', gateway.address);
+    printInfo('Current implementation', await gateway.implementation());
+    printInfo('Upgrading to implementation', contractConfig.implementation);
+    printInfo('Implementation codehash', implementationCodehash);
+    printInfo('Setup params', setupParams);
+
+    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+
+    if (!yes) {
+        console.log('Does this match any existing deployments?');
+        const anwser = readlineSync.question(`Proceed with upgrade on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+    }
+
+    const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
+    printInfo('Upgrade transaction', tx.hash);
+
+    await tx.wait(chain.confirmations);
+
+    const newImplementation = await gateway.implementation();
+    printInfo('New implementation', newImplementation);
+
+    if (newImplementation !== contractConfig.implementation) {
+        printWarn('Implementation not upgraded yet!');
+        return;
+    }
+
+    printInfo('Upgraded to', newImplementation);
+}
+
 async function main(options) {
-    const config = require(`${__dirname}/../info/${options.env}.json`);
+    const config = loadConfig(options.env);
 
-    await deploy(config, options);
+    if (!options.upgrade) {
+        await deploy(config, options);
+    } else {
+        await upgrade(config, options);
+    }
 
-    writeJSON(config, `${__dirname}/../info/${options.env}.json`);
+    saveConfig(config, options.env);
 }
 
 async function programHandler() {
@@ -259,11 +380,18 @@ async function programHandler() {
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
     program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment').env('REUSE_PROXY'));
+    program.addOption(
+        new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment').env(
+            'REUSE_HELPERS',
+        ),
+    );
     program.addOption(new Option('-g, --governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('-m, --mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
     program.addOption(new Option('-k, --keyID <keyID>', 'key ID').env('KEY_ID'));
     program.addOption(new Option('-a, --amplifier', 'deploy amplifier gateway').env('AMPLIFIER'));
+    program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
+    program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
 
     program.action((options) => {
         main(options);
