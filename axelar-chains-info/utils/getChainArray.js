@@ -6,7 +6,6 @@ import fs from 'fs';
  * @returns {Array} - An array of chain configs
  */
 export function getChainArray(env) {
-    const chains = [];
     const files = fs.readdirSync('info');
     const file = `${env}.json`;
 
@@ -16,6 +15,8 @@ export function getChainArray(env) {
 
     const data = fs.readFileSync(`info/${file}`);
     const json = JSON.parse(data);
+
+    const chains = [];
 
     for (const chain in json.chains) {
         chains.push(json.chains[chain]);
