@@ -1,13 +1,3 @@
-export const schema = {
-    id: '/info',
-    type: 'object',
-    properties: {
-        axelar: { $ref: '/info.axelar' },
-        chains: { $ref: '/info.chains' },
-    },
-    required: ['axelar', 'chains'],
-};
-
 const axelarSchema = {
     id: '/info.axelar',
     type: 'object',
@@ -21,37 +11,22 @@ const axelarSchema = {
     required: ['id', 'rpc', 'lcd', 'grpc', 'tokenSymbol'],
 };
 
-export const chainsSchema = {
-    id: '/info.chains',
-    type: 'object',
-    patternProperties: {
-        '^[a-z]+$': { $ref: '/info.chains.value' },
-    },
-};
-
-export const chainSchema = {
-    id: '/info.chains.value',
+export const contractValueSchema = {
+    id: '/info.chains.contracts.value',
     type: 'object',
     properties: {
-        name: { type: 'string' },
-        id: { type: 'string' },
-        chainId: { type: 'number' },
-        rpc: { type: 'string' },
-        tokenSymbol: { type: 'string' },
-        contracts: { $ref: '/info.chains.contracts' },
-        explorer: { $ref: '/info.chains.explorer' },
-        gasOptions: { $ref: '/info.chains.gasOption' },
+        address: { type: 'string' },
     },
-    required: ['name', 'id', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
+    required: ['address'],
 };
 
-export const contractsSchema = {
+export const contractSchema = {
     id: '/info.chains.contracts',
     type: 'object',
     patternProperties: {
         // capitalized words e.g. 'AxelarGasService', 'AxelarGateway', 'InterchainGovernanceExecutor', etc.
-        '\b[A-Z][a-z]*(?:[A-Z][a-z]+)*\b': {
-            $ref: '/info.chains.contracts.value',
+        '\b[A-Z][a-z]*([A-Z][a-z]*)*\b': {
+            $ref: contractValueSchema.id,
         },
     },
     properties: {
@@ -59,15 +34,7 @@ export const contractsSchema = {
             type: 'boolean',
         },
     },
-};
-
-export const contractSchema = {
-    id: '/info.chains.contracts.value',
-    type: 'object',
-    properties: {
-        address: { type: 'string' },
-    },
-    required: ['address'],
+    required: ['AxelarGateway', 'AxelarGasService'],
 };
 
 export const explorerSchema = {
@@ -89,14 +56,44 @@ export const gasOptionSchema = {
     required: ['gasLimit'],
 };
 
+export const chainsSchema = {
+    id: '/info.chains',
+    type: 'object',
+    patternProperties: {
+        '^[a-z]+$': {
+            type: 'object',
+            properties: {
+                name: { type: 'string' },
+                id: { type: 'string' },
+                chainId: { type: 'number' },
+                rpc: { type: 'string' },
+                tokenSymbol: { type: 'string' },
+                contracts: { $ref: contractSchema.id },
+                explorer: { $ref: explorerSchema.id },
+                gasOptions: { $ref: gasOptionSchema.id },
+            },
+            required: ['name', 'id', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
+        },
+    },
+};
+
+export const schema = {
+    id: '/info',
+    type: 'object',
+    properties: {
+        axelar: { $ref: axelarSchema.id },
+        chains: { $ref: chainsSchema.id },
+    },
+    required: ['axelar', 'chains'],
+};
+
 export function addAllSchema(validator) {
     validator.addSchema(axelarSchema, axelarSchema.id);
     validator.addSchema(chainsSchema, chainsSchema.id);
-    validator.addSchema(chainSchema, chainSchema.id);
-    validator.addSchema(contractsSchema, contractsSchema.id);
+    validator.addSchema(contractValueSchema, contractValueSchema.id);
     validator.addSchema(contractSchema, contractSchema.id);
     validator.addSchema(explorerSchema, explorerSchema.id);
     validator.addSchema(gasOptionSchema, gasOptionSchema.id);
 
-    return validator
+    return validator;
 }

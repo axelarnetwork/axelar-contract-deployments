@@ -9,9 +9,7 @@ describe('Verify `info/*.json` files', () => {
     let validator;
 
     beforeAll(() => {
-        // read all files under info directory
         const files = fs.readdirSync('info');
-        // convert each file into json
         jsons = files.map((file) => {
             const data = fs.readFileSync(`info/${file}`);
             return JSON.parse(data);
