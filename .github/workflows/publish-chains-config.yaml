@@ -17,7 +17,7 @@ jobs:
                   registry-url: 'https://registry.npmjs.org'
             - run: npm ci
               working-directory: ./axelar-chains-config
-            - run: npm pack --dry-run
+            - run: npm publish
               working-directory: ./axelar-chains-config
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
