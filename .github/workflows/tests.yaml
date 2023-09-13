@@ -1,4 +1,4 @@
-name: Run GMP Example Tests
+name: Run Axelar Chains Info Tests
 
 on: pull_request
 
