@@ -320,6 +320,20 @@ const isNumberArray = (arr) => {
     return true;
 };
 
+const isStringArray = (arr) => {
+    if (!Array.isArray(arr)) {
+        return false;
+    }
+
+    for (const item of arr) {
+        if (typeof item !== 'string') {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 const isAddressArray = (arg) => {
     if (!Array.isArray(arg)) return false;
 
@@ -351,6 +365,28 @@ function isKeccak256Hash(input) {
 
     // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
     const hexPattern = /^[a-fA-F0-9]{64}$/;
+
+    return hexPattern.test(input.slice(2));
+}
+
+/**
+ * Determines if a given input is a valid calldata for Solidity.
+ *
+ * @param {string} input - The string to validate.
+ * @returns {boolean} - Returns true if the input is a valid calldata, false otherwise.
+ */
+function isValidCalldata(input) {
+    if (input === '0x') {
+        return true;
+    }
+
+    // Ensure it's a string, starts with '0x' and has an even number of characters after '0x'
+    if (typeof input !== 'string' || input.slice(0, 2) !== '0x' || input.length % 2 !== 0) {
+        return false;
+    }
+
+    // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
+    const hexPattern = /^[a-fA-F0-9]+$/;
 
     return hexPattern.test(input.slice(2));
 }
@@ -717,9 +753,11 @@ module.exports = {
     isString,
     isNumber,
     isNumberArray,
+    isStringArray,
     isAddressArray,
     isContract,
     isKeccak256Hash,
+    isValidCalldata,
     parseArgs,
     getProxy,
     getEVMAddresses,
