@@ -11,7 +11,7 @@ const { outputJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
-const { readJSON } = require("../axelar-chains-info")
+const { readJSON } = require('../axelar-chains-config');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
 const {
