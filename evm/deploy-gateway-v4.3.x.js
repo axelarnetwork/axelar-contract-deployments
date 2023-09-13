@@ -95,7 +95,7 @@ async function deploy(config, options) {
         const params = await getAuthParams(config, chain.id);
         printInfo('Auth deployment args', params);
 
-        auth = await authFactory.deploy(params, gasOptions).then((d) => d.deployed());
+        auth = await authFactory.deploy(params, gasOptions);
         await auth.deployTransaction.wait(chain.confirmations);
 
         contractsToVerify.push({
