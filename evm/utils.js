@@ -7,10 +7,11 @@ const {
 } = require('ethers');
 const https = require('https');
 const http = require('http');
-const { outputJsonSync, readJsonSync } = require('fs-extra');
+const { outputJsonSync } = require('fs-extra');
 const { exec } = require('child_process');
 const { writeFile } = require('fs');
 const { promisify } = require('util');
+const { readJSON } = require("../axelar-chains-info")
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
 const {
@@ -140,22 +141,6 @@ const printError = (msg, info = '') => {
 function printLog(log) {
     console.log(JSON.stringify({ log }, null, 2));
 }
-
-const readJSON = (filePath, require = false) => {
-    let data;
-
-    try {
-        data = readJsonSync(filePath, 'utf8');
-    } catch (err) {
-        if (err.code === 'ENOENT' && !require) {
-            return undefined;
-        }
-
-        throw err;
-    }
-
-    return data;
-};
 
 const writeJSON = (data, name) => {
     outputJsonSync(name, data, {
