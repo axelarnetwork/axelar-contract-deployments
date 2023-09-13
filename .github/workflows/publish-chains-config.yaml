@@ -1,4 +1,4 @@
-name: 'Publish to NPM'
+name: 'Publish axelar-chains-config to NPM'
 
 on:
     workflow_dispatch:
@@ -16,6 +16,8 @@ jobs:
                   node-version: '18.x'
                   registry-url: 'https://registry.npmjs.org'
             - run: npm ci
-            - run: npm publish
+              working-directory: ./axelar-chains-config
+            - run: npm pack --dry-run
+              working-directory: ./axelar-chains-config
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
