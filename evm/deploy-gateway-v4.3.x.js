@@ -43,7 +43,7 @@ async function deploy(config, options) {
 
     const contractName = 'AxelarGateway';
 
-    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, tokenSymbol: 'ETH' };
+    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
@@ -241,7 +241,7 @@ async function upgrade(config, options) {
 
     const contractName = 'AxelarGateway';
 
-    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, tokenSymbol: 'ETH' };
+    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 

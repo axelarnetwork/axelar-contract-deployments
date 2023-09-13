@@ -6,7 +6,6 @@ const {
     Wallet,
     getDefaultProvider,
     utils: { isAddress },
-    Contract,
 } = require('ethers');
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
@@ -183,7 +182,7 @@ async function deploy(options, chain, config) {
         contracts[contractName] = {};
     }
 
-    printInfo(`Deploying on ${chain.name}`);
+    printInfo('Deploying to', chain.name);
 
     const contractConfig = contracts[contractName];
 

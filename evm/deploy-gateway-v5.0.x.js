@@ -13,13 +13,14 @@ const {
     httpGet,
     printError,
     printWalletInfo,
+    printWarn,
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
     Wallet,
-    utils: { defaultAbiCoder, getContractAddress },
+    utils: { defaultAbiCoder, getContractAddress, AddressZero },
     getDefaultProvider,
 } = ethers;
 const readlineSync = require('readline-sync');
@@ -69,7 +70,7 @@ async function deploy(config, options) {
 
     const contractName = 'AxelarGateway';
 
-    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, tokenSymbol: 'ETH' };
+    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
@@ -111,7 +112,6 @@ async function deploy(config, options) {
     let gateway;
     let auth;
     let tokenDeployer;
-    let implementation;
     const contractsToVerify = [];
 
     if (!yes) {
@@ -167,7 +167,7 @@ async function deploy(config, options) {
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${auth.address},${tokenDeployer.address}`);
 
-    implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address);
+    const implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address);
     await implementation.deployTransaction.wait(chain.confirmations);
 
     printInfo('Gateway Implementation', implementation.address);
@@ -211,7 +211,10 @@ async function deploy(config, options) {
     try {
         governanceModule = await gateway.governance();
     } catch (e) {
+        // this can fail when upgrading from an older version
+        printWarn(`WARN: Failed to retrieve governance address`);
     }
+
     printInfo(`Existing governance`, governanceModule);
 
     if (!reuseProxy && governanceModule !== governance) {
@@ -224,7 +227,10 @@ async function deploy(config, options) {
     try {
         mintLimiterModule = await gateway.mintLimiter();
     } catch (e) {
+        // this can fail when upgrading from an older version
+        printWarn(`WARN: Failed to retrieve mint limiter address`);
     }
+
     printInfo('Existing mintLimiter', mintLimiterModule);
 
     if (!reuseProxy && mintLimiterModule !== mintLimiter) {
@@ -298,7 +304,7 @@ async function upgrade(config, options) {
 
     const contractName = 'AxelarGateway';
 
-    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, tokenSymbol: 'ETH' };
+    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
