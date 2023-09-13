@@ -678,6 +678,16 @@ const etaToUnixTimestamp = (utcTimeString) => {
     return Math.floor(date.getTime() / 1000);
 };
 
+const unixTimestampToEta = (timestamp) => {
+    const date = new Date(timestamp * 1000);
+
+    if (isNaN(date.getTime())) {
+        throw new Error(`Invalid timestamp provided: ${timestamp}`);
+    }
+
+    return date.toISOString().slice(0, 19);
+};
+
 const getCurrentTimeInSeconds = () => {
     return Date.now() / 1000;
 };
@@ -729,6 +739,7 @@ module.exports = {
     printWalletInfo,
     isValidTimeFormat,
     etaToUnixTimestamp,
+    unixTimestampToEta,
     getCurrentTimeInSeconds,
     wasEventEmitted,
 };
