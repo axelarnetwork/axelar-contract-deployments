@@ -20,8 +20,8 @@ jobs:
 
             - name: Install
               run: npm ci
-              working-directory: axelar-chains-info
+              working-directory: axelar-chains-config
 
             - name: Test
               run: npm run test
-              working-directory: axelar-chains-info
+              working-directory: axelar-chains-config

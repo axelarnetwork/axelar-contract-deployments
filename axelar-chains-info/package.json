@@ -1,5 +1,5 @@
 {
-  "name": "@axelar-network/axelar-chains-info",
+  "name": "@axelar-network/axelar-chains-config",
   "version": "0.1.0",
   "description": "A utility to get chain information from Axelar",
   "main": "index.js",

@@ -85,7 +85,7 @@ async function deployConstAddressDeployer(wallet, chain, options = null, verifyO
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../axelar-chains-info/info/${options.env === 'local' ? 'testnet' : options.env}.json`);
+    const config = require(`${__dirname}/../axelar-chains-config/info/${options.env === 'local' ? 'testnet' : options.env}.json`);
 
     const chains = options.chainNames.split(',').map((str) => str.trim());
 
@@ -116,7 +116,7 @@ async function main(options) {
             { yes: options.yes, force: options.force, ignore: options.ignore },
             verifyOptions,
         );
-        writeJSON(config, `${__dirname}/../axelar-chains-info/info/${options.env}.json`);
+        writeJSON(config, `${__dirname}/../axelar-chains-config/info/${options.env}.json`);
     }
 }
 
