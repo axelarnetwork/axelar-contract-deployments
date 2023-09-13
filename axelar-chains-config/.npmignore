@@ -4,16 +4,9 @@ node_modules
 # Tests
 tests
 
-# Logs
-logs
-*.log
-
 # Optional npm cache directory
 .npm
 *.tgz
 
-# builder cache
-.cache
-
-# workflows
-.github
+# Tsconfig file
+tsconfig.json
