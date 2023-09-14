@@ -1,4 +1,4 @@
-name: 'Publish axelar-chains-config to NPM'
+name: 'Publish Axelar Chains Config to NPM'
 
 on:
     workflow_dispatch:

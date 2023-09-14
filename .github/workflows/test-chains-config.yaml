@@ -1,4 +1,4 @@
-name: Run Axelar Chains Info Tests
+name: Run Axelar Chains Config Tests
 
 on: pull_request
 
