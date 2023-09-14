@@ -8,10 +8,7 @@ const {
 const https = require('https');
 const http = require('http');
 const { outputJsonSync } = require('fs-extra');
-const { exec } = require('child_process');
-const { writeFile } = require('fs');
-const { promisify } = require('util');
-const { readJSON, importNetworks } = require('../axelar-chains-config');
+const { readJSON, importNetworks, verifyContract } = require('../axelar-chains-config');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
 const {
@@ -23,9 +20,6 @@ const {
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
-
-const execAsync = promisify(exec);
-const writeFileAsync = promisify(writeFile);
 
 const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
@@ -183,37 +177,6 @@ const httpGet = (url) => {
             });
         });
     });
-};
-
-/**
- * Verifies a contract on etherscan-like explorer of the provided chain using hardhat.
- * This assumes that the chain has been loaded as a custom network in hardhat.
- *
- * @async
- * @param {string} env
- * @param {string} chain
- * @param {string} contract
- * @param {any[]} args
- * @returns {Promise<void>}
- */
-const verifyContract = async (env, chain, contract, args, options = {}) => {
-    const stringArgs = args.map((arg) => JSON.stringify(arg));
-    const content = `module.exports = [\n    ${stringArgs.join(',\n    ')}\n];`;
-    const file = 'temp-arguments.js';
-    const contractArg = options.contractPath ? `--contract ${options.contractPath}` : '';
-    const dirPrefix = options.dir ? `cd ${options.dir};` : '';
-    const cmd = `${dirPrefix} ENV=${env} npx hardhat verify --network ${chain.toLowerCase()} ${contractArg} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
-
-    return writeFileAsync(file, content, 'utf-8')
-        .then(() => {
-            console.log(`Verifying contract ${contract} with args '${stringArgs.join(',')}'`);
-            console.log(cmd);
-
-            return execAsync(cmd, { stdio: 'inherit' });
-        })
-        .then(() => {
-            console.log('Verified!');
-        });
 };
 
 const isString = (arg) => {
