@@ -3,7 +3,6 @@
 const {
     ContractFactory,
     Contract,
-    provider,
     utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder },
 } = require('ethers');
 const https = require('https');
@@ -330,11 +329,6 @@ const isAddressArray = (arg) => {
     }
 
     return true;
-};
-
-const isContract = async (target) => {
-    const code = await provider.getCode(target);
-    return code !== '0x';
 };
 
 /**
@@ -696,6 +690,16 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
+const isContract = async (address, provider) => {
+    try {
+        const code = await provider.getCode(address);
+        return code && code !== '0x';
+    } catch (err) {
+        console.error('Error:', err);
+        return false;
+    }
+};
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -718,7 +722,6 @@ module.exports = {
     isNumber,
     isNumberArray,
     isAddressArray,
-    isContract,
     isKeccak256Hash,
     parseArgs,
     getProxy,
@@ -731,4 +734,5 @@ module.exports = {
     etaToUnixTimestamp,
     getCurrentTimeInSeconds,
     wasEventEmitted,
+    isContract,
 };
