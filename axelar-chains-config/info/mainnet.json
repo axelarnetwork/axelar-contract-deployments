@@ -4,7 +4,7 @@
       "name": "Ethereum",
       "id": "Ethereum",
       "chainId": 1,
-      "rpc": "https://mainnet.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
+      "url": "https://mainnet.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -50,7 +50,7 @@
       "name": "Avalanche",
       "id": "Avalanche",
       "chainId": 43114,
-      "rpc": "https://api.avax.network/ext/bc/C/rpc",
+      "url": "https://api.avax.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
       "contracts": {
         "AxelarGateway": {
@@ -96,7 +96,7 @@
       "name": "Fantom",
       "id": "Fantom",
       "chainId": 250,
-      "rpc": "https://fantom-mainnet.public.blastapi.io",
+      "url": "https://fantom-mainnet.public.blastapi.io",
       "tokenSymbol": "FTM",
       "contracts": {
         "AxelarGateway": {
@@ -145,7 +145,7 @@
       "name": "Polygon",
       "id": "Polygon",
       "chainId": 137,
-      "rpc": "https://polygon-rpc.com",
+      "url": "https://polygon-rpc.com",
       "tokenSymbol": "MATIC",
       "contracts": {
         "AxelarGateway": {
@@ -194,7 +194,7 @@
       "name": "Moonbeam",
       "id": "Moonbeam",
       "chainId": 1284,
-      "rpc": "https://rpc.api.moonbeam.network",
+      "url": "https://rpc.api.moonbeam.network",
       "tokenSymbol": "GLMR",
       "contracts": {
         "AxelarGateway": {
@@ -240,7 +240,7 @@
       "name": "Binance",
       "id": "binance",
       "chainId": 56,
-      "rpc": "https://bsc-dataseed4.binance.org",
+      "url": "https://bsc-dataseed4.binance.org",
       "tokenSymbol": "BNB",
       "wrappedSymbol": "WBNB",
       "contracts": {
@@ -287,7 +287,7 @@
       "name": "Arbitrum",
       "id": "arbitrum",
       "chainId": 42161,
-      "rpc": "https://arb1.arbitrum.io/rpc",
+      "url": "https://arb1.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -336,7 +336,7 @@
       "name": "Celo",
       "id": "celo",
       "chainId": 42220,
-      "rpc": "https://forno.celo.org",
+      "url": "https://forno.celo.org",
       "tokenSymbol": "CELO",
       "contracts": {
         "AxelarGateway": {
@@ -382,7 +382,7 @@
       "name": "Kava",
       "id": "kava",
       "chainId": 2222,
-      "rpc": "https://evm.kava.io",
+      "url": "https://evm.kava.io",
       "tokenSymbol": "KAVA",
       "contracts": {
         "AxelarGateway": {
@@ -428,7 +428,7 @@
       "name": "Filecoin",
       "id": "filecoin",
       "chainId": 314,
-      "rpc": "https://rpc.ankr.com/filecoin",
+      "url": "https://rpc.ankr.com/filecoin",
       "tokenSymbol": "FIL",
       "contracts": {
         "AxelarGateway": {
@@ -480,7 +480,7 @@
       "name": "Optimism",
       "id": "optimism",
       "chainId": 10,
-      "rpc": "https://optimism-mainnet.public.blastapi.io",
+      "url": "https://optimism-mainnet.public.blastapi.io",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -534,7 +534,7 @@
       "name": "Linea",
       "id": "linea",
       "chainId": 59144,
-      "rpc": "https://rpc.linea.build",
+      "url": "https://rpc.linea.build",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -584,7 +584,7 @@
       "name": "Base",
       "id": "base",
       "chainId": 8453,
-      "rpc": "https://developer-access-mainnet.base.org",
+      "url": "https://developer-access-mainnet.base.org",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -634,7 +634,7 @@
       "name": "Mantle",
       "id": "mantle",
       "chainId": 5000,
-      "rpc": "https://rpc.mantle.xyz",
+      "url": "https://rpc.mantle.xyz",
       "tokenSymbol": "MNT",
       "contracts": {
         "AxelarGateway": {
