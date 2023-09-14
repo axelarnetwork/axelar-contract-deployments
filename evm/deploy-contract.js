@@ -25,7 +25,8 @@ const {
     saveConfig,
 } = require('./utils');
 
-async function getConstructorArgs(contractName, config, wallet) {
+async function getConstructorArgs(contractName, chain, wallet, options) {
+    const config = chain.contracts;
     const contractConfig = config[contractName];
 
     switch (contractName) {
@@ -91,19 +92,19 @@ async function getConstructorArgs(contractName, config, wallet) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
             }
 
-            const governanceChain = contractConfig.governanceChain;
+            const governanceChain = contractConfig.governanceChain || 'Axelarnet';
 
             if (!isString(governanceChain)) {
                 throw new Error(`Missing InterchainGovernance.governanceChain in the chain info.`);
             }
 
-            const governanceAddress = contractConfig.governanceAddress;
+            const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
             if (!isString(governanceAddress)) {
                 throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
             }
 
-            const minimumTimeDelay = contractConfig.minimumTimeDelay;
+            const minimumTimeDelay = contractConfig.minimumTimeDelay || parseInt(options.args, 10);
 
             if (!isNumber(minimumTimeDelay)) {
                 throw new Error(`Missing InterchainGovernance.minimumTimeDelay in the chain info.`);
@@ -148,6 +149,10 @@ async function getConstructorArgs(contractName, config, wallet) {
         case 'Create3Deployer': {
             return [];
         }
+
+        case 'TokenDeployer': {
+            return [];
+        }
     }
 
     throw new Error(`${contractName} is not supported.`);
@@ -177,7 +182,7 @@ async function deploy(options, chain, config) {
         contracts[contractName] = {};
     }
 
-    printInfo(`Deploying on ${chain.name}`);
+    printInfo('Deploying to', chain.name);
 
     const contractConfig = contracts[contractName];
 
@@ -201,7 +206,7 @@ async function deploy(options, chain, config) {
 
     printInfo('Contract bytecode hash', await getBytecodeHash(contractJson, chain.id));
 
-    const constructorArgs = await getConstructorArgs(contractName, contracts, wallet);
+    const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);

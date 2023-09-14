@@ -18,7 +18,16 @@ You also need to create a `info/keys.json` file. See `evm/.example.keys.json` fo
 4. Add additional params in `.env` such as admin addresses, governance etc.
 5. If you'd like to auto-verify the contract on the explorer, then add the explorer API key under `info/keys.json` (see `.example.keys.json`), and add `--verify` flag
 6. Run the following depending on the service,
-`node evm/deploy-gateway-v5.x.js --env testnet -n fantom`
+`node evm/deploy-gateway-v5.0.x.js --env testnet -n fantom`
+
+#### Gateway Upgrade
+1. When upgrading the gateway, the proxy contract will be reused.
+2. Depending on the upgrade process, Axelar auth and token deployer helper contracts might be reused as well.
+3. `node evm/deploy-gateway-v5.0.x.js -e testnet -n fantom --reuseProxy` OR
+4. `node evm/deploy-gateway-v5.0.x.js -e testnet -n fantom --reuseProxy --reuseHelpers`
+5. This sets the new `implementation` in the chain config.
+6. Upgrade to the new implementation contract
+`node evm/deploy-gateway-v5.0.x.js -e testnet -n fantom --upgrade`
 
 ### AxelarGasService and AxelarDepositService
 
