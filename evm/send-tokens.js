@@ -10,12 +10,12 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
-const { printInfo, printWalletInfo, isValidPrivateKey, isNumber, isAddressArray, getCurrentTimeInSeconds } = require('./utils');
-const { getLedgerWallet, sendTx, ledgerSign, storeTransactionsData } = require('./offline-sign-utils.js');
+const { printInfo, printWalletInfo, isValidPrivateKey } = require('./utils');
+const { getLedgerWallet, sendTx, ledgerSign, storeTransactionsData, getNonce } = require('./offline-sign-utils.js');
 const readlineSync = require('readline-sync');
 
 async function sendTokens(chain, options) {
-    const { privateKey, amount, recipients, offline, env } = options;
+    let { privateKey, amount, recipients, offline, env } = options;
     env = env === 'local' ? 'testnet' : env;
     let wallet;
 
@@ -51,18 +51,17 @@ async function sendTokens(chain, options) {
 
     for (const recipient of recipients) {
         printInfo('Recipient', recipient);
-        const nonce = parseInt(getCurrentTimeInSeconds());
+        const nonce = await getNonce(wallet);
+        const tx = await ledgerSign(offline, 50000, 10000000000, nonce, env, chain, wallet, recipient, amount);
 
         if (privateKey === 'ledger') {
             if (offline === 'true') {
-                const tx = await ledgerSign(offline, 50000, 100, nonce, env, chain, wallet, recipient, amount);
                 const msg = `Transaction created at ${nonce}. This transaction will send ${amount} of native tokens to ${recipient} on chain ${chain.name} with chainId ${chain.chainId}`;
                 await storeTransactionsData(undefined, undefined, msg, tx);
             } else {
-                const signedTx = await ledgerSign(offline, 50000, 10000000000, nonce, env, chain, wallet, recipient, amount);
-                console.log('Sending signed tx through provider');
-                const tx = await sendTx(signedTx, provider);
-                printInfo('Transaction hash', tx.hash);
+                const signedTx = await wallet.signTransaction(tx);
+                const response = await sendTx(signedTx, provider);
+                printInfo('Transaction hash', response.transactionHash);
             }
         } else {
             const tx = await wallet.sendTransaction({
