@@ -3,15 +3,12 @@
 const {
     ContractFactory,
     Contract,
-    provider,
     utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder },
 } = require('ethers');
 const https = require('https');
 const http = require('http');
-const { outputJsonSync, readJsonSync } = require('fs-extra');
-const { exec } = require('child_process');
-const { writeFile } = require('fs');
-const { promisify } = require('util');
+const { outputJsonSync } = require('fs-extra');
+const { readJSON, importNetworks, verifyContract } = require('../axelar-chains-config');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
 const {
@@ -23,9 +20,6 @@ const {
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
-
-const execAsync = promisify(exec);
-const writeFileAsync = promisify(writeFile);
 
 const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
@@ -142,22 +136,6 @@ function printLog(log) {
     console.log(JSON.stringify({ log }, null, 2));
 }
 
-const readJSON = (filePath, require = false) => {
-    let data;
-
-    try {
-        data = readJsonSync(filePath, 'utf8');
-    } catch (err) {
-        if (err.code === 'ENOENT' && !require) {
-            return undefined;
-        }
-
-        throw err;
-    }
-
-    return data;
-};
-
 const writeJSON = (data, name) => {
     outputJsonSync(name, data, {
         spaces: 2,
@@ -173,7 +151,7 @@ const httpGet = (url) => {
             let error;
 
             if (statusCode !== 200) {
-                error = new Error('Request Failed.\n' + `Status Code: ${statusCode}`);
+                error = new Error('Request Failed.\n' + `Request: ${url}\nStatus Code: ${statusCode}`);
             } else if (!/^application\/json/.test(contentType)) {
                 error = new Error('Invalid content-type.\n' + `Expected application/json but received ${contentType}`);
             }
@@ -199,103 +177,6 @@ const httpGet = (url) => {
             });
         });
     });
-};
-
-/**
- * Imports custom networks into hardhat config format.
- * Check out the example hardhat config for usage `.example.hardhat.config.js`.
- *
- * @param {Object[]} chains - Array of chain objects following the format in info/mainnet.json
- * @param {Object} keys - Object containing keys for contract verification and accounts
- * @returns {Object} - Object containing networks and etherscan config
- */
-const importNetworks = (chains, keys) => {
-    const networks = {
-        hardhat: {
-            chainId: 31337, // default hardhat network chain id
-            id: 'hardhat',
-            confirmations: 1,
-        },
-    };
-
-    const etherscan = {
-        apiKey: {},
-        customChains: [],
-    };
-
-    if (!chains.chains) {
-        // Use new format
-        delete chains.chains;
-        chains = {
-            chains,
-        };
-    }
-
-    // Add custom networks
-    Object.entries(chains.chains).forEach(([chainName, chain]) => {
-        const name = chainName.toLowerCase();
-        networks[name] = {
-            chainId: chain.chainId,
-            id: chain.id,
-            url: chain.rpc,
-            blockGasLimit: chain.gasOptions?.gasLimit,
-            confirmations: chain.confirmations || 1,
-            contracts: chain.contracts,
-        };
-
-        if (keys) {
-            networks[name].accounts = keys.accounts || keys.chains[name]?.accounts;
-        }
-
-        // Add contract verification keys
-        if (chain.explorer?.api) {
-            if (keys) {
-                etherscan.apiKey[name] = keys.chains[name]?.api;
-            }
-
-            etherscan.customChains.push({
-                network: name,
-                chainId: chain.chainId,
-                urls: {
-                    apiURL: chain.explorer.api,
-                    browserURL: chain.explorer.url,
-                },
-            });
-        }
-    });
-
-    return { networks, etherscan };
-};
-
-/**
- * Verifies a contract on etherscan-like explorer of the provided chain using hardhat.
- * This assumes that the chain has been loaded as a custom network in hardhat.
- *
- * @async
- * @param {string} env
- * @param {string} chain
- * @param {string} contract
- * @param {any[]} args
- * @returns {Promise<void>}
- */
-const verifyContract = async (env, chain, contract, args, options = {}) => {
-    const stringArgs = args.map((arg) => JSON.stringify(arg));
-    const content = `module.exports = [\n    ${stringArgs.join(',\n    ')}\n];`;
-    const file = 'temp-arguments.js';
-    const contractArg = options.contractPath ? `--contract ${options.contractPath}` : '';
-    const dirPrefix = options.dir ? `cd ${options.dir};` : '';
-    const cmd = `${dirPrefix} ENV=${env} npx hardhat verify --network ${chain.toLowerCase()} ${contractArg} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
-
-    return writeFileAsync(file, content, 'utf-8')
-        .then(() => {
-            console.log(`Verifying contract ${contract} with args '${stringArgs.join(',')}'`);
-            console.log(cmd);
-
-            return execAsync(cmd, { stdio: 'inherit' });
-        })
-        .then(() => {
-            console.log('Verified!');
-        });
 };
 
 const isString = (arg) => {
@@ -344,11 +225,6 @@ const isAddressArray = (arg) => {
     }
 
     return true;
-};
-
-const isContract = async (target) => {
-    const code = await provider.getCode(target);
-    return code !== '0x';
 };
 
 /**
@@ -599,11 +475,11 @@ function sleep(ms) {
 }
 
 function loadConfig(env) {
-    return require(`${__dirname}/../info/${env}.json`);
+    return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
 function saveConfig(config, env) {
-    writeJSON(config, `${__dirname}/../info/${env}.json`);
+    writeJSON(config, `${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
 async function printWalletInfo(wallet) {
@@ -732,6 +608,16 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
+const isContract = async (address, provider) => {
+    try {
+        const code = await provider.getCode(address);
+        return code && code !== '0x';
+    } catch (err) {
+        console.error('Error:', err);
+        return false;
+    }
+};
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -755,7 +641,6 @@ module.exports = {
     isNumberArray,
     isStringArray,
     isAddressArray,
-    isContract,
     isKeccak256Hash,
     isValidCalldata,
     parseArgs,
@@ -769,4 +654,5 @@ module.exports = {
     etaToUnixTimestamp,
     getCurrentTimeInSeconds,
     wasEventEmitted,
+    isContract,
 };

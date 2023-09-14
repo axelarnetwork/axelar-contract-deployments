@@ -46,7 +46,7 @@ async function sendTokens(chain, options) {
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../info/${options.env === 'local' ? 'testnet' : options.env}.json`);
+    const config = require(`${__dirname}/../axelar-chains-config/info/${options.env === 'local' ? 'testnet' : options.env}.json`);
 
     const chains = options.chainNames.split(',').map((str) => str.trim());
 

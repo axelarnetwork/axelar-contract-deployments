@@ -33,6 +33,8 @@ async function processCommand(options, chain) {
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
 
+    printInfo('Chain', chain.name);
+
     let operatorsAddress;
 
     if (isAddress(address)) {
