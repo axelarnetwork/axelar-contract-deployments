@@ -32,12 +32,8 @@ export const importNetworks = (chains, keys) => {
     Object.entries(chains.chains).forEach(([chainName, chain]) => {
         const name = chainName.toLowerCase();
         networks[name] = {
-            chainId: chain.chainId,
-            id: chain.id,
-            url: chain.rpc,
+            ...chain,
             blockGasLimit: chain.gasOptions?.gasLimit,
-            confirmations: chain.confirmations || 1,
-            contracts: chain.contracts,
         };
 
         if (keys) {
