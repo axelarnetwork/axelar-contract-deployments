@@ -5,7 +5,7 @@ const {
     Contract,
     provider,
     BigNumber,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, serializeTransaction },
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, serializeTransaction, isHexString },
 } = require('ethers');
 const { LedgerSigner } = require('@ethersproject/hardware-wallets');
 const https = require('https');
@@ -214,7 +214,13 @@ const isAddressArray = (arg) => {
     }
 
     return true;
-};
+}
+
+const getCurrentTimeInSeconds = () => {
+    const now = new Date();
+    const currentTimeInSecs = Math.floor(now.getTime() / 1000);
+    return currentTimeInSecs;
+}
 
 /**
  * Determines if a given input is a valid keccak256 hash.
@@ -450,10 +456,10 @@ function saveConfig(config, env) {
 }
 
 async function printWalletInfo(wallet) {
-    printInfo('Wallet address', wallet.address);
-    const balance = await wallet.provider.getBalance(wallet.address);
+    printInfo('Wallet address', await wallet.getAddress());
+    const balance = await wallet.provider.getBalance(await wallet.getAddress());
     printInfo('Wallet balance', `${balance / 1e18}`);
-    printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(wallet.address)).toString());
+    printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(await wallet.getAddress())).toString());
 
     if (balance.isZero()) {
         printError('Wallet balance is 0');
@@ -543,6 +549,15 @@ function isValidTimeFormat(timeString) {
     return regex.test(timeString);
 }
 
+// Validate if the input privateKey is correct
+function isValidPrivateKey(privateKey) {
+    // Check if it's a valid hexadecimal string
+    if (!isHexString(privateKey) || privateKey.length !== 66) {
+        return false;
+    }
+    return true;
+}
+
 const etaToUnixTimestamp = (utcTimeString) => {
     if (utcTimeString === '0') {
         return 0;
@@ -555,10 +570,6 @@ const etaToUnixTimestamp = (utcTimeString) => {
     }
 
     return Math.floor(date.getTime() / 1000);
-};
-
-const getCurrentTimeInSeconds = () => {
-    return Date.now() / 1000;
 };
 
 /**
@@ -620,4 +631,5 @@ module.exports = {
     getCurrentTimeInSeconds,
     wasEventEmitted,
     isContract,
+    isValidPrivateKey
 };
