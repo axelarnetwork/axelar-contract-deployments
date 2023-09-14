@@ -4,7 +4,7 @@ require('@nomicfoundation/hardhat-toolbox');
 const env = process.env.ENV || 'testnet';
 const { importNetworks, readJSON } = require('@axelar-network/axelar-contract-deployments');
 const chains = require(`@axelar-network/axelar-contract-deployments/axelar-chains-config/info/${env}.json`);
-const keys = readJSON(`${__dirname}/info/keys.json`);
+const keys = readJSON(`${__dirname}/keys.json`);
 const { networks, etherscan } = importNetworks(chains, keys);
 
 module.exports = {
