@@ -1,4 +1,6 @@
-export * from './getChainArray';
-export * from './readJSON';
-export * from './importNetworks';
-export * from './verifyContract';
+module.exports = {
+    ...require('./getChainArray'),
+    ...require('./readJSON'),
+    ...require('./importNetworks'),
+    ...require('./verifyContract'),
+};

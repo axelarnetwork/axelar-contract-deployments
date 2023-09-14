@@ -1,1 +1,3 @@
-export * from './utils';
+module.exports = {
+    ...require('./utils'),
+};

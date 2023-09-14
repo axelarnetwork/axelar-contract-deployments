@@ -6,7 +6,7 @@
  * @param {Object} keys - Object containing keys for contract verification and accounts
  * @returns {Object} - Object containing networks and etherscan config
  */
-export const importNetworks = (chains, keys) => {
+const importNetworks = (chains, keys) => {
     const networks = {
         hardhat: {
             chainId: 31337, // default hardhat network chain id
@@ -58,4 +58,8 @@ export const importNetworks = (chains, keys) => {
     });
 
     return { networks, etherscan };
+};
+
+module.exports = {
+    importNetworks,
 };

@@ -16,7 +16,7 @@ const writeFileAsync = promisify(writeFile);
  * @param {any[]} args
  * @returns {Promise<void>}
  */
-export const verifyContract = async (env, chain, contract, args, options = {}) => {
+const verifyContract = async (env, chain, contract, args, options = {}) => {
     const stringArgs = args.map((arg) => JSON.stringify(arg));
     const content = `module.exports = [\n    ${stringArgs.join(',\n    ')}\n];`;
     const file = 'temp-arguments.js';
@@ -34,4 +34,8 @@ export const verifyContract = async (env, chain, contract, args, options = {}) =
         .then(() => {
             console.log('Verified!');
         });
+};
+
+module.exports = {
+    verifyContract,
 };

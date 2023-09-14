@@ -1,6 +1,6 @@
 const { readJsonSync } = require('fs-extra');
 
-export const readJSON = (filePath, require = false) => {
+const readJSON = (filePath, require = false) => {
     let data;
 
     try {
@@ -14,4 +14,8 @@ export const readJSON = (filePath, require = false) => {
     }
 
     return data;
+};
+
+module.exports = {
+    readJSON,
 };
