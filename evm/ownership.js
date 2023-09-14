@@ -11,11 +11,14 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, printWalletInfo, loadConfig } = require('./utils');
+const { printInfo, printWalletInfo, loadConfig, saveConfig } = require('./utils');
+const readlineSync = require('readline-sync');
+const chalk = require('chalk');
+
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 
 async function processCommand(options, chain) {
-    const { contractName, address, action, privateKey, newOwner } = options;
+    const { contractName, address, action, privateKey, newOwner, yes } = options;
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -35,17 +38,23 @@ async function processCommand(options, chain) {
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
 
+    printInfo('Chain', chain.name);
+    printInfo('Contract name', contractName);
+
     const wallet = new Wallet(privateKey, provider);
     await printWalletInfo(wallet);
-
-    printInfo('Contract name', contractName);
 
     const ownershipContract = new Contract(ownershipAddress, IOwnable.abi, wallet);
 
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    printInfo(`Gas override for ${chain.name}`, JSON.stringify(gasOptions));
 
     printInfo('Ownership Action', action);
+
+    if (!yes) {
+        const anwser = readlineSync.question(`Proceed with action on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+    }
 
     switch (action) {
         case 'owner': {
@@ -91,6 +100,8 @@ async function processCommand(options, chain) {
             }
 
             printInfo(`New contract owner: ${owner}`);
+
+            contractConfig.owner = owner;
 
             break;
         }
@@ -148,6 +159,8 @@ async function processCommand(options, chain) {
 
             printInfo(`New contract owner: ${newOwner}`);
 
+            contractConfig.owner = newOwner;
+
             break;
         }
 
@@ -174,6 +187,7 @@ async function main(options) {
 
     for (const chain of chains) {
         await processCommand(options, config.chains[chain.toLowerCase()]);
+        saveConfig(config, options.env);
     }
 }
 
@@ -191,7 +205,7 @@ program.addOption(
 
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-program.addOption(new Option('-n, --chain <chain>', 'chain name').makeOptionMandatory(true));
+program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
 program.addOption(new Option('--address <address>', 'override address').makeOptionMandatory(false));
 program.addOption(
     new Option('--action <action>', 'ownership action').choices([
@@ -202,7 +216,8 @@ program.addOption(
         'acceptOwnership',
     ]),
 );
-program.addOption(new Option('-d, --newOwner <newOwner>', 'new owner address').makeOptionMandatory(false));
+program.addOption(new Option('--newOwner <newOwner>', 'new owner address').makeOptionMandatory(false));
+program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
 program.action((options) => {
     main(options);
