@@ -2,8 +2,6 @@ name: 'Publish axelar-chains-config to NPM'
 
 on:
     workflow_dispatch:
-    release:
-        types: [published]
 
 jobs:
     publish-to-npm:
