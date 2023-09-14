@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint '**/*.js'",
-    "prettier": "prettier --write '**/*.js' 'info/*.json' 'package.json' 'evm/**/*.json'"
+    "prettier": "prettier --write '**/*.js' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json'"
   },
   "repository": {
     "type": "git",
