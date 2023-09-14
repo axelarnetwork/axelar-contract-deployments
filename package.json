@@ -28,7 +28,8 @@
     "@axelar-network/interchain-token-service": "0.3.0",
     "@cosmjs/cosmwasm-stargate": "^0.31.1",
     "ethers": "^5.7.2",
-    "@ethersproject/hardware-wallets": "^5.5.0"
+    "@ethersproject/hardware-wallets": "^5.5.0",
+    "@ledgerhq/hw-transport-node-hid": "^6.11.2"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
