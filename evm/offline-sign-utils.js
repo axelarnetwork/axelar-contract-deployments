@@ -8,11 +8,6 @@ const { LedgerSigner } = require('@ethersproject/hardware-wallets');
 const { printObj, isNumber, printError } = require('./utils');
 const fs = require('fs');
 
-async function getNonce(wallet) {
-    const provider = wallet.provider;
-    const nonce = (await wallet.provider.getTransactionCount(await wallet.getAddress())).toString();
-    return nonce;
-}
 
 // function to create a ledgerSigner type wallet object
 function getLedgerWallet(provider, path) {
@@ -26,20 +21,25 @@ function getLedgerWallet(provider, path) {
     return new LedgerSigner(provider, type, path);
 }
 
-async function ledgerSign(offline, gasLimit, gasPrice, nonce, network, chain, wallet, to, amount, contract, functionName, ...args) {
+async function ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, to, amount, contract, functionName, ...args) {
     const tx = {};
-    if (offline !== 'true') {
-        if (network.toLowerCase() !== 'mainnet' && isNumber(nonce)) {
-            tx.nonce = nonce;
-        }
-        tx.gasLimit = gasLimit || undefined;
-        tx.gasPrice = gasPrice || undefined;
-    }
 
     if (!chain) {
         throw new Error('Chain is missing in the function arguments');
     }
     tx.chainId = chain.chainId;
+    if (!gasLimit) {
+        throw new Error('Gas limit is missing in the function arguments');
+    }
+    tx.gasLimit = gasLimit;
+    if (!gasPrice) {
+        throw new Error('Gas price is missing in the function arguments');
+    }
+    tx.gasPrice = gasPrice;
+    if (!nonce) {
+        throw new Error('Nonce is missing in the function arguments');
+    }
+    tx.nonce = nonce;
     if (!wallet) {
         throw new Error('Wallet is missing/not provided correctly in function arguments');
     }
@@ -67,40 +67,22 @@ async function ledgerSign(offline, gasLimit, gasPrice, nonce, network, chain, wa
         data: tx.data || undefined,
         gasLimit: tx.gasLimit || undefined,
         gasPrice: tx.gasPrice || undefined,
-        nonce: tx.nonce ? BigNumber.from(tx.nonce).toNumber() : await getNonce(wallet),
+        nonce: tx.nonce ? BigNumber.from(tx.nonce).toNumber() : undefined,
         to: tx.to || undefined,
         value: tx.value || undefined,
     };
 
-    if (offline !== 'true') {
-        return baseTx;
-    }
 
-    const unsignedTx = serializeTransaction(baseTx).substring(2);
-    const sig = await wallet._retry((eth) => eth.signTransaction("m/44'/60'/0'/0/0", unsignedTx));
-
-    // EIP-155 sig.v computation
-    // v in {0,1} + 2 * chainId + 35
-    // Ledger gives this value mod 256
-    // So from that, compute whether v is 0 or 1 and then add to 2 * chainId + 35 without doing a mod
-    var v = BigNumber.from('0x' + sig.v).toNumber();
-    v = 2 * chain.chainId + 35 + ((v + 256 * 100000000000 - (2 * chain.chainId + 35)) % 256);
-
-    return serializeTransaction(baseTx, {
-        v: v,
-        r: '0x' + sig.r,
-        s: '0x' + sig.s,
-    });
+    const signedTx = await wallet.signTransaction(baseTx);
+    return [baseTx, signedTx];
 }
 
-async function fetchExisitingTransactions(dirPath, fileName) {
+async function fetchExisitingTransactions(directoryPath, fileName) {
     // Read the existing transactions from the file or create a new array if the file doesn't exist
     let transactions = [];
-    dirPath = dirPath || './tx';
-    fileName = fileName || 'signed_transactions.txt';
-    const filePath = dirPath + '/' + fileName;
+    const filePath = getFilePath(directoryPath, fileName);
     try {
-        const existingData = fs.readFileSync(filePath);
+        const existingData = getFileData(filePath);
         transactions = JSON.parse(existingData).transactions;
     } catch (error) {
         printError("File doesn't exist yet, that's fine");
@@ -108,20 +90,34 @@ async function fetchExisitingTransactions(dirPath, fileName) {
     return transactions;
 }
 
+function getFilePath(directoryPath, fileName) {
+    if(!directoryPath) {
+        throw new Error("Directory path is missing in the function arguments");
+    }
+    if(!fileName) {
+        throw new Error("File name is missing in the function arguments");
+    }
+    if (!fs.existsSync(directoryPath)) {
+        fs.mkdirSync(directoryPath);
+    }
+    const filePath = directoryPath + '/' + fileName + '.json';
+    return filePath;
+}
+
 function updateTransactions(transactions, msg, signedTransaction) {
     transactions.push({ msg: msg, signedTransaction: signedTransaction });
     return transactions;
 }
 
-async function storeTransactionsData(dirPath, fileName, msg, signedTransaction) {
-    let transactions = await fetchExisitingTransactions(dirPath, fileName);
+async function storeTransactionsData(directoryPath, fileName, msg, signedTransaction) {
+    let transactions = await fetchExisitingTransactions(directoryPath, fileName);
     transactions = updateTransactions(transactions, msg, signedTransaction);
-    dirPath = dirPath || './tx';
-    if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath);
+    directoryPath = directoryPath || './tx';
+    if (!fs.existsSync(directoryPath)) {
+        fs.mkdirSync(directoryPath);
     }
     fileName = fileName || 'signed_transactions.txt';
-    const filePath = dirPath + '/' + fileName;
+    const filePath = directoryPath + '/' + fileName;
     const data = JSON.stringify({ transactions }, null, 2);
     fs.writeFileSync(filePath, data, (err) => {
         if (err) {
@@ -137,16 +133,149 @@ async function sendTx(tx, provider) {
     return receipt;
 }
 
-async function getNonce(wallet) {
-    const provider = wallet.provider;
-    const nonce = await provider.getTransactionCount(await wallet.getAddress());
+async function updateSignersData(directoryPath, fileName, signersData) {
+    const filePath = getFilePath(directoryPath, fileName);
+    fs.writeFileSync(filePath, JSON.stringify(signersData, null, 2), (err) => {
+        if (err) {
+            printError(err);
+            return;
+        }
+        print(`Data has been successfully stored in the ${filePath} file.`);
+    });
+}
+
+async function getNonceFromProvider(provider, address) {
+    const nonce = await provider.getTransactionCount(address);
     return nonce;
 }
 
+async function getLatestNonceAndUpdateData(directoryPath, fileName, wallet) {
+    try {
+        const provider = wallet.provider;
+        const signerAddress = await wallet.getAddress();
+        let signersData = getAllSignersData(directoryPath, fileName);
+        let signerData = signersData[signerAddress];
+        const nonceFromData = getLatestNonceFromData(signerData); 
+        let nonce = await getNonceFromProvider(provider, signerAddress);
+        if(nonce > nonceFromData) {
+            signerData = updateTxNonceAndStatus(signerData, nonce);
+            signersData[signerAddress] = signerData;
+            await updateSignersData(directoryPath, fileName, signersData);
+        }
+        else {
+            nonce = nonceFromData + 1;
+        }
+        return nonce;
+
+    } catch(error) {
+        printError(error.message);
+    }
+}
+
+function updateTxNonceAndStatus(signerData, nonce) {
+    if(signerData) {
+        for(const transaction of signerData) {
+            if(nonce > transaction.nonce && (transaction.status === "PENDING" || transaction.status === "BROADCASTED")) {
+                transaction.status = "FAILED";
+                transaction.error = `Transaction nonce value of ${transaction.nonce} is less than the required signer nonce value of ${nonce}`;
+            }
+        }
+    }
+    return signerData
+}
+
+function getLatestNonceFromData(signerData) {
+    if(signerData) {
+        const length = signerData.length;
+        return parseInt(signerData[length - 1].nonce);
+    }
+    return 0;
+}
+
+async function getAllSignersData(directoryPath, fileName) {
+    const signersData = {};
+    try {
+        const filePath = getFilePath(directoryPath, fileName);
+        // Read the content of the file
+        const data = getFileData(filePath);
+        if(data) {
+            const jsonData = JSON.parse(data);
+            if(!isValidJSON(jsonData)) {
+                return signersData;
+            }
+            return jsonData;
+        }
+        return signersData;
+    } catch(error) {
+        printError(error.message);
+    }
+}
+
+function getFileData(filePath) {
+    try {
+        if (!fs.existsSync(filePath)) {
+            // File does not exist, create it
+            fs.writeFileSync(filePath, {});
+            return undefined;
+        }
+        // Read the content of the file
+        const data = fs.readFileSync(filePath);
+        return data;
+    } catch(error) {
+        printError(error.message);
+    }
+}
+
+async function getSignerData(directoryPath, fileName, signerAddress) {
+    let signerData = [];
+    console.log(fileName);
+    try {
+        const filePath = getFilePath(directoryPath, fileName);
+        // Read the content of the file
+        const data = getFileData(filePath);
+        console.log(data);
+        if(data) {
+            const jsonData = JSON.parse(data);
+            console.log(jsonData);
+            if(!isValidJSON(jsonData)) {
+                return signerData;
+            }
+            // Access the transactions array from the JSON object
+            if(signerAddress in jsonData) {
+                console.log("line 245");
+                signerData = jsonData[signerAddress];
+            }
+        }
+        return signerData;
+
+    } catch(error) {
+        printError(error.message);
+    }
+}
+
+function isValidJSON(obj) {
+    if (obj === undefined || obj === null) {
+      return false;
+    }
+  
+    if (Object.keys(obj).length === 0 && obj.constructor === Object) {
+      return false;
+    }
+  
+    return true;
+  }
+
 module.exports = {
-    getNonce,
     getLedgerWallet,
     ledgerSign,
     sendTx,
     storeTransactionsData,
+    getFilePath,
+    updateTxNonceAndStatus,
+    getNonceFromProvider,
+    getLatestNonceFromData,
+    getAllSignersData,
+    getSignerData,
+    updateSignersData,
+    getLatestNonceAndUpdateData
 };

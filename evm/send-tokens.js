@@ -2,29 +2,31 @@
 
 require('dotenv').config();
 
-const { ethers } = require('hardhat');
+// const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
-    utils: { parseEther },
-} = ethers;
+    utils: { parseEther, parseUnits },
+} = require('ethers');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
-const { printInfo, printWalletInfo, isValidPrivateKey } = require('./utils');
-const { getLedgerWallet, sendTx, ledgerSign, storeTransactionsData, getNonce } = require('./offline-sign-utils.js');
+const { printInfo, printWalletInfo, isValidPrivateKey, printError } = require('./utils');
+const { getLedgerWallet, sendTx, ledgerSign, getAllSignersData, getNonceFromProvider, getLatestNonceFromData, updateSignersData, getLatestNonceAndUpdateData, getSignerData, updateTxNonceAndStatus } = require('./offline-sign-utils.js');
 const readlineSync = require('readline-sync');
 
 async function sendTokens(chain, options) {
-    let { privateKey, amount, recipients, offline, env } = options;
-    env = env === 'local' ? 'testnet' : env;
     let wallet;
+    const { privateKey, offline, env, ledgerPath} = options;
+    let {amount, recipients, directoryPath, fileName} = options;
+    const isOffline = (offline === "true") ? true : false;
 
     const provider = getDefaultProvider(chain.rpc);
+    printInfo(`provider: ${provider}`);
     recipients = options.recipients.split(',').map((str) => str.trim());
-    amount = parseEther(options.amount);
+    amount = parseEther(amount);
 
     if (privateKey === 'ledger') {
-        wallet = getLedgerWallet(provider); // Need to think whether we will take path for ledger wallet from user or somewhere else like config/ or use default one
+        wallet = getLedgerWallet(provider, ledgerPath? ledgerPath : undefined);
     } else {
         if (!isValidPrivateKey(privateKey)) {
             throw new Error('Private key is missing/ not provided correctly in the user info');
@@ -32,8 +34,8 @@ async function sendTokens(chain, options) {
 
         wallet = new Wallet(privateKey, provider);
     }
-    console.log('Wallet address 1', await wallet.getAddress());
 
+    const signerAddress = await wallet.getAddress();
     const balance = await printWalletInfo(wallet);
 
     if (balance.lte(amount)) {
@@ -49,18 +51,42 @@ async function sendTokens(chain, options) {
         if (anwser !== 'y') return;
     }
 
+    let gasLimit, gasPrice;
+    try {
+        gasPrice = parseUnits((await provider.getGasPrice()).toString(), 'gwei');
+        const block = await provider.getBlock('latest');
+        gasLimit = block.gasLimit.toNumber() / 1000;
+    
+        printInfo('Gas Price:', gasPrice.toString());
+        printInfo('Gas Limit:', gasLimit.toString());
+      } catch (error) {
+        printError(error.message);
+      }
+
+    let nonce = await getNonceFromProvider(provider, signerAddress);
+    let signersData = undefined;
+    let signerData = undefined;
+    if(isOffline) {
+        directoryPath = directoryPath || './tx';
+        fileName = fileName || env.toLowerCase() + '-' +  chain.name.toLowerCase() + '-' + 'signedTransactions';
+        nonce = await getLatestNonceAndUpdateData(directoryPath, fileName, wallet);
+        signersData = await getAllSignersData(directoryPath, fileName);
+        signerData = await getSignerData(directoryPath, fileName, signerAddress);
+    }
     for (const recipient of recipients) {
         printInfo('Recipient', recipient);
-        const nonce = await getNonce(wallet);
-        const tx = await ledgerSign(offline, 50000, 10000000000, nonce, env, chain, wallet, recipient, amount);
 
         if (privateKey === 'ledger') {
-            if (offline === 'true') {
-                const msg = `Transaction created at ${nonce}. This transaction will send ${amount} of native tokens to ${recipient} on chain ${chain.name} with chainId ${chain.chainId}`;
-                await storeTransactionsData(undefined, undefined, msg, tx);
+            const [unsignedTx, tx] = await ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, recipient, amount);
+            if (isOffline) {
+                const tx = {};
+                tx.nonce = nonce;
+                tx.msg = `This transaction will send ${amount} of native tokens to ${recipient} on chain ${chain.name} with chainId ${chain.chainId}`;
+                tx.unsignedTx = unsignedTx;
+                tx.status = "PENDING";
+                signerData.push(tx);
             } else {
-                const signedTx = await wallet.signTransaction(tx);
-                const response = await sendTx(signedTx, provider);
+                const response = await sendTx(tx, provider);
                 printInfo('Transaction hash', response.transactionHash);
             }
         } else {
@@ -73,6 +99,11 @@ async function sendTokens(chain, options) {
 
             await tx.wait();
         }
+        ++nonce;
+    }
+    if(signerData) {
+        signersData[signerAddress] = signerData;
+        await updateSignersData(directoryPath, fileName, signersData);
     }
 }
 
@@ -113,6 +144,9 @@ if (require.main === module) {
     program.addOption(
         new Option('-o, --offline <offline>', 'If this option is set as true, then ').choices(['true', 'false']).makeOptionMandatory(false),
     );
+    program.addOption(new Option('-l, --ledgerPath <ledgerPath>', 'The path to identify the account in ledger').makeOptionMandatory(false));
+    program.addOption(new Option('-d, --directoryPath <directoryPath>', 'The folder where all the signed tx files are stored').makeOptionMandatory(false));
+    program.addOption(new Option('-f, --fileName <fileName>', 'The fileName where the signed tx will be stored').makeOptionMandatory(false));
     program.addOption(new Option('-y, --yes', 'skip prompts'));
 
     program.action((options) => {
