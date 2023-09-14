@@ -5,7 +5,16 @@ const {
     Contract,
     provider,
     BigNumber,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, serializeTransaction, isHexString },
+    utils: {
+        computeAddress,
+        getContractAddress,
+        keccak256,
+        isAddress,
+        getCreate2Address,
+        defaultAbiCoder,
+        serializeTransaction,
+        isHexString,
+    },
 } = require('ethers');
 const { LedgerSigner } = require('@ethersproject/hardware-wallets');
 const https = require('https');
@@ -220,7 +229,7 @@ const getCurrentTimeInSeconds = () => {
     const now = new Date();
     const currentTimeInSecs = Math.floor(now.getTime() / 1000);
     return currentTimeInSecs;
-}
+};
 
 /**
  * Determines if a given input is a valid keccak256 hash.

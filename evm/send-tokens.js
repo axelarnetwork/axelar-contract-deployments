@@ -3,7 +3,11 @@
 require('dotenv').config();
 
 const { ethers } = require('hardhat');
-const { Wallet, getDefaultProvider, utils : {parseEther}, } = ethers;
+const {
+    Wallet,
+    getDefaultProvider,
+    utils: { parseEther },
+} = ethers;
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 const { printInfo, printWalletInfo, isValidPrivateKey, isNumber, isAddressArray, getCurrentTimeInSeconds } = require('./utils');
@@ -11,24 +15,24 @@ const { getLedgerWallet, sendTx, ledgerSign, storeTransactionsData } = require('
 const readlineSync = require('readline-sync');
 
 async function sendTokens(chain, options) {
-    const {privateKey, amount, recipients, offline, env} = options;
-    env = (env === "local") ? "testnet" : env;
+    const { privateKey, amount, recipients, offline, env } = options;
+    env = env === 'local' ? 'testnet' : env;
     let wallet;
 
     const provider = getDefaultProvider(chain.rpc);
     recipients = options.recipients.split(',').map((str) => str.trim());
     amount = parseEther(options.amount);
 
-    if (privateKey === "ledger") {
+    if (privateKey === 'ledger') {
         wallet = getLedgerWallet(provider); // Need to think whether we will take path for ledger wallet from user or somewhere else like config/ or use default one
-      } else {
-        if(!isValidPrivateKey(privateKey)) {
-            throw new Error("Private key is missing/ not provided correctly in the user info");
+    } else {
+        if (!isValidPrivateKey(privateKey)) {
+            throw new Error('Private key is missing/ not provided correctly in the user info');
         }
 
         wallet = new Wallet(privateKey, provider);
-      }
-    console.log("Wallet address 1", await wallet.getAddress());
+    }
+    console.log('Wallet address 1', await wallet.getAddress());
 
     const balance = await printWalletInfo(wallet);
 
@@ -49,28 +53,25 @@ async function sendTokens(chain, options) {
         printInfo('Recipient', recipient);
         const nonce = parseInt(getCurrentTimeInSeconds());
 
-        if(privateKey === "ledger") {
-            if(offline === "true") {
+        if (privateKey === 'ledger') {
+            if (offline === 'true') {
                 const tx = await ledgerSign(offline, 50000, 100, nonce, env, chain, wallet, recipient, amount);
                 const msg = `Transaction created at ${nonce}. This transaction will send ${amount} of native tokens to ${recipient} on chain ${chain.name} with chainId ${chain.chainId}`;
                 await storeTransactionsData(undefined, undefined, msg, tx);
-
-            }
-            else {
+            } else {
                 const signedTx = await ledgerSign(offline, 50000, 10000000000, nonce, env, chain, wallet, recipient, amount);
-                console.log("Sending signed tx through provider");
+                console.log('Sending signed tx through provider');
                 const tx = await sendTx(signedTx, provider);
                 printInfo('Transaction hash', tx.hash);
             }
-            }
-    else {
+        } else {
             const tx = await wallet.sendTransaction({
                 to: recipient,
                 value: amount,
             });
-    
+
             printInfo('Transaction hash', tx.hash);
-    
+
             await tx.wait();
         }
     }
@@ -110,7 +111,9 @@ if (require.main === module) {
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-r, --recipients <recipients>', 'comma-separated recipients of tokens').makeOptionMandatory(true));
     program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)').makeOptionMandatory(true));
-    program.addOption(new Option('-o, --offline <offline>', 'If this option is set as true, then ').choices(["true", "false"]).makeOptionMandatory(false));
+    program.addOption(
+        new Option('-o, --offline <offline>', 'If this option is set as true, then ').choices(['true', 'false']).makeOptionMandatory(false),
+    );
     program.addOption(new Option('-y, --yes', 'skip prompts'));
 
     program.action((options) => {
