@@ -1,0 +1,12 @@
+# Modules
+node_modules
+
+# Tests
+tests
+
+# Optional npm cache directory
+.npm
+*.tgz
+
+# Tsconfig file
+tsconfig.json
