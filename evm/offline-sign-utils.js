@@ -8,8 +8,9 @@ const { LedgerSigner } = require('@ethersproject/hardware-wallets');
 const { printObj, isNumber, printError } = require('./utils');
 const fs = require('fs');
 
-async function getNonce(provider, wallet) {
-    const nonce = await provider.getTransactionCount(await wallet.getAddress());
+async function getNonce(wallet) {
+    const provider = wallet.provider;
+    const nonce = (await wallet.provider.getTransactionCount(await wallet.getAddress())).toString();
     return nonce;
 }
 
@@ -71,14 +72,11 @@ async function ledgerSign(offline, gasLimit, gasPrice, nonce, network, chain, wa
         value: tx.value || undefined,
     };
 
-    console.log('Printing Base obj');
-    printObj(baseTx);
     if (offline !== 'true') {
         return baseTx;
     }
 
     const unsignedTx = serializeTransaction(baseTx).substring(2);
-    console.log('Before trying to sign using ledger wallet');
     const sig = await wallet._retry((eth) => eth.signTransaction("m/44'/60'/0'/0/0", unsignedTx));
 
     // EIP-155 sig.v computation
@@ -87,8 +85,6 @@ async function ledgerSign(offline, gasLimit, gasPrice, nonce, network, chain, wa
     // So from that, compute whether v is 0 or 1 and then add to 2 * chainId + 35 without doing a mod
     var v = BigNumber.from('0x' + sig.v).toNumber();
     v = 2 * chain.chainId + 35 + ((v + 256 * 100000000000 - (2 * chain.chainId + 35)) % 256);
-
-    // console.log("sig v", BigNumber.from("0x" + sig.v).toNumber(), v, "chain", chainID)
 
     return serializeTransaction(baseTx, {
         v: v,
@@ -138,7 +134,7 @@ async function storeTransactionsData(dirPath, fileName, msg, signedTransaction) 
 
 async function sendTx(tx, provider) {
     const receipt = await provider.sendTransaction(tx).then((tx) => tx.wait());
-    console.log('command', receipt);
+    return receipt;
 }
 
 async function getNonce(wallet) {
@@ -148,7 +144,6 @@ async function getNonce(wallet) {
 }
 
 module.exports = {
-    getUnsignedTx,
     getNonce,
     getLedgerWallet,
     ledgerSign,
