@@ -4,7 +4,7 @@
       "name": "Ethereum",
       "id": "ethereum-2",
       "chainId": 5,
-      "rpc": "https://goerli.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
+      "url": "https://goerli.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -78,7 +78,7 @@
       "name": "Avalanche",
       "id": "Avalanche",
       "chainId": 43113,
-      "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
+      "url": "https://api.avax-test.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
       "contracts": {
         "AxelarGateway": {
@@ -152,7 +152,7 @@
       "name": "Fantom",
       "id": "Fantom",
       "chainId": 4002,
-      "rpc": "https://xapi.testnet.fantom.network/lachesis",
+      "url": "https://xapi.testnet.fantom.network/lachesis",
       "tokenSymbol": "FTM",
       "contracts": {
         "AxelarGateway": {
@@ -235,7 +235,7 @@
       "name": "Polygon",
       "id": "Polygon",
       "chainId": 80001,
-      "rpc": "https://polygon-mumbai.g.alchemy.com/v2/Ksd4J1QVWaOJAJJNbr_nzTcJBJU-6uP3",
+      "url": "https://polygon-mumbai.g.alchemy.com/v2/Ksd4J1QVWaOJAJJNbr_nzTcJBJU-6uP3",
       "tokenSymbol": "MATIC",
       "contracts": {
         "AxelarGateway": {
@@ -312,7 +312,7 @@
       "name": "Moonbeam",
       "id": "Moonbeam",
       "chainId": 1287,
-      "rpc": "https://moonbeam-alpha.api.onfinality.io/public",
+      "url": "https://moonbeam-alpha.api.onfinality.io/public",
       "tokenSymbol": "DEV",
       "contracts": {
         "AxelarGateway": {
@@ -389,7 +389,7 @@
       "name": "Binance",
       "id": "binance",
       "chainId": 97,
-      "rpc": "https://bsc-testnet.publicnode.com",
+      "url": "https://bsc-testnet.publicnode.com",
       "tokenSymbol": "BNB",
       "contracts": {
         "AxelarGateway": {
@@ -463,7 +463,7 @@
       "name": "Arbitrum",
       "id": "arbitrum",
       "chainId": 421613,
-      "rpc": "https://goerli-rollup.arbitrum.io/rpc",
+      "url": "https://goerli-rollup.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -537,7 +537,7 @@
       "name": "Celo",
       "id": "celo",
       "chainId": 44787,
-      "rpc": "https://alfajores-forno.celo-testnet.org",
+      "url": "https://alfajores-forno.celo-testnet.org",
       "tokenSymbol": "CELO",
       "contracts": {
         "AxelarGateway": {
@@ -611,7 +611,7 @@
       "name": "Kava",
       "id": "kava",
       "chainId": 2221,
-      "rpc": "https://evm.testnet.kava.io",
+      "url": "https://evm.testnet.kava.io",
       "tokenSymbol": "KAVA",
       "contracts": {
         "AxelarGateway": {
@@ -684,7 +684,7 @@
       "name": "Optimism",
       "id": "optimism",
       "chainId": 420,
-      "rpc": "https://optimism-goerli.public.blastapi.io",
+      "url": "https://optimism-goerli.public.blastapi.io",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -762,7 +762,7 @@
       "name": "Base",
       "id": "base",
       "chainId": 84531,
-      "rpc": "https://goerli.base.org",
+      "url": "https://goerli.base.org",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -839,7 +839,7 @@
       "name": "Filecoin",
       "id": "filecoin-2",
       "chainId": 314159,
-      "rpc": "https://api.calibration.node.glif.io/rpc/v1",
+      "url": "https://api.calibration.node.glif.io/rpc/v1",
       "tokenSymbol": "FIL",
       "contracts": {
         "ConstAddressDeployer": {
@@ -916,7 +916,7 @@
       "name": "Linea",
       "id": "linea",
       "chainId": 59140,
-      "rpc": "https://rpc.goerli.linea.build",
+      "url": "https://rpc.goerli.linea.build",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -991,7 +991,7 @@
       "name": "Polygon-zkEVM",
       "id": "polygon-zkevm",
       "chainId": 1442,
-      "rpc": "https://rpc.public.zkevm-test.net",
+      "url": "https://rpc.public.zkevm-test.net",
       "tokenSymbol": "ETH",
       "contracts": {
         "ConstAddressDeployer": {
@@ -1069,7 +1069,7 @@
       "name": "Mantle",
       "id": "mantle",
       "chainId": 5001,
-      "rpc": "https://rpc.testnet.mantle.xyz",
+      "url": "https://rpc.testnet.mantle.xyz",
       "tokenSymbol": "MNT",
       "contracts": {
         "AxelarGateway": {
@@ -1130,7 +1130,7 @@
       "name": "Centrifuge",
       "id": "centrifuge",
       "chainId": 2089,
-      "rpc": "https://fullnode.algol.cntrfg.com",
+      "url": "https://fullnode.algol.cntrfg.com",
       "tokenSymbol": "ALGL",
       "contracts": {
         "AxelarGateway": {
