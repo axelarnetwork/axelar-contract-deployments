@@ -107,7 +107,7 @@ build/
 cache/
 artifacts/
 
-info/local.json
-info/keys.json
+local.json
+keys.json
 
 temp-arguments.js
