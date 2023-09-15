@@ -2,6 +2,18 @@
 
 require('dotenv').config();
 
+const chalk = require('chalk');
+const { Command, Option } = require('commander');
+const { ethers } = require('hardhat');
+const {
+    ContractFactory,
+    Contract,
+    Wallet,
+    utils: { defaultAbiCoder, getContractAddress, AddressZero, parseUnits },
+    getDefaultProvider,
+} = ethers;
+const readlineSync = require('readline-sync');
+
 const {
     saveConfig,
     loadConfig,
@@ -14,7 +26,8 @@ const {
     printError,
     printWalletInfo,
     printWarn,
-    isValidPrivateKey
+    printObj,
+    isValidPrivateKey,
 } = require('./utils');
 const {
     getLedgerWallet,
@@ -23,19 +36,8 @@ const {
     getNonceFromProvider,
     updateSignersData,
     getLatestNonceAndUpdateData,
-    getSignerData,
+    getTransactions,
 } = require('./offline-sign-utils.js');
-const { ethers } = require('hardhat');
-const {
-    ContractFactory,
-    Contract,
-    Wallet,
-    utils: { defaultAbiCoder, getContractAddress, AddressZero, parseUnits },
-    getDefaultProvider,
-} = ethers;
-const readlineSync = require('readline-sync');
-const { Command, Option } = require('commander');
-const chalk = require('chalk');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
@@ -320,6 +322,7 @@ async function upgrade(config, options) {
     const provider = getDefaultProvider(rpc);
 
     let wallet;
+
     if (privateKey === 'ledger') {
         wallet = getLedgerWallet(provider, ledgerPath);
     } else {
@@ -329,6 +332,7 @@ async function upgrade(config, options) {
 
         wallet = new Wallet(privateKey, provider);
     }
+
     const signerAddress = await wallet.getAddress();
     await printWalletInfo(wallet);
 
@@ -364,6 +368,7 @@ async function upgrade(config, options) {
 
     // Offline signing
     let gasLimit, gasPrice;
+
     try {
         gasPrice = parseUnits((await provider.getGasPrice()).toString(), 'gwei');
         const block = await provider.getBlock('latest');
@@ -372,47 +377,61 @@ async function upgrade(config, options) {
         printInfo('Gas Price:', gasPrice.toString());
         printInfo('Gas Limit:', gasLimit.toString());
     } catch (error) {
-        printError(error.message);
+        printError('Gas price and limit could not be fetched from provider');
+        printObj(error);
     }
 
     let nonce = await getNonceFromProvider(provider, signerAddress);
-    let signersData, signerData;
+    let signersData, transactions;
 
     if (isOffline) {
         directoryPath = directoryPath || './tx';
         fileName = fileName || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'signedUpgradeTransactions';
         nonce = await getLatestNonceAndUpdateData(directoryPath, fileName, wallet);
         signersData = await getAllSignersData(directoryPath, fileName);
-        signerData = await getSignerData(directoryPath, fileName, signerAddress);
-        const [baseTx, signedTx] = await ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, gateway.address, undefined, gateway, "upgrade", contractConfig.implementation, implementationCodehash, setupParams);
+        transactions = await getTransactions(directoryPath, fileName, signerAddress);
+        const { baseTx, signedTx } = await ledgerSign(
+            gasLimit,
+            gasPrice,
+            nonce,
+            chain,
+            wallet,
+            gateway.address,
+            undefined,
+            gateway,
+            'upgrade',
+            contractConfig.implementation,
+            implementationCodehash,
+            setupParams,
+        );
         const tx = {};
         tx.nonce = nonce;
         tx.msg = `This transaction will perform upgrade of AxlearGateway contract having address ${gateway.address} with implementation ${contractConfig.implementation} on chain ${chain.name} with chainId ${chain.chainId}`;
         tx.baseTx = baseTx;
         tx.signedTx = signedTx;
         tx.status = 'PENDING';
-        signerData.push(tx);
-        if (signerData) {
-            signersData[signerAddress] = signerData;
+        transactions.push(tx);
+
+        if (transactions) {
+            signersData[signerAddress] = transactions;
             await updateSignersData(directoryPath, fileName, signersData);
         }
+    } else {
+        const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
+        printInfo('Upgrade transaction', tx.hash);
+
+        await tx.wait(chain.confirmations);
+
+        const newImplementation = await gateway.implementation();
+        printInfo('New implementation', newImplementation);
+
+        if (newImplementation !== contractConfig.implementation) {
+            printWarn('Implementation not upgraded yet!');
+            return;
+        }
+
+        printInfo('Upgraded to', newImplementation);
     }
-     else {
-                const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
-                printInfo('Upgrade transaction', tx.hash);
-
-                await tx.wait(chain.confirmations);
-
-                const newImplementation = await gateway.implementation();
-                printInfo('New implementation', newImplementation);
-
-                if (newImplementation !== contractConfig.implementation) {
-                    printWarn('Implementation not upgraded yet!');
-                    return;
-                }
-
-                printInfo('Upgraded to', newImplementation);
-            }
 }
 
 async function main(options) {

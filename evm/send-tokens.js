@@ -2,14 +2,16 @@
 
 require('dotenv').config();
 
+const chalk = require('chalk');
+const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
     utils: { parseEther, parseUnits },
 } = ethers;
-const { Command, Option } = require('commander');
-const chalk = require('chalk');
+const readlineSync = require('readline-sync');
+
 const { printInfo, printWalletInfo, isValidPrivateKey, printError } = require('./utils');
 const {
     getLedgerWallet,
@@ -19,10 +21,10 @@ const {
     getNonceFromProvider,
     updateSignersData,
     getLatestNonceAndUpdateData,
-    getSignerData,
+    getTransactions,
     isValidJSON,
 } = require('./offline-sign-utils.js');
-const readlineSync = require('readline-sync');
+const { printObj } = require('@axelar-network/axelar-gmp-sdk-solidity');
 
 async function sendTokens(chain, options) {
     let wallet;
@@ -70,25 +72,26 @@ async function sendTokens(chain, options) {
         printInfo('Gas Price:', gasPrice.toString());
         printInfo('Gas Limit:', gasLimit.toString());
     } catch (error) {
-        printError(error.message);
+        printError('Gas price and limit could not be fetched from provider');
+        printObj(error);
     }
 
     let nonce = await getNonceFromProvider(provider, signerAddress);
-    let signersData, signerData;
+    let signersData, transactions;
 
     if (isOffline) {
         directoryPath = directoryPath || './tx';
         fileName = fileName || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'signedTransactions';
         nonce = await getLatestNonceAndUpdateData(directoryPath, fileName, wallet);
         signersData = await getAllSignersData(directoryPath, fileName);
-        signerData = await getSignerData(directoryPath, fileName, signerAddress);
+        transactions = await getTransactions(directoryPath, fileName, signerAddress);
     }
 
     for (const recipient of recipients) {
         printInfo('Recipient', recipient);
 
         if (privateKey === 'ledger') {
-            const [baseTx, signedTx] = await ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, recipient, amount);
+            const { baseTx, signedTx } = await ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, recipient, amount);
 
             if (isOffline) {
                 const tx = {};
@@ -97,19 +100,22 @@ async function sendTokens(chain, options) {
                 tx.baseTx = baseTx;
                 tx.signedTx = signedTx;
                 tx.status = 'PENDING';
-                signerData.push(tx);
+                transactions.push(tx);
             } else {
                 try {
                     const response = await sendTx(signedTx, provider);
 
                     if (!isValidJSON(response) || response.status.toString() !== '1') {
-                        const error = `Execution failed${response.status ? ` with txHash: ${response.transactionHash}` : ''}`;
+                        const error = `Execution failed${
+                            response.status ? ` with txHash: ${response.transactionHash}` : ` with msg: ${response.message}`
+                        }`;
                         throw new Error(error);
                     }
 
                     printInfo('Transaction hash', response.transactionHash);
                 } catch (error) {
-                    printError(`Transaction failed with error: ${error.message}`);
+                    printError('Broadcasting Transaction failed');
+                    printObj(error);
                 }
             }
         } else {
@@ -126,8 +132,8 @@ async function sendTokens(chain, options) {
         ++nonce;
     }
 
-    if (signerData) {
-        signersData[signerAddress] = signerData;
+    if (transactions) {
+        signersData[signerAddress] = transactions;
         await updateSignersData(directoryPath, fileName, signersData);
     }
 }

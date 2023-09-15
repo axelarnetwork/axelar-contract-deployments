@@ -1,22 +1,23 @@
 'use strict';
 
+const chalk = require('chalk');
+const { Command, Option } = require('commander');
+const fs = require('fs');
 const { ethers } = require('hardhat');
 const {
     providers: { JsonRpcProvider },
 } = ethers;
-const { Command, Option } = require('commander');
+
 const { printError, printInfo, printObj } = require('./utils');
 const {
     sendTx,
-    updateTxNonceAndStatus,
+    getTxsWithUpdatedNonceAndStatus,
     getNonceFromData,
     getNonceFromProvider,
     getFilePath,
     getAllSignersData,
     isValidJSON,
 } = require('./offline-sign-utils');
-const fs = require('fs');
-const chalk = require('chalk');
 
 async function processTransactions(directoryPath, fileName, provider, signerAddress) {
     try {
@@ -26,15 +27,15 @@ async function processTransactions(directoryPath, fileName, provider, signerAddr
             throw new Error(`Signer data for address ${signerAddress} not found in the file ${fileName}`);
         }
 
-        let signerData = signersData[signerAddress];
-        const nonceFromData = await getNonceFromData(signerData);
+        let transactions = signersData[signerAddress];
+        const nonceFromData = await getNonceFromData(transactions);
         const nonce = parseInt(await getNonceFromProvider(provider, signerAddress));
 
         if (nonce > nonceFromData) {
-            signerData = updateTxNonceAndStatus(signerData, nonce);
+            transactions = getTxsWithUpdatedNonceAndStatus(transactions, nonce);
         }
 
-        for (const transaction of signerData) {
+        for (const transaction of transactions) {
             if (transaction.status === 'PENDING') {
                 printInfo('Broadcasting transaction: ');
                 printObj(transaction.baseTx);
@@ -44,7 +45,9 @@ async function processTransactions(directoryPath, fileName, provider, signerAddr
                     const response = await sendTx(transaction.signedTx, provider);
 
                     if (!isValidJSON(response) || response.status.toString() !== '1') {
-                        const error = `Execution failed:${response.status ? ` with txHash: ${response.transactionHash}` : ''}`;
+                        const error = `Execution failed${
+                            response.status ? ` with txHash: ${response.transactionHash}` : ` with msg: ${response.message}`
+                        }`;
                         throw new Error(error);
                     }
 
@@ -62,7 +65,7 @@ async function processTransactions(directoryPath, fileName, provider, signerAddr
         }
 
         // Write back the updated JSON object to the file
-        signersData[signerAddress] = signerData;
+        signersData[signerAddress] = transactions;
         const filePath = getFilePath(directoryPath, fileName);
         fs.writeFileSync(filePath, JSON.stringify(signersData, null, 2));
     } catch (error) {

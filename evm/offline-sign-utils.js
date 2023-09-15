@@ -1,19 +1,20 @@
 'use strict';
 
+const fs = require('fs');
 const { ethers } = require('hardhat');
 const {
     BigNumber,
     utils: { isAddress },
 } = ethers;
 const { LedgerSigner } = require('@ethersproject/hardware-wallets');
-const { printError } = require('./utils');
-const fs = require('fs');
+
+const { printError, printInfo, printObj } = require('./utils');
 
 // function to create a ledgerSigner type wallet object
 function getLedgerWallet(provider, path) {
     // Check if the parameters are undefined and assign default values if necessary
     if (provider === undefined || provider === null) {
-        throw new Error('Provider is not provided while creating a ledger wallet');
+        throw new Error('Empty provider');
     }
 
     const type = 'hid';
@@ -83,7 +84,7 @@ async function ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, to, amount, 
     };
 
     const signedTx = await wallet.signTransaction(baseTx);
-    return [baseTx, signedTx];
+    return { baseTx, signedTx };
 }
 
 function getFilePath(directoryPath, fileName) {
@@ -104,14 +105,13 @@ function getFilePath(directoryPath, fileName) {
 }
 
 async function sendTx(tx, provider) {
-    const response = {};
-
     try {
         const receipt = await provider.sendTransaction(tx).then((tx) => tx.wait());
         return receipt;
     } catch (error) {
-        printError(error.message);
-        return response;
+        printError('Error while broadcasting signed tx');
+        printObj(error);
+        return error || { message: 'Error while broadcasting signed tx' };
     }
 }
 
@@ -119,11 +119,12 @@ async function updateSignersData(directoryPath, fileName, signersData) {
     const filePath = getFilePath(directoryPath, fileName);
     fs.writeFileSync(filePath, JSON.stringify(signersData, null, 2), (err) => {
         if (err) {
-            printError(err);
+            printError(`Couldnot update signersData in file ${filePath}`);
+            printObj(err);
             return;
         }
 
-        printError(`Data has been successfully stored in the ${filePath} file.`);
+        printInfo(`Data has been successfully stored in the ${filePath} file.`);
     });
 }
 
@@ -137,13 +138,13 @@ async function getLatestNonceAndUpdateData(directoryPath, fileName, wallet) {
         const provider = wallet.provider;
         const signerAddress = await wallet.getAddress();
         const signersData = await getAllSignersData(directoryPath, fileName);
-        let signerData = signersData[signerAddress];
-        const nonceFromData = getNonceFromData(signerData);
+        let transactions = signersData[signerAddress];
+        const nonceFromData = getNonceFromData(transactions);
         let nonce = await getNonceFromProvider(provider, signerAddress);
 
         if (nonce > nonceFromData) {
-            signerData = updateTxNonceAndStatus(signerData, nonce);
-            signersData[signerAddress] = signerData;
+            transactions = getTxsWithUpdatedNonceAndStatus(transactions, nonce);
+            signersData[signerAddress] = transactions;
             await updateSignersData(directoryPath, fileName, signersData);
         } else {
             nonce = nonceFromData + 1;
@@ -151,13 +152,14 @@ async function getLatestNonceAndUpdateData(directoryPath, fileName, wallet) {
 
         return nonce;
     } catch (error) {
-        printError(error.message);
+        printError('Failed to calculate correct nonce for tx');
+        printObj(error);
     }
 }
 
-function updateTxNonceAndStatus(signerData, nonce) {
-    if (signerData) {
-        for (const transaction of signerData) {
+function getTxsWithUpdatedNonceAndStatus(transactions, nonce) {
+    if (transactions) {
+        for (const transaction of transactions) {
             if (nonce > transaction.nonce && (transaction.status === 'PENDING' || transaction.status === 'BROADCASTED')) {
                 transaction.status = 'FAILED';
                 const error = `Transaction nonce value of ${transaction.nonce} is less than the required signer nonce value of ${nonce}`;
@@ -167,20 +169,21 @@ function updateTxNonceAndStatus(signerData, nonce) {
         }
     }
 
-    return signerData;
+    return transactions;
 }
 
-function getNonceFromData(signerData) {
+function getNonceFromData(transactions) {
     try {
-        if (signerData) {
-            for (const transaction of signerData) {
+        if (transactions) {
+            for (const transaction of transactions) {
                 if (transaction.status === 'PENDING') {
                     return transaction.nonce;
                 }
             }
         }
     } catch (error) {
-        printError(error.message);
+        printError('Failed to get first pending nonce from file data');
+        printObj(error);
     }
 
     return 0;
@@ -206,7 +209,8 @@ async function getAllSignersData(directoryPath, fileName) {
 
         return signersData;
     } catch (error) {
-        printError(error.message);
+        printError(`Failed to get all  signers data from the file ${fileName}`);
+        printObj(error);
     }
 }
 
@@ -222,12 +226,13 @@ function getFileData(filePath) {
         const data = fs.readFileSync(filePath);
         return data;
     } catch (error) {
-        printError(error.message);
+        printError(`Failed to get file data from the file ${filePath}`);
+        printObj(error);
     }
 }
 
-async function getSignerData(directoryPath, fileName, signerAddress) {
-    let signerData = [];
+async function getTransactions(directoryPath, fileName, signerAddress) {
+    let transactions = [];
 
     try {
         const filePath = getFilePath(directoryPath, fileName);
@@ -238,18 +243,19 @@ async function getSignerData(directoryPath, fileName, signerAddress) {
             const jsonData = JSON.parse(data);
 
             if (!isValidJSON(jsonData)) {
-                return signerData;
+                return transactions;
             }
             // Access the transactions array from the JSON object
 
             if (signerAddress in jsonData) {
-                signerData = jsonData[signerAddress];
+                transactions = jsonData[signerAddress];
             }
         }
 
-        return signerData;
+        return transactions;
     } catch (error) {
-        printError(error.message);
+        printError(`Failed to get transactions for ${signerAddress}`);
+        printObj(error);
     }
 }
 
@@ -270,11 +276,11 @@ module.exports = {
     ledgerSign,
     sendTx,
     getFilePath,
-    updateTxNonceAndStatus,
+    getTxsWithUpdatedNonceAndStatus,
     getNonceFromProvider,
     getNonceFromData,
     getAllSignersData,
-    getSignerData,
+    getTransactions,
     updateSignersData,
     getLatestNonceAndUpdateData,
     isValidJSON,
