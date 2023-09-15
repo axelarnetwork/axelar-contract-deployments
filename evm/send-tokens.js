@@ -95,7 +95,7 @@ async function sendTokens(chain, options) {
             const { baseTx, signedTx } = await ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, recipient, amount);
 
             if (isOffline) {
-                let tx = {};
+                const tx = {};
                 tx.nonce = nonce;
                 tx.msg = `This transaction will send ${amount} of native tokens to ${recipient} on chain ${chain.name} with chainId ${chain.chainId}`;
                 tx.baseTx = baseTx;
@@ -106,7 +106,7 @@ async function sendTokens(chain, options) {
                 try {
                     const response = await sendTx(signedTx, provider);
 
-                    if (response.error || !isValidJSON(response) || response.status.toString() !== '1') {
+                    if (response.error || !isValidJSON(response) || response.status !== 1) {
                         const error = `Execution failed${
                             response.status ? ` with txHash: ${response.transactionHash}` : ` with msg: ${response.message}`
                         }`;

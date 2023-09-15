@@ -407,7 +407,7 @@ async function upgrade(config, options) {
         );
         const tx = {};
         tx.nonce = nonce;
-        tx.msg = `This transaction will perform upgrade of AxlearGateway contract having address ${gateway.address} with implementation ${contractConfig.implementation} on chain ${chain.name} with chainId ${chain.chainId}`;
+        tx.msg = `This transaction will perform upgrade of AxelarGateway contract having address ${gateway.address} with implementation ${contractConfig.implementation} on chain ${chain.name} with chainId ${chain.chainId}`;
         tx.baseTx = baseTx;
         tx.signedTx = signedTx;
         tx.status = 'PENDING';
@@ -422,17 +422,17 @@ async function upgrade(config, options) {
         printInfo('Upgrade transaction', tx.hash);
 
         await tx.wait(chain.confirmations);
-
-        const newImplementation = await gateway.implementation();
-        printInfo('New implementation', newImplementation);
-
-        if (newImplementation !== contractConfig.implementation) {
-            printWarn('Implementation not upgraded yet!');
-            return;
-        }
-
-        printInfo('Upgraded to', newImplementation);
     }
+
+    const newImplementation = await gateway.implementation();
+    printInfo('New implementation', newImplementation);
+
+    if (newImplementation !== contractConfig.implementation) {
+        printWarn('Implementation not upgraded yet!');
+        return;
+    }
+
+    printInfo('Upgraded to', newImplementation);
 }
 
 async function main(options) {

@@ -44,7 +44,7 @@ async function processTransactions(directoryPath, fileName, provider, signerAddr
                     // Send the signed transaction
                     const response = await sendTx(transaction.signedTx, provider);
 
-                    if (response.error || !isValidJSON(response) || response.status.toString() !== '1') {
+                    if (response.error || !isValidJSON(response) || response.status !== 1) {
                         const error = `Execution failed${
                             response.status ? ` with txHash: ${response.transactionHash}` : ` with msg: ${response.message}`
                         }`;

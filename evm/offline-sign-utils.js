@@ -122,10 +122,10 @@ async function sendTx(tx, provider) {
     try {
         const receipt = await provider.sendTransaction(tx).then((tx) => tx.wait());
         return receipt;
-    } catch (error) {
+    } catch (errorObj) {
         printError('Error while broadcasting signed tx');
-        printObj(error);
-        return error || { error: true, message: 'Error while broadcasting signed tx' };
+        printObj(errorObj);
+        return errorObj || { error: true, message: 'Error while broadcasting signed tx' };
     }
 }
 
