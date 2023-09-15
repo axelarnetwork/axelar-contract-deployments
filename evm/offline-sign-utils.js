@@ -59,7 +59,7 @@ async function ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, to, amount, 
     }
 
     if (!to || !isAddress(to)) {
-        throw new Error('Target address is missing/not provided as valid address for the tx in funciton arguments');
+        throw new Error('Target address is missing/not provided as valid address for the tx in function arguments');
     }
 
     tx.to = to;
@@ -71,7 +71,7 @@ async function ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, to, amount, 
         }
 
         if (!functionName) {
-            throw new Error('Function name is missing in the funciton arguments');
+            throw new Error('Function name is missing in the function arguments');
         }
 
         const data = contract.interface.encodeFunctionData(functionName, args);
@@ -123,7 +123,7 @@ async function sendTx(tx, provider) {
     } catch (error) {
         printError('Error while broadcasting signed tx');
         printObj(error);
-        return error || { message: 'Error while broadcasting signed tx' };
+        return error || { error: true, message: 'Error while broadcasting signed tx' };
     }
 }
 
@@ -131,7 +131,7 @@ async function updateSignersData(directoryPath, fileName, signersData) {
     const filePath = getFilePath(directoryPath, fileName);
     fs.writeFileSync(filePath, JSON.stringify(signersData, null, 2), (err) => {
         if (err) {
-            printError(`Couldnot update signersData in file ${filePath}`);
+            printError(`Could not update signersData in file ${filePath}`);
             printObj(err);
             return;
         }
