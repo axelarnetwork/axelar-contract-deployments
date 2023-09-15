@@ -87,15 +87,17 @@ async function ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, to, amount, 
         to: tx.to || undefined,
         value: tx.value || undefined,
     };
-    
+
     let signedTx;
+
     try {
         signedTx = await wallet.signTransaction(baseTx);
         printInfo(`Signed Tx from ledger with signedTxHash as: ${signedTx}`);
-    } catch(error) {
-        printError("Failed to sign tx from ledger");
+    } catch (error) {
+        printError('Failed to sign tx from ledger');
         printObj(error);
     }
+
     return { baseTx, signedTx };
 }
 

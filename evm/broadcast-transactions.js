@@ -54,7 +54,7 @@ async function processTransactions(directoryPath, fileName, provider, signerAddr
                     // Update the transaction status and store transaction hash
                     transaction.status = 'SUCCESS';
                     transaction.transactionHash = response.transactionHash;
-                    printInfo('Transactions executed successfully.');
+                    printInfo(`Transactions executed successfully ${response.transactionHash}`);
                 } catch (error) {
                     // Update the transaction status and store error message
                     transaction.status = 'FAILED';
