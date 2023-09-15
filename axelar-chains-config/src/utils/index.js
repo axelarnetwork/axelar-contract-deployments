@@ -3,4 +3,5 @@ module.exports = {
     ...require('./readJSON'),
     ...require('./importNetworks'),
     ...require('./verifyContract'),
+    ...require('./getBytecodeHash'),
 };
