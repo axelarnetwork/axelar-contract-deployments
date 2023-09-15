@@ -81,7 +81,7 @@ async function sendTokens(chain, options) {
 
     if (isOffline) {
         directoryPath = directoryPath || './tx';
-        fileName = fileName || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'signedTransactions';
+        fileName = fileName || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'signedSendTokensTransactions';
         nonce = await getLatestNonceAndUpdateData(directoryPath, fileName, wallet);
         signersData = await getAllSignersData(directoryPath, fileName);
         transactions = await getTransactions(directoryPath, fileName, signerAddress);
