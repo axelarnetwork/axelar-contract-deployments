@@ -14,13 +14,23 @@ const {
     printError,
     printWalletInfo,
     printWarn,
+    isValidPrivateKey
 } = require('./utils');
+const {
+    getLedgerWallet,
+    ledgerSign,
+    getAllSignersData,
+    getNonceFromProvider,
+    updateSignersData,
+    getLatestNonceAndUpdateData,
+    getSignerData,
+} = require('./offline-sign-utils.js');
 const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
     Wallet,
-    utils: { defaultAbiCoder, getContractAddress, AddressZero },
+    utils: { defaultAbiCoder, getContractAddress, AddressZero, parseUnits },
     getDefaultProvider,
 } = ethers;
 const readlineSync = require('readline-sync');
@@ -300,21 +310,32 @@ async function deploy(config, options) {
 }
 
 async function upgrade(config, options) {
-    const { chainName, privateKey, yes } = options;
-
+    const { chainName, privateKey, yes, ledgerPath, offline, env } = options;
+    let { directoryPath, fileName } = options;
+    const isOffline = offline === 'true';
     const contractName = 'AxelarGateway';
 
     const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    const wallet = new Wallet(privateKey).connect(provider);
+    let wallet;
+    if (privateKey === 'ledger') {
+        wallet = getLedgerWallet(provider, ledgerPath);
+    } else {
+        if (!isValidPrivateKey(privateKey)) {
+            throw new Error('Private key is missing/ not provided correctly in the user info');
+        }
+
+        wallet = new Wallet(privateKey, provider);
+    }
+    const signerAddress = await wallet.getAddress();
     await printWalletInfo(wallet);
 
     const contractConfig = chain.contracts[contractName];
 
     const gateway = new Contract(contractConfig.address, AxelarGateway.abi, wallet);
-    const implementationCodehash = await getBytecodeHash(contractConfig.implementation, chainName, provider);
+    const implementationCodehash = await getBytecodeHash(gateway, chainName, provider);
     let governance = options.governance || contractConfig.governance;
     let mintLimiter = options.mintLimiter || contractConfig.mintLimiter;
     let setupParams = '0x';
@@ -341,20 +362,57 @@ async function upgrade(config, options) {
         if (anwser !== 'y') return;
     }
 
-    const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
-    printInfo('Upgrade transaction', tx.hash);
+    // Offline signing
+    let gasLimit, gasPrice;
+    try {
+        gasPrice = parseUnits((await provider.getGasPrice()).toString(), 'gwei');
+        const block = await provider.getBlock('latest');
+        gasLimit = block.gasLimit.toNumber() / 1000;
 
-    await tx.wait(chain.confirmations);
-
-    const newImplementation = await gateway.implementation();
-    printInfo('New implementation', newImplementation);
-
-    if (newImplementation !== contractConfig.implementation) {
-        printWarn('Implementation not upgraded yet!');
-        return;
+        printInfo('Gas Price:', gasPrice.toString());
+        printInfo('Gas Limit:', gasLimit.toString());
+    } catch (error) {
+        printError(error.message);
     }
 
-    printInfo('Upgraded to', newImplementation);
+    let nonce = await getNonceFromProvider(provider, signerAddress);
+    let signersData, signerData;
+
+    if (isOffline) {
+        directoryPath = directoryPath || './tx';
+        fileName = fileName || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'signedUpgradeTransactions';
+        nonce = await getLatestNonceAndUpdateData(directoryPath, fileName, wallet);
+        signersData = await getAllSignersData(directoryPath, fileName);
+        signerData = await getSignerData(directoryPath, fileName, signerAddress);
+        const [baseTx, signedTx] = await ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, gateway.address, undefined, gateway, "upgrade", contractConfig.implementation, implementationCodehash, setupParams);
+        const tx = {};
+        tx.nonce = nonce;
+        tx.msg = `This transaction will perform upgrade of AxlearGateway contract having address ${gateway.address} with implementation ${contractConfig.implementation} on chain ${chain.name} with chainId ${chain.chainId}`;
+        tx.baseTx = baseTx;
+        tx.signedTx = signedTx;
+        tx.status = 'PENDING';
+        signerData.push(tx);
+        if (signerData) {
+            signersData[signerAddress] = signerData;
+            await updateSignersData(directoryPath, fileName, signersData);
+        }
+    }
+     else {
+                const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
+                printInfo('Upgrade transaction', tx.hash);
+
+                await tx.wait(chain.confirmations);
+
+                const newImplementation = await gateway.implementation();
+                printInfo('New implementation', newImplementation);
+
+                if (newImplementation !== contractConfig.implementation) {
+                    printWarn('Implementation not upgraded yet!');
+                    return;
+                }
+
+                printInfo('Upgraded to', newImplementation);
+            }
 }
 
 async function main(options) {
@@ -398,6 +456,16 @@ async function programHandler() {
     program.addOption(new Option('-a, --amplifier', 'deploy amplifier gateway').env('AMPLIFIER'));
     program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
     program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
+    program.addOption(
+        new Option('-o, --offline <offline>', 'If this option is set as true, then ').choices(['true', 'false']).makeOptionMandatory(false),
+    );
+    program.addOption(new Option('-l, --ledgerPath <ledgerPath>', 'The path to identify the account in ledger').makeOptionMandatory(false));
+    program.addOption(
+        new Option('-d, --directoryPath <directoryPath>', 'The folder where all the signed tx files are stored').makeOptionMandatory(false),
+    );
+    program.addOption(
+        new Option('-f, --fileName <fileName>', 'The fileName where the signed tx will be stored').makeOptionMandatory(false),
+    );
 
     program.action((options) => {
         main(options);
