@@ -1,8 +1,9 @@
 'use strict';
 
+const { ethers } = require('hardhat');
 const {
     providers: { JsonRpcProvider },
-} = require('ethers');
+} = ethers;
 const { Command, Option } = require('commander');
 const { printError, printInfo, printObj } = require('./utils');
 const {

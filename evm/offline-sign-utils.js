@@ -1,9 +1,10 @@
 'use strict';
 
+const { ethers } = require('hardhat');
 const {
     BigNumber,
     utils: { isAddress },
-} = require('ethers');
+} = ethers;
 const { LedgerSigner } = require('@ethersproject/hardware-wallets');
 const { printError } = require('./utils');
 const fs = require('fs');

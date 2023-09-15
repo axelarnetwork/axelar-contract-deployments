@@ -2,12 +2,12 @@
 
 require('dotenv').config();
 
-// const { ethers } = require('hardhat');
+const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
     utils: { parseEther, parseUnits },
-} = require('ethers');
+} = ethers;
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 const { printInfo, printWalletInfo, isValidPrivateKey, printError } = require('./utils');
