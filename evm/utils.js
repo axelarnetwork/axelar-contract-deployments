@@ -3,20 +3,8 @@
 const {
     ContractFactory,
     Contract,
-    provider,
-    BigNumber,
-    utils: {
-        computeAddress,
-        getContractAddress,
-        keccak256,
-        isAddress,
-        getCreate2Address,
-        defaultAbiCoder,
-        serializeTransaction,
-        isHexString,
-    },
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString },
 } = require('ethers');
-const { LedgerSigner } = require('@ethersproject/hardware-wallets');
 const https = require('https');
 const http = require('http');
 const { outputJsonSync } = require('fs-extra');
@@ -223,7 +211,7 @@ const isAddressArray = (arg) => {
     }
 
     return true;
-}
+};
 
 const getCurrentTimeInSeconds = () => {
     const now = new Date();
@@ -564,6 +552,7 @@ function isValidPrivateKey(privateKey) {
     if (!isHexString(privateKey) || privateKey.length !== 66) {
         return false;
     }
+
     return true;
 }
 
@@ -640,5 +629,5 @@ module.exports = {
     getCurrentTimeInSeconds,
     wasEventEmitted,
     isContract,
-    isValidPrivateKey
+    isValidPrivateKey,
 };
