@@ -33,6 +33,7 @@ const importNetworks = (chains, keys) => {
         const name = chainName.toLowerCase();
         networks[name] = {
             ...chain,
+            url: chain.rpc,
             blockGasLimit: chain.gasOptions?.gasLimit,
         };
 
