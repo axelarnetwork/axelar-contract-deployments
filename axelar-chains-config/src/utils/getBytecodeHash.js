@@ -1,4 +1,5 @@
 const { keccak256 } = require('@ethersproject/keccak256');
+
 /**
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
  * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
