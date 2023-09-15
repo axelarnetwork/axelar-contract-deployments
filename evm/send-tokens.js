@@ -20,6 +20,7 @@ const {
     updateSignersData,
     getLatestNonceAndUpdateData,
     getSignerData,
+    isValidJSON,
 } = require('./offline-sign-utils.js');
 const readlineSync = require('readline-sync');
 
@@ -98,8 +99,18 @@ async function sendTokens(chain, options) {
                 tx.status = 'PENDING';
                 signerData.push(tx);
             } else {
-                const response = await sendTx(signedTx, provider);
-                printInfo('Transaction hash', response.transactionHash);
+                try {
+                    const response = await sendTx(signedTx, provider);
+
+                    if (!isValidJSON(response) || response.status.toString() !== '1') {
+                        const error = `Execution failed${response.status ? ` with txHash: ${response.transactionHash}` : ''}`;
+                        throw new Error(error);
+                    }
+
+                    printInfo('Transaction hash', response.transactionHash);
+                } catch (error) {
+                    printError(`Transaction failed with error: ${error.message}`);
+                }
             }
         } else {
             const tx = await wallet.sendTransaction({

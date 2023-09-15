@@ -103,8 +103,15 @@ function getFilePath(directoryPath, fileName) {
 }
 
 async function sendTx(tx, provider) {
-    const receipt = await provider.sendTransaction(tx).then((tx) => tx.wait());
-    return receipt;
+    const response = {};
+
+    try {
+        const receipt = await provider.sendTransaction(tx).then((tx) => tx.wait());
+        return receipt;
+    } catch (error) {
+        printError(error.message);
+        return response;
+    }
 }
 
 async function updateSignersData(directoryPath, fileName, signersData) {
@@ -130,7 +137,7 @@ async function getLatestNonceAndUpdateData(directoryPath, fileName, wallet) {
         const signerAddress = await wallet.getAddress();
         const signersData = await getAllSignersData(directoryPath, fileName);
         let signerData = signersData[signerAddress];
-        const nonceFromData = getLatestNonceFromData(signerData);
+        const nonceFromData = getNonceFromData(signerData);
         let nonce = await getNonceFromProvider(provider, signerAddress);
 
         if (nonce > nonceFromData) {
@@ -152,7 +159,9 @@ function updateTxNonceAndStatus(signerData, nonce) {
         for (const transaction of signerData) {
             if (nonce > transaction.nonce && (transaction.status === 'PENDING' || transaction.status === 'BROADCASTED')) {
                 transaction.status = 'FAILED';
-                transaction.error = `Transaction nonce value of ${transaction.nonce} is less than the required signer nonce value of ${nonce}`;
+                const error = `Transaction nonce value of ${transaction.nonce} is less than the required signer nonce value of ${nonce}`;
+                transaction.error = error;
+                printError(error + ` for signedTx: ${transaction.signedTx}`);
             }
         }
     }
@@ -160,10 +169,17 @@ function updateTxNonceAndStatus(signerData, nonce) {
     return signerData;
 }
 
-function getLatestNonceFromData(signerData) {
-    if (signerData) {
-        const length = signerData.length;
-        return parseInt(signerData[length - 1].nonce);
+function getNonceFromData(signerData) {
+    try {
+        if (signerData) {
+            for (const transaction of signerData) {
+                if (transaction.status === 'PENDING') {
+                    return transaction.nonce;
+                }
+            }
+        }
+    } catch (error) {
+        printError(error.message);
     }
 
     return 0;
@@ -255,7 +271,7 @@ module.exports = {
     getFilePath,
     updateTxNonceAndStatus,
     getNonceFromProvider,
-    getLatestNonceFromData,
+    getNonceFromData,
     getAllSignersData,
     getSignerData,
     updateSignersData,

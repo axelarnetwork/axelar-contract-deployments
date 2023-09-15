@@ -4,14 +4,15 @@ const {
     providers: { JsonRpcProvider },
 } = require('ethers');
 const { Command, Option } = require('commander');
-const { printError, printInfo } = require('./utils');
+const { printError, printInfo, printObj } = require('./utils');
 const {
     sendTx,
     updateTxNonceAndStatus,
-    getLatestNonceFromData,
+    getNonceFromData,
     getNonceFromProvider,
     getFilePath,
     getAllSignersData,
+    isValidJSON,
 } = require('./offline-sign-utils');
 const fs = require('fs');
 const chalk = require('chalk');
@@ -25,7 +26,7 @@ async function processTransactions(directoryPath, fileName, provider, signerAddr
         }
 
         let signerData = signersData[signerAddress];
-        const nonceFromData = await getLatestNonceFromData(signerData);
+        const nonceFromData = await getNonceFromData(signerData);
         const nonce = parseInt(await getNonceFromProvider(provider, signerAddress));
 
         if (nonce > nonceFromData) {
@@ -34,17 +35,27 @@ async function processTransactions(directoryPath, fileName, provider, signerAddr
 
         for (const transaction of signerData) {
             if (transaction.status === 'PENDING') {
+                printInfo('Broadcasting transaction: ');
+                printObj(transaction.baseTx);
+
                 try {
                     // Send the signed transaction
                     const response = await sendTx(transaction.signedTx, provider);
 
+                    if (!isValidJSON(response) || response.status.toString() !== '1') {
+                        const error = `Execution failed:${response.status ? ` with txHash: ${response.transactionHash}` : ''}`;
+                        throw new Error(error);
+                    }
+
                     // Update the transaction status and store transaction hash
                     transaction.status = 'SUCCESS';
                     transaction.transactionHash = response.transactionHash;
+                    printInfo('Transactions executed successfully.');
                 } catch (error) {
                     // Update the transaction status and store error message
                     transaction.status = 'FAILED';
                     transaction.error = error.message;
+                    printError(`Transaction failed with error: ${error.message}`);
                 }
             }
         }
@@ -53,8 +64,6 @@ async function processTransactions(directoryPath, fileName, provider, signerAddr
         signersData[signerAddress] = signerData;
         const filePath = getFilePath(directoryPath, fileName);
         fs.writeFileSync(filePath, JSON.stringify(signersData, null, 2));
-
-        printInfo('Transactions processed successfully.');
     } catch (error) {
         printError('Error processing transactions:', error.message);
     }
