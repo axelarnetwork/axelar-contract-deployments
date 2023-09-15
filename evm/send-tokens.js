@@ -80,6 +80,7 @@ async function sendTokens(chain, options) {
     let signersData, transactions;
 
     if (isOffline) {
+        printInfo(`Storing signed Txs offline in file ${fileName}`);
         directoryPath = directoryPath || './txs';
         fileName = fileName || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'signedSendTokensTransactions';
         nonce = await getLatestNonceAndUpdateData(directoryPath, fileName, wallet);

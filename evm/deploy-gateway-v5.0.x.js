@@ -387,6 +387,7 @@ async function upgrade(config, options) {
     if (isOffline) {
         directoryPath = directoryPath || './txs';
         fileName = fileName || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'signedUpgradeTransactions';
+        printInfo(`Storing signed Txs offline in file ${fileName}`);
         nonce = await getLatestNonceAndUpdateData(directoryPath, fileName, wallet);
         signersData = await getAllSignersData(directoryPath, fileName);
         transactions = await getTransactions(directoryPath, fileName, signerAddress);

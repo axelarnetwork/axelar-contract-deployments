@@ -12,14 +12,19 @@ const { printError, printInfo, printObj } = require('./utils');
 
 // function to create a ledgerSigner type wallet object
 function getLedgerWallet(provider, path) {
-    // Check if the parameters are undefined and assign default values if necessary
-    if (provider === undefined || provider === null) {
-        throw new Error('Empty provider');
-    }
+    try {
+        // Check if the parameters are undefined and assign default values if necessary
+        if (provider === undefined || provider === null) {
+            throw new Error('Empty provider');
+        }
 
-    const type = 'hid';
-    path = path || "m/44'/60'/0'/0/0";
-    return new LedgerSigner(provider, type, path);
+        const type = 'hid';
+        path = path || "m/44'/60'/0'/0/0";
+        return new LedgerSigner(provider, type, path);
+    } catch (error) {
+        printError('Error trying to coonect to ledger wallet');
+        printObj(error);
+    }
 }
 
 async function ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, to, amount, contract, functionName, ...args) {
@@ -82,8 +87,15 @@ async function ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, to, amount, 
         to: tx.to || undefined,
         value: tx.value || undefined,
     };
-
-    const signedTx = await wallet.signTransaction(baseTx);
+    
+    let signedTx;
+    try {
+        signedTx = await wallet.signTransaction(baseTx);
+        printInfo(`Signed Tx from ledger with signedTxHash as: ${signedTx}`);
+    } catch(error) {
+        printError("Failed to sign tx from ledger");
+        printObj(error);
+    }
     return { baseTx, signedTx };
 }
 
