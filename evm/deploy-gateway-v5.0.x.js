@@ -385,7 +385,7 @@ async function upgrade(config, options) {
     let signersData, transactions;
 
     if (isOffline) {
-        directoryPath = directoryPath || './tx';
+        directoryPath = directoryPath || './txs';
         fileName = fileName || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'signedUpgradeTransactions';
         nonce = await getLatestNonceAndUpdateData(directoryPath, fileName, wallet);
         signersData = await getAllSignersData(directoryPath, fileName);

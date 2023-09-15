@@ -28,10 +28,10 @@ async function processTransactions(directoryPath, fileName, provider, signerAddr
         }
 
         let transactions = signersData[signerAddress];
-        const nonceFromData = await getNonceFromData(transactions);
+        const firstPendingnonceFromData = await getNonceFromData(transactions);
         const nonce = parseInt(await getNonceFromProvider(provider, signerAddress));
 
-        if (nonce > nonceFromData) {
+        if (nonce > firstPendingnonceFromData) {
             transactions = getTxsWithUpdatedNonceAndStatus(transactions, nonce);
         }
 
@@ -74,6 +74,7 @@ async function processTransactions(directoryPath, fileName, provider, signerAddr
 }
 
 async function main(options) {
+    // TODO: Enable multiple scripts to use offlineSigning
     const { directoryPath, fileName, rpcUrl, signerAddress } = options;
     const provider = new JsonRpcProvider(rpcUrl);
     const network = await provider.getNetwork();

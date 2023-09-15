@@ -139,15 +139,15 @@ async function getLatestNonceAndUpdateData(directoryPath, fileName, wallet) {
         const signerAddress = await wallet.getAddress();
         const signersData = await getAllSignersData(directoryPath, fileName);
         let transactions = signersData[signerAddress];
-        const nonceFromData = getNonceFromData(transactions);
+        const firstPendingnonceFromData = getNonceFromData(transactions);
         let nonce = await getNonceFromProvider(provider, signerAddress);
 
-        if (nonce > nonceFromData) {
+        if (nonce > firstPendingnonceFromData) {
             transactions = getTxsWithUpdatedNonceAndStatus(transactions, nonce);
             signersData[signerAddress] = transactions;
             await updateSignersData(directoryPath, fileName, signersData);
         } else {
-            nonce = nonceFromData + 1;
+            nonce = firstPendingnonceFromData + 1;
         }
 
         return nonce;
