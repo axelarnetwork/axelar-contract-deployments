@@ -1,10 +1,11 @@
 'use strict';
 
+const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
     utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString },
-} = require('ethers');
+} = ethers;
 const https = require('https');
 const http = require('http');
 const { outputJsonSync } = require('fs-extra');
