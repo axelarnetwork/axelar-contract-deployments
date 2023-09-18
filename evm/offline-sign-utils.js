@@ -83,12 +83,10 @@ async function getNonceFromProvider(provider, address) {
 
 async function getLatestNonceAndUpdateData(filePath, wallet, nonce) {
     try {
-        const provider = wallet.provider;
         const signerAddress = await wallet.getAddress();
         const signersData = await getAllSignersData(filePath);
         let transactions = signersData[signerAddress];
         const firstPendingnonceFromData = getNonceFromData(transactions);
-        console.log("firstPendingnonceFromData",firstPendingnonceFromData);
 
         if (nonce >= firstPendingnonceFromData) {
             transactions = getTxsWithUpdatedNonceAndStatus(transactions, nonce);
@@ -171,7 +169,6 @@ function getFileData(filePath) {
             fs.mkdirSync(directoryPath);
         }
         if (!fs.existsSync(filePath)) {
-            console.log("Creating file");
             // File does not exist, create it
             fs.writeFileSync(filePath, JSON.stringify({}));
             return undefined;

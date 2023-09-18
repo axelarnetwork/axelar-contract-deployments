@@ -51,19 +51,15 @@ async function sendTokens(chain, options) {
     }
 
     let nonce = await getNonceFromProvider(provider, signerAddress);
-    console.log("Provider nonce", nonce);
     const nonceData = getAllSignersData(nonceFilePath);
     let nonceFromFile = nonceData[signerAddress] || 0;
-    console.log("Nonce file", nonceFromFile);
     nonce = (nonce >= parseInt(nonceFromFile)) ? nonce : nonceFromFile;
-    console.log("Nonce after from nonce file if greatest", nonce);
     let signersData, transactions, chainId;
 
     if (offline) {
         filePath = filePath || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'unsignedTransactions.json';
         printInfo(`Storing signed Txs offline in file ${filePath}`);
         nonce = await getLatestNonceAndUpdateData(filePath, wallet, nonce);
-        console.log("Final nonce from getLatestNonce function", nonce);
         signersData = await getAllSignersData(filePath);
         transactions = await getTransactions(filePath, signerAddress);
         const network = await provider.getNetwork();

@@ -376,14 +376,14 @@ async function upgrade(config, options) {
     nonce = (nonce > nonceData[signerAddress]) ? nonce : nonceData[signerAddress];
     let signersData, transactions;
 
-    if (isOffline) {
+    if (offline) {
         filePath = filePath || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'unsignedTransactions.json';
         printInfo(`Storing signed Txs offline in file ${filePath}`);
         nonce = await getLatestNonceAndUpdateData(filePath, wallet, nonce);
         signersData = await getAllSignersData(filePath);
         transactions = await getTransactions(filePath, signerAddress);
         const network = await provider.getNetwork();
-        chainId = network.chainId;
+        const chainId = network.chainId;
 
         const data = {}, tx = {};
         tx = await gateway.populateTransaction['upgrade'](contractConfig.implementation, implementationCodehash, setupParams);

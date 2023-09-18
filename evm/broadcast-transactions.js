@@ -24,7 +24,6 @@ async function processTransactions(filePath, provider) {
         const signersData = await getAllSignersData(filePath);
 
         for (const [signerAddress, transactions] of Object.entries(signersData)) {
-            console.log(`${key} ${value}`); // "a 5", "b 7", "c 9"
             const firstPendingnonceFromData = await getNonceFromData(transactions);
             const nonce = parseInt(await getNonceFromProvider(provider, signerAddress));
 
