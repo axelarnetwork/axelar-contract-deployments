@@ -1,7 +1,7 @@
 require('@nomicfoundation/hardhat-toolbox');
 
 const env = process.env.NETWORK || 'testnet';
-const { importNetworks, readJSON } = require('./evm/utils.js');
+const { importNetworks, readJSON } = require(`${__dirname}/axelar-chains-config`);
 const chains = require(`${__dirname}/axelar-chains-config/info/${env}.json`);
 const keys = readJSON(`${__dirname}/keys.json`);
 const { networks, etherscan } = importNetworks(chains, keys);

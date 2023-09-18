@@ -9,7 +9,6 @@ const {
 const https = require('https');
 const http = require('http');
 const { outputJsonSync } = require('fs-extra');
-const { readJSON, importNetworks, verifyContract } = require('../axelar-chains-config');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
 const {
@@ -21,6 +20,7 @@ const {
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
+const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
@@ -423,7 +423,7 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     const weights = sortedAddresses.map((weightedAddress) => Number(weightedAddress.weight));
     const threshold = Number(evmAddresses.threshold);
 
-    return { addresses, weights, threshold };
+    return { addresses, weights, threshold, keyID: evmAddresses.key_id };
 };
 
 const getAmplifierKeyAddresses = async (config, chain, keyID = '') => {
@@ -550,6 +550,10 @@ function isValidTimeFormat(timeString) {
 // Validate if the input privateKey is correct
 function isValidPrivateKey(privateKey) {
     // Check if it's a valid hexadecimal string
+    if (!privateKey.startsWith('0x')) {
+        privateKey = '0x' + privateKey;
+    }
+
     if (!isHexString(privateKey) || privateKey.length !== 66) {
         return false;
     }
@@ -600,11 +604,8 @@ module.exports = {
     deployCreate2,
     deployCreate3,
     deployContract,
-    readJSON,
     writeJSON,
     httpGet,
-    importNetworks,
-    verifyContract,
     printObj,
     printLog,
     printInfo,

@@ -60,13 +60,13 @@ async function getAuthParams(config, chain, options) {
     if (options.prevKeyIDs) {
         for (const keyID of options.prevKeyIDs.split(',')) {
             const { addresses, weights, threshold } = await getEVMAddresses(config, chain, { ...options, keyID });
-            printInfo(JSON.stringify({ keyID, addresses, weights, threshold }));
+            printInfo(JSON.stringify({ status: 'old', keyID, addresses, weights, threshold }));
             params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
         }
     }
 
-    const { addresses, weights, threshold } = await getEVMAddresses(config, chain, options);
-    printInfo(JSON.stringify({ keyID: 'latest', addresses, weights, threshold }));
+    const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain, options);
+    printInfo(JSON.stringify({ status: 'latest', keyID, addresses, weights, threshold }));
     params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
 
     return params;
@@ -291,6 +291,7 @@ async function deploy(config, options) {
 
     contractConfig.address = gateway.address;
     contractConfig.implementation = implementation.address;
+    contractConfig.implementationCodehash = implementationCodehash;
     contractConfig.authModule = auth.address;
     contractConfig.tokenDeployer = tokenDeployer.address;
     contractConfig.governance = governance;
@@ -327,7 +328,7 @@ async function upgrade(config, options) {
         wallet = getLedgerWallet(provider, ledgerPath);
     } else {
         if (!isValidPrivateKey(privateKey)) {
-            throw new Error('Private key is missing/ not provided correctly in the user info');
+            throw new Error('Private key is missing/not provided correctly in the user info');
         }
 
         wallet = new Wallet(privateKey, provider);
@@ -339,10 +340,27 @@ async function upgrade(config, options) {
     const contractConfig = chain.contracts[contractName];
 
     const gateway = new Contract(contractConfig.address, AxelarGateway.abi, wallet);
-    const implementationCodehash = await getBytecodeHash(gateway, chainName, provider);
+    let implementationCodehash = contractConfig.implementationCodehash;
     let governance = options.governance || contractConfig.governance;
     let mintLimiter = options.mintLimiter || contractConfig.mintLimiter;
     let setupParams = '0x';
+
+    if (!isOffline) {
+        const codehash = await getBytecodeHash(contractConfig.implementation, chainName, provider);
+
+        if (!implementationCodehash) {
+            // retrieve codehash dynamically if not specified in the config file
+            implementationCodehash = codehash;
+        } else if (codehash !== implementationCodehash) {
+            throw new Error(
+                `Implementation codehash mismatch. Expected ${implementationCodehash} but got ${codehash}. Please check if the implementation contract is deployed correctly.`,
+            );
+        }
+    } else {
+        if (!implementationCodehash) {
+            throw new Error('Implementation codehash is missing in the config file');
+        }
+    }
 
     if (governance || mintLimiter) {
         governance = governance || AddressZero;
@@ -354,7 +372,7 @@ async function upgrade(config, options) {
     printInfo('Gateway Proxy', gateway.address);
     printInfo('Current implementation', await gateway.implementation());
     printInfo('Upgrading to implementation', contractConfig.implementation);
-    printInfo('Implementation codehash', implementationCodehash);
+    printInfo('New Implementation codehash', implementationCodehash);
     printInfo('Setup params', setupParams);
 
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
@@ -374,8 +392,8 @@ async function upgrade(config, options) {
         const block = await provider.getBlock('latest');
         gasLimit = block.gasLimit.toNumber() / 1000;
 
-        printInfo('Gas Price:', gasPrice.toString());
-        printInfo('Gas Limit:', gasLimit.toString());
+        printInfo('Gas Price', gasPrice.toString());
+        printInfo('Gas Limit', gasLimit.toString());
     } catch (error) {
         printError('Gas price and limit could not be fetched from provider');
         printObj(error);
@@ -387,7 +405,7 @@ async function upgrade(config, options) {
     if (isOffline) {
         directoryPath = directoryPath || './txs';
         fileName = fileName || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'signedUpgradeTransactions';
-        printInfo(`Storing signed Txs offline in file ${fileName}`);
+        printInfo('Storing signed Txs offline in file', fileName);
         nonce = await getLatestNonceAndUpdateData(directoryPath, fileName, wallet);
         signersData = await getAllSignersData(directoryPath, fileName);
         transactions = await getTransactions(directoryPath, fileName, signerAddress);
