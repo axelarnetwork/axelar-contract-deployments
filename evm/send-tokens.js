@@ -6,35 +6,43 @@ const chalk = require('chalk');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const {
-    Wallet,
     getDefaultProvider,
-    utils: { parseEther, parseUnits },
+    utils: { parseEther },
 } = ethers;
 const readlineSync = require('readline-sync');
 
-const { printInfo, printWalletInfo, isValidPrivateKey, printError, printObj } = require('./utils');
+const { printInfo, printWalletInfo, isValidNumber } = require('./utils');
 const {
     getAllSignersData,
-    getNonceFromProvider,
     updateSignersData,
-    getLatestNonceAndUpdateData,
     getTransactions,
     getWallet,
-    getUnsignedTx,
+    ledgerSign,
+    getLocalNonce,
+    updateLocalNonce,
 } = require('./offline-sign-utils.js');
-const { blob } = require('stream/consumers');
 
 async function sendTokens(chain, options) {
-    const { privateKey, offline, env, ledgerPath, nonceFilePath } = options;
-    let { amount, recipients, filePath} = options;
+    const { privateKey, offline, ledgerPath, filePath, nonceFilePath, nonceOffset } = options;
+    let { amount, recipients} = options;
+
+    if(!nonceFilePath) {
+        throw new Error("Nonce FilePath is not provided in user info");
+    }
 
     const provider = getDefaultProvider(chain.rpc);
     recipients = options.recipients.split(',').map((str) => str.trim());
     amount = parseEther(amount);
 
-    const wallet = getWallet(privateKey, provider, ledgerPath);
-
+    const { wallet, providerNonce } = await getWallet(privateKey, provider, ledgerPath);
     const signerAddress = await wallet.getAddress();
+    let nonce = getLocalNonce(nonceFilePath, signerAddress);
+
+    if(providerNonce > nonce) {
+        updateLocalNonce(nonceFilePath, signerAddress, providerNonce);
+        nonce = providerNonce;
+    }
+
     const balance = await printWalletInfo(wallet);
 
     if (balance.lte(amount)) {
@@ -50,20 +58,22 @@ async function sendTokens(chain, options) {
         if (anwser !== 'y') return;
     }
 
-    let nonce = await getNonceFromProvider(provider, signerAddress);
-    const nonceData = getAllSignersData(nonceFilePath);
-    let nonceFromFile = nonceData[signerAddress] || 0;
-    nonce = (nonce >= parseInt(nonceFromFile)) ? nonce : nonceFromFile;
-    let signersData, transactions, chainId;
+    let signersData, transactions;
+    const gasOptions = chain.staticGasOptions || {};
 
     if (offline) {
-        filePath = filePath || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'unsignedTransactions.json';
+        if(!filePath) {
+            throw new Error("FilePath is not provided in user info");
+        }
+        if(nonceOffset) {
+            if(!isValidNumber(nonceOffset)) {
+                throw new Error("Provided nonce offset is not a valid number");
+            }
+            nonce += parseInt(nonceOffset);
+        }
         printInfo(`Storing signed Txs offline in file ${filePath}`);
-        nonce = await getLatestNonceAndUpdateData(filePath, wallet, nonce);
         signersData = await getAllSignersData(filePath);
         transactions = await getTransactions(filePath, signerAddress);
-        const network = await provider.getNetwork();
-        chainId = network.chainId;
     }
 
     for (const recipient of recipients) {
@@ -76,13 +86,13 @@ async function sendTokens(chain, options) {
             if (offline) {
                 const data = {};
                 tx.nonce = nonce;
-                tx.chainId = chainId;
-                const unsignedTx = getUnsignedTx(chain, tx);
+                tx.chainId = chain.chainId;
+                const {baseTx, signedTx} = await ledgerSign(wallet, chain, tx, gasOptions);
                 // Storing the fields in the data that will be stored in file
-                data.msg = `This transaction will send ${amount} of native tokens to ${recipient} on chain ${chain.name} with chainId ${chainId}`;
-                data.unsignedTx = unsignedTx;
-                data.status = 'NOT_SIGNED';
-                
+                data.msg = `This transaction will send ${amount} of native tokens to ${recipient} on chain ${chain.name} with chainId ${chain.chainId}`;
+                data.unsignedTx = baseTx; 
+                data.signedTx = signedTx;     
+                data.status = "PENDING";          
                 transactions.push(data);
             }
             else {
@@ -101,8 +111,7 @@ async function sendTokens(chain, options) {
         await updateSignersData(filePath, signersData);
     }
     // Updating Nonce data for this Address
-    nonceData[signerAddress] = nonce;
-    await updateSignersData(nonceFilePath, nonceData);
+    updateLocalNonce(nonceFilePath, signerAddress, nonce);
 }
 
 async function main(options) {
@@ -147,6 +156,7 @@ if (require.main === module) {
         new Option('--filePath <filePath>', 'The filePath where the signed tx will be stored').makeOptionMandatory(false),
     );
     program.addOption(new Option('--nonceFilePath <nonceFilePath>', 'The File where nonce value to use for each address is stored').makeOptionMandatory(false));
+    program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce').makeOptionMandatory(false));
     program.addOption(new Option('-y, --yes', 'skip prompts'));
 
     program.action((options) => {

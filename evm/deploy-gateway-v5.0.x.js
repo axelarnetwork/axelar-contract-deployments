@@ -9,7 +9,7 @@ const {
     ContractFactory,
     Contract,
     Wallet,
-    utils: { defaultAbiCoder, getContractAddress, AddressZero, parseUnits },
+    utils: { defaultAbiCoder, getContractAddress, AddressZero },
     getDefaultProvider,
 } = ethers;
 const readlineSync = require('readline-sync');
@@ -26,15 +26,16 @@ const {
     printError,
     printWalletInfo,
     printWarn,
+    printObj,
 } = require('./utils');
 const {
     getAllSignersData,
-    getNonceFromProvider,
     updateSignersData,
-    getLatestNonceAndUpdateData,
+    ledgerSign,
     getTransactions,
     getWallet,
-    getUnsignedTx,
+    getLocalNonce,
+    updateLocalNonce,
 } = require('./offline-sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
@@ -311,17 +312,22 @@ async function deploy(config, options) {
 }
 
 async function upgrade(config, options) {
-    const { chainName, privateKey, yes, ledgerPath, offline, env } = options;
-    let filePath = options.filePath;
+    const { chainName, privateKey, yes, ledgerPath, offline, env, nonceFilePath, filePath, nonceOffset } = options;
     const contractName = 'AxelarGateway';
 
     const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    const wallet = getWallet(privateKey, provider, ledgerPath);
-
+    const {wallet, providerNonce} = await getWallet(privateKey, provider, ledgerPath);
     const signerAddress = await wallet.getAddress();
+
+    let nonce = getLocalNonce(nonceFilePath, signerAddress);
+
+    if(providerNonce > nonce) {
+        updateLocalNonce(nonceFilePath, signerAddress, providerNonce);
+        nonce = providerNonce;
+    }
     await printWalletInfo(wallet);
 
     const contractConfig = chain.contracts[contractName];
@@ -371,30 +377,32 @@ async function upgrade(config, options) {
         if (anwser !== 'y') return;
     }
 
-    let nonce = await getNonceFromProvider(provider, signerAddress);
-    const nonceData = getAllSignersData(nonceFilePath);
-    nonce = (nonce > nonceData[signerAddress]) ? nonce : nonceData[signerAddress];
     let signersData, transactions;
 
     if (offline) {
-        filePath = filePath || env.toLowerCase() + '-' + chain.name.toLowerCase() + '-' + 'unsignedTransactions.json';
+        if(!filePath) {
+            throw new Error("FilePath is not provided in user info");
+        }
+        if(nonceOffset ) {
+            if(!isValidNumber(nonceOffset)) {
+                throw new Error("Provided nonce offset is not a valid number");
+            }
+            nonce += parseInt(nonceOffset);
+        }
         printInfo(`Storing signed Txs offline in file ${filePath}`);
-        nonce = await getLatestNonceAndUpdateData(filePath, wallet, nonce);
         signersData = await getAllSignersData(filePath);
         transactions = await getTransactions(filePath, signerAddress);
-        const network = await provider.getNetwork();
-        const chainId = network.chainId;
-
-        const data = {}, tx = {};
-        tx = await gateway.populateTransaction['upgrade'](contractConfig.implementation, implementationCodehash, setupParams);
+        const staticGasOptions = chain.staticGasOptions || {};
+        const data = {};
+        let tx = await gateway.populateTransaction['upgrade'](contractConfig.implementation, implementationCodehash, setupParams);
         tx.nonce = nonce;
-        tx.chainId = chainId;
-        const unsignedTx = getUnsignedTx(chain, tx);
+        tx.chainId = chain.chainId;
+        const {baseTx, signedTx} = await ledgerSign(wallet, chain, tx, staticGasOptions);
         // Storing the fields in the data that will be stored in file
         data.msg = `This transaction will perform upgrade of AxelarGateway contract having address ${gateway.address} with implementation ${contractConfig.implementation} on chain ${chain.name} with chainId ${chain.chainId}`;
-        data.unsignedTx = unsignedTx;
-        data.status = 'NOT_SIGNED';
-        
+        data.unsignedTx = baseTx; 
+        data.signedTx = signedTx;
+        data.status = "PENDING";                  
         transactions.push(data);
 
         if (transactions) {
@@ -402,8 +410,7 @@ async function upgrade(config, options) {
             await updateSignersData(filePath, signersData);
         }
         // Updating Nonce data for this Address
-        nonceData[signerAddress] = nonce;
-        await updateSignersData(nonceFilePath, nonceData);
+        updateLocalNonce(nonceFilePath, signerAddress, nonce);
     } else {
         const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
         printInfo('Upgrade transaction', tx.hash);
@@ -464,13 +471,14 @@ async function programHandler() {
     program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
     program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
     program.addOption(
-        new Option('-o, --offline <offline>', 'If this option is set as true, then ').choices(['true', 'false']).makeOptionMandatory(false),
+        new Option('--offline', 'Run in offline mode'),
     );
     program.addOption(new Option('-l, --ledgerPath <ledgerPath>', 'The path to identify the account in ledger').makeOptionMandatory(false));
-    program.addOption(new Option('--nonceFilePath <nonceFilePath>', 'The File where nonce value to use for each address is stored').makeOptionMandatory(false));
     program.addOption(
-        new Option('--filePath <filePath>', 'The file where the signed tx will be stored').makeOptionMandatory(false),
+        new Option('--filePath <filePath>', 'The filePath where the signed tx will be stored').makeOptionMandatory(false),
     );
+    program.addOption(new Option('--nonceFilePath <nonceFilePath>', 'The File where nonce value to use for each address is stored').makeOptionMandatory(false));
+    program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce').makeOptionMandatory(false));
 
     program.action((options) => {
         main(options);

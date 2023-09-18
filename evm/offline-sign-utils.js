@@ -29,9 +29,14 @@ function getLedgerWallet(provider, path) {
     }
 }
 
-function getUnsignedTx(chain, tx) {
+async function ledgerSign(wallet, chain, tx, gasOptions) {
     if (!tx.to || !isAddress(tx.to)) {
         throw new Error('Target address is missing/not provided as valid address for the tx in function arguments');
+    }
+
+    if(gasOptions) {
+        tx.gasLimit = gasOptions.gasLimit;
+        tx.gasPrice = gasOptions.gasPrice;
     }
 
     const baseTx = {
@@ -39,31 +44,45 @@ function getUnsignedTx(chain, tx) {
         data: tx.data || undefined,
         gasLimit: tx.gasLimit || chain.gasOptions?.gasLimit || undefined,
         gasPrice: tx.gasPrice || undefined,
-        nonce: tx.nonce ? BigNumber.from(tx.nonce).toNumber() : undefined,
+        nonce: (tx.nonce !== undefined && tx.nonce !== null) ? BigNumber.from(tx.nonce).toNumber() : undefined,
         to: tx.to || undefined,
         value: tx.value || undefined,
     };
 
-    return baseTx;
+    let signedTx;
+
+    try {
+        signedTx = await wallet.signTransaction(baseTx);
+        printInfo(`Signed Tx from ledger with signedTxHash as: ${signedTx}`);
+    } catch (error) {
+        printError('Failed to sign tx from ledger');
+        printObj(error);
+    }
+
+    return { baseTx, signedTx };
 }
 
 async function sendTx(tx, provider) {
+    let success;
     try {
-        const receipt = await provider.sendTransaction(tx).then((tx) => tx.wait());
-        if(!isValidJSON(receipt) || response.status !== 1) {
+        const response = await provider.sendTransaction(tx).then((tx) => tx.wait());
+        if(response.error || !isValidJSON(response) || response.status !== 1) {
             const error = `Execution failed${
                 response.status ? ` with txHash: ${response.transactionHash}` : ` with msg: ${response.message}`
             }`;
             throw new Error(error);
         }
-        return receipt;
+        success = true;
+        return { success, response};
     } catch (errorObj) {
         printError('Error while broadcasting signed tx');
         printObj(errorObj);
+        success = false;
+        return {success, undefined};
     }
 }
 
-async function updateSignersData(filePath, signersData) {
+function updateSignersData(filePath, signersData) {
     
     fs.writeFileSync(filePath, JSON.stringify(signersData, null, 2), (err) => {
         if (err) {
@@ -77,23 +96,28 @@ async function updateSignersData(filePath, signersData) {
 }
 
 async function getNonceFromProvider(provider, address) {
-    const nonce = await provider.getTransactionCount(address);
+    let nonce = 0;
+    try {
+        nonce = await provider.getTransactionCount(address);
+    } catch(error) {
+        printError("Could not fetch nonnce from provider", error.message);
+    }
     return nonce;
 }
 
-async function getLatestNonceAndUpdateData(filePath, wallet, nonce) {
+async function getLatestNonceAndUpdateData(filePath, wallet) {
     try {
         const signerAddress = await wallet.getAddress();
+        const provider = wallet.provider;
+        const providerNonce = getNonceFromProvider(provider, signerAddress);
         const signersData = await getAllSignersData(filePath);
         let transactions = signersData[signerAddress];
-        const firstPendingnonceFromData = getNonceFromData(transactions);
+        let latestTransactionNonce = transactions[transactions.length - 1].unsignedTx.nonce;
 
-        if (nonce >= firstPendingnonceFromData) {
+        if (providerNonce >= transactions.unsignedTx.nonce && (transactions.status === "NOT_SIGNED" || transactions.status === "PENDING")) {
             transactions = getTxsWithUpdatedNonceAndStatus(transactions, nonce);
             signersData[signerAddress] = transactions;
             await updateSignersData(filePath, signersData);
-        } else {
-            nonce = firstPendingnonceFromData + 1;
         }
 
         return nonce;
@@ -135,7 +159,7 @@ function getNonceFromData(transactions) {
     return 0;
 }
 
-async function getAllSignersData(filePath) {
+function getAllSignersData(filePath) {
     const signersData = {};
 
     try {
@@ -223,7 +247,7 @@ function isValidJSON(obj) {
     return true;
 }
 
-const getWallet = (privateKey, provider, ledgerPath) => {
+const getWallet = async(privateKey, provider, ledgerPath) => {
     let wallet;
     if (privateKey === 'ledger') {
         wallet = getLedgerWallet(provider, ledgerPath || undefined);
@@ -234,7 +258,20 @@ const getWallet = (privateKey, provider, ledgerPath) => {
 
         wallet = new Wallet(privateKey, provider);
     }
-    return wallet;
+    const signerAddress = await wallet.getAddress();
+    const providerNonce = await getNonceFromProvider(provider, signerAddress);
+    return {wallet, providerNonce};
+}
+
+const getLocalNonce = (nonceFilePath, signerAddress) => {
+    const nonceData = getAllSignersData(nonceFilePath);
+    return nonceData[signerAddress] || 0;
+}
+
+const updateLocalNonce = (nonceFilePath, signerAddress, nonce) => {
+        let nonceData = getAllSignersData(nonceFilePath);
+        nonceData[signerAddress] = nonce;
+        updateSignersData(nonceFilePath, nonceData);
 }
 
 module.exports = {
@@ -249,5 +286,7 @@ module.exports = {
     getLatestNonceAndUpdateData,
     isValidJSON,
     getWallet,
-    getUnsignedTx,
+    getLocalNonce,
+    updateLocalNonce,
+    ledgerSign,
 };

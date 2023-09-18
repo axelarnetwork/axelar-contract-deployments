@@ -186,6 +186,10 @@ const isNumber = (arg) => {
     return Number.isInteger(arg);
 };
 
+const isValidNumber = (arg) => {
+    return !isNaN(parseInt(arg)) && isFinite(arg);
+  };
+
 const isNumberArray = (arr) => {
     if (!Array.isArray(arr)) {
         return false;
@@ -614,6 +618,7 @@ module.exports = {
     getDeployedAddress,
     isString,
     isNumber,
+    isValidNumber,
     isNumberArray,
     isAddressArray,
     isKeccak256Hash,
