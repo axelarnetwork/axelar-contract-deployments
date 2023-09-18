@@ -3,9 +3,11 @@
 const fs = require('fs');
 const { ethers } = require('hardhat');
 const {
+    Wallet,
     BigNumber,
     utils: { isAddress },
 } = ethers;
+const path = require('path');
 const { LedgerSigner } = require('@ethersproject/hardware-wallets');
 
 const { printError, printInfo, printObj } = require('./utils');
@@ -27,110 +29,42 @@ function getLedgerWallet(provider, path) {
     }
 }
 
-async function ledgerSign(gasLimit, gasPrice, nonce, chain, wallet, to, amount, contract, functionName, ...args) {
-    const tx = {};
-
-    if (!chain) {
-        throw new Error('Chain is missing in the function arguments');
-    }
-
-    tx.chainId = chain.chainId;
-
-    if (!gasLimit) {
-        throw new Error('Gas limit is missing in the function arguments');
-    }
-
-    tx.gasLimit = gasLimit;
-
-    if (!gasPrice) {
-        throw new Error('Gas price is missing in the function arguments');
-    }
-
-    tx.gasPrice = gasPrice;
-
-    if (!nonce) {
-        throw new Error('Nonce is missing in the function arguments');
-    }
-
-    tx.nonce = nonce;
-
-    if (!wallet) {
-        throw new Error('Wallet is missing/not provided correctly in function arguments');
-    }
-
-    if (!to || !isAddress(to)) {
+function getUnsignedTx(chain, tx) {
+    if (!tx.to || !isAddress(tx.to)) {
         throw new Error('Target address is missing/not provided as valid address for the tx in function arguments');
     }
 
-    tx.to = to;
-    tx.value = amount || undefined;
-
-    if (contract) {
-        if (to.toLowerCase() !== contract.address.toLowerCase()) {
-            throw new Error('Contract address do not matches the to address provided in function arguments');
-        }
-
-        if (!functionName) {
-            throw new Error('Function name is missing in the function arguments');
-        }
-
-        const data = contract.interface.encodeFunctionData(functionName, args);
-        tx.data = data || undefined;
-    }
-
     const baseTx = {
-        chainId: tx.chainId || undefined,
+        chainId: tx.chainId || chain.chainId || undefined,
         data: tx.data || undefined,
-        gasLimit: tx.gasLimit || undefined,
+        gasLimit: tx.gasLimit || chain.gasOptions?.gasLimit || undefined,
         gasPrice: tx.gasPrice || undefined,
         nonce: tx.nonce ? BigNumber.from(tx.nonce).toNumber() : undefined,
         to: tx.to || undefined,
         value: tx.value || undefined,
     };
 
-    let signedTx;
-
-    try {
-        signedTx = await wallet.signTransaction(baseTx);
-        printInfo(`Signed Tx from ledger with signedTxHash as: ${signedTx}`);
-    } catch (error) {
-        printError('Failed to sign tx from ledger');
-        printObj(error);
-    }
-
-    return { baseTx, signedTx };
-}
-
-function getFilePath(directoryPath, fileName) {
-    if (!directoryPath) {
-        throw new Error('Directory path is missing in the function arguments');
-    }
-
-    if (!fileName) {
-        throw new Error('File name is missing in the function arguments');
-    }
-
-    if (!fs.existsSync(directoryPath)) {
-        fs.mkdirSync(directoryPath);
-    }
-
-    const filePath = directoryPath + '/' + fileName + '.json';
-    return filePath;
+    return baseTx;
 }
 
 async function sendTx(tx, provider) {
     try {
         const receipt = await provider.sendTransaction(tx).then((tx) => tx.wait());
+        if(!isValidJSON(receipt) || response.status !== 1) {
+            const error = `Execution failed${
+                response.status ? ` with txHash: ${response.transactionHash}` : ` with msg: ${response.message}`
+            }`;
+            throw new Error(error);
+        }
         return receipt;
     } catch (errorObj) {
         printError('Error while broadcasting signed tx');
         printObj(errorObj);
-        return errorObj || { error: true, message: 'Error while broadcasting signed tx' };
     }
 }
 
-async function updateSignersData(directoryPath, fileName, signersData) {
-    const filePath = getFilePath(directoryPath, fileName);
+async function updateSignersData(filePath, signersData) {
+    
     fs.writeFileSync(filePath, JSON.stringify(signersData, null, 2), (err) => {
         if (err) {
             printError(`Could not update signersData in file ${filePath}`);
@@ -147,19 +81,19 @@ async function getNonceFromProvider(provider, address) {
     return nonce;
 }
 
-async function getLatestNonceAndUpdateData(directoryPath, fileName, wallet) {
+async function getLatestNonceAndUpdateData(filePath, wallet, nonce) {
     try {
         const provider = wallet.provider;
         const signerAddress = await wallet.getAddress();
-        const signersData = await getAllSignersData(directoryPath, fileName);
+        const signersData = await getAllSignersData(filePath);
         let transactions = signersData[signerAddress];
         const firstPendingnonceFromData = getNonceFromData(transactions);
-        let nonce = await getNonceFromProvider(provider, signerAddress);
+        console.log("firstPendingnonceFromData",firstPendingnonceFromData);
 
-        if (nonce > firstPendingnonceFromData) {
+        if (nonce >= firstPendingnonceFromData) {
             transactions = getTxsWithUpdatedNonceAndStatus(transactions, nonce);
             signersData[signerAddress] = transactions;
-            await updateSignersData(directoryPath, fileName, signersData);
+            await updateSignersData(filePath, signersData);
         } else {
             nonce = firstPendingnonceFromData + 1;
         }
@@ -203,11 +137,11 @@ function getNonceFromData(transactions) {
     return 0;
 }
 
-async function getAllSignersData(directoryPath, fileName) {
+async function getAllSignersData(filePath) {
     const signersData = {};
 
     try {
-        const filePath = getFilePath(directoryPath, fileName);
+        
         // Read the content of the file
         const data = getFileData(filePath);
 
@@ -223,14 +157,21 @@ async function getAllSignersData(directoryPath, fileName) {
 
         return signersData;
     } catch (error) {
-        printError(`Failed to get all  signers data from the file ${fileName}`);
+        printError(`Failed to get all  signers data from the file ${filePath}`);
         printObj(error);
     }
 }
 
 function getFileData(filePath) {
     try {
+        // Extract the directory path
+        const directoryPath = path.dirname(filePath);
+        // Check if the directory and file exists, create it if it doesn't
+        if (!fs.existsSync(directoryPath)){
+            fs.mkdirSync(directoryPath);
+        }
         if (!fs.existsSync(filePath)) {
+            console.log("Creating file");
             // File does not exist, create it
             fs.writeFileSync(filePath, JSON.stringify({}));
             return undefined;
@@ -245,11 +186,11 @@ function getFileData(filePath) {
     }
 }
 
-async function getTransactions(directoryPath, fileName, signerAddress) {
+async function getTransactions(filePath, signerAddress) {
     let transactions = [];
 
     try {
-        const filePath = getFilePath(directoryPath, fileName);
+        
         // Read the content of the file
         const data = getFileData(filePath);
 
@@ -285,11 +226,23 @@ function isValidJSON(obj) {
     return true;
 }
 
+const getWallet = (privateKey, provider, ledgerPath) => {
+    let wallet;
+    if (privateKey === 'ledger') {
+        wallet = getLedgerWallet(provider, ledgerPath || undefined);
+    } else {
+        if (!isValidPrivateKey(privateKey)) {
+            throw new Error('Private key is missing/ not provided correctly');
+        }
+
+        wallet = new Wallet(privateKey, provider);
+    }
+    return wallet;
+}
+
 module.exports = {
     getLedgerWallet,
-    ledgerSign,
     sendTx,
-    getFilePath,
     getTxsWithUpdatedNonceAndStatus,
     getNonceFromProvider,
     getNonceFromData,
@@ -298,4 +251,6 @@ module.exports = {
     updateSignersData,
     getLatestNonceAndUpdateData,
     isValidJSON,
+    getWallet,
+    getUnsignedTx,
 };

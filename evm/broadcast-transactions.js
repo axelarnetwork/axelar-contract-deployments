@@ -19,55 +19,45 @@ const {
     isValidJSON,
 } = require('./offline-sign-utils');
 
-async function processTransactions(directoryPath, fileName, provider, signerAddress) {
+async function processTransactions(filePath, provider) {
     try {
-        const signersData = await getAllSignersData(directoryPath, fileName);
+        const signersData = await getAllSignersData(filePath);
 
-        if (!signersData[signerAddress]) {
-            throw new Error(`Signer data for address ${signerAddress} not found in the file ${fileName}`);
-        }
+        for (const [signerAddress, transactions] of Object.entries(signersData)) {
+            console.log(`${key} ${value}`); // "a 5", "b 7", "c 9"
+            const firstPendingnonceFromData = await getNonceFromData(transactions);
+            const nonce = parseInt(await getNonceFromProvider(provider, signerAddress));
 
-        let transactions = signersData[signerAddress];
-        const firstPendingnonceFromData = await getNonceFromData(transactions);
-        const nonce = parseInt(await getNonceFromProvider(provider, signerAddress));
+            if (nonce > firstPendingnonceFromData) {
+                transactions = getTxsWithUpdatedNonceAndStatus(transactions, nonce);
+            }
 
-        if (nonce > firstPendingnonceFromData) {
-            transactions = getTxsWithUpdatedNonceAndStatus(transactions, nonce);
-        }
+            for (const transaction of transactions) {
+                if (transaction.status === 'PENDING') {
+                    printInfo('Broadcasting transaction: ');
+                    printObj(transaction.baseTx);
 
-        for (const transaction of transactions) {
-            if (transaction.status === 'PENDING') {
-                printInfo('Broadcasting transaction: ');
-                printObj(transaction.baseTx);
+                    try {
+                        // Send the signed transaction
+                        const response = await sendTx(transaction.signedTx, provider);
 
-                try {
-                    // Send the signed transaction
-                    const response = await sendTx(transaction.signedTx, provider);
-
-                    if (response.error || !isValidJSON(response) || response.status !== 1) {
-                        const error = `Execution failed${
-                            response.status ? ` with txHash: ${response.transactionHash}` : ` with msg: ${response.message}`
-                        }`;
-                        throw new Error(error);
+                        // Update the transaction status and store transaction hash
+                        transaction.status = 'SUCCESS';
+                        transaction.transactionHash = response.transactionHash;
+                        printInfo(`Transactions executed successfully ${response.transactionHash}`);
+                    } catch (error) {
+                        // Update the transaction status and store error message
+                        transaction.status = 'FAILED';
+                        transaction.error = error.message;
+                        printError(`Transaction failed with error: ${error.message}`);
                     }
-
-                    // Update the transaction status and store transaction hash
-                    transaction.status = 'SUCCESS';
-                    transaction.transactionHash = response.transactionHash;
-                    printInfo(`Transactions executed successfully ${response.transactionHash}`);
-                } catch (error) {
-                    // Update the transaction status and store error message
-                    transaction.status = 'FAILED';
-                    transaction.error = error.message;
-                    printError(`Transaction failed with error: ${error.message}`);
                 }
             }
-        }
+            // Write back the updated JSON object to the file
+            signersData[signerAddress] = transactions;
+          }
+          fs.writeFileSync(filePath, JSON.stringify(signersData, null, 2));
 
-        // Write back the updated JSON object to the file
-        signersData[signerAddress] = transactions;
-        const filePath = getFilePath(directoryPath, fileName);
-        fs.writeFileSync(filePath, JSON.stringify(signersData, null, 2));
     } catch (error) {
         printError('Error processing transactions:', error.message);
     }
@@ -75,7 +65,7 @@ async function processTransactions(directoryPath, fileName, provider, signerAddr
 
 async function main(options) {
     // TODO: Enable multiple scripts to use offlineSigning
-    const { directoryPath, fileName, rpcUrl, signerAddress } = options;
+    const { filePath, rpcUrl } = options;
     const provider = new JsonRpcProvider(rpcUrl);
     const network = await provider.getNetwork();
 
@@ -88,21 +78,17 @@ async function main(options) {
         if (anwser !== 'y') return;
     }
 
-    await processTransactions(directoryPath, fileName, provider, signerAddress);
+    await processTransactions(filePath, provider);
 }
 
 const program = new Command();
 
 program.name('broadcast-transactions').description('Broadcast all the pending signed transactions of the signer');
 
-program.addOption(
-    new Option('-d, --directoryPath <directoryPath>', 'The folder where all the signed tx files are stored').makeOptionMandatory(true),
-);
-program.addOption(new Option('-f, --fileName <fileName>', 'The fileName where the signed tx are stored').makeOptionMandatory(true));
+program.addOption(new Option('--filePath <filePath>', 'The file where the signed tx are stored').makeOptionMandatory(true));
 program.addOption(
     new Option('-r, --rpcUrl <rpcUrl>', 'The rpc url for creating a provider to broadcast the transactions').makeOptionMandatory(true),
 );
-program.addOption(new Option('-s, --signerAddress <signerAddress>', 'private key').makeOptionMandatory(true));
 program.addOption(new Option('-y, --yes', 'skip prompts'));
 
 program.action((options) => {
