@@ -394,6 +394,7 @@ async function programHandler() {
     program.addOption(new Option('-g, --governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('-m, --mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    program.addOption(new Option('-k, --keyID <keyID>', 'key ID').env('KEY_ID'));
     program.addOption(new Option('-a, --amplifier', 'deploy amplifier gateway').env('AMPLIFIER'));
     program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
     program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
