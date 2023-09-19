@@ -191,6 +191,12 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error(`Missing MultisigProver[${chain.id}].workerSetDiffThreshold in axelar info`);
             }
 
+            const encoder = contractConfig.encoder;
+
+            if (!isString(encoder)) {
+                throw new Error(`Missing MultisigProver[${chain.id}].encoder in axelar info`);
+            }
+
             return {
                 admin_address: adminAddress,
                 gateway_address: gatewayAddress,
@@ -202,6 +208,7 @@ async function getInstantiateMsg(contractName, config, chain) {
                 service_name: serviceName,
                 chain_name: chain.name,
                 worker_set_diff_threshold: workerSetDiffThreshold,
+                encoder,
             };
         }
     }

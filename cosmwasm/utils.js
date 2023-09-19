@@ -13,7 +13,7 @@ const uploadContract = async (config, options, wallet, client) => {
     const wasm = readFileSync(`${options.artifactPath}/${pascalToSnake(options.contractName)}${options.aarch64 ? '-aarch64' : ''}.wasm`);
 
     const gasPrice = GasPrice.fromString(`0.00005u${config.axelar.tokenSymbol.toLowerCase()}`);
-    const uploadFee = calculateFee(3500000, gasPrice);
+    const uploadFee = calculateFee(5000000, gasPrice);
 
     const result = await client.upload(account.address, wasm, uploadFee);
 
