@@ -4,47 +4,48 @@ const chalk = require('chalk');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const {
-    getDefaultProvider
+    getDefaultProvider,
+    utils: { parseUnits },
 } = ethers;
 const readlineSync = require('readline-sync');
 
 const { printError, printInfo, printObj, saveConfig } = require('./utils');
 
 async function updateStaticGasOptions(chain, options, filePath) {
-    const{rpcUrl, yes} = options;
+    const { rpcUrl, yes } = options;
     const provider = getDefaultProvider(rpcUrl);
     const network = await provider.getNetwork();
 
     if (!yes) {
         const anwser = readlineSync.question(
-            `Proceed with the static gasOption update on network ${chalk.green(network.name)} with chainId ${chalk.green(network.chainId)} ${chalk.green('(y/n)')} `,
+            `Proceed with the static gasOption update on network ${chalk.green(network.name)} with chainId ${chalk.green(
+                network.chainId,
+            )} ${chalk.green('(y/n)')} `,
         );
         if (anwser !== 'y') return;
     }
+
     try {
-        const gasPrice = await provider.getGasPrice() * 5;
+        const gasPrice = parseUnits((await provider.getGasPrice()).toString(), 'gwei') * 5;
         const block = await provider.getBlock('latest');
         const gasLimit = block.gasLimit.toNumber() / 500;
         const staticGasOptions = {};
         staticGasOptions.gasLimit = gasLimit;
         staticGasOptions.gasPrice = gasPrice;
         chain.staticGasOptions = staticGasOptions;
-        console.log("chain");
-        printObj(chain);
-
         printInfo(`GasOptions updated succesfully and stored in config file ${filePath}`);
-    } catch(error) {
+    } catch (error) {
         printError(`GasOptions updation failed with error: ${error.message}`);
         printObj(error);
     }
+
     return chain;
 }
-
 
 async function main(options) {
     const { env, chainNames } = options;
 
-    const filePath = `${__dirname}/../axelar-chains-config/info/${env === 'local' ? 'testnet' : env}.json`
+    const filePath = `${__dirname}/../axelar-chains-config/info/${env === 'local' ? 'testnet' : env}.json`;
     const config = require(filePath);
 
     const chains = chainNames.split(',').map((str) => str.trim());
@@ -57,11 +58,9 @@ async function main(options) {
 
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
-
         config.chains[chainName.toLowerCase()] = await updateStaticGasOptions(chain, options, filePath);
-        console.log("Config");
-        printObj(config);
     }
+
     saveConfig(config, env);
 }
 
@@ -77,9 +76,7 @@ program.addOption(
         .env('ENV'),
 );
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(
-    new Option('-r, --rpcUrl <rpcUrl>', 'The rpc url for creating a provider to fetch gasOptions').makeOptionMandatory(true),
-);
+program.addOption(new Option('-r, --rpcUrl <rpcUrl>', 'The rpc url for creating a provider to fetch gasOptions').makeOptionMandatory(true));
 program.addOption(new Option('-y, --yes', 'skip prompts'));
 
 program.action((options) => {

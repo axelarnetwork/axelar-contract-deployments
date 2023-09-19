@@ -24,10 +24,10 @@ const {
 
 async function sendTokens(chain, options) {
     const { privateKey, offline, ledgerPath, filePath, nonceFilePath, nonceOffset } = options;
-    let { amount, recipients} = options;
+    let { amount, recipients } = options;
 
-    if(!nonceFilePath) {
-        throw new Error("Nonce FilePath is not provided in user info");
+    if (!nonceFilePath) {
+        throw new Error('Nonce FilePath is not provided in user info');
     }
 
     const provider = getDefaultProvider(chain.rpc);
@@ -38,7 +38,7 @@ async function sendTokens(chain, options) {
     const signerAddress = await wallet.getAddress();
     let nonce = getLocalNonce(nonceFilePath, signerAddress);
 
-    if(providerNonce > nonce) {
+    if (providerNonce !== undefined && providerNonce !== null) {
         updateLocalNonce(nonceFilePath, signerAddress, providerNonce);
         nonce = providerNonce;
     }
@@ -62,15 +62,18 @@ async function sendTokens(chain, options) {
     const gasOptions = chain.staticGasOptions || {};
 
     if (offline) {
-        if(!filePath) {
-            throw new Error("FilePath is not provided in user info");
+        if (!filePath) {
+            throw new Error('FilePath is not provided in user info');
         }
-        if(nonceOffset) {
-            if(!isValidNumber(nonceOffset)) {
-                throw new Error("Provided nonce offset is not a valid number");
+
+        if (nonceOffset) {
+            if (!isValidNumber(nonceOffset)) {
+                throw new Error('Provided nonce offset is not a valid number');
             }
+
             nonce += parseInt(nonceOffset);
         }
+
         printInfo(`Storing signed Txs offline in file ${filePath}`);
         signersData = await getAllSignersData(filePath);
         transactions = await getTransactions(filePath, signerAddress);
@@ -81,26 +84,23 @@ async function sendTokens(chain, options) {
         const tx = {
             to: recipient,
             value: amount,
-        }
+        };
 
-            if (offline) {
-                const data = {};
-                tx.nonce = nonce;
-                tx.chainId = chain.chainId;
-                const {baseTx, signedTx} = await ledgerSign(wallet, chain, tx, gasOptions);
-                // Storing the fields in the data that will be stored in file
-                data.msg = `This transaction will send ${amount} of native tokens to ${recipient} on chain ${chain.name} with chainId ${chain.chainId}`;
-                data.unsignedTx = baseTx; 
-                data.signedTx = signedTx;     
-                data.status = "PENDING";          
-                transactions.push(data);
-            }
-            else {
-            const tx = await wallet.sendTransaction(tx);
-
-            printInfo('Transaction hash', tx.hash);
-
-            await tx.wait();
+        if (offline) {
+            const data = {};
+            tx.nonce = nonce;
+            tx.chainId = chain.chainId;
+            const { baseTx, signedTx } = await ledgerSign(wallet, chain, tx, gasOptions);
+            // Storing the fields in the data that will be stored in file
+            data.msg = `This transaction will send ${amount} of native tokens to ${recipient} on chain ${chain.name} with chainId ${chain.chainId}`;
+            data.unsignedTx = baseTx;
+            data.signedTx = signedTx;
+            data.status = 'PENDING';
+            transactions.push(data);
+        } else {
+            const response = await wallet.sendTransaction(tx);
+            await response.wait();
+            printInfo('Transaction hash', response.transactionHash);
         }
 
         ++nonce;
@@ -108,9 +108,10 @@ async function sendTokens(chain, options) {
 
     if (transactions) {
         signersData[signerAddress] = transactions;
-        await updateSignersData(filePath, signersData);
+        updateSignersData(filePath, signersData);
     }
     // Updating Nonce data for this Address
+
     updateLocalNonce(nonceFilePath, signerAddress, nonce);
 }
 
@@ -148,15 +149,20 @@ if (require.main === module) {
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-r, --recipients <recipients>', 'comma-separated recipients of tokens').makeOptionMandatory(true));
     program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)').makeOptionMandatory(true));
-    program.addOption(
-        new Option('--offline', 'Run in offline mode'),
-    );
+    program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--ledgerPath <ledgerPath>', 'The path to identify the account in ledger').makeOptionMandatory(false));
+    program.addOption(new Option('--filePath <filePath>', 'The filePath where the signed tx will be stored').makeOptionMandatory(false));
     program.addOption(
-        new Option('--filePath <filePath>', 'The filePath where the signed tx will be stored').makeOptionMandatory(false),
+        new Option('--nonceFilePath <nonceFilePath>', 'The File where nonce value to use for each address is stored').makeOptionMandatory(
+            false,
+        ),
     );
-    program.addOption(new Option('--nonceFilePath <nonceFilePath>', 'The File where nonce value to use for each address is stored').makeOptionMandatory(false));
-    program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce').makeOptionMandatory(false));
+    program.addOption(
+        new Option(
+            '--nonceOffset <nonceOffset>',
+            'The value to add in local nonce if it deviates from actual wallet nonce',
+        ).makeOptionMandatory(false),
+    );
     program.addOption(new Option('-y, --yes', 'skip prompts'));
 
     program.action((options) => {

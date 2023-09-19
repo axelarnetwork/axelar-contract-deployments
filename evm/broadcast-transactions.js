@@ -9,11 +9,7 @@ const {
 const readlineSync = require('readline-sync');
 
 const { printError, printInfo, printObj } = require('./utils');
-const {
-    sendTx,
-    getAllSignersData,
-    updateSignersData,
-} = require('./offline-sign-utils');
+const { sendTx, getAllSignersData, updateSignersData } = require('./offline-sign-utils');
 
 async function processTransactions(filePath, provider) {
     try {
@@ -25,27 +21,27 @@ async function processTransactions(filePath, provider) {
                     printInfo('Broadcasting transaction: ');
                     printObj(transaction.unsignedTx);
 
-                        // Send the signed transaction
-                        const {success, response} = await sendTx(transaction.signedTx, provider);
+                    // Send the signed transaction
+                    const { success, response } = await sendTx(transaction.signedTx, provider);
 
-                        if(success) {
-                            // Update the transaction status and store transaction hash
-                            transaction.status = 'SUCCESS';
-                            transaction.transactionHash = response.transactionHash;
-                            printInfo(`Transaction executed successfully ${response.transactionHash}`);
-                        }
-                        else {
-                            // Update the transaction status and store error message
-                            transaction.status = 'FAILED';
-                            printError("Error broadcasting tx: ", transaction.signedTx);
-                        }   
+                    if (success) {
+                        // Update the transaction status and store transaction hash
+                        transaction.status = 'SUCCESS';
+                        transaction.transactionHash = response.transactionHash;
+                        printInfo(`Transaction executed successfully ${response.transactionHash}`);
+                    } else {
+                        // Update the transaction status and store error message
+                        transaction.status = 'FAILED';
+                        printError('Error broadcasting tx: ', transaction.signedTx);
+                    }
                 }
             }
             // Write back the updated JSON object to the file
-            signersData[signerAddress] = transactions;
-          }
-          updateSignersData(filePath, signersData);
 
+            signersData[signerAddress] = transactions;
+        }
+
+        updateSignersData(filePath, signersData);
     } catch (error) {
         printError('Error processing transactions:', error.message);
     }
@@ -59,7 +55,9 @@ async function main(options) {
 
     if (!options.yes) {
         const anwser = readlineSync.question(
-            `Proceed with the broadcasting of all pending signed transactions for file ${chalk.green(options.filePath)} on network ${chalk.green(network.name)} with chainId ${chalk.green(network.chainId)} ${chalk.green('(y/n)')} `,
+            `Proceed with the broadcasting of all pending signed transactions for file ${chalk.green(
+                options.filePath,
+            )} on network ${chalk.green(network.name)} with chainId ${chalk.green(network.chainId)} ${chalk.green('(y/n)')} `,
         );
         if (anwser !== 'y') return;
     }

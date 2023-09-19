@@ -10,7 +10,7 @@ const {
 const path = require('path');
 const { LedgerSigner } = require('@ethersproject/hardware-wallets');
 
-const { printError, printInfo, printObj } = require('./utils');
+const { printError, printInfo, printObj, isValidPrivateKey } = require('./utils');
 
 // function to create a ledgerSigner type wallet object
 function getLedgerWallet(provider, path) {
@@ -34,7 +34,7 @@ async function ledgerSign(wallet, chain, tx, gasOptions) {
         throw new Error('Target address is missing/not provided as valid address for the tx in function arguments');
     }
 
-    if(gasOptions) {
+    if (gasOptions) {
         tx.gasLimit = gasOptions.gasLimit;
         tx.gasPrice = gasOptions.gasPrice;
     }
@@ -44,7 +44,7 @@ async function ledgerSign(wallet, chain, tx, gasOptions) {
         data: tx.data || undefined,
         gasLimit: tx.gasLimit || chain.gasOptions?.gasLimit || undefined,
         gasPrice: tx.gasPrice || undefined,
-        nonce: (tx.nonce !== undefined && tx.nonce !== null) ? BigNumber.from(tx.nonce).toNumber() : undefined,
+        nonce: tx.nonce !== undefined && tx.nonce !== null ? BigNumber.from(tx.nonce).toNumber() : undefined,
         to: tx.to || undefined,
         value: tx.value || undefined,
     };
@@ -53,7 +53,7 @@ async function ledgerSign(wallet, chain, tx, gasOptions) {
 
     try {
         signedTx = await wallet.signTransaction(baseTx);
-        printInfo(`Signed Tx from ledger with signedTxHash as: ${signedTx}`);
+        printInfo('Signed Tx from ledger with signedTxHash as', signedTx);
     } catch (error) {
         printError('Failed to sign tx from ledger');
         printObj(error);
@@ -64,26 +64,28 @@ async function ledgerSign(wallet, chain, tx, gasOptions) {
 
 async function sendTx(tx, provider) {
     let success;
+
     try {
         const response = await provider.sendTransaction(tx).then((tx) => tx.wait());
-        if(response.error || !isValidJSON(response) || response.status !== 1) {
+
+        if (response.error || !isValidJSON(response) || response.status !== 1) {
             const error = `Execution failed${
                 response.status ? ` with txHash: ${response.transactionHash}` : ` with msg: ${response.message}`
             }`;
             throw new Error(error);
         }
+
         success = true;
-        return { success, response};
+        return { success, response };
     } catch (errorObj) {
         printError('Error while broadcasting signed tx');
         printObj(errorObj);
         success = false;
-        return {success, undefined};
+        return { success, undefined };
     }
 }
 
 function updateSignersData(filePath, signersData) {
-    
     fs.writeFileSync(filePath, JSON.stringify(signersData, null, 2), (err) => {
         if (err) {
             printError(`Could not update signersData in file ${filePath}`);
@@ -97,73 +99,20 @@ function updateSignersData(filePath, signersData) {
 
 async function getNonceFromProvider(provider, address) {
     let nonce = 0;
+
     try {
         nonce = await provider.getTransactionCount(address);
-    } catch(error) {
-        printError("Could not fetch nonnce from provider", error.message);
+    } catch (error) {
+        printError('Could not fetch nonnce from provider', error.message);
     }
+
     return nonce;
-}
-
-async function getLatestNonceAndUpdateData(filePath, wallet) {
-    try {
-        const signerAddress = await wallet.getAddress();
-        const provider = wallet.provider;
-        const providerNonce = getNonceFromProvider(provider, signerAddress);
-        const signersData = await getAllSignersData(filePath);
-        let transactions = signersData[signerAddress];
-        let latestTransactionNonce = transactions[transactions.length - 1].unsignedTx.nonce;
-
-        if (providerNonce >= transactions.unsignedTx.nonce && (transactions.status === "NOT_SIGNED" || transactions.status === "PENDING")) {
-            transactions = getTxsWithUpdatedNonceAndStatus(transactions, nonce);
-            signersData[signerAddress] = transactions;
-            await updateSignersData(filePath, signersData);
-        }
-
-        return nonce;
-    } catch (error) {
-        printError('Failed to calculate correct nonce for tx');
-        printObj(error);
-    }
-}
-
-function getTxsWithUpdatedNonceAndStatus(transactions, nonce) {
-    if (transactions) {
-        for (const transaction of transactions) {
-            if (nonce > transaction.nonce && (transaction.status === 'PENDING' || transaction.status === 'BROADCASTED')) {
-                transaction.status = 'FAILED';
-                const error = `Transaction nonce value of ${transaction.nonce} is less than the required signer nonce value of ${nonce}`;
-                transaction.error = error;
-                printError(error + ` for signedTx: ${transaction.signedTx}`);
-            }
-        }
-    }
-
-    return transactions;
-}
-
-function getNonceFromData(transactions) {
-    try {
-        if (transactions) {
-            for (const transaction of transactions) {
-                if (transaction.status === 'PENDING') {
-                    return transaction.nonce;
-                }
-            }
-        }
-    } catch (error) {
-        printError('Failed to get first pending nonce from file data');
-        printObj(error);
-    }
-
-    return 0;
 }
 
 function getAllSignersData(filePath) {
     const signersData = {};
 
     try {
-        
         // Read the content of the file
         const data = getFileData(filePath);
 
@@ -189,9 +138,11 @@ function getFileData(filePath) {
         // Extract the directory path
         const directoryPath = path.dirname(filePath);
         // Check if the directory and file exists, create it if it doesn't
-        if (!fs.existsSync(directoryPath)){
+
+        if (!fs.existsSync(directoryPath)) {
             fs.mkdirSync(directoryPath);
         }
+
         if (!fs.existsSync(filePath)) {
             // File does not exist, create it
             fs.writeFileSync(filePath, JSON.stringify({}));
@@ -202,7 +153,7 @@ function getFileData(filePath) {
         const data = fs.readFileSync(filePath);
         return data;
     } catch (error) {
-        printError(`Failed to get file data from the file ${filePath}`);
+        printError(`Failed to get data from the file ${filePath}`);
         printObj(error);
     }
 }
@@ -211,7 +162,6 @@ async function getTransactions(filePath, signerAddress) {
     let transactions = [];
 
     try {
-        
         // Read the content of the file
         const data = getFileData(filePath);
 
@@ -247,8 +197,9 @@ function isValidJSON(obj) {
     return true;
 }
 
-const getWallet = async(privateKey, provider, ledgerPath) => {
+const getWallet = async (privateKey, provider, ledgerPath) => {
     let wallet;
+
     if (privateKey === 'ledger') {
         wallet = getLedgerWallet(provider, ledgerPath || undefined);
     } else {
@@ -258,33 +209,28 @@ const getWallet = async(privateKey, provider, ledgerPath) => {
 
         wallet = new Wallet(privateKey, provider);
     }
+
     const signerAddress = await wallet.getAddress();
     const providerNonce = await getNonceFromProvider(provider, signerAddress);
-    return {wallet, providerNonce};
-}
+    return { wallet, providerNonce };
+};
 
 const getLocalNonce = (nonceFilePath, signerAddress) => {
     const nonceData = getAllSignersData(nonceFilePath);
     return nonceData[signerAddress] || 0;
-}
+};
 
 const updateLocalNonce = (nonceFilePath, signerAddress, nonce) => {
-        let nonceData = getAllSignersData(nonceFilePath);
-        nonceData[signerAddress] = nonce;
-        updateSignersData(nonceFilePath, nonceData);
-}
+    const nonceData = getAllSignersData(nonceFilePath);
+    nonceData[signerAddress] = nonce;
+    updateSignersData(nonceFilePath, nonceData);
+};
 
 module.exports = {
-    getLedgerWallet,
     sendTx,
-    getTxsWithUpdatedNonceAndStatus,
-    getNonceFromProvider,
-    getNonceFromData,
     getAllSignersData,
     getTransactions,
     updateSignersData,
-    getLatestNonceAndUpdateData,
-    isValidJSON,
     getWallet,
     getLocalNonce,
     updateLocalNonce,

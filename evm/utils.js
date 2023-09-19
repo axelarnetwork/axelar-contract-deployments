@@ -21,7 +21,6 @@ const {
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
-const { privateKeyExport } = require('secp256k1');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const getSaltFromKey = (key) => {
@@ -188,7 +187,7 @@ const isNumber = (arg) => {
 
 const isValidNumber = (arg) => {
     return !isNaN(parseInt(arg)) && isFinite(arg);
-  };
+};
 
 const isNumberArray = (arr) => {
     if (!Array.isArray(arr)) {
