@@ -322,13 +322,6 @@ async function upgrade(config, options) {
     const { wallet, providerNonce } = await getWallet(privateKey, provider, ledgerPath);
     const signerAddress = await wallet.getAddress();
 
-    let nonce = getLocalNonce(nonceFilePath, signerAddress);
-
-    if (providerNonce !== undefined && providerNonce !== null) {
-        updateLocalNonce(nonceFilePath, signerAddress, providerNonce);
-        nonce = providerNonce;
-    }
-
     await printWalletInfo(wallet);
 
     const contractConfig = chain.contracts[contractName];
@@ -381,6 +374,13 @@ async function upgrade(config, options) {
     let signersData, transactions;
 
     if (offline) {
+        let nonce = getLocalNonce(nonceFilePath, signerAddress);
+
+        if (providerNonce !== undefined && providerNonce !== null) {
+            updateLocalNonce(nonceFilePath, signerAddress, providerNonce);
+            nonce = providerNonce;
+        }
+
         if (!filePath) {
             throw new Error('FilePath is not provided in user info');
         }
