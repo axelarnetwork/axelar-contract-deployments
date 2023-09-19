@@ -11,7 +11,7 @@ const {
 } = ethers;
 const readlineSync = require('readline-sync');
 
-const { printInfo, printWalletInfo, isValidNumber } = require('./utils');
+const { printInfo, printWalletInfo, isValidNumber, saveConfig } = require('./utils');
 const {
     getAllSignersData,
     updateSignersData,
@@ -22,31 +22,29 @@ const {
     updateLocalNonce,
 } = require('./offline-sign-utils.js');
 
-async function sendTokens(chain, options) {
-    const { privateKey, offline, ledgerPath, filePath, nonceFilePath, nonceOffset } = options;
+async function sendTokens(config, chain, options) {
+    const { privateKey, offline, ledgerPath, filePath, nonceOffset, env } = options;
     let { amount, recipients } = options;
-
-    if (!nonceFilePath) {
-        throw new Error('Nonce FilePath is not provided in user info');
-    }
-
     const provider = getDefaultProvider(chain.rpc);
     recipients = options.recipients.split(',').map((str) => str.trim());
     amount = parseEther(amount);
 
     const { wallet, providerNonce } = await getWallet(privateKey, provider, ledgerPath);
     const signerAddress = await wallet.getAddress();
-    let nonce = getLocalNonce(nonceFilePath, signerAddress);
+    let nonce = getLocalNonce(chain, signerAddress);
 
-    if (providerNonce !== undefined && providerNonce !== null) {
-        updateLocalNonce(nonceFilePath, signerAddress, providerNonce);
+    if (providerNonce !== undefined && providerNonce !== null && providerNonce > nonce) {
+        config.chains[chain.name.toLowerCase()] = updateLocalNonce(chain, providerNonce, signerAddress);
+        saveConfig(config, env);
         nonce = providerNonce;
     }
 
-    const balance = await printWalletInfo(wallet);
+    if (!offline) {
+        const balance = await printWalletInfo(wallet);
 
-    if (balance.lte(amount)) {
-        throw new Error(`Wallet has insufficient funds.`);
+        if (balance.lte(amount)) {
+            throw new Error(`Wallet has insufficient funds.`);
+        }
     }
 
     if (!options.yes) {
@@ -90,6 +88,7 @@ async function sendTokens(chain, options) {
             const data = {};
             tx.nonce = nonce;
             tx.chainId = chain.chainId;
+            printInfo('Waiting for user to approve transaction through ledger wallet');
             const { baseTx, signedTx } = await ledgerSign(wallet, chain, tx, gasOptions);
             // Storing the fields in the data that will be stored in file
             data.msg = `This transaction will send ${amount} of native tokens to ${recipient} on chain ${chain.name} with chainId ${chain.chainId}`;
@@ -112,7 +111,8 @@ async function sendTokens(chain, options) {
     }
     // Updating Nonce data for this Address
 
-    updateLocalNonce(nonceFilePath, signerAddress, nonce);
+    config.chains[chain.name.toLowerCase()] = updateLocalNonce(chain, nonce, signerAddress);
+    saveConfig(config, env);
 }
 
 async function main(options) {
@@ -129,7 +129,7 @@ async function main(options) {
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
-        await sendTokens(chain, options);
+        await sendTokens(config, chain, options);
     }
 }
 
@@ -151,11 +151,11 @@ if (require.main === module) {
     program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)').makeOptionMandatory(true));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--ledgerPath <ledgerPath>', 'The path to identify the account in ledger').makeOptionMandatory(false));
-    program.addOption(new Option('--filePath <filePath>', 'The filePath where the signed tx will be stored').makeOptionMandatory(false));
     program.addOption(
-        new Option('--nonceFilePath <nonceFilePath>', 'The File where nonce value to use for each address is stored').makeOptionMandatory(
-            false,
-        ),
+        new Option(
+            '--filePath <filePath>',
+            'The filePath where the signed tx will be stored. It will create the file if not already exists. File name Should end with .json. Example =>  ./txs/unsignedTransactions.json',
+        ).makeOptionMandatory(false),
     );
     program.addOption(
         new Option(

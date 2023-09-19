@@ -28,7 +28,7 @@ async function updateStaticGasOptions(chain, options, filePath) {
     try {
         const gasPrice = parseUnits((await provider.getGasPrice()).toString(), 'gwei') * 5;
         const block = await provider.getBlock('latest');
-        const gasLimit = block.gasLimit.toNumber() / 500;
+        const gasLimit = block.gasLimit.toNumber() / 100;
         const staticGasOptions = {};
         staticGasOptions.gasLimit = gasLimit;
         staticGasOptions.gasPrice = gasPrice;

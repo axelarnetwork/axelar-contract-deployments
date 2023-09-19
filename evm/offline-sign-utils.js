@@ -215,15 +215,17 @@ const getWallet = async (privateKey, provider, ledgerPath) => {
     return { wallet, providerNonce };
 };
 
-const getLocalNonce = (nonceFilePath, signerAddress) => {
-    const nonceData = getAllSignersData(nonceFilePath);
-    return nonceData[signerAddress] || 0;
+const getLocalNonce = (chain, signerAddress) => {
+    const nonceData = chain ? chain.nonceData : undefined;
+    const nonce = nonceData ? nonceData[signerAddress] || 0 : 0;
+    return nonce;
 };
 
-const updateLocalNonce = (nonceFilePath, signerAddress, nonce) => {
-    const nonceData = getAllSignersData(nonceFilePath);
+const updateLocalNonce = (chain, nonce, signerAddress) => {
+    const nonceData = chain.nonceData || {};
     nonceData[signerAddress] = nonce;
-    updateSignersData(nonceFilePath, nonceData);
+    chain.nonceData = nonceData;
+    return chain;
 };
 
 module.exports = {

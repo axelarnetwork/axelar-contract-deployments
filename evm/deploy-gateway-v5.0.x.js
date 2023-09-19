@@ -312,7 +312,7 @@ async function deploy(config, options) {
 }
 
 async function upgrade(config, options) {
-    const { chainName, privateKey, yes, ledgerPath, offline, nonceFilePath, filePath, nonceOffset } = options;
+    const { chainName, privateKey, yes, ledgerPath, offline, env, filePath, nonceOffset } = options;
     const contractName = 'AxelarGateway';
 
     const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
@@ -322,7 +322,9 @@ async function upgrade(config, options) {
     const { wallet, providerNonce } = await getWallet(privateKey, provider, ledgerPath);
     const signerAddress = await wallet.getAddress();
 
-    await printWalletInfo(wallet);
+    if (!offline) {
+        await printWalletInfo(wallet);
+    }
 
     const contractConfig = chain.contracts[contractName];
 
@@ -357,7 +359,11 @@ async function upgrade(config, options) {
 
     printInfo('Chain', chain.name);
     printInfo('Gateway Proxy', gateway.address);
-    printInfo('Current implementation', await gateway.implementation());
+
+    if (!offline) {
+        printInfo('Current implementation', await gateway.implementation());
+    }
+
     printInfo('Upgrading to implementation', contractConfig.implementation);
     printInfo('New Implementation codehash', implementationCodehash);
     printInfo('Setup params', setupParams);
@@ -374,10 +380,11 @@ async function upgrade(config, options) {
     let signersData, transactions;
 
     if (offline) {
-        let nonce = getLocalNonce(nonceFilePath, signerAddress);
+        let nonce = getLocalNonce(chain, signerAddress);
 
-        if (providerNonce !== undefined && providerNonce !== null) {
-            updateLocalNonce(nonceFilePath, signerAddress, providerNonce);
+        if (providerNonce !== undefined && providerNonce !== null && providerNonce > nonce) {
+            config.chains[chain.name.toLowerCase()] = updateLocalNonce(chain, providerNonce, signerAddress);
+            saveConfig(config, env);
             nonce = providerNonce;
         }
 
@@ -401,6 +408,7 @@ async function upgrade(config, options) {
         const tx = await gateway.populateTransaction.upgrade(contractConfig.implementation, implementationCodehash, setupParams);
         tx.nonce = nonce;
         tx.chainId = chain.chainId;
+        printInfo('Waiting for user to approve transaction through ledger wallet');
         const { baseTx, signedTx } = await ledgerSign(wallet, chain, tx, staticGasOptions);
         // Storing the fields in the data that will be stored in file
         data.msg = `This transaction will perform upgrade of AxelarGateway contract having address ${gateway.address} with implementation ${contractConfig.implementation} on chain ${chain.name} with chainId ${chain.chainId}`;
@@ -411,27 +419,28 @@ async function upgrade(config, options) {
 
         if (transactions) {
             signersData[signerAddress] = transactions;
-            await updateSignersData(filePath, signersData);
+            updateSignersData(filePath, signersData);
         }
         // Updating Nonce data for this Address
 
-        updateLocalNonce(nonceFilePath, signerAddress, nonce);
+        config.chains[chain.name.toLowerCase()] = updateLocalNonce(chain, ++nonce, signerAddress);
+        saveConfig(config, env);
     } else {
         const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
         printInfo('Upgrade transaction', tx.hash);
 
         await tx.wait(chain.confirmations);
+
+        const newImplementation = await gateway.implementation();
+        printInfo('New implementation', newImplementation);
+
+        if (newImplementation !== contractConfig.implementation) {
+            printWarn('Implementation not upgraded yet!');
+            return;
+        }
+
+        printInfo('Upgraded to', newImplementation);
     }
-
-    const newImplementation = await gateway.implementation();
-    printInfo('New implementation', newImplementation);
-
-    if (newImplementation !== contractConfig.implementation) {
-        printWarn('Implementation not upgraded yet!');
-        return;
-    }
-
-    printInfo('Upgraded to', newImplementation);
 }
 
 async function main(options) {
@@ -477,11 +486,11 @@ async function programHandler() {
     program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('-l, --ledgerPath <ledgerPath>', 'The path to identify the account in ledger').makeOptionMandatory(false));
-    program.addOption(new Option('--filePath <filePath>', 'The filePath where the signed tx will be stored').makeOptionMandatory(false));
     program.addOption(
-        new Option('--nonceFilePath <nonceFilePath>', 'The File where nonce value to use for each address is stored').makeOptionMandatory(
-            false,
-        ),
+        new Option(
+            '--filePath <filePath>',
+            'The filePath where the signed tx will be stored. It will create the file if not already exists. File name Should end with .json. Example =>  ./txs/unsignedTransactions.json',
+        ).makeOptionMandatory(false),
     );
     program.addOption(
         new Option(

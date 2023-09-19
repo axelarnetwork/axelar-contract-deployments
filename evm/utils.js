@@ -634,4 +634,5 @@ module.exports = {
     wasEventEmitted,
     isContract,
     isValidPrivateKey,
+    verifyContract,
 };
