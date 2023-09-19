@@ -4,7 +4,7 @@ const { Contract, ContractFactory } = require('ethers');
 const { deployAndInitContractConstant, create3DeployAndInitContract } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 
-const { verifyContract, deployCreate, getBytecodeHash } = require('./utils');
+const { verifyContract, deployCreate, getBytecodeHash, deployContract, printInfo, getDeployedAddress, isContract } = require('./utils');
 
 async function deployUpgradable(
     wallet,
@@ -98,26 +98,49 @@ async function deployCreate3Upgradable(
 }
 
 async function upgradeUpgradable(
+    deployMethod,
     proxyAddress,
     wallet,
     contractJson,
-    implementationConstructorArgs = [],
-    implementationDeploymentOptions = null,
-    setupParams = '0x',
+    implementationConstructorArgs,
+    setupParams,
+    deployOptions = {},
+    gasOptions = {},
     verifyOptions = null,
+    chain = '',
 ) {
     const proxy = new Contract(proxyAddress, IUpgradable.abi, wallet);
 
-    const implementation = await deployCreate(
-        wallet,
+    const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
+        ...deployOptions,
         contractJson,
-        implementationConstructorArgs,
-        implementationDeploymentOptions,
-        verifyOptions,
-    );
-    const implementationCodeHash = await getBytecodeHash(implementation);
+        constructorArgs: implementationConstructorArgs,
+        provider: wallet.provider,
+    });
 
-    const tx = await proxy.upgrade(implementation.address, implementationCodeHash, setupParams);
+    printInfo('Predicted Implementation Address', predictedAddress);
+    let implementation;
+
+    if (await isContract(predictedAddress, wallet.provider)) {
+        printInfo('New Implementation already deployed', predictedAddress);
+        implementation = new Contract(predictedAddress, contractJson.abi, wallet);
+    } else {
+        implementation = await deployContract(
+            deployMethod,
+            wallet,
+            contractJson,
+            implementationConstructorArgs,
+            deployOptions,
+            gasOptions,
+            verifyOptions,
+        );
+        printInfo('New Implementation', implementation.address);
+    }
+
+    const implementationCodeHash = await getBytecodeHash(implementation, chain);
+    printInfo('New Implementation Code Hash', implementationCodeHash);
+
+    const tx = await proxy.upgrade(implementation.address, implementationCodeHash, setupParams, gasOptions);
     await tx.wait();
 
     return tx;

@@ -6,22 +6,15 @@ const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
-const { printInfo } = require('./utils');
+const { printInfo, printWalletInfo } = require('./utils');
 const readlineSync = require('readline-sync');
 
 async function sendTokens(chain, options) {
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(options.privateKey, provider);
 
-    printInfo('Wallet address', wallet.address);
-    const balance = await wallet.provider.getBalance(wallet.address);
+    const balance = await printWalletInfo(wallet);
     const amount = ethers.utils.parseEther(options.amount);
-
-    console.log(
-        `Wallet has ${balance / 1e18} ${chalk.green(chain.tokenSymbol)} and nonce ${await wallet.provider.getTransactionCount(
-            wallet.address,
-        )} on ${chain.name}.`,
-    );
 
     if (balance.lte(amount)) {
         throw new Error(`Wallet has insufficient funds.`);
@@ -53,7 +46,7 @@ async function sendTokens(chain, options) {
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../info/${options.env === 'local' ? 'testnet' : options.env}.json`);
+    const config = require(`${__dirname}/../axelar-chains-config/info/${options.env === 'local' ? 'testnet' : options.env}.json`);
 
     const chains = options.chainNames.split(',').map((str) => str.trim());
 

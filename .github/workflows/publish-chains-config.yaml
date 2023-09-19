@@ -1,0 +1,23 @@
+name: 'Publish Axelar Chains Config to NPM'
+
+on:
+    workflow_dispatch:
+
+jobs:
+    publish-to-npm:
+        name: 'Publish to NPM'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '18.x'
+                  registry-url: 'https://registry.npmjs.org'
+            - run: npm ci
+              working-directory: ./axelar-chains-config
+            - run: npm run build
+              working-directory: ./axelar-chains-config
+            - run: npm publish
+              working-directory: ./axelar-chains-config
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
