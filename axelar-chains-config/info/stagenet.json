@@ -13,9 +13,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
+          "implementation": "0x385a111F8da2b4F2C6b4eB44cE71F405dB059d74",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -36,7 +36,7 @@
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
@@ -60,9 +60,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
+          "implementation": "0x385a111F8da2b4F2C6b4eB44cE71F405dB059d74",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -83,7 +83,7 @@
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
@@ -107,9 +107,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0x7199983dFa2F395dd7edE9FCC97FfD5fea09E57d",
+          "implementation": "0xD20c14560F455Db68806F570B1B3E643aE1AcF4a",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -130,7 +130,7 @@
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
@@ -154,9 +154,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
+          "implementation": "0x385a111F8da2b4F2C6b4eB44cE71F405dB059d74",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -177,7 +177,7 @@
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
@@ -201,9 +201,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
+          "implementation": "0x3A295F02cF144f15Dc02cEc2b95AF7dFc37bB2ec",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -224,7 +224,7 @@
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
@@ -248,9 +248,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
+          "implementation": "0xD20c14560F455Db68806F570B1B3E643aE1AcF4a",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -271,7 +271,7 @@
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
@@ -295,9 +295,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0x6eB032396411937905F94459591d0Ed24D0a40c3",
+          "implementation": "0x385a111F8da2b4F2C6b4eB44cE71F405dB059d74",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -321,7 +321,7 @@
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
@@ -345,9 +345,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0x571Ac97CeDDe864E15e03aeE82BB09e63459bCcD",
+          "implementation": "0x2A1E95293F9BC953C8b3B039D11e6996e44890b6",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -368,7 +368,7 @@
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
@@ -391,9 +391,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0x571Ac97CeDDe864E15e03aeE82BB09e63459bCcD",
+          "implementation": "0x7199983dFa2F395dd7edE9FCC97FfD5fea09E57d",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -414,7 +414,7 @@
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
@@ -425,7 +425,7 @@
         "api": "https://api-goerli-optimism.etherscan.io/api"
       },
       "gasOptions": {
-        "gasLimit": 2500000
+        "gasLimit": 5000000
       }
     },
     "base": {
@@ -441,9 +441,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
-          "implementation": "0x571Ac97CeDDe864E15e03aeE82BB09e63459bCcD",
+          "implementation": "0x7199983dFa2F395dd7edE9FCC97FfD5fea09E57d",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "collector": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d"
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -463,7 +463,7 @@
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "address": "0x40955d09718525559ec1bb8b37d7c211F14D2C3d",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"

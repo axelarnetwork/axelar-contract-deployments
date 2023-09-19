@@ -20,15 +20,19 @@ function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
 }
 
-async function getImplementationArgs(contractName, config) {
+async function getImplementationArgs(contractName, config, options) {
     const contractConfig = config[contractName];
 
     switch (contractName) {
         case 'AxelarGasService': {
+            if (options.args) {
+                contractConfig.collector = options.args;
+            }
+
             const collector = contractConfig.collector;
 
             if (!isAddress(collector)) {
-                throw new Error(`Missing AxelarGasService.collector in the chain info.`);
+                throw new Error(`Missing AxelarGasService.collector ${collector}.`);
             }
 
             return [collector];
@@ -94,7 +98,7 @@ function getUpgradeArgs(contractName, config) {
  * Deploy or upgrade an upgradable contract that's based on the init proxy pattern.
  */
 async function deploy(options, chain) {
-    const { artifactPath, contractName, deployMethod, privateKey, upgrade, verifyEnv, yes } = options;
+    const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
 
     if (deployMethod === 'create3' && (contractName === 'AxelarGasService' || contractName === 'AxelarDepositService')) {
@@ -106,6 +110,11 @@ async function deploy(options, chain) {
     const provider = getDefaultProvider(rpc);
     const wallet = new Wallet(privateKey, provider);
     await printWalletInfo(wallet);
+
+    const artifactPath =
+        options.artifactPath ||
+        '@axelar-network/axelar-cgp-solidity/artifacts/contracts/' +
+            (contractName === 'AxelarGasService' ? 'gas-service/' : 'deposit-service/');
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
     const proxyPath = artifactPath + contractName + 'Proxy.sol/' + contractName + 'Proxy.json';
@@ -119,10 +128,16 @@ async function deploy(options, chain) {
     }
 
     const contractConfig = contracts[contractName];
-    const implArgs = await getImplementationArgs(contractName, contracts);
+    const implArgs = await getImplementationArgs(contractName, contracts, options);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    const salt = options.salt || contractName;
+    let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
+
+    if (deployMethod === 'create') {
+        deployerContract = null;
+    }
 
     if (upgrade) {
         if (!contractConfig.address) {
@@ -144,16 +159,23 @@ async function deploy(options, chain) {
         if (!yes) {
             const anwser = readlineSync.question(`Perform an upgrade for ${chain.name}? ${chalk.green('(y/n)')} `);
             if (anwser !== 'y') return;
+            console.log('');
         }
 
         await upgradeUpgradable(
+            deployMethod,
             contractConfig.address,
             wallet.connect(provider),
             implementationJson,
             implArgs,
-            {},
             getUpgradeArgs(contractName, chain),
+            {
+                deployerContract,
+                salt: `${salt} Implementation`,
+            },
+            gasOptions,
             verifyOptions,
+            chain.name,
         );
 
         contractConfig.implementation = await contract.implementation();
@@ -161,15 +183,8 @@ async function deploy(options, chain) {
         console.log(`${chain.name} | New Implementation for ${contractName} is at ${contractConfig.implementation}`);
         console.log(`${chain.name} | Upgraded.`);
     } else {
-        const salt = options.salt || contractName;
         const setupArgs = getInitArgs(contractName, contracts);
         printInfo('Proxy setup args', setupArgs);
-
-        let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
-
-        if (deployMethod === 'create') {
-            deployerContract = null;
-        }
 
         const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
             salt,
@@ -301,17 +316,18 @@ program.addOption(
         .makeOptionMandatory(true)
         .env('ENV'),
 );
-program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true));
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
 program.addOption(
     new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
 );
+program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path'));
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
 program.addOption(new Option('-u, --upgrade', 'upgrade a deployed contract'));
 program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
 program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+program.addOption(new Option('--args <args>', 'customize deployment args'));
 
 program.action((options) => {
     main(options);

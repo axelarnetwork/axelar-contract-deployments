@@ -43,7 +43,7 @@ async function deploy(config, options) {
 
     const contractName = 'AxelarGateway';
 
-    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, tokenSymbol: 'ETH' };
+    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
@@ -95,7 +95,7 @@ async function deploy(config, options) {
         const params = await getAuthParams(config, chain.id);
         printInfo('Auth deployment args', params);
 
-        auth = await authFactory.deploy(params, gasOptions).then((d) => d.deployed());
+        auth = await authFactory.deploy(params, gasOptions);
         await auth.deployTransaction.wait(chain.confirmations);
 
         contractsToVerify.push({
@@ -109,7 +109,7 @@ async function deploy(config, options) {
     } else {
         printInfo(`Deploying token deployer contract`);
 
-        tokenDeployer = await tokenDeployerFactory.deploy(gasOptions).then((d) => d.deployed());
+        tokenDeployer = await tokenDeployerFactory.deploy(gasOptions);
         await tokenDeployer.deployTransaction.wait(chain.confirmations);
 
         contractsToVerify.push({
@@ -127,7 +127,7 @@ async function deploy(config, options) {
     if (skipExisting && contractConfig.implementation) {
         implementation = gatewayFactory.attach(contractConfig.implementation);
     } else {
-        implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address).then((d) => d.deployed());
+        implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address);
         await implementation.deployTransaction.wait(chain.confirmations);
     }
 
@@ -163,9 +163,7 @@ async function deploy(config, options) {
 
     if (!(skipExisting && contractConfig.address)) {
         printInfo('Transferring auth ownership');
-        await auth
-            .transferOwnership(gateway.address, chain.contracts.AxelarGateway?.gasOptions || {})
-            .then((tx) => tx.wait(chain.confirmations));
+        await auth.transferOwnership(gateway.address, gasOptions).then((tx) => tx.wait(chain.confirmations));
         printInfo('Transferred auth ownership. All done!');
     }
 
@@ -243,7 +241,7 @@ async function upgrade(config, options) {
 
     const contractName = 'AxelarGateway';
 
-    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, tokenSymbol: 'ETH' };
+    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 

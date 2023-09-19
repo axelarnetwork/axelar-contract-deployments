@@ -9,6 +9,8 @@ const {
     Contract,
 } = require('ethers');
 const { Command, Option } = require('commander');
+const readlineSync = require('readline-sync');
+const chalk = require('chalk');
 const {
     printInfo,
     printError,
@@ -24,12 +26,14 @@ const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/inter
 const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
 
 async function processCommand(options, chain) {
-    const { contractName, address, action, privateKey, args } = options;
+    const { contractName, address, action, privateKey, args, yes } = options;
 
     const argsArray = parseArgs(args);
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
+
+    printInfo('Chain', chain.name);
 
     let operatorsAddress;
 
@@ -57,6 +61,11 @@ async function processCommand(options, chain) {
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
     printInfo('Operator Action', action);
+
+    if (!yes) {
+        const anwser = readlineSync.question(`Proceed with action on ${chain.name}? ${chalk.green('(y/n)')} `);
+        if (anwser !== 'y') return;
+    }
 
     switch (action) {
         case 'isOperator': {
@@ -267,12 +276,13 @@ program.addOption(
 );
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators').makeOptionMandatory(false));
-program.addOption(new Option('-n, --chain <chain>', 'chain name').makeOptionMandatory(true));
+program.addOption(new Option('-n, --chainNames <chainNames>', 'chains').makeOptionMandatory(true));
 program.addOption(new Option('--address <address>', 'override address').makeOptionMandatory(false));
 program.addOption(
     new Option('--action <action>', 'operator action').choices(['isOperator', 'addOperator', 'removeOperator', 'collectFees', 'refund']),
 );
 program.addOption(new Option('--args <args>', 'operator action arguments').makeOptionMandatory(true));
+program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
 program.action((options) => {
     main(options);

@@ -11,12 +11,17 @@ const {
     utils: { defaultAbiCoder },
 } = ethers;
 const { Command, Option } = require('commander');
-const { verifyContract, getEVMAddresses } = require('./utils');
+const { verifyContract, getEVMAddresses, loadConfig } = require('./utils');
 
 async function verifyContracts(config, chain, options) {
-    const { env, contractName } = options;
+    const { env, contractName, dir } = options;
     const provider = getDefaultProvider(chain.rpc);
     const wallet = Wallet.createRandom().connect(provider);
+    const verifyOptions = {};
+
+    if (dir) {
+        verifyOptions.dir = dir;
+    }
 
     switch (contractName) {
         case 'Create3Deployer': {
@@ -28,7 +33,24 @@ async function verifyContracts(config, chain, options) {
 
             console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
 
-            await verifyContract(env, chain.name, contract.address, []);
+            await verifyContract(env, chain.name, contract.address, [], verifyOptions);
+            break;
+        }
+
+        case 'InterchainProposalSender': {
+            const contractFactory = await getContractFactory('InterchainProposalSender', wallet);
+
+            const contract = contractFactory.attach(options.address || chain.contracts.InterchainProposalSender.address);
+
+            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
+
+            await verifyContract(
+                env,
+                chain.name,
+                contract.address,
+                [chain.contracts.AxelarGateway.address, chain.contracts.AxelarGasService.address],
+                verifyOptions,
+            );
             break;
         }
 
@@ -41,7 +63,7 @@ async function verifyContracts(config, chain, options) {
 
             console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
 
-            await verifyContract(env, chain.name, contract.address, []);
+            await verifyContract(env, chain.name, contract.address, [], verifyOptions);
             break;
         }
 
@@ -54,7 +76,7 @@ async function verifyContracts(config, chain, options) {
 
             console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
 
-            await verifyContract(env, chain.name, contract.address, []);
+            await verifyContract(env, chain.name, contract.address, [], verifyOptions);
             break;
         }
 
@@ -67,7 +89,7 @@ async function verifyContracts(config, chain, options) {
 
             console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
 
-            await verifyContract(env, chain.name, contract.address, [chain.contracts.Operators.owner]);
+            await verifyContract(env, chain.name, contract.address, [chain.contracts.Operators.owner], verifyOptions);
             break;
         }
 
@@ -90,10 +112,10 @@ async function verifyContracts(config, chain, options) {
 
             console.log(`Verifying ${contractName} on ${chain.name} at address ${gateway.address}...`);
 
-            await verifyContract(env, chain.name, auth, [authParams]);
-            await verifyContract(env, chain.name, tokenDeployer, []);
-            await verifyContract(env, chain.name, implementation, [auth, tokenDeployer]);
-            await verifyContract(env, chain.name, gateway.address, [implementation, setupParams]);
+            await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
+            await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
+            await verifyContract(env, chain.name, implementation, [auth, tokenDeployer], verifyOptions);
+            await verifyContract(env, chain.name, gateway.address, [implementation, setupParams], verifyOptions);
 
             break;
         }
@@ -104,8 +126,8 @@ async function verifyContracts(config, chain, options) {
             const gasService = gasServiceFactory.attach(options.address || contractConfig.address);
 
             const implementation = await gasService.implementation();
-            await verifyContract(env, chain.name, implementation, [contractConfig.collector]);
-            await verifyContract(env, chain.name, gasService.address, []);
+            await verifyContract(env, chain.name, implementation, [contractConfig.collector], verifyOptions);
+            await verifyContract(env, chain.name, gasService.address, [], verifyOptions);
             break;
         }
 
@@ -120,7 +142,7 @@ async function verifyContracts(config, chain, options) {
                 contractConfig.wrappedSymbol,
                 contractConfig.refundIssuer,
             ]);
-            await verifyContract(env, chain.name, gasService.address, []);
+            await verifyContract(env, chain.name, gasService.address, [], verifyOptions);
             break;
         }
 
@@ -143,7 +165,7 @@ async function verifyContracts(config, chain, options) {
 
             console.log(`Verifying ${name} (${symbol}) decimals ${decimals} on ${chain.name}...`);
 
-            await verifyContract(env, chain.name, tokenContract.address, [name, symbol, decimals, cap]);
+            await verifyContract(env, chain.name, tokenContract.address, [name, symbol, decimals, cap], verifyOptions);
             break;
         }
 
@@ -154,7 +176,7 @@ async function verifyContracts(config, chain, options) {
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../info/${options.env === 'local' ? 'testnet' : options.env}.json`);
+    const config = loadConfig(options.env);
 
     let chains = options.chainNames.split(',').map((str) => str.trim());
 
@@ -194,6 +216,7 @@ if (require.main === module) {
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name'));
     program.addOption(new Option('-a, --address <address>', 'contract address'));
+    program.addOption(new Option('-d, --dir <dir>', 'contract artifacts dir'));
     program.addOption(new Option('--args <args>', 'contract args'));
 
     program.action((options) => {
