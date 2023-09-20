@@ -4,53 +4,57 @@ const chalk = require('chalk');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const {
-    providers: { JsonRpcProvider },
+    providers: { getDefaultProvider },
 } = ethers;
 const readlineSync = require('readline-sync');
 
-const { printError, printInfo, printObj } = require('./utils');
-const { sendTx, getAllSignersData, updateSignersData } = require('./offline-sign-utils');
+const { printError, printInfo, printObj, loadConfig } = require('./utils');
+const { sendTx, getSignedTx, storeSignedTx } = require('./offline-sign-utils');
 
 async function processTransactions(filePath, provider) {
     try {
-        const signersData = await getAllSignersData(filePath);
-
-        for (const [signerAddress, transactions] of Object.entries(signersData)) {
-            for (const transaction of transactions) {
-                if (transaction.status === 'PENDING') {
-                    printInfo('Broadcasting transaction: ');
-                    printObj(transaction.unsignedTx);
-
-                    // Send the signed transaction
-                    const { success, response } = await sendTx(transaction.signedTx, provider);
-
-                    if (success) {
-                        // Update the transaction status and store transaction hash
-                        transaction.status = 'SUCCESS';
-                        transaction.transactionHash = response.transactionHash;
-                        printInfo(`Transaction executed successfully ${response.transactionHash}`);
-                    } else {
-                        // Update the transaction status and store error message
-                        transaction.status = 'FAILED';
-                        printError('Error broadcasting tx: ', transaction.signedTx);
-                    }
-                }
-            }
-            // Write back the updated JSON object to the file
-
-            signersData[signerAddress] = transactions;
+        if(!filePath) {
+            throw new Error("FilePath is not provided in user info");
         }
+        const transaction = await getSignedTx(filePath);
 
-        updateSignersData(filePath, signersData);
+        if (transaction.status === 'PENDING') {
+            printInfo('Broadcasting transaction: ');
+            printObj(transaction.unsignedTx);
+
+            // Send the signed transaction
+            const { success, response } = await sendTx(transaction.signedTx, provider);
+
+            if (success) {
+                // Update the transaction status and store transaction hash
+                transaction.status = 'SUCCESS';
+                transaction.transactionHash = response.transactionHash;
+                printInfo(`Transaction executed successfully ${response.transactionHash}`);
+            } else {
+                // Update the transaction status and store error message
+                transaction.status = 'FAILED';
+                printError('Error broadcasting tx: ', transaction.signedTx);
+            }
+        }
+        storeSignedTx(filePath, transaction);
+
     } catch (error) {
         printError('Error processing transactions:', error.message);
     }
 }
 
 async function main(options) {
-    // TODO: Enable multiple scripts to use offlineSigning
-    const { filePath, rpcUrl } = options;
-    const provider = new JsonRpcProvider(rpcUrl);
+    const { filePath, rpcUrl, env, chainName } = options;
+
+    const config = loadConfig(env);
+
+    if (config.chains[chainName.toLowerCase()] === undefined) {
+        throw new Error(`Chain ${chainName} is not defined in the info file`);
+    }
+
+    const chain = config.chains[chainName.toLowerCase()];
+    const provider = rpcUrl ? getDefaultProvider(rpcUrl) : getDefaultProvider(chain.rpc);
+
     const network = await provider.getNetwork();
 
     if (!options.yes) {
@@ -71,8 +75,14 @@ program.name('broadcast-transactions').description('Broadcast all the pending si
 
 program.addOption(new Option('--filePath <filePath>', 'The file where the signed tx are stored').makeOptionMandatory(true));
 program.addOption(
-    new Option('-r, --rpcUrl <rpcUrl>', 'The rpc url for creating a provider to broadcast the transactions').makeOptionMandatory(true),
+    new Option('-e, --env <env>', 'environment')
+        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
+        .default('testnet')
+        .makeOptionMandatory(true)
+        .env('ENV'),
 );
+program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+program.addOption(new Option('-r, --rpcUrl <rpcUrl>', 'The rpc url for creating a provider to fetch gasOptions'));
 program.addOption(new Option('-y, --yes', 'skip prompts'));
 
 program.action((options) => {
