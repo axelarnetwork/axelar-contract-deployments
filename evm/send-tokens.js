@@ -11,33 +11,24 @@ const {
 } = ethers;
 const readlineSync = require('readline-sync');
 
-const { printInfo, printWalletInfo, isValidNumber, saveConfig } = require('./utils');
+const { printInfo, printWalletInfo, isValidNumber, loadConfig } = require('./utils');
 const {
-    getAllSignersData,
-    updateSignersData,
-    getTransactions,
+    storeSignedTx,
     getWallet,
     ledgerSign,
     getLocalNonce,
-    updateLocalNonce,
 } = require('./offline-sign-utils.js');
 
-async function sendTokens(config, chain, options) {
-    const { privateKey, offline, ledgerPath, filePath, nonceOffset, env } = options;
+async function sendTokens(chain, options) {
+    const { privateKey, offline, nonceOffset, env } = options;
     let { amount, recipients } = options;
     const provider = getDefaultProvider(chain.rpc);
     recipients = options.recipients.split(',').map((str) => str.trim());
     amount = parseEther(amount);
 
-    const { wallet, providerNonce } = await getWallet(privateKey, provider, ledgerPath);
+    const wallet = await getWallet(privateKey, provider, options);
     const signerAddress = await wallet.getAddress();
-    let nonce = getLocalNonce(chain, signerAddress);
-
-    if (providerNonce !== undefined && providerNonce !== null && providerNonce > nonce) {
-        config.chains[chain.name.toLowerCase()] = updateLocalNonce(chain, providerNonce, signerAddress);
-        saveConfig(config, env);
-        nonce = providerNonce;
-    }
+    let nonce;
 
     if (!offline) {
         const balance = await printWalletInfo(wallet);
@@ -56,14 +47,10 @@ async function sendTokens(config, chain, options) {
         if (anwser !== 'y') return;
     }
 
-    let signersData, transactions;
     const gasOptions = chain.staticGasOptions || {};
 
     if (offline) {
-        if (!filePath) {
-            throw new Error('FilePath is not provided in user info');
-        }
-
+        nonce = getLocalNonce(chain, signerAddress);
         if (nonceOffset) {
             if (!isValidNumber(nonceOffset)) {
                 throw new Error('Provided nonce offset is not a valid number');
@@ -72,9 +59,6 @@ async function sendTokens(config, chain, options) {
             nonce += parseInt(nonceOffset);
         }
 
-        printInfo(`Storing signed Txs offline in file ${filePath}`);
-        signersData = await getAllSignersData(filePath);
-        transactions = await getTransactions(filePath, signerAddress);
     }
 
     for (const recipient of recipients) {
@@ -85,6 +69,8 @@ async function sendTokens(config, chain, options) {
         };
 
         if (offline) {
+            const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-send-tokens-address-${signerAddress}-nonce-${nonce}.txt`;
+            printInfo(`Storing signed Tx offline in file ${filePath}`);
             const data = {};
             tx.nonce = nonce;
             tx.chainId = chain.chainId;
@@ -95,7 +81,7 @@ async function sendTokens(config, chain, options) {
             data.unsignedTx = baseTx;
             data.signedTx = signedTx;
             data.status = 'PENDING';
-            transactions.push(data);
+            storeSignedTx(filePath, data);
         } else {
             const response = await wallet.sendTransaction(tx);
             await response.wait();
@@ -104,19 +90,11 @@ async function sendTokens(config, chain, options) {
 
         ++nonce;
     }
-
-    if (transactions) {
-        signersData[signerAddress] = transactions;
-        updateSignersData(filePath, signersData);
-    }
-    // Updating Nonce data for this Address
-
-    config.chains[chain.name.toLowerCase()] = updateLocalNonce(chain, nonce, signerAddress);
-    saveConfig(config, env);
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../axelar-chains-config/info/${options.env === 'local' ? 'testnet' : options.env}.json`);
+
+    const config = loadConfig(options.env);
 
     const chains = options.chainNames.split(',').map((str) => str.trim());
 
@@ -129,7 +107,7 @@ async function main(options) {
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
-        await sendTokens(config, chain, options);
+        await sendTokens(chain, options);
     }
 }
 
@@ -151,12 +129,6 @@ if (require.main === module) {
     program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)').makeOptionMandatory(true));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--ledgerPath <ledgerPath>', 'The path to identify the account in ledger').makeOptionMandatory(false));
-    program.addOption(
-        new Option(
-            '--filePath <filePath>',
-            'The filePath where the signed tx will be stored. It will create the file if not already exists. File name Should end with .json. Example =>  ./txs/unsignedTransactions.json',
-        ).makeOptionMandatory(false),
-    );
     program.addOption(
         new Option(
             '--nonceOffset <nonceOffset>',

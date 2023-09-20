@@ -29,13 +29,10 @@ const {
     isValidNumber,
 } = require('./utils');
 const {
-    getAllSignersData,
-    updateSignersData,
+    storeSignedTx,
     ledgerSign,
-    getTransactions,
     getWallet,
     getLocalNonce,
-    updateLocalNonce,
 } = require('./offline-sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
@@ -312,14 +309,14 @@ async function deploy(config, options) {
 }
 
 async function upgrade(config, options) {
-    const { chainName, privateKey, yes, ledgerPath, offline, env, filePath, nonceOffset } = options;
+    const { chainName, privateKey, yes, offline, env, nonceOffset } = options;
     const contractName = 'AxelarGateway';
 
     const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    const { wallet, providerNonce } = await getWallet(privateKey, provider, ledgerPath);
+    const wallet = await getWallet(privateKey, provider, options);
     const signerAddress = await wallet.getAddress();
 
     if (!offline) {
@@ -377,20 +374,8 @@ async function upgrade(config, options) {
         if (anwser !== 'y') return;
     }
 
-    let signersData, transactions;
-
     if (offline) {
         let nonce = getLocalNonce(chain, signerAddress);
-
-        if (providerNonce !== undefined && providerNonce !== null && providerNonce > nonce) {
-            config.chains[chain.name.toLowerCase()] = updateLocalNonce(chain, providerNonce, signerAddress);
-            saveConfig(config, env);
-            nonce = providerNonce;
-        }
-
-        if (!filePath) {
-            throw new Error('FilePath is not provided in user info');
-        }
 
         if (nonceOffset) {
             if (!isValidNumber(nonceOffset)) {
@@ -400,9 +385,8 @@ async function upgrade(config, options) {
             nonce += parseInt(nonceOffset);
         }
 
-        printInfo(`Storing signed Txs offline in file ${filePath}`);
-        signersData = await getAllSignersData(filePath);
-        transactions = await getTransactions(filePath, signerAddress);
+        const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-send-tokens-address-${signerAddress}-nonce-${nonce}.txt`;
+        printInfo(`Storing signed Tx offline in file ${filePath}`);
         const staticGasOptions = chain.staticGasOptions || {};
         const data = {};
         const tx = await gateway.populateTransaction.upgrade(contractConfig.implementation, implementationCodehash, setupParams);
@@ -415,16 +399,7 @@ async function upgrade(config, options) {
         data.unsignedTx = baseTx;
         data.signedTx = signedTx;
         data.status = 'PENDING';
-        transactions.push(data);
-
-        if (transactions) {
-            signersData[signerAddress] = transactions;
-            updateSignersData(filePath, signersData);
-        }
-        // Updating Nonce data for this Address
-
-        config.chains[chain.name.toLowerCase()] = updateLocalNonce(chain, ++nonce, signerAddress);
-        saveConfig(config, env);
+        storeSignedTx(filePath, data);
     } else {
         const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
         printInfo('Upgrade transaction', tx.hash);
@@ -486,12 +461,6 @@ async function programHandler() {
     program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('-l, --ledgerPath <ledgerPath>', 'The path to identify the account in ledger').makeOptionMandatory(false));
-    program.addOption(
-        new Option(
-            '--filePath <filePath>',
-            'The filePath where the signed tx will be stored. It will create the file if not already exists. File name Should end with .json. Example =>  ./txs/unsignedTransactions.json',
-        ).makeOptionMandatory(false),
-    );
     program.addOption(
         new Option(
             '--nonceOffset <nonceOffset>',
