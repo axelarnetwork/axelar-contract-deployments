@@ -6,6 +6,7 @@ const {
     Wallet,
     getDefaultProvider,
     utils: { isAddress, keccak256, Interface, formatEther },
+    constants: { AddressZero },
     Contract,
     BigNumber,
 } = require('ethers');
@@ -91,7 +92,7 @@ async function processCommand(options, chain) {
 
     let multisigAddress;
 
-    if (isAddress(address)) {
+    if (isAddress(address) && address !== AddressZero) {
         multisigAddress = address;
     } else {
         if (!contractConfig?.address) {
@@ -111,7 +112,7 @@ async function processCommand(options, chain) {
 
     const multisigContract = new Contract(multisigAddress, IMultisig.abi, wallet);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions =  contractConfig?.gasOptions || chain?.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
     printInfo('Multisig Action', multisigAction);
@@ -135,7 +136,7 @@ async function processCommand(options, chain) {
 
             const multisigTarget = chain.contracts.AxelarGateway?.address;
 
-            if (!isAddress(multisigTarget)) {
+            if (!isAddress(multisigTarget) && multisigTarget !== AddressZero) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
             }
 
@@ -146,7 +147,7 @@ async function processCommand(options, chain) {
             await preExecutionChecks(multisigContract, multisigAction, wallet, multisigTarget, multisigCalldata, 0, yes);
 
             try {
-                const tx = await multisigContract.executeContract(multisigTarget, multisigCalldata, 0);
+                const tx = await multisigContract.executeContract(multisigTarget, multisigCalldata, 0, gasOptions);
                 await tx.wait();
             } catch (error) {
                 printError(error);
@@ -156,13 +157,13 @@ async function processCommand(options, chain) {
         }
 
         case 'transferMintLimiter': {
-            if (!isAddress(mintLimiterAddress)) {
+            if (!isAddress(mintLimiterAddress) && mintLimiterAddress !== AddressZero) {
                 throw new Error(`Invalid new mint limiter address: ${mintLimiterAddress}`);
             }
 
             const multisigTarget = chain.contracts.AxelarGateway?.address;
 
-            if (!isAddress(multisigTarget)) {
+            if (!isAddress(multisigTarget) && multisigTarget !== AddressZero) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
             }
 
@@ -183,7 +184,7 @@ async function processCommand(options, chain) {
         }
 
         case 'withdraw': {
-            if (!isAddress(recipientAddress)) {
+            if (!isAddress(recipientAddress) && recipientAddress !== AddressZero) {
                 throw new Error(`Invalid recipient address: ${recipientAddress}`);
             }
 
@@ -214,7 +215,7 @@ async function processCommand(options, chain) {
         }
 
         case 'executeMultisigProposal': {
-            if (!isAddress(target)) {
+            if (!isAddress(target) && target !== AddressZero) {
                 throw new Error(`Invalid target for execute multisig proposal: ${target}`);
             }
 
@@ -234,7 +235,7 @@ async function processCommand(options, chain) {
 
             const governance = chain.contracts.AxelarServiceGovernance?.address;
 
-            if (!isAddress(governance)) {
+            if (!isAddress(governance) && governance !== AddressZero) {
                 throw new Error(`Missing AxelarServiceGovernance address in the chain info.`);
             }
 
