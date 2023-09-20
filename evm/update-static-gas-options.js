@@ -27,8 +27,12 @@ async function updateStaticGasOptions(chain, options, filePath) {
 
     try {
         const gasPrice = parseUnits((await provider.getGasPrice()).toString(), 'gwei') * 5;
-        chain.staticGasOptions.gasLimit = chain.staticGasOptions.gasLimit || 3e6;
-        staticGasOptions.gasPrice = gasPrice;
+
+        if (!(chain.staticGasOptions && chain.staticGasOptions.gasLimit !== undefined)) {
+            chain.staticGasOptions = { gasLimit: 3e6 };
+        }
+
+        chain.staticGasOptions.gasPrice = gasPrice;
         printInfo(`GasOptions updated succesfully and stored in config file ${filePath}`);
     } catch (error) {
         printError(`GasOptions updation failed with error: ${error.message}`);
@@ -40,6 +44,7 @@ async function updateStaticGasOptions(chain, options, filePath) {
 
 async function main(options) {
     const { env, chainNames } = options;
+    const filePath = `${__dirname}/../axelar-chains-config/info/${env}.json`;
     const config = loadConfig(env);
     const chains = chainNames.split(',').map((str) => str.trim());
 

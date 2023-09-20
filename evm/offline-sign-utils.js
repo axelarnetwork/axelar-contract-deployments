@@ -85,10 +85,11 @@ async function sendTx(tx, provider) {
     }
 }
 
-function updateSignersData(filePath, signersData) {
-    fs.writeFileSync(filePath, JSON.stringify(signersData, null, 2), (err) => {
+function storeSignedTx(filePath, signedTx) {
+    createFileIfNotExists(filePath);
+    fs.writeFileSync(filePath, JSON.stringify(signedTx, null, 2), (err) => {
         if (err) {
-            printError(`Could not update signersData in file ${filePath}`);
+            printError(`Could not store signedTx in file ${filePath}`);
             printObj(err);
             return;
         }
@@ -109,8 +110,8 @@ async function getNonceFromProvider(provider, address) {
     return nonce;
 }
 
-function getAllSignersData(filePath) {
-    const signersData = {};
+function getSignedTx(filePath) {
+    const signedTx = {};
 
     try {
         // Read the content of the file
@@ -120,13 +121,13 @@ function getAllSignersData(filePath) {
             const jsonData = JSON.parse(data);
 
             if (!isValidJSON(jsonData)) {
-                return signersData;
+                return signedTx;
             }
 
             return jsonData;
         }
 
-        return signersData;
+        return signedTx;
     } catch (error) {
         printError(`Failed to get all  signers data from the file ${filePath}`);
         printObj(error);
@@ -135,22 +136,10 @@ function getAllSignersData(filePath) {
 
 function getFileData(filePath) {
     try {
-        // Extract the directory path
-        const directoryPath = path.dirname(filePath);
-        // Check if the directory and file exists, create it if it doesn't
-
-        if (!fs.existsSync(directoryPath)) {
-            fs.mkdirSync(directoryPath);
-        }
-
-        if (!fs.existsSync(filePath)) {
-            // File does not exist, create it
-            fs.writeFileSync(filePath, JSON.stringify({}));
-            return undefined;
-        }
+        createFileIfNotExists(filePath);
         // Read the content of the file
 
-        const data = fs.readFileSync(filePath);
+        const data = fs.readFileSync(filePath, 'utf-8');
         return data;
     } catch (error) {
         printError(`Failed to get data from the file ${filePath}`);
@@ -197,11 +186,11 @@ function isValidJSON(obj) {
     return true;
 }
 
-const getWallet = async (privateKey, provider, ledgerPath) => {
+const getWallet = async (privateKey, provider, options) => {
     let wallet;
 
     if (privateKey === 'ledger') {
-        wallet = getLedgerWallet(provider, ledgerPath || undefined);
+        wallet = getLedgerWallet(provider, options?.ledgerPath);
     } else {
         if (!isValidPrivateKey(privateKey)) {
             throw new Error('Private key is missing/ not provided correctly');
@@ -210,14 +199,59 @@ const getWallet = async (privateKey, provider, ledgerPath) => {
         wallet = new Wallet(privateKey, provider);
     }
 
-    const signerAddress = await wallet.getAddress();
-    const providerNonce = await getNonceFromProvider(provider, signerAddress);
-    return { wallet, providerNonce };
+    return wallet;
 };
 
-const getLocalNonce = (chain, signerAddress) => {
-    const nonceData = chain ? chain.nonceData : undefined;
-    const nonce = nonceData ? nonceData[signerAddress] || 0 : 0;
+const getNonceFileData = () => {
+    const filePath = `${__dirname}/../axelar-chains-config/info/nonces.json`;
+    const emptyData = {};
+    const data = getFileData(filePath);
+
+    if (data) {
+        const jsonData = JSON.parse(data);
+
+        if (!isValidJSON(jsonData)) {
+            return emptyData;
+        }
+
+        return jsonData;
+    }
+
+    return emptyData;
+};
+
+function createFileIfNotExists(filePath) {
+    const directoryPath = path.dirname(filePath);
+
+    // Check if the directory and file exists, create it if it doesn't
+    if (!fs.existsSync(directoryPath)) {
+        fs.mkdirSync(directoryPath, { recursive: true }); // Added { recursive: true } to create parent directories if needed
+    }
+
+    if (!fs.existsSync(filePath)) {
+        // File does not exist, create it
+        fs.writeFileSync(filePath, JSON.stringify({}, null, 2));
+    }
+}
+
+const updateNonceFileData = (nonceData) => {
+    const filePath = `${__dirname}/../axelar-chains-config/info/nonces.json`;
+    createFileIfNotExists(filePath);
+    // Write nonceData to the file
+
+    try {
+        fs.writeFileSync(filePath, JSON.stringify(nonceData, null, 2));
+        printInfo(`Nonce updated successfully and stored in file ${filePath}`);
+    } catch (err) {
+        printError(`Could not update Nonce in file ${filePath}`);
+        printObj(err);
+    }
+};
+
+const getLocalNonce = (env, chainName, signerAddress) => {
+    const nonceData = getNonceFileData();
+    const chainNonceData = chainName ? nonceData[env][chainName] : undefined;
+    const nonce = chainNonceData ? chainNonceData[signerAddress] || 0 : 0;
     return nonce;
 };
 
@@ -230,11 +264,14 @@ const updateLocalNonce = (chain, nonce, signerAddress) => {
 
 module.exports = {
     sendTx,
-    getAllSignersData,
     getTransactions,
-    updateSignersData,
+    storeSignedTx,
+    getSignedTx,
     getWallet,
+    getNonceFileData,
+    updateNonceFileData,
     getLocalNonce,
     updateLocalNonce,
     ledgerSign,
+    getNonceFromProvider,
 };

@@ -11,23 +11,26 @@ async function checkBalance(provider, env, chain, staticGasOptions, addresses) {
     try {
         const minRequiredBalance = BigNumber.from(staticGasOptions.gasLimit * staticGasOptions.gasPrice);
         const chainName = chain.name.toLowerCase();
-        let nonceData = getNonceFileData();
-        let chainNonceData = nonceData[env][chainName];
-        if(addresses) {
+        const nonceData = getNonceFileData();
+        const chainNonceData = nonceData[env][chainName];
+
+        if (addresses) {
             addresses = JSON.parse(addresses);
+
             for (const address of addresses) {
-                const balance = await provider.getBalance(addressToCheck);
-                if(balance < minRequiredBalance) {
-                    printError("Minimum required Balance is", minRequiredBalance);
+                const balance = await provider.getBalance(address);
+
+                if (balance < minRequiredBalance) {
+                    printError('Minimum required Balance is', minRequiredBalance);
                     printError(`Wallet Balance for address ${address} is less than minimum required amount. Wallet Balance: `, balance);
                 }
             }
-        }
-        else {
-            for (const [address, ] of Object.entries(chainNonceData)) {
-                const balance = await provider.getBalance(addressToCheck);
-                if(balance < minRequiredBalance) {
-                    printError("Minimum required Balance is", minRequiredBalance);
+        } else {
+            for (const [address] of Object.entries(chainNonceData)) {
+                const balance = await provider.getBalance(address);
+
+                if (balance < minRequiredBalance) {
+                    printError('Minimum required Balance is', minRequiredBalance);
                     printError(`Wallet Balance for address ${address} is less than minimum required amount. Wallet Balance: `, balance);
                 }
             }
@@ -52,10 +55,12 @@ async function main(options) {
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
         const staticGasOptions = chain.staticGasOptions;
-        if(!staticGasOptions) {
-            printError("Could not find staticGasOptions for chain ", chain.name.toLowerCase());
+
+        if (!staticGasOptions) {
+            printError('Could not find staticGasOptions for chain ', chain.name.toLowerCase());
             continue;
         }
+
         const provider = rpcUrl ? getDefaultProvider(rpcUrl) : getDefaultProvider(chain.rpc);
         await checkBalance(provider, env, chain, staticGasOptions, addresses);
     }
@@ -74,10 +79,7 @@ program.addOption(
 );
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
 program.addOption(new Option('-r, --rpcUrl <rpcUrl>', 'The rpc url for creating a provider to fetch gasOptions'));
-program.addOption(
-    new Option('-a --addresses <addresses>', 'The Array of addresses for which the balance to check')
-        .env('ADDRESSES')
-);
+program.addOption(new Option('-a --addresses <addresses>', 'The Array of addresses for which the balance to check').env('ADDRESSES'));
 
 program.action((options) => {
     main(options);

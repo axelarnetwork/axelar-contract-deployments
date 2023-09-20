@@ -2,31 +2,44 @@
 
 const chalk = require('chalk');
 const { Command, Option } = require('commander');
-const fs = require('fs');
 const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
 const readlineSync = require('readline-sync');
 
-const { printError, printInfo, printObj } = require('./utils');
-const { getNonceFromProvider, getAllSignersData } = require('./offline-sign-utils');
+const { printError, printObj, loadConfig } = require('./utils');
+const { getNonceFromProvider, getNonceFileData, updateNonceFileData } = require('./offline-sign-utils');
 
-function updateNonce(provider, addresses, filePath) {
+async function updateNonce(provider, env, chain, addresses) {
     try {
-        const nonceData = getAllSignersData(filePath);
-        addresses = JSON.parse(addresses);
+        const chainName = chain.name.toLowerCase();
+        const nonceData = getNonceFileData();
 
-        for (const address of addresses) {
-            const nonce = getNonceFromProvider(provider, address);
-            nonceData[address] = nonce;
+        if (!nonceData[env]) {
+            nonceData[env] = {};
         }
 
-        fs.writeFileSync(filePath, JSON.stringify(nonceData, null, 2), (err) => {
-            if (err) {
-                printError(`Could not update Nonce in file ${filePath}`);
-                printObj(err);
+        if (!nonceData[env][chainName]) {
+            nonceData[env][chainName] = {};
+        }
+
+        const chainNonceData = nonceData[env][chainName];
+
+        if (addresses) {
+            addresses = JSON.parse(addresses);
+
+            for (const address of addresses) {
+                const nonce = await getNonceFromProvider(provider, address);
+                chainNonceData[address] = nonce;
             }
-        });
-        printInfo(`Nonce updated succesfully and stored in file ${filePath}`);
+        } else {
+            for (const [signerAddress] of Object.entries(chainNonceData)) {
+                const nonce = await getNonceFromProvider(provider, signerAddress);
+                chainNonceData[signerAddress] = nonce;
+            }
+        }
+
+        nonceData[env][chainName] = chainNonceData;
+        updateNonceFileData(nonceData);
     } catch (error) {
         printError(`Nonce updation failed with error: ${error.message}`);
         printObj(error);
@@ -34,20 +47,32 @@ function updateNonce(provider, addresses, filePath) {
 }
 
 async function main(options) {
-    const { filePath, rpcUrl, addresses } = options;
-    const provider = getDefaultProvider(rpcUrl);
-    const network = await provider.getNetwork();
+    const { env, chainNames, rpcUrl, addresses, yes } = options;
+    const config = loadConfig(env);
+    const chains = chainNames.split(',').map((str) => str.trim());
 
-    if (!options.yes) {
-        const anwser = readlineSync.question(
-            `Proceed with the nonces update of all addresses ${chalk.green(addresses)} on network ${chalk.green(
-                network.name,
-            )} with chainId ${chalk.green(network.chainId)} ${chalk.green('(y/n)')} `,
-        );
-        if (anwser !== 'y') return;
+    for (const chainName of chains) {
+        if (config.chains[chainName.toLowerCase()] === undefined) {
+            throw new Error(`Chain ${chainName} is not defined in the info file`);
+        }
     }
 
-    await updateNonce(provider, addresses, filePath);
+    for (const chainName of chains) {
+        const chain = config.chains[chainName.toLowerCase()];
+        const provider = rpcUrl ? getDefaultProvider(rpcUrl) : getDefaultProvider(chain.rpc);
+        const network = await provider.getNetwork();
+
+        if (!yes) {
+            const anwser = readlineSync.question(
+                `Proceed with the nonces update on network ${chalk.green(network.name)} with chainId ${chalk.green(
+                    network.chainId,
+                )} ${chalk.green('(y/n)')} `,
+            );
+            if (anwser !== 'y') return;
+        }
+
+        await updateNonce(provider, env, chain, addresses);
+    }
 }
 
 const program = new Command();
@@ -55,20 +80,18 @@ const program = new Command();
 program.name('Update-Nonces').description('Offline sign all the unsigned transactions in the file');
 
 program.addOption(
-    new Option('-f, --filePath <filePath>', 'The filePath where the nonce for addresses will be stored').makeOptionMandatory(true),
+    new Option('-e, --env <env>', 'environment')
+        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
+        .default('testnet')
+        .makeOptionMandatory(true)
+        .env('ENV'),
 );
-program.addOption(
-    new Option('-r, --rpcUrl <rpcUrl>', 'The rpc url for creating a provider to sign the transactions').makeOptionMandatory(true),
-);
-program.addOption(
-    new Option('-a --addresses <addresses>', 'The Array of addresses for which the nonces to update')
-        .env('ADDRESSES')
-        .makeOptionMandatory(true),
-);
+program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+program.addOption(new Option('-r, --rpcUrl <rpcUrl>', 'The rpc url for creating a provider to fetch gasOptions'));
+program.addOption(new Option('-a --addresses <addresses>', 'The Array of addresses for which the nonces to update').env('ADDRESSES'));
 program.addOption(new Option('-y, --yes', 'skip prompts'));
 
 program.action((options) => {
     main(options);
 });
-
 program.parse();

@@ -13,9 +13,10 @@ const { sendTx, getSignedTx, storeSignedTx } = require('./offline-sign-utils');
 
 async function processTransactions(filePath, provider) {
     try {
-        if(!filePath) {
-            throw new Error("FilePath is not provided in user info");
+        if (!filePath) {
+            throw new Error('FilePath is not provided in user info');
         }
+
         const transaction = await getSignedTx(filePath);
 
         if (transaction.status === 'PENDING') {
@@ -36,8 +37,8 @@ async function processTransactions(filePath, provider) {
                 printError('Error broadcasting tx: ', transaction.signedTx);
             }
         }
-        storeSignedTx(filePath, transaction);
 
+        storeSignedTx(filePath, transaction);
     } catch (error) {
         printError('Error processing transactions:', error.message);
     }
@@ -81,7 +82,7 @@ program.addOption(
         .makeOptionMandatory(true)
         .env('ENV'),
 );
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+program.addOption(new Option('-n, --chainName <chainNames>', 'chain names').makeOptionMandatory(true));
 program.addOption(new Option('-r, --rpcUrl <rpcUrl>', 'The rpc url for creating a provider to fetch gasOptions'));
 program.addOption(new Option('-y, --yes', 'skip prompts'));
 

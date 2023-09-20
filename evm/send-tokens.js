@@ -12,12 +12,7 @@ const {
 const readlineSync = require('readline-sync');
 
 const { printInfo, printWalletInfo, isValidNumber, loadConfig } = require('./utils');
-const {
-    storeSignedTx,
-    getWallet,
-    ledgerSign,
-    getLocalNonce,
-} = require('./offline-sign-utils.js');
+const { storeSignedTx, getWallet, ledgerSign, getLocalNonce } = require('./offline-sign-utils.js');
 
 async function sendTokens(chain, options) {
     const { privateKey, offline, nonceOffset, env } = options;
@@ -50,7 +45,8 @@ async function sendTokens(chain, options) {
     const gasOptions = chain.staticGasOptions || {};
 
     if (offline) {
-        nonce = getLocalNonce(chain, signerAddress);
+        nonce = getLocalNonce(env, chain.name.toLowerCase(), signerAddress);
+
         if (nonceOffset) {
             if (!isValidNumber(nonceOffset)) {
                 throw new Error('Provided nonce offset is not a valid number');
@@ -58,7 +54,6 @@ async function sendTokens(chain, options) {
 
             nonce += parseInt(nonceOffset);
         }
-
     }
 
     for (const recipient of recipients) {
@@ -69,7 +64,7 @@ async function sendTokens(chain, options) {
         };
 
         if (offline) {
-            const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-send-tokens-address-${signerAddress}-nonce-${nonce}.txt`;
+            const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-send-tokens-address-${signerAddress}-nonce-${nonce}.json`;
             printInfo(`Storing signed Tx offline in file ${filePath}`);
             const data = {};
             tx.nonce = nonce;
@@ -93,7 +88,6 @@ async function sendTokens(chain, options) {
 }
 
 async function main(options) {
-
     const config = loadConfig(options.env);
 
     const chains = options.chainNames.split(',').map((str) => str.trim());

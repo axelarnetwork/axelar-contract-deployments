@@ -28,12 +28,7 @@ const {
     printWarn,
     isValidNumber,
 } = require('./utils');
-const {
-    storeSignedTx,
-    ledgerSign,
-    getWallet,
-    getLocalNonce,
-} = require('./offline-sign-utils.js');
+const { storeSignedTx, ledgerSign, getWallet, getLocalNonce } = require('./offline-sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
@@ -375,7 +370,7 @@ async function upgrade(config, options) {
     }
 
     if (offline) {
-        let nonce = getLocalNonce(chain, signerAddress);
+        let nonce = getLocalNonce(env, chain.name.toLowerCase(), signerAddress);
 
         if (nonceOffset) {
             if (!isValidNumber(nonceOffset)) {
@@ -385,7 +380,7 @@ async function upgrade(config, options) {
             nonce += parseInt(nonceOffset);
         }
 
-        const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-send-tokens-address-${signerAddress}-nonce-${nonce}.txt`;
+        const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-send-tokens-address-${signerAddress}-nonce-${nonce}.json`;
         printInfo(`Storing signed Tx offline in file ${filePath}`);
         const staticGasOptions = chain.staticGasOptions || {};
         const data = {};
