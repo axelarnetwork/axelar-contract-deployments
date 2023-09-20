@@ -9,7 +9,9 @@ const { getNonceFileData } = require('./offline-sign-utils');
 
 async function checkBalance(provider, env, chain, staticGasOptions, addresses) {
     try {
-        const minRequiredBalance = BigNumber.from(staticGasOptions.gasLimit * staticGasOptions.gasPrice);
+        const gasLimit = BigNumber.from(staticGasOptions.gasLimit);
+        const gasPrice = BigNumber.from(staticGasOptions.gasPrice);
+        const minRequiredBalance = gasLimit * gasPrice;
         const chainName = chain.name.toLowerCase();
         const nonceData = getNonceFileData();
         const chainNonceData = nonceData[env][chainName];
@@ -22,7 +24,7 @@ async function checkBalance(provider, env, chain, staticGasOptions, addresses) {
 
                 if (balance < minRequiredBalance) {
                     printError('Minimum required Balance is', minRequiredBalance);
-                    printError(`Wallet Balance for address ${address} is less than minimum required amount. Wallet Balance: `, balance);
+                    printError(`Wallet Balance for address ${address} is`, balance);
                 }
             }
         } else {
