@@ -297,6 +297,11 @@ async function processCommand(options, chain) {
             values[2] = upgradeCalldata;
 
             gmpPayload = defaultAbiCoder.encode(types, values);
+            const proposalEta = await governanceContract.getProposalEta(target, upgradeCalldata, nativeValue);
+
+            if (BigNumber.from(proposalEta).gt(0)) {
+                printWarn("The eta for this proposal already exixts and it's value is", proposalEta);
+            }
 
             printInfo(`Destination chain: ${chain.name}\nDestination governance address: ${governanceAddress}\nGMP payload: ${gmpPayload}`);
 
