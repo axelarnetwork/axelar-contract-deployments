@@ -24,6 +24,7 @@ const {
     wasEventEmitted,
     printWarn,
     printError,
+    getBytecodeHash,
 } = require('./utils');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
@@ -283,7 +284,7 @@ async function processCommand(options, chain) {
                 if (answer !== 'y') return;
             }
 
-            const newGatewayImplementationCodeHash = keccak256(implementationCode);
+            const newGatewayImplementationCodeHash = getBytecodeHash(implementation, chain.name, provider);
 
             const setupParams = '0x';
             const upgradeCalldata = targetInterface.encodeFunctionData('upgrade', [
@@ -371,7 +372,7 @@ program.addOption(
 program.addOption(new Option('-d, --calldata <calldata>', 'calldata').makeOptionMandatory(false));
 program.addOption(new Option('-v, --nativeValue <nativeValue>', 'nativeValue').makeOptionMandatory(false).default(0));
 program.addOption(new Option('-t, --eta <eta>', 'eta').makeOptionMandatory(false).default('0'));
-program.addOption(new Option('-i, --implementation <implementation>', 'new gateway implementation').makeOptionMandatory(false));
+program.addOption(new Option('--implementation <implementation>', 'new gateway implementation').makeOptionMandatory(false));
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
