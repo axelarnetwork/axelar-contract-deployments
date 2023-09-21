@@ -4,6 +4,7 @@ const {
     ContractFactory,
     Contract,
     utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder },
+    constants: { AddressZero },
 } = require('ethers');
 const https = require('https');
 const http = require('http');
@@ -592,6 +593,15 @@ const isContract = async (address, provider) => {
     }
 };
 
+function isValidAddress(address, allowZeroAddress) {
+    if(allowZeroAddress) {
+        return isAddress(address);
+    }
+    else {
+        return (isAddress(address) && address !== AddressZero);
+    }
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -628,4 +638,5 @@ module.exports = {
     getCurrentTimeInSeconds,
     wasEventEmitted,
     isContract,
+    isValidAddress
 };

@@ -5,7 +5,7 @@ require('dotenv').config();
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddress, defaultAbiCoder, keccak256, Interface },
+    utils: { defaultAbiCoder, keccak256, Interface },
     constants: { AddressZero },
     Contract,
     BigNumber,
@@ -25,6 +25,7 @@ const {
     printWarn,
     printError,
     getBytecodeHash,
+    isValidAddress,
 } = require('./utils');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
@@ -37,7 +38,7 @@ async function processCommand(options, chain) {
 
     let governanceAddress;
 
-    if (isAddress(address)) {
+    if (isValidAddress(address)) {
         governanceAddress = address;
     } else {
         if (!contractConfig?.address) {
@@ -49,7 +50,7 @@ async function processCommand(options, chain) {
 
     const target = chain.contracts.AxelarGateway?.address;
 
-    if (!isAddress(target)) {
+    if (!isValidAddress(target)) {
         throw new Error(`Missing AxelarGateway address in the chain info.`);
     }
 
@@ -269,7 +270,7 @@ async function processCommand(options, chain) {
                 if (answer !== 'y') return;
             }
 
-            if (!isAddress(implementation) || implementation === AddressZero) {
+            if (!isValidAddress(implementation)) {
                 throw new Error(`Invalid new gateway implementation address: ${implementation}`);
             }
 
