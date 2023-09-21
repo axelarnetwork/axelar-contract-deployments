@@ -6,7 +6,6 @@ const {
     Wallet,
     getDefaultProvider,
     utils: { defaultAbiCoder, keccak256, Interface },
-    constants: { AddressZero },
     Contract,
     BigNumber,
 } = require('ethers');
@@ -31,7 +30,19 @@ const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 
 async function processCommand(options, chain) {
-    const { contractName, address, governanceAction, calldata, nativeValue, eta, implementation, privateKey, yes } = options;
+    const {
+        contractName,
+        address,
+        newGovernance,
+        newMintLimiter,
+        governanceAction,
+        calldata,
+        nativeValue,
+        eta,
+        implementation,
+        privateKey,
+        yes,
+    } = options;
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -72,7 +83,7 @@ async function processCommand(options, chain) {
 
     const governanceContract = new Contract(governanceAddress, IGovernance.abi, wallet);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
     printInfo('Proposal Action', governanceAction);
@@ -264,7 +275,7 @@ async function processCommand(options, chain) {
                 throw new Error(`Invalid governance action for AxelarServiceGovernance: ${governanceAction}`);
             }
 
-            if (unixEta < getCurrentTimeInSeconds() + contractConfig.minimumTimeDelay && !yes) {
+            if (unixEta < getCurrentTimeInSeconds() + contractConfig?.minimumTimeDelay && !yes) {
                 printWarn(`${eta} is less than the minimum eta.`);
                 const answer = readlineSync.question(`Proceed with ${governanceAction}?`);
                 if (answer !== 'y') return;
@@ -287,7 +298,18 @@ async function processCommand(options, chain) {
 
             const newGatewayImplementationCodeHash = getBytecodeHash(implementation, chain.name, provider);
 
-            const setupParams = '0x';
+            const governance = newGovernance || contracts.AxelarGateway?.governance || undefined;
+            const mintLimiter = newMintLimiter || contracts.AxelarGateway?.mintLimiter || undefined;
+            let setupParams;
+
+            if (governance && mintLimiter) {
+                setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [governance, mintLimiter, '0x']);
+            } else {
+                setupParams = '0x';
+            }
+
+            printInfo('Setup Params for upgrading AxelarGateway', setupParams);
+
             const upgradeCalldata = targetInterface.encodeFunctionData('upgrade', [
                 implementation,
                 newGatewayImplementationCodeHash,
@@ -375,6 +397,8 @@ program.addOption(
         ])
         .default('scheduleTimeLock'),
 );
+program.addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'));
+program.addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
 program.addOption(new Option('-d, --calldata <calldata>', 'calldata').makeOptionMandatory(false));
 program.addOption(new Option('-v, --nativeValue <nativeValue>', 'nativeValue').makeOptionMandatory(false).default(0));
 program.addOption(new Option('-t, --eta <eta>', 'eta').makeOptionMandatory(false).default('0'));

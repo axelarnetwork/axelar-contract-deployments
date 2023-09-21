@@ -594,12 +594,11 @@ const isContract = async (address, provider) => {
 };
 
 function isValidAddress(address, allowZeroAddress) {
-    if(allowZeroAddress) {
+    if (allowZeroAddress) {
         return isAddress(address);
     }
-    else {
-        return (isAddress(address) && address !== AddressZero);
-    }
+
+    return isAddress(address) && address !== AddressZero;
 }
 
 module.exports = {
@@ -638,5 +637,5 @@ module.exports = {
     getCurrentTimeInSeconds,
     wasEventEmitted,
     isContract,
-    isValidAddress
+    isValidAddress,
 };
