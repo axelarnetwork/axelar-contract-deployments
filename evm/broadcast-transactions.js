@@ -11,7 +11,20 @@ const readlineSync = require('readline-sync');
 const { printError, printInfo, printObj, loadConfig } = require('./utils');
 const { sendTx, getSignedTx, storeSignedTx } = require('./offline-sign-utils');
 
-async function processTransactions(filePath, provider) {
+async function processCommand(config, chain, options) {
+    const { filePath, rpc } = options;
+
+    const provider = getDefaultProvider(rpc || chain.rpc);
+
+    if (!options.yes) {
+        const anwser = readlineSync.question(
+            `Proceed with the broadcasting of all pending signed transactions for file ${chalk.green(
+                options.filePath,
+            )} on chain ${chalk.green(chain.name)} ${chalk.green('(y/n)')} `,
+        );
+        if (anwser !== 'y') return;
+    }
+
     try {
         if (!filePath) {
             throw new Error('FilePath is not provided in user info');
@@ -45,29 +58,14 @@ async function processTransactions(filePath, provider) {
 }
 
 async function main(options) {
-    const { filePath, rpcUrl, env, chainName } = options;
+    const config = loadConfig(options.env);
+    const chain = config.chains[options.chainName.toLowerCase()];
 
-    const config = loadConfig(env);
-
-    if (config.chains[chainName.toLowerCase()] === undefined) {
+    if (chain === undefined) {
         throw new Error(`Chain ${chainName} is not defined in the info file`);
     }
 
-    const chain = config.chains[chainName.toLowerCase()];
-    const provider = rpcUrl ? getDefaultProvider(rpcUrl) : getDefaultProvider(chain.rpc);
-
-    const network = await provider.getNetwork();
-
-    if (!options.yes) {
-        const anwser = readlineSync.question(
-            `Proceed with the broadcasting of all pending signed transactions for file ${chalk.green(
-                options.filePath,
-            )} on network ${chalk.green(network.name)} with chainId ${chalk.green(network.chainId)} ${chalk.green('(y/n)')} `,
-        );
-        if (anwser !== 'y') return;
-    }
-
-    await processTransactions(filePath, provider);
+    await processCommand(config, chain, options);
 }
 
 const program = new Command();
@@ -82,8 +80,8 @@ program.addOption(
         .makeOptionMandatory(true)
         .env('ENV'),
 );
-program.addOption(new Option('-n, --chainName <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('-r, --rpcUrl <rpcUrl>', 'The rpc url for creating a provider to fetch gasOptions'));
+program.addOption(new Option('-n, --chainName <chainName>', 'chain names').makeOptionMandatory(true));
+program.addOption(new Option('-r, --rpc <rpc>', 'The chain rpc'));
 program.addOption(new Option('-y, --yes', 'skip prompts'));
 
 program.action((options) => {
