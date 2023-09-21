@@ -12,6 +12,7 @@ const {
 } = require('ethers');
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
+const chalk = require('chalk');
 const {
     printInfo,
     printWalletInfo,
@@ -49,7 +50,6 @@ async function preExecutionChecks(multisigContract, multisigAction, wallet, targ
     const voteCount = await multisigContract.getSignerVotesCount(topicHash);
 
     if (voteCount.eq(0)) {
-
         printWarn(`The vote count for this topic is zero. This action will create a new multisig proposal.`);
         const answer = readlineSync.question(`Proceed with ${multisigAction}?`);
         if (answer !== 'y') return;
@@ -86,7 +86,7 @@ async function processCommand(options, chain) {
         yes,
     } = options;
 
-    let withdrawAmount=  options.withdrawAmount;
+    let withdrawAmount = options.withdrawAmount;
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
 
@@ -112,7 +112,7 @@ async function processCommand(options, chain) {
 
     const multisigContract = new Contract(multisigAddress, IMultisig.abi, wallet);
 
-    const gasOptions =  contractConfig?.gasOptions || chain?.gasOptions || {};
+    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
     printInfo('Multisig Action', multisigAction);
@@ -144,7 +144,13 @@ async function processCommand(options, chain) {
             const targetInterface = new Interface(gatewayContract.interface.fragments);
             const multisigCalldata = targetInterface.encodeFunctionData('setTokenMintLimits', [symbolsArray, limitsArray]);
 
-            await preExecutionChecks(multisigContract, multisigAction, wallet, multisigTarget, multisigCalldata, 0);
+            if (!yes) {
+                const answer = readlineSync.question(`Proceed with multiSigAction without pre-execution checks ${chalk.green('(y/n)')} `);
+
+                if (answer !== 'y') {
+                    await preExecutionChecks(multisigContract, multisigAction, wallet, multisigTarget, multisigCalldata, 0);
+                }
+            }
 
             const tx = await multisigContract.executeContract(multisigTarget, multisigCalldata, 0, gasOptions);
             await tx.wait();
@@ -166,7 +172,13 @@ async function processCommand(options, chain) {
             const targetInterface = new Interface(gatewayContract.interface.fragments);
             const multisigCalldata = targetInterface.encodeFunctionData('transferMintLimiter', [mintLimiterAddress]);
 
-            await preExecutionChecks(multisigContract, multisigAction, wallet, multisigTarget, multisigCalldata, 0);
+            if (!yes) {
+                const answer = readlineSync.question(`Proceed with multiSigAction without pre-execution checks ${chalk.green('(y/n)')} `);
+
+                if (answer !== 'y') {
+                    await preExecutionChecks(multisigContract, multisigAction, wallet, multisigTarget, multisigCalldata, 0);
+                }
+            }
 
             const tx = await multisigContract.executeContract(multisigTarget, multisigCalldata, 0);
             await tx.wait();
@@ -183,7 +195,14 @@ async function processCommand(options, chain) {
             }
 
             withdrawAmount = parseEther(withdrawAmount);
-            await preExecutionChecks(multisigContract, multisigAction, wallet, recipientAddress, '0x', withdrawAmount);
+
+            if (!yes) {
+                const answer = readlineSync.question(`Proceed with multiSigAction without pre-execution checks ${chalk.green('(y/n)')} `);
+
+                if (answer !== 'y') {
+                    await preExecutionChecks(multisigContract, multisigAction, wallet, recipientAddress, '0x', withdrawAmount);
+                }
+            }
 
             const balance = await provider.getBalance(multisigContract.address);
 
@@ -227,7 +246,13 @@ async function processCommand(options, chain) {
 
             const governanceContract = new Contract(governance, IGovernance.abi, wallet);
 
-            await preExecutionChecks(governanceContract, multisigAction, wallet, target, calldata, nativeValue);
+            if (!yes) {
+                const answer = readlineSync.question(`Proceed with multiSigAction without pre-execution checks ${chalk.green('(y/n)')} `);
+
+                if (answer !== 'y') {
+                    await preExecutionChecks(governanceContract, multisigAction, wallet, target, calldata, nativeValue);
+                }
+            }
 
             const balance = await provider.getBalance(governance);
 
@@ -264,7 +289,7 @@ async function main(options) {
     for (const chain of chains) {
         try {
             await processCommand(options, config.chains[chain.toLowerCase()]);
-        } catch(error) {
+        } catch (error) {
             printError(error);
         }
     }
