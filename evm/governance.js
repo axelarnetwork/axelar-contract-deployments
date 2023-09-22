@@ -101,7 +101,7 @@ async function processCommand(options, chain) {
                 throw new Error(`Calldata required for this governance action: ${governanceAction}`);
             }
 
-            if (unixEta < getCurrentTimeInSeconds() + contractConfig.minimumTimeDelay && !yes) {
+            if (unixEta < getCurrentTimeInSeconds() + contractConfig?.minimumTimeDelay && !yes) {
                 printWarn(`${eta} is less than the minimum eta.`);
                 const answer = readlineSync.question(`Proceed with ${governanceAction}?`);
                 if (answer !== 'y') return;
@@ -296,7 +296,7 @@ async function processCommand(options, chain) {
                 if (answer !== 'y') return;
             }
 
-            const newGatewayImplementationCodeHash = getBytecodeHash(implementation, chain.name, provider);
+            const newGatewayImplementationCodeHash = await getBytecodeHash(implementation, chain.name, provider);
 
             const governance = newGovernance || contracts.AxelarGateway?.governance || undefined;
             const mintLimiter = newMintLimiter || contracts.AxelarGateway?.mintLimiter || undefined;
