@@ -5,85 +5,168 @@ const { ethers } = require('hardhat');
 const {
     Wallet,
     BigNumber,
-    utils: { isAddress },
+    utils: { isAddress, serializeTransaction },
 } = ethers;
 const path = require('path');
 const { LedgerSigner } = require('@ethersproject/hardware-wallets');
 
-const { printError, printInfo, printObj, isValidPrivateKey } = require('./utils');
+const { printError, printInfo, printObj, isValidPrivateKey, isNumber, isValidNumber } = require('./utils');
 
-// function to create a ledgerSigner type wallet object
-function getLedgerWallet(provider, path) {
-    try {
-        // Check if the parameters are undefined and assign default values if necessary
-        if (provider === undefined || provider === null) {
-            throw new Error('Empty provider');
+/**
+ * Get a wallet object from a private key or a ledger device
+ * @param {*} privateKey - private key or 'ledger'
+ * @param {*} provider - provider object
+ * @param {*} options - options object. ledgerPath can be provided for custom HD derivation
+ * @returns
+ */
+const getWallet = async (privateKey, provider, options = {}) => {
+    let wallet;
+
+    if (options.offline) {
+        provider = undefined;
+    }
+
+    if (privateKey === 'ledger') {
+        wallet = getLedgerWallet(provider, options?.ledgerPath);
+    } else {
+        if (!isValidPrivateKey(privateKey)) {
+            throw new Error('Private key is missing/ not provided correctly');
         }
 
-        const type = 'hid';
-        path = path || "m/44'/60'/0'/0/0";
-        return new LedgerSigner(provider, type, path);
-    } catch (error) {
-        printError('Error trying to coonect to ledger wallet');
-        printObj(error);
+        wallet = new Wallet(privateKey, provider);
     }
-}
 
-async function ledgerSign(wallet, chain, tx, gasOptions) {
+    return wallet;
+};
+
+// function to create a ledgerSigner type wallet object
+const getLedgerWallet = (provider, path) => {
+    const type = 'hid';
+    path = path || "m/44'/60'/0'/0/0";
+    return new LedgerSigner(provider, type, path);
+};
+
+/**
+ * Sign a transaction with a wallet. Supports offline mode, and a private key or ledger backend
+ * @param {*} wallet - Either private key or ledger wallet
+ * @param {*} chain - chain config
+ * @param {*} tx - unsigned base transaction
+ * @param {*} options
+ * @returns - unsigned and signed transaction
+ */
+const signTransaction = async (wallet, chain, tx, options = {}) => {
     if (!tx.to || !isAddress(tx.to)) {
         throw new Error('Target address is missing/not provided as valid address for the tx in function arguments');
     }
 
-    if (gasOptions) {
-        tx.gasLimit = gasOptions.gasLimit;
-        tx.gasPrice = gasOptions.gasPrice;
+    if (options.gasOptions) {
+        tx = {
+            ...options.gasOptions,
+            ...tx, // prefer gas options from tx if they were set
+        };
     }
 
-    const baseTx = {
-        chainId: tx.chainId || chain.chainId || undefined,
-        data: tx.data || undefined,
-        gasLimit: tx.gasLimit || chain.gasOptions?.gasLimit || undefined,
-        gasPrice: tx.gasPrice || undefined,
-        nonce: tx.nonce !== undefined && tx.nonce !== null ? BigNumber.from(tx.nonce).toNumber() : undefined,
-        to: tx.to || undefined,
-        value: tx.value || undefined,
-    };
+    if (options.offline) {
+        const address = options.signerAddress || (await wallet.getAddress());
+
+        tx = {
+            ...chain.staticGasOptions,
+            nonce: options.nonce,
+            chainId: chain.chainId,
+            from: address,
+            ...tx, // prefer tx options if they were set
+        };
+
+        if (!tx.nonce) {
+            tx.nonce = getLocalNonce(options.env, chain.name.toLowerCase(), address);
+        }
+
+        if (options.nonceOffset) {
+            if (!isValidNumber(options.nonceOffset)) {
+                throw new Error('Provided nonce offset is not a valid number');
+            }
+
+            tx.nonce += parseInt(options.nonceOffset);
+        }
+
+        if (!tx.gasLimit) {
+            throw new Error('Gas limit is missing/not provided for the tx in function arguments');
+        }
+
+        if (!tx.gasPrice && !(isNumber(tx.maxFeePerGas) && isNumber(tx.maxPriorityFeePerGas))) {
+            throw new Error('Gas price (legacy or eip-1559) is missing/not provided for the tx in function arguments');
+        }
+    }
+
+    printInfo(JSON.stringify(tx, null, 2));
 
     let signedTx;
 
-    try {
-        signedTx = await wallet.signTransaction(baseTx);
-        printInfo('Signed Tx from ledger with signedTxHash as', signedTx);
-    } catch (error) {
-        printError('Failed to sign tx from ledger');
-        printObj(error);
-    }
+    if (wallet instanceof LedgerSigner) {
+        signedTx = await ledgerSign(wallet, chain, tx);
 
-    return { baseTx, signedTx };
-}
-
-async function sendTx(tx, provider) {
-    let success;
-
-    try {
-        const response = await provider.sendTransaction(tx).then((tx) => tx.wait());
-
-        if (response.error || !isValidJSON(response) || response.status !== 1) {
-            const error = `Execution failed${
-                response.status ? ` with txHash: ${response.transactionHash}` : ` with msg: ${response.message}`
-            }`;
-            throw new Error(error);
+        if (!options.offline) {
+            await sendTransaction(signedTx, wallet.provider);
         }
-
-        success = true;
-        return { success, response };
-    } catch (errorObj) {
-        printError('Error while broadcasting signed tx');
-        printObj(errorObj);
-        success = false;
-        return { success, undefined };
+    } else {
+        if (options.offline) {
+            signedTx = await wallet.signTransaction(tx);
+        } else {
+            await sendTransaction(signedTx, wallet.provider);
+        }
     }
-}
+
+    return { baseTx: tx, signedTx };
+};
+
+const ledgerSign = async (wallet, chain, baseTx) => {
+    printInfo('Waiting for user to approve transaction through ledger wallet');
+
+    const unsignedTx = serializeTransaction(baseTx).substring(2);
+    const sig = await wallet._retry((eth) => eth.signTransaction("m/44'/60'/0'/0/0", unsignedTx));
+
+    // EIP-155 sig.v computation
+    // v in {0,1} + 2 * chainId + 35
+    // Ledger gives this value mod 256
+    // So from that, compute whether v is 0 or 1 and then add to 2 * chainId + 35 without doing a mod
+    var v = BigNumber.from('0x' + sig.v).toNumber();
+    v = 2 * chain.chainID + 35 + ((v + 256 * 100000000000 - (2 * chain.chainID + 35)) % 256);
+
+    // console.log("sig v", BigNumber.from("0x" + sig.v).toNumber(), v, "chain", chainID)
+
+    const signedTx = serializeTransaction(baseTx, {
+        v,
+        r: '0x' + sig.r,
+        s: '0x' + sig.s,
+    });
+
+    printInfo('Signed Tx from ledger with signedTxHash as', signedTx);
+
+    return signedTx;
+};
+
+const sendTransaction = async (tx, provider) => {
+    try {
+        const response = await provider.sendTransaction(tx);
+        const receipt = await response.wait();
+
+        // if (response.error || !isValidJSON(response) || response.status !== 1) {
+        //     const error = `Execution failed${
+        //         response.status ? ` with txHash: ${response.transactionHash}` : ` with msg: ${response.message}`
+        //     }`;
+        //     throw new Error(error);
+        // }
+
+        printInfo('Broadcasted tx', response.hash);
+        printInfo('Tx receipt', JSON.stringify(receipt, null, 2));
+
+        return { success: true, response, receipt };
+    } catch (error) {
+        printError('Error while broadcasting signed tx', `${error}`);
+
+        return { success: false, response: undefined, receipt: undefined };
+    }
+};
 
 function storeSignedTx(filePath, signedTx) {
     createFileIfNotExists(filePath);
@@ -98,17 +181,9 @@ function storeSignedTx(filePath, signedTx) {
     });
 }
 
-async function getNonceFromProvider(provider, address) {
-    let nonce = 0;
-
-    try {
-        nonce = await provider.getTransactionCount(address);
-    } catch (error) {
-        printError('Could not fetch nonnce from provider', error.message);
-    }
-
-    return nonce;
-}
+const getNonceFromProvider = async (provider, address) => {
+    return await provider.getTransactionCount(address);
+};
 
 function getSignedTx(filePath) {
     const signedTx = {};
@@ -186,22 +261,6 @@ function isValidJSON(obj) {
     return true;
 }
 
-const getWallet = async (privateKey, provider, options) => {
-    let wallet;
-
-    if (privateKey === 'ledger') {
-        wallet = getLedgerWallet(provider, options?.ledgerPath);
-    } else {
-        if (!isValidPrivateKey(privateKey)) {
-            throw new Error('Private key is missing/ not provided correctly');
-        }
-
-        wallet = new Wallet(privateKey, provider);
-    }
-
-    return wallet;
-};
-
 const getNonceFileData = () => {
     const filePath = `${__dirname}/../axelar-chains-config/info/nonces.json`;
     const emptyData = {};
@@ -237,22 +296,15 @@ function createFileIfNotExists(filePath) {
 const updateNonceFileData = (nonceData) => {
     const filePath = `${__dirname}/../axelar-chains-config/info/nonces.json`;
     createFileIfNotExists(filePath);
-    // Write nonceData to the file
 
-    try {
-        fs.writeFileSync(filePath, JSON.stringify(nonceData, null, 2));
-        printInfo(`Nonce updated successfully and stored in file ${filePath}`);
-    } catch (err) {
-        printError(`Could not update Nonce in file ${filePath}`);
-        printObj(err);
-    }
+    // Write nonceData to the file
+    fs.writeFileSync(filePath, JSON.stringify(nonceData, null, 2));
+    printInfo(`Nonce updated successfully and stored in file ${filePath}`);
 };
 
 const getLocalNonce = (env, chainName, signerAddress) => {
     const nonceData = getNonceFileData();
-    const chainNonceData = chainName ? nonceData[env][chainName] : undefined;
-    const nonce = chainNonceData ? chainNonceData[signerAddress] || 0 : 0;
-    return nonce;
+    return nonceData[env][chainName][signerAddress];
 };
 
 const updateLocalNonce = (chain, nonce, signerAddress) => {
@@ -263,7 +315,7 @@ const updateLocalNonce = (chain, nonce, signerAddress) => {
 };
 
 module.exports = {
-    sendTx,
+    sendTransaction,
     getTransactions,
     storeSignedTx,
     getSignedTx,
@@ -272,6 +324,6 @@ module.exports = {
     updateNonceFileData,
     getLocalNonce,
     updateLocalNonce,
-    ledgerSign,
+    signTransaction,
     getNonceFromProvider,
 };

@@ -8,8 +8,8 @@ const {
 } = ethers;
 const readlineSync = require('readline-sync');
 
-const { printError, printInfo, printObj, loadConfig } = require('./utils');
-const { sendTx, getSignedTx, storeSignedTx } = require('./offline-sign-utils');
+const { printError, printInfo, mainProcessor } = require('./utils');
+const { sendTransaction, getSignedTx, storeSignedTx } = require('./offline-sign-utils');
 
 async function processCommand(config, chain, options) {
     const { filePath, rpc } = options;
@@ -25,47 +25,37 @@ async function processCommand(config, chain, options) {
         if (anwser !== 'y') return;
     }
 
-    try {
-        if (!filePath) {
-            throw new Error('FilePath is not provided in user info');
-        }
+    if (!filePath) {
+        throw new Error('FilePath is not provided in user info');
+    }
 
-        const transaction = await getSignedTx(filePath);
+    const transaction = await getSignedTx(filePath);
 
-        if (transaction.status === 'PENDING') {
-            printInfo('Broadcasting transaction: ');
-            printObj(transaction.unsignedTx);
+    if (transaction.status === 'PENDING') {
+        printInfo('Broadcasting transaction', JSON.stringify(transaction.unsignedTx, null, 2));
 
-            // Send the signed transaction
-            const { success, response } = await sendTx(transaction.signedTx, provider);
+        // Send the signed transaction
+        const { success, response } = await sendTransaction(transaction.signedTx, provider);
 
-            if (success) {
-                // Update the transaction status and store transaction hash
-                transaction.status = 'SUCCESS';
-                transaction.transactionHash = response.transactionHash;
-                printInfo(`Transaction executed successfully ${response.transactionHash}`);
-            } else {
-                // Update the transaction status and store error message
-                transaction.status = 'FAILED';
-                printError('Error broadcasting tx: ', transaction.signedTx);
-            }
+        if (success) {
+            // Update the transaction status and store transaction hash
+            transaction.status = 'SUCCESS';
+            transaction.transactionHash = response.hash;
+            printInfo(`Transaction executed successfully ${response.hash}`);
+        } else {
+            // Update the transaction status and store error message
+            transaction.status = 'FAILED';
+            printError('Error broadcasting tx: ', transaction.signedTx);
         }
 
         storeSignedTx(filePath, transaction);
-    } catch (error) {
-        printError('Error processing transactions:', error.message);
+    } else {
+        printInfo('Skipping broadcast, transaction status is', transaction.status);
     }
 }
 
 async function main(options) {
-    const config = loadConfig(options.env);
-    const chain = config.chains[options.chainName.toLowerCase()];
-
-    if (chain === undefined) {
-        throw new Error(`Chain ${chainName} is not defined in the info file`);
-    }
-
-    await processCommand(config, chain, options);
+    await mainProcessor(options, processCommand);
 }
 
 const program = new Command();

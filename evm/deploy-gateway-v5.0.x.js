@@ -16,7 +16,6 @@ const readlineSync = require('readline-sync');
 
 const {
     saveConfig,
-    loadConfig,
     getBytecodeHash,
     verifyContract,
     printInfo,
@@ -26,9 +25,9 @@ const {
     printError,
     printWalletInfo,
     printWarn,
-    isValidNumber,
+    mainProcessor,
 } = require('./utils');
-const { storeSignedTx, ledgerSign, getWallet, getLocalNonce } = require('./offline-sign-utils.js');
+const { storeSignedTx, signTransaction, getWallet } = require('./offline-sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
@@ -304,7 +303,7 @@ async function deploy(config, options) {
 }
 
 async function upgrade(config, options) {
-    const { chainName, privateKey, yes, offline, env, nonceOffset } = options;
+    const { chainName, privateKey, yes, offline, env } = options;
     const contractName = 'AxelarGateway';
 
     const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
@@ -312,11 +311,8 @@ async function upgrade(config, options) {
     const provider = getDefaultProvider(rpc);
 
     const wallet = await getWallet(privateKey, provider, options);
-    const signerAddress = await wallet.getAddress();
 
-    if (!offline) {
-        await printWalletInfo(wallet);
-    }
+    const { address } = await printWalletInfo(wallet, options);
 
     const contractConfig = chain.contracts[contractName];
 
@@ -369,38 +365,26 @@ async function upgrade(config, options) {
         if (anwser !== 'y') return;
     }
 
+    const tx = await gateway.populateTransaction.upgrade(contractConfig.implementation, implementationCodehash, setupParams);
+
+    const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
+
     if (offline) {
-        let nonce = getLocalNonce(env, chain.name.toLowerCase(), signerAddress);
-
-        if (nonceOffset) {
-            if (!isValidNumber(nonceOffset)) {
-                throw new Error('Provided nonce offset is not a valid number');
-            }
-
-            nonce += parseInt(nonceOffset);
-        }
-
-        const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-send-tokens-address-${signerAddress}-nonce-${nonce}.json`;
+        const filePath = `./tx/signed-tx-${env}-${chainName}-gateway-upgrade-address-${address}-nonce-${baseTx.nonce}.json`;
         printInfo(`Storing signed Tx offline in file ${filePath}`);
-        const staticGasOptions = chain.staticGasOptions || {};
-        const data = {};
-        const tx = await gateway.populateTransaction.upgrade(contractConfig.implementation, implementationCodehash, setupParams);
-        tx.nonce = nonce;
-        tx.chainId = chain.chainId;
-        printInfo('Waiting for user to approve transaction through ledger wallet');
-        const { baseTx, signedTx } = await ledgerSign(wallet, chain, tx, staticGasOptions);
+
         // Storing the fields in the data that will be stored in file
-        data.msg = `This transaction will perform upgrade of AxelarGateway contract having address ${gateway.address} with implementation ${contractConfig.implementation} on chain ${chain.name} with chainId ${chain.chainId}`;
-        data.unsignedTx = baseTx;
-        data.signedTx = signedTx;
-        data.status = 'PENDING';
+        const data = {
+            msg: `This transaction will upgrade gateway ${gateway.address} to implementation ${contractConfig.implementation} on chain ${chain.name}`,
+            unsignedTx: baseTx,
+            signedTx,
+            status: 'PENDING',
+        };
+
         storeSignedTx(filePath, data);
+
+        options.nonceOffset = (options.nonceOffset || 0) + 1;
     } else {
-        const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
-        printInfo('Upgrade transaction', tx.hash);
-
-        await tx.wait(chain.confirmations);
-
         const newImplementation = await gateway.implementation();
         printInfo('New implementation', newImplementation);
 
@@ -413,16 +397,16 @@ async function upgrade(config, options) {
     }
 }
 
-async function main(options) {
-    const config = loadConfig(options.env);
-
+async function processCommand(config, chain, options) {
     if (!options.upgrade) {
         await deploy(config, options);
     } else {
         await upgrade(config, options);
     }
+}
 
-    saveConfig(config, options.env);
+async function main(options) {
+    await mainProcessor(options, processCommand);
 }
 
 async function programHandler() {

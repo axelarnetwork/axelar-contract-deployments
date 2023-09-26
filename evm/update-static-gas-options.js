@@ -9,57 +9,34 @@ const {
 } = ethers;
 const readlineSync = require('readline-sync');
 
-const { printError, printInfo, printObj, saveConfig, loadConfig } = require('./utils');
+const { printInfo, mainProcessor } = require('./utils');
 
-async function updateStaticGasOptions(chain, options, filePath) {
-    const { rpcUrl, yes } = options;
-    const provider = rpcUrl ? getDefaultProvider(rpcUrl) : getDefaultProvider(chain.rpc);
-    const network = await provider.getNetwork();
+const defaultGasLimit = 3e6;
+const gasPriceMultiplier = 5;
+
+async function processCommand(config, chain, options) {
+    const { rpc, yes } = options;
+    const provider = rpc ? getDefaultProvider(rpc) : getDefaultProvider(chain.rpc);
 
     if (!yes) {
         const anwser = readlineSync.question(
-            `Proceed with the static gasOption update on network ${chalk.green(network.name)} with chainId ${chalk.green(
-                network.chainId,
-            )} ${chalk.green('(y/n)')} `,
+            `Proceed with the static gasOption update on network ${chalk.green(chain.name)} ${chalk.green('(y/n)')} `,
         );
         if (anwser !== 'y') return;
     }
 
-    try {
-        const gasPrice = parseUnits((await provider.getGasPrice()).toString(), 'gwei') * 5;
+    const gasPrice = parseUnits((await provider.getGasPrice()).toString(), 'wei') * gasPriceMultiplier;
 
-        if (!(chain.staticGasOptions && chain.staticGasOptions.gasLimit !== undefined)) {
-            chain.staticGasOptions = { gasLimit: 3e6 };
-        }
-
-        chain.staticGasOptions.gasPrice = gasPrice;
-        printInfo(`GasOptions updated succesfully and stored in config file ${filePath}`);
-    } catch (error) {
-        printError(`GasOptions updation failed with error: ${error.message}`);
-        printObj(error);
+    if (!(chain.staticGasOptions && chain.staticGasOptions.gasLimit !== undefined)) {
+        chain.staticGasOptions = { gasLimit: defaultGasLimit };
     }
 
-    return chain;
+    chain.staticGasOptions.gasPrice = gasPrice;
+    printInfo(`staticGasOptions updated succesfully and stored in config file`);
 }
 
 async function main(options) {
-    const { env, chainNames } = options;
-    const filePath = `${__dirname}/../axelar-chains-config/info/${env}.json`;
-    const config = loadConfig(env);
-    const chains = chainNames.split(',').map((str) => str.trim());
-
-    for (const chainName of chains) {
-        if (config.chains[chainName.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chainName} is not defined in the info file`);
-        }
-    }
-
-    for (const chainName of chains) {
-        const chain = config.chains[chainName.toLowerCase()];
-        config.chains[chainName.toLowerCase()] = await updateStaticGasOptions(chain, options, filePath);
-    }
-
-    saveConfig(config, env);
+    await mainProcessor(options, processCommand, true);
 }
 
 const program = new Command();
@@ -74,7 +51,7 @@ program.addOption(
         .env('ENV'),
 );
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('-r, --rpcUrl <rpcUrl>', 'The rpc url for creating a provider to fetch gasOptions'));
+program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch gasOptions'));
 program.addOption(new Option('-y, --yes', 'skip prompts'));
 
 program.action((options) => {

@@ -189,6 +189,10 @@ const isValidNumber = (arg) => {
     return !isNaN(parseInt(arg)) && isFinite(arg);
 };
 
+const isValidDecimal = (arg) => {
+    return !isNaN(parseFloat(arg)) && isFinite(arg);
+};
+
 const isNumberArray = (arr) => {
     if (!Array.isArray(arr)) {
         return false;
@@ -203,11 +207,11 @@ const isNumberArray = (arr) => {
     return true;
 };
 
-const isAddressArray = (arg) => {
-    if (!Array.isArray(arg)) return false;
+const isAddressArray = (addresses) => {
+    if (!Array.isArray(addresses)) return false;
 
-    for (const ele of arg) {
-        if (!isAddress(ele)) {
+    for (const address of addresses) {
+        if (!isAddress(address)) {
             return false;
         }
     }
@@ -451,17 +455,22 @@ function saveConfig(config, env) {
     writeJSON(config, `${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
-async function printWalletInfo(wallet) {
-    printInfo('Wallet address', await wallet.getAddress());
-    const balance = await wallet.provider.getBalance(await wallet.getAddress());
-    printInfo('Wallet balance', `${balance / 1e18}`);
-    printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(await wallet.getAddress())).toString());
+async function printWalletInfo(wallet, options = {}) {
+    let balance = 0;
+    const address = await wallet.getAddress();
+    printInfo('Wallet address', address);
 
-    if (balance.isZero()) {
-        printError('Wallet balance is 0');
+    if (!options.offline) {
+        balance = await wallet.provider.getBalance(address);
+        printInfo('Wallet balance', `${balance / 1e18}`);
+        printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(address)).toString());
+
+        if (balance.isZero()) {
+            printError('Wallet balance is 0');
+        }
     }
 
-    return balance;
+    return { address, balance };
 }
 
 const deployContract = async (
@@ -597,6 +606,43 @@ const isContract = async (address, provider) => {
     }
 };
 
+const mainProcessor = async (options, processCommand, save = false, catchErr = false) => {
+    if (!options.env) {
+        throw new Error('Environment was not provided');
+    }
+
+    if (!options.chainName && !options.chainNames) {
+        throw new Error('Chain names were not provided');
+    }
+
+    const config = loadConfig(options.env);
+    const chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
+
+    for (const chainName of chains) {
+        if (config.chains[chainName.toLowerCase()] === undefined) {
+            throw new Error(`Chain ${chainName} is not defined in the info file`);
+        }
+    }
+
+    for (const chainName of chains) {
+        const chain = config.chains[chainName.toLowerCase()];
+
+        try {
+            await processCommand(config, chain, options);
+        } catch (error) {
+            printError(`Failed with error on ${chain.name}`, error.message);
+
+            if (!catchErr) {
+                throw error;
+            }
+        }
+
+        if (save) {
+            saveConfig(config, options.env);
+        }
+    }
+};
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -615,6 +661,7 @@ module.exports = {
     isString,
     isNumber,
     isValidNumber,
+    isValidDecimal,
     isNumberArray,
     isAddressArray,
     isKeccak256Hash,
@@ -632,4 +679,5 @@ module.exports = {
     isContract,
     isValidPrivateKey,
     verifyContract,
+    mainProcessor,
 };

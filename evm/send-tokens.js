@@ -11,23 +11,33 @@ const {
 } = ethers;
 const readlineSync = require('readline-sync');
 
-const { printInfo, printWalletInfo, isValidNumber, loadConfig } = require('./utils');
-const { storeSignedTx, getWallet, ledgerSign, getLocalNonce } = require('./offline-sign-utils.js');
+const { printInfo, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal } = require('./utils');
+const { storeSignedTx, getWallet, signTransaction } = require('./offline-sign-utils.js');
 
-async function sendTokens(chain, options) {
-    const { privateKey, offline, nonceOffset, env } = options;
+async function processCommand(_, chain, options) {
+    const { privateKey, offline, env } = options;
     let { amount, recipients } = options;
+
+    const chainName = chain.name.toLowerCase();
     const provider = getDefaultProvider(chain.rpc);
+
     recipients = options.recipients.split(',').map((str) => str.trim());
+
+    if (!isAddressArray(recipients)) {
+        throw new Error('Invalid recipient addresses');
+    }
+
+    if (!isValidDecimal(amount)) {
+        throw new Error('Invalid amount');
+    }
+
     amount = parseEther(amount);
 
     const wallet = await getWallet(privateKey, provider, options);
-    const signerAddress = await wallet.getAddress();
-    let nonce;
+
+    const { address, balance } = await printWalletInfo(wallet, options);
 
     if (!offline) {
-        const balance = await printWalletInfo(wallet);
-
         if (balance.lte(amount)) {
             throw new Error(`Wallet has insufficient funds.`);
         }
@@ -42,20 +52,6 @@ async function sendTokens(chain, options) {
         if (anwser !== 'y') return;
     }
 
-    const gasOptions = chain.staticGasOptions || {};
-
-    if (offline) {
-        nonce = getLocalNonce(env, chain.name.toLowerCase(), signerAddress);
-
-        if (nonceOffset) {
-            if (!isValidNumber(nonceOffset)) {
-                throw new Error('Provided nonce offset is not a valid number');
-            }
-
-            nonce += parseInt(nonceOffset);
-        }
-    }
-
     for (const recipient of recipients) {
         printInfo('Recipient', recipient);
         const tx = {
@@ -63,46 +59,29 @@ async function sendTokens(chain, options) {
             value: amount,
         };
 
-        if (offline) {
-            const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-send-tokens-address-${signerAddress}-nonce-${nonce}.json`;
-            printInfo(`Storing signed Tx offline in file ${filePath}`);
-            const data = {};
-            tx.nonce = nonce;
-            tx.chainId = chain.chainId;
-            printInfo('Waiting for user to approve transaction through ledger wallet');
-            const { baseTx, signedTx } = await ledgerSign(wallet, chain, tx, gasOptions);
-            // Storing the fields in the data that will be stored in file
-            data.msg = `This transaction will send ${amount} of native tokens to ${recipient} on chain ${chain.name} with chainId ${chain.chainId}`;
-            data.unsignedTx = baseTx;
-            data.signedTx = signedTx;
-            data.status = 'PENDING';
-            storeSignedTx(filePath, data);
-        } else {
-            const response = await wallet.sendTransaction(tx);
-            await response.wait();
-            printInfo('Transaction hash', response.transactionHash);
-        }
+        const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
-        ++nonce;
+        if (offline) {
+            const filePath = `./tx/signed-tx-${env}-${chainName}-send-tokens-address-${address}-nonce-${baseTx.nonce}.json`;
+            printInfo(`Storing signed Tx offline in file ${filePath}`);
+
+            // Storing the fields in the data that will be stored in file
+            const data = {
+                msg: `This transaction will send ${amount} of native tokens from ${address} to ${recipient} on chain ${chain.name}`,
+                unsignedTx: baseTx,
+                signedTx,
+                status: 'PENDING',
+            };
+
+            storeSignedTx(filePath, data);
+
+            options.nonceOffset = (options.nonceOffset || 0) + 1;
+        }
     }
 }
 
 async function main(options) {
-    const config = loadConfig(options.env);
-
-    const chains = options.chainNames.split(',').map((str) => str.trim());
-
-    for (const chainName of chains) {
-        if (config.chains[chainName.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chainName} is not defined in the info file`);
-        }
-    }
-
-    for (const chainName of chains) {
-        const chain = config.chains[chainName.toLowerCase()];
-
-        await sendTokens(chain, options);
-    }
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {
@@ -122,13 +101,8 @@ if (require.main === module) {
     program.addOption(new Option('-r, --recipients <recipients>', 'comma-separated recipients of tokens').makeOptionMandatory(true));
     program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)').makeOptionMandatory(true));
     program.addOption(new Option('--offline', 'Run in offline mode'));
-    program.addOption(new Option('--ledgerPath <ledgerPath>', 'The path to identify the account in ledger').makeOptionMandatory(false));
-    program.addOption(
-        new Option(
-            '--nonceOffset <nonceOffset>',
-            'The value to add in local nonce if it deviates from actual wallet nonce',
-        ).makeOptionMandatory(false),
-    );
+    program.addOption(new Option('--ledgerPath <ledgerPath>', 'The path to identify the account in ledger'));
+    program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
     program.addOption(new Option('-y, --yes', 'skip prompts'));
 
     program.action((options) => {
@@ -137,5 +111,5 @@ if (require.main === module) {
 
     program.parse();
 } else {
-    module.exports = { sendTokens };
+    module.exports = { sendTokens: processCommand };
 }
