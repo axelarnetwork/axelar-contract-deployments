@@ -408,7 +408,7 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     const keyID = options.keyID || '';
 
     const evmAddresses = options.amplifier
-        ? await getAmplifierKeyAddresses(config, chain, keyID)
+        ? await getAmplifierKeyAddresses(config, chain)
         : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
 
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
@@ -420,19 +420,16 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     return { addresses, weights, threshold };
 };
 
-const getAmplifierKeyAddresses = async (config, chain, keyID = '') => {
+const getAmplifierKeyAddresses = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const key = await client.queryContractSmart(config.axelar.contracts.Multisig.address, {
-        get_key: { key_id: { owner: config.axelar.contracts.MultisigProver[chain].address, subkey: keyID } },
-    });
-    const pubkeys = new Map(Object.entries(key.pub_keys));
+    const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'get_worker_set');
 
-    const weightedAddresses = Object.values(key.snapshot.participants).map((participant) => ({
-        address: computeAddress(`0x${pubkeys.get(participant.address)}`),
-        weight: participant.weight,
+    const weightedAddresses = workerSet.signers.map((signer) => ({
+        address: computeAddress(`0x${signer.pub_key.ecdsa}`),
+        weight: signer.weight,
     }));
 
-    return { addresses: weightedAddresses, threshold: key.snapshot.quorum };
+    return { addresses: weightedAddresses, threshold: workerSet.threshold };
 };
 
 function sleep(ms) {
