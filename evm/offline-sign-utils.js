@@ -7,6 +7,7 @@ const {
     BigNumber,
     utils: { isAddress, serializeTransaction },
 } = ethers;
+
 const path = require('path');
 const { LedgerSigner } = require('@ethersproject/hardware-wallets');
 
@@ -67,6 +68,12 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
     }
 
     if (!options.offline) {
+        // force legacy tx type for ledger signer
+        if (wallet instanceof LedgerSigner) {
+            tx.type = 0;
+            tx.gasPrice = tx.gasPrice || (await wallet.provider.getGasPrice());
+        }
+
         tx = await wallet.populateTransaction(tx);
     } else {
         const address = options.signerAddress || (await wallet.getAddress());
@@ -74,8 +81,8 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
         tx = {
             ...chain.staticGasOptions,
             chainId: chain.chainId,
-            from: address,
             nonce: options.nonce,
+            from: address,
             ...tx, // prefer tx options if they were set
         };
 
@@ -98,24 +105,23 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
         if (!tx.gasPrice && !(isNumber(tx.maxFeePerGas) && isNumber(tx.maxPriorityFeePerGas))) {
             throw new Error('Gas price (legacy or eip-1559) is missing/not provided for the tx in function arguments');
         }
-    }
 
-    printInfo('Transaction being signed', JSON.stringify(tx, null, 2));
+        printInfo('Transaction being signed', JSON.stringify(tx, null, 2));
+    }
 
     let signedTx;
 
     if (wallet instanceof LedgerSigner) {
-        signedTx = await ledgerSign(wallet, chain, tx);
+        // Ledger doesn't like .from to be set
+        delete tx.from;
 
-        if (!options.offline) {
-            await sendTransaction(signedTx, wallet.provider);
-        }
+        signedTx = await ledgerSign(wallet, chain, tx);
     } else {
         signedTx = await wallet.signTransaction(tx);
+    }
 
-        if (!options.offline) {
-            await sendTransaction(signedTx, wallet.provider);
-        }
+    if (!options.offline) {
+        await sendTransaction(signedTx, wallet.provider);
     }
 
     return { baseTx: tx, signedTx };
@@ -132,9 +138,7 @@ const ledgerSign = async (wallet, chain, baseTx) => {
     // Ledger gives this value mod 256
     // So from that, compute whether v is 0 or 1 and then add to 2 * chainId + 35 without doing a mod
     var v = BigNumber.from('0x' + sig.v).toNumber();
-    v = 2 * chain.chainID + 35 + ((v + 256 * 100000000000 - (2 * chain.chainID + 35)) % 256);
-
-    // console.log("sig v", BigNumber.from("0x" + sig.v).toNumber(), v, "chain", chainID)
+    v = 2 * chain.chainId + 35 + ((v + 256 * 100000000000 - (2 * chain.chainId + 35)) % 256);
 
     const signedTx = serializeTransaction(baseTx, {
         v,
