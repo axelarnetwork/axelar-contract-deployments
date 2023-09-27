@@ -3,7 +3,7 @@
 require('dotenv').config();
 
 const { ethers } = require('hardhat');
-const { Wallet, getDefaultProvider } = ethers;
+const { getDefaultProvider } = ethers;
 const { Command, Option } = require('commander');
 const { mainProcessor, printWalletInfo } = require('./utils');
 const { getWallet } = require('./offline-sign-utils');

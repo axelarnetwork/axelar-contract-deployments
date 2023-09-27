@@ -5,7 +5,7 @@ const { ethers } = require('hardhat');
 const {
     Wallet,
     BigNumber,
-    utils: { isAddress, serializeTransaction, formatUnits },
+    utils: { isAddress, serializeTransaction },
 } = ethers;
 
 const path = require('path');
