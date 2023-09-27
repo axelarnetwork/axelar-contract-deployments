@@ -147,27 +147,14 @@ const ledgerSign = async (wallet, chain, baseTx) => {
     return signedTx;
 };
 
-const sendTransaction = async (tx, provider) => {
-    try {
+const sendTransaction = async (tx, provider, confirmations = undefined) => {
         const response = await provider.sendTransaction(tx);
-        const receipt = await response.wait();
-
-        // if (response.error || !isValidJSON(response) || response.status !== 1) {
-        //     const error = `Execution failed${
-        //         response.status ? ` with txHash: ${response.transactionHash}` : ` with msg: ${response.message}`
-        //     }`;
-        //     throw new Error(error);
-        // }
+        const receipt = await response.wait(confirmations);
 
         printInfo('Broadcasted tx', response.hash);
         printInfo('Tx receipt', JSON.stringify(receipt, null, 2));
 
-        return { success: true, response, receipt };
-    } catch (error) {
-        printError('Error while broadcasting signed tx', `${error}`);
-
-        return { success: false, response: undefined, receipt: undefined };
-    }
+        return { response, receipt };
 };
 
 function storeSignedTx(filePath, signedTx) {

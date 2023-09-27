@@ -11,7 +11,7 @@ const readlineSync = require('readline-sync');
 const { printError, printInfo, mainProcessor } = require('./utils');
 const { sendTransaction, getSignedTx, storeSignedTx } = require('./offline-sign-utils');
 
-async function processCommand(config, chain, options) {
+async function processCommand(_, chain, options) {
     const { filePath, rpc } = options;
 
     const provider = getDefaultProvider(rpc || chain.rpc);
@@ -35,22 +35,19 @@ async function processCommand(config, chain, options) {
         printInfo('Broadcasting transaction', JSON.stringify(transaction.unsignedTx, null, 2));
 
         // Send the signed transaction
-        const { success, response } = await sendTransaction(transaction.signedTx, provider);
-
-        if (success) {
-            // Update the transaction status and store transaction hash
+        try {
+            const { response } = await sendTransaction(transaction.signedTx, provider, chain.confirmations);
             transaction.status = 'SUCCESS';
-            transaction.transactionHash = response.hash;
-            printInfo(`Transaction executed successfully ${response.hash}`);
-        } else {
-            // Update the transaction status and store error message
+            transaction.hash = response.hash;
+            printInfo('Transaction executed successfully', response.hash);
+        } catch (error) {
             transaction.status = 'FAILED';
-            printError('Error broadcasting tx: ', transaction.signedTx);
+            printError('Error broadcasting tx', error);
         }
 
         storeSignedTx(filePath, transaction);
     } else {
-        printInfo('Skipping broadcast, transaction status is', transaction.status);
+        printWarn('Skipping broadcast, transaction status is', transaction.status);
     }
 }
 
