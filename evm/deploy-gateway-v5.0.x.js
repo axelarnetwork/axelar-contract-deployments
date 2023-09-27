@@ -2,19 +2,8 @@
 
 require('dotenv').config();
 
-const {
-    saveConfig,
-    loadConfig,
-    getBytecodeHash,
-    verifyContract,
-    printInfo,
-    getProxy,
-    getEVMAddresses,
-    httpGet,
-    printError,
-    printWalletInfo,
-    printWarn,
-} = require('./utils');
+const chalk = require('chalk');
+const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const {
     ContractFactory,
@@ -24,8 +13,21 @@ const {
     getDefaultProvider,
 } = ethers;
 const readlineSync = require('readline-sync');
-const { Command, Option } = require('commander');
-const chalk = require('chalk');
+
+const {
+    saveConfig,
+    getBytecodeHash,
+    verifyContract,
+    printInfo,
+    getProxy,
+    getEVMAddresses,
+    httpGet,
+    printError,
+    printWalletInfo,
+    printWarn,
+    mainProcessor,
+} = require('./utils');
+const { storeSignedTx, signTransaction, getWallet } = require('./offline-sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
@@ -48,13 +50,13 @@ async function getAuthParams(config, chain, options) {
     if (options.prevKeyIDs) {
         for (const keyID of options.prevKeyIDs.split(',')) {
             const { addresses, weights, threshold } = await getEVMAddresses(config, chain, { ...options, keyID });
-            printInfo(JSON.stringify({ keyID, addresses, weights, threshold }));
+            printInfo(JSON.stringify({ status: 'old', keyID, addresses, weights, threshold }));
             params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
         }
     }
 
-    const { addresses, weights, threshold } = await getEVMAddresses(config, chain, options);
-    printInfo(JSON.stringify({ keyID: 'latest', addresses, weights, threshold }));
+    const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain, options);
+    printInfo(JSON.stringify({ status: 'latest', keyID, addresses, weights, threshold }));
     params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
 
     return params;
@@ -93,17 +95,6 @@ async function deploy(config, options) {
         throw new Error('mintLimiter address is required');
     }
 
-    const transactionCount = await wallet.getTransactionCount();
-    const proxyAddress = getContractAddress({
-        from: wallet.address,
-        nonce: transactionCount + 3,
-    });
-    printInfo('Predicted proxy address', proxyAddress);
-
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
-    printInfo('Is verification enabled?', verify ? 'y' : 'n');
-
     const gatewayFactory = new ContractFactory(AxelarGateway.abi, AxelarGateway.bytecode, wallet);
     const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
     const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
@@ -114,6 +105,23 @@ async function deploy(config, options) {
     let tokenDeployer;
     const contractsToVerify = [];
 
+    if (reuseProxy) {
+        const gatewayProxy = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.id));
+        printInfo('Reusing Gateway Proxy address', gatewayProxy);
+        gateway = gatewayFactory.attach(gatewayProxy);
+    } else {
+        const transactionCount = await wallet.getTransactionCount();
+        const proxyAddress = getContractAddress({
+            from: wallet.address,
+            nonce: transactionCount + 3,
+        });
+        printInfo('Predicted proxy address', proxyAddress);
+    }
+
+    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
+    printInfo('Is verification enabled?', verify ? 'y' : 'n');
+
     if (!yes) {
         console.log('Does this match any existing deployments?');
         const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
@@ -121,14 +129,6 @@ async function deploy(config, options) {
     }
 
     contractConfig.deployer = wallet.address;
-
-    if (reuseProxy) {
-        printInfo('Reusing gateway proxy contract');
-
-        const gatewayProxy = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.id));
-        printInfo('Proxy address', gatewayProxy);
-        gateway = gatewayFactory.attach(gatewayProxy);
-    }
 
     if (reuseProxy && reuseHelpers) {
         auth = authFactory.attach(await gateway.authModule());
@@ -212,7 +212,7 @@ async function deploy(config, options) {
         governanceModule = await gateway.governance();
     } catch (e) {
         // this can fail when upgrading from an older version
-        printWarn(`WARN: Failed to retrieve governance address`);
+        printWarn(`WARN: Failed to retrieve governance address. Expected when reusing a gateway <v6 proxy`);
     }
 
     printInfo(`Existing governance`, governanceModule);
@@ -228,7 +228,7 @@ async function deploy(config, options) {
         mintLimiterModule = await gateway.mintLimiter();
     } catch (e) {
         // this can fail when upgrading from an older version
-        printWarn(`WARN: Failed to retrieve mint limiter address`);
+        printWarn(`WARN: Failed to retrieve mint limiter address. Expected when reusing a gateway <v6 proxy`);
     }
 
     printInfo('Existing mintLimiter', mintLimiterModule);
@@ -279,6 +279,7 @@ async function deploy(config, options) {
 
     contractConfig.address = gateway.address;
     contractConfig.implementation = implementation.address;
+    contractConfig.implementationCodehash = implementationCodehash;
     contractConfig.authModule = auth.address;
     contractConfig.tokenDeployer = tokenDeployer.address;
     contractConfig.governance = governance;
@@ -300,24 +301,41 @@ async function deploy(config, options) {
 }
 
 async function upgrade(config, options) {
-    const { chainName, privateKey, yes } = options;
-
+    const { chainName, privateKey, yes, offline, env } = options;
     const contractName = 'AxelarGateway';
 
     const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    const wallet = new Wallet(privateKey).connect(provider);
-    await printWalletInfo(wallet);
+    const wallet = await getWallet(privateKey, provider, options);
+
+    const { address } = await printWalletInfo(wallet, options);
 
     const contractConfig = chain.contracts[contractName];
 
     const gateway = new Contract(contractConfig.address, AxelarGateway.abi, wallet);
-    const implementationCodehash = await getBytecodeHash(contractConfig.implementation, chainName, provider);
+    let implementationCodehash = contractConfig.implementationCodehash;
     let governance = options.governance || contractConfig.governance;
     let mintLimiter = options.mintLimiter || contractConfig.mintLimiter;
     let setupParams = '0x';
+
+    if (!offline) {
+        const codehash = await getBytecodeHash(contractConfig.implementation, chainName, provider);
+
+        if (!implementationCodehash) {
+            // retrieve codehash dynamically if not specified in the config file
+            implementationCodehash = codehash;
+        } else if (codehash !== implementationCodehash) {
+            throw new Error(
+                `Implementation codehash mismatch. Expected ${implementationCodehash} but got ${codehash}. Please check if the implementation contract is deployed correctly.`,
+            );
+        }
+    } else {
+        if (!implementationCodehash) {
+            throw new Error('Implementation codehash is missing in the config file');
+        }
+    }
 
     if (governance || mintLimiter) {
         governance = governance || AddressZero;
@@ -327,9 +345,13 @@ async function upgrade(config, options) {
 
     printInfo('Chain', chain.name);
     printInfo('Gateway Proxy', gateway.address);
-    printInfo('Current implementation', await gateway.implementation());
+
+    if (!offline) {
+        printInfo('Current implementation', await gateway.implementation());
+    }
+
     printInfo('Upgrading to implementation', contractConfig.implementation);
-    printInfo('Implementation codehash', implementationCodehash);
+    printInfo('New Implementation codehash', implementationCodehash);
     printInfo('Setup params', setupParams);
 
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
@@ -341,32 +363,48 @@ async function upgrade(config, options) {
         if (anwser !== 'y') return;
     }
 
-    const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
-    printInfo('Upgrade transaction', tx.hash);
+    const tx = await gateway.populateTransaction.upgrade(contractConfig.implementation, implementationCodehash, setupParams);
 
-    await tx.wait(chain.confirmations);
+    const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
-    const newImplementation = await gateway.implementation();
-    printInfo('New implementation', newImplementation);
+    if (offline) {
+        const filePath = `./tx/signed-tx-${env}-${chainName}-gateway-upgrade-address-${address}-nonce-${baseTx.nonce}.json`;
+        printInfo(`Storing signed Tx offline in file ${filePath}`);
 
-    if (newImplementation !== contractConfig.implementation) {
-        printWarn('Implementation not upgraded yet!');
-        return;
+        // Storing the fields in the data that will be stored in file
+        const data = {
+            msg: `This transaction will upgrade gateway ${gateway.address} to implementation ${contractConfig.implementation} on chain ${chain.name}`,
+            unsignedTx: baseTx,
+            signedTx,
+            status: 'PENDING',
+        };
+
+        storeSignedTx(filePath, data);
+
+        options.nonceOffset = (options.nonceOffset || 0) + 1;
+    } else {
+        const newImplementation = await gateway.implementation();
+        printInfo('New implementation', newImplementation);
+
+        if (newImplementation !== contractConfig.implementation) {
+            printWarn('Implementation not upgraded yet!');
+            return;
+        }
+
+        printInfo('Upgraded to', newImplementation);
     }
-
-    printInfo('Upgraded to', newImplementation);
 }
 
-async function main(options) {
-    const config = loadConfig(options.env);
-
+async function processCommand(config, chain, options) {
     if (!options.upgrade) {
         await deploy(config, options);
     } else {
         await upgrade(config, options);
     }
+}
 
-    saveConfig(config, options.env);
+async function main(options) {
+    await mainProcessor(options, processCommand);
 }
 
 async function programHandler() {
@@ -398,6 +436,14 @@ async function programHandler() {
     program.addOption(new Option('-a, --amplifier', 'deploy amplifier gateway').env('AMPLIFIER'));
     program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
     program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
+    program.addOption(new Option('--offline', 'Run in offline mode'));
+    program.addOption(new Option('-l, --ledgerPath <ledgerPath>', 'The path to identify the account in ledger').makeOptionMandatory(false));
+    program.addOption(
+        new Option(
+            '--nonceOffset <nonceOffset>',
+            'The value to add in local nonce if it deviates from actual wallet nonce',
+        ).makeOptionMandatory(false),
+    );
 
     program.action((options) => {
         main(options);

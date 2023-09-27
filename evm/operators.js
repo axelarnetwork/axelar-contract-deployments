@@ -2,12 +2,13 @@
 
 require('dotenv').config();
 
+const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
     utils: { isAddress, Interface },
     Contract,
-} = require('ethers');
+} = ethers;
 const { Command, Option } = require('commander');
 const readlineSync = require('readline-sync');
 const chalk = require('chalk');

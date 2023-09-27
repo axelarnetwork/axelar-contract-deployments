@@ -2,25 +2,46 @@
 
 require('dotenv').config();
 
-const { ethers } = require('hardhat');
-const { Wallet, getDefaultProvider } = ethers;
-const { Command, Option } = require('commander');
 const chalk = require('chalk');
-const { printInfo, printWalletInfo } = require('./utils');
+const { Command, Option } = require('commander');
+const { ethers } = require('hardhat');
+const {
+    getDefaultProvider,
+    utils: { parseEther },
+} = ethers;
 const readlineSync = require('readline-sync');
 
-async function sendTokens(chain, options) {
+const { printInfo, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal } = require('./utils');
+const { storeSignedTx, getWallet, signTransaction } = require('./offline-sign-utils.js');
+
+async function processCommand(_, chain, options) {
+    const { privateKey, offline, env } = options;
+    let { amount, recipients } = options;
+
+    const chainName = chain.name.toLowerCase();
     const provider = getDefaultProvider(chain.rpc);
-    const wallet = new Wallet(options.privateKey, provider);
 
-    const balance = await printWalletInfo(wallet);
-    const amount = ethers.utils.parseEther(options.amount);
+    recipients = options.recipients.split(',').map((str) => str.trim());
 
-    if (balance.lte(amount)) {
-        throw new Error(`Wallet has insufficient funds.`);
+    if (!isAddressArray(recipients)) {
+        throw new Error('Invalid recipient addresses');
     }
 
-    const recipients = options.recipients.split(',').map((str) => str.trim());
+    if (!isValidDecimal(amount)) {
+        throw new Error('Invalid amount');
+    }
+
+    amount = parseEther(amount);
+
+    const wallet = await getWallet(privateKey, provider, options);
+
+    const { address, balance } = await printWalletInfo(wallet, options);
+
+    if (!offline) {
+        if (balance.lte(amount)) {
+            throw new Error(`Wallet has insufficient funds.`);
+        }
+    }
 
     if (!options.yes) {
         const anwser = readlineSync.question(
@@ -33,34 +54,34 @@ async function sendTokens(chain, options) {
 
     for (const recipient of recipients) {
         printInfo('Recipient', recipient);
-
-        const tx = await wallet.sendTransaction({
+        const tx = {
             to: recipient,
             value: amount,
-        });
+        };
 
-        printInfo('Transaction hash', tx.hash);
+        const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
-        await tx.wait();
+        if (offline) {
+            const filePath = `./tx/signed-tx-${env}-${chainName}-send-tokens-address-${address}-nonce-${baseTx.nonce}.json`;
+            printInfo(`Storing signed Tx offline in file ${filePath}`);
+
+            // Storing the fields in the data that will be stored in file
+            const data = {
+                msg: `This transaction will send ${amount} of native tokens from ${address} to ${recipient} on chain ${chain.name}`,
+                unsignedTx: baseTx,
+                signedTx,
+                status: 'PENDING',
+            };
+
+            storeSignedTx(filePath, data);
+
+            options.nonceOffset = (options.nonceOffset || 0) + 1;
+        }
     }
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../axelar-chains-config/info/${options.env === 'local' ? 'testnet' : options.env}.json`);
-
-    const chains = options.chainNames.split(',').map((str) => str.trim());
-
-    for (const chainName of chains) {
-        if (config.chains[chainName.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chainName} is not defined in the info file`);
-        }
-    }
-
-    for (const chainName of chains) {
-        const chain = config.chains[chainName.toLowerCase()];
-
-        await sendTokens(chain, options);
-    }
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {
@@ -79,6 +100,9 @@ if (require.main === module) {
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-r, --recipients <recipients>', 'comma-separated recipients of tokens').makeOptionMandatory(true));
     program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)').makeOptionMandatory(true));
+    program.addOption(new Option('--offline', 'Run in offline mode'));
+    program.addOption(new Option('--ledgerPath <ledgerPath>', 'The path to identify the account in ledger'));
+    program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
     program.addOption(new Option('-y, --yes', 'skip prompts'));
 
     program.action((options) => {
@@ -87,5 +111,5 @@ if (require.main === module) {
 
     program.parse();
 } else {
-    module.exports = { sendTokens };
+    module.exports = { sendTokens: processCommand };
 }
