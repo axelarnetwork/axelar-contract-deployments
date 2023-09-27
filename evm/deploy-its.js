@@ -2,12 +2,13 @@ require('dotenv').config();
 
 const { getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const { deployCreate3, deployCreate2 } = require('./utils');
+const { ethers } = require('hardhat');
 const {
     Wallet,
     Contract,
     getDefaultProvider,
     utils: { defaultAbiCoder, isAddress, keccak256 },
-} = require('ethers');
+} = ethers;
 const readlineSync = require('readline-sync');
 const chalk = require('chalk');
 const { printInfo, loadConfig, saveConfig } = require('./utils');

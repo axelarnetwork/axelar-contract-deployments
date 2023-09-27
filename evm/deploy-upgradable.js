@@ -2,12 +2,13 @@
 
 require('dotenv').config();
 
+const { ethers } = require('hardhat');
 const {
     Contract,
     Wallet,
     getDefaultProvider,
     utils: { isAddress },
-} = require('ethers');
+} = ethers;
 const readlineSync = require('readline-sync');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 const { Command, Option } = require('commander');
