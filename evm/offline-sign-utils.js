@@ -148,13 +148,13 @@ const ledgerSign = async (wallet, chain, baseTx) => {
 };
 
 const sendTransaction = async (tx, provider, confirmations = undefined) => {
-        const response = await provider.sendTransaction(tx);
-        const receipt = await response.wait(confirmations);
+    const response = await provider.sendTransaction(tx);
+    const receipt = await response.wait(confirmations);
 
-        printInfo('Broadcasted tx', response.hash);
-        printInfo('Tx receipt', JSON.stringify(receipt, null, 2));
+    printInfo('Broadcasted tx', response.hash);
+    printInfo('Tx receipt', JSON.stringify(receipt, null, 2));
 
-        return { response, receipt };
+    return { response, receipt };
 };
 
 function storeSignedTx(filePath, signedTx) {

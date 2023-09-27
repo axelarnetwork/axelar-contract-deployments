@@ -8,7 +8,7 @@ const {
 } = ethers;
 const readlineSync = require('readline-sync');
 
-const { printError, printInfo, mainProcessor } = require('./utils');
+const { printError, printInfo, printWarn, mainProcessor } = require('./utils');
 const { sendTransaction, getSignedTx, storeSignedTx } = require('./offline-sign-utils');
 
 async function processCommand(_, chain, options) {
