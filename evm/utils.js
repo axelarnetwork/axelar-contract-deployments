@@ -116,7 +116,7 @@ const printInfo = (msg, info = '') => {
 
 const printWarn = (msg, info = '') => {
     if (info) {
-        msg = msg + ': ' + info;
+        msg = `${msg}: ${info}`;
     }
 
     console.log(`${chalk.yellow(msg)}\n`);
@@ -124,7 +124,7 @@ const printWarn = (msg, info = '') => {
 
 const printError = (msg, info = '') => {
     if (info) {
-        msg = msg + ': ' + info;
+        msg = `${msg}: ${info}`;
     }
 
     console.log(`${chalk.red(msg)}\n`);

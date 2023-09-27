@@ -193,8 +193,8 @@ function getSignedTx(filePath) {
 
         return signedTx;
     } catch (error) {
-        printError(`Failed to get all  signers data from the file ${filePath}`);
-        printObj(error);
+        printError(`Failed to get all signers data from the file ${filePath}`, error);
+        throw error;
     }
 }
 
@@ -206,8 +206,8 @@ function getFileData(filePath) {
         const data = fs.readFileSync(filePath, 'utf-8');
         return data;
     } catch (error) {
-        printError(`Failed to get data from the file ${filePath}`);
-        printObj(error);
+        printError(`Failed to get data from the file ${filePath}`, error);
+        throw error;
     }
 }
 
@@ -233,8 +233,8 @@ async function getTransactions(filePath, signerAddress) {
 
         return transactions;
     } catch (error) {
-        printError(`Failed to get transactions for ${signerAddress}`);
-        printObj(error);
+        printError(`Failed to get transactions for ${signerAddress}`, error);
+        throw error;
     }
 }
 
