@@ -66,14 +66,16 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
         };
     }
 
-    if (options.offline) {
+    if (!options.offline) {
+        tx = await wallet.populateTransaction(tx);
+    } else {
         const address = options.signerAddress || (await wallet.getAddress());
 
         tx = {
             ...chain.staticGasOptions,
-            nonce: options.nonce,
             chainId: chain.chainId,
             from: address,
+            nonce: options.nonce,
             ...tx, // prefer tx options if they were set
         };
 
@@ -98,7 +100,7 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
         }
     }
 
-    printInfo(JSON.stringify(tx, null, 2));
+    printInfo('Transaction being signed', JSON.stringify(tx, null, 2));
 
     let signedTx;
 
@@ -109,9 +111,9 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
             await sendTransaction(signedTx, wallet.provider);
         }
     } else {
-        if (options.offline) {
-            signedTx = await wallet.signTransaction(tx);
-        } else {
+        signedTx = await wallet.signTransaction(tx);
+
+        if (!options.offline) {
             await sendTransaction(signedTx, wallet.provider);
         }
     }

@@ -95,17 +95,6 @@ async function deploy(config, options) {
         throw new Error('mintLimiter address is required');
     }
 
-    const transactionCount = await wallet.getTransactionCount();
-    const proxyAddress = getContractAddress({
-        from: wallet.address,
-        nonce: transactionCount + 3,
-    });
-    printInfo('Predicted proxy address', proxyAddress);
-
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
-    printInfo('Is verification enabled?', verify ? 'y' : 'n');
-
     const gatewayFactory = new ContractFactory(AxelarGateway.abi, AxelarGateway.bytecode, wallet);
     const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
     const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
@@ -116,6 +105,23 @@ async function deploy(config, options) {
     let tokenDeployer;
     const contractsToVerify = [];
 
+    if (reuseProxy) {
+        const gatewayProxy = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.id));
+        printInfo('Reusing Gateway Proxy address', gatewayProxy);
+        gateway = gatewayFactory.attach(gatewayProxy);
+    } else {
+        const transactionCount = await wallet.getTransactionCount();
+        const proxyAddress = getContractAddress({
+            from: wallet.address,
+            nonce: transactionCount + 3,
+        });
+        printInfo('Predicted proxy address', proxyAddress);
+    }
+
+    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
+    printInfo('Is verification enabled?', verify ? 'y' : 'n');
+
     if (!yes) {
         console.log('Does this match any existing deployments?');
         const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
@@ -123,14 +129,6 @@ async function deploy(config, options) {
     }
 
     contractConfig.deployer = wallet.address;
-
-    if (reuseProxy) {
-        printInfo('Reusing gateway proxy contract');
-
-        const gatewayProxy = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.id));
-        printInfo('Proxy address', gatewayProxy);
-        gateway = gatewayFactory.attach(gatewayProxy);
-    }
 
     if (reuseProxy && reuseHelpers) {
         auth = authFactory.attach(await gateway.authModule());
@@ -214,7 +212,7 @@ async function deploy(config, options) {
         governanceModule = await gateway.governance();
     } catch (e) {
         // this can fail when upgrading from an older version
-        printWarn(`WARN: Failed to retrieve governance address`);
+        printWarn(`WARN: Failed to retrieve governance address. Expected when reusing a gateway <v6 proxy`);
     }
 
     printInfo(`Existing governance`, governanceModule);
@@ -230,7 +228,7 @@ async function deploy(config, options) {
         mintLimiterModule = await gateway.mintLimiter();
     } catch (e) {
         // this can fail when upgrading from an older version
-        printWarn(`WARN: Failed to retrieve mint limiter address`);
+        printWarn(`WARN: Failed to retrieve mint limiter address. Expected when reusing a gateway <v6 proxy`);
     }
 
     printInfo('Existing mintLimiter', mintLimiterModule);
