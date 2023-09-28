@@ -643,8 +643,8 @@ const isContract = async (address, provider) => {
     }
 };
 
-function isValidAddress(address, allowZeroAddress = false) {
-    if (!allowZeroAddress || address === AddressZero) {
+function isValidAddress(address, allowZeroAddress) {
+    if (!allowZeroAddress && address === AddressZero) {
         return false;
     }
 

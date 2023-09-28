@@ -24,6 +24,7 @@ const {
     isNumberArray,
     isValidAddress,
     mainProcessor,
+    isValidDecimal,
 } = require('./utils');
 const IMultisig = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IMultisig.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
@@ -31,7 +32,7 @@ const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const { parseEther } = require('ethers/lib/utils');
 const { getWallet, signTransaction, storeSignedTx } = require('./sign-utils');
 
-async function preExecutionChecks(multisigContract, action, wallet, target, calldata, nativeValue) {
+async function preExecutionChecks(multisigContract, action, wallet, target, calldata, nativeValue, yes) {
     const address = await wallet.getAddress();
     const isSigner = await multisigContract.isSigner(address);
 
@@ -52,9 +53,9 @@ async function preExecutionChecks(multisigContract, action, wallet, target, call
     const topicHash = keccak256(topic);
     const voteCount = await multisigContract.getSignerVotesCount(topicHash);
 
-    if (voteCount.eq(0)) {
+    if (!yes && voteCount.eq(0)) {
         printWarn(`The vote count for this topic is zero. This action will create a new multisig proposal.`);
-        const answer = readlineSync.question(`Proceed with ${action}?`);
+        const answer = readlineSync.question(`Proceed with ${action}? ${chalk.green('(y/n)')} `);
         if (answer !== 'y') return;
     }
 
@@ -66,9 +67,9 @@ async function preExecutionChecks(multisigContract, action, wallet, target, call
 
     const threshold = await multisigContract.signerThreshold();
 
-    if (voteCount.eq(threshold.sub(1))) {
+    if (!yes && voteCount.eq(threshold.sub(1))) {
         printWarn(`The vote count is one below the threshold. This action will execute the multisig proposal.`);
-        const answer = readlineSync.question(`Proceed with ${action}?`);
+        const answer = readlineSync.question(`Proceed with ${action}? ${chalk.green('(y/n)')} `);
         if (answer !== 'y') return 0;
     }
 }
@@ -159,7 +160,7 @@ async function processCommand(_, chain, options) {
             const multisigCalldata = targetInterface.encodeFunctionData('setTokenMintLimits', [symbolsArray, limitsArray]);
 
             if (!offline) {
-                await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0);
+                await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
             }
 
             tx = await multisigContract.populateTransaction.executeContract(multisigTarget, multisigCalldata, 0, gasOptions);
@@ -182,7 +183,7 @@ async function processCommand(_, chain, options) {
             const multisigCalldata = targetInterface.encodeFunctionData('transferMintLimiter', [mintLimiter]);
 
             if (!offline) {
-                await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0);
+                await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
             }
 
             tx = await multisigContract.populateTransaction.executeContract(multisigTarget, multisigCalldata, 0);
@@ -201,7 +202,7 @@ async function processCommand(_, chain, options) {
             const amount = parseEther(withdrawAmount);
 
             if (!offline) {
-                await preExecutionChecks(multisigContract, action, wallet, recipient, '0x', amount);
+                await preExecutionChecks(multisigContract, action, wallet, recipient, '0x', amount, yes);
 
                 const balance = await provider.getBalance(multisigContract.address);
 
@@ -246,7 +247,7 @@ async function processCommand(_, chain, options) {
             const governanceContract = new Contract(governance, IGovernance.abi, wallet);
 
             if (!offline) {
-                await preExecutionChecks(governanceContract, action, wallet, target, calldata, nativeValue);
+                await preExecutionChecks(governanceContract, action, wallet, target, calldata, nativeValue, yes);
 
                 const balance = await provider.getBalance(governance);
 
@@ -301,7 +302,7 @@ program.addOption(
         .makeOptionMandatory(true)
         .env('ENV'),
 );
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig'));
+program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig').makeOptionMandatory(false));
 program.addOption(new Option('-a, --address <address>', 'override address'));
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
 program.addOption(
@@ -315,20 +316,20 @@ program.addOption(new Option('--offline', 'run script in offline mode'));
 program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
 
 // options for setTokenMintLimits
-program.addOption(new Option('--symbols <symbols>', 'token symbols'));
-program.addOption(new Option('--limits <limits>', 'token limits'));
+program.addOption(new Option('--symbols <symbols>', 'token symbols').makeOptionMandatory(false));
+program.addOption(new Option('--limits <limits>', 'token limits').makeOptionMandatory(false));
 
 // option for transferMintLimiter
-program.addOption(new Option('--mintLimiter <mintLimiter>', 'new mint limiter address'));
+program.addOption(new Option('--mintLimiter <mintLimiter>', 'new mint limiter address').makeOptionMandatory(false));
 
 // options for withdraw
-program.addOption(new Option('--recipient <recipient>', 'withdraw recipient address'));
-program.addOption(new Option('--withdrawAmount <withdrawAmount>', 'withdraw amount'));
+program.addOption(new Option('--recipient <recipient>', 'withdraw recipient address').makeOptionMandatory(false));
+program.addOption(new Option('--withdrawAmount <withdrawAmount>', 'withdraw amount').makeOptionMandatory(false));
 
 // options for executeMultisigProposal
-program.addOption(new Option('--target <target>', 'execute multisig proposal target'));
-program.addOption(new Option('--calldata <calldata>', 'execute multisig proposal calldata'));
-program.addOption(new Option('--nativeValue <nativeValue>', 'execute multisig proposal nativeValue').default(0));
+program.addOption(new Option('--target <target>', 'execute multisig proposal target').makeOptionMandatory(false));
+program.addOption(new Option('--calldata <calldata>', 'execute multisig proposal calldata').makeOptionMandatory(false));
+program.addOption(new Option('--nativeValue <nativeValue>', 'execute multisig proposal nativeValue').makeOptionMandatory(false).default(0));
 
 program.action((options) => {
     main(options);
