@@ -629,10 +629,6 @@ const unixTimestampToEta = (timestamp) => {
     return date.toISOString().slice(0, 19);
 };
 
-const getCurrentTimeInSeconds = () => {
-    return Date.now() / 1000;
-};
-
 /**
  * Check if a specific event was emitted in a transaction receipt.
  *
