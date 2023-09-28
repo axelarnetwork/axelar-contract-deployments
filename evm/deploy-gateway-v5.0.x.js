@@ -438,12 +438,7 @@ async function programHandler() {
     program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('-l, --ledgerPath <ledgerPath>', 'The path to identify the account in ledger').makeOptionMandatory(false));
-    program.addOption(
-        new Option(
-            '--nonceOffset <nonceOffset>',
-            'The value to add in local nonce if it deviates from actual wallet nonce',
-        ).makeOptionMandatory(false),
-    );
+    program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
 
     program.action((options) => {
         main(options);
