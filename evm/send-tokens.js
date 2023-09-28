@@ -12,7 +12,7 @@ const {
 const readlineSync = require('readline-sync');
 
 const { printInfo, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal } = require('./utils');
-const { storeSignedTx, getWallet, signTransaction } = require('./offline-sign-utils.js');
+const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js');
 
 async function processCommand(_, chain, options) {
     const { privateKey, offline, env } = options;

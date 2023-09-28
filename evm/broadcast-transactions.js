@@ -9,7 +9,7 @@ const {
 const readlineSync = require('readline-sync');
 
 const { printError, printInfo, printWarn, mainProcessor } = require('./utils');
-const { sendTransaction, getSignedTx, storeSignedTx } = require('./offline-sign-utils');
+const { sendTransaction, getSignedTx, storeSignedTx } = require('./sign-utils');
 
 async function processCommand(_, chain, options) {
     const { filePath, rpc } = options;

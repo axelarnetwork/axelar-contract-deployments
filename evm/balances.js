@@ -6,7 +6,7 @@ const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
 const { Command, Option } = require('commander');
 const { mainProcessor, printWalletInfo } = require('./utils');
-const { getWallet } = require('./offline-sign-utils');
+const { getWallet } = require('./sign-utils');
 
 async function processCommand(_, chain, options) {
     const provider = getDefaultProvider(chain.rpc);
