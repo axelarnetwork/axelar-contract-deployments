@@ -27,7 +27,7 @@ const {
     printWarn,
     mainProcessor,
 } = require('./utils');
-const { storeSignedTx, signTransaction, getWallet } = require('./offline-sign-utils.js');
+const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');

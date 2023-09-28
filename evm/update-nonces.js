@@ -7,7 +7,7 @@ const { getDefaultProvider } = ethers;
 const readlineSync = require('readline-sync');
 
 const { mainProcessor } = require('./utils');
-const { getNonceFromProvider, getNonceFileData, updateNonceFileData } = require('./offline-sign-utils');
+const { getNonceFromProvider, getNonceFileData, updateNonceFileData } = require('./sign-utils');
 
 async function processCommand(config, chain, options) {
     const { env, rpc, yes } = options;
