@@ -5,6 +5,7 @@ const {
     ContractFactory,
     Contract,
     utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString },
+    constants: { AddressZero },
 } = ethers;
 const https = require('https');
 const http = require('http');
@@ -207,11 +208,25 @@ const isNumberArray = (arr) => {
     return true;
 };
 
-const isAddressArray = (addresses) => {
-    if (!Array.isArray(addresses)) return false;
+const isStringArray = (arr) => {
+    if (!Array.isArray(arr)) {
+        return false;
+    }
 
-    for (const address of addresses) {
-        if (!isAddress(address)) {
+    for (const item of arr) {
+        if (typeof item !== 'string') {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+const isAddressArray = (arr) => {
+    if (!Array.isArray(arr)) return false;
+
+    for (const item of arr) {
+        if (!isAddress(item)) {
             return false;
         }
     }
@@ -239,6 +254,28 @@ function isKeccak256Hash(input) {
 
     // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
     const hexPattern = /^[a-fA-F0-9]{64}$/;
+
+    return hexPattern.test(input.slice(2));
+}
+
+/**
+ * Determines if a given input is a valid calldata for Solidity.
+ *
+ * @param {string} input - The string to validate.
+ * @returns {boolean} - Returns true if the input is a valid calldata, false otherwise.
+ */
+function isValidCalldata(input) {
+    if (input === '0x') {
+        return true;
+    }
+
+    // Ensure it's a string, starts with '0x' and has an even number of characters after '0x'
+    if (typeof input !== 'string' || input.slice(0, 2) !== '0x' || input.length % 2 !== 0) {
+        return false;
+    }
+
+    // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
+    const hexPattern = /^[a-fA-F0-9]+$/;
 
     return hexPattern.test(input.slice(2));
 }
@@ -294,15 +331,15 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
         // Contract instance
         provider = contractObject.provider;
         bytecode = await provider.getCode(contractObject.address);
-    } else if (contractObject.bytecode) {
+    } else if (contractObject.deployedBytecode) {
         // Contract factory
-        bytecode = contractObject.bytecode;
+        bytecode = contractObject.deployedBytecode;
     } else {
         throw new Error('Invalid contract object. Expected ethers.js Contract or ContractFactory.');
     }
 
     if (chain.toLowerCase() === 'polygon-zkevm') {
-        const codehash = await zkevm.smtUtils.hashContractBytecode(bytecode);
+        const codehash = zkevm.smtUtils.hashContractBytecode(bytecode);
         return codehash;
     }
 
@@ -606,7 +643,15 @@ const isContract = async (address, provider) => {
     }
 };
 
-const mainProcessor = async (options, processCommand, save = false, catchErr = false) => {
+function isValidAddress(address, allowZeroAddress) {
+    if (!allowZeroAddress && address === AddressZero) {
+        return false;
+    }
+
+    return isAddress(address);
+}
+
+const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
     if (!options.env) {
         throw new Error('Environment was not provided');
     }
@@ -663,8 +708,10 @@ module.exports = {
     isValidNumber,
     isValidDecimal,
     isNumberArray,
+    isStringArray,
     isAddressArray,
     isKeccak256Hash,
+    isValidCalldata,
     parseArgs,
     getProxy,
     getEVMAddresses,
@@ -677,6 +724,7 @@ module.exports = {
     getCurrentTimeInSeconds,
     wasEventEmitted,
     isContract,
+    isValidAddress,
     isValidPrivateKey,
     verifyContract,
     mainProcessor,
