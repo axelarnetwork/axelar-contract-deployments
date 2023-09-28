@@ -13,6 +13,8 @@ const {
     saveConfig,
     loadConfig,
     printWalletInfo,
+    isAddressArray,
+    isNumber,
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
@@ -26,8 +28,8 @@ const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
 async function getAuthParams(config, chain) {
-    const { addresses, weights, threshold } = await getEVMAddresses(config, chain);
-    printObj(JSON.stringify({ addresses, weights, threshold }));
+    const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain);
+    printObj(JSON.stringify({ status: 'latest', keyID, addresses, weights, threshold }));
     const paramsAuth = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
     return paramsAuth;
 }
@@ -63,7 +65,7 @@ async function deploy(config, options) {
     });
     printInfo('Predicted proxy address', proxyAddress);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = contractConfig.gasOptions || chain.gasOptions || { gasLimit: 6e6 };
     printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
     printInfo('Skip existing contracts?', skipExisting ? 'y' : 'n');
@@ -72,6 +74,16 @@ async function deploy(config, options) {
     const authFactory = await getContractFactory('AxelarAuthWeighted', wallet);
     const tokenDeployerFactory = await getContractFactory('TokenDeployer', wallet);
     const gatewayProxyFactory = await getContractFactory('AxelarGatewayProxy', wallet);
+
+    if (!adminAddresses || !isAddressArray(JSON.parse(adminAddresses))) {
+        printError('Invalid admin addresses', `${adminAddresses}`);
+        return;
+    }
+
+    if (!adminThreshold || !isNumber(parseInt(adminThreshold))) {
+        printError('Invalid admin threshold', `${adminThreshold}`);
+        return;
+    }
 
     let gateway;
     let auth;
@@ -219,6 +231,7 @@ async function deploy(config, options) {
 
     contractConfig.address = gateway.address;
     contractConfig.implementation = implementation.address;
+    contractConfig.implementationCodehash = implementationCodehash;
     contractConfig.authModule = auth.address;
     contractConfig.tokenDeployer = tokenDeployer.address;
 

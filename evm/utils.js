@@ -1,15 +1,15 @@
 'use strict';
 
+const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder },
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString },
     constants: { AddressZero },
-} = require('ethers');
+} = ethers;
 const https = require('https');
 const http = require('http');
 const { outputJsonSync } = require('fs-extra');
-const { readJSON, importNetworks, verifyContract } = require('../axelar-chains-config');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const chalk = require('chalk');
 const {
@@ -17,10 +17,12 @@ const {
     deployContractConstant,
     predictContractConstant,
     getCreate3Address,
+    printObj,
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
+const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
@@ -105,10 +107,6 @@ const deployCreate3 = async (
     return contract;
 };
 
-const printObj = (obj) => {
-    console.log(JSON.stringify(obj, null, 2));
-};
-
 const printInfo = (msg, info = '') => {
     if (info) {
         console.log(`${msg}: ${chalk.green(info)}\n`);
@@ -119,7 +117,7 @@ const printInfo = (msg, info = '') => {
 
 const printWarn = (msg, info = '') => {
     if (info) {
-        msg = msg + ': ' + info;
+        msg = `${msg}: ${info}`;
     }
 
     console.log(`${chalk.yellow(msg)}\n`);
@@ -127,7 +125,7 @@ const printWarn = (msg, info = '') => {
 
 const printError = (msg, info = '') => {
     if (info) {
-        msg = msg + ': ' + info;
+        msg = `${msg}: ${info}`;
     }
 
     console.log(`${chalk.red(msg)}\n`);
@@ -188,6 +186,14 @@ const isNumber = (arg) => {
     return Number.isInteger(arg);
 };
 
+const isValidNumber = (arg) => {
+    return !isNaN(parseInt(arg)) && isFinite(arg);
+};
+
+const isValidDecimal = (arg) => {
+    return !isNaN(parseFloat(arg)) && isFinite(arg);
+};
+
 const isNumberArray = (arr) => {
     if (!Array.isArray(arr)) {
         return false;
@@ -216,16 +222,22 @@ const isStringArray = (arr) => {
     return true;
 };
 
-const isAddressArray = (arg) => {
-    if (!Array.isArray(arg)) return false;
+const isAddressArray = (arr) => {
+    if (!Array.isArray(arr)) return false;
 
-    for (const ele of arg) {
-        if (!isAddress(ele)) {
+    for (const item of arr) {
+        if (!isAddress(item)) {
             return false;
         }
     }
 
     return true;
+};
+
+const getCurrentTimeInSeconds = () => {
+    const now = new Date();
+    const currentTimeInSecs = Math.floor(now.getTime() / 1000);
+    return currentTimeInSecs;
 };
 
 /**
@@ -453,7 +465,7 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     const weights = sortedAddresses.map((weightedAddress) => Number(weightedAddress.weight));
     const threshold = Number(evmAddresses.threshold);
 
-    return { addresses, weights, threshold };
+    return { addresses, weights, threshold, keyID: evmAddresses.key_id };
 };
 
 const getAmplifierKeyAddresses = async (config, chain) => {
@@ -480,17 +492,22 @@ function saveConfig(config, env) {
     writeJSON(config, `${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
-async function printWalletInfo(wallet) {
-    printInfo('Wallet address', wallet.address);
-    const balance = await wallet.provider.getBalance(wallet.address);
-    printInfo('Wallet balance', `${balance / 1e18}`);
-    printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(wallet.address)).toString());
+async function printWalletInfo(wallet, options = {}) {
+    let balance = 0;
+    const address = await wallet.getAddress();
+    printInfo('Wallet address', address);
 
-    if (balance.isZero()) {
-        printError('Wallet balance is 0');
+    if (!options.offline) {
+        balance = await wallet.provider.getBalance(address);
+        printInfo('Wallet balance', `${balance / 1e18}`);
+        printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(address)).toString());
+
+        if (balance.isZero()) {
+            printError('Wallet balance is 0');
+        }
     }
 
-    return balance;
+    return { address, balance };
 }
 
 const deployContract = async (
@@ -574,6 +591,20 @@ function isValidTimeFormat(timeString) {
     return regex.test(timeString);
 }
 
+// Validate if the input privateKey is correct
+function isValidPrivateKey(privateKey) {
+    // Check if it's a valid hexadecimal string
+    if (!privateKey.startsWith('0x')) {
+        privateKey = '0x' + privateKey;
+    }
+
+    if (!isHexString(privateKey) || privateKey.length !== 66) {
+        return false;
+    }
+
+    return true;
+}
+
 const etaToUnixTimestamp = (utcTimeString) => {
     if (utcTimeString === '0') {
         return 0;
@@ -586,10 +617,6 @@ const etaToUnixTimestamp = (utcTimeString) => {
     }
 
     return Math.floor(date.getTime() / 1000);
-};
-
-const getCurrentTimeInSeconds = () => {
-    return Date.now() / 1000;
 };
 
 /**
@@ -616,24 +643,58 @@ const isContract = async (address, provider) => {
     }
 };
 
-function isValidAddress(address, allowZeroAddress) {
-    if (allowZeroAddress) {
-        return isAddress(address);
+function isValidAddress(address, allowZeroAddress = false) {
+    if (!allowZeroAddress || address === AddressZero) {
+        return false;
     }
 
-    return isAddress(address) && address !== AddressZero;
+    return isAddress(address);
 }
+
+const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
+    if (!options.env) {
+        throw new Error('Environment was not provided');
+    }
+
+    if (!options.chainName && !options.chainNames) {
+        throw new Error('Chain names were not provided');
+    }
+
+    const config = loadConfig(options.env);
+    const chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
+
+    for (const chainName of chains) {
+        if (config.chains[chainName.toLowerCase()] === undefined) {
+            throw new Error(`Chain ${chainName} is not defined in the info file`);
+        }
+    }
+
+    for (const chainName of chains) {
+        const chain = config.chains[chainName.toLowerCase()];
+
+        try {
+            await processCommand(config, chain, options);
+        } catch (error) {
+            printError(`Failed with error on ${chain.name}`, error.message);
+
+            if (!catchErr) {
+                throw error;
+            }
+        }
+
+        if (save) {
+            saveConfig(config, options.env);
+        }
+    }
+};
 
 module.exports = {
     deployCreate,
     deployCreate2,
     deployCreate3,
     deployContract,
-    readJSON,
     writeJSON,
     httpGet,
-    importNetworks,
-    verifyContract,
     printObj,
     printLog,
     printInfo,
@@ -644,6 +705,8 @@ module.exports = {
     getDeployedAddress,
     isString,
     isNumber,
+    isValidNumber,
+    isValidDecimal,
     isNumberArray,
     isStringArray,
     isAddressArray,
@@ -662,4 +725,7 @@ module.exports = {
     wasEventEmitted,
     isContract,
     isValidAddress,
+    isValidPrivateKey,
+    verifyContract,
+    mainProcessor,
 };
