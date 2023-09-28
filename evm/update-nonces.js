@@ -6,7 +6,7 @@ const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
 const readlineSync = require('readline-sync');
 
-const { mainProcessor } = require('./utils');
+const { mainProcessor, printInfo } = require('./utils');
 const { getNonceFromProvider, getNonceFileData, updateNonceFileData } = require('./sign-utils');
 
 async function processCommand(config, chain, options) {
@@ -41,6 +41,7 @@ async function processCommand(config, chain, options) {
     }
 
     for (const address of addresses) {
+        printInfo('Updating nonce for address', address);
         const nonce = await getNonceFromProvider(provider, address);
         chainNonceData[address] = nonce;
     }
