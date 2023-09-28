@@ -23,11 +23,14 @@
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
     "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v1.0.0",
-    "@axelar-network/axelar-cgp-solidity": "6.1.0",
-    "@axelar-network/axelar-gmp-sdk-solidity": "5.3.1",
+    "@axelar-network/axelar-cgp-solidity": "6.1.2",
+    "@axelar-network/axelar-gmp-sdk-solidity": "5.3.3",
     "@axelar-network/interchain-token-service": "0.3.0",
     "@cosmjs/cosmwasm-stargate": "^0.31.1",
-    "ethers": "^5.7.2"
+    "@ethersproject/hardware-wallets": "^5.5.0",
+    "@ledgerhq/hw-transport-node-hid": "^6.11.2",
+    "ethers": "^5.7.2",
+    "path": "^0.12.7"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",

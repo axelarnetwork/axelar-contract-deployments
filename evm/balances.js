@@ -3,42 +3,20 @@
 require('dotenv').config();
 
 const { ethers } = require('hardhat');
-const { Wallet, getDefaultProvider } = ethers;
+const { getDefaultProvider } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo } = require('./utils');
+const { mainProcessor, printWalletInfo } = require('./utils');
+const { getWallet } = require('./sign-utils');
 
-async function balances(chain, options) {
+async function processCommand(_, chain, options) {
     const provider = getDefaultProvider(chain.rpc);
-    const wallet = new Wallet(options.privateKey, provider);
 
-    const balance = await wallet.getBalance();
-
-    printInfo(chain.name, `${balance / 1e18} ${chain.tokenSymbol}`);
+    const wallet = await getWallet(options.privateKey, provider);
+    await printWalletInfo(wallet, options);
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../axelar-chains-config/info/${options.env === 'local' ? 'testnet' : options.env}.json`);
-
-    let chains = options.chainNames.split(',').map((str) => str.trim());
-
-    if (options.chainNames === 'all') {
-        chains = Object.keys(config.chains);
-    }
-
-    for (const chainName of chains) {
-        if (config.chains[chainName.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chainName} is not defined in the info file`);
-        }
-    }
-
-    const wallet = new Wallet(options.privateKey);
-    printInfo('Wallet address', wallet.address);
-
-    for (const chainName of chains) {
-        const chain = config.chains[chainName.toLowerCase()];
-
-        await balances(chain, options);
-    }
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {
