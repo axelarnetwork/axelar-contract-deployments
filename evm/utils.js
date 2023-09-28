@@ -331,15 +331,15 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
         // Contract instance
         provider = contractObject.provider;
         bytecode = await provider.getCode(contractObject.address);
-    } else if (contractObject.bytecode) {
+    } else if (contractObject.deployedBytecode) {
         // Contract factory
-        bytecode = contractObject.bytecode;
+        bytecode = contractObject.deployedBytecode;
     } else {
         throw new Error('Invalid contract object. Expected ethers.js Contract or ContractFactory.');
     }
 
     if (chain.toLowerCase() === 'polygon-zkevm') {
-        const codehash = await zkevm.smtUtils.hashContractBytecode(bytecode);
+        const codehash = zkevm.smtUtils.hashContractBytecode(bytecode);
         return codehash;
     }
 

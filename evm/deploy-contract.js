@@ -205,7 +205,8 @@ async function deploy(options, chain, config) {
 
     const contractJson = require(contractPath);
 
-    printInfo('Contract bytecode hash', await getBytecodeHash(contractJson, chain.id));
+    const codehash = await getBytecodeHash(contractJson, chain.id);
+    printInfo('Contract bytecode hash', codehash);
 
     const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
@@ -252,6 +253,7 @@ async function deploy(options, chain, config) {
     );
 
     contractConfig.address = contract.address;
+    contractConfig.codehash = codehash;
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = deployMethod;
 
