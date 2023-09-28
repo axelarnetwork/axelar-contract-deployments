@@ -3,9 +3,8 @@
 require('dotenv').config();
 
 const {
-    Wallet,
     getDefaultProvider,
-    utils: { keccak256, Interface, formatEther },
+    utils: { keccak256, formatEther },
     Contract,
     BigNumber,
 } = require('ethers');
@@ -15,11 +14,9 @@ const chalk = require('chalk');
 const {
     printInfo,
     printWalletInfo,
-    loadConfig,
     isNumber,
     isValidCalldata,
     printWarn,
-    printError,
     isStringArray,
     isNumberArray,
     isValidAddress,
@@ -76,6 +73,7 @@ async function preExecutionChecks(multisigContract, action, wallet, target, call
 
 async function processCommand(_, chain, options) {
     const {
+        env,
         contractName,
         address,
         action,
@@ -113,9 +111,10 @@ async function processCommand(_, chain, options) {
     printInfo('Chain', chain.name);
 
     const wallet = await getWallet(privateKey, provider, options);
-    await printWalletInfo(wallet, options);
+    const { address: walletAddress } = await printWalletInfo(wallet, options);
 
     printInfo('Contract name', contractName);
+    printInfo('Contract address', multisigAddress);
 
     const multisigContract = new Contract(multisigAddress, IMultisig.abi, wallet);
 
@@ -155,9 +154,8 @@ async function processCommand(_, chain, options) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
             }
 
-            const gatewayContract = new Contract(multisigTarget, IGateway.abi, wallet);
-            const targetInterface = new Interface(gatewayContract.interface.fragments);
-            const multisigCalldata = targetInterface.encodeFunctionData('setTokenMintLimits', [symbolsArray, limitsArray]);
+            const gateway = new Contract(multisigTarget, IGateway.abi, wallet);
+            const multisigCalldata = gateway.interface.encodeFunctionData('setTokenMintLimits', [symbolsArray, limitsArray]);
 
             if (!offline) {
                 await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
@@ -178,9 +176,8 @@ async function processCommand(_, chain, options) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
             }
 
-            const gatewayContract = new Contract(multisigTarget, IGateway.abi, wallet);
-            const targetInterface = new Interface(gatewayContract.interface.fragments);
-            const multisigCalldata = targetInterface.encodeFunctionData('transferMintLimiter', [mintLimiter]);
+            const gateway = new Contract(multisigTarget, IGateway.abi, wallet);
+            const multisigCalldata = gateway.interface.encodeFunctionData('transferMintLimiter', [mintLimiter]);
 
             if (!offline) {
                 await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
@@ -268,7 +265,7 @@ async function processCommand(_, chain, options) {
     const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
     if (offline) {
-        const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-multisig-${action}-address-${address}-nonce-${
+        const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-multisig-${action}-address-${walletAddress}-nonce-${
             baseTx.nonce
         }.json`;
         printInfo(`Storing signed Tx offline in file ${filePath}`);
@@ -293,7 +290,7 @@ async function main(options) {
 
 const program = new Command();
 
-program.name('multisig-script').description('Script to manage multisig actions');
+program.name('multisig').description('Script to manage multisig actions');
 
 program.addOption(
     new Option('-e, --env <env>', 'environment')
