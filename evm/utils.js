@@ -11,6 +11,7 @@ const https = require('https');
 const http = require('http');
 const { outputJsonSync } = require('fs-extra');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
+const readlineSync = require('readline-sync');
 const chalk = require('chalk');
 const {
     create3DeployContract,
@@ -338,6 +339,10 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
         throw new Error('Invalid contract object. Expected ethers.js Contract or ContractFactory.');
     }
 
+    if (bytecode === '0x') {
+        throw new Error('Contract bytecode is empty');
+    }
+
     if (chain.toLowerCase() === 'polygon-zkevm') {
         const codehash = zkevm.smtUtils.hashContractBytecode(bytecode);
         return codehash;
@@ -454,6 +459,10 @@ const getProxy = async (config, chain) => {
 
 const getEVMAddresses = async (config, chain, options = {}) => {
     const keyID = options.keyID || '';
+
+    if (isAddress(keyID)) {
+        return { addresses: [keyID], weights: [Number(1)], threshold: 1, keyID: 'debug' };
+    }
 
     const evmAddresses = options.amplifier
         ? await getAmplifierKeyAddresses(config, chain)
@@ -605,7 +614,7 @@ function isValidPrivateKey(privateKey) {
     return true;
 }
 
-const etaToUnixTimestamp = (utcTimeString) => {
+const dateToEta = (utcTimeString) => {
     if (utcTimeString === '0') {
         return 0;
     }
@@ -619,7 +628,7 @@ const etaToUnixTimestamp = (utcTimeString) => {
     return Math.floor(date.getTime() / 1000);
 };
 
-const unixTimestampToEta = (timestamp) => {
+const etaToDate = (timestamp) => {
     const date = new Date(timestamp * 1000);
 
     if (isNaN(date.getTime())) {
@@ -698,6 +707,18 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     }
 };
 
+const prompt = (question, yes = false) => {
+    // skip the prompt if yes was passed
+    if (yes) {
+        return false;
+    }
+
+    const answer = readlineSync.question(`${question} ${chalk.green('(y/n)')} `);
+    console.log();
+
+    return answer !== 'y';
+};
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -730,13 +751,14 @@ module.exports = {
     saveConfig,
     printWalletInfo,
     isValidTimeFormat,
-    etaToUnixTimestamp,
-    unixTimestampToEta,
+    dateToEta,
+    etaToDate,
     getCurrentTimeInSeconds,
     wasEventEmitted,
     isContract,
     isValidAddress,
     isValidPrivateKey,
     verifyContract,
+    prompt,
     mainProcessor,
 };
