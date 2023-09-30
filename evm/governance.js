@@ -6,13 +6,12 @@ const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddress, defaultAbiCoder, keccak256, Interface },
+    utils: { defaultAbiCoder, keccak256, Interface },
     Contract,
     BigNumber,
 } = ethers;
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-
 const {
     printInfo,
     printWalletInfo,
@@ -20,22 +19,38 @@ const {
     isNumber,
     isValidTimeFormat,
     etaToUnixTimestamp,
+    unixTimestampToEta,
     getCurrentTimeInSeconds,
     wasEventEmitted,
     printWarn,
     printError,
+    getBytecodeHash,
+    isValidAddress,
 } = require('./utils');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
+const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 
 async function processCommand(options, chain) {
-    const { contractName, address, governanceAction, calldata, nativeValue, eta, privateKey, yes } = options;
+    const {
+        contractName,
+        address,
+        newGovernance,
+        newMintLimiter,
+        governanceAction,
+        calldata,
+        nativeValue,
+        eta,
+        implementation,
+        privateKey,
+        yes,
+    } = options;
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
 
     let governanceAddress;
 
-    if (isAddress(address)) {
+    if (isValidAddress(address)) {
         governanceAddress = address;
     } else {
         if (!contractConfig?.address) {
@@ -47,7 +62,7 @@ async function processCommand(options, chain) {
 
     const target = chain.contracts.AxelarGateway?.address;
 
-    if (!isAddress(target)) {
+    if (!isValidAddress(target)) {
         throw new Error(`Missing AxelarGateway address in the chain info.`);
     }
 
@@ -69,7 +84,7 @@ async function processCommand(options, chain) {
 
     const governanceContract = new Contract(governanceAddress, IGovernance.abi, wallet);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || {};
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
     printInfo('Proposal Action', governanceAction);
@@ -83,7 +98,11 @@ async function processCommand(options, chain) {
 
     switch (governanceAction) {
         case 'scheduleTimeLock': {
-            if (unixEta < getCurrentTimeInSeconds() + contractConfig.minimumTimeDelay && !yes) {
+            if (!calldata) {
+                throw new Error(`Calldata required for this governance action: ${governanceAction}`);
+            }
+
+            if (unixEta < getCurrentTimeInSeconds() + contractConfig?.minimumTimeDelay && !yes) {
                 printWarn(`${eta} is less than the minimum eta.`);
                 const answer = readlineSync.question(`Proceed with ${governanceAction}?`);
                 if (answer !== 'y') return;
@@ -98,6 +117,10 @@ async function processCommand(options, chain) {
 
         case 'cancelTimeLock': {
             const commandType = 1;
+
+            if (!calldata) {
+                throw new Error(`Calldata required for this governance action: ${governanceAction}`);
+            }
 
             if (unixEta < getCurrentTimeInSeconds() && !yes) {
                 printWarn(`${eta} has already passed.`);
@@ -124,6 +147,10 @@ async function processCommand(options, chain) {
                 throw new Error(`Invalid governance action for InterchainGovernance: ${governanceAction}`);
             }
 
+            if (!calldata) {
+                throw new Error(`Calldata required for this governance action: ${governanceAction}`);
+            }
+
             const commandType = 2;
 
             values[0] = commandType;
@@ -137,6 +164,10 @@ async function processCommand(options, chain) {
         case 'cancelMultisig': {
             if (contractName === 'InterchainGovernance') {
                 throw new Error(`Invalid governance action for InterchainGovernance: ${governanceAction}`);
+            }
+
+            if (!calldata) {
+                throw new Error(`Calldata required for this governance action: ${governanceAction}`);
             }
 
             const commandType = 3;
@@ -155,6 +186,10 @@ async function processCommand(options, chain) {
 
             if (minimumEta === 0) {
                 throw new Error('Proposal does not exist.');
+            }
+
+            if (!calldata) {
+                throw new Error(`Calldata required for this governance action: ${governanceAction}`);
             }
 
             if (getCurrentTimeInSeconds() < minimumEta) {
@@ -184,6 +219,10 @@ async function processCommand(options, chain) {
         case 'executeMultisigProposal': {
             if (contractName === 'InterchainGovernance') {
                 throw new Error(`Invalid governance action for InterchainGovernance: ${governanceAction}`);
+            }
+
+            if (!calldata) {
+                throw new Error(`Calldata required for this governance action: ${governanceAction}`);
             }
 
             const proposalHash = keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
@@ -232,6 +271,83 @@ async function processCommand(options, chain) {
             break;
         }
 
+        case 'gatewayUpgrade': {
+            if (contractName === 'AxelarServiceGovernance') {
+                throw new Error(`Invalid governance action for AxelarServiceGovernance: ${governanceAction}`);
+            }
+
+            if (unixEta < getCurrentTimeInSeconds() + contractConfig?.minimumTimeDelay && !yes) {
+                printWarn(`${eta} is less than the minimum eta.`);
+                const answer = readlineSync.question(`Proceed with ${governanceAction}?`);
+                if (answer !== 'y') return;
+            }
+
+            if (!isValidAddress(implementation)) {
+                throw new Error(`Invalid new gateway implementation address: ${implementation}`);
+            }
+
+            const gatewayContract = new Contract(target, IGateway.abi, wallet);
+            const targetInterface = new Interface(gatewayContract.interface.fragments);
+
+            const implementationCode = await provider.getCode(implementation);
+
+            if (implementationCode === '0x') {
+                printWarn(`There is no code deployed at ${implementation}`);
+                const answer = readlineSync.question(`Proceed with ${governanceAction}?`);
+                if (answer !== 'y') return;
+            }
+
+            const newGatewayImplementationCodeHash = await getBytecodeHash(implementation, chain.name, provider);
+
+            const governance = newGovernance || contracts.AxelarGateway?.governance || undefined;
+            const mintLimiter = newMintLimiter || contracts.AxelarGateway?.mintLimiter || undefined;
+            let setupParams;
+
+            if (governance && mintLimiter) {
+                setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [governance, mintLimiter, '0x']);
+            } else {
+                setupParams = '0x';
+            }
+
+            printInfo('Setup Params for upgrading AxelarGateway', setupParams);
+
+            const upgradeCalldata = targetInterface.encodeFunctionData('upgrade', [
+                implementation,
+                newGatewayImplementationCodeHash,
+                setupParams,
+            ]);
+
+            values[2] = upgradeCalldata;
+
+            gmpPayload = defaultAbiCoder.encode(types, values);
+            const proposalEta = await governanceContract.getProposalEta(target, upgradeCalldata, nativeValue);
+
+            if (BigNumber.from(proposalEta).gt(0)) {
+                printWarn("The eta for this proposal already exixts and it's value is", proposalEta);
+            }
+
+            printInfo(`Destination chain: ${chain.name}\nDestination governance address: ${governanceAddress}\nGMP payload: ${gmpPayload}`);
+
+            break;
+        }
+
+        case 'getProposalEta': {
+            if (!calldata) {
+                throw new Error(`Calldata required for this governance action: ${governanceAction}`);
+            }
+
+            const proposalHash = keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
+            const minimumEta = await governanceContract.getTimeLock(proposalHash);
+
+            if (minimumEta === 0) {
+                throw new Error('Proposal does not exist.');
+            }
+
+            printInfo(`Proposal eta: ${unixTimestampToEta(minimumEta)}`);
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown governance action ${governanceAction}`);
         }
@@ -270,12 +386,24 @@ program.addOption(new Option('-a, --address <address>', 'override address').make
 program.addOption(new Option('-n, --destinationChain <destinationChain>', 'destination chain').makeOptionMandatory(true));
 program.addOption(
     new Option('-g, --governanceAction <governanceAction>', 'governance action')
-        .choices(['scheduleTimeLock', 'cancelTimeLock', 'approveMultisig', 'cancelMultisig', 'executeProposal', 'executeMultisigProposal'])
+        .choices([
+            'scheduleTimeLock',
+            'cancelTimeLock',
+            'approveMultisig',
+            'cancelMultisig',
+            'executeProposal',
+            'executeMultisigProposal',
+            'gatewayUpgrade',
+            'getProposalEta',
+        ])
         .default('scheduleTimeLock'),
 );
-program.addOption(new Option('-d, --calldata <calldata>', 'calldata').makeOptionMandatory(true));
+program.addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'));
+program.addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
+program.addOption(new Option('-d, --calldata <calldata>', 'calldata').makeOptionMandatory(false));
 program.addOption(new Option('-v, --nativeValue <nativeValue>', 'nativeValue').makeOptionMandatory(false).default(0));
 program.addOption(new Option('-t, --eta <eta>', 'eta').makeOptionMandatory(false).default('0'));
+program.addOption(new Option('--implementation <implementation>', 'new gateway implementation').makeOptionMandatory(false));
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
