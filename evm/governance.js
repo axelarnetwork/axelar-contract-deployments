@@ -31,7 +31,7 @@ const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 
 async function processCommand(_, chain, options) {
-    const { contractName, address, action, calldata, nativeValue, date, privateKey, yes } = options;
+    const { contractName, address, action, nativeValue, date, privateKey, yes } = options;
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -77,6 +77,7 @@ async function processCommand(_, chain, options) {
     printInfo('Proposal Action', action);
 
     let gmpPayload;
+    let calldata = options.calldata;
 
     switch (action) {
         case 'scheduleTimeLock': {
@@ -344,7 +345,7 @@ async function processCommand(_, chain, options) {
 
             printInfo('Setup Params for upgrading AxelarGateway', setupParams);
 
-            const upgradeCalldata = gateway.interface.encodeFunctionData('upgrade', [
+            calldata = gateway.interface.encodeFunctionData('upgrade', [
                 implementation,
                 newGatewayImplementationCodeHash,
                 setupParams,
@@ -352,10 +353,10 @@ async function processCommand(_, chain, options) {
 
             const commandType = 0;
             const types = ['uint256', 'address', 'bytes', 'uint256', 'uint256'];
-            const values = [commandType, target, upgradeCalldata, nativeValue, eta];
+            const values = [commandType, target, calldata, nativeValue, eta];
 
             gmpPayload = defaultAbiCoder.encode(types, values);
-            const proposalEta = await governance.getProposalEta(target, upgradeCalldata, nativeValue);
+            const proposalEta = await governance.getProposalEta(target, calldata, nativeValue);
 
             if (!BigNumber.from(proposalEta).eq(0)) {
                 printWarn('The proposal already exixts', etaToDate(proposalEta));
@@ -391,7 +392,7 @@ async function processCommand(_, chain, options) {
         printInfo('Destination governance address', governanceAddress);
         printInfo('GMP payload', gmpPayload);
         printInfo('Target contract', target);
-        printInfo('Target calldata', upgradeCalldata);
+        printInfo('Target calldata', calldata);
         printInfo('Native value', nativeValue);
     }
 }
