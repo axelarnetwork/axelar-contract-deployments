@@ -345,11 +345,7 @@ async function processCommand(_, chain, options) {
 
             printInfo('Setup Params for upgrading AxelarGateway', setupParams);
 
-            calldata = gateway.interface.encodeFunctionData('upgrade', [
-                implementation,
-                newGatewayImplementationCodeHash,
-                setupParams,
-            ]);
+            calldata = gateway.interface.encodeFunctionData('upgrade', [implementation, newGatewayImplementationCodeHash, setupParams]);
 
             const commandType = 0;
             const types = ['uint256', 'address', 'bytes', 'uint256', 'uint256'];
