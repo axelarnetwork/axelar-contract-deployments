@@ -99,13 +99,13 @@ async function getConstructorArgs(contractName, chain, wallet, options) {
                 throw new Error(`Missing InterchainGovernance.governanceChain in the chain info.`);
             }
 
-            const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+            const governanceAddress = contractConfig.governanceAddress || wallet.address || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
             if (!isString(governanceAddress)) {
                 throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
             }
 
-            const minimumTimeDelay = contractConfig.minimumTimeDelay || parseInt(options.args, 10);
+            const minimumTimeDelay = contractConfig.minimumTimeDelay;
 
             if (!isNumber(minimumTimeDelay)) {
                 throw new Error(`Missing InterchainGovernance.minimumTimeDelay in the chain info.`);
