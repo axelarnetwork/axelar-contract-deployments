@@ -66,13 +66,12 @@ function getProxyParams(governance, mintLimiter) {
     return defaultAbiCoder.encode(['address', 'address', 'bytes'], [governance, mintLimiter, '0x']);
 }
 
-async function deploy(config, options) {
+async function deploy(config, chain, options) {
     const { privateKey, reuseProxy, reuseHelpers, verify, yes } = options;
-    const chainName = options.chainName.toLowerCase();
+    const chainName = chain.name.toLowerCase();
 
     const contractName = 'AxelarGateway';
 
-    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
@@ -300,11 +299,11 @@ async function deploy(config, options) {
     }
 }
 
-async function upgrade(config, options) {
-    const { chainName, privateKey, yes, offline, env } = options;
+async function upgrade(config, chain, options) {
+    const { privateKey, yes, offline, env } = options;
     const contractName = 'AxelarGateway';
+    const chainName = chain.name.toLowerCase();
 
-    const chain = config.chains[chainName] || { contracts: {}, name: chainName, id: chainName, rpc: options.rpc, tokenSymbol: 'ETH' };
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
@@ -397,9 +396,9 @@ async function upgrade(config, options) {
 
 async function processCommand(config, chain, options) {
     if (!options.upgrade) {
-        await deploy(config, options);
+        await deploy(config, chain, options);
     } else {
-        await upgrade(config, options);
+        await upgrade(config, chain, options);
     }
 }
 
