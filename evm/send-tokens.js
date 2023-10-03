@@ -9,9 +9,8 @@ const {
     getDefaultProvider,
     utils: { parseEther },
 } = ethers;
-const readlineSync = require('readline-sync');
 
-const { printInfo, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal } = require('./utils');
+const { printInfo, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt } = require('./utils');
 const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js');
 
 async function processCommand(_, chain, options) {
@@ -43,13 +42,16 @@ async function processCommand(_, chain, options) {
         }
     }
 
-    if (!options.yes) {
-        const anwser = readlineSync.question(
+    if (
+        prompt(
             `Proceed with the transfer of ${chalk.green(options.amount)} ${chalk.green(chain.tokenSymbol)} to ${recipients} on ${
                 chain.name
-            }? ${chalk.green('(y/n)')} `,
-        );
-        if (anwser !== 'y') return;
+            }?`,
+            options.yes,
+        )
+    ) {
+        printInfo('Operation Cancelled');
+        return;
     }
 
     for (const recipient of recipients) {

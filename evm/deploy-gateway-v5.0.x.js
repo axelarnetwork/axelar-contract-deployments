@@ -2,7 +2,6 @@
 
 require('dotenv').config();
 
-const chalk = require('chalk');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const {
@@ -12,7 +11,6 @@ const {
     utils: { defaultAbiCoder, getContractAddress, AddressZero },
     getDefaultProvider,
 } = ethers;
-const readlineSync = require('readline-sync');
 
 const {
     saveConfig,
@@ -25,6 +23,7 @@ const {
     printError,
     printWalletInfo,
     printWarn,
+    prompt,
     mainProcessor,
 } = require('./utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
@@ -121,10 +120,8 @@ async function deploy(config, chain, options) {
     printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
 
-    if (!yes) {
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    if (prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
+        return;
     }
 
     contractConfig.deployer = wallet.address;
@@ -299,7 +296,7 @@ async function deploy(config, chain, options) {
     }
 }
 
-async function upgrade(config, chain, options) {
+async function upgrade(_, chain, options) {
     const { privateKey, yes, offline, env } = options;
     const contractName = 'AxelarGateway';
     const chainName = chain.name.toLowerCase();
@@ -356,10 +353,8 @@ async function upgrade(config, chain, options) {
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
 
-    if (!yes) {
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with upgrade on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    if (prompt(`Proceed with an upgrade on ${chain.name}?`, yes)) {
+        return;
     }
 
     const tx = await gateway.populateTransaction.upgrade(contractConfig.implementation, implementationCodehash, setupParams);

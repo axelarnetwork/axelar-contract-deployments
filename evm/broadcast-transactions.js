@@ -6,9 +6,8 @@ const { ethers } = require('hardhat');
 const {
     providers: { getDefaultProvider },
 } = ethers;
-const readlineSync = require('readline-sync');
 
-const { printError, printInfo, printWarn, mainProcessor } = require('./utils');
+const { printError, printInfo, printWarn, prompt, mainProcessor } = require('./utils');
 const { sendTransaction, getSignedTx, storeSignedTx } = require('./sign-utils');
 
 async function processCommand(_, chain, options) {
@@ -16,13 +15,15 @@ async function processCommand(_, chain, options) {
 
     const provider = getDefaultProvider(rpc || chain.rpc);
 
-    if (!options.yes) {
-        const anwser = readlineSync.question(
+    if (
+        prompt(
             `Proceed with the broadcasting of all pending signed transactions for file ${chalk.green(
                 options.filePath,
-            )} on chain ${chalk.green(chain.name)} ${chalk.green('(y/n)')} `,
-        );
-        if (anwser !== 'y') return;
+            )} on chain ${chalk.green(chain.name)}`,
+            options.yes,
+        )
+    ) {
+        return;
     }
 
     if (!filePath) {

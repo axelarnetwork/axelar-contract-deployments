@@ -7,9 +7,8 @@ const {
     getDefaultProvider,
     utils: { parseUnits },
 } = ethers;
-const readlineSync = require('readline-sync');
 
-const { printInfo, mainProcessor } = require('./utils');
+const { printInfo, mainProcessor, prompt } = require('./utils');
 
 const defaultGasLimit = 3e6;
 const gasPriceMultiplier = 5;
@@ -18,11 +17,8 @@ async function processCommand(config, chain, options) {
     const { rpc, yes } = options;
     const provider = rpc ? getDefaultProvider(rpc) : getDefaultProvider(chain.rpc);
 
-    if (!yes) {
-        const anwser = readlineSync.question(
-            `Proceed with the static gasOption update on network ${chalk.green(chain.name)} ${chalk.green('(y/n)')} `,
-        );
-        if (anwser !== 'y') return;
+    if (prompt(`Proceed with the static gasOption update on ${chalk.green(chain.name)}`, yes)) {
+        return;
     }
 
     const gasPrice = parseUnits((await provider.getGasPrice()).toString(), 'wei') * gasPriceMultiplier;
