@@ -15,6 +15,7 @@ const {
     printWalletInfo,
     isAddressArray,
     isNumber,
+    prompt,
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
@@ -23,9 +24,7 @@ const {
     utils: { defaultAbiCoder, getContractAddress },
     getDefaultProvider,
 } = ethers;
-const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-const chalk = require('chalk');
 
 async function getAuthParams(config, chain) {
     const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain);
@@ -91,10 +90,8 @@ async function deploy(config, options) {
     let implementation;
     const contractsToVerify = [];
 
-    if (!yes) {
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    if (prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
+        return;
     }
 
     contractConfig.deployer = wallet.address;
@@ -277,10 +274,8 @@ async function upgrade(config, options) {
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
 
-    if (!yes) {
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with upgrade on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    if (prompt(`Proceed with upgrade on ${chain.name}?`, yes)) {
+        return;
     }
 
     const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);

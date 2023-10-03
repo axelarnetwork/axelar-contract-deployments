@@ -9,9 +9,7 @@ const {
     Contract,
     BigNumber,
 } = ethers;
-const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-const chalk = require('chalk');
 const {
     printInfo,
     printWalletInfo,
@@ -23,6 +21,7 @@ const {
     isValidAddress,
     mainProcessor,
     isValidDecimal,
+    prompt,
 } = require('./utils');
 const IMultisig = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IMultisig.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
@@ -51,10 +50,12 @@ async function preExecutionChecks(multisigContract, action, wallet, target, call
     const topicHash = keccak256(topic);
     const voteCount = await multisigContract.getSignerVotesCount(topicHash);
 
-    if (!yes && voteCount.eq(0)) {
+    if (voteCount.eq(0)) {
         printWarn(`The vote count for this topic is zero. This action will create a new multisig proposal.`);
-        const answer = readlineSync.question(`Proceed with ${action}? ${chalk.green('(y/n)')} `);
-        if (answer !== 'y') return;
+
+        if (prompt(`Proceed with ${action}?`, yes)) {
+            return;
+        }
     }
 
     const hasVoted = await multisigContract.hasSignerVoted(address, topicHash);
@@ -65,10 +66,12 @@ async function preExecutionChecks(multisigContract, action, wallet, target, call
 
     const threshold = await multisigContract.signerThreshold();
 
-    if (!yes && voteCount.eq(threshold.sub(1))) {
+    if (voteCount.eq(threshold.sub(1))) {
         printWarn(`The vote count is one below the threshold. This action will execute the multisig proposal.`);
-        const answer = readlineSync.question(`Proceed with ${action}? ${chalk.green('(y/n)')} `);
-        if (answer !== 'y') return 0;
+
+        if (prompt(`Proceed with ${action}?`, yes)) {
+            // implicit return
+        }
     }
 }
 
@@ -124,10 +127,8 @@ async function processCommand(_, chain, options) {
 
     printInfo('Multisig Action', action);
 
-    if (!yes) {
-        const answer = readlineSync.question(`Proceed with action ${action} ${chalk.green('(y/n)')} `);
-
-        if (answer !== 'y') return;
+    if (prompt(`Proceed with action ${action} on chain ${chain.name}?`, yes)) {
+        return;
     }
 
     let tx;
@@ -226,10 +227,12 @@ async function processCommand(_, chain, options) {
                 throw new Error(`Invalid calldata for execute multisig proposal: ${calldata}`);
             }
 
-            if (calldata === '0x' && !yes) {
+            if (calldata === '0x') {
                 printWarn(`Calldata for execute multisig proposal is empty.`);
-                const answer = readlineSync.question(`Proceed with ${action}?`);
-                if (answer !== 'y') return;
+
+                if (prompt(`Proceed with ${action}?`, yes)) {
+                    return;
+                }
             }
 
             if (!isNumber(parseFloat(nativeValue))) {

@@ -8,9 +8,7 @@ const {
     getDefaultProvider,
     utils: { isAddress },
 } = ethers;
-const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-const chalk = require('chalk');
 
 const {
     printInfo,
@@ -24,6 +22,7 @@ const {
     deployContract,
     loadConfig,
     saveConfig,
+    prompt,
 } = require('./utils');
 
 async function getConstructorArgs(contractName, chain, wallet, options) {
@@ -236,10 +235,8 @@ async function deploy(options, chain, config) {
     printInfo('Deployer contract', deployerContract);
     printInfo(`${contractName} will be deployed to`, predictedAddress);
 
-    if (!yes) {
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    if (prompt(`Does derived address match existing deployments? Proceed with deployment on ${chain.name}?`, yes)) {
+        return;
     }
 
     const contract = await deployContract(
