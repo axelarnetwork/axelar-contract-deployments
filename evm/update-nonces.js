@@ -4,21 +4,17 @@ const chalk = require('chalk');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
-const readlineSync = require('readline-sync');
 
-const { mainProcessor, printInfo } = require('./utils');
+const { mainProcessor, printInfo, prompt } = require('./utils');
 const { getNonceFromProvider, getNonceFileData, updateNonceFileData } = require('./sign-utils');
 
-async function processCommand(config, chain, options) {
+async function processCommand(_, chain, options) {
     const { env, rpc, yes } = options;
     let { addresses } = options;
     const provider = rpc ? getDefaultProvider(rpc) : getDefaultProvider(chain.rpc);
 
-    if (!yes) {
-        const anwser = readlineSync.question(
-            `Proceed with the nonces update on network ${chalk.green(chain.name)} ${chalk.green('(y/n)')} `,
-        );
-        if (anwser !== 'y') return;
+    if (prompt(`Proceed with the nonces update on network ${chalk.green(chain.name)}`, yes)) {
+        return;
     }
 
     const chainName = chain.name.toLowerCase();

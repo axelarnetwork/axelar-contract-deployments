@@ -10,8 +10,6 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const readlineSync = require('readline-sync');
-const chalk = require('chalk');
 const {
     printInfo,
     printError,
@@ -22,6 +20,7 @@ const {
     isNumberArray,
     isKeccak256Hash,
     parseArgs,
+    prompt,
 } = require('./utils');
 const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
 const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
@@ -63,9 +62,8 @@ async function processCommand(options, chain) {
 
     printInfo('Operator Action', action);
 
-    if (!yes) {
-        const anwser = readlineSync.question(`Proceed with action on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    if (prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
+        return;
     }
 
     switch (action) {

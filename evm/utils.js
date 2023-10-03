@@ -707,6 +707,12 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     }
 };
 
+/**
+ * Prompt the user for confirmation
+ * @param {string} question Prompt question
+ * @param {boolean} yes If true, skip the prompt
+ * @returns {boolean} Returns true if the prompt was skipped, false otherwise
+ */
 const prompt = (question, yes = false) => {
     // skip the prompt if yes was passed
     if (yes) {

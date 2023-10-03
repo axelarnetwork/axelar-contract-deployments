@@ -9,13 +9,11 @@ const {
     getDefaultProvider,
     utils: { isAddress },
 } = ethers;
-const readlineSync = require('readline-sync');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 const { Command, Option } = require('commander');
-const chalk = require('chalk');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
-const { printInfo, printError, saveConfig, loadConfig, printWalletInfo, getDeployedAddress } = require('./utils');
+const { printInfo, printError, saveConfig, loadConfig, printWalletInfo, getDeployedAddress, prompt } = require('./utils');
 
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
@@ -157,10 +155,8 @@ async function deploy(options, chain) {
             );
         }
 
-        if (!yes) {
-            const anwser = readlineSync.question(`Perform an upgrade for ${chain.name}? ${chalk.green('(y/n)')} `);
-            if (anwser !== 'y') return;
-            console.log('');
+        if (prompt(`Perform an upgrade for ${chain.name}?`, yes)) {
+            return;
         }
 
         await upgradeUpgradable(
@@ -204,10 +200,8 @@ async function deploy(options, chain) {
         printInfo('Deployer contract', deployerContract);
         printInfo(`${contractName} will be deployed to`, predictedAddress);
 
-        if (!yes) {
-            console.log('Does this match any existing deployments?');
-            const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-            if (anwser !== 'y') return;
+        if (prompt(`Does derived address match existing deployments? Proceed with deployment on ${chain.name}?`, yes)) {
+            return;
         }
 
         let contract;
