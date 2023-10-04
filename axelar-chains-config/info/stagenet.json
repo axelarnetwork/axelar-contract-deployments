@@ -40,6 +40,17 @@
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
+        },
+        "InterchainGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "address": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
+          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
+          "salt": "InterchainGovernance v5.3.4"
         }
       },
       "explorer": {
@@ -87,6 +98,17 @@
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
+        },
+        "InterchainGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "address": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
+          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
+          "salt": "InterchainGovernance v5.3.4"
         }
       },
       "explorer": {
@@ -134,6 +156,17 @@
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
+        },
+        "InterchainGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "address": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
+          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
+          "salt": "InterchainGovernance v5.3.4"
         }
       },
       "explorer": {
@@ -181,6 +214,17 @@
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
+        },
+        "InterchainGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "address": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
+          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
+          "salt": "InterchainGovernance v5.3.4"
         }
       },
       "explorer": {
@@ -228,6 +272,17 @@
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
+        },
+        "InterchainGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "address": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
+          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
+          "salt": "InterchainGovernance v5.3.4"
         }
       },
       "explorer": {
@@ -275,6 +330,17 @@
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
+        },
+        "InterchainGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "address": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
+          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
+          "salt": "InterchainGovernance v5.3.4"
         }
       },
       "explorer": {
@@ -325,6 +391,17 @@
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
+        },
+        "InterchainGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "address": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
+          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
+          "salt": "InterchainGovernance v5.3.4"
         }
       },
       "explorer": {
@@ -372,6 +449,17 @@
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
+        },
+        "InterchainGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "address": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
+          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
+          "salt": "InterchainGovernance v5.3.4"
         }
       },
       "explorer": {
@@ -418,6 +506,17 @@
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
+        },
+        "InterchainGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "address": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
+          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
+          "salt": "InterchainGovernance v5.3.4"
         }
       },
       "explorer": {
@@ -467,6 +566,17 @@
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create2",
           "salt": "Operators"
+        },
+        "InterchainGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "address": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
+          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
+          "salt": "InterchainGovernance v5.3.4"
         }
       },
       "explorer": {
