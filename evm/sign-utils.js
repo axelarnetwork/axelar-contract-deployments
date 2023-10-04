@@ -156,7 +156,6 @@ const sendTransaction = async (tx, provider, confirmations = undefined) => {
     const receipt = await response.wait(confirmations);
 
     printInfo('Broadcasted tx', response.hash);
-    printInfo('Tx receipt', JSON.stringify(receipt, null, 2));
 
     return { response, receipt };
 };

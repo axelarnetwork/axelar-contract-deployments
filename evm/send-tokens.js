@@ -7,15 +7,15 @@ const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { parseEther },
+    utils: { parseEther, parseUnits },
 } = ethers;
 
-const { printInfo, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt } = require('./utils');
+const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt } = require('./utils');
 const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js');
 
 async function processCommand(_, chain, options) {
     const { privateKey, offline, env } = options;
-    let { amount, recipients } = options;
+    let { amount: amountStr, recipients } = options;
 
     const chainName = chain.name.toLowerCase();
     const provider = getDefaultProvider(chain.rpc);
@@ -26,11 +26,17 @@ async function processCommand(_, chain, options) {
         throw new Error('Invalid recipient addresses');
     }
 
-    if (!isValidDecimal(amount)) {
-        throw new Error('Invalid amount');
+    if (!amountStr && options.gasUsage) {
+        const gasPrice = parseUnits((await provider.getGasPrice()).toString(), 'wei');
+        const gas = gasPrice * parseInt(options.gasUsage);
+        amountStr = (gas / 1e18).toString();
     }
 
-    amount = parseEther(amount);
+    if (!isValidDecimal(amountStr)) {
+        throw new Error(`Invalid amount ${amountStr}`);
+    }
+
+    const amount = parseEther(amountStr);
 
     const wallet = await getWallet(privateKey, provider, options);
 
@@ -38,13 +44,16 @@ async function processCommand(_, chain, options) {
 
     if (!offline) {
         if (balance.lte(amount)) {
-            throw new Error(`Wallet has insufficient funds.`);
+            printError(`Wallet balance ${balance} has insufficient funds for ${amount}.`);
+            return;
         }
     }
 
+    printInfo('Chain', chain.name);
+
     if (
         prompt(
-            `Proceed with the transfer of ${chalk.green(options.amount)} ${chalk.green(chain.tokenSymbol)} to ${recipients} on ${
+            `Proceed with the transfer of ${chalk.green(amountStr)} ${chalk.green(chain.tokenSymbol)} to ${recipients} on ${
                 chain.name
             }?`,
             options.yes,
@@ -101,9 +110,9 @@ if (require.main === module) {
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-r, --recipients <recipients>', 'comma-separated recipients of tokens').makeOptionMandatory(true));
-    program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)').makeOptionMandatory(true));
+    program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)'));
+    program.addOption(new Option('--gasUsage <gasUsage>', 'amount to transfer based on gas usage and gas price').default('5000000'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
-    program.addOption(new Option('--ledgerPath <ledgerPath>', 'The path to identify the account in ledger'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
     program.addOption(new Option('-y, --yes', 'skip prompts'));
 

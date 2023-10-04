@@ -118,13 +118,15 @@ async function getConstructorArgs(contractName, chain, wallet, options) {
         }
 
         case 'Multisig': {
-            const signers = contractConfig.signers;
+            const signers = contractConfig.signers || ["0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd", "0xA24156B88D56696a7beE61A38deB5D8aaD8Ceb55", "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817"];
 
             if (!isAddressArray(signers)) {
                 throw new Error(`Missing Multisig.signers in the chain info.`);
             }
 
-            const threshold = contractConfig.threshold;
+            const threshold = contractConfig.threshold || (signers.length + 1) / 2;
+            contractConfig.threshold = threshold;
+            contractConfig.signers = signers;
 
             if (!isNumber(threshold)) {
                 throw new Error(`Missing Multisig.threshold in the chain info.`);
