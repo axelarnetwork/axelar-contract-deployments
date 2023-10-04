@@ -82,12 +82,23 @@ async function processCommand(_, chain, options) {
         throw new Error('Missing GMP payload');
     }
 
-    const payloadHash = payload.startsWith('0x') ? keccak256(arrayify(payload)) : id(payload);
-
-    const commandID = isValidNumber(options.commandID) ? id(parseInt(options.commandID).toString()) : options.commandID;
-
     switch (action) {
-        case ('approve', 'approveAndExecute'): {
+        case 'admins': {
+            const adminEpoch = await gateway.adminEpoch();
+            const admins = await gateway.admins(adminEpoch);
+            const adminThreshold = await gateway.adminThreshold(adminEpoch);
+            printInfo('Gateway admins', admins);
+            printInfo('Gateway admin threshold', adminThreshold);
+
+            break;
+        }
+
+        case 'approve':
+        case 'approveAndExecute': {
+            const payloadHash = payload.startsWith('0x') ? keccak256(arrayify(payload)) : id(payload);
+
+            const commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+
             if (await gateway.isCommandExecuted(commandID)) {
                 printWarn('Command already executed');
                 return;
@@ -119,19 +130,38 @@ async function processCommand(_, chain, options) {
         }
 
         // eslint-disable-next-line no-fallthrough
-        case ('execute', 'approveAndExecute'): {
+        case 'execute':
+        case 'approveAndExecute': {
+            const payloadHash = payload.startsWith('0x') ? keccak256(arrayify(payload)) : id(payload);
+
+            const commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+
             if (!options.destination) {
                 throw new Error('Missing destination contract address');
             }
 
-            if (!(await gateway.isContractCallApproved(commandID, chain.id, walletAddress, options.destination, payloadHash))) {
+            printInfo('payloadhash', payloadHash);
+            if (
+                !(await gateway.isContractCallApproved(
+                    '0xa6a7b3831e05fc26defa0238df49df4949db1c9aa3182f496dea46179b49983f',
+                    'Axelarnet',
+                    'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj',
+                    options.destination,
+                    payloadHash,
+                ))
+            ) {
                 printWarn('Contract call not approved at the gateway');
                 return;
             }
 
             const appContract = new Contract(options.destination, IAxelarExecutable.abi, wallet);
 
-            const tx = await appContract.execute(commandID, chain.id, walletAddress, payload);
+            const tx = await appContract.execute(
+                '0xa6a7b3831e05fc26defa0238df49df4949db1c9aa3182f496dea46179b49983f',
+                'Axelarnet',
+                'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj',
+                payload,
+            );
             printInfo('Execute tx', tx.hash);
             await tx.wait(chain.confirmations);
 
@@ -208,7 +238,7 @@ program.addOption(new Option('-a, --address <address>', 'override address'));
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
 program.addOption(
     new Option('--action <action>', 'gateway action')
-        .choices(['approve', 'execute', 'approveAndExecute', 'transferGovernance', 'governance', 'mintLimiter'])
+        .choices(['admins', 'approve', 'execute', 'approveAndExecute', 'transferGovernance', 'governance', 'mintLimiter'])
         .makeOptionMandatory(true),
 );
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
