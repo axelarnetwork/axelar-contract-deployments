@@ -227,7 +227,7 @@ async function processCommand(config, chain, options) {
     const contractConfig = contracts[contractName];
 
     if (contractConfig.address && options.skipExisting) {
-        printInfo(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
+        printWarn(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
         return;
     }
 
@@ -268,7 +268,7 @@ async function processCommand(config, chain, options) {
     });
 
     if (await isContract(predictedAddress, provider)) {
-        printInfo(`Contract ${contractName} is already deployed on ${chain.name} at ${predictedAddress}`);
+        printWarn(`Contract ${contractName} is already deployed on ${chain.name} at ${predictedAddress}`);
         return;
     }
 

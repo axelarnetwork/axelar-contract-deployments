@@ -51,6 +51,20 @@
           "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
           "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
           "salt": "InterchainGovernance v5.3.4"
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+            "0xA24156B88D56696a7beE61A38deB5D8aaD8Ceb55",
+            "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817"
+          ],
+          "address": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.3.4"
         }
       },
       "explorer": {
@@ -109,6 +123,20 @@
           "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
           "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
           "salt": "InterchainGovernance v5.3.4"
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+            "0xA24156B88D56696a7beE61A38deB5D8aaD8Ceb55",
+            "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817"
+          ],
+          "address": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.3.4"
         }
       },
       "explorer": {
@@ -167,6 +195,20 @@
           "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
           "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
           "salt": "InterchainGovernance v5.3.4"
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+            "0xA24156B88D56696a7beE61A38deB5D8aaD8Ceb55",
+            "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817"
+          ],
+          "address": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.3.4"
         }
       },
       "explorer": {
@@ -225,6 +267,20 @@
           "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
           "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
           "salt": "InterchainGovernance v5.3.4"
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+            "0xA24156B88D56696a7beE61A38deB5D8aaD8Ceb55",
+            "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817"
+          ],
+          "address": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.3.4"
         }
       },
       "explorer": {
@@ -283,6 +339,20 @@
           "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
           "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
           "salt": "InterchainGovernance v5.3.4"
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+            "0xA24156B88D56696a7beE61A38deB5D8aaD8Ceb55",
+            "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817"
+          ],
+          "address": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.3.4"
         }
       },
       "explorer": {
@@ -341,6 +411,20 @@
           "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
           "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
           "salt": "InterchainGovernance v5.3.4"
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+            "0xA24156B88D56696a7beE61A38deB5D8aaD8Ceb55",
+            "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817"
+          ],
+          "address": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.3.4"
         }
       },
       "explorer": {
@@ -402,6 +486,20 @@
           "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
           "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
           "salt": "InterchainGovernance v5.3.4"
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+            "0xA24156B88D56696a7beE61A38deB5D8aaD8Ceb55",
+            "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817"
+          ],
+          "address": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.3.4"
         }
       },
       "explorer": {
@@ -460,6 +558,20 @@
           "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
           "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
           "salt": "InterchainGovernance v5.3.4"
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+            "0xA24156B88D56696a7beE61A38deB5D8aaD8Ceb55",
+            "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817"
+          ],
+          "address": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.3.4"
         }
       },
       "explorer": {
@@ -517,6 +629,20 @@
           "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
           "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
           "salt": "InterchainGovernance v5.3.4"
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+            "0xA24156B88D56696a7beE61A38deB5D8aaD8Ceb55",
+            "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817"
+          ],
+          "address": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.3.4"
         }
       },
       "explorer": {
@@ -577,6 +703,20 @@
           "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
           "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
           "salt": "InterchainGovernance v5.3.4"
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+            "0xA24156B88D56696a7beE61A38deB5D8aaD8Ceb55",
+            "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817"
+          ],
+          "address": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.3.4"
         }
       },
       "explorer": {
