@@ -130,7 +130,7 @@ async function processCommand(_, chain, options) {
             printInfo('Proposal eta', etaToDate(proposalEta));
 
             if (proposalEta.eq(BigNumber.from(0))) {
-                throw new Error(`Proposal does not exist.`);
+                printWarn(`Proposal does not exist.`);
             }
 
             if (proposalEta <= currTime) {
@@ -427,14 +427,30 @@ async function processCommand(_, chain, options) {
     }
 
     if (gmpPayload) {
+        const payloadBase64 = Buffer.from(`${gmpPayload}`.slice(2), 'hex').toString('base64');
+
         printInfo('Destination chain', chain.name);
         printInfo('Destination governance address', governanceAddress);
         printInfo('GMP payload', gmpPayload);
-        printInfo('GMP payload Base64', Buffer.from(`${gmpPayload}`.slice(2), 'hex').toString('base64'));
+        printInfo('GMP payload hash', keccak256(gmpPayload));
         printInfo('Target contract', target);
         printInfo('Target calldata', calldata);
         printInfo('Native value', nativeValue || '0');
         printInfo('Date', date);
+
+        const proposal = {
+            title: '',
+            description: '',
+            contract_calls: [
+                {
+                    chain: chain.id,
+                    contract_address: governanceAddress,
+                    payload: payloadBase64,
+                },
+            ],
+        };
+
+        printInfo('Proposal', JSON.stringify(proposal, null, 2));
     }
 }
 

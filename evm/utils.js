@@ -457,6 +457,11 @@ const getProxy = async (config, chain) => {
     return address;
 };
 
+const getEVMBatch = async (config, chain, batchID = '') => {
+    const batch = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}/`);
+    return batch;
+};
+
 const getEVMAddresses = async (config, chain, options = {}) => {
     const keyID = options.keyID || '';
 
@@ -676,6 +681,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
     const config = loadConfig(options.env);
     let chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
+
     if (options.chainNames === 'all') {
         chains = Object.keys(config.chains);
     }
@@ -749,6 +755,7 @@ module.exports = {
     isValidCalldata,
     parseArgs,
     getProxy,
+    getEVMBatch,
     getEVMAddresses,
     sleep,
     loadConfig,

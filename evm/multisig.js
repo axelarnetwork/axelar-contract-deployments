@@ -159,6 +159,9 @@ async function processCommand(_, chain, options) {
             const gateway = new Contract(multisigTarget, IGateway.abi, wallet);
             const multisigCalldata = gateway.interface.encodeFunctionData('setTokenMintLimits', [symbolsArray, limitsArray]);
 
+            printInfo('Rate limit tokens', symbolsArray);
+            printInfo('Rate limit values', limitsArray);
+
             if (!offline) {
                 await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
             }
@@ -269,9 +272,8 @@ async function processCommand(_, chain, options) {
     const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
     if (offline) {
-        const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-multisig-${action}-address-${walletAddress}-nonce-${
-            baseTx.nonce
-        }.json`;
+        const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-multisig-${action}-address-${walletAddress}-nonce-${baseTx.nonce
+            }.json`;
         printInfo(`Storing signed Tx offline in file ${filePath}`);
 
         // Storing the fields in the data that will be stored in file

@@ -53,9 +53,7 @@ async function processCommand(_, chain, options) {
 
     if (
         prompt(
-            `Proceed with the transfer of ${chalk.green(amountStr)} ${chalk.green(chain.tokenSymbol)} to ${recipients} on ${
-                chain.name
-            }?`,
+            `Proceed with the transfer of ${chalk.green(amountStr)} ${chalk.green(chain.tokenSymbol)} to ${recipients} on ${chain.name}?`,
             options.yes,
         )
     ) {

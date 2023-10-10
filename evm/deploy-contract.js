@@ -12,6 +12,7 @@ const { Command, Option } = require('commander');
 
 const {
     printInfo,
+    printWarn,
     printError,
     isString,
     isNumber,
