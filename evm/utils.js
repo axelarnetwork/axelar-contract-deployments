@@ -457,6 +457,11 @@ const getProxy = async (config, chain) => {
     return address;
 };
 
+const getEVMBatch = async (config, chain, batchID = '') => {
+    const batch = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}/`);
+    return batch;
+};
+
 const getEVMAddresses = async (config, chain, options = {}) => {
     const keyID = options.keyID || '';
 
@@ -653,13 +658,8 @@ function wasEventEmitted(receipt, contract, eventName) {
 }
 
 const isContract = async (address, provider) => {
-    try {
-        const code = await provider.getCode(address);
-        return code && code !== '0x';
-    } catch (err) {
-        console.error('Error:', err);
-        return false;
-    }
+    const code = await provider.getCode(address);
+    return code && code !== '0x';
 };
 
 function isValidAddress(address, allowZeroAddress) {
@@ -680,7 +680,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     }
 
     const config = loadConfig(options.env);
-    const chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
+    let chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
+
+    if (options.chainNames === 'all') {
+        chains = Object.keys(config.chains);
+    }
 
     for (const chainName of chains) {
         if (config.chains[chainName.toLowerCase()] === undefined) {
@@ -751,6 +755,7 @@ module.exports = {
     isValidCalldata,
     parseArgs,
     getProxy,
+    getEVMBatch,
     getEVMAddresses,
     sleep,
     loadConfig,

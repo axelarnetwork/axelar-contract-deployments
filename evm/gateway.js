@@ -9,10 +9,23 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, prompt, printWarn, printWalletInfo, isValidNumber, isValidAddress, wasEventEmitted, mainProcessor } = require('./utils');
+const {
+    printInfo,
+    prompt,
+    printWarn,
+    printWalletInfo,
+    getEVMBatch,
+    getEVMAddresses,
+    isValidAddress,
+    wasEventEmitted,
+    mainProcessor,
+    printError,
+} = require('./utils');
+const { getWallet } = require('./sign-utils');
+
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 const IAxelarExecutable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarExecutable.json');
-const { getWallet } = require('./sign-utils');
+const IAuth = require('@axelar-network/axelar-cgp-solidity/interfaces/IAxelarAuthWeighted.json');
 
 const getApproveContractCall = (sourceChain, source, destination, payloadHash, sourceTxHash, sourceEventIndex) => {
     return defaultAbiCoder.encode(
@@ -41,7 +54,7 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
     );
 };
 
-async function processCommand(_, chain, options) {
+async function processCommand(config, chain, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
@@ -82,12 +95,89 @@ async function processCommand(_, chain, options) {
         throw new Error('Missing GMP payload');
     }
 
-    const payloadHash = payload.startsWith('0x') ? keccak256(arrayify(payload)) : id(payload);
-
-    const commandID = isValidNumber(options.commandID) ? id(parseInt(options.commandID).toString()) : options.commandID;
-
     switch (action) {
-        case ('approve', 'approveAndExecute'): {
+        case 'admins': {
+            const adminEpoch = await gateway.adminEpoch();
+            const admins = await gateway.admins(adminEpoch);
+            const adminThreshold = await gateway.adminThreshold(adminEpoch);
+            printInfo('Gateway admins', admins);
+            printInfo('Gateway admin threshold', adminThreshold);
+
+            break;
+        }
+
+        case 'operators': {
+            const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain.id, options);
+            printInfo('Axelar validator key id', keyID);
+
+            const auth = new Contract(await gateway.authModule(), IAuth.abi, wallet);
+            const operators = defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]);
+            const expectedHash = keccak256(operators);
+
+            const epoch = await auth.currentEpoch();
+            const operatorHash = await auth.hashForEpoch(epoch);
+
+            printInfo('Gateway operator epoch', epoch);
+            printInfo('Gateway operator hash', operatorHash);
+
+            if (expectedHash !== operatorHash) {
+                printError(`Expected operator hash ${expectedHash} but found ${operatorHash}`);
+            }
+
+            break;
+        }
+
+        case 'submitBatch': {
+            const batch = getEVMBatch(config, chain.id, options.batchID);
+
+            printInfo(`Submitting batch: ${options.batchID || 'latest'}`);
+
+            if (batch.status !== 'BATCH_COMMANDS_STATUS_SIGNED') {
+                throw new Error(`Batch status: ${batch.status} is not signed`);
+            }
+
+            const tx = await gateway.execute(batch.execute_data, gasOptions);
+            printInfo('Approve tx', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'Executed');
+
+            if (!eventEmitted) {
+                printWarn('Event not emitted in receipt.');
+            }
+
+            break;
+        }
+
+        case 'callContract': {
+            const destination = options.destination || walletAddress;
+
+            printInfo('Call contract destination chain', options.destinationChain);
+            printInfo('Call contract destination address', destination);
+
+            const tx = await gateway.callContract(options.destinationChain, destination, payload, gasOptions);
+            printInfo('Call contract tx', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'ContractCall');
+
+            if (!eventEmitted) {
+                printWarn('Event not emitted in receipt.');
+            }
+
+            break;
+        }
+
+        case 'approve':
+
+        // eslint-disable-next-line no-fallthrough
+        case 'approveAndExecute': {
+            const payloadHash = payload.startsWith('0x') ? keccak256(arrayify(payload)) : id(payload);
+
+            const commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+
             if (await gateway.isCommandExecuted(commandID)) {
                 printWarn('Command already executed');
                 return;
@@ -119,19 +209,37 @@ async function processCommand(_, chain, options) {
         }
 
         // eslint-disable-next-line no-fallthrough
-        case ('execute', 'approveAndExecute'): {
+        case 'execute':
+
+        // eslint-disable-next-line no-duplicate-case,no-fallthrough
+        case 'approveAndExecute': {
+            const payloadHash = payload.startsWith('0x') ? keccak256(arrayify(payload)) : id(payload);
+
+            const commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+
             if (!options.destination) {
                 throw new Error('Missing destination contract address');
             }
 
-            if (!(await gateway.isContractCallApproved(commandID, chain.id, walletAddress, options.destination, payloadHash))) {
+            printInfo('Destination app contract', options.destination);
+            printInfo('Payload Hash', payloadHash);
+
+            if (
+                !(await gateway.isContractCallApproved(
+                    commandID,
+                    'Axelarnet',
+                    'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj',
+                    options.destination,
+                    payloadHash,
+                ))
+            ) {
                 printWarn('Contract call not approved at the gateway');
                 return;
             }
 
             const appContract = new Contract(options.destination, IAxelarExecutable.abi, wallet);
 
-            const tx = await appContract.execute(commandID, chain.id, walletAddress, payload);
+            const tx = await appContract.execute(commandID, 'Axelarnet', 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj', payload);
             printInfo('Execute tx', tx.hash);
             await tx.wait(chain.confirmations);
 
@@ -182,6 +290,16 @@ async function processCommand(_, chain, options) {
             break;
         }
 
+        case 'mintLimit': {
+            if (!options.symbol) {
+                throw new Error('Missing symbol');
+            }
+
+            printInfo(`Gateway mintLimit ${options.symbol}`, await gateway.tokenMintLimit(options.symbol));
+            printInfo(`Gateway mint amount ${options.symbol}`, await gateway.tokenMintAmount(options.symbol));
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -208,7 +326,19 @@ program.addOption(new Option('-a, --address <address>', 'override address'));
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
 program.addOption(
     new Option('--action <action>', 'gateway action')
-        .choices(['approve', 'execute', 'approveAndExecute', 'transferGovernance', 'governance', 'mintLimiter'])
+        .choices([
+            'admins',
+            'operators',
+            'callContract',
+            'submitBatch',
+            'approve',
+            'execute',
+            'approveAndExecute',
+            'transferGovernance',
+            'governance',
+            'mintLimiter',
+            'mintLimit',
+        ])
         .makeOptionMandatory(true),
 );
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
@@ -217,6 +347,9 @@ program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation')
 program.addOption(new Option('--payload <payload>', 'gmp payload'));
 program.addOption(new Option('--commandID <commandID>', 'execute command ID'));
 program.addOption(new Option('--destination <destination>', 'GMP destination address'));
+program.addOption(new Option('--destinationChain <destinationChain>', 'GMP destination chain'));
+program.addOption(new Option('--batchID <batchID>', 'EVM batch ID').default(''));
+program.addOption(new Option('--symbol <symbol>', 'EVM token symbol'));
 
 program.action((options) => {
     main(options);
