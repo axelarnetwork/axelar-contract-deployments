@@ -533,6 +533,18 @@ const deployContract = async (
     gasOptions = {},
     verifyOptions = {},
 ) => {
+    const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
+        salt: deployOptions.salt,
+        deployerContract: deployOptions.deployerContract,
+        contractJson,
+        constructorArgs,
+        provider: wallet.provider,
+    });
+
+    if (await isContract(predictedAddress, wallet.provider)) {
+        throw new Error(`Contract is already deployed at ${predictedAddress}`);
+    }
+
     switch (deployMethod) {
         case 'create': {
             const contract = await deployCreate(wallet, contractJson, constructorArgs, gasOptions, verifyOptions);
