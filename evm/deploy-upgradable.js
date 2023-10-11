@@ -113,7 +113,7 @@ async function deploy(options, chain) {
     const artifactPath =
         options.artifactPath ||
         '@axelar-network/axelar-cgp-solidity/artifacts/contracts/' +
-        (contractName === 'AxelarGasService' ? 'gas-service/' : 'deposit-service/');
+            (contractName === 'AxelarGasService' ? 'gas-service/' : 'deposit-service/');
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
     const proxyPath = artifactPath + contractName + 'Proxy.sol/' + contractName + 'Proxy.json';
