@@ -33,15 +33,24 @@ const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/con
 const AxelarAuthWeighted = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json');
 const TokenDeployer = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/TokenDeployer.sol/TokenDeployer.json');
 
+async function checkKeyRotation(config, chain) {
+    let resp;
+
+    // check if key rotation is in progress
+    try {
+        resp = await httpGet(`${config.axelar.lcd}/axelar/multisig/v1beta1/next_key_id/${chain}`);
+    } catch (err) {
+        return;
+    }
+
+    throw new Error(`Key rotation is in progress for ${chain.name}: ${resp}`);
+}
+
 async function getAuthParams(config, chain, options) {
     printInfo('Retrieving auth key');
 
     if (!options.amplifier) {
-        // check if key rotation is in progress
-        try {
-            const resp = await httpGet(`${config.axelar.lcd}/axelar/multisig/v1beta1/next_key_id/${chain}`);
-            throw new Error(`Key rotation is in progress for ${chain.name}: ${resp}`);
-        } catch (err) {}
+        await checkKeyRotation(config, chain);
     }
 
     const params = [];

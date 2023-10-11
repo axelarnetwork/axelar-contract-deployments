@@ -6,12 +6,13 @@ const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddress },
+    utils: { isAddress, keccak256, toUtf8Bytes },
 } = ethers;
 const { Command, Option } = require('commander');
 
 const {
     printInfo,
+    printWarn,
     printError,
     isString,
     isNumber,
@@ -20,9 +21,10 @@ const {
     printWalletInfo,
     getDeployedAddress,
     deployContract,
-    loadConfig,
     saveConfig,
     prompt,
+    mainProcessor,
+    isContract,
 } = require('./utils');
 
 async function getConstructorArgs(contractName, chain, wallet, options) {
@@ -93,18 +95,21 @@ async function getConstructorArgs(contractName, chain, wallet, options) {
             }
 
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
+            contractConfig.governanceChain = governanceChain;
 
             if (!isString(governanceChain)) {
                 throw new Error(`Missing InterchainGovernance.governanceChain in the chain info.`);
             }
 
-            const governanceAddress = contractConfig.governanceAddress || wallet.address || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+            const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+            contractConfig.governanceAddress = governanceAddress;
 
             if (!isString(governanceAddress)) {
                 throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
             }
 
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
+            contractConfig.minimumTimeDelay = minimumTimeDelay;
 
             if (!isNumber(minimumTimeDelay)) {
                 throw new Error(`Missing InterchainGovernance.minimumTimeDelay in the chain info.`);
@@ -120,7 +125,9 @@ async function getConstructorArgs(contractName, chain, wallet, options) {
                 throw new Error(`Missing Multisig.signers in the chain info.`);
             }
 
-            const threshold = contractConfig.threshold;
+            const threshold = contractConfig.threshold || (signers.length + 1) / 2;
+            contractConfig.threshold = threshold;
+            contractConfig.signers = signers;
 
             if (!isNumber(threshold)) {
                 throw new Error(`Missing Multisig.threshold in the chain info.`);
@@ -169,10 +176,46 @@ async function checkContract(contractName, contract, contractConfig) {
 
             break;
         }
+
+        case 'InterchainGovernance': {
+            const governanceChain = await contract.governanceChain();
+
+            if (governanceChain !== contractConfig.governanceChain) {
+                printError(`Expected governanceChain ${contractConfig.governanceChain} but got ${governanceChain}.`);
+            }
+
+            const governanceChainHash = await contract.governanceChainHash();
+            const expectedChainHash = keccak256(toUtf8Bytes(contractConfig.governanceChain));
+
+            if (governanceChainHash !== expectedChainHash) {
+                printError(`Expected governanceChainHash ${expectedChainHash} but got ${governanceChainHash}.`);
+            }
+
+            const governanceAddress = await contract.governanceAddress();
+
+            if (governanceAddress !== contractConfig.governanceAddress) {
+                printError(`Expected governanceAddress ${contractConfig.governanceAddress} but got ${governanceAddress}.`);
+            }
+
+            const governanceAddressHash = await contract.governanceAddressHash();
+            const expectedAddressHash = keccak256(toUtf8Bytes(contractConfig.governanceAddress));
+
+            if (governanceAddressHash !== expectedAddressHash) {
+                printError(`Expected governanceAddressHash ${expectedAddressHash} but got ${governanceAddressHash}.`);
+            }
+
+            const minimumTimeDelay = await contract.minimumTimeLockDelay();
+
+            if (!minimumTimeDelay.eq(contractConfig.minimumTimeDelay)) {
+                printError(`Expected minimumTimeDelay ${contractConfig.minimumTimeDelay} but got ${minimumTimeDelay}.`);
+            }
+
+            break;
+        }
     }
 }
 
-async function deploy(options, chain, config) {
+async function processCommand(config, chain, options) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes } = options;
     const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
 
@@ -187,7 +230,7 @@ async function deploy(options, chain, config) {
     const contractConfig = contracts[contractName];
 
     if (contractConfig.address && options.skipExisting) {
-        printInfo(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
+        printWarn(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
         return;
     }
 
@@ -204,8 +247,8 @@ async function deploy(options, chain, config) {
 
     const contractJson = require(contractPath);
 
-    const codehash = await getBytecodeHash(contractJson, chain.id);
-    printInfo('Contract bytecode hash', codehash);
+    const predeployCodehash = await getBytecodeHash(contractJson, chain.id);
+    printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
 
     const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
@@ -226,6 +269,11 @@ async function deploy(options, chain, config) {
         constructorArgs,
         provider: wallet.provider,
     });
+
+    if (await isContract(predictedAddress, provider)) {
+        printWarn(`Contract ${contractName} is already deployed on ${chain.name} at ${predictedAddress}`);
+        return;
+    }
 
     if (deployMethod !== 'create') {
         printInfo(`${contractName} deployment salt`, salt);
@@ -249,10 +297,14 @@ async function deploy(options, chain, config) {
         verifyOptions,
     );
 
+    const codehash = await getBytecodeHash(contract, chain.id);
+    printInfo('Deployed Contract bytecode hash', codehash);
+
     contractConfig.address = contract.address;
-    contractConfig.codehash = codehash;
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = deployMethod;
+    contractConfig.codehash = codehash;
+    contractConfig.predeployCodehash = predeployCodehash;
 
     if (deployMethod !== 'create') {
         contractConfig.salt = salt;
@@ -266,25 +318,7 @@ async function deploy(options, chain, config) {
 }
 
 async function main(options) {
-    const config = loadConfig(options.env);
-
-    let chains = options.chainNames.split(',').map((str) => str.trim());
-
-    if (options.chainNames === 'all') {
-        chains = Object.keys(config.chains);
-    }
-
-    for (const chain of chains) {
-        if (config.chains[chain.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chain} is not defined in the info file`);
-        }
-    }
-
-    for (const chain of chains) {
-        await deploy(options, config.chains[chain.toLowerCase()], config);
-    }
-
-    saveConfig(config, options.env);
+    await mainProcessor(options, processCommand);
 }
 
 const program = new Command();

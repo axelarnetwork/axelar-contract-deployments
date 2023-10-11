@@ -159,6 +159,9 @@ async function processCommand(_, chain, options) {
             const gateway = new Contract(multisigTarget, IGateway.abi, wallet);
             const multisigCalldata = gateway.interface.encodeFunctionData('setTokenMintLimits', [symbolsArray, limitsArray]);
 
+            printInfo('Rate limit tokens', symbolsArray);
+            printInfo('Rate limit values', limitsArray);
+
             if (!offline) {
                 await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
             }

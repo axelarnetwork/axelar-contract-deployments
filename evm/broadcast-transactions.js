@@ -37,10 +37,10 @@ async function processCommand(_, chain, options) {
 
         // Send the signed transaction
         try {
-            const { response } = await sendTransaction(transaction.signedTx, provider, chain.confirmations);
+            const { response, receipt } = await sendTransaction(transaction.signedTx, provider, chain.confirmations);
             transaction.status = 'SUCCESS';
             transaction.hash = response.hash;
-            printInfo('Transaction executed successfully', response.hash);
+            printInfo('Tx Receipt', JSON.stringify(receipt, null, 2));
         } catch (error) {
             transaction.status = 'FAILED';
             printError('Error broadcasting tx', error);

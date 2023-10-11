@@ -5,7 +5,7 @@ require('dotenv').config();
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { defaultAbiCoder, keccak256, Interface },
+    utils: { defaultAbiCoder, keccak256, Interface, parseEther },
     Contract,
     BigNumber,
 } = ethers;
@@ -48,7 +48,7 @@ async function processCommand(_, chain, options) {
         governanceAddress = contractConfig.address;
     }
 
-    const target = options.target || chain.contracts.AxelarGateway?.address;
+    let target = options.target || chain.contracts.AxelarGateway?.address;
 
     if (!isValidAddress(target)) {
         throw new Error(`Missing target address.`);
@@ -130,7 +130,7 @@ async function processCommand(_, chain, options) {
             printInfo('Proposal eta', etaToDate(proposalEta));
 
             if (proposalEta.eq(BigNumber.from(0))) {
-                throw new Error(`Proposal does not exist.`);
+                printWarn(`Proposal does not exist.`);
             }
 
             if (proposalEta <= currTime) {
@@ -361,6 +361,49 @@ async function processCommand(_, chain, options) {
             break;
         }
 
+        case 'withdraw': {
+            if (!isValidTimeFormat(date)) {
+                throw new Error(`Invalid ETA: ${date}. Please pass the eta in the format YYYY-MM-DDTHH:mm:ss`);
+            }
+
+            const eta = dateToEta(date);
+
+            const currTime = getCurrentTimeInSeconds();
+            printInfo('Current time', etaToDate(currTime));
+
+            const minEta = currTime + contractConfig?.minimumTimeDelay;
+            printInfo('Minimum eta', etaToDate(minEta));
+
+            if (eta < minEta) {
+                printWarn(`${date} is less than the minimum eta.`);
+            }
+
+            if (!isValidAddress(options.target)) {
+                throw new Error(`Invalid target address: ${options.target}`);
+            }
+
+            if (!isValidDecimal(options.amount)) {
+                throw new Error(`Invalid withdraw amount: ${options.amount}`);
+            }
+
+            const amount = parseEther(options.amount);
+            calldata = governance.interface.encodeFunctionData('withdraw', [options.target, amount]);
+            target = governance.address;
+
+            const commandType = 0;
+            const types = ['uint256', 'address', 'bytes', 'uint256', 'uint256'];
+            const values = [commandType, target, calldata, nativeValue, eta];
+
+            gmpPayload = defaultAbiCoder.encode(types, values);
+            const proposalEta = await governance.getProposalEta(target, calldata, nativeValue);
+
+            if (!BigNumber.from(proposalEta).eq(0)) {
+                printWarn('The proposal already exixts', etaToDate(proposalEta));
+            }
+
+            break;
+        }
+
         case 'getProposalEta': {
             if (!calldata) {
                 throw new Error(`Calldata required for this governance action: ${action}`);
@@ -384,12 +427,30 @@ async function processCommand(_, chain, options) {
     }
 
     if (gmpPayload) {
+        const payloadBase64 = Buffer.from(`${gmpPayload}`.slice(2), 'hex').toString('base64');
+
         printInfo('Destination chain', chain.name);
         printInfo('Destination governance address', governanceAddress);
         printInfo('GMP payload', gmpPayload);
+        printInfo('GMP payload hash', keccak256(gmpPayload));
         printInfo('Target contract', target);
         printInfo('Target calldata', calldata);
-        printInfo('Native value', nativeValue);
+        printInfo('Native value', nativeValue || '0');
+        printInfo('Date', date);
+
+        const proposal = {
+            title: '',
+            description: '',
+            contract_calls: [
+                {
+                    chain: chain.id,
+                    contract_address: governanceAddress,
+                    payload: payloadBase64,
+                },
+            ],
+        };
+
+        printInfo('Proposal', JSON.stringify(proposal, null, 2));
     }
 }
 
@@ -426,6 +487,7 @@ program.addOption(
         'executeProposal',
         'executeMultisigProposal',
         'gatewayUpgrade',
+        'withdraw',
         'getProposalEta',
     ]),
 );
@@ -434,6 +496,7 @@ program.addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter add
 program.addOption(new Option('--target <target>', 'governance execution target'));
 program.addOption(new Option('--calldata <calldata>', 'calldata'));
 program.addOption(new Option('--nativeValue <nativeValue>', 'nativeValue').default(0));
+program.addOption(new Option('--amount <amount>', 'withdraw amount'));
 program.addOption(new Option('--date <date>', 'proposal activation date'));
 program.addOption(new Option('--implementation <implementation>', 'new gateway implementation'));
 
