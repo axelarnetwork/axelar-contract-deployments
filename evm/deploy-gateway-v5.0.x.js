@@ -25,6 +25,8 @@ const {
     printWarn,
     prompt,
     mainProcessor,
+    isContract,
+    deployContract,
 } = require('./utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
@@ -83,6 +85,8 @@ async function deploy(config, chain, options) {
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
+    printInfo('Chain', chain.name);
+
     const wallet = new Wallet(privateKey).connect(provider);
     await printWalletInfo(wallet);
 
@@ -94,18 +98,31 @@ async function deploy(config, chain, options) {
     const governance = options.governance || contractConfig.governance;
     const mintLimiter = options.mintLimiter || contractConfig.mintLimiter;
 
-    if (governance === undefined) {
-        throw new Error('governance address is required');
-    }
+    if (!reuseProxy) {
+        if (governance === undefined) {
+            throw new Error('governance address is required');
+        }
 
-    if (mintLimiter === undefined) {
-        throw new Error('mintLimiter address is required');
+        if (mintLimiter === undefined) {
+            throw new Error('mintLimiter address is required');
+        }
+
+        if (!(await isContract(governance, provider))) {
+            throw new Error('governance address is not a contract');
+        }
+
+        if (!(await isContract(mintLimiter, provider))) {
+            throw new Error('mintLimiter address is not a contract');
+        }
     }
 
     const gatewayFactory = new ContractFactory(AxelarGateway.abi, AxelarGateway.bytecode, wallet);
     const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
     const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
     const gatewayProxyFactory = new ContractFactory(AxelarGatewayProxy.abi, AxelarGatewayProxy.bytecode, wallet);
+
+    const deployerContract =
+        options.deployMethod === 'create3' ? chain.contracts.Create3Deployer?.address : chain.contracts.ConstAddressDeployer?.address;
 
     let gateway;
     let auth;
@@ -157,8 +174,17 @@ async function deploy(config, chain, options) {
     } else {
         printInfo(`Deploying token deployer contract`);
 
-        tokenDeployer = await tokenDeployerFactory.deploy(gasOptions);
-        await tokenDeployer.deployTransaction.wait(chain.confirmations);
+        const salt = 'TokenDeployer' + (options.salt || '');
+
+        tokenDeployer = await deployContract(
+            options.deployMethod !== 'create' ? 'create2' : 'create',
+            wallet,
+            TokenDeployer,
+            [],
+            { salt, deployerContract },
+            gasOptions,
+            {},
+        );
 
         contractsToVerify.push({
             address: tokenDeployer.address,
@@ -172,8 +198,17 @@ async function deploy(config, chain, options) {
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${auth.address},${tokenDeployer.address}`);
 
-    const implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address);
-    await implementation.deployTransaction.wait(chain.confirmations);
+    const salt = 'AxelarGateway v6.1.2' + (options.salt || '');
+
+    const implementation = await deployContract(
+        options.deployMethod,
+        wallet,
+        AxelarGateway,
+        [auth.address, tokenDeployer.address],
+        { salt, deployerContract },
+        gasOptions,
+        {},
+    );
 
     printInfo('Gateway Implementation', implementation.address);
 
@@ -187,6 +222,7 @@ async function deploy(config, chain, options) {
 
     if (!reuseProxy) {
         const params = getProxyParams(governance, mintLimiter);
+
         printInfo('Deploying gateway proxy contract');
         printInfo('Proxy deployment args', `${implementation.address},${params}`);
 
@@ -290,6 +326,10 @@ async function deploy(config, chain, options) {
     contractConfig.governance = governance;
     contractConfig.mintLimiter = mintLimiter;
     contractConfig.deployer = wallet.address;
+    contractConfig.deploymentMethod = options.deployMethod;
+    if (options.deployMethod !== 'create') {
+        contractConfig.salt = salt;
+    }
 
     printInfo('Deployment status', 'SUCCESS');
 
@@ -324,8 +364,18 @@ async function upgrade(_, chain, options) {
     let governance = options.governance || contractConfig.governance;
     let mintLimiter = options.mintLimiter || contractConfig.mintLimiter;
     let setupParams = '0x';
+    contractConfig.governance = governance;
+    contractConfig.mintLimiter = mintLimiter;
 
     if (!offline) {
+        if (governance && !(await isContract(governance, provider))) {
+            throw new Error('governance address is not a contract');
+        }
+
+        if (mintLimiter && !(await isContract(mintLimiter, provider))) {
+            throw new Error('mintLimiter address is not a contract');
+        }
+
         const codehash = await getBytecodeHash(contractConfig.implementation, chainName, provider);
 
         if (!implementationCodehash) {
@@ -394,7 +444,7 @@ async function upgrade(_, chain, options) {
             return;
         }
 
-        printInfo('Upgraded to', newImplementation);
+        printInfo('Upgraded!');
     }
 }
 
@@ -425,6 +475,10 @@ async function programHandler() {
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chains to run the script over').makeOptionMandatory(true).env('CHAINS'));
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+    program.addOption(
+        new Option('--deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
+    );
+    program.addOption(new Option('-s, --salt <salt>', 'salt to use for deployment method'));
     program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
     program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment').env('REUSE_PROXY'));
     program.addOption(
