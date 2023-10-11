@@ -1,5 +1,5 @@
 const { exec } = require('child_process');
-const { writeFile } = require('fs');
+const { writeFile, writeFileSync, existsSync } = require('fs');
 const { promisify } = require('util');
 
 const execAsync = promisify(exec);
@@ -19,7 +19,12 @@ const writeFileAsync = promisify(writeFile);
 const verifyContract = async (env, chain, contract, args, options = {}) => {
     const stringArgs = args.map((arg) => JSON.stringify(arg));
     const content = `module.exports = [\n    ${stringArgs.join(',\n    ')}\n];`;
-    const file = 'temp-arguments.js';
+    const file = options.dir ? `${options.dir}/temp-arguments.js` : 'temp-arguments.js';
+
+    if (!existsSync(file)) {
+        writeFileSync(file, '', 'utf-8');
+    }
+
     const contractArg = options.contractPath ? `--contract ${options.contractPath}` : '';
     const dirPrefix = options.dir ? `cd ${options.dir};` : '';
     const cmd = `${dirPrefix} ENV=${env} npx hardhat verify --network ${chain.toLowerCase()} ${contractArg} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
