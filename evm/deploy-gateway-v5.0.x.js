@@ -327,6 +327,7 @@ async function deploy(config, chain, options) {
     contractConfig.mintLimiter = mintLimiter;
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = options.deployMethod;
+
     if (options.deployMethod !== 'create') {
         contractConfig.salt = salt;
     }
