@@ -89,10 +89,10 @@
         "AxelarGateway": {
           "address": "0x6aF9C075d8C11b9A2CD66bbA801481b3c7A96488",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "implementation": "0xdc9fA655094bBaD6840cd4b05c5658eE2042e122",
-          "implementationCodehash": "0x20ffa60e7826975e9be603bfeeb3d596818ae082852e902a16aa25ae185a65c1",
-          "authModule": "0x68F66b5Ea49B43E4d29BDED1051B90a28EADC67d",
-          "tokenDeployer": "0x34bF216E0ae4aFCFf9283ED6D23A89cF1B0CCED1",
+          "implementation": "0xB2e93A9E47646d13235FA963e396Fd99c157d37E",
+          "implementationCodehash": "0x4c7ffe5584bd092de0339cca1af43e82e542428f5bedb685ccc9b0aaa09e67ef",
+          "authModule": "0x56FdBc2a6b63D768BE38e0585175dC7956d741F3",
+          "tokenDeployer": "0x4e5Fd0f7046aBE327D637D5D4AB756769cB60A97",
           "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
           "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A"
         },
@@ -644,10 +644,10 @@
         "AxelarGateway": {
           "address": "0x6aF9C075d8C11b9A2CD66bbA801481b3c7A96488",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
-          "implementation": "0xef180cdD04aCec05E085963aCc61BaeD17b50894",
-          "implementationCodehash": "0x53d1a6c69bf029df9e2bacd5d5d884ab20ecafc472301a14ce81faf3942c5be3",
-          "authModule": "0x2F4d0bEecEE4559026A8093EDD0e16377202DBe8",
-          "tokenDeployer": "0xB0288E332552f87Ef51EEE5F4060D1A98e99548B",
+          "implementation": "0x34bF216E0ae4aFCFf9283ED6D23A89cF1B0CCED1",
+          "implementationCodehash": "0x0e9952670976b6db51368e44f2444546f38e1069caba845ac576e92f98199b2f",
+          "authModule": "0xD65b4CEde4733F08939719e228F76d13BC99cBBa",
+          "tokenDeployer": "0x68F66b5Ea49B43E4d29BDED1051B90a28EADC67d",
           "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
           "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A"
         },
