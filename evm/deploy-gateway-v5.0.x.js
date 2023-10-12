@@ -208,6 +208,7 @@ async function deploy(config, chain, options) {
         { salt, deployerContract },
         gasOptions,
         {},
+        chain,
     );
 
     printInfo('Gateway Implementation', implementation.address);
