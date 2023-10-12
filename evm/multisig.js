@@ -134,6 +134,18 @@ async function processCommand(_, chain, options) {
     let tx;
 
     switch (action) {
+        case 'signers': {
+            const signerEpoch = await multisigContract.signerEpoch();
+            const signers = await multisigContract.signerAccounts();
+            const signerThreshold = await multisigContract.signerThreshold();
+
+            printInfo('Signer epoch', signerEpoch);
+            printInfo('Signer threshold', signerThreshold);
+            printInfo('Signers', signers);
+
+            return;
+        }
+
         case 'setTokenMintLimits': {
             const symbolsArray = JSON.parse(symbols);
             const limitsArray = JSON.parse(limits);
@@ -309,9 +321,10 @@ program.addOption(
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig').makeOptionMandatory(false));
 program.addOption(new Option('-a, --address <address>', 'override address'));
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
 program.addOption(
     new Option('--action <action>', 'multisig action')
-        .choices(['setTokenMintLimits', 'transferMintLimiter', 'withdraw', 'executeMultisigProposal'])
+        .choices(['signers', 'setTokenMintLimits', 'transferMintLimiter', 'withdraw', 'executeMultisigProposal'])
         .makeOptionMandatory(true),
 );
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));

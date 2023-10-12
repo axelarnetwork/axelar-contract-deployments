@@ -475,6 +475,7 @@ async function programHandler() {
             .env('ENV'),
     );
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chains to run the script over').makeOptionMandatory(true).env('CHAINS'));
+    program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(
