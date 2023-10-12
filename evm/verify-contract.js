@@ -11,13 +11,15 @@ const {
     utils: { defaultAbiCoder },
 } = ethers;
 const { Command, Option } = require('commander');
-const { verifyContract, getEVMAddresses, loadConfig } = require('./utils');
+const { verifyContract, getEVMAddresses, printInfo, mainProcessor } = require('./utils');
 
-async function verifyContracts(config, chain, options) {
+async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
     const provider = getDefaultProvider(chain.rpc);
     const wallet = Wallet.createRandom().connect(provider);
     const verifyOptions = {};
+
+    printInfo('Chain', chain.name);
 
     if (dir) {
         verifyOptions.dir = dir;
@@ -34,6 +36,45 @@ async function verifyContracts(config, chain, options) {
             console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
 
             await verifyContract(env, chain.name, contract.address, [], verifyOptions);
+            break;
+        }
+
+        case 'InterchainGovernance': {
+            const InterchainGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/governance/InterchainGovernance.sol/InterchainGovernance.json');
+
+            const contractFactory = await getContractAt(InterchainGovernance.abi, wallet);
+
+            const contract = contractFactory.attach(options.address || chain.contracts.InterchainGovernance.address);
+
+            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address} ...`);
+            const contractConfig = chain.contracts[contractName];
+
+            await verifyContract(
+                env,
+                chain.name,
+                contract.address,
+                [
+                    chain.contracts.AxelarGateway.address,
+                    contractConfig.governanceChain,
+                    contractConfig.governanceAddress,
+                    contractConfig.minimumTimeDelay,
+                ],
+                verifyOptions,
+            );
+            break;
+        }
+
+        case 'Multisig': {
+            const Multisig = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/governance/Multisig.sol/Multisig.json');
+
+            const contractFactory = await getContractAt(Multisig.abi, wallet);
+
+            const contract = contractFactory.attach(options.address || chain.contracts.Multisig.address);
+
+            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
+            const contractConfig = chain.contracts[contractName];
+
+            await verifyContract(env, chain.name, contract.address, [contractConfig.signers, contractConfig.threshold], verifyOptions);
             break;
         }
 
@@ -110,7 +151,7 @@ async function verifyContracts(config, chain, options) {
             const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, { keyID: `evm-${chain.id}-genesis` });
             const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
 
-            console.log(`Verifying ${contractName} on ${chain.name} at address ${gateway.address}...`);
+            console.log(`Verifying ${contractName} on ${chain.name} at address ${gateway.address} ...`);
 
             await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
             await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
@@ -176,29 +217,7 @@ async function verifyContracts(config, chain, options) {
 }
 
 async function main(options) {
-    const config = loadConfig(options.env);
-
-    let chains = options.chainNames.split(',').map((str) => str.trim());
-
-    if (options.chainNames === 'all') {
-        chains = Object.keys(config.chains);
-    }
-
-    for (const chainName of chains) {
-        if (config.chains[chainName.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chainName} is not defined in the info file`);
-        }
-    }
-
-    for (const chainName of chains) {
-        const chain = config.chains[chainName.toLowerCase()];
-
-        try {
-            await verifyContracts(config, chain, options);
-        } catch (e) {
-            console.log(`FAILED VERIFICATION: ${e}`);
-        }
-    }
+    await mainProcessor(options, processCommand, false, true);
 }
 
 if (require.main === module) {
@@ -214,6 +233,7 @@ if (require.main === module) {
             .env('ENV'),
     );
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+    program.addOption(new Option('--skipChains <skipChains>', 'skip chains'));
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name'));
     program.addOption(new Option('-a, --address <address>', 'contract address'));
     program.addOption(new Option('-d, --dir <dir>', 'contract artifacts dir'));
