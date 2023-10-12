@@ -31,9 +31,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "gasOptions": {
@@ -105,9 +107,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "gasOptions": {
@@ -186,8 +190,10 @@
         "Create3Deployer": {
           "salt": "Create3Deployer",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
-          "deploymentMethod": "create2"
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "gasOptions": {
@@ -262,9 +268,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "gasOptions": {
@@ -339,9 +347,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "gasOptions": {
@@ -416,9 +426,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "gasOptions": {
@@ -493,9 +505,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "salt": "ITS v0.3.0",
@@ -564,9 +578,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "salt": "ITS v0.3.0",
@@ -638,9 +654,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "gasOptions": {
@@ -711,9 +729,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "gasOptions": {
@@ -789,9 +809,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "gasOptions": {
@@ -869,9 +891,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "salt": "ITS v0.3.0",
@@ -910,7 +934,7 @@
       "gasOptions": {
         "gasLimit": 300000000
       },
-      "confirmations": 1
+      "confirmations": 3
     },
     "linea": {
       "name": "Linea",
@@ -947,9 +971,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
           "salt": "ITS v0.3.0",
@@ -1021,9 +1047,11 @@
         },
         "Create3Deployer": {
           "salt": "Create3Deployer",
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2"
+          "deploymentMethod": "create2",
+          "codehash": "0x560e0fd29846f1419f347486d7078f378fc55231e275939c6fd837fd9f1a1df1",
+          "predeployCodehash": "0xd2e447f58ed8d9d3e7e4f0221882d65bf8d3cffba898bc0430e5478ef39855c6"
         },
         "InterchainTokenService": {
           "gasOptions": {
@@ -1098,10 +1126,12 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Create3Deployer": {
-          "address": "0xf49B10ccFB7D82C3a8749fFB1aAF3e0c936Eba36",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
-          "salt": "Create3Deployer"
+          "salt": "Create3Deployer",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",

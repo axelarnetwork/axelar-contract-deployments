@@ -29,11 +29,11 @@ const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
 };
 
-const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null) => {
+const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
     const contract = await factory.deploy(...args, { ...options });
-    await contract.deployed();
+    await contract.deployTransaction.wait(chain.confirmations || 2);
 
     if (verifyOptions?.env) {
         sleep(10000);
@@ -56,11 +56,12 @@ const deployCreate2 = async (
     salt = Date.now(),
     gasOptions = null,
     verifyOptions = null,
+    chain = {},
 ) => {
     let contract;
 
     if (!verifyOptions?.only) {
-        contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args, gasOptions?.gasLimit);
+        contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args, gasOptions, chain.confirmations || 2);
     } else {
         contract = { address: await predictContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args) };
     }
@@ -86,11 +87,12 @@ const deployCreate3 = async (
     key = Date.now(),
     gasOptions = null,
     verifyOptions = null,
+    chain = {},
 ) => {
     let contract;
 
     if (!verifyOptions?.only) {
-        contract = await create3DeployContract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions.gasLimit);
+        contract = await create3DeployContract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions, chain.confirmations || 2);
     } else {
         contract = { address: await getCreate3Address(create3DeployerAddress, wallet, key) };
     }
@@ -532,6 +534,7 @@ const deployContract = async (
     deployOptions = {},
     gasOptions = {},
     verifyOptions = {},
+    chain = {},
 ) => {
     const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
         salt: deployOptions.salt,
@@ -547,7 +550,7 @@ const deployContract = async (
 
     switch (deployMethod) {
         case 'create': {
-            const contract = await deployCreate(wallet, contractJson, constructorArgs, gasOptions, verifyOptions);
+            const contract = await deployCreate(wallet, contractJson, constructorArgs, gasOptions, verifyOptions, chain);
             return contract;
         }
 
@@ -568,6 +571,7 @@ const deployContract = async (
                 deployOptions.salt,
                 gasOptions.gasLimit,
                 verifyOptions,
+                chain,
             );
 
             return contract;
@@ -590,6 +594,7 @@ const deployContract = async (
                 deployOptions.salt,
                 gasOptions,
                 verifyOptions,
+                chain,
             );
 
             return contract;
