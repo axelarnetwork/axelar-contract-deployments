@@ -15,7 +15,9 @@
           "authModule": "0xcbf7900138EBc9CdB3E933B9E6F7071587BD6cb8",
           "tokenDeployer": "0x299286b730f6906a7E1A90E5cB4dfBab9516AE14",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -123,7 +125,9 @@
           "authModule": "0xE39d7d526DFd7B6D10972708C77ED19c3f2f5625",
           "tokenDeployer": "0x299286b730f6906a7E1A90E5cB4dfBab9516AE14",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -234,7 +238,9 @@
           "authModule": "0xE39d7d526DFd7B6D10972708C77ED19c3f2f5625",
           "tokenDeployer": "0x299286b730f6906a7E1A90E5cB4dfBab9516AE14",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -348,7 +354,9 @@
           "authModule": "0xE39d7d526DFd7B6D10972708C77ED19c3f2f5625",
           "tokenDeployer": "0x299286b730f6906a7E1A90E5cB4dfBab9516AE14",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -572,7 +580,9 @@
           "authModule": "0xE39d7d526DFd7B6D10972708C77ED19c3f2f5625",
           "tokenDeployer": "0x299286b730f6906a7E1A90E5cB4dfBab9516AE14",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -680,7 +690,9 @@
           "authModule": "0x6e0e885F0957086e173D95aAA08191a6c1Ac860d",
           "tokenDeployer": "0x299286b730f6906a7E1A90E5cB4dfBab9516AE14",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -788,7 +800,9 @@
           "authModule": "0xD9Af006C3b33a87eE8168B9e25721DFb00FC3d2d",
           "tokenDeployer": "0x299286b730f6906a7E1A90E5cB4dfBab9516AE14",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -896,7 +910,9 @@
           "authModule": "0x7A599c9bB4D88F648701B653739688edEfd830E8",
           "tokenDeployer": "0x299286b730f6906a7E1A90E5cB4dfBab9516AE14",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -1003,7 +1019,9 @@
           "authModule": "0x6e0e885F0957086e173D95aAA08191a6c1Ac860d",
           "tokenDeployer": "0x299286b730f6906a7E1A90E5cB4dfBab9516AE14",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -1115,7 +1133,9 @@
           "authModule": "0x6e0e885F0957086e173D95aAA08191a6c1Ac860d",
           "tokenDeployer": "0x299286b730f6906a7E1A90E5cB4dfBab9516AE14",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -1229,7 +1249,9 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementationCodehash": "0x451f58676d810b3bc3dc22a380660589692bdc260c43eeee60afe50c52697398",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
@@ -1333,7 +1355,9 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementationCodehash": "0x40cacd71121902c1617bda9266e8ece13a43df8087f5361d3e0b9ecb6b5b14bd",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -1441,7 +1465,9 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementationCodehash": "0xe0e5fe9739dc401a9f0ff0f456d3c4062b05bc8c7b9eb6adf26e281cd16400e5",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.1.2"
+          "salt": "AxelarGateway v6.1.2",
+          "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
+          "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c"
         },
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
