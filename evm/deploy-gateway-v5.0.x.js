@@ -108,11 +108,11 @@ async function deploy(config, chain, options) {
         }
 
         if (!(await isContract(governance, provider))) {
-            throw new Error('governance address is not a contract');
+            printWarn('governance address is not a contract');
         }
 
         if (!(await isContract(mintLimiter, provider))) {
-            throw new Error('mintLimiter address is not a contract');
+            printWarn('mintLimiter address is not a contract');
         }
     }
 
@@ -208,6 +208,7 @@ async function deploy(config, chain, options) {
         { salt, deployerContract },
         gasOptions,
         {},
+        chain,
     );
 
     printInfo('Gateway Implementation', implementation.address);
