@@ -134,6 +134,7 @@ async function upgradeUpgradable(
             deployOptions,
             gasOptions,
             verifyOptions,
+            chain,
         );
         printInfo('New Implementation', implementation.address);
     }

@@ -253,7 +253,7 @@ async function processCommand(config, chain, options) {
     const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    printInfo(`Gas override for chain ${chain.name}`, JSON.stringify(gasOptions, null, 2));
 
     const salt = options.salt || contractName;
     let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
@@ -295,6 +295,7 @@ async function processCommand(config, chain, options) {
         { salt, deployerContract },
         gasOptions,
         verifyOptions,
+        chain,
     );
 
     const codehash = await getBytecodeHash(contract, chain.id);
