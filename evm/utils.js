@@ -61,7 +61,15 @@ const deployCreate2 = async (
     let contract;
 
     if (!verifyOptions?.only) {
-        contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args, gasOptions, chain.confirmations || 2);
+        contract = await deployContractConstant(
+            constAddressDeployerAddress,
+            wallet,
+            contractJson,
+            salt,
+            args,
+            gasOptions,
+            chain.confirmations || 2,
+        );
     } else {
         contract = { address: await predictContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args) };
     }
@@ -92,7 +100,15 @@ const deployCreate3 = async (
     let contract;
 
     if (!verifyOptions?.only) {
-        contract = await create3DeployContract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions, chain.confirmations || 2);
+        contract = await create3DeployContract(
+            create3DeployerAddress,
+            wallet,
+            contractJson,
+            key,
+            args,
+            gasOptions,
+            chain.confirmations || 2,
+        );
     } else {
         contract = { address: await getCreate3Address(create3DeployerAddress, wallet, key) };
     }
