@@ -531,12 +531,14 @@ async function printWalletInfo(wallet, options = {}) {
 
     if (!options.offline) {
         balance = await wallet.provider.getBalance(address);
-        printInfo('Wallet balance', `${balance / 1e18}`);
-        printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(address)).toString());
 
         if (balance.isZero()) {
-            printError('Wallet balance is 0');
+            printError('Wallet balance', '0');
+        } else {
+            printInfo('Wallet balance', `${balance / 1e18}`);
         }
+
+        printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(address)).toString());
     }
 
     return { address, balance };
@@ -714,6 +716,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
     const config = loadConfig(options.env);
     let chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
+    const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim());
 
     if (options.chainNames === 'all') {
         chains = Object.keys(config.chains);
@@ -727,6 +730,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
+
+        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
+            printWarn('Skipping chain', chain.name);
+            continue;
+        }
 
         try {
             await processCommand(config, chain, options);

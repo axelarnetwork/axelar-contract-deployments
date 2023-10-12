@@ -324,6 +324,7 @@ program.addOption(
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig'));
 program.addOption(new Option('-a, --address <address>', 'override address'));
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
 program.addOption(
     new Option('--action <action>', 'gateway action')
         .choices([

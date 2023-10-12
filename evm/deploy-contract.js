@@ -336,6 +336,7 @@ program.addOption(
 program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true));
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
 program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
 program.addOption(
     new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
 );
