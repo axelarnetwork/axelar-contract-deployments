@@ -30,8 +30,37 @@ const { getWallet } = require('./sign-utils.js');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 
+async function getGatewaySetupParams(governance, gateway, contracts, options) {
+    const currGovernance = await gateway.governance();
+    const currMintLimiter = await gateway.mintLimiter();
+
+    if (currGovernance !== governance.address) {
+        printWarn(`Gateway governor ${currGovernance} does not match governance contract: ${governance.address}`);
+    }
+
+    let newGovernance = options.newGovernance || contracts.AxelarGateway?.governance;
+
+    if (newGovernance === currGovernance) {
+        newGovernance = '0x';
+    }
+
+    let newMintLimiter = options.newMintLimiter || contracts.AxelarGateway?.mintLimiter;
+
+    if (newMintLimiter === `${currMintLimiter}`) {
+        newMintLimiter = '0x';
+    }
+
+    let setupParams = '0x';
+
+    if (newGovernance !== '0x' || newMintLimiter !== '0x') {
+        setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [newGovernance, newMintLimiter, '0x']);
+    }
+
+    return setupParams;
+}
+
 async function processCommand(_, chain, options) {
-    const { contractName, address, action, nativeValue, date, privateKey, yes } = options;
+    const { contractName, address, action, date, privateKey, yes } = options;
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -49,6 +78,7 @@ async function processCommand(_, chain, options) {
     }
 
     let target = options.target || chain.contracts.AxelarGateway?.address;
+    let nativeValue = options.nativeValue;
 
     if (!isValidAddress(target)) {
         throw new Error(`Missing target address.`);
@@ -71,12 +101,14 @@ async function processCommand(_, chain, options) {
 
     const governance = new Contract(governanceAddress, IGovernance.abi, wallet);
 
-    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || {};
+    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || { gasLimit: 5e6 };
     printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
 
     printInfo('Proposal Action', action);
 
     let gmpPayload;
+    let title = `Governance proposal for chain ${chain.name}`;
+    let description = `This proposal submits a governance command for chain ${chain.name}`;
     let calldata = options.calldata;
 
     switch (action) {
@@ -184,6 +216,15 @@ async function processCommand(_, chain, options) {
         }
 
         case 'executeProposal': {
+            if (options.proposal) {
+                printInfo('Decoding proposal to get governance data');
+
+                [_, target, calldata, nativeValue, _] = defaultAbiCoder.decode(
+                    ['uint256', 'address', 'bytes', 'uint256', 'uint256'],
+                    options.proposal,
+                );
+            }
+
             const proposalHash = keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
             const eta = await governance.getTimeLock(proposalHash);
 
@@ -208,7 +249,7 @@ async function processCommand(_, chain, options) {
                 throw new Error('Proposal execution cancelled.');
             }
 
-            const tx = await governance.executeProposal(target, calldata, nativeValue, { gasLimit: 1e6 });
+            const tx = await governance.executeProposal(target, calldata, nativeValue, gasOptions);
             printInfo('Proposal execution tx', tx.hash);
 
             const receipt = await tx.wait(chain.confirmations);
@@ -300,6 +341,8 @@ async function processCommand(_, chain, options) {
                 printWarn(`${date} is less than the minimum eta.`);
             }
 
+            printInfo('Time difference between current time and eta', etaToDate(eta - currTime));
+
             const implementation = options.implementation || chain.contracts.AxelarGateway?.implementation;
 
             if (!isValidAddress(implementation)) {
@@ -314,34 +357,7 @@ async function processCommand(_, chain, options) {
             const newGatewayImplementationCodeHash = await getBytecodeHash(implementation, chain.name, provider);
             printInfo('New gateway implementation code hash', newGatewayImplementationCodeHash);
 
-            const currGovernance = await gateway.governance();
-            const currMintLimiter = await gateway.mintLimiter();
-
-            if (currGovernance !== governance.address) {
-                printWarn(`Gateway governor ${currGovernance} does not match governance contract: ${governance.address}`);
-            }
-
-            let newGovernance = options.newGovernance;
-
-            if (contracts.AxelarGateway?.governance === currGovernance) {
-                newGovernance = contracts.AxelarGateway?.governance;
-            } else {
-                newGovernance = '0x';
-            }
-
-            let newMintLimiter = options.newMintLimiter;
-
-            if (contracts.AxelarGateway?.mintLimiter === currMintLimiter) {
-                newMintLimiter = contracts.AxelarGateway?.mintLimiter;
-            } else {
-                newMintLimiter = '0x';
-            }
-
-            let setupParams = '0x';
-
-            if (newGovernance !== '0x' || newMintLimiter !== '0x') {
-                setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [newGovernance, newMintLimiter, '0x']);
-            }
+            const setupParams = await getGatewaySetupParams(governance, gateway, contracts, options);
 
             printInfo('Setup Params for upgrading AxelarGateway', setupParams);
 
@@ -357,6 +373,67 @@ async function processCommand(_, chain, options) {
             if (!BigNumber.from(proposalEta).eq(0)) {
                 printWarn('The proposal already exixts', etaToDate(proposalEta));
             }
+
+            title = `Chain ${chain.name} gateway upgrade proposal`;
+            description = `This proposal upgrades the gateway contract ${gateway.address} on chain ${chain.name} to a new implementation contract ${implementation}`;
+
+            break;
+        }
+
+        case 'executeUpgrade': {
+            target = contracts.AxelarGateway?.address;
+            const gateway = new Contract(target, IGateway.abi, wallet);
+            const implementation = options.implementation || chain.contracts.AxelarGateway?.implementation;
+            const implementationCodehash = chain.contracts.AxelarGateway?.implementationCodehash;
+            printInfo('New gateway implementation code hash', implementationCodehash);
+
+            if (!isValidAddress(implementation)) {
+                throw new Error(`Invalid new gateway implementation address: ${implementation}`);
+            }
+
+            const setupParams = await getGatewaySetupParams(governance, gateway, contracts, options);
+
+            printInfo('Setup Params for upgrading AxelarGateway', setupParams);
+
+            calldata = gateway.interface.encodeFunctionData('upgrade', [implementation, implementationCodehash, setupParams]);
+
+            const proposalHash = keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
+            const eta = await governance.getTimeLock(proposalHash);
+
+            if (eta.eq(0)) {
+                printError('Proposal does not exist.');
+                return;
+            }
+
+            if (!calldata) {
+                throw new Error(`Calldata required for this governance action: ${action}`);
+            }
+
+            printInfo('Proposal ETA', etaToDate(eta));
+
+            const currTime = getCurrentTimeInSeconds();
+            printInfo('Current time', etaToDate(currTime));
+
+            if (currTime < eta) {
+                throw new Error(`Upgrade proposal is not yet eligible for execution.`);
+            }
+
+            if (prompt('Proceed with executing this proposal?', yes)) {
+                throw new Error('Proposal execution cancelled.');
+            }
+
+            const tx = await governance.executeProposal(target, calldata, nativeValue, gasOptions);
+            printInfo('Proposal execution tx', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, governance, 'ProposalExecuted');
+
+            if (!eventEmitted) {
+                throw new Error('Proposal execution failed.');
+            }
+
+            printInfo('Proposal executed.');
 
             break;
         }
@@ -431,16 +508,16 @@ async function processCommand(_, chain, options) {
 
         printInfo('Destination chain', chain.name);
         printInfo('Destination governance address', governanceAddress);
-        printInfo('GMP payload', gmpPayload);
-        printInfo('GMP payload hash', keccak256(gmpPayload));
-        printInfo('Target contract', target);
-        printInfo('Target calldata', calldata);
-        printInfo('Native value', nativeValue || '0');
+        printInfo('Governance call contract payload', gmpPayload);
+        printInfo('Governance payload hash', keccak256(gmpPayload));
+        printInfo('Governance call target', target);
+        printInfo('Governance call data', calldata);
+        printInfo('Governance native value', nativeValue || '0');
         printInfo('Date', date);
 
         const proposal = {
-            title: '',
-            description: '',
+            title,
+            description,
             contract_calls: [
                 {
                     chain: chain.id,
@@ -450,7 +527,8 @@ async function processCommand(_, chain, options) {
             ],
         };
 
-        printInfo('Proposal', JSON.stringify(proposal, null, 2));
+        // printInfo('Proposal', JSON.stringify(proposal, null, 2));
+        console.log(JSON.stringify(proposal.contract_calls[0]));
     }
 }
 
@@ -488,6 +566,7 @@ program.addOption(
         'executeProposal',
         'executeMultisigProposal',
         'gatewayUpgrade',
+        'executeUpgrade',
         'withdraw',
         'getProposalEta',
     ]),
@@ -497,6 +576,7 @@ program.addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter add
 program.addOption(new Option('--target <target>', 'governance execution target'));
 program.addOption(new Option('--calldata <calldata>', 'calldata'));
 program.addOption(new Option('--nativeValue <nativeValue>', 'nativeValue').default(0));
+program.addOption(new Option('--proposal <proposal>', 'governance proposal payload'));
 program.addOption(new Option('--amount <amount>', 'withdraw amount'));
 program.addOption(new Option('--date <date>', 'proposal activation date'));
 program.addOption(new Option('--implementation <implementation>', 'new gateway implementation'));
