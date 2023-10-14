@@ -33,7 +33,7 @@ const deployCreate = async (wallet, contractJson, args = [], options = {}, verif
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
     const contract = await factory.deploy(...args, { ...options });
-    await contract.deployTransaction.wait(chain.confirmations || 2);
+    await contract.deployTransaction.wait(chain.confirmations);
 
     if (verifyOptions?.env) {
         sleep(10000);
@@ -68,7 +68,7 @@ const deployCreate2 = async (
             salt,
             args,
             gasOptions,
-            chain.confirmations || 2,
+            chain.confirmations,
         );
     } else {
         contract = { address: await predictContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args) };
@@ -107,7 +107,7 @@ const deployCreate3 = async (
             key,
             args,
             gasOptions,
-            chain.confirmations || 2,
+            chain.confirmations,
         );
     } else {
         contract = { address: await getCreate3Address(create3DeployerAddress, wallet, key) };
