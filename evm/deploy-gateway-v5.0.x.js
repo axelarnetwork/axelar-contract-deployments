@@ -198,7 +198,7 @@ async function deploy(config, chain, options) {
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${auth.address},${tokenDeployer.address}`);
 
-    const salt = 'AxelarGateway v6.1.2' + (options.salt || '');
+    const salt = 'AxelarGateway v6.1' + (options.salt || '');
 
     const implementation = await deployContract(
         options.deployMethod,
@@ -489,6 +489,7 @@ async function programHandler() {
             'REUSE_HELPERS',
         ),
     );
+    program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('-g, --governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('-m, --mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));

@@ -25,6 +25,9 @@ async function processCommand(config, chain, options) {
         verifyOptions.dir = dir;
     }
 
+    printInfo('Verifying contract', contractName);
+    printInfo('Contract address', options.address || chain.contracts[contractName].address);
+
     switch (contractName) {
         case 'Create3Deployer': {
             const Create3Deployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
@@ -32,8 +35,6 @@ async function processCommand(config, chain, options) {
             const contractFactory = await getContractAt(Create3Deployer.abi, wallet);
 
             const contract = contractFactory.attach(options.address || chain.contracts.Create3Deployer.address);
-
-            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
 
             await verifyContract(env, chain.name, contract.address, [], verifyOptions);
             break;
@@ -46,7 +47,6 @@ async function processCommand(config, chain, options) {
 
             const contract = contractFactory.attach(options.address || chain.contracts.InterchainGovernance.address);
 
-            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address} ...`);
             const contractConfig = chain.contracts[contractName];
 
             await verifyContract(
@@ -71,7 +71,6 @@ async function processCommand(config, chain, options) {
 
             const contract = contractFactory.attach(options.address || chain.contracts.Multisig.address);
 
-            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
             const contractConfig = chain.contracts[contractName];
 
             await verifyContract(env, chain.name, contract.address, [contractConfig.signers, contractConfig.threshold], verifyOptions);
@@ -82,8 +81,6 @@ async function processCommand(config, chain, options) {
             const contractFactory = await getContractFactory('InterchainProposalSender', wallet);
 
             const contract = contractFactory.attach(options.address || chain.contracts.InterchainProposalSender.address);
-
-            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
 
             await verifyContract(
                 env,
@@ -102,8 +99,6 @@ async function processCommand(config, chain, options) {
 
             const contract = contractFactory.attach(options.address || chain.contracts.ConstAddressDeployer.address);
 
-            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
-
             await verifyContract(env, chain.name, contract.address, [], verifyOptions);
             break;
         }
@@ -115,8 +110,6 @@ async function processCommand(config, chain, options) {
 
             const contract = contractFactory.attach(options.address || chain.contracts.CreateDeployer.address);
 
-            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
-
             await verifyContract(env, chain.name, contract.address, [], verifyOptions);
             break;
         }
@@ -127,8 +120,6 @@ async function processCommand(config, chain, options) {
             const contractFactory = await getContractAt(Operators.abi, wallet);
 
             const contract = contractFactory.attach(options.address || chain.contracts.Operators.address);
-
-            console.log(`Verifying ${contractName} on ${chain.name} at address ${contract.address}...`);
 
             await verifyContract(env, chain.name, contract.address, [chain.contracts.Operators.owner], verifyOptions);
             break;
@@ -150,8 +141,6 @@ async function processCommand(config, chain, options) {
 
             const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, { keyID: `evm-${chain.id}-genesis` });
             const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
-
-            console.log(`Verifying ${contractName} on ${chain.name} at address ${gateway.address} ...`);
 
             await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
             await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
