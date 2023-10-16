@@ -57,3 +57,53 @@ node evm/deploy-its -n ${chain-name} -s [salt]
 Run again with `-v only` to verify deployed contracts.
 
 You can change `.env` to run the above script to testnet instead of local. Change the `SALT` to get a new address.
+
+### Contract-Verification
+
+#### Pre-requisites
+
+- Command for verification will eventually be run from the directory specified with the command using `-dir` which contains the contract artifacts directory ex: `/home/axelar/axelar-cgp-solidity`. So you will need to provide a path for the directory, which contains the `artifacts` directory.
+
+- Checkout to the version of contracts to verify in the directory provided to the command before compiling artifacts used by the command. (v4.3 is the latest version of contracts as of now)
+
+   ```bash
+   git checkout vX.Y.Z
+
+   # Example: 
+   git checkout v4.3.1
+   ```
+
+- The directory should also contain a `keys.json` for info on the chain and explorer. The expected location of the file can be verified in `hardhat.config.js`. You need to create a `keys.json` in the following format in the expected location if it doesn't exist:
+
+   ```bash
+   {
+      "chains": {
+         "fantom": {"api": "API_KEY_FANTOM"}, 
+         "ethereum": {"api": "API_KEY_ETH"}, 
+         "mantle": {"api": "ETHERSCAN_API_KEY_MANTLE"}},
+      "accounts": ["PRIVATE_KEY_1", "PRIVATE_KEY_2"]
+   }
+   ```
+#### Overriding constructor args
+
+If you wish to override the args here or args provided in the command or info directory, then create a file named `temp-arguments.js` in the directory same as the artifacts directory. It should export the constructs args array, ex:
+```
+module.exports = ["MYToken", "MTK"];
+```
+*Note: Make sure there isn't a `temp-arguments.js` in the dir folder if you don't want to override the constructor arguments.
+
+#### help
+
+To get details of options provided in the command run:
+   ```bash
+   node evm/verify-contract.js --help
+   ```
+
+#### Example
+
+Here is an example command to run the `evm/verify-contract.js` script:
+
+   ```bash
+   #This command will verify the 'BurnableMintableCappedERC20' contract on the 'mainnet' environment for chain 'mantle' using the provided contract address.
+   node evm/verify-contract.js -e mainnet -n "mantle" -c BurnableMintableCappedERC20 -a 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 --dir /home/axelar/axelar-cgp-solidity --args TKN
+   ```
