@@ -100,15 +100,7 @@ const deployCreate3 = async (
     let contract;
 
     if (!verifyOptions?.only) {
-        contract = await create3DeployContract(
-            create3DeployerAddress,
-            wallet,
-            contractJson,
-            key,
-            args,
-            gasOptions,
-            chain.confirmations,
-        );
+        contract = await create3DeployContract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions, chain.confirmations);
     } else {
         contract = { address: await getCreate3Address(create3DeployerAddress, wallet, key) };
     }
