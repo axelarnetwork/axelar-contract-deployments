@@ -1640,8 +1640,8 @@
         }
       },
       "explorer": {
-        "url": "https://explorer.testnet.mantle.xyz",
-        "api": "https://explorer.testnet.mantle.xyz/api"
+        "url": "https://testnet.mantlescan.org/",
+        "api": "https://testnet.mantlescan.org/api"
       },
       "gasOptions": {
         "gasLimit": 8000000

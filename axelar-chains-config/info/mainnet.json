@@ -704,8 +704,8 @@
         }
       },
       "explorer": {
-        "url": "https://explorer.mantle.xyz",
-        "api": "https://explorer.mantle.xyz/api"
+        "url": "https://mantlescan.org/",
+        "api": "https://mantlescan.org/api"
       },
       "gasOptions": {
         "gasLimit": 8000000
