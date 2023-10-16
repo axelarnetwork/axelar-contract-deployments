@@ -711,6 +711,21 @@
         "gasLimit": 8000000
       },
       "skipRevertTests": true
+    },
+    "cronos": {
+      "name": "Cronos",
+      "id": "cronos",
+      "chainId": 25,
+      "rpc": "https://evm.cronos.org",
+      "tokenSymbol": "CRO",
+      "gasOptions": {
+        "gasLimit": 40000000
+      },
+      "explorer": {
+        "url": "https://cronoscan.com/",
+        "api": "https://api.cronoscan.com/"
+      },
+      "confirmations": 3
     }
   },
   "axelar": {

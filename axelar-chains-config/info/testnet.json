@@ -1758,6 +1758,23 @@
       "gasOptions": {
         "gasLimit": 8000000
       }
+    },
+    "cronos": {
+      "name": "Cronos",
+      "id": "cronos",
+      "chainId": 338,
+      "rpc": "https://evm-dev-t3.cronos.org",
+      "tokenSymbol": "TCRO",
+      "gasOptions": {
+        "maxPriorityFeePerGas": 5000000000,
+        "maxFeePerGas": 6000000000000,
+        "gasLimit": 40000000
+      },
+      "confirmations": 3,
+      "explorer": {
+        "url": "https://cronos.org/explorer/testnet3",
+        "api": "https://cronos.org/explorer/testnet3/api"
+      }
     }
   },
   "axelar": {
