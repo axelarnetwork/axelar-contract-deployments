@@ -72,6 +72,7 @@ You can change `.env` to run the above script to testnet instead of local. Chang
    # Example: 
    git checkout v4.3.1
    ```
+- Copy the artifacts generated in `axelar-cgp-solidity` to this repo as the verify script will need it.
 
 - The directory should also contain a `keys.json` for info on the chain and explorer. The expected location of the file can be verified in `hardhat.config.js`. You need to create a `keys.json` in the following format in the expected location if it doesn't exist:
 
