@@ -128,15 +128,15 @@ async function processCommand(config, chain, options) {
         }
 
         case 'submitBatch': {
-            const batch = getEVMBatch(config, chain.id, options.batchID);
+            const batch = await getEVMBatch(config, chain.id, options.batchID);
 
             printInfo(`Submitting batch: ${options.batchID || 'latest'}`);
 
-            if (batch.status !== 'BATCH_COMMANDS_STATUS_SIGNED') {
+            if (batch.status !== 'BATCHED_COMMANDS_STATUS_SIGNED') {
                 throw new Error(`Batch status: ${batch.status} is not signed`);
             }
 
-            const tx = await gateway.execute(batch.execute_data, gasOptions);
+            const tx = await gateway.execute('0x' + batch.execute_data, gasOptions);
             printInfo('Approve tx', tx.hash);
 
             const receipt = await tx.wait(chain.confirmations);

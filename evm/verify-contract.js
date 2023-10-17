@@ -26,7 +26,7 @@ async function processCommand(config, chain, options) {
     }
 
     printInfo('Verifying contract', contractName);
-    printInfo('Contract address', options.address || chain.contracts[contractName].address);
+    printInfo('Contract address', options.address || chain.contracts[contractName]?.address);
 
     switch (contractName) {
         case 'Create3Deployer': {
