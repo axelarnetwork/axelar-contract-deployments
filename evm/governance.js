@@ -5,7 +5,7 @@ require('dotenv').config();
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { defaultAbiCoder, keccak256, Interface, parseEther },
+    utils: { defaultAbiCoder, keccak256, Interface, parseEther, arrayify },
     Contract,
     BigNumber,
 } = ethers;
@@ -29,6 +29,7 @@ const {
 const { getWallet } = require('./sign-utils.js');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
+const IInterchainTokenService = require('@axelar-network/interchain-token-service/dist/interfaces/IInterchainTokenService.sol');
 
 async function getGatewaySetupParams(governance, gateway, contracts, options) {
     const currGovernance = await gateway.governance();
@@ -54,6 +55,23 @@ async function getGatewaySetupParams(governance, gateway, contracts, options) {
 
     if (newGovernance !== '0x' || newMintLimiter !== '0x') {
         setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [newGovernance, newMintLimiter, '0x']);
+    }
+
+    return setupParams;
+}
+
+async function getITSSetupParams(options) {
+    let setupParams;
+    const newOperator = options.newOperator;
+
+    if (newOperator) {
+        if (!isValidAddress(newOperator)) {
+            throw new Error(`Invalid new operator address: ${newOperator}`);
+        }
+
+        setupParams = arrayify(newOperator);
+    } else {
+        setupParams = '0x';
     }
 
     return setupParams;
@@ -438,6 +456,167 @@ async function processCommand(_, chain, options) {
             break;
         }
 
+        case 'ITSUpgrade': {
+            if (contractName === 'InterchainGovernance') {
+                throw new Error(`Invalid governance action for InterchainGovernance: ${action}`);
+            }
+
+            const isTimeLock = options.isTimeLock;
+            let eta = 0;
+
+            if (isTimeLock) {
+                eta = dateToEta(date);
+
+                const currTime = getCurrentTimeInSeconds();
+                printInfo('Current time', etaToDate(currTime));
+
+                const minEta = currTime + contractConfig?.minimumTimeDelay;
+                printInfo('Minimum eta', etaToDate(minEta));
+
+                if (eta < minEta) {
+                    printWarn(`${date} is less than the minimum eta.`);
+                }
+
+                printInfo('Time difference between current time and eta', etaToDate(eta - currTime));
+            }
+
+            const implementation = options.implementation || chain.contracts.InterchainTokenService?.implementation;
+
+            if (!isValidAddress(implementation)) {
+                throw new Error(`Invalid new ITS implementation address: ${implementation}`);
+            }
+
+            const ITS = new Contract(target, IInterchainTokenService.abi, wallet);
+
+            printInfo('Current ITS implementation', await ITS.implementation());
+            printInfo('New ITS implementation', implementation);
+
+            const newITSImplementationCodeHash = await getBytecodeHash(implementation, chain.name, provider);
+            printInfo('New ITS implementation code hash', newITSImplementationCodeHash);
+
+            const setupParams = await getITSSetupParams(governance, ITS, contracts, options);
+
+            printInfo('Setup Params for upgrading AxelarGateway', setupParams);
+
+            calldata = ITS.interface.encodeFunctionData('upgrade', [implementation, newITSImplementationCodeHash, setupParams]);
+
+            const commandType = 0;
+            const types = ['uint256', 'address', 'bytes', 'uint256', 'uint256'];
+            const values = [commandType, target, calldata, nativeValue, eta];
+
+            gmpPayload = defaultAbiCoder.encode(types, values);
+            const proposalEta = await governance.getProposalEta(target, calldata, nativeValue);
+
+            if (!BigNumber.from(proposalEta).eq(0)) {
+                printWarn('The proposal already exixts', etaToDate(proposalEta));
+            }
+
+            title = `Chain ${chain.name} ITS upgrade proposal`;
+            description = `This proposal upgrades the ITS contract ${ITS.address} on chain ${chain.name} to a new implementation contract ${implementation}`;
+
+            break;
+        }
+
+        case 'executeITSUpgrade': {
+            if (contractName === 'InterchainGovernance') {
+                throw new Error(`Invalid governance action for InterchainGovernance: ${action}`);
+            }
+
+            target = contracts.InterchainTokenService?.address;
+            const ITS = new Contract(target, IInterchainTokenService.abi, wallet);
+            const implementation = options.implementation || chain.contracts.InterchainTokenService?.implementation;
+            const implementationCodehash = chain.contracts.InterchainTokenService?.implementationCodehash;
+            printInfo('New ITS implementation code hash', implementationCodehash);
+
+            if (!isValidAddress(implementation)) {
+                throw new Error(`Invalid new ITS implementation address: ${implementation}`);
+            }
+
+            const setupParams = await getITSSetupParams(options);
+
+            printInfo('Setup Params for upgrading ITS', setupParams);
+
+            calldata = ITS.interface.encodeFunctionData('upgrade', [implementation, implementationCodehash, setupParams]);
+
+            const proposalHash = keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
+            const eta = await governance.getTimeLock(proposalHash);
+
+            const isTimeLock = options.isTimelock;
+
+            if (!calldata) {
+                throw new Error(`Calldata required for this governance action: ${action}`);
+            }
+
+            let tx;
+
+            if (isTimeLock) {
+                if (eta.eq(0)) {
+                    printError('TimeLock proposal does not exist.');
+                    return;
+                }
+
+                printInfo('Proposal ETA', etaToDate(eta));
+
+                const currTime = getCurrentTimeInSeconds();
+                printInfo('Current time', etaToDate(currTime));
+
+                if (currTime < eta) {
+                    throw new Error(`Upgrade timeLock proposal is not yet eligible for execution.`);
+                }
+
+                if (prompt('Proceed with executing this proposal?', yes)) {
+                    throw new Error('Proposal execution cancelled.');
+                }
+
+                tx = await governance.executeProposal(target, calldata, nativeValue, gasOptions);
+            } else {
+                const isApproved = await governance.multisigApprovals(proposalHash);
+
+                if (!isApproved) {
+                    throw new Error('Upgrade multisig proposal has not been approved.');
+                }
+
+                const isSigner = await governance.isSigner(wallet.address);
+
+                if (!isSigner) {
+                    throw new Error(`Caller is not a valid signer address: ${wallet.address}`);
+                }
+
+                const executeInterface = new Interface(governance.interface.fragments);
+                const executeCalldata = executeInterface.encodeFunctionData('executeMultisigProposal', [target, calldata, nativeValue]);
+                const topic = keccak256(executeCalldata);
+
+                const hasSignerVoted = await governance.hasSignerVoted(wallet.address, topic);
+
+                if (hasSignerVoted) {
+                    throw new Error(`Signer has already voted: ${wallet.address}`);
+                }
+
+                const signerVoteCount = await governance.getSignerVotesCount(topic);
+                printInfo(`${signerVoteCount} signers have already voted.`);
+
+                if (prompt('Proceed with executing this proposal?', yes)) {
+                    throw new Error('Proposal execution cancelled.');
+                }
+
+                tx = await governance.executeMultisigProposal(target, calldata, nativeValue, gasOptions);
+            }
+
+            printInfo('Proposal execution tx', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, governance, 'ProposalExecuted');
+
+            if (!eventEmitted) {
+                throw new Error('Proposal execution failed.');
+            }
+
+            printInfo('Proposal executed.');
+
+            break;
+        }
+
         case 'withdraw': {
             if (!isValidTimeFormat(date)) {
                 throw new Error(`Invalid ETA: ${date}. Please pass the eta in the format YYYY-MM-DDTHH:mm:ss`);
@@ -567,12 +746,16 @@ program.addOption(
         'executeMultisigProposal',
         'gatewayUpgrade',
         'executeUpgrade',
+        'ITSUpgrade',
+        'executeITSUpgrade',
         'withdraw',
         'getProposalEta',
     ]),
 );
 program.addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'));
 program.addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
+program.addOption(new Option('--newOperator <operator>', 'new operator address'));
+program.addOption(new Option('--isTimeLock <isTimeLock>', 'ITS upgrade proposal type').default(false));
 program.addOption(new Option('--target <target>', 'governance execution target'));
 program.addOption(new Option('--calldata <calldata>', 'calldata'));
 program.addOption(new Option('--nativeValue <nativeValue>', 'nativeValue').default(0));
