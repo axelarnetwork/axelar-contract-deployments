@@ -15,13 +15,14 @@ const { writeFileSync } = require('fs');
 const verifyContract = (env, chain, contract, args, options = {}) => {
     const stringArgs = args.map((arg) => JSON.stringify(arg));
     const content = `module.exports = [\n    ${stringArgs.join(',\n    ')}\n];`;
-    const file = options.dir ? `${options.dir}/temp-arguments.js` : 'temp-arguments.js';
+    const file = 'temp-arguments.js';
+    const filePath = options.dir ? `${options.dir}/temp-arguments.js` : 'temp-arguments.js';
 
     const contractArg = options.contractPath ? `--contract ${options.contractPath}` : '';
     const dirPrefix = options.dir ? `cd ${options.dir};` : '';
     const cmd = `${dirPrefix} ENV=${env} npx hardhat verify --network ${chain.toLowerCase()} ${contractArg} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
 
-    writeFileSync(file, content, 'utf-8');
+    writeFileSync(filePath, content, 'utf-8');
 
     console.log(`Verifying contract ${contract} with args '${stringArgs.join(',')}'`);
     console.log(cmd);
