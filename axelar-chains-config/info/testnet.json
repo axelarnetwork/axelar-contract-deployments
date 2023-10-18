@@ -1646,55 +1646,10 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
-      "skipRevertTests": true
-    },
-    "centrifuge": {
-      "name": "Centrifuge",
-      "status": "deactive",
-      "id": "centrifuge",
-      "chainId": 2089,
-      "rpc": "https://fullnode.algol.cntrfg.com",
-      "tokenSymbol": "ALGL",
-      "contracts": {
-        "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
-          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
-          "tokenDeployer": "0x8A156bCA562FB75385c4d41ea6903E270A34B727"
-        },
-        "AxelarGasService": {
-          "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
-          "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x125AAf72B24a78f7aE5Cae92D7717f533633320d",
-          "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
-        },
-        "AxelarDepositService": {
-          "wrappedSymbol": "",
-          "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF",
-          "salt": "AxelarDepositService",
-          "address": "0xc1DCb196BA862B337Aa23eDA1Cb9503C0801b955",
-          "implementation": "0xd883C8bA523253c93d97b6C7a5087a7B5ff23d79",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
-        },
-        "ConstAddressDeployer": {
-          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
-        },
-        "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "deploymentMethod": "create2",
-          "salt": "Operators"
-        }
-      },
-      "explorer": {
-        "url": "https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Ffullnode.algol.cntrfg.com%2Fpublic-ws#/explorer",
-        "api": ""
-      },
-      "gasOptions": {
-        "gasLimit": 8000000
+      "skipRevertTests": true,
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 1000000000
       }
     },
     "scroll": {
