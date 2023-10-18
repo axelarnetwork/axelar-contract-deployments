@@ -46,6 +46,10 @@
       "explorer": {
         "url": "https://etherscan.io",
         "api": "https://api.etherscan.io/api"
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 150000000000
       }
     },
     "avalanche": {
@@ -94,6 +98,10 @@
       "explorer": {
         "url": "https://snowtrace.io",
         "api": "https://api.snowtrace.io/api"
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 150000000000
       }
     },
     "fantom": {
@@ -145,6 +153,10 @@
       },
       "gasOptions": {
         "gasLimit": 5000000
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 1000000000000
       }
     },
     "polygon": {
@@ -196,6 +208,10 @@
       },
       "gasOptions": {
         "gasLimit": 6000000
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 350000000000
       }
     },
     "moonbeam": {
@@ -244,6 +260,10 @@
       "explorer": {
         "url": "https://moonbeam.moonscan.io",
         "api": "https://api-moonbeam.moonscan.io/api"
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 625000000000
       }
     },
     "binance": {
@@ -293,6 +313,10 @@
       "explorer": {
         "url": "https://bscscan.com",
         "api": "https://api.bscscan.com/api"
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 30000000000
       }
     },
     "arbitrum": {
@@ -344,6 +368,10 @@
       },
       "gasOptions": {
         "gasLimit": 20000000
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 2000000000
       }
     },
     "celo": {
@@ -392,6 +420,10 @@
       "explorer": {
         "url": "https://celoscan.io",
         "api": "https://api.celoscan.io/api"
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 100000000000
       }
     },
     "kava": {
@@ -440,6 +472,10 @@
       "explorer": {
         "url": "https://explorer.kava.io",
         "api": "https://explorer.kava.io/api"
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 50000000000
       }
     },
     "filecoin": {
@@ -494,6 +530,10 @@
       },
       "gasOptions": {
         "gasLimit": 500000000
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 1000000000
       }
     },
     "optimism": {
@@ -550,7 +590,11 @@
       "gasOptions": {
         "gasLimit": 5000000
       },
-      "confirmations": 3
+      "confirmations": 3,
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 10000000000
+      }
     },
     "linea": {
       "name": "Linea",
@@ -602,6 +646,10 @@
       "explorer": {
         "url": "https://lineascan.build",
         "api": "https://api.lineascan.build/api"
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 10000000000
       }
     },
     "base": {
@@ -654,6 +702,10 @@
       "explorer": {
         "url": "https://basescan.org",
         "api": "https://api.basescan.org/api"
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 10000000000
       }
     },
     "mantle": {
@@ -710,7 +762,11 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
-      "skipRevertTests": true
+      "skipRevertTests": true,
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 25000000000
+      }
     },
     "scroll": {
       "name": "Scroll",
@@ -761,6 +817,10 @@
       "confirmations": 2,
       "gasOptions": {
         "gasLimit": 8000000
+      },
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 25000000000
       }
     }
   },

@@ -1646,7 +1646,11 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
-      "skipRevertTests": true
+      "skipRevertTests": true,
+      "staticGasOptions": {
+        "gasLimit": 3000000,
+        "gasPrice": 1000000000
+      }
     },
     "scroll": {
       "name": "Scroll",
