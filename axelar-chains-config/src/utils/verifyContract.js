@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const { execSync } = require('child_process');
 const { writeFileSync } = require('fs');
 
 /**
@@ -27,7 +27,7 @@ const verifyContract = (env, chain, contract, args, options = {}) => {
     console.log(`Verifying contract ${contract} with args '${stringArgs.join(',')}'`);
     console.log(cmd);
 
-    exec(cmd, { stdio: 'inherit' });
+    execSync(cmd, { stdio: 'inherit' });
 
     console.log('Verified!');
 };
