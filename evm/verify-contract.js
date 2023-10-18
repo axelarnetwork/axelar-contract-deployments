@@ -8,6 +8,7 @@ const {
     getDefaultProvider,
     getContractAt,
     getContractFactory,
+    getContractFactoryFromArtifact,
     utils: { defaultAbiCoder },
 } = ethers;
 const { Command, Option } = require('commander');
@@ -78,6 +79,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'InterchainProposalSender': {
+            // Cannot find InterchainProposalSender within contracts
             const contractFactory = await getContractFactory('InterchainProposalSender', wallet);
 
             const contract = contractFactory.attach(options.address || chain.contracts.InterchainProposalSender.address);
@@ -126,7 +128,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'AxelarGateway': {
-            const gatewayFactory = await getContractFactory('AxelarGateway', wallet);
+            const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
+            const gatewayFactory = await getContractFactoryFromArtifact(AxelarGateway, wallet);
             const gateway = gatewayFactory.attach(options.address || chain.contracts.AxelarGateway.address);
 
             const implementation = await gateway.implementation();
@@ -151,7 +154,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'AxelarGasService': {
-            const gasServiceFactory = await getContractFactory(contractName, wallet);
+            const AxelarGasService = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json');
+            const gasServiceFactory = await getContractFactoryFromArtifact(AxelarGasService, wallet);
             const contractConfig = chain.contracts[contractName];
             const gasService = gasServiceFactory.attach(options.address || contractConfig.address);
 
@@ -162,7 +166,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'AxelarDepositService': {
-            const depositServiceFactory = await getContractFactory(contractName, wallet);
+            const AxelarDepositService = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/deposit-service/AxelarDepositService.sol/AxelarDepositService.json');
+            const depositServiceFactory = await getContractFactoryFromArtifact(AxelarDepositService, wallet);
             const contractConfig = chain.contracts[contractName];
             const gasService = depositServiceFactory.attach(options.address || contractConfig.address);
 
@@ -177,12 +182,14 @@ async function processCommand(config, chain, options) {
         }
 
         case 'BurnableMintableCappedERC20': {
-            const token = await getContractFactory('BurnableMintableCappedERC20', wallet);
+            const BurnableMintableCappedERC20 = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
+            const token = await getContractFactoryFromArtifact(BurnableMintableCappedERC20, wallet);
             const symbol = options.args;
 
             console.log(`Verifying ${symbol}...`);
 
-            const gatewayFactory = await getContractFactory('AxelarGateway', wallet);
+            const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
+            const gatewayFactory = await getContractFactoryFromArtifact(AxelarGateway, wallet);
             const gateway = gatewayFactory.attach(chain.contracts.AxelarGateway.address);
 
             const tokenAddress = await gateway.tokenAddresses(symbol);
