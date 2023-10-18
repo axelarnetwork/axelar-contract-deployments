@@ -47,7 +47,7 @@ async function processCommand(_, chain, options) {
     const gasPriceWei = await provider.getGasPrice();
     printInfo(`${chain.name} gas price`, `${gasPriceWei / 1e9} gwei`);
 
-    let gasPrice = parseUnits(gasPriceWei.toString(), 'wei') * gasPriceMultiplier;
+    const gasPrice = parseUnits(gasPriceWei.toString(), 'wei') * gasPriceMultiplier;
 
     if (!(chain.staticGasOptions && chain.staticGasOptions.gasLimit !== undefined)) {
         chain.staticGasOptions = { gasLimit: defaultGasLimit };
