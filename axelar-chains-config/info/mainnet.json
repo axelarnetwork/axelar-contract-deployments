@@ -711,6 +711,57 @@
         "gasLimit": 8000000
       },
       "skipRevertTests": true
+    },
+    "scroll": {
+      "name": "Scroll",
+      "id": "scroll",
+      "chainId": 534352,
+      "rpc": "https://rpc.scroll.io",
+      "tokenSymbol": "ETH",
+      "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
+          "implementationCodehash": "0xddafcab1abaece0c2bc12eb0c91cacad745d87e64353783cd1827a192fe00e5c",
+          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
+          "tokenDeployer": "0x8A156bCA562FB75385c4d41ea6903E270A34B727"
+        },
+        "AxelarGasService": {
+          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "salt": "AxelarGasService",
+          "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
+          "implementation": "0x0d39b56BDDea985246437DF1e3d2886A7e6C17B9",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "AxelarDepositService": {
+          "wrappedSymbol": "",
+          "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF",
+          "salt": "AxelarDepositService",
+          "address": "0xc1DCb196BA862B337Aa23eDA1Cb9503C0801b955",
+          "implementation": "0xb79fB2Cfb023CC939407499Aa809BD7e8c5c09D0",
+          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
+        },
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        }
+      },
+      "explorer": {
+        "url": "https://blockscout.scroll.io",
+        "api": "https://blockscout.scroll.io/api"
+      },
+      "confirmations": 2,
+      "gasOptions": {
+        "gasLimit": 8000000
+      }
     }
   },
   "axelar": {
