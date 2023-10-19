@@ -7,7 +7,6 @@ const {
     Wallet,
     getDefaultProvider,
     getContractAt,
-    getContractFactory,
     getContractFactoryFromArtifact,
     utils: { defaultAbiCoder },
 } = ethers;
