@@ -79,15 +79,10 @@ async function processCommand(config, chain, options) {
         }
 
         case 'InterchainProposalSender': {
-            // Cannot find InterchainProposalSender within contracts
-            const contractFactory = await getContractFactory('InterchainProposalSender', wallet);
-
-            const contract = contractFactory.attach(options.address || chain.contracts.InterchainProposalSender.address);
-
             await verifyContract(
                 env,
                 chain.name,
-                contract.address,
+                options.address || chain.contracts.InterchainProposalSender.address,
                 [chain.contracts.AxelarGateway.address, chain.contracts.AxelarGasService.address],
                 verifyOptions,
             );
@@ -193,7 +188,7 @@ async function processCommand(config, chain, options) {
             const gateway = gatewayFactory.attach(chain.contracts.AxelarGateway.address);
 
             const tokenAddress = await gateway.tokenAddresses(symbol);
-            const tokenContract = token.attach(tokenAddress);
+            const tokenContract = token.attach(options.address || tokenAddress);
             const name = await tokenContract.name();
             const decimals = await tokenContract.decimals();
             const cap = await tokenContract.cap();
