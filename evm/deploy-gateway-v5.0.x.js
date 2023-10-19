@@ -184,6 +184,7 @@ async function deploy(config, chain, options) {
             { salt, deployerContract },
             gasOptions,
             {},
+            chain,
         );
 
         contractsToVerify.push({
@@ -198,7 +199,7 @@ async function deploy(config, chain, options) {
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${auth.address},${tokenDeployer.address}`);
 
-    const salt = 'AxelarGateway v6.1' + (options.salt || '');
+    const salt = 'AxelarGateway v6.2' + (options.salt || '');
 
     const implementation = await deployContract(
         options.deployMethod,
@@ -213,7 +214,7 @@ async function deploy(config, chain, options) {
 
     printInfo('Gateway Implementation', implementation.address);
 
-    const implementationCodehash = await getBytecodeHash(implementation, chainName);
+    const implementationCodehash = await getBytecodeHash(implementation, chain.id);
     printInfo('Gateway Implementation codehash', implementationCodehash);
 
     contractsToVerify.push({
@@ -378,7 +379,7 @@ async function upgrade(_, chain, options) {
             throw new Error('mintLimiter address is not a contract');
         }
 
-        const codehash = await getBytecodeHash(contractConfig.implementation, chainName, provider);
+        const codehash = await getBytecodeHash(contractConfig.implementation, chain.id, provider);
 
         if (!implementationCodehash) {
             // retrieve codehash dynamically if not specified in the config file
