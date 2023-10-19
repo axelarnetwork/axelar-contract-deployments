@@ -270,7 +270,7 @@
       "name": "Binance",
       "id": "binance",
       "chainId": 56,
-      "rpc": "https://bscrpc.com",
+      "rpc": "https://1rpc.io/bnb",
       "tokenSymbol": "BNB",
       "wrappedSymbol": "WBNB",
       "contracts": {
