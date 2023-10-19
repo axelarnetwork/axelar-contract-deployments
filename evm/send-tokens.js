@@ -68,6 +68,10 @@ async function processCommand(_, chain, options) {
             value: amount,
         };
 
+        if (!offline && chain.name.toLowerCase() === 'binance') {
+            tx.gasPrice = (await provider.getGasPrice()) * 1.2;
+        }
+
         const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
         if (offline) {

@@ -30,6 +30,8 @@ const { getWallet } = require('./sign-utils.js');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 
+let proposals = [];
+
 async function getGatewaySetupParams(governance, gateway, contracts, options) {
     const currGovernance = await gateway.governance();
     const currMintLimiter = await gateway.mintLimiter();
@@ -527,13 +529,26 @@ async function processCommand(_, chain, options) {
             ],
         };
 
+        // Print all proposals together
+        proposals.push(proposal.contract_calls[0]);
+
         // printInfo('Proposal', JSON.stringify(proposal, null, 2));
-        console.log(JSON.stringify(proposal.contract_calls[0]));
+        // console.log(JSON.stringify(proposal.contract_calls[0]));
     }
 }
 
 async function main(options) {
+    proposals = [];
+
     await mainProcessor(options, processCommand);
+
+    const proposal = {
+        title: 'Interchain Governance Proposal',
+        description: 'Interchain Governance Proposal',
+        contract_calls: proposals,
+    };
+
+    printInfo('Proposal', JSON.stringify(proposal, null, 2));
 }
 
 const program = new Command();
