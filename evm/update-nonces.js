@@ -37,7 +37,7 @@ async function processCommand(_, chain, options) {
     }
 
     for (const address of addresses) {
-        printInfo('Updating nonce for address', address);
+        printInfo(`Updating nonce on ${chain.name} for address`, address);
         const nonce = await getNonceFromProvider(provider, address);
         chainNonceData[address] = nonce;
     }
