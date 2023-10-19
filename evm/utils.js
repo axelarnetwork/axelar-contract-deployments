@@ -733,7 +733,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         } catch (error) {
             printError(`Failed with error on ${chain.name}`, error.message);
 
-            if (options.ignoreError || !catchErr) {
+            if (!options.ignoreError || !catchErr) {
                 throw error;
             }
         }

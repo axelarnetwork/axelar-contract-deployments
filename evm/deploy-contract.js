@@ -252,6 +252,12 @@ async function processCommand(config, chain, options) {
 
     const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+
+    // Some chains require a gas adjustment
+    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
+        gasOptions.gasPrice = await provider.getGasPrice() * 1.6;
+    }
+
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
     printInfo(`Gas override for chain ${chain.name}`, JSON.stringify(gasOptions, null, 2));
 

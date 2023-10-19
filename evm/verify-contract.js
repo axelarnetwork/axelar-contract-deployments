@@ -11,7 +11,7 @@ const {
     utils: { defaultAbiCoder },
 } = ethers;
 const { Command, Option } = require('commander');
-const { verifyContract, getEVMAddresses, printInfo, mainProcessor } = require('./utils');
+const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor } = require('./utils');
 
 async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
@@ -23,6 +23,11 @@ async function processCommand(config, chain, options) {
 
     if (dir) {
         verifyOptions.dir = dir;
+    }
+
+    if (!chain.explorer?.api) {
+        printError('Explorer API not found for chain', chain.name);
+        return;
     }
 
     printInfo('Verifying contract', contractName);
