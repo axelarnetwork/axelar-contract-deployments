@@ -97,12 +97,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -207,12 +207,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -323,12 +323,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -436,12 +436,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -549,12 +549,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -662,12 +662,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -772,12 +772,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -879,12 +879,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -992,12 +992,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -1101,12 +1101,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -1215,12 +1215,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -1324,12 +1324,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -1434,12 +1434,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -1543,12 +1543,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x9839c528d6ad961c2f985354fd14dd602ef9781f5adbe71d482a04153bb25ccf",
           "predeployCodehash": "0x9839c528d6ad961c2f985354fd14dd602ef9781f5adbe71d482a04153bb25ccf",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -1631,12 +1631,12 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
@@ -1722,17 +1722,17 @@
             "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
             "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
           ],
-          "address": "0xcC4ca36AAC38aAED89FD7922CDfbab079FFC7A6c",
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.4"
+          "salt": "Multisig v5.5"
         }
       },
       "explorer": {
-        "url": "https://sepolia.scrollscan.dev",
-        "api": "https://api-sepolia.scrollscan.dev/api"
+        "url": "https://sepolia-blockscout.scroll.io",
+        "api": "https://sepolia-blockscout.scroll.io/api"
       },
       "confirmations": 2,
       "gasOptions": {
