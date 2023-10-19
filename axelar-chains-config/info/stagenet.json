@@ -56,12 +56,12 @@
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
-          "address": "0x98c7B8AE63CB2bE0899eBc3BdCa4Bc6dB820F908",
+          "address": "0xf6c4679c0FdA9b4e49fCcfedCEE03a730d35E64D",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create3",
-          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
-          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
-          "salt": "InterchainGovernance v5.4"
+          "codehash": "0xa8c5d3eab2aefc62e03bcf3c5e1db27cbce0e24d3f87d8dfbbb54676bfbf937c",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 2,
@@ -139,12 +139,12 @@
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
-          "address": "0x98c7B8AE63CB2bE0899eBc3BdCa4Bc6dB820F908",
+          "address": "0xf6c4679c0FdA9b4e49fCcfedCEE03a730d35E64D",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create3",
-          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
-          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
-          "salt": "InterchainGovernance v5.4"
+          "codehash": "0xa8c5d3eab2aefc62e03bcf3c5e1db27cbce0e24d3f87d8dfbbb54676bfbf937c",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 2,
@@ -222,12 +222,12 @@
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
-          "address": "0x98c7B8AE63CB2bE0899eBc3BdCa4Bc6dB820F908",
+          "address": "0xf6c4679c0FdA9b4e49fCcfedCEE03a730d35E64D",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create3",
-          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
-          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
-          "salt": "InterchainGovernance v5.4"
+          "codehash": "0xa8c5d3eab2aefc62e03bcf3c5e1db27cbce0e24d3f87d8dfbbb54676bfbf937c",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 2,
@@ -305,12 +305,12 @@
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
-          "address": "0x98c7B8AE63CB2bE0899eBc3BdCa4Bc6dB820F908",
+          "address": "0xf6c4679c0FdA9b4e49fCcfedCEE03a730d35E64D",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create3",
-          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
-          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
-          "salt": "InterchainGovernance v5.4"
+          "codehash": "0xa8c5d3eab2aefc62e03bcf3c5e1db27cbce0e24d3f87d8dfbbb54676bfbf937c",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 2,
@@ -388,12 +388,12 @@
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
-          "address": "0x98c7B8AE63CB2bE0899eBc3BdCa4Bc6dB820F908",
+          "address": "0xf6c4679c0FdA9b4e49fCcfedCEE03a730d35E64D",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create3",
-          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
-          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
-          "salt": "InterchainGovernance v5.4"
+          "codehash": "0xa8c5d3eab2aefc62e03bcf3c5e1db27cbce0e24d3f87d8dfbbb54676bfbf937c",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 2,
@@ -471,12 +471,12 @@
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
-          "address": "0x98c7B8AE63CB2bE0899eBc3BdCa4Bc6dB820F908",
+          "address": "0xf6c4679c0FdA9b4e49fCcfedCEE03a730d35E64D",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create3",
-          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
-          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
-          "salt": "InterchainGovernance v5.4"
+          "codehash": "0xa8c5d3eab2aefc62e03bcf3c5e1db27cbce0e24d3f87d8dfbbb54676bfbf937c",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 2,
@@ -557,12 +557,12 @@
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
-          "address": "0x98c7B8AE63CB2bE0899eBc3BdCa4Bc6dB820F908",
+          "address": "0xf6c4679c0FdA9b4e49fCcfedCEE03a730d35E64D",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create3",
-          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
-          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
-          "salt": "InterchainGovernance v5.4"
+          "codehash": "0xa8c5d3eab2aefc62e03bcf3c5e1db27cbce0e24d3f87d8dfbbb54676bfbf937c",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 2,
@@ -640,12 +640,12 @@
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
-          "address": "0x98c7B8AE63CB2bE0899eBc3BdCa4Bc6dB820F908",
+          "address": "0xf6c4679c0FdA9b4e49fCcfedCEE03a730d35E64D",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create3",
-          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
-          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
-          "salt": "InterchainGovernance v5.4"
+          "codehash": "0xa8c5d3eab2aefc62e03bcf3c5e1db27cbce0e24d3f87d8dfbbb54676bfbf937c",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 2,
@@ -722,12 +722,12 @@
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
-          "address": "0x98c7B8AE63CB2bE0899eBc3BdCa4Bc6dB820F908",
+          "address": "0xf6c4679c0FdA9b4e49fCcfedCEE03a730d35E64D",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create3",
-          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
-          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
-          "salt": "InterchainGovernance v5.4"
+          "codehash": "0xa8c5d3eab2aefc62e03bcf3c5e1db27cbce0e24d3f87d8dfbbb54676bfbf937c",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 2,
@@ -807,12 +807,12 @@
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
-          "address": "0x98c7B8AE63CB2bE0899eBc3BdCa4Bc6dB820F908",
+          "address": "0xf6c4679c0FdA9b4e49fCcfedCEE03a730d35E64D",
           "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
           "deploymentMethod": "create3",
-          "codehash": "0x0b4f61f66315f6a6d807a689b91c81c76bfba196c8f11babae8fdaa8ba9cc194",
-          "predeployCodehash": "0x9ac40b847f2512b8e3636d7619e69c5bdd0b3740e796405c049023a385d1c6b6",
-          "salt": "InterchainGovernance v5.4"
+          "codehash": "0xa8c5d3eab2aefc62e03bcf3c5e1db27cbce0e24d3f87d8dfbbb54676bfbf937c",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 2,
