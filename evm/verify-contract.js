@@ -11,7 +11,7 @@ const {
     utils: { defaultAbiCoder },
 } = ethers;
 const { Command, Option } = require('commander');
-const { verifyContract, getEVMAddresses, printInfo, mainProcessor } = require('./utils');
+const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor } = require('./utils');
 
 async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
@@ -23,6 +23,11 @@ async function processCommand(config, chain, options) {
 
     if (dir) {
         verifyOptions.dir = dir;
+    }
+
+    if (!chain.explorer?.api) {
+        printError('Explorer API not found for chain', chain.name);
+        return;
     }
 
     printInfo('Verifying contract', contractName);
@@ -131,18 +136,15 @@ async function processCommand(config, chain, options) {
             const auth = await gateway.authModule();
             const tokenDeployer = await gateway.tokenDeployer();
 
-            // Assume setup params corresponds to epoch 1
-            const admins = await gateway.admins(1);
-            const adminThreshold = await gateway.adminThreshold(1);
-            const setupParams = defaultAbiCoder.encode(['address[]', 'uint8', 'bytes'], [admins, adminThreshold, '0x']);
-
-            const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, { keyID: `evm-${chain.id}-genesis` });
+            const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, {
+                keyID: options.args || `evm-${chain.id.toLowerCase()}-genesis`,
+            });
             const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
 
             await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
             await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
             await verifyContract(env, chain.name, implementation, [auth, tokenDeployer], verifyOptions);
-            await verifyContract(env, chain.name, gateway.address, [implementation, setupParams], verifyOptions);
+            await verifyContract(env, chain.name, gateway.address, [implementation, options.constructorArgs], verifyOptions);
 
             break;
         }
@@ -228,6 +230,7 @@ if (require.main === module) {
     program.addOption(new Option('-a, --address <address>', 'contract address'));
     program.addOption(new Option('-d, --dir <dir>', 'contract artifacts dir'));
     program.addOption(new Option('--args <args>', 'contract args'));
+    program.addOption(new Option('--constructorArgs <constructorArgs>', 'contract constructor args'));
 
     program.action((options) => {
         main(options);

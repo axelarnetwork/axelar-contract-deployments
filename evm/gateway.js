@@ -106,6 +106,22 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'params': {
+            const governance = await gateway.governance();
+            const mintLimiter = await gateway.mintLimiter();
+            const authModule = await gateway.authModule();
+            const tokenDeployer = await gateway.tokenDeployer();
+            const implementation = await gateway.implementation();
+
+            printInfo('Gateway governance', governance);
+            printInfo('Gateway mint limiter', mintLimiter);
+            printInfo('Gateway auth module', authModule);
+            printInfo('Gateway token deployer', tokenDeployer);
+            printInfo('Gateway implementation', implementation);
+
+            break;
+        }
+
         case 'operators': {
             const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain.id, options);
             printInfo('Axelar validator key id', keyID);
@@ -339,6 +355,7 @@ program.addOption(
             'governance',
             'mintLimiter',
             'mintLimit',
+            'params',
         ])
         .makeOptionMandatory(true),
 );

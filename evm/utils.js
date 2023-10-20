@@ -555,7 +555,8 @@ const deployContract = async (
     });
 
     if (await isContract(predictedAddress, wallet.provider)) {
-        throw new Error(`Contract is already deployed at ${predictedAddress}`);
+        printError(`Contract is already deployed at ${predictedAddress}, skipping`);
+        return new Contract(predictedAddress, contractJson.abi, wallet);
     }
 
     switch (deployMethod) {
@@ -579,7 +580,7 @@ const deployContract = async (
                 contractJson,
                 constructorArgs,
                 deployOptions.salt,
-                gasOptions.gasLimit,
+                gasOptions,
                 verifyOptions,
                 chain,
             );
@@ -733,7 +734,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         } catch (error) {
             printError(`Failed with error on ${chain.name}`, error.message);
 
-            if (options.ignoreError || !catchErr) {
+            if (!catchErr && !options.ignoreError) {
                 throw error;
             }
         }
