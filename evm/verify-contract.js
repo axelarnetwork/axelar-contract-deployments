@@ -137,7 +137,7 @@ async function processCommand(config, chain, options) {
             const tokenDeployer = await gateway.tokenDeployer();
 
             const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, {
-                keyID: options.args || `evm-${chain.id.toLowerCase()}-genesis`,
+                keyID: chain.contracts.AxelarGateway.startingKeyIDs[0] || options.args || `evm-${chain.id.toLowerCase()}-genesis`,
             });
             const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
 
