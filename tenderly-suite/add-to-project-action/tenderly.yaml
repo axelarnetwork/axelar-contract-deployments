@@ -1,0 +1,13 @@
+account_id: ""
+actions:
+  axelareng/its:
+    runtime: v2
+    sources: add-to-project
+    specs:
+      add-to-project:
+        description: This action adds newly deployed TokenManagers to a tenderly project.
+        function: addToProject:addToProjectFn
+        trigger:
+          type: transaction
+        execution_type: sequential
+project_slug: ""
