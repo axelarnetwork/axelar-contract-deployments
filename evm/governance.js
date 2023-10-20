@@ -464,6 +464,23 @@ async function processCommand(_, chain, options) {
             break;
         }
 
+        case 'cancelUpgrade': {
+            const eta = dateToEta(date);
+            const implementation = options.implementation || chain.contracts.AxelarGateway?.implementation;
+            const newGatewayImplementationCodeHash = await getBytecodeHash(implementation, chain.name, provider);
+            const gateway = new Contract(target, IGateway.abi, wallet);
+            const setupParams = await getGatewaySetupParams(governance, gateway, contracts, options);
+            calldata = gateway.interface.encodeFunctionData('upgrade', [implementation, newGatewayImplementationCodeHash, setupParams]);
+
+            const commandType = 1;
+            const types = ['uint256', 'address', 'bytes', 'uint256', 'uint256'];
+            const values = [commandType, target, calldata, nativeValue, eta];
+
+            gmpPayload = defaultAbiCoder.encode(types, values);
+
+            break;
+        }
+
         case 'withdraw': {
             if (!isValidTimeFormat(date)) {
                 throw new Error(`Invalid ETA: ${date}. Please pass the eta in the format YYYY-MM-DDTHH:mm:ss`);
@@ -609,6 +626,7 @@ program.addOption(
         'gatewayUpgrade',
         'submitUpgrade',
         'executeUpgrade',
+        'cancelUpgrade',
         'withdraw',
         'getProposalEta',
     ]),
