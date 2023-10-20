@@ -56,20 +56,23 @@ async function getAuthParams(config, chain, options) {
     }
 
     const params = [];
+    const keyIDs = [];
 
     if (options.prevKeyIDs) {
         for (const keyID of options.prevKeyIDs.split(',')) {
             const { addresses, weights, threshold } = await getEVMAddresses(config, chain, { ...options, keyID });
             printInfo(JSON.stringify({ status: 'old', keyID, addresses, weights, threshold }));
             params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
+            keyIDs.push(keyID);
         }
     }
 
     const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain, options);
     printInfo(JSON.stringify({ status: 'latest', keyID, addresses, weights, threshold }));
     params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
+    keyIDs.push(keyID);
 
-    return params;
+    return { params, keyIDs };
 }
 
 function getProxyParams(governance, mintLimiter) {
@@ -143,6 +146,12 @@ async function deploy(config, chain, options) {
     }
 
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+
+    // Some chains require a gas adjustment
+    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
+        gasOptions.gasPrice = Math.floor(await provider.getGasPrice() * 1.6);
+    }
+
     printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
 
@@ -157,8 +166,10 @@ async function deploy(config, chain, options) {
     } else {
         printInfo(`Deploying auth contract`);
 
-        const params = await getAuthParams(config, chain.id, options);
+        const { params, keyIDs } = await getAuthParams(config, chain.id, options);
         printInfo('Auth deployment args', params);
+
+        contractConfig.keyIDs = keyIDs;
 
         auth = await authFactory.deploy(params, gasOptions);
         await auth.deployTransaction.wait(chain.confirmations);

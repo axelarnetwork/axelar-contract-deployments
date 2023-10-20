@@ -136,7 +136,9 @@ async function processCommand(config, chain, options) {
             const auth = await gateway.authModule();
             const tokenDeployer = await gateway.tokenDeployer();
 
-            const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, { keyID: options.args || `evm-${chain.id.toLowerCase()}-genesis` });
+            const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, {
+                keyID: options.args || `evm-${chain.id.toLowerCase()}-genesis`,
+            });
             const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
 
             await verifyContract(env, chain.name, auth, [authParams], verifyOptions);

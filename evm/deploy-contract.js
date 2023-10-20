@@ -125,7 +125,7 @@ async function getConstructorArgs(contractName, chain, wallet, options) {
                 throw new Error(`Missing Multisig.signers in the chain info.`);
             }
 
-            const threshold = contractConfig.threshold || (signers.length + 1) / 2;
+            const threshold = contractConfig.threshold || Math.floor((signers.length + 1) / 2);
             contractConfig.threshold = threshold;
             contractConfig.signers = signers;
 
@@ -255,7 +255,7 @@ async function processCommand(config, chain, options) {
 
     // Some chains require a gas adjustment
     if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
-        gasOptions.gasPrice = await provider.getGasPrice() * 1.6;
+        gasOptions.gasPrice = Math.floor(await provider.getGasPrice() * 1.6);
     }
 
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);

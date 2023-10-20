@@ -402,7 +402,7 @@ async function processCommand(_, chain, options) {
                 contracts.InterchainGovernance.governanceAddress,
                 gmpPayload,
                 gasOptions,
-            )
+            );
             printInfo('Transaction hash', tx.hash);
             await tx.wait(chain.confirmations);
 
