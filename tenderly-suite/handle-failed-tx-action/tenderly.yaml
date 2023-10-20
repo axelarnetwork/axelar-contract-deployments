@@ -1,0 +1,13 @@
+account_id: ""
+actions:
+  axelareng/its:
+    runtime: v2
+    sources: handle-failed-tx
+    specs:
+      handle-failed-tx:
+        description: This action handles failed transactions and forwards to pager duty as per requirement.
+        function: handleFailedTx:handleFailedTxFn
+        trigger:
+          type: transaction
+        execution_type: sequential
+project_slug: ""
