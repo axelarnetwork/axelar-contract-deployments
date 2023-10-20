@@ -7,11 +7,11 @@ const {
     Wallet,
     getDefaultProvider,
     getContractAt,
-    getContractFactory,
+    getContractFactoryFromArtifact,
     utils: { defaultAbiCoder },
 } = ethers;
 const { Command, Option } = require('commander');
-const { verifyContract, getEVMAddresses, printInfo, mainProcessor } = require('./utils');
+const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor } = require('./utils');
 
 async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
@@ -23,6 +23,11 @@ async function processCommand(config, chain, options) {
 
     if (dir) {
         verifyOptions.dir = dir;
+    }
+
+    if (!chain.explorer?.api) {
+        printError('Explorer API not found for chain', chain.name);
+        return;
     }
 
     printInfo('Verifying contract', contractName);
@@ -78,14 +83,10 @@ async function processCommand(config, chain, options) {
         }
 
         case 'InterchainProposalSender': {
-            const contractFactory = await getContractFactory('InterchainProposalSender', wallet);
-
-            const contract = contractFactory.attach(options.address || chain.contracts.InterchainProposalSender.address);
-
             await verifyContract(
                 env,
                 chain.name,
-                contract.address,
+                options.address || chain.contracts.InterchainProposalSender.address,
                 [chain.contracts.AxelarGateway.address, chain.contracts.AxelarGasService.address],
                 verifyOptions,
             );
@@ -126,7 +127,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'AxelarGateway': {
-            const gatewayFactory = await getContractFactory('AxelarGateway', wallet);
+            const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
+            const gatewayFactory = await getContractFactoryFromArtifact(AxelarGateway, wallet);
             const gateway = gatewayFactory.attach(options.address || chain.contracts.AxelarGateway.address);
 
             const implementation = await gateway.implementation();
@@ -134,24 +136,22 @@ async function processCommand(config, chain, options) {
             const auth = await gateway.authModule();
             const tokenDeployer = await gateway.tokenDeployer();
 
-            // Assume setup params corresponds to epoch 1
-            const admins = await gateway.admins(1);
-            const adminThreshold = await gateway.adminThreshold(1);
-            const setupParams = defaultAbiCoder.encode(['address[]', 'uint8', 'bytes'], [admins, adminThreshold, '0x']);
-
-            const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, { keyID: `evm-${chain.id}-genesis` });
+            const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, {
+                keyID: options.args || `evm-${chain.id.toLowerCase()}-genesis`,
+            });
             const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
 
             await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
             await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
             await verifyContract(env, chain.name, implementation, [auth, tokenDeployer], verifyOptions);
-            await verifyContract(env, chain.name, gateway.address, [implementation, setupParams], verifyOptions);
+            await verifyContract(env, chain.name, gateway.address, [implementation, options.constructorArgs], verifyOptions);
 
             break;
         }
 
         case 'AxelarGasService': {
-            const gasServiceFactory = await getContractFactory(contractName, wallet);
+            const AxelarGasService = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json');
+            const gasServiceFactory = await getContractFactoryFromArtifact(AxelarGasService, wallet);
             const contractConfig = chain.contracts[contractName];
             const gasService = gasServiceFactory.attach(options.address || contractConfig.address);
 
@@ -162,7 +162,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'AxelarDepositService': {
-            const depositServiceFactory = await getContractFactory(contractName, wallet);
+            const AxelarDepositService = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/deposit-service/AxelarDepositService.sol/AxelarDepositService.json');
+            const depositServiceFactory = await getContractFactoryFromArtifact(AxelarDepositService, wallet);
             const contractConfig = chain.contracts[contractName];
             const gasService = depositServiceFactory.attach(options.address || contractConfig.address);
 
@@ -177,16 +178,18 @@ async function processCommand(config, chain, options) {
         }
 
         case 'BurnableMintableCappedERC20': {
-            const token = await getContractFactory('BurnableMintableCappedERC20', wallet);
+            const BurnableMintableCappedERC20 = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
+            const token = await getContractFactoryFromArtifact(BurnableMintableCappedERC20, wallet);
             const symbol = options.args;
 
             console.log(`Verifying ${symbol}...`);
 
-            const gatewayFactory = await getContractFactory('AxelarGateway', wallet);
+            const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
+            const gatewayFactory = await getContractFactoryFromArtifact(AxelarGateway, wallet);
             const gateway = gatewayFactory.attach(chain.contracts.AxelarGateway.address);
 
             const tokenAddress = await gateway.tokenAddresses(symbol);
-            const tokenContract = token.attach(tokenAddress);
+            const tokenContract = token.attach(options.address || tokenAddress);
             const name = await tokenContract.name();
             const decimals = await tokenContract.decimals();
             const cap = await tokenContract.cap();
@@ -227,6 +230,7 @@ if (require.main === module) {
     program.addOption(new Option('-a, --address <address>', 'contract address'));
     program.addOption(new Option('-d, --dir <dir>', 'contract artifacts dir'));
     program.addOption(new Option('--args <args>', 'contract args'));
+    program.addOption(new Option('--constructorArgs <constructorArgs>', 'contract constructor args'));
 
     program.action((options) => {
         main(options);

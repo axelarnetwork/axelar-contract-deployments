@@ -56,20 +56,23 @@ async function getAuthParams(config, chain, options) {
     }
 
     const params = [];
+    const keyIDs = [];
 
     if (options.prevKeyIDs) {
         for (const keyID of options.prevKeyIDs.split(',')) {
             const { addresses, weights, threshold } = await getEVMAddresses(config, chain, { ...options, keyID });
             printInfo(JSON.stringify({ status: 'old', keyID, addresses, weights, threshold }));
             params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
+            keyIDs.push(keyID);
         }
     }
 
     const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain, options);
     printInfo(JSON.stringify({ status: 'latest', keyID, addresses, weights, threshold }));
     params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
+    keyIDs.push(keyID);
 
-    return params;
+    return { params, keyIDs };
 }
 
 function getProxyParams(governance, mintLimiter) {
@@ -77,8 +80,7 @@ function getProxyParams(governance, mintLimiter) {
 }
 
 async function deploy(config, chain, options) {
-    const { privateKey, reuseProxy, reuseHelpers, verify, yes } = options;
-    const chainName = chain.name.toLowerCase();
+    const { env, privateKey, reuseProxy, reuseHelpers, verify, yes } = options;
 
     const contractName = 'AxelarGateway';
 
@@ -142,7 +144,13 @@ async function deploy(config, chain, options) {
         printInfo('Predicted proxy address', proxyAddress);
     }
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = JSON.parse(JSON.stringify(contractConfig.gasOptions || chain.gasOptions || {}));
+
+    // Some chains require a gas adjustment
+    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
+        gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.6);
+    }
+
     printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
 
@@ -157,8 +165,10 @@ async function deploy(config, chain, options) {
     } else {
         printInfo(`Deploying auth contract`);
 
-        const params = await getAuthParams(config, chain.id, options);
+        const { params, keyIDs } = await getAuthParams(config, chain.id, options);
         printInfo('Auth deployment args', params);
+
+        contractConfig.startingKeyIDs = keyIDs;
 
         auth = await authFactory.deploy(params, gasOptions);
         await auth.deployTransaction.wait(chain.confirmations);
@@ -184,6 +194,7 @@ async function deploy(config, chain, options) {
             { salt, deployerContract },
             gasOptions,
             {},
+            chain,
         );
 
         contractsToVerify.push({
@@ -198,7 +209,7 @@ async function deploy(config, chain, options) {
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${auth.address},${tokenDeployer.address}`);
 
-    const salt = 'AxelarGateway v6.1' + (options.salt || '');
+    const salt = 'AxelarGateway v6.2' + (options.salt || '');
 
     const implementation = await deployContract(
         options.deployMethod,
@@ -213,7 +224,7 @@ async function deploy(config, chain, options) {
 
     printInfo('Gateway Implementation', implementation.address);
 
-    const implementationCodehash = await getBytecodeHash(implementation, chainName);
+    const implementationCodehash = await getBytecodeHash(implementation, chain.id);
     printInfo('Gateway Implementation codehash', implementationCodehash);
 
     contractsToVerify.push({
@@ -378,7 +389,7 @@ async function upgrade(_, chain, options) {
             throw new Error('mintLimiter address is not a contract');
         }
 
-        const codehash = await getBytecodeHash(contractConfig.implementation, chainName, provider);
+        const codehash = await getBytecodeHash(contractConfig.implementation, chain.id, provider);
 
         if (!implementationCodehash) {
             // retrieve codehash dynamically if not specified in the config file
