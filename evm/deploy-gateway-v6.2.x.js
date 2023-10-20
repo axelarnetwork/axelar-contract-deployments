@@ -420,6 +420,8 @@ async function upgrade(_, chain, options) {
 
     printInfo('Upgrading to implementation', contractConfig.implementation);
     printInfo('New Implementation codehash', implementationCodehash);
+    printInfo('Governance', governance);
+    printInfo('Mint limiter', mintLimiter);
     printInfo('Setup params', setupParams);
 
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
@@ -434,7 +436,7 @@ async function upgrade(_, chain, options) {
     const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
     if (offline) {
-        const filePath = `./tx/signed-tx-${env}-${chainName}-gateway-upgrade-address-${address}-nonce-${baseTx.nonce}.json`;
+        const filePath = `./tx/signed-tx-${env}-gateway-upgrade-${chainName}-address-${address}-nonce-${baseTx.nonce}.json`;
         printInfo(`Storing signed Tx offline in file ${filePath}`);
 
         // Storing the fields in the data that will be stored in file
