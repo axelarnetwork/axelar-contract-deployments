@@ -80,8 +80,7 @@ function getProxyParams(governance, mintLimiter) {
 }
 
 async function deploy(config, chain, options) {
-    const { privateKey, reuseProxy, reuseHelpers, verify, yes } = options;
-    const chainName = chain.name.toLowerCase();
+    const { env, privateKey, reuseProxy, reuseHelpers, verify, yes } = options;
 
     const contractName = 'AxelarGateway';
 
@@ -145,7 +144,7 @@ async function deploy(config, chain, options) {
         printInfo('Predicted proxy address', proxyAddress);
     }
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = JSON.parse(JSON.stringify(contractConfig.gasOptions || chain.gasOptions || {}));
 
     // Some chains require a gas adjustment
     if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
@@ -169,7 +168,7 @@ async function deploy(config, chain, options) {
         const { params, keyIDs } = await getAuthParams(config, chain.id, options);
         printInfo('Auth deployment args', params);
 
-        contractConfig.keyIDs = keyIDs;
+        contractConfig.startingKeyIDs = keyIDs;
 
         auth = await authFactory.deploy(params, gasOptions);
         await auth.deployTransaction.wait(chain.confirmations);
