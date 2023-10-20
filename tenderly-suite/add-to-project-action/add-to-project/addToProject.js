@@ -33,6 +33,7 @@ const addToProjectFn = async (context, event) => {
             },
         );
     } catch (error) {
+        console.log(error.response.status);
         console.error(error.response.data);
         throw Error('CONTRACT_ADDITION_FAILED');
     }
