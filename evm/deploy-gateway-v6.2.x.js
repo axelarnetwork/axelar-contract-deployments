@@ -148,7 +148,7 @@ async function deploy(config, chain, options) {
 
     // Some chains require a gas adjustment
     if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
-        gasOptions.gasPrice = Math.floor(await provider.getGasPrice() * 1.6);
+        gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.6);
     }
 
     printInfo('Gas override', JSON.stringify(gasOptions, null, 2));

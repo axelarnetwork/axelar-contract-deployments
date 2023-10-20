@@ -118,6 +118,8 @@ async function processCommand(config, chain, options) {
             printInfo('Gateway auth module', authModule);
             printInfo('Gateway token deployer', tokenDeployer);
             printInfo('Gateway implementation', implementation);
+
+            break;
         }
 
         case 'operators': {
