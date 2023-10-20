@@ -119,13 +119,20 @@ async function getConstructorArgs(contractName, chain, wallet, options) {
         }
 
         case 'Multisig': {
-            const signers = contractConfig.signers;
+            const signers = contractConfig.signers || [
+                '0x3f5876a2b06E54949aB106651Ab6694d0289b2b4',
+                '0x9256Fd872118ed3a97754B0fB42c15015d17E0CC',
+                '0x1486157d505C7F7E546aD00E3E2Eee25BF665C9b',
+                '0x2eC991B5c0B742AbD9d2ea31fe6c14a85e91C821',
+                '0xf505462A29E36E26f25Ef0175Ca1eCBa09CC118f',
+                '0x027c1882B975E2cd771AE068b0389FA38B9dda73',
+            ];
 
             if (!isAddressArray(signers)) {
                 throw new Error(`Missing Multisig.signers in the chain info.`);
             }
 
-            const threshold = contractConfig.threshold || (signers.length + 1) / 2;
+            const threshold = contractConfig.threshold || Math.floor((signers.length + 1) / 2);
             contractConfig.threshold = threshold;
             contractConfig.signers = signers;
 
@@ -251,7 +258,13 @@ async function processCommand(config, chain, options) {
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
 
     const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = JSON.parse(JSON.stringify(contractConfig.gasOptions || chain.gasOptions || {}));
+
+    // Some chains require a gas adjustment
+    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
+        gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.6);
+    }
+
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
     printInfo(`Gas override for chain ${chain.name}`, JSON.stringify(gasOptions, null, 2));
 
