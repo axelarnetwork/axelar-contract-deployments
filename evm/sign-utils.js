@@ -88,6 +88,10 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
 
         if (!tx.nonce) {
             tx.nonce = getLocalNonce(options.env, chain.name.toLowerCase(), address);
+
+            if (!tx.nonce) {
+                throw new Error(`Nonce is missing for ${address} on ${chain.name} in nonces.json`);
+            }
         }
 
         if (options.nonceOffset) {

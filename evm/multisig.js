@@ -176,6 +176,14 @@ async function processCommand(_, chain, options) {
 
             if (!offline) {
                 await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
+
+                // loop over each token
+                for (let i = 0; i < symbolsArray.length; i++) {
+                    const token = await gateway.tokenAddresses(symbolsArray[i]);
+                    const limit = await gateway.tokenMintLimit(token);
+                    printInfo(`Token ${symbolsArray[i]} address`, token);
+                    printInfo(`Token ${symbolsArray[i]} limit`, limit);
+                }
             }
 
             tx = await multisigContract.populateTransaction.executeContract(multisigTarget, multisigCalldata, 0, gasOptions);
@@ -284,7 +292,7 @@ async function processCommand(_, chain, options) {
     const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
     if (offline) {
-        const filePath = `./tx/signed-tx-${env}-${chain.name.toLowerCase()}-multisig-${action}-address-${walletAddress}-nonce-${
+        const filePath = `./tx/signed-tx-${env}-multisig-${action}-${chain.name.toLowerCase()}-address-${walletAddress}-nonce-${
             baseTx.nonce
         }.json`;
         printInfo(`Storing signed Tx offline in file ${filePath}`);
@@ -304,7 +312,7 @@ async function processCommand(_, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessor(options, processCommand, false);
 }
 
 const program = new Command();
