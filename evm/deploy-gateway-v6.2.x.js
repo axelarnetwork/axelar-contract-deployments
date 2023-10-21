@@ -448,8 +448,6 @@ async function upgrade(_, chain, options) {
         };
 
         storeSignedTx(filePath, data);
-
-        options.nonceOffset = (options.nonceOffset || 0) + 1;
     } else {
         const newImplementation = await gateway.implementation();
         printInfo('New implementation', newImplementation);
