@@ -86,7 +86,7 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
             ...tx, // prefer tx options if they were set
         };
 
-        if (!tx.nonce) {
+        if (tx.nonce === undefined) {
             tx.nonce = getLocalNonce(options.env, chain.name.toLowerCase(), address);
 
             if (tx.nonce === undefined) {

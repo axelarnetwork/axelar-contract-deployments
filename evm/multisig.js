@@ -306,8 +306,6 @@ async function processCommand(_, chain, options) {
         };
 
         storeSignedTx(filePath, data);
-
-        options.nonceOffset = (options.nonceOffset || 0) + 1;
     }
 }
 
