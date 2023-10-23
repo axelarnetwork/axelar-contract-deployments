@@ -1,5 +1,15 @@
 {
   "chains": {
+    "centrifuge": {
+      "name": "centrifuge",
+      "id": "centrifuge",
+      "chainId": 2090,
+      "rpc": "https://node-7118620155331796992.gx.onfinality.io/rpc?apikey=00538f2d-6297-44e3-8812-4b9d579524b2",
+      "tokenSymbol": "CFG",
+      "gasOptions": {
+         "gasLimit": 8000000
+      }
+    },
     "ethereum": {
       "name": "Ethereum",
       "id": "ethereum-2",
