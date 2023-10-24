@@ -31,6 +31,8 @@ const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 
+let proposals = [];
+
 async function getGatewaySetupParams(governance, gateway, contracts, options) {
     const currGovernance = await gateway.governance();
     const currMintLimiter = await gateway.mintLimiter();
@@ -406,20 +408,44 @@ async function processCommand(_, chain, options) {
             break;
         }
 
+        case 'submitUpgrade': {
+            const eta = dateToEta(date);
+            const implementation = options.implementation || chain.contracts.AxelarGateway?.implementation;
+            const newGatewayImplementationCodeHash = await getBytecodeHash(implementation, chain.name, provider);
+            const gateway = new Contract(target, IGateway.abi, wallet);
+            const setupParams = await getGatewaySetupParams(governance, gateway, contracts, options);
+            calldata = gateway.interface.encodeFunctionData('upgrade', [implementation, newGatewayImplementationCodeHash, setupParams]);
+
+            const commandType = 0;
+            const types = ['uint256', 'address', 'bytes', 'uint256', 'uint256'];
+            const values = [commandType, target, calldata, nativeValue, eta];
+
+            gmpPayload = defaultAbiCoder.encode(types, values);
+
+            const tx = await governance.execute(
+                options.commandId,
+                contracts.InterchainGovernance.governanceChain,
+                contracts.InterchainGovernance.governanceAddress,
+                gmpPayload,
+                gasOptions,
+            );
+            printInfo('Transaction hash', tx.hash);
+            await tx.wait(chain.confirmations);
+
+            return;
+        }
+
         case 'executeGatewayUpgrade': {
             target = contracts.AxelarGateway?.address;
             const gateway = new Contract(target, IGateway.abi, wallet);
             const implementation = options.implementation || chain.contracts.AxelarGateway?.implementation;
             const implementationCodehash = chain.contracts.AxelarGateway?.implementationCodehash;
-            printInfo('New gateway implementation code hash', implementationCodehash);
 
             if (!isValidAddress(implementation)) {
                 throw new Error(`Invalid new gateway implementation address: ${implementation}`);
             }
 
             const setupParams = await getGatewaySetupParams(governance, gateway, contracts, options);
-
-            printInfo('Setup Params for upgrading AxelarGateway', setupParams);
 
             calldata = gateway.interface.encodeFunctionData('upgrade', [implementation, implementationCodehash, setupParams]);
 
@@ -460,6 +486,23 @@ async function processCommand(_, chain, options) {
             }
 
             printInfo('Proposal executed.');
+
+            break;
+        }
+
+        case 'cancelUpgrade': {
+            const eta = dateToEta(date);
+            const implementation = options.implementation || chain.contracts.AxelarGateway?.implementation;
+            const newGatewayImplementationCodeHash = await getBytecodeHash(implementation, chain.name, provider);
+            const gateway = new Contract(target, IGateway.abi, wallet);
+            const setupParams = await getGatewaySetupParams(governance, gateway, contracts, options);
+            calldata = gateway.interface.encodeFunctionData('upgrade', [implementation, newGatewayImplementationCodeHash, setupParams]);
+
+            const commandType = 1;
+            const types = ['uint256', 'address', 'bytes', 'uint256', 'uint256'];
+            const values = [commandType, target, calldata, nativeValue, eta];
+
+            gmpPayload = defaultAbiCoder.encode(types, values);
 
             break;
         }
@@ -719,13 +762,28 @@ async function processCommand(_, chain, options) {
             ],
         };
 
+        // Print all proposals together
+        proposals.push(proposal.contract_calls[0]);
+
         // printInfo('Proposal', JSON.stringify(proposal, null, 2));
-        console.log(JSON.stringify(proposal.contract_calls[0]));
+        // console.log(JSON.stringify(proposal.contract_calls[0]));
     }
 }
 
 async function main(options) {
+    proposals = [];
+
     await mainProcessor(options, processCommand);
+
+    const proposal = {
+        title: 'Interchain Governance Proposal',
+        description: 'Interchain Governance Proposal',
+        contract_calls: proposals,
+    };
+
+    if (proposals.length > 0) {
+        printInfo('Proposal', JSON.stringify(proposal, null, 2));
+    }
 }
 
 const program = new Command();
@@ -765,7 +823,9 @@ program.addOption(
         'gatewayUpgrade',
         'executeGatewayUpgrade',
         'upgrade',
+        'submitUpgrade',
         'executeUpgrade',
+        'cancelUpgrade',
         'withdraw',
         'getProposalEta',
     ]),
@@ -774,6 +834,7 @@ program.addOption(new Option('--newGovernance <governance>', 'governance address
 program.addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
 program.addOption(new Option('--newOperator <operator>', 'new operator address'));
 program.addOption(new Option('--isTimeLock <isTimeLock>', 'ITS upgrade proposal type').default(false));
+program.addOption(new Option('--commandId <commandId>', 'command id'));
 program.addOption(new Option('--target <target>', 'governance execution target'));
 program.addOption(new Option('--calldata <calldata>', 'calldata'));
 program.addOption(new Option('--nativeValue <nativeValue>', 'nativeValue').default(0));

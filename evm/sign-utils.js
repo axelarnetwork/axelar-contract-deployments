@@ -86,8 +86,12 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
             ...tx, // prefer tx options if they were set
         };
 
-        if (!tx.nonce) {
+        if (tx.nonce === undefined) {
             tx.nonce = getLocalNonce(options.env, chain.name.toLowerCase(), address);
+
+            if (tx.nonce === undefined) {
+                throw new Error(`Nonce is missing for ${address} on ${chain.name} in nonces.json`);
+            }
         }
 
         if (options.nonceOffset) {
@@ -121,7 +125,7 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
     }
 
     if (!options.offline) {
-        await sendTransaction(signedTx, wallet.provider);
+        await sendTransaction(signedTx, wallet.provider, chain.confirmations);
     }
 
     return { baseTx: tx, signedTx };
@@ -254,7 +258,7 @@ function isValidJSON(obj) {
 }
 
 const getNonceFileData = () => {
-    const filePath = `${__dirname}/../axelar-chains-config/info/nonces.json`;
+    const filePath = `${__dirname}/nonces.json`;
     const emptyData = {};
     const data = getFileData(filePath);
 
@@ -286,7 +290,7 @@ function createFileIfNotExists(filePath) {
 }
 
 const updateNonceFileData = (nonceData) => {
-    const filePath = `${__dirname}/../axelar-chains-config/info/nonces.json`;
+    const filePath = `${__dirname}/nonces.json`;
     createFileIfNotExists(filePath);
 
     // Write nonceData to the file

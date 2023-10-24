@@ -160,7 +160,7 @@ const httpGet = (url) => {
             const contentType = res.headers['content-type'];
             let error;
 
-            if (statusCode !== 200) {
+            if (statusCode !== 200 && statusCode !== 301) {
                 error = new Error('Request Failed.\n' + `Request: ${url}\nStatus Code: ${statusCode}`);
             } else if (!/^application\/json/.test(contentType)) {
                 error = new Error('Invalid content-type.\n' + `Expected application/json but received ${contentType}`);
@@ -468,7 +468,7 @@ const getProxy = async (config, chain) => {
 };
 
 const getEVMBatch = async (config, chain, batchID = '') => {
-    const batch = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}/`);
+    const batch = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
     return batch;
 };
 
@@ -555,7 +555,8 @@ const deployContract = async (
     });
 
     if (await isContract(predictedAddress, wallet.provider)) {
-        throw new Error(`Contract is already deployed at ${predictedAddress}`);
+        printError(`Contract is already deployed at ${predictedAddress}, skipping`);
+        return new Contract(predictedAddress, contractJson.abi, wallet);
     }
 
     switch (deployMethod) {
@@ -579,7 +580,7 @@ const deployContract = async (
                 contractJson,
                 constructorArgs,
                 deployOptions.salt,
-                gasOptions.gasLimit,
+                gasOptions,
                 verifyOptions,
                 chain,
             );
@@ -733,7 +734,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         } catch (error) {
             printError(`Failed with error on ${chain.name}`, error.message);
 
-            if (!catchErr) {
+            if (!catchErr && !options.ignoreError) {
                 throw error;
             }
         }

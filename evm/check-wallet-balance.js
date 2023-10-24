@@ -22,22 +22,23 @@ async function processCommand(_, chain, options) {
 
     const gasLimit = BigNumber.from(staticGasOptions.gasLimit);
     const gasPrice = BigNumber.from(staticGasOptions.gasPrice);
-    const minRequiredBalance = gasLimit * gasPrice;
+    const minRequiredBalance = gasLimit * gasPrice * 1.5;
+    printError(`${chain.name} minimum required Balance`, `${minRequiredBalance / 1e18}`);
+
     const nonceData = getNonceFileData();
     const nonces = nonceData[options.env][chainName];
 
     if (addresses) {
         addresses = JSON.parse(addresses);
     } else {
-        addresses = Object.entries(nonces);
+        addresses = Object.keys(nonces);
     }
 
     for (const address of addresses) {
         const balance = await provider.getBalance(address);
 
         if (balance < minRequiredBalance) {
-            printError('Minimum required Balance is', `${minRequiredBalance / 1e18}`);
-            printError(`Wallet Balance for address ${address} is`, `${balance / 1e18}`);
+            printError(`${chain.name} Wallet Balance for ${address} is`, `${balance / 1e18}`);
         }
     }
 }
