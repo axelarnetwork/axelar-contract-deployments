@@ -105,6 +105,7 @@ async function processCommand(_, chain, options) {
     const governance = new Contract(governanceAddress, IGovernance.abi, wallet);
 
     const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || { gasLimit: 5e6 });
+
     // Some chains require a gas adjustment
     if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
         gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.4);
