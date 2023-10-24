@@ -698,6 +698,10 @@ function isValidAddress(address, allowZeroAddress) {
     return isAddress(address);
 }
 
+function copyObject(obj) {
+    return JSON.parse(JSON.stringify(obj));
+}
+
 const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
     if (!options.env) {
         throw new Error('Environment was not provided');
@@ -763,12 +767,23 @@ const prompt = (question, yes = false) => {
     return answer !== 'y';
 };
 
+function getConfigByChainId(chainId, config) {
+    for (const chain of Object.values(config.chains)) {
+        if (chain.chainId === chainId) {
+            return chain;
+        }
+    }
+
+    throw new Error(`Chain with chainId ${chainId} not found in the config`);
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
     deployCreate3,
     deployContract,
     writeJSON,
+    copyObject,
     httpGet,
     printObj,
     printLog,
@@ -791,6 +806,7 @@ module.exports = {
     getProxy,
     getEVMBatch,
     getEVMAddresses,
+    getConfigByChainId,
     sleep,
     loadConfig,
     saveConfig,
