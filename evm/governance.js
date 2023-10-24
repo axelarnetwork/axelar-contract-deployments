@@ -29,7 +29,7 @@ const {
 const { getWallet } = require('./sign-utils.js');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
-const IInterchainTokenService = require('@axelar-network/interchain-token-service/dist/interfaces/IInterchainTokenService.sol');
+const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 
 async function getGatewaySetupParams(governance, gateway, contracts, options) {
     const currGovernance = await gateway.governance();
@@ -60,21 +60,29 @@ async function getGatewaySetupParams(governance, gateway, contracts, options) {
     return setupParams;
 }
 
-async function getITSSetupParams(options) {
+async function getSetupParams(options) {
+    const toUpgrade = options.contractToUpgrade;
     let setupParams;
-    const newOperator = options.newOperator;
 
-    if (newOperator) {
-        if (!isValidAddress(newOperator)) {
-            throw new Error(`Invalid new operator address: ${newOperator}`);
+    switch (toUpgrade) {
+        case 'InterchainTokenService': {
+            const newOperator = options.newOperator;
+
+            if (newOperator) {
+                if (!isValidAddress(newOperator)) {
+                    throw new Error(`Invalid new operator address: ${newOperator}`);
+                }
+
+                setupParams = arrayify(newOperator);
+            } else {
+                setupParams = '0x';
+            }
+
+            return setupParams;
         }
-
-        setupParams = arrayify(newOperator);
-    } else {
-        setupParams = '0x';
     }
 
-    return setupParams;
+    throw new Error(`${toUpgrade} is not supported.`);
 }
 
 async function processCommand(_, chain, options) {
@@ -398,7 +406,7 @@ async function processCommand(_, chain, options) {
             break;
         }
 
-        case 'executeUpgrade': {
+        case 'executeGatewayUpgrade': {
             target = contracts.AxelarGateway?.address;
             const gateway = new Contract(target, IGateway.abi, wallet);
             const implementation = options.implementation || chain.contracts.AxelarGateway?.implementation;
@@ -456,12 +464,13 @@ async function processCommand(_, chain, options) {
             break;
         }
 
-        case 'ITSUpgrade': {
-            if (contractName === 'InterchainGovernance') {
+        case 'upgrade': {
+            const isTimeLock = options.isTimeLock;
+
+            if (!isTimeLock && contractName === 'InterchainGovernance') {
                 throw new Error(`Invalid governance action for InterchainGovernance: ${action}`);
             }
 
-            const isTimeLock = options.isTimeLock;
             let eta = 0;
 
             if (isTimeLock) {
@@ -480,25 +489,27 @@ async function processCommand(_, chain, options) {
                 printInfo('Time difference between current time and eta', etaToDate(eta - currTime));
             }
 
-            const implementation = options.implementation || chain.contracts.InterchainTokenService?.implementation;
+            const toUpgrade = options.contractToUpgrade;
+
+            const implementation = options.implementation || chain.contracts[toUpgrade]?.implementation;
 
             if (!isValidAddress(implementation)) {
-                throw new Error(`Invalid new ITS implementation address: ${implementation}`);
+                throw new Error(`Invalid new ${toUpgrade} implementation address: ${implementation}`);
             }
 
-            const ITS = new Contract(target, IInterchainTokenService.abi, wallet);
+            const toUpgradeContract = new Contract(target, IUpgradable.abi, wallet);
 
-            printInfo('Current ITS implementation', await ITS.implementation());
-            printInfo('New ITS implementation', implementation);
+            printInfo(`Current ${toUpgrade} implementation`, await toUpgradeContract.implementation());
+            printInfo(`New ${toUpgrade} implementation`, implementation);
 
-            const newITSImplementationCodeHash = await getBytecodeHash(implementation, chain.name, provider);
-            printInfo('New ITS implementation code hash', newITSImplementationCodeHash);
+            const newImplementationCodeHash = await getBytecodeHash(implementation, chain.name, provider);
+            printInfo(`New ${toUpgrade} implementation code hash`, newImplementationCodeHash);
 
-            const setupParams = await getITSSetupParams(governance, ITS, contracts, options);
+            const setupParams = await getSetupParams(options);
 
-            printInfo('Setup Params for upgrading AxelarGateway', setupParams);
+            printInfo(`Setup Params for upgrading ${toUpgrade}`, setupParams);
 
-            calldata = ITS.interface.encodeFunctionData('upgrade', [implementation, newITSImplementationCodeHash, setupParams]);
+            calldata = toUpgradeContract.interface.encodeFunctionData('upgrade', [implementation, newImplementationCodeHash, setupParams]);
 
             const commandType = 0;
             const types = ['uint256', 'address', 'bytes', 'uint256', 'uint256'];
@@ -511,37 +522,39 @@ async function processCommand(_, chain, options) {
                 printWarn('The proposal already exixts', etaToDate(proposalEta));
             }
 
-            title = `Chain ${chain.name} ITS upgrade proposal`;
-            description = `This proposal upgrades the ITS contract ${ITS.address} on chain ${chain.name} to a new implementation contract ${implementation}`;
+            title = `Chain ${chain.name} ${toUpgrade} upgrade proposal`;
+            description = `This proposal upgrades the ${toUpgrade} contract ${toUpgradeContract.address} on chain ${chain.name} to a new implementation contract ${implementation}`;
 
             break;
         }
 
-        case 'executeITSUpgrade': {
-            if (contractName === 'InterchainGovernance') {
+        case 'executeUpgrade': {
+            const isTimeLock = options.isTimeLock;
+
+            if (!isTimeLock && contractName === 'InterchainGovernance') {
                 throw new Error(`Invalid governance action for InterchainGovernance: ${action}`);
             }
 
-            target = contracts.InterchainTokenService?.address;
-            const ITS = new Contract(target, IInterchainTokenService.abi, wallet);
-            const implementation = options.implementation || chain.contracts.InterchainTokenService?.implementation;
-            const implementationCodehash = chain.contracts.InterchainTokenService?.implementationCodehash;
-            printInfo('New ITS implementation code hash', implementationCodehash);
+            const toUpgrade = options.contractToUpgrade;
+
+            target = contracts[toUpgrade]?.address;
+            const toUpgradeContract = new Contract(target, IUpgradable.abi, wallet);
+            const implementation = options.implementation || chain.contracts[toUpgrade]?.implementation;
+            const implementationCodehash = chain.contracts[toUpgrade]?.implementationCodehash;
+            printInfo(`New ${toUpgrade} implementation code hash`, implementationCodehash);
 
             if (!isValidAddress(implementation)) {
-                throw new Error(`Invalid new ITS implementation address: ${implementation}`);
+                throw new Error(`Invalid new ${toUpgrade} implementation address: ${implementation}`);
             }
 
-            const setupParams = await getITSSetupParams(options);
+            const setupParams = await getSetupParams(options);
 
-            printInfo('Setup Params for upgrading ITS', setupParams);
+            printInfo(`Setup Params for upgrading ${toUpgrade}`, setupParams);
 
-            calldata = ITS.interface.encodeFunctionData('upgrade', [implementation, implementationCodehash, setupParams]);
+            calldata = toUpgradeContract.interface.encodeFunctionData('upgrade', [implementation, implementationCodehash, setupParams]);
 
             const proposalHash = keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
             const eta = await governance.getTimeLock(proposalHash);
-
-            const isTimeLock = options.isTimelock;
 
             if (!calldata) {
                 throw new Error(`Calldata required for this governance action: ${action}`);
@@ -731,6 +744,11 @@ program.addOption(
         .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
         .default('InterchainGovernance'),
 );
+program.addOption(
+    new Option('-u, --contractToUpgrade <contractToUpgrade>', 'contracted to be upgraded')
+        .choices(['InterchainTokenService'])
+        .default('InterchainTokenService'),
+);
 program.addOption(new Option('-a, --address <address>', 'override address'));
 program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
@@ -745,9 +763,9 @@ program.addOption(
         'executeProposal',
         'executeMultisigProposal',
         'gatewayUpgrade',
+        'executeGatewayUpgrade',
+        'upgrade',
         'executeUpgrade',
-        'ITSUpgrade',
-        'executeITSUpgrade',
         'withdraw',
         'getProposalEta',
     ]),
