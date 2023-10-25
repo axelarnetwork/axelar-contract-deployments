@@ -1,0 +1,13 @@
+account_id: "axelarEng"
+actions:
+  axelareng/its:
+    runtime: v2
+    sources: token-transfers
+    specs:
+      handle-token-transfer:
+        description: This action sends alert to pager duty if the amount of tokens transferred in ITS exceeds a threshold.
+        function: handleTokenTransfer:handleTokenTransferFn
+        trigger:
+          type: transaction
+        execution_type: sequential
+project_slug: "ITS"
