@@ -21,14 +21,6 @@ jobs:
             - name: Install
               run: npm ci
 
-            - name: List directories and check file existence
-              run: |
-                  echo "Listing all directories:"
-                  ls -R  # Lists all contents recursively in the working directory
-
-                  echo "Checking if 'local.json' exists in 'axelar-chains-config/info/':"
-                  [ -f axelar-chains-config/info/local.json ] && echo "File exists" || echo "File does not exist"
-
             - name: Spin up Hardhat Network
               run: npx hardhat node &
 
@@ -51,10 +43,10 @@ jobs:
               run: cat axelar-chains-config/info/local.json
 
             - name: Deploy constAddressDeployer
-              run: node evm/deploy-contract.js -e local -a ./node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c ConstAddressDeployer -n hardhat -m create -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+              run: node evm/deploy-contract.js -e local -a ./node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c ConstAddressDeployer -n ethereum -m create -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
             - name: Deploy Create3Deployer
-              run: node evm/deploy-contract.js -e local -a ./node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c Create3Deployer -n hardhat -m create2 -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+              run: node evm/deploy-contract.js -e local -a ./node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c Create3Deployer -n ethereum -m create2 -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
             - name: Deploy AxelarGateway
               run: node evm/deploy-gateway-v6.2.x.js -e local -n ethereum -m create3 -s "AxelarGateway v6.2" -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 -g 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -m 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
