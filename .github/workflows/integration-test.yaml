@@ -43,13 +43,13 @@ jobs:
               run: cat axelar-chains-config/info/local.json
 
             - name: Deploy constAddressDeployer
-              run: node evm/deploy-contract.js -e local -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c ConstAddressDeployer -n ethereum -m create -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+              run: node evm/deploy-contract.js -e local -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c ConstAddressDeployer -n ethereum -m create -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --yes
 
             - name: Deploy Create3Deployer
-              run: node evm/deploy-contract.js -e local -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c Create3Deployer -n ethereum -m create2 -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+              run: node evm/deploy-contract.js -e local -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c Create3Deployer -n ethereum -m create2 -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --yes
 
             - name: Deploy AxelarGateway
-              run: node evm/deploy-gateway-v6.2.x.js -e local -n ethereum -m create3 -s "AxelarGateway v6.2" -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 -g 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -m 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+              run: node evm/deploy-gateway-v6.2.x.js -e local -n ethereum -m create3 -s "AxelarGateway v6.2" -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 -g 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -m 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --yes
 
             - name: Call Method on Gateway
-              run: node evm/gateway.js -e local -n ethereum --action callContract -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --destinationChain fantom
+              run: node evm/gateway.js -e local -n ethereum --action callContract -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --destinationChain fantom --yes
