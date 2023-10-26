@@ -4,12 +4,11 @@ const fs = require('fs');
 const { ethers } = require('hardhat');
 const {
     Wallet,
-    BigNumber,
-    utils: { isAddress, serializeTransaction },
+    utils: { isAddress },
 } = ethers;
 
 const path = require('path');
-const { LedgerSigner } = require('@ethersproject/hardware-wallets');
+const { LedgerSigner } = require('./LedgerSigner');
 
 const { printError, printInfo, printObj, isValidPrivateKey, isNumber, isValidNumber } = require('./utils');
 
@@ -28,7 +27,7 @@ const getWallet = async (privateKey, provider, options = {}) => {
     }
 
     if (privateKey === 'ledger') {
-        wallet = getLedgerWallet(provider, options?.ledgerPath);
+        wallet = await getLedgerWallet(provider, options?.ledgerPath);
     } else {
         if (!isValidPrivateKey(privateKey)) {
             throw new Error('Private key is missing/ not provided correctly');
@@ -41,10 +40,10 @@ const getWallet = async (privateKey, provider, options = {}) => {
 };
 
 // function to create a ledgerSigner type wallet object
-const getLedgerWallet = (provider, path) => {
-    const type = 'hid';
+const getLedgerWallet = async (provider, path) => {
     path = path || "m/44'/60'/0'/0/0";
-    return new LedgerSigner(provider, type, path);
+
+    return new LedgerSigner(provider, path);
 };
 
 /**
@@ -68,12 +67,6 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
     }
 
     if (!options.offline) {
-        // force legacy tx type for ledger signer
-        if (wallet instanceof LedgerSigner) {
-            tx.type = 0;
-            tx.gasPrice = tx.gasPrice || (await wallet.provider.getGasPrice());
-        }
-
         tx = await wallet.populateTransaction(tx);
     } else {
         const address = options.signerAddress || (await wallet.getAddress());
@@ -106,53 +99,29 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
             throw new Error('Gas limit is missing/not provided for the tx in function arguments');
         }
 
-        if (!tx.gasPrice && !(isNumber(tx.maxFeePerGas) && isNumber(tx.maxPriorityFeePerGas))) {
+        if (
+            !tx.gasPrice &&
+            !(isValidNumber(tx.maxFeePerGas) && (tx.maxPriorityFeePerGas === undefined || isNumber(tx.maxPriorityFeePerGas)))
+        ) {
             throw new Error('Gas price (legacy or eip-1559) is missing/not provided for the tx in function arguments');
+        }
+
+        if (tx.maxFeePerGas !== undefined) {
+            tx.type = 2;
+        } else {
+            tx.type = 0;
         }
 
         printInfo('Transaction being signed', JSON.stringify(tx, null, 2));
     }
 
-    let signedTx;
-
-    if (wallet instanceof LedgerSigner) {
-        // Ledger doesn't like .from to be set
-        delete tx.from;
-
-        signedTx = await ledgerSign(wallet, chain, tx);
-    } else {
-        signedTx = await wallet.signTransaction(tx);
-    }
+    const signedTx = await wallet.signTransaction(tx);
 
     if (!options.offline) {
         await sendTransaction(signedTx, wallet.provider, chain.confirmations);
     }
 
     return { baseTx: tx, signedTx };
-};
-
-const ledgerSign = async (wallet, chain, baseTx) => {
-    printInfo('Waiting for user to approve transaction through ledger wallet');
-
-    const unsignedTx = serializeTransaction(baseTx).substring(2);
-    const sig = await wallet._retry((eth) => eth.signTransaction("m/44'/60'/0'/0/0", unsignedTx));
-
-    // EIP-155 sig.v computation
-    // v in {0,1} + 2 * chainId + 35
-    // Ledger gives this value mod 256
-    // So from that, compute whether v is 0 or 1 and then add to 2 * chainId + 35 without doing a mod
-    var v = BigNumber.from('0x' + sig.v).toNumber();
-    v = 2 * chain.chainId + 35 + ((v + 256 * 100000000000 - (2 * chain.chainId + 35)) % 256);
-
-    const signedTx = serializeTransaction(baseTx, {
-        v,
-        r: '0x' + sig.r,
-        s: '0x' + sig.s,
-    });
-
-    printInfo('Signed Tx from ledger with signedTxHash as', signedTx);
-
-    return signedTx;
 };
 
 const sendTransaction = async (tx, provider, confirmations = undefined) => {
