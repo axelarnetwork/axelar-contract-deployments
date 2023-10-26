@@ -21,6 +21,14 @@ jobs:
             - name: Install
               run: npm ci
 
+            - name: List directories and check file existence
+              run: |
+                  echo "Listing all directories:"
+                  ls -R  # Lists all contents recursively in the working directory
+
+                  echo "Checking if 'local.json' exists in 'axelar-chains-config/info/':"
+                  [ -f axelar-chains-config/info/local.json ] && echo "File exists" || echo "File does not exist"
+
             - name: Spin up Hardhat Network
               run: npx hardhat node &
 
