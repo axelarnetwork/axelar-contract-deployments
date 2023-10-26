@@ -1,0 +1,13 @@
+account_id: "axelarEng"
+actions:
+  axelareng/its:
+    runtime: v2
+    sources: role-update
+    specs:
+      role-update:
+        description: This actions sends alerts if roles are updated.
+        function: roleUpdate:handleRoleUpdate
+        trigger:
+          type: transaction
+        execution_type: sequential
+project_slug: "ITS"
