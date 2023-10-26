@@ -5,6 +5,12 @@ const TOPIC_0_ROLES_REMOVED = '0xfcacbe9899a5563ab47d70de5417c1cb8e648bc9ccaeea6
 
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
+const TRUSTED_ADDRESSES = [
+    '0x4a6eea0999b000a941926e298f7a49373c153fbc', // TODO: Update contracts list upon deployment
+    '0xf1ea5615086a0936f82656f88263365831978f71',
+    '0xb8cd93c83a974649d76b1c19f311f639e62272bc',
+];
+
 const handleRoleUpdate = async (context, event) => {
     const chainName = context.metadata.getNetwork();
 
@@ -20,6 +26,7 @@ const handleRoleUpdate = async (context, event) => {
 
             const summary = log.topics[0] === TOPIC_0_ROLES_ADDED ? 'Roles added' : 'Roles removed';
             const account = `0x${log.topics[1].substring(26, 26 + 40)}`;
+            const severity = TRUSTED_ADDRESSES.includes(account.toLowerCase()) ? 'warning' : 'info';
 
             try {
                 await axios.post(
@@ -30,7 +37,7 @@ const handleRoleUpdate = async (context, event) => {
                         payload: {
                             summary,
                             source: `${chainName}-${log.address}`,
-                            severity: 'warning',
+                            severity,
                             custom_details: {
                                 timestamp: Date.now(),
                                 chain_name: chainName,
