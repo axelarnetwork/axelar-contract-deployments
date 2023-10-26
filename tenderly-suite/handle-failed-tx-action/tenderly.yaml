@@ -1,4 +1,4 @@
-account_id: ""
+account_id: "axelarEng"
 actions:
   axelareng/its:
     runtime: v2
@@ -10,4 +10,4 @@ actions:
         trigger:
           type: transaction
         execution_type: sequential
-project_slug: ""
+project_slug: "ITS"
