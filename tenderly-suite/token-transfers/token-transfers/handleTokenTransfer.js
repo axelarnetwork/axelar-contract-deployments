@@ -42,6 +42,11 @@ const handleTokenTransferFn = async (context, event) => {
         throw new Error('NO_TOKEN_TRANSFER_DETECTED');
     }
 
+    const amountsAboveThreshold = [];
+    const prices = [];
+    const symbols = [];
+    let severity = 0;
+
     for (let index = 0; index < tokenIDs.length; index++) {
         const id = tokenIDs[index];
 
@@ -80,46 +85,75 @@ const handleTokenTransferFn = async (context, event) => {
             throw Error('ERROR_IN_FETCHING_PRICE');
         }
 
-        let severity;
+        let tempSeverity = 0;
 
         if (totalAmount > tokenThreshold[2]) {
-            severity = 'critical';
+            tempSeverity = 3;
         } else if (totalAmount > tokenThreshold[1]) {
-            severity = 'warning';
+            tempSeverity = 2;
         } else if (totalAmount > tokenThreshold[0]) {
-            severity = 'info';
+            tempSeverity = 1;
         }
 
-        if (severity) {
-            try {
-                await axios.post(
-                    PAGER_DUTY_ALERT_URL,
-                    {
-                        routing_key: await context.secrets.get('PD_ROUTING_KEY'),
-                        event_action: 'trigger',
-                        payload: {
-                            summary: 'Token tranfer amount crossed threshold',
-                            source: `${chainName}-ITS-${ITS_CONTRACT_ADDRESS}`,
-                            severity,
-                            custom_details: {
-                                timestamp: Date.now(),
-                                chain_name: chainName,
-                                transaction: event.hash,
-                                price: tokenPrice,
-                                amount: `${tokenTransferAmount}`,
-                                payload: event,
+        if (tempSeverity) {
+            if (tempSeverity > severity) {
+                severity = tempSeverity;
+            }
+
+            amountsAboveThreshold.push(totalAmount);
+            prices.push(tokenPrice);
+            symbols.push(symbol);
+        }
+    }
+
+    if (severity) {
+        try {
+            await axios.post(
+                PAGER_DUTY_ALERT_URL,
+                {
+                    routing_key: await context.secrets.get('PD_ROUTING_KEY'),
+                    event_action: 'trigger',
+                    payload: {
+                        summary: 'Token tranfer amount crossed threshold',
+                        source: `${chainName}-ITS-${ITS_CONTRACT_ADDRESS}`,
+                        severity: getSeverityString(severity),
+                        custom_details: {
+                            timestamp: Date.now(),
+                            chain_name: chainName,
+                            transaction: event.hash,
+                            transfer_info: {
+                                amounts: amountsAboveThreshold,
+                                prices,
+                                symbols,
                             },
+                            payload: event,
                         },
                     },
-                    {},
-                );
-            } catch (error) {
-                console.log('PD error status: ', error.response.status);
-                console.log('PD error response: ', error.response.data);
-                throw Error('TOKEN_TRANSFER_ALERT_FAILED');
-            }
+                },
+                {},
+            );
+        } catch (error) {
+            console.log('PD error status: ', error.response.status);
+            console.log('PD error response: ', error.response.data);
+            throw Error('TOKEN_TRANSFER_ALERT_FAILED');
         }
     }
 };
+
+function getSeverityString(severity) {
+    if (severity === 3) {
+        return 'critical';
+    }
+
+    if (severity === 2) {
+        return 'warning';
+    }
+
+    if (severity === 1) {
+        return 'info';
+    }
+
+    return '';
+}
 
 module.exports = { handleTokenTransferFn };
