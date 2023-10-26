@@ -7,32 +7,38 @@ const {
     providers: { getDefaultProvider },
 } = ethers;
 
-const { printError, printInfo, printWarn, prompt, mainProcessor } = require('./utils');
+const { printError, printInfo, printWarn, getConfigByChainId, prompt, loadConfig } = require('./utils');
 const { sendTransaction, getSignedTx, storeSignedTx } = require('./sign-utils');
 
-async function processCommand(_, chain, options) {
-    const { filePath, rpc } = options;
+async function processCommand(config, _, options, file) {
+    const { rpc } = options;
+
+    const transaction = await getSignedTx(file);
+    const parsedTx = ethers.utils.parseTransaction(transaction.signedTx);
+
+    const chain = getConfigByChainId(parsedTx.chainId, config);
 
     const provider = getDefaultProvider(rpc || chain.rpc);
 
+    if (parsedTx.chainId !== transaction.unsignedTx.chainId) {
+        printError(
+            `ChainId mismatch: signed tx chain id ${parsedTx.chainId} doesn't match unsigned tx chain id ${transaction.unsignedTx.chainId}`,
+        );
+        return;
+    }
+
     if (
         prompt(
-            `Proceed with the broadcasting of all pending signed transactions for file ${chalk.green(
-                options.filePath,
-            )} on chain ${chalk.green(chain.name)}`,
+            `Proceed with the broadcasting of all pending signed transactions for file ${chalk.green(file)} on chain ${chalk.green(
+                chain.name,
+            )}`,
             options.yes,
         )
     ) {
         return;
     }
 
-    if (!filePath) {
-        throw new Error('FilePath is not provided in user info');
-    }
-
-    const transaction = await getSignedTx(filePath);
-
-    if (transaction.status === 'PENDING') {
+    if (transaction.status !== 'SUCCESS') {
         printInfo('Broadcasting transaction', JSON.stringify(transaction.unsignedTx, null, 2));
 
         // Send the signed transaction
@@ -46,21 +52,30 @@ async function processCommand(_, chain, options) {
             printError('Error broadcasting tx', error);
         }
 
-        storeSignedTx(filePath, transaction);
+        storeSignedTx(file, transaction);
     } else {
         printWarn('Skipping broadcast, transaction status is', transaction.status);
     }
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    const config = loadConfig(options.env);
+    const { files } = options;
+
+    if (!files || files.length === 0) {
+        throw new Error('FilePath is not provided in user info');
+    }
+
+    for (const file of files) {
+        await processCommand(config, null, options, file);
+    }
 }
 
 const program = new Command();
 
 program.name('broadcast-transactions').description('Broadcast all the pending signed transactions of the signer');
 
-program.addOption(new Option('--filePath <filePath>', 'The file where the signed tx are stored').makeOptionMandatory(true));
+program.addOption(new Option('--files [files...]', 'The file where the signed tx are stored').makeOptionMandatory(true));
 program.addOption(
     new Option('-e, --env <env>', 'environment')
         .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
@@ -68,7 +83,6 @@ program.addOption(
         .makeOptionMandatory(true)
         .env('ENV'),
 );
-program.addOption(new Option('-n, --chainName <chainName>', 'chain names').makeOptionMandatory(true));
 program.addOption(new Option('-r, --rpc <rpc>', 'The chain rpc'));
 program.addOption(new Option('-y, --yes', 'skip prompts'));
 

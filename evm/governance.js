@@ -12,6 +12,7 @@ const {
 const { Command, Option } = require('commander');
 const {
     printInfo,
+    copyObject,
     printWalletInfo,
     isValidTimeFormat,
     dateToEta,
@@ -62,7 +63,7 @@ async function getGatewaySetupParams(governance, gateway, contracts, options) {
 }
 
 async function processCommand(_, chain, options) {
-    const { contractName, address, action, date, privateKey, yes } = options;
+    const { env, contractName, address, action, date, privateKey, yes } = options;
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -103,7 +104,13 @@ async function processCommand(_, chain, options) {
 
     const governance = new Contract(governanceAddress, IGovernance.abi, wallet);
 
-    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || { gasLimit: 5e6 };
+    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || { gasLimit: 5e6 });
+
+    // Some chains require a gas adjustment
+    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
+        gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.4);
+    }
+
     printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
 
     printInfo('Proposal Action', action);
@@ -464,6 +471,23 @@ async function processCommand(_, chain, options) {
             break;
         }
 
+        case 'cancelUpgrade': {
+            const eta = dateToEta(date);
+            const implementation = options.implementation || chain.contracts.AxelarGateway?.implementation;
+            const newGatewayImplementationCodeHash = await getBytecodeHash(implementation, chain.name, provider);
+            const gateway = new Contract(target, IGateway.abi, wallet);
+            const setupParams = await getGatewaySetupParams(governance, gateway, contracts, options);
+            calldata = gateway.interface.encodeFunctionData('upgrade', [implementation, newGatewayImplementationCodeHash, setupParams]);
+
+            const commandType = 1;
+            const types = ['uint256', 'address', 'bytes', 'uint256', 'uint256'];
+            const values = [commandType, target, calldata, nativeValue, eta];
+
+            gmpPayload = defaultAbiCoder.encode(types, values);
+
+            break;
+        }
+
         case 'withdraw': {
             if (!isValidTimeFormat(date)) {
                 throw new Error(`Invalid ETA: ${date}. Please pass the eta in the format YYYY-MM-DDTHH:mm:ss`);
@@ -609,6 +633,7 @@ program.addOption(
         'gatewayUpgrade',
         'submitUpgrade',
         'executeUpgrade',
+        'cancelUpgrade',
         'withdraw',
         'getProposalEta',
     ]),
