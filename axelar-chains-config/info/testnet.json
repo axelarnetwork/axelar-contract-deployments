@@ -1338,7 +1338,8 @@
       "gasOptions": {
         "gasLimit": 300000000
       },
-      "confirmations": 3
+      "confirmations": 3,
+      "eip1559": true
     },
     "linea": {
       "name": "Linea",
@@ -1646,11 +1647,7 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
-      "skipRevertTests": true,
-      "staticGasOptions": {
-        "gasLimit": 3000000,
-        "gasPrice": 1000000000
-      }
+      "skipRevertTests": true
     },
     "scroll": {
       "name": "Scroll",
