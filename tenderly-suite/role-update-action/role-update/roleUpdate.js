@@ -1,7 +1,7 @@
 const axios = require('axios').default;
 
-const TOPIC_0_ROLES_ADDED = '0x7d84b89a03a5eeb4f4c08928d186adfdee2af1ef0a026ef9b04fe688774e8463';
-const TOPIC_0_ROLES_REMOVED = '0xfcacbe9899a5563ab47d70de5417c1cb8e648bc9ccaeea6d8e0f5276087394c3';
+const TOPIC_0_ROLES_ADDED = '0x3df2f62906643352cfb366ada865850a1f2127a98c97ac962921d5caf75561c3';
+const TOPIC_0_ROLES_REMOVED = '0x17e90d13bc6dcdbe950d3d022f0774c9dfa3308b96720b8779075dd83236061f';
 
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
