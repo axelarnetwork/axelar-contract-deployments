@@ -15,13 +15,11 @@ const TOPIC_0_TOKEN_SENT_WITH_DATA = '0x875cab82a677ce38c76127a24fa89a67df04116c
 const TOPIC_0_TOKEN_RECIEVED = '0xa5392cc9825f3ea9fa772e43f2392ca1a9e97db3619eac789383aaaaabb467c4';
 const TOPIC_0_TOKEN_RECIEVED_WITH_DATA = '0x35f4643275e22b7f12d809c70f685b292b1ade91c4033884bdd0a49bfbe737c3';
 
-const ITS_CONTRACT_ADDRESS = '0x4a6eea0999b000a941926e298f7a49373c153fbc'; // Assuming ITS contract address will be same on all chains.
-
 const handleTokenTransferFn = async (context, event) => {
     const chainName = context.metadata.getNetwork();
     const provider = new ethers.providers.JsonRpcProvider(context.gateways.getGateway(chainName));
 
-    const its = new ethers.Contract(ITS_CONTRACT_ADDRESS, ITS_ABI, provider);
+    let its;
 
     const tokenTransferAmounts = [];
     const tokenIDs = [];
@@ -33,6 +31,10 @@ const handleTokenTransferFn = async (context, event) => {
             log.topics[0] === TOPIC_0_TOKEN_RECIEVED ||
             log.topics[0] === TOPIC_0_TOKEN_RECIEVED_WITH_DATA
         ) {
+            if(!its){
+                its = new ethers.Contract(log.address, ITS_ABI, provider);
+            }
+
             tokenIDs.push(log.topics[1]);
             tokenTransferAmounts.push(ethers.BigNumber.from(log.topics[log.topics.length - 1]));
         }
@@ -115,7 +117,7 @@ const handleTokenTransferFn = async (context, event) => {
                     event_action: 'trigger',
                     payload: {
                         summary: 'Token tranfer amount crossed threshold',
-                        source: `${chainName}-ITS-${ITS_CONTRACT_ADDRESS}`,
+                        source: `${chainName}-ITS-${its.address}`,
                         severity: getSeverityString(severity),
                         custom_details: {
                             timestamp: Date.now(),
