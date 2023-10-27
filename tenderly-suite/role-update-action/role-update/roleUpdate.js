@@ -14,8 +14,16 @@ const TRUSTED_ADDRESSES = [
 const handleRoleUpdate = async (context, event) => {
     const chainName = context.metadata.getNetwork();
 
+    const roleAddedAccounts = [];
+    const addedRoles = [];
+    const roleRemovedAccounts = [];
+    const removedRoles = [];
+    const summary = 'Roles updated';
+    let severity = 0;
+
     for (const log of event.logs) {
         if (log.topics[0] === TOPIC_0_ROLES_ADDED || log.topics[0] === TOPIC_0_ROLES_REMOVED) {
+            console.log('log Found');
             const length = parseInt(log.data.substring(128, 130), 16);
             const roles = [];
 
@@ -24,39 +32,58 @@ const handleRoleUpdate = async (context, event) => {
                 roles.push(getRole(parseInt(log.data.substring(subIndex - 2, subIndex), 16)));
             }
 
-            const summary = log.topics[0] === TOPIC_0_ROLES_ADDED ? 'Roles added' : 'Roles removed';
             const account = `0x${log.topics[1].substring(26, 26 + 40)}`;
-            const severity = TRUSTED_ADDRESSES.includes(account.toLowerCase()) ? 'warning' : 'info';
+            const tempSeverity = TRUSTED_ADDRESSES.includes(account.toLowerCase()) ? 1 : 2;
 
-            try {
-                await axios.post(
-                    PAGER_DUTY_ALERT_URL,
-                    {
-                        routing_key: await context.secrets.get('PD_ROUTING_KEY'),
-                        event_action: 'trigger',
-                        payload: {
-                            summary,
-                            source: `${chainName}-${log.address}`,
-                            severity,
-                            custom_details: {
-                                timestamp: Date.now(),
-                                chain_name: chainName,
-                                trigger_event: event,
-                                account,
-                                roles,
+            if (log.topics[0] === TOPIC_0_ROLES_ADDED) {
+                roleAddedAccounts.push(account);
+                addedRoles.push(roles);
+            } else {
+                roleRemovedAccounts.push(account);
+                removedRoles.push(roles);
+            }
+
+            if (tempSeverity > severity) {
+                severity = tempSeverity;
+            }
+        }
+    }
+
+    if (severity) {
+        try {
+            await axios.post(
+                PAGER_DUTY_ALERT_URL,
+                {
+                    routing_key: await context.secrets.get('PD_ROUTING_KEY'),
+                    event_action: 'trigger',
+                    payload: {
+                        summary,
+                        source: `${chainName}-${event.hash}`,
+                        severity: severity === 2 ? 'warning' : 'info',
+                        custom_details: {
+                            timestamp: Date.now(),
+                            chain_name: chainName,
+                            trigger_event: event,
+                            rolesUpdated: {
+                                roleAddedAccounts,
+                                addedRoles,
+                                roleRemovedAccounts,
+                                removedRoles,
                             },
                         },
                     },
-                    {
-                        'Content-Type': 'application/json',
-                    },
-                );
-            } catch (error) {
-                console.log('PD error status: ', error.response.status);
-                console.log('PD error data: ', error.response.data);
-                throw Error('SENDING_ALERTS_FAILED');
-            }
+                },
+                {
+                    'Content-Type': 'application/json',
+                },
+            );
+        } catch (error) {
+            console.log('PD error status: ', error.response.status);
+            console.log('PD error data: ', error.response.data);
+            throw Error('SENDING_ALERTS_FAILED');
         }
+    } else {
+        throw new Error('NO_ROLE_UPDATES_DETECTED');
     }
 };
 
