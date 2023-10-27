@@ -18,8 +18,7 @@ const TOPIC_0_TOKEN_RECIEVED_WITH_DATA = '0x35f4643275e22b7f12d809c70f685b292b1a
 const handleTokenTransferFn = async (context, event) => {
     const chainName = context.metadata.getNetwork();
     const provider = new ethers.providers.JsonRpcProvider(context.gateways.getGateway(chainName));
-
-    let its;
+    const its = new ethers.Contract(await context.storage.getStr('ITSContractAddress'), ITS_ABI, provider);
 
     const tokenTransferAmounts = [];
     const tokenIDs = [];
@@ -31,10 +30,6 @@ const handleTokenTransferFn = async (context, event) => {
             log.topics[0] === TOPIC_0_TOKEN_RECIEVED ||
             log.topics[0] === TOPIC_0_TOKEN_RECIEVED_WITH_DATA
         ) {
-            if (!its) {
-                its = new ethers.Contract(log.address, ITS_ABI, provider);
-            }
-
             tokenIDs.push(log.topics[1]);
             tokenTransferAmounts.push(ethers.BigNumber.from(log.topics[log.topics.length - 1]));
         }
