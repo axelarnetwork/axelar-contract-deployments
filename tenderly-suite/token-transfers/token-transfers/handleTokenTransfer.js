@@ -31,7 +31,7 @@ const handleTokenTransferFn = async (context, event) => {
             log.topics[0] === TOPIC_0_TOKEN_RECIEVED ||
             log.topics[0] === TOPIC_0_TOKEN_RECIEVED_WITH_DATA
         ) {
-            if(!its){
+            if (!its) {
                 its = new ethers.Contract(log.address, ITS_ABI, provider);
             }
 
