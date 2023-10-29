@@ -3,25 +3,25 @@ name: Run Axelar Chains Config Tests
 on: pull_request
 
 jobs:
-    test:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [ubuntu-22.04]
-                arch: [amd64]
-        steps:
-            - name: Setup Node
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 18
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        arch: [amd64]
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-            - name: Checkout code
-              uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-            - name: Install
-              run: npm ci
-              working-directory: axelar-chains-config
+      - name: Install
+        run: npm ci
+        working-directory: axelar-chains-config
 
-            - name: Test
-              run: npm run test
-              working-directory: axelar-chains-config
+      - name: Test
+        run: npm run test
+        working-directory: axelar-chains-config
