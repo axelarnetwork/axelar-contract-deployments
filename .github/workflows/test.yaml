@@ -44,7 +44,7 @@ jobs:
       # Create .env file with default hardhat private key that's prefunded
       - name: Prepare .env
         run: |
-          echo "PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80\nENV=local\nCHAIN=test\n" > .env
+          echo "PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80\nENV=local\nCHAINS=test\n" > .env
 
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
