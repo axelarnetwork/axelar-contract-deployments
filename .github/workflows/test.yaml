@@ -1,22 +1,24 @@
-name: Contract Deployments Integration Test
+name: Test
 
 on: pull_request
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04]
-        arch: [amd64]
+        node-version:
+          - 18.x
+        os:
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install
         run: npm ci
@@ -28,28 +30,33 @@ jobs:
         run: |
           echo '{
             "chains": {
-              "ethereum": {
-                "name": "Hardhat",
-                "id": "hardhat",
+              "test": {
+                "name": "Test",
+                "id": "test",
                 "chainId": 31337,
                 "rpc": "http://127.0.0.1:8545",
-                "tokenSymbol": "ETH",
+                "tokenSymbol": "TEST",
                 "contracts": {}
               }
             }
-          }' > axelar-chains-config/info/local.json
+          }' > ./axelar-chains-config/info/local.json
+
+      # Create .env file with default hardhat private key that's prefunded
+      - name: Prepare .env
+        run: |
+          echo "PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80\nENV=local\nCHAIN=test\n" > .env
 
       - name: Display local.json
-        run: cat axelar-chains-config/info/local.json
+        run: cat ./axelar-chains-config/info/local.json
 
-      - name: Deploy constAddressDeployer
-        run: node evm/deploy-contract.js -e local -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c ConstAddressDeployer -n ethereum -m create -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --yes
+      - name: Deploy ConstAddressDeployer
+        run: node evm/deploy-contract.js -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c ConstAddressDeployer -m create -y
 
       - name: Deploy Create3Deployer
-        run: node evm/deploy-contract.js -e local -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c Create3Deployer -n ethereum -m create2 -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --yes
+        run: node evm/deploy-contract.js -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c Create3Deployer -m create2 -y
 
       - name: Deploy AxelarGateway
-        run: node evm/deploy-gateway-v6.2.x.js -e local -n ethereum -m create3 -s "AxelarGateway v6.2" -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 -g 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -m 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --yes
+        run: node evm/deploy-gateway-v6.2.x.js -m create3 -s "AxelarGateway v6.2" -g 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -m 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
 
       - name: Call Method on Gateway
-        run: node evm/gateway.js -e local -n ethereum --action callContract -p 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --destinationChain fantom --yes
+        run: node evm/gateway.js --action callContract --destinationChain test2 -y
