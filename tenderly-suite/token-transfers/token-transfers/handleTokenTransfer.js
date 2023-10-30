@@ -17,7 +17,7 @@ const TOPIC_0_TOKEN_RECIEVED_WITH_DATA = '0x35f4643275e22b7f12d809c70f685b292b1a
 
 const handleTokenTransferFn = async (context, event) => {
     const chainName = context.metadata.getNetwork();
-    const provider = new ethers.providers.JsonRpcProvider(context.gateways.getGateway(chainName));
+    const provider = new ethers.providers.JsonRpcProvider(await context.secrets.get(`RPC_${chainName.toUpperCase()}`));
     const its = new ethers.Contract(await context.storage.getStr('ITSContractAddress'), ITS_ABI, provider);
 
     const tokenTransferAmounts = [];
