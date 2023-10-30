@@ -97,8 +97,8 @@ async function deploy(config, chain, options) {
     }
 
     const contractConfig = chain.contracts[contractName];
-    const governance = options.governance || contractConfig.governance;
-    const mintLimiter = options.mintLimiter || contractConfig.mintLimiter;
+    const governance = options.governance || contractConfig.governance || chain.contracts.InterchainGovernance?.address;
+    const mintLimiter = options.mintLimiter || contractConfig.mintLimiter || chain.contracts.Multisig?.address;
 
     if (!reuseProxy) {
         if (governance === undefined) {
@@ -374,8 +374,8 @@ async function upgrade(_, chain, options) {
 
     const gateway = new Contract(contractConfig.address, AxelarGateway.abi, wallet);
     let implementationCodehash = contractConfig.implementationCodehash;
-    let governance = options.governance || contractConfig.governance;
-    let mintLimiter = options.mintLimiter || contractConfig.mintLimiter;
+    let governance = options.governance || contractConfig.governance || chain.contracts.InterchainGovernance?.address;
+    let mintLimiter = options.mintLimiter || contractConfig.mintLimiter || chain.contracts.Multisig?.address;
     let setupParams = '0x';
     contractConfig.governance = governance;
     contractConfig.mintLimiter = mintLimiter;
@@ -476,7 +476,7 @@ async function main(options) {
 async function programHandler() {
     const program = new Command();
 
-    program.name('deploy-gateway-v5.x').description('Deploy gateway v5.x');
+    program.name('deploy-gateway-v6.2.x').description('Deploy gateway v6.2.x');
 
     program.addOption(
         new Option('-e, --env <env>', 'environment')
@@ -510,6 +510,7 @@ async function programHandler() {
     program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
+    program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain'));
 
     program.action((options) => {
         main(options);

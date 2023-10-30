@@ -358,7 +358,7 @@ program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').mak
 program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
 program.addOption(new Option('-v, --verify <verify>', 'verify the deployed contract on the explorer').env('VERIFY'));
 program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain').env('YES'));
+program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain'));
 program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
 
 program.action((options) => {
