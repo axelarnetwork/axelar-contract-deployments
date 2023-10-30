@@ -8,8 +8,7 @@ const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
 const handleFailedTxFn = async (context, event) => {
     const chainName = context.metadata.getNetwork();
-    const rpc = context.gateways.getGateway(chainName);
-    const provider = new ethers.providers.JsonRpcProvider(rpc);
+    const provider = new ethers.providers.JsonRpcProvider(await context.secrets.get(`RPC_${chainName.toUpperCase()}`));
     const tx = await provider.getTransaction(event.hash);
 
     const response = await provider.call(tx, tx.blockNumber);
