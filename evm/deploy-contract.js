@@ -26,7 +26,46 @@ const {
     prompt,
     mainProcessor,
     isContract,
+    addDeploymentOptions,
 } = require('./utils');
+
+function getContractPath(contractName) {
+    switch (contractName) {
+        case 'AxelarServiceGovernance': {
+            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/governance/AxelarServiceGovernance.sol/AxelarServiceGovernance.json';
+        }
+
+        case 'InterchainProposalSender': {
+            throw new Error(`Artifact path for ${contractName} must be entered manually.`);
+        }
+
+        case 'InterchainGovernance': {
+            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/governance/InterchainGovernance.sol/InterchainGovernance.json';
+        }
+
+        case 'Multisig': {
+            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/governance/Multisig.sol/Multisig.json';
+        }
+
+        case 'Operators': {
+            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/utils/Operators.sol/Operators.json';
+        }
+
+        case 'ConstAddressDeployer': {
+            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json';
+        }
+
+        case 'Create3Deployer': {
+            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json';
+        }
+
+        case 'TokenDeployer': {
+            return '@axelar-network/axelar-cgp-solidity/artifacts/contracts/TokenDeployer.sol/TokenDeployer.json';
+        }
+    }
+
+    throw new Error(`${contractName} is not supported.`);
+}
 
 async function getConstructorArgs(contractName, chain, wallet, options) {
     const config = chain.contracts;
@@ -250,7 +289,14 @@ async function processCommand(config, chain, options) {
 
     printInfo('Contract name', contractName);
 
-    const contractPath = artifactPath.charAt(0) === '@' ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
+    let contractPath;
+
+    if (artifactPath) {
+        contractPath = artifactPath.charAt(0) === '@' ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
+    } else {
+        contractPath = getContractPath(contractName);
+    }
+
     printInfo('Contract path', contractPath);
 
     const contractJson = require(contractPath);
@@ -340,25 +386,11 @@ const program = new Command();
 
 program.name('deploy-contract').description('Deploy contracts using create, create2, or create3');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true));
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true).env('CHAINS'));
-program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
+addDeploymentOptions(program, true, true, true, true, true);
+
 program.addOption(
     new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
 );
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
-program.addOption(new Option('-v, --verify <verify>', 'verify the deployed contract on the explorer').env('VERIFY'));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain'));
 program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
 
 program.action((options) => {

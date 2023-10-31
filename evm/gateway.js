@@ -20,6 +20,7 @@ const {
     wasEventEmitted,
     mainProcessor,
     printError,
+    addCallContractOptions,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 
@@ -330,17 +331,9 @@ const program = new Command();
 
 program.name('gateway').description('Script to perform gateway commands');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
+addCallContractOptions(program, true);
+
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig'));
-program.addOption(new Option('-a, --address <address>', 'override address'));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true).env('CHAINS'));
-program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
 program.addOption(
     new Option('--action <action>', 'gateway action')
         .choices([
@@ -359,8 +352,6 @@ program.addOption(
         ])
         .makeOptionMandatory(true),
 );
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
 program.addOption(new Option('--payload <payload>', 'gmp payload'));
 program.addOption(new Option('--commandID <commandID>', 'execute command ID'));

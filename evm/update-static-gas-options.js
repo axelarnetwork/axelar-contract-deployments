@@ -9,7 +9,7 @@ const {
     BigNumber,
 } = ethers;
 
-const { printInfo, mainProcessor, prompt } = require('./utils');
+const { printInfo, mainProcessor, prompt, addEnvironmentOptions } = require('./utils');
 
 const defaultGasLimit = 3e6;
 const gasPriceMultiplier = 5;
@@ -101,14 +101,8 @@ const program = new Command();
 
 program.name('update-static-gas-options').description('Update staticGasOptions');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+addEnvironmentOptions(program);
+
 program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch gasOptions'));
 program.addOption(new Option('-y, --yes', 'skip prompts'));
 

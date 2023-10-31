@@ -3,7 +3,7 @@
 require('dotenv').config();
 
 const { Command, Option } = require('commander');
-const { mainProcessor } = require('./utils');
+const { mainProcessor, addEnvironmentOptions } = require('./utils');
 
 async function processCommand(options, chain, _) {
     const { contractName } = options;
@@ -23,15 +23,9 @@ const program = new Command();
 
 program.name('remove-info').description('Remove info about contract from the info file.');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
+addEnvironmentOptions(program);
+
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
 
 program.action((options) => {
     main(options);

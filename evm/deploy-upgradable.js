@@ -13,7 +13,16 @@ const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const { Command, Option } = require('commander');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
-const { printInfo, printError, saveConfig, loadConfig, printWalletInfo, getDeployedAddress, prompt } = require('./utils');
+const {
+    printInfo,
+    printError,
+    saveConfig,
+    loadConfig,
+    printWalletInfo,
+    getDeployedAddress,
+    prompt,
+    addDeploymentOptions,
+} = require('./utils');
 
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
@@ -65,7 +74,7 @@ async function getImplementationArgs(contractName, config, options) {
     throw new Error(`${contractName} is not supported.`);
 }
 
-function getInitArgs(contractName, config) {
+function getInitArgs(contractName) {
     switch (contractName) {
         case 'AxelarGasService': {
             return '0x';
@@ -79,7 +88,7 @@ function getInitArgs(contractName, config) {
     throw new Error(`${contractName} is not supported.`);
 }
 
-function getUpgradeArgs(contractName, config) {
+function getUpgradeArgs(contractName) {
     switch (contractName) {
         case 'AxelarGasService': {
             return '0x';
@@ -304,25 +313,11 @@ const program = new Command();
 
 program.name('deploy-upgradable').description('Deploy upgradable contracts');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
+addDeploymentOptions(program, true, true, true, true, false, true);
+
 program.addOption(
     new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
 );
-program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path'));
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
-program.addOption(new Option('-u, --upgrade', 'upgrade a deployed contract'));
-program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 program.addOption(new Option('--args <args>', 'customize deployment args'));
 
 program.action((options) => {

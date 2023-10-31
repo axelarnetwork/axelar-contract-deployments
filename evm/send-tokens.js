@@ -10,7 +10,16 @@ const {
     utils: { parseEther, parseUnits },
 } = ethers;
 
-const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt } = require('./utils');
+const {
+    printInfo,
+    printError,
+    printWalletInfo,
+    isAddressArray,
+    mainProcessor,
+    isValidDecimal,
+    prompt,
+    addEnvironmentOptions,
+} = require('./utils');
 const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js');
 
 async function processCommand(_, chain, options) {
@@ -102,14 +111,8 @@ if (require.main === module) {
 
     program.name('send-tokens').description('Send native tokens to an address.');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+    addEnvironmentOptions(program);
+
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-r, --recipients <recipients>', 'comma-separated recipients of tokens').makeOptionMandatory(true));
     program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)'));

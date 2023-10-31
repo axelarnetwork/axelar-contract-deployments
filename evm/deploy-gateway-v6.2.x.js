@@ -27,6 +27,7 @@ const {
     mainProcessor,
     isContract,
     deployContract,
+    addDeploymentOptions,
 } = require('./utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
@@ -478,22 +479,12 @@ async function programHandler() {
 
     program.name('deploy-gateway-v6.2.x').description('Deploy gateway v6.2.x');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chains to run the script over').makeOptionMandatory(true).env('CHAINS'));
-    program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
+    addDeploymentOptions(program, false, false, true, true, true, true);
+
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(
         new Option('--deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
     );
-    program.addOption(new Option('-s, --salt <salt>', 'salt to use for deployment method'));
-    program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
     program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment').env('REUSE_PROXY'));
     program.addOption(
         new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment').env(
@@ -503,14 +494,11 @@ async function programHandler() {
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('-g, --governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('-m, --mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
-    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
     program.addOption(new Option('-k, --keyID <keyID>', 'key ID').env('KEY_ID'));
     program.addOption(new Option('-a, --amplifier', 'deploy amplifier gateway').env('AMPLIFIER'));
     program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
-    program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
-    program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain'));
 
     program.action((options) => {
         main(options);

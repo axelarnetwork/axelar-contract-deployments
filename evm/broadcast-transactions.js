@@ -7,7 +7,7 @@ const {
     providers: { getDefaultProvider },
 } = ethers;
 
-const { printError, printInfo, printWarn, getConfigByChainId, prompt, loadConfig } = require('./utils');
+const { printError, printInfo, printWarn, getConfigByChainId, prompt, loadConfig, addEnvironmentOptions } = require('./utils');
 const { sendTransaction, getSignedTx, storeSignedTx } = require('./sign-utils');
 
 async function processCommand(config, _, options, file) {
@@ -76,13 +76,7 @@ const program = new Command();
 program.name('broadcast-transactions').description('Broadcast all the pending signed transactions of the signer');
 
 program.addOption(new Option('--files [files...]', 'The file where the signed tx are stored').makeOptionMandatory(true));
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
+addEnvironmentOptions(program, true);
 program.addOption(new Option('-r, --rpc <rpc>', 'The chain rpc'));
 program.addOption(new Option('-y, --yes', 'skip prompts'));
 

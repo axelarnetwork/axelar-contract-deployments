@@ -12,7 +12,7 @@ const {
 
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-const { isNumber, isString, loadConfig, saveConfig, printObj, printLog, printError, printInfo } = require('./utils');
+const { isNumber, isString, loadConfig, saveConfig, printObj, printLog, printError, printInfo, addEnvironmentOptions } = require('./utils');
 
 async function getCallData(methodName, targetContract, inputRecipient, inputAmount) {
     var recipient, amount;
@@ -203,14 +203,8 @@ const program = new Command();
 
 program.name('execute-contract').description('Executes a call to an external contract');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+addEnvironmentOptions(program);
+
 program.addOption(
     new Option('-pc, --callContractPath <callContractPath>', 'artifact path for the called contract').makeOptionMandatory(true),
 );

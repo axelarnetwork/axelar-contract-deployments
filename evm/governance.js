@@ -27,6 +27,7 @@ const {
     mainProcessor,
     isValidDecimal,
     prompt,
+    addCallContractOptions,
 } = require('./utils');
 const { getWallet } = require('./sign-utils.js');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
@@ -606,23 +607,13 @@ const program = new Command();
 
 program.name('governance').description('Script to manage interchain governance actions');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
+addCallContractOptions(program, true);
+
 program.addOption(
     new Option('-c, --contractName <contractName>', 'contract name')
         .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
         .default('InterchainGovernance'),
 );
-program.addOption(new Option('-a, --address <address>', 'override address'));
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
 program.addOption(
     new Option('--action <action>', 'governance action').choices([
         'scheduleTimeLock',

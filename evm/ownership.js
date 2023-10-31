@@ -11,7 +11,7 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, printWalletInfo, loadConfig, saveConfig, prompt } = require('./utils');
+const { printInfo, printWalletInfo, loadConfig, saveConfig, prompt, addCallContractOptions } = require('./utils');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 
@@ -192,18 +192,9 @@ const program = new Command();
 
 program.name('ownership').description('script to manage contract ownership');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
+addCallContractOptions(program);
 
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('--address <address>', 'override address').makeOptionMandatory(false));
 program.addOption(
     new Option('--action <action>', 'ownership action').choices([
         'owner',
@@ -214,7 +205,6 @@ program.addOption(
     ]),
 );
 program.addOption(new Option('--newOwner <newOwner>', 'new owner address').makeOptionMandatory(false));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
 program.action((options) => {
     main(options);

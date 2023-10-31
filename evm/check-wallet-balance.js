@@ -4,7 +4,7 @@ const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { getDefaultProvider, BigNumber } = ethers;
 
-const { printError, mainProcessor } = require('./utils');
+const { printError, mainProcessor, addEnvironmentOptions } = require('./utils');
 const { getNonceFileData } = require('./sign-utils');
 
 async function processCommand(_, chain, options) {
@@ -51,14 +51,8 @@ const program = new Command();
 
 program.name('check-wallet-balance').description('Before offline signing checks if each signer has minimum required wallet balance');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
+addEnvironmentOptions(program);
+
 program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch gasOptions'));
 program.addOption(new Option('--addresses <addresses>', 'The Array of addresses for which the balance to check').env('ADDRESSES'));
 
