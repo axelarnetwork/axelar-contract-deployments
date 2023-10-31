@@ -20,8 +20,8 @@ async function processCommand(_, chain, options) {
         return;
     }
 
-    const gasLimit = BigNumber.from(staticGasOptions.gasLimit);
-    const gasPrice = BigNumber.from(staticGasOptions.gasPrice);
+    const gasLimit = BigNumber.from(chain.staticGasOptions.gasLimit);
+    const gasPrice = BigNumber.from(chain.eip1559 ? staticGasOptions.maxFeePerGas : staticGasOptions.gasPrice);
     const minRequiredBalance = gasLimit * gasPrice * 1.5;
     printError(`${chain.name} minimum required Balance`, `${minRequiredBalance / 1e18}`);
 

@@ -15,7 +15,7 @@ const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js')
 
 async function processCommand(_, chain, options) {
     const { privateKey, offline, env } = options;
-    let { amount: amountStr, recipients } = options;
+    let { amount: amountStr, recipients, nonceOffset } = options;
 
     const chainName = chain.name.toLowerCase();
     const provider = getDefaultProvider(chain.rpc);
@@ -88,7 +88,7 @@ async function processCommand(_, chain, options) {
 
             storeSignedTx(filePath, data);
 
-            options.nonceOffset = (parseInt(options.nonceOffset) || 0) + 1;
+            nonceOffset = (parseInt(nonceOffset) || 0) + 1;
         }
     }
 }

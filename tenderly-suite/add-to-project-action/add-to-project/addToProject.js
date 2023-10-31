@@ -1,7 +1,7 @@
 const axios = require('axios').default;
 
 const URL = 'https://api.tenderly.co/api/v2/accounts/axelarEng/projects/ITS/contracts';
-const TOKEN_MANAGER_DEPLOYED_TOPIC0 = '0x614cc9db96194a8f405df6fbdd25ebc1df6bb741c1fd196cb927d546c1406c34';
+const TOKEN_MANAGER_DEPLOYED_TOPIC0 = '0x5284c2478b9c1a55e973429331078be39b5fb3eeb9d87d10b34d65a4c89ee4eb';
 
 const addToProjectFn = async (context, event) => {
     const logs = event.logs;
@@ -9,7 +9,7 @@ const addToProjectFn = async (context, event) => {
 
     for (let index = 0; index < logs.length; ++index) {
         if (logs[index].topics[0] === TOKEN_MANAGER_DEPLOYED_TOPIC0) {
-            const deployedAddress = '0x' + logs[index].data.substring(218, 258); // TODO: can change with final event imp with AXL-2064
+            const deployedAddress = '0x' + logs[index].data.substring(26, 66);
             const name = `TokenManager-${context.metadata.getNetwork()}-${deployedAddress}`; // TokenManager + network + address
 
             contracts.push({
