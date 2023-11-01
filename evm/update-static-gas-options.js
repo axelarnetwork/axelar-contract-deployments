@@ -6,6 +6,7 @@ const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
     utils: { parseUnits },
+    BigNumber,
 } = ethers;
 
 const { printInfo, mainProcessor, prompt } = require('./utils');
@@ -36,27 +37,58 @@ const minGasPrices = {
     },
 };
 
+const minGasLimits = {
+    mainnet: {
+        filecoin: 3e8,
+        arbitrum: 20e8,
+    },
+    testnet: {
+        filecoin: 3e8,
+        arbitrum: 20e8,
+    },
+};
+
+async function getBaseFee(provider) {
+    const block = await provider.getBlock('latest');
+    return block.baseFeePerGas;
+}
+
 async function processCommand(_, chain, options) {
     const { env, rpc, yes } = options;
-    const provider = rpc ? getDefaultProvider(rpc) : getDefaultProvider(chain.rpc);
+    const provider = getDefaultProvider(rpc || chain.rpc);
 
     if (prompt(`Proceed with the static gasOption update on ${chalk.green(chain.name)}`, yes)) {
         return;
     }
 
-    const gasPriceWei = await provider.getGasPrice();
+    let gasPriceWei = await provider.getGasPrice();
+
+    if (chain.eip1559) {
+        const baseFee = await getBaseFee(provider);
+        const maxPriorityFeePerGas = await provider.send('eth_maxPriorityFeePerGas', []);
+        gasPriceWei = BigNumber.from(baseFee).add(BigNumber.from(maxPriorityFeePerGas));
+    }
+
     printInfo(`${chain.name} gas price`, `${gasPriceWei / 1e9} gwei`);
 
-    const gasPrice = parseUnits(gasPriceWei.toString(), 'wei') * gasPriceMultiplier;
+    let gasPrice = parseUnits(gasPriceWei.toString(), 'wei') * gasPriceMultiplier;
+
+    const minGasLimit = (minGasLimits[env] || {})[chain.name.toLowerCase()] || defaultGasLimit;
 
     if (!(chain.staticGasOptions && chain.staticGasOptions.gasLimit !== undefined)) {
-        chain.staticGasOptions = { gasLimit: defaultGasLimit };
+        chain.staticGasOptions = { gasLimit: minGasLimit };
     }
 
     const minGasPrice = ((minGasPrices[env] || {})[chain.name.toLowerCase()] || 0) * 1e9;
-    chain.staticGasOptions.gasPrice = gasPrice < minGasPrice ? minGasPrice : gasPrice;
+    gasPrice = gasPrice < minGasPrice ? minGasPrice : gasPrice;
 
-    printInfo(`${chain.name} static gas price set to`, `${chain.staticGasOptions.gasPrice / 1e9} gwei`);
+    if (chain.eip1559) {
+        chain.staticGasOptions.maxFeePerGas = gasPrice;
+    } else {
+        chain.staticGasOptions.gasPrice = gasPrice;
+    }
+
+    printInfo(`${chain.name} static gas price set to`, `${gasPrice / 1e9} gwei`);
 
     printInfo(`staticGasOptions updated succesfully and stored in config file`);
 }

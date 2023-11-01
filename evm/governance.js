@@ -8,10 +8,12 @@ const {
     utils: { defaultAbiCoder, keccak256, Interface, parseEther },
     Contract,
     BigNumber,
+    constants: { AddressZero },
 } = ethers;
 const { Command, Option } = require('commander');
 const {
     printInfo,
+    copyObject,
     printWalletInfo,
     isValidTimeFormat,
     dateToEta,
@@ -40,16 +42,16 @@ async function getGatewaySetupParams(governance, gateway, contracts, options) {
         printWarn(`Gateway governor ${currGovernance} does not match governance contract: ${governance.address}`);
     }
 
-    let newGovernance = options.newGovernance || contracts.AxelarGateway?.governance;
+    let newGovernance = options.newGovernance || contracts.InterchainGovernance?.address;
 
     if (newGovernance === currGovernance) {
-        newGovernance = '0x';
+        newGovernance = AddressZero;
     }
 
-    let newMintLimiter = options.newMintLimiter || contracts.AxelarGateway?.mintLimiter;
+    let newMintLimiter = options.newMintLimiter || contracts.Multisig?.address;
 
     if (newMintLimiter === `${currMintLimiter}`) {
-        newMintLimiter = '0x';
+        newMintLimiter = AddressZero;
     }
 
     let setupParams = '0x';
@@ -62,7 +64,7 @@ async function getGatewaySetupParams(governance, gateway, contracts, options) {
 }
 
 async function processCommand(_, chain, options) {
-    const { contractName, address, action, date, privateKey, yes } = options;
+    const { env, contractName, address, action, date, privateKey, yes } = options;
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -103,7 +105,13 @@ async function processCommand(_, chain, options) {
 
     const governance = new Contract(governanceAddress, IGovernance.abi, wallet);
 
-    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || { gasLimit: 5e6 };
+    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || { gasLimit: 5e6 });
+
+    // Some chains require a gas adjustment
+    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
+        gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.4);
+    }
+
     printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
 
     printInfo('Proposal Action', action);

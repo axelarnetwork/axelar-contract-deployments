@@ -10,7 +10,9 @@
         "AxelarGateway": {
           "address": "0x4F4495243837681061C4743b74B3eEdf548D56A5",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-ethereum-9169970"],
+          "startingKeyIDs": [
+            "evm-ethereum-9169970"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x7d8ba71c940fc633465d77bc7c2b2d7c4d7fcc0d397d8f699d0345fcad136216",
           "authModule": "0xE3B83f79Fbf01B25659f8A814945aB82186A8AD0",
@@ -53,13 +55,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0x7c2a10f3fb640011bd79b87339fa19125328ae8cb3031d73778edde8250cb5a7",
+          "codehash": "0xc267d7aaedb1dc89499aaecf4ac77e3ab7c06b7ccca3312cabf6dcd76be177cd",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -104,7 +106,9 @@
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "startingKeyIDs": ["evm-avalanche-9169969"]
+          "startingKeyIDs": [
+            "evm-avalanche-9169969"
+          ]
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -141,13 +145,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0x2b944fdbc04729de747b8c86df899e5922ab0823f743938ec786b6523d03fc14",
+          "codehash": "0x72bf6ca25654837abfbd9e534fd22c77db6256058964e7c19d9c6968620347a9",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -186,7 +190,9 @@
         "AxelarGateway": {
           "address": "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-fantom-9169993"],
+          "startingKeyIDs": [
+            "evm-fantom-9169993"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x85db006683bdfff99e7e8518d8eb23a89b6174b6c2c4cea2f5e06d66b0e09a9c",
           "authModule": "0xFcf8b865177c45A86a4977e518B44a1eD90191bd",
@@ -229,13 +235,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0xa90689a5ab35edaacb5305faf3dc4c375541254923da1799aeb73b925aed15bb",
+          "codehash": "0xc656797ac2fcb7da505d62ae2d037bd8cac0440281b19ccc177eb0d8de8640d3",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -277,7 +283,9 @@
         "AxelarGateway": {
           "address": "0x6f015F16De9fC8791b234eF68D486d2bF203FBA8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-polygon-9170074"],
+          "startingKeyIDs": [
+            "evm-polygon-9170074"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x85db006683bdfff99e7e8518d8eb23a89b6174b6c2c4cea2f5e06d66b0e09a9c",
           "authModule": "0xFcf8b865177c45A86a4977e518B44a1eD90191bd",
@@ -320,13 +328,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0x5c155b1174086bf397f5b944e073a3a3d8bd391de8194fbae6b02180a9dd875f",
+          "codehash": "0x29db59337c0baa2643f96b30678ad643a749bf8354794f6165d883a113c2074f",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -368,7 +376,9 @@
         "AxelarGateway": {
           "address": "0x4F4495243837681061C4743b74B3eEdf548D56A5",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-moonbeam-9169938"],
+          "startingKeyIDs": [
+            "evm-moonbeam-9169938"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x7d8ba71c940fc633465d77bc7c2b2d7c4d7fcc0d397d8f699d0345fcad136216",
           "authModule": "0xE3B83f79Fbf01B25659f8A814945aB82186A8AD0",
@@ -411,13 +421,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0x7c2a10f3fb640011bd79b87339fa19125328ae8cb3031d73778edde8250cb5a7",
+          "codehash": "0xc267d7aaedb1dc89499aaecf4ac77e3ab7c06b7ccca3312cabf6dcd76be177cd",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -457,7 +467,9 @@
         "AxelarGateway": {
           "address": "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-binance-9170027"],
+          "startingKeyIDs": [
+            "evm-binance-9170027"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x021b7a78521cc2d80e7010e7b6c0dcb4e1200df45a89f00ee2b88ba60bacccbb",
           "authModule": "0x242E937CE1B5894bf92c343e56eC63fAe522d627",
@@ -500,13 +512,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0xa90689a5ab35edaacb5305faf3dc4c375541254923da1799aeb73b925aed15bb",
+          "codehash": "0xc656797ac2fcb7da505d62ae2d037bd8cac0440281b19ccc177eb0d8de8640d3",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -548,7 +560,9 @@
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-arbitrum-9170015"],
+          "startingKeyIDs": [
+            "evm-arbitrum-9170015"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
@@ -591,13 +605,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0xdf93a83f152e71432d3ccdfa5502fc805f4eeef0a6e616b6a28dc55d74aaae85",
+          "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -639,13 +653,17 @@
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-celo-9170074"],
+          "startingKeyIDs": [
+            "evm-celo-9170074"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "governance": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -682,13 +700,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0xdf93a83f152e71432d3ccdfa5502fc805f4eeef0a6e616b6a28dc55d74aaae85",
+          "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -727,7 +745,9 @@
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-kava-9169958"],
+          "startingKeyIDs": [
+            "evm-kava-9169958"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
@@ -770,13 +790,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0xdf93a83f152e71432d3ccdfa5502fc805f4eeef0a6e616b6a28dc55d74aaae85",
+          "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -797,8 +817,7 @@
         }
       },
       "explorer": {
-        "url": "https://explorer.kava.io",
-        "api": "https://explorer.kava.io/api"
+        "url": "https://explorer.kava.io"
       },
       "staticGasOptions": {
         "gasLimit": 3000000,
@@ -818,7 +837,9 @@
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-filecoin-9169887"],
+          "startingKeyIDs": [
+            "evm-filecoin-9169887"
+          ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
@@ -858,13 +879,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0xdf93a83f152e71432d3ccdfa5502fc805f4eeef0a6e616b6a28dc55d74aaae85",
+          "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -891,9 +912,10 @@
       "gasOptions": {
         "gasLimit": 500000000
       },
+      "eip1559": true,
       "staticGasOptions": {
-        "gasLimit": 3000000,
-        "gasPrice": 1000000000
+        "gasLimit": 100000000,
+        "maxFeePerGas": 1000000000
       }
     },
     "optimism": {
@@ -909,7 +931,9 @@
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-optimism-9169964"],
+          "startingKeyIDs": [
+            "evm-optimism-9169964"
+          ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
@@ -949,13 +973,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0xdf93a83f152e71432d3ccdfa5502fc805f4eeef0a6e616b6a28dc55d74aaae85",
+          "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -1001,7 +1025,9 @@
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-linea-9169923"],
+          "startingKeyIDs": [
+            "evm-linea-9169923"
+          ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
@@ -1041,13 +1067,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0xdf93a83f152e71432d3ccdfa5502fc805f4eeef0a6e616b6a28dc55d74aaae85",
+          "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -1089,7 +1115,9 @@
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-base-9169992"],
+          "startingKeyIDs": [
+            "evm-base-9169992"
+          ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
@@ -1129,13 +1157,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0xdf93a83f152e71432d3ccdfa5502fc805f4eeef0a6e616b6a28dc55d74aaae85",
+          "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -1178,7 +1206,9 @@
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "authModule": "0x4EC83aE13097EF1Fb1dC9fC98592bf607A22A55D",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
-          "startingKeyIDs": ["evm-mantle-9169917"],
+          "startingKeyIDs": [
+            "evm-mantle-9169917"
+          ],
           "implementationCodehash": "0x44a3e78ebfbd139f4023ba77ffced61aeea29f0a20eec807d260e805e272c5c9",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
@@ -1218,13 +1248,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0xdf93a83f152e71432d3ccdfa5502fc805f4eeef0a6e616b6a28dc55d74aaae85",
+          "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
@@ -1272,7 +1302,9 @@
           "implementationCodehash": "0xbfae4d9f9280a802bd594ee14e35b2da6bfb5e89d2542c366faaa96702ece420",
           "authModule": "0xdC46f07661B673Fc262f61FC5b05B10A58a3b7fE",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
-          "startingKeyIDs": ["evm-scroll-genesis"],
+          "startingKeyIDs": [
+            "evm-scroll-genesis"
+          ],
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
@@ -1305,13 +1337,13 @@
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 14400,
-          "address": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b",
+          "minimumTimeDelay": 604800,
+          "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
-          "codehash": "0xdf93a83f152e71432d3ccdfa5502fc805f4eeef0a6e616b6a28dc55d74aaae85",
+          "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5 test"
+          "salt": "InterchainGovernance v5.5"
         },
         "Multisig": {
           "threshold": 3,
