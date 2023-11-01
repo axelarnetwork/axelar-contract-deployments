@@ -25,6 +25,15 @@ const handleRoleUpdate = async (context, event) => {
         if (log.topics[0] === TOPIC_0_ROLES_ADDED || log.topics[0] === TOPIC_0_ROLES_REMOVED) {
             const roles = toRoleArray(parseInt(log.data, 16));
 
+            if (log.topics.length === 0) {
+                throw new Error('INVALID_LOGS_LENGTH');
+            }
+
+            if (log.topics[1].length < 66) {
+                throw new Error('INVALID_LOGS_LENGTH');
+            }
+
+            //  log data contains address in first 32 bytes i.e. first 64 chars, here data string is also prefixed with 0x.
             const account = `0x${log.topics[1].substring(26, 26 + 40)}`;
             const tempSeverity = TRUSTED_ADDRESSES.includes(account.toLowerCase()) ? 1 : 2;
 
@@ -96,6 +105,7 @@ function toRoleArray(accountRoles) {
     const roles = [];
     let bitIndex = 0;
 
+    //  calculate uint8 array from uint256 value by bit shifting operation
     while (accountRoles > 0) {
         if (accountRoles & 1) {
             roles.push(getRole(bitIndex));
