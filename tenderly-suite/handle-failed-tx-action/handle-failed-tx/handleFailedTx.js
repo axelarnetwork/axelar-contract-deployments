@@ -23,10 +23,10 @@ const handleFailedTxFn = async (context, event) => {
         case '0xbb6c1639':
             warningOptions = ['MissingRole', '-'];
             break;
-        case '0x90a6e7d6':
+        case '0x7fa6fbb4':
             warningOptions = ['MissingAllRoles', '-'];
             break;
-        case '0xb94d593e':
+        case '0x218de251':
             warningOptions = ['MissingAnyOfRoles', '-'];
             break;
         case '0xb078d99c':
