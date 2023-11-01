@@ -13,20 +13,21 @@ const readlineSync = require('readline-sync');
 const chalk = require('chalk');
 const { printInfo, loadConfig, saveConfig } = require('./utils');
 
-const TokenManagerDeployer = require('@axelar-network/interchain-token-service/dist/utils/TokenManagerDeployer.sol/TokenManagerDeployer.json');
-const StandardizedTokenLockUnlock = require('@axelar-network/interchain-token-service/dist/token-implementations/StandardizedTokenLockUnlock.sol/StandardizedTokenLockUnlock.json');
-const StandardizedTokenMintBurn = require('@axelar-network/interchain-token-service/dist/token-implementations/StandardizedTokenMintBurn.sol/StandardizedTokenMintBurn.json');
-const StandardizedTokenDeployer = require('@axelar-network/interchain-token-service/dist/utils/StandardizedTokenDeployer.sol/StandardizedTokenDeployer.json');
-const RemoteAddressValidator = require('@axelar-network/interchain-token-service/dist/remote-address-validator/RemoteAddressValidator.sol/RemoteAddressValidator.json');
-const RemoteAddressValidatorProxy = require('@axelar-network/interchain-token-service/dist/proxies/RemoteAddressValidatorProxy.sol/RemoteAddressValidatorProxy.json');
-const TokenManagerLockUnlock = require('@axelar-network/interchain-token-service/dist/token-manager/implementations/TokenManagerLockUnlock.sol/TokenManagerLockUnlock.json');
-const TokenManagerMintBurn = require('@axelar-network/interchain-token-service/dist/token-manager/implementations/TokenManagerMintBurn.sol/TokenManagerMintBurn.json');
-const TokenManagerLiquidityPool = require('@axelar-network/interchain-token-service/dist/token-manager/implementations/TokenManagerLiquidityPool.sol/TokenManagerLiquidityPool.json');
-const InterchainTokenService = require('@axelar-network/interchain-token-service/dist/interchain-token-service/InterchainTokenService.sol/InterchainTokenService.json');
-const InterchainTokenServiceProxy = require('@axelar-network/interchain-token-service/dist/proxies/InterchainTokenServiceProxy.sol/InterchainTokenServiceProxy.json');
+const TokenManagerDeployer = require('@axelar-network/interchain-token-service/artifacts/contracts/utils/TokenManagerDeployer.sol/TokenManagerDeployer.json');
+const StandardizedToken = require('@axelar-network/interchain-token-service/artifacts/contracts/token-implementations/StandardizedToken.sol/StandardizedToken.json');
+const StandardizedTokenDeployer = require('@axelar-network/interchain-token-service/artifacts/contracts/utils/StandardizedTokenDeployer.sol/StandardizedTokenDeployer.json');
+const InterchainAddressTracker = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/utils/InterchainAddressTracker.sol/InterchainAddressTracker.json');
+const InterchainAddressTrackerProxy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/utils/InterchainAddressTrackerProxy.sol/InterchainAddressTrackerProxy.json');
+const TokenManagerLockUnlock = require('@axelar-network/interchain-token-service/artifacts/contracts/token-manager/implementations/TokenManagerLockUnlock.sol/TokenManagerLockUnlock.json');
+const TokenManagerMintBurn = require('@axelar-network/interchain-token-service/artifacts/contracts/token-manager/implementations/TokenManagerMintBurn.sol/TokenManagerMintBurn.json');
+const TokenManagerMintBurnFrom = require('@axelar-network/interchain-token-service/artifacts/contracts/token-manager/implementations/TokenManagerMintBurnFrom.sol/TokenManagerMintBurnFrom.json');
+const TokenManagerLockUnlockFee = require('@axelar-network/interchain-token-service/artifacts/contracts/token-manager/implementations/TokenManagerLockUnlockFee.sol/TokenManagerLockUnlockFee.json');
+const InterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interchain-token-service/InterchainTokenService.sol/InterchainTokenService.json');
+const InterchainTokenServiceProxy = require('@axelar-network/interchain-token-service/artifacts/contracts/proxies/InterchainTokenServiceProxy.sol/InterchainTokenServiceProxy.json');
 const { Command, Option } = require('commander');
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
 const { deployCreate3Deployer } = require('./deploy-create3-deployer');
+const { deployGatewayv5 } = require('./deploy-gateway-v6.2.x');
 
 /**
  * Function that handles the ITS deployment.
@@ -66,20 +67,6 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                     create2Deployer,
                     wallet,
                     TokenManagerDeployer,
-                    [contracts.Create3Deployer.address],
-                    deploymentKey,
-                    gasOptions,
-                    verifyOptions,
-                );
-            },
-        },
-        standardizedTokenLockUnlock: {
-            name: 'Standardized Token Lock Unlock',
-            async deploy() {
-                return await deployCreate2(
-                    create2Deployer,
-                    wallet,
-                    StandardizedTokenLockUnlock,
                     [],
                     deploymentKey,
                     gasOptions,
@@ -87,13 +74,13 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                 );
             },
         },
-        standardizedTokenMintBurn: {
-            name: 'Standardized Token Mint Burn',
+        standardizedToken: {
+            name: 'Standardized Token Lock Unlock',
             async deploy() {
                 return await deployCreate2(
                     create2Deployer,
                     wallet,
-                    StandardizedTokenMintBurn,
+                    StandardizedToken,
                     [],
                     deploymentKey,
                     gasOptions,
@@ -109,9 +96,7 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                     wallet,
                     StandardizedTokenDeployer,
                     [
-                        contracts.Create3Deployer.address,
-                        contractConfig.standardizedTokenLockUnlock,
-                        contractConfig.standardizedTokenMintBurn,
+                        contractConfig.standardizedToken,
                     ],
                     deploymentKey,
                     gasOptions,
@@ -119,13 +104,13 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                 );
             },
         },
-        remoteAddressValidatorImplementation: {
-            name: 'Remote Address Validator Implementation',
+        interchainAddressTrackerImplementation: {
+            name: 'Interchain Address Tracker Implementation',
             async deploy() {
                 return await deployCreate2(
                     create2Deployer,
                     wallet,
-                    RemoteAddressValidator,
+                    InterchainAddressTracker,
                     [interchainTokenServiceAddress],
                     deploymentKey,
                     gasOptions,
@@ -133,15 +118,15 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                 );
             },
         },
-        remoteAddressValidator: {
-            name: 'Remote Address Validator',
+        interchainAddressTracker: {
+            name: 'Interchain Address Tracker',
             async deploy() {
                 const params = defaultAbiCoder.encode(['string[]', 'string[]'], [[], []]);
                 return await deployCreate2(
                     create2Deployer,
                     wallet,
-                    RemoteAddressValidatorProxy,
-                    [contractConfig.remoteAddressValidatorImplementation, wallet.address, params],
+                    InterchainAddressTrackerProxy,
+                    [contractConfig.interchainAddressTrackerImplementation, wallet.address, params],
                     deploymentKey,
                     gasOptions,
                     {
@@ -155,17 +140,6 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
             name: 'Token Manager Implementations',
             async deploy() {
                 const implementations = {
-                    tokenManagerLockUnlock: (
-                        await deployCreate2(
-                            create2Deployer,
-                            wallet,
-                            TokenManagerLockUnlock,
-                            [interchainTokenServiceAddress],
-                            deploymentKey,
-                            gasOptions,
-                            verifyOptions,
-                        )
-                    ).address,
                     tokenManagerMintBurn: (
                         await deployCreate2(
                             create2Deployer,
@@ -177,11 +151,33 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                             verifyOptions,
                         )
                     ).address,
-                    tokenManagerLiquidityPool: (
+                    tokenManagerMintBurnFrom: (
                         await deployCreate2(
                             create2Deployer,
                             wallet,
-                            TokenManagerLiquidityPool,
+                            TokenManagerMintBurnFrom,
+                            [interchainTokenServiceAddress],
+                            deploymentKey,
+                            gasOptions,
+                            verifyOptions,
+                        )
+                    ).address,
+                    tokenManagerLockUnlock: (
+                        await deployCreate2(
+                            create2Deployer,
+                            wallet,
+                            TokenManagerLockUnlock,
+                            [interchainTokenServiceAddress],
+                            deploymentKey,
+                            gasOptions,
+                            verifyOptions,
+                        )
+                    ).address,
+                    tokenManagerLockUnlockFee: (
+                        await deployCreate2(
+                            create2Deployer,
+                            wallet,
+                            TokenManagerLockUnlockFee,
                             [interchainTokenServiceAddress],
                             deploymentKey,
                             gasOptions,
@@ -205,9 +201,8 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                         contractConfig.standardizedTokenDeployer,
                         contracts.AxelarGateway.address,
                         contracts.AxelarGasService.address,
-                        contractConfig.remoteAddressValidator,
-                        Object.values(contractConfig.tokenManagerImplementations),
-                        chain.name,
+                        contractConfig.interchainAddressTracker,
+                        Object.values(contractConfig.tokenManagerImplementations)
                     ],
                     deploymentKey,
                     gasOptions,
@@ -310,7 +305,6 @@ async function upgradeITS(wallet, chain, deploymentKey, operatorAddress = wallet
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
 
     const codehash = keccak256(await wallet.provider.getCode(contractConfig.implementation));
-    console.log(codehash);
     await (await contract.upgrade(contractConfig.implementation, codehash, '0x', gasOptions)).wait();
 
     console.log(`Deployed Interchain Token Service`);
@@ -339,8 +333,20 @@ async function main(options) {
             const [funder] = await require('hardhat').ethers.getSigners();
             wallet = new Wallet(options.privateKey, funder.provider);
             await (await funder.sendTransaction({ to: wallet.address, value: BigInt(1e21) })).wait();
-            await deployConstAddressDeployer(wallet, chain, null, verifyOptions);
-            await deployCreate3Deployer(wallet, chain, null, verifyOptions);
+            await deployConstAddressDeployer(wallet, chain, {yes: true}, verifyOptions);
+            await deployCreate3Deployer(wallet, chain, {yes: true}, verifyOptions);
+            await deployGatewayv5(config, chain, {
+                env: 'local',
+                deployMethod: 'create',
+                mintLimiter: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+                salt: 'AxelarGateway v6.2',
+                governance: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+                keyID: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+                yes: true,
+                chainNames: 'test',
+                privateKey: '0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e'
+            });
+            chain.contracts.AxelarGasService = { address: wallet.address };
         } else {
             const provider = getDefaultProvider(chain.rpc);
             wallet = new Wallet(options.privateKey, provider);
