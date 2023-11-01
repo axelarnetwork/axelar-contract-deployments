@@ -1,18 +1,27 @@
 const axios = require('axios').default;
 const { ethers } = require('ethers');
 
-const WARNING_THRESHOLD = 10; // TODO: discuss for production
-const CRITICAL_THRESHOLD = 20;
-const TIME_SPLIT = 5 * 3600 * 1000; //  5 hours in milliseconds
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
 const handleFailedTxFn = async (context, event) => {
     const chainName = context.metadata.getNetwork();
-    const rpc = context.gateways.getGateway(chainName);
-    const provider = new ethers.providers.JsonRpcProvider(rpc);
+    const provider = new ethers.providers.JsonRpcProvider(await context.secrets.get(`RPC_${chainName.toUpperCase()}`));
     const tx = await provider.getTransaction(event.hash);
 
+    const warningThreshold = await context.storage.getStr('WarningThreshold');
+    const criticalThreshold = await context.storage.getStr('CriticalThreshold');
+    const timeSplit = await context.storage.getStr('TimeSplit');
+
+    if (!tx.to || !tx.from || !tx.blockNumber || !tx.data) {
+        throw new Error('INVALID_TX_FORMAT');
+    }
+
     const response = await provider.call(tx, tx.blockNumber);
+
+    if (response.length < 10) {
+        throw new Error('INVALID_RESPONSE_LENGTH');
+    }
+
     const errorHash = response.slice(0, 10);
     console.log('errorHash: ', errorHash);
     let warningOptions = [];
@@ -22,13 +31,13 @@ const handleFailedTxFn = async (context, event) => {
             warningOptions = ['FlowLimitExceeded', 'TokenManager'];
             break;
         case '0xbb6c1639':
-            warningOptions = ['MissingRole', '-'];
+            warningOptions = ['MissingRole', event.to];
             break;
-        case '0x90a6e7d6':
-            warningOptions = ['MissingAllRoles', '-'];
+        case '0x7fa6fbb4':
+            warningOptions = ['MissingAllRoles', event.to];
             break;
-        case '0xb94d593e':
-            warningOptions = ['MissingAnyOfRoles', '-'];
+        case '0x218de251':
+            warningOptions = ['MissingAnyOfRoles', event.to];
             break;
         case '0xb078d99c':
             warningOptions = ['ReEntrancy', 'TokenManager'];
@@ -41,7 +50,7 @@ const handleFailedTxFn = async (context, event) => {
     }
 
     if (warningOptions.length !== 0) {
-        await sendWarning(event, context, chainName, ...warningOptions, 'info');
+        await sendWarning(event, context, chainName, ...warningOptions, Severity.INFO);
     }
 
     const failedTxStartTime = await context.storage.getNumber('FailedTxStartTimestamp');
@@ -49,30 +58,30 @@ const handleFailedTxFn = async (context, event) => {
 
     const timeNow = Date.now();
 
-    if (timeNow - failedTxStartTime > TIME_SPLIT) {
+    if (timeNow - failedTxStartTime > timeSplit) {
         console.log('Updating Time stamp');
         failedTxCount = 1;
         await context.storage.putNumber('FailedTxStartTimestamp', timeNow);
     } else {
         failedTxCount++;
 
-        if (failedTxCount >= CRITICAL_THRESHOLD) {
+        if (failedTxCount >= criticalThreshold) {
             await sendWarning(
                 event,
                 context,
                 chainName,
                 `Threshold crossed for failed transactions: ${failedTxCount}`,
                 'ITS_PROJECT',
-                'critical',
+                Severity.CRITICAL,
             );
-        } else if (failedTxCount >= WARNING_THRESHOLD) {
+        } else if (failedTxCount >= warningThreshold) {
             await sendWarning(
                 event,
                 context,
                 chainName,
                 `Threshold crossed for failed transactions: ${failedTxCount}`,
                 'ITS_PROJECT',
-                'warning',
+                Severity.WARNING,
             );
         }
     }
@@ -108,5 +117,11 @@ async function sendWarning(event, context, chainName, summary, source, severity)
         throw Error('SENDING_ALERTS_FAILED');
     }
 }
+
+const Severity = {
+    INFO: 'info',
+    CRITICAL: 'critical',
+    WARNING: 'warning',
+};
 
 module.exports = { handleFailedTxFn };

@@ -1,0 +1,64 @@
+name: Test
+
+on: pull_request
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        node-version:
+          - 18.x
+        os:
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install
+        run: npm ci
+
+      - name: Spin up Hardhat Network
+        run: npx hardhat node &
+
+      - name: Prepare local.json
+        run: |
+          echo '{
+            "chains": {
+              "test": {
+                "name": "Test",
+                "id": "test",
+                "chainId": 31337,
+                "rpc": "http://127.0.0.1:8545",
+                "tokenSymbol": "TEST",
+                "contracts": {}
+              }
+            }
+          }' > ./axelar-chains-config/info/local.json
+
+      # Create .env file with default hardhat private key that's prefunded
+      - name: Prepare .env
+        run: |
+          echo 'PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' >> .env
+          echo 'ENV=local' >> .env
+          echo 'CHAINS=test' >> .env
+
+      - name: Display local.json
+        run: cat ./axelar-chains-config/info/local.json
+
+      - name: Deploy ConstAddressDeployer
+        run: node evm/deploy-contract.js -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c ConstAddressDeployer -m create -y
+
+      - name: Deploy Create3Deployer
+        run: node evm/deploy-contract.js -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c Create3Deployer -m create2 -y
+
+      - name: Deploy AxelarGateway
+        run: node evm/deploy-gateway-v6.2.x.js -m create3 -s "AxelarGateway v6.2" -g 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -m 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
+
+      - name: Call Method on Gateway
+        run: node evm/gateway.js --action callContract --destinationChain test2 -y

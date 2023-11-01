@@ -10,7 +10,9 @@
         "AxelarGateway": {
           "address": "0x4F4495243837681061C4743b74B3eEdf548D56A5",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-ethereum-9169970"],
+          "startingKeyIDs": [
+            "evm-ethereum-9169970"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x7d8ba71c940fc633465d77bc7c2b2d7c4d7fcc0d397d8f699d0345fcad136216",
           "authModule": "0xE3B83f79Fbf01B25659f8A814945aB82186A8AD0",
@@ -104,7 +106,9 @@
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "startingKeyIDs": ["evm-avalanche-9169969"]
+          "startingKeyIDs": [
+            "evm-avalanche-9169969"
+          ]
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -186,7 +190,9 @@
         "AxelarGateway": {
           "address": "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-fantom-9169993"],
+          "startingKeyIDs": [
+            "evm-fantom-9169993"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x85db006683bdfff99e7e8518d8eb23a89b6174b6c2c4cea2f5e06d66b0e09a9c",
           "authModule": "0xFcf8b865177c45A86a4977e518B44a1eD90191bd",
@@ -277,7 +283,9 @@
         "AxelarGateway": {
           "address": "0x6f015F16De9fC8791b234eF68D486d2bF203FBA8",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-polygon-9170074"],
+          "startingKeyIDs": [
+            "evm-polygon-9170074"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x85db006683bdfff99e7e8518d8eb23a89b6174b6c2c4cea2f5e06d66b0e09a9c",
           "authModule": "0xFcf8b865177c45A86a4977e518B44a1eD90191bd",
@@ -368,7 +376,9 @@
         "AxelarGateway": {
           "address": "0x4F4495243837681061C4743b74B3eEdf548D56A5",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-moonbeam-9169938"],
+          "startingKeyIDs": [
+            "evm-moonbeam-9169938"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x7d8ba71c940fc633465d77bc7c2b2d7c4d7fcc0d397d8f699d0345fcad136216",
           "authModule": "0xE3B83f79Fbf01B25659f8A814945aB82186A8AD0",
@@ -457,7 +467,9 @@
         "AxelarGateway": {
           "address": "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-binance-9170027"],
+          "startingKeyIDs": [
+            "evm-binance-9170027"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x021b7a78521cc2d80e7010e7b6c0dcb4e1200df45a89f00ee2b88ba60bacccbb",
           "authModule": "0x242E937CE1B5894bf92c343e56eC63fAe522d627",
@@ -548,7 +560,9 @@
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-arbitrum-9170015"],
+          "startingKeyIDs": [
+            "evm-arbitrum-9170015"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
@@ -639,7 +653,9 @@
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-celo-9170074"],
+          "startingKeyIDs": [
+            "evm-celo-9170074"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
@@ -729,7 +745,9 @@
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-kava-9169958"],
+          "startingKeyIDs": [
+            "evm-kava-9169958"
+          ],
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
@@ -819,7 +837,9 @@
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-filecoin-9169887"],
+          "startingKeyIDs": [
+            "evm-filecoin-9169887"
+          ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
@@ -911,7 +931,9 @@
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-optimism-9169964"],
+          "startingKeyIDs": [
+            "evm-optimism-9169964"
+          ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
@@ -1003,7 +1025,9 @@
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-linea-9169923"],
+          "startingKeyIDs": [
+            "evm-linea-9169923"
+          ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
@@ -1091,7 +1115,9 @@
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "startingKeyIDs": ["evm-base-9169992"],
+          "startingKeyIDs": [
+            "evm-base-9169992"
+          ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
@@ -1180,7 +1206,9 @@
           "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
           "authModule": "0x4EC83aE13097EF1Fb1dC9fC98592bf607A22A55D",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
-          "startingKeyIDs": ["evm-mantle-9169917"],
+          "startingKeyIDs": [
+            "evm-mantle-9169917"
+          ],
           "implementationCodehash": "0x44a3e78ebfbd139f4023ba77ffced61aeea29f0a20eec807d260e805e272c5c9",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
@@ -1274,7 +1302,9 @@
           "implementationCodehash": "0xbfae4d9f9280a802bd594ee14e35b2da6bfb5e89d2542c366faaa96702ece420",
           "authModule": "0xdC46f07661B673Fc262f61FC5b05B10A58a3b7fE",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
-          "startingKeyIDs": ["evm-scroll-genesis"],
+          "startingKeyIDs": [
+            "evm-scroll-genesis"
+          ],
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
