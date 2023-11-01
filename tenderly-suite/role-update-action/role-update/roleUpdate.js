@@ -1,7 +1,7 @@
 const axios = require('axios').default;
 
-const TOPIC_0_ROLES_ADDED = '0x3df2f62906643352cfb366ada865850a1f2127a98c97ac962921d5caf75561c3';
-const TOPIC_0_ROLES_REMOVED = '0x17e90d13bc6dcdbe950d3d022f0774c9dfa3308b96720b8779075dd83236061f';
+const TOPIC_0_ROLES_ADDED = '0x34e73c57659d4b6809b53db4feee9b007b892e978114eda420d2991aba150143';
+const TOPIC_0_ROLES_REMOVED = '0xccf920c8facee98a9c2a6c6124f2857b87b17e9f3a819bfcc6945196ee77366b';
 
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
@@ -23,14 +23,7 @@ const handleRoleUpdate = async (context, event) => {
 
     for (const log of event.logs) {
         if (log.topics[0] === TOPIC_0_ROLES_ADDED || log.topics[0] === TOPIC_0_ROLES_REMOVED) {
-            console.log('log Found');
-            const length = parseInt(log.data.substring(128, 130), 16);
-            const roles = [];
-
-            for (let index = 0; index < length; index++) {
-                const subIndex = 64 * (3 + index) + 2;
-                roles.push(getRole(parseInt(log.data.substring(subIndex - 2, subIndex), 16)));
-            }
+            const roles = toRoleArray(parseInt(log.data, 16));
 
             const account = `0x${log.topics[1].substring(26, 26 + 40)}`;
             const tempSeverity = TRUSTED_ADDRESSES.includes(account.toLowerCase()) ? 1 : 2;
@@ -97,6 +90,22 @@ function getRole(roleId) {
     }
 
     return '-';
+}
+
+function toRoleArray(accountRoles) {
+    const roles = [];
+    let bitIndex = 0;
+
+    while (accountRoles > 0) {
+        if (accountRoles & 1) {
+            roles.push(getRole(bitIndex));
+        }
+
+        accountRoles >>= 1;
+        bitIndex++;
+    }
+
+    return roles;
 }
 
 module.exports = { handleRoleUpdate };
