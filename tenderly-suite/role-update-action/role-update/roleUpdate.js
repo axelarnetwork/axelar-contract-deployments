@@ -23,7 +23,7 @@ const handleRoleUpdate = async (context, event) => {
 
     for (const log of event.logs) {
         if (log.topics[0] === TOPIC_0_ROLES_ADDED || log.topics[0] === TOPIC_0_ROLES_REMOVED) {
-            if(log.data.length < 130){
+            if (log.data.length < 130) {
                 throw new Error('INVALID_LOG_DATA_LENGTH');
             }
 
@@ -35,11 +35,11 @@ const handleRoleUpdate = async (context, event) => {
                 roles.push(getRole(parseInt(log.data.substring(subIndex - 2, subIndex), 16)));
             }
 
-            if(log.topics.length === 0){
+            if (log.topics.length === 0) {
                 throw new Error('INVALID_LOG_TOPICS_LENGTH');
             }
 
-            if(log.topics[1].length < 26 + 40){
+            if (log.topics[1].length < 26 + 40) {
                 throw new Error('INVALID_LOG_TOPIC_LENGTH');
             }
 
