@@ -124,5 +124,4 @@ const Severity = {
     WARNING: 'warning',
 };
 
-
 module.exports = { handleFailedTxFn };
