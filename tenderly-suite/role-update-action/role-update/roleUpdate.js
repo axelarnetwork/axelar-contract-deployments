@@ -5,14 +5,14 @@ const TOPIC_0_ROLES_REMOVED = '0x17e90d13bc6dcdbe950d3d022f0774c9dfa3308b96720b8
 
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
-const TRUSTED_ADDRESSES = [
-    '0x4a6eea0999b000a941926e298f7a49373c153fbc', // TODO: Update contracts list upon deployment
-    '0xf1ea5615086a0936f82656f88263365831978f71',
-    '0xb8cd93c83a974649d76b1c19f311f639e62272bc',
-];
-
 const handleRoleUpdate = async (context, event) => {
     const chainName = context.metadata.getNetwork();
+
+    if (!event || !event.logs || !context || !context.metadata) {
+        throw new Error('INVALID_INPUT_FOR_ACTION');
+    }
+
+    const trustedAddresses = await context.storage.getJson('TrustedAddresses');
 
     const roleAddedAccounts = [];
     const addedRoles = [];
@@ -23,7 +23,10 @@ const handleRoleUpdate = async (context, event) => {
 
     for (const log of event.logs) {
         if (log.topics[0] === TOPIC_0_ROLES_ADDED || log.topics[0] === TOPIC_0_ROLES_REMOVED) {
-            console.log('log Found');
+            if(log.data.length < 130){
+                throw new Error('INVALID_LOG_DATA_LENGTH');
+            }
+
             const length = parseInt(log.data.substring(128, 130), 16);
             const roles = [];
 
@@ -32,8 +35,17 @@ const handleRoleUpdate = async (context, event) => {
                 roles.push(getRole(parseInt(log.data.substring(subIndex - 2, subIndex), 16)));
             }
 
+            if(log.topics.length === 0){
+                throw new Error('INVALID_LOG_TOPICS_LENGTH');
+            }
+
+            if(log.topics[1].length < 26 + 40){
+                throw new Error('INVALID_LOG_TOPIC_LENGTH');
+            }
+
+            //  account is present in log topic as 32 bytes hex string, with prefixed 0s
             const account = `0x${log.topics[1].substring(26, 26 + 40)}`;
-            const tempSeverity = TRUSTED_ADDRESSES.includes(account.toLowerCase()) ? 1 : 2;
+            const tempSeverity = trustedAddresses.includes(account.toLowerCase()) ? 1 : 2;
 
             if (log.topics[0] === TOPIC_0_ROLES_ADDED) {
                 roleAddedAccounts.push(account);
@@ -96,7 +108,7 @@ function getRole(roleId) {
         return 'FlowLimiter';
     }
 
-    return '-';
+    throw new Error('UNKNOWN_ROLE_UPDATED');
 }
 
 module.exports = { handleRoleUpdate };
