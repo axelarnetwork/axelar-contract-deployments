@@ -63,29 +63,13 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
         tokenManagerDeployer: {
             name: 'Token Manager Deployer',
             async deploy() {
-                return await deployCreate2(
-                    create2Deployer,
-                    wallet,
-                    TokenManagerDeployer,
-                    [],
-                    deploymentKey,
-                    gasOptions,
-                    verifyOptions,
-                );
+                return await deployCreate2(create2Deployer, wallet, TokenManagerDeployer, [], deploymentKey, gasOptions, verifyOptions);
             },
         },
         standardizedToken: {
             name: 'Standardized Token Lock Unlock',
             async deploy() {
-                return await deployCreate2(
-                    create2Deployer,
-                    wallet,
-                    StandardizedToken,
-                    [],
-                    deploymentKey,
-                    gasOptions,
-                    verifyOptions,
-                );
+                return await deployCreate2(create2Deployer, wallet, StandardizedToken, [], deploymentKey, gasOptions, verifyOptions);
             },
         },
         standardizedTokenDeployer: {
@@ -95,9 +79,7 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                     contracts.ConstAddressDeployer.address,
                     wallet,
                     StandardizedTokenDeployer,
-                    [
-                        contractConfig.standardizedToken,
-                    ],
+                    [contractConfig.standardizedToken],
                     deploymentKey,
                     gasOptions,
                     verifyOptions,
@@ -202,7 +184,7 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                         contracts.AxelarGateway.address,
                         contracts.AxelarGasService.address,
                         contractConfig.interchainAddressTracker,
-                        Object.values(contractConfig.tokenManagerImplementations)
+                        Object.values(contractConfig.tokenManagerImplementations),
                     ],
                     deploymentKey,
                     gasOptions,
@@ -333,8 +315,8 @@ async function main(options) {
             const [funder] = await require('hardhat').ethers.getSigners();
             wallet = new Wallet(options.privateKey, funder.provider);
             await (await funder.sendTransaction({ to: wallet.address, value: BigInt(1e21) })).wait();
-            await deployConstAddressDeployer(wallet, chain, {yes: true}, verifyOptions);
-            await deployCreate3Deployer(wallet, chain, {yes: true}, verifyOptions);
+            await deployConstAddressDeployer(wallet, chain, { yes: true }, verifyOptions);
+            await deployCreate3Deployer(wallet, chain, { yes: true }, verifyOptions);
             await deployGatewayv5(config, chain, {
                 env: 'local',
                 deployMethod: 'create',
@@ -344,7 +326,7 @@ async function main(options) {
                 keyID: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
                 yes: true,
                 chainNames: 'test',
-                privateKey: '0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e'
+                privateKey: '0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e',
             });
             chain.contracts.AxelarGasService = { address: wallet.address };
         } else {
