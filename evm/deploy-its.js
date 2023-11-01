@@ -207,7 +207,7 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                         contracts.AxelarGasService.address,
                         contractConfig.remoteAddressValidator,
                         Object.values(contractConfig.tokenManagerImplementations),
-                        chain.id,  // use the unique Axelar registered chain id
+                        chain.id, // use the unique Axelar registered chain id
                     ],
                     deploymentKey,
                     gasOptions,
