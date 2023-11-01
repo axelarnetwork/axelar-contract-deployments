@@ -7,10 +7,19 @@ const addToProjectFn = async (context, event) => {
     const logs = event.logs;
     const contracts = [];
 
+    if (!event || !event.logs || !context || !context.metadata) {
+        throw new Error('INVALID_INPUT_FOR_ACTION');
+    }
+
     for (let index = 0; index < logs.length; ++index) {
         if (logs[index].topics[0] === TOKEN_MANAGER_DEPLOYED_TOPIC0) {
+            if(logs[index].data.length < 66){
+                throw new Error('INVALID_LOG_DATA_LENGTH');
+            }
+
+            //  log data contains address in first 32 bytes i.e. first 64 chars, here data string is also prefixed with 0x.
             const deployedAddress = '0x' + logs[index].data.substring(26, 66);
-            const name = `TokenManager-${context.metadata.getNetwork()}-${deployedAddress}`; // TokenManager + network + address
+            const name = `TokenManager-${context.metadata.getNetwork()}-${deployedAddress}`;
 
             contracts.push({
                 address: deployedAddress,
