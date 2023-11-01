@@ -13,7 +13,7 @@ const addToProjectFn = async (context, event) => {
 
     for (let index = 0; index < logs.length; ++index) {
         if (logs[index].topics[0] === TOKEN_MANAGER_DEPLOYED_TOPIC0) {
-            if(logs[index].data.length < 66){
+            if (logs[index].data.length < 66) {
                 throw new Error('INVALID_LOG_DATA_LENGTH');
             }
 
