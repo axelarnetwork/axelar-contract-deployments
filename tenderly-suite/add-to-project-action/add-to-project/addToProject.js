@@ -1,15 +1,14 @@
 const axios = require('axios').default;
 
-const URL = 'https://api.tenderly.co/api/v2/accounts/axelarEng/projects/ITS/contracts';
 const TOKEN_MANAGER_DEPLOYED_TOPIC0 = '0x5284c2478b9c1a55e973429331078be39b5fb3eeb9d87d10b34d65a4c89ee4eb';
 
 const addToProjectFn = async (context, event) => {
-    const logs = event.logs;
-    const contracts = [];
-
     if (!event || !event.logs || !context || !context.metadata) {
         throw new Error('INVALID_INPUT_FOR_ACTION');
     }
+
+    const logs = event.logs;
+    const contracts = [];
 
     for (let index = 0; index < logs.length; ++index) {
         if (logs[index].topics[0] === TOKEN_MANAGER_DEPLOYED_TOPIC0) {
@@ -29,11 +28,11 @@ const addToProjectFn = async (context, event) => {
         }
     }
 
-    if (contracts.length === 0) throw Error('NO_DEPLOYED_CONTRACT_FOUND');
+    if (contracts.length === 0) throw Error('NO_NEW_TOKEN_MANAGER_DEPLOYED');
 
     try {
         await axios.post(
-            URL,
+            await context.storage.getStr('TenderlyAddContractsURL'),
             { contracts },
             {
                 headers: {
