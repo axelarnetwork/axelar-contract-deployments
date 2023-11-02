@@ -11,9 +11,9 @@ Add the deployer private key in `.env` folder (see `.example.env` for reference)
 
 ## AxelarGateway
 
-1. Add additional params in `.env` such as admin addresses, governance etc.
-2. Run the following depending on the service,
-   `node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
+Deploy the gateway contract.
+
+`node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
 
 ## Gateway Upgrade
 
