@@ -4,6 +4,10 @@ const { ethers } = require('ethers');
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
 const handleFailedTxFn = async (context, event) => {
+    if (!event || !event.logs || !context || !context.metadata) {
+        throw new Error('INVALID_INPUT_FOR_ACTION');
+    }
+
     const chainName = context.metadata.getNetwork();
     const provider = new ethers.providers.JsonRpcProvider(await context.secrets.get(`RPC_${chainName.toUpperCase()}`));
     const tx = await provider.getTransaction(event.hash);
