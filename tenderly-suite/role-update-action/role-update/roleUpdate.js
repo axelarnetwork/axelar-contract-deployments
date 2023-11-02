@@ -6,11 +6,11 @@ const TOPIC_0_ROLES_REMOVED = '0x17e90d13bc6dcdbe950d3d022f0774c9dfa3308b96720b8
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
 const handleRoleUpdate = async (context, event) => {
-    const chainName = context.metadata.getNetwork();
-
     if (!event || !event.logs || !context || !context.metadata) {
         throw new Error('INVALID_INPUT_FOR_ACTION');
     }
+
+    const chainName = context.metadata.getNetwork();
 
     const trustedAddresses = await context.storage.getJson('TrustedAddresses');
 
