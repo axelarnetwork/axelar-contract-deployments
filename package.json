@@ -4,7 +4,7 @@
   "description": "Axelar contract deployment scripts",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint '**/*.js'",
+    "lint": "eslint --fix '**/*.js'",
     "prettier": "prettier --write '**/*.js' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'"
   },
   "repository": {
