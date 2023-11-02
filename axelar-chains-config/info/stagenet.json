@@ -14,8 +14,6 @@
           "implementationCodehash": "0x5703cdd5d9808d811ab9e516c6298a18ff926b2dc03abeba391e662f737df203",
           "authModule": "0xa30225bE0D505c67028B49c7175a37ff4883980f",
           "tokenDeployer": "0xD65b4CEde4733F08939719e228F76d13BC99cBBa",
-          "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
-          "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
@@ -97,8 +95,6 @@
           "implementationCodehash": "0xc680513d76d4bb9ddebb68f3137e92cf5ee91ffd83f8153de0339b7c3f72c156",
           "authModule": "0x56FdBc2a6b63D768BE38e0585175dC7956d741F3",
           "tokenDeployer": "0x4e5Fd0f7046aBE327D637D5D4AB756769cB60A97",
-          "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
-          "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
@@ -180,8 +176,6 @@
           "implementationCodehash": "0xa9ca57c139ac5ae7a0c65d6307c2b26b3a8624a7ab0a3e450be82d86482e2024",
           "authModule": "0x68F66b5Ea49B43E4d29BDED1051B90a28EADC67d",
           "tokenDeployer": "0x34bF216E0ae4aFCFf9283ED6D23A89cF1B0CCED1",
-          "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
-          "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
@@ -263,8 +257,6 @@
           "implementationCodehash": "0x5703cdd5d9808d811ab9e516c6298a18ff926b2dc03abeba391e662f737df203",
           "authModule": "0xa30225bE0D505c67028B49c7175a37ff4883980f",
           "tokenDeployer": "0xD65b4CEde4733F08939719e228F76d13BC99cBBa",
-          "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
-          "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
@@ -346,8 +338,6 @@
           "implementationCodehash": "0xa9ca57c139ac5ae7a0c65d6307c2b26b3a8624a7ab0a3e450be82d86482e2024",
           "authModule": "0x68F66b5Ea49B43E4d29BDED1051B90a28EADC67d",
           "tokenDeployer": "0x34bF216E0ae4aFCFf9283ED6D23A89cF1B0CCED1",
-          "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
-          "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
@@ -429,8 +419,6 @@
           "implementationCodehash": "0x575efa6334e10e63128cb88913044c7c687f47d267640e41faac93b054ae6140",
           "authModule": "0x34bF216E0ae4aFCFf9283ED6D23A89cF1B0CCED1",
           "tokenDeployer": "0xdc9fA655094bBaD6840cd4b05c5658eE2042e122",
-          "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
-          "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
@@ -512,8 +500,6 @@
           "implementationCodehash": "0x5703cdd5d9808d811ab9e516c6298a18ff926b2dc03abeba391e662f737df203",
           "authModule": "0xa30225bE0D505c67028B49c7175a37ff4883980f",
           "tokenDeployer": "0xD65b4CEde4733F08939719e228F76d13BC99cBBa",
-          "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
-          "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
@@ -598,8 +584,6 @@
           "implementationCodehash": "0xf1c37572ed919c97c02f87c70f41e57dd513f335c53237e1af73330b00f04de0",
           "authModule": "0xB0288E332552f87Ef51EEE5F4060D1A98e99548B",
           "tokenDeployer": "0xef180cdD04aCec05E085963aCc61BaeD17b50894",
-          "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
-          "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
@@ -680,8 +664,6 @@
           "implementationCodehash": "0x3eb48e5f48808ef13805b38cffaa69b898238f02ad768e5d1ee5bc73be6bb579",
           "authModule": "0xD65b4CEde4733F08939719e228F76d13BC99cBBa",
           "tokenDeployer": "0x68F66b5Ea49B43E4d29BDED1051B90a28EADC67d",
-          "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
-          "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
@@ -766,8 +748,6 @@
           "implementationCodehash": "0x7fb0f83cf34549753919f6f16ed3e895fbe26eda1bfded31247048255b5d4331",
           "authModule": "0x2F4d0bEecEE4559026A8093EDD0e16377202DBe8",
           "tokenDeployer": "0xB0288E332552f87Ef51EEE5F4060D1A98e99548B",
-          "governance": "0xeeC07176Ed1d49D9cb6C52f86E278b82Dd006C3e",
-          "mintLimiter": "0xdae074A742cC3628aF70bCa2B410654dF0168a5A",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2"
         },
