@@ -7,15 +7,16 @@ const ITS_ABI = ['function getTokenAddress(bytes32 tokenId) external view return
 const COIN_MARKET_QUOTES_URL = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest';
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
-const TOKEN_THRESHOLD_WITH_PRICE = [50000, 100000, 500000]; // [info, warning, critical]
-const TOKEN_THRESHOLD_WITHOUT_PRICE = [500000, 1000000, 5000000]; // [info, warning, critical]
-
 const TOPIC_0_TOKEN_SENT = '0x9df6ec8cb445f82179f3b208e5fba6df6aa89854dfccb3af0bf74791dba47929';
 const TOPIC_0_TOKEN_SENT_WITH_DATA = '0x875cab82a677ce38c76127a24fa89a67df04116c1a0bf652b61abb89b289f433';
-const TOPIC_0_TOKEN_RECIEVED = '0xa5392cc9825f3ea9fa772e43f2392ca1a9e97db3619eac789383aaaaabb467c4';
-const TOPIC_0_TOKEN_RECIEVED_WITH_DATA = '0x35f4643275e22b7f12d809c70f685b292b1ade91c4033884bdd0a49bfbe737c3';
+const TOPIC_0_TOKEN_RECEIVED = '0xce6b1bfc389550d5075a1abee58f0efb2527b3d3ace1ee62fe59fc0ef58422fa';
+const TOPIC_0_TOKEN_RECEIVED_WITH_DATA = '0x3aa5914dfeb0200fb4b7cd39984ccf7226783495125271264156459383a78d02';
 
 const handleTokenTransferFn = async (context, event) => {
+    if (!event || !event.logs || !context || !context.metadata) {
+        throw new Error('INVALID_INPUT_FOR_ACTION');
+    }
+
     const chainName = context.metadata.getNetwork();
     const provider = new ethers.providers.JsonRpcProvider(await context.secrets.get(`RPC_${chainName.toUpperCase()}`));
     const its = new ethers.Contract(await context.storage.getStr('ITSContractAddress'), ITS_ABI, provider);
@@ -27,8 +28,8 @@ const handleTokenTransferFn = async (context, event) => {
         if (
             log.topics[0] === TOPIC_0_TOKEN_SENT ||
             log.topics[0] === TOPIC_0_TOKEN_SENT_WITH_DATA ||
-            log.topics[0] === TOPIC_0_TOKEN_RECIEVED ||
-            log.topics[0] === TOPIC_0_TOKEN_RECIEVED_WITH_DATA
+            log.topics[0] === TOPIC_0_TOKEN_RECEIVED ||
+            log.topics[0] === TOPIC_0_TOKEN_RECEIVED_WITH_DATA
         ) {
             tokenIDs.push(log.topics[1]);
             tokenTransferAmounts.push(ethers.BigNumber.from(log.topics[log.topics.length - 1]));
@@ -49,7 +50,7 @@ const handleTokenTransferFn = async (context, event) => {
 
         const erc20Address = await its.getTokenAddress(id);
         const erc20 = new ethers.Contract(erc20Address, ERC20_ABI, provider);
-        const symbol = (await erc20.symbol()).replace('axl', '');
+        const symbol = resolveTokenSymbol(await erc20.symbol());
         const decimals = await erc20.decimals();
 
         const tokenTransferAmount = parseFloat(ethers.utils.formatUnits(tokenTransferAmounts[index], decimals));
@@ -69,10 +70,10 @@ const handleTokenTransferFn = async (context, event) => {
 
             if (result.data.data[symbol].length !== 0) {
                 tokenPrice = result.data.data[symbol][0].quote.USD.price;
-                tokenThreshold = TOKEN_THRESHOLD_WITH_PRICE;
+                tokenThreshold = await context.storage.getJson('TokenThresholdWithPrice');
                 totalAmount = tokenTransferAmount * tokenPrice;
             } else {
-                tokenThreshold = TOKEN_THRESHOLD_WITHOUT_PRICE;
+                tokenThreshold = await context.storage.getJson('TokenThresholdWithoutPrice');
                 totalAmount = tokenTransferAmount;
             }
         } catch (error) {
@@ -113,7 +114,7 @@ const handleTokenTransferFn = async (context, event) => {
                     payload: {
                         summary: 'Token tranfer amount crossed threshold',
                         source: `${chainName}-ITS-${its.address}`,
-                        severity: getSeverityString(severity),
+                        severity: Severity[severity],
                         custom_details: {
                             timestamp: Date.now(),
                             chain_name: chainName,
@@ -137,20 +138,22 @@ const handleTokenTransferFn = async (context, event) => {
     }
 };
 
-function getSeverityString(severity) {
-    if (severity === 3) {
-        return 'critical';
+function resolveTokenSymbol(symbol) {
+    if (!symbol) {
+        throw new Error('NO_SYMBOL_DETECTED');
     }
 
-    if (severity === 2) {
-        return 'warning';
+    if (symbol.length >= 3 && symbol.substring(0, 3).toLowerCase() === 'axl') {
+        return symbol.substring(3);
     }
 
-    if (severity === 1) {
-        return 'info';
-    }
-
-    return '';
+    return symbol;
 }
+
+const Severity = {
+    1: 'info',
+    2: 'warning',
+    3: 'critical',
+};
 
 module.exports = { handleTokenTransferFn };
