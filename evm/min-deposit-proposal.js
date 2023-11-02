@@ -21,7 +21,7 @@ async function processCommand(_, chain, options) {
         governanceAddress = address;
     } else {
         if (!contractConfig?.address) {
-            throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
+            throw new Error(`Governance contract not deployed on ${chain.name}`);
         }
 
         governanceAddress = contractConfig.address;
@@ -33,13 +33,13 @@ async function processCommand(_, chain, options) {
 
     values.push({
         chain: chain.id.toLowerCase(),
-        'contract_address': governanceAddress,
-        'min_deposits': [
+        contract_address: governanceAddress,
+        min_deposits: [
             {
                 denom: 'uaxl',
                 amount: `${parseInt(deposit) * 1e6}`,
-            }
-        ]
+            },
+        ],
     });
 }
 
@@ -50,12 +50,14 @@ async function main(options) {
         title: 'Update min deposit for governance proposals',
         description: `This proposal sets a minimum deposit of ${options.deposit} AXL for any governance proposals for the Axelar gateway contracts.`,
         deposit: '2000000000uaxl',
-        changes: [{
-            subspace: 'axelarnet',
-            key: 'callContractsProposalMinDeposits',
-            value: values,
-        }],
-    }
+        changes: [
+            {
+                subspace: 'axelarnet',
+                key: 'callContractsProposalMinDeposits',
+                value: values,
+            },
+        ],
+    };
 
     printInfo('Proposal', JSON.stringify(paramChange, null, 2));
 }
