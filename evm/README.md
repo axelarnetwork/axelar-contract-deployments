@@ -1,62 +1,45 @@
 # EVM deployment scripts
 
-This folder contains deployment scripts for the following contracts.
+This folder contains deployment and operational scripts for various contracts.
+By default the version of contracts specified in `package.json` will be used for deployment.
 
 ## Setup
 
 `npm ci`
 
-For contract verification to work, copy over the appropriate build `artifacts` and `contracts` folder from the source repo into this repo. And update the hardhat config to use the same compiler version and optimizer runs setting.
-
-You also need to create a `keys.json` file. See `evm/.example.keys.json` for an example.
+Add the deployer private key in `.env` folder (see `.example.env` for reference).
 
 ## AxelarGateway
 
-1. Compile the contracts from the source repo
-2. Copy the `artifacts` folder at the root level of this repo
-3. Add the deployer private key in `.env` folder (see `.example.env` for reference)
-4. Add additional params in `.env` such as admin addresses, governance etc.
-5. If you'd like to auto-verify the contract on the explorer, then add the explorer API key under `keys.json` (see `.example.keys.json`), and add `--verify` flag
-6. Run the following depending on the service,
-   `node evm/deploy-gateway-v5.0.x.js --env testnet -n fantom`
+1. Add additional params in `.env` such as admin addresses, governance etc.
+2. Run the following depending on the service,
+   `node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
 
 ## Gateway Upgrade
 
 1. When upgrading the gateway, the proxy contract will be reused.
 2. Depending on the upgrade process, Axelar auth and token deployer helper contracts might be reused as well.
-3. `node evm/deploy-gateway-v5.0.x.js -e testnet -n fantom --reuseProxy` OR
-4. `node evm/deploy-gateway-v5.0.x.js -e testnet -n fantom --reuseProxy --reuseHelpers`
+3. `node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy` OR
+4. `node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy --reuseHelpers`
 5. This sets the new `implementation` in the chain config.
 6. Upgrade to the new implementation contract
-   `node evm/deploy-gateway-v5.0.x.js -e testnet -n fantom --upgrade`
+   `node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --upgrade`
 
 ## AxelarGasService and AxelarDepositService
 
-1. Compile the contracts from the source repo
-2. Copy the `artifacts` folder at the root level of this repo
-3. Add the deployer private key in `.env` folder (see `.example.env` for reference)
-4. If you'd like to auto-verify the contract on the explorer, then add the explorer API key under `keys.json` (see `.example.keys.json`), and add `--verify` flag
-5. Use the `--upgrade` flag to upgrade the contract instead
-6. Run the following depending on the service,
-   `node evm/deploy-upgradable.js deploy --env testnet -n fantom -c AxelarGasService -a ../artifacts/contracts/gas-service/`
+1. Run the following depending on the service,
+`node evm/deploy-upgradable.js -e testnet -n ethereum -c AxelarGasService`
+2. Use the `--upgrade` flag to upgrade the contract instead
 
 ## InterchainTokenService
-
-Install and copy default setting with
-
-```bash
-npm ci && cp example.env .env
-```
 
 To test the Interchain Token Service deployment
 
 ```bash
-node evm/deploy-its -n ${chain-name} -s [salt]
+node evm/deploy-its -e testnet -n ethereum -s [salt]
 ```
 
-Run again with `-v only` to verify deployed contracts.
-
-You can change `.env` to run the above script to testnet instead of local. Change the `SALT` to get a new address.
+Change the `-s SALT` to derive a new address.
 
 ## Contract Verification
 
