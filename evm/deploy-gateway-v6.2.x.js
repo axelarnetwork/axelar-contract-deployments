@@ -347,11 +347,13 @@ async function deploy(config, chain, options) {
     if (!chain.contracts.InterchainGovernance) {
         chain.contracts.InterchainGovernance = {};
     }
+
     chain.contracts.InterchainGovernance.address = governance;
 
     if (!chain.contracts.Multisig) {
         chain.contracts.Multisig = {};
     }
+
     chain.contracts.Multisig.address = mintLimiter;
 
     printInfo('Deployment status', 'SUCCESS');
@@ -391,11 +393,13 @@ async function upgrade(_, chain, options) {
     if (!chain.contracts.InterchainGovernance) {
         chain.contracts.InterchainGovernance = {};
     }
+
     chain.contracts.InterchainGovernance.address = governance;
 
     if (!chain.contracts.Multisig) {
         chain.contracts.Multisig = {};
     }
+
     chain.contracts.Multisig.address = mintLimiter;
 
     if (!offline) {
