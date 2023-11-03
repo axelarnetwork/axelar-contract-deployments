@@ -41,6 +41,11 @@ node evm/deploy-its -e testnet -n ethereum -s [salt]
 
 Change the `-s SALT` to derive a new address.
 
+## InterchainGovernance
+
+To update the min deposit on Axelar with a param change proposal, you can generate the proposal via
+`node evm/min-deposit-proposal.js -e mainnet -n all --deposit 1000000`
+
 ## Contract Verification
 
 ### Prerequisites
