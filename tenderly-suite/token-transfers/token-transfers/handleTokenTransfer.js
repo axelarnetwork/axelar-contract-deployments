@@ -12,6 +12,12 @@ const TOPIC_0_TOKEN_SENT_WITH_DATA = '0x875cab82a677ce38c76127a24fa89a67df04116c
 const TOPIC_0_TOKEN_RECEIVED = '0xce6b1bfc389550d5075a1abee58f0efb2527b3d3ace1ee62fe59fc0ef58422fa';
 const TOPIC_0_TOKEN_RECEIVED_WITH_DATA = '0x3aa5914dfeb0200fb4b7cd39984ccf7226783495125271264156459383a78d02';
 
+const Severity = {
+    1: 'info',
+    2: 'warning',
+    3: 'critical',
+};
+
 const handleTokenTransferFn = async (context, event) => {
     if (!event || !event.logs || !context || !context.metadata) {
         throw new Error('INVALID_INPUT_FOR_ACTION');
@@ -83,21 +89,30 @@ const handleTokenTransferFn = async (context, event) => {
             throw Error('ERROR_IN_FETCHING_PRICE');
         }
 
-        let tempSeverity = 0;
+        let thresholdCrossed = 0;
 
         if (totalAmount > tokenThreshold[2]) {
-            tempSeverity = 3;
-        } else if (totalAmount > tokenThreshold[1]) {
-            tempSeverity = 2;
-        } else if (totalAmount > tokenThreshold[0]) {
-            tempSeverity = 1;
-        }
-
-        if (tempSeverity) {
-            if (tempSeverity > severity) {
-                severity = tempSeverity;
+            if (severity <= 2) {
+                severity = 3;
             }
 
+            thresholdCrossed = 1;
+        } else if (totalAmount > tokenThreshold[1]) {
+            if (severity <= 1) {
+                severity = 2;
+            }
+
+            thresholdCrossed = 1;
+        } else if (totalAmount > tokenThreshold[0]) {
+            if (severity === 0) {
+                severity = 1;
+            }
+
+            thresholdCrossed = 1;
+        }
+
+        if (thresholdCrossed === 1) {
+            thresholdCrossed = 0;
             amountsAboveThreshold.push(totalAmount);
             prices.push(tokenPrice);
             symbols.push(symbol);
@@ -149,11 +164,5 @@ function resolveTokenSymbol(symbol) {
 
     return symbol;
 }
-
-const Severity = {
-    1: 'info',
-    2: 'warning',
-    3: 'critical',
-};
 
 module.exports = { handleTokenTransferFn };
