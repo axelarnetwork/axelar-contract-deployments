@@ -59,14 +59,14 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
         throw new Error('Target address is missing/not provided as valid address for the tx in function arguments');
     }
 
-    if (options.gasOptions) {
-        tx = {
-            ...options.gasOptions,
-            ...tx, // prefer gas options from tx if they were set
-        };
-    }
-
     if (!options.offline) {
+        if (options.gasOptions) {
+            tx = {
+                ...options.gasOptions,
+                ...tx, // prefer gas options from tx if they were set
+            };
+        }
+
         tx = await wallet.populateTransaction(tx);
     } else {
         const address = options.signerAddress || (await wallet.getAddress());
@@ -269,7 +269,8 @@ const updateNonceFileData = (nonceData) => {
 
 const getLocalNonce = (env, chainName, signerAddress) => {
     const nonceData = getNonceFileData();
-    return nonceData[env][chainName][signerAddress];
+    const chainData = nonceData[env] ? nonceData[env][chainName] : undefined;
+    return chainData ? chainData[signerAddress] : undefined;
 };
 
 const updateLocalNonce = (chain, nonce, signerAddress) => {

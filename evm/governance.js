@@ -8,6 +8,7 @@ const {
     utils: { defaultAbiCoder, keccak256, Interface, parseEther },
     Contract,
     BigNumber,
+    constants: { AddressZero },
 } = ethers;
 const { Command, Option } = require('commander');
 const {
@@ -41,16 +42,16 @@ async function getGatewaySetupParams(governance, gateway, contracts, options) {
         printWarn(`Gateway governor ${currGovernance} does not match governance contract: ${governance.address}`);
     }
 
-    let newGovernance = options.newGovernance || contracts.AxelarGateway?.governance;
+    let newGovernance = options.newGovernance || contracts.InterchainGovernance?.address;
 
     if (newGovernance === currGovernance) {
-        newGovernance = '0x';
+        newGovernance = AddressZero;
     }
 
-    let newMintLimiter = options.newMintLimiter || contracts.AxelarGateway?.mintLimiter;
+    let newMintLimiter = options.newMintLimiter || contracts.Multisig?.address;
 
     if (newMintLimiter === `${currMintLimiter}`) {
-        newMintLimiter = '0x';
+        newMintLimiter = AddressZero;
     }
 
     let setupParams = '0x';

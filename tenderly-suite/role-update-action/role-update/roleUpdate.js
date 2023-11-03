@@ -5,14 +5,14 @@ const TOPIC_0_ROLES_REMOVED = '0xccf920c8facee98a9c2a6c6124f2857b87b17e9f3a819bf
 
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
-const TRUSTED_ADDRESSES = [
-    '0x4a6eea0999b000a941926e298f7a49373c153fbc', // TODO: Update contracts list upon deployment
-    '0xf1ea5615086a0936f82656f88263365831978f71',
-    '0xb8cd93c83a974649d76b1c19f311f639e62272bc',
-];
-
 const handleRoleUpdate = async (context, event) => {
+    if (!event || !event.logs || !context || !context.metadata) {
+        throw new Error('INVALID_INPUT_FOR_ACTION');
+    }
+
     const chainName = context.metadata.getNetwork();
+
+    const trustedAddresses = await context.storage.getJson('TrustedAddresses');
 
     const roleAddedAccounts = [];
     const addedRoles = [];
@@ -23,19 +23,27 @@ const handleRoleUpdate = async (context, event) => {
 
     for (const log of event.logs) {
         if (log.topics[0] === TOPIC_0_ROLES_ADDED || log.topics[0] === TOPIC_0_ROLES_REMOVED) {
+            if (log.data.length <= 2) {
+                throw new Error('EMPTY_LOG_DATA');
+            }
+
             const roles = toRoleArray(parseInt(log.data, 16));
 
             if (log.topics.length === 0) {
                 throw new Error('INVALID_LOGS_LENGTH');
             }
 
-            if (log.topics[1].length < 66) {
-                throw new Error('INVALID_LOGS_LENGTH');
+            if (log.topics.length === 0) {
+                throw new Error('INVALID_LOG_TOPICS_LENGTH');
             }
 
-            //  log data contains address in first 32 bytes i.e. first 64 chars, here data string is also prefixed with 0x.
+            if (log.topics[1].length < 26 + 40) {
+                throw new Error('INVALID_LOG_TOPIC_LENGTH');
+            }
+
+            //  account is present in log topic as 32 bytes hex string, with prefixed 0s
             const account = `0x${log.topics[1].substring(26, 26 + 40)}`;
-            const tempSeverity = TRUSTED_ADDRESSES.includes(account.toLowerCase()) ? 1 : 2;
+            const tempSeverity = trustedAddresses.includes(account.toLowerCase()) ? 1 : 2;
 
             if (log.topics[0] === TOPIC_0_ROLES_ADDED) {
                 roleAddedAccounts.push(account);
@@ -98,7 +106,7 @@ function getRole(roleId) {
         return 'FlowLimiter';
     }
 
-    return '-';
+    throw new Error('UNKNOWN_ROLE_UPDATED');
 }
 
 function toRoleArray(accountRoles) {
