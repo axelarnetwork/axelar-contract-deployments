@@ -16,7 +16,8 @@ const addToProjectFn = async (context, event) => {
                 throw new Error('INVALID_LOG_DATA_LENGTH');
             }
 
-            //  log data contains address in first 32 bytes i.e. first 64 chars, here data string is also prefixed with 0x.
+            // log data contains address in first 32 bytes i.e. first 64 chars, here data string is also prefixed with 0x.
+            // data = '0x' + 24 chars (appended 0) + 40 chars (address)
             const deployedAddress = '0x' + logs[index].data.substring(26, 66);
             const name = `TokenManager-${context.metadata.getNetwork()}-${deployedAddress}`;
 
