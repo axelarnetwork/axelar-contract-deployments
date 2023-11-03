@@ -2,6 +2,11 @@ const axios = require('axios').default;
 const { ethers } = require('ethers');
 
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
+const Severity = {
+    INFO: 'info',
+    CRITICAL: 'critical',
+    WARNING: 'warning',
+};
 
 const handleFailedTxFn = async (context, event) => {
     if (!event || !event.logs || !context || !context.metadata) {
@@ -121,11 +126,5 @@ async function sendWarning(event, context, chainName, summary, source, severity)
         throw Error('SENDING_ALERTS_FAILED');
     }
 }
-
-const Severity = {
-    INFO: 'info',
-    CRITICAL: 'critical',
-    WARNING: 'warning',
-};
 
 module.exports = { handleFailedTxFn };
