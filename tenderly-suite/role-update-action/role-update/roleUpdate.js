@@ -97,17 +97,11 @@ const handleRoleUpdate = async (context, event) => {
     }
 };
 
-function getRole(roleId) {
-    if (roleId === 0) {
-        return 'Distributor';
-    } else if (roleId === 1) {
-        return 'Operator';
-    } else if (roleId === 2) {
-        return 'FlowLimiter';
-    }
-
-    throw new Error('UNKNOWN_ROLE_UPDATED');
-}
+const Role = {
+    0: 'Distributor',
+    1: 'Operator',
+    2: 'FlowLimiter',
+};
 
 function toRoleArray(accountRoles) {
     const roles = [];
@@ -116,7 +110,7 @@ function toRoleArray(accountRoles) {
     //  calculate uint8 array from uint256 value by bit shifting operation
     while (accountRoles > 0) {
         if (accountRoles & 1) {
-            roles.push(getRole(bitIndex));
+            roles.push(Role[bitIndex]);
         }
 
         accountRoles >>= 1;
