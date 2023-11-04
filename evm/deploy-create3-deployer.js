@@ -9,7 +9,8 @@ const { predictContractConstant } = require('@axelar-network/axelar-gmp-sdk-soli
 const { Command } = require('commander');
 const chalk = require('chalk');
 
-const { printInfo, writeJSON, deployCreate2, addDeploymentOptions } = require('./utils');
+const { printInfo, writeJSON, deployCreate2 } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
 const contractName = 'Create3Deployer';
@@ -94,7 +95,7 @@ if (require.main === module) {
 
     program.name('deploy-create3-deployer').description('Deploy create3 deployer');
 
-    addDeploymentOptions(program, false, false, true);
+    addExtendedOptions(program, { salt: true });
 
     program.action((options) => {
         main(options);

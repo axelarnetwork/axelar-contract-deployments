@@ -9,6 +9,8 @@ const {
 } = ethers;
 const https = require('https');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 const { outputJsonSync } = require('fs-extra');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const readlineSync = require('readline-sync');
@@ -24,7 +26,6 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
-const { Option } = require('commander');
 
 const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
@@ -778,56 +779,56 @@ function getConfigByChainId(chainId, config) {
     throw new Error(`Chain with chainId ${chainId} not found in the config`);
 }
 
-const addEnvironmentOptions = (program, ignoreChainNames) => {
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
+function findProjectRoot(startDir) {
+    let currentDir = startDir;
 
-    if (!ignoreChainNames) {
-        program.addOption(
-            new Option('-n, --chainNames <chainNames>', 'chains to run the script over').makeOptionMandatory(true).env('CHAINS'),
-        );
+    while (currentDir !== path.parse(currentDir).root) {
+        const potentialPackageJson = path.join(currentDir, 'package.json');
+
+        if (fs.existsSync(potentialPackageJson)) {
+            return currentDir;
+        }
+
+        // Move up a directory
+        currentDir = path.resolve(currentDir, '..');
     }
 
-    return program;
-};
+    throw new Error('Unable to find project root');
+}
 
-const addDeploymentOptions = (program, artifactPath, contractName, salt, skipChains, skipExisting, upgrade) => {
-    addEnvironmentOptions(program);
+function findContractPath(dir, contractName) {
+    const files = fs.readdirSync(dir);
 
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-    program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
-    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    for (const file of files) {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
 
-    if (artifactPath) program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path'));
-    if (contractName) program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-    if (salt) program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment').env('SALT'));
-    if (skipChains) program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
+        if (stat && stat.isDirectory()) {
+            const recursivePath = findContractPath(filePath, contractName);
+            if (recursivePath) return recursivePath;
+        } else if (file === `${contractName}.json`) {
+            return filePath;
+        }
+    }
+}
 
-    if (skipExisting) {
-        program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain').env('SKIP_EXISTING'));
+function getContractPath(contractName) {
+    const projectRoot = findProjectRoot(__dirname);
+
+    const searchDirs = [
+        path.join(projectRoot, 'node_modules', '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts'),
+        path.join(projectRoot, 'node_modules', '@axelar-network/axelar-cgp-solidity/artifacts/contracts'),
+    ];
+
+    for (const dir of searchDirs) {
+        if (fs.existsSync(dir)) {
+            const contractPath = findContractPath(dir, contractName);
+            if (contractPath) return contractPath;
+        }
     }
 
-    if (upgrade) program.addOption(new Option('-u, --upgrade', 'upgrade a deployed contract').env('UPGRADE'));
-
-    return program;
-};
-
-const addCallContractOptions = (program, skipChains) => {
-    addEnvironmentOptions(program);
-
-    program.addOption(new Option('-a, --address <address>', 'override address'));
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-
-    if (skipChains) program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
-
-    return program;
-};
+    throw new Error(`Contract path for ${contractName} must be entered manually.`);
+}
 
 module.exports = {
     deployCreate,
@@ -874,7 +875,5 @@ module.exports = {
     verifyContract,
     prompt,
     mainProcessor,
-    addEnvironmentOptions,
-    addDeploymentOptions,
-    addCallContractOptions,
+    getContractPath,
 };

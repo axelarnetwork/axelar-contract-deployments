@@ -9,7 +9,6 @@ const {
     utils: { isAddress, keccak256, toUtf8Bytes },
 } = ethers;
 const { Command, Option } = require('commander');
-
 const {
     printInfo,
     printWarn,
@@ -26,48 +25,11 @@ const {
     prompt,
     mainProcessor,
     isContract,
-    addDeploymentOptions,
+    getContractPath,
 } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 
-function getContractPath(contractName) {
-    switch (contractName) {
-        case 'AxelarServiceGovernance': {
-            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/governance/AxelarServiceGovernance.sol/AxelarServiceGovernance.json';
-        }
-
-        case 'InterchainProposalSender': {
-            throw new Error(`Artifact path for ${contractName} must be entered manually.`);
-        }
-
-        case 'InterchainGovernance': {
-            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/governance/InterchainGovernance.sol/InterchainGovernance.json';
-        }
-
-        case 'Multisig': {
-            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/governance/Multisig.sol/Multisig.json';
-        }
-
-        case 'Operators': {
-            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/utils/Operators.sol/Operators.json';
-        }
-
-        case 'ConstAddressDeployer': {
-            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json';
-        }
-
-        case 'Create3Deployer': {
-            return '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json';
-        }
-
-        case 'TokenDeployer': {
-            return '@axelar-network/axelar-cgp-solidity/artifacts/contracts/TokenDeployer.sol/TokenDeployer.json';
-        }
-    }
-
-    throw new Error(`${contractName} is not supported.`);
-}
-
-async function getConstructorArgs(contractName, chain, wallet, options) {
+async function getConstructorArgs(contractName, chain, wallet) {
     const config = chain.contracts;
     const contractConfig = config[contractName];
 
@@ -382,19 +344,21 @@ async function main(options) {
     await mainProcessor(options, processCommand);
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('deploy-contract').description('Deploy contracts using create, create2, or create3');
+    program.name('deploy-contract').description('Deploy contracts using create, create2, or create3');
 
-addDeploymentOptions(program, true, true, true, true, true);
+    addExtendedOptions(program, { artifactPath: true, contractName: true, salt: true, skipChains: true, skipExisting: true });
 
-program.addOption(
-    new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
-);
-program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
+    program.addOption(
+        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
+    );
+    program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+}

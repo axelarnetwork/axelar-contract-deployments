@@ -4,8 +4,9 @@ require('dotenv').config();
 
 const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
-const { Command, Option } = require('commander');
-const { mainProcessor, printWalletInfo, printInfo, addEnvironmentOptions } = require('./utils');
+const { Command } = require('commander');
+const { mainProcessor, printWalletInfo, printInfo } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 
 async function processCommand(_, chain, options) {
@@ -26,9 +27,7 @@ if (require.main === module) {
 
     program.name('balances').description('Display balance of the wallet on specified chains.');
 
-    addEnvironmentOptions(program);
-
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+    addBaseOptions(program);
 
     program.action((options) => {
         main(options);

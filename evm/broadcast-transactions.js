@@ -7,7 +7,8 @@ const {
     providers: { getDefaultProvider },
 } = ethers;
 
-const { printError, printInfo, printWarn, getConfigByChainId, prompt, loadConfig, addEnvironmentOptions } = require('./utils');
+const { printError, printInfo, printWarn, getConfigByChainId, prompt, loadConfig } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const { sendTransaction, getSignedTx, storeSignedTx } = require('./sign-utils');
 
 async function processCommand(config, _, options, file) {
@@ -71,17 +72,18 @@ async function main(options) {
     }
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('broadcast-transactions').description('Broadcast all the pending signed transactions of the signer');
+    program.name('broadcast-transactions').description('Broadcast all the pending signed transactions of the signer');
 
-program.addOption(new Option('--files [files...]', 'The file where the signed tx are stored').makeOptionMandatory(true));
-addEnvironmentOptions(program, true);
-program.addOption(new Option('-r, --rpc <rpc>', 'The chain rpc'));
-program.addOption(new Option('-y, --yes', 'skip prompts'));
+    program.addOption(new Option('--files [files...]', 'The file where the signed tx are stored').makeOptionMandatory(true));
+    addBaseOptions(program, { ignoreChainNames: true });
+    program.addOption(new Option('-r, --rpc <rpc>', 'The chain rpc'));
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+}

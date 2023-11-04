@@ -27,8 +27,8 @@ const {
     mainProcessor,
     isContract,
     deployContract,
-    addDeploymentOptions,
 } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
@@ -501,7 +501,7 @@ async function programHandler() {
 
     program.name('deploy-gateway-v6.2.x').description('Deploy gateway v6.2.x');
 
-    addDeploymentOptions(program, false, false, true, true, true, true);
+    addExtendedOptions(program, { salt: true, skipChains: true, skipExisting: true, upgrade: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(

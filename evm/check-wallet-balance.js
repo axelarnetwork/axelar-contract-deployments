@@ -4,7 +4,8 @@ const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { getDefaultProvider, BigNumber } = ethers;
 
-const { printError, mainProcessor, addEnvironmentOptions } = require('./utils');
+const { printError, mainProcessor } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const { getNonceFileData } = require('./sign-utils');
 
 async function processCommand(_, chain, options) {
@@ -47,17 +48,19 @@ async function main(options) {
     await mainProcessor(options, processCommand);
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('check-wallet-balance').description('Before offline signing checks if each signer has minimum required wallet balance');
+    program.name('check-wallet-balance').description('Before offline signing checks if each signer has minimum required wallet balance');
 
-addEnvironmentOptions(program);
+    addBaseOptions(program, { ignorePrivateKey: true });
 
-program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch gasOptions'));
-program.addOption(new Option('--addresses <addresses>', 'The Array of addresses for which the balance to check').env('ADDRESSES'));
+    program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch gasOptions'));
+    program.addOption(new Option('--addresses <addresses>', 'The Array of addresses for which the balance to check').env('ADDRESSES'));
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+}

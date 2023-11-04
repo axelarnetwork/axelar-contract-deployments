@@ -11,7 +11,8 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, printWalletInfo, loadConfig, saveConfig, prompt, addCallContractOptions } = require('./utils');
+const { printInfo, printWalletInfo, loadConfig, saveConfig, prompt } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 
@@ -188,26 +189,28 @@ async function main(options) {
     }
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('ownership').description('script to manage contract ownership');
+    program.name('ownership').description('script to manage contract ownership');
 
-addCallContractOptions(program);
+    addBaseOptions(program, { address: true });
 
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-program.addOption(
-    new Option('--action <action>', 'ownership action').choices([
-        'owner',
-        'pendingOwner',
-        'transferOwnership',
-        'proposeOwnership',
-        'acceptOwnership',
-    ]),
-);
-program.addOption(new Option('--newOwner <newOwner>', 'new owner address').makeOptionMandatory(false));
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+    program.addOption(
+        new Option('--action <action>', 'ownership action').choices([
+            'owner',
+            'pendingOwner',
+            'transferOwnership',
+            'proposeOwnership',
+            'acceptOwnership',
+        ]),
+    );
+    program.addOption(new Option('--newOwner <newOwner>', 'new owner address').makeOptionMandatory(false));
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+}

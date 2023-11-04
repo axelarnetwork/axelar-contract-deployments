@@ -21,8 +21,8 @@ const {
     isKeccak256Hash,
     parseArgs,
     prompt,
-    addCallContractOptions,
 } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
 const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
 
@@ -263,20 +263,28 @@ async function main(options) {
     }
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('operators').description('script to manage operators contract');
+    program.name('operators').description('script to manage operators contract');
 
-addCallContractOptions(program);
+    addBaseOptions(program, { address: true });
 
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators').makeOptionMandatory(false));
-program.addOption(
-    new Option('--action <action>', 'operator action').choices(['isOperator', 'addOperator', 'removeOperator', 'collectFees', 'refund']),
-);
-program.addOption(new Option('--args <args>', 'operator action arguments').makeOptionMandatory(true));
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators').makeOptionMandatory(false));
+    program.addOption(
+        new Option('--action <action>', 'operator action').choices([
+            'isOperator',
+            'addOperator',
+            'removeOperator',
+            'collectFees',
+            'refund',
+        ]),
+    );
+    program.addOption(new Option('--args <args>', 'operator action arguments').makeOptionMandatory(true));
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+}

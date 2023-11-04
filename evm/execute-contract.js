@@ -12,7 +12,8 @@ const {
 
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-const { isNumber, isString, loadConfig, saveConfig, printObj, printLog, printError, printInfo, addEnvironmentOptions } = require('./utils');
+const { isNumber, isString, loadConfig, saveConfig, printObj, printLog, printError, printInfo } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 async function getCallData(methodName, targetContract, inputRecipient, inputAmount) {
     var recipient, amount;
@@ -199,47 +200,50 @@ async function main(options) {
     }
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('execute-contract').description('Executes a call to an external contract');
+    program.name('execute-contract').description('Executes a call to an external contract');
 
-addEnvironmentOptions(program);
+    addBaseOptions(program);
 
-program.addOption(
-    new Option('-pc, --callContractPath <callContractPath>', 'artifact path for the called contract').makeOptionMandatory(true),
-);
-program.addOption(new Option('-cn, --callContractName <callContractName>', 'name of the called contract').makeOptionMandatory(true));
-program.addOption(
-    new Option('-pt, --targetContractPath <targetContractPath>', 'artifact path for the target contract').makeOptionMandatory(true),
-);
-program.addOption(
-    new Option(
-        '-tn, --targetContractName <targetContractName>',
-        'name of the target contract that is called through executeContract',
-    ).makeOptionMandatory(false),
-);
-program.addOption(
-    new Option('-ta, --targetContractAddress <targetContractAddress>', 'The address of the contract to be called')
-        .makeOptionMandatory(true)
-        .env('TARGET_ADDR'),
-);
-program.addOption(
-    new Option('-v, --nativeValue <nativeValue>', 'The amount of native token (e.g., Ether) to be sent along with the call').default(0),
-);
-program.addOption(
-    new Option('-m, --methodName <methodName>', 'method name to call in executeContract')
-        .choices(['withdraw', 'transfer', 'approve', 'default'])
-        .default('default'),
-);
-program.addOption(
-    new Option('-k, --privateKey <privateKey>', 'The private key of the caller').makeOptionMandatory(true).env('PRIVATE_KEY'),
-);
-program.addOption(new Option('-c, --callData <callData>', 'The calldata to be sent').env('CALL_DATA').default('0x'));
-program.addOption(new Option('-ra, --recipientAddress <recipientAddress>', 'The recipient address for the tokens').env('RECIPIENT_ADDR'));
-program.addOption(new Option('-am, --amount <amount>', 'The amount of tokens to transfer/withdraw/provide allowance etc.').env('AMOUNT'));
+    program.addOption(
+        new Option('-pc, --callContractPath <callContractPath>', 'artifact path for the called contract').makeOptionMandatory(true),
+    );
+    program.addOption(new Option('-cn, --callContractName <callContractName>', 'name of the called contract').makeOptionMandatory(true));
+    program.addOption(
+        new Option('-pt, --targetContractPath <targetContractPath>', 'artifact path for the target contract').makeOptionMandatory(true),
+    );
+    program.addOption(
+        new Option(
+            '-tn, --targetContractName <targetContractName>',
+            'name of the target contract that is called through executeContract',
+        ).makeOptionMandatory(false),
+    );
+    program.addOption(
+        new Option('-ta, --targetContractAddress <targetContractAddress>', 'The address of the contract to be called')
+            .makeOptionMandatory(true)
+            .env('TARGET_ADDR'),
+    );
+    program.addOption(
+        new Option('-v, --nativeValue <nativeValue>', 'The amount of native token (e.g., Ether) to be sent along with the call').default(0),
+    );
+    program.addOption(
+        new Option('-m, --methodName <methodName>', 'method name to call in executeContract')
+            .choices(['withdraw', 'transfer', 'approve', 'default'])
+            .default('default'),
+    );
+    program.addOption(new Option('-c, --callData <callData>', 'The calldata to be sent').env('CALL_DATA').default('0x'));
+    program.addOption(
+        new Option('-ra, --recipientAddress <recipientAddress>', 'The recipient address for the tokens').env('RECIPIENT_ADDR'),
+    );
+    program.addOption(
+        new Option('-am, --amount <amount>', 'The amount of tokens to transfer/withdraw/provide allowance etc.').env('AMOUNT'),
+    );
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+}

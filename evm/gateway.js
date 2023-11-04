@@ -20,8 +20,8 @@ const {
     wasEventEmitted,
     mainProcessor,
     printError,
-    addCallContractOptions,
 } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
@@ -327,41 +327,43 @@ async function main(options) {
     await mainProcessor(options, processCommand);
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('gateway').description('Script to perform gateway commands');
+    program.name('gateway').description('Script to perform gateway commands');
 
-addCallContractOptions(program, true);
+    addBaseOptions(program, { address: true });
 
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig'));
-program.addOption(
-    new Option('--action <action>', 'gateway action')
-        .choices([
-            'admins',
-            'operators',
-            'callContract',
-            'submitBatch',
-            'approve',
-            'execute',
-            'approveAndExecute',
-            'transferGovernance',
-            'governance',
-            'mintLimiter',
-            'mintLimit',
-            'params',
-        ])
-        .makeOptionMandatory(true),
-);
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig'));
+    program.addOption(
+        new Option('--action <action>', 'gateway action')
+            .choices([
+                'admins',
+                'operators',
+                'callContract',
+                'submitBatch',
+                'approve',
+                'execute',
+                'approveAndExecute',
+                'transferGovernance',
+                'governance',
+                'mintLimiter',
+                'mintLimit',
+                'params',
+            ])
+            .makeOptionMandatory(true),
+    );
 
-program.addOption(new Option('--payload <payload>', 'gmp payload'));
-program.addOption(new Option('--commandID <commandID>', 'execute command ID'));
-program.addOption(new Option('--destination <destination>', 'GMP destination address'));
-program.addOption(new Option('--destinationChain <destinationChain>', 'GMP destination chain'));
-program.addOption(new Option('--batchID <batchID>', 'EVM batch ID').default(''));
-program.addOption(new Option('--symbol <symbol>', 'EVM token symbol'));
+    program.addOption(new Option('--payload <payload>', 'gmp payload'));
+    program.addOption(new Option('--commandID <commandID>', 'execute command ID'));
+    program.addOption(new Option('--destination <destination>', 'GMP destination address'));
+    program.addOption(new Option('--destinationChain <destinationChain>', 'GMP destination chain'));
+    program.addOption(new Option('--batchID <batchID>', 'EVM batch ID').default(''));
+    program.addOption(new Option('--symbol <symbol>', 'EVM token symbol'));
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+}

@@ -8,7 +8,8 @@ const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
-const { printInfo, writeJSON, predictAddressCreate, deployCreate, addDeploymentOptions } = require('./utils');
+const { printInfo, writeJSON, predictAddressCreate, deployCreate } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json');
 const contractName = 'ConstAddressDeployer';
 
@@ -125,7 +126,7 @@ if (require.main === module) {
 
     program.name('deploy-const-address-deployer').description('Deploy const address deployer');
 
-    addDeploymentOptions(program);
+    addExtendedOptions(program);
 
     program.addOption(new Option('-i, --ignore', 'ignore the nonce value check'));
     program.addOption(new Option('-f, --force', 'proceed with contract deployment even if address already returns a bytecode'));

@@ -16,8 +16,8 @@ const {
     isAddressArray,
     isNumber,
     prompt,
-    addDeploymentOptions,
 } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 const { ethers } = require('hardhat');
 const {
     getContractFactory,
@@ -312,7 +312,7 @@ async function programHandler() {
 
     program.name('deploy-gateway-v4.3.x').description('Deploy gateway v4.3.x');
 
-    addDeploymentOptions(program, false, false, false, false, true, true);
+    addExtendedOptions(program, { skipExisting: true, upgrade: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('-a, --adminAddresses <adminAddresses>', 'admin addresses').env('ADMIN_ADDRESSES'));

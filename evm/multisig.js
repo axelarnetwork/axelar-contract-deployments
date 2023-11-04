@@ -22,8 +22,8 @@ const {
     mainProcessor,
     isValidDecimal,
     prompt,
-    addCallContractOptions,
 } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const IMultisig = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IMultisig.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
@@ -314,39 +314,43 @@ async function main(options) {
     await mainProcessor(options, processCommand, false);
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('multisig').description('Script to manage multisig actions');
+    program.name('multisig').description('Script to manage multisig actions');
 
-addCallContractOptions(program, true);
+    addBaseOptions(program, { address: true });
 
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig').makeOptionMandatory(false));
-program.addOption(
-    new Option('--action <action>', 'multisig action')
-        .choices(['signers', 'setTokenMintLimits', 'transferMintLimiter', 'withdraw', 'executeMultisigProposal'])
-        .makeOptionMandatory(true),
-);
-program.addOption(new Option('--offline', 'run script in offline mode'));
-program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig').makeOptionMandatory(false));
+    program.addOption(
+        new Option('--action <action>', 'multisig action')
+            .choices(['signers', 'setTokenMintLimits', 'transferMintLimiter', 'withdraw', 'executeMultisigProposal'])
+            .makeOptionMandatory(true),
+    );
+    program.addOption(new Option('--offline', 'run script in offline mode'));
+    program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
 
-// options for setTokenMintLimits
-program.addOption(new Option('--symbols <symbols>', 'token symbols').makeOptionMandatory(false));
-program.addOption(new Option('--limits <limits>', 'token limits').makeOptionMandatory(false));
+    // options for setTokenMintLimits
+    program.addOption(new Option('--symbols <symbols>', 'token symbols').makeOptionMandatory(false));
+    program.addOption(new Option('--limits <limits>', 'token limits').makeOptionMandatory(false));
 
-// option for transferMintLimiter
-program.addOption(new Option('--mintLimiter <mintLimiter>', 'new mint limiter address').makeOptionMandatory(false));
+    // option for transferMintLimiter
+    program.addOption(new Option('--mintLimiter <mintLimiter>', 'new mint limiter address').makeOptionMandatory(false));
 
-// options for withdraw
-program.addOption(new Option('--recipient <recipient>', 'withdraw recipient address').makeOptionMandatory(false));
-program.addOption(new Option('--withdrawAmount <withdrawAmount>', 'withdraw amount').makeOptionMandatory(false));
+    // options for withdraw
+    program.addOption(new Option('--recipient <recipient>', 'withdraw recipient address').makeOptionMandatory(false));
+    program.addOption(new Option('--withdrawAmount <withdrawAmount>', 'withdraw amount').makeOptionMandatory(false));
 
-// options for executeMultisigProposal
-program.addOption(new Option('--target <target>', 'execute multisig proposal target').makeOptionMandatory(false));
-program.addOption(new Option('--calldata <calldata>', 'execute multisig proposal calldata').makeOptionMandatory(false));
-program.addOption(new Option('--nativeValue <nativeValue>', 'execute multisig proposal nativeValue').makeOptionMandatory(false).default(0));
+    // options for executeMultisigProposal
+    program.addOption(new Option('--target <target>', 'execute multisig proposal target').makeOptionMandatory(false));
+    program.addOption(new Option('--calldata <calldata>', 'execute multisig proposal calldata').makeOptionMandatory(false));
+    program.addOption(
+        new Option('--nativeValue <nativeValue>', 'execute multisig proposal nativeValue').makeOptionMandatory(false).default(0),
+    );
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+}

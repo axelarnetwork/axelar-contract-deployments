@@ -9,7 +9,8 @@ const {
     BigNumber,
 } = ethers;
 
-const { printInfo, mainProcessor, prompt, addEnvironmentOptions } = require('./utils');
+const { printInfo, mainProcessor, prompt } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 const defaultGasLimit = 3e6;
 const gasPriceMultiplier = 5;
@@ -97,17 +98,18 @@ async function main(options) {
     await mainProcessor(options, processCommand, true);
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('update-static-gas-options').description('Update staticGasOptions');
+    program.name('update-static-gas-options').description('Update staticGasOptions');
 
-addEnvironmentOptions(program);
+    addBaseOptions(program, { ignorePrivateKey: true });
 
-program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch gasOptions'));
-program.addOption(new Option('-y, --yes', 'skip prompts'));
+    program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch gasOptions'));
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+}

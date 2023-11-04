@@ -13,16 +13,8 @@ const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const { Command, Option } = require('commander');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
-const {
-    printInfo,
-    printError,
-    saveConfig,
-    loadConfig,
-    printWalletInfo,
-    getDeployedAddress,
-    prompt,
-    addDeploymentOptions,
-} = require('./utils');
+const { printInfo, printError, saveConfig, loadConfig, printWalletInfo, getDeployedAddress, prompt } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
@@ -309,19 +301,21 @@ async function main(options) {
     }
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('deploy-upgradable').description('Deploy upgradable contracts');
+    program.name('deploy-upgradable').description('Deploy upgradable contracts');
 
-addDeploymentOptions(program, true, true, true, true, false, true);
+    addExtendedOptions(program, { artifactPath: true, contractName: true, salt: true, skipChains: true, upgrade: true });
 
-program.addOption(
-    new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
-);
-program.addOption(new Option('--args <args>', 'customize deployment args'));
+    program.addOption(
+        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
+    );
+    program.addOption(new Option('--args <args>', 'customize deployment args'));
 
-program.action((options) => {
-    main(options);
-});
+    program.action((options) => {
+        main(options);
+    });
 
-program.parse();
+    program.parse();
+}

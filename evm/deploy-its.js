@@ -11,7 +11,8 @@ const {
 } = ethers;
 const readlineSync = require('readline-sync');
 const chalk = require('chalk');
-const { printInfo, loadConfig, saveConfig, addDeploymentOptions } = require('./utils');
+const { printInfo, loadConfig, saveConfig } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 
 const TokenManagerDeployer = require('@axelar-network/interchain-token-service/dist/utils/TokenManagerDeployer.sol/TokenManagerDeployer.json');
 const StandardizedTokenLockUnlock = require('@axelar-network/interchain-token-service/dist/token-implementations/StandardizedTokenLockUnlock.sol/StandardizedTokenLockUnlock.json');
@@ -362,7 +363,7 @@ if (require.main === module) {
 
     program.name('deploy-its').description('Deploy interchain token service');
 
-    addDeploymentOptions(program, false, false, false, false, true, true);
+    addExtendedOptions(program, { skipExisting: true, upgrade: true });
 
     program.addOption(new Option('-s, --salt <key>', 'deployment salt to use for ITS deployment').makeOptionMandatory(true).env('SALT'));
     program.addOption(new Option('-o, --operator', 'address of the ITS operator').env('OPERATOR_ADDRESS'));

@@ -11,7 +11,8 @@ const {
     utils: { defaultAbiCoder },
 } = ethers;
 const { Command, Option } = require('commander');
-const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, addEnvironmentOptions } = require('./utils');
+const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
@@ -217,11 +218,9 @@ if (require.main === module) {
 
     program.name('balances').description('Display balance of the wallet on specified chains.');
 
-    addEnvironmentOptions(program);
+    addBaseOptions(program, { ignorePrivateKey: true, address: true });
 
-    program.addOption(new Option('--skipChains <skipChains>', 'skip chains'));
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name'));
-    program.addOption(new Option('-a, --address <address>', 'contract address'));
     program.addOption(new Option('-d, --dir <dir>', 'contract artifacts dir'));
     program.addOption(new Option('--args <args>', 'contract args'));
     program.addOption(new Option('--constructorArgs <constructorArgs>', 'contract constructor args'));
