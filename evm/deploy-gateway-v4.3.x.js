@@ -137,7 +137,7 @@ async function deploy(config, options) {
     if (skipExisting && contractConfig.implementation) {
         implementation = gatewayFactory.attach(contractConfig.implementation);
     } else {
-        implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address);
+        implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address, gasOptions);
         await implementation.deployTransaction.wait(chain.confirmations);
     }
 

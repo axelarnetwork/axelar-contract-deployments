@@ -50,7 +50,7 @@ async function checkKeyRotation(config, chain) {
 }
 
 async function getAuthParams(config, chain, options) {
-    printInfo('Retrieving auth key');
+    printInfo(`Retrieving validator addresses for ${chain} from Axelar network`);
 
     if (!options.amplifier) {
         await checkKeyRotation(config, chain);
@@ -98,8 +98,8 @@ async function deploy(config, chain, options) {
     }
 
     const contractConfig = chain.contracts[contractName];
-    const governance = options.governance || contractConfig.governance || chain.contracts.InterchainGovernance?.address;
-    const mintLimiter = options.mintLimiter || contractConfig.mintLimiter || chain.contracts.Multisig?.address;
+    const governance = options.governance || chain.contracts.InterchainGovernance?.address || wallet.address;
+    const mintLimiter = options.mintLimiter || chain.contracts.Multisig?.address || wallet.address;
 
     if (!reuseProxy) {
         if (governance === undefined) {
@@ -111,11 +111,11 @@ async function deploy(config, chain, options) {
         }
 
         if (!(await isContract(governance, provider))) {
-            printWarn('governance address is not a contract');
+            printWarn('Governance address is not a contract. This is optional for test deployments');
         }
 
         if (!(await isContract(mintLimiter, provider))) {
-            printWarn('mintLimiter address is not a contract');
+            printWarn('MintLimiter address is not a contract. This is optional for test deployments');
         }
     }
 
@@ -237,6 +237,8 @@ async function deploy(config, chain, options) {
         const params = getProxyParams(governance, mintLimiter);
 
         printInfo('Deploying gateway proxy contract');
+        printInfo('Governance address', governance);
+        printInfo('MintLimiter address', mintLimiter);
         printInfo('Proxy deployment args', `${implementation.address},${params}`);
 
         const gatewayProxy = await gatewayProxyFactory.deploy(implementation.address, params, gasOptions);
@@ -336,14 +338,24 @@ async function deploy(config, chain, options) {
     contractConfig.implementationCodehash = implementationCodehash;
     contractConfig.authModule = auth.address;
     contractConfig.tokenDeployer = tokenDeployer.address;
-    contractConfig.governance = governance;
-    contractConfig.mintLimiter = mintLimiter;
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = options.deployMethod;
 
     if (options.deployMethod !== 'create') {
         contractConfig.salt = salt;
     }
+
+    if (!chain.contracts.InterchainGovernance) {
+        chain.contracts.InterchainGovernance = {};
+    }
+
+    chain.contracts.InterchainGovernance.address = governance;
+
+    if (!chain.contracts.Multisig) {
+        chain.contracts.Multisig = {};
+    }
+
+    chain.contracts.Multisig.address = mintLimiter;
 
     printInfo('Deployment status', 'SUCCESS');
 
@@ -375,11 +387,21 @@ async function upgrade(_, chain, options) {
 
     const gateway = new Contract(contractConfig.address, AxelarGateway.abi, wallet);
     let implementationCodehash = contractConfig.implementationCodehash;
-    let governance = options.governance || contractConfig.governance || chain.contracts.InterchainGovernance?.address;
-    let mintLimiter = options.mintLimiter || contractConfig.mintLimiter || chain.contracts.Multisig?.address;
+    let governance = options.governance || chain.contracts.InterchainGovernance?.address;
+    let mintLimiter = options.mintLimiter || chain.contracts.Multisig?.address;
     let setupParams = '0x';
-    contractConfig.governance = governance;
-    contractConfig.mintLimiter = mintLimiter;
+
+    if (!chain.contracts.InterchainGovernance) {
+        chain.contracts.InterchainGovernance = {};
+    }
+
+    chain.contracts.InterchainGovernance.address = governance;
+
+    if (!chain.contracts.Multisig) {
+        chain.contracts.Multisig = {};
+    }
+
+    chain.contracts.Multisig.address = mintLimiter;
 
     if (!offline) {
         if (governance && !(await isContract(governance, provider))) {
