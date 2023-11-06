@@ -15,7 +15,7 @@ const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
 const contractName = 'Create3Deployer';
 
-async function deployCreate3Deployer(wallet, chain, options = null, verifyOptions = null) {
+async function deployCreate3Deployer(wallet, chain, options = {}, verifyOptions = null) {
     printInfo('Deployer address', wallet.address);
 
     console.log(

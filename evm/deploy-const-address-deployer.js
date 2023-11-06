@@ -13,7 +13,7 @@ const { addExtendedOptions } = require('./cli-utils');
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json');
 const contractName = 'ConstAddressDeployer';
 
-async function deployConstAddressDeployer(wallet, chain, options = null, verifyOptions = null) {
+async function deployConstAddressDeployer(wallet, chain, options = {}, verifyOptions = null) {
     printInfo('Deployer address', wallet.address);
 
     const contracts = chain.contracts;
