@@ -789,7 +789,6 @@ function findProjectRoot(startDir) {
             return currentDir;
         }
 
-        // Move up a directory
         currentDir = path.resolve(currentDir, '..');
     }
 
@@ -805,7 +804,10 @@ function findContractPath(dir, contractName) {
 
         if (stat && stat.isDirectory()) {
             const recursivePath = findContractPath(filePath, contractName);
-            if (recursivePath) return recursivePath;
+
+            if (recursivePath) {
+                return recursivePath;
+            }
         } else if (file === `${contractName}.json`) {
             return filePath;
         }
@@ -816,18 +818,40 @@ function getContractPath(contractName) {
     const projectRoot = findProjectRoot(__dirname);
 
     const searchDirs = [
-        path.join(projectRoot, 'node_modules', '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts'),
-        path.join(projectRoot, 'node_modules', '@axelar-network/axelar-cgp-solidity/artifacts/contracts'),
+        path.join(projectRoot, 'node_modules', '@axelar-network', 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
+        path.join(projectRoot, 'node_modules', '@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
     ];
 
     for (const dir of searchDirs) {
         if (fs.existsSync(dir)) {
             const contractPath = findContractPath(dir, contractName);
-            if (contractPath) return contractPath;
+
+            if (contractPath) {
+                return contractPath;
+            }
         }
     }
 
     throw new Error(`Contract path for ${contractName} must be entered manually.`);
+}
+
+function getContractJSON(contractName, artifactPath) {
+    let contractPath;
+
+    if (artifactPath) {
+        contractPath = artifactPath.charAt(0) === '@' ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
+    } else {
+        contractPath = getContractPath(contractName);
+    }
+
+    printInfo('Contract path', contractPath);
+
+    try {
+        const contractJson = require(contractPath);
+        return contractJson;
+    } catch (err) {
+        throw new Error(`Failed to load contract JSON for ${contractName} at path ${contractPath}`);
+    }
 }
 
 module.exports = {
@@ -876,4 +900,5 @@ module.exports = {
     prompt,
     mainProcessor,
     getContractPath,
+    getContractJSON,
 };

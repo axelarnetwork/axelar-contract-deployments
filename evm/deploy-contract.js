@@ -25,7 +25,7 @@ const {
     prompt,
     mainProcessor,
     isContract,
-    getContractPath,
+    getContractJSON,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
@@ -251,17 +251,7 @@ async function processCommand(config, chain, options) {
 
     printInfo('Contract name', contractName);
 
-    let contractPath;
-
-    if (artifactPath) {
-        contractPath = artifactPath.charAt(0) === '@' ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
-    } else {
-        contractPath = getContractPath(contractName);
-    }
-
-    printInfo('Contract path', contractPath);
-
-    const contractJson = require(contractPath);
+    const contractJson = getContractJSON(contractName, artifactPath);
 
     const predeployCodehash = await getBytecodeHash(contractJson, chain.id);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);

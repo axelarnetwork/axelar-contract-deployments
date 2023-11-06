@@ -12,7 +12,7 @@ const {
 
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-const { isNumber, isString, loadConfig, saveConfig, printObj, printLog, printError, printInfo } = require('./utils');
+const { isNumber, isString, loadConfig, saveConfig, printObj, printLog, printError, getContractJSON } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function getCallData(methodName, targetContract, inputRecipient, inputAmount) {
@@ -137,11 +137,7 @@ async function executeContract(options, chain, wallet) {
         throw new Error('Missing native value from user info');
     }
 
-    var contractPath =
-        callContractPath.charAt(0) === '@' ? callContractPath : callContractPath + callContractName + '.sol/' + callContractName + '.json';
-    printInfo('Call Contract path', contractPath);
-
-    const IContractExecutor = require(contractPath);
+    const IContractExecutor = getContractJSON(callContractName, callContractPath);
     const contract = new Contract(callContractAddress, IContractExecutor.abi, wallet);
     var finalCallData, finalNativeValue;
 
@@ -149,12 +145,7 @@ async function executeContract(options, chain, wallet) {
         finalCallData = callData;
         finalNativeValue = nativeValue;
     } else {
-        contractPath =
-            targetContractPath.charAt(0) === '@'
-                ? targetContractPath
-                : targetContractPath + targetContractName + '.sol/' + targetContractName + '.json';
-        printInfo('Target Contract path', contractPath);
-        const ITargetContract = require(contractPath);
+        const ITargetContract = getContractJSON(targetContractName, targetContractPath);
         const targetContract = new Contract(targetContractAddress, ITargetContract.abi, wallet);
         finalCallData = await getCallData(methodName, targetContract, recipientAddress, Number(amount));
         finalNativeValue = Number(0);
@@ -207,21 +198,16 @@ if (require.main === module) {
 
     addBaseOptions(program);
 
+    program.addOption(new Option('-c, --callContractName <callContractName>', 'name of the called contract').makeOptionMandatory(true));
+    program.addOption(new Option('--callContractPath <callContractPath>', 'artifact path for the called contract'));
+    program.addOption(new Option('--targetContractPath <targetContractPath>', 'artifact path for the target contract'));
     program.addOption(
-        new Option('-pc, --callContractPath <callContractPath>', 'artifact path for the called contract').makeOptionMandatory(true),
-    );
-    program.addOption(new Option('-cn, --callContractName <callContractName>', 'name of the called contract').makeOptionMandatory(true));
-    program.addOption(
-        new Option('-pt, --targetContractPath <targetContractPath>', 'artifact path for the target contract').makeOptionMandatory(true),
-    );
-    program.addOption(
-        new Option(
-            '-tn, --targetContractName <targetContractName>',
-            'name of the target contract that is called through executeContract',
-        ).makeOptionMandatory(false),
+        new Option('-t, --targetContractName <targetContractName>', 'target contract name called by executeContract').makeOptionMandatory(
+            true,
+        ),
     );
     program.addOption(
-        new Option('-ta, --targetContractAddress <targetContractAddress>', 'The address of the contract to be called')
+        new Option('-a, --targetContractAddress <targetContractAddress>', 'target contract address')
             .makeOptionMandatory(true)
             .env('TARGET_ADDR'),
     );
@@ -229,17 +215,13 @@ if (require.main === module) {
         new Option('-v, --nativeValue <nativeValue>', 'The amount of native token (e.g., Ether) to be sent along with the call').default(0),
     );
     program.addOption(
-        new Option('-m, --methodName <methodName>', 'method name to call in executeContract')
+        new Option('--action <action>', 'executeContract action')
             .choices(['withdraw', 'transfer', 'approve', 'default'])
             .default('default'),
     );
-    program.addOption(new Option('-c, --callData <callData>', 'The calldata to be sent').env('CALL_DATA').default('0x'));
-    program.addOption(
-        new Option('-ra, --recipientAddress <recipientAddress>', 'The recipient address for the tokens').env('RECIPIENT_ADDR'),
-    );
-    program.addOption(
-        new Option('-am, --amount <amount>', 'The amount of tokens to transfer/withdraw/provide allowance etc.').env('AMOUNT'),
-    );
+    program.addOption(new Option('--callData <callData>', 'The calldata to be sent').env('CALL_DATA').default('0x'));
+    program.addOption(new Option('--recipientAddress <recipientAddress>', 'The recipient address for the tokens').env('RECIPIENT_ADDR'));
+    program.addOption(new Option('--amount <amount>', 'The amount of tokens to transfer/withdraw/provide allowance etc.').env('AMOUNT'));
 
     program.action((options) => {
         main(options);
