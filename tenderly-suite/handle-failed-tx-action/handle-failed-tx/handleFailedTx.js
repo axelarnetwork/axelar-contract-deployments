@@ -9,13 +9,15 @@ const Severity = {
 };
 
 const handleFailedTxFn = async (context, event) => {
-    if (!event || !event.logs || !context || !context.metadata) {
+    if (!event || !context || !context.metadata) {
         throw new Error('INVALID_INPUT_FOR_ACTION');
     }
 
     const chainName = context.metadata.getNetwork();
     const provider = new ethers.providers.JsonRpcProvider(await context.secrets.get(`RPC_${chainName.toUpperCase()}`));
     const tx = await provider.getTransaction(event.hash);
+    const blockNumberLatest = await provider.getBlockNumber();
+    console.log('latestBlockNumber: ', blockNumberLatest);
 
     const warningThreshold = await context.storage.getStr('WarningThreshold');
     const criticalThreshold = await context.storage.getStr('CriticalThreshold');
@@ -25,7 +27,23 @@ const handleFailedTxFn = async (context, event) => {
         throw new Error('INVALID_TX_FORMAT');
     }
 
-    const response = await provider.call(tx, tx.blockNumber);
+    const { to, from, nonce, gasLimit, gasPrice, data, value, chainId, type, accessList, blockNumber } = tx;
+
+    const response = await provider.call(
+        {
+            to,
+            from,
+            nonce,
+            gasLimit,
+            gasPrice,
+            data,
+            value,
+            chainId,
+            type: type ?? undefined,
+            accessList,
+        },
+        blockNumber,
+    );
 
     if (response.length < 10) {
         throw new Error('INVALID_RESPONSE_LENGTH');
