@@ -244,7 +244,7 @@ async function deployITS(
         { ...verifyOptions, contractPath: 'contracts/proxies/InterchainTokenServiceProxy.sol:InterchainTokenServiceProxy' },
     );
     contractConfig.address = contract.address;
-    
+
     console.log(`Deployed Interchain Token Service at ${contract.address}`);
 
     if (!verifyOptions?.only && saveFunc) await saveFunc();
@@ -266,11 +266,19 @@ async function deployTokenFactory(wallet, chain, deployOptions, skipExisting = t
     if (skipExisting && isAddress(contractConfig.interchainTokenFactoryImplementation)) return;
 
     console.log(`Deploying Interchain Token Factory Implementation.`);
-    
-    const implementation = await deployContract('create', wallet, InterchainTokenFactory, [contractConfig.address], deployOptions, gasOptions, {
-        ...verifyOptions,
-        contractPath: 'contracts/InterchainTokenService.sol:InterchainTokenFactory',
-    });
+
+    const implementation = await deployContract(
+        'create',
+        wallet,
+        InterchainTokenFactory,
+        [contractConfig.address],
+        deployOptions,
+        gasOptions,
+        {
+            ...verifyOptions,
+            contractPath: 'contracts/InterchainTokenService.sol:InterchainTokenFactory',
+        },
+    );
 
     contractConfig.interchainTokenFactoryImplementation = implementation.address;
     console.log(`Deployed Interchain Token Factroy Implementations at ${implementation.address}`);
@@ -287,7 +295,7 @@ async function deployTokenFactory(wallet, chain, deployOptions, skipExisting = t
         gasOptions,
         { ...verifyOptions, contractPath: 'contracts/proxies/InterchainTokenServiceProxy.sol:InterchainTokenFactoryProxy' },
     );
-    
+
     console.log(`Deployed Interchain Token Factroy Proxy at ${proxy.address}`);
 
     contractConfig.interchainTokenFactory = proxy.address;
@@ -378,11 +386,12 @@ async function main(options) {
             salt: options.salt,
         };
 
-        if (options.deployMethod == 'create2') {
+        if (options.deployMethod === 'create2') {
             deployOptions.deployerContract = chain.contracts.ConstAddressDeployer.address;
-        } else if (options.deployMethod == 'create3') {
+        } else if (options.deployMethod === 'create3') {
             deployOptions.deployerContract = chain.contracts.Create3Deployer.address;
         }
+
         chain.contracts.InterchainTokenService = chain.contracts.InterchainTokenService || {};
         chain.contracts.InterchainTokenService.interchainTokenFactory = await getCreate3Address(
             chain.contracts.Create3Deployer.address,
@@ -415,7 +424,11 @@ if (require.main === module) {
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-s, --salt <key>', 'deployment salt to use for ITS deployment').makeOptionMandatory(true).env('SALT'));
-    program.addOption(new Option('-f, --factorySalt <key>', 'deployment salt to use for Interchain Token Factory deployment').makeOptionMandatory(true).env('FACTORY_SALT'));
+    program.addOption(
+        new Option('-f, --factorySalt <key>', 'deployment salt to use for Interchain Token Factory deployment')
+            .makeOptionMandatory(true)
+            .env('FACTORY_SALT'),
+    );
     program.addOption(new Option('-v, --verify <verify>', 'verify the deployed contract on the explorer [true|false|only]').env('VERIFY'));
     program.addOption(new Option('-x, --skipExisting <boolean>', 'skip deploying contracts if they already exist').env('SKIP_EXISTING'));
     program.addOption(new Option('-o, --operator', 'address of the ITS operator').env('OPERATOR_ADDRESS'));
