@@ -7,10 +7,10 @@ const ITS_ABI = ['function getTokenAddress(bytes32 tokenId) external view return
 const COIN_MARKET_QUOTES_URL = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest';
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
-const TOPIC_0_TOKEN_SENT = '0x9df6ec8cb445f82179f3b208e5fba6df6aa89854dfccb3af0bf74791dba47929';
-const TOPIC_0_TOKEN_SENT_WITH_DATA = '0x875cab82a677ce38c76127a24fa89a67df04116c1a0bf652b61abb89b289f433';
-const TOPIC_0_TOKEN_RECEIVED = '0xce6b1bfc389550d5075a1abee58f0efb2527b3d3ace1ee62fe59fc0ef58422fa';
-const TOPIC_0_TOKEN_RECEIVED_WITH_DATA = '0x3aa5914dfeb0200fb4b7cd39984ccf7226783495125271264156459383a78d02';
+const TOPIC_0_TOKEN_SENT = '0xc69ea08ff19729031661a332e0492ee7a7e27e028ae777d3fe57cf299f091c4f';
+const TOPIC_0_TOKEN_SENT_WITH_DATA = '0xa5e69b627d003d7e0b239ecaf3e5f1816fe464981b3057663595a2119e5771f5';
+const TOPIC_0_TOKEN_RECEIVED = '0xb7c5e219defd6108c4fcf3fa28c407d83946ad17f4f5b27acc0b45345911187e';
+const TOPIC_0_TOKEN_RECEIVED_WITH_DATA = '0x36578ffa82c9b8a006de8b9a63f06cb53324d13073d643fbf1d04ce2e14f1c67';
 
 const Severity = {
     1: 'info',
