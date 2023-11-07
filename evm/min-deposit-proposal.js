@@ -3,6 +3,7 @@
 require('dotenv').config();
 
 const { Command, Option } = require('commander');
+const { addBaseOptions } = require('./cli-utils');
 const { mainProcessor, printInfo, isValidNumber, isValidAddress } = require('./utils');
 
 const values = [];
@@ -67,15 +68,8 @@ if (require.main === module) {
 
     program.name('balances').description('Display balance of the wallet on specified chains.');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true).env('CHAINS'));
-    program.addOption(new Option('-a, --address <address>', 'override governance address'));
+    addBaseOptions(program, { ignorePrivateKey: true, address: true });
+
     program.addOption(new Option('--deposit <deposit>', 'min deposit for governance proposals, in terms of AXL'));
 
     program.action((options) => {

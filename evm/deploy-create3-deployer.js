@@ -6,15 +6,16 @@ const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
 const readlineSync = require('readline-sync');
 const { predictContractConstant } = require('@axelar-network/axelar-gmp-sdk-solidity');
-const { Command, Option } = require('commander');
+const { Command } = require('commander');
 const chalk = require('chalk');
 
 const { printInfo, writeJSON, deployCreate2 } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
 const contractName = 'Create3Deployer';
 
-async function deployCreate3Deployer(wallet, chain, options = null, verifyOptions = null) {
+async function deployCreate3Deployer(wallet, chain, options = {}, verifyOptions = null) {
     printInfo('Deployer address', wallet.address);
 
     console.log(
@@ -94,18 +95,7 @@ if (require.main === module) {
 
     program.name('deploy-create3-deployer').description('Deploy create3 deployer');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-    program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
-    program.addOption(new Option('-v, --verify <verify>', 'verify the deployed contract on the explorer').env('VERIFY'));
-    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    addExtendedOptions(program, { salt: true });
 
     program.action((options) => {
         main(options);
