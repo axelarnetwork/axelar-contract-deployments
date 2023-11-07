@@ -1,7 +1,5 @@
+const { ethers } = require('ethers');
 const axios = require('axios').default;
-
-const TOPIC_0_ROLES_ADDED = '0x34e73c57659d4b6809b53db4feee9b007b892e978114eda420d2991aba150143';
-const TOPIC_0_ROLES_REMOVED = '0xccf920c8facee98a9c2a6c6124f2857b87b17e9f3a819bfcc6945196ee77366b';
 
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
@@ -10,8 +8,11 @@ const handleRoleUpdate = async (context, event) => {
         throw new Error('INVALID_INPUT_FOR_ACTION');
     }
 
-    const chainName = context.metadata.getNetwork();
+    const { rolesAdded, rolesRemoved } = await context.storage.getJson('EventsABI');
+    const rolesAddedHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(rolesAdded));
+    const rolesRemovedHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(rolesRemoved));
 
+    const chainName = context.metadata.getNetwork();
     const trustedAddresses = await context.storage.getJson('TrustedAddresses');
 
     const roleAddedAccounts = [];
@@ -22,7 +23,7 @@ const handleRoleUpdate = async (context, event) => {
     let severity = 0;
 
     for (const log of event.logs) {
-        if (log.topics[0] === TOPIC_0_ROLES_ADDED || log.topics[0] === TOPIC_0_ROLES_REMOVED) {
+        if (log.topics[0] === rolesAddedHash || log.topics[0] === rolesRemovedHash) {
             if (log.data.length <= 2) {
                 throw new Error('EMPTY_LOG_DATA');
             }
@@ -45,7 +46,7 @@ const handleRoleUpdate = async (context, event) => {
             const account = `0x${log.topics[1].substring(26, 26 + 40)}`;
             const tempSeverity = trustedAddresses.includes(account.toLowerCase()) ? 1 : 2;
 
-            if (log.topics[0] === TOPIC_0_ROLES_ADDED) {
+            if (log.topics[0] === rolesAddedHash) {
                 roleAddedAccounts.push(account);
                 addedRoles.push(roles);
             } else {
