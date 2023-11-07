@@ -28,6 +28,7 @@ const {
     isValidDecimal,
     prompt,
 } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils.js');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
@@ -602,56 +603,48 @@ async function main(options) {
     }
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('governance').description('Script to manage interchain governance actions');
+    program.name('governance').description('Script to manage interchain governance actions');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(
-    new Option('-c, --contractName <contractName>', 'contract name')
-        .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-        .default('InterchainGovernance'),
-);
-program.addOption(new Option('-a, --address <address>', 'override address'));
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
-program.addOption(
-    new Option('--action <action>', 'governance action').choices([
-        'scheduleTimeLock',
-        'cancelTimeLock',
-        'approveMultisig',
-        'cancelMultisig',
-        'executeProposal',
-        'executeMultisigProposal',
-        'gatewayUpgrade',
-        'submitUpgrade',
-        'executeUpgrade',
-        'cancelUpgrade',
-        'withdraw',
-        'getProposalEta',
-    ]),
-);
-program.addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'));
-program.addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
-program.addOption(new Option('--commandId <commandId>', 'command id'));
-program.addOption(new Option('--target <target>', 'governance execution target'));
-program.addOption(new Option('--calldata <calldata>', 'calldata'));
-program.addOption(new Option('--nativeValue <nativeValue>', 'nativeValue').default(0));
-program.addOption(new Option('--proposal <proposal>', 'governance proposal payload'));
-program.addOption(new Option('--amount <amount>', 'withdraw amount'));
-program.addOption(new Option('--date <date>', 'proposal activation date'));
-program.addOption(new Option('--implementation <implementation>', 'new gateway implementation'));
+    addBaseOptions(program, { address: true });
 
-program.action((options) => {
-    main(options);
-});
+    program.addOption(
+        new Option('-c, --contractName <contractName>', 'contract name')
+            .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+            .default('InterchainGovernance'),
+    );
+    program.addOption(
+        new Option('--action <action>', 'governance action').choices([
+            'scheduleTimeLock',
+            'cancelTimeLock',
+            'approveMultisig',
+            'cancelMultisig',
+            'executeProposal',
+            'executeMultisigProposal',
+            'gatewayUpgrade',
+            'submitUpgrade',
+            'executeUpgrade',
+            'cancelUpgrade',
+            'withdraw',
+            'getProposalEta',
+        ]),
+    );
+    program.addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'));
+    program.addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
+    program.addOption(new Option('--commandId <commandId>', 'command id'));
+    program.addOption(new Option('--target <target>', 'governance execution target'));
+    program.addOption(new Option('--calldata <calldata>', 'calldata'));
+    program.addOption(new Option('--nativeValue <nativeValue>', 'nativeValue').default(0));
+    program.addOption(new Option('--proposal <proposal>', 'governance proposal payload'));
+    program.addOption(new Option('--amount <amount>', 'withdraw amount'));
+    program.addOption(new Option('--date <date>', 'proposal activation date'));
+    program.addOption(new Option('--implementation <implementation>', 'new gateway implementation'));
 
-program.parse();
+    program.action((options) => {
+        main(options);
+    });
+
+    program.parse();
+}

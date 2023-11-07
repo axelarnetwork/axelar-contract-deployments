@@ -36,7 +36,28 @@ jobs:
                 "chainId": 31337,
                 "rpc": "http://127.0.0.1:8545",
                 "tokenSymbol": "TEST",
-                "contracts": {}
+                "contracts": {
+                  "InterchainGovernance": {
+                    "minimumTimeDelay": 3600
+                  },
+                  "AxelarServiceGovernance": {
+                    "minimumTimeDelay": 3600,
+                    "cosigners": [
+                      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+                      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+                      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+                    ],
+                    "threshold": 2
+                  },
+                  "Multisig": {
+                    "signers": [
+                      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+                      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+                      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+                    ],
+                    "threshold": 2
+                  }
+                }
               }
             }
           }' > ./axelar-chains-config/info/local.json
@@ -52,13 +73,31 @@ jobs:
         run: cat ./axelar-chains-config/info/local.json
 
       - name: Deploy ConstAddressDeployer
-        run: node evm/deploy-contract.js -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c ConstAddressDeployer -m create -y
+        run: node evm/deploy-contract.js -c ConstAddressDeployer -m create -y
 
       - name: Deploy Create3Deployer
-        run: node evm/deploy-contract.js -a ../node_modules/@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ -c Create3Deployer -m create2 -y
+        run: node evm/deploy-contract.js -c Create3Deployer -m create2 -y
 
       - name: Deploy AxelarGateway
         run: node evm/deploy-gateway-v6.2.x.js -m create3 -s "AxelarGateway v6.2" -g 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -m 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
 
       - name: Call Method on Gateway
         run: node evm/gateway.js --action callContract --destinationChain test2 -y
+
+      - name: Deploy InterchainGovernance using create
+        run: node evm/deploy-contract.js -c InterchainGovernance -m create -y
+
+      - name: Deploy InterchainGovernance using create2
+        run: node evm/deploy-contract.js -c InterchainGovernance -m create2 -y
+
+      - name: Deploy InterchainGovernance using create3
+        run: node evm/deploy-contract.js -c InterchainGovernance -m create3 -y
+
+      - name: Deploy AxelarServiceGovernance using create3
+        run: node evm/deploy-contract.js -c AxelarServiceGovernance -m create3 -y
+
+      - name: Deploy Multisig using create3
+        run: node evm/deploy-contract.js -c Multisig -m create3 -y
+
+      - name: Deploy Operators using create3
+        run: node evm/deploy-contract.js -c Operators -m create3 -y
