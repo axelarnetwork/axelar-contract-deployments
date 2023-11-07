@@ -41,7 +41,21 @@ jobs:
                     "minimumTimeDelay": 3600
                   },
                   "AxelarServiceGovernance": {
-                    "minimumTimeDelay": 3600
+                    "minimumTimeDelay": 3600,
+                    "cosigners": [
+                      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+                      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+                      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+                    ],
+                    "threshold": 2
+                  },
+                  "Multisig": {
+                    "signers": [
+                      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+                      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+                      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+                    ],
+                    "threshold": 2
                   }
                 }
               }
@@ -73,32 +87,8 @@ jobs:
       - name: Deploy InterchainGovernance using create
         run: node evm/deploy-contract.js -c InterchainGovernance -m create -y
 
-      - name: Deploy AxelarServiceGovernance using create
-        run: node evm/deploy-contract.js -c AxelarServiceGovernance -m create -y
-
-      - name: Deploy Multisig using create
-        run: node evm/deploy-contract.js -c Multisig -m create -y
-
-      - name: Deploy Operators using create
-        run: node evm/deploy-contract.js -c Operators -m create -y
-
-      - name: Deploy TokenDeployer using create
-        run: node evm/deploy-contract.js -c TokenDeployer -m create -y
-
       - name: Deploy InterchainGovernance using create2
         run: node evm/deploy-contract.js -c InterchainGovernance -m create2 -y
-
-      - name: Deploy AxelarServiceGovernance using create2
-        run: node evm/deploy-contract.js -c AxelarServiceGovernance -m create2 -y
-
-      - name: Deploy Multisig using create2
-        run: node evm/deploy-contract.js -c Multisig -m create2 -y
-
-      - name: Deploy Operators using create2
-        run: node evm/deploy-contract.js -c Operators -m create2 -y
-
-      - name: Deploy TokenDeployer using create2
-        run: node evm/deploy-contract.js -c TokenDeployer -m create2 -y
 
       - name: Deploy InterchainGovernance using create3
         run: node evm/deploy-contract.js -c InterchainGovernance -m create3 -y
@@ -111,6 +101,3 @@ jobs:
 
       - name: Deploy Operators using create3
         run: node evm/deploy-contract.js -c Operators -m create3 -y
-
-      - name: Deploy TokenDeployer using create3
-        run: node evm/deploy-contract.js -c TokenDeployer -m create3 -y

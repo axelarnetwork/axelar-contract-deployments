@@ -15,10 +15,10 @@ const { Command, Option } = require('commander');
 const { isNumber, isString, loadConfig, saveConfig, printObj, printLog, printError, getContractJSON } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
-async function getCallData(methodName, targetContract, inputRecipient, inputAmount) {
+async function getCallData(action, targetContract, inputRecipient, inputAmount) {
     var recipient, amount;
 
-    switch (methodName) {
+    switch (action) {
         case 'withdraw': {
             if (inputRecipient) {
                 recipient = inputRecipient;
@@ -95,7 +95,7 @@ async function getCallData(methodName, targetContract, inputRecipient, inputAmou
         }
 
         default: {
-            throw new Error('The method name does not match any of the specified choices');
+            throw new Error('The action does not match any of the specified choices');
         }
     }
 }
@@ -109,7 +109,7 @@ async function executeContract(options, chain, wallet) {
         targetContractAddress,
         callData,
         nativeValue,
-        methodName,
+        action,
         recipientAddress,
         amount,
     } = options;
@@ -129,7 +129,7 @@ async function executeContract(options, chain, wallet) {
         throw new Error('Missing target address in the address info.');
     }
 
-    if (!isString(methodName)) {
+    if (!isString(action)) {
         throw new Error('Missing method name from the user info.');
     }
 
@@ -141,13 +141,13 @@ async function executeContract(options, chain, wallet) {
     const contract = new Contract(callContractAddress, IContractExecutor.abi, wallet);
     var finalCallData, finalNativeValue;
 
-    if (methodName === 'default') {
+    if (action === 'default') {
         finalCallData = callData;
         finalNativeValue = nativeValue;
     } else {
         const ITargetContract = getContractJSON(targetContractName, targetContractPath);
         const targetContract = new Contract(targetContractAddress, ITargetContract.abi, wallet);
-        finalCallData = await getCallData(methodName, targetContract, recipientAddress, Number(amount));
+        finalCallData = await getCallData(action, targetContract, recipientAddress, Number(amount));
         finalNativeValue = Number(0);
     }
 
