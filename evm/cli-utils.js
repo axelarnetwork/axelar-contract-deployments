@@ -24,7 +24,7 @@ const addBaseOptions = (program, options = {}) => {
     }
 
     if (options.address) {
-        program.addOption(new Option('-a, --address <address>', 'override address'));
+        program.addOption(new Option('--address <address>', 'override address'));
     }
 
     return program;

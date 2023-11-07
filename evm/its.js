@@ -27,6 +27,7 @@ const {
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/dist/interchain-token-service/InterchainTokenService.sol');
+const { addExtendedOptions } = require('./cli-utils');
 const tokenManagerImplementations = {
     MINT_BURN: 0,
     MINT_BURN_FROM: 1,
@@ -653,16 +654,8 @@ if (require.main === module) {
 
     program.name('ITS').description('Script to perform ITS commands');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-a, --address <address>', 'override address'));
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true).env('CHAINS'));
-    program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
+    addExtendedOptions(program, { address: true, salt: true });
+
     program.addOption(
         new Option('--action <action>', 'ITS action')
             .choices([
@@ -690,13 +683,10 @@ if (require.main === module) {
             ])
             .makeOptionMandatory(true),
     );
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
     program.addOption(new Option('--commandID <commandID>', 'execute command ID'));
     program.addOption(new Option('--tokenId <tokenId>', 'ID of the token'));
     program.addOption(new Option('--sender <sender>', 'TokenManager deployer address'));
-    program.addOption(new Option('--salt <salt>', 'deployment salt'));
     program.addOption(
         new Option('--type <type>', 'TokenManager implementation type').choices([
             'MINT_BURN',
