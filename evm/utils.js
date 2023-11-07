@@ -292,6 +292,35 @@ function isValidCalldata(input) {
 }
 
 /**
+ * Checks if a given string is a valid tokenId.
+ *
+ * @param {string} input - The input string to check.
+ * @returns {boolean} - True if the input is a valid tokenId, false otherwise.
+ */
+function isValidTokenId(input) {
+    if (!input.startsWith('0x')) {
+        return false;
+    }
+
+    const hexPattern = /^[0-9a-fA-F]+$/;
+
+    if (!hexPattern.test(input.slice(2))) {
+        return false;
+    }
+
+    const minValue = BigInt('0x00');
+    const maxValue = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
+    const numericValue = BigInt(input);
+
+    return numericValue >= minValue && numericValue <= maxValue;
+}
+
+function isValidBytesAddress(input) {
+    const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+    return addressRegex.test(input);
+}
+
+/**
  * Parses the input string into an array of arguments, recognizing and converting
  * to the following types: boolean, number, array, and string.
  *
@@ -802,6 +831,8 @@ module.exports = {
     isAddressArray,
     isKeccak256Hash,
     isValidCalldata,
+    isValidTokenId,
+    isValidBytesAddress,
     parseArgs,
     getProxy,
     getEVMBatch,
