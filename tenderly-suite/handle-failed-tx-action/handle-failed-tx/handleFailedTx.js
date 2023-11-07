@@ -49,27 +49,37 @@ const handleFailedTxFn = async (context, event) => {
         throw new Error('INVALID_RESPONSE_LENGTH');
     }
 
+    const { flowLimitExceeded, missingRole, missingAllRoles, missingAnyOfRoles, reEntrancy, notService } = await context.storage.getJson(
+        'ErrorsABI',
+    );
+    const flowLimitExceededHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(flowLimitExceeded)).slice(0, 10);
+    const missingRoleHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(missingRole)).slice(0, 10);
+    const missingAllRolesHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(missingAllRoles)).slice(0, 10);
+    const missingAnyOfRolesHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(missingAnyOfRoles)).slice(0, 10);
+    const reEntrancyHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(reEntrancy)).slice(0, 10);
+    const notServiceHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(notService)).slice(0, 10);
+
     const errorHash = response.slice(0, 10);
     console.log('errorHash: ', errorHash);
     let warningOptions = [];
 
     switch (errorHash) {
-        case '0xdf359a15':
+        case flowLimitExceededHash:
             warningOptions = ['FlowLimitExceeded', 'TokenManager'];
             break;
-        case '0xbb6c1639':
+        case missingRoleHash:
             warningOptions = ['MissingRole', event.to];
             break;
-        case '0x7fa6fbb4':
+        case missingAllRolesHash:
             warningOptions = ['MissingAllRoles', event.to];
             break;
-        case '0x218de251':
+        case missingAnyOfRolesHash:
             warningOptions = ['MissingAnyOfRoles', event.to];
             break;
-        case '0xb078d99c':
-            warningOptions = ['ReEntrancy', 'TokenManager'];
+        case reEntrancyHash:
+            warningOptions = ['ReEntrancy', event.to];
             break;
-        case '0x0d6c7be9':
+        case notServiceHash:
             warningOptions = ['NotService', 'TokenManager'];
             break;
         default:
