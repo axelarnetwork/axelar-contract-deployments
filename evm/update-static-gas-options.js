@@ -10,6 +10,7 @@ const {
 } = ethers;
 
 const { printInfo, mainProcessor, prompt } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 const defaultGasLimit = 3e6;
 const gasPriceMultiplier = 5;
@@ -97,23 +98,18 @@ async function main(options) {
     await mainProcessor(options, processCommand, true);
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('update-static-gas-options').description('Update staticGasOptions');
+    program.name('update-static-gas-options').description('Update staticGasOptions');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch gasOptions'));
-program.addOption(new Option('-y, --yes', 'skip prompts'));
+    addBaseOptions(program, { ignorePrivateKey: true });
 
-program.action((options) => {
-    main(options);
-});
+    program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch gasOptions'));
 
-program.parse();
+    program.action((options) => {
+        main(options);
+    });
+
+    program.parse();
+}
