@@ -17,6 +17,7 @@ const {
     isNumber,
     prompt,
 } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 const { ethers } = require('hardhat');
 const {
     getContractFactory,
@@ -311,22 +312,11 @@ async function programHandler() {
 
     program.name('deploy-gateway-v4.3.x').description('Deploy gateway v4.3.x');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-n, --chainName <chainName>', 'chain name').makeOptionMandatory(true).env('CHAIN'));
+    addExtendedOptions(program, { skipExisting: true, upgrade: true });
+
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-    program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
-    program.addOption(new Option('-x, --skipExisting', 'skip deployment for existing contracts in the info files').env('SKIP_EXISTING'));
     program.addOption(new Option('-a, --adminAddresses <adminAddresses>', 'admin addresses').env('ADMIN_ADDRESSES'));
     program.addOption(new Option('-t, --adminThreshold <adminThreshold>', 'admin threshold').env('ADMIN_THRESHOLD'));
-    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
 
     program.action((options) => {
         main(options);

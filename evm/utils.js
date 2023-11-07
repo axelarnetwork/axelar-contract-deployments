@@ -9,6 +9,8 @@ const {
 } = ethers;
 const https = require('https');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 const { outputJsonSync } = require('fs-extra');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const readlineSync = require('readline-sync');
@@ -777,6 +779,81 @@ function getConfigByChainId(chainId, config) {
     throw new Error(`Chain with chainId ${chainId} not found in the config`);
 }
 
+function findProjectRoot(startDir) {
+    let currentDir = startDir;
+
+    while (currentDir !== path.parse(currentDir).root) {
+        const potentialPackageJson = path.join(currentDir, 'package.json');
+
+        if (fs.existsSync(potentialPackageJson)) {
+            return currentDir;
+        }
+
+        currentDir = path.resolve(currentDir, '..');
+    }
+
+    throw new Error('Unable to find project root');
+}
+
+function findContractPath(dir, contractName) {
+    const files = fs.readdirSync(dir);
+
+    for (const file of files) {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+
+        if (stat && stat.isDirectory()) {
+            const recursivePath = findContractPath(filePath, contractName);
+
+            if (recursivePath) {
+                return recursivePath;
+            }
+        } else if (file === `${contractName}.json`) {
+            return filePath;
+        }
+    }
+}
+
+function getContractPath(contractName) {
+    const projectRoot = findProjectRoot(__dirname);
+
+    const searchDirs = [
+        path.join(projectRoot, 'node_modules', '@axelar-network', 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
+        path.join(projectRoot, 'node_modules', '@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
+    ];
+
+    for (const dir of searchDirs) {
+        if (fs.existsSync(dir)) {
+            const contractPath = findContractPath(dir, contractName);
+
+            if (contractPath) {
+                return contractPath;
+            }
+        }
+    }
+
+    throw new Error(`Contract path for ${contractName} must be entered manually.`);
+}
+
+function getContractJSON(contractName, artifactPath) {
+    let contractPath;
+
+    if (artifactPath) {
+        contractPath = artifactPath.charAt(0) === '@' ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
+    } else {
+        contractPath = getContractPath(contractName);
+    }
+
+    printInfo('Contract path', contractPath);
+
+    try {
+        const contractJson = require(contractPath);
+        return contractJson;
+    } catch (err) {
+        throw new Error(`Failed to load contract JSON for ${contractName} at path ${contractPath}`);
+    }
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -822,4 +899,6 @@ module.exports = {
     verifyContract,
     prompt,
     mainProcessor,
+    getContractPath,
+    getContractJSON,
 };

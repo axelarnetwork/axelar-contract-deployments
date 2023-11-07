@@ -6,6 +6,7 @@ const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
 
 const { mainProcessor, printInfo, prompt } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const { getNonceFromProvider, getNonceFileData, updateNonceFileData } = require('./sign-utils');
 
 async function processCommand(_, chain, options) {
@@ -49,23 +50,18 @@ async function main(options) {
     await mainProcessor(options, processCommand);
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('update-nonces').description('Update nonces for addresses');
+    program.name('update-nonces').description('Update nonces for addresses');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch gasOptions'));
-program.addOption(new Option('--addresses <addresses>', 'The Array of addresses for which the nonces to update').env('ADDRESSES'));
-program.addOption(new Option('-y, --yes', 'skip prompts'));
+    addBaseOptions(program, { ignorePrivateKey: true });
 
-program.action((options) => {
-    main(options);
-});
-program.parse();
+    program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch gasOptions'));
+    program.addOption(new Option('--addresses <addresses>', 'The Array of addresses for which the nonces to update').env('ADDRESSES'));
+
+    program.action((options) => {
+        main(options);
+    });
+    program.parse();
+}

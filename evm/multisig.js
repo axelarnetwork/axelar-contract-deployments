@@ -23,6 +23,7 @@ const {
     isValidDecimal,
     prompt,
 } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const IMultisig = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IMultisig.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
@@ -313,49 +314,43 @@ async function main(options) {
     await mainProcessor(options, processCommand, false);
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('multisig').description('Script to manage multisig actions');
+    program.name('multisig').description('Script to manage multisig actions');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig').makeOptionMandatory(false));
-program.addOption(new Option('-a, --address <address>', 'override address'));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
-program.addOption(
-    new Option('--action <action>', 'multisig action')
-        .choices(['signers', 'setTokenMintLimits', 'transferMintLimiter', 'withdraw', 'executeMultisigProposal'])
-        .makeOptionMandatory(true),
-);
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-program.addOption(new Option('--offline', 'run script in offline mode'));
-program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
+    addBaseOptions(program, { address: true });
 
-// options for setTokenMintLimits
-program.addOption(new Option('--symbols <symbols>', 'token symbols').makeOptionMandatory(false));
-program.addOption(new Option('--limits <limits>', 'token limits').makeOptionMandatory(false));
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig').makeOptionMandatory(false));
+    program.addOption(
+        new Option('--action <action>', 'multisig action')
+            .choices(['signers', 'setTokenMintLimits', 'transferMintLimiter', 'withdraw', 'executeMultisigProposal'])
+            .makeOptionMandatory(true),
+    );
+    program.addOption(new Option('--offline', 'run script in offline mode'));
+    program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
 
-// option for transferMintLimiter
-program.addOption(new Option('--mintLimiter <mintLimiter>', 'new mint limiter address').makeOptionMandatory(false));
+    // options for setTokenMintLimits
+    program.addOption(new Option('--symbols <symbols>', 'token symbols').makeOptionMandatory(false));
+    program.addOption(new Option('--limits <limits>', 'token limits').makeOptionMandatory(false));
 
-// options for withdraw
-program.addOption(new Option('--recipient <recipient>', 'withdraw recipient address').makeOptionMandatory(false));
-program.addOption(new Option('--withdrawAmount <withdrawAmount>', 'withdraw amount').makeOptionMandatory(false));
+    // option for transferMintLimiter
+    program.addOption(new Option('--mintLimiter <mintLimiter>', 'new mint limiter address').makeOptionMandatory(false));
 
-// options for executeMultisigProposal
-program.addOption(new Option('--target <target>', 'execute multisig proposal target').makeOptionMandatory(false));
-program.addOption(new Option('--calldata <calldata>', 'execute multisig proposal calldata').makeOptionMandatory(false));
-program.addOption(new Option('--nativeValue <nativeValue>', 'execute multisig proposal nativeValue').makeOptionMandatory(false).default(0));
+    // options for withdraw
+    program.addOption(new Option('--recipient <recipient>', 'withdraw recipient address').makeOptionMandatory(false));
+    program.addOption(new Option('--withdrawAmount <withdrawAmount>', 'withdraw amount').makeOptionMandatory(false));
 
-program.action((options) => {
-    main(options);
-});
+    // options for executeMultisigProposal
+    program.addOption(new Option('--target <target>', 'execute multisig proposal target').makeOptionMandatory(false));
+    program.addOption(new Option('--calldata <calldata>', 'execute multisig proposal calldata').makeOptionMandatory(false));
+    program.addOption(
+        new Option('--nativeValue <nativeValue>', 'execute multisig proposal nativeValue').makeOptionMandatory(false).default(0),
+    );
 
-program.parse();
+    program.action((options) => {
+        main(options);
+    });
+
+    program.parse();
+}
