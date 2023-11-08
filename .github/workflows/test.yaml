@@ -69,7 +69,6 @@ jobs:
           echo 'ENV=local' >> .env
           echo 'CHAINS=test' >> .env
           echo 'OPERATOR_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' >> .env
-          echo 'FACTORY_SALT=Factory' >> .env
 
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
@@ -105,7 +104,7 @@ jobs:
         run: node evm/deploy-contract.js -c Operators -m create3 -y
 
       - name: Deploy ITS using create2
-        run: node evm/deploy-its.js -s "ITS v0.3.0" -m create2
+        run: node evm/deploy-its.js -s "ITS v0.3.0" -f "ITS v0.3.0 Factory" -m create2 -y
 
       - name: Upgrade ITS using create2
-        run: node evm/deploy-its.js -s "ITS v0.3.0" -m create2 -u
+        run: node evm/deploy-its.js -s "ITS v0.3.0" -f "ITS v0.3.0 Factory" -m create2 -u -y
