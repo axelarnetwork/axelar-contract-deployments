@@ -1,6 +1,8 @@
 const axios = require('axios').default;
 const { ethers } = require('ethers');
-
+const {
+    utils: { toUtf8Bytes },
+} = ethers;
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 const Severity = {
     INFO: 'info',
@@ -52,12 +54,12 @@ const handleFailedTxFn = async (context, event) => {
     const { flowLimitExceeded, missingRole, missingAllRoles, missingAnyOfRoles, reEntrancy, notService } = await context.storage.getJson(
         'ErrorsABI',
     );
-    const flowLimitExceededHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(flowLimitExceeded)).slice(0, 10);
-    const missingRoleHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(missingRole)).slice(0, 10);
-    const missingAllRolesHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(missingAllRoles)).slice(0, 10);
-    const missingAnyOfRolesHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(missingAnyOfRoles)).slice(0, 10);
-    const reEntrancyHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(reEntrancy)).slice(0, 10);
-    const notServiceHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(notService)).slice(0, 10);
+    const flowLimitExceededHash = ethers.utils.keccak256(toUtf8Bytes(flowLimitExceeded)).slice(0, 10);
+    const missingRoleHash = ethers.utils.keccak256(toUtf8Bytes(missingRole)).slice(0, 10);
+    const missingAllRolesHash = ethers.utils.keccak256(toUtf8Bytes(missingAllRoles)).slice(0, 10);
+    const missingAnyOfRolesHash = ethers.utils.keccak256(toUtf8Bytes(missingAnyOfRoles)).slice(0, 10);
+    const reEntrancyHash = ethers.utils.keccak256(toUtf8Bytes(reEntrancy)).slice(0, 10);
+    const notServiceHash = ethers.utils.keccak256(toUtf8Bytes(notService)).slice(0, 10);
 
     const errorHash = response.slice(0, 10);
     console.log('errorHash: ', errorHash);
@@ -66,21 +68,49 @@ const handleFailedTxFn = async (context, event) => {
     switch (errorHash) {
         case flowLimitExceededHash:
             warningOptions = ['FlowLimitExceeded', 'TokenManager'];
+            console.log(
+                `Tx reverted due to error ${toUtf8Bytes(flowLimitExceeded)} with values flowLimit ${parseInt(
+                    response.slice(10, 74),
+                    16,
+                )} and flowAmount ${parseInt(response.slice(74, 134), 16)} for address ${event.to}`,
+            );
             break;
         case missingRoleHash:
             warningOptions = ['MissingRole', event.to];
+            console.log(
+                `Tx reverted due to error ${toUtf8Bytes(missingRole)} with values account ${response.slice(34, 74)} and role ${parseInt(
+                    response.slice(74, 138),
+                    16,
+                )} for address ${event.to}`,
+            );
             break;
         case missingAllRolesHash:
             warningOptions = ['MissingAllRoles', event.to];
+            console.log(
+                `Tx reverted due to error ${toUtf8Bytes(missingAllRoles)} with values account ${response.slice(34, 74)} and role ${parseInt(
+                    response.slice(74, 138),
+                    16,
+                )} for address ${event.to}`,
+            );
             break;
         case missingAnyOfRolesHash:
             warningOptions = ['MissingAnyOfRoles', event.to];
+            console.log(
+                `Tx reverted due to error ${toUtf8Bytes(missingAnyOfRoles)} with values account ${response.slice(
+                    34,
+                    74,
+                )} and role ${parseInt(response.slice(74, 138), 16)} for address ${event.to}`,
+            );
             break;
         case reEntrancyHash:
             warningOptions = ['ReEntrancy', event.to];
+            console.log(`Tx reverted due to error ${toUtf8Bytes(reEntrancy)} for address ${event.to}`);
             break;
         case notServiceHash:
             warningOptions = ['NotService', 'TokenManager'];
+            console.log(
+                `Tx reverted due to error ${toUtf8Bytes(notService)} with value caller ${response.slice(34, 74)} for address ${event.to}`,
+            );
             break;
         default:
             console.log('No Error match found');
