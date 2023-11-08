@@ -24,6 +24,8 @@ const handleRoleUpdate = async (context, event) => {
 
     for (const log of event.logs) {
         if (log.topics[0] === rolesAddedHash || log.topics[0] === rolesRemovedHash) {
+            const isRoleAdded = log.topics[0] === rolesAddedHash;
+
             if (log.data.length <= 2) {
                 throw new Error('EMPTY_LOG_DATA');
             }
@@ -44,9 +46,18 @@ const handleRoleUpdate = async (context, event) => {
 
             //  account is present in log topic as 32 bytes hex string, with prefixed 0s
             const account = `0x${log.topics[1].substring(26, 26 + 40)}`;
-            const tempSeverity = trustedAddresses.includes(account.toLowerCase()) ? 1 : 2;
 
-            if (log.topics[0] === rolesAddedHash) {
+            let tempSeverity = 1;
+
+            const isTrustedAddress = trustedAddresses.includes(account.toLowerCase());
+
+            if (isTrustedAddress && !isRoleAdded) {
+                tempSeverity = 3;
+            } else if (!isTrustedAddress && isRoleAdded) {
+                tempSeverity = 2;
+            }
+
+            if (isRoleAdded) {
                 roleAddedAccounts.push(account);
                 addedRoles.push(roles);
             } else {
@@ -70,7 +81,7 @@ const handleRoleUpdate = async (context, event) => {
                     payload: {
                         summary,
                         source: `${chainName}-${event.hash}`,
-                        severity: severity === 2 ? 'warning' : 'info',
+                        severity: Severity[severity],
                         custom_details: {
                             timestamp: Date.now(),
                             chain_name: chainName,
@@ -102,6 +113,12 @@ const Role = {
     0: 'Distributor',
     1: 'Operator',
     2: 'FlowLimiter',
+};
+
+const Severity = {
+    1: 'info',
+    2: 'warning',
+    3: 'critical',
 };
 
 function toRoleArray(accountRoles) {
