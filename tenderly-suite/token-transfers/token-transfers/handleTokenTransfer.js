@@ -2,7 +2,7 @@ const { ethers } = require('ethers');
 const axios = require('axios').default;
 
 const ERC20_ABI = ['function symbol() external view returns (string)', 'function decimals() external view returns (uint8)'];
-const ITS_ABI = ['function getTokenAddress(bytes32 tokenId) external view returns (address)'];
+const ITS_ABI = ['function validTokenAddress(bytes32 tokenId) external view returns (address)'];
 
 const COIN_MARKET_QUOTES_URL = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest';
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
@@ -56,7 +56,7 @@ const handleTokenTransferFn = async (context, event) => {
     for (let index = 0; index < tokenIDs.length; index++) {
         const id = tokenIDs[index];
 
-        const erc20Address = await its.getTokenAddress(id);
+        const erc20Address = await its.validTokenAddress(id);
         const erc20 = new ethers.Contract(erc20Address, ERC20_ABI, provider);
         const symbol = resolveTokenSymbol(await erc20.symbol());
         const decimals = await erc20.decimals();
