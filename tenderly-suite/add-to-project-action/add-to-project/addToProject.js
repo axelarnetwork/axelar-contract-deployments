@@ -23,6 +23,8 @@ const addToProjectFn = async (context, event) => {
             const deployedAddress = '0x' + logs[index].data.substring(26, 66);
             const name = `TokenManager-${context.metadata.getNetwork()}-${deployedAddress}`;
 
+            console.log(`New TokenManager deployed for chain ${context.metadata.getNetwork()} at address ${deployedAddress}`);
+
             contracts.push({
                 address: deployedAddress,
                 display_name: name,
