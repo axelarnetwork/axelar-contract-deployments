@@ -1,4 +1,7 @@
 const { ethers } = require('ethers');
+const {
+    utils: { toUtf8Bytes },
+} = ethers;
 const axios = require('axios').default;
 
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
@@ -9,8 +12,8 @@ const handleRoleUpdate = async (context, event) => {
     }
 
     const { rolesAdded, rolesRemoved } = await context.storage.getJson('EventsABI');
-    const rolesAddedHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(rolesAdded));
-    const rolesRemovedHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(rolesRemoved));
+    const rolesAddedHash = ethers.utils.keccak256(toUtf8Bytes(rolesAdded));
+    const rolesRemovedHash = ethers.utils.keccak256(toUtf8Bytes(rolesRemoved));
 
     const chainName = context.metadata.getNetwork();
     const trustedAddresses = await context.storage.getJson('TrustedAddresses');
@@ -60,9 +63,11 @@ const handleRoleUpdate = async (context, event) => {
             if (isRoleAdded) {
                 roleAddedAccounts.push(account);
                 addedRoles.push(roles);
+                console.log(`Event ${toUtf8Bytes(rolesAdded)} with roles array ${roles} emitted for account ${account}`);
             } else {
                 roleRemovedAccounts.push(account);
                 removedRoles.push(roles);
+                console.log(`Event ${toUtf8Bytes(rolesRemoved)} with roles array ${roles} emitted for account ${account}`);
             }
 
             if (tempSeverity > severity) {
