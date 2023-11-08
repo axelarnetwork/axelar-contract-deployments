@@ -293,6 +293,7 @@ async function processCommand(config, chain, options) {
     printInfo(`${contractName} will be deployed to`, predictedAddress);
 
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
+
     if (existingAddress !== undefined && predictedAddress !== existingAddress) {
         printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} on chain ${chain.name}.`);
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
