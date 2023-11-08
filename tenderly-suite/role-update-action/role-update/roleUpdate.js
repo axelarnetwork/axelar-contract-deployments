@@ -1,7 +1,8 @@
+const { ethers } = require('ethers');
+const {
+    utils: { toUtf8Bytes },
+} = ethers;
 const axios = require('axios').default;
-
-const TOPIC_0_ROLES_ADDED = '0x3df2f62906643352cfb366ada865850a1f2127a98c97ac962921d5caf75561c3';
-const TOPIC_0_ROLES_REMOVED = '0x17e90d13bc6dcdbe950d3d022f0774c9dfa3308b96720b8779075dd83236061f';
 
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
@@ -10,8 +11,11 @@ const handleRoleUpdate = async (context, event) => {
         throw new Error('INVALID_INPUT_FOR_ACTION');
     }
 
-    const chainName = context.metadata.getNetwork();
+    const { rolesAdded, rolesRemoved } = await context.storage.getJson('EventsABI');
+    const rolesAddedHash = ethers.utils.keccak256(toUtf8Bytes(rolesAdded));
+    const rolesRemovedHash = ethers.utils.keccak256(toUtf8Bytes(rolesRemoved));
 
+    const chainName = context.metadata.getNetwork();
     const trustedAddresses = await context.storage.getJson('TrustedAddresses');
 
     const roleAddedAccounts = [];
@@ -22,17 +26,17 @@ const handleRoleUpdate = async (context, event) => {
     let severity = 0;
 
     for (const log of event.logs) {
-        if (log.topics[0] === TOPIC_0_ROLES_ADDED || log.topics[0] === TOPIC_0_ROLES_REMOVED) {
-            if (log.data.length < 130) {
-                throw new Error('INVALID_LOG_DATA_LENGTH');
+        if (log.topics[0] === rolesAddedHash || log.topics[0] === rolesRemovedHash) {
+            const isRoleAdded = log.topics[0] === rolesAddedHash;
+
+            if (log.data.length <= 2) {
+                throw new Error('EMPTY_LOG_DATA');
             }
 
-            const length = parseInt(log.data.substring(128, 130), 16);
-            const roles = [];
+            const roles = toRoleArray(parseInt(log.data, 16));
 
-            for (let index = 0; index < length; index++) {
-                const subIndex = 64 * (3 + index) + 2;
-                roles.push(getRole(parseInt(log.data.substring(subIndex - 2, subIndex), 16)));
+            if (log.topics.length === 0) {
+                throw new Error('INVALID_LOGS_LENGTH');
             }
 
             if (log.topics.length === 0) {
@@ -45,14 +49,25 @@ const handleRoleUpdate = async (context, event) => {
 
             //  account is present in log topic as 32 bytes hex string, with prefixed 0s
             const account = `0x${log.topics[1].substring(26, 26 + 40)}`;
-            const tempSeverity = trustedAddresses.includes(account.toLowerCase()) ? 1 : 2;
 
-            if (log.topics[0] === TOPIC_0_ROLES_ADDED) {
+            let tempSeverity = 1;
+
+            const isTrustedAddress = trustedAddresses.includes(account.toLowerCase());
+
+            if (isTrustedAddress && !isRoleAdded) {
+                tempSeverity = 3;
+            } else if (!isTrustedAddress && isRoleAdded) {
+                tempSeverity = 2;
+            }
+
+            if (isRoleAdded) {
                 roleAddedAccounts.push(account);
                 addedRoles.push(roles);
+                console.log(`Event ${toUtf8Bytes(rolesAdded)} with roles array ${roles} emitted for account ${account}`);
             } else {
                 roleRemovedAccounts.push(account);
                 removedRoles.push(roles);
+                console.log(`Event ${toUtf8Bytes(rolesRemoved)} with roles array ${roles} emitted for account ${account}`);
             }
 
             if (tempSeverity > severity) {
@@ -71,7 +86,7 @@ const handleRoleUpdate = async (context, event) => {
                     payload: {
                         summary,
                         source: `${chainName}-${event.hash}`,
-                        severity: severity === 2 ? 'warning' : 'info',
+                        severity: Severity[severity],
                         custom_details: {
                             timestamp: Date.now(),
                             chain_name: chainName,
@@ -99,16 +114,33 @@ const handleRoleUpdate = async (context, event) => {
     }
 };
 
-function getRole(roleId) {
-    if (roleId === 0) {
-        return 'Distributor';
-    } else if (roleId === 1) {
-        return 'Operator';
-    } else if (roleId === 2) {
-        return 'FlowLimiter';
+const Role = {
+    0: 'Distributor',
+    1: 'Operator',
+    2: 'FlowLimiter',
+};
+
+const Severity = {
+    1: 'info',
+    2: 'warning',
+    3: 'critical',
+};
+
+function toRoleArray(accountRoles) {
+    const roles = [];
+    let bitIndex = 0;
+
+    //  calculate uint8 array from uint256 value by bit shifting operation
+    while (accountRoles > 0) {
+        if (accountRoles & 1) {
+            roles.push(Role[bitIndex]);
+        }
+
+        accountRoles >>= 1;
+        bitIndex++;
     }
 
-    throw new Error('UNKNOWN_ROLE_UPDATED');
+    return roles;
 }
 
 module.exports = { handleRoleUpdate };
