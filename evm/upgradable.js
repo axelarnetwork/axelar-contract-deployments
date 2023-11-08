@@ -48,7 +48,7 @@ async function deployCreate2Upgradable(
     txOptions = null,
     verifyOptions,
 ) {
-    const implementation = await deployCreate(wallet, implementationJson, implementationConstructorArgs, {}, verifyOptions);
+    const implementation = await deployCreate(wallet, implementationJson, implementationConstructorArgs, txOptions, verifyOptions);
 
     const proxy = await deployAndInitContractConstant(
         constAddressDeployerAddress,

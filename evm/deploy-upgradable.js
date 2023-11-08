@@ -131,7 +131,7 @@ async function deploy(options, chain) {
     const implArgs = await getImplementationArgs(contractName, contracts, options);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions, null, 2)}`);
     const salt = options.salt || contractName;
     let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
 
