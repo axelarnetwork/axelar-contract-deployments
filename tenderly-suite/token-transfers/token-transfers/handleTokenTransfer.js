@@ -1,4 +1,7 @@
 const { ethers } = require('ethers');
+const {
+    utils: { toUtf8Bytes },
+} = ethers;
 const axios = require('axios').default;
 
 const ERC20_ABI = ['function symbol() external view returns (string)', 'function decimals() external view returns (uint8)'];
@@ -20,10 +23,10 @@ const handleTokenTransferFn = async (context, event) => {
 
     const { tokenSent, tokenSentWithData, tokenReceived, tokenReceivedWithData } = await context.storage.getJson('EventsABI');
 
-    const tokenSentHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(tokenSent));
-    const tokenSentWithDataHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(tokenSentWithData));
-    const tokenReceivedHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(tokenReceived));
-    const tokenReceivedWithDataHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(tokenReceivedWithData));
+    const tokenSentHash = ethers.utils.keccak256(toUtf8Bytes(tokenSent));
+    const tokenSentWithDataHash = ethers.utils.keccak256(toUtf8Bytes(tokenSentWithData));
+    const tokenReceivedHash = ethers.utils.keccak256(toUtf8Bytes(tokenReceived));
+    const tokenReceivedWithDataHash = ethers.utils.keccak256(toUtf8Bytes(tokenReceivedWithData));
 
     const chainName = context.metadata.getNetwork();
     const provider = new ethers.providers.JsonRpcProvider(await context.secrets.get(`RPC_${chainName.toUpperCase()}`));
@@ -118,6 +121,15 @@ const handleTokenTransferFn = async (context, event) => {
             amountsAboveThreshold.push(totalAmount);
             prices.push(tokenPrice);
             symbols.push(symbol);
+            const eventName =
+                id === tokenSentHash
+                    ? toUtf8Bytes(tokenSent)
+                    : id === tokenSentWithDataHash
+                    ? toUtf8Bytes(tokenSentWithData)
+                    : id === tokenReceivedHash
+                    ? toUtf8Bytes(tokenReceived)
+                    : toUtf8Bytes(tokenReceivedWithData);
+            console.log(`Event emitted is ${eventName}`);
             console.log(`Token threhold of ${tokenThreshold[severity - 1]} crossed for severity level ${severity}`);
             console.log(`Total ${symbol} tokens transferred are ${tokenTransferAmount} with current USD value of ${totalAmount}$`);
         }
