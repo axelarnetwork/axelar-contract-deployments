@@ -118,6 +118,8 @@ const handleTokenTransferFn = async (context, event) => {
             amountsAboveThreshold.push(totalAmount);
             prices.push(tokenPrice);
             symbols.push(symbol);
+            console.log(`Token threhold of ${tokenThreshold[severity - 1]} crossed for severity level ${severity}`);
+            console.log(`Total ${symbol} tokens transferred are ${tokenTransferAmount} with current USD value of ${totalAmount}$`);
         }
     }
 
