@@ -120,9 +120,9 @@ const deployCreate3 = async (
     return contract;
 };
 
-const printInfo = (msg, info = '') => {
+const printInfo = (msg, info = '', colour = chalk.green) => {
     if (info) {
-        console.log(`${msg}: ${chalk.green(info)}\n`);
+        console.log(`${msg}: ${colour(info)}\n`);
     } else {
         console.log(`${msg}\n`);
     }
@@ -133,7 +133,7 @@ const printWarn = (msg, info = '') => {
         msg = `${msg}: ${info}`;
     }
 
-    console.log(`${chalk.yellow(msg)}\n`);
+    console.log(`${chalk.italic.yellow(msg)}\n`);
 };
 
 const printError = (msg, info = '') => {
@@ -141,7 +141,7 @@ const printError = (msg, info = '') => {
         msg = `${msg}: ${info}`;
     }
 
-    console.log(`${chalk.red(msg)}\n`);
+    console.log(`${chalk.bold.red(msg)}\n`);
 };
 
 function printLog(log) {

@@ -2,6 +2,7 @@
 
 require('dotenv').config();
 
+const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
     Wallet,
@@ -290,7 +291,7 @@ async function processCommand(config, chain, options) {
 
     printInfo('Deployment method', deployMethod);
     printInfo('Deployer contract', deployerContract);
-    printInfo(`${contractName} will be deployed to`, predictedAddress);
+    printInfo(`${contractName} will be deployed to`, predictedAddress, chalk.cyan);
 
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
 

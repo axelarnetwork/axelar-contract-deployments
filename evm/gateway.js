@@ -2,6 +2,7 @@
 
 require('dotenv').config();
 
+const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
@@ -264,7 +265,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'transferGovernance': {
-            const newGovernance = options.destination;
+            const newGovernance = options.destination || chain.contracts.InterchainGovernance?.address;
 
             if (!isValidAddress(newGovernance)) {
                 throw new Error('Invalid new governor address');
@@ -277,7 +278,7 @@ async function processCommand(config, chain, options) {
                 throw new Error('Wallet address is not the governor');
             }
 
-            if (prompt(`Proceed with governance transfer to ${newGovernance}`, yes)) {
+            if (prompt(`Proceed with governance transfer to ${chalk.cyan(newGovernance)}`, yes)) {
                 return;
             }
 
@@ -292,7 +293,11 @@ async function processCommand(config, chain, options) {
                 throw new Error('Event not emitted in receipt.');
             }
 
-            contracts.AxelarGateway.governance = newGovernance;
+            if (!chain.contracts.InterchainGovernance) {
+                chain.contracts.InterchainGovernance = {};
+            }
+
+            chain.contracts.InterchainGovernance.address = newGovernance;
 
             break;
         }
@@ -304,6 +309,44 @@ async function processCommand(config, chain, options) {
 
         case 'mintLimiter': {
             printInfo(`Gateway mintLimiter`, await gateway.mintLimiter());
+            break;
+        }
+
+        case 'transferMintLimiter': {
+            const newMintLimiter = options.destination || chain.contracts.Multisig?.address;
+
+            if (!isValidAddress(newMintLimiter)) {
+                throw new Error('Invalid address');
+            }
+
+            const currMintLimiter = await gateway.mintLimiter();
+            printInfo('Current governance', currMintLimiter);
+
+            if (!(currMintLimiter === walletAddress)) {
+                throw new Error('Wallet address is not the mint limiter');
+            }
+
+            if (prompt(`Proceed with mint limiter transfer to ${chalk.cyan(newMintLimiter)}`, yes)) {
+                return;
+            }
+
+            const tx = await gateway.transferMintLimiter(newMintLimiter, gasOptions);
+            printInfo('Transfer mint limiter tx', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'MintLimiterTransferred');
+
+            if (!eventEmitted) {
+                throw new Error('Event not emitted in receipt.');
+            }
+
+            if (!chain.contracts.Multisig) {
+                chain.contracts.Multisig = {};
+            }
+
+            chain.contracts.Multisig.address = newMintLimiter;
+
             break;
         }
 
@@ -348,6 +391,7 @@ if (require.main === module) {
                 'transferGovernance',
                 'governance',
                 'mintLimiter',
+                'transferMintLimiter',
                 'mintLimit',
                 'params',
             ])
