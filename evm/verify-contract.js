@@ -11,7 +11,7 @@ const {
     utils: { defaultAbiCoder },
 } = ethers;
 const { Command, Option } = require('commander');
-const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor } = require('./utils');
+const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, getContractJSON } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(config, chain, options) {
@@ -200,6 +200,58 @@ async function processCommand(config, chain, options) {
             console.log(`Verifying ${name} (${symbol}) decimals ${decimals} on ${chain.name}...`);
 
             await verifyContract(env, chain.name, tokenContract.address, [name, symbol, decimals, cap], verifyOptions);
+            break;
+        }
+
+        case 'InterchainTokenService': {
+            const InterchainTokenService = getContractJSON('InterchainTokenService');
+            const interchainTokenServiceFactory = await getContractFactoryFromArtifact(InterchainTokenService, wallet);
+            const interchainTokenService = interchainTokenServiceFactory.attach(
+                options.address || chain.contracts.InterchainTokenService.address,
+            );
+
+            const implementation = await interchainTokenService.implementation();
+            const tokenManagerDeployer = await interchainTokenService.tokenManagerDeployer();
+            const interchainTokenDeployer = await interchainTokenService.interchainTokenDeployer();
+            const interchainToken = await interchainTokenDeployer.implementation();
+            const interchainTokenFactory = await interchainTokenService.interchainTokenFactory();
+
+            const tokenManagerMintBurn = await interchainTokenService.implementationMintBurn();
+            const tokenManagerMintBurnFrom = await interchainTokenService.implementationMintBurnFrom();
+            const tokenManagerLockUnlock = await interchainTokenService.implementationLockUnlock();
+            const tokenManagerLockUnlockFee = await interchainTokenService.implementationLockUnlockFee();
+
+            await verifyContract(env, chain.name, tokenManagerDeployer, [], verifyOptions);
+            await verifyContract(env, chain.name, interchainToken, [], verifyOptions);
+            await verifyContract(env, chain.name, interchainTokenDeployer, [interchainToken], verifyOptions);
+            await verifyContract(env, chain.name, tokenManagerMintBurn, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, tokenManagerMintBurnFrom, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, tokenManagerLockUnlock, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, tokenManagerLockUnlockFee, [interchainTokenService.address], verifyOptions);
+            await verifyContract(
+                env,
+                chain.name,
+                implementation,
+                [
+                    tokenManagerDeployer,
+                    interchainTokenDeployer,
+                    chain.contracts.AxelarGateway.address,
+                    chain.contracts.AxelarGasService.address,
+                    interchainTokenFactory,
+                    chain.name,
+                    [tokenManagerMintBurn, tokenManagerMintBurnFrom, tokenManagerLockUnlock, tokenManagerLockUnlockFee],
+                ],
+                verifyOptions,
+            );
+            await verifyContract(env, chain.name, interchainTokenFactory, [interchainTokenService.address], verifyOptions);
+            await verifyContract(
+                env,
+                chain.name,
+                interchainTokenService.address,
+                [implementation, chain.contracts.InterchainTokenService.deployer, options.constructorArgs],
+                verifyOptions,
+            );
+
             break;
         }
 
