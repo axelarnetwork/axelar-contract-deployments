@@ -1,0 +1,13 @@
+account_id: "axelarEng"
+actions:
+  axelareng/its:
+    runtime: v2
+    sources: flow-limit-update
+    specs:
+      flow-limit-update:
+        description: This action sends alerts to pagerduty based on operator's address updating them.
+        function: flowLimitUpdate:flowLimitUpdateFn
+        trigger:
+          type: transaction
+        execution_type: sequential
+project_slug: "ITS"
