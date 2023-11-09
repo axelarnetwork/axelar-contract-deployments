@@ -51,7 +51,7 @@ const handleFailedTxFn = async (context, event) => {
         throw new Error('INVALID_RESPONSE_LENGTH');
     }
 
-    const { flowLimitExceeded, missingRole, missingAllRoles, missingAnyOfRoles, reEntrancy, notService } = await context.storage.getJson(
+    const { flowLimitExceeded, missingRole, missingAllRoles, missingAnyOfRoles, reEntrancy, notService, notSigner, alreadyVoted, invalidSigners, invalidSignerThreshold, duplicateSigner, notGovernance, notSelf } = await context.storage.getJson(
         'ErrorsABI',
     );
     const flowLimitExceededHash = ethers.utils.keccak256(toUtf8Bytes(flowLimitExceeded)).slice(0, 10);
@@ -60,6 +60,13 @@ const handleFailedTxFn = async (context, event) => {
     const missingAnyOfRolesHash = ethers.utils.keccak256(toUtf8Bytes(missingAnyOfRoles)).slice(0, 10);
     const reEntrancyHash = ethers.utils.keccak256(toUtf8Bytes(reEntrancy)).slice(0, 10);
     const notServiceHash = ethers.utils.keccak256(toUtf8Bytes(notService)).slice(0, 10);
+    const notSignerHash = ethers.utils.keccak256(toUtf8Bytes(notSigner)).slice(0, 10);
+    const alreadyVotedHash = ethers.utils.keccak256(toUtf8Bytes(alreadyVoted)).slice(0, 10);
+    const invalidSignersHash = ethers.utils.keccak256(toUtf8Bytes(invalidSigners)).slice(0, 10);
+    const invalidSignerThresholdHash = ethers.utils.keccak256(toUtf8Bytes(invalidSignerThreshold)).slice(0, 10);
+    const duplicateSignerHash = ethers.utils.keccak256(toUtf8Bytes(duplicateSigner)).slice(0, 10);
+	const notGovernanceHash = ethers.utils.keccak256(toUtf8Bytes(notGovernance)).slice(0, 10);
+    const notSelfHash = ethers.utils.keccak256(toUtf8Bytes(notSelf)).slice(0, 10);
 
     const errorHash = response.slice(0, 10);
     console.log('errorHash: ', errorHash);
@@ -111,6 +118,48 @@ const handleFailedTxFn = async (context, event) => {
             console.log(
                 `Tx reverted due to error ${toUtf8Bytes(notService)} with value caller ${response.slice(34, 74)} for address ${event.to}`,
             );
+            break;
+        case notSignerHash:
+            warningOptions = ['NotSigner', event.to];
+            break;
+        case alreadyVotedHash:
+            warningOptions = ['AlreadyVoted', event.to];
+            break;
+        case invalidSignersHash:
+            warningOptions = ['InvalidSigners', event.to];
+            break;
+        case invalidSignerThresholdHash:
+            warningOptions = ['InvalidSignerThreshold', event.to];
+            break;
+        case duplicateSignerHash:
+            warningOptions = ['DuplicateSigner', event.to];
+            break;
+        case notGovernanceHash:
+            warningOptions = ['NotGovernance', 'InterchainGovernance'];
+            break;
+        case notSelfHash:
+            warningOptions = ['NotSelf', 'InterchainGovernance'];
+            break;
+        case notSignerHash:
+            warningOptions = ['NotSigner', event.to];
+            break;
+        case alreadyVotedHash:
+            warningOptions = ['AlreadyVoted', event.to];
+            break;
+        case invalidSignersHash:
+            warningOptions = ['InvalidSigners', event.to];
+            break;
+        case invalidSignerThresholdHash:
+            warningOptions = ['InvalidSignerThreshold', event.to];
+            break;
+        case duplicateSignerHash:
+            warningOptions = ['DuplicateSigner', event.to];
+            break;
+        case notGovernanceHash:
+            warningOptions = ['NotGovernance', 'InterchainGovernance'];
+            break;
+        case notSelfHash:
+            warningOptions = ['NotSelf', 'InterchainGovernance'];
             break;
         default:
             console.log('No Error match found');
