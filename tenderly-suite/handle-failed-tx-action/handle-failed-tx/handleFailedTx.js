@@ -51,9 +51,21 @@ const handleFailedTxFn = async (context, event) => {
         throw new Error('INVALID_RESPONSE_LENGTH');
     }
 
-    const { flowLimitExceeded, missingRole, missingAllRoles, missingAnyOfRoles, reEntrancy, notService, notSigner, alreadyVoted, invalidSigners, invalidSignerThreshold, duplicateSigner, notGovernance, notSelf } = await context.storage.getJson(
-        'ErrorsABI',
-    );
+    const {
+        flowLimitExceeded,
+        missingRole,
+        missingAllRoles,
+        missingAnyOfRoles,
+        reEntrancy,
+        notService,
+        notSigner,
+        alreadyVoted,
+        invalidSigners,
+        invalidSignerThreshold,
+        duplicateSigner,
+        notGovernance,
+        notSelf,
+    } = await context.storage.getJson('ErrorsABI');
     const flowLimitExceededHash = ethers.utils.keccak256(toUtf8Bytes(flowLimitExceeded)).slice(0, 10);
     const missingRoleHash = ethers.utils.keccak256(toUtf8Bytes(missingRole)).slice(0, 10);
     const missingAllRolesHash = ethers.utils.keccak256(toUtf8Bytes(missingAllRoles)).slice(0, 10);
@@ -65,7 +77,7 @@ const handleFailedTxFn = async (context, event) => {
     const invalidSignersHash = ethers.utils.keccak256(toUtf8Bytes(invalidSigners)).slice(0, 10);
     const invalidSignerThresholdHash = ethers.utils.keccak256(toUtf8Bytes(invalidSignerThreshold)).slice(0, 10);
     const duplicateSignerHash = ethers.utils.keccak256(toUtf8Bytes(duplicateSigner)).slice(0, 10);
-	const notGovernanceHash = ethers.utils.keccak256(toUtf8Bytes(notGovernance)).slice(0, 10);
+    const notGovernanceHash = ethers.utils.keccak256(toUtf8Bytes(notGovernance)).slice(0, 10);
     const notSelfHash = ethers.utils.keccak256(toUtf8Bytes(notSelf)).slice(0, 10);
 
     const errorHash = response.slice(0, 10);
@@ -121,45 +133,35 @@ const handleFailedTxFn = async (context, event) => {
             break;
         case notSignerHash:
             warningOptions = ['NotSigner', event.to];
+            console.log(`Tx reverted due to error ${toUtf8Bytes(notSigner)} for address ${event.to}`);
             break;
         case alreadyVotedHash:
             warningOptions = ['AlreadyVoted', event.to];
+            console.log(`Tx reverted due to error ${toUtf8Bytes(alreadyVoted)} for address ${event.to}`);
             break;
         case invalidSignersHash:
             warningOptions = ['InvalidSigners', event.to];
+            console.log(`Tx reverted due to error ${toUtf8Bytes(invalidSigners)} for address ${event.to}`);
             break;
         case invalidSignerThresholdHash:
             warningOptions = ['InvalidSignerThreshold', event.to];
+            console.log(`Tx reverted due to error ${toUtf8Bytes(invalidSignerThreshold)} for address ${event.to}`);
             break;
         case duplicateSignerHash:
             warningOptions = ['DuplicateSigner', event.to];
+            console.log(
+                `Tx reverted due to error ${toUtf8Bytes(duplicateSigner)} with value account ${response.slice(34, 74)} for address ${
+                    event.to
+                }`,
+            );
             break;
         case notGovernanceHash:
             warningOptions = ['NotGovernance', 'InterchainGovernance'];
+            console.log(`Tx reverted due to error ${toUtf8Bytes(notGovernance)} for address ${event.to}`);
             break;
         case notSelfHash:
             warningOptions = ['NotSelf', 'InterchainGovernance'];
-            break;
-        case notSignerHash:
-            warningOptions = ['NotSigner', event.to];
-            break;
-        case alreadyVotedHash:
-            warningOptions = ['AlreadyVoted', event.to];
-            break;
-        case invalidSignersHash:
-            warningOptions = ['InvalidSigners', event.to];
-            break;
-        case invalidSignerThresholdHash:
-            warningOptions = ['InvalidSignerThreshold', event.to];
-            break;
-        case duplicateSignerHash:
-            warningOptions = ['DuplicateSigner', event.to];
-            break;
-        case notGovernanceHash:
-            warningOptions = ['NotGovernance', 'InterchainGovernance'];
-            break;
-        case notSelfHash:
-            warningOptions = ['NotSelf', 'InterchainGovernance'];
+            console.log(`Tx reverted due to error ${toUtf8Bytes(notSelf)} for address ${event.to}`);
             break;
         default:
             console.log('No Error match found');
