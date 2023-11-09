@@ -3,6 +3,7 @@
 require('dotenv').config();
 
 const { Command, Option } = require('commander');
+const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
     ContractFactory,
@@ -28,6 +29,7 @@ const {
     isContract,
     deployContract,
 } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
@@ -49,7 +51,7 @@ async function checkKeyRotation(config, chain) {
 }
 
 async function getAuthParams(config, chain, options) {
-    printInfo('Retrieving auth key');
+    printInfo(`Retrieving validator addresses for ${chain} from Axelar network`);
 
     if (!options.amplifier) {
         await checkKeyRotation(config, chain);
@@ -92,13 +94,17 @@ async function deploy(config, chain, options) {
     const wallet = new Wallet(privateKey).connect(provider);
     await printWalletInfo(wallet);
 
+    if (chain.contracts === undefined) {
+        chain.contracts = {};
+    }
+
     if (chain.contracts[contractName] === undefined) {
         chain.contracts[contractName] = {};
     }
 
     const contractConfig = chain.contracts[contractName];
-    const governance = options.governance || contractConfig.governance || chain.contracts.InterchainGovernance?.address;
-    const mintLimiter = options.mintLimiter || contractConfig.mintLimiter || chain.contracts.Multisig?.address;
+    const governance = options.governance || chain.contracts.InterchainGovernance?.address || wallet.address;
+    const mintLimiter = options.mintLimiter || chain.contracts.Multisig?.address || wallet.address;
 
     if (!reuseProxy) {
         if (governance === undefined) {
@@ -110,12 +116,15 @@ async function deploy(config, chain, options) {
         }
 
         if (!(await isContract(governance, provider))) {
-            printWarn('governance address is not a contract');
+            printWarn('Governance address is not a contract. This is optional for test deployments');
         }
 
         if (!(await isContract(mintLimiter, provider))) {
-            printWarn('mintLimiter address is not a contract');
+            printWarn('MintLimiter address is not a contract. This is optional for test deployments');
         }
+
+        printInfo('Governance address', governance);
+        printInfo('MintLimiter address', mintLimiter);
     }
 
     const gatewayFactory = new ContractFactory(AxelarGateway.abi, AxelarGateway.bytecode, wallet);
@@ -141,7 +150,7 @@ async function deploy(config, chain, options) {
             from: wallet.address,
             nonce: transactionCount + 3,
         });
-        printInfo('Predicted proxy address', proxyAddress);
+        printInfo('Predicted proxy address', proxyAddress, chalk.cyan);
     }
 
     const gasOptions = JSON.parse(JSON.stringify(contractConfig.gasOptions || chain.gasOptions || {}));
@@ -160,7 +169,9 @@ async function deploy(config, chain, options) {
 
     contractConfig.deployer = wallet.address;
 
-    if (reuseProxy && reuseHelpers) {
+    if (options.skipExisting && contractConfig.authModule) {
+        auth = authFactory.attach(contractConfig.authModule);
+    } else if (reuseProxy && reuseHelpers) {
         auth = authFactory.attach(await gateway.authModule());
     } else {
         printInfo(`Deploying auth contract`);
@@ -179,7 +190,9 @@ async function deploy(config, chain, options) {
         });
     }
 
-    if (reuseProxy && reuseHelpers) {
+    if (options.skipExisting && contractConfig.tokenDeployer) {
+        tokenDeployer = tokenDeployerFactory.attach(contractConfig.tokenDeployer);
+    } else if (reuseProxy && reuseHelpers) {
         tokenDeployer = tokenDeployerFactory.attach(await gateway.tokenDeployer());
     } else {
         printInfo(`Deploying token deployer contract`);
@@ -335,14 +348,24 @@ async function deploy(config, chain, options) {
     contractConfig.implementationCodehash = implementationCodehash;
     contractConfig.authModule = auth.address;
     contractConfig.tokenDeployer = tokenDeployer.address;
-    contractConfig.governance = governance;
-    contractConfig.mintLimiter = mintLimiter;
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = options.deployMethod;
 
     if (options.deployMethod !== 'create') {
         contractConfig.salt = salt;
     }
+
+    if (!chain.contracts.InterchainGovernance) {
+        chain.contracts.InterchainGovernance = {};
+    }
+
+    chain.contracts.InterchainGovernance.address = governance;
+
+    if (!chain.contracts.Multisig) {
+        chain.contracts.Multisig = {};
+    }
+
+    chain.contracts.Multisig.address = mintLimiter;
 
     printInfo('Deployment status', 'SUCCESS');
 
@@ -374,11 +397,21 @@ async function upgrade(_, chain, options) {
 
     const gateway = new Contract(contractConfig.address, AxelarGateway.abi, wallet);
     let implementationCodehash = contractConfig.implementationCodehash;
-    let governance = options.governance || contractConfig.governance || chain.contracts.InterchainGovernance?.address;
-    let mintLimiter = options.mintLimiter || contractConfig.mintLimiter || chain.contracts.Multisig?.address;
+    let governance = options.governance || chain.contracts.InterchainGovernance?.address;
+    let mintLimiter = options.mintLimiter || chain.contracts.Multisig?.address;
     let setupParams = '0x';
-    contractConfig.governance = governance;
-    contractConfig.mintLimiter = mintLimiter;
+
+    if (!chain.contracts.InterchainGovernance) {
+        chain.contracts.InterchainGovernance = {};
+    }
+
+    chain.contracts.InterchainGovernance.address = governance;
+
+    if (!chain.contracts.Multisig) {
+        chain.contracts.Multisig = {};
+    }
+
+    chain.contracts.Multisig.address = mintLimiter;
 
     if (!offline) {
         if (governance && !(await isContract(governance, provider))) {
@@ -478,22 +511,12 @@ async function programHandler() {
 
     program.name('deploy-gateway-v6.2.x').description('Deploy gateway v6.2.x');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chains to run the script over').makeOptionMandatory(true).env('CHAINS'));
-    program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
+    addExtendedOptions(program, { salt: true, skipChains: true, skipExisting: true, upgrade: true });
+
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(
         new Option('--deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
     );
-    program.addOption(new Option('-s, --salt <salt>', 'salt to use for deployment method'));
-    program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
     program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment').env('REUSE_PROXY'));
     program.addOption(
         new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment').env(
@@ -503,11 +526,9 @@ async function programHandler() {
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('-g, --governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('-m, --mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
-    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
     program.addOption(new Option('-k, --keyID <keyID>', 'key ID').env('KEY_ID'));
     program.addOption(new Option('-a, --amplifier', 'deploy amplifier gateway').env('AMPLIFIER'));
     program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
-    program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
     program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain'));

@@ -12,6 +12,7 @@ const {
 const readlineSync = require('readline-sync');
 const chalk = require('chalk');
 const { printInfo, loadConfig, saveConfig } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 
 const TokenManagerDeployer = require('@axelar-network/interchain-token-service/dist/utils/TokenManagerDeployer.sol/TokenManagerDeployer.json');
 const StandardizedTokenLockUnlock = require('@axelar-network/interchain-token-service/dist/token-implementations/StandardizedTokenLockUnlock.sol/StandardizedTokenLockUnlock.json');
@@ -207,7 +208,7 @@ async function deployImplementation(wallet, chain, deploymentKey, skipExisting =
                         contracts.AxelarGasService.address,
                         contractConfig.remoteAddressValidator,
                         Object.values(contractConfig.tokenManagerImplementations),
-                        chain.name,
+                        chain.id, // use the unique Axelar registered chain id
                     ],
                     deploymentKey,
                     gasOptions,
@@ -362,20 +363,10 @@ if (require.main === module) {
 
     program.name('deploy-its').description('Deploy interchain token service');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+    addExtendedOptions(program, { skipExisting: true, upgrade: true });
+
     program.addOption(new Option('-s, --salt <key>', 'deployment salt to use for ITS deployment').makeOptionMandatory(true).env('SALT'));
-    program.addOption(new Option('-v, --verify <verify>', 'verify the deployed contract on the explorer [true|false|only]').env('VERIFY'));
-    program.addOption(new Option('-x, --skipExisting <boolean>', 'skip deploying contracts if they already exist').env('SKIP_EXISTING'));
     program.addOption(new Option('-o, --operator', 'address of the ITS operator').env('OPERATOR_ADDRESS'));
-    program.addOption(new Option('-u, --upgrade', 'upgrade ITS').env('UPGRADE'));
 
     program.action(async (options) => {
         options.skipExisting = options.skipExisting === 'true';

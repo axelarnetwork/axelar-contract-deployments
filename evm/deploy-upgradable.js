@@ -14,6 +14,7 @@ const { Command, Option } = require('commander');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
 const { printInfo, printError, saveConfig, loadConfig, printWalletInfo, getDeployedAddress, prompt } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
@@ -65,7 +66,7 @@ async function getImplementationArgs(contractName, config, options) {
     throw new Error(`${contractName} is not supported.`);
 }
 
-function getInitArgs(contractName, config) {
+function getInitArgs(contractName) {
     switch (contractName) {
         case 'AxelarGasService': {
             return '0x';
@@ -79,7 +80,7 @@ function getInitArgs(contractName, config) {
     throw new Error(`${contractName} is not supported.`);
 }
 
-function getUpgradeArgs(contractName, config) {
+function getUpgradeArgs(contractName) {
     switch (contractName) {
         case 'AxelarGasService': {
             return '0x';
@@ -130,7 +131,7 @@ async function deploy(options, chain) {
     const implArgs = await getImplementationArgs(contractName, contracts, options);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions, null, 2)}`);
     const salt = options.salt || contractName;
     let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
 
@@ -300,33 +301,21 @@ async function main(options) {
     }
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('deploy-upgradable').description('Deploy upgradable contracts');
+    program.name('deploy-upgradable').description('Deploy upgradable contracts');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
-program.addOption(
-    new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
-);
-program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path'));
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
-program.addOption(new Option('-u, --upgrade', 'upgrade a deployed contract'));
-program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-program.addOption(new Option('--args <args>', 'customize deployment args'));
+    addExtendedOptions(program, { artifactPath: true, contractName: true, salt: true, skipChains: true, upgrade: true });
 
-program.action((options) => {
-    main(options);
-});
+    program.addOption(
+        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
+    );
+    program.addOption(new Option('--args <args>', 'customize deployment args'));
 
-program.parse();
+    program.action((options) => {
+        main(options);
+    });
+
+    program.parse();
+}

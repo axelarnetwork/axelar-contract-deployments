@@ -9,8 +9,8 @@ const {
     getDefaultProvider,
     utils: { parseEther, parseUnits },
 } = ethers;
-
-const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt } = require('./utils');
+const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt, copyObject } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js');
 
 async function processCommand(_, chain, options) {
@@ -51,6 +51,8 @@ async function processCommand(_, chain, options) {
 
     printInfo('Chain', chain.name);
 
+    const gasOptions = copyObject(chain.gasOptions || {});
+
     if (
         prompt(
             `Proceed with the transfer of ${chalk.green(amountStr)} ${chalk.green(chain.tokenSymbol)} to ${recipients} on ${chain.name}?`,
@@ -66,6 +68,7 @@ async function processCommand(_, chain, options) {
         const tx = {
             to: recipient,
             value: amount,
+            ...gasOptions,
         };
 
         if (!offline && chain.name.toLowerCase() === 'binance') {
@@ -102,21 +105,13 @@ if (require.main === module) {
 
     program.name('send-tokens').description('Send native tokens to an address.');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+    addBaseOptions(program);
+
     program.addOption(new Option('-r, --recipients <recipients>', 'comma-separated recipients of tokens').makeOptionMandatory(true));
     program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)'));
     program.addOption(new Option('--gasUsage <gasUsage>', 'amount to transfer based on gas usage and gas price').default('5000000'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
-    program.addOption(new Option('-y, --yes', 'skip prompts'));
 
     program.action((options) => {
         main(options);

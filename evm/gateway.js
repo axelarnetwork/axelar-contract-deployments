@@ -2,6 +2,7 @@
 
 require('dotenv').config();
 
+const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
@@ -21,6 +22,7 @@ const {
     mainProcessor,
     printError,
 } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
@@ -263,7 +265,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'transferGovernance': {
-            const newGovernance = options.destination;
+            const newGovernance = options.destination || chain.contracts.InterchainGovernance?.address;
 
             if (!isValidAddress(newGovernance)) {
                 throw new Error('Invalid new governor address');
@@ -276,7 +278,7 @@ async function processCommand(config, chain, options) {
                 throw new Error('Wallet address is not the governor');
             }
 
-            if (prompt(`Proceed with governance transfer to ${newGovernance}`, yes)) {
+            if (prompt(`Proceed with governance transfer to ${chalk.cyan(newGovernance)}`, yes)) {
                 return;
             }
 
@@ -291,7 +293,11 @@ async function processCommand(config, chain, options) {
                 throw new Error('Event not emitted in receipt.');
             }
 
-            contracts.AxelarGateway.governance = newGovernance;
+            if (!chain.contracts.InterchainGovernance) {
+                chain.contracts.InterchainGovernance = {};
+            }
+
+            chain.contracts.InterchainGovernance.address = newGovernance;
 
             break;
         }
@@ -303,6 +309,44 @@ async function processCommand(config, chain, options) {
 
         case 'mintLimiter': {
             printInfo(`Gateway mintLimiter`, await gateway.mintLimiter());
+            break;
+        }
+
+        case 'transferMintLimiter': {
+            const newMintLimiter = options.destination || chain.contracts.Multisig?.address;
+
+            if (!isValidAddress(newMintLimiter)) {
+                throw new Error('Invalid address');
+            }
+
+            const currMintLimiter = await gateway.mintLimiter();
+            printInfo('Current governance', currMintLimiter);
+
+            if (!(currMintLimiter === walletAddress)) {
+                throw new Error('Wallet address is not the mint limiter');
+            }
+
+            if (prompt(`Proceed with mint limiter transfer to ${chalk.cyan(newMintLimiter)}`, yes)) {
+                return;
+            }
+
+            const tx = await gateway.transferMintLimiter(newMintLimiter, gasOptions);
+            printInfo('Transfer mint limiter tx', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'MintLimiterTransferred');
+
+            if (!eventEmitted) {
+                throw new Error('Event not emitted in receipt.');
+            }
+
+            if (!chain.contracts.Multisig) {
+                chain.contracts.Multisig = {};
+            }
+
+            chain.contracts.Multisig.address = newMintLimiter;
+
             break;
         }
 
@@ -326,51 +370,44 @@ async function main(options) {
     await mainProcessor(options, processCommand);
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('gateway').description('Script to perform gateway commands');
+    program.name('gateway').description('Script to perform gateway commands');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig'));
-program.addOption(new Option('-a, --address <address>', 'override address'));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true).env('CHAINS'));
-program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
-program.addOption(
-    new Option('--action <action>', 'gateway action')
-        .choices([
-            'admins',
-            'operators',
-            'callContract',
-            'submitBatch',
-            'approve',
-            'execute',
-            'approveAndExecute',
-            'transferGovernance',
-            'governance',
-            'mintLimiter',
-            'mintLimit',
-            'params',
-        ])
-        .makeOptionMandatory(true),
-);
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    addBaseOptions(program, { address: true });
 
-program.addOption(new Option('--payload <payload>', 'gmp payload'));
-program.addOption(new Option('--commandID <commandID>', 'execute command ID'));
-program.addOption(new Option('--destination <destination>', 'GMP destination address'));
-program.addOption(new Option('--destinationChain <destinationChain>', 'GMP destination chain'));
-program.addOption(new Option('--batchID <batchID>', 'EVM batch ID').default(''));
-program.addOption(new Option('--symbol <symbol>', 'EVM token symbol'));
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig'));
+    program.addOption(
+        new Option('--action <action>', 'gateway action')
+            .choices([
+                'admins',
+                'operators',
+                'callContract',
+                'submitBatch',
+                'approve',
+                'execute',
+                'approveAndExecute',
+                'transferGovernance',
+                'governance',
+                'mintLimiter',
+                'transferMintLimiter',
+                'mintLimit',
+                'params',
+            ])
+            .makeOptionMandatory(true),
+    );
 
-program.action((options) => {
-    main(options);
-});
+    program.addOption(new Option('--payload <payload>', 'gmp payload'));
+    program.addOption(new Option('--commandID <commandID>', 'execute command ID'));
+    program.addOption(new Option('--destination <destination>', 'GMP destination address'));
+    program.addOption(new Option('--destinationChain <destinationChain>', 'GMP destination chain'));
+    program.addOption(new Option('--batchID <batchID>', 'EVM batch ID').default(''));
+    program.addOption(new Option('--symbol <symbol>', 'EVM token symbol'));
 
-program.parse();
+    program.action((options) => {
+        main(options);
+    });
+
+    program.parse();
+}
