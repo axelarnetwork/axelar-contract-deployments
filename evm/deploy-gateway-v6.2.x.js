@@ -3,6 +3,7 @@
 require('dotenv').config();
 
 const { Command, Option } = require('commander');
+const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
     ContractFactory,
@@ -149,7 +150,7 @@ async function deploy(config, chain, options) {
             from: wallet.address,
             nonce: transactionCount + 3,
         });
-        printInfo('Predicted proxy address', proxyAddress);
+        printInfo('Predicted proxy address', proxyAddress, chalk.cyan);
     }
 
     const gasOptions = JSON.parse(JSON.stringify(contractConfig.gasOptions || chain.gasOptions || {}));
