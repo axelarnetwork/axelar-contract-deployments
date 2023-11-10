@@ -956,6 +956,22 @@
         },
         "Multisig": {
           "address": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
+          "salt": "AxelarGasService",
+          "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
+          "implementation": "0x488E54121f7995feF259d15bE688C68142F9a146",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd"
         }
       },
       "explorer": {
@@ -1008,6 +1024,22 @@
         },
         "Multisig": {
           "address": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
+          "salt": "AxelarGasService",
+          "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
+          "implementation": "0xe0Ad88660B5B09fE9FF8bA6f1dba1A826b1C7583",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd"
         }
       },
       "explorer": {
@@ -1056,6 +1088,22 @@
         },
         "Multisig": {
           "address": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd"
+        },
+        "Operators": {
+          "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0xB77A61a241a756E4817c845BEDE7e213a319b1DD",
+          "salt": "AxelarGasService",
+          "address": "0x47E840B35e0eca3E7C0577835DD78d95574873e7",
+          "implementation": "0x488E54121f7995feF259d15bE688C68142F9a146",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd"
         }
       },
       "explorer": {
