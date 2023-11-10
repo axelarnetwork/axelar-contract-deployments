@@ -20,7 +20,7 @@ const addToProjectFn = async (context, event) => {
 
             // log data contains address in first 32 bytes i.e. first 64 chars, here data string is also prefixed with 0x.
             // data = '0x' + 24 chars (appended 0) + 40 chars (address)
-            const deployedAddress = '0x' + logs[index].data.substring(26, 66);
+            const [deployedAddress] = ethers.utils.defaultAbiCoder.decode(['address'], logs[index].data.substring(0, 66));
             const name = `TokenManager-${context.metadata.getNetwork()}-${deployedAddress}`;
 
             console.log(`New TokenManager deployed for chain ${context.metadata.getNetwork()} at address ${deployedAddress}`);
