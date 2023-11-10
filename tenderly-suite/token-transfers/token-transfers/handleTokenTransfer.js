@@ -10,12 +10,6 @@ const ITS_ABI = ['function validTokenAddress(bytes32 tokenId) external view retu
 const COIN_MARKET_QUOTES_URL = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest';
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
 
-const Severity = {
-    1: 'info',
-    2: 'warning',
-    3: 'critical',
-};
-
 const handleTokenTransferFn = async (context, event) => {
     if (!event || !event.logs || !context || !context.metadata) {
         throw new Error('INVALID_INPUT_FOR_ACTION');
@@ -136,6 +130,8 @@ const handleTokenTransferFn = async (context, event) => {
     }
 
     if (severity) {
+        const Severity = await context.storage.getJson('Severity');
+
         try {
             await axios.post(
                 PAGER_DUTY_ALERT_URL,
@@ -145,7 +141,7 @@ const handleTokenTransferFn = async (context, event) => {
                     payload: {
                         summary: 'Token tranfer amount crossed threshold',
                         source: `${chainName}-ITS-${its.address}`,
-                        severity: Severity[severity],
+                        severity: Severity[`${severity}`],
                         custom_details: {
                             timestamp: Date.now(),
                             chain_name: chainName,
