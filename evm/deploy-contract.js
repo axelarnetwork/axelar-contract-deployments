@@ -296,7 +296,13 @@ async function processCommand(config, chain, options) {
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
 
     if (existingAddress !== undefined && predictedAddress !== existingAddress) {
-        printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} on chain ${chain.name}.`);
+        printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}.`);
+
+        const existingCodeHash = config.chains.ethereum.contracts[contractName].predeployCodehash;
+        if (predeployCodehash !== existingCodeHash) {
+            printWarn(`Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${config.chains.ethereum.name}.`);
+        }
+
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
     }
 
