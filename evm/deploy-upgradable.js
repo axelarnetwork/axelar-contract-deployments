@@ -2,6 +2,7 @@
 
 require('dotenv').config();
 
+const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
     Contract,
@@ -199,7 +200,7 @@ async function deploy(options, chain) {
 
         printInfo('Deployment method', deployMethod);
         printInfo('Deployer contract', deployerContract);
-        printInfo(`${contractName} will be deployed to`, predictedAddress);
+        printInfo(`${contractName} will be deployed to`, predictedAddress, chalk.cyan);
 
         if (prompt(`Does derived address match existing deployments? Proceed with deployment on ${chain.name}?`, yes)) {
             return;
