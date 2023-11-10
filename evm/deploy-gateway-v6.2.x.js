@@ -127,6 +127,14 @@ async function deploy(config, chain, options) {
         printInfo('MintLimiter address', mintLimiter);
     }
 
+    const gasOptions = JSON.parse(JSON.stringify(contractConfig.gasOptions || chain.gasOptions || {}));
+
+    // Some chains require a gas adjustment
+    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
+        gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.6);
+    }
+
+    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
     const gatewayFactory = new ContractFactory(AxelarGateway.abi, AxelarGateway.bytecode, wallet);
     const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
     const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
@@ -139,28 +147,30 @@ async function deploy(config, chain, options) {
     let auth;
     let tokenDeployer;
     const contractsToVerify = [];
+    let proxyAddress;
 
     if (reuseProxy) {
-        const gatewayProxy = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.id));
-        printInfo('Reusing Gateway Proxy address', gatewayProxy);
-        gateway = gatewayFactory.attach(gatewayProxy);
+        proxyAddress = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.id));
+        printInfo('Reusing Gateway Proxy address', proxyAddress);
+        gateway = gatewayFactory.attach(proxyAddress);
     } else {
         const transactionCount = await wallet.getTransactionCount();
-        const proxyAddress = getContractAddress({
+        proxyAddress = getContractAddress({
             from: wallet.address,
             nonce: transactionCount + 3,
         });
         printInfo('Predicted proxy address', proxyAddress, chalk.cyan);
     }
 
-    const gasOptions = JSON.parse(JSON.stringify(contractConfig.gasOptions || chain.gasOptions || {}));
+    const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
 
-    // Some chains require a gas adjustment
-    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
-        gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.6);
+    if (existingAddress !== undefined && proxyAddress !== existingAddress) {
+        printWarn(
+            `Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}.`,
+        );
+        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
     }
 
-    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
 
     if (prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
@@ -224,16 +234,22 @@ async function deploy(config, chain, options) {
 
     const salt = 'AxelarGateway v6.2' + (options.salt || '');
 
-    const implementation = await deployContract(
-        options.deployMethod,
-        wallet,
-        AxelarGateway,
-        [auth.address, tokenDeployer.address],
-        { salt, deployerContract },
-        gasOptions,
-        {},
-        chain,
-    );
+    let implementation;
+
+    if (options.skipExisting) {
+        implementation = gatewayFactory.attach(contractConfig.implementation);
+    } else {
+        implementation = await deployContract(
+            options.deployMethod,
+            wallet,
+            AxelarGateway,
+            [auth.address, tokenDeployer.address],
+            { salt, deployerContract },
+            gasOptions,
+            {},
+            chain,
+        );
+    }
 
     printInfo('Gateway Implementation', implementation.address);
 
