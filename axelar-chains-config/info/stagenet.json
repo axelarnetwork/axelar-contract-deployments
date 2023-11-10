@@ -937,6 +937,25 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
           "salt": "Create3Deployer"
+        },
+        "AxelarGateway": {
+          "startingKeyIDs": [
+            "evm-ethereum-sepolia-genesis"
+          ],
+          "authModule": "0x68681A28772177ceEd5519A5f52Bf965c3e112E3",
+          "tokenDeployer": "0x42dBF20686794C1a82A95A629373ed2E8CFb5fEb",
+          "deployer": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
+          "address": "0x6aF9C075d8C11b9A2CD66bbA801481b3c7A96488",
+          "implementation": "0x21BB37D5e02Ef479E34f6806C36a506c63741cc1",
+          "implementationCodehash": "0xd598b518b39d1ff405642adf3da87ba9b6bbdf26b2dbcecc013beaa360ed2874",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
+        "InterchainGovernance": {
+          "address": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd"
+        },
+        "Multisig": {
+          "address": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd"
         }
       },
       "explorer": {
