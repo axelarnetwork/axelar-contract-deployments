@@ -1,5 +1,18 @@
 {
   "chains": {
+    "ethereum-sepolia": {
+      "name": "ethereum-sepolia",
+      "id": "ethereum-sepolia",
+      "chainId": 11155111,
+      "rpc": "https://1rpc.io/sepolia",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": "20000000"
+      },
+      "confirmations": 1,
+      "contracts": {
+      }
+    },
     "ethereum": {
       "name": "Ethereum",
       "id": "ethereum-2",
