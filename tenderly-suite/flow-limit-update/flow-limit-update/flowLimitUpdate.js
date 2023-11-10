@@ -22,11 +22,11 @@ const flowLimitUpdateFn = async (context, event) => {
         if (log.topics[0] === flowLimitSetHash) {
             console.log(`event emitted: ${flowLimitSet}`);
 
-            if (log.topics.length < 2) {
+            if (log.topics.length !== 2) {
                 throw new Error('INVALID_LOG_TOPICS_LENGTH');
             }
 
-            if (log.data.length < 66) {
+            if (log.data.length !== 130) {
                 throw new Error('INVALID_LOG_DATA_LENGTH');
             }
 
