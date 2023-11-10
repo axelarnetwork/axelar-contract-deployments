@@ -10,8 +10,7 @@
         "gasLimit": "20000000"
       },
       "confirmations": 1,
-      "contracts": {
-      }
+      "contracts": {}
     },
     "ethereum": {
       "name": "Ethereum",
