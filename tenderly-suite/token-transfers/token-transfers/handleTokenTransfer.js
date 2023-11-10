@@ -28,6 +28,7 @@ const handleTokenTransferFn = async (context, event) => {
 
     const tokenTransferAmounts = [];
     const tokenIDs = [];
+    const hashes = [];
 
     event.logs.forEach(function (log) {
         if (
@@ -37,7 +38,9 @@ const handleTokenTransferFn = async (context, event) => {
             log.topics[0] === tokenReceivedWithDataHash
         ) {
             tokenIDs.push(log.topics[1]);
-            tokenTransferAmounts.push(ethers.BigNumber.from(log.topics[log.topics.length - 1]));
+            const amountIndex = log.topics.length - (log.topics[0] === tokenSentWithDataHash ? 2 : 1);
+            tokenTransferAmounts.push(ethers.BigNumber.from(log.topics[amountIndex]));
+            hashes.push(log.topics[0]);
         }
     });
 
@@ -116,13 +119,13 @@ const handleTokenTransferFn = async (context, event) => {
             prices.push(tokenPrice);
             symbols.push(symbol);
             const eventName =
-                id === tokenSentHash
-                    ? toUtf8Bytes(tokenSent)
+                hashes[index] === tokenSentHash
+                    ? tokenSent
                     : id === tokenSentWithDataHash
-                    ? toUtf8Bytes(tokenSentWithData)
+                    ? tokenSentWithData
                     : id === tokenReceivedHash
-                    ? toUtf8Bytes(tokenReceived)
-                    : toUtf8Bytes(tokenReceivedWithData);
+                    ? tokenReceived
+                    : tokenReceivedWithData;
             console.log(`Event emitted is ${eventName}`);
             console.log(`Token threhold of ${tokenThreshold[severity - 1]} crossed for severity level ${severity}`);
             console.log(`Total ${symbol} tokens transferred are ${tokenTransferAmount} with current USD value of ${totalAmount}$`);
