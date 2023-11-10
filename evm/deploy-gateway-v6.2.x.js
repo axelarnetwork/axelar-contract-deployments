@@ -240,7 +240,7 @@ async function deploy(config, chain, options) {
 
     let implementation;
 
-    if (options.skipExisting) {
+    if (options.skipExisting && contractConfig.implementation) {
         implementation = gatewayFactory.attach(contractConfig.implementation);
     } else {
         implementation = await deployContract(
