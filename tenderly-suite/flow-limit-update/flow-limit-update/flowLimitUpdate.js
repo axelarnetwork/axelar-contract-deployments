@@ -30,8 +30,7 @@ const flowLimitUpdateFn = async (context, event) => {
                 throw new Error('INVALID_LOG_DATA_LENGTH');
             }
 
-            //  log data contains address in first 32 bytes i.e. first 64 chars, here data string is also prefixed with 0x.
-            const operatorAddress = '0x' + log.data.substring(26, 66);
+            const [operatorAddress] = ethers.utils.defaultAbiCoder.decode(['address', 'uint256'], log.data);
             const tempSeverity = itsAddresses.includes(operatorAddress.toLowerCase()) ? 1 : 2;
 
             if (tempSeverity > severity) {
