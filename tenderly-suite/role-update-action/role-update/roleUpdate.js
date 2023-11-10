@@ -36,14 +36,10 @@ const handleRoleUpdate = async (context, event) => {
             const roles = toRoleArray(parseInt(log.data, 16));
 
             if (log.topics.length === 0) {
-                throw new Error('INVALID_LOGS_LENGTH');
-            }
-
-            if (log.topics.length === 0) {
                 throw new Error('INVALID_LOG_TOPICS_LENGTH');
             }
 
-            if (log.topics[1].length < 26 + 40) {
+            if (log.topics[1].length !== 66) {
                 throw new Error('INVALID_LOG_TOPIC_LENGTH');
             }
 
