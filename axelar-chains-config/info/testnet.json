@@ -1714,6 +1714,61 @@
       "gasOptions": {
         "gasLimit": 8000000
       }
+    },
+    "immutable": {
+      "name": "Immutable",
+      "id": "immutable",
+      "chainId": 13473,
+      "rpc": "https://rpc-geth.testnet.immutable.com",
+      "tokenSymbol": "IMX",
+      "contracts": {},
+      "gasOptions": {
+        "gasLimit": 8000000,
+        "maxPriorityFeePerGas": 150000000000,
+        "maxFeePerGas": 160000000000
+      }
+    },
+    "ethereum-sepolia": {
+      "name": "Ethereum-Sepolia",
+      "id": "ethereum-sepolia",
+      "chainId": 11155111,
+      "rpc": "https://1rpc.io/sepolia",
+      "tokenSymbol": "ETH",
+      "confirmations": 2,
+      "contracts": {},
+      "explorer": {
+        "url": "https://sepolia.etherscan.io",
+        "api": "https://api-sepolia.etherscan.io/api"
+      },
+      "gasOptions": {
+        "maxFeePerGas": 110000000,
+        "maxPriorityFeePerGas": 100000000
+      }
+    },
+    "arbitrum-sepolia": {
+      "name": "Arbitrum-Sepolia",
+      "id": "arbitrum-sepolia",
+      "chainId": 421614,
+      "rpc": "https://sepolia-rollup.arbitrum.io/rpc",
+      "tokenSymbol": "ETH",
+      "confirmations": 2,
+      "contracts": {},
+      "explorer": {
+        "url": "https://sepolia.arbiscan.io",
+        "api": "https://api-sepolia.arbiscan.io/api"
+      }
+    },
+    "centrifuge": {
+      "name": "Centrifuge",
+      "id": "centrifuge-2",
+      "chainId": 2090,
+      "rpc": "https://node-7118620155331796992.gx.onfinality.io/rpc?apikey=00538f2d-6297-44e3-8812-4b9d579524b2",
+      "tokenSymbol": "CFG",
+      "confirmations": 1,
+      "contracts": {},
+      "explorer": {
+        "url": ""
+      }
     }
   },
   "axelar": {
