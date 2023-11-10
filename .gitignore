@@ -5,3 +5,7 @@ solana/node_modules
 solana/dist
 solana/build
 solana/test-ledger
+
+axelar/target
+axelar/Cargo.lock
+axelar/artifacts
