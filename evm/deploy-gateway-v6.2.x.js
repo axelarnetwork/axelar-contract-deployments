@@ -116,11 +116,15 @@ async function deploy(config, chain, options) {
         }
 
         if (governance !== wallet.address) {
-            printWarn('Governance address is not set to the wallet address. This is needed for official deployment and is transferred after deployment');
+            printWarn(
+                'Governance address is not set to the wallet address. This is needed for official deployment and is transferred after deployment',
+            );
         }
 
         if (mintLimiter !== wallet.address) {
-            printWarn('MintLimiter address is not set to the wallet address. This is needed for official deployment and is transferred after deployment');
+            printWarn(
+                'MintLimiter address is not set to the wallet address. This is needed for official deployment and is transferred after deployment',
+            );
         }
 
         printInfo('Governance address', governance);
