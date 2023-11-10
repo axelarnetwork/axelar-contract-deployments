@@ -910,7 +910,8 @@
           "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
           "salt": "InterchainGovernance v5.5"
         }
-      }
+      },
+      "explorer": {}
     },
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
@@ -997,7 +998,8 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
           "salt": "Create3Deployer"
         }
-      }
+      },
+      "explorer": {}
     }
   },
   "axelar": {
