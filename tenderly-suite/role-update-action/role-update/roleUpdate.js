@@ -77,6 +77,8 @@ const handleRoleUpdate = async (context, event) => {
     }
 
     if (severity) {
+        const Severity = await context.storage.getJson('Severity');
+
         try {
             await axios.post(
                 PAGER_DUTY_ALERT_URL,
@@ -86,7 +88,7 @@ const handleRoleUpdate = async (context, event) => {
                     payload: {
                         summary,
                         source: `${chainName}-${event.hash}`,
-                        severity: Severity[severity],
+                        severity: Severity[`${severity}`],
                         custom_details: {
                             timestamp: Date.now(),
                             chain_name: chainName,
@@ -118,12 +120,6 @@ const Role = {
     0: 'Distributor',
     1: 'Operator',
     2: 'FlowLimiter',
-};
-
-const Severity = {
-    1: 'info',
-    2: 'warning',
-    3: 'critical',
 };
 
 function toRoleArray(accountRoles) {
