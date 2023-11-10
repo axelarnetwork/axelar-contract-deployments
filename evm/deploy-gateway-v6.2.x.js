@@ -204,6 +204,8 @@ async function deploy(config, chain, options) {
         });
     }
 
+    printInfo('Auth address', auth.address);
+
     if (options.skipExisting && contractConfig.tokenDeployer) {
         tokenDeployer = tokenDeployerFactory.attach(contractConfig.tokenDeployer);
     } else if (reuseProxy && reuseHelpers) {
@@ -230,7 +232,6 @@ async function deploy(config, chain, options) {
         });
     }
 
-    printInfo('Auth address', auth.address);
     printInfo('Token Deployer address', tokenDeployer.address);
 
     printInfo(`Deploying gateway implementation contract`);
@@ -265,7 +266,10 @@ async function deploy(config, chain, options) {
         params: [auth.address, tokenDeployer.address],
     });
 
-    if (!reuseProxy) {
+    if (options.skipExisting && contractConfig.address) {
+        proxyAddress = chain.contracts.AxelarGateway?.address;
+        gateway = gatewayFactory.attach(proxyAddress);
+    } else if (!reuseProxy) {
         const params = getProxyParams(governance, mintLimiter);
 
         printInfo('Deploying gateway proxy contract');
