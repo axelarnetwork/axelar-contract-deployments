@@ -4,11 +4,6 @@ const {
     utils: { toUtf8Bytes },
 } = ethers;
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
-const Severity = {
-    INFO: 'info',
-    CRITICAL: 'critical',
-    WARNING: 'warning',
-};
 
 const handleFailedTxFn = async (context, event) => {
     if (!event || !context || !context.metadata) {
@@ -115,6 +110,8 @@ const handleFailedTxFn = async (context, event) => {
         default:
             console.log('No Error match found');
     }
+
+    const Severity = await context.storage.getJson('Severity');
 
     if (warningOptions.length !== 0) {
         await sendWarning(event, context, chainName, ...warningOptions, Severity.INFO);
