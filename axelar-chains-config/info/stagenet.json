@@ -1,5 +1,18 @@
 {
   "chains": {
+    "arbitrum-sepolia": {
+      "name": "arbitrum-sepolia",
+      "id": "arbitrum-sepolia",
+      "chainId": 421614,
+      "rpc": "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": "20000000"
+      },
+      "confirmations": 1,
+      "contracts": {
+      }
+    },
     "ethereum": {
       "name": "Ethereum",
       "id": "ethereum-2",
