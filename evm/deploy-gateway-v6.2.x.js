@@ -3,6 +3,7 @@
 require('dotenv').config();
 
 const { Command, Option } = require('commander');
+const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
     ContractFactory,
@@ -93,6 +94,10 @@ async function deploy(config, chain, options) {
     const wallet = new Wallet(privateKey).connect(provider);
     await printWalletInfo(wallet);
 
+    if (chain.contracts === undefined) {
+        chain.contracts = {};
+    }
+
     if (chain.contracts[contractName] === undefined) {
         chain.contracts[contractName] = {};
     }
@@ -117,6 +122,9 @@ async function deploy(config, chain, options) {
         if (!(await isContract(mintLimiter, provider))) {
             printWarn('MintLimiter address is not a contract. This is optional for test deployments');
         }
+
+        printInfo('Governance address', governance);
+        printInfo('MintLimiter address', mintLimiter);
     }
 
     const gatewayFactory = new ContractFactory(AxelarGateway.abi, AxelarGateway.bytecode, wallet);
@@ -142,7 +150,7 @@ async function deploy(config, chain, options) {
             from: wallet.address,
             nonce: transactionCount + 3,
         });
-        printInfo('Predicted proxy address', proxyAddress);
+        printInfo('Predicted proxy address', proxyAddress, chalk.cyan);
     }
 
     const gasOptions = JSON.parse(JSON.stringify(contractConfig.gasOptions || chain.gasOptions || {}));
@@ -161,7 +169,9 @@ async function deploy(config, chain, options) {
 
     contractConfig.deployer = wallet.address;
 
-    if (reuseProxy && reuseHelpers) {
+    if (options.skipExisting && contractConfig.authModule) {
+        auth = authFactory.attach(contractConfig.authModule);
+    } else if (reuseProxy && reuseHelpers) {
         auth = authFactory.attach(await gateway.authModule());
     } else {
         printInfo(`Deploying auth contract`);
@@ -180,7 +190,9 @@ async function deploy(config, chain, options) {
         });
     }
 
-    if (reuseProxy && reuseHelpers) {
+    if (options.skipExisting && contractConfig.tokenDeployer) {
+        tokenDeployer = tokenDeployerFactory.attach(contractConfig.tokenDeployer);
+    } else if (reuseProxy && reuseHelpers) {
         tokenDeployer = tokenDeployerFactory.attach(await gateway.tokenDeployer());
     } else {
         printInfo(`Deploying token deployer contract`);
@@ -237,8 +249,6 @@ async function deploy(config, chain, options) {
         const params = getProxyParams(governance, mintLimiter);
 
         printInfo('Deploying gateway proxy contract');
-        printInfo('Governance address', governance);
-        printInfo('MintLimiter address', mintLimiter);
         printInfo('Proxy deployment args', `${implementation.address},${params}`);
 
         const gatewayProxy = await gatewayProxyFactory.deploy(implementation.address, params, gasOptions);
@@ -521,6 +531,7 @@ async function programHandler() {
     program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
+    program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain'));
 
     program.action((options) => {
         main(options);

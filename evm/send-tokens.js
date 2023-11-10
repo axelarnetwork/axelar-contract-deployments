@@ -9,7 +9,7 @@ const {
     getDefaultProvider,
     utils: { parseEther, parseUnits },
 } = ethers;
-const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt } = require('./utils');
+const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt, copyObject } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js');
 
@@ -51,6 +51,8 @@ async function processCommand(_, chain, options) {
 
     printInfo('Chain', chain.name);
 
+    const gasOptions = copyObject(chain.gasOptions || {});
+
     if (
         prompt(
             `Proceed with the transfer of ${chalk.green(amountStr)} ${chalk.green(chain.tokenSymbol)} to ${recipients} on ${chain.name}?`,
@@ -66,6 +68,7 @@ async function processCommand(_, chain, options) {
         const tx = {
             to: recipient,
             value: amount,
+            ...gasOptions,
         };
 
         if (!offline && chain.name.toLowerCase() === 'binance') {

@@ -2,6 +2,7 @@
 
 require('dotenv').config();
 
+const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
     Wallet,
@@ -221,6 +222,10 @@ async function processCommand(config, chain, options) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes } = options;
     const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
 
+    if (!chain.contracts) {
+        chain.contracts = {};
+    }
+
     const contracts = chain.contracts;
 
     if (!contracts[contractName]) {
@@ -286,9 +291,16 @@ async function processCommand(config, chain, options) {
 
     printInfo('Deployment method', deployMethod);
     printInfo('Deployer contract', deployerContract);
-    printInfo(`${contractName} will be deployed to`, predictedAddress);
+    printInfo(`${contractName} will be deployed to`, predictedAddress, chalk.cyan);
 
-    if (prompt(`Does derived address match existing deployments? Proceed with deployment on ${chain.name}?`, yes)) {
+    const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
+
+    if (existingAddress !== undefined && predictedAddress !== existingAddress) {
+        printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} on chain ${chain.name}.`);
+        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
+    }
+
+    if (prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
         return;
     }
 

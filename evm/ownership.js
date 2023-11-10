@@ -20,7 +20,7 @@ async function processCommand(options, chain) {
     const { contractName, address, action, privateKey, newOwner, yes } = options;
 
     const contracts = chain.contracts;
-    const contractConfig = contracts[contractName];
+    const contractConfig = contracts[contractName] || {};
 
     let ownershipAddress;
 
@@ -46,7 +46,7 @@ async function processCommand(options, chain) {
     const ownershipContract = new Contract(ownershipAddress, IOwnable.abi, wallet);
 
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    printInfo(`Gas override for ${chain.name}`, JSON.stringify(gasOptions));
+    printInfo(`Gas override for ${chain.name}`, JSON.stringify(gasOptions, null, 2));
 
     printInfo('Ownership Action', action);
 
@@ -78,7 +78,7 @@ async function processCommand(options, chain) {
             let owner = await ownershipContract.owner();
 
             if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
-                throw new Error(`Caller ${wallet.address} is not the contract owner.`);
+                throw new Error(`Caller ${wallet.address} is not the contract owner but ${owner} is.`);
             }
 
             if (!isAddress(newOwner) || newOwner === AddressZero) {
@@ -86,7 +86,7 @@ async function processCommand(options, chain) {
             }
 
             try {
-                await ownershipContract.transferOwnership(newOwner).then((tx) => tx.wait());
+                await ownershipContract.transferOwnership(newOwner, gasOptions).then((tx) => tx.wait());
             } catch (error) {
                 throw new Error(error);
             }
@@ -116,7 +116,7 @@ async function processCommand(options, chain) {
             }
 
             try {
-                await ownershipContract.proposeOwnership(newOwner).then((tx) => tx.wait());
+                await ownershipContract.proposeOwnership(newOwner, gasOptions).then((tx) => tx.wait());
             } catch (error) {
                 throw new Error(error);
             }
@@ -144,7 +144,7 @@ async function processCommand(options, chain) {
             }
 
             try {
-                await ownershipContract.acceptOwnership().then((tx) => tx.wait());
+                await ownershipContract.acceptOwnership(gasOptions).then((tx) => tx.wait());
             } catch (error) {
                 throw new Error(error);
             }
@@ -196,7 +196,7 @@ if (require.main === module) {
 
     addBaseOptions(program, { address: true });
 
-    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name'));
     program.addOption(
         new Option('--action <action>', 'ownership action').choices([
             'owner',
