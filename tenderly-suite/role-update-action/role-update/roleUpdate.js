@@ -44,7 +44,7 @@ const handleRoleUpdate = async (context, event) => {
             }
 
             //  account is present in log topic as 32 bytes hex string, with prefixed 0s
-            const account = `0x${log.topics[1].substring(26, 26 + 40)}`;
+            const [account] = ethers.utils.defaultAbiCoder.decode(['address'], log.data);
 
             let tempSeverity = 1;
 
