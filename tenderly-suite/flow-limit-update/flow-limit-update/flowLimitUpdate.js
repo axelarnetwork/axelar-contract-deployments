@@ -2,13 +2,6 @@ const axios = require('axios').default;
 const { ethers } = require('ethers');
 
 const PAGER_DUTY_ALERT_URL = 'https://events.pagerduty.com/v2/enqueue';
-const Severity = {
-    INFO: 'info',
-    CRITICAL: 'critical',
-    WARNING: 'warning',
-    1: 'info',
-    2: 'warning',
-};
 
 const flowLimitUpdateFn = async (context, event) => {
     if (!event || !event.logs || !context || !context.metadata) {
@@ -53,6 +46,8 @@ const flowLimitUpdateFn = async (context, event) => {
 
     if (severity) {
         try {
+            const Severity = await context.storage.getJson('Severity');
+
             await axios.post(
                 PAGER_DUTY_ALERT_URL,
                 {
@@ -61,7 +56,7 @@ const flowLimitUpdateFn = async (context, event) => {
                     payload: {
                         summary: 'Flow limit updated',
                         source: 'ITS',
-                        severity: Severity[severity],
+                        severity: Severity[`${severity}`],
                         custom_details: {
                             timestamp: Date.now(),
                             chain_name: context.metadata.getNetwork(),
