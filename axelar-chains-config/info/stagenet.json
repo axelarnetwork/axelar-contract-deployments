@@ -651,7 +651,8 @@
         }
       },
       "explorer": {
-        "url": "https://explorer.evm-alpha.kava.io"
+        "url": "https://explorer.evm-alpha.kava.io",
+        "api": ""
       }
     },
     "optimism": {
@@ -912,7 +913,8 @@
         }
       },
       "explorer": {
-        "url": ""
+        "url": "",
+        "api": ""
       }
     },
     "ethereum-sepolia": {
@@ -1107,7 +1109,8 @@
         }
       },
       "explorer": {
-        "url": ""
+        "url": "",
+        "api": ""
       }
     }
   },
