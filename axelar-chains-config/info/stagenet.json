@@ -911,7 +911,9 @@
           "salt": "InterchainGovernance v5.5"
         }
       },
-      "explorer": {}
+      "explorer": {
+        "url": ""
+      }
     },
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
@@ -999,7 +1001,9 @@
           "salt": "Create3Deployer"
         }
       },
-      "explorer": {}
+      "explorer": {
+        "url": ""
+      }
     }
   },
   "axelar": {
