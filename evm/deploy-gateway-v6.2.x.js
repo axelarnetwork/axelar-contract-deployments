@@ -115,12 +115,12 @@ async function deploy(config, chain, options) {
             throw new Error('mintLimiter address is required');
         }
 
-        if (!(await isContract(governance, provider))) {
-            printWarn('Governance address is not a contract. This is optional for test deployments');
+        if (governance !== wallet.address) {
+            printWarn('Governance address is not set to the wallet address. This is needed for official deployment and is transferred after deployment');
         }
 
-        if (!(await isContract(mintLimiter, provider))) {
-            printWarn('MintLimiter address is not a contract. This is optional for test deployments');
+        if (mintLimiter !== wallet.address) {
+            printWarn('MintLimiter address is not set to the wallet address. This is needed for official deployment and is transferred after deployment');
         }
 
         printInfo('Governance address', governance);
@@ -531,7 +531,7 @@ async function programHandler() {
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(
-        new Option('--deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
+        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
     );
     program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment').env('REUSE_PROXY'));
     program.addOption(
@@ -540,8 +540,8 @@ async function programHandler() {
         ),
     );
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
-    program.addOption(new Option('-g, --governance <governance>', 'governance address').env('GOVERNANCE'));
-    program.addOption(new Option('-m, --mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
+    program.addOption(new Option('--governance <governance>', 'governance address').env('GOVERNANCE'));
+    program.addOption(new Option('--mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
     program.addOption(new Option('-k, --keyID <keyID>', 'key ID').env('KEY_ID'));
     program.addOption(new Option('-a, --amplifier', 'deploy amplifier gateway').env('AMPLIFIER'));
     program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
