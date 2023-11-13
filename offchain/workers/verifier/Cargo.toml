@@ -1,5 +1,5 @@
 [package]
-name = "verify-worker"
+name = "verifier"
 version = "0.1.0"
 edition = "2021"
 
