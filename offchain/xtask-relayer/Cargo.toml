@@ -1,0 +1,18 @@
+[package]
+name = "xtask-relayer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anchor-client.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+env_logger.workspace=true
+gateway.workspace = true
+log.workspace=true
+serde.workspace = true
+serde_json.workspace = true
+shellexpand.workspace=true
+solana-client.workspace = true
+solana-program.workspace = true
+solana-sdk.workspace = true
