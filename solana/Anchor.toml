@@ -2,13 +2,14 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
+gateway = "C3iZqLs7omGNxbug6SbeKHAAiJYArNAkn9KxudeDSdpG"
 registry = "9fH45E6rSfwx71HEgDnmhR5fZwj3vvJpExRvHQbU6Z2X"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

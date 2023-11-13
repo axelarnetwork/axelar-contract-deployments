@@ -5,7 +5,8 @@ solana/node_modules
 solana/dist
 solana/build
 solana/test-ledger
-
+test_suite/target
+relayer/target
 axelar/target
 axelar/Cargo.lock
 axelar/artifacts
