@@ -1,5 +1,5 @@
 [package]
-name = "test_suite"
+name = "ts_solana_client"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,5 +14,5 @@ shellexpand = "3.1.0"
 log = "0.4.20"
 env_logger = "0.10.0"
 
-gateway = { path = "../solana/programs/gateway", features = ["no-entrypoint"] }
+gateway = { path = "../../solana/programs/gateway", features = ["no-entrypoint"] }
 clap = { version = "4.4.8", features = ["derive"] }

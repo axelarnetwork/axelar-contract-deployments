@@ -1,6 +1,11 @@
-# solana-axelar
-Solana integration with Axelar
-#monorepo
+# Solana Axelar Interoperability
+Monorepo for code around Solana Axelar interoperatbility. 
 
 ---
-Type `anchor test` from within solana directory to run tests.
+## Run
+To test Solana programs, type `anchor test` from within solana directory to run tests.
+To run POC flow Solana -> Axelar:
+
+- Run `test_suite/relayer`
+- Run `test_suite/solana_client`
+- Observe logs

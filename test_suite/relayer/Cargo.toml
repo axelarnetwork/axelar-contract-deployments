@@ -1,5 +1,5 @@
 [package]
-name = "relayer"
+name = "ts_relayer"
 version = "0.1.0"
 edition = "2021"
 
@@ -18,4 +18,4 @@ env_logger = "0.10.0"
 clap = { version = "4.4.8", features = ["derive"] }
 anyhow = "1.0.75"
 
-gateway = { path = "../solana/programs/gateway", features = ["no-entrypoint"] }
+gateway = { path = "../../solana/programs/gateway", features = ["no-entrypoint"] }

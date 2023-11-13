@@ -10,3 +10,5 @@ relayer/target
 axelar/target
 axelar/Cargo.lock
 axelar/artifacts
+test_suite/relayer/target
+test_suite/solana_client/target
