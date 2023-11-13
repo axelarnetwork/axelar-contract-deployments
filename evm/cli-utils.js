@@ -24,7 +24,7 @@ const addBaseOptions = (program, options = {}) => {
     }
 
     if (options.address) {
-        program.addOption(new Option('--address <address>', 'override address'));
+        program.addOption(new Option('-a, --address <address>', 'override address'));
     }
 
     return program;
@@ -36,7 +36,7 @@ const addExtendedOptions = (program, options = {}) => {
     program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
 
     if (options.artifactPath) {
-        program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path'));
+        program.addOption(new Option('--artifactPath <artifactPath>', 'artifact path'));
     }
 
     if (options.contractName) {

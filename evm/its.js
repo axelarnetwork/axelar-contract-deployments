@@ -15,15 +15,9 @@ const {
     printWarn,
     printWalletInfo,
     isValidAddress,
-    isKeccak256Hash,
     wasEventEmitted,
     mainProcessor,
-    isValidTokenId,
-    isValidNumber,
-    isString,
-    isValidCalldata,
-    isValidBytesAddress,
-    isNumberArray,
+    validateParameters,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/dist/interchain-token-service/InterchainTokenService.sol');
@@ -34,6 +28,38 @@ const tokenManagerImplementations = {
     LOCK_UNLOCK: 2,
     LOCK_UNLOCK_FEE: 3,
 };
+
+function isValidTokenId(input) {
+    if (!input.startsWith('0x')) {
+        return false;
+    }
+
+    const hexPattern = /^[0-9a-fA-F]+$/;
+
+    if (!hexPattern.test(input.slice(2))) {
+        return false;
+    }
+
+    const minValue = BigInt('0x00');
+    const maxValue = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
+    const numericValue = BigInt(input);
+
+    return numericValue >= minValue && numericValue <= maxValue;
+}
+
+async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
+    printInfo(`${action} tx`, tx.hash);
+
+    const receipt = await tx.wait(chain.confirmations);
+
+    const eventEmitted =
+        (firstEvent ? wasEventEmitted(receipt, contract, 'TokenManagerDeployed') : true) ||
+        (secondEvent ? wasEventEmitted(receipt, contract, 'TokenManagerDeploymentStarted') : false);
+
+    if (!eventEmitted) {
+        printWarn('Event not emitted in receipt.');
+    }
+}
 
 async function processCommand(chain, options) {
     const { privateKey, address, action, yes } = options;
@@ -70,6 +96,12 @@ async function processCommand(chain, options) {
         return;
     }
 
+    const tokenId = options.tokenId;
+
+    if (!isValidTokenId(tokenId)) {
+        throw new Error(`Invalid tokenId value: ${tokenId}`);
+    }
+
     switch (action) {
         case 'contractId': {
             const contractId = await interchainTokenService.contractId();
@@ -79,46 +111,22 @@ async function processCommand(chain, options) {
         }
 
         case 'tokenManagerAddress': {
-            const tokenId = options.tokenId;
-
-            if (!isValidTokenId(tokenId)) {
-                throw new Error(`Invalid tokenId value: ${tokenId}`);
-            }
-
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const tokenManagerAddress = await interchainTokenService.tokenManagerAddress(tokenIdBytes32);
             printInfo(`TokenManager address for tokenId: ${tokenId}:`, tokenManagerAddress);
 
-            break;
-        }
-
-        case 'validTokenManagerAddress': {
-            const tokenId = options.tokenId;
-
-            if (!isValidTokenId(tokenId)) {
-                throw new Error(`Invalid tokenId value: ${tokenId}`);
-            }
-
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
             try {
-                const tokenManagerAddress = await interchainTokenService.validTokenManagerAddress(tokenIdBytes32);
+                await interchainTokenService.validTokenManagerAddress(tokenIdBytes32);
                 printInfo(`TokenManager for tokenId: ${tokenId} exists at address:`, tokenManagerAddress);
             } catch (error) {
-                printInfo(`TokenManager for tokenId: ${tokenId} does not exist.`);
+                printInfo(`TokenManager for tokenId: ${tokenId} does not yet exist.`);
             }
 
             break;
         }
 
         case 'interchainTokenAddress': {
-            const tokenId = options.tokenId;
-
-            if (!isValidTokenId(tokenId)) {
-                throw new Error(`Invalid tokenId value: ${tokenId}`);
-            }
-
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const interchainTokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
@@ -128,17 +136,9 @@ async function processCommand(chain, options) {
         }
 
         case 'interchainTokenId': {
-            const sender = options.sender;
+            const { sender, salt } = options;
 
-            if (!isValidAddress(sender)) {
-                throw new Error(`Invalid sender address: ${sender}`);
-            }
-
-            const salt = options.salt;
-
-            if (!isKeccak256Hash(salt)) {
-                throw new Error(`Invalid salt: ${salt}`);
-            }
+            validateParameters({ isValidAddress: [sender], isKeccak256Hash: [salt] });
 
             const interchainTokenId = await interchainTokenService.interchainTokenId(sender, salt);
             printInfo(`InterchainTokenId for sender ${sender} and deployment salt: ${salt}`, interchainTokenId);
@@ -156,12 +156,6 @@ async function processCommand(chain, options) {
         }
 
         case 'flowLimit': {
-            const tokenId = options.tokenId;
-
-            if (!isValidTokenId(tokenId)) {
-                throw new Error(`Invalid tokenId value: ${tokenId}`);
-            }
-
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const flowLimit = await interchainTokenService.flowLimit(tokenIdBytes32);
@@ -171,12 +165,6 @@ async function processCommand(chain, options) {
         }
 
         case 'flowOutAmount': {
-            const tokenId = options.tokenId;
-
-            if (!isValidTokenId(tokenId)) {
-                throw new Error(`Invalid tokenId value: ${tokenId}`);
-            }
-
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const flowOutAmount = await interchainTokenService.flowOutAmount(tokenIdBytes32);
@@ -186,12 +174,6 @@ async function processCommand(chain, options) {
         }
 
         case 'flowInAmount': {
-            const tokenId = options.tokenId;
-
-            if (!isValidTokenId(tokenId)) {
-                throw new Error(`Invalid tokenId value: ${tokenId}`);
-            }
-
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const flowInAmount = await interchainTokenService.flowInAmount(tokenIdBytes32);
@@ -201,29 +183,14 @@ async function processCommand(chain, options) {
         }
 
         case 'deployTokenManager': {
-            const isPaused = await interchainTokenService.paused();
-
-            if (isPaused) {
-                throw new Error(`${action} invalid while service is paused.`);
-            }
-
             const { salt, destinationChain, type, params, gasValue } = options;
 
-            if (!isKeccak256Hash(salt)) {
-                throw new Error(`Invalid salt: ${salt}`);
-            }
-
-            if (!isString(destinationChain)) {
-                throw new Error(`Invalid destinationChain: ${destinationChain}`);
-            }
-
-            if (!isValidCalldata(params)) {
-                throw new Error(`Invalid params: ${params}`);
-            }
-
-            if (!isValidNumber(gasValue)) {
-                throw new Error(`Invalid gas value: ${gasValue}`);
-            }
+            validateParameters({
+                isKeccak256Hash: [salt],
+                isString: [destinationChain],
+                isValidCalldata: [params],
+                isValidNumber: [gasValue],
+            });
 
             const tx = await interchainTokenService.deployTokenManager(
                 salt,
@@ -232,57 +199,21 @@ async function processCommand(chain, options) {
                 params,
                 gasValue,
             );
-            printInfo('deploy TokenManager tx', tx.hash);
 
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted =
-                wasEventEmitted(receipt, interchainTokenService, 'TokenManagerDeployed') ||
-                wasEventEmitted(receipt, interchainTokenService, 'TokenManagerDeploymentStarted');
-
-            if (!eventEmitted) {
-                printWarn('Event not emitted in receipt.');
-            }
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'TokenManagerDeploymentStarted');
 
             break;
         }
 
         case 'deployInterchainToken': {
-            const isPaused = await interchainTokenService.paused();
-
-            if (isPaused) {
-                throw new Error(`${action} invalid while service is paused.`);
-            }
-
             const { salt, destinationChain, name, symbol, decimals, distributor, gasValue } = options;
 
-            if (!isKeccak256Hash(salt)) {
-                throw new Error(`Invalid salt: ${salt}`);
-            }
-
-            if (!isString(destinationChain)) {
-                throw new Error(`Invalid destinationChain: ${destinationChain}`);
-            }
-
-            if (!isString(name)) {
-                throw new Error(`Invalid name: ${name}`);
-            }
-
-            if (!isString(symbol)) {
-                throw new Error(`Invalid symbol: ${symbol}`);
-            }
-
-            if (!isValidNumber(decimals)) {
-                throw new Error(`Invalid decimals value: ${decimals}`);
-            }
-
-            if (!isValidBytesAddress(distributor)) {
-                throw new Error(`Invalid distributor address: ${distributor}`);
-            }
-
-            if (!isValidNumber(gasValue)) {
-                throw new Error(`Invalid gas value: ${gasValue}`);
-            }
+            validateParameters({
+                isKeccak256Hash: [salt],
+                isString: [destinationChain, name, symbol],
+                isValidBytesAddress: [distributor],
+                isValidNumber: [decimals, gasValue],
+            });
 
             const tx = await interchainTokenService.deployInterchainToken(
                 salt,
@@ -293,37 +224,16 @@ async function processCommand(chain, options) {
                 distributor,
                 gasValue,
             );
-            printInfo('deploy InterchainToken tx', tx.hash);
 
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted =
-                wasEventEmitted(receipt, interchainTokenService, 'TokenManagerDeployed') ||
-                wasEventEmitted(receipt, interchainTokenService, 'InterchainTokenDeploymentStarted');
-
-            if (!eventEmitted) {
-                printWarn('Event not emitted in receipt.');
-            }
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
             break;
         }
 
         case 'contractCallValue': {
-            const isPaused = await interchainTokenService.paused();
-
-            if (isPaused) {
-                throw new Error(`${action} invalid while service is paused.`);
-            }
-
             const { sourceChain, sourceAddress, payload } = options;
 
-            if (!isString(sourceChain)) {
-                throw new Error(`Invalid sourceChain: ${sourceChain}`);
-            }
-
-            if (!isString(sourceAddress)) {
-                throw new Error(`Invalid sourceAddress: ${sourceAddress}`);
-            }
+            validateParameters({ isString: [sourceChain, sourceAddress] });
 
             const isTrustedAddress = await interchainTokenService.isTrustedAddress(sourceChain, sourceAddress);
 
@@ -331,9 +241,7 @@ async function processCommand(chain, options) {
                 throw new Error('Invalid remote service.');
             }
 
-            if (!isValidCalldata(payload)) {
-                throw new Error(`Invalid payload: ${payload}`);
-            }
+            validateParameters({ isValidCalldata: [payload] });
 
             const [tokenAddress, tokenAmount] = await interchainTokenService.contractCallValue(sourceChain, sourceAddress, payload);
             printInfo(`Amount of tokens with address ${tokenAddress} that the call is worth:`, tokenAmount);
@@ -342,74 +250,31 @@ async function processCommand(chain, options) {
         }
 
         case 'expressExecute': {
-            const isPaused = await interchainTokenService.paused();
-
-            if (isPaused) {
-                throw new Error(`${action} invalid while service is paused.`);
-            }
-
             const { commandID, sourceChain, sourceAddress, payload } = options;
 
-            if (!isKeccak256Hash(commandID)) {
-                throw new Error(`Invalid commandID: ${commandID}`);
-            }
-
-            if (!isString(sourceChain)) {
-                throw new Error(`Invalid sourceChain: ${sourceChain}`);
-            }
-
-            if (!isString(sourceAddress)) {
-                throw new Error(`Invalid sourceAddress: ${sourceAddress}`);
-            }
-
-            if (!isValidCalldata(payload)) {
-                throw new Error(`Invalid payload: ${payload}`);
-            }
+            validateParameters({
+                isKeccak256Hash: [commandID],
+                isString: [sourceChain, sourceAddress],
+                isValidCalldata: [payload],
+            });
 
             const tx = await interchainTokenService.expressExecute(commandID, sourceChain, sourceAddress, payload);
-            printInfo('expressExecute tx', tx.hash);
 
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted = wasEventEmitted(receipt, interchainTokenService, 'ExpressExecuted');
-
-            if (!eventEmitted) {
-                printWarn('Event not emitted in receipt.');
-            }
+            await handleTx(tx, chain, interchainTokenService, options.action, 'ExpressExecuted');
 
             break;
         }
 
         case 'interchainTransfer': {
-            const isPaused = await interchainTokenService.paused();
-
-            if (isPaused) {
-                throw new Error(`${action} invalid while service is paused.`);
-            }
-
-            const { tokenId, destinationChain, destinationAddress, amount, metadata } = options;
-
-            if (!isValidTokenId(tokenId)) {
-                throw new Error(`Invalid tokenId value: ${tokenId}`);
-            }
+            const { destinationChain, destinationAddress, amount, metadata } = options;
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            if (!isString(destinationChain)) {
-                throw new Error(`Invalid destinationChain: ${destinationChain}`);
-            }
-
-            if (!isString(destinationAddress)) {
-                throw new Error(`Invalid destinationAddress: ${destinationAddress}`);
-            }
-
-            if (!isValidNumber(amount)) {
-                throw new Error(`Invalid token amount: ${amount}`);
-            }
-
-            if (!isValidCalldata(metadata)) {
-                throw new Error(`Invalid metadata: ${metadata}`);
-            }
+            validateParameters({
+                isString: [destinationChain, destinationAddress],
+                isValidNumber: [amount],
+                isValidCalldata: [metadata],
+            });
 
             const tx = await interchainTokenService.interchainTransfer(
                 tokenIdBytes32,
@@ -418,51 +283,22 @@ async function processCommand(chain, options) {
                 amount,
                 metadata,
             );
-            printInfo('interchainTransfer tx', tx.hash);
 
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted =
-                wasEventEmitted(receipt, interchainTokenService, 'InterchainTransfer') ||
-                wasEventEmitted(receipt, interchainTokenService, 'InterchainTransferWithData');
-
-            if (!eventEmitted) {
-                printWarn('Event not emitted in receipt.');
-            }
+            await handleTx(tx, chain, interchainTokenService, options.action, 'InterchainTransfer', 'InterchainTransferWithData');
 
             break;
         }
 
         case 'callContractWithInterchainToken': {
-            const isPaused = await interchainTokenService.paused();
-
-            if (isPaused) {
-                throw new Error(`${action} invalid while service is paused.`);
-            }
-
-            const { tokenId, destinationChain, destinationAddress, amount, data } = options;
-
-            if (!isValidTokenId(tokenId)) {
-                throw new Error(`Invalid tokenId value: ${tokenId}`);
-            }
+            const { destinationChain, destinationAddress, amount, data } = options;
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            if (!isString(destinationChain)) {
-                throw new Error(`Invalid destinationChain: ${destinationChain}`);
-            }
-
-            if (!isString(destinationAddress)) {
-                throw new Error(`Invalid destinationAddress: ${destinationAddress}`);
-            }
-
-            if (!isValidNumber(amount)) {
-                throw new Error(`Invalid token amount: ${amount}`);
-            }
-
-            if (!isValidCalldata(data)) {
-                throw new Error(`Invalid data: ${data}`);
-            }
+            validateParameters({
+                isString: [destinationChain, destinationAddress],
+                isValidNumber: [amount],
+                isValidCalldata: [data],
+            });
 
             const tx = await interchainTokenService.callContractWithInterchainToken(
                 tokenIdBytes32,
@@ -471,17 +307,8 @@ async function processCommand(chain, options) {
                 amount,
                 data,
             );
-            printInfo('callContractWithInterchainToken tx', tx.hash);
 
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted =
-                wasEventEmitted(receipt, interchainTokenService, 'InterchainTransfer') ||
-                wasEventEmitted(receipt, interchainTokenService, 'InterchainTransferWithData');
-
-            if (!eventEmitted) {
-                printWarn('Event not emitted in receipt.');
-            }
+            await handleTx(tx, chain, interchainTokenService, options.action, 'InterchainTransfer', 'InterchainTransferWithData');
 
             break;
         }
@@ -499,20 +326,11 @@ async function processCommand(chain, options) {
                 tokenIdsBytes32.push(tokenIdBytes32);
             }
 
-            if (!isNumberArray(flowLimits)) {
-                throw new Error(`Invalid flowLimits array: ${flowLimits}`);
-            }
+            validateParameters({ isNumberArray: [flowLimits] });
 
             const tx = await interchainTokenService.setFlowLimits(tokenIdsBytes32, flowLimits);
-            printInfo('setFlowLimits tx', tx.hash);
 
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted = wasEventEmitted(receipt, interchainTokenService, 'FlowLimitSet');
-
-            if (!eventEmitted) {
-                printWarn('Event not emitted in receipt.');
-            }
+            await handleTx(tx, chain, interchainTokenService, options.action, 'FlowLimitSet');
 
             break;
         }
@@ -526,24 +344,11 @@ async function processCommand(chain, options) {
 
             const { trustedChain, trustedAddress } = options;
 
-            if (!isString(trustedChain)) {
-                throw new Error(`Invalid chain name: ${trustedChain}`);
-            }
-
-            if (!isString(trustedAddress)) {
-                throw new Error(`Invalid trusted address: ${trustedAddress}`);
-            }
+            validateParameters({ isString: [trustedChain, trustedAddress] });
 
             const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress);
-            printInfo('setTrustedAddress tx', tx.hash);
 
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted = wasEventEmitted(receipt, interchainTokenService, 'TrustedAddressSet');
-
-            if (!eventEmitted) {
-                printWarn('Event not emitted in receipt.');
-            }
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TrustedAddressSet');
 
             break;
         }
@@ -557,20 +362,11 @@ async function processCommand(chain, options) {
 
             const trustedChain = options.trustedChain;
 
-            if (!isString(trustedChain)) {
-                throw new Error(`Invalid chain name: ${trustedChain}`);
-            }
+            validateParameters({ isString: [trustedChain] });
 
             const tx = await interchainTokenService.removeTrustedAddress(trustedChain);
-            printInfo('removeTrustedAddress tx', tx.hash);
 
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted = wasEventEmitted(receipt, interchainTokenService, 'TrustedAddressRemoved');
-
-            if (!eventEmitted) {
-                printWarn('Event not emitted in receipt.');
-            }
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TrustedAddressRemoved');
 
             break;
         }
@@ -585,41 +381,16 @@ async function processCommand(chain, options) {
             const pauseStatus = options.pauseStatus;
 
             const tx = await interchainTokenService.setPauseStatus(pauseStatus);
-            printInfo('setPauseStatus tx', tx.hash);
 
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted = pauseStatus
-                ? wasEventEmitted(receipt, interchainTokenService, 'Paused')
-                : wasEventEmitted(receipt, interchainTokenService, 'Unpaused');
-
-            if (!eventEmitted) {
-                printWarn('Event not emitted in receipt.');
-            }
+            await handleTx(tx, chain, interchainTokenService, options.action, 'Paused', 'Unpaused');
 
             break;
         }
 
         case 'execute': {
-            const isPaused = await interchainTokenService.paused();
-
-            if (isPaused) {
-                throw new Error(`${action} invalid while service is paused.`);
-            }
-
             const { commandID, sourceChain, sourceAddress, payload } = options;
 
-            if (!isKeccak256Hash(commandID)) {
-                throw new Error(`Invalid commandID: ${commandID}`);
-            }
-
-            if (!isString(sourceChain)) {
-                throw new Error(`Invalid sourceChain: ${sourceChain}`);
-            }
-
-            if (!isString(sourceAddress)) {
-                throw new Error(`Invalid sourceAddress: ${sourceAddress}`);
-            }
+            validateParameters({ isKeccak256Hash: [commandID], isString: [sourceChain, sourceAddress] });
 
             const isTrustedAddress = await interchainTokenService.isTrustedAddress(sourceChain, sourceAddress);
 
@@ -627,14 +398,11 @@ async function processCommand(chain, options) {
                 throw new Error('Invalid remote service.');
             }
 
-            if (!isValidCalldata(payload)) {
-                throw new Error(`Invalid payload: ${payload}`);
-            }
+            validateParameters({ isValidCalldata: [payload] });
 
             const tx = await interchainTokenService.execute(commandID, sourceChain, sourceAddress, payload);
-            printInfo('execute tx', tx.hash);
 
-            await tx.wait(chain.confirmations);
+            await handleTx(tx, chain, interchainTokenService, options.action);
 
             break;
         }
@@ -661,7 +429,6 @@ if (require.main === module) {
             .choices([
                 'contractId',
                 'tokenManagerAddress',
-                'validTokenManagerAddress',
                 'tokenAddress',
                 'interchainTokenAddress',
                 'interchainTokenId',

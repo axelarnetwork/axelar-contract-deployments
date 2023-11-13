@@ -293,33 +293,25 @@ function isValidCalldata(input) {
     return hexPattern.test(input.slice(2));
 }
 
-/**
- * Checks if a given string is a valid tokenId.
- *
- * @param {string} input - The input string to check.
- * @returns {boolean} - True if the input is a valid tokenId, false otherwise.
- */
-function isValidTokenId(input) {
-    if (!input.startsWith('0x')) {
-        return false;
-    }
-
-    const hexPattern = /^[0-9a-fA-F]+$/;
-
-    if (!hexPattern.test(input.slice(2))) {
-        return false;
-    }
-
-    const minValue = BigInt('0x00');
-    const maxValue = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
-    const numericValue = BigInt(input);
-
-    return numericValue >= minValue && numericValue <= maxValue;
-}
-
 function isValidBytesAddress(input) {
     const addressRegex = /^0x[a-fA-F0-9]{40}$/;
     return addressRegex.test(input);
+}
+
+function validateParameters(parameters) {
+    for (const [validatorFunction, params] of Object.entries(parameters)) {
+        if (typeof validatorFunction !== 'function') {
+            throw new Error(`Validator function ${validatorFunction} is not defined`);
+        }
+
+        params.forEach((param) => {
+            const isValid = validatorFunction(param);
+
+            if (!isValid) {
+                throw new Error(`Input validation failed for ${validatorFunction} with parameter ${param}`);
+            }
+        });
+    }
 }
 
 /**
@@ -910,8 +902,8 @@ module.exports = {
     isAddressArray,
     isKeccak256Hash,
     isValidCalldata,
-    isValidTokenId,
     isValidBytesAddress,
+    validateParameters,
     parseArgs,
     getProxy,
     getEVMBatch,
