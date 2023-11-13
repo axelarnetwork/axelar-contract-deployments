@@ -5,7 +5,6 @@ mod solana;
 use axelar::gateway_verify_messages::axelar_gateway_verify_messages;
 use axelar::verifier_is_verified::axelar_dummy_verifier_is_verified;
 use clap::Parser;
-use common::config::{AXELAR_GATEWAY_ADDRESS, AXELAR_VERIFIER_ADDRESS};
 use common::types::{CcId, Message};
 use env_logger;
 use gateway::id as gateway_program_id;
