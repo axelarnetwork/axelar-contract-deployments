@@ -88,7 +88,7 @@ const handleFailedTxFn = async (context, event) => {
         case flowLimitExceededHash:
             warningOptions = ['FlowLimitExceeded', 'TokenManager'];
             console.log(
-                `Tx reverted due to error ${toUtf8Bytes(flowLimitExceeded)} with values flowLimit ${parseInt(
+                `Tx reverted due to error ${flowLimitExceeded} with values flowLimit ${parseInt(
                     response.slice(10, 74),
                     16,
                 )} and flowAmount ${parseInt(response.slice(74, 134), 16)} for address ${event.to}`,
@@ -97,7 +97,7 @@ const handleFailedTxFn = async (context, event) => {
         case missingRoleHash:
             warningOptions = ['MissingRole', event.to];
             console.log(
-                `Tx reverted due to error ${toUtf8Bytes(missingRole)} with values account ${response.slice(34, 74)} and role ${parseInt(
+                `Tx reverted due to error ${missingRole} with values account ${response.slice(34, 74)} and role ${parseInt(
                     response.slice(74, 138),
                     16,
                 )} for address ${event.to}`,
@@ -106,7 +106,7 @@ const handleFailedTxFn = async (context, event) => {
         case missingAllRolesHash:
             warningOptions = ['MissingAllRoles', event.to];
             console.log(
-                `Tx reverted due to error ${toUtf8Bytes(missingAllRoles)} with values account ${response.slice(34, 74)} and role ${parseInt(
+                `Tx reverted due to error ${missingAllRoles} with values account ${response.slice(34, 74)} and role ${parseInt(
                     response.slice(74, 138),
                     16,
                 )} for address ${event.to}`,
@@ -115,53 +115,47 @@ const handleFailedTxFn = async (context, event) => {
         case missingAnyOfRolesHash:
             warningOptions = ['MissingAnyOfRoles', event.to];
             console.log(
-                `Tx reverted due to error ${toUtf8Bytes(missingAnyOfRoles)} with values account ${response.slice(
-                    34,
-                    74,
-                )} and role ${parseInt(response.slice(74, 138), 16)} for address ${event.to}`,
+                `Tx reverted due to error ${missingAnyOfRoles} with values account ${response.slice(34, 74)} and role ${parseInt(
+                    response.slice(74, 138),
+                    16,
+                )} for address ${event.to}`,
             );
             break;
         case reEntrancyHash:
             warningOptions = ['ReEntrancy', event.to];
-            console.log(`Tx reverted due to error ${toUtf8Bytes(reEntrancy)} for address ${event.to}`);
+            console.log(`Tx reverted due to error ${reEntrancy} for address ${event.to}`);
             break;
         case notServiceHash:
             warningOptions = ['NotService', 'TokenManager'];
-            console.log(
-                `Tx reverted due to error ${toUtf8Bytes(notService)} with value caller ${response.slice(34, 74)} for address ${event.to}`,
-            );
+            console.log(`Tx reverted due to error ${notService} with value caller ${response.slice(34, 74)} for address ${event.to}`);
             break;
         case notSignerHash:
             warningOptions = ['NotSigner', event.to];
-            console.log(`Tx reverted due to error ${toUtf8Bytes(notSigner)} for address ${event.to}`);
+            console.log(`Tx reverted due to error ${notSigner} for address ${event.to}`);
             break;
         case alreadyVotedHash:
             warningOptions = ['AlreadyVoted', event.to];
-            console.log(`Tx reverted due to error ${toUtf8Bytes(alreadyVoted)} for address ${event.to}`);
+            console.log(`Tx reverted due to error ${alreadyVoted} for address ${event.to}`);
             break;
         case invalidSignersHash:
             warningOptions = ['InvalidSigners', event.to];
-            console.log(`Tx reverted due to error ${toUtf8Bytes(invalidSigners)} for address ${event.to}`);
+            console.log(`Tx reverted due to error ${invalidSigners} for address ${event.to}`);
             break;
         case invalidSignerThresholdHash:
             warningOptions = ['InvalidSignerThreshold', event.to];
-            console.log(`Tx reverted due to error ${toUtf8Bytes(invalidSignerThreshold)} for address ${event.to}`);
+            console.log(`Tx reverted due to error ${invalidSignerThreshold} for address ${event.to}`);
             break;
         case duplicateSignerHash:
             warningOptions = ['DuplicateSigner', event.to];
-            console.log(
-                `Tx reverted due to error ${toUtf8Bytes(duplicateSigner)} with value account ${response.slice(34, 74)} for address ${
-                    event.to
-                }`,
-            );
+            console.log(`Tx reverted due to error ${duplicateSigner} with value account ${response.slice(34, 74)} for address ${event.to}`);
             break;
         case notGovernanceHash:
             warningOptions = ['NotGovernance', 'InterchainGovernance'];
-            console.log(`Tx reverted due to error ${toUtf8Bytes(notGovernance)} for address ${event.to}`);
+            console.log(`Tx reverted due to error ${notGovernance} for address ${event.to}`);
             break;
         case notSelfHash:
             warningOptions = ['NotSelf', 'InterchainGovernance'];
-            console.log(`Tx reverted due to error ${toUtf8Bytes(notSelf)} for address ${event.to}`);
+            console.log(`Tx reverted due to error ${notSelf} for address ${event.to}`);
             break;
         default:
             console.log('No Error match found');
