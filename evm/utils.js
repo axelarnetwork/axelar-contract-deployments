@@ -713,6 +713,8 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         throw new Error('Chain names were not provided');
     }
 
+    printInfo('Environment', options.env);
+
     const config = loadConfig(options.env);
     let chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
     const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim());
