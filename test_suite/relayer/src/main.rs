@@ -36,6 +36,12 @@ struct Args {
     /// Axelar fees multiplier
     #[arg(long)]
     fees_ratio: String,
+
+    #[arg(long)]
+    axelar_gateway_addr: String,
+
+    #[arg(long)]
+    axelar_verifier_addr: String,
 }
 
 fn main() {
@@ -44,7 +50,7 @@ fn main() {
 
     let client = setup_solana_client(args.solana_payer_path);
 
-    info!("listening to solana gateway ContractCallEvent addr: {:?} pushing to axelar gateway addr: {:?}", gateway_program_id(), AXELAR_GATEWAY_ADDRESS);
+    info!("listening to solana gateway ContractCallEvent addr: {:?} pushing to axelar gateway addr: {:?}", gateway_program_id(), args.axelar_gateway_addr.clone());
 
     // solana - observe / catch
     let event =
@@ -80,7 +86,7 @@ fn main() {
         &args.fees,
         &args.fees_ratio,
         args.axelar_payer.as_str(),
-        AXELAR_GATEWAY_ADDRESS,
+        args.axelar_gateway_addr.clone(),
         args.rpc_addr.clone(),
     );
 
@@ -96,7 +102,7 @@ fn main() {
             destination_address: event.destination_contract_address.clone(),
             payload_hash: payload_hash_hex.clone(),
         },
-        AXELAR_VERIFIER_ADDRESS,
+        args.axelar_verifier_addr.clone(),
         args.rpc_addr.clone(),
     );
 
@@ -112,7 +118,7 @@ fn main() {
             destination_address: event.destination_contract_address.clone(),
             payload_hash: payload_hash_hex.clone(),
         },
-        AXELAR_VERIFIER_ADDRESS,
+        args.axelar_verifier_addr.clone(),
         args.rpc_addr.clone(),
     );
 }

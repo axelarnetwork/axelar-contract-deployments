@@ -2,7 +2,7 @@ use super::*;
 
 pub fn axelar_dummy_verifier_is_verified(
     request_body: Message,
-    verifier_addr: &str,
+    verifier_addr: String,
     rpc_addr: String,
 ) {
     let request_json = json!({

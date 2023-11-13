@@ -5,7 +5,7 @@ pub fn axelar_gateway_verify_messages(
     fees: &str,
     fees_ratio: &str,
     payer: &str,
-    gateway_addr: &str,
+    gateway_addr: String,
     rpc_addr: String,
 ) {
     let request_json = json!({
