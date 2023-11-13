@@ -1,5 +1,5 @@
-use crate::types::BatchID;
 use cosmwasm_std::Uint64;
+use multisig_prover::types::BatchID;
 use serde_json::to_string;
 
 pub enum ProverEvent {

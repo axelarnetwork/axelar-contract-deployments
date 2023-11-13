@@ -1,6 +1,6 @@
-use crate::encoding::{Data, Encoder};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{HexBinary, Uint256, Uint64};
+use multisig_prover::encoding::{Data, Encoder};
 
 #[cw_serde]
 pub struct InstantiateMsg {

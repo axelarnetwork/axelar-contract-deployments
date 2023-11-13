@@ -46,6 +46,8 @@ enum-display-derive.workspace = true
 # axelar-amplifier contracts
 connection-router.workspace = true
 gateway.workspace = true
+multisig.workspace = true
+multisig-prover.workspace = true
 
 [dev-dependencies]
 cw-multi-test = "0.17.0"

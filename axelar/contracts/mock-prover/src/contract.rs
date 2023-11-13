@@ -1,5 +1,4 @@
 use crate::{
-    error::ContractError,
     execute,
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     query,
@@ -8,10 +7,9 @@ use crate::{
 use connection_router::state::ChainName;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
-};
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
+use multisig_prover::error::ContractError;
 use std::str::FromStr;
 
 // version info for migration info
@@ -52,7 +50,7 @@ pub fn execute(
     env: Env,
     _info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response, StdError> {
+) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::ConstructProof { message_ids } => {
             execute::construct_proof(deps, env, message_ids)
@@ -71,11 +69,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
 #[cfg(test)]
 mod tests {
-    use crate::encoding::Encoder;
-
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, Addr, Attribute, Uint256};
+    use cosmwasm_std::{
+        coins,
+        testing::{mock_dependencies, mock_env, mock_info},
+        Addr, Attribute, Uint256,
+    };
+    use multisig_prover::encoding::Encoder;
+
     #[test]
     fn proper_initialization() {
         const CREATOR_ADDR: &str = "creator";

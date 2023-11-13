@@ -26,6 +26,22 @@ serde_json = "1.0.108"
 sha3 = { version = "0.10", default-features = false, features = [] }
 thiserror = "1.0.49"
 
-# axelar-amplifier contracts
-connection-router = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev="bc1726e" }
-gateway  = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev="bc1726e" }
+[workspace.dependencies.connection-router]
+git = "https://github.com/axelarnetwork/axelar-amplifier.git"
+rev = "bc1726e"
+features = ["library"]
+
+[workspace.dependencies.gateway]
+git = "https://github.com/axelarnetwork/axelar-amplifier.git"
+rev = "bc1726e"
+features = ["library"]
+
+[workspace.dependencies.multisig]
+git = "https://github.com/axelarnetwork/axelar-amplifier.git"
+rev = "bc1726e"
+features = ["library"]
+
+[workspace.dependencies.multisig-prover]
+git = "https://github.com/axelarnetwork/axelar-amplifier.git"
+rev = "bc1726e"
+features = ["library"]

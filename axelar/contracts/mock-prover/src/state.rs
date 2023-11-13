@@ -1,11 +1,11 @@
-use crate::{
-    encoding::Encoder,
-    types::{BatchID, CommandBatch},
-};
 use connection_router::state::ChainName;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Uint256};
 use cw_storage_plus::{Item, Map};
+use multisig_prover::{
+    encoding::Encoder,
+    types::{BatchID, CommandBatch},
+};
 
 pub const COMMANDS_BATCH: Map<&BatchID, CommandBatch> = Map::new("command_batch");
 pub const MULTISIG_SESSION_BATCH: Map<u64, BatchID> = Map::new("multisig_session_batch");

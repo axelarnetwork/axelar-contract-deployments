@@ -1,25 +1,25 @@
 use crate::{
-    encoding::CommandBatchBuilder,
     events::ProverEvent,
-    multisig_imports::{KeyID, MsgToSign, MultiSigEvent},
     state::{COMMANDS_BATCH, CONFIG, MULTISIG_SESSION_BATCH},
-    types::BatchID,
 };
-
 use connection_router::state::{ChainName, CrossChainId, Message};
 use cosmwasm_std::{
     to_json_binary, Addr, DepsMut, Env, Event, QuerierWrapper, QueryRequest, Response, StdError,
     Uint64, WasmQuery,
 };
+use hex_literal::hex;
+use multisig::events::Event as MultiSigEvent;
+use multisig::types::{KeyID, MsgToSign};
+use multisig_prover::{encoding::CommandBatchBuilder, error::ContractError, types::BatchID};
 use std::collections::HashMap;
 
 pub fn construct_proof(
     deps: DepsMut,
     env: Env,
     message_ids: Vec<String>,
-) -> Result<Response, StdError> {
+) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let batch_id = BatchID::new(&message_ids);
+    let batch_id = BatchID::new(&message_ids, None);
 
     let messages = get_messages(
         deps.querier,
@@ -60,6 +60,7 @@ pub fn construct_proof(
     // that would be emitted by the referential multisig contract.
     // The main difference is that the [multisig::SigningCompleted] event is expected to be found at
     // the results of a transaction sent to the multisig contract, not to this one.
+
     let signing_started_event = MultiSigEvent::SigningStarted {
         session_id,
         key_id: KeyID {
@@ -67,7 +68,7 @@ pub fn construct_proof(
             subkey: "bar".into(),
         },
         pub_keys: HashMap::new(),
-        msg: MsgToSign::unchecked(batch_id.inner().clone()),
+        msg: MsgToSign::unchecked(hex!("deadbeef").into()),
     };
 
     let proof_under_construction_event = ProverEvent::ProofUnderConstruction {
