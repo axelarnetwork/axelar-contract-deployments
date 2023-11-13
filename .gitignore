@@ -8,6 +8,7 @@ solana/test-ledger
 
 axelar/target
 axelar/artifacts
+axelar/contracts/*/schema
 
 offchain/target
 
