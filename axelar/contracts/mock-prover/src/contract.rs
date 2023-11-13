@@ -71,19 +71,47 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use cosmwasm_std::coins;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use crate::encoding::Encoder;
 
+    use super::*;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::{coins, Addr, Attribute, Uint256};
     #[test]
     fn proper_initialization() {
+        const CREATOR_ADDR: &str = "creator";
+        const ADMIN_ADDR: &str = "admin";
+        const GATEWAY_ADDR: &str = "gateway";
+        const CHAIN_NAME: &str = "solana";
+        const DEST_CHAIN_ID: Uint256 = Uint256::zero();
+        const ENCODER: Encoder = Encoder::Bcs;
+
         let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {
+            admin_address: ADMIN_ADDR.into(),
+            gateway_address: GATEWAY_ADDR.into(),
+            destination_chain_id: DEST_CHAIN_ID,
+            chain_name: CHAIN_NAME.into(),
+            encoder: ENCODER,
+        };
+        let info = mock_info(CREATOR_ADDR, &coins(1000, "earth"));
 
-        let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let response = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        assert!(response
+            .attributes
+            .contains(&Attribute::new("method", "instantiate")));
+        assert!(response
+            .attributes
+            .contains(&Attribute::new("owner", CREATOR_ADDR)));
+        assert_eq!(
+            CONFIG.load(&deps.storage).unwrap(),
+            Config {
+                admin: Addr::unchecked(ADMIN_ADDR),
+                gateway: Addr::unchecked(GATEWAY_ADDR),
+                destination_chain_id: DEST_CHAIN_ID,
+                chain_name: CHAIN_NAME.parse().unwrap(),
+                encoder: ENCODER,
+            }
+        )
     }
 }
