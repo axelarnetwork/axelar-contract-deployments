@@ -9,7 +9,7 @@ registry = "9fH45E6rSfwx71HEgDnmhR5fZwj3vvJpExRvHQbU6Z2X"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
