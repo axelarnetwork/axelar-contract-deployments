@@ -107,10 +107,10 @@ jobs:
         run: node evm/deploy-contract.js -c Operators -m create3 -y
 
       - name: Deploy AxelarGasService using create2
-        run: node evm/deploy-upgradable.js -c AxelarGasService -y
+        run: node evm/deploy-upgradable.js -c AxelarGasService -m create2 -y
 
       - name: Deploy ITS using create2
-        run: node evm/deploy-its.js -s "ITS v0.3.0" -f "ITS v0.3.0 Factory" -m create2 -y
+        run: node evm/deploy-its.js -s "ITS v1.0.0" -f "ITS v1.0.0 Factory" -m create2 -y
 
       - name: Upgrade ITS using create2
-        run: node evm/deploy-its.js -s "ITS v0.3.0" -f "ITS v0.3.0 Factory" -m create2 -u -y
+        run: node evm/deploy-its.js -s "ITS v1.0.0" -f "ITS v1.0.0 Factory" -m create2 -u -y
