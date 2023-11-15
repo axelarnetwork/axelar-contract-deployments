@@ -24,8 +24,7 @@ async function deployConstAddressDeployer(wallet, chain, options = {}, verifyOpt
 
     const contractConfig = contracts[contractName];
 
-    const rpc = chain.rpc;
-    const provider = getDefaultProvider(rpc);
+    const provider = wallet.provider;
     const expectedAddress = contractConfig.address ? contractConfig.address : await predictAddressCreate(wallet.address, 0);
 
     if (!options.force && (await provider.getCode(expectedAddress)) !== '0x') {

@@ -37,6 +37,9 @@ jobs:
                 "rpc": "http://127.0.0.1:8545",
                 "tokenSymbol": "TEST",
                 "contracts": {
+                  "AxelarGasService": {
+                    "collector": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+                  },
                   "InterchainGovernance": {
                     "minimumTimeDelay": 3600
                   },
@@ -101,3 +104,12 @@ jobs:
 
       - name: Deploy Operators using create3
         run: node evm/deploy-contract.js -c Operators -m create3 -y
+
+      - name: Deploy AxelarGasService using create2
+        run: node evm/deploy-upgradable.js -c AxelarGasService -m create2 -y
+
+      - name: Deploy ITS using create2
+        run: node evm/deploy-its.js -s "ITS v1.0.0" -f "ITS v1.0.0 Factory" -m create2 -y
+
+      - name: Upgrade ITS using create2
+        run: node evm/deploy-its.js -s "ITS v1.0.0" -f "ITS v1.0.0 Factory" -m create2 -u -y
