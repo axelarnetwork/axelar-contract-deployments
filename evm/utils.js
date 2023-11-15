@@ -845,8 +845,6 @@ function getContractJSON(contractName, artifactPath) {
         contractPath = getContractPath(contractName);
     }
 
-    printInfo('Contract path', contractPath);
-
     try {
         const contractJson = require(contractPath);
         return contractJson;
