@@ -1033,7 +1033,20 @@
         "InterchainTokenService": {
           "gasOptions": {
             "gasLimit": 8000000
-          }
+          },
+          "salt": "ITS v1.0.0-beta.3",
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "interchainTokenFactory": "0xe93462bc7Ef7692D763C4d4DbCE7B870c0958c59",
+          "tokenManagerDeployer": "0x8f21Ca2b43FF72D54e9eca6FE7DBAfF40AF98991",
+          "interchainToken": "0x5dFE2DB0F7b0e8dc0ab9C10bEB0b92e62573f504",
+          "interchainTokenDeployer": "0xb03F21cC0b55b6e7aD106Cb4E9EDA81e78ffeE43",
+          "tokenManagerMintBurn": "0xCb476fA8597e5399fe862EaC11C70bC62B5CeE90",
+          "tokenManagerMintBurnFrom": "0x1da9227500647206CDcec0Fdd929958591686600",
+          "tokenManagerLockUnlock": "0x5a7088174c2f23A699Aa65d70206333C338B2793",
+          "tokenManagerLockUnlockFee": "0xBf36d78558cdEf9C27D55b4095D70851A9bf1E35",
+          "implementation": "0xbD96FC33F67fEe7412fd1Fcb0cA5f6b27d2eC234",
+          "address": "0xa4A9965149388c86E62CDDDd6C95EFe9c294005a",
+          "interchainTokenFactoryImplementation": "0xF907f26Dd84e58537b2C54d731cb9B17236239e9"
         },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
