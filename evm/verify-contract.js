@@ -221,6 +221,9 @@ async function processCommand(config, chain, options) {
             const tokenManagerLockUnlock = await interchainTokenService.implementationLockUnlock();
             const tokenManagerLockUnlockFee = await interchainTokenService.implementationLockUnlockFee();
 
+            const trustedChains = Object.values(config.chains).map((chain) => chain.id);
+            const trustedAddresses = trustedChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)).filter((address) => address !== '');
+
             await verifyContract(env, chain.name, tokenManagerDeployer, [], verifyOptions);
             await verifyContract(env, chain.name, interchainToken, [], verifyOptions);
             await verifyContract(env, chain.name, interchainTokenDeployer, [interchainToken], verifyOptions);
@@ -248,7 +251,7 @@ async function processCommand(config, chain, options) {
                 env,
                 chain.name,
                 interchainTokenService.address,
-                [implementation, chain.contracts.InterchainTokenService.deployer, options.constructorArgs],
+                [implementation, chain.contracts.InterchainTokenService.deployer, trustedChains, trustedAddresses],
                 verifyOptions,
             );
 
