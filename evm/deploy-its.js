@@ -355,7 +355,8 @@ if (require.main === module) {
     program.addOption(
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
     );
-    addExtendedOptions(program, { skipExisting: true, upgrade: true });
+
+    program = addExtendedOptions(program, { skipExisting: true, upgrade: true });
 
     program.addOption(new Option('-s, --salt <key>', 'deployment salt to use for ITS deployment').makeOptionMandatory(true).env('SALT'));
     program.addOption(

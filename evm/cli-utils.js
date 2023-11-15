@@ -31,7 +31,7 @@ const addBaseOptions = (program, options = {}) => {
 };
 
 const addExtendedOptions = (program, options = {}) => {
-    addBaseOptions(program, options);
+    program = addBaseOptions(program, options);
 
     program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
 
