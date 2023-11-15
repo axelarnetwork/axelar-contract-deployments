@@ -215,10 +215,18 @@ async function processCommand(config, chain, options) {
             const implementation = await interchainTokenService.implementation();
             const tokenManagerDeployer = await interchainTokenService.tokenManagerDeployer();
             const interchainTokenDeployer = await interchainTokenService.interchainTokenDeployer();
-            const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, getContractJSON('InterchainTokenDeployer').abi, wallet);
+            const interchainTokenDeployerContract = new Contract(
+                interchainTokenDeployer,
+                getContractJSON('InterchainTokenDeployer').abi,
+                wallet,
+            );
             const interchainToken = await interchainTokenDeployerContract.implementationAddress();
             const interchainTokenFactory = await interchainTokenService.interchainTokenFactory();
-            const interchainTokenFactoryContract = new Contract(interchainTokenFactory, getContractJSON('InterchainTokenFactory').abi, wallet);
+            const interchainTokenFactoryContract = new Contract(
+                interchainTokenFactory,
+                getContractJSON('InterchainTokenFactory').abi,
+                wallet,
+            );
             const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
 
             const tokenManagerMintBurn = await interchainTokenService.tokenManagerImplementation(0);
@@ -227,11 +235,14 @@ async function processCommand(config, chain, options) {
             const tokenManagerLockUnlockFee = await interchainTokenService.tokenManagerImplementation(3);
 
             const trustedChains = Object.values(config.chains).map((chain) => chain.id);
-            const trustedAddresses = (await Promise.all(trustedChains
-                .map(async (chainName) => await interchainTokenService.trustedAddress(chainName))))
-                .filter((address) => address !== '');
+            const trustedAddresses = (
+                await Promise.all(trustedChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)))
+            ).filter((address) => address !== '');
 
-            const setupParams = defaultAbiCoder.encode(['address', 'string', 'string[]', 'string[]'], [contractConfig.deployer, chain.id, trustedChains, trustedAddresses]);
+            const setupParams = defaultAbiCoder.encode(
+                ['address', 'string', 'string[]', 'string[]'],
+                [contractConfig.deployer, chain.id, trustedChains, trustedAddresses],
+            );
 
             await verifyContract(env, chain.name, tokenManagerDeployer, [], verifyOptions);
             await verifyContract(env, chain.name, interchainToken, [], verifyOptions);
