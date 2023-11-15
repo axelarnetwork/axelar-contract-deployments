@@ -34,7 +34,7 @@ const getSaltFromKey = (key) => {
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
-    const contract = await factory.deploy(...args, { ...options });
+    const contract = await factory.deploy(...args, options);
     await contract.deployTransaction.wait(chain.confirmations);
 
     if (verifyOptions?.env) {
@@ -120,9 +120,9 @@ const deployCreate3 = async (
     return contract;
 };
 
-const printInfo = (msg, info = '') => {
+const printInfo = (msg, info = '', colour = chalk.green) => {
     if (info) {
-        console.log(`${msg}: ${chalk.green(info)}\n`);
+        console.log(`${msg}: ${colour(info)}\n`);
     } else {
         console.log(`${msg}\n`);
     }
@@ -133,7 +133,7 @@ const printWarn = (msg, info = '') => {
         msg = `${msg}: ${info}`;
     }
 
-    console.log(`${chalk.yellow(msg)}\n`);
+    console.log(`${chalk.italic.yellow(msg)}\n`);
 };
 
 const printError = (msg, info = '') => {
@@ -141,7 +141,7 @@ const printError = (msg, info = '') => {
         msg = `${msg}: ${info}`;
     }
 
-    console.log(`${chalk.red(msg)}\n`);
+    console.log(`${chalk.bold.red(msg)}\n`);
 };
 
 function printLog(log) {
@@ -713,6 +713,8 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         throw new Error('Chain names were not provided');
     }
 
+    printInfo('Environment', options.env);
+
     const config = loadConfig(options.env);
     let chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
     const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim());
@@ -840,7 +842,7 @@ function getContractJSON(contractName, artifactPath) {
     let contractPath;
 
     if (artifactPath) {
-        contractPath = artifactPath.charAt(0) === '@' ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
+        contractPath = artifactPath.endsWith('.json') ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
     } else {
         contractPath = getContractPath(contractName);
     }
@@ -849,7 +851,7 @@ function getContractJSON(contractName, artifactPath) {
         const contractJson = require(contractPath);
         return contractJson;
     } catch (err) {
-        throw new Error(`Failed to load contract JSON for ${contractName} at path ${contractPath}`);
+        throw new Error(`Failed to load contract JSON for ${contractName} at path ${contractPath} with error: ${err}`);
     }
 }
 

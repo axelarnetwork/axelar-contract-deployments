@@ -2,6 +2,7 @@
 
 require('dotenv').config();
 
+const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
     Contract,
@@ -131,7 +132,7 @@ async function deploy(options, chain) {
     const implArgs = await getImplementationArgs(contractName, contracts, options);
     const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions, null, 2)}`);
     const salt = options.salt || contractName;
     let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
 
@@ -199,7 +200,7 @@ async function deploy(options, chain) {
 
         printInfo('Deployment method', deployMethod);
         printInfo('Deployer contract', deployerContract);
-        printInfo(`${contractName} will be deployed to`, predictedAddress);
+        printInfo(`${contractName} will be deployed to`, predictedAddress, chalk.cyan);
 
         if (prompt(`Does derived address match existing deployments? Proceed with deployment on ${chain.name}?`, yes)) {
             return;
