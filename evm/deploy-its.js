@@ -321,7 +321,7 @@ async function upgrade(config, chain, options) {
 
     contracts[contractName] = contractConfig;
 
-    await deployImplementation(wallet, chain, options);
+    await deployImplementation(config, wallet, chain, options);
 
     printInfo(`Upgrading Interchain Token Service.`);
 
@@ -348,7 +348,7 @@ async function main(options) {
 }
 
 if (require.main === module) {
-    let program = new Command();
+    const program = new Command();
 
     program.name('deploy-its').description('Deploy interchain token service');
 
@@ -356,7 +356,7 @@ if (require.main === module) {
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
     );
 
-    program = addExtendedOptions(program, { skipExisting: true, upgrade: true });
+    addExtendedOptions(program, { skipExisting: true, upgrade: true });
 
     program.addOption(new Option('-s, --salt <key>', 'deployment salt to use for ITS deployment').makeOptionMandatory(true).env('SALT'));
     program.addOption(
