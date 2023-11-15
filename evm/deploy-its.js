@@ -348,7 +348,7 @@ async function main(options) {
 }
 
 if (require.main === module) {
-    const program = new Command();
+    let program = new Command();
 
     program.name('deploy-its').description('Deploy interchain token service');
 
