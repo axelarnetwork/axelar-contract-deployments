@@ -9,7 +9,7 @@ const {
     getDefaultProvider,
     utils: { defaultAbiCoder, isAddress },
 } = ethers;
-const { printInfo, getContractJSON, mainProcessor, prompt, sleep } = require('./utils');
+const { printInfo, getContractJSON, mainProcessor, prompt, sleep, getBytecodeHash } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const InterchainTokenService = getContractJSON('InterchainTokenService');
 const { Command, Option } = require('commander');
@@ -122,52 +122,52 @@ async function deployImplementation(config, wallet, chain, options) {
                     gasOptions,
                     verifyOptions,
                     chain,
-                )
+                );
             },
         },
         tokenManagerMintBurnFrom: {
             name: 'Token Manager Mint Burn From',
             async deploy() {
-            return await deployContract(
-                deployMethod,
-                wallet,
-                getContractJSON('TokenManagerMintBurnFrom'),
-                [interchainTokenServiceAddress],
-                deployOptions,
-                gasOptions,
-                verifyOptions,
-                chain,
-            )
+                return await deployContract(
+                    deployMethod,
+                    wallet,
+                    getContractJSON('TokenManagerMintBurnFrom'),
+                    [interchainTokenServiceAddress],
+                    deployOptions,
+                    gasOptions,
+                    verifyOptions,
+                    chain,
+                );
             },
         },
         tokenManagerLockUnlock: {
             name: 'Token Manager Lock Unlock',
             async deploy() {
-            return await deployContract(
-                deployMethod,
-                wallet,
-                getContractJSON('TokenManagerLockUnlock'),
-                [interchainTokenServiceAddress],
-                deployOptions,
-                gasOptions,
-                verifyOptions,
-                chain,
-            )
+                return await deployContract(
+                    deployMethod,
+                    wallet,
+                    getContractJSON('TokenManagerLockUnlock'),
+                    [interchainTokenServiceAddress],
+                    deployOptions,
+                    gasOptions,
+                    verifyOptions,
+                    chain,
+                );
             },
         },
         tokenManagerLockUnlockFee: {
             name: 'Token Manager Lock Unlock Fee',
             async deploy() {
-            return await deployContract(
-                deployMethod,
-                wallet,
-                getContractJSON('TokenManagerLockUnlockFee'),
-                [interchainTokenServiceAddress],
-                deployOptions,
-                gasOptions,
-                verifyOptions,
-                chain,
-            )
+                return await deployContract(
+                    deployMethod,
+                    wallet,
+                    getContractJSON('TokenManagerLockUnlockFee'),
+                    [interchainTokenServiceAddress],
+                    deployOptions,
+                    gasOptions,
+                    verifyOptions,
+                    chain,
+                );
             },
         },
         implementation: {
@@ -184,7 +184,12 @@ async function deployImplementation(config, wallet, chain, options) {
                         contracts.AxelarGasService.address,
                         contractConfig.interchainTokenFactory,
                         chain.id,
-                        [contractConfig.tokenManagerMintBurn, contractConfig.tokenManagerMintBurnFrom, contractConfig.tokenManagerLockUnlock, contractConfig.tokenManagerLockUnlockFee],
+                        [
+                            contractConfig.tokenManagerMintBurn,
+                            contractConfig.tokenManagerMintBurnFrom,
+                            contractConfig.tokenManagerLockUnlock,
+                            contractConfig.tokenManagerLockUnlockFee,
+                        ],
                     ],
                     deployOptions,
                     gasOptions,
@@ -198,7 +203,10 @@ async function deployImplementation(config, wallet, chain, options) {
             async deploy() {
                 const operatorAddress = options.operatorAddress || wallet.address;
 
-                const deploymentParams = defaultAbiCoder.encode(['address', 'string', 'string[]', 'string[]'], [operatorAddress, chain.id, trustedChains, trustedAddresses]);
+                const deploymentParams = defaultAbiCoder.encode(
+                    ['address', 'string', 'string[]', 'string[]'],
+                    [operatorAddress, chain.id, trustedChains, trustedAddresses],
+                );
 
                 return await deployContract(
                     'create3',
@@ -219,9 +227,7 @@ async function deployImplementation(config, wallet, chain, options) {
                     deployMethod,
                     wallet,
                     getContractJSON('InterchainTokenFactory'),
-                    [
-                        interchainTokenServiceAddress,
-                    ],
+                    [interchainTokenServiceAddress],
                     deployOptions,
                     gasOptions,
                     verifyOptions,
@@ -357,7 +363,9 @@ if (require.main === module) {
             .makeOptionMandatory(true)
             .env('FACTORY_SALT'),
     );
-    program.addOption(new Option('-o, --operatorAddress <operatorAddress>', 'address of the ITS operator/rate limiter').env('OPERATOR_ADDRESS'));
+    program.addOption(
+        new Option('-o, --operatorAddress <operatorAddress>', 'address of the ITS operator/rate limiter').env('OPERATOR_ADDRESS'),
+    );
 
     program.action(async (options) => {
         options.skipExisting = options.skipExisting === 'true';
