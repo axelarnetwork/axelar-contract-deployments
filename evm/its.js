@@ -9,16 +9,7 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const {
-    printInfo,
-    prompt,
-    printWarn,
-    printWalletInfo,
-    isValidAddress,
-    wasEventEmitted,
-    mainProcessor,
-    validateParameters,
-} = require('./utils');
+const { printInfo, prompt, printWarn, printWalletInfo, wasEventEmitted, mainProcessor, validateParameters } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/dist/interchain-token-service/InterchainTokenService.sol');
 const { addExtendedOptions } = require('./cli-utils');
@@ -70,9 +61,7 @@ async function processCommand(chain, options) {
 
     const interchainTokenServiceAddress = address || contracts.interchainTokenService?.address;
 
-    if (!isValidAddress(interchainTokenServiceAddress)) {
-        throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
-    }
+    validateParameters({ isValidAddress: { interchainTokenServiceAddress } });
 
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
@@ -138,7 +127,7 @@ async function processCommand(chain, options) {
         case 'interchainTokenId': {
             const { sender, salt } = options;
 
-            validateParameters({ isValidAddress: [sender], isKeccak256Hash: [salt] });
+            validateParameters({ isValidAddress: { sender }, isKeccak256Hash: { salt } });
 
             const interchainTokenId = await interchainTokenService.interchainTokenId(sender, salt);
             printInfo(`InterchainTokenId for sender ${sender} and deployment salt: ${salt}`, interchainTokenId);
@@ -186,10 +175,10 @@ async function processCommand(chain, options) {
             const { salt, destinationChain, type, params, gasValue } = options;
 
             validateParameters({
-                isKeccak256Hash: [salt],
-                isString: [destinationChain],
-                isValidCalldata: [params],
-                isValidNumber: [gasValue],
+                isKeccak256Hash: { salt },
+                isString: { destinationChain },
+                isValidCalldata: { params },
+                isValidNumber: { gasValue },
             });
 
             const tx = await interchainTokenService.deployTokenManager(
@@ -209,10 +198,10 @@ async function processCommand(chain, options) {
             const { salt, destinationChain, name, symbol, decimals, distributor, gasValue } = options;
 
             validateParameters({
-                isKeccak256Hash: [salt],
-                isString: [destinationChain, name, symbol],
-                isValidBytesAddress: [distributor],
-                isValidNumber: [decimals, gasValue],
+                isKeccak256Hash: { salt },
+                isString: { destinationChain, name, symbol },
+                isValidBytesAddress: { distributor },
+                isValidNumber: { decimals, gasValue },
             });
 
             const tx = await interchainTokenService.deployInterchainToken(
@@ -233,7 +222,7 @@ async function processCommand(chain, options) {
         case 'contractCallValue': {
             const { sourceChain, sourceAddress, payload } = options;
 
-            validateParameters({ isString: [sourceChain, sourceAddress] });
+            validateParameters({ isString: { sourceChain, sourceAddress } });
 
             const isTrustedAddress = await interchainTokenService.isTrustedAddress(sourceChain, sourceAddress);
 
@@ -241,7 +230,7 @@ async function processCommand(chain, options) {
                 throw new Error('Invalid remote service.');
             }
 
-            validateParameters({ isValidCalldata: [payload] });
+            validateParameters({ isValidCalldata: { payload } });
 
             const [tokenAddress, tokenAmount] = await interchainTokenService.contractCallValue(sourceChain, sourceAddress, payload);
             printInfo(`Amount of tokens with address ${tokenAddress} that the call is worth:`, tokenAmount);
@@ -253,9 +242,9 @@ async function processCommand(chain, options) {
             const { commandID, sourceChain, sourceAddress, payload } = options;
 
             validateParameters({
-                isKeccak256Hash: [commandID],
-                isString: [sourceChain, sourceAddress],
-                isValidCalldata: [payload],
+                isKeccak256Hash: { commandID },
+                isString: { sourceChain, sourceAddress },
+                isValidCalldata: { payload },
             });
 
             const tx = await interchainTokenService.expressExecute(commandID, sourceChain, sourceAddress, payload);
@@ -271,9 +260,9 @@ async function processCommand(chain, options) {
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             validateParameters({
-                isString: [destinationChain, destinationAddress],
-                isValidNumber: [amount],
-                isValidCalldata: [metadata],
+                isString: { destinationChain, destinationAddress },
+                isValidNumber: { amount },
+                isValidCalldata: { metadata },
             });
 
             const tx = await interchainTokenService.interchainTransfer(
@@ -295,9 +284,9 @@ async function processCommand(chain, options) {
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             validateParameters({
-                isString: [destinationChain, destinationAddress],
-                isValidNumber: [amount],
-                isValidCalldata: [data],
+                isString: { destinationChain, destinationAddress },
+                isValidNumber: { amount },
+                isValidCalldata: { data },
             });
 
             const tx = await interchainTokenService.callContractWithInterchainToken(
@@ -326,7 +315,7 @@ async function processCommand(chain, options) {
                 tokenIdsBytes32.push(tokenIdBytes32);
             }
 
-            validateParameters({ isNumberArray: [flowLimits] });
+            validateParameters({ isNumberArray: { flowLimits } });
 
             const tx = await interchainTokenService.setFlowLimits(tokenIdsBytes32, flowLimits);
 
@@ -344,7 +333,7 @@ async function processCommand(chain, options) {
 
             const { trustedChain, trustedAddress } = options;
 
-            validateParameters({ isString: [trustedChain, trustedAddress] });
+            validateParameters({ isString: { trustedChain, trustedAddress } });
 
             const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress);
 
@@ -362,7 +351,7 @@ async function processCommand(chain, options) {
 
             const trustedChain = options.trustedChain;
 
-            validateParameters({ isString: [trustedChain] });
+            validateParameters({ isString: { trustedChain } });
 
             const tx = await interchainTokenService.removeTrustedAddress(trustedChain);
 
@@ -390,7 +379,7 @@ async function processCommand(chain, options) {
         case 'execute': {
             const { commandID, sourceChain, sourceAddress, payload } = options;
 
-            validateParameters({ isKeccak256Hash: [commandID], isString: [sourceChain, sourceAddress] });
+            validateParameters({ isKeccak256Hash: { commandID }, isString: { sourceChain, sourceAddress } });
 
             const isTrustedAddress = await interchainTokenService.isTrustedAddress(sourceChain, sourceAddress);
 
@@ -398,7 +387,7 @@ async function processCommand(chain, options) {
                 throw new Error('Invalid remote service.');
             }
 
-            validateParameters({ isValidCalldata: [payload] });
+            validateParameters({ isValidCalldata: { payload } });
 
             const tx = await interchainTokenService.execute(commandID, sourceChain, sourceAddress, payload);
 

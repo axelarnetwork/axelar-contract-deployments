@@ -299,18 +299,19 @@ function isValidBytesAddress(input) {
 }
 
 function validateParameters(parameters) {
-    for (const [validatorFunction, params] of Object.entries(parameters)) {
+    for (const [validatorFunction, paramsObj] of Object.entries(parameters)) {
         if (typeof validatorFunction !== 'function') {
             throw new Error(`Validator function ${validatorFunction} is not defined`);
         }
 
-        params.forEach((param) => {
-            const isValid = validatorFunction(param);
+        for (const paramKey of Object.keys(paramsObj)) {
+            const paramValue = paramsObj[paramKey];
+            const isValid = validatorFunction(paramValue);
 
             if (!isValid) {
-                throw new Error(`Input validation failed for ${validatorFunction} with parameter ${param}`);
+                throw new Error(`Input validation failed for ${validatorFunction} with parameter ${paramKey}: ${paramValue}`);
             }
-        });
+        }
     }
 }
 
