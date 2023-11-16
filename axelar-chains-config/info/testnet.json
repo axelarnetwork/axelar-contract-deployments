@@ -1776,6 +1776,9 @@
         "gasLimit": 8000000,
         "maxPriorityFeePerGas": 150000000000,
         "maxFeePerGas": 160000000000
+      },
+      "explorer": {
+        "url": ""
       }
     },
     "ethereum-sepolia": {
