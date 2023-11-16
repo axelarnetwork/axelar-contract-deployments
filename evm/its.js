@@ -44,8 +44,8 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
     const receipt = await tx.wait(chain.confirmations);
 
     const eventEmitted =
-        (firstEvent ? wasEventEmitted(receipt, contract, 'TokenManagerDeployed') : true) ||
-        (secondEvent ? wasEventEmitted(receipt, contract, 'TokenManagerDeploymentStarted') : false);
+        (firstEvent ? wasEventEmitted(receipt, contract, firstEvent) : true) ||
+        (secondEvent ? wasEventEmitted(receipt, contract, secondEvent) : false);
 
     if (!eventEmitted) {
         printWarn('Event not emitted in receipt.');
