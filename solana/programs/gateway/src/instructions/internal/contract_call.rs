@@ -1,5 +1,6 @@
-use super::*;
 use crate::common::contract_call::Params;
+use anchor_lang::prelude::*;
+use registry::State;
 
 #[event]
 pub struct ContractCallApprovedEvent {
@@ -12,6 +13,7 @@ pub struct ContractCallApprovedEvent {
     pub source_event_index: [u8; 256],
 }
 
+#[allow(dead_code)]
 fn approve(acc: &mut Account<'_, State>, params: Vec<u8>, command_id: [u8; 32]) -> Result<()> {
     let p = Params::decode(params);
     acc.value = true;

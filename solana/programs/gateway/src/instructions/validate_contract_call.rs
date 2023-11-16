@@ -36,7 +36,7 @@ pub fn validate_contract_call(
     let valid = result.get();
     if valid {
         let state_account = &mut ctx.accounts.state;
-        let _ = registry::cpi::set(
+        registry::cpi::set(
             CpiContext::new(
                 ctx.accounts.registry_program.to_account_info(),
                 Set {

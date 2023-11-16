@@ -10,11 +10,13 @@ pub mod registry {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>, seeds_hash: [u8; 32], v: bool) -> Result<()> {
-        Ok(instructions::initialize(ctx, seeds_hash, v).unwrap())
+        instructions::initialize(ctx, seeds_hash, v).unwrap();
+        Ok(())
     }
 
     pub fn set(ctx: Context<Set>, seeds_hash: [u8; 32], v: bool) -> Result<()> {
-        Ok(instructions::set(ctx, seeds_hash, v).unwrap())
+        instructions::set(ctx, seeds_hash, v).unwrap();
+        Ok(())
     }
 
     pub fn get(ctx: Context<Get>, seeds_hash: [u8; 32]) -> Result<bool> {
@@ -22,7 +24,8 @@ pub mod registry {
     }
 
     pub fn delete(ctx: Context<Delete>, seeds_hash: [u8; 32]) -> Result<()> {
-        Ok(instructions::delete(ctx, seeds_hash).unwrap())
+        instructions::delete(ctx, seeds_hash).unwrap();
+        Ok(())
     }
 }
 

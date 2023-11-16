@@ -33,7 +33,7 @@ pub fn execute(ctx: Context<Execute>, seeds_hash: [u8; 32]) -> Result<()> {
     // account with 0 lamports are not initialized
     if ctx.accounts.state.to_account_info().lamports() == 0 {
         let state_account = &mut ctx.accounts.state;
-        let _ = registry::cpi::initialize(
+        registry::cpi::initialize(
             CpiContext::new(
                 ctx.accounts.registry_program.to_account_info(),
                 Initialize {

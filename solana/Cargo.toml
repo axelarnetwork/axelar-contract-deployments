@@ -1,7 +1,10 @@
 [workspace]
-members = [
-    "programs/*"
-]
+members = ["programs/*"]
+resolver = "2"
+
+[workspace.dependencies]
+anchor-lang = { version = "0.28.0" }
+borsh = { version = "0.10.3" }
 
 [profile.release]
 overflow-checks = true
