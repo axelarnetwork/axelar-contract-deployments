@@ -9,9 +9,18 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, prompt, printWarn, printWalletInfo, wasEventEmitted, mainProcessor, validateParameters } = require('./utils');
+const {
+    printInfo,
+    prompt,
+    printWarn,
+    printWalletInfo,
+    wasEventEmitted,
+    mainProcessor,
+    validateParameters,
+    getContractJSON,
+} = require('./utils');
 const { getWallet } = require('./sign-utils');
-const IInterchainTokenService = require('@axelar-network/interchain-token-service/dist/interchain-token-service/InterchainTokenService.sol');
+const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const { addExtendedOptions } = require('./cli-utils');
 const tokenManagerImplementations = {
     MINT_BURN: 0,
@@ -477,3 +486,5 @@ if (require.main === module) {
 
     program.parse();
 }
+
+module.exports = { isValidTokenId, handleTx };
