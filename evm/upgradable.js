@@ -21,13 +21,13 @@ async function deployUpgradable(
 
     const proxyFactory = new ContractFactory(proxyJson.abi, proxyJson.bytecode, wallet);
 
-    const implementation = await implementationFactory.deploy(...implementationConstructorArgs);
+    const implementation = await implementationFactory.deploy(...implementationConstructorArgs, txOptions);
     await implementation.deployed();
 
     const proxy = await proxyFactory.deploy(...proxyConstructorArgs, txOptions);
     await proxy.deployed();
 
-    await proxy.init(implementation.address, wallet.address, setupParams).then((tx) => tx.wait());
+    await proxy.init(implementation.address, wallet.address, setupParams, txOptions).then((tx) => tx.wait());
 
     if (verifyOptions) {
         await verifyContract(verifyOptions.env, verifyOptions.chain, proxy.address, proxyConstructorArgs);
