@@ -38,10 +38,9 @@ function getDeploymentSalt(options) {
         validateParameters({ isKeccak256Hash: { rawSalt } });
         return rawSalt;
     }
- 
-        validateParameters({ isString: { salt } });
-        return getSaltFromKey(salt);
-    
+
+    validateParameters({ isString: { salt } });
+    return getSaltFromKey(salt);
 }
 
 async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
