@@ -191,8 +191,12 @@ const httpGet = (url) => {
     });
 };
 
-const isString = (arg) => {
+const isNonEmptyString = (arg) => {
     return typeof arg === 'string' && arg !== '';
+};
+
+const isString = (arg) => {
+    return typeof arg === 'string';
 };
 
 const isNumber = (arg) => {
@@ -221,7 +225,7 @@ const isNumberArray = (arr) => {
     return true;
 };
 
-const isStringArray = (arr) => {
+const isNonEmptyStringArray = (arr) => {
     if (!Array.isArray(arr)) {
         return false;
     }
@@ -293,6 +297,110 @@ function isValidCalldata(input) {
     return hexPattern.test(input.slice(2));
 }
 
+function isValidBytesAddress(input) {
+    const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+    return addressRegex.test(input);
+}
+
+const isContract = async (address, provider) => {
+    const code = await provider.getCode(address);
+    return code && code !== '0x';
+};
+
+function isValidAddress(address, allowZeroAddress) {
+    if (!allowZeroAddress && address === AddressZero) {
+        return false;
+    }
+
+    return isAddress(address);
+}
+
+/**
+ * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
+ *
+ * @param {string} timeString - The input time string.
+ * @return {boolean} - Returns true if the format matches, false otherwise.
+ */
+function isValidTimeFormat(timeString) {
+    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+
+    if (timeString === '0') {
+        return true;
+    }
+
+    return regex.test(timeString);
+}
+
+// Validate if the input privateKey is correct
+function isValidPrivateKey(privateKey) {
+    // Check if it's a valid hexadecimal string
+    if (!privateKey?.startsWith('0x')) {
+        privateKey = '0x' + privateKey;
+    }
+
+    if (!isHexString(privateKey) || privateKey.length !== 66) {
+        return false;
+    }
+
+    return true;
+}
+
+function isValidTokenId(input) {
+    if (!input?.startsWith('0x')) {
+        return false;
+    }
+
+    const hexPattern = /^[0-9a-fA-F]+$/;
+
+    if (!hexPattern.test(input.slice(2))) {
+        return false;
+    }
+
+    const minValue = BigInt('0x00');
+    const maxValue = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
+    const numericValue = BigInt(input);
+
+    return numericValue >= minValue && numericValue <= maxValue;
+}
+
+const validationFunctions = {
+    isNonEmptyString,
+    isNumber,
+    isValidNumber,
+    isValidDecimal,
+    isNumberArray,
+    isString,
+    isNonEmptyStringArray,
+    isAddressArray,
+    isKeccak256Hash,
+    isValidCalldata,
+    isValidBytesAddress,
+    isValidTimeFormat,
+    isContract,
+    isValidAddress,
+    isValidPrivateKey,
+    isValidTokenId,
+};
+
+function validateParameters(parameters) {
+    for (const [validatorFunctionString, paramsObj] of Object.entries(parameters)) {
+        const validatorFunction = validationFunctions[validatorFunctionString];
+
+        if (typeof validatorFunction !== 'function') {
+            throw new Error(`Validator function ${validatorFunction} is not defined`);
+        }
+
+        for (const paramKey of Object.keys(paramsObj)) {
+            const paramValue = paramsObj[paramKey];
+            const isValid = validatorFunction(paramValue);
+
+            if (!isValid) {
+                throw new Error(`Input validation failed for ${validatorFunctionString} with parameter ${paramKey}: ${paramValue}`);
+            }
+        }
+    }
+}
+
 /**
  * Parses the input string into an array of arguments, recognizing and converting
  * to the following types: boolean, number, array, and string.
@@ -334,7 +442,7 @@ const parseArgs = (args) => {
 async function getBytecodeHash(contractObject, chain = '', provider = null) {
     let bytecode;
 
-    if (isString(contractObject)) {
+    if (isNonEmptyString(contractObject)) {
         if (provider === null) {
             throw new Error('Provider must be provided for chain');
         }
@@ -408,7 +516,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
 
             const deployerContract = options.deployerContract;
 
-            if (!isString(deployerContract)) {
+            if (!isNonEmptyString(deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
@@ -431,7 +539,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
         case 'create3': {
             const deployerContract = options.deployerContract;
 
-            if (!isString(deployerContract)) {
+            if (!isNonEmptyString(deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
@@ -568,11 +676,11 @@ const deployContract = async (
         }
 
         case 'create2': {
-            if (!isString(deployOptions.deployerContract)) {
+            if (!isNonEmptyString(deployOptions.deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
-            if (!isString(deployOptions.salt)) {
+            if (!isNonEmptyString(deployOptions.salt)) {
                 throw new Error('Salt was not provided');
             }
 
@@ -591,11 +699,11 @@ const deployContract = async (
         }
 
         case 'create3': {
-            if (!isString(deployOptions.deployerContract)) {
+            if (!isNonEmptyString(deployOptions.deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
-            if (!isString(deployOptions.salt)) {
+            if (!isNonEmptyString(deployOptions.salt)) {
                 throw new Error('Salt was not provided');
             }
 
@@ -618,36 +726,6 @@ const deployContract = async (
         }
     }
 };
-
-/**
- * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
- *
- * @param {string} timeString - The input time string.
- * @return {boolean} - Returns true if the format matches, false otherwise.
- */
-function isValidTimeFormat(timeString) {
-    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
-
-    if (timeString === '0') {
-        return true;
-    }
-
-    return regex.test(timeString);
-}
-
-// Validate if the input privateKey is correct
-function isValidPrivateKey(privateKey) {
-    // Check if it's a valid hexadecimal string
-    if (!privateKey.startsWith('0x')) {
-        privateKey = '0x' + privateKey;
-    }
-
-    if (!isHexString(privateKey) || privateKey.length !== 66) {
-        return false;
-    }
-
-    return true;
-}
 
 const dateToEta = (utcTimeString) => {
     if (utcTimeString === '0') {
@@ -685,19 +763,6 @@ function wasEventEmitted(receipt, contract, eventName) {
     const event = contract.filters[eventName]();
 
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
-}
-
-const isContract = async (address, provider) => {
-    const code = await provider.getCode(address);
-    return code && code !== '0x';
-};
-
-function isValidAddress(address, allowZeroAddress) {
-    if (!allowZeroAddress && address === AddressZero) {
-        return false;
-    }
-
-    return isAddress(address);
 }
 
 function copyObject(obj) {
@@ -872,14 +937,17 @@ module.exports = {
     predictAddressCreate,
     getDeployedAddress,
     isString,
+    isNonEmptyString,
     isNumber,
     isValidNumber,
     isValidDecimal,
     isNumberArray,
-    isStringArray,
+    isNonEmptyStringArray,
     isAddressArray,
     isKeccak256Hash,
     isValidCalldata,
+    isValidBytesAddress,
+    validateParameters,
     parseArgs,
     getProxy,
     getEVMBatch,
@@ -897,6 +965,7 @@ module.exports = {
     isContract,
     isValidAddress,
     isValidPrivateKey,
+    isValidTokenId,
     verifyContract,
     prompt,
     mainProcessor,
