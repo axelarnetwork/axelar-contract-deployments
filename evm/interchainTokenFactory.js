@@ -12,7 +12,7 @@ const { Command, Option } = require('commander');
 const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const { addExtendedOptions } = require('./cli-utils');
-const { handleTx } = require('./its');
+const { getDeploymentSalt, handleTx } = require('./its');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IERC20 = getContractJSON('IERC20');
@@ -60,12 +60,14 @@ async function processCommand(config, chain, options) {
         }
 
         case 'interchainTokenSalt': {
-            const { chainNameHash, deployer, salt } = options;
+            const { chainNameHash, deployer } = options;
 
-            validateParameters({ isValidAddress: { deployer }, isKeccak256Hash: { chainNameHash, salt } });
+            const deploymentSalt = getDeploymentSalt(options);
 
-            const interchainTokenSalt = await interchainTokenFactory.interchainTokenSalt(chainNameHash, deployer, salt);
-            printInfo(`interchainTokenSalt for deployer ${deployer} and deployment salt: ${salt}`, interchainTokenSalt);
+            validateParameters({ isValidAddress: { deployer }, isKeccak256Hash: { chainNameHash } });
+
+            const interchainTokenSalt = await interchainTokenFactory.interchainTokenSalt(chainNameHash, deployer, deploymentSalt);
+            printInfo(`interchainTokenSalt for deployer ${deployer} and deployment salt: ${deploymentSalt}`, interchainTokenSalt);
 
             break;
         }
@@ -82,12 +84,14 @@ async function processCommand(config, chain, options) {
         }
 
         case 'interchainTokenId': {
-            const { deployer, salt } = options;
+            const { deployer } = options;
 
-            validateParameters({ isValidAddress: { deployer }, isKeccak256Hash: { salt } });
+            const deploymentSalt = getDeploymentSalt(options);
 
-            const interchainTokenId = await interchainTokenFactory.interchainTokenId(deployer, salt);
-            printInfo(`InterchainTokenId for deployer ${deployer} and deployment salt: ${salt}`, interchainTokenId);
+            validateParameters({ isValidAddress: { deployer } });
+
+            const interchainTokenId = await interchainTokenFactory.interchainTokenId(deployer, deploymentSalt);
+            printInfo(`InterchainTokenId for deployer ${deployer} and deployment salt: ${deploymentSalt}`, interchainTokenId);
 
             break;
         }
@@ -104,27 +108,30 @@ async function processCommand(config, chain, options) {
         }
 
         case 'interchainTokenAddress': {
-            const { deployer, salt } = options;
+            const { deployer } = options;
 
-            validateParameters({ isValidAddress: { deployer }, isKeccak256Hash: { salt } });
+            const deploymentSalt = getDeploymentSalt(options);
 
-            const interchainTokenAddress = await interchainTokenFactory.interchainTokenAddress(deployer, salt);
-            printInfo(`interchainTokenAddress for deployer ${deployer} and deployment salt: ${salt}`, interchainTokenAddress);
+            validateParameters({ isValidAddress: { deployer } });
+
+            const interchainTokenAddress = await interchainTokenFactory.interchainTokenAddress(deployer, deploymentSalt);
+            printInfo(`interchainTokenAddress for deployer ${deployer} and deployment salt: ${deploymentSalt}`, interchainTokenAddress);
 
             break;
         }
 
         case 'deployInterchainToken': {
-            const { salt, name, symbol, decimals, mintAmount, distributor } = options;
+            const { name, symbol, decimals, mintAmount, distributor } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
-                isKeccak256Hash: { salt },
                 isNonEmptyString: { name, symbol },
                 isValidAddress: { distributor },
                 isValidNumber: { decimals, mintAmount },
             });
 
-            const tx = await interchainTokenFactory.deployInterchainToken(salt, name, symbol, decimals, mintAmount, distributor);
+            const tx = await interchainTokenFactory.deployInterchainToken(deploymentSalt, name, symbol, decimals, mintAmount, distributor);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
@@ -132,10 +139,11 @@ async function processCommand(config, chain, options) {
         }
 
         case 'deployRemoteInterchainToken': {
-            const { originalChain, salt, distributor, destinationChain, gasValue } = options;
+            const { originalChain, distributor, destinationChain, gasValue } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
-                isKeccak256Hash: { salt },
                 isNonEmptyString: { originalChain, destinationChain },
                 isValidBytesAddress: { distributor },
                 isValidNumber: { gasValue },
@@ -143,7 +151,7 @@ async function processCommand(config, chain, options) {
 
             const tx = await interchainTokenFactory.deployRemoteInterchainToken(
                 originalChain,
-                salt,
+                deploymentSalt,
                 distributor,
                 destinationChain,
                 gasValue,
@@ -305,6 +313,7 @@ if (require.main === module) {
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
     program.addOption(new Option('--gasValue <gasValue>', 'gas value'));
     program.addOption(new Option('--amount <amount>', 'token amount'));
+    program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
 
     program.action((options) => {
         main(options);

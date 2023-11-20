@@ -23,12 +23,26 @@ const {
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const { addExtendedOptions } = require('./cli-utils');
+const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const tokenManagerImplementations = {
     MINT_BURN: 0,
     MINT_BURN_FROM: 1,
     LOCK_UNLOCK: 2,
     LOCK_UNLOCK_FEE: 3,
 };
+
+function getDeploymentSalt(options) {
+    const { rawSalt, salt } = options;
+
+    if (rawSalt) {
+        validateParameters({ isKeccak256Hash: { rawSalt } });
+        return rawSalt;
+    }
+ 
+        validateParameters({ isString: { salt } });
+        return getSaltFromKey(salt);
+    
+}
 
 async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
     printInfo(`${action} tx`, tx.hash);
@@ -117,12 +131,14 @@ async function processCommand(config, chain, options) {
         }
 
         case 'interchainTokenId': {
-            const { sender, salt } = options;
+            const { sender } = options;
 
-            validateParameters({ isValidAddress: { sender }, isKeccak256Hash: { salt } });
+            const deploymentSalt = getDeploymentSalt(options);
 
-            const interchainTokenId = await interchainTokenService.interchainTokenId(sender, salt);
-            printInfo(`InterchainTokenId for sender ${sender} and deployment salt: ${salt}`, interchainTokenId);
+            validateParameters({ isValidAddress: { sender } });
+
+            const interchainTokenId = await interchainTokenService.interchainTokenId(sender, deploymentSalt);
+            printInfo(`InterchainTokenId for sender ${sender} and deployment salt: ${deploymentSalt}`, interchainTokenId);
 
             break;
         }
@@ -170,17 +186,18 @@ async function processCommand(config, chain, options) {
         }
 
         case 'deployTokenManager': {
-            const { salt, destinationChain, type, params, gasValue } = options;
+            const { destinationChain, type, params, gasValue } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
-                isKeccak256Hash: { salt },
                 isString: { destinationChain },
                 isValidCalldata: { params },
                 isValidNumber: { gasValue },
             });
 
             const tx = await interchainTokenService.deployTokenManager(
-                salt,
+                deploymentSalt,
                 destinationChain,
                 tokenManagerImplementations[type],
                 params,
@@ -193,10 +210,11 @@ async function processCommand(config, chain, options) {
         }
 
         case 'deployInterchainToken': {
-            const { salt, destinationChain, name, symbol, decimals, distributor, gasValue } = options;
+            const { destinationChain, name, symbol, decimals, distributor, gasValue } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
-                isKeccak256Hash: { salt },
                 isNonEmptyString: { name, symbol },
                 isString: { destinationChain },
                 isValidBytesAddress: { distributor },
@@ -204,7 +222,7 @@ async function processCommand(config, chain, options) {
             });
 
             const tx = await interchainTokenService.deployInterchainToken(
-                salt,
+                deploymentSalt,
                 destinationChain,
                 name,
                 symbol,
@@ -471,6 +489,7 @@ if (require.main === module) {
     program.addOption(new Option('--trustedChain <trustedChain>', 'chain name for trusted addresses'));
     program.addOption(new Option('--trustedAddress <trustedAddress>', 'trusted address'));
     program.addOption(new Option('--pauseStatus <pauseStatus>', 'pause status').choices(['true', 'false']));
+    program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
 
     program.action((options) => {
         main(options);
@@ -479,4 +498,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { handleTx };
+module.exports = { getDeploymentSalt, handleTx };
