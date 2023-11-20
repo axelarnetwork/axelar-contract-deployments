@@ -18,6 +18,7 @@ const {
     mainProcessor,
     validateParameters,
     getContractJSON,
+    isValidTokenId,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -28,24 +29,6 @@ const tokenManagerImplementations = {
     LOCK_UNLOCK: 2,
     LOCK_UNLOCK_FEE: 3,
 };
-
-function isValidTokenId(input) {
-    if (!input.startsWith('0x')) {
-        return false;
-    }
-
-    const hexPattern = /^[0-9a-fA-F]+$/;
-
-    if (!hexPattern.test(input.slice(2))) {
-        return false;
-    }
-
-    const minValue = BigInt('0x00');
-    const maxValue = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
-    const numericValue = BigInt(input);
-
-    return numericValue >= minValue && numericValue <= maxValue;
-}
 
 async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
     printInfo(`${action} tx`, tx.hash);
@@ -61,14 +44,14 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
     }
 }
 
-async function processCommand(chain, options) {
+async function processCommand(config, chain, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
     const contractName = 'InterchainTokenService';
     const contractConfig = contracts.InterchainTokenService;
 
-    const interchainTokenServiceAddress = address || contracts.interchainTokenService?.address;
+    const interchainTokenServiceAddress = address || contracts.InterchainTokenService?.address;
 
     validateParameters({ isValidAddress: { interchainTokenServiceAddress } });
 
@@ -96,10 +79,6 @@ async function processCommand(chain, options) {
 
     const tokenId = options.tokenId;
 
-    if (!isValidTokenId(tokenId)) {
-        throw new Error(`Invalid tokenId value: ${tokenId}`);
-    }
-
     switch (action) {
         case 'contractId': {
             const contractId = await interchainTokenService.contractId();
@@ -109,10 +88,12 @@ async function processCommand(chain, options) {
         }
 
         case 'tokenManagerAddress': {
+            validateParameters({ isValidTokenId: { tokenId } });
+
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const tokenManagerAddress = await interchainTokenService.tokenManagerAddress(tokenIdBytes32);
-            printInfo(`TokenManager address for tokenId: ${tokenId}:`, tokenManagerAddress);
+            printInfo(`TokenManager address for tokenId: ${tokenId}`, tokenManagerAddress);
 
             try {
                 await interchainTokenService.validTokenManagerAddress(tokenIdBytes32);
@@ -125,10 +106,12 @@ async function processCommand(chain, options) {
         }
 
         case 'interchainTokenAddress': {
+            validateParameters({ isValidTokenId: { tokenId } });
+
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const interchainTokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
-            printInfo(`InterchainToken address for tokenId: ${tokenId}:`, interchainTokenAddress);
+            printInfo(`InterchainToken address for tokenId: ${tokenId}`, interchainTokenAddress);
 
             break;
         }
@@ -148,34 +131,40 @@ async function processCommand(chain, options) {
             const type = options.type;
 
             const tokenManagerImplementation = await interchainTokenService.tokenManagerImplementation(tokenManagerImplementations[type]);
-            printInfo(`${type} TokenManager implementation address:`, tokenManagerImplementation);
+            printInfo(`${type} TokenManager implementation address`, tokenManagerImplementation);
 
             break;
         }
 
         case 'flowLimit': {
+            validateParameters({ isValidTokenId: { tokenId } });
+
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const flowLimit = await interchainTokenService.flowLimit(tokenIdBytes32);
-            printInfo(`Flow limit for TokenManager with tokenId: ${tokenId}`, flowLimit);
+            printInfo(`Flow limit for TokenManager with tokenId ${tokenId}`, flowLimit);
 
             break;
         }
 
         case 'flowOutAmount': {
+            validateParameters({ isValidTokenId: { tokenId } });
+
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const flowOutAmount = await interchainTokenService.flowOutAmount(tokenIdBytes32);
-            printInfo(`Flow out amount for TokenManager with tokenId: ${tokenId}`, flowOutAmount);
+            printInfo(`Flow out amount for TokenManager with tokenId ${tokenId}`, flowOutAmount);
 
             break;
         }
 
         case 'flowInAmount': {
+            validateParameters({ isValidTokenId: { tokenId } });
+
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const flowInAmount = await interchainTokenService.flowInAmount(tokenIdBytes32);
-            printInfo(`Flow out amount for TokenManager with tokenId: ${tokenId}`, flowInAmount);
+            printInfo(`Flow out amount for TokenManager with tokenId ${tokenId}`, flowInAmount);
 
             break;
         }
@@ -208,7 +197,8 @@ async function processCommand(chain, options) {
 
             validateParameters({
                 isKeccak256Hash: { salt },
-                isString: { destinationChain, name, symbol },
+                isNonEmptyString: { name, symbol },
+                isString: { destinationChain },
                 isValidBytesAddress: { distributor },
                 isValidNumber: { decimals, gasValue },
             });
@@ -231,7 +221,7 @@ async function processCommand(chain, options) {
         case 'contractCallValue': {
             const { sourceChain, sourceAddress, payload } = options;
 
-            validateParameters({ isString: { sourceChain, sourceAddress } });
+            validateParameters({ isNonEmptyString: { sourceChain, sourceAddress } });
 
             const isTrustedAddress = await interchainTokenService.isTrustedAddress(sourceChain, sourceAddress);
 
@@ -252,7 +242,7 @@ async function processCommand(chain, options) {
 
             validateParameters({
                 isKeccak256Hash: { commandID },
-                isString: { sourceChain, sourceAddress },
+                isNonEmptyString: { sourceChain, sourceAddress },
                 isValidCalldata: { payload },
             });
 
@@ -266,13 +256,14 @@ async function processCommand(chain, options) {
         case 'interchainTransfer': {
             const { destinationChain, destinationAddress, amount, metadata } = options;
 
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
             validateParameters({
-                isString: { destinationChain, destinationAddress },
+                isValidTokenId: { tokenId },
+                isNonEmptyString: { destinationChain, destinationAddress },
                 isValidNumber: { amount },
                 isValidCalldata: { metadata },
             });
+
+            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const tx = await interchainTokenService.interchainTransfer(
                 tokenIdBytes32,
@@ -290,13 +281,14 @@ async function processCommand(chain, options) {
         case 'callContractWithInterchainToken': {
             const { destinationChain, destinationAddress, amount, data } = options;
 
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
             validateParameters({
-                isString: { destinationChain, destinationAddress },
+                isValidTokenId: { tokenId },
+                isNonEmptyString: { destinationChain, destinationAddress },
                 isValidNumber: { amount },
                 isValidCalldata: { data },
             });
+
+            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const tx = await interchainTokenService.callContractWithInterchainToken(
                 tokenIdBytes32,
@@ -342,7 +334,7 @@ async function processCommand(chain, options) {
 
             const { trustedChain, trustedAddress } = options;
 
-            validateParameters({ isString: { trustedChain, trustedAddress } });
+            validateParameters({ isNonEmptyString: { trustedChain, trustedAddress } });
 
             const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress);
 
@@ -360,7 +352,7 @@ async function processCommand(chain, options) {
 
             const trustedChain = options.trustedChain;
 
-            validateParameters({ isString: { trustedChain } });
+            validateParameters({ isNonEmptyString: { trustedChain } });
 
             const tx = await interchainTokenService.removeTrustedAddress(trustedChain);
 
@@ -388,7 +380,7 @@ async function processCommand(chain, options) {
         case 'execute': {
             const { commandID, sourceChain, sourceAddress, payload } = options;
 
-            validateParameters({ isKeccak256Hash: { commandID }, isString: { sourceChain, sourceAddress } });
+            validateParameters({ isKeccak256Hash: { commandID }, isNonEmptyString: { sourceChain, sourceAddress } });
 
             const isTrustedAddress = await interchainTokenService.isTrustedAddress(sourceChain, sourceAddress);
 
@@ -487,4 +479,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { isValidTokenId, handleTx };
+module.exports = { handleTx };

@@ -12,19 +12,22 @@ const { Command, Option } = require('commander');
 const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const { addExtendedOptions } = require('./cli-utils');
-const { isValidTokenId, handleTx } = require('./its');
+const { handleTx } = require('./its');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
+const IInterchainTokenService = getContractJSON('IInterchainTokenService');
+const IERC20 = getContractJSON('IERC20');
 
-async function processCommand(chain, options) {
+async function processCommand(config, chain, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
     const contractName = 'InterchainTokenFactory';
-    const contractConfig = contracts.InterchainTokenFactory;
+    const contractConfig = contracts.InterchainTokenService;
 
-    const interchainTokenFactoryAddress = address || contracts.interchainTokenFactory?.interchainTokenFactory;
+    const interchainTokenFactoryAddress = address || contracts.InterchainTokenService?.interchainTokenFactory;
+    const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
 
-    validateParameters({ isValidAddress: { interchainTokenFactoryAddress } });
+    validateParameters({ isValidAddress: { interchainTokenFactoryAddress, interchainTokenServiceAddress } });
 
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
@@ -37,6 +40,7 @@ async function processCommand(chain, options) {
     printInfo('Contract address', interchainTokenFactoryAddress);
 
     const interchainTokenFactory = new Contract(interchainTokenFactoryAddress, IInterchainTokenFactory.abi, wallet);
+    const interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
 
     const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || {};
     printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
@@ -45,12 +49,6 @@ async function processCommand(chain, options) {
 
     if (prompt(`Proceed with action ${action}`, yes)) {
         return;
-    }
-
-    const tokenId = options.tokenId;
-
-    if (!isValidTokenId(tokenId)) {
-        throw new Error(`Invalid tokenId value: ${tokenId}`);
     }
 
     switch (action) {
@@ -121,14 +119,14 @@ async function processCommand(chain, options) {
 
             validateParameters({
                 isKeccak256Hash: { salt },
-                isString: { name, symbol },
+                isNonEmptyString: { name, symbol },
                 isValidAddress: { distributor },
                 isValidNumber: { decimals, mintAmount },
             });
 
             const tx = await interchainTokenFactory.deployInterchainToken(salt, name, symbol, decimals, mintAmount, distributor);
 
-            await handleTx(tx, chain, interchainTokenFactory, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
             break;
         }
@@ -138,7 +136,7 @@ async function processCommand(chain, options) {
 
             validateParameters({
                 isKeccak256Hash: { salt },
-                isString: { originalChain, destinationChain },
+                isNonEmptyString: { originalChain, destinationChain },
                 isValidBytesAddress: { distributor },
                 isValidNumber: { gasValue },
             });
@@ -151,7 +149,7 @@ async function processCommand(chain, options) {
                 gasValue,
             );
 
-            await handleTx(tx, chain, interchainTokenFactory, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
             break;
         }
@@ -163,7 +161,7 @@ async function processCommand(chain, options) {
 
             const tx = await interchainTokenFactory.registerCanonicalInterchainToken(tokenAddress);
 
-            await handleTx(tx, chain, interchainTokenFactory, options.action, 'TokenManagerDeployed', 'TokenManagerDeploymentStarted');
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'TokenManagerDeploymentStarted');
 
             break;
         }
@@ -173,7 +171,7 @@ async function processCommand(chain, options) {
 
             validateParameters({
                 isValidAddress: { tokenAddress },
-                isString: { originalChain, destinationChain },
+                isNonEmptyString: { originalChain, destinationChain },
                 isValidNumber: { gasValue },
             });
 
@@ -184,7 +182,7 @@ async function processCommand(chain, options) {
                 gasValue,
             );
 
-            await handleTx(tx, chain, interchainTokenFactory, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
             break;
         }
@@ -195,6 +193,7 @@ async function processCommand(chain, options) {
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             validateParameters({
+                isValidTokenId: { tokenId },
                 isString: { destinationChain },
                 isValidCalldata: { destinationAddress },
                 isValidNumber: { amount, gasValue },
@@ -208,7 +207,14 @@ async function processCommand(chain, options) {
                 gasValue,
             );
 
-            await handleTx(tx, chain, interchainTokenFactory, options.action, 'Transfer', 'InterchainTransferWithData');
+            if (destinationChain === '') {
+                const tokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
+                const token = new Contract(tokenAddress, IERC20.abi, wallet);
+
+                await handleTx(tx, chain, token, options.action, 'Transfer');
+            } else {
+                await handleTx(tx, chain, interchainTokenFactory, options.action, 'InterchainTransferWithData');
+            }
 
             break;
         }
@@ -218,11 +224,14 @@ async function processCommand(chain, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            validateParameters({ isValidNumber: { amount } });
+            validateParameters({ isValidTokenId: { tokenId }, isValidNumber: { amount } });
+
+            const tokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
+            const token = new Contract(tokenAddress, IERC20.abi, wallet);
 
             const tx = await interchainTokenFactory.tokenTransferFrom(tokenIdBytes32, amount);
 
-            await handleTx(tx, chain, interchainTokenFactory, options.action, 'Transfer');
+            await handleTx(tx, chain, token, options.action, 'Transfer');
 
             break;
         }
@@ -232,11 +241,14 @@ async function processCommand(chain, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            validateParameters({ isValidNumber: { amount } });
+            validateParameters({ isValidTokenId: { tokenId }, isValidNumber: { amount } });
+
+            const tokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
+            const token = new Contract(tokenAddress, IERC20.abi, wallet);
 
             const tx = await interchainTokenFactory.tokenApprove(tokenIdBytes32, amount);
 
-            await handleTx(tx, chain, interchainTokenFactory, options.action, 'Approval');
+            await handleTx(tx, chain, token, options.action, 'Approval');
 
             break;
         }
