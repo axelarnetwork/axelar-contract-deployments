@@ -48,26 +48,6 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "InterchainTokenService": {
-          "gasOptions": {
-            "gasLimit": 8000000
-          },
-          "salt": "ITS v0.3.0",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0x6Aa459645b696108894C7548A898192E4716Ef15",
-          "standardizedTokenLockUnlock": "0x3a27e5d92C50C022510B74D2eBc53956E3b3cAd6",
-          "standardizedTokenMintBurn": "0x9b63b458cD214C3786f117aD3d2821a9aC8E4201",
-          "standardizedTokenDeployer": "0x6c6632071c792f7F73BBC404A1FD1973e60B8C0C",
-          "remoteAddressValidatorImplementation": "0x33FEfaaD1D97d82C930B2d920613c8697787823D",
-          "remoteAddressValidator": "0x30c8dffBfb0f0535A1B56A7D00d5627692B399D5",
-          "tokenManagerImplementations": {
-            "tokenManagerLockUnlock": "0xADE0d3f7E7325219610907F80e7438CD22B0d27D",
-            "tokenManagerMintBurn": "0x2dF7688066d10e6aAEd5116814eB0f701cF6F74f",
-            "tokenManagerLiquidityPool": "0x5D16dFFFb32889eB4d023030FD63B598334C9C90"
-          },
-          "implementation": "0x3d120AC789529bC9045ee913658C3bfdfCbCAaF5",
-          "address": "0xF786e21509A9D50a9aFD033B5940A2b7D872C208"
-        },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -157,9 +137,6 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
-          "gasOptions": {
-            "gasLimit": 8000000
-          },
           "salt": "ITS v1.0.0-beta.3",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "tokenManagerDeployer": "0x6bf1F411785A3f36c6f4A51e61a332534EABdC74",
@@ -269,9 +246,6 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
-          "gasOptions": {
-            "gasLimit": 8000000
-          },
           "salt": "ITS v1.0.0-beta.3",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "tokenManagerDeployer": "0x6bf1F411785A3f36c6f4A51e61a332534EABdC74",
@@ -377,26 +351,6 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "InterchainTokenService": {
-          "gasOptions": {
-            "gasLimit": 8000000
-          },
-          "salt": "ITS v0.3.0",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0x6Aa459645b696108894C7548A898192E4716Ef15",
-          "standardizedTokenLockUnlock": "0x3a27e5d92C50C022510B74D2eBc53956E3b3cAd6",
-          "standardizedTokenMintBurn": "0x9b63b458cD214C3786f117aD3d2821a9aC8E4201",
-          "standardizedTokenDeployer": "0x6c6632071c792f7F73BBC404A1FD1973e60B8C0C",
-          "remoteAddressValidatorImplementation": "0x33FEfaaD1D97d82C930B2d920613c8697787823D",
-          "remoteAddressValidator": "0x30c8dffBfb0f0535A1B56A7D00d5627692B399D5",
-          "tokenManagerImplementations": {
-            "tokenManagerLockUnlock": "0xADE0d3f7E7325219610907F80e7438CD22B0d27D",
-            "tokenManagerMintBurn": "0x2dF7688066d10e6aAEd5116814eB0f701cF6F74f",
-            "tokenManagerLiquidityPool": "0x5D16dFFFb32889eB4d023030FD63B598334C9C90"
-          },
-          "implementation": "0x49a9824e5b39EA7dddA98E0AfA718815cC9d9258",
-          "address": "0xF786e21509A9D50a9aFD033B5940A2b7D872C208"
-        },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -490,26 +444,6 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "InterchainTokenService": {
-          "gasOptions": {
-            "gasLimit": 8000000
-          },
-          "salt": "ITS v0.3.0",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0x6Aa459645b696108894C7548A898192E4716Ef15",
-          "standardizedTokenLockUnlock": "0x3a27e5d92C50C022510B74D2eBc53956E3b3cAd6",
-          "standardizedTokenMintBurn": "0x9b63b458cD214C3786f117aD3d2821a9aC8E4201",
-          "standardizedTokenDeployer": "0x6c6632071c792f7F73BBC404A1FD1973e60B8C0C",
-          "remoteAddressValidatorImplementation": "0x33FEfaaD1D97d82C930B2d920613c8697787823D",
-          "remoteAddressValidator": "0x30c8dffBfb0f0535A1B56A7D00d5627692B399D5",
-          "tokenManagerImplementations": {
-            "tokenManagerLockUnlock": "0xADE0d3f7E7325219610907F80e7438CD22B0d27D",
-            "tokenManagerMintBurn": "0x2dF7688066d10e6aAEd5116814eB0f701cF6F74f",
-            "tokenManagerLiquidityPool": "0x5D16dFFFb32889eB4d023030FD63B598334C9C90"
-          },
-          "implementation": "0xb45271Cb5ed19054cF655e87bc7436E97e3956a3",
-          "address": "0xF786e21509A9D50a9aFD033B5940A2b7D872C208"
-        },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -600,26 +534,6 @@
           "deploymentMethod": "create2",
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
-        },
-        "InterchainTokenService": {
-          "gasOptions": {
-            "gasLimit": 8000000
-          },
-          "salt": "ITS v0.3.0",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0x6Aa459645b696108894C7548A898192E4716Ef15",
-          "standardizedTokenLockUnlock": "0x3a27e5d92C50C022510B74D2eBc53956E3b3cAd6",
-          "standardizedTokenMintBurn": "0x9b63b458cD214C3786f117aD3d2821a9aC8E4201",
-          "standardizedTokenDeployer": "0x6c6632071c792f7F73BBC404A1FD1973e60B8C0C",
-          "remoteAddressValidatorImplementation": "0x33FEfaaD1D97d82C930B2d920613c8697787823D",
-          "remoteAddressValidator": "0x30c8dffBfb0f0535A1B56A7D00d5627692B399D5",
-          "tokenManagerImplementations": {
-            "tokenManagerLockUnlock": "0xADE0d3f7E7325219610907F80e7438CD22B0d27D",
-            "tokenManagerMintBurn": "0x2dF7688066d10e6aAEd5116814eB0f701cF6F74f",
-            "tokenManagerLiquidityPool": "0x5D16dFFFb32889eB4d023030FD63B598334C9C90"
-          },
-          "implementation": "0xD962Af3036Ff56464940f5C3fBC828755Bd20D92",
-          "address": "0xF786e21509A9D50a9aFD033B5940A2b7D872C208"
         },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
@@ -712,23 +626,6 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "InterchainTokenService": {
-          "salt": "ITS v0.3.0",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0x6Aa459645b696108894C7548A898192E4716Ef15",
-          "standardizedTokenLockUnlock": "0x3a27e5d92C50C022510B74D2eBc53956E3b3cAd6",
-          "standardizedTokenMintBurn": "0x9b63b458cD214C3786f117aD3d2821a9aC8E4201",
-          "standardizedTokenDeployer": "0x6c6632071c792f7F73BBC404A1FD1973e60B8C0C",
-          "remoteAddressValidatorImplementation": "0x33FEfaaD1D97d82C930B2d920613c8697787823D",
-          "remoteAddressValidator": "0x30c8dffBfb0f0535A1B56A7D00d5627692B399D5",
-          "tokenManagerImplementations": {
-            "tokenManagerLockUnlock": "0xADE0d3f7E7325219610907F80e7438CD22B0d27D",
-            "tokenManagerMintBurn": "0x2dF7688066d10e6aAEd5116814eB0f701cF6F74f",
-            "tokenManagerLiquidityPool": "0x5D16dFFFb32889eB4d023030FD63B598334C9C90"
-          },
-          "implementation": "0x22957E8E4CA4A5695f30308B4Be7Cb6CA8d418fb",
-          "address": "0xF786e21509A9D50a9aFD033B5940A2b7D872C208"
-        },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -766,6 +663,21 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v1.0.0-beta.3",
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "tokenManagerDeployer": "0x6bf1F411785A3f36c6f4A51e61a332534EABdC74",
+          "implementation": "0x85A2a3bb7AA0347513D435b4eFd0E9417F3C620A",
+          "address": "0xa4A9965149388c86E62CDDDd6C95EFe9c294005a",
+          "interchainTokenFactory": "0xe93462bc7Ef7692D763C4d4DbCE7B870c0958c59",
+          "interchainToken": "0x39a525B43c58F483162e532d2335C5Ff93f67Ee6",
+          "interchainTokenDeployer": "0x2b30B2b0e24c94b05423f6f37e5aDe06c6acC9cf",
+          "tokenManagerMintBurn": "0x66689C684B2d4EA971E9aA4EBC34061949CA457d",
+          "tokenManagerMintBurnFrom": "0x4b8fa7DCfB59950bA8755b54ec9dBEe2f0F3a512",
+          "tokenManagerLockUnlock": "0x1E063c4162Eb0447092590E5BFcd2fE192E57D62",
+          "tokenManagerLockUnlockFee": "0x89aEF97F9c5023035AB631313ED8A1621E218820",
+          "interchainTokenFactoryImplementation": "0x7745e12A01549e5611CE97Df2ec8Cb43819af988"
         }
       },
       "explorer": {
@@ -923,26 +835,6 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "InterchainTokenService": {
-          "gasOptions": {
-            "gasLimit": 8000000
-          },
-          "salt": "ITS v0.3.0",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "standardizedTokenLockUnlock": "0x3a27e5d92C50C022510B74D2eBc53956E3b3cAd6",
-          "standardizedTokenMintBurn": "0x9b63b458cD214C3786f117aD3d2821a9aC8E4201",
-          "tokenManagerDeployer": "0x6Aa459645b696108894C7548A898192E4716Ef15",
-          "standardizedTokenDeployer": "0x6c6632071c792f7F73BBC404A1FD1973e60B8C0C",
-          "remoteAddressValidatorImplementation": "0x33FEfaaD1D97d82C930B2d920613c8697787823D",
-          "remoteAddressValidator": "0x30c8dffBfb0f0535A1B56A7D00d5627692B399D5",
-          "tokenManagerImplementations": {
-            "tokenManagerLockUnlock": "0xADE0d3f7E7325219610907F80e7438CD22B0d27D",
-            "tokenManagerMintBurn": "0x2dF7688066d10e6aAEd5116814eB0f701cF6F74f",
-            "tokenManagerLiquidityPool": "0x5D16dFFFb32889eB4d023030FD63B598334C9C90"
-          },
-          "implementation": "0x3493E158F71F6F51bf0Eea74c78E05328dC59436",
-          "address": "0xF786e21509A9D50a9aFD033B5940A2b7D872C208"
-        },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1031,9 +923,6 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
-          "gasOptions": {
-            "gasLimit": 8000000
-          },
           "salt": "ITS v1.0.0-beta.3",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "interchainTokenFactory": "0xe93462bc7Ef7692D763C4d4DbCE7B870c0958c59",
@@ -1140,26 +1029,6 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "InterchainTokenService": {
-          "gasOptions": {
-            "gasLimit": 8000000
-          },
-          "salt": "ITS v0.3.0",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0x6Aa459645b696108894C7548A898192E4716Ef15",
-          "standardizedTokenLockUnlock": "0x3a27e5d92C50C022510B74D2eBc53956E3b3cAd6",
-          "standardizedTokenMintBurn": "0x9b63b458cD214C3786f117aD3d2821a9aC8E4201",
-          "standardizedTokenDeployer": "0x6c6632071c792f7F73BBC404A1FD1973e60B8C0C",
-          "remoteAddressValidatorImplementation": "0x33FEfaaD1D97d82C930B2d920613c8697787823D",
-          "remoteAddressValidator": "0x30c8dffBfb0f0535A1B56A7D00d5627692B399D5",
-          "tokenManagerImplementations": {
-            "tokenManagerLockUnlock": "0xADE0d3f7E7325219610907F80e7438CD22B0d27D",
-            "tokenManagerMintBurn": "0x2dF7688066d10e6aAEd5116814eB0f701cF6F74f",
-            "tokenManagerLiquidityPool": "0x5D16dFFFb32889eB4d023030FD63B598334C9C90"
-          },
-          "implementation": "0xD726BE4c4491E86205d36076C0E9cD3a825e797a",
-          "address": "0xF786e21509A9D50a9aFD033B5940A2b7D872C208"
-        },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1249,23 +1118,6 @@
           "deploymentMethod": "create2",
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
-        },
-        "InterchainTokenService": {
-          "salt": "ITS v0.3.0",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0x6Aa459645b696108894C7548A898192E4716Ef15",
-          "standardizedTokenLockUnlock": "0x3a27e5d92C50C022510B74D2eBc53956E3b3cAd6",
-          "standardizedTokenMintBurn": "0x9b63b458cD214C3786f117aD3d2821a9aC8E4201",
-          "standardizedTokenDeployer": "0x6c6632071c792f7F73BBC404A1FD1973e60B8C0C",
-          "remoteAddressValidatorImplementation": "0x33FEfaaD1D97d82C930B2d920613c8697787823D",
-          "remoteAddressValidator": "0x30c8dffBfb0f0535A1B56A7D00d5627692B399D5",
-          "tokenManagerImplementations": {
-            "tokenManagerLockUnlock": "0xADE0d3f7E7325219610907F80e7438CD22B0d27D",
-            "tokenManagerMintBurn": "0x2dF7688066d10e6aAEd5116814eB0f701cF6F74f",
-            "tokenManagerLiquidityPool": "0x5D16dFFFb32889eB4d023030FD63B598334C9C90"
-          },
-          "implementation": "0x6f7F028e83696498233EdB778Abe858D8c63d85b",
-          "address": "0xF786e21509A9D50a9aFD033B5940A2b7D872C208"
         },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
@@ -1359,23 +1211,6 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "InterchainTokenService": {
-          "salt": "ITS v0.3.0",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0x6Aa459645b696108894C7548A898192E4716Ef15",
-          "standardizedTokenLockUnlock": "0x3a27e5d92C50C022510B74D2eBc53956E3b3cAd6",
-          "standardizedTokenMintBurn": "0x9b63b458cD214C3786f117aD3d2821a9aC8E4201",
-          "standardizedTokenDeployer": "0x6c6632071c792f7F73BBC404A1FD1973e60B8C0C",
-          "remoteAddressValidatorImplementation": "0x33FEfaaD1D97d82C930B2d920613c8697787823D",
-          "remoteAddressValidator": "0x30c8dffBfb0f0535A1B56A7D00d5627692B399D5",
-          "tokenManagerImplementations": {
-            "tokenManagerLockUnlock": "0xADE0d3f7E7325219610907F80e7438CD22B0d27D",
-            "tokenManagerMintBurn": "0x2dF7688066d10e6aAEd5116814eB0f701cF6F74f",
-            "tokenManagerLiquidityPool": "0x5D16dFFFb32889eB4d023030FD63B598334C9C90"
-          },
-          "implementation": "0x586f432b7a5a714c5cEfE8240a3C6c4B56B1EcF9",
-          "address": "0xF786e21509A9D50a9aFD033B5940A2b7D872C208"
-        },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1462,26 +1297,6 @@
           "deploymentMethod": "create2",
           "codehash": "0x560e0fd29846f1419f347486d7078f378fc55231e275939c6fd837fd9f1a1df1",
           "predeployCodehash": "0xd2e447f58ed8d9d3e7e4f0221882d65bf8d3cffba898bc0430e5478ef39855c6"
-        },
-        "InterchainTokenService": {
-          "gasOptions": {
-            "gasLimit": 8000000
-          },
-          "salt": "ITS v0.3.0",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0x6Aa459645b696108894C7548A898192E4716Ef15",
-          "standardizedTokenLockUnlock": "0x3a27e5d92C50C022510B74D2eBc53956E3b3cAd6",
-          "standardizedTokenMintBurn": "0x9b63b458cD214C3786f117aD3d2821a9aC8E4201",
-          "standardizedTokenDeployer": "0x6c6632071c792f7F73BBC404A1FD1973e60B8C0C",
-          "remoteAddressValidatorImplementation": "0x33FEfaaD1D97d82C930B2d920613c8697787823D",
-          "remoteAddressValidator": "0x30c8dffBfb0f0535A1B56A7D00d5627692B399D5",
-          "tokenManagerImplementations": {
-            "tokenManagerLockUnlock": "0xADE0d3f7E7325219610907F80e7438CD22B0d27D",
-            "tokenManagerMintBurn": "0x2dF7688066d10e6aAEd5116814eB0f701cF6F74f",
-            "tokenManagerLiquidityPool": "0x5D16dFFFb32889eB4d023030FD63B598334C9C90"
-          },
-          "implementation": "0x3fA4a8fA63703B3548107a7F31f7AEc9d990D6E7",
-          "address": "0xF786e21509A9D50a9aFD033B5940A2b7D872C208"
         },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
