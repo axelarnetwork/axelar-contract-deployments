@@ -65,12 +65,13 @@ jobs:
             }
           }' > ./axelar-chains-config/info/local.json
 
-      # Create .env file with default hardhat private key that's prefunded
+      # Create .env file with default hardhat private key that's prefunded, default salt is keccak256('salt')
       - name: Prepare .env
         run: |
           echo 'PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' >> .env
           echo 'ENV=local' >> .env
           echo 'CHAINS=test' >> .env
+          echo 'SALT=a05e334153147e75f3f416139b5109d1179cb56fef6a4ecb4c4cbc92a7c37b70' >> .env
 
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
@@ -113,3 +114,9 @@ jobs:
 
       - name: Upgrade ITS using create2
         run: node evm/deploy-its.js -s "ITS v1.0.0" -f "ITS v1.0.0 Factory" -m create2 -u -y
+
+      - name: InterchainTokenFactory deploy interchain token on current chain
+        run: node evm/interchainTokenFactory.js --action deployInterchainToken --name "test" --symbol "TST" --decimals 18 --distributor 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
+
+      - name: InterchainTokenService deploy interchain token on current chain
+        run: node evm/its.js --action deployInterchainToken --name "test" --symbol "TST" --decimals 18 --distributor 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 --destinationChain '' --gasValue 0 -y

@@ -299,7 +299,7 @@ if (require.main === module) {
     program.addOption(new Option('--symbol <symbol>', 'token symbol'));
     program.addOption(new Option('--decimals <decimals>', 'token decimals'));
     program.addOption(new Option('--distributor <distributor>', 'token distributor'));
-    program.addOption(new Option('--mintAmount <mintAmount>', 'mint amount'));
+    program.addOption(new Option('--mintAmount <mintAmount>', 'mint amount').default(0));
     program.addOption(new Option('--originalChain <originalChain>', 'original chain'));
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
