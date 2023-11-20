@@ -15,7 +15,7 @@ const {
     printWarn,
     printError,
     copyObject,
-    isString,
+    isNonEmptyString,
     isNumber,
     isAddressArray,
     getBytecodeHash,
@@ -45,14 +45,14 @@ async function getConstructorArgs(contractName, chain, wallet) {
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
 
-            if (!isString(governanceChain)) {
+            if (!isNonEmptyString(governanceChain)) {
                 throw new Error(`Missing AxelarServiceGovernance.governanceChain in the chain info.`);
             }
 
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
             contractConfig.governanceAddress = governanceAddress;
 
-            if (!isString(governanceAddress)) {
+            if (!isNonEmptyString(governanceAddress)) {
                 throw new Error(`Missing AxelarServiceGovernance.governanceAddress in the chain info.`);
             }
 
@@ -102,14 +102,14 @@ async function getConstructorArgs(contractName, chain, wallet) {
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
 
-            if (!isString(governanceChain)) {
+            if (!isNonEmptyString(governanceChain)) {
                 throw new Error(`Missing InterchainGovernance.governanceChain in the chain info.`);
             }
 
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
             contractConfig.governanceAddress = governanceAddress;
 
-            if (!isString(governanceAddress)) {
+            if (!isNonEmptyString(governanceAddress)) {
                 throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
             }
 
