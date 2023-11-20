@@ -16,7 +16,7 @@ const {
     isNumber,
     isValidCalldata,
     printWarn,
-    isStringArray,
+    isNonEmptyStringArray,
     isNumberArray,
     isValidAddress,
     mainProcessor,
@@ -151,7 +151,7 @@ async function processCommand(_, chain, options) {
             const symbolsArray = JSON.parse(symbols);
             const limitsArray = JSON.parse(limits);
 
-            if (!isStringArray(symbolsArray)) {
+            if (!isNonEmptyStringArray(symbolsArray)) {
                 throw new Error(`Invalid token symbols: ${symbols})}`);
             }
 
