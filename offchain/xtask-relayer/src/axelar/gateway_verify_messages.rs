@@ -5,8 +5,8 @@ pub fn axelar_gateway_verify_messages(
     fees: &str,
     fees_ratio: &str,
     payer: &str,
-    gateway_addr: String,
-    rpc_addr: String,
+    gateway_addr: &str,
+    rpc_addr: &str,
 ) {
     let request_json = json!({
         "verify_messages": [
@@ -50,11 +50,8 @@ pub fn axelar_gateway_verify_messages(
         let output = String::from_utf8_lossy(&output.stdout);
         let output: Value = serde_json::from_str(&output).unwrap();
 
-        info!("axelar_gateway_verify_messages | output: {:?}", output)
+        info!("output: {:#?}", output)
     } else {
-        error!(
-            "axelar_gateway_verify_messages | error: {:?}",
-            String::from_utf8_lossy(&output.stderr)
-        );
+        error!("error: {:#?}", String::from_utf8_lossy(&output.stderr));
     }
 }

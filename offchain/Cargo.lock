@@ -1032,6 +1032,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "anchor-client",
+ "anchor-lang",
+ "anyhow",
+ "base64 0.21.5",
+ "clap 4.4.8",
+ "env_logger 0.10.1",
+ "gateway",
+ "regex",
+ "serde",
+ "solana-client",
+ "solana-program",
+ "solana-sdk",
+ "solana-transaction-status",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5261,17 +5280,23 @@ name = "xtask-relayer"
 version = "0.1.0"
 dependencies = [
  "anchor-client",
+ "anchor-lang",
  "anyhow",
+ "base64 0.21.5",
  "clap 4.4.8",
+ "common",
  "env_logger 0.10.1",
  "gateway",
  "log",
+ "regex",
  "serde",
  "serde_json",
  "shellexpand",
  "solana-client",
  "solana-program",
  "solana-sdk",
+ "solana-transaction-status",
+ "tokio",
 ]
 
 [[package]]

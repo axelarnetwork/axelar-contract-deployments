@@ -41,11 +41,8 @@ pub fn axelar_dummy_verifier_is_verified(
         let output = String::from_utf8_lossy(&output.stdout);
         let output: Value = serde_json::from_str(&output).unwrap();
 
-        info!("axelar_dummy_verifier_is_verified | output: {:?}", output);
+        info!("output: {:#?}", output);
     } else {
-        error!(
-            "axelar_dummy_verifier_is_verified | error: {:?}",
-            String::from_utf8_lossy(&output.stderr)
-        );
+        error!("error: {:#?}", String::from_utf8_lossy(&output.stderr));
     }
 }

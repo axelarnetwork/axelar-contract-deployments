@@ -1,5 +1,5 @@
 [workspace]
-members = ["components/*", "xtask-relayer", "xtask-solana-client"]
+members = ["components/*", "xtask-relayer", "xtask-solana-client", "common"]
 resolver = "2"
 
 [profile.release]
@@ -15,6 +15,7 @@ panic = 'abort'
 
 [workspace.dependencies]
 anchor-client = "0.28.0"
+anchor-lang = "0.28.0"
 anyhow = "1.0"
 clap = { version = "4.4.8", features = ["derive"] }
 gateway = { path = "../solana/programs/gateway", features = ["no-entrypoint"] }
@@ -26,3 +27,8 @@ solana-sdk = "1.16.18"
 shellexpand = "3.1.0"
 log = "0.4.20"
 env_logger = "0.10.0"
+solana-transaction-status = "1.16.18"
+regex = "1"
+base64 = "0.21"
+common = { path = "common" }
+tokio = { version = "1", features = ["full"] }
