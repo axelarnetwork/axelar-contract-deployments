@@ -113,3 +113,9 @@ jobs:
 
       - name: Upgrade ITS using create2
         run: node evm/deploy-its.js -s "ITS v1.0.0" -f "ITS v1.0.0 Factory" -m create2 -u -y
+
+      - name: InterchainTokenFactory deploy interchain token on current chain
+        run: node evm/interchainTokenFactory.js --action deployInterchainToken --name "test" --symbol "TST" --decimals 18 --distributor 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --salt "salt" -y
+
+      - name: InterchainTokenService deploy interchain token on current chain
+        run: node evm/its.js --action deployInterchainToken --name "test" --symbol "TST" --decimals 18 --distributor 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 --destinationChain '' --gasValue 0 --salt "salt" -y
