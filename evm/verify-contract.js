@@ -21,8 +21,6 @@ async function processCommand(config, chain, options) {
     const wallet = Wallet.createRandom().connect(provider);
     const verifyOptions = {};
 
-    printInfo('Chain', chain.name);
-
     if (dir) {
         verifyOptions.dir = dir;
     }
