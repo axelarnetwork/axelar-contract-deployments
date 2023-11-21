@@ -723,17 +723,17 @@
         "InterchainTokenService": {
           "salt": "ITS v1.0.0-beta.3",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "tokenManagerDeployer": "0x6bf1F411785A3f36c6f4A51e61a332534EABdC74",
-          "implementation": "0x85A2a3bb7AA0347513D435b4eFd0E9417F3C620A",
+          "tokenManagerDeployer": "0x63961dA89E1ba37923b92CCba214A900DeD5697B",
+          "implementation": "0x5e77AA24809D938717D2128C7fdfF77aD32C566a",
           "address": "0xa4A9965149388c86E62CDDDd6C95EFe9c294005a",
           "interchainTokenFactory": "0xe93462bc7Ef7692D763C4d4DbCE7B870c0958c59",
-          "interchainToken": "0x39a525B43c58F483162e532d2335C5Ff93f67Ee6",
-          "interchainTokenDeployer": "0x2b30B2b0e24c94b05423f6f37e5aDe06c6acC9cf",
-          "tokenManagerMintBurn": "0x66689C684B2d4EA971E9aA4EBC34061949CA457d",
-          "tokenManagerMintBurnFrom": "0x4b8fa7DCfB59950bA8755b54ec9dBEe2f0F3a512",
-          "tokenManagerLockUnlock": "0x1E063c4162Eb0447092590E5BFcd2fE192E57D62",
-          "tokenManagerLockUnlockFee": "0x89aEF97F9c5023035AB631313ED8A1621E218820",
-          "interchainTokenFactoryImplementation": "0x7745e12A01549e5611CE97Df2ec8Cb43819af988"
+          "interchainToken": "0xcCC6Bf8FC63829975e41F2F75757bf048594C1f5",
+          "interchainTokenDeployer": "0xe08A78f67dDC85fB09f7b5601Bd7E6839a0A115C",
+          "tokenManagerMintBurn": "0xf517D082793b6b4A2B7B57d7A082411E29f11020",
+          "tokenManagerMintBurnFrom": "0x349C1E05C1f0A0D6211E4D9B11604de93982D8dd",
+          "tokenManagerLockUnlock": "0x4B922CD3CA6e9A8596e7A5f9793b2CAA9A99Df10",
+          "tokenManagerLockUnlockFee": "0x657f1FA0e281eEE53BB829D0161868b53C593fd2",
+          "interchainTokenFactoryImplementation": "0x48c7b6790e00eC6A40a8d1d50F226aC3954A2B15"
         }
       },
       "explorer": {
