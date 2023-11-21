@@ -920,6 +920,46 @@ function getContractJSON(contractName, artifactPath) {
     }
 }
 
+/**
+ * Retrieves gas options for contract interactions.
+ *
+ * This function determines the appropriate gas options for a given transaction.
+ * It supports offline scenarios and applies gas price adjustments if specified.
+ *
+ * @param {Object} contractConfig - The contract config.
+ * @param {Object} chain - The chain config object.
+ * @param {Object} options - Script options, including the 'offline' flag.
+ * @param {Object} provider - The RPC provider.
+ * @param {Number} gasLimit - Optional gas limit if no gas options are specified.
+ *
+ * @returns {Object} An object containing gas options for the transaction.
+ *
+ * @throws {Error} Throws an error if fetching the gas price fails.
+ *
+ * Note:
+ * - If 'options.offline' is true, static gas options from the contract or chain config are used.
+ * - If 'gasPriceAdjustment' is set in gas options and 'gasPrice' is not pre-defined, the gas price
+ *   is fetched from the provider and adjusted according to 'gasPriceAdjustment'.
+ */
+async function getGasOptions(contractConfig, chain, options, provider, gasLimit) {
+    if (options.offline) {
+        return contractConfig?.staticGasOptions || chain?.staticGasOptions || gasLimit ? { gasLimit } : {};
+    }
+
+    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || gasLimit ? { gasLimit } : {};
+    const gasPriceAdjustment = gasOptions.gasPriceAdjustment;
+
+    if (gasPriceAdjustment && !gasOptions.gasPrice) {
+        try {
+            gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * gasPriceAdjustment);
+        } catch (err) {
+            throw new Error(`Provider failed to retreive gas price: ${err}`);
+        }
+    }
+
+    return gasOptions;
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -971,4 +1011,5 @@ module.exports = {
     mainProcessor,
     getContractPath,
     getContractJSON,
+    getGasOptions,
 };

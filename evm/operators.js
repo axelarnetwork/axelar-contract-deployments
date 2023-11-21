@@ -21,6 +21,7 @@ const {
     isKeccak256Hash,
     parseArgs,
     prompt,
+    getGasOptions,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
@@ -58,7 +59,7 @@ async function processCommand(options, chain) {
 
     const operatorsContract = new Contract(operatorsAddress, IOperators.abi, wallet);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
     printInfo('Operator Action', action);

@@ -14,7 +14,7 @@ const {
     printInfo,
     printWarn,
     printError,
-    copyObject,
+    getGasOptions,
     isNonEmptyString,
     isNumber,
     isAddressArray,
@@ -255,7 +255,7 @@ async function processCommand(config, chain, options) {
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
 
     const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
-    const gasOptions = copyObject(contractConfig.gasOptions || chain.gasOptions || {});
+    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
 
     // Some chains require a gas adjustment
     if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {

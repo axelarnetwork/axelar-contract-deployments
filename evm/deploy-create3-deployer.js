@@ -9,13 +9,13 @@ const { predictContractConstant } = require('@axelar-network/axelar-gmp-sdk-soli
 const { Command } = require('commander');
 const chalk = require('chalk');
 
-const { printInfo, writeJSON, deployCreate2 } = require('./utils');
+const { printInfo, writeJSON, deployCreate2, getGasOptions } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
 const contractName = 'Create3Deployer';
 
-async function deployCreate3Deployer(wallet, chain, options = {}, verifyOptions = null) {
+async function deployCreate3Deployer(wallet, chain, provider, options = {}, verifyOptions = null) {
     printInfo('Deployer address', wallet.address);
 
     console.log(
@@ -31,7 +31,7 @@ async function deployCreate3Deployer(wallet, chain, options = {}, verifyOptions 
     }
 
     const contractConfig = contracts[contractName];
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
     console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
     const salt = options.salt || contractName;
@@ -74,6 +74,7 @@ async function main(options) {
         const verifyOptions = options.verify ? { env: options.env, chain: chain.name, only: options.verify } : null;
 
         let wallet;
+        let provider;
 
         if (options.env === 'local') {
             const [funder] = await ethers.getSigners();
@@ -81,11 +82,11 @@ async function main(options) {
             await (await funder.sendTransaction({ to: wallet.address, value: BigInt(1e21) })).wait();
             await deployConstAddressDeployer(wallet, config.chains[chains[0].toLowerCase()]);
         } else {
-            const provider = getDefaultProvider(chain.rpc);
+            provider = getDefaultProvider(chain.rpc);
             wallet = new Wallet(options.privateKey, provider);
         }
 
-        await deployCreate3Deployer(wallet, chain, { salt: options.salt, yes: options.yes }, verifyOptions);
+        await deployCreate3Deployer(wallet, chain, provider, { salt: options.salt, yes: options.yes }, verifyOptions);
         writeJSON(config, `${__dirname}/../axelar-chains-config/info/${options.env}.json`);
     }
 }

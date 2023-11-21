@@ -21,6 +21,7 @@ const {
     wasEventEmitted,
     mainProcessor,
     printError,
+    getGasOptions,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -82,7 +83,7 @@ async function processCommand(config, chain, options) {
 
     const gateway = new Contract(gatewayAddress, IGateway.abi, wallet);
 
-    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || {};
+    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
     printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
 
     printInfo('Action', action);
