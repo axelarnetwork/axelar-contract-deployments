@@ -175,7 +175,7 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('InterchainTokenService'),
+                    getContractJSON('InterchainTokenService', options.artifactPath),
                     [
                         contractConfig.tokenManagerDeployer,
                         contractConfig.interchainTokenDeployer,
