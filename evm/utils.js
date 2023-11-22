@@ -883,13 +883,17 @@ function findContractPath(dir, contractName) {
     }
 }
 
-function getContractPath(contractName) {
-    const projectRoot = findProjectRoot(__dirname);
+function getContractPath(contractName, projectRoot = '') {
+    if (projectRoot === '') {
+        projectRoot = path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network');
+    }
+
+    projectRoot = path.resolve(projectRoot);
 
     const searchDirs = [
-        path.join(projectRoot, 'node_modules', '@axelar-network', 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
-        path.join(projectRoot, 'node_modules', '@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
-        path.join(projectRoot, 'node_modules', '@axelar-network', 'interchain-token-service', 'artifacts', 'contracts'),
+        path.join(projectRoot, 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
+        path.join(projectRoot, 'axelar-cgp-solidity', 'artifacts', 'contracts'),
+        path.join(projectRoot, 'interchain-token-service', 'artifacts', 'contracts'),
     ];
 
     for (const dir of searchDirs) {
