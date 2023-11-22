@@ -6,6 +6,7 @@ const {
     Contract,
     utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString },
     constants: { AddressZero },
+    getDefaultProvider,
 } = ethers;
 const https = require('https');
 const http = require('http');
@@ -26,6 +27,7 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
+const defaultGasOptions = { gasLimit: 6000000 };
 
 const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
@@ -926,11 +928,9 @@ function getContractJSON(contractName, artifactPath) {
  * This function determines the appropriate gas options for a given transaction.
  * It supports offline scenarios and applies gas price adjustments if specified.
  *
- * @param {Object} contractConfig - The contract config.
  * @param {Object} chain - The chain config object.
  * @param {Object} options - Script options, including the 'offline' flag.
- * @param {Object} provider - The RPC provider.
- * @param {Number} gasLimit - Optional gas limit if no gas options are specified.
+ * @param {String} contractName - The name of the contract to deploy/interact with.
  *
  * @returns {Object} An object containing gas options for the transaction.
  *
@@ -941,21 +941,32 @@ function getContractJSON(contractName, artifactPath) {
  * - If 'gasPriceAdjustment' is set in gas options and 'gasPrice' is not pre-defined, the gas price
  *   is fetched from the provider and adjusted according to 'gasPriceAdjustment'.
  */
-async function getGasOptions(contractConfig, chain, options, provider, gasLimit) {
-    if (options.offline) {
-        return contractConfig?.staticGasOptions || chain?.staticGasOptions || gasLimit ? { gasLimit } : {};
+async function getGasOptions(chain, options, contractName) {
+    const { offline } = options;
+
+    const contractConfig = contractName ? chain?.contracts[contractName] : null;
+
+    if (offline) {
+        return copyObject(contractConfig?.staticGasOptions || chain?.staticGasOptions || defaultGasOptions);
     }
 
-    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || gasLimit ? { gasLimit } : {};
+    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || defaultGasOptions);
     const gasPriceAdjustment = gasOptions.gasPriceAdjustment;
 
     if (gasPriceAdjustment && !gasOptions.gasPrice) {
         try {
+            const provider = getDefaultProvider(chain.rpc);
             gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * gasPriceAdjustment);
         } catch (err) {
-            throw new Error(`Provider failed to retreive gas price: ${err}`);
+            throw new Error(`Provider failed to retrieve gas price: ${err}`);
         }
     }
+
+    if (gasPriceAdjustment) {
+        delete gasOptions.gasPriceAdjustment;
+    }
+
+    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
 
     return gasOptions;
 }

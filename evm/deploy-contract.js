@@ -255,15 +255,9 @@ async function processCommand(config, chain, options) {
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
 
     const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
-    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
-
-    // Some chains require a gas adjustment
-    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
-        gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.6);
-    }
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
-    printInfo(`Gas override for chain ${chain.name}`, JSON.stringify(gasOptions, null, 2));
 
     const salt = options.salt || contractName;
     let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;

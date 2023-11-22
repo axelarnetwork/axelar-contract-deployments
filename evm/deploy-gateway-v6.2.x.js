@@ -132,9 +132,8 @@ async function deploy(config, chain, options) {
         printInfo('MintLimiter address', mintLimiter);
     }
 
-    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
-    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
     const gatewayFactory = new ContractFactory(AxelarGateway.abi, AxelarGateway.bytecode, wallet);
     const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
     const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
@@ -477,14 +476,13 @@ async function upgrade(_, chain, options) {
     printInfo('Mint limiter', mintLimiter);
     printInfo('Setup params', setupParams);
 
-    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     if (prompt(`Proceed with an upgrade on ${chain.name}?`, yes)) {
         return;
     }
 
-    const tx = await gateway.populateTransaction.upgrade(contractConfig.implementation, implementationCodehash, setupParams);
+    const tx = await gateway.populateTransaction.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
 
     const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 

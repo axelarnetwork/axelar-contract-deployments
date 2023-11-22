@@ -32,9 +32,6 @@ async function deployImplementation(config, wallet, chain, options) {
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName] || {};
 
-    const rpc = chain.rpc;
-    const provider = getDefaultProvider(rpc);
-
     contractConfig.salt = salt;
     contractConfig.deployer = wallet.address;
 
@@ -57,7 +54,7 @@ async function deployImplementation(config, wallet, chain, options) {
         return;
     }
 
-    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     const deployOptions =
         deployMethod === 'create'
@@ -328,7 +325,7 @@ async function upgrade(config, chain, options) {
 
     printInfo(`Upgrading Interchain Token Service.`);
 
-    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
+    const gasOptions = await getGasOptions(chain, options, contractName);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
 
     const codehash = await getBytecodeHash(contractConfig.implementation, chain.id, provider);

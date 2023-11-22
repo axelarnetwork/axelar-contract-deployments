@@ -45,8 +45,7 @@ async function processCommand(options, chain) {
 
     const ownershipContract = new Contract(ownershipAddress, IOwnable.abi, wallet);
 
-    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
-    printInfo(`Gas override for ${chain.name}`, JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Ownership Action', action);
 

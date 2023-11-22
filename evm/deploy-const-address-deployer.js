@@ -48,8 +48,7 @@ async function deployConstAddressDeployer(wallet, chain, options = {}, verifyOpt
 
     console.log(`Deployer has ${balance / 1e18} ${chalk.green(chain.tokenSymbol)} and nonce ${nonce} on ${chain.name}.`);
 
-    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     const constAddressDeployerAddress = await predictAddressCreate(wallet.address, nonce);
     printInfo('ConstAddressDeployer will be deployed to', constAddressDeployerAddress);

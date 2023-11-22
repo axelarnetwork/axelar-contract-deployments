@@ -59,8 +59,7 @@ async function processCommand(options, chain) {
 
     const operatorsContract = new Contract(operatorsAddress, IOperators.abi, wallet);
 
-    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Operator Action', action);
 

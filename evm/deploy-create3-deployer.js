@@ -31,8 +31,7 @@ async function deployCreate3Deployer(wallet, chain, provider, options = {}, veri
     }
 
     const contractConfig = contracts[contractName];
-    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     const salt = options.salt || contractName;
     printInfo('Create3 deployer deployment salt', salt);

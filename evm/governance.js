@@ -106,9 +106,7 @@ async function processCommand(_, chain, options) {
 
     const governance = new Contract(governanceAddress, IGovernance.abi, wallet);
 
-    const gasOptions = getGasOptions(contractConfig, chain, options, provider, 5e6);
-
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Proposal Action', action);
 

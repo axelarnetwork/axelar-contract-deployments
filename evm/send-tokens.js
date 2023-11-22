@@ -51,7 +51,7 @@ async function processCommand(_, chain, options) {
 
     printInfo('Chain', chain.name);
 
-    const gasOptions = getGasOptions(null, chain, options, provider);
+    const gasOptions = await getGasOptions(chain, options);
 
     if (
         prompt(

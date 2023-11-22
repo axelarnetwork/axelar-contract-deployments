@@ -124,8 +124,7 @@ async function processCommand(_, chain, options) {
 
     const multisigContract = new Contract(multisigAddress, IMultisig.abi, wallet);
 
-    const gasOptions = getGasOptions(contractConfig, chain, options, provider);
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Multisig Action', action);
 
