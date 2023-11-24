@@ -3,7 +3,7 @@ members = ["programs/*"]
 resolver = "2"
 
 [workspace.dependencies]
-anchor-lang = { version = "0.28.0" }
+anchor-lang = { version = "0.29.0" }
 borsh = { version = "0.10.3" }
 
 [profile.release]
