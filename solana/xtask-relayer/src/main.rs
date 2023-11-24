@@ -3,7 +3,7 @@ mod axelar;
 use axelar::gateway_verify_messages::axelar_gateway_verify_messages;
 use axelar::verifier_is_verified::axelar_dummy_verifier_is_verified;
 use clap::Parser;
-use common::solana::client::Client;
+use common::client::Client;
 use common::types::{CcId, Message};
 use env_logger;
 use log::{info, warn};

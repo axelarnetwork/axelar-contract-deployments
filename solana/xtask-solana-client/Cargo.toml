@@ -5,11 +5,11 @@ edition = "2021"
 
 [dependencies]
 anchor-client.workspace = true
-clap.workspace=true
-env_logger.workspace=true
-gateway.workspace=true
-log.workspace=true
-shellexpand.workspace=true
+clap.workspace = true
+env_logger.workspace = true
+gateway = { path = "../programs/gateway" }
+log.workspace = true
+shellexpand.workspace = true
 solana-client.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
