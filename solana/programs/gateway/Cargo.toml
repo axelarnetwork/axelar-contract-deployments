@@ -12,6 +12,7 @@ no-entrypoint = []
 
 [dependencies]
 arrayref = "0.3.7"
+borsh.workspace = true
 num-derive = "0.4.1"
 num-traits = "0.2.17"
 solana-program = "1.17.6"

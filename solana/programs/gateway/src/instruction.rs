@@ -1,20 +1,15 @@
 //! Instruction types
 
+use crate::error::GatewayError;
 use arrayref::{array_ref, array_refs};
+use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::instruction::Instruction;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use crate::error::GatewayError;
-
-const MSG_ID_SIZE: usize = 100;
-const PROOF_SIZE: usize = 100;
-const PAYLOAD_SIZE: usize = 100;
-const QUEUE_INSTRUCTION_SIZE: usize = MSG_ID_SIZE + PROOF_SIZE + PAYLOAD_SIZE;
-
 /// Instructions supported by the gateway program.
 #[repr(u8)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
 pub enum GatewayInstruction<'a> {
     /// Receives an Axelar message and initializes a new Message account.
     ///
@@ -45,14 +40,10 @@ impl<'a> GatewayInstruction<'a> {
     #[allow(clippy::ptr_offset_with_cast)]
     pub fn unpack(input: &'a [u8]) -> Result<Self, GatewayError> {
         use crate::error::GatewayError::InvalidInstruction;
+        use GatewayInstruction::*;
         let (&tag, rest) = input.split_first().ok_or(InvalidInstruction)?;
         Ok(match tag {
-            0 => {
-                let src = array_ref![rest, 0, QUEUE_INSTRUCTION_SIZE];
-                let (id, proof, payload) = array_refs![src, MSG_ID_SIZE, PROOF_SIZE, PAYLOAD_SIZE];
-                let id = std::str::from_utf8(id).map_err(|_| InvalidInstruction)?;
-                Self::Queue { id, payload, proof }
-            }
+            0 => Queue::try_from_slice(rest),
             _ => return Err(GatewayError::InvalidInstruction),
         })
     }

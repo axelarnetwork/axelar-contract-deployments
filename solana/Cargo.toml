@@ -1,5 +1,5 @@
 [workspace]
-members = ["programs/*", "common", "xtask-relayer", "xtask-solana-client"]
+members = ["programs/*", "helpers/*", "common", "xtask-relayer", "xtask-solana-client"]
 resolver = "2"
 
 [workspace.dependencies]
