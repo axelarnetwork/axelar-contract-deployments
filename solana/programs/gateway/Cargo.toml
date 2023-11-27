@@ -1,22 +1,23 @@
 [package]
 name = "gateway"
 version = "0.1.0"
-description = "Axelar Gateway implementation for Solana"
 edition = "2021"
+
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "gateway"
 
 [features]
 no-entrypoint = []
-no-idl = []
-no-log-ix-name = []
-cpi = ["no-entrypoint"]
-default = []
 
 [dependencies]
-anchor-lang.workspace = true
-borsh.workspace = true
+arrayref = "0.3.7"
+num-derive = "0.4.1"
+num-traits = "0.2.17"
+solana-program = "1.17.6"
+thiserror = "1"
 
-registry = { path = "../registry", features = ["cpi"] }
+[dev-dependencies]
+solana-program-test = "1.17.6"
+solana-sdk = "1.17.6"
+test-utilities = {path = "test-utilities"}
