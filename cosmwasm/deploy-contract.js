@@ -36,8 +36,48 @@ async function getInstantiateMsg(contractName, config, chain) {
             if (chain) {
                 throw new Error('Multisig does not support chainNames option');
             }
+            const governanceAddress = contractConfig.governanceAddress;
 
-            return {};
+            if (!isString(governanceAddress)) {
+                throw new Error('Missing Multisig.governanceAddress in axelar info');
+            }
+
+            const rewardsAddress = config.axelar.contracts.Rewards.address;
+
+            if (!isString(rewardsAddress)) {
+                throw new Error('Missing Rewards.address in axelar info');
+            }
+
+            const gracePeriod = contractConfig.gracePeriod;
+
+            if (!isNumber(gracePeriod)) {
+                throw new Error(`Missing Multisig.gracePeriod in axelar info`);
+            }
+
+            return {governance_address: governanceAddress, rewards_address: rewardsAddress, grace_period: gracePeriod};
+        }
+
+        case 'Rewards': {
+        
+            if (chain) {
+                throw new Error('Rewards does not support chainNames option');
+            }
+            const governanceAddress = contractConfig.governanceAddress;
+
+            if (!isString(governanceAddress)) {
+                throw new Error('Missing Rewards.governanceAddress in axelar info');
+            }
+
+            const rewardsDenom = contractConfig.rewardsDenom;
+
+            if (!isString(rewardsDenom)) {
+                throw new Error('Missing Rewards.rewardsDenom in axelar info');
+            }
+
+            const params = contractConfig.params;
+
+            return {governance_address: governanceAddress, rewards_denom: rewardsDenom, params: params} ;
+
         }
 
         case 'ConnectionRouter': {
@@ -50,8 +90,34 @@ async function getInstantiateMsg(contractName, config, chain) {
             if (!isString(adminAddress)) {
                 throw new Error('Missing ConnectionRouter.adminAddress in axelar info');
             }
+            const governanceAddress = contractConfig.governanceAddress;
 
-            return { admin_address: adminAddress };
+            if (!isString(governanceAddress)) {
+                throw new Error('Missing ConnectionRouter.governanceAddress in axelar info');
+            }
+
+            return { admin_address: adminAddress, governance_address: governanceAddress };
+        }
+
+        case 'NexusGateway': {
+            if (chain) {
+                throw new Error('ConnectionRouter does not support chainNames option');
+            }
+
+            const nexus = contractConfig.nexus;
+
+            if (!isString(nexus)) {
+                throw new Error('Missing NexusGateway.nexus in axelar info');
+            }
+
+            const router = config.axelar.contracts.ConnectionRouter.address;
+
+            if (!isString(router)) {
+                throw new Error('Missing NexusGateway.router in axelar info');
+            }
+
+            return { nexus, router};
+
         }
 
         case 'VotingVerifier': {
@@ -65,6 +131,12 @@ async function getInstantiateMsg(contractName, config, chain) {
 
             if (!isString(serviceRegistryAddress)) {
                 throw new Error('Missing ServiceRegistry.address in axelar info');
+            }
+
+            const rewardsAddress = config.axelar.contracts.ServiceRegistry.address;
+
+            if (!isString(rewardsAddress)) {
+                throw new Error('Missing Rewards.address in axelar info');
             }
 
             const serviceName = contractConfig.serviceName;
@@ -99,6 +171,7 @@ async function getInstantiateMsg(contractName, config, chain) {
 
             return {
                 service_registry_address: serviceRegistryAddress,
+                rewards_address: rewardsAddress,
                 service_name: serviceName,
                 source_gateway_address: sourceGatewayAddress,
                 voting_threshold: votingThreshold,
@@ -197,6 +270,12 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error(`Missing MultisigProver[${chain.id}].encoder in axelar info`);
             }
 
+            const keyType = contractConfig.keyType;
+
+            if (!isString(keyType)) {
+                throw new Error(`Missing MultisigProver[${chain.id}].keyType in axelar info`);
+            }
+
             return {
                 admin_address: adminAddress,
                 gateway_address: gatewayAddress,
@@ -209,6 +288,7 @@ async function getInstantiateMsg(contractName, config, chain) {
                 chain_name: chain.name,
                 worker_set_diff_threshold: workerSetDiffThreshold,
                 encoder,
+                key_type:keyType,
             };
         }
     }
