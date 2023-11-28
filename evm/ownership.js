@@ -11,7 +11,7 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, printWalletInfo, loadConfig, saveConfig, prompt } = require('./utils');
+const { printInfo, printWalletInfo, loadConfig, saveConfig, prompt, getGasOptions } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
@@ -45,8 +45,7 @@ async function processCommand(options, chain) {
 
     const ownershipContract = new Contract(ownershipAddress, IOwnable.abi, wallet);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    printInfo(`Gas override for ${chain.name}`, JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Ownership Action', action);
 
