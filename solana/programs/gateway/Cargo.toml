@@ -17,8 +17,9 @@ num-derive = "0.4.1"
 num-traits = "0.2.17"
 solana-program = "1.17.6"
 thiserror = "1"
+slice-iterator = { path = "../../helpers/slice-iterator" }
 
 [dev-dependencies]
 solana-program-test = "1.17.6"
 solana-sdk = "1.17.6"
-test-utilities = {path = "test-utilities"}
+random-array = { path = "../../helpers/random-array" }
