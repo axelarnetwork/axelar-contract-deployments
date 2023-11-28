@@ -28,6 +28,7 @@ const {
     mainProcessor,
     isContract,
     deployContract,
+    getGasOptions,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
@@ -82,7 +83,7 @@ function getProxyParams(governance, mintLimiter) {
 }
 
 async function deploy(config, chain, options) {
-    const { env, privateKey, reuseProxy, reuseHelpers, verify, yes } = options;
+    const { privateKey, reuseProxy, reuseHelpers, verify, yes } = options;
 
     const contractName = 'AxelarGateway';
 
@@ -131,14 +132,8 @@ async function deploy(config, chain, options) {
         printInfo('MintLimiter address', mintLimiter);
     }
 
-    const gasOptions = JSON.parse(JSON.stringify(contractConfig.gasOptions || chain.gasOptions || {}));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
-    // Some chains require a gas adjustment
-    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
-        gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.6);
-    }
-
-    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
     const gatewayFactory = new ContractFactory(AxelarGateway.abi, AxelarGateway.bytecode, wallet);
     const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
     const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
@@ -481,14 +476,13 @@ async function upgrade(_, chain, options) {
     printInfo('Mint limiter', mintLimiter);
     printInfo('Setup params', setupParams);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     if (prompt(`Proceed with an upgrade on ${chain.name}?`, yes)) {
         return;
     }
 
-    const tx = await gateway.populateTransaction.upgrade(contractConfig.implementation, implementationCodehash, setupParams);
+    const tx = await gateway.populateTransaction.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
 
     const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 

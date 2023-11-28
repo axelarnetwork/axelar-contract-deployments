@@ -9,7 +9,7 @@ const {
     getDefaultProvider,
     utils: { parseEther, parseUnits },
 } = ethers;
-const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt, copyObject } = require('./utils');
+const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt, getGasOptions } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js');
 
@@ -51,7 +51,7 @@ async function processCommand(_, chain, options) {
 
     printInfo('Chain', chain.name);
 
-    const gasOptions = copyObject(chain.gasOptions || {});
+    const gasOptions = await getGasOptions(chain, options);
 
     if (
         prompt(

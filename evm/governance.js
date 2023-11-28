@@ -13,7 +13,7 @@ const {
 const { Command, Option } = require('commander');
 const {
     printInfo,
-    copyObject,
+    getGasOptions,
     printWalletInfo,
     isValidTimeFormat,
     dateToEta,
@@ -65,7 +65,7 @@ async function getGatewaySetupParams(governance, gateway, contracts, options) {
 }
 
 async function processCommand(_, chain, options) {
-    const { env, contractName, address, action, date, privateKey, yes } = options;
+    const { contractName, address, action, date, privateKey, yes } = options;
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -106,14 +106,7 @@ async function processCommand(_, chain, options) {
 
     const governance = new Contract(governanceAddress, IGovernance.abi, wallet);
 
-    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || { gasLimit: 5e6 });
-
-    // Some chains require a gas adjustment
-    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
-        gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.4);
-    }
-
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Proposal Action', action);
 
