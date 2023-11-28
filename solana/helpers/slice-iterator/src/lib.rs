@@ -3,15 +3,35 @@ use std::mem::size_of;
 
 /// Iterates over a slice of bytes while yielding segments of variable length.
 /// Each slice is prefixed with its length as a 16-bit unsigned integer.
+#[derive(Debug)]
 pub struct SliceIterator<'a> {
     input: &'a [u8],
     cursor: u16,
+    size: u16,
 }
+const STEP: usize = size_of::<u16>();
 
 impl<'a> SliceIterator<'a> {
     /// Creates a new `SliceIterator` for the given byte slice.
-    pub fn new(input: &'a [u8]) -> Self {
-        Self { input, cursor: 0 }
+    pub fn new(input: &'a [u8]) -> Result<Self, IterationError> {
+        // The first two bytes should contain the collection size
+        if input.len() < STEP {
+            return Err(IterationError {
+                kind: InputError::TooSmall,
+                position: 0,
+            });
+        }
+
+        let (collection_size_bytes, rest) = input.split_at(STEP);
+        // Unwrap: We just checked that `collection_size_bytes` contains at least two bytes.
+        let collection_size_bytes = collection_size_bytes.try_into().unwrap();
+        let collection_size = u16::from_be_bytes(collection_size_bytes);
+
+        Ok(Self {
+            input: rest,
+            cursor: 0,
+            size: collection_size,
+        })
     }
 
     /// Generates an `IterationError` with specific `InputError` and current cursor position.
@@ -21,11 +41,17 @@ impl<'a> SliceIterator<'a> {
             position: self.cursor,
         }
     }
+
+    // The initial collection size.
+    pub fn size(&self) -> u16 {
+        self.size
+    }
 }
 
-#[derive(Debug)]
 /// Error returnd by `SliceIterator`, detailing the error type and the position in the
 /// byte slice where it occurred.
+#[derive(Debug)]
+#[allow(unused)]
 pub struct IterationError {
     kind: InputError,
     position: u16,
@@ -34,6 +60,7 @@ pub struct IterationError {
 #[derive(Debug)]
 /// Possible types of error that can occur during iteration.
 pub enum InputError {
+    TooSmall,
     MissingSizePrefix,
     InvalidSizePrefix,
     ContentLenghtMissmatch,
@@ -48,29 +75,24 @@ impl<'a> Iterator for SliceIterator<'a> {
     /// if an error occurs.
     fn next(&mut self) -> Option<Self::Item> {
         use InputError::*;
-
         let rest = &self.input[self.cursor as usize..];
         if rest.is_empty() {
             return None;
         }
-
-        if rest.len() < size_of::<u16>() {
+        if rest.len() < STEP {
             return Some(Err(self.error(MissingSizePrefix)));
         }
-
-        let (chunk_size_bytes, rest) = rest.split_at(size_of::<u16>());
-        let Ok(chunk_size_bytes) = chunk_size_bytes.try_into() else {
-            return Some(Err(self.error(InvalidSizePrefix)));
-        };
+        let (chunk_size_bytes, rest) = rest.split_at(STEP);
+        // Unwrap: We just checked that `rest` contains at least two bytes.
+        let chunk_size_bytes = chunk_size_bytes.try_into().unwrap();
         let chunk_size = u16::from_be_bytes(chunk_size_bytes);
-        let chunk = &rest[0..chunk_size as usize];
 
+        let chunk = &rest[0..chunk_size as usize];
         if chunk.len() != chunk_size as usize {
             return Some(Err(self.error(ContentLenghtMissmatch)));
         }
 
-        self.cursor += size_of::<u16>() as u16 + chunk_size;
-
+        self.cursor += STEP as u16 + chunk_size;
         Some(Ok(chunk))
     }
 }
@@ -80,16 +102,18 @@ impl<'a> Iterator for SliceIterator<'a> {
 /// This function expects the input byte slice to be formatted as a sequence of sub-slices,
 /// where each sub-slice is prefixed with its length encoded as a big-endian `u16`.
 pub fn deserialize_slices(src: &[u8]) -> Result<Vec<&[u8]>, IterationError> {
-    SliceIterator::new(src).collect()
+    SliceIterator::new(src)?.collect()
 }
 
 /// Serializes slices into a writer.
 ///
 /// Each slice is prefixed with its length encoded as a big-endian `u16`.
 pub fn serialize_slices<W: Write>(src: &[&[u8]], writer: &mut W) -> io::Result<()> {
+    // write the collection size in the first two bytes
+    writer.write_all(&(src.len() as u16).to_be_bytes())?;
+    // Then write each sub-slice prefixed by the sub-slice size
     for value in src {
-        let len = value.len() as u16;
-        writer.write_all(&len.to_be_bytes())?;
+        writer.write_all(&(value.len() as u16).to_be_bytes())?;
         writer.write_all(value)?;
     }
     Ok(())
@@ -98,6 +122,25 @@ pub fn serialize_slices<W: Write>(src: &[&[u8]], writer: &mut W) -> io::Result<(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn iterator_initialization() {
+        let a = &[1, 2, 3, 4, 5];
+        let b = &[5, 6, 7, 8, 9, 10];
+        let data: &[&[u8]] = &[a, b];
+        let mut buffer = vec![];
+        serialize_slices(data, &mut buffer).unwrap();
+        assert_eq!(u16::from_be_bytes([buffer[0], buffer[1]]), 2); // collection size
+
+        // Iterator should consume the first two bytes of the slice when it is created.
+        let mut iterator = SliceIterator::new(&buffer).unwrap();
+        assert_eq!(iterator.input, &buffer[2..]);
+        assert_eq!(iterator.size, 2);
+        let first = iterator.next().unwrap().unwrap();
+        assert_eq!(first, a);
+        let second = iterator.next().unwrap().unwrap();
+        assert_eq!(second, b);
+    }
 
     #[test]
     fn iterator_round_trip() {
@@ -119,9 +162,31 @@ mod tests {
         let data: &[&[u8]] = &[&[12, 13]];
         let mut buffer = vec![];
         serialize_slices(data, &mut buffer).unwrap();
-        assert_eq!(u16::from_be_bytes([buffer[0], buffer[1]]), 2);
-        assert_eq!(buffer[2], 12);
-        assert_eq!(buffer[3], 13);
+        assert_eq!(u16::from_be_bytes([buffer[0], buffer[1]]), 1); // collection size
+        assert_eq!(u16::from_be_bytes([buffer[2], buffer[3]]), 2); // first sub-slice size
+        assert_eq!(buffer[4], 12); // first sub-slice element
+        assert_eq!(buffer[5], 13); // second sub-slice element
+        assert!(buffer.get(6).is_none());
+    }
+
+    #[test]
+    fn serialize_slices_function_two_subslices() {
+        let a = &[20, 21];
+        let b = &[30, 31, 32];
+        let data: &[&[u8]] = &[a, b];
+        let mut buffer = vec![];
+        serialize_slices(data, &mut buffer).unwrap();
+        assert_eq!(u16::from_be_bytes([buffer[0], buffer[1]]), 2); // collection size
+        assert_eq!(u16::from_be_bytes([buffer[2], buffer[3]]), 2); // first sub-slice size
+        assert_eq!(buffer[4], 20); // first sub-slice, first element
+        assert_eq!(buffer[5], 21); // second sub-slice, second element
+        assert_eq!(u16::from_be_bytes([buffer[6], buffer[7]]), 3); // second sub-slice size
+        assert_eq!(buffer[8], 30); // second sub-slice, first element
+        assert_eq!(buffer[9], 31); // second sub-slice, second element
+        assert_eq!(buffer[10], 32); // secont sub-slice, third element
+        assert!(buffer.get(11).is_none());
+        // round-trip
+        assert_eq!(deserialize_slices(&buffer).unwrap(), data);
     }
 
     #[test]
@@ -129,7 +194,11 @@ mod tests {
         let data: &[&[u8]] = &[&[]];
         let mut buffer = vec![];
         serialize_slices(data, &mut buffer).unwrap();
-        assert_eq!(u16::from_be_bytes([buffer[0], buffer[1]]), 0);
+        assert_eq!(u16::from_be_bytes([buffer[0], buffer[1]]), 1); // collection-size
+        assert_eq!(u16::from_be_bytes([buffer[2], buffer[3]]), 0); // first sub-slice size
+        assert!(buffer.get(4).is_none());
+        // round-trip
+        assert_eq!(deserialize_slices(&buffer).unwrap(), data);
     }
 
     #[test]
@@ -137,6 +206,9 @@ mod tests {
         let data: &[&[u8]] = &[];
         let mut buffer = vec![];
         serialize_slices(data, &mut buffer).unwrap();
-        assert!(buffer.is_empty());
+        assert_eq!(u16::from_be_bytes([buffer[0], buffer[1]]), 0);
+        assert!(buffer.get(2).is_none());
+        // round-trip
+        assert_eq!(deserialize_slices(&buffer).unwrap(), data);
     }
 }
