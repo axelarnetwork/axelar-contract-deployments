@@ -83,3 +83,9 @@ The contracts depend on each other and will need to be deployed in a specific or
 3. VotingVerifier
 4. Gateway
 5. MultisigProver
+
+### Constant Address Deployment
+
+To deploy with a constant address using instantiate2, pass the `--instantiate2` flag. To upload the contract and output the expected address, but not instantiate, pass `--instantiate2` and `-u`. A salt can be passed
+with `-s`. If no salt is passed but a salt is needed for constant address deployment, the contract name will be used
+as a salt.
