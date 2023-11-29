@@ -1084,7 +1084,6 @@ dependencies = [
  "solana-program",
  "solana-sdk",
  "solana-transaction-status",
- "thiserror",
 ]
 
 [[package]]
