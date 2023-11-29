@@ -5,7 +5,6 @@ use axelar::verifier_is_verified::axelar_dummy_verifier_is_verified;
 use clap::Parser;
 use common::client::Client;
 use common::types::{CcId, Message};
-use env_logger;
 use log::{info, warn};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::signature::Signature;
@@ -67,7 +66,7 @@ async fn main() {
             &gateway::id(),
             None,
             None,
-            args.solana_tx_limit.clone(),
+            args.solana_tx_limit,
         );
 
         // request rate limit
@@ -76,13 +75,13 @@ async fn main() {
         for tx in txs {
             let signature = Signature::from_str(tx.signature.as_str()).unwrap();
 
-            match solana_rpc_client.fetch_events_by_tx_signature_contract_call(signature.clone()) {
+            match solana_rpc_client.fetch_events_by_tx_signature_contract_call(signature) {
                 Ok(events) => {
                     for (index, event) in events.iter().enumerate() {
                         // prep for axelar
                         let cc_id = CcId::from_chain_signature_and_index(
                             "sol".to_owned(),
-                            signature.clone(),
+                            signature,
                             index,
                         );
                         let correct_request_body =
@@ -101,14 +100,14 @@ async fn main() {
                         );
 
                         // check if state has changed happy scenario
-                        let _result_is_verified_verifier = axelar_dummy_verifier_is_verified(
+                        axelar_dummy_verifier_is_verified(
                             correct_request_body.clone(),
                             args.axelar_verifier_addr.clone(),
                             args.rpc_addr.clone(),
                         );
 
                         // angry scenario
-                        let _result_is_verified_verifier = axelar_dummy_verifier_is_verified(
+                        axelar_dummy_verifier_is_verified(
                         Message {
                             cc_id: CcId {
                                 chain: "sol".to_owned(),
