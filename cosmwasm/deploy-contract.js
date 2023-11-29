@@ -54,11 +54,11 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error(`Missing Multisig.gracePeriod in axelar info`);
             }
 
-            return {governance_address: governanceAddress, rewards_address: rewardsAddress, grace_period: gracePeriod};
+            return { governance_address: governanceAddress, rewards_address: rewardsAddress, grace_period: gracePeriod };
         }
 
         case 'Rewards': {
-        
+
             if (chain) {
                 throw new Error('Rewards does not support chainNames option');
             }
@@ -76,7 +76,7 @@ async function getInstantiateMsg(contractName, config, chain) {
 
             const params = contractConfig.params;
 
-            return {governance_address: governanceAddress, rewards_denom: rewardsDenom, params: params} ;
+            return { governance_address: governanceAddress, rewards_denom: rewardsDenom, params: params };
 
         }
 
@@ -116,7 +116,7 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error('Missing NexusGateway.router in axelar info');
             }
 
-            return { nexus, router};
+            return { nexus, router };
 
         }
 
@@ -288,7 +288,7 @@ async function getInstantiateMsg(contractName, config, chain) {
                 chain_name: chain.name,
                 worker_set_diff_threshold: workerSetDiffThreshold,
                 encoder,
-                key_type:keyType,
+                key_type: keyType,
             };
         }
     }
@@ -320,19 +320,21 @@ async function deploy(options, chain, config) {
 
     printInfo('Code ID', contractConfig.codeID);
 
-    const initMsg = await getInstantiateMsg(options.contractName, config, chain);
-    const contractAddress = await instantiateContract(config, options.contractName, initMsg, wallet, client);
+    if (!!!options.uploadOnly) {
+        const initMsg = await getInstantiateMsg(options.contractName, config, chain);
+        const contractAddress = await instantiateContract(config, options, options.contractName, initMsg, wallet, client);
 
-    if (chain) {
-        contractConfig[chain.id] = {
-            ...contractConfig[chain.id],
-            address: contractAddress,
-        };
-    } else {
-        contractConfig.address = contractAddress;
+        if (chain) {
+            contractConfig[chain.id] = {
+                ...contractConfig[chain.id],
+                address: contractAddress,
+            };
+        } else {
+            contractConfig.address = contractAddress;
+        }
+
+        printInfo('Contract address', contractAddress);
     }
-
-    printInfo('Contract address', contractAddress);
 }
 
 async function main(options) {
@@ -375,6 +377,9 @@ async function programHandler() {
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
     program.addOption(new Option('-r, --reuseCodeID', 'reuse code ID'));
+    program.addOption(new Option('-s, --salt', 'salt for instantiate2. defaults to contract name'));
+    program.addOption(new Option('-u, --uploadOnly', 'upload the contract without instantiating. prints expected contract address if --instantiate2 is passed'));
+    program.addOption(new Option('--instantiate2', 'use instantiate2 for constant address deployment'));
     program.addOption(new Option('--aarch64', 'aarch64').env('AARCH64').default(false));
 
     program.action((options) => {
