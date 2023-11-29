@@ -1,14 +1,15 @@
 //! Types used for logging messages.
 
-use borsh::BorshSerialize;
+use std::array::TryFromSliceError;
+
 use solana_program::keccak;
 use solana_program::log::sol_log_data;
-use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+use crate::error::GatewayError;
+
 /// Logged when the Gateway receives an outbound message.
-#[derive(BorshSerialize)]
-pub struct ContractCallEvent<'a> {
+pub struct ContractCallEventRef<'a> {
     /// Message sender.
     pub sender: &'a Pubkey,
     /// The name of the target blockchain.
@@ -16,25 +17,69 @@ pub struct ContractCallEvent<'a> {
     /// The address of the target contract in the destination blockchain.
     pub destination_contract_address: &'a str,
     /// The payload hash.
-    pub payload_hash: [u8; 32],
+    pub payload_hash: &'a [u8],
     /// Contract call data.
     pub payload: &'a [u8],
 }
 
-impl<'a> ContractCallEvent<'a> {
+impl<'a> ContractCallEventRef<'a> {
     /// Constructs a new `ContractCallEvent`.
     pub fn new(
         sender: &'a Pubkey,
         destination_chain: &'a str,
         destination_contract_address: &'a str,
+        payload_hash: &'a [u8],
         payload: &'a [u8],
-    ) -> Self {
-        Self {
+    ) -> Result<Self, GatewayError> {
+        if payload_hash.len() != 32 {
+            return Err(GatewayError::InvalidMessagePayloadHash);
+        }
+
+        Ok(Self {
             sender,
             destination_chain,
             destination_contract_address,
-            payload_hash: keccak::hash(payload).to_bytes(),
+            payload_hash,
             payload,
+        })
+    }
+
+    /// Copy values into a [`ContractCallEvent`].
+    /// Returns an error if the payload hash slice don't fit into a `[u8; 32]`.
+    pub fn try_to_owned(&self) -> Result<ContractCallEvent, TryFromSliceError> {
+        Ok(ContractCallEvent {
+            sender: self.sender.to_owned(),
+            destination_chain: self.destination_chain.to_owned(),
+            destination_contract_address: self.destination_contract_address.to_owned(),
+            payload_hash: self.payload_hash.try_into()?,
+            payload: self.payload.to_vec(),
+        })
+    }
+}
+
+/// Owned version of [`ContractCallEventRef`]
+pub struct ContractCallEvent {
+    /// Message sender.
+    pub sender: Pubkey,
+    /// The name of the target blockchain.
+    pub destination_chain: String,
+    /// The address of the target contract in the destination blockchain.
+    pub destination_contract_address: String,
+    /// The payload hash.
+    pub payload_hash: [u8; 32],
+    /// Contract call data.
+    pub payload: Vec<u8>,
+}
+
+impl<'a> ContractCallEvent {
+    /// Returns a [`ContractCallEventRef`].
+    pub fn borrow(&'a self) -> ContractCallEventRef<'a> {
+        ContractCallEventRef {
+            sender: &self.sender,
+            destination_chain: &self.destination_chain,
+            destination_contract_address: &self.destination_contract_address,
+            payload_hash: &self.payload_hash,
+            payload: &self.payload,
         }
     }
 }
@@ -45,13 +90,17 @@ pub fn emit_call_contract_event(
     destination_chain: &str,
     destination_contract_address: &str,
     payload: &[u8],
-) {
-    let event = ContractCallEvent::new(
+) -> Result<(), GatewayError> {
+    let payload_hash = keccak::hash(payload).to_bytes();
+
+    let event = ContractCallEventRef::new(
         sender,
         destination_chain,
         destination_contract_address,
+        &payload_hash,
         payload,
-    );
+    )
+    .map_err(|_| GatewayError::InvalidMessagePayloadHash)?;
 
     // TODO: match previous implementation layout.
     let bytes = &[
@@ -62,4 +111,5 @@ pub fn emit_call_contract_event(
         &event.payload_hash,
     ];
     sol_log_data(bytes);
+    Ok(())
 }
