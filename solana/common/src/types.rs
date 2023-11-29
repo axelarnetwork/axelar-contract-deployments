@@ -1,6 +1,7 @@
-use gateway::instructions::ContractCallEvent;
+use gateway::events::ContractCallEventOwned;
 use serde::{Deserialize, Serialize};
 use solana_sdk::signature::Signature;
+use std::fmt::Write;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CcId {
@@ -15,7 +16,7 @@ impl CcId {
         index: usize,
     ) -> Self {
         CcId {
-            chain: chain,
+            chain,
             id: format!("{}:{}", signature, index),
         }
     }
@@ -38,12 +39,18 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn prepare_message_for_axelar_side(cc_id: CcId, event_body: &ContractCallEvent) -> Self {
-        let payload_hash_hex: String = event_body
-            .payload_hash
-            .iter()
-            .map(|b| format!("{:02X}", b))
-            .collect();
+    pub fn prepare_message_for_axelar_side(
+        cc_id: CcId,
+        event_body: &ContractCallEventOwned,
+    ) -> Self {
+        let payload_hash_hex: String =
+            event_body
+                .payload_hash
+                .iter()
+                .fold(String::new(), |mut output, b| {
+                    let _ = write!(output, "{:02X}", b);
+                    output
+                });
 
         Self {
             cc_id,

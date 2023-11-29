@@ -1,6 +1,5 @@
-use ::base64::engine::general_purpose::STANDARD;
 use anchor_client::ClientError;
-use gateway::instructions::ContractCallEvent;
+use gateway::events::ContractCallEventOwned;
 use regex::Regex;
 use solana_program::pubkey::Pubkey;
 use solana_transaction_status::option_serializer::OptionSerializer;
@@ -49,27 +48,23 @@ impl Execution {
 pub fn parse_logs_from_contract_call_event(
     tx_body: solana_transaction_status::EncodedConfirmedTransactionWithStatusMeta,
     contract_id: &Pubkey,
-) -> Vec<ContractCallEvent> {
+) -> Vec<ContractCallEventOwned> {
     let tx_meta = tx_body.transaction.meta.unwrap();
     let tx_meta_log_messages = tx_meta.log_messages;
-    let tx_parsed_events = if let OptionSerializer::Some(meta) = &tx_meta_log_messages {
-        let parsed_events: Vec<ContractCallEvent> =
+    if let OptionSerializer::Some(meta) = &tx_meta_log_messages {
+        let parsed_events: Vec<ContractCallEventOwned> =
             parse_logs_response(meta.clone(), &contract_id.to_string());
 
         parsed_events
     } else {
         // hack
         Vec::new()
-    };
-    tx_parsed_events
+    }
 }
 
-pub fn parse_logs_response<T: anchor_lang::Event + anchor_lang::AnchorDeserialize>(
-    logs: Vec<String>,
-    program_id_str: &str,
-) -> Vec<T> {
+pub fn parse_logs_response(logs: Vec<String>, program_id_str: &str) -> Vec<ContractCallEventOwned> {
     let mut logs = &logs[..];
-    let mut events: Vec<T> = Vec::new();
+    let mut events = vec![];
     if !logs.is_empty() {
         if let Ok(mut execution) = Execution::new(&mut logs) {
             for l in logs {
@@ -103,38 +98,16 @@ pub fn parse_logs_response<T: anchor_lang::Event + anchor_lang::AnchorDeserializ
     events
 }
 
-fn handle_program_log<T: anchor_lang::Event + anchor_lang::AnchorDeserialize>(
+fn handle_program_log(
     self_program_str: &str,
     l: &str,
-) -> Result<(Option<T>, Option<String>, bool), ClientError> {
+) -> Result<(Option<ContractCallEventOwned>, Option<String>, bool), ClientError> {
     // Log emitted from the current program.
-    if let Some(log) = l
+    if let Some(_log) = l
         .strip_prefix(PROGRAM_LOG)
         .or_else(|| l.strip_prefix(PROGRAM_DATA))
     {
-        let borsh_bytes = match ::base64::Engine::decode(&STANDARD, log) {
-            Ok(borsh_bytes) => borsh_bytes,
-            _ => {
-                #[cfg(feature = "debug")]
-                println!("Could not base64 decode log: {}", log);
-                return Ok((None, None, false));
-            }
-        };
-
-        let mut slice: &[u8] = &borsh_bytes[..];
-        let disc: [u8; 8] = {
-            let mut disc = [0; 8];
-            disc.copy_from_slice(&borsh_bytes[..8]);
-            slice = &slice[8..];
-            disc
-        };
-        let mut event = None;
-        if disc == T::discriminator() {
-            let e: T = anchor_lang::AnchorDeserialize::deserialize(&mut slice)
-                .map_err(|e| ClientError::LogParseError(e.to_string()))?;
-            event = Some(e);
-        }
-        Ok((event, None, false))
+        todo!("Parse progam log")
     }
     // System log.
     else {
