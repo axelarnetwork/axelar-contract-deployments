@@ -11,6 +11,12 @@ pub enum GatewayError {
     /// Invalid instruction
     #[error("Invalid instruction")]
     InvalidInstruction,
+    /// Invalid message payload hash
+    #[error("Invalid message payload hash")]
+    InvalidMessagePayloadHash,
+    ///
+    #[error("Byte serialization error")]
+    ByteSerializationError,
 }
 
 impl From<GatewayError> for ProgramError {

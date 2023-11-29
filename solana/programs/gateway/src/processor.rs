@@ -5,7 +5,6 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::pubkey::Pubkey;
 
-use crate::error::GatewayError;
 use crate::instruction::GatewayInstruction;
 
 /// Program state handler.
@@ -18,12 +17,13 @@ impl Processor {
         _accounts: &[AccountInfo],
         input: &[u8],
     ) -> ProgramResult {
-        let Ok(instruction) = GatewayInstruction::unpack(input) else {
-            return Err(GatewayError::InvalidInstruction.into());
-        };
+        let instruction = GatewayInstruction::unpack(input)?;
         match instruction {
             GatewayInstruction::Queue { .. } => {
                 msg!("Instruction: Queue")
+            }
+            GatewayInstruction::CallContract { .. } => {
+                msg!("Instruction: CallContract")
             }
         };
         Ok(())
