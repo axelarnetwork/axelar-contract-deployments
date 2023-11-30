@@ -96,7 +96,13 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error('Missing ConnectionRouter.governanceAddress in axelar info');
             }
 
-            return { admin_address: adminAddress, governance_address: governanceAddress };
+            const nexusGateway = config.axelar.contracts.NexusGateway.address;
+
+            if (!isString(nexusGateway)) {
+                throw new Error('Missing NexusGateway.address in axelar info');
+            }
+
+            return { admin_address: adminAddress, governance_address: governanceAddress, nexus_gateway: nexusGateway};
         }
 
         case 'NexusGateway': {
@@ -113,7 +119,7 @@ async function getInstantiateMsg(contractName, config, chain) {
             const router = config.axelar.contracts.ConnectionRouter.address;
 
             if (!isString(router)) {
-                throw new Error('Missing NexusGateway.router in axelar info');
+                throw new Error('Missing ConnectionRouter.address in axelar info');
             }
 
             return { nexus, router };
