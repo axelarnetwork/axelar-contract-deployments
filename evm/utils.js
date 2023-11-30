@@ -6,6 +6,7 @@ const {
     Contract,
     utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString },
     constants: { AddressZero },
+    getDefaultProvider,
 } = ethers;
 const https = require('https');
 const http = require('http');
@@ -934,6 +935,56 @@ function getContractJSON(contractName, artifactPath) {
     }
 }
 
+/**
+ * Retrieves gas options for contract interactions.
+ *
+ * This function determines the appropriate gas options for a given transaction.
+ * It supports offline scenarios and applies gas price adjustments if specified.
+ *
+ * @param {Object} chain - The chain config object.
+ * @param {Object} options - Script options, including the 'offline' flag.
+ * @param {String} contractName - The name of the contract to deploy/interact with.
+ * @param {Object} defaultGasOptions - Optional default gas options if none are provided in the chain or contract configs.
+ *
+ * @returns {Object} An object containing gas options for the transaction.
+ *
+ * @throws {Error} Throws an error if fetching the gas price fails.
+ *
+ * Note:
+ * - If 'options.offline' is true, static gas options from the contract or chain config are used.
+ * - If 'gasPriceAdjustment' is set in gas options and 'gasPrice' is not pre-defined, the gas price
+ *   is fetched from the provider and adjusted according to 'gasPriceAdjustment'.
+ */
+async function getGasOptions(chain, options, contractName, defaultGasOptions) {
+    const { offline } = options;
+
+    const contractConfig = contractName ? chain?.contracts[contractName] : null;
+
+    if (offline) {
+        return copyObject(contractConfig?.staticGasOptions || chain?.staticGasOptions || defaultGasOptions ? defaultGasOptions : {});
+    }
+
+    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || defaultGasOptions ? defaultGasOptions : {});
+    const gasPriceAdjustment = gasOptions.gasPriceAdjustment;
+
+    if (gasPriceAdjustment && !gasOptions.gasPrice) {
+        try {
+            const provider = getDefaultProvider(chain.rpc);
+            gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * gasPriceAdjustment);
+        } catch (err) {
+            throw new Error(`Provider failed to retrieve gas price on chain ${chain.name}: ${err}`);
+        }
+    }
+
+    if (gasPriceAdjustment) {
+        delete gasOptions.gasPriceAdjustment;
+    }
+
+    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+
+    return gasOptions;
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -986,4 +1037,5 @@ module.exports = {
     getContractPath,
     getContractJSON,
     isBytes32Array,
+    getGasOptions,
 };

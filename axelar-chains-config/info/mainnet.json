@@ -270,7 +270,8 @@
         "api": "https://api.ftmscan.com/api"
       },
       "gasOptions": {
-        "gasLimit": 5000000
+        "gasLimit": 5000000,
+        "gasPriceAdjustment": 1.4
       },
       "staticGasOptions": {
         "gasLimit": 3000000,
@@ -363,7 +364,8 @@
         "api": "https://api.polygonscan.com/api"
       },
       "gasOptions": {
-        "gasLimit": 6000000
+        "gasLimit": 6000000,
+        "gasPriceAdjustment": 1.6
       },
       "staticGasOptions": {
         "gasLimit": 3000000,
@@ -547,7 +549,8 @@
         "api": "https://api.bscscan.com/api"
       },
       "gasOptions": {
-        "gasLimit": 8000000
+        "gasLimit": 8000000,
+        "gasPriceAdjustment": 1.4
       },
       "staticGasOptions": {
         "gasLimit": 3000000,

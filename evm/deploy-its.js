@@ -9,7 +9,7 @@ const {
     getDefaultProvider,
     utils: { defaultAbiCoder, isAddress },
 } = ethers;
-const { printInfo, getContractJSON, mainProcessor, prompt, sleep, getBytecodeHash } = require('./utils');
+const { printInfo, getContractJSON, mainProcessor, prompt, sleep, getBytecodeHash, getGasOptions } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const InterchainTokenService = getContractJSON('InterchainTokenService');
 const { Command, Option } = require('commander');
@@ -54,7 +54,7 @@ async function deployImplementation(config, wallet, chain, options) {
         return;
     }
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     const deployOptions =
         deployMethod === 'create'
@@ -325,7 +325,7 @@ async function upgrade(config, chain, options) {
 
     printInfo(`Upgrading Interchain Token Service.`);
 
-    const gasOptions = chain.gasOptions || {};
+    const gasOptions = await getGasOptions(chain, options, contractName);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
 
     const codehash = await getBytecodeHash(contractConfig.implementation, chain.id, provider);
