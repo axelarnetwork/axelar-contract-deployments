@@ -5,6 +5,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::pubkey::Pubkey;
 
+use crate::events::emit_call_contract_event;
 use crate::instruction::GatewayInstruction;
 
 /// Program state handler.
@@ -20,10 +21,21 @@ impl Processor {
         let instruction = GatewayInstruction::unpack(input)?;
         match instruction {
             GatewayInstruction::Queue { .. } => {
-                msg!("Instruction: Queue")
+                msg!("Instruction: Queue");
             }
-            GatewayInstruction::CallContract { .. } => {
-                msg!("Instruction: CallContract")
+            GatewayInstruction::CallContract {
+                sender,
+                destination_chain,
+                destination_contract_address,
+                payload,
+            } => {
+                msg!("Instruction: CallContract");
+                emit_call_contract_event(
+                    sender,
+                    destination_chain,
+                    destination_contract_address,
+                    payload,
+                )?
             }
         };
         Ok(())

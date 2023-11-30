@@ -11,11 +11,11 @@ use crate::error::GatewayError;
 /// Logged when the Gateway receives an outbound message.
 pub struct ContractCallEventRef<'a> {
     /// Message sender.
-    pub sender: &'a Pubkey,
+    pub sender: Pubkey,
     /// The name of the target blockchain.
-    pub destination_chain: &'a str,
+    pub destination_chain: &'a [u8],
     /// The address of the target contract in the destination blockchain.
-    pub destination_contract_address: &'a str,
+    pub destination_contract_address: &'a [u8],
     /// The payload hash.
     pub payload_hash: &'a [u8],
     /// Contract call data.
@@ -25,9 +25,9 @@ pub struct ContractCallEventRef<'a> {
 impl<'a> ContractCallEventRef<'a> {
     /// Constructs a new `ContractCallEvent`.
     pub fn new(
-        sender: &'a Pubkey,
-        destination_chain: &'a str,
-        destination_contract_address: &'a str,
+        sender: Pubkey,
+        destination_chain: &'a [u8],
+        destination_contract_address: &'a [u8],
         payload_hash: &'a [u8],
         payload: &'a [u8],
     ) -> Result<Self, GatewayError> {
@@ -49,8 +49,8 @@ impl<'a> ContractCallEventRef<'a> {
     pub fn try_to_owned(&self) -> Result<ContractCallEvent, TryFromSliceError> {
         Ok(ContractCallEvent {
             sender: self.sender.to_owned(),
-            destination_chain: self.destination_chain.to_owned(),
-            destination_contract_address: self.destination_contract_address.to_owned(),
+            destination_chain: self.destination_chain.to_vec(),
+            destination_contract_address: self.destination_contract_address.to_vec(),
             payload_hash: self.payload_hash.try_into()?,
             payload: self.payload.to_vec(),
         })
@@ -62,9 +62,9 @@ pub struct ContractCallEvent {
     /// Message sender.
     pub sender: Pubkey,
     /// The name of the target blockchain.
-    pub destination_chain: String,
+    pub destination_chain: Vec<u8>,
     /// The address of the target contract in the destination blockchain.
-    pub destination_contract_address: String,
+    pub destination_contract_address: Vec<u8>,
     /// The payload hash.
     pub payload_hash: [u8; 32],
     /// Contract call data.
@@ -75,7 +75,7 @@ impl<'a> ContractCallEvent {
     /// Returns a [`ContractCallEventRef`].
     pub fn borrow(&'a self) -> ContractCallEventRef<'a> {
         ContractCallEventRef {
-            sender: &self.sender,
+            sender: self.sender,
             destination_chain: &self.destination_chain,
             destination_contract_address: &self.destination_contract_address,
             payload_hash: &self.payload_hash,
@@ -86,9 +86,9 @@ impl<'a> ContractCallEvent {
 
 /// Emits a `ContractCallEvent`.
 pub fn emit_call_contract_event(
-    sender: &Pubkey,
-    destination_chain: &str,
-    destination_contract_address: &str,
+    sender: Pubkey,
+    destination_chain: &[u8],
+    destination_contract_address: &[u8],
     payload: &[u8],
 ) -> Result<(), GatewayError> {
     let payload_hash = keccak::hash(payload).to_bytes();
@@ -103,11 +103,11 @@ pub fn emit_call_contract_event(
     .map_err(|_| GatewayError::InvalidMessagePayloadHash)?;
 
     // TODO: match previous implementation layout.
-    let bytes = &[
+    let bytes: &[&[u8]] = &[
         &event.sender.as_ref(),
-        event.destination_chain.as_bytes(),
-        event.destination_contract_address.as_bytes(),
-        &event.payload_hash,
+        &event.destination_chain,
+        &event.destination_contract_address,
+        &event.payload,
         &event.payload_hash,
     ];
     sol_log_data(bytes);
