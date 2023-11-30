@@ -947,10 +947,10 @@ async function getGasOptions(chain, options, contractName, defaultGasOptions) {
     const contractConfig = contractName ? chain?.contracts[contractName] : null;
 
     if (offline) {
-        return copyObject(contractConfig?.staticGasOptions || chain?.staticGasOptions || (defaultGasOptions ? defaultGasOptions : {}));
+        return copyObject(contractConfig?.staticGasOptions || chain?.staticGasOptions || defaultGasOptions || {});
     }
 
-    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || (defaultGasOptions ? defaultGasOptions : {}));
+    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || defaultGasOptions || {});
     const gasPriceAdjustment = gasOptions.gasPriceAdjustment;
 
     if (gasPriceAdjustment && !gasOptions.gasPrice) {
