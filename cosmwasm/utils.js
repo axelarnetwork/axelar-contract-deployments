@@ -17,16 +17,15 @@ const uploadContract = async (config, options, wallet, client) => {
     const gasPrice = GasPrice.fromString(`0.00005u${config.axelar.tokenSymbol.toLowerCase()}`);
     const uploadFee = calculateFee(5000000, gasPrice);
     const result = await client.upload(account.address, wasm, uploadFee);
+    var address = null;
     if (!!options.instantiate2) {
         const salt = getSaltFromKey(options.salt || options.contractName);
 
         const checksum = Uint8Array.from(Buffer.from(result.checksum, 'hex'));
-        const address = instantiate2Address(checksum, account.address, new Uint8Array(Buffer.from(salt.slice(2),'hex')), "axelar")
-
-        console.log("predicted address", address);
+        address = instantiate2Address(checksum, account.address, new Uint8Array(Buffer.from(salt.slice(2),'hex')), "axelar")
     }
 
-    return result.codeId;
+    return {codeId: result.codeId, address: address}
 };
 
 const instantiateContract = async (config, options, contractName, initMsg, wallet, client) => {
@@ -39,10 +38,10 @@ const instantiateContract = async (config, options, contractName, initMsg, walle
     var result;
     if (!!options.instantiate2) {
         const salt = getSaltFromKey(options.salt || options.contractName);
-        result = await client.instantiate2(account.address, contractConfig.codeID, new Uint8Array(Buffer.from(salt.slice(2), 'hex')), initMsg, contractName, initFee);
+        result = await client.instantiate2(account.address, contractConfig.codeId, new Uint8Array(Buffer.from(salt.slice(2), 'hex')), initMsg, contractName, initFee);
     }
     else {
-        result = await client.instantiate(account.address, contractConfig.codeID, initMsg, contractName, initFee);
+        result = await client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee);
     }
 
     return result.contractAddress;

@@ -13,8 +13,8 @@ const { Command, Option } = require('commander');
 async function getInstantiateMsg(contractName, config, chain) {
     let contractConfig = config.axelar.contracts[contractName];
 
-    if (!isNumber(contractConfig.codeID)) {
-        throw new Error('Code ID is not defined');
+    if (!isNumber(contractConfig.codeId)) {
+        throw new Error('Code Id is not defined');
     }
 
     switch (contractName) {
@@ -310,15 +310,19 @@ async function deploy(options, chain, config) {
 
     printInfo('Contract name', options.contractName);
 
-    const reuseCodeID = !!options.reuseCodeID && !!contractConfig.codeID;
-    printInfo('Reusing codeID', reuseCodeID.toString());
+    const reuseCodeId = !!options.reuseCodeId && !!contractConfig.codeId;
+    printInfo('Reusing codeId', reuseCodeId.toString());
 
-    if (!reuseCodeID) {
-        const codeID = await uploadContract(config, options, wallet, client);
-        contractConfig.codeID = codeID;
+    if (!reuseCodeId) {
+        const result = await uploadContract(config, options, wallet, client);
+        contractConfig.codeId = result.codeId;
+        if (!!result.address) {
+            contractConfig.address = result.address;
+            printInfo('Expected contract address', contractConfig.address);
+        }
     }
 
-    printInfo('Code ID', contractConfig.codeID);
+    printInfo('Code Id', contractConfig.codeId);
 
     if (!!!options.uploadOnly) {
         const initMsg = await getInstantiateMsg(options.contractName, config, chain);
@@ -356,7 +360,7 @@ async function main(options) {
         await deploy(options, config.chains[chain.toLowerCase()], config);
         saveConfig(config, options.env);
 
-        options.reuseCodeID = true;
+        options.reuseCodeId = true;
     }
 }
 
@@ -376,7 +380,7 @@ async function programHandler() {
     program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
-    program.addOption(new Option('-r, --reuseCodeID', 'reuse code ID'));
+    program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
     program.addOption(new Option('-s, --salt', 'salt for instantiate2. defaults to contract name'));
     program.addOption(new Option('-u, --uploadOnly', 'upload the contract without instantiating. prints expected contract address if --instantiate2 is passed'));
     program.addOption(new Option('--instantiate2', 'use instantiate2 for constant address deployment'));
