@@ -37,7 +37,7 @@ jobs:
                 "rpc": "http://127.0.0.1:8545",
                 "tokenSymbol": "TEST",
                 "gasOptions": {
-                  "gasLimit": 5000000
+                  "gasLimit": 8000000
                 },
                 "contracts": {
                   "AxelarGateway": {
