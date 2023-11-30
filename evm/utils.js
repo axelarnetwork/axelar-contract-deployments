@@ -941,16 +941,16 @@ function getContractJSON(contractName, artifactPath) {
  * - If 'gasPriceAdjustment' is set in gas options and 'gasPrice' is not pre-defined, the gas price
  *   is fetched from the provider and adjusted according to 'gasPriceAdjustment'.
  */
-async function getGasOptions(chain, options, contractName, defaultGasOptions) {
+async function getGasOptions(chain, options, contractName, defaultGasOptions = {}) {
     const { offline } = options;
 
     const contractConfig = contractName ? chain?.contracts[contractName] : null;
 
     if (offline) {
-        return copyObject(contractConfig?.staticGasOptions || chain?.staticGasOptions || defaultGasOptions ? defaultGasOptions : {});
+        return copyObject(contractConfig?.staticGasOptions || chain?.staticGasOptions || defaultGasOptions);
     }
 
-    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || defaultGasOptions ? defaultGasOptions : {});
+    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || defaultGasOptions);
     const gasPriceAdjustment = gasOptions.gasPriceAdjustment;
 
     if (gasPriceAdjustment && !gasOptions.gasPrice) {
