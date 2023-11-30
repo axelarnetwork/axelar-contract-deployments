@@ -629,5 +629,5 @@ module.exports = {
     getCurrentTimeInSeconds,
     wasEventEmitted,
     isContract,
-    getSaltFromKey
+    getSaltFromKey,
 };

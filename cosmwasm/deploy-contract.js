@@ -36,6 +36,7 @@ async function getInstantiateMsg(contractName, config, chain) {
             if (chain) {
                 throw new Error('Multisig does not support chainNames option');
             }
+
             const governanceAddress = contractConfig.governanceAddress;
 
             if (!isString(governanceAddress)) {
@@ -62,6 +63,7 @@ async function getInstantiateMsg(contractName, config, chain) {
             if (chain) {
                 throw new Error('Rewards does not support chainNames option');
             }
+
             const governanceAddress = contractConfig.governanceAddress;
 
             if (!isString(governanceAddress)) {
@@ -76,7 +78,7 @@ async function getInstantiateMsg(contractName, config, chain) {
 
             const params = contractConfig.params;
 
-            return { governance_address: governanceAddress, rewards_denom: rewardsDenom, params: params };
+            return { governance_address: governanceAddress, rewards_denom: rewardsDenom, params};
 
         }
 
@@ -90,6 +92,7 @@ async function getInstantiateMsg(contractName, config, chain) {
             if (!isString(adminAddress)) {
                 throw new Error('Missing ConnectionRouter.adminAddress in axelar info');
             }
+
             const governanceAddress = contractConfig.governanceAddress;
 
             if (!isString(governanceAddress)) {
@@ -322,7 +325,8 @@ async function deploy(options, chain, config) {
     if (!reuseCodeId) {
         const result = await uploadContract(config, options, wallet, client);
         contractConfig.codeId = result.codeId;
-        if (!!result.address) {
+
+        if (result.address) {
             contractConfig.address = result.address;
             printInfo('Expected contract address', contractConfig.address);
         }
@@ -330,7 +334,7 @@ async function deploy(options, chain, config) {
 
     printInfo('Code Id', contractConfig.codeId);
 
-    if (!!!options.uploadOnly) {
+    if (options.uploadOnly) {
         const initMsg = await getInstantiateMsg(options.contractName, config, chain);
         const contractAddress = await instantiateContract(config, options, options.contractName, initMsg, wallet, client);
 

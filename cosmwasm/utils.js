@@ -18,14 +18,15 @@ const uploadContract = async (config, options, wallet, client) => {
     const uploadFee = calculateFee(5000000, gasPrice);
     const result = await client.upload(account.address, wasm, uploadFee);
     var address = null;
-    if (!!options.instantiate2) {
+
+    if (options.instantiate2) {
         const salt = getSaltFromKey(options.salt || options.contractName);
 
         const checksum = Uint8Array.from(Buffer.from(result.checksum, 'hex'));
         address = instantiate2Address(checksum, account.address, new Uint8Array(Buffer.from(salt.slice(2),'hex')), "axelar")
     }
 
-    return {codeId: result.codeId, address: address}
+    return {codeId: result.codeId, address}
 };
 
 const instantiateContract = async (config, options, contractName, initMsg, wallet, client) => {
