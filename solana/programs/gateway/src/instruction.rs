@@ -10,7 +10,7 @@ use crate::error::GatewayError::{self, *};
 
 /// Instructions supported by the gateway program.
 #[repr(u8)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum GatewayInstruction<'a> {
     /// Receives an Axelar message and initializes a new Message account.
     ///
@@ -96,14 +96,10 @@ impl<'a> GatewayInstruction<'a> {
                 destination_contract_address,
                 payload,
             } => {
-                buffer.push(0);
+                buffer.push(1);
+                buffer.extend_from_slice(sender.as_ref());
                 serialize_slices(
-                    &[
-                        &sender.to_bytes(),
-                        destination_chain,
-                        destination_contract_address,
-                        payload,
-                    ],
+                    &[destination_chain, destination_contract_address, payload],
                     &mut buffer,
                 )?;
             }
@@ -185,14 +181,16 @@ pub mod tests {
 
     use arrayref::{array_ref, array_refs};
     use random_array::rand_array;
+    use solana_sdk::signature::Keypair;
+    use solana_sdk::signer::Signer;
 
     use super::*;
 
     const TAG: usize = 1;
     const SIZE: usize = std::mem::size_of::<u16>();
-    const ID: usize = 2;
-    const PAYLOAD: usize = 2;
-    const PROOF: usize = 2;
+    const ID: usize = 50;
+    const PAYLOAD: usize = 100;
+    const PROOF: usize = 100;
     const BUFF: usize = TAG + (SIZE * 3) + ID + PAYLOAD + PROOF;
 
     #[test]
@@ -264,6 +262,129 @@ pub mod tests {
         let packed = original.pack().unwrap();
         let unpacked = GatewayInstruction::unpack(&packed).unwrap();
         assert_eq!(unpacked, original);
+    }
+
+    #[test]
+    fn round_trip_queue_function() {
+        let message_id = rand_array::<3>();
+        let proof = rand_array::<1>();
+        let payload = rand_array::<2>();
+
+        let instruction = queue(crate::id(), &message_id, &payload, &proof)
+            .expect("valid instruction construction");
+
+        let unpacked =
+            GatewayInstruction::unpack(&instruction.data).expect("unpacked valid instruction");
+
+        match unpacked {
+            GatewayInstruction::Queue {
+                id: unpacked_id,
+                payload: unpacked_payload,
+                proof: unpacked_proof,
+            } => {
+                assert_eq!(unpacked_id, message_id);
+                assert_eq!(unpacked_proof, &proof);
+                assert_eq!(unpacked_payload, &payload);
+            }
+            _ => panic!("Wrong instruction"),
+        }
+    }
+
+    #[test]
+    #[ignore]
+    fn unpack_call_contract() {
+        todo!()
+    }
+
+    #[test]
+    fn pack_call_contract() {
+        let sender = Keypair::new().pubkey();
+        let destination_chain = "ethereum";
+        let destination_contract_address = "0x2F43DDFf564Fb260dbD783D55fc6E4c70Be18862";
+        let payload = rand_array::<100>();
+
+        let packed = GatewayInstruction::CallContract {
+            sender,
+            destination_chain: destination_chain.as_bytes(),
+            destination_contract_address: destination_contract_address.as_bytes(),
+            payload: &payload,
+        }
+        .pack()
+        .expect("call contract to be packed");
+        let packed = &packed[1..]; // skip tag
+
+        let (packed_sender, rest) = GatewayInstruction::unpack_pubkey(packed).unwrap();
+        assert_eq!(packed_sender, sender);
+        let mut iterator = SliceIterator::new(rest);
+        let packed_destination_chain = next_slice(&mut iterator).unwrap();
+        let packed_destination_contract_address = next_slice(&mut iterator).unwrap();
+        let packed_payload = next_slice(&mut iterator).unwrap();
+
+        assert_eq!(packed_destination_chain, destination_chain.as_bytes());
+        assert_eq!(
+            packed_destination_contract_address,
+            destination_contract_address.as_bytes()
+        );
+        assert_eq!(packed_payload, payload);
+    }
+
+    #[test]
+    fn round_trip_call_contract() {
+        let sender = Keypair::new().pubkey();
+        let destination_chain = "ethereum";
+        let destination_contract_address = "0x2F43DDFf564Fb260dbD783D55fc6E4c70Be18862";
+        let payload = rand_array::<100>();
+
+        let instruction = GatewayInstruction::CallContract {
+            sender,
+            destination_chain: destination_chain.as_bytes(),
+            destination_contract_address: destination_contract_address.as_bytes(),
+            payload: &payload,
+        };
+
+        let packed = instruction.pack().expect("call contract to be packed");
+
+        let unpacked = GatewayInstruction::unpack(&packed).expect("call contract to be unpacked");
+
+        assert_eq!(instruction, unpacked);
+    }
+
+    #[test]
+    fn round_trip_call_contract_function() {
+        let sender = Keypair::new().pubkey();
+        let destination_chain = "ethereum";
+        let destination_contract_address = "0x2F43DDFf564Fb260dbD783D55fc6E4c70Be18862";
+        let payload = rand_array::<100>();
+
+        let instruction = call_contract(
+            crate::id(),
+            sender,
+            destination_chain,
+            destination_contract_address,
+            &payload,
+        )
+        .expect("valid instruction construction");
+
+        let unpacked =
+            GatewayInstruction::unpack(&instruction.data).expect("unpacked valid instruction");
+
+        match unpacked {
+            GatewayInstruction::CallContract {
+                sender: unpacked_sender,
+                destination_chain: unpacked_destination_chain,
+                destination_contract_address: unpacked_destination_contract_address,
+                payload: unpacked_payload,
+            } => {
+                assert_eq!(sender, unpacked_sender);
+                assert_eq!(destination_chain.as_bytes(), unpacked_destination_chain);
+                assert_eq!(
+                    destination_contract_address.as_bytes(),
+                    unpacked_destination_contract_address
+                );
+                assert_eq!(payload, unpacked_payload);
+            }
+            _ => panic!("Wrong instruction"),
+        };
     }
 }
 
