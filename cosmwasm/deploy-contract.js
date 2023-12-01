@@ -10,7 +10,7 @@ const { uploadContract, instantiateContract } = require('./utils');
 
 const { Command, Option } = require('commander');
 
-const getServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
+const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
     if (!isString(governanceAccount)) {
         throw new Error('Missing ServiceRegistry.governanceAccount in axelar info');
     }
@@ -18,7 +18,7 @@ const getServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
     return { governance_account: governanceAccount };
 };
 
-const getMultisigInstantiateMsg = ({ governanceAddress, rewardsAddress, gracePeriod }) => {
+const makeMultisigInstantiateMsg = ({ governanceAddress, rewardsAddress, gracePeriod }) => {
     if (!isString(governanceAddress)) {
         throw new Error('Missing Multisig.governanceAddress in axelar info');
     }
@@ -34,7 +34,7 @@ const getMultisigInstantiateMsg = ({ governanceAddress, rewardsAddress, gracePer
     return { governance_address: governanceAddress, rewards_address: rewardsAddress, grace_period: gracePeriod };
 };
 
-const getRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) => {
+const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) => {
     if (!isString(governanceAddress)) {
         throw new Error('Missing Rewards.governanceAddress in axelar info');
     }
@@ -46,7 +46,7 @@ const getRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) =
     return { governance_address: governanceAddress, rewards_denom: rewardsDenom, params };
 };
 
-const getConnectionRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGateway: { address: nexusGateway } }) => {
+const makeConnectionRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGateway: { address: nexusGateway } }) => {
     if (!isString(adminAddress)) {
         throw new Error('Missing ConnectionRouter.adminAddress in axelar info');
     }
@@ -62,7 +62,7 @@ const getConnectionRouterInstantiateMsg = ({ adminAddress, governanceAddress }, 
     return { admin_address: adminAddress, governance_address: governanceAddress, nexus_gateway: nexusGateway };
 };
 
-const getNexusGatewayInstantiateMsg = ({ nexus }, { ConnectionRouter: { address: router } }) => {
+const makeNexusGatewayInstantiateMsg = ({ nexus }, { ConnectionRouter: { address: router } }) => {
     if (!isString(nexus)) {
         throw new Error('Missing NexusGateway.nexus in axelar info');
     }
@@ -74,7 +74,7 @@ const getNexusGatewayInstantiateMsg = ({ nexus }, { ConnectionRouter: { address:
     return { nexus, router };
 };
 
-const getVotingVerifierInstantiateMsg = (
+const makeVotingVerifierInstantiateMsg = (
     contractConfig,
     { ServiceRegistry: { address: serviceRegistryAddress }, Rewards: { address: rewardsAddress } },
     chainId,
@@ -123,7 +123,7 @@ const getVotingVerifierInstantiateMsg = (
     };
 };
 
-const getGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRouterAddress }, VotingVerifier }, chainId) => {
+const makeGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRouterAddress }, VotingVerifier }, chainId) => {
     const {
         [chainId]: { address: verifierAddress },
     } = VotingVerifier;
@@ -139,7 +139,7 @@ const getGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRoute
     return { router_address: connectionRouterAddress, verifier_address: verifierAddress };
 };
 
-const getMultisigProverInstantiateMsg = (contractConfig, contracts, chainId) => {
+const makeMultisigProverInstantiateMsg = (contractConfig, contracts, chainId) => {
     const {
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
@@ -214,7 +214,7 @@ const getMultisigProverInstantiateMsg = (contractConfig, contracts, chainId) => 
     };
 };
 
-async function getInstantiateMsg(contractName, config, chain) {
+const makeInstantiateMsg = (contractName, config, chain) => {
     const {
         axelar: { contracts },
     } = config;
@@ -234,7 +234,7 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error('ServiceRegistry does not support chainNames option');
             }
 
-            return getServiceRegistryInstantiateMsg(contractConfig);
+            return makeServiceRegistryInstantiateMsg(contractConfig);
         }
 
         case 'Multisig': {
@@ -242,7 +242,7 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error('Multisig does not support chainNames option');
             }
 
-            return getMultisigInstantiateMsg(contractConfig);
+            return makeMultisigInstantiateMsg(contractConfig);
         }
 
         case 'Rewards': {
@@ -250,7 +250,7 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error('Rewards does not support chainNames option');
             }
 
-            return getRewardsInstantiateMsg(contractConfig);
+            return makeRewardsInstantiateMsg(contractConfig);
         }
 
         case 'ConnectionRouter': {
@@ -258,7 +258,7 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error('ConnectionRouter does not support chainNames option');
             }
 
-            return getConnectionRouterInstantiateMsg(contractConfig, contracts);
+            return makeConnectionRouterInstantiateMsg(contractConfig, contracts);
         }
 
         case 'NexusGateway': {
@@ -266,7 +266,7 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error('NexusGateway does not support chainNames option');
             }
 
-            return getNexusGatewayInstantiateMsg(contractConfig, contracts);
+            return makeNexusGatewayInstantiateMsg(contractConfig, contracts);
         }
 
         case 'VotingVerifier': {
@@ -274,7 +274,7 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error('VotingVerifier requires chainNames option');
             }
 
-            return getVotingVerifierInstantiateMsg(contractConfig, contracts, chain);
+            return makeVotingVerifierInstantiateMsg(contractConfig, contracts, chain);
         }
 
         case 'Gateway': {
@@ -282,7 +282,7 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error('Gateway requires chainNames option');
             }
 
-            return getGatewayInstantiateMsg(contracts, chainId);
+            return makeGatewayInstantiateMsg(contracts, chainId);
         }
 
         case 'MultisigProver': {
@@ -290,18 +290,20 @@ async function getInstantiateMsg(contractName, config, chain) {
                 throw new Error('MultisigProver requires chainNames option');
             }
 
-            return getMultisigProverInstantiateMsg(contractConfig, contracts, chainId);
+            return makeMultisigProverInstantiateMsg(contractConfig, contracts, chainId);
         }
     }
 
     throw new Error(`${contractName} is not supported.`);
 }
 
-async function deploy(options, chain, config) {
+
+const deploy = async (options, chain, config) => {
     printInfo('Deploying for chain', chain ? chain.name : 'none');
 
     const wallet = await DirectSecp256k1HdWallet.fromMnemonic(options.mnemonic, { prefix: 'axelar' });
     const client = await SigningCosmWasmClient.connectWithSigner(config.axelar.rpc, wallet);
+
 
     if (config.axelar.contracts[options.contractName] === undefined) {
         config.axelar.contracts[options.contractName] = {};
@@ -327,7 +329,7 @@ async function deploy(options, chain, config) {
     printInfo('Code Id', contractConfig.codeId);
 
     if (!options.uploadOnly) {
-        const initMsg = await getInstantiateMsg(options.contractName, config, chain);
+        const initMsg = makeInstantiateMsg(options.contractName, config, chain);
         const contractAddress = await instantiateContract(config, options, options.contractName, initMsg, wallet, client);
 
         if (chain) {
@@ -343,7 +345,7 @@ async function deploy(options, chain, config) {
     }
 }
 
-async function main(options) {
+const main = async (options) => {
     const config = loadConfig(options.env);
 
     let chains = options.chainNames.split(',').map((str) => str.trim());
@@ -366,7 +368,7 @@ async function main(options) {
     }
 }
 
-async function programHandler() {
+const programHandler = () => {
     const program = new Command();
 
     program.name('upload-contract').description('Upload CosmWasm contracts');
