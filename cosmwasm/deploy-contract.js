@@ -77,7 +77,7 @@ const makeNexusGatewayInstantiateMsg = ({ nexus }, { ConnectionRouter: { address
 const makeVotingVerifierInstantiateMsg = (
     contractConfig,
     { ServiceRegistry: { address: serviceRegistryAddress }, Rewards: { address: rewardsAddress } },
-    chainId,
+    {id: chainId},
 ) => {
     const {
         [chainId]: { serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight },
@@ -123,7 +123,7 @@ const makeVotingVerifierInstantiateMsg = (
     };
 };
 
-const makeGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRouterAddress }, VotingVerifier }, chainId) => {
+const makeGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRouterAddress }, VotingVerifier }, {id: chainId}) => {
     const {
         [chainId]: { address: verifierAddress },
     } = VotingVerifier;
@@ -139,7 +139,7 @@ const makeGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRout
     return { router_address: connectionRouterAddress, verifier_address: verifierAddress };
 };
 
-const makeMultisigProverInstantiateMsg = (contractConfig, contracts, chainId) => {
+const makeMultisigProverInstantiateMsg = (contractConfig, contracts, {id: chainId}) => {
     const {
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
@@ -222,7 +222,6 @@ const makeInstantiateMsg = (contractName, config, chain) => {
     const { [contractName]: contractConfig } = contracts;
 
     const { codeId } = contractConfig;
-    const { id: chainId } = chain;
 
     if (!isNumber(codeId)) {
         throw new Error('Code Id is not defined');
@@ -282,7 +281,7 @@ const makeInstantiateMsg = (contractName, config, chain) => {
                 throw new Error('Gateway requires chainNames option');
             }
 
-            return makeGatewayInstantiateMsg(contracts, chainId);
+            return makeGatewayInstantiateMsg(contracts, chain);
         }
 
         case 'MultisigProver': {
@@ -290,7 +289,7 @@ const makeInstantiateMsg = (contractName, config, chain) => {
                 throw new Error('MultisigProver requires chainNames option');
             }
 
-            return makeMultisigProverInstantiateMsg(contractConfig, contracts, chainId);
+            return makeMultisigProverInstantiateMsg(contractConfig, contracts, chain);
         }
     }
 
