@@ -37,7 +37,8 @@ const instantiateContract = async (config, options, contractName, initMsg, walle
     const initFee = calculateFee(500000, gasPrice);
 
     var result;
-    if (!!options.instantiate2) {
+
+    if (options.instantiate2) {
         const salt = getSaltFromKey(options.salt || options.contractName);
         result = await client.instantiate2(account.address, contractConfig.codeId, new Uint8Array(Buffer.from(salt.slice(2), 'hex')), initMsg, contractName, initFee);
     }
