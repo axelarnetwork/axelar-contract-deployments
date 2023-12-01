@@ -1,14 +1,14 @@
 {
   "chains": {
     "ethereum": {
-      "api": "xyz"
+      "api": "EXPLORER_API_KEY"
     },
     "avalanche": {
-      "api": "xyz"
-    },
-    "polygon": {
-      "api": "xyz"
+      "api": "EXPLORER_API_KEY"
     }
   },
-  "accounts": ["private key 1", "private key 2"]
+  "accounts": [
+    "private key 1",
+    "private key 2"
+  ]
 }

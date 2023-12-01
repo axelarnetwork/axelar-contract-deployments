@@ -2,30 +2,35 @@
 
 require('dotenv').config();
 
+const chalk = require('chalk');
+const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddress },
-} = require('ethers');
-const readlineSync = require('readline-sync');
+    utils: { isAddress, keccak256, toUtf8Bytes },
+} = ethers;
 const { Command, Option } = require('commander');
-const chalk = require('chalk');
-
 const {
     printInfo,
+    printWarn,
     printError,
-    isString,
+    getGasOptions,
+    isNonEmptyString,
     isNumber,
     isAddressArray,
     getBytecodeHash,
     printWalletInfo,
     getDeployedAddress,
     deployContract,
-    loadConfig,
     saveConfig,
+    prompt,
+    mainProcessor,
+    isContract,
+    getContractJSON,
 } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 
-async function getConstructorArgs(contractName, chain, wallet, options) {
+async function getConstructorArgs(contractName, chain, wallet) {
     const config = chain.contracts;
     const contractConfig = config[contractName];
 
@@ -37,15 +42,17 @@ async function getConstructorArgs(contractName, chain, wallet, options) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
             }
 
-            const governanceChain = contractConfig.governanceChain;
+            const governanceChain = contractConfig.governanceChain || 'Axelarnet';
+            contractConfig.governanceChain = governanceChain;
 
-            if (!isString(governanceChain)) {
+            if (!isNonEmptyString(governanceChain)) {
                 throw new Error(`Missing AxelarServiceGovernance.governanceChain in the chain info.`);
             }
 
-            const governanceAddress = contractConfig.governanceAddress;
+            const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+            contractConfig.governanceAddress = governanceAddress;
 
-            if (!isString(governanceAddress)) {
+            if (!isNonEmptyString(governanceAddress)) {
                 throw new Error(`Missing AxelarServiceGovernance.governanceAddress in the chain info.`);
             }
 
@@ -93,18 +100,21 @@ async function getConstructorArgs(contractName, chain, wallet, options) {
             }
 
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
+            contractConfig.governanceChain = governanceChain;
 
-            if (!isString(governanceChain)) {
+            if (!isNonEmptyString(governanceChain)) {
                 throw new Error(`Missing InterchainGovernance.governanceChain in the chain info.`);
             }
 
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+            contractConfig.governanceAddress = governanceAddress;
 
-            if (!isString(governanceAddress)) {
+            if (!isNonEmptyString(governanceAddress)) {
                 throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
             }
 
-            const minimumTimeDelay = contractConfig.minimumTimeDelay || parseInt(options.args, 10);
+            const minimumTimeDelay = contractConfig.minimumTimeDelay;
+            contractConfig.minimumTimeDelay = minimumTimeDelay;
 
             if (!isNumber(minimumTimeDelay)) {
                 throw new Error(`Missing InterchainGovernance.minimumTimeDelay in the chain info.`);
@@ -169,12 +179,52 @@ async function checkContract(contractName, contract, contractConfig) {
 
             break;
         }
+
+        case 'InterchainGovernance': {
+            const governanceChain = await contract.governanceChain();
+
+            if (governanceChain !== contractConfig.governanceChain) {
+                printError(`Expected governanceChain ${contractConfig.governanceChain} but got ${governanceChain}.`);
+            }
+
+            const governanceChainHash = await contract.governanceChainHash();
+            const expectedChainHash = keccak256(toUtf8Bytes(contractConfig.governanceChain));
+
+            if (governanceChainHash !== expectedChainHash) {
+                printError(`Expected governanceChainHash ${expectedChainHash} but got ${governanceChainHash}.`);
+            }
+
+            const governanceAddress = await contract.governanceAddress();
+
+            if (governanceAddress !== contractConfig.governanceAddress) {
+                printError(`Expected governanceAddress ${contractConfig.governanceAddress} but got ${governanceAddress}.`);
+            }
+
+            const governanceAddressHash = await contract.governanceAddressHash();
+            const expectedAddressHash = keccak256(toUtf8Bytes(contractConfig.governanceAddress));
+
+            if (governanceAddressHash !== expectedAddressHash) {
+                printError(`Expected governanceAddressHash ${expectedAddressHash} but got ${governanceAddressHash}.`);
+            }
+
+            const minimumTimeDelay = await contract.minimumTimeLockDelay();
+
+            if (!minimumTimeDelay.eq(contractConfig.minimumTimeDelay)) {
+                printError(`Expected minimumTimeDelay ${contractConfig.minimumTimeDelay} but got ${minimumTimeDelay}.`);
+            }
+
+            break;
+        }
     }
 }
 
-async function deploy(options, chain, config) {
+async function processCommand(config, chain, options) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes } = options;
     const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
+
+    if (!chain.contracts) {
+        chain.contracts = {};
+    }
 
     const contracts = chain.contracts;
 
@@ -187,7 +237,7 @@ async function deploy(options, chain, config) {
     const contractConfig = contracts[contractName];
 
     if (contractConfig.address && options.skipExisting) {
-        printInfo(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
+        printWarn(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
         return;
     }
 
@@ -199,17 +249,15 @@ async function deploy(options, chain, config) {
 
     printInfo('Contract name', contractName);
 
-    const contractPath = artifactPath.charAt(0) === '@' ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
-    printInfo('Contract path', contractPath);
+    const contractJson = getContractJSON(contractName, artifactPath);
 
-    const contractJson = require(contractPath);
-
-    printInfo('Contract bytecode hash', await getBytecodeHash(contractJson, chain.id));
+    const predeployCodehash = await getBytecodeHash(contractJson, chain.id);
+    printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
 
     const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
+    const gasOptions = await getGasOptions(chain, options, contractName);
+
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
 
     const salt = options.salt || contractName;
     let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
@@ -226,18 +274,39 @@ async function deploy(options, chain, config) {
         provider: wallet.provider,
     });
 
+    if (await isContract(predictedAddress, provider)) {
+        printWarn(`Contract ${contractName} is already deployed on ${chain.name} at ${predictedAddress}`);
+        return;
+    }
+
     if (deployMethod !== 'create') {
         printInfo(`${contractName} deployment salt`, salt);
     }
 
     printInfo('Deployment method', deployMethod);
     printInfo('Deployer contract', deployerContract);
-    printInfo(`${contractName} will be deployed to`, predictedAddress);
+    printInfo(`${contractName} will be deployed to`, predictedAddress, chalk.cyan);
 
-    if (!yes) {
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
+
+    if (existingAddress !== undefined && predictedAddress !== existingAddress) {
+        printWarn(
+            `Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}.`,
+        );
+
+        const existingCodeHash = config.chains.ethereum.contracts[contractName].predeployCodehash;
+
+        if (predeployCodehash !== existingCodeHash) {
+            printWarn(
+                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${config.chains.ethereum.name}.`,
+            );
+        }
+
+        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
+    }
+
+    if (prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
+        return;
     }
 
     const contract = await deployContract(
@@ -248,11 +317,17 @@ async function deploy(options, chain, config) {
         { salt, deployerContract },
         gasOptions,
         verifyOptions,
+        chain,
     );
+
+    const codehash = await getBytecodeHash(contract, chain.id);
+    printInfo('Deployed Contract bytecode hash', codehash);
 
     contractConfig.address = contract.address;
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = deployMethod;
+    contractConfig.codehash = codehash;
+    contractConfig.predeployCodehash = predeployCodehash;
 
     if (deployMethod !== 'create') {
         contractConfig.salt = salt;
@@ -266,52 +341,24 @@ async function deploy(options, chain, config) {
 }
 
 async function main(options) {
-    const config = loadConfig(options.env);
-
-    let chains = options.chainNames.split(',').map((str) => str.trim());
-
-    if (options.chainNames === 'all') {
-        chains = Object.keys(config.chains);
-    }
-
-    for (const chain of chains) {
-        if (config.chains[chain.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chain} is not defined in the info file`);
-        }
-    }
-
-    for (const chain of chains) {
-        await deploy(options, config.chains[chain.toLowerCase()], config);
-    }
-
-    saveConfig(config, options.env);
+    await mainProcessor(options, processCommand);
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('deploy-contract').description('Deploy contracts using create, create2, or create3');
+    program.name('deploy-contract').description('Deploy contracts using create, create2, or create3');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true));
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-program.addOption(
-    new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
-);
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment'));
-program.addOption(new Option('-v, --verify <verify>', 'verify the deployed contract on the explorer').env('VERIFY'));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain').env('YES'));
+    addExtendedOptions(program, { artifactPath: true, contractName: true, salt: true, skipChains: true, skipExisting: true });
 
-program.action((options) => {
-    main(options);
-});
+    program.addOption(
+        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
+    );
+    program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
 
-program.parse();
+    program.action((options) => {
+        main(options);
+    });
+
+    program.parse();
+}

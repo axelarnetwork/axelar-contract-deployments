@@ -13,7 +13,12 @@ const {
     saveConfig,
     loadConfig,
     printWalletInfo,
+    isAddressArray,
+    isNumber,
+    prompt,
+    getGasOptions,
 } = require('./utils');
+const { addExtendedOptions } = require('./cli-utils');
 const { ethers } = require('hardhat');
 const {
     getContractFactory,
@@ -21,13 +26,11 @@ const {
     utils: { defaultAbiCoder, getContractAddress },
     getDefaultProvider,
 } = ethers;
-const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-const chalk = require('chalk');
 
 async function getAuthParams(config, chain) {
-    const { addresses, weights, threshold } = await getEVMAddresses(config, chain);
-    printObj(JSON.stringify({ addresses, weights, threshold }));
+    const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain);
+    printObj(JSON.stringify({ status: 'latest', keyID, addresses, weights, threshold }));
     const paramsAuth = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
     return paramsAuth;
 }
@@ -63,8 +66,8 @@ async function deploy(config, options) {
     });
     printInfo('Predicted proxy address', proxyAddress);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
+
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
     printInfo('Skip existing contracts?', skipExisting ? 'y' : 'n');
 
@@ -73,16 +76,24 @@ async function deploy(config, options) {
     const tokenDeployerFactory = await getContractFactory('TokenDeployer', wallet);
     const gatewayProxyFactory = await getContractFactory('AxelarGatewayProxy', wallet);
 
+    if (!adminAddresses || !isAddressArray(JSON.parse(adminAddresses))) {
+        printError('Invalid admin addresses', `${adminAddresses}`);
+        return;
+    }
+
+    if (!adminThreshold || !isNumber(parseInt(adminThreshold))) {
+        printError('Invalid admin threshold', `${adminThreshold}`);
+        return;
+    }
+
     let gateway;
     let auth;
     let tokenDeployer;
     let implementation;
     const contractsToVerify = [];
 
-    if (!yes) {
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    if (prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
+        return;
     }
 
     contractConfig.deployer = wallet.address;
@@ -127,7 +138,7 @@ async function deploy(config, options) {
     if (skipExisting && contractConfig.implementation) {
         implementation = gatewayFactory.attach(contractConfig.implementation);
     } else {
-        implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address);
+        implementation = await gatewayFactory.deploy(auth.address, tokenDeployer.address, gasOptions);
         await implementation.deployTransaction.wait(chain.confirmations);
     }
 
@@ -219,6 +230,7 @@ async function deploy(config, options) {
 
     contractConfig.address = gateway.address;
     contractConfig.implementation = implementation.address;
+    contractConfig.implementationCodehash = implementationCodehash;
     contractConfig.authModule = auth.address;
     contractConfig.tokenDeployer = tokenDeployer.address;
 
@@ -261,13 +273,10 @@ async function upgrade(config, options) {
     printInfo('Upgrading to implementation', contractConfig.implementation);
     printInfo('Implementation codehash', implementationCodehash);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
-    if (!yes) {
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with upgrade on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    if (prompt(`Proceed with upgrade on ${chain.name}?`, yes)) {
+        return;
     }
 
     const tx = await gateway.upgrade(contractConfig.implementation, implementationCodehash, setupParams, gasOptions);
@@ -303,22 +312,11 @@ async function programHandler() {
 
     program.name('deploy-gateway-v4.3.x').description('Deploy gateway v4.3.x');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-n, --chainName <chainName>', 'chain name').makeOptionMandatory(true).env('CHAIN'));
+    addExtendedOptions(program, { skipExisting: true, upgrade: true });
+
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-    program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
-    program.addOption(new Option('-x, --skipExisting', 'skip deployment for existing contracts in the info files').env('SKIP_EXISTING'));
     program.addOption(new Option('-a, --adminAddresses <adminAddresses>', 'admin addresses').env('ADMIN_ADDRESSES'));
     program.addOption(new Option('-t, --adminThreshold <adminThreshold>', 'admin threshold').env('ADMIN_THRESHOLD'));
-    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    program.addOption(new Option('-u, --upgrade', 'upgrade gateway').env('UPGRADE'));
 
     program.action((options) => {
         main(options);

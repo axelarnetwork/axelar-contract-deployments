@@ -2,15 +2,14 @@
 
 require('dotenv').config();
 
+const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
     utils: { isAddress, Interface },
     Contract,
-} = require('ethers');
+} = ethers;
 const { Command, Option } = require('commander');
-const readlineSync = require('readline-sync');
-const chalk = require('chalk');
 const {
     printInfo,
     printError,
@@ -21,7 +20,10 @@ const {
     isNumberArray,
     isKeccak256Hash,
     parseArgs,
+    prompt,
+    getGasOptions,
 } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
 const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
 
@@ -57,14 +59,12 @@ async function processCommand(options, chain) {
 
     const operatorsContract = new Contract(operatorsAddress, IOperators.abi, wallet);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Operator Action', action);
 
-    if (!yes) {
-        const anwser = readlineSync.question(`Proceed with action on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    if (prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
+        return;
     }
 
     switch (action) {
@@ -263,29 +263,28 @@ async function main(options) {
     }
 }
 
-const program = new Command();
+if (require.main === module) {
+    const program = new Command();
 
-program.name('operators').description('script to manage operators contract');
+    program.name('operators').description('script to manage operators contract');
 
-program.addOption(
-    new Option('-e, --env <env>', 'environment')
-        .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-        .default('testnet')
-        .makeOptionMandatory(true)
-        .env('ENV'),
-);
-program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators').makeOptionMandatory(false));
-program.addOption(new Option('-n, --chainNames <chainNames>', 'chains').makeOptionMandatory(true));
-program.addOption(new Option('--address <address>', 'override address').makeOptionMandatory(false));
-program.addOption(
-    new Option('--action <action>', 'operator action').choices(['isOperator', 'addOperator', 'removeOperator', 'collectFees', 'refund']),
-);
-program.addOption(new Option('--args <args>', 'operator action arguments').makeOptionMandatory(true));
-program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    addBaseOptions(program, { address: true });
 
-program.action((options) => {
-    main(options);
-});
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators').makeOptionMandatory(false));
+    program.addOption(
+        new Option('--action <action>', 'operator action').choices([
+            'isOperator',
+            'addOperator',
+            'removeOperator',
+            'collectFees',
+            'refund',
+        ]),
+    );
+    program.addOption(new Option('--args <args>', 'operator action arguments').makeOptionMandatory(true));
 
-program.parse();
+    program.action((options) => {
+        main(options);
+    });
+
+    program.parse();
+}

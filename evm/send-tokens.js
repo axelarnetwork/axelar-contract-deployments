@@ -2,65 +2,102 @@
 
 require('dotenv').config();
 
-const { ethers } = require('hardhat');
-const { Wallet, getDefaultProvider } = ethers;
-const { Command, Option } = require('commander');
 const chalk = require('chalk');
-const { printInfo, printWalletInfo } = require('./utils');
-const readlineSync = require('readline-sync');
+const { Command, Option } = require('commander');
+const { ethers } = require('hardhat');
+const {
+    getDefaultProvider,
+    utils: { parseEther, parseUnits },
+} = ethers;
+const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt, getGasOptions } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
+const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js');
 
-async function sendTokens(chain, options) {
+async function processCommand(_, chain, options) {
+    const { privateKey, offline, env } = options;
+    let { amount: amountStr, recipients, nonceOffset } = options;
+
+    const chainName = chain.name.toLowerCase();
     const provider = getDefaultProvider(chain.rpc);
-    const wallet = new Wallet(options.privateKey, provider);
 
-    const balance = await printWalletInfo(wallet);
-    const amount = ethers.utils.parseEther(options.amount);
+    recipients = options.recipients.split(',').map((str) => str.trim());
 
-    if (balance.lte(amount)) {
-        throw new Error(`Wallet has insufficient funds.`);
+    if (!isAddressArray(recipients)) {
+        throw new Error('Invalid recipient addresses');
     }
 
-    const recipients = options.recipients.split(',').map((str) => str.trim());
+    if (!amountStr && options.gasUsage) {
+        const gasPrice = parseUnits((await provider.getGasPrice()).toString(), 'wei');
+        const gas = gasPrice * parseInt(options.gasUsage);
+        amountStr = (gas / 1e18).toString();
+    }
 
-    if (!options.yes) {
-        const anwser = readlineSync.question(
-            `Proceed with the transfer of ${chalk.green(options.amount)} ${chalk.green(chain.tokenSymbol)} to ${recipients} on ${
-                chain.name
-            }? ${chalk.green('(y/n)')} `,
-        );
-        if (anwser !== 'y') return;
+    if (!isValidDecimal(amountStr)) {
+        throw new Error(`Invalid amount ${amountStr}`);
+    }
+
+    const amount = parseEther(amountStr);
+
+    const wallet = await getWallet(privateKey, provider, options);
+
+    const { address, balance } = await printWalletInfo(wallet, options);
+
+    if (!offline) {
+        if (balance.lte(amount)) {
+            printError(`Wallet balance ${balance} has insufficient funds for ${amount}.`);
+            return;
+        }
+    }
+
+    printInfo('Chain', chain.name);
+
+    const gasOptions = await getGasOptions(chain, options);
+
+    if (
+        prompt(
+            `Proceed with the transfer of ${chalk.green(amountStr)} ${chalk.green(chain.tokenSymbol)} to ${recipients} on ${chain.name}?`,
+            options.yes,
+        )
+    ) {
+        printInfo('Operation Cancelled');
+        return;
     }
 
     for (const recipient of recipients) {
         printInfo('Recipient', recipient);
-
-        const tx = await wallet.sendTransaction({
+        const tx = {
             to: recipient,
             value: amount,
-        });
+            ...gasOptions,
+        };
 
-        printInfo('Transaction hash', tx.hash);
+        if (!offline && chain.name.toLowerCase() === 'binance') {
+            tx.gasPrice = (await provider.getGasPrice()) * 1.2;
+        }
 
-        await tx.wait();
+        const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
+
+        if (offline) {
+            const filePath = `./tx/signed-tx-${env}-send-tokens-${chainName}-address-${address}-nonce-${baseTx.nonce}.json`;
+            printInfo(`Storing signed Tx offline in file ${filePath}`);
+
+            // Storing the fields in the data that will be stored in file
+            const data = {
+                msg: `This transaction will send ${amount} of native tokens from ${address} to ${recipient} on chain ${chain.name}`,
+                unsignedTx: baseTx,
+                signedTx,
+                status: 'PENDING',
+            };
+
+            storeSignedTx(filePath, data);
+
+            nonceOffset = (parseInt(nonceOffset) || 0) + 1;
+        }
     }
 }
 
 async function main(options) {
-    const config = require(`${__dirname}/../axelar-chains-config/info/${options.env === 'local' ? 'testnet' : options.env}.json`);
-
-    const chains = options.chainNames.split(',').map((str) => str.trim());
-
-    for (const chainName of chains) {
-        if (config.chains[chainName.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chainName} is not defined in the info file`);
-        }
-    }
-
-    for (const chainName of chains) {
-        const chain = config.chains[chainName.toLowerCase()];
-
-        await sendTokens(chain, options);
-    }
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {
@@ -68,18 +105,13 @@ if (require.main === module) {
 
     program.name('send-tokens').description('Send native tokens to an address.');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').makeOptionMandatory(true));
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+    addBaseOptions(program);
+
     program.addOption(new Option('-r, --recipients <recipients>', 'comma-separated recipients of tokens').makeOptionMandatory(true));
-    program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)').makeOptionMandatory(true));
-    program.addOption(new Option('-y, --yes', 'skip prompts'));
+    program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)'));
+    program.addOption(new Option('--gasUsage <gasUsage>', 'amount to transfer based on gas usage and gas price').default('5000000'));
+    program.addOption(new Option('--offline', 'Run in offline mode'));
+    program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
 
     program.action((options) => {
         main(options);
@@ -87,5 +119,5 @@ if (require.main === module) {
 
     program.parse();
 } else {
-    module.exports = { sendTokens };
+    module.exports = { sendTokens: processCommand };
 }
