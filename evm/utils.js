@@ -1,35 +1,42 @@
 'use strict';
 
+const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder },
-} = require('ethers');
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString },
+    constants: { AddressZero },
+    getDefaultProvider,
+} = ethers;
 const https = require('https');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 const { outputJsonSync } = require('fs-extra');
-const { readJSON, importNetworks, verifyContract } = require('../axelar-chains-config');
 const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
+const readlineSync = require('readline-sync');
 const chalk = require('chalk');
 const {
     create3DeployContract,
     deployContractConstant,
     predictContractConstant,
     getCreate3Address,
+    printObj,
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
+const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
 };
 
-const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null) => {
+const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
-    const contract = await factory.deploy(...args, { ...options });
-    await contract.deployed();
+    const contract = await factory.deploy(...args, options);
+    await contract.deployTransaction.wait(chain.confirmations);
 
     if (verifyOptions?.env) {
         sleep(10000);
@@ -52,11 +59,20 @@ const deployCreate2 = async (
     salt = Date.now(),
     gasOptions = null,
     verifyOptions = null,
+    chain = {},
 ) => {
     let contract;
 
     if (!verifyOptions?.only) {
-        contract = await deployContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args, gasOptions?.gasLimit);
+        contract = await deployContractConstant(
+            constAddressDeployerAddress,
+            wallet,
+            contractJson,
+            salt,
+            args,
+            gasOptions,
+            chain.confirmations,
+        );
     } else {
         contract = { address: await predictContractConstant(constAddressDeployerAddress, wallet, contractJson, salt, args) };
     }
@@ -82,11 +98,12 @@ const deployCreate3 = async (
     key = Date.now(),
     gasOptions = null,
     verifyOptions = null,
+    chain = {},
 ) => {
     let contract;
 
     if (!verifyOptions?.only) {
-        contract = await create3DeployContract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions.gasLimit);
+        contract = await create3DeployContract(create3DeployerAddress, wallet, contractJson, key, args, gasOptions, chain.confirmations);
     } else {
         contract = { address: await getCreate3Address(create3DeployerAddress, wallet, key) };
     }
@@ -104,13 +121,9 @@ const deployCreate3 = async (
     return contract;
 };
 
-const printObj = (obj) => {
-    console.log(JSON.stringify(obj, null, 2));
-};
-
-const printInfo = (msg, info = '') => {
+const printInfo = (msg, info = '', colour = chalk.green) => {
     if (info) {
-        console.log(`${msg}: ${chalk.green(info)}\n`);
+        console.log(`${msg}: ${colour(info)}\n`);
     } else {
         console.log(`${msg}\n`);
     }
@@ -118,18 +131,18 @@ const printInfo = (msg, info = '') => {
 
 const printWarn = (msg, info = '') => {
     if (info) {
-        msg = msg + ': ' + info;
+        msg = `${msg}: ${info}`;
     }
 
-    console.log(`${chalk.yellow(msg)}\n`);
+    console.log(`${chalk.italic.yellow(msg)}\n`);
 };
 
 const printError = (msg, info = '') => {
     if (info) {
-        msg = msg + ': ' + info;
+        msg = `${msg}: ${info}`;
     }
 
-    console.log(`${chalk.red(msg)}\n`);
+    console.log(`${chalk.bold.red(msg)}\n`);
 };
 
 function printLog(log) {
@@ -150,7 +163,7 @@ const httpGet = (url) => {
             const contentType = res.headers['content-type'];
             let error;
 
-            if (statusCode !== 200) {
+            if (statusCode !== 200 && statusCode !== 301) {
                 error = new Error('Request Failed.\n' + `Request: ${url}\nStatus Code: ${statusCode}`);
             } else if (!/^application\/json/.test(contentType)) {
                 error = new Error('Invalid content-type.\n' + `Expected application/json but received ${contentType}`);
@@ -179,26 +192,24 @@ const httpGet = (url) => {
     });
 };
 
-const isString = (arg) => {
+const isNonEmptyString = (arg) => {
     return typeof arg === 'string' && arg !== '';
 };
 
-const isStringArray = (arr) => {
-    if (!Array.isArray(arr)) {
-        return false;
-    }
-
-    for (const item of arr) {
-        if (!isString(item)) {
-            return false;
-        }
-    }
-
-    return true;
+const isString = (arg) => {
+    return typeof arg === 'string';
 };
 
 const isNumber = (arg) => {
     return Number.isInteger(arg);
+};
+
+const isValidNumber = (arg) => {
+    return !isNaN(parseInt(arg)) && isFinite(arg);
+};
+
+const isValidDecimal = (arg) => {
+    return !isNaN(parseFloat(arg)) && isFinite(arg);
 };
 
 const isNumberArray = (arr) => {
@@ -215,16 +226,36 @@ const isNumberArray = (arr) => {
     return true;
 };
 
-const isAddressArray = (arg) => {
-    if (!Array.isArray(arg)) return false;
+const isNonEmptyStringArray = (arr) => {
+    if (!Array.isArray(arr)) {
+        return false;
+    }
 
-    for (const ele of arg) {
-        if (!isAddress(ele)) {
+    for (const item of arr) {
+        if (typeof item !== 'string') {
             return false;
         }
     }
 
     return true;
+};
+
+const isAddressArray = (arr) => {
+    if (!Array.isArray(arr)) return false;
+
+    for (const item of arr) {
+        if (!isAddress(item)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+const getCurrentTimeInSeconds = () => {
+    const now = new Date();
+    const currentTimeInSecs = Math.floor(now.getTime() / 1000);
+    return currentTimeInSecs;
 };
 
 /**
@@ -243,6 +274,132 @@ function isKeccak256Hash(input) {
     const hexPattern = /^[a-fA-F0-9]{64}$/;
 
     return hexPattern.test(input.slice(2));
+}
+
+/**
+ * Determines if a given input is a valid calldata for Solidity.
+ *
+ * @param {string} input - The string to validate.
+ * @returns {boolean} - Returns true if the input is a valid calldata, false otherwise.
+ */
+function isValidCalldata(input) {
+    if (input === '0x') {
+        return true;
+    }
+
+    // Ensure it's a string, starts with '0x' and has an even number of characters after '0x'
+    if (typeof input !== 'string' || input.slice(0, 2) !== '0x' || input.length % 2 !== 0) {
+        return false;
+    }
+
+    // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
+    const hexPattern = /^[a-fA-F0-9]+$/;
+
+    return hexPattern.test(input.slice(2));
+}
+
+function isValidBytesAddress(input) {
+    const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+    return addressRegex.test(input);
+}
+
+const isContract = async (address, provider) => {
+    const code = await provider.getCode(address);
+    return code && code !== '0x';
+};
+
+function isValidAddress(address, allowZeroAddress) {
+    if (!allowZeroAddress && address === AddressZero) {
+        return false;
+    }
+
+    return isAddress(address);
+}
+
+/**
+ * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
+ *
+ * @param {string} timeString - The input time string.
+ * @return {boolean} - Returns true if the format matches, false otherwise.
+ */
+function isValidTimeFormat(timeString) {
+    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+
+    if (timeString === '0') {
+        return true;
+    }
+
+    return regex.test(timeString);
+}
+
+// Validate if the input privateKey is correct
+function isValidPrivateKey(privateKey) {
+    // Check if it's a valid hexadecimal string
+    if (!privateKey?.startsWith('0x')) {
+        privateKey = '0x' + privateKey;
+    }
+
+    if (!isHexString(privateKey) || privateKey.length !== 66) {
+        return false;
+    }
+
+    return true;
+}
+
+function isValidTokenId(input) {
+    if (!input?.startsWith('0x')) {
+        return false;
+    }
+
+    const hexPattern = /^[0-9a-fA-F]+$/;
+
+    if (!hexPattern.test(input.slice(2))) {
+        return false;
+    }
+
+    const minValue = BigInt('0x00');
+    const maxValue = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
+    const numericValue = BigInt(input);
+
+    return numericValue >= minValue && numericValue <= maxValue;
+}
+
+const validationFunctions = {
+    isNonEmptyString,
+    isNumber,
+    isValidNumber,
+    isValidDecimal,
+    isNumberArray,
+    isString,
+    isNonEmptyStringArray,
+    isAddressArray,
+    isKeccak256Hash,
+    isValidCalldata,
+    isValidBytesAddress,
+    isValidTimeFormat,
+    isContract,
+    isValidAddress,
+    isValidPrivateKey,
+    isValidTokenId,
+};
+
+function validateParameters(parameters) {
+    for (const [validatorFunctionString, paramsObj] of Object.entries(parameters)) {
+        const validatorFunction = validationFunctions[validatorFunctionString];
+
+        if (typeof validatorFunction !== 'function') {
+            throw new Error(`Validator function ${validatorFunction} is not defined`);
+        }
+
+        for (const paramKey of Object.keys(paramsObj)) {
+            const paramValue = paramsObj[paramKey];
+            const isValid = validatorFunction(paramValue);
+
+            if (!isValid) {
+                throw new Error(`Input validation failed for ${validatorFunctionString} with parameter ${paramKey}: ${paramValue}`);
+            }
+        }
+    }
 }
 
 /**
@@ -286,7 +443,7 @@ const parseArgs = (args) => {
 async function getBytecodeHash(contractObject, chain = '', provider = null) {
     let bytecode;
 
-    if (isString(contractObject)) {
+    if (isNonEmptyString(contractObject)) {
         if (provider === null) {
             throw new Error('Provider must be provided for chain');
         }
@@ -296,15 +453,19 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
         // Contract instance
         provider = contractObject.provider;
         bytecode = await provider.getCode(contractObject.address);
-    } else if (contractObject.bytecode) {
+    } else if (contractObject.deployedBytecode) {
         // Contract factory
-        bytecode = contractObject.bytecode;
+        bytecode = contractObject.deployedBytecode;
     } else {
         throw new Error('Invalid contract object. Expected ethers.js Contract or ContractFactory.');
     }
 
+    if (bytecode === '0x') {
+        throw new Error('Contract bytecode is empty');
+    }
+
     if (chain.toLowerCase() === 'polygon-zkevm') {
-        const codehash = await zkevm.smtUtils.hashContractBytecode(bytecode);
+        const codehash = zkevm.smtUtils.hashContractBytecode(bytecode);
         return codehash;
     }
 
@@ -356,7 +517,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
 
             const deployerContract = options.deployerContract;
 
-            if (!isString(deployerContract)) {
+            if (!isNonEmptyString(deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
@@ -379,7 +540,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
         case 'create3': {
             const deployerContract = options.deployerContract;
 
-            if (!isString(deployerContract)) {
+            if (!isNonEmptyString(deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
@@ -417,8 +578,17 @@ const getProxy = async (config, chain) => {
     return address;
 };
 
+const getEVMBatch = async (config, chain, batchID = '') => {
+    const batch = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
+    return batch;
+};
+
 const getEVMAddresses = async (config, chain, options = {}) => {
     const keyID = options.keyID || '';
+
+    if (isAddress(keyID)) {
+        return { addresses: [keyID], weights: [Number(1)], threshold: 1, keyID: 'debug' };
+    }
 
     const evmAddresses = options.amplifier
         ? await getAmplifierKeyAddresses(config, chain)
@@ -430,7 +600,7 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     const weights = sortedAddresses.map((weightedAddress) => Number(weightedAddress.weight));
     const threshold = Number(evmAddresses.threshold);
 
-    return { addresses, weights, threshold };
+    return { addresses, weights, threshold, keyID: evmAddresses.key_id };
 };
 
 const getAmplifierKeyAddresses = async (config, chain) => {
@@ -457,17 +627,24 @@ function saveConfig(config, env) {
     writeJSON(config, `${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
-async function printWalletInfo(wallet) {
-    printInfo('Wallet address', wallet.address);
-    const balance = await wallet.provider.getBalance(wallet.address);
-    printInfo('Wallet balance', `${balance / 1e18}`);
-    printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(wallet.address)).toString());
+async function printWalletInfo(wallet, options = {}) {
+    let balance = 0;
+    const address = await wallet.getAddress();
+    printInfo('Wallet address', address);
 
-    if (balance.isZero()) {
-        printError('Wallet balance is 0');
+    if (!options.offline) {
+        balance = await wallet.provider.getBalance(address);
+
+        if (balance.isZero()) {
+            printError('Wallet balance', '0');
+        } else {
+            printInfo('Wallet balance', `${balance / 1e18}`);
+        }
+
+        printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(address)).toString());
     }
 
-    return balance;
+    return { address, balance };
 }
 
 const deployContract = async (
@@ -478,19 +655,33 @@ const deployContract = async (
     deployOptions = {},
     gasOptions = {},
     verifyOptions = {},
+    chain = {},
 ) => {
+    const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
+        salt: deployOptions.salt,
+        deployerContract: deployOptions.deployerContract,
+        contractJson,
+        constructorArgs,
+        provider: wallet.provider,
+    });
+
+    if (await isContract(predictedAddress, wallet.provider)) {
+        printError(`Contract is already deployed at ${predictedAddress}, skipping`);
+        return new Contract(predictedAddress, contractJson.abi, wallet);
+    }
+
     switch (deployMethod) {
         case 'create': {
-            const contract = await deployCreate(wallet, contractJson, constructorArgs, gasOptions, verifyOptions);
+            const contract = await deployCreate(wallet, contractJson, constructorArgs, gasOptions, verifyOptions, chain);
             return contract;
         }
 
         case 'create2': {
-            if (!isString(deployOptions.deployerContract)) {
+            if (!isNonEmptyString(deployOptions.deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
-            if (!isString(deployOptions.salt)) {
+            if (!isNonEmptyString(deployOptions.salt)) {
                 throw new Error('Salt was not provided');
             }
 
@@ -500,19 +691,20 @@ const deployContract = async (
                 contractJson,
                 constructorArgs,
                 deployOptions.salt,
-                gasOptions.gasLimit,
+                gasOptions,
                 verifyOptions,
+                chain,
             );
 
             return contract;
         }
 
         case 'create3': {
-            if (!isString(deployOptions.deployerContract)) {
+            if (!isNonEmptyString(deployOptions.deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
-            if (!isString(deployOptions.salt)) {
+            if (!isNonEmptyString(deployOptions.salt)) {
                 throw new Error('Salt was not provided');
             }
 
@@ -524,6 +716,7 @@ const deployContract = async (
                 deployOptions.salt,
                 gasOptions,
                 verifyOptions,
+                chain,
             );
 
             return contract;
@@ -535,23 +728,7 @@ const deployContract = async (
     }
 };
 
-/**
- * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
- *
- * @param {string} timeString - The input time string.
- * @return {boolean} - Returns true if the format matches, false otherwise.
- */
-function isValidTimeFormat(timeString) {
-    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
-
-    if (timeString === '0') {
-        return true;
-    }
-
-    return regex.test(timeString);
-}
-
-const etaToUnixTimestamp = (utcTimeString) => {
+const dateToEta = (utcTimeString) => {
     if (utcTimeString === '0') {
         return 0;
     }
@@ -565,8 +742,14 @@ const etaToUnixTimestamp = (utcTimeString) => {
     return Math.floor(date.getTime() / 1000);
 };
 
-const getCurrentTimeInSeconds = () => {
-    return Date.now() / 1000;
+const etaToDate = (timestamp) => {
+    const date = new Date(timestamp * 1000);
+
+    if (isNaN(date.getTime())) {
+        throw new Error(`Invalid timestamp provided: ${timestamp}`);
+    }
+
+    return date.toISOString().slice(0, 19);
 };
 
 /**
@@ -583,26 +766,219 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
-const isContract = async (address, provider) => {
-    try {
-        const code = await provider.getCode(address);
-        return code && code !== '0x';
-    } catch (err) {
-        console.error('Error:', err);
-        return false;
+function copyObject(obj) {
+    return JSON.parse(JSON.stringify(obj));
+}
+
+const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
+    if (!options.env) {
+        throw new Error('Environment was not provided');
+    }
+
+    if (!options.chainName && !options.chainNames) {
+        throw new Error('Chain names were not provided');
+    }
+
+    printInfo('Environment', options.env);
+
+    const config = loadConfig(options.env);
+    let chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
+    const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim());
+
+    if (options.chainNames === 'all') {
+        chains = Object.keys(config.chains);
+    }
+
+    for (const chainName of chains) {
+        if (config.chains[chainName.toLowerCase()] === undefined) {
+            throw new Error(`Chain ${chainName} is not defined in the info file`);
+        }
+    }
+
+    for (const chainName of chains) {
+        const chain = config.chains[chainName.toLowerCase()];
+
+        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
+            printWarn('Skipping chain', chain.name);
+            continue;
+        }
+
+        try {
+            await processCommand(config, chain, options);
+        } catch (error) {
+            printError(`Failed with error on ${chain.name}`, error.message);
+
+            if (!catchErr && !options.ignoreError) {
+                throw error;
+            }
+        }
+
+        if (save) {
+            saveConfig(config, options.env);
+        }
     }
 };
+
+/**
+ * Prompt the user for confirmation
+ * @param {string} question Prompt question
+ * @param {boolean} yes If true, skip the prompt
+ * @returns {boolean} Returns true if the prompt was skipped, false otherwise
+ */
+const prompt = (question, yes = false) => {
+    // skip the prompt if yes was passed
+    if (yes) {
+        return false;
+    }
+
+    const answer = readlineSync.question(`${question} ${chalk.green('(y/n)')} `);
+    console.log();
+
+    return answer !== 'y';
+};
+
+function getConfigByChainId(chainId, config) {
+    for (const chain of Object.values(config.chains)) {
+        if (chain.chainId === chainId) {
+            return chain;
+        }
+    }
+
+    throw new Error(`Chain with chainId ${chainId} not found in the config`);
+}
+
+function findProjectRoot(startDir) {
+    let currentDir = startDir;
+
+    while (currentDir !== path.parse(currentDir).root) {
+        const potentialPackageJson = path.join(currentDir, 'package.json');
+
+        if (fs.existsSync(potentialPackageJson)) {
+            return currentDir;
+        }
+
+        currentDir = path.resolve(currentDir, '..');
+    }
+
+    throw new Error('Unable to find project root');
+}
+
+function findContractPath(dir, contractName) {
+    const files = fs.readdirSync(dir);
+
+    for (const file of files) {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+
+        if (stat && stat.isDirectory()) {
+            const recursivePath = findContractPath(filePath, contractName);
+
+            if (recursivePath) {
+                return recursivePath;
+            }
+        } else if (file === `${contractName}.json`) {
+            return filePath;
+        }
+    }
+}
+
+function getContractPath(contractName) {
+    const projectRoot = findProjectRoot(__dirname);
+
+    const searchDirs = [
+        path.join(projectRoot, 'node_modules', '@axelar-network', 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
+        path.join(projectRoot, 'node_modules', '@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
+        path.join(projectRoot, 'node_modules', '@axelar-network', 'interchain-token-service', 'artifacts', 'contracts'),
+    ];
+
+    for (const dir of searchDirs) {
+        if (fs.existsSync(dir)) {
+            const contractPath = findContractPath(dir, contractName);
+
+            if (contractPath) {
+                return contractPath;
+            }
+        }
+    }
+
+    throw new Error(`Contract path for ${contractName} must be entered manually.`);
+}
+
+function getContractJSON(contractName, artifactPath) {
+    let contractPath;
+
+    if (artifactPath) {
+        contractPath = artifactPath.endsWith('.json') ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
+    } else {
+        contractPath = getContractPath(contractName);
+    }
+
+    try {
+        const contractJson = require(contractPath);
+        return contractJson;
+    } catch (err) {
+        throw new Error(`Failed to load contract JSON for ${contractName} at path ${contractPath} with error: ${err}`);
+    }
+}
+
+/**
+ * Retrieves gas options for contract interactions.
+ *
+ * This function determines the appropriate gas options for a given transaction.
+ * It supports offline scenarios and applies gas price adjustments if specified.
+ *
+ * @param {Object} chain - The chain config object.
+ * @param {Object} options - Script options, including the 'offline' flag.
+ * @param {String} contractName - The name of the contract to deploy/interact with.
+ * @param {Object} defaultGasOptions - Optional default gas options if none are provided in the chain or contract configs.
+ *
+ * @returns {Object} An object containing gas options for the transaction.
+ *
+ * @throws {Error} Throws an error if fetching the gas price fails.
+ *
+ * Note:
+ * - If 'options.offline' is true, static gas options from the contract or chain config are used.
+ * - If 'gasPriceAdjustment' is set in gas options and 'gasPrice' is not pre-defined, the gas price
+ *   is fetched from the provider and adjusted according to 'gasPriceAdjustment'.
+ */
+async function getGasOptions(chain, options, contractName, defaultGasOptions = {}) {
+    const { offline } = options;
+
+    const contractConfig = contractName ? chain?.contracts[contractName] : null;
+
+    if (offline) {
+        return copyObject(contractConfig?.staticGasOptions || chain?.staticGasOptions || defaultGasOptions);
+    }
+
+    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || defaultGasOptions);
+    const gasPriceAdjustment = gasOptions.gasPriceAdjustment;
+
+    if (gasPriceAdjustment && !gasOptions.gasPrice) {
+        try {
+            const provider = getDefaultProvider(chain.rpc);
+            gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * gasPriceAdjustment);
+        } catch (err) {
+            throw new Error(`Provider failed to retrieve gas price on chain ${chain.name}: ${err}`);
+        }
+    }
+
+    if (gasPriceAdjustment) {
+        delete gasOptions.gasPriceAdjustment;
+    }
+
+    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+
+    return gasOptions;
+}
 
 module.exports = {
     deployCreate,
     deployCreate2,
     deployCreate3,
     deployContract,
-    readJSON,
     writeJSON,
+    copyObject,
     httpGet,
-    importNetworks,
-    verifyContract,
     printObj,
     printLog,
     printInfo,
@@ -612,22 +988,39 @@ module.exports = {
     predictAddressCreate,
     getDeployedAddress,
     isString,
-    isStringArray,
+    isNonEmptyString,
     isNumber,
+    isValidNumber,
+    isValidDecimal,
     isNumberArray,
+    isNonEmptyStringArray,
     isAddressArray,
     isKeccak256Hash,
+    isValidCalldata,
+    isValidBytesAddress,
+    validateParameters,
     parseArgs,
     getProxy,
+    getEVMBatch,
     getEVMAddresses,
+    getConfigByChainId,
     sleep,
     loadConfig,
     saveConfig,
     printWalletInfo,
     isValidTimeFormat,
-    etaToUnixTimestamp,
+    dateToEta,
+    etaToDate,
     getCurrentTimeInSeconds,
     wasEventEmitted,
     isContract,
-    getSaltFromKey,
+    isValidAddress,
+    isValidPrivateKey,
+    isValidTokenId,
+    verifyContract,
+    prompt,
+    mainProcessor,
+    getContractPath,
+    getContractJSON,
+    getGasOptions,
 };
