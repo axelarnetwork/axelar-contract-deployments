@@ -219,7 +219,7 @@ async function getInstantiateMsg(contractName, config, chain) {
         axelar: { contracts },
     } = config;
 
-    const { contractName: contractConfig } = contracts;
+    const { [contractName]: contractConfig } = contracts;
 
     const { codeId } = contractConfig;
     const { id: chainId } = chain;
@@ -326,7 +326,7 @@ async function deploy(options, chain, config) {
 
     printInfo('Code Id', contractConfig.codeId);
 
-    if (options.uploadOnly) {
+    if (!options.uploadOnly) {
         const initMsg = await getInstantiateMsg(options.contractName, config, chain);
         const contractAddress = await instantiateContract(config, options, options.contractName, initMsg, wallet, client);
 
