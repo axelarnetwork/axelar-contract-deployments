@@ -3,7 +3,7 @@
 const { readFileSync } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
-const { getSaltFromKey} = require('../evm/utils');
+const { getSaltFromKey } = require('../evm/utils');
 
 const pascalToSnake = (str) => {
     return str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
@@ -23,10 +23,10 @@ const uploadContract = async (config, options, wallet, client) => {
         const salt = getSaltFromKey(options.salt || options.contractName);
 
         const checksum = Uint8Array.from(Buffer.from(result.checksum, 'hex'));
-        address = instantiate2Address(checksum, account.address, new Uint8Array(Buffer.from(salt.slice(2),'hex')), "axelar")
+        address = instantiate2Address(checksum, account.address, new Uint8Array(Buffer.from(salt.slice(2), 'hex')), 'axelar');
     }
 
-    return {codeId: result.codeId, address}
+    return { codeId: result.codeId, address };
 };
 
 const instantiateContract = async (config, options, contractName, initMsg, wallet, client) => {
@@ -40,9 +40,15 @@ const instantiateContract = async (config, options, contractName, initMsg, walle
 
     if (options.instantiate2) {
         const salt = getSaltFromKey(options.salt || options.contractName);
-        result = await client.instantiate2(account.address, contractConfig.codeId, new Uint8Array(Buffer.from(salt.slice(2), 'hex')), initMsg, contractName, initFee);
-    }
-    else {
+        result = await client.instantiate2(
+            account.address,
+            contractConfig.codeId,
+            new Uint8Array(Buffer.from(salt.slice(2), 'hex')),
+            initMsg,
+            contractName,
+            initFee,
+        );
+    } else {
         result = await client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee);
     }
 
