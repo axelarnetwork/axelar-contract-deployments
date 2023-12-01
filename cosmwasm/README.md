@@ -11,6 +11,7 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 
 2. Add a `contracts` object to the `axelar` section of your config. Change any values as necessary. For chain specific contracts (`VotingVerifier`,`Gateway`,`MultisigProver`), there should be one object per chain, where the key is the chain id.
 ```
+  "axelar": {
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
@@ -92,7 +93,13 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
           "keyType": "ecdsa"
         }
       }
-    }
+    },
+
+    "rpc": [rpc],
+    "tokenSymbol": "amplifier",
+    "gasPrice": "0.00005uamplifier",
+    "gasLimit": 5000000
+  }
 ```
 
 ### Deploy the contracts

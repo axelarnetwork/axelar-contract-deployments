@@ -5,7 +5,7 @@ require('dotenv').config();
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 
-const { printInfo, loadConfig, saveConfig, isString, isStringArray, isNumber } = require('../evm/utils');
+const { printInfo, loadConfig, saveConfig, isString, isStringArray, isNumber, prompt } = require('../evm/utils');
 const { uploadContract, instantiateContract } = require('./utils');
 
 const { Command, Option } = require('commander');
@@ -302,11 +302,11 @@ const deploy = async (options, chain, config) => {
     const wallet = await DirectSecp256k1HdWallet.fromMnemonic(options.mnemonic, { prefix: 'axelar' });
     const client = await SigningCosmWasmClient.connectWithSigner(config.axelar.rpc, wallet);
 
-    if (config.axelar.contracts[options.contractName] === undefined) {
-        config.axelar.contracts[options.contractName] = {};
-    }
-
-    const contractConfig = config.axelar.contracts[options.contractName];
+    const {
+        axelar: {
+            contracts: { [options.contractName]: contractConfig = {} },
+        },
+    } = config;
 
     printInfo('Contract name', options.contractName);
 
@@ -325,21 +325,23 @@ const deploy = async (options, chain, config) => {
 
     printInfo('Code Id', contractConfig.codeId);
 
-    if (!options.uploadOnly) {
-        const initMsg = makeInstantiateMsg(options.contractName, config, chain);
-        const contractAddress = await instantiateContract(config, options, options.contractName, initMsg, wallet, client);
-
-        if (chain) {
-            contractConfig[chain.id] = {
-                ...contractConfig[chain.id],
-                address: contractAddress,
-            };
-        } else {
-            contractConfig.address = contractAddress;
-        }
-
-        printInfo('Contract address', contractAddress);
+    if (options.uploadOnly || prompt(`Proceed with deployment on axelar?`, options.yes)) {
+        return;
     }
+
+    const initMsg = makeInstantiateMsg(options.contractName, config, chain);
+    const contractAddress = await instantiateContract(config, options, options.contractName, initMsg, wallet, client);
+
+    if (chain) {
+        contractConfig[chain.id] = {
+            ...contractConfig[chain.id],
+            address: contractAddress,
+        };
+    } else {
+        contractConfig.address = contractAddress;
+    }
+
+    printInfo('Contract address', contractAddress);
 };
 
 const main = async (options) => {
@@ -382,7 +384,7 @@ const programHandler = () => {
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
     program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
-    program.addOption(new Option('-s, --salt', 'salt for instantiate2. defaults to contract name'));
+    program.addOption(new Option('-s, --salt', 'salt for instantiate2. defaults to contract name').env('SALT'));
     program.addOption(
         new Option(
             '-u, --uploadOnly',
@@ -391,6 +393,7 @@ const programHandler = () => {
     );
     program.addOption(new Option('--instantiate2', 'use instantiate2 for constant address deployment'));
     program.addOption(new Option('--aarch64', 'aarch64').env('AARCH64').default(false));
+    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 
     program.action((options) => {
         main(options);
