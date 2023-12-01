@@ -18,7 +18,7 @@ const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
     return { governance_account: governanceAccount };
 };
 
-const makeMultisigInstantiateMsg = ({ governanceAddress, rewardsAddress, gracePeriod }) => {
+const makeMultisigInstantiateMsg = ({ governanceAddress, gracePeriod }, { Rewards: { address: rewardsAddress } }) => {
     if (!isString(governanceAddress)) {
         throw new Error('Missing Multisig.governanceAddress in axelar info');
     }
@@ -77,7 +77,7 @@ const makeNexusGatewayInstantiateMsg = ({ nexus }, { ConnectionRouter: { address
 const makeVotingVerifierInstantiateMsg = (
     contractConfig,
     { ServiceRegistry: { address: serviceRegistryAddress }, Rewards: { address: rewardsAddress } },
-    {id: chainId},
+    { id: chainId },
 ) => {
     const {
         [chainId]: { serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight },
@@ -123,7 +123,7 @@ const makeVotingVerifierInstantiateMsg = (
     };
 };
 
-const makeGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRouterAddress }, VotingVerifier }, {id: chainId}) => {
+const makeGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRouterAddress }, VotingVerifier }, { id: chainId }) => {
     const {
         [chainId]: { address: verifierAddress },
     } = VotingVerifier;
@@ -139,7 +139,7 @@ const makeGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRout
     return { router_address: connectionRouterAddress, verifier_address: verifierAddress };
 };
 
-const makeMultisigProverInstantiateMsg = (contractConfig, contracts, {id: chainId}) => {
+const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chainId }) => {
     const {
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
@@ -241,7 +241,7 @@ const makeInstantiateMsg = (contractName, config, chain) => {
                 throw new Error('Multisig does not support chainNames option');
             }
 
-            return makeMultisigInstantiateMsg(contractConfig);
+            return makeMultisigInstantiateMsg(contractConfig, contracts);
         }
 
         case 'Rewards': {
@@ -294,15 +294,13 @@ const makeInstantiateMsg = (contractName, config, chain) => {
     }
 
     throw new Error(`${contractName} is not supported.`);
-}
-
+};
 
 const deploy = async (options, chain, config) => {
     printInfo('Deploying for chain', chain ? chain.name : 'none');
 
     const wallet = await DirectSecp256k1HdWallet.fromMnemonic(options.mnemonic, { prefix: 'axelar' });
     const client = await SigningCosmWasmClient.connectWithSigner(config.axelar.rpc, wallet);
-
 
     if (config.axelar.contracts[options.contractName] === undefined) {
         config.axelar.contracts[options.contractName] = {};
@@ -342,7 +340,7 @@ const deploy = async (options, chain, config) => {
 
         printInfo('Contract address', contractAddress);
     }
-}
+};
 
 const main = async (options) => {
     const config = loadConfig(options.env);
@@ -365,7 +363,7 @@ const main = async (options) => {
 
         options.reuseCodeId = true;
     }
-}
+};
 
 const programHandler = () => {
     const program = new Command();
@@ -399,7 +397,7 @@ const programHandler = () => {
     });
 
     program.parse();
-}
+};
 
 if (require.main === module) {
     programHandler();
