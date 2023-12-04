@@ -1,6 +1,5 @@
 //! Program entrypoint
-
-#![cfg(not(feature = "no-entrypoint"))]
+#![cfg(all(target_os = "solana", not(feature = "no-entrypoint")))]
 
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;

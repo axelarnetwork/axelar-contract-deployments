@@ -77,8 +77,9 @@ pub enum GatewayEvent {
 
 impl GatewayEvent {
     /// Try to parse a [`GatewayEvent`] out of a Solana program log line.
-    pub fn parse_log(log: &str) -> Option<Self> {
+    pub fn parse_log<T: AsRef<str>>(log: T) -> Option<Self> {
         let mut iterator = log
+            .as_ref()
             .trim()
             .trim_start_matches("Program data:")
             .split_whitespace()

@@ -9,6 +9,7 @@ crate-type = ["cdylib", "lib"]
 
 [features]
 no-entrypoint = []
+test-sbf = []
 
 [dependencies]
 base64.workspace = true

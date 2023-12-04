@@ -1,3 +1,5 @@
+// #![cfg(feature = "test-sbf")]
+
 use std::error::Error;
 
 use gateway::events::GatewayEvent;
@@ -14,15 +16,14 @@ fn program_test() -> ProgramTest {
 }
 
 #[tokio::test]
-async fn test_queue_message() {
+async fn test_queue_message() -> Result<(), Box<dyn Error>> {
     let (mut banks_client, payer, recent_blockhash) = program_test().start().await;
 
     let message_id = rand_array::<50>();
     let proof = rand_array::<100>();
     let payload = rand_array::<100>();
 
-    let instruction = gateway::instruction::queue(gateway::id(), &message_id, &proof, &payload)
-        .expect("valid instruction construction");
+    let instruction = gateway::instruction::queue(gateway::id(), &message_id, &proof, &payload)?;
 
     let transaction = Transaction::new_signed_with_payer(
         &[instruction],
@@ -32,12 +33,13 @@ async fn test_queue_message() {
     );
     let BanksTransactionResultWithMetadata { result, metadata } = banks_client
         .process_transaction_with_metadata(transaction)
-        .await
-        .expect("transaction to be successful");
+        .await?;
+
     assert!({ result.is_ok() });
-    let _tx_meta = metadata.expect("transaction to have metadata");
+    let _tx_meta = metadata.ok_or("foo")?;
 
     // TODO: check created message account
+    Ok(())
 }
 
 #[tokio::test]
@@ -57,8 +59,7 @@ async fn test_call_contract_instruction() -> Result<(), Box<dyn Error>> {
         &destination_address,
         &payload,
         payload_hash,
-    )
-    .expect("valid instruction construction");
+    )?;
 
     let transaction = Transaction::new_signed_with_payer(
         &[instruction],
@@ -69,15 +70,15 @@ async fn test_call_contract_instruction() -> Result<(), Box<dyn Error>> {
 
     let BanksTransactionResultWithMetadata { result, metadata } = banks_client
         .process_transaction_with_metadata(transaction)
-        .await
-        .expect("transaction to be successful");
-    assert!({ result.is_ok() });
-    let tx_meta = metadata.expect("transaction to have metadata");
+        .await?;
 
-    let event = tx_meta
+    assert!({ result.is_ok() });
+
+    let event = metadata
+        .ok_or("expected transaction to have metadata")?
         .log_messages
         .iter()
-        .filter_map(|log: &String| GatewayEvent::parse_log(log.as_str()))
+        .filter_map(GatewayEvent::parse_log)
         .next();
 
     assert_eq!(
