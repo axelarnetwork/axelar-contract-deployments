@@ -106,23 +106,23 @@ async fn main() {
                             args.rpc_addr.clone(),
                         );
 
-                        // angry scenario
-                        axelar_dummy_verifier_is_verified(
-                        Message {
-                            cc_id: CcId {
-                                chain: "sol".to_owned(),
-                                id: "wrong-command-id-should-be-false".to_owned(),
-                            },
-                            source_address: event.sender.to_string(), // TODO: check if thats correct
-                            destination_chain: event.destination_chain.clone(),
-                            destination_address: event.destination_contract_address.clone(),
-                            payload_hash:
-                                "2CE2D8F68382ACFAF56AD8BF81DAFDBD558490431B701FD10F8969CD8669EB2D"
-                                    .to_string(),
-                        },
-                        args.axelar_verifier_addr.clone(),
-                        args.rpc_addr.clone(),
-                    );
+                        //     // angry scenario
+                        //     axelar_dummy_verifier_is_verified(
+                        //     Message {
+                        //         cc_id: CcId {
+                        //             chain: "sol".to_owned(),
+                        //             id: "wrong-command-id-should-be-false".to_owned(),
+                        //         },
+                        //         source_address: event.sender.to_string(), // TODO: check if thats correct
+                        //         destination_chain: event.destination_chain.clone(),
+                        //         destination_address: event.destination_contract_address.clone(),
+                        //         payload_hash:
+                        //             "2CE2D8F68382ACFAF56AD8BF81DAFDBD558490431B701FD10F8969CD8669EB2D"
+                        //                 .to_string(),
+                        //     },
+                        //     args.axelar_verifier_addr.clone(),
+                        //     args.rpc_addr.clone(),
+                        // );
                     }
                 }
                 Err(e) => warn!(

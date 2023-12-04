@@ -16,15 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
-          cache: "yarn"
-          cache-dependency-path: solana/yarn.lock
-      - uses: baptiste0928/cargo-install@v2
-        with:
-          git: https://github.com/coral-xyz/anchor
-          crate: anchor-cli
+      # - uses: actions/setup-node@v3
+        # with:
+        #   node-version: '20.x'
+        #   cache: "yarn"
+        #   cache-dependency-path: solana/yarn.lock
+      # - uses: baptiste0928/cargo-install@v2
+      #   with:
+      #     git: https://github.com/coral-xyz/anchor
+      #     crate: anchor-cli
       - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         shell: bash
       - run: echo "/home/runner/.cargo/bin" >> $GITHUB_PATH
@@ -34,4 +34,4 @@ jobs:
       - run: echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
         shell: bash
       - run: solana-keygen new --no-passphrase
-      - run: anchor test
+      - run: cargo test-sbf

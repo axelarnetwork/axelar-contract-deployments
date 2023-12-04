@@ -1,7 +1,6 @@
-use gateway::events::ContractCallEventOwned;
 use serde::{Deserialize, Serialize};
 use solana_sdk::signature::Signature;
-use std::fmt::Write;
+use std::{fmt::Write, string::FromUtf8Error};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CcId {
@@ -39,25 +38,29 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn prepare_message_for_axelar_side(
-        cc_id: CcId,
-        event_body: &ContractCallEventOwned,
-    ) -> Self {
-        let payload_hash_hex: String =
-            event_body
-                .payload_hash
-                .iter()
-                .fold(String::new(), |mut output, b| {
-                    let _ = write!(output, "{:02X}", b);
-                    output
-                });
+    pub fn prepare_message_for_axelar_side(cc_id: CcId, event_body: &Vec<Vec<u8>>) -> Self {
+        let payload_hash_hex: String = event_body[3].iter().fold(String::new(), |mut output, b| {
+            let _ = write!(output, "{:02X}", b);
+            output
+        });
+
+        let destination_chain_str = vec_to_string(event_body[1].clone()).unwrap(); // TODO:
+        let destination_contract_addr = vec_to_string(event_body[2].clone()).unwrap(); // TODO:
 
         Self {
             cc_id,
-            source_address: event_body.sender.to_string(),
-            destination_chain: event_body.destination_chain.clone(),
-            destination_address: event_body.destination_contract_address.clone(),
+            source_address: String::from_utf8(event_body[0].clone()).unwrap(),
+            destination_chain: destination_chain_str,
+            destination_address: destination_contract_addr,
             payload_hash: payload_hash_hex,
         }
     }
+}
+
+/// Convert Vec[u8] to [String].
+fn vec_to_string(body: Vec<u8>) -> Result<String, FromUtf8Error> {
+    match String::from_utf8(body) {
+        Ok(s) => return Ok(s),
+        Err(e) => return Err(e),
+    };
 }
