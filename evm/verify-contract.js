@@ -233,7 +233,9 @@ async function processCommand(config, chain, options) {
             const tokenManagerLockUnlockFee = await interchainTokenService.tokenManagerImplementation(3);
 
             const allChains = Object.values(config.chains).map((chain) => chain.id);
-            const trustedAddressesValues = await Promise.all(allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)));
+            const trustedAddressesValues = await Promise.all(
+                allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)),
+            );
             const trustedChains = allChains.filter((_, index) => trustedAddressesValues[index] !== '');
             const trustedAddresses = trustedAddressesValues.filter((address) => address !== '');
 

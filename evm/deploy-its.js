@@ -8,7 +8,17 @@ const {
     getDefaultProvider,
     utils: { defaultAbiCoder, isAddress },
 } = ethers;
-const { deployContract, printWalletInfo, saveConfig, printInfo, getContractJSON, mainProcessor, prompt, sleep, getBytecodeHash } = require('./utils');
+const {
+    deployContract,
+    printWalletInfo,
+    saveConfig,
+    printInfo,
+    getContractJSON,
+    mainProcessor,
+    prompt,
+    sleep,
+    getBytecodeHash,
+} = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const InterchainTokenService = getContractJSON('InterchainTokenService');
 const { Command, Option } = require('commander');
@@ -45,11 +55,7 @@ async function deployImplementation(config, wallet, chain, options) {
     const trustedChains = itsChains.map((chain) => chain.id);
     const trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address || interchainTokenServiceAddress);
 
-    const interchainTokenFactory = await getCreate3Address(
-        contracts.Create3Deployer.address,
-        wallet,
-        factorySalt,
-    );
+    const interchainTokenFactory = await getCreate3Address(contracts.Create3Deployer.address, wallet, factorySalt);
     printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
 
     if (prompt(`Does this match any existing deployments? Proceed with deployment on ${chain.name}?`, yes)) {
