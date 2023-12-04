@@ -39,8 +39,11 @@ async function deployImplementation(config, wallet, chain, options) {
     const interchainTokenServiceAddress = await getCreate3Address(contracts.Create3Deployer.address, wallet, salt);
     printInfo('Interchain Token Service will be deployed to', interchainTokenServiceAddress);
 
-    const trustedChains = Object.values(config.chains).map((chain) => chain.id);
-    const trustedAddresses = Object.values(config.chains).map((_) => interchainTokenServiceAddress);
+    // Register all chains that ITS is or will be deployed on.
+    // Add a "skip": true under ITS key in the config if the chain will not have ITS.
+    const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
+    const trustedChains = itsChains.map((chain) => chain.id);
+    const trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address || interchainTokenServiceAddress);
 
     const interchainTokenFactory = await getCreate3Address(
         contracts.Create3Deployer.address,

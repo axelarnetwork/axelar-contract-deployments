@@ -232,10 +232,10 @@ async function processCommand(config, chain, options) {
             const tokenManagerLockUnlock = await interchainTokenService.tokenManagerImplementation(2);
             const tokenManagerLockUnlockFee = await interchainTokenService.tokenManagerImplementation(3);
 
-            const trustedChains = Object.values(config.chains).map((chain) => chain.id);
-            const trustedAddresses = (
-                await Promise.all(trustedChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)))
-            ).filter((address) => address !== '');
+            const allChains = Object.values(config.chains).map((chain) => chain.id);
+            const trustedAddressesValues = await Promise.all(allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)));
+            const trustedChains = allChains.filter((_, index) => trustedAddressesValues[index] !== '');
+            const trustedAddresses = trustedAddressesValues.filter((address) => address !== '');
 
             const setupParams = defaultAbiCoder.encode(
                 ['address', 'string', 'string[]', 'string[]'],
