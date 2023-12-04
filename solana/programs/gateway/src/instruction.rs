@@ -50,6 +50,8 @@ pub enum GatewayInstruction<'a> {
         destination_contract_address: &'a [u8],
         /// Contract call data.
         payload: &'a [u8],
+        /// Contract call data.
+        payload_hash: [u8; 32],
     },
 }
 
@@ -71,11 +73,13 @@ impl<'a> GatewayInstruction<'a> {
                 let destination_chain = next_slice(&mut iterator)?;
                 let destination_contract_address = next_slice(&mut iterator)?;
                 let payload = next_slice(&mut iterator)?;
+                let (payload_hash, _rest) = Self::unpack_payload_hash(iterator.rest())?;
                 GatewayInstruction::CallContract {
                     sender,
                     destination_chain,
                     destination_contract_address,
                     payload,
+                    payload_hash,
                 }
             }
             _ => return Err(InvalidInstruction),
@@ -95,16 +99,28 @@ impl<'a> GatewayInstruction<'a> {
                 destination_chain,
                 destination_contract_address,
                 payload,
+                payload_hash,
             } => {
                 buffer.push(1);
-                buffer.extend_from_slice(sender.as_ref());
+                buffer.extend(sender.as_ref());
                 serialize_slices(
                     &[destination_chain, destination_contract_address, payload],
                     &mut buffer,
                 )?;
+                buffer.extend(&payload_hash);
             }
         }
         Ok(buffer)
+    }
+
+    fn unpack_payload_hash(input: &[u8]) -> Result<([u8; 32], &[u8]), GatewayError> {
+        if input.len() >= 32 {
+            let (payload_hash, rest) = input.split_at(32);
+            let payload_hash = payload_hash.try_into().map_err(|_| InvalidInstruction)?;
+            Ok((payload_hash, rest))
+        } else {
+            Err(InvalidInstruction)
+        }
     }
 
     fn unpack_pubkey(input: &[u8]) -> Result<(Pubkey, &[u8]), GatewayError> {
@@ -154,6 +170,7 @@ pub fn call_contract(
     destination_chain: &str,
     destination_contract_address: &str,
     payload: &[u8],
+    payload_hash: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
     crate::check_program_account(program_id)?;
 
@@ -162,6 +179,7 @@ pub fn call_contract(
         destination_chain: destination_chain.as_bytes(),
         destination_contract_address: destination_contract_address.as_bytes(),
         payload,
+        payload_hash,
     }
     .pack()?;
 
@@ -302,12 +320,14 @@ pub mod tests {
         let destination_chain = "ethereum";
         let destination_contract_address = "0x2F43DDFf564Fb260dbD783D55fc6E4c70Be18862";
         let payload = rand_array::<100>();
+        let payload_hash = rand_array::<32>();
 
         let packed = GatewayInstruction::CallContract {
             sender,
             destination_chain: destination_chain.as_bytes(),
             destination_contract_address: destination_contract_address.as_bytes(),
             payload: &payload,
+            payload_hash,
         }
         .pack()
         .expect("call contract to be packed");
@@ -334,12 +354,14 @@ pub mod tests {
         let destination_chain = "ethereum";
         let destination_contract_address = "0x2F43DDFf564Fb260dbD783D55fc6E4c70Be18862";
         let payload = rand_array::<100>();
+        let payload_hash = rand_array::<32>();
 
         let instruction = GatewayInstruction::CallContract {
             sender,
             destination_chain: destination_chain.as_bytes(),
             destination_contract_address: destination_contract_address.as_bytes(),
             payload: &payload,
+            payload_hash,
         };
 
         let packed = instruction.pack().expect("call contract to be packed");
@@ -355,6 +377,7 @@ pub mod tests {
         let destination_chain = "ethereum";
         let destination_contract_address = "0x2F43DDFf564Fb260dbD783D55fc6E4c70Be18862";
         let payload = rand_array::<100>();
+        let payload_hash = rand_array::<32>();
 
         let instruction = call_contract(
             crate::id(),
@@ -362,6 +385,7 @@ pub mod tests {
             destination_chain,
             destination_contract_address,
             &payload,
+            payload_hash,
         )
         .expect("valid instruction construction");
 
@@ -374,6 +398,7 @@ pub mod tests {
                 destination_chain: unpacked_destination_chain,
                 destination_contract_address: unpacked_destination_contract_address,
                 payload: unpacked_payload,
+                payload_hash: unpacked_payload_hash,
             } => {
                 assert_eq!(sender, unpacked_sender);
                 assert_eq!(destination_chain.as_bytes(), unpacked_destination_chain);
@@ -382,6 +407,7 @@ pub mod tests {
                     unpacked_destination_contract_address
                 );
                 assert_eq!(payload, unpacked_payload);
+                assert_eq!(payload_hash, unpacked_payload_hash);
             }
             _ => panic!("Wrong instruction"),
         };

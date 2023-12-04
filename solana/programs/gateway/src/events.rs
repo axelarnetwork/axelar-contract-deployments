@@ -1,115 +1,75 @@
 //! Types used for logging messages.
 
-use std::array::TryFromSliceError;
-
-use solana_program::keccak;
 use solana_program::log::sol_log_data;
 use solana_program::pubkey::Pubkey;
 
 use crate::error::GatewayError;
 
-/// Logged when the Gateway receives an outbound message.
-pub struct ContractCallEventRef<'a> {
-    /// Message sender.
-    pub sender: Pubkey,
-    /// The name of the target blockchain.
-    pub destination_chain: &'a [u8],
-    /// The address of the target contract in the destination blockchain.
-    pub destination_contract_address: &'a [u8],
-    /// The payload hash.
-    pub payload_hash: &'a [u8],
-    /// Contract call data.
-    pub payload: &'a [u8],
-}
-
-impl<'a> ContractCallEventRef<'a> {
-    /// Constructs a new `ContractCallEvent`.
-    pub fn new(
-        sender: Pubkey,
+/// Gateway program logs.
+#[repr(u8)]
+#[derive(Debug)]
+pub enum GatewayEvent<'a> {
+    /// Logged when the Gateway receives an outbound message.
+    CallContract {
+        /// Message sender.
+        sender: &'a Pubkey,
+        /// The name of the target blockchain.
         destination_chain: &'a [u8],
-        destination_contract_address: &'a [u8],
-        payload_hash: &'a [u8],
+        /// The address of the target contract in the destination blockchain.
+        destination_address: &'a [u8],
+        /// Contract call data.
         payload: &'a [u8],
-    ) -> Result<Self, GatewayError> {
-        if payload_hash.len() != 32 {
-            return Err(GatewayError::InvalidMessagePayloadHash);
-        }
-
-        Ok(Self {
-            sender,
-            destination_chain,
-            destination_contract_address,
-            payload_hash,
-            payload,
-        })
-    }
-
-    /// Copy values into a [`ContractCallEvent`].
-    /// Returns an error if the payload hash slice don't fit into a `[u8; 32]`.
-    pub fn try_to_owned(&self) -> Result<ContractCallEvent, TryFromSliceError> {
-        Ok(ContractCallEvent {
-            sender: self.sender.to_owned(),
-            destination_chain: self.destination_chain.to_vec(),
-            destination_contract_address: self.destination_contract_address.to_vec(),
-            payload_hash: self.payload_hash.try_into()?,
-            payload: self.payload.to_vec(),
-        })
-    }
+        /// The payload hash.
+        payload_hash: &'a [u8; 32],
+    },
 }
 
-/// Owned version of [`ContractCallEventRef`]
-pub struct ContractCallEvent {
-    /// Message sender.
-    pub sender: Pubkey,
-    /// The name of the target blockchain.
-    pub destination_chain: Vec<u8>,
-    /// The address of the target contract in the destination blockchain.
-    pub destination_contract_address: Vec<u8>,
-    /// The payload hash.
-    pub payload_hash: [u8; 32],
-    /// Contract call data.
-    pub payload: Vec<u8>,
-}
+impl<'a> GatewayEvent<'a> {
+    /// Returns the event's discriminant byte.
+    fn discriminant(&self) -> u8 {
+        unsafe { *(self as *const Self as *const u8) }
+    }
+    /// Emits the log for this event.
+    pub fn emit(&self) {
+        match *self {
+            GatewayEvent::CallContract {
+                sender,
+                destination_chain,
+                destination_address,
+                payload_hash,
+                payload,
+            } => sol_log_data(&[
+                &[self.discriminant()],
+                sender.as_ref(),
+                destination_chain,
+                destination_address,
+                payload,
+                payload_hash,
+            ]),
+        };
+    }
 
-impl<'a> ContractCallEvent {
-    /// Returns a [`ContractCallEventRef`].
-    pub fn borrow(&'a self) -> ContractCallEventRef<'a> {
-        ContractCallEventRef {
-            sender: self.sender,
-            destination_chain: &self.destination_chain,
-            destination_contract_address: &self.destination_contract_address,
-            payload_hash: &self.payload_hash,
-            payload: &self.payload,
-        }
+    /// Try to parse a [`GatewayEvent`] out of a log line.
+    pub fn parse_log(_log: &str) -> Option<Self> {
+        todo!("implement this")
     }
 }
 
 /// Emits a `ContractCallEvent`.
 pub fn emit_call_contract_event(
-    sender: Pubkey,
+    sender: &Pubkey,
     destination_chain: &[u8],
     destination_contract_address: &[u8],
     payload: &[u8],
+    payload_hash: &[u8; 32],
 ) -> Result<(), GatewayError> {
-    let payload_hash = keccak::hash(payload).to_bytes();
-
-    let event = ContractCallEventRef::new(
+    let event = GatewayEvent::CallContract {
         sender,
         destination_chain,
-        destination_contract_address,
-        &payload_hash,
+        destination_address: destination_contract_address,
+        payload_hash,
         payload,
-    )
-    .map_err(|_| GatewayError::InvalidMessagePayloadHash)?;
-
-    // TODO: match previous implementation layout.
-    let bytes: &[&[u8]] = &[
-        &event.sender.as_ref(),
-        &event.destination_chain,
-        &event.destination_contract_address,
-        &event.payload,
-        &event.payload_hash,
-    ];
-    sol_log_data(bytes);
+    };
+    event.emit();
     Ok(())
 }

@@ -28,13 +28,15 @@ impl Processor {
                 destination_chain,
                 destination_contract_address,
                 payload,
+                payload_hash,
             } => {
                 msg!("Instruction: CallContract");
                 emit_call_contract_event(
-                    sender,
+                    &sender,
                     destination_chain,
                     destination_contract_address,
                     payload,
+                    &payload_hash,
                 )?
             }
         };

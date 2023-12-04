@@ -1,3 +1,4 @@
+use gateway::events::GatewayEvent;
 use random_array::rand_array;
 use solana_program_test::{processor, tokio, BanksTransactionResultWithMetadata, ProgramTest};
 use solana_sdk::signature::{Keypair, Signer};
@@ -38,13 +39,14 @@ async fn test_queue_message() {
 }
 
 #[tokio::test]
-async fn teste_call_contract_instruction() {
+async fn test_call_contract_instruction() {
     let (mut banks_client, payer, recent_blockhash) = program_test().start().await;
 
     let sender = Keypair::new();
     let destination_chain = "ethereum";
     let destination_contract_address = "0x2F43DDFf564Fb260dbD783D55fc6E4c70Be18862";
     let payload = rand_array::<100>();
+    let payload_hash = rand_array::<32>();
 
     let instruction = gateway::instruction::call_contract(
         gateway::id(),
@@ -52,6 +54,7 @@ async fn teste_call_contract_instruction() {
         destination_chain,
         destination_contract_address,
         &payload,
+        payload_hash,
     )
     .expect("valid instruction construction");
 
@@ -67,6 +70,16 @@ async fn teste_call_contract_instruction() {
         .await
         .expect("transaction to be successful");
     assert!({ result.is_ok() });
-    let _tx_meta = metadata.expect("transaction to have metadata");
-    // TODO: check created logs
+    let tx_meta = metadata.expect("transaction to have metadata");
+
+    let event = tx_meta
+        .log_messages
+        .iter()
+        .filter_map(|log: &String| GatewayEvent::parse_log(log.as_str()))
+        .next();
+
+    assert!(matches!(
+        dbg!(event),
+        Some(GatewayEvent::CallContract { .. })
+    ));
 }
