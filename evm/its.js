@@ -345,6 +345,22 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'trustedAddress': {
+            const trustedChain = options.trustedChain;
+
+            validateParameters({ isNonEmptyString: { trustedChain } });
+
+            const trustedAddress = await interchainTokenService.trustedAddress(trustedChain);
+
+            if (trustedAddress) {
+                printInfo(`Trusted address for chain ${trustedChain}`, trustedAddress);
+            } else {
+                printWarn(`No trusted address for chain ${trustedChain}`);
+            }
+
+            break;
+        }
+
         case 'setTrustedAddress': {
             const owner = await interchainTokenService.owner();
 
@@ -453,6 +469,7 @@ if (require.main === module) {
                 'interchainTransfer',
                 'callContractWithInterchainToken',
                 'setFlowLimits',
+                'trustedAddress',
                 'setTrustedAddress',
                 'removeTrustedAddress',
                 'setPauseStatus',
