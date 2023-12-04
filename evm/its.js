@@ -19,6 +19,7 @@ const {
     validateParameters,
     getContractJSON,
     isValidTokenId,
+    getGasOptions,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -62,7 +63,6 @@ async function processCommand(config, chain, options) {
 
     const contracts = chain.contracts;
     const contractName = 'InterchainTokenService';
-    const contractConfig = contracts.InterchainTokenService;
 
     const interchainTokenServiceAddress = address || contracts.InterchainTokenService?.address;
 
@@ -81,8 +81,7 @@ async function processCommand(config, chain, options) {
 
     const interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
 
-    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || {};
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Action', action);
 
@@ -201,6 +200,7 @@ async function processCommand(config, chain, options) {
                 tokenManagerImplementations[type],
                 params,
                 gasValue,
+                gasOptions,
             );
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'TokenManagerDeploymentStarted');
@@ -228,6 +228,7 @@ async function processCommand(config, chain, options) {
                 decimals,
                 distributor,
                 gasValue,
+                gasOptions,
             );
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
@@ -263,7 +264,7 @@ async function processCommand(config, chain, options) {
                 isValidCalldata: { payload },
             });
 
-            const tx = await interchainTokenService.expressExecute(commandID, sourceChain, sourceAddress, payload);
+            const tx = await interchainTokenService.expressExecute(commandID, sourceChain, sourceAddress, payload, gasOptions);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'ExpressExecuted');
 
@@ -288,6 +289,7 @@ async function processCommand(config, chain, options) {
                 destinationAddress,
                 amount,
                 metadata,
+                gasOptions,
             );
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'InterchainTransfer', 'InterchainTransferWithData');
@@ -313,6 +315,7 @@ async function processCommand(config, chain, options) {
                 destinationAddress,
                 amount,
                 data,
+                gasOptions,
             );
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'InterchainTransfer', 'InterchainTransferWithData');
@@ -335,7 +338,7 @@ async function processCommand(config, chain, options) {
 
             validateParameters({ isNumberArray: { flowLimits } });
 
-            const tx = await interchainTokenService.setFlowLimits(tokenIdsBytes32, flowLimits);
+            const tx = await interchainTokenService.setFlowLimits(tokenIdsBytes32, flowLimits, gasOptions);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'FlowLimitSet');
 
@@ -369,7 +372,7 @@ async function processCommand(config, chain, options) {
 
             validateParameters({ isNonEmptyString: { trustedChain, trustedAddress } });
 
-            const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress);
+            const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TrustedAddressSet');
 
@@ -387,7 +390,7 @@ async function processCommand(config, chain, options) {
 
             validateParameters({ isNonEmptyString: { trustedChain } });
 
-            const tx = await interchainTokenService.removeTrustedAddress(trustedChain);
+            const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TrustedAddressRemoved');
 
@@ -403,7 +406,7 @@ async function processCommand(config, chain, options) {
 
             const pauseStatus = options.pauseStatus;
 
-            const tx = await interchainTokenService.setPauseStatus(pauseStatus);
+            const tx = await interchainTokenService.setPauseStatus(pauseStatus, gasOptions);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'Paused', 'Unpaused');
 
@@ -423,7 +426,7 @@ async function processCommand(config, chain, options) {
 
             validateParameters({ isValidCalldata: { payload } });
 
-            const tx = await interchainTokenService.execute(commandID, sourceChain, sourceAddress, payload);
+            const tx = await interchainTokenService.execute(commandID, sourceChain, sourceAddress, payload, gasOptions);
 
             await handleTx(tx, chain, interchainTokenService, options.action);
 

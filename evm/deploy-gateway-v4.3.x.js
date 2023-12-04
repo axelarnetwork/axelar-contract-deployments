@@ -16,6 +16,7 @@ const {
     isAddressArray,
     isNumber,
     prompt,
+    getGasOptions,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { ethers } = require('hardhat');
@@ -65,8 +66,8 @@ async function deploy(config, options) {
     });
     printInfo('Predicted proxy address', proxyAddress);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || { gasLimit: 6e6 };
-    printInfo('Gas override', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
+
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
     printInfo('Skip existing contracts?', skipExisting ? 'y' : 'n');
 
@@ -272,8 +273,7 @@ async function upgrade(config, options) {
     printInfo('Upgrading to implementation', contractConfig.implementation);
     printInfo('Implementation codehash', implementationCodehash);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     if (prompt(`Proceed with upgrade on ${chain.name}?`, yes)) {
         return;
