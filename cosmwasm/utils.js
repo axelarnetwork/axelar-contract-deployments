@@ -4,9 +4,20 @@ const { readFileSync } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 const { getSaltFromKey } = require('../evm/utils');
+const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const pascalToSnake = (str) => {
     return str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
+};
+
+const isValidCosmosAddress = (str) => {
+    try {
+        normalizeBech32(str);
+    } catch (error) {
+        return false;
+    }
+
+    return true;
 };
 
 const uploadContract = async (config, options, wallet, client) => {
@@ -63,4 +74,5 @@ module.exports = {
     pascalToSnake,
     uploadContract,
     instantiateContract,
+    isValidCosmosAddress,
 };

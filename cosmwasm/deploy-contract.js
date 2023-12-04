@@ -6,69 +6,73 @@ const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 
 const { printInfo, loadConfig, saveConfig, isString, isStringArray, isNumber, prompt } = require('../evm/utils');
-const { uploadContract, instantiateContract } = require('./utils');
+const { uploadContract, instantiateContract, isValidCosmosAddress } = require('./utils');
 
 const { Command, Option } = require('commander');
 
+const validateAddress = (address) => {
+    return isString(address) && isValidCosmosAddress(address);
+};
+
 const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
-    if (!isString(governanceAccount)) {
-        throw new Error('Missing ServiceRegistry.governanceAccount in axelar info');
+    if (!validateAddress(governanceAccount)) {
+        throw new Error('Missing or invalid ServiceRegistry.governanceAccount in axelar info');
     }
 
     return { governance_account: governanceAccount };
 };
 
 const makeMultisigInstantiateMsg = ({ governanceAddress, gracePeriod }, { Rewards: { address: rewardsAddress } }) => {
-    if (!isString(governanceAddress)) {
-        throw new Error('Missing Multisig.governanceAddress in axelar info');
+    if (!validateAddress(governanceAddress)) {
+        throw new Error('Missing or invalid Multisig.governanceAddress in axelar info');
     }
 
-    if (!isString(rewardsAddress)) {
-        throw new Error('Missing Rewards.address in axelar info');
+    if (!validateAddress(rewardsAddress)) {
+        throw new Error('Missing or invalid Rewards.address in axelar info');
     }
 
     if (!isNumber(gracePeriod)) {
-        throw new Error(`Missing Multisig.gracePeriod in axelar info`);
+        throw new Error(`Missing or invalid Multisig.gracePeriod in axelar info`);
     }
 
     return { governance_address: governanceAddress, rewards_address: rewardsAddress, grace_period: gracePeriod };
 };
 
 const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) => {
-    if (!isString(governanceAddress)) {
-        throw new Error('Missing Rewards.governanceAddress in axelar info');
+    if (!validateAddress(governanceAddress)) {
+        throw new Error('Missing or invalid Rewards.governanceAddress in axelar info');
     }
 
     if (!isString(rewardsDenom)) {
-        throw new Error('Missing Rewards.rewardsDenom in axelar info');
+        throw new Error('Missing or invalid Rewards.rewardsDenom in axelar info');
     }
 
     return { governance_address: governanceAddress, rewards_denom: rewardsDenom, params };
 };
 
 const makeConnectionRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGateway: { address: nexusGateway } }) => {
-    if (!isString(adminAddress)) {
-        throw new Error('Missing ConnectionRouter.adminAddress in axelar info');
+    if (!validateAddress(adminAddress)) {
+        throw new Error('Missing or invalid ConnectionRouter.adminAddress in axelar info');
     }
 
-    if (!isString(governanceAddress)) {
-        throw new Error('Missing ConnectionRouter.governanceAddress in axelar info');
+    if (!validateAddress(governanceAddress)) {
+        throw new Error('Missing or invalid ConnectionRouter.governanceAddress in axelar info');
     }
 
-    if (!isString(nexusGateway)) {
-        throw new Error('Missing NexusGateway.address in axelar info');
+    if (!validateAddress(nexusGateway)) {
+        throw new Error('Missing or invalid NexusGateway.address in axelar info');
     }
 
     return { admin_address: adminAddress, governance_address: governanceAddress, nexus_gateway: nexusGateway };
 };
 
 const makeNexusGatewayInstantiateMsg = ({ nexus }, { ConnectionRouter: { address: router } }) => {
-    if (!isString(nexus)) {
-        throw new Error('Missing NexusGateway.nexus in axelar info');
+    if (!validateAddress(nexus)) {
+        throw new Error('Missing or invalid NexusGateway.nexus in axelar info');
     }
 
-    if (!isString(router)) {
-        throw new Error('Missing ConnectionRouter.address in axelar info');
+    if (!validateAddress(router)) {
+        throw new Error('Missing or invalid ConnectionRouter.address in axelar info');
     }
 
     return { nexus, router };
@@ -83,32 +87,32 @@ const makeVotingVerifierInstantiateMsg = (
         [chainId]: { serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight },
     } = contractConfig;
 
-    if (!isString(serviceRegistryAddress)) {
-        throw new Error('Missing ServiceRegistry.address in axelar info');
+    if (!validateAddress(serviceRegistryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
     }
 
-    if (!isString(rewardsAddress)) {
-        throw new Error('Missing Rewards.address in axelar info');
+    if (!validateAddress(rewardsAddress)) {
+        throw new Error('Missing or invalid Rewards.address in axelar info');
     }
 
     if (!isString(serviceName)) {
-        throw new Error(`Missing VotingVerifier[${chainId}].serviceName in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainId}].serviceName in axelar info`);
     }
 
     if (!isString(sourceGatewayAddress)) {
-        throw new Error(`Missing VotingVerifier[${chainId}].sourceGatewayAddress in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainId}].sourceGatewayAddress in axelar info`);
     }
 
     if (!isStringArray(votingThreshold)) {
-        throw new Error(`Missing VotingVerifier[${chainId}].votingThreshold in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainId}].votingThreshold in axelar info`);
     }
 
     if (!isNumber(blockExpiry)) {
-        throw new Error(`Missing VotingVerifier[${chainId}].blockExpiry in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainId}].blockExpiry in axelar info`);
     }
 
     if (!isNumber(confirmationHeight)) {
-        throw new Error(`Missing VotingVerifier[${chainId}].confirmationHeight in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainId}].confirmationHeight in axelar info`);
     }
 
     return {
@@ -128,12 +132,12 @@ const makeGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRout
         [chainId]: { address: verifierAddress },
     } = VotingVerifier;
 
-    if (!isString(connectionRouterAddress)) {
-        throw new Error('Missing ConnectionRouter.address in axelar info');
+    if (!validateAddress(connectionRouterAddress)) {
+        throw new Error('Missing or invalid ConnectionRouter.address in axelar info');
     }
 
-    if (!isString(verifierAddress)) {
-        throw new Error(`Missing VotingVerifier[${chainId}].address in axelar info`);
+    if (!validateAddress(verifierAddress)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainId}].address in axelar info`);
     }
 
     return { router_address: connectionRouterAddress, verifier_address: verifierAddress };
@@ -154,48 +158,48 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         [chainId]: { adminAddress, destinationChainID, signingThreshold, serviceName, workerSetDiffThreshold, encoder, keyType },
     } = contractConfig;
 
-    if (!isString(adminAddress)) {
-        throw new Error(`Missing MultisigProver[${chainId}].adminAddress in axelar info`);
+    if (!validateAddress(adminAddress)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].adminAddress in axelar info`);
     }
 
-    if (!isString(gatewayAddress)) {
-        throw new Error(`Missing Gateway[${chainId}].address in axelar info`);
+    if (!validateAddress(gatewayAddress)) {
+        throw new Error(`Missing or invalid Gateway[${chainId}].address in axelar info`);
     }
 
-    if (!isString(multisigAddress)) {
-        throw new Error('Missing Multisig.address in axelar info');
+    if (!validateAddress(multisigAddress)) {
+        throw new Error('Missing or invalid Multisig.address in axelar info');
     }
 
-    if (!isString(serviceRegistryAddress)) {
-        throw new Error('Missing ServiceRegistry.address in axelar info');
+    if (!validateAddress(serviceRegistryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
     }
 
-    if (!isString(verifierAddress)) {
-        throw new Error(`Missing VotingVerifier[${chainId}].address in axelar info`);
+    if (!validateAddress(verifierAddress)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainId}].address in axelar info`);
     }
 
     if (!isString(destinationChainID)) {
-        throw new Error(`Missing MultisigProver[${chainId}].destinationChainID in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].destinationChainID in axelar info`);
     }
 
     if (!isStringArray(signingThreshold)) {
-        throw new Error(`Missing MultisigProver[${chainId}].signingThreshold in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].signingThreshold in axelar info`);
     }
 
     if (!isString(serviceName)) {
-        throw new Error(`Missing MultisigProver[${chainId}].serviceName in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].serviceName in axelar info`);
     }
 
     if (!isNumber(workerSetDiffThreshold)) {
-        throw new Error(`Missing MultisigProver[${chainId}].workerSetDiffThreshold in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].workerSetDiffThreshold in axelar info`);
     }
 
     if (!isString(encoder)) {
-        throw new Error(`Missing MultisigProver[${chainId}].encoder in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].encoder in axelar info`);
     }
 
     if (!isString(keyType)) {
-        throw new Error(`Missing MultisigProver[${chainId}].keyType in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].keyType in axelar info`);
     }
 
     return {
