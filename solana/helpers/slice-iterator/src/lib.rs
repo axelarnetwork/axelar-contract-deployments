@@ -23,6 +23,10 @@ impl<'a> SliceIterator<'a> {
             position: self.cursor,
         }
     }
+
+    pub fn rest(self) -> &'a [u8] {
+        &self.input[self.cursor as usize..]
+    }
 }
 
 /// Error returnd by `SliceIterator`, detailing the error type and the position in the

@@ -14,7 +14,7 @@ pub enum GatewayError {
     /// Invalid message payload hash
     #[error("Invalid message payload hash")]
     InvalidMessagePayloadHash,
-    ///
+    /// Byte serialization error
     #[error("Byte serialization error")]
     ByteSerializationError,
 }
