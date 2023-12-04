@@ -1,37 +1,111 @@
-name: solana-programs
+name: Continuous Integration for Solana Programs
 
 on:
   push:
+    branches: [main, poc]
+    paths:
+      - solana/**
+      - .github/workflows/solana-programs.yml
+  pull_request:
+    branches: [main, poc]
     paths:
       - solana/**
       - .github/workflows/solana-programs.yml
 
+env:
+  CARGO_TERM_COLOR: always
+  RUSTC_WRAPPER: "sccache"
+  RUSTFLAGS: "-D warnings"
+  SCCACHE_GHA_ENABLED: "true"
+  SOLANA_VERSION: "v1.17.7"
+
 defaults:
   run:
     working-directory: solana
+    shell: bash
 
 jobs:
-  common-general:
-    name: test solana programs
+  rustfmt:
+    name: Check code formatting
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      # - uses: actions/setup-node@v3
-        # with:
-        #   node-version: '20.x'
-        #   cache: "yarn"
-        #   cache-dependency-path: solana/yarn.lock
-      # - uses: baptiste0928/cargo-install@v2
-      #   with:
-      #     git: https://github.com/coral-xyz/anchor
-      #     crate: anchor-cli
-      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        shell: bash
-      - run: echo "/home/runner/.cargo/bin" >> $GITHUB_PATH
-        shell: bash
-      - run: curl -sSfL https://release.solana.com/v1.16.5/install | sh
-        shell: bash
-      - run: echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-        shell: bash
-      - run: solana-keygen new --no-passphrase
-      - run: cargo test-sbf
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: "rustfmt"
+
+      - name: Run rustfmt
+        run: cargo fmt --check --all
+
+  clippy:
+    name: Clippy linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: "clippy"
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cache compilation artifacts
+        uses: mozilla-actions/sccache-action@v0.0.3
+
+      - name: Run clippy
+        run: cargo clippy --all-targets
+
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cache compilation artifacts
+        uses: mozilla-actions/sccache-action@v0.0.3
+
+      - name: Run unit tests
+        run: cargo test --workspace
+
+  gateway-integration-tests:
+    name: Gateway Program - Integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Solana
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/solana
+          key: solana-${{ env.SOLANA_VERSION }}
+
+      - name: Install Solana
+        run: |
+          curl -sSfL https://release.solana.com/${{ env.SOLANA_VERSION}}/install | sh
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cache compilation artifacts
+        uses: mozilla-actions/sccache-action@v0.0.3
+
+      - name: Run integration tests
+        run: cargo-test-sbf --features test-sbf --package gateway
