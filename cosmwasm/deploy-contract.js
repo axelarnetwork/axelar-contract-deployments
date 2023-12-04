@@ -218,7 +218,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
     };
 };
 
-const makeInstantiateMsg = (contractName, config, chain) => {
+const makeInstantiateMsg = (contractName, chain, config) => {
     const {
         axelar: { contracts },
     } = config;
@@ -311,6 +311,7 @@ const deploy = async (options, chain, config) => {
             contracts: { [options.contractName]: contractConfig = {} },
         },
     } = config;
+    console.log(options);
 
     printInfo('Contract name', options.contractName);
 
@@ -318,7 +319,7 @@ const deploy = async (options, chain, config) => {
     printInfo('Reusing codeId', reuseCodeId.toString());
 
     if (!reuseCodeId) {
-        const result = await uploadContract(config, options, wallet, client);
+        const result = await uploadContract(client, wallet, config, options);
         contractConfig.codeId = result.codeId;
 
         if (result.address) {
@@ -333,8 +334,8 @@ const deploy = async (options, chain, config) => {
         return;
     }
 
-    const initMsg = makeInstantiateMsg(options.contractName, config, chain);
-    const contractAddress = await instantiateContract(config, options, options.contractName, initMsg, wallet, client);
+    const initMsg = makeInstantiateMsg(options.contractName, chain, config);
+    const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
 
     if (chain) {
         contractConfig[chain.id] = {
@@ -357,10 +358,10 @@ const main = async (options) => {
         chains = Object.keys(config.chains);
     }
 
-    for (const chain of chains) {
-        if (config.chains[chain.toLowerCase()] === undefined && chain !== 'none') {
-            throw new Error(`Chain ${chain} is not defined in the info file`);
-        }
+    const undefinedChain = chains.find((chain) => !config.chains[chain.toLowerCase()] && chain !== 'none');
+
+    if (undefinedChain) {
+        throw new Error(`Chain ${undefinedChain} is not defined in the info file`);
     }
 
     for (const chain of chains) {
@@ -388,7 +389,7 @@ const programHandler = () => {
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
     program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
-    program.addOption(new Option('-s, --salt', 'salt for instantiate2. defaults to contract name').env('SALT'));
+    program.addOption(new Option('-s, --salt <salt>', 'salt for instantiate2. defaults to contract name').env('SALT'));
     program.addOption(
         new Option(
             '-u, --uploadOnly',

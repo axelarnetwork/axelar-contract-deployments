@@ -6,9 +6,7 @@ const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 const { getSaltFromKey } = require('../evm/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
-const pascalToSnake = (str) => {
-    return str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
-};
+const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
 const isValidCosmosAddress = (str) => {
     try {
@@ -20,29 +18,31 @@ const isValidCosmosAddress = (str) => {
     return true;
 };
 
-const uploadContract = async (config, options, wallet, client) => {
-    const [account] = await wallet.getAccounts();
+const fromHex = (str) => {
+    const start = str.startsWith('0x') ? 2 : 0;
+    return new Uint8Array(Buffer.from(str.slice(start), 'hex'));
+};
 
-    const wasm = readFileSync(`${options.artifactPath}/${pascalToSnake(options.contractName)}${options.aarch64 ? '-aarch64' : ''}.wasm`);
+const uploadContract = async (client, wallet, config, options) => {
+    const [account] = await wallet.getAccounts();
+    const { artifactPath, contractName, instantiate2, salt, aarch64 } = options;
+
+    const wasm = readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
 
     const {
         axelar: { gasPrice, gasLimit },
     } = config;
     const uploadFee = calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-    const result = await client.upload(account.address, wasm, uploadFee);
-    var address = null;
+    return client.upload(account.address, wasm, uploadFee).then((result) => {
+        const address = instantiate2
+            ? instantiate2Address(fromHex(result.checksum), account.address, fromHex(getSaltFromKey(salt || contractName)), 'axelar')
+            : null;
 
-    if (options.instantiate2) {
-        const salt = getSaltFromKey(options.salt || options.contractName);
-
-        const checksum = Uint8Array.from(Buffer.from(result.checksum, 'hex'));
-        address = instantiate2Address(checksum, account.address, new Uint8Array(Buffer.from(salt.slice(2), 'hex')), 'axelar');
-    }
-
-    return { codeId: result.codeId, address };
+        return { codeId: result.codeId, address };
+    });
 };
 
-const instantiateContract = async (config, options, contractName, initMsg, wallet, client) => {
+const instantiateContract = async (client, wallet, initMsg, config, { contractName, salt, instantiate2 }) => {
     const [account] = await wallet.getAccounts();
     const contractConfig = config.axelar.contracts[contractName];
 
@@ -51,27 +51,21 @@ const instantiateContract = async (config, options, contractName, initMsg, walle
     } = config;
     const initFee = calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
-    var result;
-
-    if (options.instantiate2) {
-        const salt = getSaltFromKey(options.salt || options.contractName);
-        result = await client.instantiate2(
-            account.address,
-            contractConfig.codeId,
-            new Uint8Array(Buffer.from(salt.slice(2), 'hex')),
-            initMsg,
-            contractName,
-            initFee,
-        );
-    } else {
-        result = await client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee);
-    }
-
-    return result.contractAddress;
+    return (
+        instantiate2
+            ? client.instantiate2(
+                  account.address,
+                  contractConfig.codeId,
+                  fromHex(getSaltFromKey(salt || contractName)),
+                  initMsg,
+                  contractName,
+                  initFee,
+              )
+            : client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee)
+    ).then(({ contractAddress }) => contractAddress);
 };
 
 module.exports = {
-    pascalToSnake,
     uploadContract,
     instantiateContract,
     isValidCosmosAddress,
