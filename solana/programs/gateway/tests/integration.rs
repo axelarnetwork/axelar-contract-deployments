@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use gateway::events::GatewayEvent;
 use random_array::rand_array;
 use solana_program_test::{processor, tokio, BanksTransactionResultWithMetadata, ProgramTest};
@@ -39,20 +41,20 @@ async fn test_queue_message() {
 }
 
 #[tokio::test]
-async fn test_call_contract_instruction() {
+async fn test_call_contract_instruction() -> Result<(), Box<dyn Error>> {
     let (mut banks_client, payer, recent_blockhash) = program_test().start().await;
 
     let sender = Keypair::new();
     let destination_chain = "ethereum";
-    let destination_contract_address = "0x2F43DDFf564Fb260dbD783D55fc6E4c70Be18862";
-    let payload = rand_array::<100>();
+    let destination_address = hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862")?;
+    let payload = rand_array::<32>().to_vec();
     let payload_hash = rand_array::<32>();
 
     let instruction = gateway::instruction::call_contract(
         gateway::id(),
         sender.pubkey(),
         destination_chain,
-        destination_contract_address,
+        &destination_address,
         &payload,
         payload_hash,
     )
@@ -78,8 +80,16 @@ async fn test_call_contract_instruction() {
         .filter_map(|log: &String| GatewayEvent::parse_log(log.as_str()))
         .next();
 
-    assert!(matches!(
-        dbg!(event),
-        Some(GatewayEvent::CallContract { .. })
-    ));
+    assert_eq!(
+        event,
+        Some(GatewayEvent::CallContract {
+            sender: sender.pubkey(),
+            destination_chain: destination_chain.as_bytes().to_vec(),
+            destination_address,
+            payload,
+            payload_hash
+        })
+    );
+
+    Ok(())
 }

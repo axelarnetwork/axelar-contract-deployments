@@ -168,7 +168,7 @@ pub fn call_contract(
     program_id: Pubkey,
     sender: Pubkey,
     destination_chain: &str,
-    destination_contract_address: &str,
+    destination_contract_address: &[u8],
     payload: &[u8],
     payload_hash: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
@@ -177,7 +177,7 @@ pub fn call_contract(
     let data = GatewayInstruction::CallContract {
         sender,
         destination_chain: destination_chain.as_bytes(),
-        destination_contract_address: destination_contract_address.as_bytes(),
+        destination_contract_address,
         payload,
         payload_hash,
     }
@@ -375,7 +375,8 @@ pub mod tests {
     fn round_trip_call_contract_function() {
         let sender = Keypair::new().pubkey();
         let destination_chain = "ethereum";
-        let destination_contract_address = "0x2F43DDFf564Fb260dbD783D55fc6E4c70Be18862";
+        let destination_contract_address =
+            &hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
         let payload = rand_array::<100>();
         let payload_hash = rand_array::<32>();
 
@@ -403,7 +404,7 @@ pub mod tests {
                 assert_eq!(sender, unpacked_sender);
                 assert_eq!(destination_chain.as_bytes(), unpacked_destination_chain);
                 assert_eq!(
-                    destination_contract_address.as_bytes(),
+                    destination_contract_address,
                     unpacked_destination_contract_address
                 );
                 assert_eq!(payload, unpacked_payload);

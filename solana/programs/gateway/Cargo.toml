@@ -11,14 +11,16 @@ crate-type = ["cdylib", "lib"]
 no-entrypoint = []
 
 [dependencies]
+base64.workspace = true
+hex = "0.4.3"
 num-derive = "0.4.1"
 num-traits = "0.2.17"
+slice-iterator = { path = "../../helpers/slice-iterator" }
 solana-program.workspace = true
 thiserror.workspace = true
-slice-iterator = { path = "../../helpers/slice-iterator" }
 
 [dev-dependencies]
+arrayref = "0.3.7"
+random-array = { path = "../../helpers/random-array" }
 solana-program-test = "1.17.6"
 solana-sdk = "1.17.6"
-random-array = { path = "../../helpers/random-array" }
-arrayref = "0.3.7"
