@@ -1,17 +1,11 @@
-use anchor_client::anchor_lang::AnchorSerialize;
-use anchor_client::solana_sdk::commitment_config::CommitmentConfig;
-use anchor_client::solana_sdk::pubkey::Pubkey;
-use anchor_client::solana_sdk::signature::{read_keypair_file, Signer};
-use anchor_client::{Client, ClientError, Cluster};
 use clap::Parser;
-use env_logger;
-use gateway::accounts::CallContract;
-use gateway::id as gateway_program_id;
-use gateway::instruction as gateway_instruction;
 use log::info;
-use shellexpand::tilde;
-use std::ops::Deref;
-use std::rc::Rc;
+use solana_client::rpc_client::RpcClient;
+use solana_sdk::signature::{Keypair, Signer};
+use solana_sdk::signer::keypair::read_keypair_file;
+use solana_sdk::transaction::Transaction;
+use std::error::Error;
+use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -30,57 +24,51 @@ struct Args {
 
     /// Account address to pay for Axelar TXs
     #[arg(short, long)]
-    solana_payer_path: String,
+    solana_payer_path: PathBuf,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
     let args = Args::parse();
-
-    let payer = read_keypair_file(&*tilde(&args.solana_payer_path)).unwrap();
-    let payer = Rc::new(payer);
-    let cluster = Cluster::Devnet;
-    let client = Client::new_with_options(
-        cluster.clone(),
-        payer.clone(),
-        CommitmentConfig::confirmed(),
-    );
+    let payer = read_keypair_file(&args.solana_payer_path).unwrap();
+    let devnet_cluster = "https://api.devnet.solana.com";
+    let client = RpcClient::new(devnet_cluster);
 
     // kick it
-    let _result = gateway_call_contract(
+    gateway_call_contract(
         &client,
-        gateway_program_id(),
-        payer.pubkey(),
-        args.destination_chain,
-        args.destination_contract_address,
-        args.payload.try_to_vec().unwrap(),
+        &payer,
+        &args.destination_chain,
+        &args.destination_contract_address,
+        args.payload.as_ref(),
     )
-    .unwrap();
-    // TODO: error handling
 }
 
-fn gateway_call_contract<C: Deref<Target = impl Signer> + Clone>(
-    client: &Client<C>,
-    program_id: Pubkey,
-    sender_account_info: Pubkey,
-    destination_chain: String,
-    destination_contract_addr: String,
-    payload: Vec<u8>,
-) -> Result<(), ClientError> {
-    let program = client.program(program_id)?;
-    let signature = program
-        .request()
-        .accounts(CallContract {
-            sender: sender_account_info, // INFO: Perhaps could be ommited #TBD
-        })
-        .args(gateway_instruction::CallContract {
-            destination_chain: destination_chain,
-            destination_contract_address: destination_contract_addr,
-            payload: payload,
-        })
-        .send()?;
+fn gateway_call_contract(
+    client: &RpcClient,
+    payer: &Keypair,
+    destination_chain: &str,
+    destination_contract_address: &str,
+    payload: &[u8],
+) -> Result<(), Box<dyn Error>> {
+    let ix = gateway::instruction::call_contract(
+        &gateway::id(),
+        &payer.pubkey(),
+        destination_chain,
+        destination_contract_address,
+        payload,
+    )?;
+    let latest_blockhash = client.get_latest_blockhash()?;
+
+    let tx = Transaction::new_signed_with_payer(
+        &[ix],
+        Some(&payer.pubkey()),
+        &[payer],
+        latest_blockhash,
+    );
+
+    let signature = client.send_and_confirm_transaction(&tx)?;
 
     info!("sent - check relayer log | txid: {}", signature);
-
     Ok(())
 }

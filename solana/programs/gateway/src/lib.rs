@@ -1,56 +1,24 @@
-mod common;
-mod errors;
-pub mod instructions;
+#![deny(missing_docs)]
 
-use anchor_lang::prelude::*;
-use instructions::*;
+//! Axelar Gateway program for the Solana blockchain
 
-declare_id!("C3iZqLs7omGNxbug6SbeKHAAiJYArNAkn9KxudeDSdpG");
+mod entrypoint;
+mod error;
+pub mod events;
+pub mod instruction;
+pub mod processor;
+// Export current sdk types for downstream users building with a different sdk version
+pub use solana_program;
+use solana_program::entrypoint::ProgramResult;
+use solana_program::program_error::ProgramError;
+use solana_program::pubkey::Pubkey;
 
-#[program]
-pub mod gateway {
-    use super::*;
+solana_program::declare_id!("VqMMNEMXqUagHieikoHz4YgFBusPs3kMFHN59yuwaoM");
 
-    pub fn call_contract(
-        ctx: Context<CallContract>,
-        destination_chain: String,
-        destination_contract_address: String,
-        payload: Vec<u8>,
-    ) -> Result<()> {
-        instructions::call_contract(
-            ctx,
-            destination_chain,
-            destination_contract_address,
-            payload,
-        )
+/// Checks that the supplied program ID is the correct one
+pub fn check_program_account(program_id: Pubkey) -> ProgramResult {
+    if program_id != id() {
+        return Err(ProgramError::IncorrectProgramId);
     }
-
-    pub fn is_contract_call_approved(
-        ctx: Context<IsContractCallApproved>,
-        seeds_hash: [u8; 32],
-    ) -> Result<bool> {
-        instructions::is_contract_call_approved(ctx, seeds_hash)
-    }
-
-    pub fn validate_contract_call(
-        ctx: Context<ValidateContractCall>,
-        seeds_hash: [u8; 32],
-    ) -> Result<bool> {
-        instructions::validate_contract_call(ctx, seeds_hash)
-    }
-
-    pub fn execute(ctx: Context<Execute>, seeds_hash: [u8; 32]) -> Result<()> {
-        instructions::execute(ctx, seeds_hash)
-    }
-
-    pub fn auth_module(ctx: Context<AuthModule>) -> Result<()> {
-        instructions::auth_module(ctx)
-    }
-
-    pub fn is_command_executed(
-        ctx: Context<IsCommandExecuted>,
-        command_id: [u8; 32],
-    ) -> Result<bool> {
-        instructions::is_command_executed(ctx, command_id)
-    }
+    Ok(())
 }

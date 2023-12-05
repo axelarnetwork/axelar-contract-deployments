@@ -1,6 +1,5 @@
 use super::log_parsing::parse_logs_from_contract_call_event;
 use anyhow::{Error, Result};
-use gateway::instructions::ContractCallEvent;
 use solana_client::rpc_client::{GetConfirmedSignaturesForAddress2Config, RpcClient};
 use solana_client::rpc_response::RpcConfirmedTransactionStatusWithSignature;
 use solana_program::pubkey::Pubkey;
@@ -25,7 +24,7 @@ impl<'a> Client<'a> {
     pub fn fetch_events_by_tx_signature_contract_call(
         &self,
         tx_id: Signature,
-    ) -> Result<Vec<ContractCallEvent>, Error> {
+    ) -> Result<Vec<Vec<Vec<u8>>>, Error> {
         let tx_body = match self
             .rpc
             .get_transaction(&tx_id, UiTransactionEncoding::Base64)
@@ -58,10 +57,8 @@ impl<'a> Client<'a> {
             }),
         };
 
-        let txs = self
-            .rpc
+        self.rpc
             .get_signatures_for_address_with_config(contract_id, config_for_tx_fetch)
-            .unwrap();
-        txs
+            .unwrap()
     }
 }

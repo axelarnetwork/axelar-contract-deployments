@@ -19,3 +19,6 @@ solana-client.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
 solana-transaction-status.workspace = true
+
+[dev-dependencies]
+base64 = "0.21.5"

@@ -1,0 +1,2 @@
+[alias]
+integration-tests = "test-sbf --features test-sbf"
