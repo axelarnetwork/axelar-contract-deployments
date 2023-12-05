@@ -1,6 +1,7 @@
 'use strict';
 
 require('dotenv').config();
+var _ = require('lodash');
 
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
@@ -218,9 +219,10 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
     };
 };
 
-const makeInstantiateMsg = (contractName, chain, config) => {
+const makeInstantiateMsg = (contractName, chainName, config) => {
     const {
         axelar: { contracts },
+        chains: { [chainName]: chainConfig },
     } = config;
 
     const { [contractName]: contractConfig } = contracts;
@@ -233,7 +235,7 @@ const makeInstantiateMsg = (contractName, chain, config) => {
 
     switch (contractName) {
         case 'ServiceRegistry': {
-            if (chain) {
+            if (chainConfig) {
                 throw new Error('ServiceRegistry does not support chainNames option');
             }
 
@@ -241,7 +243,7 @@ const makeInstantiateMsg = (contractName, chain, config) => {
         }
 
         case 'Multisig': {
-            if (chain) {
+            if (chainConfig) {
                 throw new Error('Multisig does not support chainNames option');
             }
 
@@ -249,7 +251,7 @@ const makeInstantiateMsg = (contractName, chain, config) => {
         }
 
         case 'Rewards': {
-            if (chain) {
+            if (chainConfig) {
                 throw new Error('Rewards does not support chainNames option');
             }
 
@@ -257,7 +259,7 @@ const makeInstantiateMsg = (contractName, chain, config) => {
         }
 
         case 'ConnectionRouter': {
-            if (chain) {
+            if (chainConfig) {
                 throw new Error('ConnectionRouter does not support chainNames option');
             }
 
@@ -265,7 +267,7 @@ const makeInstantiateMsg = (contractName, chain, config) => {
         }
 
         case 'NexusGateway': {
-            if (chain) {
+            if (chainConfig) {
                 throw new Error('NexusGateway does not support chainNames option');
             }
 
@@ -273,89 +275,120 @@ const makeInstantiateMsg = (contractName, chain, config) => {
         }
 
         case 'VotingVerifier': {
-            if (!chain) {
+            if (!chainConfig) {
                 throw new Error('VotingVerifier requires chainNames option');
             }
 
-            return makeVotingVerifierInstantiateMsg(contractConfig, contracts, chain);
+            return makeVotingVerifierInstantiateMsg(contractConfig, contracts, chainConfig);
         }
 
         case 'Gateway': {
-            if (!chain) {
+            if (!chainConfig) {
                 throw new Error('Gateway requires chainNames option');
             }
 
-            return makeGatewayInstantiateMsg(contracts, chain);
+            return makeGatewayInstantiateMsg(contracts, chainConfig);
         }
 
         case 'MultisigProver': {
-            if (!chain) {
+            if (!chainConfig) {
                 throw new Error('MultisigProver requires chainNames option');
             }
 
-            return makeMultisigProverInstantiateMsg(contractConfig, contracts, chain);
+            return makeMultisigProverInstantiateMsg(contractConfig, contracts, chainConfig);
         }
     }
 
     throw new Error(`${contractName} is not supported.`);
 };
 
-const deploy = async (options, chain, config) => {
-    printInfo('Deploying for chain', chain ? chain.name : 'none');
+const prepareWallet = async ({ mnemonic }) => {
+    return DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+};
 
-    const wallet = await DirectSecp256k1HdWallet.fromMnemonic(options.mnemonic, { prefix: 'axelar' });
-    const client = await SigningCosmWasmClient.connectWithSigner(config.axelar.rpc, wallet);
+const prepareClient = async ({ axelar: { rpc } }, wallet) => {
+    return SigningCosmWasmClient.connectWithSigner(rpc, wallet).then((client) => {
+        return { wallet, client };
+    });
+};
 
+const upload = async (client, wallet, chainName, config, options) => {
+    const { reuseCodeId, contractName } = options;
     const {
         axelar: {
-            contracts: { [options.contractName]: contractConfig = {} },
+            contracts: { [contractName]: contractConfig },
         },
+        chains: { [chainName]: chainConfig },
     } = config;
-    console.log(options);
 
-    printInfo('Contract name', options.contractName);
+    if (!reuseCodeId || _.isNil(contractConfig.codeId)) {
+        printInfo('Uploading contract binary');
 
-    const reuseCodeId = !!options.reuseCodeId && !!contractConfig.codeId;
-    printInfo('Reusing codeId', reuseCodeId.toString());
+        return uploadContract(client, wallet, config, options)
+            .then(({ address, codeId }) => {
+                printInfo('Uploaded contract binary');
+                contractConfig.codeId = codeId;
 
-    if (!reuseCodeId) {
-        const result = await uploadContract(client, wallet, config, options);
-        contractConfig.codeId = result.codeId;
+                if (!address) {
+                    return;
+                }
 
-        if (result.address) {
-            contractConfig.address = result.address;
-            printInfo('Expected contract address', contractConfig.address);
+                if (chainConfig) {
+                    contractConfig[chainConfig.id] = {
+                        ...contractConfig[chainConfig.id],
+                        address,
+                    };
+                } else {
+                    contractConfig.address = address;
+                }
+
+                printInfo('Expected contract address', address);
+            })
+            .then(() => {
+                return { wallet, client };
+            });
+    }
+
+    printInfo('Skipping upload. Reusing previously uploaded binary');
+    return { wallet, client };
+};
+
+const instantiate = async (client, wallet, chainName, config, options) => {
+    const { contractName } = options;
+    const {
+        axelar: {
+            contracts: { [contractName]: contractConfig },
+        },
+        chains: { [chainName]: chainConfig },
+    } = config;
+
+    const initMsg = makeInstantiateMsg(contractName, chainName, config);
+    return instantiateContract(client, wallet, initMsg, config, options).then((contractAddress) => {
+        if (chainConfig) {
+            contractConfig[chainConfig.id] = {
+                ...contractConfig[chainConfig.id],
+                address: contractAddress,
+            };
+        } else {
+            contractConfig.address = contractAddress;
         }
-    }
 
-    printInfo('Code Id', contractConfig.codeId);
-
-    if (options.uploadOnly || prompt(`Proceed with deployment on axelar?`, options.yes)) {
-        return;
-    }
-
-    const initMsg = makeInstantiateMsg(options.contractName, chain, config);
-    const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
-
-    if (chain) {
-        contractConfig[chain.id] = {
-            ...contractConfig[chain.id],
-            address: contractAddress,
-        };
-    } else {
-        contractConfig.address = contractAddress;
-    }
-
-    printInfo('Contract address', contractAddress);
+        printInfo(`Instantiated ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
+    });
 };
 
 const main = async (options) => {
-    const config = loadConfig(options.env);
+    const { env, chainNames, uploadOnly, yes, instantiate2 } = options;
+    const config = loadConfig(env);
 
-    let chains = options.chainNames.split(',').map((str) => str.trim());
+    let chains = chainNames.split(',').map((str) => str.trim());
 
-    if (options.chainNames === 'all') {
+    if (chainNames === 'all') {
         chains = Object.keys(config.chains);
+    }
+
+    if (chains.length !== 1 && instantiate2) {
+        throw new Error('Cannot pass --instantiate2 with more than one chain');
     }
 
     const undefinedChain = chains.find((chain) => !config.chains[chain.toLowerCase()] && chain !== 'none');
@@ -364,12 +397,19 @@ const main = async (options) => {
         throw new Error(`Chain ${undefinedChain} is not defined in the info file`);
     }
 
-    for (const chain of chains) {
-        await deploy(options, config.chains[chain.toLowerCase()], config);
-        saveConfig(config, options.env);
+    await prepareWallet(options)
+        .then((wallet) => prepareClient(config, wallet))
+        .then(({ wallet, client }) => upload(client, wallet, chains[0], config, options))
+        .then(({ wallet, client }) => {
+            if (uploadOnly || prompt(`Proceed with deployment on axelar?`, yes)) {
+                return;
+            }
 
-        options.reuseCodeId = true;
-    }
+            return chains.reduce((promise, chain) => {
+                return promise.then(() => instantiate(client, wallet, chain.toLowerCase(), config, options));
+            }, Promise.resolve());
+        })
+        .then(() => saveConfig(config, env));
 };
 
 const programHandler = () => {
