@@ -284,7 +284,7 @@ async function deploy(config, chain, options) {
 }
 
 async function upgrade(config, chain, options) {
-    const { salt, privateKey } = options;
+    const { artifactPath, salt, privateKey } = options;
 
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
@@ -305,6 +305,10 @@ async function upgrade(config, chain, options) {
     await deployImplementation(config, wallet, chain, options);
 
     printInfo(`Upgrading Interchain Token Service.`);
+
+    const InterchainTokenService = artifactPath
+        ? getContractJSON('InterchainTokenService', artifactPath)
+        : getContractJSON('InterchainTokenService');
 
     const gasOptions = await getGasOptions(chain, options, contractName);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
