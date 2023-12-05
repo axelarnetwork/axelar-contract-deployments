@@ -16,11 +16,25 @@ pub enum InterchainAddressTrackerInstruction {
     ///
     ///   0. `[writeable,signer]` Funding account, pays for the chain account creation
     ///   1. `[writable]` The account to initialize where we store the chain name & other data.
-    ///   1. `[]` The account that is used for derivation of the associated chain address (can be another PDA or a wallet account)
-    ///   2. `[]` The system program
+    ///   2. `[signer]` The to-be owner account that is used for derivation of the associated chain address (can be another PDA or a wallet account)
+    ///   3. `[]` The system program
     CreateRegisteredChain {
         /// Chain name of the remote chain
         chain_name: String,
+    },
+    /// Sets the trusted address and its hash for a remote chain.
+    /// Accounts expected by this instruction:
+    ///
+    ///   0. `[writeable,signer]` Funding account, pays for the chain account creation
+    ///   1. `[]` The associated chain account
+    ///   2. `[signer]` The owner account of the associated chain account
+    ///   3. `[writable]` The associated trusted address account where the data will be stored
+    ///   4. `[]` The system program
+    SetTrustedAddress {
+        /// Chain name of the remote chain
+        chain_name: String,
+        /// the string representation of the trusted address
+        address: String,
     },
 }
 
@@ -28,7 +42,7 @@ pub enum InterchainAddressTrackerInstruction {
 pub fn build_create_registered_chain_instruction(
     funder: &Pubkey,
     associated_chain_account: &Pubkey,
-    wallet_account: &Pubkey,
+    owner: &Pubkey,
     chain_name: String,
 ) -> Result<Instruction, ProgramError> {
     let init_data = InterchainAddressTrackerInstruction::CreateRegisteredChain { chain_name };
@@ -37,7 +51,36 @@ pub fn build_create_registered_chain_instruction(
     let accounts = vec![
         AccountMeta::new(*funder, true),
         AccountMeta::new(*associated_chain_account, false),
-        AccountMeta::new_readonly(*wallet_account, false),
+        AccountMeta::new_readonly(*owner, true),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+    Ok(Instruction {
+        program_id: id(),
+        accounts,
+        data,
+    })
+}
+
+/// Create `SetTrustedAddress` instruction
+pub fn build_set_trusted_address_instruction(
+    funder: &Pubkey,
+    associated_chain_account: &Pubkey,
+    associated_trusted_address_account: &Pubkey,
+    owner: &Pubkey,
+    trusted_chain_name: String,
+    trusted_chain_address: String,
+) -> Result<Instruction, ProgramError> {
+    let init_data = InterchainAddressTrackerInstruction::SetTrustedAddress {
+        chain_name: trusted_chain_name,
+        address: trusted_chain_address,
+    };
+    let data = init_data.try_to_vec()?;
+
+    let accounts = vec![
+        AccountMeta::new(*funder, true),
+        AccountMeta::new_readonly(*associated_chain_account, false),
+        AccountMeta::new_readonly(*owner, true),
+        AccountMeta::new(*associated_trusted_address_account, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
     Ok(Instruction {

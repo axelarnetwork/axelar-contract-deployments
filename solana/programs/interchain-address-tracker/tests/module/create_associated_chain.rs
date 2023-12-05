@@ -1,26 +1,20 @@
 use interchain_address_tracker::get_associated_chain_address;
-use solana_program::{program_pack::Pack, pubkey::Pubkey};
-use solana_program_test::{processor, tokio, ProgramTest};
-use solana_sdk::signature::Signer;
+use solana_program::program_pack::Pack;
+use solana_program_test::tokio;
+use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
 
-fn program_test() -> ProgramTest {
-    ProgramTest::new(
-        &env!("CARGO_PKG_NAME").replace("-", "_"),
-        interchain_address_tracker::id(),
-        processor!(interchain_address_tracker::processor::Processor::process_instruction),
-    )
-}
+use crate::utils::program_test;
 
 #[tokio::test]
 async fn test_create_and_store_chain_name() {
-    let wallet_address = Pubkey::new_unique();
-    let associated_chain_address = get_associated_chain_address(&wallet_address);
+    let owner = Keypair::new();
+    let associated_chain_address = get_associated_chain_address(&owner.pubkey());
     let (mut banks_client, payer, recent_blockhash) = program_test().start().await;
 
     let rent = banks_client.get_rent().await.unwrap();
-    let expected_token_account_len = interchain_address_tracker::state::Account::LEN;
-    let expected_token_account_balance = rent.minimum_balance(expected_token_account_len);
+    let expected_chain_account_len = interchain_address_tracker::state::RegisteredChainAccount::LEN;
+    let expected_chain_account_balance = rent.minimum_balance(expected_chain_account_len);
 
     // Associated account does not exist
     assert_eq!(
@@ -34,14 +28,14 @@ async fn test_create_and_store_chain_name() {
     let ix = interchain_address_tracker::instruction::build_create_registered_chain_instruction(
         &payer.pubkey(),
         &associated_chain_address,
-        &wallet_address,
+        &owner.pubkey(),
         "MyChainABC".to_string(),
     )
     .unwrap();
     let transaction = Transaction::new_signed_with_payer(
         &[ix],
         Some(&payer.pubkey()),
-        &[&payer],
+        &[&payer, &owner],
         recent_blockhash,
     );
     banks_client.process_transaction(transaction).await.unwrap();
@@ -56,14 +50,15 @@ async fn test_create_and_store_chain_name() {
     assert_eq!(associated_account.owner, interchain_address_tracker::id());
     assert_eq!(
         associated_account.data.len(),
-        interchain_address_tracker::state::Account::LEN
+        interchain_address_tracker::state::RegisteredChainAccount::LEN
     );
-    assert_eq!(associated_account.lamports, expected_token_account_balance);
+    assert_eq!(associated_account.lamports, expected_chain_account_balance);
 
-    let account_info = interchain_address_tracker::state::Account::unpack_from_slice(
-        associated_account.data.as_slice(),
-    )
-    .unwrap();
+    let account_info =
+        interchain_address_tracker::state::RegisteredChainAccount::unpack_from_slice(
+            associated_account.data.as_slice(),
+        )
+        .unwrap();
     assert_eq!(account_info.chain_name, "MyChainABC".to_string());
-    assert_eq!(account_info.owner, wallet_address);
+    assert_eq!(account_info.owner, owner.pubkey());
 }
