@@ -1,6 +1,5 @@
 'use strict';
 
-
 const chalk = require('chalk');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');

@@ -1,6 +1,5 @@
 'use strict';
 
-
 const { Command, Option } = require('commander');
 const { mainProcessor } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');

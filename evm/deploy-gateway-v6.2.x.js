@@ -1,6 +1,5 @@
 'use strict';
 
-
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
@@ -534,7 +533,7 @@ async function programHandler() {
     );
     program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
     program.addOption(
-        new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment')
+        new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment'),
     );
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('--governance <governance>', 'governance address').env('GOVERNANCE'));

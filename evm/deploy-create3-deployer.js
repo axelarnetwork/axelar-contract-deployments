@@ -1,6 +1,5 @@
 'use strict';
 
-
 const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
 const readlineSync = require('readline-sync');
