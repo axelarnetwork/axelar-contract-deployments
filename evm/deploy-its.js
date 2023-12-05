@@ -38,9 +38,7 @@ async function deployImplementation(config, wallet, chain, options) {
     const { env, artifactPath, salt, factorySalt, deployMethod, skipExisting, verify, yes } = options;
     const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
 
-    const InterchainTokenService = artifactPath
-        ? getContractJSON('InterchainTokenService', artifactPath)
-        : getContractJSON('InterchainTokenService');
+    const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
 
     const contractName = 'InterchainTokenService';
     const contracts = chain.contracts;
@@ -84,7 +82,7 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('TokenManagerDeployer'),
+                    getContractJSON('TokenManagerDeployer', artifactPath),
                     [],
                     deployOptions,
                     gasOptions,
@@ -99,7 +97,7 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('InterchainToken'),
+                    getContractJSON('InterchainToken', artifactPath),
                     [interchainTokenServiceAddress],
                     deployOptions,
                     gasOptions,
@@ -114,7 +112,7 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('InterchainTokenDeployer'),
+                    getContractJSON('InterchainTokenDeployer', artifactPath),
                     [contractConfig.interchainToken],
                     deployOptions,
                     gasOptions,
@@ -129,7 +127,7 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('TokenManager'),
+                    getContractJSON('TokenManager', artifactPath),
                     [interchainTokenServiceAddress],
                     deployOptions,
                     gasOptions,
@@ -144,7 +142,7 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('TokenHandler'),
+                    getContractJSON('TokenHandler', artifactPath),
                     [],
                     deployOptions,
                     gasOptions,
@@ -190,7 +188,7 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     'create3',
                     wallet,
-                    getContractJSON('Proxy'),
+                    getContractJSON('InterchainProxy', artifactPath),
                     [contractConfig.implementation, wallet.address, deploymentParams],
                     { salt, deployerContract: contracts.Create3Deployer.address },
                     gasOptions,
@@ -205,7 +203,7 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('InterchainTokenFactory'),
+                    getContractJSON('InterchainTokenFactory', artifactPath),
                     [interchainTokenServiceAddress],
                     deployOptions,
                     gasOptions,
@@ -220,7 +218,7 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     'create3',
                     wallet,
-                    getContractJSON('Proxy'),
+                    getContractJSON('InterchainProxy', artifactPath),
                     [contractConfig.interchainTokenFactoryImplementation, wallet.address, '0x'],
                     { salt: factorySalt, deployerContract: contracts.Create3Deployer.address },
                     gasOptions,
@@ -306,9 +304,7 @@ async function upgrade(config, chain, options) {
 
     printInfo(`Upgrading Interchain Token Service.`);
 
-    const InterchainTokenService = artifactPath
-        ? getContractJSON('InterchainTokenService', artifactPath)
-        : getContractJSON('InterchainTokenService');
+    const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);

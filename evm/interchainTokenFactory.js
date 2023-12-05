@@ -17,7 +17,7 @@ const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IERC20 = getContractJSON('IERC20');
 
-async function processCommand(_config, chain, options) {
+async function processCommand(_, chain, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;

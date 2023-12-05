@@ -271,7 +271,7 @@ async function processCommand(config, chain, options) {
                 [implementation, chain.contracts.InterchainTokenService.deployer, setupParams],
                 {
                     ...verifyOptions,
-                    contractPath: 'contracts/proxies/Proxy.sol:Proxy',
+                    contractPath: 'contracts/proxies/InterchainProxy.sol:InterchainProxy',
                 },
             );
             await verifyContract(
@@ -281,7 +281,7 @@ async function processCommand(config, chain, options) {
                 [interchainTokenFactoryImplementation, chain.contracts.InterchainTokenService.deployer, '0x'],
                 {
                     ...verifyOptions,
-                    contractPath: 'contracts/proxies/Proxy.sol:Proxy',
+                    contractPath: 'contracts/proxies/InterchainProxy.sol:InterchainProxy',
                 },
             );
 

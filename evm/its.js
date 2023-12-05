@@ -58,7 +58,7 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
     }
 }
 
-async function processCommand(config, chain, options) {
+async function processCommand(_, chain, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
