@@ -1,7 +1,6 @@
 require('dotenv').config();
 
 const { getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity');
-const { deployContract, printWalletInfo } = require('./utils');
 const { ethers } = require('hardhat');
 const {
     Wallet,
@@ -9,7 +8,19 @@ const {
     getDefaultProvider,
     utils: { defaultAbiCoder, isAddress },
 } = ethers;
-const { printInfo, getContractJSON, mainProcessor, prompt, sleep, getBytecodeHash, getGasOptions } = require('./utils');
+
+const {
+    deployContract,
+    printWalletInfo,
+    saveConfig,
+    printInfo,
+    getContractJSON,
+    mainProcessor,
+    prompt,
+    sleep,
+    getBytecodeHash,
+    getGasOptions,
+} = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const InterchainTokenService = getContractJSON('InterchainTokenService');
 const { Command, Option } = require('commander');
@@ -40,15 +51,14 @@ async function deployImplementation(config, wallet, chain, options) {
     const interchainTokenServiceAddress = await getCreate3Address(contracts.Create3Deployer.address, wallet, salt);
     printInfo('Interchain Token Service will be deployed to', interchainTokenServiceAddress);
 
-    const trustedChains = Object.values(config.chains).map((chain) => chain.id);
-    const trustedAddresses = Object.values(config.chains).map((_) => interchainTokenServiceAddress);
+    // Register all chains that ITS is or will be deployed on.
+    // Add a "skip": true under ITS key in the config if the chain will not have ITS.
+    const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
+    const trustedChains = itsChains.map((chain) => chain.id);
+    const trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address || interchainTokenServiceAddress);
 
-    contracts.InterchainTokenService.interchainTokenFactory = await getCreate3Address(
-        contracts.Create3Deployer.address,
-        wallet,
-        factorySalt,
-    );
-    printInfo('Interchain Token Factory will be deployed to', contracts.InterchainTokenService.interchainTokenFactory);
+    const interchainTokenFactory = await getCreate3Address(contracts.Create3Deployer.address, wallet, factorySalt);
+    printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
 
     if (prompt(`Does this match any existing deployments? Proceed with deployment on ${chain.name}?`, yes)) {
         return;
@@ -81,7 +91,7 @@ async function deployImplementation(config, wallet, chain, options) {
             },
         },
         interchainToken: {
-            name: 'Interchain Token Lock Unlock',
+            name: 'Interchain Token',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -176,13 +186,13 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('InterchainTokenService'),
+                    getContractJSON('InterchainTokenService', options.artifactPath),
                     [
                         contractConfig.tokenManagerDeployer,
                         contractConfig.interchainTokenDeployer,
                         contracts.AxelarGateway.address,
                         contracts.AxelarGasService.address,
-                        contractConfig.interchainTokenFactory,
+                        interchainTokenFactory,
                         chain.id,
                         [
                             contractConfig.tokenManagerMintBurn,
@@ -267,6 +277,8 @@ async function deployImplementation(config, wallet, chain, options) {
             contractConfig[key] = contract.address;
             printInfo(`Deployed ${deployment.name} at ${contract.address}`);
         }
+
+        saveConfig(config, options.env);
 
         if (chain.chainId !== 31337) {
             await sleep(2000);
@@ -358,6 +370,7 @@ if (require.main === module) {
 
     addExtendedOptions(program, { skipExisting: true, upgrade: true });
 
+    program.addOption(new Option('--contractName <contractName>', 'contract name').default('InterchainTokenService')); // added for consistency
     program.addOption(new Option('-s, --salt <key>', 'deployment salt to use for ITS deployment').makeOptionMandatory(true).env('SALT'));
     program.addOption(
         new Option('-f, --factorySalt <key>', 'deployment salt to use for Interchain Token Factory deployment')
@@ -369,7 +382,6 @@ if (require.main === module) {
     );
 
     program.action(async (options) => {
-        options.skipExisting = options.skipExisting === 'true';
         await main(options);
     });
 
