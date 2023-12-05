@@ -125,6 +125,13 @@ async function processCommand(config, chain, options) {
             const interchainTokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
             printInfo(`InterchainToken address for tokenId: ${tokenId}`, interchainTokenAddress);
 
+            try {
+                await interchainTokenService.validTokenAddress(tokenIdBytes32);
+                printInfo(`Token for tokenId: ${tokenId} exists at address:`, interchainTokenAddress);
+            } catch (error) {
+                printInfo(`Token for tokenId: ${tokenId} does not yet exist.`);
+            }
+
             break;
         }
 
@@ -142,10 +149,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'tokenManagerImplementation': {
-            const type = options.type;
-
-            const tokenManagerImplementation = await interchainTokenService.tokenManagerImplementation(tokenManagerImplementations[type]);
-            printInfo(`${type} TokenManager implementation address`, tokenManagerImplementation);
+            const tokenManagerImplementation = await interchainTokenService.tokenManager();
+            printInfo(`TokenManager implementation address`, tokenManagerImplementation);
 
             break;
         }

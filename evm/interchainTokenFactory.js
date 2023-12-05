@@ -17,7 +17,7 @@ const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IERC20 = getContractJSON('IERC20');
 
-async function processCommand(config, chain, options) {
+async function processCommand(_config, chain, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
@@ -118,15 +118,28 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'deployerTokenBalance': {
+            const { tokenId, deployer } = options;
+
+            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+
+            validateParameters({ isValidTokenId: { tokenId }, isValidAddress: { deployer } });
+
+            const deployerTokenBalance = await interchainTokenFactory.deployerTokenBalance(tokenIdBytes32, deployer);
+            printInfo(`deployerTokenBalance for deployer ${deployer} and token ID: ${tokenId}`, deployerTokenBalance);
+
+            break;
+        }
+
         case 'deployInterchainToken': {
-            const { name, symbol, decimals, mintAmount, distributor } = options;
+            const { name, symbol, decimals, initialSupply, distributor } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
                 isNonEmptyString: { name, symbol },
                 isValidAddress: { distributor },
-                isValidNumber: { decimals, mintAmount },
+                isValidNumber: { decimals, initialSupply },
             });
 
             const tx = await interchainTokenFactory.deployInterchainToken(
@@ -134,7 +147,7 @@ async function processCommand(config, chain, options) {
                 name,
                 symbol,
                 decimals,
-                mintAmount,
+                initialSupply,
                 distributor,
                 gasOptions,
             );
@@ -296,6 +309,7 @@ if (require.main === module) {
                 'interchainTokenId',
                 'canonicalInterchainTokenId',
                 'interchainTokenAddress',
+                'deployerTokenBalance',
                 'deployInterchainToken',
                 'deployRemoteInterchainToken',
                 'registerCanonicalInterchainToken',
@@ -316,7 +330,7 @@ if (require.main === module) {
     program.addOption(new Option('--symbol <symbol>', 'token symbol'));
     program.addOption(new Option('--decimals <decimals>', 'token decimals'));
     program.addOption(new Option('--distributor <distributor>', 'token distributor'));
-    program.addOption(new Option('--mintAmount <mintAmount>', 'mint amount').default(0));
+    program.addOption(new Option('--initialSupply <initialSupply>', 'initial supply').default(0));
     program.addOption(new Option('--originalChain <originalChain>', 'original chain'));
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));

@@ -22,7 +22,6 @@ const {
     getGasOptions,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
-const InterchainTokenService = getContractJSON('InterchainTokenService');
 const { Command, Option } = require('commander');
 
 /**
@@ -36,8 +35,12 @@ const { Command, Option } = require('commander');
  */
 
 async function deployImplementation(config, wallet, chain, options) {
-    const { env, salt, factorySalt, deployMethod, skipExisting, verify, yes } = options;
+    const { env, artifactPath, salt, factorySalt, deployMethod, skipExisting, verify, yes } = options;
     const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
+
+    const InterchainTokenService = artifactPath
+        ? getContractJSON('InterchainTokenService', artifactPath)
+        : getContractJSON('InterchainTokenService');
 
     const contractName = 'InterchainTokenService';
     const contracts = chain.contracts;
@@ -97,7 +100,7 @@ async function deployImplementation(config, wallet, chain, options) {
                     deployMethod,
                     wallet,
                     getContractJSON('InterchainToken'),
-                    [],
+                    [interchainTokenServiceAddress],
                     deployOptions,
                     gasOptions,
                     verifyOptions,
@@ -120,13 +123,13 @@ async function deployImplementation(config, wallet, chain, options) {
                 );
             },
         },
-        tokenManagerMintBurn: {
-            name: 'Token Manager Mint Burn',
+        tokenManager: {
+            name: 'Token Manager',
             async deploy() {
                 return await deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('TokenManagerMintBurn'),
+                    getContractJSON('TokenManager'),
                     [interchainTokenServiceAddress],
                     deployOptions,
                     gasOptions,
@@ -135,44 +138,14 @@ async function deployImplementation(config, wallet, chain, options) {
                 );
             },
         },
-        tokenManagerMintBurnFrom: {
-            name: 'Token Manager Mint Burn From',
+        tokenHandler: {
+            name: 'Token Handler',
             async deploy() {
                 return await deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('TokenManagerMintBurnFrom'),
-                    [interchainTokenServiceAddress],
-                    deployOptions,
-                    gasOptions,
-                    verifyOptions,
-                    chain,
-                );
-            },
-        },
-        tokenManagerLockUnlock: {
-            name: 'Token Manager Lock Unlock',
-            async deploy() {
-                return await deployContract(
-                    deployMethod,
-                    wallet,
-                    getContractJSON('TokenManagerLockUnlock'),
-                    [interchainTokenServiceAddress],
-                    deployOptions,
-                    gasOptions,
-                    verifyOptions,
-                    chain,
-                );
-            },
-        },
-        tokenManagerLockUnlockFee: {
-            name: 'Token Manager Lock Unlock Fee',
-            async deploy() {
-                return await deployContract(
-                    deployMethod,
-                    wallet,
-                    getContractJSON('TokenManagerLockUnlockFee'),
-                    [interchainTokenServiceAddress],
+                    getContractJSON('TokenHandler'),
+                    [],
                     deployOptions,
                     gasOptions,
                     verifyOptions,
@@ -186,7 +159,7 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('InterchainTokenService', options.artifactPath),
+                    InterchainTokenService,
                     [
                         contractConfig.tokenManagerDeployer,
                         contractConfig.interchainTokenDeployer,
@@ -194,12 +167,8 @@ async function deployImplementation(config, wallet, chain, options) {
                         contracts.AxelarGasService.address,
                         interchainTokenFactory,
                         chain.id,
-                        [
-                            contractConfig.tokenManagerMintBurn,
-                            contractConfig.tokenManagerMintBurnFrom,
-                            contractConfig.tokenManagerLockUnlock,
-                            contractConfig.tokenManagerLockUnlockFee,
-                        ],
+                        contractConfig.tokenManager,
+                        contractConfig.tokenHandler,
                     ],
                     deployOptions,
                     gasOptions,
@@ -221,7 +190,7 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     'create3',
                     wallet,
-                    getContractJSON('InterchainTokenServiceProxy'),
+                    getContractJSON('Proxy'),
                     [contractConfig.implementation, wallet.address, deploymentParams],
                     { salt, deployerContract: contracts.Create3Deployer.address },
                     gasOptions,
@@ -251,8 +220,8 @@ async function deployImplementation(config, wallet, chain, options) {
                 return await deployContract(
                     'create3',
                     wallet,
-                    getContractJSON('InterchainTokenFactoryProxy'),
-                    [contractConfig.interchainTokenFactoryImplementation, wallet.address],
+                    getContractJSON('Proxy'),
+                    [contractConfig.interchainTokenFactoryImplementation, wallet.address, '0x'],
                     { salt: factorySalt, deployerContract: contracts.Create3Deployer.address },
                     gasOptions,
                     verifyOptions,
