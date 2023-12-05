@@ -1,6 +1,5 @@
 'use strict';
 
-require('dotenv').config();
 
 const chalk = require('chalk');
 const { Command, Option } = require('commander');

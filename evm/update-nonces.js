@@ -33,8 +33,12 @@ async function processCommand(_, chain, options) {
 
     if (addresses) {
         addresses = addresses.split(',').map((str) => str.trim());
-    } else {
+    } else if (chainNonceData.length > 0) {
         addresses = Object.keys(chainNonceData);
+    } else if (chain.contracts?.Multisig?.signers) {
+        addresses = chain.contracts.Multisig.signers;
+    } else {
+        throw new Error('No addresses provided or found for chain');
     }
 
     for (const address of addresses) {
