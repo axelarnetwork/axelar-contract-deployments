@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const ethers = require('hardhat');
 const {
     Wallet,
