@@ -21,7 +21,8 @@ pub struct TestFixture {
 }
 
 impl TestFixture {
-    /// Crete a new test fixture with a new registered chain account already created.
+    /// Crete a new test fixture with a new registered chain account already
+    /// created.
     pub async fn new() -> TestFixture {
         let owner = Keypair::new();
         let associated_chain_address = get_associated_chain_address(&owner.pubkey());

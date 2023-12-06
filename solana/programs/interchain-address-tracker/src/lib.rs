@@ -22,7 +22,8 @@ pub fn check_program_account(program_id: &Pubkey) -> ProgramResult {
     Ok(())
 }
 
-/// Derives the associated chain address and bump seed for the given wallet address
+/// Derives the associated chain address and bump seed for the given wallet
+/// address
 pub(crate) fn get_associated_chain_address_and_bump_seed_internal(
     wallet_address: &Pubkey,
     program_id: &Pubkey,
@@ -35,7 +36,8 @@ pub fn get_associated_chain_address(wallet_address: &Pubkey) -> Pubkey {
     get_associated_chain_address_and_bump_seed_internal(wallet_address, &crate::id()).0
 }
 
-/// Derives the associated trusted address and bump seed for the given chain address and address
+/// Derives the associated trusted address and bump seed for the given chain
+/// address and address
 pub(crate) fn get_associated_trusted_address_account_and_bump_seed_internal(
     associated_chain_address: &Pubkey,
     chain_name: &str,
@@ -48,7 +50,8 @@ pub(crate) fn get_associated_trusted_address_account_and_bump_seed_internal(
     )
 }
 
-/// Derives the associated trusted address for the given chain address and address
+/// Derives the associated trusted address for the given chain address and
+/// address
 pub fn get_associated_trusted_address(
     associated_chain_address: &Pubkey,
     chain_name: &str,

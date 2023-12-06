@@ -1,6 +1,8 @@
+use std::fmt::Write;
+use std::string::FromUtf8Error;
+
 use serde::{Deserialize, Serialize};
 use solana_sdk::signature::Signature;
-use std::{fmt::Write, string::FromUtf8Error};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CcId {

@@ -16,7 +16,8 @@ impl<'a> SliceIterator<'a> {
         Self { input, cursor: 0 }
     }
 
-    /// Generates an `IterationError` with specific `InputError` and current cursor position.
+    /// Generates an `IterationError` with specific `InputError` and current
+    /// cursor position.
     fn error(&self, kind: InputError) -> IterationError {
         IterationError {
             kind,
@@ -29,8 +30,8 @@ impl<'a> SliceIterator<'a> {
     }
 }
 
-/// Error returnd by `SliceIterator`, detailing the error type and the position in the
-/// byte slice where it occurred.
+/// Error returnd by `SliceIterator`, detailing the error type and the position
+/// in the byte slice where it occurred.
 #[derive(Debug)]
 #[allow(unused)]
 pub struct IterationError {
@@ -52,8 +53,8 @@ impl<'a> Iterator for SliceIterator<'a> {
 
     /// Advances the iterator and returns the next result.
     ///
-    /// Returns `Ok(&[u8])` where `slice` is the next segment of the input or `Err(IterationError)`
-    /// if an error occurs.
+    /// Returns `Ok(&[u8])` where `slice` is the next segment of the input or
+    /// `Err(IterationError)` if an error occurs.
     fn next(&mut self) -> Option<Self::Item> {
         use InputError::*;
         let rest = &self.input[self.cursor as usize..];
@@ -80,8 +81,9 @@ impl<'a> Iterator for SliceIterator<'a> {
 
 /// Deserializes an encoded byte slice into a vector of sub-slices.
 ///
-/// This function expects the input byte slice to be formatted as a sequence of sub-slices,
-/// where each sub-slice is prefixed with its length encoded as a big-endian `u16`.
+/// This function expects the input byte slice to be formatted as a sequence of
+/// sub-slices, where each sub-slice is prefixed with its length encoded as a
+/// big-endian `u16`.
 pub fn deserialize_slices(src: &[u8]) -> Result<Vec<&[u8]>, IterationError> {
     SliceIterator::new(src).collect()
 }

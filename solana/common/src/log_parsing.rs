@@ -140,8 +140,9 @@ fn handle_system_log(this_program_str: &str, log: &str) -> (Option<String>, bool
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use core::panic;
+
+    use super::*;
 
     #[test]
     fn test_new_handle_program_log() {

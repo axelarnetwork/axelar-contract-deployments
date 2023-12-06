@@ -56,7 +56,8 @@ impl<'a> GatewayEventRef<'a> {
 
 /// Owned version of [`GatewayEventRef`].
 ///
-/// Used by tests and external crates that want to parse GatewayEvent log messages.
+/// Used by tests and external crates that want to parse GatewayEvent log
+/// messages.
 #[repr(u8)]
 #[derive(Debug, PartialEq)]
 pub enum GatewayEvent {

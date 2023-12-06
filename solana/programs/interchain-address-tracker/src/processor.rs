@@ -1,26 +1,22 @@
 //! Program state processor
 
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::msg;
+use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::entrypoint::ProgramResult;
+use solana_program::hash::hash;
+use solana_program::program::invoke_signed;
+use solana_program::program_error::ProgramError;
+use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
-use solana_program::{
-    account_info::{next_account_info, AccountInfo},
-    program::invoke_signed,
-    program_error::ProgramError,
-    program_pack::Pack,
-    rent::Rent,
-    system_instruction, system_program,
-    sysvar::Sysvar,
-};
-use solana_program::{entrypoint::ProgramResult, hash::hash};
+use solana_program::rent::Rent;
+use solana_program::sysvar::Sysvar;
+use solana_program::{msg, system_instruction, system_program};
 
+use crate::instruction::InterchainAddressTrackerInstruction;
+use crate::state::{RegisteredChainAccount, RegisteredTrustedAddressAccount};
 use crate::{
     check_program_account, get_associated_chain_address_and_bump_seed_internal,
-    state::RegisteredChainAccount,
-};
-use crate::{
     get_associated_trusted_address_account_and_bump_seed_internal,
-    instruction::InterchainAddressTrackerInstruction, state::RegisteredTrustedAddressAccount,
 };
 
 /// Program state handler.

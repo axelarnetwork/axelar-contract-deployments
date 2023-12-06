@@ -1,11 +1,10 @@
-use clap::Parser;
+use std::error::Error;
+use std::path::PathBuf;
 
+use clap::Parser;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::keypair::read_keypair_file;
-
-use std::error::Error;
-use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -18,7 +17,8 @@ struct Args {
     #[arg(long)]
     destination_chain: String,
 
-    /// Address of contract on destination chain e.g. "0x999991888887653456765445676544567654567765"
+    /// Address of contract on destination chain e.g.
+    /// "0x999991888887653456765445676544567654567765"
     #[arg(long)]
     destination_contract_address: String,
 

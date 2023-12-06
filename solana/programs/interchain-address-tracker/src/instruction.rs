@@ -14,9 +14,13 @@ pub enum InterchainAddressTrackerInstruction {
     /// Initialize a new InterchainAddressTracker.
     /// Accounts expected by this instruction:
     ///
-    ///   0. `[writeable,signer]` Funding account, pays for the chain account creation
-    ///   1. `[writable]` The account to initialize where we store the chain name & other data.
-    ///   2. `[signer]` The to-be owner account that is used for derivation of the associated chain address (can be another PDA or a wallet account)
+    ///   0. `[writeable,signer]` Funding account, pays for the chain account
+    ///      creation
+    ///   1. `[writable]` The account to initialize where we store the chain
+    ///      name & other data.
+    ///   2. `[signer]` The to-be owner account that is used for derivation of
+    ///      the associated chain address (can be another PDA or a wallet
+    ///      account)
     ///   3. `[]` The system program
     CreateRegisteredChain {
         /// Chain name of the remote chain
@@ -25,10 +29,12 @@ pub enum InterchainAddressTrackerInstruction {
     /// Sets the trusted address and its hash for a remote chain.
     /// Accounts expected by this instruction:
     ///
-    ///   0. `[writeable,signer]` Funding account, pays for the chain account creation
+    ///   0. `[writeable,signer]` Funding account, pays for the chain account
+    ///      creation
     ///   1. `[]` The associated chain account
     ///   2. `[signer]` The owner account of the associated chain account
-    ///   3. `[writable]` The associated trusted address account where the data will be stored
+    ///   3. `[writable]` The associated trusted address account where the data
+    ///      will be stored
     ///   4. `[]` The system program
     SetTrustedAddress {
         /// Chain name of the remote chain

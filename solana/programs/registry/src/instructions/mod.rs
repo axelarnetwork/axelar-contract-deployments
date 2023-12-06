@@ -25,7 +25,8 @@ pub struct Initialize<'info> {
     )]
     pub state: Account<'info, State>,
 
-    /// CHECK: This is not dangerous because we don't read or write from this account; lie
+    /// CHECK: This is not dangerous because we don't read or write from this
+    /// account; lie
     #[account(mut)]
     pub authority: Signer<'info>,
 
@@ -50,7 +51,8 @@ pub struct Set<'info> {
     )]
     pub state: Account<'info, State>,
 
-    /// CHECK: This is not dangerous because we don't read or write from this account; lie
+    /// CHECK: This is not dangerous because we don't read or write from this
+    /// account; lie
     #[account(mut)]
     pub authority: Signer<'info>,
 }

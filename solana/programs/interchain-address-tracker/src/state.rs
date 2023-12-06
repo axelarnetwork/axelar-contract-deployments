@@ -1,12 +1,10 @@
 //! State structures for the interchain-address-tracker program.
 
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::{
-    msg,
-    program_error::ProgramError,
-    program_pack::{Pack, Sealed},
-    pubkey::Pubkey,
-};
+use solana_program::msg;
+use solana_program::program_error::ProgramError;
+use solana_program::program_pack::{Pack, Sealed};
+use solana_program::pubkey::Pubkey;
 
 /// Registered Chain Account data.
 #[repr(C)]

@@ -20,7 +20,8 @@ pub enum GatewayInstruction<'a> {
     /// Otherwise another party can acquire ownership of the uninitialized
     /// account.
     ///
-    /// The `Registry` account should be initialized before calling this instruction.
+    /// The `Registry` account should be initialized before calling this
+    /// instruction.
     ///
     /// Accounts expected by this instruction:
     ///
@@ -192,6 +193,20 @@ pub fn call_contract(
         accounts,
         data,
     })
+}
+
+fn next_slice<'a, I>(iterator: &mut I) -> Result<&'a [u8], GatewayError>
+where
+    I: Iterator<Item = Result<&'a [u8], slice_iterator::IterationError>>,
+{
+    iterator
+        .next()
+        .ok_or(InvalidInstruction)?
+        .map_err(|_| InvalidInstruction)
+}
+
+fn serialize_slices<W: Write>(src: &[&[u8]], writer: &mut W) -> Result<(), GatewayError> {
+    slice_iterator::serialize_slices(src, writer).map_err(|_| ByteSerializationError)
 }
 
 #[cfg(test)]
@@ -413,18 +428,4 @@ pub mod tests {
             _ => panic!("Wrong instruction"),
         };
     }
-}
-
-fn next_slice<'a, I>(iterator: &mut I) -> Result<&'a [u8], GatewayError>
-where
-    I: Iterator<Item = Result<&'a [u8], slice_iterator::IterationError>>,
-{
-    iterator
-        .next()
-        .ok_or(InvalidInstruction)?
-        .map_err(|_| InvalidInstruction)
-}
-
-fn serialize_slices<W: Write>(src: &[&[u8]], writer: &mut W) -> Result<(), GatewayError> {
-    slice_iterator::serialize_slices(src, writer).map_err(|_| ByteSerializationError)
 }

@@ -1,5 +1,7 @@
 mod axelar;
 
+use std::str::FromStr;
+
 use axelar::gateway_verify_messages::axelar_gateway_verify_messages;
 use axelar::verifier_is_verified::axelar_dummy_verifier_is_verified;
 use clap::Parser;
@@ -8,7 +10,6 @@ use common::types::{CcId, Message};
 use log::{info, warn};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::signature::Signature;
-use std::str::FromStr;
 use tokio::time::{interval, Duration};
 
 #[derive(Parser, Debug, Clone)]
@@ -111,13 +112,18 @@ async fn main() {
                         //     Message {
                         //         cc_id: CcId {
                         //             chain: "sol".to_owned(),
-                        //             id: "wrong-command-id-should-be-false".to_owned(),
+                        //             id:
+                        // "wrong-command-id-should-be-false".to_owned(),
                         //         },
-                        //         source_address: event.sender.to_string(), // TODO: check if thats correct
-                        //         destination_chain: event.destination_chain.clone(),
-                        //         destination_address: event.destination_contract_address.clone(),
+                        //         source_address: event.sender.to_string(), //
+                        // TODO: check if thats correct
+                        //         destination_chain:
+                        // event.destination_chain.clone(),
+                        //         destination_address:
+                        // event.destination_contract_address.clone(),
                         //         payload_hash:
-                        //             "2CE2D8F68382ACFAF56AD8BF81DAFDBD558490431B701FD10F8969CD8669EB2D"
+                        //
+                        // "2CE2D8F68382ACFAF56AD8BF81DAFDBD558490431B701FD10F8969CD8669EB2D"
                         //                 .to_string(),
                         //     },
                         //     args.axelar_verifier_addr.clone(),

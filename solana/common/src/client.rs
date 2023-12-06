@@ -1,14 +1,14 @@
-use super::log_parsing::parse_logs_from_contract_call_event;
+use std::str::FromStr;
+
 use anyhow::{Error, Result};
 use solana_client::rpc_client::{GetConfirmedSignaturesForAddress2Config, RpcClient};
 use solana_client::rpc_response::RpcConfirmedTransactionStatusWithSignature;
 use solana_program::pubkey::Pubkey;
-use solana_sdk::{
-    commitment_config::{CommitmentConfig, CommitmentLevel},
-    signature::Signature,
-};
+use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
+use solana_sdk::signature::Signature;
 use solana_transaction_status::UiTransactionEncoding;
-use std::str::FromStr;
+
+use super::log_parsing::parse_logs_from_contract_call_event;
 
 pub struct Client<'a> {
     pub rpc: &'a RpcClient,
@@ -20,7 +20,8 @@ impl<'a> Client<'a> {
         Client { rpc, commitment }
     }
 
-    // fetch_events_by_tx_signature returns vector of events for Gateway::ContractCall
+    // fetch_events_by_tx_signature returns vector of events for
+    // Gateway::ContractCall
     pub fn fetch_events_by_tx_signature_contract_call(
         &self,
         tx_id: Signature,
@@ -38,8 +39,8 @@ impl<'a> Client<'a> {
         Ok(tx_parsed_events)
     }
 
-    // fetch_tx_signatures_per_address returns transactions for given contract address
-    // tx_limit determine max size of the batch with txids
+    // fetch_tx_signatures_per_address returns transactions for given contract
+    // address tx_limit determine max size of the batch with txids
     pub fn fetch_tx_signatures_per_address(
         &self,
         contract_id: &Pubkey,
