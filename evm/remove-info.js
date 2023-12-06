@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const { Command, Option } = require('commander');
 const { mainProcessor } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');

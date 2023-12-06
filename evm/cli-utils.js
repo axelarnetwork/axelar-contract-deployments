@@ -1,5 +1,7 @@
 'use strict';
 
+require('dotenv').config();
+
 const { Option } = require('commander');
 
 const addBaseOptions = (program, options = {}) => {
