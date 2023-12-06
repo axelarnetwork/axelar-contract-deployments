@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
@@ -231,8 +229,6 @@ async function processCommand(config, chain, options) {
     if (!contracts[contractName]) {
         contracts[contractName] = {};
     }
-
-    printInfo('Deploying to', chain.name);
 
     const contractConfig = contracts[contractName];
 
