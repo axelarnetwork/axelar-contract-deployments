@@ -200,6 +200,8 @@ const isString = (arg) => {
     return typeof arg === 'string';
 };
 
+const isStringArray = (arr) => Array.isArray(arr) && arr.every(isString);
+
 const isNumber = (arg) => {
     return Number.isInteger(arg);
 };
@@ -995,6 +997,7 @@ module.exports = {
     getDeployedAddress,
     isString,
     isNonEmptyString,
+    isStringArray,
     isNumber,
     isValidNumber,
     isValidDecimal,
@@ -1029,4 +1032,5 @@ module.exports = {
     getContractPath,
     getContractJSON,
     getGasOptions,
+    getSaltFromKey,
 };
