@@ -99,6 +99,7 @@ pub fn parse_logs_response(logs: Vec<String>, program_id_str: &str) -> Vec<Vec<V
     events
 }
 
+#[allow(clippy::type_complexity)]
 fn handle_program_log(
     self_program_str: &str,
     l: &str,
@@ -157,7 +158,7 @@ mod tests {
         assert_ne!(prepare_from_base64(&not_expected), actual);
     }
 
-    fn prepare_from_base64(expected: &String) -> Vec<Vec<u8>> {
+    fn prepare_from_base64(expected: &str) -> Vec<Vec<u8>> {
         let expected_no_prefix = expected.strip_prefix(PROGRAM_DATA).unwrap();
         let expected_split: Vec<&str> = expected_no_prefix.split_whitespace().collect();
         let expected_split_decoded: Vec<Vec<u8>> = expected_split

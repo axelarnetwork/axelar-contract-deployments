@@ -1,0 +1,50 @@
+[config]
+# Skip loading of all core tasks which saves up a bit on toml parsing and task creation
+skip_core_tasks = true
+
+[tasks.local-ci]
+workspace = false
+dependencies = ["check", "test", "unused-deps"]
+
+[tasks.fmt]
+workspace = false
+command = "cargo"
+args = ["fmt", "--all", "--", "--emit=files"]
+dependencies = ["fmt-clippy"]
+
+[tasks.fmt-clippy]
+workspace = false
+install_crate = "clippy"
+command = "cargo"
+args = ["clippy", "--fix", "--allow-dirty", "--allow-staged", "--workspace"]
+
+[tasks.unused-deps]
+workspace = false
+install_crate = "cargo-udeps"
+command = "cargo"
+args = ["udeps", "--all-targets", "--backend=depinfo"]
+
+[tasks.check]
+dependencies = ["fmt-check", "clippy-check"]
+
+[tasks.fmt-check]
+workspace = false
+command = "cargo"
+args = ["fmt", "--all", "--check"]
+
+[tasks.clippy-check]
+workspace = false
+install_crate = "clippy"
+command = "cargo"
+args = ["clippy", "--workspace", "--locked", "--", "-D", "warnings"]
+
+[tasks.test]
+workspace = false
+command = "cargo"
+args = ["test-sbf", "--workspace"]
+
+[tasks.audit]
+workspace = false
+install_crate = "cargo-audit"
+command = "cargo"
+args = ["audit"]

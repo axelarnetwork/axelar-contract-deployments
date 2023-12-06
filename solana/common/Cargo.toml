@@ -10,8 +10,6 @@ anchor-client.workspace = true
 anchor-lang.workspace = true
 anyhow.workspace = true
 base64.workspace = true
-clap.workspace = true
-env_logger.workspace = true
 gateway = { path = "../programs/gateway", features = ["no-entrypoint"] }
 regex.workspace = true
 serde.workspace = true

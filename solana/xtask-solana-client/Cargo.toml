@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 clap.workspace = true
 env_logger.workspace = true
-gateway = { path = "../programs/gateway" }
 log.workspace = true
 solana-client.workspace = true
 solana-program.workspace = true

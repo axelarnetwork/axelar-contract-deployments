@@ -1,0 +1,26 @@
+name: 'Setup Repo Action'
+description: 'A reusable composite action that setups rust and other common tasks'
+inputs:
+  toolchain:
+    description: 'Override the default (nightly) toolchain to install'
+    required: false
+    default: 'nightly-2023-12-03'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install nightly
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ inputs.toolchain }}
+
+    - uses: Swatinem/rust-cache@v2
+      with:
+        cache-on-failure: true
+
+    - name: Cache compilation artifacts
+      uses: mozilla-actions/sccache-action@v0.0.3
+
+    - name: Install cargo-make
+      shell: bash
+      run: cargo install --debug cargo-make

@@ -38,7 +38,7 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn prepare_message_for_axelar_side(cc_id: CcId, event_body: &Vec<Vec<u8>>) -> Self {
+    pub fn prepare_message_for_axelar_side(cc_id: CcId, event_body: &[Vec<u8>]) -> Self {
         let payload_hash_hex: String = event_body[3].iter().fold(String::new(), |mut output, b| {
             let _ = write!(output, "{:02X}", b);
             output
@@ -59,8 +59,5 @@ impl Message {
 
 /// Convert Vec[u8] to [String].
 fn vec_to_string(body: Vec<u8>) -> Result<String, FromUtf8Error> {
-    match String::from_utf8(body) {
-        Ok(s) => return Ok(s),
-        Err(e) => return Err(e),
-    };
+    String::from_utf8(body)
 }

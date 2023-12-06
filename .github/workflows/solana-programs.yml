@@ -32,13 +32,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: "rustfmt"
+      - name: Setup repo
+        uses: ./.github/actions/setup-solana-repo
 
       - name: Run rustfmt
-        run: cargo fmt --check --all
+        run: cargo make fmt-check
 
   clippy:
     name: Clippy linting
@@ -47,48 +45,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: "clippy"
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Cache compilation artifacts
-        uses: mozilla-actions/sccache-action@v0.0.3
+      - name: Setup repo
+        uses: ./.github/actions/setup-solana-repo
 
       - name: Run clippy
-        run: cargo clippy --all-targets
+        run: cargo make clippy-check
 
-  unit-tests:
-    name: Unit tests
+  unused-deps:
+    name: Check for unused dependencies
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Setup repo
+        uses: ./.github/actions/setup-solana-repo
 
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
+      - name: Unused deps
+        run: cargo make unused-deps
 
-      - name: Cache compilation artifacts
-        uses: mozilla-actions/sccache-action@v0.0.3
-
-      - name: Run unit tests
-        run: cargo test --workspace
-
-  gateway-integration-tests:
+  tests:
     name: Gateway Program - Integration tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Setup repo
+        uses: ./.github/actions/setup-solana-repo
 
       - name: Cache Solana
         uses: actions/cache@v3
@@ -101,11 +85,5 @@ jobs:
           curl -sSfL https://release.solana.com/${{ env.SOLANA_VERSION}}/install | sh
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Cache compilation artifacts
-        uses: mozilla-actions/sccache-action@v0.0.3
-
       - name: Run integration tests
-        run: cargo-test-sbf --features test-sbf --package gateway
+        run: cargo make test

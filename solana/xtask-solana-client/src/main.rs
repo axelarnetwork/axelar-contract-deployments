@@ -1,9 +1,9 @@
 use clap::Parser;
-use log::info;
+
 use solana_client::rpc_client::RpcClient;
-use solana_sdk::signature::{Keypair, Signer};
+use solana_sdk::signature::Keypair;
 use solana_sdk::signer::keypair::read_keypair_file;
-use solana_sdk::transaction::Transaction;
+
 use std::error::Error;
 use std::path::PathBuf;
 
@@ -45,30 +45,31 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn gateway_call_contract(
-    client: &RpcClient,
-    payer: &Keypair,
-    destination_chain: &str,
-    destination_contract_address: &str,
-    payload: &[u8],
+    _client: &RpcClient,
+    _payer: &Keypair,
+    _destination_chain: &str,
+    _destination_contract_address: &str,
+    _payload: &[u8],
 ) -> Result<(), Box<dyn Error>> {
-    let ix = gateway::instruction::call_contract(
-        &gateway::id(),
-        &payer.pubkey(),
-        destination_chain,
-        destination_contract_address,
-        payload,
-    )?;
-    let latest_blockhash = client.get_latest_blockhash()?;
+    unimplemented!("gateway_call_contract");
+    // let _ix = gateway::instruction::call_contract(
+    //     &gateway::id(),
+    //     &payer.pubkey(),
+    //     destination_chain,
+    //     destination_contract_address,
+    //     payload,
+    // )?;
+    // let latest_blockhash = client.get_latest_blockhash()?;
 
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&payer.pubkey()),
-        &[payer],
-        latest_blockhash,
-    );
+    // let tx = Transaction::new_signed_with_payer(
+    //     &[ix],
+    //     Some(&payer.pubkey()),
+    //     &[payer],
+    //     latest_blockhash,
+    // );
 
-    let signature = client.send_and_confirm_transaction(&tx)?;
+    // let signature = client.send_and_confirm_transaction(&tx)?;
 
-    info!("sent - check relayer log | txid: {}", signature);
-    Ok(())
+    // info!("sent - check relayer log | txid: {}", signature);
+    // Ok(())
 }

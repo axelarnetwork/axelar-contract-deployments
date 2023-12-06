@@ -184,14 +184,14 @@ fn assert_associated_chain_account(
 
 fn assert_associated_address_account(
     associated_chain_account: &AccountInfo<'_>,
-    chain_name: &String,
+    chain_name: &str,
     program_id: &Pubkey,
     associated_trusted_address_account: &AccountInfo<'_>,
 ) -> Result<u8, ProgramError> {
     let (associated_trusted_address, bump_seed) =
         get_associated_trusted_address_account_and_bump_seed_internal(
             associated_chain_account.key,
-            chain_name.as_str(),
+            chain_name,
             program_id,
         );
     if associated_trusted_address != *associated_trusted_address_account.key {
