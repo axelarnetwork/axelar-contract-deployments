@@ -1,7 +1,7 @@
 'use strict';
 
 require('dotenv').config();
-var _ = require('lodash');
+const { isNil } = require('lodash');
 
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
@@ -302,17 +302,14 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     throw new Error(`${contractName} is not supported.`);
 };
 
-const prepareWallet = async ({ mnemonic }) => {
-    return DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
-};
+const prepareWallet = ({ mnemonic }) => DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
-const prepareClient = async ({ axelar: { rpc } }, wallet) => {
-    return SigningCosmWasmClient.connectWithSigner(rpc, wallet).then((client) => {
+const prepareClient = ({ axelar: { rpc } }, wallet) =>
+    SigningCosmWasmClient.connectWithSigner(rpc, wallet).then((client) => {
         return { wallet, client };
     });
-};
 
-const upload = async (client, wallet, chainName, config, options) => {
+const upload = (client, wallet, chainName, config, options) => {
     const { reuseCodeId, contractName } = options;
     const {
         axelar: {
@@ -321,7 +318,7 @@ const upload = async (client, wallet, chainName, config, options) => {
         chains: { [chainName]: chainConfig },
     } = config;
 
-    if (!reuseCodeId || _.isNil(contractConfig.codeId)) {
+    if (!reuseCodeId || isNil(contractConfig.codeId)) {
         printInfo('Uploading contract binary');
 
         return uploadContract(client, wallet, config, options)
@@ -344,16 +341,14 @@ const upload = async (client, wallet, chainName, config, options) => {
 
                 printInfo('Expected contract address', address);
             })
-            .then(() => {
-                return { wallet, client };
-            });
+            .then(() => ({ wallet, client }));
     }
 
     printInfo('Skipping upload. Reusing previously uploaded binary');
-    return { wallet, client };
+    return Promise.resolve({ wallet, client });
 };
 
-const instantiate = async (client, wallet, chainName, config, options) => {
+const instantiate = (client, wallet, chainName, config, options) => {
     const { contractName } = options;
     const {
         axelar: {
