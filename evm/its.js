@@ -1,5 +1,6 @@
 'use strict';
 
+require('dotenv').config();
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
@@ -212,14 +213,14 @@ async function processCommand(_, chain, options) {
         }
 
         case 'deployInterchainToken': {
-            const { destinationChain, name, symbol, decimals, distributor, gasValue } = options;
+            const { destinationChain, name, symbol, decimals, minter, gasValue } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
                 isNonEmptyString: { name, symbol },
                 isString: { destinationChain },
-                isValidBytesAddress: { distributor },
+                isValidBytesAddress: { minter },
                 isValidNumber: { decimals, gasValue },
             });
 
@@ -229,7 +230,7 @@ async function processCommand(_, chain, options) {
                 name,
                 symbol,
                 decimals,
-                distributor,
+                minter,
                 gasValue,
                 gasOptions,
             );
@@ -275,12 +276,12 @@ async function processCommand(_, chain, options) {
         }
 
         case 'interchainTransfer': {
-            const { destinationChain, destinationAddress, amount, metadata } = options;
+            const { destinationChain, destinationAddress, amount, metadata, gasValue } = options;
 
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, destinationAddress },
-                isValidNumber: { amount },
+                isValidNumber: { amount, gasValue },
                 isValidCalldata: { metadata },
             });
 
@@ -292,6 +293,7 @@ async function processCommand(_, chain, options) {
                 destinationAddress,
                 amount,
                 metadata,
+                gasValue,
                 gasOptions,
             );
 
@@ -301,12 +303,12 @@ async function processCommand(_, chain, options) {
         }
 
         case 'callContractWithInterchainToken': {
-            const { destinationChain, destinationAddress, amount, data } = options;
+            const { destinationChain, destinationAddress, amount, data, gasValue } = options;
 
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, destinationAddress },
-                isValidNumber: { amount },
+                isValidNumber: { amount, gasValue },
                 isValidCalldata: { data },
             });
 
@@ -318,6 +320,7 @@ async function processCommand(_, chain, options) {
                 destinationAddress,
                 amount,
                 data,
+                gasValue,
                 gasOptions,
             );
 
@@ -499,7 +502,7 @@ if (require.main === module) {
     program.addOption(new Option('--name <name>', 'token name'));
     program.addOption(new Option('--symbol <symbol>', 'token symbol'));
     program.addOption(new Option('--decimals <decimals>', 'token decimals'));
-    program.addOption(new Option('--distributor <distributor>', 'token distributor'));
+    program.addOption(new Option('--minter <minter>', 'token minter'));
     program.addOption(new Option('--sourceChain <sourceChain>', 'source chain'));
     program.addOption(new Option('--sourceAddress <sourceAddress>', 'source address'));
     program.addOption(new Option('--payload <payload>', 'payload'));

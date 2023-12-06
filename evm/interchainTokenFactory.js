@@ -1,11 +1,8 @@
 'use strict';
 
+require('dotenv').config();
 const { ethers } = require('hardhat');
-const {
-    getDefaultProvider,
-    utils: { hexZeroPad },
-    Contract,
-} = ethers;
+const { getDefaultProvider, Contract } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions } = require('./utils');
 const { getWallet } = require('./sign-utils');
@@ -13,7 +10,6 @@ const { addExtendedOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx } = require('./its');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
-const IERC20 = getContractJSON('IERC20');
 
 async function processCommand(_, chain, options) {
     const { privateKey, address, action, yes } = options;
@@ -116,27 +112,14 @@ async function processCommand(_, chain, options) {
             break;
         }
 
-        case 'deployerTokenBalance': {
-            const { tokenId, deployer } = options;
-
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
-            validateParameters({ isValidTokenId: { tokenId }, isValidAddress: { deployer } });
-
-            const deployerTokenBalance = await interchainTokenFactory.deployerTokenBalance(tokenIdBytes32, deployer);
-            printInfo(`deployerTokenBalance for deployer ${deployer} and token ID: ${tokenId}`, deployerTokenBalance);
-
-            break;
-        }
-
         case 'deployInterchainToken': {
-            const { name, symbol, decimals, initialSupply, distributor } = options;
+            const { name, symbol, decimals, initialSupply, minter } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
                 isNonEmptyString: { name, symbol },
-                isValidAddress: { distributor },
+                isValidAddress: { minter },
                 isValidNumber: { decimals, initialSupply },
             });
 
@@ -146,7 +129,7 @@ async function processCommand(_, chain, options) {
                 symbol,
                 decimals,
                 initialSupply,
-                distributor,
+                minter,
                 gasOptions,
             );
 
@@ -156,20 +139,20 @@ async function processCommand(_, chain, options) {
         }
 
         case 'deployRemoteInterchainToken': {
-            const { originalChain, distributor, destinationChain, gasValue } = options;
+            const { originalChain, minter, destinationChain, gasValue } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
                 isNonEmptyString: { originalChain, destinationChain },
-                isValidBytesAddress: { distributor },
+                isValidBytesAddress: { minter },
                 isValidNumber: { gasValue },
             });
 
             const tx = await interchainTokenFactory.deployRemoteInterchainToken(
                 originalChain,
                 deploymentSalt,
-                distributor,
+                minter,
                 destinationChain,
                 gasValue,
                 gasOptions,
@@ -214,73 +197,6 @@ async function processCommand(_, chain, options) {
             break;
         }
 
-        case 'interchainTransfer': {
-            const { tokenId, destinationChain, destinationAddress, amount, gasValue } = options;
-
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
-            validateParameters({
-                isValidTokenId: { tokenId },
-                isString: { destinationChain },
-                isValidCalldata: { destinationAddress },
-                isValidNumber: { amount, gasValue },
-            });
-
-            const tx = await interchainTokenFactory.interchainTransfer(
-                tokenIdBytes32,
-                destinationChain,
-                destinationAddress,
-                amount,
-                gasValue,
-                gasOptions,
-            );
-
-            if (destinationChain === '') {
-                const tokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
-                const token = new Contract(tokenAddress, IERC20.abi, wallet);
-
-                await handleTx(tx, chain, token, options.action, 'Transfer');
-            } else {
-                await handleTx(tx, chain, interchainTokenFactory, options.action, 'InterchainTransferWithData');
-            }
-
-            break;
-        }
-
-        case 'tokenTransferFrom': {
-            const { tokenId, amount } = options;
-
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
-            validateParameters({ isValidTokenId: { tokenId }, isValidNumber: { amount } });
-
-            const tokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
-            const token = new Contract(tokenAddress, IERC20.abi, wallet);
-
-            const tx = await interchainTokenFactory.tokenTransferFrom(tokenIdBytes32, amount, gasOptions);
-
-            await handleTx(tx, chain, token, options.action, 'Transfer');
-
-            break;
-        }
-
-        case 'tokenApprove': {
-            const { tokenId, amount } = options;
-
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
-            validateParameters({ isValidTokenId: { tokenId }, isValidNumber: { amount } });
-
-            const tokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
-            const token = new Contract(tokenAddress, IERC20.abi, wallet);
-
-            const tx = await interchainTokenFactory.tokenApprove(tokenIdBytes32, amount, gasOptions);
-
-            await handleTx(tx, chain, token, options.action, 'Approval');
-
-            break;
-        }
-
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -307,14 +223,10 @@ if (require.main === module) {
                 'interchainTokenId',
                 'canonicalInterchainTokenId',
                 'interchainTokenAddress',
-                'deployerTokenBalance',
                 'deployInterchainToken',
                 'deployRemoteInterchainToken',
                 'registerCanonicalInterchainToken',
                 'deployRemoteCanonicalInterchainToken',
-                'interchainTransfer',
-                'tokenTransferFrom',
-                'tokenApprove',
             ])
             .makeOptionMandatory(true),
     );
@@ -327,13 +239,12 @@ if (require.main === module) {
     program.addOption(new Option('--name <name>', 'token name'));
     program.addOption(new Option('--symbol <symbol>', 'token symbol'));
     program.addOption(new Option('--decimals <decimals>', 'token decimals'));
-    program.addOption(new Option('--distributor <distributor>', 'token distributor'));
+    program.addOption(new Option('--minter <minter>', 'token minter'));
     program.addOption(new Option('--initialSupply <initialSupply>', 'initial supply').default(0));
     program.addOption(new Option('--originalChain <originalChain>', 'original chain'));
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
     program.addOption(new Option('--gasValue <gasValue>', 'gas value'));
-    program.addOption(new Option('--amount <amount>', 'token amount'));
     program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
 
     program.action((options) => {
