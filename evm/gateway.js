@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
@@ -21,6 +19,7 @@ const {
     wasEventEmitted,
     mainProcessor,
     printError,
+    getGasOptions,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -61,7 +60,6 @@ async function processCommand(config, chain, options) {
 
     const contracts = chain.contracts;
     const contractName = 'AxelarGateway';
-    const contractConfig = contracts.AxelarGateway;
 
     const gatewayAddress = address || contracts.AxelarGateway?.address;
 
@@ -82,8 +80,7 @@ async function processCommand(config, chain, options) {
 
     const gateway = new Contract(gatewayAddress, IGateway.abi, wallet);
 
-    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || {};
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Action', action);
 

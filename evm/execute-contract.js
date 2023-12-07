@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const ethers = require('hardhat');
 const {
     Wallet,
@@ -12,7 +10,7 @@ const {
 
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-const { isNumber, isString, loadConfig, saveConfig, printObj, printLog, printError, getContractJSON } = require('./utils');
+const { isNumber, isNonEmptyString, loadConfig, saveConfig, printObj, printLog, printError, getContractJSON } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function getCallData(action, targetContract, inputRecipient, inputAmount) {
@@ -129,7 +127,7 @@ async function executeContract(options, chain, wallet) {
         throw new Error('Missing target address in the address info.');
     }
 
-    if (!isString(action)) {
+    if (!isNonEmptyString(action)) {
         throw new Error('Missing method name from the user info.');
     }
 
@@ -181,7 +179,7 @@ async function main(options) {
         const provider = getDefaultProvider(rpc);
         const privateKey = options.privateKey;
 
-        if (!isString(privateKey)) {
+        if (!isNonEmptyString(privateKey)) {
             throw new Error('Private Key value is not provided in the info file');
         }
 

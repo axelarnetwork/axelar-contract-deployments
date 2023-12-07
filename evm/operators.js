@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const { ethers } = require('hardhat');
 const {
     Wallet,
@@ -21,6 +19,7 @@ const {
     isKeccak256Hash,
     parseArgs,
     prompt,
+    getGasOptions,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
@@ -58,8 +57,7 @@ async function processCommand(options, chain) {
 
     const operatorsContract = new Contract(operatorsAddress, IOperators.abi, wallet);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Operator Action', action);
 

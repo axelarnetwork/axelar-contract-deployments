@@ -1,14 +1,12 @@
 'use strict';
 
-require('dotenv').config();
-
 const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider, ContractFactory } = ethers;
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
-const { printInfo, writeJSON, predictAddressCreate, deployCreate } = require('./utils');
+const { printInfo, writeJSON, predictAddressCreate, deployCreate, getGasOptions } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json');
 const contractName = 'ConstAddressDeployer';
@@ -24,8 +22,7 @@ async function deployConstAddressDeployer(wallet, chain, options = {}, verifyOpt
 
     const contractConfig = contracts[contractName];
 
-    const rpc = chain.rpc;
-    const provider = getDefaultProvider(rpc);
+    const provider = wallet.provider;
     const expectedAddress = contractConfig.address ? contractConfig.address : await predictAddressCreate(wallet.address, 0);
 
     if (!options.force && (await provider.getCode(expectedAddress)) !== '0x') {
@@ -49,8 +46,7 @@ async function deployConstAddressDeployer(wallet, chain, options = {}, verifyOpt
 
     console.log(`Deployer has ${balance / 1e18} ${chalk.green(chain.tokenSymbol)} and nonce ${nonce} on ${chain.name}.`);
 
-    const gasOptions = contractConfig.gasOptions || chain.gasOptions || {};
-    console.log(`Gas override for chain ${chain.name}: ${JSON.stringify(gasOptions)}`);
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     const constAddressDeployerAddress = await predictAddressCreate(wallet.address, nonce);
     printInfo('ConstAddressDeployer will be deployed to', constAddressDeployerAddress);

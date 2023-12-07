@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
@@ -14,8 +12,8 @@ const {
     printInfo,
     printWarn,
     printError,
-    copyObject,
-    isString,
+    getGasOptions,
+    isNonEmptyString,
     isNumber,
     isAddressArray,
     getBytecodeHash,
@@ -45,14 +43,14 @@ async function getConstructorArgs(contractName, chain, wallet) {
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
 
-            if (!isString(governanceChain)) {
+            if (!isNonEmptyString(governanceChain)) {
                 throw new Error(`Missing AxelarServiceGovernance.governanceChain in the chain info.`);
             }
 
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
             contractConfig.governanceAddress = governanceAddress;
 
-            if (!isString(governanceAddress)) {
+            if (!isNonEmptyString(governanceAddress)) {
                 throw new Error(`Missing AxelarServiceGovernance.governanceAddress in the chain info.`);
             }
 
@@ -102,14 +100,14 @@ async function getConstructorArgs(contractName, chain, wallet) {
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
 
-            if (!isString(governanceChain)) {
+            if (!isNonEmptyString(governanceChain)) {
                 throw new Error(`Missing InterchainGovernance.governanceChain in the chain info.`);
             }
 
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
             contractConfig.governanceAddress = governanceAddress;
 
-            if (!isString(governanceAddress)) {
+            if (!isNonEmptyString(governanceAddress)) {
                 throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
             }
 
@@ -232,8 +230,6 @@ async function processCommand(config, chain, options) {
         contracts[contractName] = {};
     }
 
-    printInfo('Deploying to', chain.name);
-
     const contractConfig = contracts[contractName];
 
     if (contractConfig.address && options.skipExisting) {
@@ -255,15 +251,9 @@ async function processCommand(config, chain, options) {
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
 
     const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
-    const gasOptions = copyObject(contractConfig.gasOptions || chain.gasOptions || {});
-
-    // Some chains require a gas adjustment
-    if (env === 'mainnet' && !gasOptions.gasPrice && (chain.name === 'Fantom' || chain.name === 'Binance' || chain.name === 'Polygon')) {
-        gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * 1.6);
-    }
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
-    printInfo(`Gas override for chain ${chain.name}`, JSON.stringify(gasOptions, null, 2));
 
     const salt = options.salt || contractName;
     let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
@@ -296,7 +286,18 @@ async function processCommand(config, chain, options) {
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
 
     if (existingAddress !== undefined && predictedAddress !== existingAddress) {
-        printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} on chain ${chain.name}.`);
+        printWarn(
+            `Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}.`,
+        );
+
+        const existingCodeHash = config.chains.ethereum.contracts[contractName].predeployCodehash;
+
+        if (predeployCodehash !== existingCodeHash) {
+            printWarn(
+                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${config.chains.ethereum.name}.`,
+            );
+        }
+
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
     }
 

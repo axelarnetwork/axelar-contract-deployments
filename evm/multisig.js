@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
@@ -16,12 +14,13 @@ const {
     isNumber,
     isValidCalldata,
     printWarn,
-    isStringArray,
+    isNonEmptyStringArray,
     isNumberArray,
     isValidAddress,
     mainProcessor,
     isValidDecimal,
     prompt,
+    getGasOptions,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const IMultisig = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IMultisig.json');
@@ -123,8 +122,7 @@ async function processCommand(_, chain, options) {
 
     const multisigContract = new Contract(multisigAddress, IMultisig.abi, wallet);
 
-    const gasOptions = contractConfig?.gasOptions || chain?.gasOptions || {};
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Multisig Action', action);
 
@@ -151,7 +149,7 @@ async function processCommand(_, chain, options) {
             const symbolsArray = JSON.parse(symbols);
             const limitsArray = JSON.parse(limits);
 
-            if (!isStringArray(symbolsArray)) {
+            if (!isNonEmptyStringArray(symbolsArray)) {
                 throw new Error(`Invalid token symbols: ${symbols})}`);
             }
 

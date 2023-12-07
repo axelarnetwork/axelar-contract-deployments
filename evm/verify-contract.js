@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const { ethers } = require('hardhat');
 const {
     Wallet,
@@ -9,9 +7,10 @@ const {
     getContractAt,
     getContractFactoryFromArtifact,
     utils: { defaultAbiCoder },
+    Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor } = require('./utils');
+const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, getContractJSON } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(config, chain, options) {
@@ -19,8 +18,6 @@ async function processCommand(config, chain, options) {
     const provider = getDefaultProvider(chain.rpc);
     const wallet = Wallet.createRandom().connect(provider);
     const verifyOptions = {};
-
-    printInfo('Chain', chain.name);
 
     if (dir) {
         verifyOptions.dir = dir;
@@ -200,6 +197,95 @@ async function processCommand(config, chain, options) {
             console.log(`Verifying ${name} (${symbol}) decimals ${decimals} on ${chain.name}...`);
 
             await verifyContract(env, chain.name, tokenContract.address, [name, symbol, decimals, cap], verifyOptions);
+            break;
+        }
+
+        case 'InterchainTokenService': {
+            const InterchainTokenService = getContractJSON('InterchainTokenService');
+            const interchainTokenServiceFactory = await getContractFactoryFromArtifact(InterchainTokenService, wallet);
+            const interchainTokenService = interchainTokenServiceFactory.attach(
+                options.address || chain.contracts.InterchainTokenService.address,
+            );
+            const contractConfig = chain.contracts[contractName];
+
+            const implementation = await interchainTokenService.implementation();
+            const tokenManagerDeployer = await interchainTokenService.tokenManagerDeployer();
+            const interchainTokenDeployer = await interchainTokenService.interchainTokenDeployer();
+            const interchainTokenDeployerContract = new Contract(
+                interchainTokenDeployer,
+                getContractJSON('InterchainTokenDeployer').abi,
+                wallet,
+            );
+            const interchainToken = await interchainTokenDeployerContract.implementationAddress();
+            const interchainTokenFactory = await interchainTokenService.interchainTokenFactory();
+            const interchainTokenFactoryContract = new Contract(
+                interchainTokenFactory,
+                getContractJSON('InterchainTokenFactory').abi,
+                wallet,
+            );
+            const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
+
+            const tokenManagerMintBurn = await interchainTokenService.tokenManagerImplementation(0);
+            const tokenManagerMintBurnFrom = await interchainTokenService.tokenManagerImplementation(1);
+            const tokenManagerLockUnlock = await interchainTokenService.tokenManagerImplementation(2);
+            const tokenManagerLockUnlockFee = await interchainTokenService.tokenManagerImplementation(3);
+
+            const allChains = Object.values(config.chains).map((chain) => chain.id);
+            const trustedAddressesValues = await Promise.all(
+                allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)),
+            );
+            const trustedChains = allChains.filter((_, index) => trustedAddressesValues[index] !== '');
+            const trustedAddresses = trustedAddressesValues.filter((address) => address !== '');
+
+            const setupParams = defaultAbiCoder.encode(
+                ['address', 'string', 'string[]', 'string[]'],
+                [contractConfig.deployer, chain.id, trustedChains, trustedAddresses],
+            );
+
+            await verifyContract(env, chain.name, tokenManagerDeployer, [], verifyOptions);
+            await verifyContract(env, chain.name, interchainToken, [], verifyOptions);
+            await verifyContract(env, chain.name, interchainTokenDeployer, [interchainToken], verifyOptions);
+            await verifyContract(env, chain.name, tokenManagerMintBurn, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, tokenManagerMintBurnFrom, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, tokenManagerLockUnlock, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, tokenManagerLockUnlockFee, [interchainTokenService.address], verifyOptions);
+            await verifyContract(
+                env,
+                chain.name,
+                implementation,
+                [
+                    tokenManagerDeployer,
+                    interchainTokenDeployer,
+                    chain.contracts.AxelarGateway.address,
+                    chain.contracts.AxelarGasService.address,
+                    interchainTokenFactory,
+                    chain.name,
+                    [tokenManagerMintBurn, tokenManagerMintBurnFrom, tokenManagerLockUnlock, tokenManagerLockUnlockFee],
+                ],
+                verifyOptions,
+            );
+            await verifyContract(env, chain.name, interchainTokenFactoryImplementation, [interchainTokenService.address], verifyOptions);
+            await verifyContract(
+                env,
+                chain.name,
+                interchainTokenService.address,
+                [implementation, chain.contracts.InterchainTokenService.deployer, setupParams],
+                {
+                    ...verifyOptions,
+                    contractPath: 'contracts/proxies/InterchainTokenServiceProxy.sol:InterchainTokenServiceProxy',
+                },
+            );
+            await verifyContract(
+                env,
+                chain.name,
+                interchainTokenFactory,
+                [interchainTokenFactoryImplementation, chain.contracts.InterchainTokenService.deployer],
+                {
+                    ...verifyOptions,
+                    contractPath: 'contracts/proxies/InterchainTokenFactoryProxy.sol:InterchainTokenFactoryProxy',
+                },
+            );
+
             break;
         }
 

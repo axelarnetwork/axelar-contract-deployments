@@ -126,9 +126,10 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
 
 const sendTransaction = async (tx, provider, confirmations = undefined) => {
     const response = await provider.sendTransaction(tx);
-    const receipt = await response.wait(confirmations);
 
     printInfo('Broadcasted tx', response.hash);
+
+    const receipt = await response.wait(confirmations);
 
     return { response, receipt };
 };

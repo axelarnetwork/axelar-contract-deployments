@@ -6,6 +6,7 @@ const {
     Contract,
     utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString },
     constants: { AddressZero },
+    getDefaultProvider,
 } = ethers;
 const https = require('https');
 const http = require('http');
@@ -191,9 +192,15 @@ const httpGet = (url) => {
     });
 };
 
-const isString = (arg) => {
+const isNonEmptyString = (arg) => {
     return typeof arg === 'string' && arg !== '';
 };
+
+const isString = (arg) => {
+    return typeof arg === 'string';
+};
+
+const isStringArray = (arr) => Array.isArray(arr) && arr.every(isString);
 
 const isNumber = (arg) => {
     return Number.isInteger(arg);
@@ -221,7 +228,7 @@ const isNumberArray = (arr) => {
     return true;
 };
 
-const isStringArray = (arr) => {
+const isNonEmptyStringArray = (arr) => {
     if (!Array.isArray(arr)) {
         return false;
     }
@@ -293,6 +300,110 @@ function isValidCalldata(input) {
     return hexPattern.test(input.slice(2));
 }
 
+function isValidBytesAddress(input) {
+    const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+    return addressRegex.test(input);
+}
+
+const isContract = async (address, provider) => {
+    const code = await provider.getCode(address);
+    return code && code !== '0x';
+};
+
+function isValidAddress(address, allowZeroAddress) {
+    if (!allowZeroAddress && address === AddressZero) {
+        return false;
+    }
+
+    return isAddress(address);
+}
+
+/**
+ * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
+ *
+ * @param {string} timeString - The input time string.
+ * @return {boolean} - Returns true if the format matches, false otherwise.
+ */
+function isValidTimeFormat(timeString) {
+    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+
+    if (timeString === '0') {
+        return true;
+    }
+
+    return regex.test(timeString);
+}
+
+// Validate if the input privateKey is correct
+function isValidPrivateKey(privateKey) {
+    // Check if it's a valid hexadecimal string
+    if (!privateKey?.startsWith('0x')) {
+        privateKey = '0x' + privateKey;
+    }
+
+    if (!isHexString(privateKey) || privateKey.length !== 66) {
+        return false;
+    }
+
+    return true;
+}
+
+function isValidTokenId(input) {
+    if (!input?.startsWith('0x')) {
+        return false;
+    }
+
+    const hexPattern = /^[0-9a-fA-F]+$/;
+
+    if (!hexPattern.test(input.slice(2))) {
+        return false;
+    }
+
+    const minValue = BigInt('0x00');
+    const maxValue = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
+    const numericValue = BigInt(input);
+
+    return numericValue >= minValue && numericValue <= maxValue;
+}
+
+const validationFunctions = {
+    isNonEmptyString,
+    isNumber,
+    isValidNumber,
+    isValidDecimal,
+    isNumberArray,
+    isString,
+    isNonEmptyStringArray,
+    isAddressArray,
+    isKeccak256Hash,
+    isValidCalldata,
+    isValidBytesAddress,
+    isValidTimeFormat,
+    isContract,
+    isValidAddress,
+    isValidPrivateKey,
+    isValidTokenId,
+};
+
+function validateParameters(parameters) {
+    for (const [validatorFunctionString, paramsObj] of Object.entries(parameters)) {
+        const validatorFunction = validationFunctions[validatorFunctionString];
+
+        if (typeof validatorFunction !== 'function') {
+            throw new Error(`Validator function ${validatorFunction} is not defined`);
+        }
+
+        for (const paramKey of Object.keys(paramsObj)) {
+            const paramValue = paramsObj[paramKey];
+            const isValid = validatorFunction(paramValue);
+
+            if (!isValid) {
+                throw new Error(`Input validation failed for ${validatorFunctionString} with parameter ${paramKey}: ${paramValue}`);
+            }
+        }
+    }
+}
+
 /**
  * Parses the input string into an array of arguments, recognizing and converting
  * to the following types: boolean, number, array, and string.
@@ -334,7 +445,7 @@ const parseArgs = (args) => {
 async function getBytecodeHash(contractObject, chain = '', provider = null) {
     let bytecode;
 
-    if (isString(contractObject)) {
+    if (isNonEmptyString(contractObject)) {
         if (provider === null) {
             throw new Error('Provider must be provided for chain');
         }
@@ -408,7 +519,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
 
             const deployerContract = options.deployerContract;
 
-            if (!isString(deployerContract)) {
+            if (!isNonEmptyString(deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
@@ -431,7 +542,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
         case 'create3': {
             const deployerContract = options.deployerContract;
 
-            if (!isString(deployerContract)) {
+            if (!isNonEmptyString(deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
@@ -568,11 +679,11 @@ const deployContract = async (
         }
 
         case 'create2': {
-            if (!isString(deployOptions.deployerContract)) {
+            if (!isNonEmptyString(deployOptions.deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
-            if (!isString(deployOptions.salt)) {
+            if (!isNonEmptyString(deployOptions.salt)) {
                 throw new Error('Salt was not provided');
             }
 
@@ -591,11 +702,11 @@ const deployContract = async (
         }
 
         case 'create3': {
-            if (!isString(deployOptions.deployerContract)) {
+            if (!isNonEmptyString(deployOptions.deployerContract)) {
                 throw new Error('Deployer contract address was not provided');
             }
 
-            if (!isString(deployOptions.salt)) {
+            if (!isNonEmptyString(deployOptions.salt)) {
                 throw new Error('Salt was not provided');
             }
 
@@ -618,36 +729,6 @@ const deployContract = async (
         }
     }
 };
-
-/**
- * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
- *
- * @param {string} timeString - The input time string.
- * @return {boolean} - Returns true if the format matches, false otherwise.
- */
-function isValidTimeFormat(timeString) {
-    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
-
-    if (timeString === '0') {
-        return true;
-    }
-
-    return regex.test(timeString);
-}
-
-// Validate if the input privateKey is correct
-function isValidPrivateKey(privateKey) {
-    // Check if it's a valid hexadecimal string
-    if (!privateKey.startsWith('0x')) {
-        privateKey = '0x' + privateKey;
-    }
-
-    if (!isHexString(privateKey) || privateKey.length !== 66) {
-        return false;
-    }
-
-    return true;
-}
 
 const dateToEta = (utcTimeString) => {
     if (utcTimeString === '0') {
@@ -687,19 +768,6 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
-const isContract = async (address, provider) => {
-    const code = await provider.getCode(address);
-    return code && code !== '0x';
-};
-
-function isValidAddress(address, allowZeroAddress) {
-    if (!allowZeroAddress && address === AddressZero) {
-        return false;
-    }
-
-    return isAddress(address);
-}
-
 function copyObject(obj) {
     return JSON.parse(JSON.stringify(obj));
 }
@@ -712,6 +780,8 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     if (!options.chainName && !options.chainNames) {
         throw new Error('Chain names were not provided');
     }
+
+    printInfo('Environment', options.env);
 
     const config = loadConfig(options.env);
     let chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
@@ -730,10 +800,12 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
-        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
+        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive' || chain.contracts[options.contractName]?.skip) {
             printWarn('Skipping chain', chain.name);
             continue;
         }
+
+        printInfo('Chain', chain.name, chalk.cyan);
 
         try {
             await processCommand(config, chain, options);
@@ -814,12 +886,17 @@ function findContractPath(dir, contractName) {
     }
 }
 
-function getContractPath(contractName) {
-    const projectRoot = findProjectRoot(__dirname);
+function getContractPath(contractName, projectRoot = '') {
+    if (projectRoot === '') {
+        projectRoot = path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network');
+    }
+
+    projectRoot = path.resolve(projectRoot);
 
     const searchDirs = [
-        path.join(projectRoot, 'node_modules', '@axelar-network', 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
-        path.join(projectRoot, 'node_modules', '@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
+        path.join(projectRoot, 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
+        path.join(projectRoot, 'axelar-cgp-solidity', 'artifacts', 'contracts'),
+        path.join(projectRoot, 'interchain-token-service', 'artifacts', 'contracts'),
     ];
 
     for (const dir of searchDirs) {
@@ -844,14 +921,62 @@ function getContractJSON(contractName, artifactPath) {
         contractPath = getContractPath(contractName);
     }
 
-    printInfo('Contract path', contractPath);
-
     try {
         const contractJson = require(contractPath);
         return contractJson;
     } catch (err) {
         throw new Error(`Failed to load contract JSON for ${contractName} at path ${contractPath} with error: ${err}`);
     }
+}
+
+/**
+ * Retrieves gas options for contract interactions.
+ *
+ * This function determines the appropriate gas options for a given transaction.
+ * It supports offline scenarios and applies gas price adjustments if specified.
+ *
+ * @param {Object} chain - The chain config object.
+ * @param {Object} options - Script options, including the 'offline' flag.
+ * @param {String} contractName - The name of the contract to deploy/interact with.
+ * @param {Object} defaultGasOptions - Optional default gas options if none are provided in the chain or contract configs.
+ *
+ * @returns {Object} An object containing gas options for the transaction.
+ *
+ * @throws {Error} Throws an error if fetching the gas price fails.
+ *
+ * Note:
+ * - If 'options.offline' is true, static gas options from the contract or chain config are used.
+ * - If 'gasPriceAdjustment' is set in gas options and 'gasPrice' is not pre-defined, the gas price
+ *   is fetched from the provider and adjusted according to 'gasPriceAdjustment'.
+ */
+async function getGasOptions(chain, options, contractName, defaultGasOptions = {}) {
+    const { offline } = options;
+
+    const contractConfig = contractName ? chain?.contracts[contractName] : null;
+
+    if (offline) {
+        return copyObject(contractConfig?.staticGasOptions || chain?.staticGasOptions || defaultGasOptions);
+    }
+
+    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || defaultGasOptions);
+    const gasPriceAdjustment = gasOptions.gasPriceAdjustment;
+
+    if (gasPriceAdjustment && !gasOptions.gasPrice) {
+        try {
+            const provider = getDefaultProvider(chain.rpc);
+            gasOptions.gasPrice = Math.floor((await provider.getGasPrice()) * gasPriceAdjustment);
+        } catch (err) {
+            throw new Error(`Provider failed to retrieve gas price on chain ${chain.name}: ${err}`);
+        }
+    }
+
+    if (gasPriceAdjustment) {
+        delete gasOptions.gasPriceAdjustment;
+    }
+
+    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+
+    return gasOptions;
 }
 
 module.exports = {
@@ -871,14 +996,18 @@ module.exports = {
     predictAddressCreate,
     getDeployedAddress,
     isString,
+    isNonEmptyString,
+    isStringArray,
     isNumber,
     isValidNumber,
     isValidDecimal,
     isNumberArray,
-    isStringArray,
+    isNonEmptyStringArray,
     isAddressArray,
     isKeccak256Hash,
     isValidCalldata,
+    isValidBytesAddress,
+    validateParameters,
     parseArgs,
     getProxy,
     getEVMBatch,
@@ -896,9 +1025,12 @@ module.exports = {
     isContract,
     isValidAddress,
     isValidPrivateKey,
+    isValidTokenId,
     verifyContract,
     prompt,
     mainProcessor,
     getContractPath,
     getContractJSON,
+    getGasOptions,
+    getSaltFromKey,
 };
