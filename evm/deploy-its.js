@@ -18,6 +18,7 @@ const {
     sleep,
     getBytecodeHash,
     getGasOptions,
+    isContract,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
@@ -32,14 +33,20 @@ const { Command, Option } = require('commander');
  * @param {*} verifyOptions
  */
 
-async function deployImplementation(config, wallet, chain, options) {
+async function deployAll(config, wallet, chain, options) {
     const { env, artifactPath, salt, factorySalt, deployMethod, skipExisting, verify, yes } = options;
     const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
 
+    const provider = getDefaultProvider(chain.rpc);
     const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
 
     const contractName = 'InterchainTokenService';
     const contracts = chain.contracts;
+    // Reset config data if it's a fresh deployment
+    if (!skipExisting) {
+        contracts[contractName] = {};
+    }
+
     const contractConfig = contracts[contractName] || {};
 
     contractConfig.salt = salt;
@@ -231,22 +238,20 @@ async function deployImplementation(config, wallet, chain, options) {
         if (skipExisting && contractConfig[key]) continue;
 
         const deployment = deployments[key];
-        printInfo(`Deploying ${deployment.name}.`);
+        printInfo(`Deploying ${deployment.name}`);
 
         const contract = await deployment.deploy();
-
-        if (contract.address === undefined) {
-            contractConfig[key] = contract;
-            printInfo(`Deployed ${deployment.name} at ${JSON.stringify(contract)}`);
-        } else {
-            contractConfig[key] = contract.address;
-            printInfo(`Deployed ${deployment.name} at ${contract.address}`);
-        }
+        contractConfig[key] = contract.address;
+        printInfo(`Deployed ${deployment.name} at ${contract.address}`);
 
         saveConfig(config, options.env);
 
         if (chain.chainId !== 31337) {
             await sleep(2000);
+        }
+
+        if (!(await isContract(contract.address, provider))) {
+            throw new Error(`Contract ${deployment.name} at ${contract.address} was not deployed on ${chain.name}`);
         }
     }
 }
@@ -276,7 +281,7 @@ async function deploy(config, chain, options) {
         throw new Error(`Invalid operator address: ${operatorAddress}`);
     }
 
-    await deployImplementation(config, wallet, chain, options);
+    await deployAll(config, wallet, chain, options);
 }
 
 async function upgrade(config, chain, options) {
@@ -298,7 +303,7 @@ async function upgrade(config, chain, options) {
 
     contracts[contractName] = contractConfig;
 
-    await deployImplementation(config, wallet, chain, options);
+    await deployAll(config, wallet, chain, options);
 
     printInfo(`Upgrading Interchain Token Service.`);
 
