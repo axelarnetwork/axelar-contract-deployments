@@ -42,6 +42,7 @@ async function deployAll(config, wallet, chain, options) {
 
     const contractName = 'InterchainTokenService';
     const contracts = chain.contracts;
+
     // Reset config data if it's a fresh deployment
     if (!skipExisting) {
         contracts[contractName] = {};
