@@ -71,6 +71,7 @@ export const chainValueSchema = {
         contracts: { $ref: contractSchema.id },
         explorer: { $ref: explorerSchema.id },
         gasOptions: { $ref: gasOptionSchema.id },
+        confirmations: { type: 'number' },
     },
     required: ['name', 'id', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
 };
