@@ -52,8 +52,11 @@ export const gasOptionSchema = {
     type: 'object',
     properties: {
         gasLimit: { type: 'number' },
+        gasPrice: { type: 'number' },
+        maxPriorityFeePerGas: { type: 'number' },
+        maxFeePerGas: { type: 'number' },
+        gasPriceAdjustment: { type: 'number' },
     },
-    required: ['gasLimit'],
 };
 
 export const chainValueSchema = {
