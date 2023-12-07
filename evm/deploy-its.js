@@ -332,7 +332,7 @@ if (require.main === module) {
     program.name('deploy-its').description('Deploy interchain token service');
 
     program.addOption(
-        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
+        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
     );
 
     addExtendedOptions(program, { skipExisting: true, upgrade: true });
