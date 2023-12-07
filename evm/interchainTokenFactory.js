@@ -1,6 +1,5 @@
 'use strict';
 
-require('dotenv').config();
 const { ethers } = require('hardhat');
 const { getDefaultProvider, Contract } = ethers;
 const { Command, Option } = require('commander');
