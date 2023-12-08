@@ -54,24 +54,13 @@ To decode multicall data:
     ```
 4.  The resulting decoded function calls and arguments will be printed to the console.
     Example output for multicall data with `deployInterchainToken` and `interchainTransfer` calls:
-    ```Decoded multicall data:
-      Function: deployInterchainToken
-      Args:
-      0x79d4bf58fff996a2ffaca4809382c4ddb24b53d6def5712c141e97a010f68178
-      Chain A
-      Token A
-      TKA
-      18
-      0x1234
-      90,
-      Function: interchainTransfer
-      Args:
-      0x848f254a0b936a6b704ad1dad4a2867638db919eb10e5354cf526cccbd9fbc24
-      Chain B
-      0x1234567890
-      100
-      0x00000001
-      90
+    ```
+    Function: deployInterchainToken
+    Arg names: salt, destinationChain, name, symbol, decimals, minter, gasValue
+    Arg values: 0x79d4bf58fff996a2ffaca4809382c4ddb24b53d6def5712c141e97a010f68178, Chain A, Token A, TKA, 18, 0x1234, 90,
+    Function: interchainTransfer
+    Arg names: tokenId, destinationChain, destinationAddress, amount, metadata, gasValue
+    Arg values: 0x848f254a0b936a6b704ad1dad4a2867638db919eb10e5354cf526cccbd9fbc24, Chain B, 0x1234567890, 100, 0x00000001, 90
     ```
     Note: If any encoded functions are not recogized they will be printed to the console as unrecognized:
     ```

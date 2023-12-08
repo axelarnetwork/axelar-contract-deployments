@@ -66,9 +66,12 @@ const decodeMulticallData = async (encodedData, contractJSON) => {
         try {
             const parsedCall = iface.parseTransaction({ data: encodedCall });
             const functionName = parsedCall.name;
-            const args = parsedCall.args.map((arg) => arg.toString());
+            const functionFragment = iface.getFunction(functionName);
 
-            return `\nFunction: ${functionName}\nArgs:\n${args.join('\n')}`;
+            const argNames = functionFragment.inputs.map((input) => input.name).join(', ');
+            const argValues = parsedCall.args.map((arg) => arg.toString()).join(', ');
+
+            return `\nFunction: ${functionName}\nArg names: ${argNames}\nArg values: ${argValues}`;
         } catch (error) {
             printError(`Unrecognized function call: ${encodedCall}`, error);
             return `\nFunction: Unrecognized function call`;
