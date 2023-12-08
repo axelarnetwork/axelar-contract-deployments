@@ -18,9 +18,13 @@ const {
     getContractJSON,
     isValidTokenId,
     getGasOptions,
+    printError,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
+const InterchainTokenService = getContractJSON('InterchainTokenService');
+const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
+const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
 const IOwnable = getContractJSON('IOwnable');
 const { addExtendedOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
@@ -54,6 +58,28 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
 
     if (!eventEmitted) {
         printWarn('Event not emitted in receipt.');
+    }
+}
+
+function postDeploymentCheck(contractName, contractConfig, toCheck) {
+    let allKeysMatch = true;
+
+    for (const [key, value] of Object.entries(toCheck)) {
+        if (Object.prototype.hasOwnProperty.call(contractConfig, key)) {
+            if (contractConfig[key] === value) {
+                printInfo(`Confirmed: Value match for '${key}'.`);
+            } else {
+                printError(`Error: Value mismatch for '${key}'. Config value: ${contractConfig[key]}, Inputted value: ${value}`);
+                allKeysMatch = false;
+            }
+        } else {
+            printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractName}.`);
+            allKeysMatch = false;
+        }
+    }
+
+    if (allKeysMatch) {
+        printInfo(`Confirmation: All values match the contract config for ${contractName}.`);
     }
 }
 
@@ -437,6 +463,36 @@ async function processCommand(_, chain, options) {
             break;
         }
 
+        case 'postDeploy': {
+            const interchainTokenService = new Contract(interchainTokenServiceAddress, InterchainTokenService.abi, wallet);
+
+            const contractConfig = chain.contracts[contractName];
+
+            const interchainTokenDeployer = await interchainTokenService.interchainTokenDeployer();
+            const interchainTokenFactory = await interchainTokenService.interchainTokenFactory();
+
+            const interchainTokenFactoryContract = new Contract(interchainTokenFactory, InterchainTokenFactory.abi, wallet);
+            const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
+
+            const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
+            const interchainToken = await interchainTokenDeployerContract.implementationAddress();
+
+            const toCheck = {
+                tokenManagerDeployer: await interchainTokenService.tokenManagerDeployer(),
+                interchainTokenDeployer,
+                interchainToken,
+                tokenManager: await interchainTokenService.tokenManager(),
+                tokenHandler: await interchainTokenService.tokenHandler(),
+                implementation: await interchainTokenService.implementation(),
+                interchainTokenFactory,
+                interchainTokenFactoryImplementation,
+            };
+
+            postDeploymentCheck(contractName, contractConfig, toCheck);
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -478,6 +534,7 @@ if (require.main === module) {
                 'removeTrustedAddress',
                 'setPauseStatus',
                 'execute',
+                'postDeploy',
             ])
             .makeOptionMandatory(true),
     );
