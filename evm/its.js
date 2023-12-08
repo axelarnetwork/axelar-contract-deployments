@@ -3,12 +3,13 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad },
+    utils: { hexZeroPad, defaultAbiCoder, Interface },
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
 const {
     printInfo,
+    printError,
     prompt,
     printWarn,
     printWalletInfo,
@@ -60,6 +61,27 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
         printWarn('Event not emitted in receipt.');
     }
 }
+
+const decodeMulticallData = async (encodedData, contractJSON) => {
+    const decodedArray = defaultAbiCoder.decode(['bytes[]'], encodedData)[0];
+    const iface = new Interface(contractJSON.abi);
+
+    return decodedArray.map((encodedCall) => {
+        try {
+            const parsedCall = iface.parseTransaction({ data: encodedCall });
+            const functionName = parsedCall.name;
+            const functionFragment = iface.getFunction(functionName);
+
+            const argNames = functionFragment.inputs.map((input) => input.name).join(', ');
+            const argValues = parsedCall.args.map((arg) => arg.toString()).join(', ');
+
+            return `\nFunction: ${functionName}\nArg names: ${argNames}\nArg values: ${argValues}`;
+        } catch (error) {
+            printError(`Unrecognized function call: ${encodedCall}`, error);
+            return `\nFunction: Unrecognized function call`;
+        }
+    });
+};
 
 function postDeploymentCheck(contractName, contractConfig, toCheck) {
     let allKeysMatch = true;
@@ -463,6 +485,18 @@ async function processCommand(_, chain, options) {
             break;
         }
 
+        case 'decodeMulticall': {
+            const { multicallData } = options;
+
+            validateParameters({ isValidCalldata: { multicallData } });
+
+            const decodedMulticall = await decodeMulticallData(multicallData, IInterchainTokenService);
+
+            printInfo('Decoded multicall data', decodedMulticall);
+
+            break;
+        }
+
         case 'postDeploy': {
             const interchainTokenService = new Contract(interchainTokenServiceAddress, InterchainTokenService.abi, wallet);
 
@@ -534,6 +568,7 @@ if (require.main === module) {
                 'removeTrustedAddress',
                 'setPauseStatus',
                 'execute',
+                'decodeMulticall',
                 'postDeploy',
             ])
             .makeOptionMandatory(true),
@@ -570,6 +605,7 @@ if (require.main === module) {
     program.addOption(new Option('--trustedAddress <trustedAddress>', 'trusted address'));
     program.addOption(new Option('--pauseStatus <pauseStatus>', 'pause status').choices(['true', 'false']));
     program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
+    program.addOption(new Option('--multicallData <multicallData>', 'multicall data arg').env('MULTICALL_DATA'));
 
     program.action((options) => {
         main(options);
@@ -578,4 +614,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { getDeploymentSalt, handleTx };
+module.exports = { getDeploymentSalt, handleTx, decodeMulticallData };
