@@ -21,6 +21,7 @@ const {
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
+const IOwnable = getContractJSON('IOwnable');
 const { addExtendedOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const tokenManagerImplementations = {
@@ -68,8 +69,6 @@ async function processCommand(_, chain, options) {
 
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
-
-    printInfo('Chain', chain.name);
 
     const wallet = await getWallet(privateKey, provider, options);
     const { address: walletAddress } = await printWalletInfo(wallet, options);
@@ -367,7 +366,7 @@ async function processCommand(_, chain, options) {
         }
 
         case 'setTrustedAddress': {
-            const owner = await interchainTokenService.owner();
+            const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
                 throw new Error(`${action} can only be performed by contract owner: ${owner}`);
@@ -385,7 +384,7 @@ async function processCommand(_, chain, options) {
         }
 
         case 'removeTrustedAddress': {
-            const owner = await interchainTokenService.owner();
+            const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
                 throw new Error(`${action} can only be performed by contract owner: ${owner}`);
@@ -403,7 +402,7 @@ async function processCommand(_, chain, options) {
         }
 
         case 'setPauseStatus': {
-            const owner = await interchainTokenService.owner();
+            const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
                 throw new Error(`${action} can only be performed by contract owner: ${owner}`);
