@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const {
     printObj,
     getBytecodeHash,

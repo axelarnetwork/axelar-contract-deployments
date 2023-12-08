@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const { ethers } = require('hardhat');
 const {
     Wallet,
@@ -227,10 +225,8 @@ async function processCommand(config, chain, options) {
             );
             const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
 
-            const tokenManagerMintBurn = await interchainTokenService.tokenManagerImplementation(0);
-            const tokenManagerMintBurnFrom = await interchainTokenService.tokenManagerImplementation(1);
-            const tokenManagerLockUnlock = await interchainTokenService.tokenManagerImplementation(2);
-            const tokenManagerLockUnlockFee = await interchainTokenService.tokenManagerImplementation(3);
+            const tokenManager = await interchainTokenService.tokenManager();
+            const tokenHandler = await interchainTokenService.tokenHandler();
 
             const allChains = Object.values(config.chains).map((chain) => chain.id);
             const trustedAddressesValues = await Promise.all(
@@ -245,12 +241,10 @@ async function processCommand(config, chain, options) {
             );
 
             await verifyContract(env, chain.name, tokenManagerDeployer, [], verifyOptions);
-            await verifyContract(env, chain.name, interchainToken, [], verifyOptions);
+            await verifyContract(env, chain.name, interchainToken, [interchainTokenService.address], verifyOptions);
             await verifyContract(env, chain.name, interchainTokenDeployer, [interchainToken], verifyOptions);
-            await verifyContract(env, chain.name, tokenManagerMintBurn, [interchainTokenService.address], verifyOptions);
-            await verifyContract(env, chain.name, tokenManagerMintBurnFrom, [interchainTokenService.address], verifyOptions);
-            await verifyContract(env, chain.name, tokenManagerLockUnlock, [interchainTokenService.address], verifyOptions);
-            await verifyContract(env, chain.name, tokenManagerLockUnlockFee, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, tokenManager, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, tokenHandler, [], verifyOptions);
             await verifyContract(
                 env,
                 chain.name,
@@ -262,7 +256,8 @@ async function processCommand(config, chain, options) {
                     chain.contracts.AxelarGasService.address,
                     interchainTokenFactory,
                     chain.name,
-                    [tokenManagerMintBurn, tokenManagerMintBurnFrom, tokenManagerLockUnlock, tokenManagerLockUnlockFee],
+                    tokenManager,
+                    tokenHandler,
                 ],
                 verifyOptions,
             );
@@ -274,17 +269,17 @@ async function processCommand(config, chain, options) {
                 [implementation, chain.contracts.InterchainTokenService.deployer, setupParams],
                 {
                     ...verifyOptions,
-                    contractPath: 'contracts/proxies/InterchainTokenServiceProxy.sol:InterchainTokenServiceProxy',
+                    contractPath: 'contracts/proxies/InterchainProxy.sol:InterchainProxy',
                 },
             );
             await verifyContract(
                 env,
                 chain.name,
                 interchainTokenFactory,
-                [interchainTokenFactoryImplementation, chain.contracts.InterchainTokenService.deployer],
+                [interchainTokenFactoryImplementation, chain.contracts.InterchainTokenService.deployer, '0x'],
                 {
                     ...verifyOptions,
-                    contractPath: 'contracts/proxies/InterchainTokenFactoryProxy.sol:InterchainTokenFactoryProxy',
+                    contractPath: 'contracts/proxies/InterchainProxy.sol:InterchainProxy',
                 },
             );
 

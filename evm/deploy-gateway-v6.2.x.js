@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
@@ -90,8 +88,6 @@ async function deploy(config, chain, options) {
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    printInfo('Chain', chain.name);
-
     const wallet = new Wallet(privateKey).connect(provider);
     await printWalletInfo(wallet);
 
@@ -161,11 +157,11 @@ async function deploy(config, chain, options) {
         printInfo('Predicted proxy address', proxyAddress, chalk.cyan);
     }
 
-    const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
+    const existingAddress = config.chains.arbitrum?.contracts?.[contractName]?.address;
 
     if (existingAddress !== undefined && proxyAddress !== existingAddress) {
         printWarn(
-            `Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}.`,
+            `Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} on chain ${config.chains.arbitrum.name}.`,
         );
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
     }
@@ -529,17 +525,15 @@ async function programHandler() {
 
     program.name('deploy-gateway-v6.2.x').description('Deploy gateway v6.2.x');
 
-    addExtendedOptions(program, { salt: true, skipChains: true, skipExisting: true, upgrade: true });
+    addExtendedOptions(program, { salt: true, skipExisting: true, upgrade: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
     );
-    program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment').env('REUSE_PROXY'));
+    program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
     program.addOption(
-        new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment').env(
-            'REUSE_HELPERS',
-        ),
+        new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment'),
     );
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('--governance <governance>', 'governance address').env('GOVERNANCE'));
