@@ -255,7 +255,7 @@ async function processCommand(config, chain, options) {
                     chain.contracts.AxelarGateway.address,
                     chain.contracts.AxelarGasService.address,
                     interchainTokenFactory,
-                    chain.name,
+                    chain.id,
                     tokenManager,
                     tokenHandler,
                 ],
