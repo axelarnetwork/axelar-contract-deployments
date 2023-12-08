@@ -28,7 +28,7 @@ Deploy the gateway contract.
 ## AxelarGasService and AxelarDepositService
 
 1. Run the following depending on the service,
-`node evm/deploy-upgradable.js -e testnet -n ethereum -c AxelarGasService`
+   `node evm/deploy-upgradable.js -e testnet -n ethereum -c AxelarGasService`
 2. Use the `--upgrade` flag to upgrade the contract instead
 
 ## InterchainTokenService
@@ -41,6 +41,43 @@ node evm/deploy-its -e testnet -n ethereum -s [salt]
 
 Change the `-s SALT` to derive a new address.
 
+### Decode Multicall
+
+To decode multicall data:
+
+1.  Create a variable in the `.env` file named `MULTICALL_DATA`
+2.  Set this variable equal to the multicall data that needs to be decoded:
+    Example: `MULTICALL_DATA=0x00000000000000000000...`
+3.  Run the command below in the terminal:
+    ```bash
+    node evm/its.js --action decodeMulticall -e testnet -n ethereum -y
+    ```
+4.  The resulting decoded function calls and arguments will be printed to the console.
+    Example output for multicall data with `deployInterchainToken` and `interchainTransfer` calls:
+    ```Decoded multicall data:
+      Function: deployInterchainToken
+      Args:
+      0x79d4bf58fff996a2ffaca4809382c4ddb24b53d6def5712c141e97a010f68178
+      Chain A
+      Token A
+      TKA
+      18
+      0x1234
+      90,
+      Function: interchainTransfer
+      Args:
+      0x848f254a0b936a6b704ad1dad4a2867638db919eb10e5354cf526cccbd9fbc24
+      Chain B
+      0x1234567890
+      100
+      0x00000001
+      90
+    ```
+    Note: If any encoded functions are not recogized they will be printed to the console as unrecognized:
+    ```
+    Function: Unrecognized function call
+    ```
+
 ## InterchainGovernance
 
 To update the min deposit on Axelar with a param change proposal, you can generate the proposal via
@@ -50,13 +87,13 @@ To update the min deposit on Axelar with a param change proposal, you can genera
 
 ### Prerequisites
 
-- Clone the repo containing the contract source code.
+-   Clone the repo containing the contract source code.
 
 ```bash
 git clone https://github.com/axelarnetwork/axelar-cgp-solidity.git
 ```
 
-- Checkout to the version of contracts to verify in the directory provided to the command before compiling artifacts used by the command.
+-   Checkout to the version of contracts to verify in the directory provided to the command before compiling artifacts used by the command.
 
 ```bash
 git checkout vX.Y.Z
@@ -66,15 +103,15 @@ npm ci
 npm run build
 ```
 
-- Update `.hardhat.config.js` to have `chains` and `keys` to point to the current repo.
+-   Update `.hardhat.config.js` to have `chains` and `keys` to point to the current repo.
 
 ```javascript
 const chains = require(`../axelar-contract-deployments/axelar-chains-config/info/${env}.json`);
 const keys = readJSON(`../axelar-contract-deployments/keys.json`);
 ```
 
-- `keys.json` is expected to be in the format described [here](./.example.keys.json).
-You can generate the explorer API key via creating an account on the explorer.
+-   `keys.json` is expected to be in the format described [here](./.example.keys.json).
+    You can generate the explorer API key via creating an account on the explorer.
 
 ### Example
 

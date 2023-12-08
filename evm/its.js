@@ -68,10 +68,10 @@ const decodeMulticallData = async (encodedData, contractJSON) => {
             const functionName = parsedCall.name;
             const args = parsedCall.args.map((arg) => arg.toString());
 
-            return ` ${functionName}(${args.join(', ')})`;
+            return `\nFunction: ${functionName}\nArgs:\n${args.join('\n')}`;
         } catch (error) {
             printError(`Unrecognized function call: ${encodedCall}`, error);
-            return ` Unrecognized function call`;
+            return `\nFunction: Unrecognized function call`;
         }
     });
 };
@@ -463,7 +463,7 @@ async function processCommand(_, chain, options) {
 
             const decodedMulticall = await decodeMulticallData(multicallData, IInterchainTokenService);
 
-            printInfo(`Decoded multicall data: ${decodedMulticall}`);
+            printInfo('Decoded multicall data', decodedMulticall);
 
             break;
         }
