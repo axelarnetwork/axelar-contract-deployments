@@ -62,7 +62,7 @@ To decode multicall data:
     Arg names: tokenId, destinationChain, destinationAddress, amount, metadata, gasValue
     Arg values: 0x848f254a0b936a6b704ad1dad4a2867638db919eb10e5354cf526cccbd9fbc24, Chain B, 0x1234567890, 100, 0x00000001, 90
     ```
-    Note: If any encoded functions are not recogized they will be printed to the console as unrecognized:
+    Note: If any encoded functions are not recognized, they will be printed to the console as unrecognized:
     ```
     Function: Unrecognized function call
     ```
