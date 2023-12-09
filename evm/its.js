@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, defaultAbiCoder, Interface },
+    utils: { hexZeroPad, defaultAbiCoder, Interface, toUtf8Bytes, keccak256 },
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
@@ -19,7 +19,7 @@ const {
     getContractJSON,
     isValidTokenId,
     getGasOptions,
-    printError,
+    isNonEmptyString,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -29,6 +29,7 @@ const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
 const IOwnable = getContractJSON('IOwnable');
 const { addExtendedOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
+const { getTrustedChainsAndAddresses } = require('./verify-contract');
 const tokenManagerImplementations = {
     MINT_BURN: 0,
     MINT_BURN_FROM: 1,
@@ -83,7 +84,20 @@ const decodeMulticallData = async (encodedData, contractJSON) => {
     });
 };
 
-function postDeploymentCheck(contractName, contractConfig, toCheck) {
+function compare(contractValue, configValue, variableName) {
+    contractValue = isNonEmptyString(contractValue) ? contractValue.toLowerCase() : contractValue;
+    configValue = isNonEmptyString(configValue) ? configValue.toLowerCase() : configValue;
+
+    if (contractValue === configValue) {
+        printInfo(`Confirmed: Value match for '${variableName}'.`);
+    } else {
+        printError(
+            `Error: Value mismatch for '${variableName}'. Config value: ${configValue}, InterchainTokenService value: ${contractValue}`,
+        );
+    }
+}
+
+function configCheck(contractName, contractConfig, toCheck) {
     let allKeysMatch = true;
 
     for (const [key, value] of Object.entries(toCheck)) {
@@ -105,7 +119,7 @@ function postDeploymentCheck(contractName, contractConfig, toCheck) {
     }
 }
 
-async function processCommand(_, chain, options) {
+async function processCommand(config, chain, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
@@ -497,7 +511,7 @@ async function processCommand(_, chain, options) {
             break;
         }
 
-        case 'postDeploy': {
+        case 'checks': {
             const interchainTokenService = new Contract(interchainTokenServiceAddress, InterchainTokenService.abi, wallet);
 
             const contractConfig = chain.contracts[contractName];
@@ -511,6 +525,24 @@ async function processCommand(_, chain, options) {
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
             const interchainToken = await interchainTokenDeployerContract.implementationAddress();
 
+            const [trustedChains, trustedAddresses] = await getTrustedChainsAndAddresses(config, interchainTokenService);
+
+            printInfo('Trusted chains', trustedChains);
+            printInfo('Trusted addresses', trustedAddresses);
+
+            const gateway = await interchainTokenService.gateway();
+            const gasService = await interchainTokenService.gasService();
+
+            const configGateway = chain.contracts.AxelarGateway?.address;
+            const configGasService = chain.contracts.AxelarGasService?.address;
+
+            const chainNameHash = await interchainTokenService.chainNameHash();
+            const configChainNameHash = keccak256(toUtf8Bytes(chain.id));
+
+            compare(gateway, configGateway, 'AxelarGateway');
+            compare(gasService, configGasService, 'AxelarGasService');
+            compare(chainNameHash, configChainNameHash, 'chainNameHash');
+
             const toCheck = {
                 tokenManagerDeployer: await interchainTokenService.tokenManagerDeployer(),
                 interchainTokenDeployer,
@@ -522,7 +554,7 @@ async function processCommand(_, chain, options) {
                 interchainTokenFactoryImplementation,
             };
 
-            postDeploymentCheck(contractName, contractConfig, toCheck);
+            configCheck(contractName, contractConfig, toCheck);
 
             break;
         }
@@ -569,7 +601,7 @@ if (require.main === module) {
                 'setPauseStatus',
                 'execute',
                 'decodeMulticall',
-                'postDeploy',
+                'checks',
             ])
             .makeOptionMandatory(true),
     );
