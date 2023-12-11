@@ -97,7 +97,7 @@ jobs:
         run: node evm/deploy-contract.js -c InterchainGovernance -m create3 -y
 
       - name: Transfer gateway governance
-        run: node evm/gateway.js --action transferGovernance
+        run: node evm/gateway.js --action transferGovernance -y
 
       - name: Generate governance upgrade proposal
         run: node evm/governance.js --targetContractName AxelarGateway --action upgrade --proposalAction schedule --date 2100-01-01T12:00:00
