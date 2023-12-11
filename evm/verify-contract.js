@@ -12,17 +12,7 @@ const {
 const { Command, Option } = require('commander');
 const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, getContractJSON } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-
-async function getTrustedChainsAndAddresses(config, interchainTokenService) {
-    const allChains = Object.values(config.chains).map((chain) => chain.id);
-    const trustedAddressesValues = await Promise.all(
-        allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)),
-    );
-    const trustedChains = allChains.filter((_, index) => trustedAddressesValues[index] !== '');
-    const trustedAddresses = trustedAddressesValues.filter((address) => address !== '');
-
-    return [trustedChains, trustedAddresses];
-}
+const { getTrustedChainsAndAddresses } = require('./its');
 
 async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
@@ -320,5 +310,3 @@ if (require.main === module) {
 
     program.parse();
 }
-
-module.exports = { getTrustedChainsAndAddresses };

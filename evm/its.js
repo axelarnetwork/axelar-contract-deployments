@@ -29,7 +29,6 @@ const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
 const IOwnable = getContractJSON('IOwnable');
 const { addExtendedOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
-const { getTrustedChainsAndAddresses } = require('./verify-contract');
 const tokenManagerImplementations = {
     MINT_BURN: 0,
     MINT_BURN_FROM: 1,
@@ -84,38 +83,27 @@ const decodeMulticallData = async (encodedData, contractJSON) => {
     });
 };
 
+async function getTrustedChainsAndAddresses(config, interchainTokenService) {
+    const allChains = Object.values(config.chains).map((chain) => chain.id);
+    const trustedAddressesValues = await Promise.all(
+        allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)),
+    );
+    const trustedChains = allChains.filter((_, index) => trustedAddressesValues[index] !== '');
+    const trustedAddresses = trustedAddressesValues.filter((address) => address !== '');
+
+    return [trustedChains, trustedAddresses];
+}
+
 function compare(contractValue, configValue, variableName) {
     contractValue = isNonEmptyString(contractValue) ? contractValue.toLowerCase() : contractValue;
     configValue = isNonEmptyString(configValue) ? configValue.toLowerCase() : configValue;
 
     if (contractValue === configValue) {
-        printInfo(`Confirmed: Value match for '${variableName}'.`);
+        printInfo(variableName, contractValue);
     } else {
         printError(
             `Error: Value mismatch for '${variableName}'. Config value: ${configValue}, InterchainTokenService value: ${contractValue}`,
         );
-    }
-}
-
-function configCheck(contractName, contractConfig, toCheck) {
-    let allKeysMatch = true;
-
-    for (const [key, value] of Object.entries(toCheck)) {
-        if (Object.prototype.hasOwnProperty.call(contractConfig, key)) {
-            if (contractConfig[key] === value) {
-                printInfo(`Confirmed: Value match for '${key}'.`);
-            } else {
-                printError(`Error: Value mismatch for '${key}'. Config value: ${contractConfig[key]}, Inputted value: ${value}`);
-                allKeysMatch = false;
-            }
-        } else {
-            printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractName}.`);
-            allKeysMatch = false;
-        }
-    }
-
-    if (allKeysMatch) {
-        printInfo(`Confirmation: All values match the contract config for ${contractName}.`);
     }
 }
 
@@ -554,7 +542,14 @@ async function processCommand(config, chain, options) {
                 interchainTokenFactoryImplementation,
             };
 
-            configCheck(contractName, contractConfig, toCheck);
+            for (const [key, value] of Object.entries(toCheck)) {
+                if (Object.prototype.hasOwnProperty.call(contractConfig, key)) {
+                    const configValue = contractConfig[key];
+                    compare(value, configValue, key);
+                } else {
+                    printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractName}.`);
+                }
+            }
 
             break;
         }
@@ -646,4 +641,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { getDeploymentSalt, handleTx, decodeMulticallData };
+module.exports = { getDeploymentSalt, handleTx, decodeMulticallData, getTrustedChainsAndAddresses };
