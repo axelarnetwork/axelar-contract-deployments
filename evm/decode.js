@@ -18,12 +18,11 @@ const decode = (calldata, iface) => {
             const data = parsedCall.args[0];
             return `\nFunction: multicall\nDecoded multicall:${decodeMulticallData(data, iface)}`;
         }
- 
-            const argNames = functionFragment.inputs.map((input) => input.name).join(', ');
-            const argValues = parsedCall.args.map((arg) => arg.toString()).join(', ');
 
-            return `\nFunction: ${functionName}\nArg names: ${argNames}\nArg values: ${argValues}`;
-        
+        const argNames = functionFragment.inputs.map((input) => input.name).join(', ');
+        const argValues = parsedCall.args.map((arg) => arg.toString()).join(', ');
+
+        return `\nFunction: ${functionName}\nArg names: ${argNames}\nArg values: ${argValues}`;
     } catch (error) {
         printError(`Unrecognized function call: ${calldata}`, error);
         return `\nFunction: Unrecognized function call`;
