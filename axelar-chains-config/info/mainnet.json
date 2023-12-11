@@ -1,5 +1,17 @@
 {
   "chains": {
+    "immutable": {
+      "name": "Immutable",
+      "id": "immutable",
+      "chainId": 13371,
+      "rpc": "https://rpc.immutable.com/",
+      "tokenSymbol": "IMX",
+      "gasOptions": {
+         "gasLimit": 8000000,
+         "maxPriorityFeePerGas": 100000000000,
+         "maxFeePerGas": 110000000000
+      }
+    },
     "ethereum": {
       "name": "Ethereum",
       "id": "Ethereum",
