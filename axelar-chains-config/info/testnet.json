@@ -203,7 +203,7 @@
       },
       "explorer": {
         "url": "https://testnet.snowtrace.io",
-        "api": "https://api-testnet.snowtrace.io/api"
+        "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
       }
     },
     "fantom": {
@@ -1745,7 +1745,8 @@
         "maxFeePerGas": 160000000000
       },
       "explorer": {
-        "url": ""
+        "url": "https://explorer.testnet.immutable.com",
+        "api": "https://explorer.testnet.immutable.com/api"
       }
     },
     "ethereum-sepolia": {
