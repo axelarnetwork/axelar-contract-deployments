@@ -507,10 +507,11 @@ async function processCommand(config, chain, options) {
                 implementation: await interchainTokenService.implementation(),
                 interchainTokenFactory,
                 interchainTokenFactoryImplementation,
+                test: 'test',
             };
 
             for (const [key, value] of Object.entries(toCheck)) {
-                if (Object.prototype.hasOwnProperty.call(contractConfig, key)) {
+                if (contractConfig[key]) {
                     const configValue = contractConfig[key];
                     compare(value, configValue, key);
                 } else {
