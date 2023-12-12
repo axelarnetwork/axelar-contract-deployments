@@ -11,6 +11,7 @@ const {
     printInfo,
     prompt,
     printWarn,
+    printError,
     printWalletInfo,
     wasEventEmitted,
     mainProcessor,
