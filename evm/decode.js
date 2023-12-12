@@ -36,31 +36,18 @@ const decodeMulticallData = (encodedData, iface) => {
 };
 
 function processCommand(options) {
-    const { action, contractName, calldata } = options;
+    const { contractName, calldata } = options;
 
     validateParameters({ isNonEmptyString: { contractName }, isValidCalldata: { calldata } });
 
     printInfo('Contract name', contractName);
 
-    printInfo('Action', action);
-
     const contractJSON = getContractJSON(contractName);
+    const iface = new Interface(contractJSON.abi);
 
-    switch (action) {
-        case 'decode': {
-            const iface = new Interface(contractJSON.abi);
+    const decodedFunctionCall = decode(calldata, iface);
 
-            const decodedFunctionCall = decode(calldata, iface);
-
-            printInfo('Decoded calldata', decodedFunctionCall);
-
-            break;
-        }
-
-        default: {
-            throw new Error(`Unknown action ${action}`);
-        }
-    }
+    printInfo('Decoded calldata', decodedFunctionCall);
 }
 
 async function main(options) {
@@ -71,8 +58,6 @@ if (require.main === module) {
     const program = new Command();
 
     program.name('Decode').description('Script to decode calldata');
-
-    program.addOption(new Option('--action <action>', 'ITS action').choices(['decode']).default('decode').makeOptionMandatory(true));
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     program.addOption(new Option('--calldata <calldata>', 'calldata to decode').env('CALLDATA'));
