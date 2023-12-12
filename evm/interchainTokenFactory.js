@@ -6,7 +6,7 @@ const { Command, Option } = require('commander');
 const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const { addExtendedOptions } = require('./cli-utils');
-const { getDeploymentSalt, handleTx, decodeMulticallData } = require('./its');
+const { getDeploymentSalt, handleTx } = require('./its');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 
@@ -196,18 +196,6 @@ async function processCommand(_, chain, options) {
             break;
         }
 
-        case 'decodeMulticall': {
-            const { multicallData } = options;
-
-            validateParameters({ isValidCalldata: { multicallData } });
-
-            const decodedMulticall = await decodeMulticallData(multicallData, IInterchainTokenFactory);
-
-            printInfo(`Decoded multicall data: ${decodedMulticall}`);
-
-            break;
-        }
-
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -238,7 +226,6 @@ if (require.main === module) {
                 'deployRemoteInterchainToken',
                 'registerCanonicalInterchainToken',
                 'deployRemoteCanonicalInterchainToken',
-                'decodeMulticall',
             ])
             .makeOptionMandatory(true),
     );
