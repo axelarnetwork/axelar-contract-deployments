@@ -85,16 +85,13 @@ node evm/governance.js -n [chain] --targetContractName AxelarGateway --action up
 
 To decode function calldata:
 
-1. Create a variable in the `.env` file named `CALLDATA`
-2. Set this variable equal to the calldata that needs to be decoded
-   Example: `CALLDATA=0x00000000000000000000...`
-3. Run the command below in the terminal:
+1. Run the command below with the calldata being decoded
 
     ```bash
-    node evm/its.js -c CONTRACT_NAME
+    node evm/decode.js -c CONTRACT_NAME --calldata [calldata]
     ```
 
-4. The resulting decoded function call (calls for `multicall`) and arguments will be printed to the console.
+2. The resulting decoded function call and arguments will be printed to the console.
    Example output for multicall data with `deployInterchainToken` and `interchainTransfer` calls:
 
     ```
