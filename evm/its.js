@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad },
+    utils: { hexZeroPad, toUtf8Bytes, keccak256 },
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
@@ -11,6 +11,7 @@ const {
     printInfo,
     prompt,
     printWarn,
+    printError,
     printWalletInfo,
     wasEventEmitted,
     mainProcessor,
@@ -18,9 +19,13 @@ const {
     getContractJSON,
     isValidTokenId,
     getGasOptions,
+    isNonEmptyString,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
+const InterchainTokenService = getContractJSON('InterchainTokenService');
+const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
+const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
 const IOwnable = getContractJSON('IOwnable');
 const { addExtendedOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
@@ -57,7 +62,31 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
     }
 }
 
-async function processCommand(_, chain, options) {
+async function getTrustedChainsAndAddresses(config, interchainTokenService) {
+    const allChains = Object.values(config.chains).map((chain) => chain.id);
+    const trustedAddressesValues = await Promise.all(
+        allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)),
+    );
+    const trustedChains = allChains.filter((_, index) => trustedAddressesValues[index] !== '');
+    const trustedAddresses = trustedAddressesValues.filter((address) => address !== '');
+
+    return [trustedChains, trustedAddresses];
+}
+
+function compare(contractValue, configValue, variableName) {
+    contractValue = isNonEmptyString(contractValue) ? contractValue.toLowerCase() : contractValue;
+    configValue = isNonEmptyString(configValue) ? configValue.toLowerCase() : configValue;
+
+    if (contractValue === configValue) {
+        printInfo(variableName, contractValue);
+    } else {
+        printError(
+            `Error: Value mismatch for '${variableName}'. Config value: ${configValue}, InterchainTokenService value: ${contractValue}`,
+        );
+    }
+}
+
+async function processCommand(config, chain, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
@@ -437,6 +466,61 @@ async function processCommand(_, chain, options) {
             break;
         }
 
+        case 'checks': {
+            const interchainTokenService = new Contract(interchainTokenServiceAddress, InterchainTokenService.abi, wallet);
+
+            const contractConfig = chain.contracts[contractName];
+
+            const interchainTokenDeployer = await interchainTokenService.interchainTokenDeployer();
+            const interchainTokenFactory = await interchainTokenService.interchainTokenFactory();
+
+            const interchainTokenFactoryContract = new Contract(interchainTokenFactory, InterchainTokenFactory.abi, wallet);
+            const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
+
+            const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
+            const interchainToken = await interchainTokenDeployerContract.implementationAddress();
+
+            const [trustedChains, trustedAddresses] = await getTrustedChainsAndAddresses(config, interchainTokenService);
+
+            printInfo('Trusted chains', trustedChains);
+            printInfo('Trusted addresses', trustedAddresses);
+
+            const gateway = await interchainTokenService.gateway();
+            const gasService = await interchainTokenService.gasService();
+
+            const configGateway = chain.contracts.AxelarGateway?.address;
+            const configGasService = chain.contracts.AxelarGasService?.address;
+
+            const chainNameHash = await interchainTokenService.chainNameHash();
+            const configChainNameHash = keccak256(toUtf8Bytes(chain.id));
+
+            compare(gateway, configGateway, 'AxelarGateway');
+            compare(gasService, configGasService, 'AxelarGasService');
+            compare(chainNameHash, configChainNameHash, 'chainNameHash');
+
+            const toCheck = {
+                tokenManagerDeployer: await interchainTokenService.tokenManagerDeployer(),
+                interchainTokenDeployer,
+                interchainToken,
+                tokenManager: await interchainTokenService.tokenManager(),
+                tokenHandler: await interchainTokenService.tokenHandler(),
+                implementation: await interchainTokenService.implementation(),
+                interchainTokenFactory,
+                interchainTokenFactoryImplementation,
+            };
+
+            for (const [key, value] of Object.entries(toCheck)) {
+                if (contractConfig[key]) {
+                    const configValue = contractConfig[key];
+                    compare(value, configValue, key);
+                } else {
+                    printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractName}.`);
+                }
+            }
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -478,6 +562,7 @@ if (require.main === module) {
                 'removeTrustedAddress',
                 'setPauseStatus',
                 'execute',
+                'checks',
             ])
             .makeOptionMandatory(true),
     );
@@ -521,4 +606,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { getDeploymentSalt, handleTx };
+module.exports = { getDeploymentSalt, handleTx, getTrustedChainsAndAddresses };
