@@ -177,7 +177,7 @@
       },
       "explorer": {
         "url": "https://snowtrace.io",
-        "api": "https://api.snowtrace.io/api"
+        "api": "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan"
       },
       "staticGasOptions": {
         "gasLimit": 3000000,
@@ -1453,6 +1453,9 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "InterchainTokenService": {
+          "skip": true
         }
       },
       "gasOptions": {
@@ -1464,6 +1467,41 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 40
+      }
+    },
+    "immutable": {
+      "name": "Immutable",
+      "id": "immutable",
+      "chainId": 13371,
+      "rpc": "https://rpc.immutable.com/",
+      "tokenSymbol": "IMX",
+      "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "startingKeyIDs": [
+            "evm-immutable-genesis"
+          ],
+          "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
+        "AxelarGasService": {
+          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "salt": "AxelarGasService",
+          "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "InterchainTokenService": {
+          "skip": true
+        }
+      },
+      "gasOptions": {
+        "maxPriorityFeePerGas": 10000000000,
+        "maxFeePerGas": 100000000000
+      },
+      "explorer": {
+        "url": "https://explorer.immutable.com",
+        "api": "https://explorer.immutable.com/api"
       }
     }
   },
