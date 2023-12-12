@@ -17,13 +17,18 @@ num-traits = "0.2"
 regex = "1"
 serde = "1"
 serde_json = "1"
-solana-client = "1.17.7"
-solana-program = "1.17.7"
-solana-program-test = "1.17.7"
-solana-sdk = "1.17.7"
-solana-transaction-status = "1.17.7"
-thiserror = "1"
+shellexpand = "3.1.0"
+solana-client = "1.17.9"
+solana-program = "1.17.9"
+solana-sdk = "1.17.9"
+solana-transaction-status = "1.17.9"
 tokio = { version = "1", features = ["full"] }
+solana-program-test = "1.17.9"
+ethnum = { version = "1.5.0", features = ["serde"]}
+thiserror = "1"
+hex = "0.4.3"
+secp256k1 ="0.28.0"
+rand = "0.8.5"
 
 [profile.release]
 overflow-checks = true

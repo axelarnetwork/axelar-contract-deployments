@@ -1,0 +1,26 @@
+[package]
+name = "auth-weighted"
+version = "0.1.0"
+edition = "2021"
+
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+
+[dependencies]
+thiserror.workspace = true
+borsh.workspace = true
+ethnum.workspace = true
+solana-program.workspace = true
+hex.workspace = true
+num-derive.workspace = true
+num-traits.workspace = true
+base64.workspace = true
+rand.workspace = true
+
+[dev-dependencies]
+solana-program-test.workspace = true
+solana-sdk.workspace = true
