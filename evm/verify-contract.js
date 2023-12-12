@@ -12,6 +12,7 @@ const {
 const { Command, Option } = require('commander');
 const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, getContractJSON } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
+const { getTrustedChainsAndAddresses } = require('./its');
 
 async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
@@ -228,12 +229,7 @@ async function processCommand(config, chain, options) {
             const tokenManager = await interchainTokenService.tokenManager();
             const tokenHandler = await interchainTokenService.tokenHandler();
 
-            const allChains = Object.values(config.chains).map((chain) => chain.id);
-            const trustedAddressesValues = await Promise.all(
-                allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)),
-            );
-            const trustedChains = allChains.filter((_, index) => trustedAddressesValues[index] !== '');
-            const trustedAddresses = trustedAddressesValues.filter((address) => address !== '');
+            const [trustedChains, trustedAddresses] = await getTrustedChainsAndAddresses(config, interchainTokenService);
 
             const setupParams = defaultAbiCoder.encode(
                 ['address', 'string', 'string[]', 'string[]'],
@@ -255,7 +251,7 @@ async function processCommand(config, chain, options) {
                     chain.contracts.AxelarGateway.address,
                     chain.contracts.AxelarGasService.address,
                     interchainTokenFactory,
-                    chain.name,
+                    chain.id,
                     tokenManager,
                     tokenHandler,
                 ],

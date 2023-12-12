@@ -814,7 +814,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
-        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive' || chain.contracts[options.contractName]?.skip) {
+        if (
+            chainsToSkip.includes(chain.name.toLowerCase()) ||
+            chain.status === 'deactive' ||
+            (chain.contracts && chain.contracts[options.contractName]?.skip)
+        ) {
             printWarn('Skipping chain', chain.name);
             continue;
         }
