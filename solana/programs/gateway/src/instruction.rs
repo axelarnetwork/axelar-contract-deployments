@@ -2,7 +2,7 @@
 use std::io::Write;
 
 use slice_iterator::SliceIterator;
-use solana_program::instruction::Instruction;
+use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
@@ -54,6 +54,14 @@ pub enum GatewayInstruction<'a> {
         /// Contract call data.
         payload_hash: [u8; 32],
     },
+
+    /// Recives an initial state of deployment Configuration.
+    ///
+    /// Is meant to be the single point of initialization.
+    Initialize {
+        /// Initial state of the root PDA `Config`.
+        payload: &'a [u8],
+    },
 }
 
 impl<'a> GatewayInstruction<'a> {
@@ -83,6 +91,7 @@ impl<'a> GatewayInstruction<'a> {
                     payload_hash,
                 }
             }
+            2 => GatewayInstruction::Initialize { payload: rest },
             _ => return Err(InvalidInstruction),
         })
     }
@@ -109,6 +118,10 @@ impl<'a> GatewayInstruction<'a> {
                     &mut buffer,
                 )?;
                 buffer.extend(&payload_hash);
+            }
+            Self::Initialize { payload } => {
+                buffer.push(2);
+                serialize_slices(&[payload], &mut buffer)?;
             }
         }
         Ok(buffer)
@@ -190,6 +203,27 @@ pub fn call_contract(
 
     Ok(Instruction {
         program_id,
+        accounts,
+        data,
+    })
+}
+
+/// Creates a [`Initialize`] instruction.
+pub fn build_initialize_ix(
+    payer_info: Pubkey,
+    pda_address_info: Pubkey,
+    data: &[u8],
+) -> Result<Instruction, ProgramError> {
+    let data = GatewayInstruction::Initialize { payload: data }.pack()?;
+
+    let accounts = vec![
+        AccountMeta::new(payer_info, true),
+        AccountMeta::new(pda_address_info, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::id(),
         accounts,
         data,
     })

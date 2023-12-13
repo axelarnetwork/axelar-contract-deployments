@@ -4,6 +4,7 @@ use std::error::Error;
 
 use gateway::events::GatewayEvent;
 use random_array::rand_array;
+use solana_program::pubkey::Pubkey;
 use solana_program_test::{processor, tokio, BanksTransactionResultWithMetadata, ProgramTest};
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
@@ -91,6 +92,42 @@ async fn test_call_contract_instruction() -> Result<(), Box<dyn Error>> {
             payload_hash
         })
     );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_initialize() -> Result<(), Box<dyn Error>> {
+    let (mut banks_client, payer, recent_blockhash) = program_test().start().await;
+    let (root_pda, _bump) = Pubkey::find_program_address(&[&[]], &gateway::id());
+
+    let payload = b"All you need is potatoes!";
+
+    let ix = gateway::instruction::build_initialize_ix(payer.pubkey(), root_pda, payload)?;
+    let tx = Transaction::new_signed_with_payer(
+        &[ix],
+        Some(&payer.pubkey()),
+        &[&payer],
+        recent_blockhash,
+    );
+
+    let BanksTransactionResultWithMetadata {
+        result,
+        metadata: _,
+    } = banks_client.process_transaction_with_metadata(tx).await?;
+
+    assert!({ result.is_ok() });
+
+    let actual_data = banks_client
+        .get_account(root_pda)
+        .await
+        .expect("get_account")
+        .unwrap();
+
+    // [2..] as the data serialized to account consist of 2-byte len descriptor.
+    assert_eq!(actual_data.owner, gateway::id());
+    assert_eq!(actual_data.data[2..].len(), payload.len());
+    assert_eq!(&actual_data.data[2..], payload);
 
     Ok(())
 }

@@ -23,3 +23,9 @@ pub fn check_program_account(program_id: Pubkey) -> ProgramResult {
     }
     Ok(())
 }
+
+/// Finds the program root PDA.
+pub fn find_root_pda() -> (Pubkey, u8) {
+    let (found_pda_info, bump) = Pubkey::find_program_address(&[&[]], &crate::id());
+    (found_pda_info, bump)
+}
