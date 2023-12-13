@@ -254,6 +254,20 @@ const isAddressArray = (arr) => {
     return true;
 };
 
+const isBytes32Array = (arr) => {
+    if (!Array.isArray(arr)) {
+        return false;
+    }
+
+    for (const item of arr) {
+        if (typeof item !== 'string' || !item.startsWith('0x') || item.length !== 66) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 const getCurrentTimeInSeconds = () => {
     const now = new Date();
     const currentTimeInSecs = Math.floor(now.getTime() / 1000);
@@ -1035,6 +1049,7 @@ module.exports = {
     mainProcessor,
     getContractPath,
     getContractJSON,
+    isBytes32Array,
     getGasOptions,
     getSaltFromKey,
 };
