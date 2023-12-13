@@ -1,0 +1,21 @@
+[package]
+name = "end-poll"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+cosmos-sdk-proto = "0.20.0"
+cosmrs = { version = "0.15.0", features = ["cosmwasm"] }
+cosmwasm-schema = "1.5.0"
+futures = "0.3.29"
+futures-util = "0.3.29"
+serde.workspace = true
+serde_json.workspace = true
+tendermint = "0.34.0"
+tendermint-rpc = { version = "0.34.0", features = [
+  "websocket-client",
+  "http-client",
+] }
+tokio.workspace = true
+tonic = "0.10.2"

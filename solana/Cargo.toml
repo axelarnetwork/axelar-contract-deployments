@@ -1,34 +1,26 @@
 [workspace]
-members = ["programs/*", "helpers/*", "common", "xtask-relayer", "xtask-solana-client"]
+members = ["programs/*", "helpers/*"]
 resolver = "2"
 
 [workspace.dependencies]
-program-utils = { path = "programs/program-utils" }
-anchor-client = "0.29.0"
-anchor-lang = { version = "0.29.0" }
-anyhow = "1"
+anchor-lang = "0.29.0"
 base64 = "0.21"
 borsh = "0.10"
-clap = { version = "4", features = ["derive"] }
-env_logger = "0.10"
-log = "0.4"
+ethnum = { version = "1.5.0", features = ["serde"]}
+hex = "0.4.3"
 num-derive = "0.4"
 num-traits = "0.2"
-regex = "1"
-serde = "1"
-serde_json = "1"
-shellexpand = "3.1.0"
-solana-client = "1.17.9"
-solana-program = "1.17.9"
-solana-sdk = "1.17.9"
-solana-transaction-status = "1.17.9"
-tokio = { version = "1", features = ["full"] }
-solana-program-test = "1.17.9"
-ethnum = { version = "1.5.0", features = ["serde"]}
-thiserror = "1"
-hex = "0.4.3"
-secp256k1 ="0.28.0"
 rand = "0.8.5"
+secp256k1 ="0.28.0"
+solana-program = "1.17.9"
+solana-program-test = "1.17.9"
+solana-sdk = "1.17.9"
+thiserror = "1"
+
+# helper crates
+program-utils = { path = "helpers/program-utils" }
+random-array = { path = "helpers/random-array" }
+slice-iterator = { path = "helpers/slice-iterator" }
 
 [profile.release]
 overflow-checks = true
@@ -39,3 +31,18 @@ codegen-units = 1
 opt-level = 3
 incremental = false
 codegen-units = 1
+
+
+[patch.crates-io]
+# aes-gcm-siv 0.10.3 and curve25519-dalek 3.x pin zeroize to <1.4
+# which conflicts with other dependencies requiring zeroize ^1.5.
+# We’re patching both crates to unpin zeroize.
+#
+# For aes-gcm-siv we’re using the same revision Solana uses in
+# an (as of now) unreleased commit, see
+# https://github.com/solana-labs/solana/commit/01f1bf27994d9813fadfcd134befd3a449aaa0bd
+#
+# For curve25519-dalek we’re using commit from a PR, see
+# https://github.com/dalek-cryptography/curve25519-dalek/pull/606
+aes-gcm-siv = { git = "https://github.com/RustCrypto/AEADs", rev = "6105d7a5591aefa646a95d12b5e8d3f55a9214ef" }
+curve25519-dalek = { git = "https://github.com/dalek-cryptography/curve25519-dalek", rev = "8274d5cbb6fc3f38cdc742b4798173895cd2a290" }

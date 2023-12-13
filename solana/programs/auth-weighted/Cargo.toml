@@ -11,15 +11,14 @@ crate-type = ["cdylib", "lib"]
 no-entrypoint = []
 
 [dependencies]
-thiserror.workspace = true
+base64.workspace = true
 borsh.workspace = true
 ethnum.workspace = true
-solana-program.workspace = true
 hex.workspace = true
 num-derive.workspace = true
 num-traits.workspace = true
-base64.workspace = true
-rand.workspace = true
+solana-program.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
 solana-program-test.workspace = true

@@ -1,22 +1,25 @@
 [package]
-name = "common"
+name = "relayer"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anchor-client.workspace = true
 anchor-lang.workspace = true
 anyhow.workspace = true
 base64.workspace = true
-gateway = { path = "../programs/gateway", features = ["no-entrypoint"] }
+clap.workspace = true
+env_logger.workspace = true
+log.workspace = true
 regex.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 solana-client.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
 solana-transaction-status.workspace = true
+tokio.workspace = true
 
-[dev-dependencies]
-base64 = "0.21.5"
+[dependencies.gateway]
+path = "../../../solana/programs/gateway"
+features = ["no-entrypoint"]

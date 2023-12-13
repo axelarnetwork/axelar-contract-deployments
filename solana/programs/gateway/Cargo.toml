@@ -13,15 +13,16 @@ test-sbf = []
 
 [dependencies]
 base64.workspace = true
-hex = "0.4.3"
 num-derive = "0.4.1"
 num-traits = "0.2.17"
-slice-iterator = { path = "../../helpers/slice-iterator" }
+slice-iterator.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
 
+
 [dev-dependencies]
 arrayref = "0.3.7"
-random-array = { path = "../../helpers/random-array" }
+hex.workspace = true
+random-array.workspace = true
 solana-program-test = "1.17.6"
 solana-sdk = "1.17.6"
