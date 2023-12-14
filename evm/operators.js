@@ -12,7 +12,6 @@ const {
     printInfo,
     printError,
     printWalletInfo,
-    loadConfig,
     isNumber,
     isAddressArray,
     isNumberArray,
@@ -22,7 +21,7 @@ const {
     getGasOptions,
     mainProcessor,
 } = require('./utils');
-const { addBaseOptions, addExtendedOptions } = require('./cli-utils');
+const { addBaseOptions } = require('./cli-utils');
 const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
 const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
 
@@ -90,7 +89,7 @@ async function processCommand(_, chain, options) {
                 throw new Error(`Invalid operator address: ${operatorAddress}`);
             }
 
-            let isOperator = await operatorsContract.isOperator(operatorAddress);
+            const isOperator = await operatorsContract.isOperator(operatorAddress);
 
             if (isOperator) {
                 printError(`Address ${operatorAddress} is already an operator.`);
