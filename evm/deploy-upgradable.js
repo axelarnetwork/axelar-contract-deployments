@@ -12,7 +12,7 @@ const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const { Command, Option } = require('commander');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
-const { printInfo, printError, saveConfig, loadConfig, printWalletInfo, getDeployedAddress, prompt, getGasOptions } = require('./utils');
+const { printInfo, printError, saveConfig, loadConfig, printWalletInfo, getDeployedAddress, prompt, getGasOptions, mainProcessor } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
 function getProxy(wallet, proxyAddress) {
@@ -96,7 +96,7 @@ function getUpgradeArgs(contractName) {
 /*
  * Deploy or upgrade an upgradable contract that's based on the init proxy pattern.
  */
-async function deploy(options, chain) {
+async function processCommand(_, chain, options) {
     const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
 
@@ -279,24 +279,7 @@ async function deploy(options, chain) {
 }
 
 async function main(options) {
-    const config = loadConfig(options.env);
-
-    let chains = options.chainNames.split(',').map((str) => str.trim());
-
-    if (options.chainNames === 'all') {
-        chains = Object.keys(config.chains);
-    }
-
-    for (const chain of chains) {
-        if (config.chains[chain.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chain} is not defined in the info file`);
-        }
-    }
-
-    for (const chain of chains) {
-        await deploy(options, config.chains[chain.toLowerCase()]);
-        saveConfig(config, options.env);
-    }
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

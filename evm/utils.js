@@ -823,6 +823,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
             continue;
         }
 
+        console.log('\n');
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
