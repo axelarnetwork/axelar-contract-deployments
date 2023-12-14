@@ -799,7 +799,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
     const config = loadConfig(options.env);
     let chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
-    const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim());
+    const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim().toLowerCase());
 
     if (options.chainNames === 'all') {
         chains = Object.keys(config.chains);

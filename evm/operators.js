@@ -20,20 +20,19 @@ const {
     parseArgs,
     prompt,
     getGasOptions,
+    mainProcessor,
 } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions, addExtendedOptions } = require('./cli-utils');
 const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
 const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
 
-async function processCommand(options, chain) {
+async function processCommand(_, chain, options) {
     const { contractName, address, action, privateKey, args, yes } = options;
 
     const argsArray = parseArgs(args);
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
-
-    printInfo('Chain', chain.name);
 
     let operatorsAddress;
 
@@ -94,15 +93,11 @@ async function processCommand(options, chain) {
             let isOperator = await operatorsContract.isOperator(operatorAddress);
 
             if (isOperator) {
-                throw new Error(`Address ${operatorAddress} is already an operator.`);
+                printError(`Address ${operatorAddress} is already an operator.`);
+                return;
             }
 
             await operatorsContract.addOperator(operatorAddress, gasOptions).then((tx) => tx.wait());
-            isOperator = await operatorsContract.isOperator(operatorAddress);
-
-            if (!isOperator) {
-                throw new Error('Add operator action failed.');
-            }
 
             printInfo(`Address ${operatorAddress} added as an operator.`);
 
@@ -242,23 +237,7 @@ async function processCommand(options, chain) {
 }
 
 async function main(options) {
-    const config = loadConfig(options.env);
-
-    let chains = options.chainNames.split(',').map((str) => str.trim());
-
-    if (options.chainNames === 'all') {
-        chains = Object.keys(config.chains);
-    }
-
-    for (const chain of chains) {
-        if (config.chains[chain.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chain} is not defined in the info file`);
-        }
-    }
-
-    for (const chain of chains) {
-        await processCommand(options, config.chains[chain.toLowerCase()]);
-    }
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {
