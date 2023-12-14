@@ -289,7 +289,7 @@ async function processCommand(_, chain, options) {
             const currTime = getCurrentTimeInSeconds();
             printInfo('Current time', etaToDate(currTime));
 
-            eta = await governance.geteta(target, calldata, nativeValue);
+            eta = await governance.getProposalEta(target, calldata, nativeValue);
             printInfo('Proposal eta', etaToDate(eta));
 
             if (eta.eq(BigNumber.from(0))) {
