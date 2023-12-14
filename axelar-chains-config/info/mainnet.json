@@ -23,9 +23,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xE622B1D44F5061DB10ABa2594F1A8eb2DC1fC1d4",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90"
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -83,6 +83,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -117,9 +126,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xE622B1D44F5061DB10ABa2594F1A8eb2DC1fC1d4",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90"
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -173,11 +182,23 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
         "url": "https://snowtrace.io",
         "api": "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan"
+      },
+      "gasOptions": {
+        "gasLimit": 6000000
       },
       "staticGasOptions": {
         "gasLimit": 3000000,
@@ -207,9 +228,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xE622B1D44F5061DB10ABa2594F1A8eb2DC1fC1d4",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90"
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -263,6 +284,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -301,9 +331,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xE622B1D44F5061DB10ABa2594F1A8eb2DC1fC1d4",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90"
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -357,6 +387,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -364,7 +403,6 @@
         "api": "https://api.polygonscan.com/api"
       },
       "gasOptions": {
-        "gasLimit": 6000000,
         "gasPriceAdjustment": 1.6
       },
       "staticGasOptions": {
@@ -395,9 +433,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xE622B1D44F5061DB10ABa2594F1A8eb2DC1fC1d4",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90"
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -451,6 +489,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -486,9 +533,9 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xE622B1D44F5061DB10ABa2594F1A8eb2DC1fC1d4",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90"
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
@@ -542,6 +589,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -579,9 +635,9 @@
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -636,15 +692,22 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
         "url": "https://arbiscan.io",
         "api": "https://api.arbiscan.io/api"
       },
-      "gasOptions": {
-        "gasLimit": 20000000
-      },
+      "gasOptions": {},
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 2000000000
@@ -674,9 +737,9 @@
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -731,6 +794,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -764,9 +836,9 @@
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -821,10 +893,20 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
-        "url": "https://explorer.kava.io"
+        "url": "https://kavascan.com",
+        "api": "https://kavascan.com/api"
       },
       "staticGasOptions": {
         "gasLimit": 3000000,
@@ -853,9 +935,9 @@
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -910,6 +992,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "confirmations": 3,
@@ -917,7 +1008,7 @@
         "url": "https://www.filfox.info"
       },
       "gasOptions": {
-        "gasLimit": 500000000
+        "gasLimit": 100000000
       },
       "eip1559": true,
       "staticGasOptions": {
@@ -947,9 +1038,9 @@
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1004,6 +1095,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -1040,10 +1140,10 @@
           "salt": "AxelarGateway v6.2"
         },
         "AxelarGasService": {
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1098,6 +1198,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -1107,6 +1216,9 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 10000000000
+      },
+      "gasOptions": {
+        "gasPriceAdjustment": 2
       }
     },
     "base": {
@@ -1130,10 +1242,10 @@
           "salt": "AxelarGateway v6.2"
         },
         "AxelarGasService": {
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1188,6 +1300,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "confirmations": 2,
@@ -1221,10 +1342,10 @@
           "salt": "AxelarGateway v6.2"
         },
         "AxelarGasService": {
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1279,6 +1400,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "confirmations": 2,
@@ -1316,10 +1446,10 @@
           "salt": "AxelarGateway v6.2"
         },
         "AxelarGasService": {
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x0d39b56BDDea985246437DF1e3d2886A7e6C17B9",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1368,6 +1498,15 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "explorer": {
@@ -1420,10 +1559,10 @@
           "salt": "AxelarGateway v6.2"
         },
         "AxelarGasService": {
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x0d39b56BDDea985246437DF1e3d2886A7e6C17B9",
+          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainGovernance": {
@@ -1456,6 +1595,15 @@
         },
         "InterchainTokenService": {
           "skip": true
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       },
       "gasOptions": {
