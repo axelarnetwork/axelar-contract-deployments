@@ -29,7 +29,7 @@ const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAx
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/interfaces/IInterchainTokenService.json');
 const ITokenManager = require('@axelar-network/interchain-token-service/interfaces/ITokenManager.json');
-const IOperatable = require('@axelar-network/interchain-token-service/interfaces/IOperatable.json');
+const IOperator = require('@axelar-network/interchain-token-service/interfaces/IOperator.json');
 const { parseEther } = require('ethers/lib/utils');
 const { getWallet, signTransaction, storeSignedTx } = require('./sign-utils');
 
@@ -184,7 +184,7 @@ async function processCommand(_, chain, options) {
                 // loop over each token
                 for (let i = 0; i < symbolsArray.length; i++) {
                     const token = await gateway.tokenAddresses(symbolsArray[i]);
-                    const limit = await gateway.tokenMintLimit(token);
+                    const limit = await gateway.tokenMintLimit(symbolsArray[i]);
                     printInfo(`Token ${symbolsArray[i]} address`, token);
                     printInfo(`Token ${symbolsArray[i]} limit`, limit);
                 }
@@ -322,18 +322,18 @@ async function processCommand(_, chain, options) {
 
             if (!offline) {
                 await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
-                const operatable = new Contract(multisigTarget, IOperatable.abi, wallet);
-                const hasOperatorRole = await operatable.isOperator(wallet.address);
+                const operatable = new Contract(multisigTarget, IOperator.abi, wallet);
+                const hasOperatorRole = await operatable.isOperator(multisigAddress);
 
                 if (!hasOperatorRole) {
-                    throw new Error('Missing Operator role for the used wallet address.');
+                    throw new Error('Missing Operator role for the used multisig address.');
                 }
 
                 // loop over each token
                 for (let i = 0; i < tokenIdsArray.length; ++i) {
                     const tokenManagerAddress = await its.validTokenManagerAddress(tokenIdsArray[i]);
                     const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
-                    const currentFlowLimit = await tokenManager.flowLimit(tokenIdsArray[i]);
+                    const currentFlowLimit = await tokenManager.flowLimit();
                     printInfo(`TokenManager address`, tokenManagerAddress);
                     printInfo(`TokenManager current flowLimit`, currentFlowLimit);
                 }
