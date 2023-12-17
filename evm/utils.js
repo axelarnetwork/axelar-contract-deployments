@@ -497,6 +497,33 @@ const predictAddressCreate = async (from, nonce) => {
     return address;
 };
 
+const getDeployOptions = (deployMethod, salt, chain) => {
+    let deployer;
+
+    if (deployMethod === 'create') {
+        return {};
+    }
+
+    if (deployMethod === 'create2') {
+        deployer = chain.contracts.ConstAddressDeployer?.address;
+    } else {
+        deployer = chain.contracts.Create3Deployer?.address;
+    }
+
+    if (!isValidAddress(deployer)) {
+        throw new Error('ConstAddressDeployer address is not valid');
+    }
+
+    if (!isNonEmptyString(salt)) {
+        throw new Error('Salt was not provided');
+    }
+
+    return {
+        salt,
+        deployerContract: deployer,
+    };
+};
+
 /**
  * Get the predicted address of a contract deployment using one of create/create2/create3 deployment method.
  * @param {string} deployer - Sender address that's triggering the contract deployment
@@ -798,11 +825,23 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     printInfo('Environment', options.env);
 
     const config = loadConfig(options.env);
-    let chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
+    let chains = options.chainName ? [options.chainName] : options.chainNames.split(',');
     const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim().toLowerCase());
 
     if (options.chainNames === 'all') {
         chains = Object.keys(config.chains);
+    }
+
+    chains = chains.map((chain) => chain.trim().toLowerCase());
+
+    if (options.startFromChain) {
+        const startIndex = chains.findIndex((chain) => chain === options.startFromChain.toLowerCase());
+
+        if (startIndex === -1) {
+            throw new Error(`Chain ${options.startFromChain} is not defined in the info file`);
+        }
+
+        chains = chains.slice(startIndex);
     }
 
     for (const chainName of chains) {
@@ -823,7 +862,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
             continue;
         }
 
-        console.log('\n');
+        console.log('');
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
@@ -1053,4 +1092,5 @@ module.exports = {
     isBytes32Array,
     getGasOptions,
     getSaltFromKey,
+    getDeployOptions,
 };
