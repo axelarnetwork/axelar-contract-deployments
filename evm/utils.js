@@ -388,6 +388,7 @@ const validationFunctions = {
     isNumberArray,
     isString,
     isNonEmptyStringArray,
+    isAddress,
     isAddressArray,
     isKeccak256Hash,
     isValidCalldata,
