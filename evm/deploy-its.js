@@ -51,8 +51,8 @@ async function deployAll(config, wallet, chain, options) {
     const contractConfig = contracts[contractName] || {};
 
     const salt = options.salt ? `ITS ${options.salt}` : 'ITS';
-    const proxySalt = (options.proxySalt || options.salt) ? `ITS ${options.proxySalt || options.salt}` : 'ITS';
-    const factorySalt = (options.proxySalt || options.salt) ? `ITS Factory ${options.proxySalt || options.salt}` : 'ITS Factory';
+    const proxySalt = options.proxySalt || options.salt ? `ITS ${options.proxySalt || options.salt}` : 'ITS';
+    const factorySalt = options.proxySalt || options.salt ? `ITS Factory ${options.proxySalt || options.salt}` : 'ITS Factory';
     const implementationSalt = `${salt} Implementation`;
     contractConfig.salt = salt;
     contractConfig.proxySalt = proxySalt;

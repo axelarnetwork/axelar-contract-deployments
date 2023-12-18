@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
 const { Command } = require('commander');
-const { mainProcessor, printWalletInfo, printInfo } = require('./utils');
+const { mainProcessor, printWalletInfo } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 
