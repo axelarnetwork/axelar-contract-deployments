@@ -4,7 +4,7 @@
       "name": "Ethereum",
       "id": "ethereum-2",
       "chainId": 5,
-      "rpc": "https://goerli.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
+      "rpc": "https://ethereum-goerli.publicnode.com",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -87,17 +87,18 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0xD874605d1dc2Cf105fB22d4Bc41453CB33FD76C0",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.0.0"
         }
       },
       "explorer": {
@@ -150,17 +151,18 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0xCEf538e9633CDcb814e12940902ec949EFaE67B1",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
@@ -257,17 +259,18 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0xb374C530D7eA10E1E4ddA32aB3d469bF52001048",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
@@ -399,17 +402,18 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0x75f256B715a376747C136694f08982B6A2115238",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         }
       },
       "explorer": {
@@ -505,17 +509,18 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0x6E88352E4CF69741e832601D873AC298BBf16ef4",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         }
       },
       "explorer": {
@@ -609,17 +614,18 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0x2a0a3ba764ba9cC776441051D8839C35F797DeCd",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         }
       },
       "explorer": {
@@ -713,17 +719,18 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0xc3732f452BeE02dBb8C044f3b336671065B59af8",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         }
       },
       "explorer": {
@@ -776,17 +783,18 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0x40C0C642ACC081eF01752258dE99647A79484A44",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
@@ -918,17 +926,18 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0xf958d10c2f17352f5Ec0a8988c95572AD2EFA50B",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         }
       },
       "explorer": {
@@ -980,17 +989,18 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0xD29aB6cd4AB8B667Ffc53331072F5a3D822C1bB8",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         },
         "InterchainProposalSender": {
           "address": "0x1f8A4d195B647647c7dD45650CBd553FD33cCAA6",
@@ -1123,17 +1133,18 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0xf57c0E0d357ff81793E0f5D7347751f66B7803e6",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         }
       },
       "explorer": {
@@ -1226,17 +1237,18 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0x260b685FD203195483396f973F28873a4Fb2c192",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         }
       },
       "explorer": {
@@ -1331,17 +1343,18 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0x691DA342f049fa0Ae1703D3c25f9C94d3814554B",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.2.1"
         }
       },
       "explorer": {
@@ -1435,24 +1448,28 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0x5560C7BAa84E79764fFA7e39A33f3bB07b4B706a",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.0.0"
         }
       },
       "explorer": {
         "url": "https://testnet-zkevm.polygonscan.com",
         "api": "https://api-testnet-zkevm.polygonscan.com/api"
       },
-      "confirmations": 2
+      "confirmations": 2,
+      "gasOptions": {
+        "gasLimit": 6000000
+      }
     },
     "mantle": {
       "name": "Mantle",
@@ -1536,17 +1553,18 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0x0e73F71Ba3A1874649d9f84062BB9B56aa8BE535",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.0.0"
         }
       },
       "explorer": {
@@ -1637,17 +1655,18 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0xFa5a028E19B2369Bb5eC9691dB170Ac73Cf54079",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.0.0"
         }
       },
       "explorer": {
@@ -1826,24 +1845,27 @@
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0",
+          "salt": "ITS v1.2.1",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0xD00de9ed29B2eC83717C83c0DD03168b91568BfF",
-          "interchainToken": "0xD4cEAEC880E4Bf3350fd316eB94a37838C13da74",
-          "interchainTokenDeployer": "0xAA89F4655482BC5b4569F9DA6ecDd5e78B2688cF",
-          "tokenManager": "0x5EE3f3A1fA63C8b167100ea527f998DdE22e5aea",
-          "tokenHandler": "0x56040Ee946BeEFD7E3017FfA6DD7e938eC73a890",
-          "implementation": "0xD65821E848caE39717A83862901bF803bA65a91B",
+          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
+          "tokenManager": "0xC1B09c9c16117417A1B414A52Dd92CF1f634e786",
+          "tokenHandler": "0x9Ef1f24EF4Ed0520DC1Da282a0fe76271A183b36",
+          "implementation": "0x30DEFb998D7FdDC75ffb8D002fC15BbB75115758",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "interchainTokenFactoryImplementation": "0x7f6E654B222ac455aa0E948Fc7AD08AeeeF8df30",
-          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "interchainTokenFactoryImplementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
+          "interchainTokenFactory": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "proxySalt": "ITS v1.0.0"
         }
       },
       "explorer": {
         "url": "https://sepolia.etherscan.io",
         "api": "https://api-sepolia.etherscan.io/api"
       },
-      "gasOptions": {}
+      "gasOptions": {
+        "gasLimit": 8000000
+      }
     },
     "arbitrum-sepolia": {
       "name": "Arbitrum-Sepolia",
