@@ -10,8 +10,6 @@ const { getWallet } = require('./sign-utils');
 async function processCommand(_, chain, options) {
     const provider = getDefaultProvider(chain.rpc);
 
-    printInfo('Chain', chain.name);
-
     const wallet = await getWallet(options.privateKey, provider);
     await printWalletInfo(wallet, options);
 }
