@@ -1,12 +1,16 @@
 'use strict';
 
 const { ethers } = require('hardhat');
-const { getDefaultProvider, Contract } = ethers;
+const {
+    getDefaultProvider,
+    Contract,
+    constants: { AddressZero },
+} = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions } = require('./utils');
-const { getWallet } = require('./sign-utils');
+const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx } = require('./its');
+const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 
@@ -24,9 +28,9 @@ async function processCommand(_, chain, options) {
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    printInfo('Chain', chain.name);
-
     const wallet = await getWallet(privateKey, provider, options);
+
+    await printWalletInfo(wallet, options);
 
     printInfo('Contract name', contractName);
     printInfo('Contract address', interchainTokenFactoryAddress);
@@ -118,8 +122,9 @@ async function processCommand(_, chain, options) {
 
             validateParameters({
                 isNonEmptyString: { name, symbol },
-                isValidAddress: { minter },
-                isValidNumber: { decimals, initialSupply },
+                isValidNumber: { decimals },
+                isValidDecimal: { initialSupply },
+                isAddress: { minter },
             });
 
             const tx = await interchainTokenFactory.deployInterchainToken(
@@ -127,7 +132,7 @@ async function processCommand(_, chain, options) {
                 name,
                 symbol,
                 decimals,
-                initialSupply,
+                parseInt(initialSupply * 10 ** decimals),
                 minter,
                 gasOptions,
             );
@@ -143,8 +148,9 @@ async function processCommand(_, chain, options) {
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
-                isNonEmptyString: { originalChain, destinationChain },
-                isValidBytesAddress: { minter },
+                isString: { originalChain },
+                isNonEmptyString: { destinationChain },
+                isAddress: { minter },
                 isValidNumber: { gasValue },
             });
 
@@ -154,7 +160,7 @@ async function processCommand(_, chain, options) {
                 minter,
                 destinationChain,
                 gasValue,
-                gasOptions,
+                { value: gasValue, ...gasOptions },
             );
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
@@ -188,7 +194,7 @@ async function processCommand(_, chain, options) {
                 tokenAddress,
                 destinationChain,
                 gasValue,
-                gasOptions,
+                { ...gasValue, gasOptions },
             );
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
@@ -238,12 +244,12 @@ if (require.main === module) {
     program.addOption(new Option('--name <name>', 'token name'));
     program.addOption(new Option('--symbol <symbol>', 'token symbol'));
     program.addOption(new Option('--decimals <decimals>', 'token decimals'));
-    program.addOption(new Option('--minter <minter>', 'token minter'));
-    program.addOption(new Option('--initialSupply <initialSupply>', 'initial supply').default(0));
-    program.addOption(new Option('--originalChain <originalChain>', 'original chain'));
+    program.addOption(new Option('--minter <minter>', 'token minter').default(AddressZero));
+    program.addOption(new Option('--initialSupply <initialSupply>', 'initial supply').default(1e9));
+    program.addOption(new Option('--originalChain <originalChain>', 'original chain').default(''));
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
-    program.addOption(new Option('--gasValue <gasValue>', 'gas value'));
+    program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
     program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
 
     program.action((options) => {

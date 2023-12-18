@@ -36,10 +36,11 @@ Deploy the gateway contract.
 To test the Interchain Token Service deployment
 
 ```bash
-node evm/deploy-its -e testnet -n ethereum -s [salt]
+node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -m create2
 ```
 
-Change the `-s SALT` to derive a new address.
+Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
+`proxySalt` is used to derive the same address as a deployment on an existing chain.
 
 ## Governance
 
