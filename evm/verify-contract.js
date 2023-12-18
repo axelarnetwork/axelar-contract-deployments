@@ -32,6 +32,8 @@ async function processCommand(config, chain, options) {
     printInfo('Verifying contract', contractName);
     printInfo('Contract address', options.address || chain.contracts[contractName]?.address);
 
+    const contractConfig = chain.contracts[contractName];
+
     switch (contractName) {
         case 'Create3Deployer': {
             const Create3Deployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
@@ -50,8 +52,6 @@ async function processCommand(config, chain, options) {
             const contractFactory = await getContractAt(InterchainGovernance.abi, wallet);
 
             const contract = contractFactory.attach(options.address || chain.contracts.InterchainGovernance.address);
-
-            const contractConfig = chain.contracts[contractName];
 
             await verifyContract(
                 env,
@@ -74,8 +74,6 @@ async function processCommand(config, chain, options) {
             const contractFactory = await getContractAt(Multisig.abi, wallet);
 
             const contract = contractFactory.attach(options.address || chain.contracts.Multisig.address);
-
-            const contractConfig = chain.contracts[contractName];
 
             await verifyContract(env, chain.name, contract.address, [contractConfig.signers, contractConfig.threshold], verifyOptions);
             break;
@@ -139,11 +137,12 @@ async function processCommand(config, chain, options) {
                 keyID: chain.contracts.AxelarGateway.startingKeyIDs[0] || options.args || `evm-${chain.id.toLowerCase()}-genesis`,
             });
             const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
+            const setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [contractConfig.deployer, contractConfig.deployer, '0x'])
 
             await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
             await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
             await verifyContract(env, chain.name, implementation, [auth, tokenDeployer], verifyOptions);
-            await verifyContract(env, chain.name, gateway.address, [implementation, options.constructorArgs], verifyOptions);
+            await verifyContract(env, chain.name, gateway.address, [implementation, setupParams], verifyOptions);
 
             break;
         }
