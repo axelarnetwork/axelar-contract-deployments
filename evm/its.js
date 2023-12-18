@@ -4,6 +4,7 @@ const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
     utils: { hexZeroPad, toUtf8Bytes, keccak256 },
+    constants: { AddressZero },
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
@@ -247,7 +248,7 @@ async function processCommand(config, chain, options) {
             validateParameters({
                 isNonEmptyString: { name, symbol },
                 isString: { destinationChain },
-                isValidBytesAddress: { minter },
+                isAddress: { minter },
                 isValidNumber: { decimals, gasValue },
             });
 
@@ -259,7 +260,7 @@ async function processCommand(config, chain, options) {
                 decimals,
                 minter,
                 gasValue,
-                gasOptions,
+                { value: gasValue, ...gasOptions },
             );
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
@@ -321,7 +322,7 @@ async function processCommand(config, chain, options) {
                 amount,
                 metadata,
                 gasValue,
-                gasOptions,
+                { value: gasValue, ...gasOptions },
             );
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'InterchainTransfer', 'InterchainTransferWithData');
@@ -348,7 +349,7 @@ async function processCommand(config, chain, options) {
                 amount,
                 data,
                 gasValue,
-                gasOptions,
+                { value: gasValue, ...gasOptions },
             );
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'InterchainTransfer', 'InterchainTransferWithData');
@@ -581,16 +582,16 @@ if (require.main === module) {
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
     program.addOption(new Option('--params <params>', 'params for TokenManager deployment'));
-    program.addOption(new Option('--gasValue <gasValue>', 'gas value'));
+    program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
     program.addOption(new Option('--name <name>', 'token name'));
     program.addOption(new Option('--symbol <symbol>', 'token symbol'));
     program.addOption(new Option('--decimals <decimals>', 'token decimals'));
-    program.addOption(new Option('--minter <minter>', 'token minter'));
+    program.addOption(new Option('--minter <minter>', 'token minter').default(AddressZero));
     program.addOption(new Option('--sourceChain <sourceChain>', 'source chain'));
     program.addOption(new Option('--sourceAddress <sourceAddress>', 'source address'));
     program.addOption(new Option('--payload <payload>', 'payload'));
     program.addOption(new Option('--amount <amount>', 'token amount'));
-    program.addOption(new Option('--metadata <metadata>', 'token transfer metadata'));
+    program.addOption(new Option('--metadata <metadata>', 'token transfer metadata').default('0x'));
     program.addOption(new Option('--data <data>', 'token transfer data'));
     program.addOption(new Option('--tokenIds <tokenIds>', 'tokenId array'));
     program.addOption(new Option('--flowLimits <flowLimits>', 'flow limit array'));

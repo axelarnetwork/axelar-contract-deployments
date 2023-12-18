@@ -19,6 +19,12 @@ const addBaseOptions = (program, options = {}) => {
             new Option('-n, --chainNames <chainNames>', 'chains to run the script over').makeOptionMandatory(true).env('CHAINS'),
         );
         program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
+        program.addOption(
+            new Option(
+                '--startFromChain <startFromChain>',
+                'start from a specific chain onwards in the config, useful when a cmd fails for an intermediate chain',
+            ),
+        );
     }
 
     if (!options.ignorePrivateKey) {

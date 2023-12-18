@@ -1,4 +1,3 @@
-const { getCreate3Address } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const { ethers } = require('hardhat');
 const {
     Wallet,
@@ -12,6 +11,8 @@ const {
     printWalletInfo,
     saveConfig,
     printInfo,
+    printWarn,
+    printError,
     getContractJSON,
     mainProcessor,
     prompt,
@@ -19,6 +20,10 @@ const {
     getBytecodeHash,
     getGasOptions,
     isContract,
+    isValidAddress,
+    getDeployOptions,
+    getDeployedAddress,
+    wasEventEmitted,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
@@ -34,7 +39,7 @@ const { Command, Option } = require('commander');
  */
 
 async function deployAll(config, wallet, chain, options) {
-    const { env, artifactPath, salt, factorySalt, deployMethod, skipExisting, verify, yes } = options;
+    const { env, artifactPath, deployMethod, proxyDeployMethod, skipExisting, verify, yes } = options;
     const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
 
     const provider = getDefaultProvider(chain.rpc);
@@ -44,42 +49,86 @@ async function deployAll(config, wallet, chain, options) {
     const contracts = chain.contracts;
 
     // Reset config data if it's a fresh deployment
-    if (!skipExisting) {
+    if (!skipExisting && !options.reuseProxy) {
         contracts[contractName] = {};
     }
 
     const contractConfig = contracts[contractName] || {};
 
+    const salt = options.salt ? `ITS ${options.salt}` : 'ITS';
+    const proxySalt = options.proxySalt || options.salt ? `ITS ${options.proxySalt || options.salt}` : 'ITS';
+    const factorySalt = `${proxySalt} Factory`;
+    const implementationSalt = `${salt} Implementation`;
     contractConfig.salt = salt;
+    contractConfig.proxySalt = proxySalt;
     contractConfig.deployer = wallet.address;
 
     contracts[contractName] = contractConfig;
 
-    const interchainTokenServiceAddress = await getCreate3Address(contracts.Create3Deployer.address, wallet, salt);
-    printInfo('Interchain Token Service will be deployed to', interchainTokenServiceAddress);
+    const proxyJSON = getContractJSON('InterchainProxy', artifactPath);
+    const predeployCodehash = await getBytecodeHash(proxyJSON, chain.id);
+    const gasOptions = await getGasOptions(chain, options, contractName);
+    const deployOptions = getDeployOptions(deployMethod, salt, chain);
+
+    const interchainTokenService = options.reuseProxy
+        ? contractConfig.address
+        : await getDeployedAddress(wallet.address, proxyDeployMethod, {
+              salt: proxySalt,
+              deployerContract: getDeployOptions(proxyDeployMethod, proxySalt, chain).deployerContract,
+              contractJson: proxyJSON,
+              constructorArgs: [],
+              provider: wallet.provider,
+          });
+
+    if (!isValidAddress(interchainTokenService)) {
+        throw new Error(`Invalid ITS address: ${interchainTokenService}`);
+    }
+
+    printInfo('Interchain Token Service will be deployed to', interchainTokenService);
+
+    const interchainTokenFactory = options.reuseProxy
+        ? contractConfig.interchainTokenFactory
+        : await getDeployedAddress(wallet.address, proxyDeployMethod, {
+              salt: factorySalt,
+              deployerContract: getDeployOptions(proxyDeployMethod, factorySalt, chain).deployerContract,
+              contractJSON: proxyJSON,
+              constructorArgs: [],
+              provider: wallet.provider,
+          });
+
+    if (!isValidAddress(interchainTokenFactory)) {
+        throw new Error(`Invalid Interchain Token Factory address: ${interchainTokenFactory}`);
+    }
+
+    printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
 
     // Register all chains that ITS is or will be deployed on.
     // Add a "skip": true under ITS key in the config if the chain will not have ITS.
     const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
     const trustedChains = itsChains.map((chain) => chain.id);
-    const trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address || interchainTokenServiceAddress);
+    const trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address || interchainTokenService);
 
-    const interchainTokenFactory = await getCreate3Address(contracts.Create3Deployer.address, wallet, factorySalt);
-    printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
+    const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
 
-    if (prompt(`Does this match any existing deployments? Proceed with deployment on ${chain.name}?`, yes)) {
-        return;
+    if (existingAddress !== undefined && interchainTokenService !== existingAddress) {
+        printWarn(
+            `Predicted address ${interchainTokenService} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}`,
+        );
+
+        const existingCodeHash = config.chains.ethereum.contracts[contractName].predeployCodehash;
+
+        if (predeployCodehash !== existingCodeHash) {
+            printWarn(
+                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${config.chains.ethereum.name}`,
+            );
+        }
+
+        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode');
     }
 
-    const gasOptions = await getGasOptions(chain, options, contractName);
-
-    const deployOptions =
-        deployMethod === 'create'
-            ? {}
-            : {
-                  salt,
-                  deployerContract: deployMethod === 'create2' ? contracts.ConstAddressDeployer.address : contracts.Create3Deployer.address,
-              };
+    if (prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
+        return;
+    }
 
     const deployments = {
         tokenManagerDeployer: {
@@ -104,7 +153,7 @@ async function deployAll(config, wallet, chain, options) {
                     deployMethod,
                     wallet,
                     getContractJSON('InterchainToken', artifactPath),
-                    [interchainTokenServiceAddress],
+                    [interchainTokenService],
                     deployOptions,
                     gasOptions,
                     verifyOptions,
@@ -134,7 +183,7 @@ async function deployAll(config, wallet, chain, options) {
                     deployMethod,
                     wallet,
                     getContractJSON('TokenManager', artifactPath),
-                    [interchainTokenServiceAddress],
+                    [interchainTokenService],
                     deployOptions,
                     gasOptions,
                     verifyOptions,
@@ -161,7 +210,7 @@ async function deployAll(config, wallet, chain, options) {
             name: 'Interchain Token Service Implementation',
             async deploy() {
                 return await deployContract(
-                    deployMethod,
+                    proxyDeployMethod,
                     wallet,
                     InterchainTokenService,
                     [
@@ -174,7 +223,7 @@ async function deployAll(config, wallet, chain, options) {
                         contractConfig.tokenManager,
                         contractConfig.tokenHandler,
                     ],
-                    deployOptions,
+                    getDeployOptions(proxyDeployMethod, implementationSalt, chain),
                     gasOptions,
                     verifyOptions,
                     chain,
@@ -190,13 +239,14 @@ async function deployAll(config, wallet, chain, options) {
                     ['address', 'string', 'string[]', 'string[]'],
                     [operatorAddress, chain.id, trustedChains, trustedAddresses],
                 );
+                contractConfig.predeployCodehash = predeployCodehash;
 
                 return await deployContract(
-                    'create3',
+                    proxyDeployMethod,
                     wallet,
                     getContractJSON('InterchainProxy', artifactPath),
                     [contractConfig.implementation, wallet.address, deploymentParams],
-                    { salt, deployerContract: contracts.Create3Deployer.address },
+                    getDeployOptions(proxyDeployMethod, proxySalt, chain),
                     gasOptions,
                     verifyOptions,
                     chain,
@@ -210,7 +260,7 @@ async function deployAll(config, wallet, chain, options) {
                     deployMethod,
                     wallet,
                     getContractJSON('InterchainTokenFactory', artifactPath),
-                    [interchainTokenServiceAddress],
+                    [interchainTokenService],
                     deployOptions,
                     gasOptions,
                     verifyOptions,
@@ -222,11 +272,11 @@ async function deployAll(config, wallet, chain, options) {
             name: 'Interchain Token Factory Proxy',
             async deploy() {
                 return await deployContract(
-                    'create3',
+                    proxyDeployMethod,
                     wallet,
                     getContractJSON('InterchainProxy', artifactPath),
                     [contractConfig.interchainTokenFactoryImplementation, wallet.address, '0x'],
-                    { salt: factorySalt, deployerContract: contracts.Create3Deployer.address },
+                    getDeployOptions(proxyDeployMethod, factorySalt, chain),
                     gasOptions,
                     verifyOptions,
                     chain,
@@ -239,6 +289,12 @@ async function deployAll(config, wallet, chain, options) {
         if (skipExisting && contractConfig[key]) continue;
 
         const deployment = deployments[key];
+
+        if ((key === 'address' || key === 'interchainTokenFactory') && options.reuseProxy) {
+            printInfo(`Reusing ${deployment.name} deployment at ${contractConfig[key]}`);
+            continue;
+        }
+
         printInfo(`Deploying ${deployment.name}`);
 
         const contract = await deployment.deploy();
@@ -286,11 +342,9 @@ async function deploy(config, chain, options) {
 }
 
 async function upgrade(config, chain, options) {
-    const { artifactPath, salt, privateKey } = options;
+    const { artifactPath, privateKey } = options;
 
-    const rpc = chain.rpc;
-    const provider = getDefaultProvider(rpc);
-
+    const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(privateKey, provider);
     const contractName = 'InterchainTokenService';
 
@@ -299,32 +353,72 @@ async function upgrade(config, chain, options) {
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName] || {};
 
-    contractConfig.salt = salt;
-    contractConfig.deployer = wallet.address;
-
     contracts[contractName] = contractConfig;
-
-    await deployAll(config, wallet, chain, options);
 
     printInfo(`Upgrading Interchain Token Service.`);
 
     const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
-
     const gasOptions = await getGasOptions(chain, options, contractName);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
-
     const codehash = await getBytecodeHash(contractConfig.implementation, chain.id, provider);
 
-    await contract.upgrade(contractConfig.implementation, codehash, '0x', gasOptions).then((tx) => tx.wait(chain.confirmations));
+    printInfo(`ITS Proxy`, contract.address);
+
+    const currImplementation = await contract.implementation();
+    printInfo(`Current ITS implementation`, currImplementation);
+    printInfo(`New ITS implementation`, contractConfig.implementation);
+
+    if (prompt(`Proceed with ITS upgrade on ${chain.name}?`, options.yes)) {
+        return;
+    }
+
+    const receipt = await contract
+        .upgrade(contractConfig.implementation, codehash, '0x', gasOptions)
+        .then((tx) => tx.wait(chain.confirmations));
+
+    if (!wasEventEmitted(receipt, contract, 'Upgraded')) {
+        printError('Upgrade failed');
+        return;
+    }
 
     printInfo(`Upgraded Interchain Token Service`);
+
+    const InterchainTokenFactory = getContractJSON('InterchainTokenFactory', artifactPath);
+    const itsFactory = new Contract(contractConfig.interchainTokenFactory, InterchainTokenFactory.abi, wallet);
+    const factoryCodehash = await getBytecodeHash(contractConfig.interchainTokenFactoryImplementation, chain.id, provider);
+
+    printInfo(`ITS Factory Proxy`, itsFactory.address);
+
+    const factoryImplementation = await itsFactory.implementation();
+    printInfo(`Current ITS Factory implementation`, factoryImplementation);
+    printInfo(`New ITS Factory implementation`, contractConfig.interchainTokenFactoryImplementation);
+
+    if (
+        prompt(
+            `Proceed with ITS Factory upgrade to implementation ${contractConfig.interchainTokenFactoryImplementation} on ${chain.name}?`,
+            options.yes,
+        )
+    ) {
+        return;
+    }
+
+    const factoryReceipt = await itsFactory
+        .upgrade(contractConfig.interchainTokenFactoryImplementation, factoryCodehash, '0x', gasOptions)
+        .then((tx) => tx.wait(chain.confirmations));
+
+    if (!wasEventEmitted(factoryReceipt, itsFactory, 'Upgraded')) {
+        printError('Upgrade failed');
+        return;
+    }
+
+    printInfo(`Upgraded Interchain Token Factory`);
 }
 
 async function processCommand(config, chain, options) {
-    if (!options.upgrade) {
-        await deploy(config, chain, options);
-    } else {
+    if (options.upgrade) {
         await upgrade(config, chain, options);
+    } else {
+        await deploy(config, chain, options);
     }
 }
 
@@ -338,17 +432,29 @@ if (require.main === module) {
     program.name('deploy-its').description('Deploy interchain token service');
 
     program.addOption(
-        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
+        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
+    );
+    program.addOption(
+        new Option(
+            '--proxyDeployMethod <proxyDeployMethod>',
+            'proxy deployment method, overrides normal deployment method (defaults to create3)',
+        )
+            .choices(['create', 'create3'])
+            .default('create3'),
     );
 
     addExtendedOptions(program, { skipExisting: true, upgrade: true });
 
+    program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments'));
     program.addOption(new Option('--contractName <contractName>', 'contract name').default('InterchainTokenService')); // added for consistency
-    program.addOption(new Option('-s, --salt <key>', 'deployment salt to use for ITS deployment').makeOptionMandatory(true).env('SALT'));
+    program.addOption(new Option('-s, --salt <salt>', 'deployment salt to use for ITS deployment').env('SALT'));
     program.addOption(
-        new Option('-f, --factorySalt <key>', 'deployment salt to use for Interchain Token Factory deployment')
-            .makeOptionMandatory(true)
-            .env('FACTORY_SALT'),
+        new Option(
+            '--proxySalt <proxySalt>',
+            'deployment salt to use for ITS proxies, this allows deploying latest releases to new chains while deriving the same proxy address',
+        )
+            .default('v1.0.0')
+            .env('PROXY_SALT'),
     );
     program.addOption(
         new Option('-o, --operatorAddress <operatorAddress>', 'address of the ITS operator/rate limiter').env('OPERATOR_ADDRESS'),
