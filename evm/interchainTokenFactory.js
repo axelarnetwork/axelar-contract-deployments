@@ -7,15 +7,7 @@ const {
     constants: { AddressZero },
 } = ethers;
 const { Command, Option } = require('commander');
-const {
-    printInfo,
-    prompt,
-    mainProcessor,
-    validateParameters,
-    getContractJSON,
-    getGasOptions,
-    printWalletInfo,
-} = require('./utils');
+const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx } = require('./its');
 const { getWallet } = require('./sign-utils');
