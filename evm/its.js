@@ -87,6 +87,24 @@ function compare(contractValue, configValue, variableName) {
     }
 }
 
+function isValidDestinationChain(config, chain, destinationChain, originalChain = null) {
+    const chains = config.chains;
+
+    const validDestination = Object.values(chains).some((chainObject) => chainObject.id === destinationChain);
+
+    if (!validDestination) {
+        throw new Error(`Invalid destination chain: ${destinationChain}`);
+    }
+
+    if (chain.id === destinationChain) {
+        throw new Error(`Destination chain ${destinationChain} equals source chain ${chain.id}`);
+    }
+
+    if (originalChain && destinationChain === originalChain) {
+        throw new Error(`Destination chain ${destinationChain} equals original chain ${originalChain}`);
+    }
+}
+
 async function processCommand(config, chain, options) {
     const { privateKey, address, action, yes } = options;
 
@@ -226,6 +244,8 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
+            isValidDestinationChain(config, chain, destinationChain);
+
             const tx = await interchainTokenService.deployTokenManager(
                 deploymentSalt,
                 destinationChain,
@@ -251,6 +271,8 @@ async function processCommand(config, chain, options) {
                 isAddress: { minter },
                 isValidNumber: { decimals, gasValue },
             });
+
+            isValidDestinationChain(config, chain, destinationChain);
 
             const tx = await interchainTokenService.deployInterchainToken(
                 deploymentSalt,
@@ -313,6 +335,8 @@ async function processCommand(config, chain, options) {
                 isValidCalldata: { metadata },
             });
 
+            isValidDestinationChain(config, chain, destinationChain);
+
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const tx = await interchainTokenService.interchainTransfer(
@@ -339,6 +363,8 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { amount, gasValue },
                 isValidCalldata: { data },
             });
+
+            isValidDestinationChain(config, chain, destinationChain);
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
@@ -607,4 +633,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { getDeploymentSalt, handleTx, getTrustedChainsAndAddresses };
+module.exports = { getDeploymentSalt, handleTx, getTrustedChainsAndAddresses, isValidDestinationChain };

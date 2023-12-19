@@ -9,12 +9,12 @@ const {
 const { Command, Option } = require('commander');
 const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
-const { getDeploymentSalt, handleTx } = require('./its');
+const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 
-async function processCommand(_, chain, options) {
+async function processCommand(config, chain, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
@@ -154,6 +154,8 @@ async function processCommand(_, chain, options) {
                 isValidNumber: { gasValue },
             });
 
+            isValidDestinationChain(config, chain, destinationChain);
+
             const tx = await interchainTokenFactory.deployRemoteInterchainToken(
                 originalChain,
                 deploymentSalt,
@@ -188,6 +190,8 @@ async function processCommand(_, chain, options) {
                 isNonEmptyString: { originalChain, destinationChain },
                 isValidNumber: { gasValue },
             });
+
+            isValidDestinationChain(config, chain, destinationChain);
 
             const tx = await interchainTokenFactory.deployRemoteCanonicalInterchainToken(
                 originalChain,
