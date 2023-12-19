@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, keccak256 },
+    utils: { hexZeroPad, toUtf8Bytes, keccak256 },
     BigNumber,
     constants: { AddressZero },
     Contract,
@@ -571,7 +571,7 @@ async function processCommand(config, chain, options) {
             const configGasService = chain.contracts.AxelarGasService?.address;
 
             const chainNameHash = await interchainTokenService.chainNameHash();
-            const configChainNameHash = keccak256(chain.id);
+            const configChainNameHash = keccak256(toUtf8Bytes(chain.id));
 
             compare(gateway, configGateway, 'AxelarGateway');
             compare(gasService, configGasService, 'AxelarGasService');
