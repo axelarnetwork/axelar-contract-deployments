@@ -185,7 +185,8 @@ async function processCommand(_, chain, options) {
 
             validateParameters({
                 isValidAddress: { tokenAddress },
-                isNonEmptyString: { originalChain, destinationChain },
+                isString: { originalChain },
+                isNonEmptyString: { destinationChain },
                 isValidNumber: { gasValue },
             });
 
@@ -194,7 +195,7 @@ async function processCommand(_, chain, options) {
                 tokenAddress,
                 destinationChain,
                 gasValue,
-                { ...gasValue, gasOptions },
+                { value: gasValue, ...gasOptions },
             );
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
