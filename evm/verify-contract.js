@@ -137,7 +137,10 @@ async function processCommand(config, chain, options) {
                 keyID: chain.contracts.AxelarGateway.startingKeyIDs[0] || options.args || `evm-${chain.id.toLowerCase()}-genesis`,
             });
             const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
-            const setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [contractConfig.deployer, contractConfig.deployer, '0x'])
+            const setupParams = defaultAbiCoder.encode(
+                ['address', 'address', 'bytes'],
+                [contractConfig.deployer, contractConfig.deployer, '0x'],
+            );
 
             await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
             await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
