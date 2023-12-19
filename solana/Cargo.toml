@@ -21,6 +21,7 @@ thiserror = "1"
 program-utils = { path = "helpers/program-utils" }
 random-array = { path = "helpers/random-array" }
 slice-iterator = { path = "helpers/slice-iterator" }
+operator = { path = "programs/operator" }
 
 [profile.release]
 overflow-checks = true

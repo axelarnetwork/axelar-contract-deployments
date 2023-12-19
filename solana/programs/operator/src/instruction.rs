@@ -42,9 +42,9 @@ pub enum OperatorInstruction {
 /// Create `Creategroup` instruction
 pub fn build_create_group_instruction(
     funder: &Pubkey,
-    operator_group_acc: &Pubkey,
-    operator_acc: &Pubkey,
-    operator_acc_owner: &Pubkey,
+    operator_group_pda: &Pubkey,
+    operator_pda: &Pubkey,
+    operator: &Pubkey,
     op_id: String,
 ) -> Result<Instruction, ProgramError> {
     let init_data = OperatorInstruction::CreateOperatorGroup { id: op_id };
@@ -52,9 +52,9 @@ pub fn build_create_group_instruction(
 
     let accounts = vec![
         AccountMeta::new(*funder, true),
-        AccountMeta::new(*operator_group_acc, false),
-        AccountMeta::new(*operator_acc, false),
-        AccountMeta::new_readonly(*operator_acc_owner, true),
+        AccountMeta::new(*operator_group_pda, false),
+        AccountMeta::new(*operator_pda, false),
+        AccountMeta::new_readonly(*operator, true),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
     Ok(Instruction {

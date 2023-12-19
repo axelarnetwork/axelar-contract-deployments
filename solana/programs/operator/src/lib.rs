@@ -10,7 +10,7 @@ pub use solana_program;
 use solana_program::hash::hash;
 use solana_program::pubkey::Pubkey;
 
-solana_program::declare_id!("VqMMNEMXqUagHieikoHz4YgFBusPs3kMFHN59yuwaoM");
+solana_program::declare_id!("7FsMLiW9cK1p4ivD9SGv1ZASDp2L3hQnwcDA3yXeDxsS");
 
 /// Derives the operator group address and bump seed for the
 /// given wallet address
@@ -25,12 +25,12 @@ pub(crate) fn get_operator_group_account_and_bump_seed_internal(
 /// Derives the operator address and bump seed for the given wallet
 /// address
 pub(crate) fn get_operator_address_account_and_bump_seed_internal(
-    operator_group_account: &Pubkey,
-    operator_account: &Pubkey,
+    operator_group_pda: &Pubkey,
+    operator: &Pubkey,
     program_id: &Pubkey,
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
-        &[&operator_account.as_ref(), &operator_group_account.as_ref()],
+        &[&operator.as_ref(), &operator_group_pda.as_ref()],
         program_id,
     )
 }
@@ -42,11 +42,6 @@ pub fn get_operator_group_account(op_id: &str) -> Pubkey {
 }
 
 /// Derives the operator address for the given wallet address
-pub fn get_operator_account(operator_group_account: &Pubkey, operator_account: &Pubkey) -> Pubkey {
-    get_operator_address_account_and_bump_seed_internal(
-        operator_group_account,
-        operator_account,
-        &id(),
-    )
-    .0
+pub fn get_operator_account(operator_group_pda: &Pubkey, operator: &Pubkey) -> Pubkey {
+    get_operator_address_account_and_bump_seed_internal(operator_group_pda, operator, &id()).0
 }

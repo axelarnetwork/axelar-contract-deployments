@@ -12,7 +12,7 @@ use solana_program::hash::hash;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-solana_program::declare_id!("VqMMNEMXqUagHieikoHz4YgFBusPs3kMFHN59yuwaoM");
+solana_program::declare_id!("D9JncPXNLJBWCNi8aAmyM3BunT3G4K6pxczsqQUfMhFM");
 
 /// Checks that the supplied program ID is the correct one
 pub fn check_program_account(program_id: &Pubkey) -> ProgramResult {
