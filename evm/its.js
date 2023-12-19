@@ -3,7 +3,8 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256 },
+    utils: { hexZeroPad, keccak256 },
+    BigNumber,
     constants: { AddressZero },
     Contract,
 } = ethers;
@@ -304,7 +305,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'interchainTransfer': {
-            const { destinationChain, destinationAddress, amount, metadata, gasValue } = options;
+            const { destinationChain, destinationAddress, metadata, gasValue } = options;
+            let amount = options.amount;
 
             validateParameters({
                 isValidTokenId: { tokenId },
@@ -314,6 +316,31 @@ async function processCommand(config, chain, options) {
             });
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+
+            const tokenManager = new Contract(
+                await interchainTokenService.validTokenManagerAddress(tokenIdBytes32),
+                getContractJSON('ITokenManager').abi,
+                wallet,
+            );
+            const token = new Contract(
+                await interchainTokenService.validTokenAddress(tokenIdBytes32),
+                getContractJSON('InterchainToken').abi,
+                wallet,
+            );
+
+            const implementationType = await tokenManager.implementationType();
+            const decimals = await token.decimals();
+            amount = BigNumber.from(amount).mul(BigNumber.from(10).pow(decimals));
+            const balance = await token.balanceOf(wallet.address);
+
+            if (balance.lt(amount)) {
+                throw new Error(`Insufficient balance for transfer. Balance: ${balance}, amount: ${amount}`);
+            }
+
+            if (implementationType !== tokenManagerImplementations.MINT_BURN) {
+                printInfo('Approving ITS for a transfer');
+                await token.approve(interchainTokenService.address, amount, gasOptions).then((tx) => tx.wait());
+            }
 
             const tx = await interchainTokenService.interchainTransfer(
                 tokenIdBytes32,
@@ -402,13 +429,34 @@ async function processCommand(config, chain, options) {
                 throw new Error(`${action} can only be performed by contract owner: ${owner}`);
             }
 
-            const { trustedChain, trustedAddress } = options;
+            const { trustedAddress } = options;
 
-            validateParameters({ isNonEmptyString: { trustedChain, trustedAddress } });
+            validateParameters({ isNonEmptyString: { trustedChain: options.trustedChain, trustedAddress } });
 
-            const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
+            let trustedChains, trustedAddresses;
 
-            await handleTx(tx, chain, interchainTokenService, options.action, 'TrustedAddressSet');
+            if (options.trustedChain === 'all') {
+                const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
+                trustedChains = itsChains.map((chain) => chain.id);
+                trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address);
+            } else {
+                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.id;
+
+                if (trustedChain === undefined) {
+                    throw new Error(`Invalid chain: ${options.trustedChain}`);
+                }
+
+                trustedChains = [trustedChain];
+                trustedAddresses = [trustedAddress];
+            }
+
+            printInfo(`Setting trusted address for chain ${trustedChains} to ${trustedAddresses}`);
+
+            for (const [trustedChain, trustedAddress] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
+                const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
+
+                await handleTx(tx, chain, interchainTokenService, options.action, 'TrustedAddressSet');
+            }
 
             break;
         }
@@ -420,13 +468,32 @@ async function processCommand(config, chain, options) {
                 throw new Error(`${action} can only be performed by contract owner: ${owner}`);
             }
 
-            const trustedChain = options.trustedChain;
+            let trustedChains;
 
-            validateParameters({ isNonEmptyString: { trustedChain } });
+            if (options.trustedChain === 'all') {
+                [trustedChains] = await getTrustedChainsAndAddresses(config, interchainTokenService);
+            } else {
+                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.id;
 
-            const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
+                if (trustedChain === undefined) {
+                    throw new Error(`Invalid chain: ${options.trustedChain}`);
+                }
 
-            await handleTx(tx, chain, interchainTokenService, options.action, 'TrustedAddressRemoved');
+                if ((await interchainTokenService.trustedAddress(options.trustedChain)) === '') {
+                    printError(`No trusted address for chain ${options.trustedChain}`);
+                    return;
+                }
+
+                trustedChains = [trustedChain];
+            }
+
+            printInfo(`Removing trusted address for chains ${trustedChains}`);
+
+            for (const trustedChain of trustedChains) {
+                const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
+
+                await handleTx(tx, chain, interchainTokenService, options.action, 'TrustedAddressRemoved');
+            }
 
             break;
         }
@@ -486,6 +553,17 @@ async function processCommand(config, chain, options) {
             printInfo('Trusted chains', trustedChains);
             printInfo('Trusted addresses', trustedAddresses);
 
+            // check if all trusted addresses match ITS address
+            for (const trustedAddress of trustedAddresses) {
+                if (trustedAddress !== interchainTokenServiceAddress) {
+                    printError(
+                        `Error: Trusted address ${trustedAddress} does not match InterchainTokenService address ${interchainTokenServiceAddress}`,
+                    );
+
+                    break;
+                }
+            }
+
             const gateway = await interchainTokenService.gateway();
             const gasService = await interchainTokenService.gasService();
 
@@ -493,7 +571,7 @@ async function processCommand(config, chain, options) {
             const configGasService = chain.contracts.AxelarGasService?.address;
 
             const chainNameHash = await interchainTokenService.chainNameHash();
-            const configChainNameHash = keccak256(toUtf8Bytes(chain.id));
+            const configChainNameHash = keccak256(chain.id);
 
             compare(gateway, configGateway, 'AxelarGateway');
             compare(gasService, configGasService, 'AxelarGasService');
@@ -539,6 +617,7 @@ if (require.main === module) {
 
     addExtendedOptions(program, { address: true, salt: true });
 
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('InterchainTokenService'));
     program.addOption(
         new Option('--action <action>', 'ITS action')
             .choices([
@@ -590,7 +669,7 @@ if (require.main === module) {
     program.addOption(new Option('--sourceChain <sourceChain>', 'source chain'));
     program.addOption(new Option('--sourceAddress <sourceAddress>', 'source address'));
     program.addOption(new Option('--payload <payload>', 'payload'));
-    program.addOption(new Option('--amount <amount>', 'token amount'));
+    program.addOption(new Option('--amount <amount>', 'token amount, in terms of symbol'));
     program.addOption(new Option('--metadata <metadata>', 'token transfer metadata').default('0x'));
     program.addOption(new Option('--data <data>', 'token transfer data'));
     program.addOption(new Option('--tokenIds <tokenIds>', 'tokenId array'));
