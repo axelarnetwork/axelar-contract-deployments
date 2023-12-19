@@ -559,9 +559,9 @@ async function processCommand(config, chain, options) {
                     printError(
                         `Error: Trusted address ${trustedAddress} does not match InterchainTokenService address ${interchainTokenServiceAddress}`,
                     );
-                }
 
-                break;
+                    break;
+                }
             }
 
             const gateway = await interchainTokenService.gateway();
