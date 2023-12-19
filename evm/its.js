@@ -88,6 +88,10 @@ function compare(contractValue, configValue, variableName) {
 }
 
 function isValidDestinationChain(config, chain, destinationChain, originalChain = null) {
+    if (destinationChain === '') {
+        return;
+    }
+
     const chains = config.chains;
 
     const validDestination = Object.values(chains).some((chainObject) => chainObject.id === destinationChain);
