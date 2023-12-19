@@ -1038,6 +1038,16 @@ async function getGasOptions(chain, options, contractName, defaultGasOptions = {
     return gasOptions;
 }
 
+function isValidChain(config, chainName) {
+    const chains = config.chains;
+
+    const validChain = Object.values(chains).some((chainObject) => chainObject.id === chainName);
+
+    if (!validChain) {
+        throw new Error(`Invalid destination chain: ${chainName}`);
+    }
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -1094,4 +1104,5 @@ module.exports = {
     getGasOptions,
     getSaltFromKey,
     getDeployOptions,
+    isValidChain,
 };

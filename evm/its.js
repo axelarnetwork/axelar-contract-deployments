@@ -22,6 +22,7 @@ const {
     isValidTokenId,
     getGasOptions,
     isNonEmptyString,
+    isValidChain,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -88,26 +89,12 @@ function compare(contractValue, configValue, variableName) {
     }
 }
 
-function isValidDestinationChain(config, chain, destinationChain, originalChain = null) {
+function isValidDestinationChain(config, destinationChain) {
     if (destinationChain === '') {
         return;
     }
 
-    const chains = config.chains;
-
-    const validDestination = Object.values(chains).some((chainObject) => chainObject.id === destinationChain);
-
-    if (!validDestination) {
-        throw new Error(`Invalid destination chain: ${destinationChain}`);
-    }
-
-    if (chain.id === destinationChain) {
-        throw new Error(`Destination chain ${destinationChain} equals source chain ${chain.id}`);
-    }
-
-    if (originalChain && destinationChain === originalChain) {
-        throw new Error(`Destination chain ${destinationChain} equals original chain ${originalChain}`);
-    }
+    isValidChain(config, destinationChain);
 }
 
 async function processCommand(config, chain, options) {
@@ -249,7 +236,7 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
-            isValidDestinationChain(config, chain, destinationChain);
+            isValidDestinationChain(config, destinationChain);
 
             const tx = await interchainTokenService.deployTokenManager(
                 deploymentSalt,
@@ -277,7 +264,7 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { decimals, gasValue },
             });
 
-            isValidDestinationChain(config, chain, destinationChain);
+            isValidDestinationChain(config, destinationChain);
 
             const tx = await interchainTokenService.deployInterchainToken(
                 deploymentSalt,
@@ -341,7 +328,7 @@ async function processCommand(config, chain, options) {
                 isValidCalldata: { metadata },
             });
 
-            isValidDestinationChain(config, chain, destinationChain);
+            isValidDestinationChain(config, destinationChain);
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
@@ -395,7 +382,7 @@ async function processCommand(config, chain, options) {
                 isValidCalldata: { data },
             });
 
-            isValidDestinationChain(config, chain, destinationChain);
+            isValidDestinationChain(config, destinationChain);
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 

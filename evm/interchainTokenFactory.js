@@ -154,7 +154,7 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
-            isValidDestinationChain(config, chain, destinationChain);
+            isValidDestinationChain(config, destinationChain);
 
             const tx = await interchainTokenFactory.deployRemoteInterchainToken(
                 originalChain,
@@ -192,7 +192,7 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
-            isValidDestinationChain(config, chain, destinationChain);
+            isValidDestinationChain(config, destinationChain);
 
             const tx = await interchainTokenFactory.deployRemoteCanonicalInterchainToken(
                 originalChain,
