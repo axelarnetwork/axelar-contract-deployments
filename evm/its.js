@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256 },
+    utils: { hexZeroPad, keccak256 },
     BigNumber,
     constants: { AddressZero },
     Contract,
@@ -317,8 +317,16 @@ async function processCommand(config, chain, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            const tokenManager = new Contract(await interchainTokenService.validTokenManagerAddress(tokenIdBytes32), getContractJSON('ITokenManager').abi, wallet);
-            const token = new Contract(await interchainTokenService.validTokenAddress(tokenIdBytes32), getContractJSON('InterchainToken').abi, wallet);
+            const tokenManager = new Contract(
+                await interchainTokenService.validTokenManagerAddress(tokenIdBytes32),
+                getContractJSON('ITokenManager').abi,
+                wallet,
+            );
+            const token = new Contract(
+                await interchainTokenService.validTokenAddress(tokenIdBytes32),
+                getContractJSON('InterchainToken').abi,
+                wallet,
+            );
 
             const implementationType = await tokenManager.implementationType();
             const decimals = await token.decimals();
@@ -463,7 +471,7 @@ async function processCommand(config, chain, options) {
             let trustedChains;
 
             if (options.trustedChain === 'all') {
-                ([trustedChains, ] = await getTrustedChainsAndAddresses(config, interchainTokenService));
+                [trustedChains] = await getTrustedChainsAndAddresses(config, interchainTokenService);
             } else {
                 const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.id;
 
@@ -471,7 +479,7 @@ async function processCommand(config, chain, options) {
                     throw new Error(`Invalid chain: ${options.trustedChain}`);
                 }
 
-                if (await interchainTokenService.trustedAddress(options.trustedChain) === '') {
+                if ((await interchainTokenService.trustedAddress(options.trustedChain)) === '') {
                     printError(`No trusted address for chain ${options.trustedChain}`);
                     return;
                 }
