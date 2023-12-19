@@ -1853,17 +1853,56 @@
             "evm-immutable-genesis"
           ],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "deploymentMethod": "create",
+          "salt": "AxelarGateway v6.2",
+          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
+          "implementationCodehash": "0x9bdd7652536460a69d217dc4fd03669ef763ba66d1dcdf5068ef6e887b2c1ea8",
+          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
+          "tokenDeployer": "0x8A156bCA562FB75385c4d41ea6903E270A34B727"
         },
         "AxelarGasService": {
-          "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
+          "collector": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C",
           "salt": "AxelarGasService",
-          "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "address": "0x24C2b56128fF8E7bFaD578ABefB0fc7Dfa9ba358",
+          "implementation": "0x42E0fBA4785D23643B9F596774b3b6CAc0d40640",
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
         },
         "InterchainTokenService": {
           "skip": true
+        },
+        "InterchainGovernance": {
+          "address": "0x35dFacdE7B4b80e156e69b1291D12EA51ce123BD",
+          "minimumTimeDelay": 604800,
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create",
+          "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2"
+        },
+        "Multisig": {
+          "threshold": 3,
+          "signers": [
+            "0x3f5876a2b06E54949aB106651Ab6694d0289b2b4",
+            "0x9256Fd872118ed3a97754B0fB42c15015d17E0CC",
+            "0x1486157d505C7F7E546aD00E3E2Eee25BF665C9b",
+            "0x2eC991B5c0B742AbD9d2ea31fe6c14a85e91C821",
+            "0xf505462A29E36E26f25Ef0175Ca1eCBa09CC118f",
+            "0x027c1882B975E2cd771AE068b0389FA38B9dda73"
+          ],
+          "address": "0xdC46f07661B673Fc262f61FC5b05B10A58a3b7fE",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb"
         }
       },
       "gasOptions": {
