@@ -3,14 +3,17 @@
 //! Axelar Gateway program for the Solana blockchain
 
 mod entrypoint;
-mod error;
+pub mod error;
 pub mod events;
 pub mod instruction;
 pub mod processor;
+use error::GatewayError;
 // Export current sdk types for downstream users building with a different sdk
-// version
+// version.
 pub use solana_program;
+use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
@@ -20,6 +23,23 @@ solana_program::declare_id!("VqMMNEMXqUagHieikoHz4YgFBusPs3kMFHN59yuwaoM");
 pub fn check_program_account(program_id: Pubkey) -> ProgramResult {
     if program_id != id() {
         return Err(ProgramError::IncorrectProgramId);
+    }
+    Ok(())
+}
+
+/// Compares the account address with the expected address.
+pub fn cmp_addr(pda_info: &AccountInfo<'_>, expected_pda_info: Pubkey) -> ProgramResult {
+    if pda_info.key != &expected_pda_info {
+        msg!("pda_info.key: {:?}", pda_info.key);
+        return Err(GatewayError::IncorrectAccountAddr.into());
+    }
+    Ok(())
+}
+
+/// Checks if the account is initialized.
+pub fn check_initialized(v: u64) -> ProgramResult {
+    if v != 0 {
+        return Err(GatewayError::IncorrectAccountAddr.into());
     }
     Ok(())
 }

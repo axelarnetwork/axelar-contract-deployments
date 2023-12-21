@@ -44,6 +44,12 @@ impl PartialEq<[u8]> for Address {
     }
 }
 
+impl PartialOrd for Address {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.0.cmp(&other.0))
+    }
+}
+
 impl Address {
     const ECDSA_COMPRESSED_PUBKEY_LEN: usize = 33;
 

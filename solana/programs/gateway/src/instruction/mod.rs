@@ -1,4 +1,8 @@
 //! Instruction types
+
+pub mod initialize;
+pub mod transfer_op;
+
 use std::io::Write;
 
 use slice_iterator::SliceIterator;
@@ -7,6 +11,7 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use crate::error::GatewayError::{self, *};
+use crate::id;
 
 /// Instructions supported by the gateway program.
 #[repr(u8)]
@@ -62,6 +67,11 @@ pub enum GatewayInstruction<'a> {
         /// Initial state of the root PDA `Config`.
         payload: &'a [u8],
     },
+
+    /// Recieves parameters over account.
+    ///
+    /// Is meant to be used as part of key rotation process.
+    TransferOperatorship,
 }
 
 impl<'a> GatewayInstruction<'a> {
@@ -92,6 +102,7 @@ impl<'a> GatewayInstruction<'a> {
                 }
             }
             2 => GatewayInstruction::Initialize { payload: rest },
+            3 => GatewayInstruction::TransferOperatorship {},
             _ => return Err(InvalidInstruction),
         })
     }
@@ -122,6 +133,9 @@ impl<'a> GatewayInstruction<'a> {
             Self::Initialize { payload } => {
                 buffer.push(2);
                 serialize_slices(&[payload], &mut buffer)?;
+            }
+            Self::TransferOperatorship {} => {
+                buffer.push(3);
             }
         }
         Ok(buffer)
@@ -224,6 +238,29 @@ pub fn build_initialize_ix(
 
     Ok(Instruction {
         program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Creates a validate proof instruction.
+/// Thats purely for testing purposes.
+pub fn build_transfer_operatorship_ix(
+    payer: &Pubkey,
+    new_operators: &Pubkey,
+    state: &Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let accounts = vec![
+        AccountMeta::new(*payer, true),
+        AccountMeta::new_readonly(*new_operators, false),
+        AccountMeta::new(*state, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    let data = GatewayInstruction::TransferOperatorship {}.pack()?;
+
+    Ok(Instruction {
+        program_id: id(),
         accounts,
         data,
     })

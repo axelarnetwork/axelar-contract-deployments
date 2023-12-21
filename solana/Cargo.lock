@@ -1628,7 +1628,9 @@ name = "gateway"
 version = "0.1.0"
 dependencies = [
  "arrayref",
+ "auth-weighted",
  "base64 0.21.5",
+ "borsh 0.10.3",
  "hex",
  "num-derive 0.4.1",
  "num-traits",

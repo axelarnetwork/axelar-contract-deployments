@@ -17,6 +17,8 @@ solana-program-test = "1.17.9"
 solana-sdk = "1.17.9"
 thiserror = "1"
 
+auth-weighted = { path = "programs/auth-weighted" }
+
 # helper crates
 program-utils = { path = "helpers/program-utils" }
 random-array = { path = "helpers/random-array" }

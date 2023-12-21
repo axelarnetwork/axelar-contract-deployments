@@ -26,6 +26,11 @@ pub enum GatewayEventRef<'a> {
         /// The payload hash.
         payload_hash: &'a [u8; 32],
     },
+    /// The event emited after successful keys rotation [TransferOperatorship].
+    OperatorshipTransferred {
+        /// Serialized.
+        params: &'a [u8],
+    },
 }
 
 impl<'a> GatewayEventRef<'a> {
@@ -50,6 +55,9 @@ impl<'a> GatewayEventRef<'a> {
                 payload,
                 payload_hash,
             ]),
+            GatewayEventRef::OperatorshipTransferred { params } => {
+                sol_log_data(&[&[self.discriminant()], params])
+            }
         };
     }
 }
@@ -129,6 +137,14 @@ pub fn emit_call_contract_event(
         payload,
     };
     event.emit();
+    Ok(())
+}
+
+/// Emit a [`OperatorshipTransferred`].
+pub fn emit_operatorship_transferred_event(params: &[u8]) -> Result<(), GatewayError> {
+    let event = GatewayEventRef::OperatorshipTransferred { params };
+    event.emit();
+
     Ok(())
 }
 

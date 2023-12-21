@@ -11,14 +11,6 @@ pub enum AuthWeightedError {
     #[error("invalid operators")]
     InvalidOperators,
 
-    /// InvalidWeights
-    #[error("invalid weights")]
-    InvalidWeights,
-
-    /// InvalidThreshold
-    #[error("invalid treshold")]
-    InvalidThreshold,
-
     /// DuplicateOperators
     #[error("duplicate operators")]
     DuplicateOperators,
@@ -66,10 +58,6 @@ pub enum AuthWeightedError {
     /// Secp256k1RecoveryFailedInvalidHash
     #[error("could not recover public key due to invalid hash")]
     Secp256k1RecoveryFailedInvalidHash,
-
-    /// DebugError
-    #[error("use only for debugging")]
-    DebugError,
 }
 
 impl From<AuthWeightedError> for ProgramError {
