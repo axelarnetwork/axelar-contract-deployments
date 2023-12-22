@@ -1,12 +1,15 @@
 [package]
-name = "solana-client"
+name = "eiger-solana-client"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 clap.workspace = true
-env_logger.workspace = true
-log.workspace = true
 solana-client.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+gateway = { path = "../../../solana/programs/gateway" }
+anyhow.workspace = true

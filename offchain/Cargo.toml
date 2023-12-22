@@ -29,6 +29,8 @@ solana-program = "1.17.9"
 solana-sdk = "1.17.9"
 solana-transaction-status = "1.17.9"
 tokio = { version = "1.34.0", features = ["rt", "rt-multi-thread", "macros"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [patch.crates-io]
 # aes-gcm-siv 0.10.3 and curve25519-dalek 3.x pin zeroize to <1.4

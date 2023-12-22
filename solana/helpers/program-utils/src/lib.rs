@@ -38,7 +38,7 @@ pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack + borsh::BorshSeri
         &[signer_seeds],
     )?;
     let mut account_data = to_create.try_borrow_mut_data()?;
-    let serialized_data = data.try_to_vec().unwrap();
+    let serialized_data = borsh::to_vec(&data).unwrap();
     account_data[..serialized_data.len()].copy_from_slice(&serialized_data);
     Ok(())
 }

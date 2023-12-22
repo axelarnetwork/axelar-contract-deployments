@@ -11,12 +11,15 @@ pub enum GatewayError {
     /// Invalid instruction
     #[error("Invalid instruction")]
     InvalidInstruction,
+
     /// Invalid message payload hash
     #[error("Invalid message payload hash")]
     InvalidMessagePayloadHash,
+
     /// Byte serialization error
     #[error("Byte serialization error")]
     ByteSerializationError,
+
     /// Incorrect root state account
     #[error("Incorrect root state account")]
     IncorrectAccountAddr,
@@ -76,6 +79,27 @@ pub enum GatewayError {
     /// Secp256k1RecoveryFailedInvalidHash
     #[error("could not recover public key due to invalid hash")]
     Secp256k1RecoveryFailedInvalidHash,
+
+    /// Invalid Account Address
+    #[error("Invalid Account Address")]
+    InvalidAccountAddress,
+
+    /// Invalid Gateway Config account
+    #[error("Invalid Gateway Config account")]
+    InvalidConfigAccount,
+
+    /// Invalid System Program account
+    #[error("Invalid System Program account")]
+    InvalidSystemAccount,
+
+    // 5
+    /// Invalid Execute Data account
+    #[error("Invalid Execute Data account")]
+    InvalidExecuteDataAccount,
+
+    /// Invalid Message ID account
+    #[error("Invalid Message ID account")]
+    InvalidMessageIDAccount,
 }
 
 impl From<GatewayError> for ProgramError {

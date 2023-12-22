@@ -5,6 +5,7 @@ use auth_weighted::types::account::transfer_operatorship::TransferOperatorshipAc
 use auth_weighted::types::address::Address;
 use auth_weighted::types::u256::U256;
 use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -14,8 +15,32 @@ use solana_program::{keccak, system_instruction};
 
 use crate::error::GatewayError;
 use crate::events::emit_operatorship_transferred_event;
+use crate::instructions::GatewayInstruction;
 use crate::{check_program_account, cmp_addr, find_root_pda};
 
+/// Creates a [`GatewayInstructon::TransferOperatorship`] instruction
+pub fn transfer_operatorship_ix(
+    payer: &Pubkey,
+    new_operators: &Pubkey,
+    state: &Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let accounts = vec![
+        AccountMeta::new(*payer, true),
+        AccountMeta::new_readonly(*new_operators, false),
+        AccountMeta::new(*state, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    let data = borsh::to_vec(&GatewayInstruction::TransferOperatorship {})?;
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+// TODO: move to processor module
 pub(crate) fn transfer_operatorship(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
@@ -116,22 +141,8 @@ pub(crate) fn transfer_operatorship(
 
 /// Checks if the given list of accounts is sorted in ascending order and
 /// contains no duplicates.
-pub fn is_sorted_asc_and_contains_no_duplicate(accounts: &[Address]) -> bool {
-    let mut previous_account = &accounts[0];
-
-    if *previous_account == Address::new(vec![0]) {
-        return false;
-    }
-
-    for current_account in accounts.iter().skip(1) {
-        if previous_account >= current_account {
-            return false;
-        }
-
-        previous_account = current_account;
-    }
-
-    true
+pub fn is_sorted_asc_and_contains_no_duplicate(addresses: &[Address]) -> bool {
+    addresses.windows(2).all(|pair| pair[0] < pair[1])
 }
 
 #[cfg(test)]
@@ -146,7 +157,7 @@ mod tests {
             Address::new(vec![2, 3, 4]),
             Address::new(vec![3, 4, 5]),
         ];
-        assert_eq!(is_sorted_asc_and_contains_no_duplicate(&addresses1), true);
+        assert!(is_sorted_asc_and_contains_no_duplicate(&addresses1));
 
         // // not sorted
         let addresses2 = vec![
@@ -154,7 +165,7 @@ mod tests {
             Address::new(vec![2, 3, 4]),
             Address::new(vec![1, 2, 3]),
         ];
-        assert_eq!(is_sorted_asc_and_contains_no_duplicate(&addresses2), false);
+        assert!(!is_sorted_asc_and_contains_no_duplicate(&addresses2));
 
         // duplicates
         let addresses3 = vec![
@@ -162,6 +173,6 @@ mod tests {
             Address::new(vec![2, 3, 4]),
             Address::new(vec![2, 3, 4]),
         ];
-        assert_eq!(is_sorted_asc_and_contains_no_duplicate(&addresses3), false);
+        assert!(!is_sorted_asc_and_contains_no_duplicate(&addresses3));
     }
 }

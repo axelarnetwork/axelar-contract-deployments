@@ -1,3 +1,5 @@
+mod common;
+
 use std::collections::BTreeMap;
 
 use ::base64::engine::general_purpose;
@@ -6,6 +8,7 @@ use auth_weighted::types::account::transfer_operatorship::TransferOperatorshipAc
 use auth_weighted::types::address::Address;
 use auth_weighted::types::u256::U256;
 use base64::Engine;
+use common::program_test;
 use gateway::error::GatewayError;
 use solana_program::instruction::InstructionError;
 use solana_program::keccak;
@@ -13,8 +16,6 @@ use solana_program::pubkey::Pubkey;
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::{Transaction, TransactionError};
-
-use crate::utils::program_test;
 
 #[tokio::test]
 async fn test_transfer_operatorship_happy_scenario() {
@@ -109,7 +110,7 @@ async fn test_transfer_operatorship_happy_scenario() {
         .unwrap();
 
     // Push.
-    let instruction = gateway::instruction::build_transfer_operatorship_ix(
+    let instruction = gateway::instructions::transfer_op::transfer_operatorship_ix(
         &payer.pubkey(),
         &params_account,
         &state_account,
@@ -248,7 +249,7 @@ async fn test_transfer_operatorship_duplicate_ops() {
 
     let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
 
-    let instruction = gateway::instruction::build_transfer_operatorship_ix(
+    let instruction = gateway::instructions::transfer_op::transfer_operatorship_ix(
         &payer.pubkey(),
         &params_account,
         &state_account,
@@ -350,7 +351,7 @@ async fn test_transfer_operatorship_invald_weights() {
 
     let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
 
-    let instruction = gateway::instruction::build_transfer_operatorship_ix(
+    let instruction = gateway::instructions::transfer_op::transfer_operatorship_ix(
         &payer.pubkey(),
         &params_account,
         &state_account,
@@ -464,15 +465,8 @@ async fn test_transfer_operatorship_zero_weights() {
     //
 
     let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
-
-    let state_data_after_before_mutation = banks_client
-        .get_account(state_account)
-        .await
-        .expect("get_account")
-        .unwrap();
-
     // Push.
-    let instruction = gateway::instruction::build_transfer_operatorship_ix(
+    let instruction = gateway::instructions::transfer_op::transfer_operatorship_ix(
         &payer.pubkey(),
         &params_account,
         &state_account,

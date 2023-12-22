@@ -2,12 +2,14 @@
 
 //! Axelar Gateway program for the Solana blockchain
 
+pub mod accounts;
 mod entrypoint;
 pub mod error;
 pub mod events;
-pub mod instruction;
+pub mod instructions;
 pub mod processor;
-use error::GatewayError;
+pub mod types;
+
 // Export current sdk types for downstream users building with a different sdk
 // version.
 pub use solana_program;
@@ -17,7 +19,9 @@ use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-solana_program::declare_id!("VqMMNEMXqUagHieikoHz4YgFBusPs3kMFHN59yuwaoM");
+use crate::error::GatewayError;
+
+solana_program::declare_id!("4hz16cS4d82cPKzvaQNzMCadyKSqzZR8bqzw8FfzYH8a");
 
 /// Checks that the supplied program ID is the correct one
 pub fn check_program_account(program_id: Pubkey) -> ProgramResult {
@@ -46,6 +50,5 @@ pub fn check_initialized(v: u64) -> ProgramResult {
 
 /// Finds the program root PDA.
 pub fn find_root_pda() -> (Pubkey, u8) {
-    let (found_pda_info, bump) = Pubkey::find_program_address(&[&[]], &crate::id());
-    (found_pda_info, bump)
+    Pubkey::find_program_address(&[&[]], &crate::id())
 }

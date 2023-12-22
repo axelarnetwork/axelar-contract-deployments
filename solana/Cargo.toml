@@ -4,17 +4,16 @@ resolver = "2"
 
 [workspace.dependencies]
 anchor-lang = "0.29.0"
+anyhow = "1"
 base64 = "0.21"
-borsh = "0.10"
-ethnum = { version = "1.5.0", features = ["serde"]}
+borsh = { version = "1", features = ["derive"] }
+ethnum = { version = "1.5.0", features = ["serde"] }
 hex = "0.4.3"
 num-derive = "0.4"
 num-traits = "0.2"
-rand = "0.8.5"
-secp256k1 ="0.28.0"
-solana-program = "1.17.9"
-solana-program-test = "1.17.9"
-solana-sdk = "1.17.9"
+solana-program = "1.17.12"
+solana-program-test = "1.17.12"
+solana-sdk = "1.17.12"
 thiserror = "1"
 
 auth-weighted = { path = "programs/auth-weighted" }
