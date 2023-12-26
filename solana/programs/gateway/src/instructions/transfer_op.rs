@@ -135,7 +135,7 @@ pub(crate) fn transfer_operatorship(
     let mut state_data_ref = state_info.try_borrow_mut_data()?;
     state_data_ref[..state_data_packed.len()].copy_from_slice(&state_data_packed);
 
-    emit_operatorship_transferred_event(new_operators_data_ref).unwrap();
+    emit_operatorship_transferred_event(*new_operators_info.key)?;
     Ok(())
 }
 

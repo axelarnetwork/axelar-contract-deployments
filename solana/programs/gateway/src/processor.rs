@@ -37,17 +37,17 @@ impl Processor {
             GatewayInstruction::CallContract {
                 sender,
                 destination_chain,
-                destination_contract_address,
+                destination_contract_address: destination_address,
                 payload,
                 payload_hash,
             } => {
                 msg!("Instruction: Call Contract");
                 emit_call_contract_event(
-                    &sender,
-                    destination_chain.as_bytes(),
-                    &destination_contract_address,
-                    &payload,
-                    &payload_hash,
+                    *sender,
+                    destination_chain,
+                    destination_address,
+                    payload,
+                    payload_hash,
                 )?;
                 Ok(())
             }
@@ -77,7 +77,7 @@ impl Processor {
         // DEBUG: print all accounts
         let mut accounts = accounts.iter();
         while let Ok(account) = next_account_info(&mut accounts) {
-            msg!("Instruction Account: {:#?}", account);
+            msg!("{}", account.key);
         }
         Ok(())
     }

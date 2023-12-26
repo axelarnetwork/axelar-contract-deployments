@@ -11,7 +11,8 @@ use solana_program::address_lookup_table::state::AddressLookupTable;
 use solana_program::address_lookup_table_account::AddressLookupTableAccount;
 use solana_program::hash::Hash;
 use solana_program::instruction::Instruction;
-use solana_program::message::{v0, VersionedMessage};
+use solana_program::message::v0::Message;
+use solana_program::message::VersionedMessage;
 use solana_program::pubkey::Pubkey;
 use solana_program::slot_hashes::SlotHashes;
 use solana_program::slot_history::Slot;
@@ -21,6 +22,37 @@ use solana_program_test::{
 use solana_sdk::address_lookup_table::instruction::{create_lookup_table, extend_lookup_table};
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::{Transaction, VersionedTransaction};
+
+mod helper {
+    use super::*;
+    pub async fn prepare_versioned_transaction(
+        context: &mut ProgramTestContext,
+        instruction: Instruction,
+        lookup_table_address: Pubkey,
+    ) -> Result<VersionedTransaction> {
+        let raw_account = context
+            .banks_client
+            .get_account(lookup_table_address)
+            .await?
+            .ok_or(anyhow!("could not find address lookup table account"))?;
+        let address_lookup_table = AddressLookupTable::deserialize(&raw_account.data)?;
+        let address_lookup_table_account = AddressLookupTableAccount {
+            key: lookup_table_address,
+            addresses: address_lookup_table.addresses.to_vec(),
+        };
+        let blockhash = context.banks_client.get_latest_blockhash().await?;
+        let message = Message::try_compile(
+            &context.payer.pubkey(),
+            &[instruction],
+            &[address_lookup_table_account],
+            blockhash,
+        )?;
+        Ok(VersionedTransaction::try_new(
+            VersionedMessage::V0(message),
+            &[&context.payer],
+        )?)
+    }
+}
 
 mod accounts {
     use super::*;
@@ -151,19 +183,56 @@ mod accounts {
         Ok(())
     }
 
+    /// Helper struct to track and advance slots in tests.
+    pub struct SlotTracker {
+        position: usize,
+        slots: Vec<Slot>,
+    }
+
+    impl<'a> SlotTracker {
+        pub fn new(context: &ProgramTestContext, slots: Vec<Slot>) -> Result<Self> {
+            anyhow::ensure!(!slots.is_empty());
+            Self::overwrite_slot_hashes_with_slots(context, &slots);
+            Ok(Self { position: 0, slots })
+        }
+
+        fn overwrite_slot_hashes_with_slots(context: &ProgramTestContext, slots: &[Slot]) {
+            let mut slot_hashes = SlotHashes::default();
+            for slot in slots {
+                slot_hashes.add(*slot, Hash::new_unique());
+            }
+            context.set_sysvar(&slot_hashes);
+        }
+
+        pub fn warp_to_next_slot(&mut self, context: &'a mut ProgramTestContext) -> Result<()> {
+            let new_position = self.position + 1;
+            anyhow::ensure!(new_position < self.slots.len(), "No more slots to advance");
+            self.position = new_position;
+            context.warp_to_slot(self.current_slot())?;
+            Ok(())
+        }
+
+        pub fn current_slot(&self) -> Slot {
+            self.slots[self.position]
+        }
+    }
+
     /// Original function refactored to use the new functions.
     /// Payer is also assigned as the Authority of the lookup table.
     pub(super) async fn initialize_address_lookup_table(
         context: &mut ProgramTestContext,
         accounts: &[Pubkey],
+        slot_tracker: &mut SlotTracker,
     ) -> Result<Pubkey> {
         assert!(accounts.len() < u8::MAX as usize, "too many accounts");
         let payer_pk = context.payer.pubkey();
-        let (slot1, slot2) = (10, 20); // Creation and extension must happen in different slots.
-        overwrite_slot_hashes_with_slots(context, &[slot1, slot2]);
-        let lookup_table_address = create_address_lookup_table(context, payer_pk, slot1).await?;
-        context.warp_to_slot(slot2)?; // Advance slot before extending.
+        let lookup_table_address =
+            create_address_lookup_table(context, payer_pk, slot_tracker.current_slot()).await?;
+        // Need to wait for the next slot to extended the created address lookup table.
+        slot_tracker.warp_to_next_slot(context)?;
         extend_address_lookup_table(context, lookup_table_address, payer_pk, accounts).await?;
+        // Need to wait for the next slot to use the extended address lookup table.
+        slot_tracker.warp_to_next_slot(context)?;
         Ok(lookup_table_address)
     }
 }
@@ -200,7 +269,7 @@ async fn test_call_contract_instruction() -> Result<()> {
 
     assert!({ result.is_ok() });
 
-    let event = metadata
+    let expected_event = metadata
         .ok_or("expected transaction to have metadata")
         .unwrap()
         .log_messages
@@ -209,16 +278,15 @@ async fn test_call_contract_instruction() -> Result<()> {
         .next();
 
     assert_eq!(
-        event,
+        expected_event,
         Some(GatewayEvent::CallContract {
-            sender: sender.pubkey(),
+            sender: sender.pubkey().into(),
             destination_chain: destination_chain.as_bytes().to_vec(),
             destination_address,
             payload,
             payload_hash
         })
     );
-
     Ok(())
 }
 
@@ -267,63 +335,35 @@ async fn execute_message() -> Result<()> {
     };
 
     let message_accounts: Vec<Pubkey> = {
-        // Using more than this causes the Address Lookup Table program reject the
-        // instruction witht: 'invalid instruction data'
-        let batch_size = 38;
-
+        // Be mindful of transaction max size and compute budget:
+        // - Using more than 38 accounts causes the Address Lookup Table program reject
+        //   the instruction with: 'invalid instruction data'.
+        // - Using more than 14 accounts cause the `Execute` instruction to fail with
+        //   'Program failed to complete'.
+        let batch_size = 14;
         (0..batch_size)
             .map(|id| GatewayMessageID::new(format!("message{id}")).pda().0)
             .collect()
     };
 
-    let lookup_table_address =
-        accounts::initialize_address_lookup_table(&mut test_context, &message_accounts).await?;
+    let mut slot_tracker = accounts::SlotTracker::new(&test_context, vec![10, 20, 30])?;
+
+    let lookup_table_address = accounts::initialize_address_lookup_table(
+        &mut test_context,
+        &message_accounts,
+        &mut slot_tracker,
+    )
+    .await?;
 
     let instruction =
         gateway::instructions::execute(gateway::ID, execute_data_account, &message_accounts)?;
     let transaction =
-        prepare_versioned_transaction(&mut test_context, instruction, lookup_table_address).await?;
+        helper::prepare_versioned_transaction(&mut test_context, instruction, lookup_table_address)
+            .await?;
 
     test_context
         .banks_client
         .process_transaction(transaction)
         .await?;
     Ok(())
-}
-
-async fn prepare_versioned_transaction(
-    context: &mut ProgramTestContext,
-    instruction: Instruction,
-    lookup_table_address: Pubkey,
-) -> Result<VersionedTransaction> {
-    let raw_account = context
-        .banks_client
-        .get_account(lookup_table_address)
-        .await?
-        .ok_or(anyhow!("could not find address lookup table account"))?;
-    let address_lookup_table = AddressLookupTable::deserialize(&raw_account.data)?;
-    let address_lookup_table_account = AddressLookupTableAccount {
-        key: lookup_table_address,
-        addresses: address_lookup_table.addresses.to_vec(),
-    };
-    let blockhash = context.banks_client.get_latest_blockhash().await?;
-    let tx = VersionedTransaction::try_new(
-        VersionedMessage::V0(v0::Message::try_compile(
-            &context.payer.pubkey(),
-            &[instruction],
-            &[address_lookup_table_account],
-            blockhash,
-        )?),
-        &[&context.payer],
-    )?;
-
-    Ok(tx)
-}
-
-pub fn overwrite_slot_hashes_with_slots(context: &ProgramTestContext, slots: &[Slot]) {
-    let mut slot_hashes = SlotHashes::default();
-    for slot in slots {
-        slot_hashes.add(*slot, Hash::new_unique());
-    }
-    context.set_sysvar(&slot_hashes);
 }
