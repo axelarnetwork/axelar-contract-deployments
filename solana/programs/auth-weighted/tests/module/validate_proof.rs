@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use ::base64::engine::general_purpose;
+use anyhow::Result;
 use auth_weighted::error::AuthWeightedError;
 use auth_weighted::types::account::state::AuthWeightedStateAccount;
 use auth_weighted::types::account::validate_proof::ValidateProofAccount;
@@ -23,7 +24,7 @@ fn prepare_valid_proof() -> ([u8; 32], Proof) {
         let mut array = [0; 32];
         array.copy_from_slice(
             &hex::decode("fa0609efd1dfeedfdcc8ba51520fae2d5176b7621d2560f071e801b0817e1537")
-                .unwrap(),
+                .expect("decodable input"),
         );
 
         array
@@ -72,8 +73,8 @@ fn prepare_valid_state_account() -> AuthWeightedStateAccount {
     let operators_hash = proof.get_operators_hash();
 
     // Populate.
-    epoch_for_hash.insert(operators_hash, current_epoch.clone());
-    hash_for_epoch.insert(current_epoch.clone(), operators_hash);
+    epoch_for_hash.insert(operators_hash, current_epoch);
+    hash_for_epoch.insert(current_epoch, operators_hash);
 
     //
     AuthWeightedStateAccount {
@@ -84,7 +85,7 @@ fn prepare_valid_state_account() -> AuthWeightedStateAccount {
 }
 
 #[tokio::test]
-async fn test_validate_proof_happy_scenario() {
+async fn test_validate_proof_happy_scenario() -> Result<()> {
     // Keys.
     let accounts_owner = Keypair::new();
 
@@ -102,7 +103,8 @@ async fn test_validate_proof_happy_scenario() {
     );
 
     // Mock data prepare; program state.
-    let state_account_b64 = general_purpose::STANDARD.encode(prepare_valid_state_account().pack());
+    let state_account_b64 =
+        general_purpose::STANDARD.encode(borsh::to_vec(&prepare_valid_state_account())?);
 
     // Env setup.
     let mut program_test: ProgramTest = program_test();
@@ -131,19 +133,20 @@ async fn test_validate_proof_happy_scenario() {
         &payer.pubkey(),
         &params_account,
         &state_account,
-    )
-    .unwrap();
+    )?;
 
     // Prepare/ sign transaction.
     let mut transaction = Transaction::new_with_payer(&[instruction], Some(&payer.pubkey()));
     transaction.sign(&[&payer], recent_blockhash);
 
     // Push.
-    banks_client.process_transaction(transaction).await.unwrap();
+    banks_client.process_transaction(transaction).await?;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_validate_proof_invalid_message_hash() {
+async fn test_validate_proof_invalid_message_hash() -> Result<()> {
     // Keys.
     let accounts_owner = Keypair::new();
 
@@ -155,10 +158,9 @@ async fn test_validate_proof_invalid_message_hash() {
 
     let invalid_message_hash: [u8; 32] = {
         let mut array = [0; 32];
-        array.copy_from_slice(
-            &hex::decode("fb0609efd1dfeedfdcc8ba51520fae2d5176b7621d2560f071e801b0817e1537")
-                .unwrap(),
-        );
+        array.copy_from_slice(&hex::decode(
+            "fb0609efd1dfeedfdcc8ba51520fae2d5176b7621d2560f071e801b0817e1537",
+        )?);
 
         array
     };
@@ -172,7 +174,8 @@ async fn test_validate_proof_invalid_message_hash() {
     );
 
     // Mock data prepare; program state.
-    let state_account_b64 = general_purpose::STANDARD.encode(prepare_valid_state_account().pack());
+    let state_account_b64 =
+        general_purpose::STANDARD.encode(borsh::to_vec(&prepare_valid_state_account())?);
 
     // Env setup.
     let mut program_test: ProgramTest = program_test();
@@ -201,8 +204,7 @@ async fn test_validate_proof_invalid_message_hash() {
         &payer.pubkey(),
         &params_account,
         &state_account,
-    )
-    .unwrap();
+    )?;
 
     // Prepare/ sign transaction.
     let mut transaction = Transaction::new_with_payer(&[instruction], Some(&payer.pubkey()));
@@ -219,4 +221,5 @@ async fn test_validate_proof_invalid_message_hash() {
             InstructionError::Custom(AuthWeightedError::MalformedSigners as u32)
         )
     );
+    Ok(())
 }

@@ -1,7 +1,5 @@
 //! Instruction types
 
-pub mod transfer_op;
-
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
@@ -75,7 +73,7 @@ pub enum GatewayInstruction {
     },
 }
 
-/// Creates an [`Execute`] instruction.
+/// Creates a [`GatewayInstruction::Execute`] instruction.
 pub fn execute(
     program_id: Pubkey,
     execute_data_account: Pubkey,
@@ -191,6 +189,28 @@ pub fn initialize_config(
         AccountMeta::new(gateway_config_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Creates a [`GatewayInstructon::TransferOperatorship`] instruction
+pub fn transfer_operatorship(
+    payer: &Pubkey,
+    new_operators: &Pubkey,
+    state: &Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let accounts = vec![
+        AccountMeta::new(*payer, true),
+        AccountMeta::new_readonly(*new_operators, false),
+        AccountMeta::new(*state, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    let data = borsh::to_vec(&GatewayInstruction::TransferOperatorship {})?;
+
     Ok(Instruction {
         program_id: crate::id(),
         accounts,

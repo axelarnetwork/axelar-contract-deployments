@@ -21,5 +21,6 @@ solana-program.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
+anyhow.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true

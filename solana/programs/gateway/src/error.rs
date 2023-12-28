@@ -7,7 +7,6 @@ use thiserror::Error;
 /// Errors that may be returned by the Token program.
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
 pub enum GatewayError {
-    // 0
     /// Invalid instruction
     #[error("Invalid instruction")]
     InvalidInstruction,
@@ -23,15 +22,19 @@ pub enum GatewayError {
     /// Incorrect root state account
     #[error("Incorrect root state account")]
     IncorrectAccountAddr,
+
     /// Account already initialized
     #[error("Account already initialized")]
     AccountAlreadyInitialized,
+
     /// Invalid operators
     #[error("Invalid operators")]
     InvalidOperators,
+
     /// Invalid weights
     #[error("Invalid weights")]
     InvalidWeights,
+
     /// Invalid threshold
     #[error("Invalid threshold")]
     InvalidThreshold,
@@ -92,7 +95,6 @@ pub enum GatewayError {
     #[error("Invalid System Program account")]
     InvalidSystemAccount,
 
-    // 5
     /// Invalid Execute Data account
     #[error("Invalid Execute Data account")]
     InvalidExecuteDataAccount,

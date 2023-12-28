@@ -11,6 +11,14 @@ pub enum AuthWeightedError {
     #[error("invalid operators")]
     InvalidOperators,
 
+    /// Invalid weights
+    #[error("Invalid weights")]
+    InvalidWeights,
+
+    /// Invalid threshold
+    #[error("Invalid threshold")]
+    InvalidThreshold,
+
     /// DuplicateOperators
     #[error("duplicate operators")]
     DuplicateOperators,

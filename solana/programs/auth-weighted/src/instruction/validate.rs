@@ -66,11 +66,7 @@ pub fn validate_proof_ix(
     };
 
     // State account data.
-    let state_data: &[u8] = &state.data.borrow();
-    let state_data = match AuthWeightedStateAccount::unpack(state_data) {
-        Ok(v) => v,
-        Err(e) => return Err(e.into()),
-    };
+    let state_data: AuthWeightedStateAccount = borsh::de::from_slice(*state.data.borrow())?;
 
     let operators_hash = params_data.proof.get_operators_hash();
     let message_hash = params_data.message_hash;

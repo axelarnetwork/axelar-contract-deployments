@@ -11,6 +11,7 @@ use crate::types::PubkeyWrapper;
 /// Gateway program logs.
 ///
 /// Used internally by the Gateway program to log messages.
+#[non_exhaustive]
 #[repr(u8)]
 #[derive(Debug, PartialEq, BorshDeserialize, BorshSerialize)]
 pub enum GatewayEvent {

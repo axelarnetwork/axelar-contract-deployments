@@ -1,11 +1,12 @@
 //! U256 implementation of uint256.
 
+use std::iter::Sum;
 use std::ops::{Add, Sub};
 
 use borsh::{BorshDeserialize, BorshSerialize};
 
 /// [U256] represents uint256.
-#[derive(Clone, PartialEq, PartialOrd, Debug, Ord, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug, Ord, Eq, Hash)]
 pub struct U256(ethnum::U256);
 
 impl U256 {
@@ -26,6 +27,12 @@ impl Add for U256 {
 
     fn add(self, b: Self) -> Self {
         U256(self.0 + b.0)
+    }
+}
+
+impl Sum for U256 {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(U256::from(0), |a, b| a + b)
     }
 }
 
