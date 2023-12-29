@@ -139,7 +139,9 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
     // Checks if current_epoch was mutated in the state.
     assert_eq!(
         state_data_after_mutation_unpacked.current_epoch,
-        current_epoch + U256::from(1)
+        current_epoch
+            .checked_add(U256::ONE)
+            .expect("arithmetic overflow")
     );
 
     // TODO: check if epoch_for_hash is the valid one here.

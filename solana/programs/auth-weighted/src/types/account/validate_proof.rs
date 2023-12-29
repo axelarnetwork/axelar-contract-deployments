@@ -1,6 +1,6 @@
 //! Validate Proof params account.
 
-use borsh::{to_vec, BorshDeserialize, BorshSerialize};
+use borsh::{BorshDeserialize, BorshSerialize};
 
 use crate::error::AuthWeightedError;
 use crate::types::proof::Proof;
@@ -17,18 +17,9 @@ pub struct ValidateProofAccount {
     pub proof: Proof,
 }
 
-impl<'a> ValidateProofAccount {
-    /// Deserialize [ValidateProofAccount].
-    pub fn unpack(input: &'a [u8]) -> Result<Self, AuthWeightedError> {
-        match Self::try_from_slice(input) {
-            Ok(v) => Ok(v),
-            Err(_) => Err(AuthWeightedError::MalformedProof),
-        }
-    }
-
-    /// Serialize [ValidateProofAccount].
-    pub fn pack(&self) -> Vec<u8> {
-        // It is safe to unwrap here, as to_vec doesn't return Error.
-        to_vec(&self).unwrap()
+impl ValidateProofAccount {
+    /// Checks if the proof is valid for the given message batch hash.
+    pub fn validate(&self) -> Result<(), AuthWeightedError> {
+        self.proof.validate(&self.message_hash)
     }
 }

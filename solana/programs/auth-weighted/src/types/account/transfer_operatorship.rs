@@ -47,14 +47,25 @@ impl TransferOperatorshipAccount {
     }
 
     /// Verifies if the threshold is valid.
-    fn valid_threshold(&self) -> bool {
-        let total_weight: U256 = self.weights().iter().copied().sum();
-        self.threshold() != U256::from(0) && total_weight >= self.threshold()
+    fn valid_threshold(&self) -> Result<(), AuthWeightedError> {
+        if self.threshold == U256::ZERO {
+            return Err(AuthWeightedError::InvalidThreshold);
+        }
+        let total_weight: U256 = self
+            .weights()
+            .iter()
+            .try_fold(U256::ZERO, |a, &b| a.checked_add(b))
+            .ok_or(AuthWeightedError::ArithmeticOverflow)?;
+        if total_weight < self.threshold {
+            Err(AuthWeightedError::InvalidThreshold)
+        } else {
+            Ok(())
+        }
     }
 
     /// Checks if the operators data is valid.
     fn valid_operators(&self) -> bool {
-        self.operators_len() == 0 || is_sorted_and_unique(self.operators())
+        self.operators.is_empty() || is_sorted_and_unique(&self.operators)
     }
 
     /// Validates transfer operatorship data.
@@ -70,9 +81,7 @@ impl TransferOperatorshipAccount {
         }
 
         // Check: sufficient threshold
-        if !self.valid_threshold() {
-            return Err(AuthWeightedError::InvalidThreshold);
-        }
+        self.valid_threshold()?;
 
         Ok(())
     }

@@ -40,7 +40,10 @@ impl AuthWeightedStateAccount {
 
         // XXX: Is this the correct way to [re]define an epoch?
         // TODO: use checked math.
-        self.current_epoch = self.current_epoch + 1.into();
+        self.current_epoch = self
+            .current_epoch
+            .checked_add(U256::ONE)
+            .ok_or(AuthWeightedError::ArithmeticOverflow)?;
         self.hash_for_epoch
             .insert(self.current_epoch, operators_hash);
         self.epoch_for_hash

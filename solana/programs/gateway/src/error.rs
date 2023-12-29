@@ -7,6 +7,7 @@ use thiserror::Error;
 /// Errors that may be returned by the Token program.
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
 pub enum GatewayError {
+    // 0
     /// Invalid instruction
     #[error("Invalid instruction")]
     InvalidInstruction,
@@ -27,6 +28,7 @@ pub enum GatewayError {
     #[error("Account already initialized")]
     AccountAlreadyInitialized,
 
+    // 5
     /// Invalid operators
     #[error("Invalid operators")]
     InvalidOperators,
@@ -46,7 +48,7 @@ pub enum GatewayError {
     /// MalformedSigners
     #[error("malformed signers")]
     MalformedSigners,
-
+    // 10
     /// LowSignaturesWeight
     #[error("low signature weight")]
     LowSignaturesWeight,
@@ -67,6 +69,7 @@ pub enum GatewayError {
     #[error("malformed transfer operatorship body")]
     MalformedTransferOperatorshipParams,
 
+    // 15
     /// EpochForHashNotFound
     #[error("could not find requested key")]
     EpochForHashNotFound,
@@ -87,6 +90,7 @@ pub enum GatewayError {
     #[error("Invalid Account Address")]
     InvalidAccountAddress,
 
+    // 20
     /// Invalid Gateway Config account
     #[error("Invalid Gateway Config account")]
     InvalidConfigAccount,

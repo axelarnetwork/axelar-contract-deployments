@@ -55,6 +55,10 @@ pub enum AuthWeightedError {
     #[error("could not find requested key")]
     EpochForHashNotFound,
 
+    /// Operator set epoch is different than the current epoch
+    #[error("Operator set epoch is different than the current epoch.")]
+    EpochMissmatch,
+
     /// https://docs.rs/solana-program/latest/solana_program/secp256k1_recover/fn.secp256k1_recover.html#errors
     #[error("could not recover public key due to invalid signature")]
     Secp256k1RecoveryFailedInvalidSignature,
@@ -66,10 +70,17 @@ pub enum AuthWeightedError {
     /// Secp256k1RecoveryFailedInvalidHash
     #[error("could not recover public key due to invalid hash")]
     Secp256k1RecoveryFailedInvalidHash,
+
+    /// Arithmetic overflow
+    #[error("Program arithmetic overflowed")]
+    ArithmeticOverflow,
 }
 
 impl From<AuthWeightedError> for ProgramError {
     fn from(e: AuthWeightedError) -> Self {
-        ProgramError::Custom(e as u32)
+        match e {
+            AuthWeightedError::ArithmeticOverflow => ProgramError::ArithmeticOverflow,
+            _ => ProgramError::Custom(e as u32),
+        }
     }
 }

@@ -94,13 +94,11 @@ async fn test_validate_proof_happy_scenario() -> Result<()> {
 
     // Mock data prepare; params account.
     let (message_hash, proof) = prepare_valid_proof();
-    let params_account_b64 = general_purpose::STANDARD.encode(
-        ValidateProofAccount {
+    let params_account_b64 =
+        general_purpose::STANDARD.encode(borsh::to_vec(&ValidateProofAccount {
             message_hash,
             proof,
-        }
-        .pack(),
-    );
+        })?);
 
     // Mock data prepare; program state.
     let state_account_b64 =
@@ -129,7 +127,7 @@ async fn test_validate_proof_happy_scenario() -> Result<()> {
     let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
 
     // Prepare instruction; for tests only.
-    let instruction = auth_weighted::instruction::validate::build_validate_proof_ix(
+    let instruction = auth_weighted::instruction::validate::validate_proof(
         &payer.pubkey(),
         &params_account,
         &state_account,
@@ -165,13 +163,11 @@ async fn test_validate_proof_invalid_message_hash() -> Result<()> {
         array
     };
 
-    let params_account_b64 = general_purpose::STANDARD.encode(
-        ValidateProofAccount {
+    let params_account_b64 =
+        general_purpose::STANDARD.encode(borsh::to_vec(&ValidateProofAccount {
             message_hash: invalid_message_hash,
             proof,
-        }
-        .pack(),
-    );
+        })?);
 
     // Mock data prepare; program state.
     let state_account_b64 =
@@ -200,7 +196,7 @@ async fn test_validate_proof_invalid_message_hash() -> Result<()> {
     let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
 
     // Prepare instruction; for tests only.
-    let instruction = auth_weighted::instruction::validate::build_validate_proof_ix(
+    let instruction = auth_weighted::instruction::validate::validate_proof(
         &payer.pubkey(),
         &params_account,
         &state_account,

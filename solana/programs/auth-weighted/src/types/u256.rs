@@ -1,8 +1,5 @@
 //! U256 implementation of uint256.
 
-use std::iter::Sum;
-use std::ops::{Add, Sub};
-
 use borsh::{BorshDeserialize, BorshSerialize};
 
 /// [U256] represents uint256.
@@ -10,37 +7,35 @@ use borsh::{BorshDeserialize, BorshSerialize};
 pub struct U256(ethnum::U256);
 
 impl U256 {
-    /// Constructor for [U256].
-    pub fn new(bytes: [u8; 32]) -> Self {
+    /// The additive identity for this integer type, i.e. `0`.
+    pub const ZERO: U256 = Self(ethnum::U256::ZERO);
+    /// The multiplicative identity for this integer type, i.e. `1`.
+    pub const ONE: U256 = Self(ethnum::U256::ONE);
+
+    /// Create an integer value from its representation as a byte array in
+    /// little endian.
+    pub fn from_le_bytes(bytes: [u8; 32]) -> Self {
         U256(ethnum::U256::from_le_bytes(bytes))
+    }
+
+    /// Checked integer addition. Computes `self + rhs`, returning `None` if
+    /// overflow occurred.
+    #[must_use]
+    pub fn checked_add(self, rhs: Self) -> Option<Self> {
+        self.0.checked_add(rhs.0).map(Self)
+    }
+
+    /// Checked integer subtraction. Computes `self - rhs`, returning `None` if
+    /// overflow occurred.
+    #[must_use]
+    pub fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self)
     }
 }
 
 impl From<u8> for U256 {
     fn from(value: u8) -> Self {
         U256(ethnum::U256::from(value))
-    }
-}
-
-impl Add for U256 {
-    type Output = Self;
-
-    fn add(self, b: Self) -> Self {
-        U256(self.0 + b.0)
-    }
-}
-
-impl Sum for U256 {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(U256::from(0), |a, b| a + b)
-    }
-}
-
-impl<'a, 'b> Sub<&'b U256> for &'a U256 {
-    type Output = U256;
-
-    fn sub(self, rhs: &'b U256) -> Self::Output {
-        U256(self.0 - rhs.0)
     }
 }
 
@@ -69,13 +64,13 @@ mod tests {
 
     #[test]
     fn test_u256_roundtrip() {
-        let expected = U256::new([
+        let expected = U256::from_le_bytes([
             0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
             0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
             0x1c, 0x1d, 0x1e, 0x1f,
         ]);
 
-        let not_expected = U256::new([
+        let not_expected = U256::from_le_bytes([
             0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
             0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
             0x1c, 0x1d, 0x1e, 0x22,
