@@ -219,11 +219,11 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
     };
 };
 
-const makeInstantiateMsg = (contractName, chainName, config) => {
+const makeInstantiateMsg = (contractName, chainName, amplifierInstance, config) => {
     const {
-        axelar: { contracts },
         chains: { [chainName]: chainConfig },
     } = config;
+    const { contracts } = config.axelar.amplifier[Number(amplifierInstance)];
 
     const { [contractName]: contractConfig } = contracts;
 
@@ -310,16 +310,13 @@ const prepareClient = ({ axelar: { rpc } }, wallet) =>
     });
 
 const upload = (client, wallet, chainName, config, options) => {
-    const { reuseCodeId, contractName } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-        chains: { [chainName]: chainConfig },
-    } = config;
+    const { reuseCodeId, contractName, amplifierInstance } = options;
+    const { chains: { [chainName]: chainConfig } } = config;
+    const { [contractName]: contractConfig } = config.axelar.amplifier[Number(amplifierInstance)];
 
     if (!reuseCodeId || isNil(contractConfig.codeId)) {
         printInfo('Uploading contract binary');
+        console.log(contractConfig);
 
         return uploadContract(client, wallet, config, options)
             .then(({ address, codeId }) => {
@@ -349,15 +346,13 @@ const upload = (client, wallet, chainName, config, options) => {
 };
 
 const instantiate = (client, wallet, chainName, config, options) => {
-    const { contractName } = options;
+    const { contractName, amplifierInstance } = options;
     const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
         chains: { [chainName]: chainConfig },
     } = config;
+    const { [contractName]: contractConfig } = config.axelar.amplifier[Number(amplifierInstance)];
 
-    const initMsg = makeInstantiateMsg(contractName, chainName, config);
+    const initMsg = makeInstantiateMsg(contractName, chainName, amplifierInstance, config);
     return instantiateContract(client, wallet, initMsg, config, options).then((contractAddress) => {
         if (chainConfig) {
             contractConfig[chainConfig.id] = {
@@ -423,6 +418,7 @@ const programHandler = () => {
     program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
+    program.addOption(new Option('-i, --amplifierInstance <index>', 'chain names').default('0'));
     program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
     program.addOption(new Option('-s, --salt <salt>', 'salt for instantiate2. defaults to contract name').env('SALT'));
     program.addOption(
