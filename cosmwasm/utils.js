@@ -47,11 +47,13 @@ const uploadContract = async (client, wallet, config, options) => {
         });
 };
 
-const instantiateContract = (client, wallet, initMsg, config, { contractName, salt, instantiate2, chainNames }) => {
+const instantiateContract = (client, wallet, initMsg, config, { contractName, salt, instantiate2, amplifierInstance, chainNames }) => {
     return wallet
         .getAccounts()
         .then(([account]) => {
-            const contractConfig = config.axelar.contracts[contractName];
+            const {
+                [contractName]: contractConfig ,
+            } = config.axelar.amplifier[Number(amplifierInstance)];
 
             const {
                 axelar: { gasPrice, gasLimit },
