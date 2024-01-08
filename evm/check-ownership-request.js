@@ -1,13 +1,19 @@
 'use strict';
 
+const axios = require('axios');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
-const { getDefaultProvider, Contract } = ethers;
+const {
+    getDefaultProvider,
+    Contract,
+    constants: { AddressZero },
+} = ethers;
 
 const { addBaseOptions } = require('./cli-utils');
 const { printError, mainProcessor, printInfo } = require('./utils');
 
 const ERC20 = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/ERC20.sol/ERC20.json');
+const IInterchainToken = require('@axelar-network/interchain-token-service/interfaces/IInterchainToken.json');
 
 async function processCommand(_, chain, options) {
     const { rpc } = options;
@@ -24,11 +30,11 @@ async function processCommand(_, chain, options) {
 
     try {
         await checkContract(address, addresses, erc20);
+        await checkAxelarDeployedToken(address, chain.name.toLowerCase(), provider);
+        printInfo(`Contract verification checks passed.`);
     } catch (error) {
         printError(`Error while checking contract address`, error.message);
     }
-
-    printInfo(`Contract verification checks passed.`);
 }
 
 async function checkContract(address, addressesArray, erc20) {
@@ -42,6 +48,32 @@ async function checkContract(address, addressesArray, erc20) {
 
     if (regex.test(name) || regex.test(symbol)) {
         throw new Error('Contract name or symbol includes "axl"');
+    }
+}
+
+async function checkAxelarDeployedToken(address, chain, provider) {
+    let isAxelarDeployed = false;
+    const apiUrl = `https://lcd-axelar.imperator.co/axelar/evm/v1beta1/token_info/${chain}?address=${address}`;
+
+    try {
+        const response = await axios.get(apiUrl);
+        const data = response.data;
+        isAxelarDeployed = data.confirmed === true && data.is_external === true;
+    } catch (error) {}
+
+    if (!isAxelarDeployed) {
+        const interchainToken = new Contract(address, IInterchainToken.abi, provider);
+
+        try {
+            const itsAddress = await interchainToken.interchainTokenService();
+            isAxelarDeployed = itsAddress !== AddressZero;
+        } catch (error) {
+            isAxelarDeployed = false;
+        }
+
+        if (!isAxelarDeployed) {
+            throw new Error('Contract is not deployed by our Gateway');
+        }
     }
 }
 
