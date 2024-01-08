@@ -4,16 +4,22 @@ use std::array::TryFromSliceError;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use hex::FromHexError;
+use thiserror::Error;
 
-/// Error variants for [Signature].
-#[derive(Debug)]
+/// Error variants for [SignatureError].
+#[derive(Error, Debug)]
 pub enum SignatureError {
     /// When couldn't decode given hex.
-    FromHexDecode(FromHexError),
+    #[error(transparent)]
+    FromHexDecode(#[from] FromHexError),
+
     /// When couldn't read returned vec as slice.
-    FromHexAsSlice(TryFromSliceError),
-    /// When given signature length isn't the expected.
-    InvalidSignatureLen,
+    #[error(transparent)]
+    FromHexAsSlice(#[from] TryFromSliceError),
+
+    /// When given [Signature] length isn't the expected.
+    #[error("Invalid signature length: {0}")]
+    InvalidLength(usize),
 }
 
 /// [Signature] represents ECDSA signature with apended 1-byte recovery id.
@@ -21,12 +27,8 @@ pub enum SignatureError {
 pub struct Signature(Vec<u8>);
 
 impl<'a> Signature {
-    const ECDSA_SIGNATURE_LEN: usize = 64;
-
-    /// Constructor for [Signature].
-    pub fn new(bytes: Vec<u8>) -> Self {
-        Self(bytes)
-    }
+    /// Signature size in bytes.
+    pub const ECDSA_SIGNATURE_LEN: usize = 64;
 
     /// Returns last byte of the signature aka recovery id.
     pub fn recovery_id(&'a self) -> &'a u8 {
@@ -37,43 +39,58 @@ impl<'a> Signature {
     pub fn signature(&'a self) -> &'a [u8] {
         &self.0
     }
+}
 
-    /// Signature from hex.
-    pub fn from_hex(hex: &str) -> Result<Self, SignatureError> {
-        let bytes = match hex::decode(hex) {
-            Ok(v) => v,
-            Err(e) => return Err(SignatureError::FromHexDecode(e)),
-        };
+impl TryFrom<&str> for Signature {
+    type Error = SignatureError;
 
-        if bytes.len() != Self::ECDSA_SIGNATURE_LEN {
-            return Err(SignatureError::InvalidSignatureLen);
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        hex::decode(value)?.try_into()
+    }
+}
+
+impl TryFrom<Vec<u8>> for Signature {
+    type Error = SignatureError;
+
+    fn try_from(mut bytes: Vec<u8>) -> Result<Self, Self::Error> {
+        match bytes.len() {
+            64 => Ok(Self(bytes)),
+            65 => {
+                // Pop out the recovery byte.
+                // Unwrap: we just checked it have 65 elements.
+                bytes.pop().unwrap();
+                Ok(Self(bytes))
+            }
+            _ => Err(SignatureError::InvalidLength(bytes.len())),
         }
-
-        Ok(Self(bytes))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
+
     use super::*;
 
     #[test]
-    fn test_recovery_id() {
+    fn test_recovery_id() -> Result<()> {
         let (bytes, _) = get_testdata_bytes_hex();
-        let signature = Signature::new(bytes.to_vec());
+        let signature = Signature::try_from(bytes.to_vec())?;
 
         let actual = signature.recovery_id();
         let expected = 2;
 
-        assert_eq!(&expected, actual)
+        assert_eq!(&expected, actual);
+        Ok(())
     }
 
     #[test]
-    fn test_signature_from_hex() {
+    fn test_signature_from_hex() -> Result<()> {
         let (bytes, hex) = get_testdata_bytes_hex();
-        let sig = Signature::from_hex(hex).unwrap();
+        let sig = Signature::try_from(hex)?;
 
-        assert_eq!(sig.0, bytes)
+        assert_eq!(sig.0, bytes);
+        Ok(())
     }
 
     fn get_testdata_bytes_hex() -> ([u8; 64], &'static str) {

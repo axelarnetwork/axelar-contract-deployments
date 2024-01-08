@@ -4,16 +4,22 @@ use std::array::TryFromSliceError;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use hex::FromHexError;
+use thiserror::Error;
 
 /// Error variants for [AddressError].
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum AddressError {
     /// When couldn't decode given hex.
-    FromHexDecode(FromHexError),
+    #[error(transparent)]
+    FromHexDecode(#[from] FromHexError),
+
     /// When couldn't read returned vec as slice.
-    FromHexAsSlice(TryFromSliceError),
+    #[error(transparent)]
+    FromHexAsSlice(#[from] TryFromSliceError),
+
     /// When given [Address] length isn't the expected.
-    InvalidAddressLen,
+    #[error("Invalid address length: {0}")]
+    InvalidLength(usize),
 }
 
 /// [Address] represents ECDSA public key.
@@ -50,31 +56,33 @@ impl PartialOrd for Address {
     }
 }
 
+impl TryFrom<&str> for Address {
+    type Error = AddressError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        hex::decode(value)?.try_into()
+    }
+}
+
+impl TryFrom<Vec<u8>> for Address {
+    type Error = AddressError;
+
+    fn try_from(bytes: Vec<u8>) -> Result<Self, Self::Error> {
+        if bytes.len() != Self::ECDSA_COMPRESSED_PUBKEY_LEN {
+            Err(AddressError::InvalidLength(bytes.len()))
+        } else {
+            Ok(Self(bytes))
+        }
+    }
+}
+
 impl Address {
-    const ECDSA_COMPRESSED_PUBKEY_LEN: usize = 33;
+    /// Size of the ECDSA compressed public key in bytes.
+    pub const ECDSA_COMPRESSED_PUBKEY_LEN: usize = 33;
 
     /// Returns [ECDSA_COMPRESSED_PUBKEY_LEN] value.
     pub fn expected_len() -> usize {
         Self::ECDSA_COMPRESSED_PUBKEY_LEN
-    }
-
-    /// Constructor for [Address].
-    pub fn new(bytes: Vec<u8>) -> Self {
-        Self(bytes)
-    }
-
-    /// Signature from hex.
-    pub fn from_hex(hex: &str) -> Result<Self, AddressError> {
-        let bytes = match hex::decode(hex) {
-            Ok(v) => v,
-            Err(e) => return Err(AddressError::FromHexDecode(e)),
-        };
-
-        if bytes.len() != Self::ECDSA_COMPRESSED_PUBKEY_LEN {
-            return Err(AddressError::InvalidAddressLen);
-        }
-
-        Ok(Self::new(bytes))
     }
 
     /// Returns ECDSA public key (compressed) without prefix.
@@ -87,18 +95,20 @@ impl Address {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use anyhow::Result;
 
+    use super::*;
     #[test]
-    fn test_address_from_hex() {
+    fn test_address_from_hex() -> Result<()> {
         let bytes = [
             0x03, 0xf5, 0x7d, 0x1a, 0x81, 0x3f, 0xeb, 0xac, 0xcb, 0xe6, 0x42, 0x96, 0x03, 0xf9,
             0xec, 0x57, 0x96, 0x95, 0x11, 0xb7, 0x6c, 0xd6, 0x80, 0x45, 0x2d, 0xba, 0x91, 0xfa,
             0x01, 0xf5, 0x4e, 0x75, 0x6d,
         ];
         let hex = "03f57d1a813febaccbe6429603f9ec57969511b76cd680452dba91fa01f54e756d";
-        let addr = Address::from_hex(hex).unwrap();
+        let addr = Address::try_from(hex)?;
 
-        assert_eq!(addr.0, bytes)
+        assert_eq!(addr.0, bytes);
+        Ok(())
     }
 }

@@ -7,7 +7,7 @@ anchor-lang = "0.29.0"
 anyhow = "1"
 base64 = "0.21"
 borsh = { version = "1", features = ["derive"] }
-ethnum = { version = "1.5.0", features = ["serde"] }
+bnum = { version = "0.10", features = ["serde", "nightly"] }
 hex = "0.4.3"
 num-derive = "0.4"
 num-traits = "0.2"
@@ -15,7 +15,8 @@ solana-program = "1.17.12"
 solana-program-test = "1.17.12"
 solana-sdk = "1.17.12"
 thiserror = "1"
-
+cosmwasm-std = "1.5"
+serde = "1"
 auth-weighted = { path = "programs/auth-weighted" }
 
 # helper crates
@@ -23,6 +24,22 @@ program-utils = { path = "helpers/program-utils" }
 random-array = { path = "helpers/random-array" }
 slice-iterator = { path = "helpers/slice-iterator" }
 operator = { path = "programs/operator" }
+
+
+[workspace.dependencies.multisig]
+git = "https://github.com/axelarnetwork/axelar-amplifier"
+rev = "c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
+features = ["library"]
+
+[workspace.dependencies.multisig-prover]
+git = "https://github.com/axelarnetwork/axelar-amplifier"
+rev = "c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
+features = ["library"]
+
+[workspace.dependencies.connection-router]
+git = "https://github.com/axelarnetwork/axelar-amplifier"
+rev = "c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
+features = ["library"]
 
 [profile.release]
 overflow-checks = true

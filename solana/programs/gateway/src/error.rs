@@ -106,6 +106,11 @@ pub enum GatewayError {
     /// Invalid Message ID account
     #[error("Invalid Message ID account")]
     InvalidMessageIDAccount,
+
+    /// Failed to decode `execute_data`
+    #[error("Falied to decode execute_data")]
+    FailedToDecodeExecuteData,
+    // 25
 }
 
 impl From<GatewayError> for ProgramError {

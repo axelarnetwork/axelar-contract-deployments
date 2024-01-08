@@ -38,7 +38,6 @@ impl Processor {
     pub fn validate_proof(accounts: &[AccountInfo]) -> Result<(), ProgramError> {
         // Number of recent operator sets to be tracked.
         const OLD_KEY_RETENTION: u8 = 16;
-
         let accounts = &mut accounts.iter();
 
         // A payer isn't used here, but to get further accounts we have to get it first.
@@ -78,6 +77,7 @@ impl Processor {
         if *operators_epoch != current_epoch {
             return Err(AuthWeightedError::EpochMissmatch)?;
         }
+
         params_data.validate()?;
 
         Ok(())

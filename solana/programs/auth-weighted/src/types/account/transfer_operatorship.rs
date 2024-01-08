@@ -94,28 +94,38 @@ pub(super) fn is_sorted_and_unique(addresses: &[Address]) -> bool {
 }
 
 #[test]
-fn test_is_sorted_and_unique() {
+fn test_is_sorted_and_unique() -> anyhow::Result<()> {
+    /// Creates a 33-byte vector starting with `first_elements` and fill the
+    /// rest with zeroes.
+    fn prefixed_vector(first_elements: &[u8]) -> Vec<u8> {
+        assert!(first_elements.len() < Address::ECDSA_COMPRESSED_PUBKEY_LEN);
+        let mut vec = first_elements.to_vec();
+        vec.resize(Address::ECDSA_COMPRESSED_PUBKEY_LEN, 0);
+        vec
+    }
+
     // Valid
     let addresses1 = vec![
-        Address::new(vec![1, 2, 3]),
-        Address::new(vec![2, 3, 4]),
-        Address::new(vec![3, 4, 5]),
+        prefixed_vector(&[1, 2, 3]).try_into()?,
+        prefixed_vector(&[2, 3, 4]).try_into()?,
+        prefixed_vector(&[3, 4, 5]).try_into()?,
     ];
     assert!(is_sorted_and_unique(&addresses1));
 
     // Invalid: Not sorted
     let addresses2 = vec![
-        Address::new(vec![3, 4, 5]),
-        Address::new(vec![2, 3, 4]),
-        Address::new(vec![1, 2, 3]),
+        prefixed_vector(&[3, 4, 5]).try_into()?,
+        prefixed_vector(&[2, 3, 4]).try_into()?,
+        prefixed_vector(&[1, 2, 3]).try_into()?,
     ];
     assert!(!is_sorted_and_unique(&addresses2));
 
     // Invalid: Duplicates
     let addresses3 = vec![
-        Address::new(vec![1, 2, 3]),
-        Address::new(vec![2, 3, 4]),
-        Address::new(vec![2, 3, 4]),
+        prefixed_vector(&[1, 2, 3]).try_into()?,
+        prefixed_vector(&[2, 3, 4]).try_into()?,
+        prefixed_vector(&[2, 3, 4]).try_into()?,
     ];
     assert!(!is_sorted_and_unique(&addresses3));
+    Ok(())
 }
