@@ -10,7 +10,16 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, getContractJSON } = require('./utils');
+const {
+    verifyContract,
+    getEVMAddresses,
+    printInfo,
+    printError,
+    mainProcessor,
+    getContractJSON,
+    validateParameters,
+    getSaltFromKey,
+} = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getTrustedChainsAndAddresses } = require('./its');
 
@@ -284,6 +293,45 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'TokenManagerProxy': {
+            const { deployer, salt, minter } = options;
+
+            validateParameters({
+                isString: { salt },
+                isAddress: { deployer, minter },
+            });
+
+            const InterchainTokenService = getContractJSON('InterchainTokenService');
+            const interchainTokenServiceFactory = await getContractFactoryFromArtifact(InterchainTokenService, wallet);
+            const interchainTokenService = interchainTokenServiceFactory.attach(
+                options.address || chain.contracts.InterchainTokenService.address,
+            );
+
+            const deploymentSalt = getSaltFromKey(salt);
+            const tokenId = await interchainTokenService.interchainTokenId(deployer, deploymentSalt);
+            const tokenManagerAddress = await interchainTokenService.tokenManagerAddress(tokenId);
+
+            const TokenManagerProxy = getContractJSON('TokenManagerProxy');
+            const tokenManagerProxyFactory = await getContractFactoryFromArtifact(TokenManagerProxy, wallet);
+            const tokenManagerProxy = tokenManagerProxyFactory.attach(tokenManagerAddress);
+
+            const [implementationType, tokenAddress] = await tokenManagerProxy.getImplementationTypeAndTokenAddress();
+            const params = defaultAbiCoder.encode(['bytes', 'address'], [minter, tokenAddress]);
+
+            await verifyContract(
+                env,
+                chain.name,
+                tokenManagerAddress,
+                [interchainTokenService.address, implementationType, tokenId, params],
+                {
+                    ...verifyOptions,
+                    contractPath: 'contracts/proxies/TokenManagerProxy.sol:TokenManagerProxy',
+                },
+            );
+
+            break;
+        }
+
         default: {
             throw new Error(`Contract ${contractName} is not supported`);
         }
@@ -305,6 +353,9 @@ if (require.main === module) {
     program.addOption(new Option('-d, --dir <dir>', 'contract artifacts dir'));
     program.addOption(new Option('--args <args>', 'contract args'));
     program.addOption(new Option('--constructorArgs <constructorArgs>', 'contract constructor args'));
+    program.addOption(new Option('--deployer <deployer>', 'interchain token deployer address'));
+    program.addOption(new Option('--salt <salt>', 'interchain token deployment salt'));
+    program.addOption(new Option('--minter <minter>', 'interchain token minter address'));
 
     program.action((options) => {
         main(options);
