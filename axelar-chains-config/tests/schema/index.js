@@ -52,8 +52,11 @@ export const gasOptionSchema = {
     type: 'object',
     properties: {
         gasLimit: { type: 'number' },
+        gasPrice: { type: 'number' },
+        maxPriorityFeePerGas: { type: 'number' },
+        maxFeePerGas: { type: 'number' },
+        gasPriceAdjustment: { type: 'number' },
     },
-    required: ['gasLimit'],
 };
 
 export const chainValueSchema = {
@@ -68,6 +71,7 @@ export const chainValueSchema = {
         contracts: { $ref: contractSchema.id },
         explorer: { $ref: explorerSchema.id },
         gasOptions: { $ref: gasOptionSchema.id },
+        confirmations: { type: 'number' },
     },
     required: ['name', 'id', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
 };

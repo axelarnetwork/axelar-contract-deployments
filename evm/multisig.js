@@ -20,12 +20,16 @@ const {
     mainProcessor,
     isValidDecimal,
     prompt,
+    isBytes32Array,
     getGasOptions,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const IMultisig = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IMultisig.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
+const IInterchainTokenService = require('@axelar-network/interchain-token-service/interfaces/IInterchainTokenService.json');
+const ITokenManager = require('@axelar-network/interchain-token-service/interfaces/ITokenManager.json');
+const IOperator = require('@axelar-network/interchain-token-service/interfaces/IOperator.json');
 const { parseEther } = require('ethers/lib/utils');
 const { getWallet, signTransaction, storeSignedTx } = require('./sign-utils');
 
@@ -82,6 +86,7 @@ async function processCommand(_, chain, options) {
         address,
         action,
         symbols,
+        tokenIds,
         limits,
         mintLimiter,
         recipient,
@@ -179,7 +184,7 @@ async function processCommand(_, chain, options) {
                 // loop over each token
                 for (let i = 0; i < symbolsArray.length; i++) {
                     const token = await gateway.tokenAddresses(symbolsArray[i]);
-                    const limit = await gateway.tokenMintLimit(token);
+                    const limit = await gateway.tokenMintLimit(symbolsArray[i]);
                     printInfo(`Token ${symbolsArray[i]} address`, token);
                     printInfo(`Token ${symbolsArray[i]} limit`, limit);
                 }
@@ -286,6 +291,57 @@ async function processCommand(_, chain, options) {
             tx = await governanceContract.populateTransaction.executeMultisigProposal(target, calldata, nativeValue);
             break;
         }
+
+        case 'setFlowLimits': {
+            const tokenIdsArray = JSON.parse(tokenIds);
+            const limitsArray = JSON.parse(limits);
+
+            if (!isBytes32Array(tokenIdsArray)) {
+                throw new Error(`Invalid token symbols: ${tokenIds}`);
+            }
+
+            if (!isNumberArray(limitsArray)) {
+                throw new Error(`Invalid token limits: ${limits}`);
+            }
+
+            if (tokenIdsArray.length !== limitsArray.length) {
+                throw new Error('Token ids and token flow limits length mismatch');
+            }
+
+            const multisigTarget = chain.contracts.InterchainTokenService?.address;
+
+            if (!isValidAddress(multisigTarget)) {
+                throw new Error(`Missing InterchainTokenService address in the chain info.`);
+            }
+
+            const its = new Contract(multisigTarget, IInterchainTokenService.abi, wallet);
+            const multisigCalldata = its.interface.encodeFunctionData('setFlowLimits', [tokenIdsArray, limitsArray]);
+
+            printInfo('Token Ids', tokenIdsArray);
+            printInfo('FLow limit values', limitsArray);
+
+            if (!offline) {
+                await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
+                const operatable = new Contract(multisigTarget, IOperator.abi, wallet);
+                const hasOperatorRole = await operatable.isOperator(multisigAddress);
+
+                if (!hasOperatorRole) {
+                    throw new Error('Missing Operator role for the used multisig address.');
+                }
+
+                // loop over each token
+                for (let i = 0; i < tokenIdsArray.length; ++i) {
+                    const tokenManagerAddress = await its.validTokenManagerAddress(tokenIdsArray[i]);
+                    const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+                    const currentFlowLimit = await tokenManager.flowLimit();
+                    printInfo(`TokenManager address`, tokenManagerAddress);
+                    printInfo(`TokenManager current flowLimit`, currentFlowLimit);
+                }
+            }
+
+            tx = await multisigContract.populateTransaction.executeContract(multisigTarget, multisigCalldata, 0, gasOptions);
+            break;
+        }
     }
 
     const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
@@ -322,7 +378,7 @@ if (require.main === module) {
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig').makeOptionMandatory(false));
     program.addOption(
         new Option('--action <action>', 'multisig action')
-            .choices(['signers', 'setTokenMintLimits', 'transferMintLimiter', 'withdraw', 'executeMultisigProposal'])
+            .choices(['signers', 'setTokenMintLimits', 'transferMintLimiter', 'withdraw', 'executeMultisigProposal', 'setFlowLimits'])
             .makeOptionMandatory(true),
     );
     program.addOption(new Option('--offline', 'run script in offline mode'));
@@ -345,6 +401,9 @@ if (require.main === module) {
     program.addOption(
         new Option('--nativeValue <nativeValue>', 'execute multisig proposal nativeValue').makeOptionMandatory(false).default(0),
     );
+
+    // option for setFlowLimit in ITS
+    program.addOption(new Option('--tokenIds <tokenIds>', 'token ids'));
 
     program.action((options) => {
         main(options);

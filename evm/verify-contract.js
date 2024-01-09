@@ -12,6 +12,7 @@ const {
 const { Command, Option } = require('commander');
 const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, getContractJSON } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
+const { getTrustedChainsAndAddresses } = require('./its');
 
 async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
@@ -31,6 +32,8 @@ async function processCommand(config, chain, options) {
     printInfo('Verifying contract', contractName);
     printInfo('Contract address', options.address || chain.contracts[contractName]?.address);
 
+    const contractConfig = chain.contracts[contractName];
+
     switch (contractName) {
         case 'Create3Deployer': {
             const Create3Deployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
@@ -49,8 +52,6 @@ async function processCommand(config, chain, options) {
             const contractFactory = await getContractAt(InterchainGovernance.abi, wallet);
 
             const contract = contractFactory.attach(options.address || chain.contracts.InterchainGovernance.address);
-
-            const contractConfig = chain.contracts[contractName];
 
             await verifyContract(
                 env,
@@ -73,8 +74,6 @@ async function processCommand(config, chain, options) {
             const contractFactory = await getContractAt(Multisig.abi, wallet);
 
             const contract = contractFactory.attach(options.address || chain.contracts.Multisig.address);
-
-            const contractConfig = chain.contracts[contractName];
 
             await verifyContract(env, chain.name, contract.address, [contractConfig.signers, contractConfig.threshold], verifyOptions);
             break;
@@ -138,11 +137,15 @@ async function processCommand(config, chain, options) {
                 keyID: chain.contracts.AxelarGateway.startingKeyIDs[0] || options.args || `evm-${chain.id.toLowerCase()}-genesis`,
             });
             const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
+            const setupParams = defaultAbiCoder.encode(
+                ['address', 'address', 'bytes'],
+                [contractConfig.deployer, contractConfig.deployer, '0x'],
+            );
 
             await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
             await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
             await verifyContract(env, chain.name, implementation, [auth, tokenDeployer], verifyOptions);
-            await verifyContract(env, chain.name, gateway.address, [implementation, options.constructorArgs], verifyOptions);
+            await verifyContract(env, chain.name, gateway.address, [implementation, setupParams], verifyOptions);
 
             break;
         }
@@ -225,17 +228,10 @@ async function processCommand(config, chain, options) {
             );
             const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
 
-            const tokenManagerMintBurn = await interchainTokenService.tokenManagerImplementation(0);
-            const tokenManagerMintBurnFrom = await interchainTokenService.tokenManagerImplementation(1);
-            const tokenManagerLockUnlock = await interchainTokenService.tokenManagerImplementation(2);
-            const tokenManagerLockUnlockFee = await interchainTokenService.tokenManagerImplementation(3);
+            const tokenManager = await interchainTokenService.tokenManager();
+            const tokenHandler = await interchainTokenService.tokenHandler();
 
-            const allChains = Object.values(config.chains).map((chain) => chain.id);
-            const trustedAddressesValues = await Promise.all(
-                allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)),
-            );
-            const trustedChains = allChains.filter((_, index) => trustedAddressesValues[index] !== '');
-            const trustedAddresses = trustedAddressesValues.filter((address) => address !== '');
+            const [trustedChains, trustedAddresses] = await getTrustedChainsAndAddresses(config, interchainTokenService);
 
             const setupParams = defaultAbiCoder.encode(
                 ['address', 'string', 'string[]', 'string[]'],
@@ -243,12 +239,10 @@ async function processCommand(config, chain, options) {
             );
 
             await verifyContract(env, chain.name, tokenManagerDeployer, [], verifyOptions);
-            await verifyContract(env, chain.name, interchainToken, [], verifyOptions);
+            await verifyContract(env, chain.name, interchainToken, [interchainTokenService.address], verifyOptions);
             await verifyContract(env, chain.name, interchainTokenDeployer, [interchainToken], verifyOptions);
-            await verifyContract(env, chain.name, tokenManagerMintBurn, [interchainTokenService.address], verifyOptions);
-            await verifyContract(env, chain.name, tokenManagerMintBurnFrom, [interchainTokenService.address], verifyOptions);
-            await verifyContract(env, chain.name, tokenManagerLockUnlock, [interchainTokenService.address], verifyOptions);
-            await verifyContract(env, chain.name, tokenManagerLockUnlockFee, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, tokenManager, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, tokenHandler, [], verifyOptions);
             await verifyContract(
                 env,
                 chain.name,
@@ -259,8 +253,9 @@ async function processCommand(config, chain, options) {
                     chain.contracts.AxelarGateway.address,
                     chain.contracts.AxelarGasService.address,
                     interchainTokenFactory,
-                    chain.name,
-                    [tokenManagerMintBurn, tokenManagerMintBurnFrom, tokenManagerLockUnlock, tokenManagerLockUnlockFee],
+                    chain.id,
+                    tokenManager,
+                    tokenHandler,
                 ],
                 verifyOptions,
             );
@@ -272,17 +267,17 @@ async function processCommand(config, chain, options) {
                 [implementation, chain.contracts.InterchainTokenService.deployer, setupParams],
                 {
                     ...verifyOptions,
-                    contractPath: 'contracts/proxies/InterchainTokenServiceProxy.sol:InterchainTokenServiceProxy',
+                    contractPath: 'contracts/proxies/InterchainProxy.sol:InterchainProxy',
                 },
             );
             await verifyContract(
                 env,
                 chain.name,
                 interchainTokenFactory,
-                [interchainTokenFactoryImplementation, chain.contracts.InterchainTokenService.deployer],
+                [interchainTokenFactoryImplementation, chain.contracts.InterchainTokenService.deployer, '0x'],
                 {
                     ...verifyOptions,
-                    contractPath: 'contracts/proxies/InterchainTokenFactoryProxy.sol:InterchainTokenFactoryProxy',
+                    contractPath: 'contracts/proxies/InterchainProxy.sol:InterchainProxy',
                 },
             );
 
