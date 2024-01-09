@@ -9,7 +9,7 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 
 1. Compile the contracts in the amplifier [repo](https://github.com/axelarnetwork/axelar-amplifier) using the [rust optimizer](https://github.com/CosmWasm/rust-optimizer) for cosmwasm.
 
-2. Add a `contracts` object to the `axelar` section of your config. Change any values as necessary. For chain specific contracts (`VotingVerifier`,`Gateway`,`MultisigProver`), there should be one object per chain, where the key is the chain id.
+2. Add a `amplifier` array to the `axelar` section of your config. Each element represents an amplifier instance. Change any values as necessary. For chain specific contracts (`VotingVerifier`,`Gateway`,`MultisigProver`), there should be one object per chain, where the key is the chain id.
 ```
   "axelar": {
     "amplifier": [
@@ -128,3 +128,4 @@ To deploy with a constant address using instantiate2, pass the `--instantiate2` 
 To upload the contract and compute the expected address without instantiating, pass `--instantiate2` and `-u`. This will write the contract address and the code id to the config file.
 A salt can be passed with `-s`. If no salt is passed but a salt is needed for constant address deployment, the contract name will be used as a salt.
 Pass `-r` to skip the upload step, and reuse the previous code id (specified in the config).
+This script supports multiple amplifier instances. These are organized into a json array. You can use the `--amplifierInstance` and `-u` flag to specify
