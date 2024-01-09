@@ -96,6 +96,12 @@ jobs:
       - name: Deploy InterchainGovernance using create3
         run: node evm/deploy-contract.js -c InterchainGovernance -m create3 -y
 
+      - name: Transfer gateway governance
+        run: node evm/gateway.js --action transferGovernance -y
+
+      - name: Generate governance upgrade proposal
+        run: node evm/governance.js --targetContractName AxelarGateway --action upgrade --proposalAction schedule --date 2100-01-01T12:00:00
+
       - name: Deploy AxelarServiceGovernance using create3
         run: node evm/deploy-contract.js -c AxelarServiceGovernance -m create3 -y
 
@@ -109,16 +115,19 @@ jobs:
         run: node evm/deploy-upgradable.js -c AxelarGasService -m create2 -y
 
       - name: Deploy ITS using create2
-        run: node evm/deploy-its.js -s "ITS v1.0.0" -f "ITS v1.0.0 Factory" -m create2 -y
+        run: node evm/deploy-its.js -s "v1.0.0" -m create2 -y
+
+      - name: Deploy new ITS implementation
+        run: node evm/deploy-its.js -s "v1.1.0" -m create2 --reuseProxy -y
 
       - name: Upgrade ITS using create2
-        run: node evm/deploy-its.js -s "ITS v1.0.0" -f "ITS v1.0.0 Factory" -m create2 -u -y
+        run: node evm/deploy-its.js -m create2 -u -y
 
       - name: InterchainTokenFactory deploy interchain token on current chain
-        run: node evm/interchainTokenFactory.js --action deployInterchainToken --name "test" --symbol "TST" --decimals 18 --distributor 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --salt "salt" -y
+        run: node evm/interchainTokenFactory.js --action deployInterchainToken --name "test" --symbol "TST" --decimals 18 --minter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --salt "salt" -y
 
       - name: InterchainTokenService deploy interchain token on current chain
-        run: node evm/its.js --action deployInterchainToken --name "test" --symbol "TST" --decimals 18 --distributor 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 --destinationChain '' --gasValue 0 --salt "salt" -y
+        run: node evm/its.js --action deployInterchainToken --name "test" --symbol "TST" --decimals 18 --minter 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 --destinationChain '' --gasValue 0 --salt "salt" -y
 
       - name: Add gasOptions to local.json
         run: |
@@ -128,4 +137,4 @@ jobs:
         run: node evm/deploy-gateway-v6.2.x.js -m create3 -s "AxelarGateway v6.2" --governance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --mintLimiter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
 
       - name: Redeploy ITS with gasOptions in Chain Config
-        run: node evm/deploy-its.js -s "ITS v1.0.0" -f "ITS v1.0.0 Factory" -m create2 -y
+        run: node evm/deploy-its.js -s "v1.0.0" -m create2 -y

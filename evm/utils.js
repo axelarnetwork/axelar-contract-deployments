@@ -254,6 +254,20 @@ const isAddressArray = (arr) => {
     return true;
 };
 
+const isBytes32Array = (arr) => {
+    if (!Array.isArray(arr)) {
+        return false;
+    }
+
+    for (const item of arr) {
+        if (typeof item !== 'string' || !item.startsWith('0x') || item.length !== 66) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 const getCurrentTimeInSeconds = () => {
     const now = new Date();
     const currentTimeInSecs = Math.floor(now.getTime() / 1000);
@@ -374,6 +388,7 @@ const validationFunctions = {
     isNumberArray,
     isString,
     isNonEmptyStringArray,
+    isAddress,
     isAddressArray,
     isKeccak256Hash,
     isValidCalldata,
@@ -481,6 +496,33 @@ const predictAddressCreate = async (from, nonce) => {
     });
 
     return address;
+};
+
+const getDeployOptions = (deployMethod, salt, chain) => {
+    let deployer;
+
+    if (deployMethod === 'create') {
+        return {};
+    }
+
+    if (deployMethod === 'create2') {
+        deployer = chain.contracts.ConstAddressDeployer?.address;
+    } else {
+        deployer = chain.contracts.Create3Deployer?.address;
+    }
+
+    if (!isValidAddress(deployer)) {
+        throw new Error('ConstAddressDeployer address is not valid');
+    }
+
+    if (!isNonEmptyString(salt)) {
+        throw new Error('Salt was not provided');
+    }
+
+    return {
+        salt,
+        deployerContract: deployer,
+    };
 };
 
 /**
@@ -784,11 +826,23 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     printInfo('Environment', options.env);
 
     const config = loadConfig(options.env);
-    let chains = options.chainName ? [options.chainName] : options.chainNames.split(',').map((str) => str.trim());
-    const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim());
+    let chains = options.chainName ? [options.chainName] : options.chainNames.split(',');
+    const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim().toLowerCase());
 
     if (options.chainNames === 'all') {
         chains = Object.keys(config.chains);
+    }
+
+    chains = chains.map((chain) => chain.trim().toLowerCase());
+
+    if (options.startFromChain) {
+        const startIndex = chains.findIndex((chain) => chain === options.startFromChain.toLowerCase());
+
+        if (startIndex === -1) {
+            throw new Error(`Chain ${options.startFromChain} is not defined in the info file`);
+        }
+
+        chains = chains.slice(startIndex);
     }
 
     for (const chainName of chains) {
@@ -800,11 +854,16 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
-        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive' || chain.contracts[options.contractName]?.skip) {
+        if (
+            chainsToSkip.includes(chain.name.toLowerCase()) ||
+            chain.status === 'deactive' ||
+            (chain.contracts && chain.contracts[options.contractName]?.skip)
+        ) {
             printWarn('Skipping chain', chain.name);
             continue;
         }
 
+        console.log('');
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
@@ -1031,6 +1090,8 @@ module.exports = {
     mainProcessor,
     getContractPath,
     getContractJSON,
+    isBytes32Array,
     getGasOptions,
     getSaltFromKey,
+    getDeployOptions,
 };
