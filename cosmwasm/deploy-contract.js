@@ -311,7 +311,9 @@ const prepareClient = ({ axelar: { rpc } }, wallet) =>
 
 const upload = (client, wallet, chainName, config, options) => {
     const { reuseCodeId, contractName, amplifierInstance } = options;
-    const { chains: { [chainName]: chainConfig } } = config;
+    const {
+        chains: { [chainName]: chainConfig },
+    } = config;
     const { [contractName]: contractConfig } = config.axelar.amplifier[Number(amplifierInstance)];
 
     if (!reuseCodeId || isNil(contractConfig.codeId)) {
