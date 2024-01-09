@@ -12,88 +12,90 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 2. Add a `contracts` object to the `axelar` section of your config. Change any values as necessary. For chain specific contracts (`VotingVerifier`,`Gateway`,`MultisigProver`), there should be one object per chain, where the key is the chain id.
 ```
   "axelar": {
-    "contracts": {
-      "ServiceRegistry": {
-        "governanceAccount": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
-      },
-      "ConnectionRouter": {
-        "adminAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
-        "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
-      },
-      "Multisig": {
-        "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
-        "gracePeriod": 5
-      },
-      "Rewards": {
-        "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
-        "rewardsDenom": "uamplifier",
-        "params": {
-          "epoch_duration": "10",
-          "rewards_per_epoch": "100",
-          "participation_threshold": [
-            "9",
-            "10"
-          ]
-        }
-      },
-      "NexusGateway": {
-        "nexus": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
-      },
-      "VotingVerifier": {
-        "ethereum-2": {
-          "serviceName": "validators",
-          "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "votingThreshold": [
-            "9",
-            "10"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1
+    "amplifier": [
+      {
+        "ServiceRegistry": {
+          "governanceAccount": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
         },
-        "Avalanche": {
-          "serviceName": "validators",
-          "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "votingThreshold": [
-            "9",
-            "10"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1
-        }
-      },
-      "Gateway": {
-        "ethereum-2": {
-        },
-        "Avalanche": {
-        }
-      },
-      "MultisigProver": {
-        "ethereum-2": {
+        "ConnectionRouter": {
           "adminAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
-          "destinationChainID": "0",
-          "signingThreshold": [
-            "4",
-            "5"
-          ],
-          "serviceName": "validators",
-          "workerSetDiffThreshold": 1,
-          "encoder": "abi",
-          "keyType": "ecdsa"
+          "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
         },
-        "Avalanche": {
-          "adminAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
-          "destinationChainID": "0",
-          "signingThreshold": [
-            "4",
-            "5"
-          ],
-          "serviceName": "validators",
-          "workerSetDiffThreshold": 1,
-          "encoder": "abi",
-          "keyType": "ecdsa"
+        "Multisig": {
+          "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
+          "gracePeriod": 5
+        },
+        "Rewards": {
+          "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
+          "rewardsDenom": "uamplifier",
+          "params": {
+            "epoch_duration": "10",
+            "rewards_per_epoch": "100",
+            "participation_threshold": [
+              "9",
+              "10"
+            ]
+          }
+        },
+        "NexusGateway": {
+          "nexus": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
+        },
+        "VotingVerifier": {
+          "ethereum-2": {
+            "serviceName": "validators",
+            "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+            "votingThreshold": [
+              "9",
+              "10"
+            ],
+            "blockExpiry": 10,
+            "confirmationHeight": 1
+          },
+          "Avalanche": {
+            "serviceName": "validators",
+            "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+            "votingThreshold": [
+              "9",
+              "10"
+            ],
+            "blockExpiry": 10,
+            "confirmationHeight": 1
+          }
+        },
+        "Gateway": {
+          "ethereum-2": {
+          },
+          "Avalanche": {
+          }
+        },
+        "MultisigProver": {
+          "ethereum-2": {
+            "adminAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
+            "destinationChainID": "0",
+            "signingThreshold": [
+              "4",
+              "5"
+            ],
+            "serviceName": "validators",
+            "workerSetDiffThreshold": 1,
+            "encoder": "abi",
+            "keyType": "ecdsa"
+          },
+          "Avalanche": {
+            "adminAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
+            "destinationChainID": "0",
+            "signingThreshold": [
+              "4",
+              "5"
+            ],
+            "serviceName": "validators",
+            "workerSetDiffThreshold": 1,
+            "encoder": "abi",
+            "keyType": "ecdsa"
+          }
         }
       }
-    },
+    ],
 
     "rpc": [rpc],
     "tokenSymbol": "amplifier",
