@@ -223,7 +223,7 @@ const makeInstantiateMsg = (contractName, chainName, amplifierInstance, config) 
     const {
         chains: { [chainName]: chainConfig },
     } = config;
-    const { contracts } = config.axelar.amplifier[Number(amplifierInstance)];
+    const contracts = config.axelar.amplifier[Number(amplifierInstance)];
 
     const { [contractName]: contractConfig } = contracts;
 
@@ -316,7 +316,6 @@ const upload = (client, wallet, chainName, config, options) => {
 
     if (!reuseCodeId || isNil(contractConfig.codeId)) {
         printInfo('Uploading contract binary');
-        console.log(contractConfig);
 
         return uploadContract(client, wallet, config, options)
             .then(({ address, codeId }) => {
