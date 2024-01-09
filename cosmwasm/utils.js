@@ -51,9 +51,7 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
     return wallet
         .getAccounts()
         .then(([account]) => {
-            const {
-                [contractName]: contractConfig ,
-            } = config.axelar.amplifier[Number(amplifierInstance)];
+            const { [contractName]: contractConfig } = config.axelar.amplifier[Number(amplifierInstance)];
 
             const {
                 axelar: { gasPrice, gasLimit },
