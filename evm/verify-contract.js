@@ -10,18 +10,9 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const {
-    verifyContract,
-    getEVMAddresses,
-    printInfo,
-    printError,
-    mainProcessor,
-    getContractJSON,
-    validateParameters,
-    getSaltFromKey,
-} = require('./utils');
+const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, getContractJSON, validateParameters } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getTrustedChainsAndAddresses } = require('./its');
+const { getTrustedChainsAndAddresses, getDeploymentSalt } = require('./its');
 
 async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
@@ -294,12 +285,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'TokenManagerProxy': {
-            const { deployer, salt, minter } = options;
-
-            validateParameters({
-                isString: { salt },
-                isAddress: { deployer, minter },
-            });
+            const { deployer, minter } = options;
+            let { tokenId, implementationType, tokenManagerAddress, params } = options;
 
             const InterchainTokenService = getContractJSON('InterchainTokenService');
             const interchainTokenServiceFactory = await getContractFactoryFromArtifact(InterchainTokenService, wallet);
@@ -307,16 +294,30 @@ async function processCommand(config, chain, options) {
                 options.address || chain.contracts.InterchainTokenService.address,
             );
 
-            const deploymentSalt = getSaltFromKey(salt);
-            const tokenId = await interchainTokenService.interchainTokenId(deployer, deploymentSalt);
-            const tokenManagerAddress = await interchainTokenService.tokenManagerAddress(tokenId);
+            if (tokenId && implementationType && tokenManagerAddress && params) {
+                validateParameters({
+                    isAddress: { tokenManagerAddress },
+                    isKeccak256Hash: { tokenId },
+                    isValidCalldata: { params },
+                });
+            } else {
+                const deploymentSalt = getDeploymentSalt(options);
 
-            const TokenManagerProxy = getContractJSON('TokenManagerProxy');
-            const tokenManagerProxyFactory = await getContractFactoryFromArtifact(TokenManagerProxy, wallet);
-            const tokenManagerProxy = tokenManagerProxyFactory.attach(tokenManagerAddress);
+                validateParameters({
+                    isAddress: { deployer, minter },
+                });
 
-            const [implementationType, tokenAddress] = await tokenManagerProxy.getImplementationTypeAndTokenAddress();
-            const params = defaultAbiCoder.encode(['bytes', 'address'], [minter, tokenAddress]);
+                tokenId = await interchainTokenService.interchainTokenId(deployer, deploymentSalt);
+                tokenManagerAddress = await interchainTokenService.tokenManagerAddress(tokenId);
+
+                const TokenManagerProxy = getContractJSON('TokenManagerProxy');
+                const tokenManagerProxyFactory = await getContractFactoryFromArtifact(TokenManagerProxy, wallet);
+                const tokenManagerProxy = tokenManagerProxyFactory.attach(tokenManagerAddress);
+
+                let tokenAddress;
+                [implementationType, tokenAddress] = await tokenManagerProxy.getImplementationTypeAndTokenAddress();
+                params = defaultAbiCoder.encode(['bytes', 'address'], [minter, tokenAddress]);
+            }
 
             await verifyContract(
                 env,
@@ -355,7 +356,14 @@ if (require.main === module) {
     program.addOption(new Option('--constructorArgs <constructorArgs>', 'contract constructor args'));
     program.addOption(new Option('--deployer <deployer>', 'interchain token deployer address'));
     program.addOption(new Option('--salt <salt>', 'interchain token deployment salt'));
+    program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
     program.addOption(new Option('--minter <minter>', 'interchain token minter address'));
+    program.addOption(new Option('--tokenId <tokenId>', 'interchain token tokenId'));
+    program.addOption(
+        new Option('--implementationType <implementationType>', 'token manager implementation type').choices(['0', '1', '2', '3']),
+    );
+    program.addOption(new Option('--tokenManagerAddress <tokenManagerAddress>', 'token manager proxy address'));
+    program.addOption(new Option('--params <params>', 'token manager deployment params'));
 
     program.action((options) => {
         main(options);
