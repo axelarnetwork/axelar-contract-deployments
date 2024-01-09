@@ -127,5 +127,4 @@ Some of the contracts depend on each other and need to be deployed in a specific
 To deploy with a constant address using instantiate2, pass the `--instantiate2` flag.
 To upload the contract and compute the expected address without instantiating, pass `--instantiate2` and `-u`. This will write the contract address and the code id to the config file.
 A salt can be passed with `-s`. If no salt is passed but a salt is needed for constant address deployment, the contract name will be used as a salt.
-Pass `-r` to skip the upload step, and reuse the previous code id (specified in the config).
-This script supports multiple amplifier instances. These are organized into a json array. You can use the `--amplifierInstance` and `-u` flag to specify
+Pass `-r` to skip the upload step, and reuse the previous code id (specified in the config). You can use the `--amplifierInstance` and `-u` flag to specify the amplifier instance you want to update. By default, the script assumes the instance at index `0`.
