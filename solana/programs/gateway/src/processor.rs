@@ -74,13 +74,67 @@ impl Processor {
     }
 
     fn execute(accounts: &[AccountInfo]) -> Result<(), ProgramError> {
-        // FIXME: implement the actual instruction here
-
-        // DEBUG: print all accounts
         let mut accounts = accounts.iter();
-        while let Ok(account) = next_account_info(&mut accounts) {
-            msg!("{}", account.is_writable);
+        let gateway_config_account = next_account_info(&mut accounts)?;
+        let execute_data_account = next_account_info(&mut accounts)?;
+        let message_accounts: Vec<_> = accounts.collect();
+
+        // Phase 1: Account validation
+
+        // Check: Config account uses the canonical bump.
+        let (canonical_pda, _canonical_bump) = crate::find_root_pda();
+        if *gateway_config_account.key != canonical_pda {
+            return Err(GatewayError::InvalidConfigAccount)?;
         }
+
+        // Check: Config account is owned by the Gateway program.
+        if *gateway_config_account.owner != crate::ID {
+            return Err(ProgramError::InvalidAccountOwner);
+        }
+
+        // Check: Config account is read only.
+        if gateway_config_account.is_writable {
+            return Err(ProgramError::InvalidInstructionData);
+        }
+
+        // Check: execute_data account is owned by the Gateway program.
+        if *execute_data_account.owner != crate::ID {
+            return Err(ProgramError::InvalidAccountOwner);
+        }
+
+        // Check: execute_data account is writable
+        if !execute_data_account.is_writable {
+            return Err(ProgramError::InvalidInstructionData);
+        }
+
+        // Check: at least one message account
+        if message_accounts.is_empty() {
+            return Err(ProgramError::NotEnoughAccountKeys);
+        }
+        for message_account in message_accounts {
+            // Check: All message accounts are writable.
+            if !message_account.is_writable {
+                return Err(ProgramError::InvalidInstructionData);
+            }
+
+            // Check: All message accounts are uninitialized
+            if **message_account.lamports.borrow() > 0 {
+                return Err(ProgramError::AccountAlreadyInitialized);
+            }
+        }
+
+        // Phase 2: Deserialization
+        solana_program::log::sol_log_compute_units();
+        // Check: execute_data account was initialized
+        let execute_data: GatewayExecuteData =
+            borsh::from_slice(*execute_data_account.data.borrow())?;
+        solana_program::log::sol_log_compute_units();
+        let Ok((proof, decoded_commands)) = execute_data.decode() else {
+            return Err(GatewayError::MalformedProof)?;
+        };
+        solana_program::log::sol_log_compute_units();
+        proof.validate(todo!("message_hash (?)"));
+
         Ok(())
     }
 

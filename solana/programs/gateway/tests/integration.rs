@@ -3,9 +3,12 @@
 mod common;
 
 use anyhow::{anyhow, Result};
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use common::program_test;
 use gateway::accounts::{GatewayConfig, GatewayExecuteData, GatewayMessageID};
 use gateway::events::GatewayEvent;
+use gateway::find_root_pda;
 use random_array::rand_array;
 use solana_program::address_lookup_table::state::AddressLookupTable;
 use solana_program::address_lookup_table_account::AddressLookupTableAccount;
@@ -58,7 +61,7 @@ mod accounts {
     use super::*;
     pub(super) async fn initialize_config_account(
         client: &mut BanksClient,
-        payer: Keypair,
+        payer: &Keypair,
         gateway_config: &GatewayConfig,
     ) -> Result<()> {
         let recent_blockhash = client.get_latest_blockhash().await?;
@@ -274,8 +277,7 @@ async fn test_call_contract_instruction() -> Result<()> {
         .unwrap()
         .log_messages
         .iter()
-        .filter_map(GatewayEvent::parse_log)
-        .next();
+        .find_map(GatewayEvent::parse_log);
 
     assert_eq!(
         expected_event,
@@ -294,7 +296,7 @@ async fn test_call_contract_instruction() -> Result<()> {
 async fn initialize_config() -> Result<()> {
     let (mut banks_client, payer, _recent_blockhash) = program_test().start().await;
     let gateway_config = GatewayConfig::new(1);
-    accounts::initialize_config_account(&mut banks_client, payer, &gateway_config).await
+    accounts::initialize_config_account(&mut banks_client, &payer, &gateway_config).await
 }
 
 #[tokio::test]
@@ -310,7 +312,7 @@ async fn initialize_execute_data() -> Result<()> {
 #[tokio::test]
 async fn initialize_message() -> Result<()> {
     let (mut banks_client, payer, _recent_blockhash) = program_test().start().await;
-    let message_id = GatewayMessageID::new("All you need is potatoes!".into());
+    let message_id = GatewayMessageID::new([5; 32]);
     let (execute_data_pda, _bump, _seeds) = message_id.pda();
     accounts::initialize_message(&mut banks_client, payer, execute_data_pda, message_id).await?;
     Ok(())
@@ -320,8 +322,15 @@ async fn initialize_message() -> Result<()> {
 async fn execute_message() -> Result<()> {
     let mut test_context = program_test().start_with_context().await;
 
-    // TODO: define a data type for the execute_data bytes produced by andreceived
-    // from the Prover.
+    // Set up Gateway Config account
+    let gateway_config = GatewayConfig::new(1);
+    accounts::initialize_config_account(
+        &mut test_context.banks_client,
+        &test_context.payer,
+        &gateway_config,
+    )
+    .await?;
+
     let execute_data_account = {
         let execute_data = GatewayExecuteData::new(b"All you need is potatoes!".to_vec());
         let (execute_data_pda, _bump, _seeds) = execute_data.pda();
@@ -342,7 +351,7 @@ async fn execute_message() -> Result<()> {
         //   'Program failed to complete'.
         let batch_size = 14;
         (0..batch_size)
-            .map(|id| GatewayMessageID::new(format!("message{id}")).pda().0)
+            .map(|id| GatewayMessageID::new([id; 32]).pda().0)
             .collect()
     };
 
@@ -365,5 +374,67 @@ async fn execute_message() -> Result<()> {
         .banks_client
         .process_transaction(transaction)
         .await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn execute() -> Result<()> {
+    let mut program_test = program_test();
+
+    // Provision the test program with an `execute_data` account.
+
+    // Copied from https://github.com/axelarnetwork/axelar-amplifier/blob/e04a85fc635448559cdd265da582d1f49a6b8f52/contracts/multisig-prover/src/encoding/bcs.rs#L509
+    let execute_data = hex::decode("8a02010000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020213617070726f7665436f6e747261637443616c6c13617070726f7665436f6e747261637443616c6c0249034554480330783000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000004c064158454c415203307831000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000087010121037286a4f1177bea06c8e15cf6ec3df0b7747a01ac2329ca2999dfd74eff59902801640000000000000000000000000000000a0000000000000000000000000000000141ef5ce016a4beed7e11761e5831805e962fca3d8901696a61a6ffd3af2b646bdc3740f64643bdb164b8151d1424eb4943d03f71e71816c00726e2d68ee55600c600")?;
+    let execute_data_account = GatewayExecuteData::new(execute_data);
+    let (execute_data_pda, _bump, _seeds) = execute_data_account.pda();
+    let execute_data_base64 = STANDARD.encode(&borsh::to_vec(&execute_data_account)?);
+
+    program_test.add_account_with_base64_data(
+        execute_data_pda,
+        999999,
+        gateway::id(),
+        &execute_data_base64,
+    );
+
+    // Provision the test program with a Config account
+    let config = GatewayConfig::new(1);
+    let config_bytes = borsh::to_vec(&config)?;
+    let config_base64 = STANDARD.encode(&config_bytes);
+    let (config_pda, _bump) = find_root_pda();
+    program_test.add_account_with_base64_data(config_pda, 999999, gateway::id(), &config_base64);
+
+    // Provision the test progam with the message accounts.
+    let message_pdas: Vec<Pubkey> = (&[1, 2])
+        .into_iter()
+        .map(|suffix| {
+            let mut id = [0u8; 32];
+            id[31] = *suffix;
+            let message = GatewayMessageID::new(id);
+            let message_pda = message.pda();
+            message_pda.0
+        })
+        .collect();
+
+    // Start the test program
+    let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
+
+    // Prepare an `execute` instruction
+    let instruction =
+        gateway::instructions::execute(gateway::id(), execute_data_pda, &message_pdas)?;
+
+    let transaction = Transaction::new_signed_with_payer(
+        &[instruction],
+        Some(&payer.pubkey()),
+        &[&payer],
+        recent_blockhash,
+    );
+    let BanksTransactionResultWithMetadata { result, metadata } = banks_client
+        .process_transaction_with_metadata(transaction)
+        .await?;
+
+    assert!(result.is_ok());
+
+    panic!("finish this test: check logs");
+
     Ok(())
 }
