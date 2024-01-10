@@ -15,7 +15,9 @@ pub enum GatewayInstruction {
     /// Represents the `CallContract` Axelar event.
     ///
     /// Accounts expected by this instruction:
-    /// 0. [] ???  // TODO
+    /// 0. [] Gateway Config PDA account
+    /// 1. [WRITE] Execute Data PDA account
+    /// N. [WRITE] Message PDA accounts
     Execute {},
 
     /// Represents the `CallContract` Axelar event.
