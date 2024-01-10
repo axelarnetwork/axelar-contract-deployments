@@ -77,12 +77,12 @@ impl GatewayExecuteData {
 #[repr(C)]
 pub struct GatewayMessageID {
     discriminator: Discriminator<MessageID>,
-    message_id: String,
+    message_id: [u8; 32],
 }
 
 impl GatewayMessageID {
     /// Creates a new `GatewayMessageID` struct.
-    pub fn new(message_id: String) -> Self {
+    pub fn new(message_id: [u8; 32]) -> Self {
         Self {
             discriminator: Discriminator::new(),
             message_id,
@@ -90,7 +90,7 @@ impl GatewayMessageID {
     }
     /// Returns the seeds for this account PDA.
     pub fn seeds(&self) -> [u8; 32] {
-        hash(self.message_id.as_bytes()).to_bytes()
+        hash(&self.message_id).to_bytes()
     }
 
     /// Finds a PDA for this account. Returns its Pubkey, the canonical bump and
@@ -254,7 +254,7 @@ mod tests {
 
     #[test]
     fn message_id_pda() -> Result<()> {
-        let message_id = GatewayMessageID::new("Hello!".to_string());
+        let message_id = GatewayMessageID::new([42u8; 32]);
         let (expected_pda, bump_seed, seed) = message_id.pda();
         let actual_pda =
             Pubkey::create_program_address(&[seed.as_ref(), &[bump_seed]], &crate::ID)?;
