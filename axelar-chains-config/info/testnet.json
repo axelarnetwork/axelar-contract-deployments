@@ -204,7 +204,7 @@
         }
       },
       "explorer": {
-        "url": "https://testnet.snowtrace.io",
+        "url": "https://avalanche.testnet.routescan.io",
         "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
       }
     },
