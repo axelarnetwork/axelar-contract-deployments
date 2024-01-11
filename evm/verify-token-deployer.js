@@ -62,12 +62,13 @@ function fetchSenderAddress(data, chainName) {
 
 function fetchTokenAddress(data, eventHash) {
     let tokenAddress;
+    const EVENT_SIGNATURE_INDEX = 0;
 
     for (const item of data) {
         let logsData = item.call?.receipt?.logs;
 
         for (const log of logsData) {
-            if (log.topics[0] === eventHash) {
+            if (log.topics[EVENT_SIGNATURE_INDEX] === eventHash) {
                 [tokenAddress] = defaultAbiCoder.decode(['address'], log.data.substring(0, 66));
                 break;
             }
@@ -77,7 +78,7 @@ function fetchTokenAddress(data, eventHash) {
             logsData = item.executed?.receipt?.logs;
 
             for (const log of logsData) {
-                if (log.topics[0] === eventHash) {
+                if (log.topics[EVENT_SIGNATURE_INDEX] === eventHash) {
                     [tokenAddress] = defaultAbiCoder.decode(['address'], log.data.substring(0, 66));
                     break;
                 }
