@@ -1,5 +1,6 @@
 //! Error types
 
+use auth_weighted::error::AuthWeightedError;
 use num_derive::FromPrimitive;
 use solana_program::program_error::ProgramError;
 use thiserror::Error;
@@ -111,10 +112,50 @@ pub enum GatewayError {
     #[error("Falied to decode execute_data")]
     FailedToDecodeExecuteData,
     // 25
+    /// Arithmetic overflow
+    #[error("Program arithmetic overflowed")]
+    ArithmeticOverflow,
+
+    /// Operator set epoch is different than the current epoch
+    #[error("Operator set epoch is different than the current epoch.")]
+    EpochMissmatch,
 }
 
 impl From<GatewayError> for ProgramError {
     fn from(e: GatewayError) -> Self {
         ProgramError::Custom(e as u32)
+    }
+}
+
+/// TODO: Once we merge `auth-weighted` types into this crate, most of their
+/// error variants should be removed as well.
+impl From<AuthWeightedError> for GatewayError {
+    fn from(error: AuthWeightedError) -> Self {
+        use AuthWeightedError::*;
+        match error {
+            InvalidOperators => GatewayError::InvalidOperators,
+            InvalidWeights => GatewayError::InvalidWeights,
+            InvalidThreshold => GatewayError::InvalidThreshold,
+            DuplicateOperators => GatewayError::DuplicateOperators,
+            MalformedSigners => GatewayError::MalformedSigners,
+            LowSignaturesWeight => GatewayError::LowSignaturesWeight,
+            InvalidInstruction => GatewayError::InvalidInstruction,
+            InvalidProgramID => GatewayError::InvalidProgramID,
+            MalformedProof => GatewayError::MalformedProof,
+            MalformedState => GatewayError::MalformedState,
+            MalformedTransferOperatorshipParams => {
+                GatewayError::MalformedTransferOperatorshipParams
+            }
+            EpochForHashNotFound => GatewayError::EpochForHashNotFound,
+            EpochMissmatch => GatewayError::EpochMissmatch,
+            Secp256k1RecoveryFailedInvalidSignature => {
+                GatewayError::Secp256k1RecoveryFailedInvalidSignature
+            }
+            Secp256k1RecoveryFailedInvalidRecoveryId => {
+                GatewayError::Secp256k1RecoveryFailedInvalidRecoveryId
+            }
+            Secp256k1RecoveryFailedInvalidHash => GatewayError::Secp256k1RecoveryFailedInvalidHash,
+            ArithmeticOverflow => GatewayError::ArithmeticOverflow,
+        }
     }
 }

@@ -1,6 +1,5 @@
 //! Program state processor.
 
-use auth_weighted::error::AuthWeightedError;
 use auth_weighted::types::account::state::AuthWeightedStateAccount;
 use auth_weighted::types::account::transfer_operatorship::TransferOperatorshipAccount;
 use borsh::from_slice;
@@ -244,17 +243,7 @@ impl Processor {
             borsh::de::from_slice::<TransferOperatorshipAccount>(new_operators_bytes)?;
 
         // Check: new operator data is valid.
-        if let Err(error) = new_operators.validate() {
-            // TODO: Error handling should not be this brittle. Consider merging this part
-            // of the AuthWeighted program into the Gateway.
-            let gateway_error = match error {
-                AuthWeightedError::InvalidOperators => GatewayError::InvalidOperators,
-                AuthWeightedError::InvalidWeights => GatewayError::InvalidWeights,
-                AuthWeightedError::InvalidThreshold => GatewayError::InvalidThreshold,
-                _ => panic!("Unexpected error received from AuthWeighted module"),
-            };
-            return Err(gateway_error)?;
-        };
+        new_operators.validate().map_err(GatewayError::from)?;
 
         // Hash the new operator set.
         let new_operators_hash = hash(new_operators_bytes).to_bytes();
@@ -266,15 +255,9 @@ impl Processor {
         };
 
         // Update epoch and operators.
-        if let Err(error) = state.update_epoch_and_operators(new_operators_hash) {
-            // TODO: Error handling should not be this brittle. Consider merging this part
-            // of the AuthWeighted program into the Gateway.
-            let gateway_error = match error {
-                AuthWeightedError::DuplicateOperators => GatewayError::DuplicateOperators,
-                _ => panic!("Unexpected error received from AuthWeighted module"),
-            };
-            return Err(gateway_error)?;
-        };
+        state
+            .update_epoch_and_operators(new_operators_hash)
+            .map_err(GatewayError::from)?;
 
         // Resize and refund state account space.
         state.reallocate(state_account, payer_account, system_account)?;
