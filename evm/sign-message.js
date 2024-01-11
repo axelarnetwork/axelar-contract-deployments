@@ -2,7 +2,7 @@
 
 const { ethers } = require('hardhat');
 const {
-    utils: { splitSignature, isHexString, arrayify },
+    utils: { isHexString, arrayify },
 } = ethers;
 const { Command, Option } = require('commander');
 const { getWallet } = require('./sign-utils');
@@ -11,23 +11,20 @@ const { printInfo } = require('./utils');
 async function processCommand(options) {
     const { message, privateKey } = options;
 
-    const wallet = await getWallet(privateKey, '');
-    // let wallet = new Wallet('9c6cd64132c4bb5c9e812638c2865e78fa789d73a7d934500e3fbd22c68bbe4a', "");
+    const wallet = await getWallet(privateKey);
     printInfo('Wallet address', await wallet.getAddress());
-    let flatSig;
+    let sig;
 
     if (isHexString(message) && message.length === 66) {
         const messageHashBytes = arrayify(message);
         // Sign the binary data
-        flatSig = await wallet.signMessage(messageHashBytes);
+        sig = await wallet.signMessage(messageHashBytes);
     } else {
         // Sign the string message
-        flatSig = await wallet.signMessage(message);
+        sig = await wallet.signMessage(message);
     }
 
-    // For Solidity, we need the expanded-format of a signature
-    const sig = splitSignature(flatSig);
-    console.log('The signed message is: \n', sig);
+    printInfo('The signed message is:', sig);
 }
 
 async function main(options) {
