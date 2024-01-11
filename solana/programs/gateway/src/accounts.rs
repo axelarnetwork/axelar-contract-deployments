@@ -8,7 +8,9 @@ use solana_program::pubkey::Pubkey;
 
 use self::discriminators::MessageID;
 use crate::error::GatewayError;
-use crate::types::execute_data_decoder::{decode as decode_execute_data, DecodedCommand};
+use crate::types::execute_data_decoder::{
+    decode as decode_execute_data, DecodedCommand, DecodedCommandBatch,
+};
 
 /// Gateway configuration type.
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
@@ -67,7 +69,7 @@ impl GatewayExecuteData {
 
     /// Decodes the `execute_data` into a Proof and a CommandBatch.
 
-    pub fn decode(&self) -> Result<(Proof, Vec<DecodedCommand>), GatewayError> {
+    pub fn decode(&self) -> Result<(Proof, DecodedCommandBatch), GatewayError> {
         decode_execute_data(&self.data).map_err(|e| e.into())
     }
 }

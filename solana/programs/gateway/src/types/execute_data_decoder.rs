@@ -111,6 +111,16 @@ impl DecodedCommand {
     }
 }
 
+/// Decoded command batch.
+#[derive(Debug, PartialEq)]
+pub struct DecodedCommandBatch {
+    /// The decoded commands.
+    pub commands: Vec<DecodedCommand>,
+    /// The hash of the bytes used to decode this command batch.
+    pub hash: [u8; 32],
+}
+
+#[inline]
 fn build_proof_from_raw_parts(
     addresses: Vec<Vec<u8>>,
     weights: Vec<u128>,
@@ -136,34 +146,38 @@ fn build_proof_from_raw_parts(
     Ok(Proof::new(operators, signatures))
 }
 
+#[inline]
+fn decode_proof(proof_bytes: &[u8]) -> Result<Proof, DecodeError> {
+    let (addresses, weights, quorum, signatures): DecodedProofParts =
+        bcs::from_bytes(&proof_bytes).map_err(|_| DecodeError::FailedToDecodeProofParts)?;
+    build_proof_from_raw_parts(addresses, weights, quorum, signatures)
+}
+
+#[inline]
+fn decode_command_batch(command_batch_bytes: &[u8]) -> Result<DecodedCommandBatch, DecodeError> {
+    // Decode command batch parts
+    let (destination_chain_id, commands_ids, commands_types, commands_params): DecodedCommandBatchParts =
+                bcs::from_bytes(&command_batch_bytes).map_err(|_| DecodeError::FailedToDecodeCommandBatchParts)?;
+    // Build command batch from raw parts
+    let commands = izip!(&commands_ids, &commands_types, &commands_params)
+        .map(|(id, type_, encoded_params)| {
+            DecodedCommand::decode(*id, type_, destination_chain_id, encoded_params)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let hash = solana_program::hash::hash(command_batch_bytes).to_bytes();
+    Ok(DecodedCommandBatch { commands, hash })
+}
+
 /// Decodes the `execute_data` bytes into a [`Proof`] and
-/// [`Vec<DecodedCommand>`] tuple.
-pub fn decode(bytes: &[u8]) -> Result<(Proof, Vec<DecodedCommand>), DecodeError> {
+/// [`DecodedCommandBatch`] tuple.
+pub fn decode(bytes: &[u8]) -> Result<(Proof, DecodedCommandBatch), DecodeError> {
     // Split into:
     // 1. command batch parts
     // 2. proof parts
     let (command_batch_bytes, proof_bytes): (Vec<u8>, Vec<u8>) =
         bcs::from_bytes(bytes).map_err(|_| DecodeError::FailedToSplitExecuteData)?;
-
-    let proof = {
-        // Decode proof parts
-        let (addresses, weights, quorum, signatures): DecodedProofParts =
-            bcs::from_bytes(&proof_bytes).map_err(|_| DecodeError::FailedToDecodeProofParts)?;
-        build_proof_from_raw_parts(addresses, weights, quorum, signatures)?
-    };
-
-    let commands = {
-        // Decode command batch parts
-        let (destination_chain_id, commands_ids, commands_types, commands_params): DecodedCommandBatchParts =
-                bcs::from_bytes(&command_batch_bytes).map_err(|_| DecodeError::FailedToDecodeCommandBatchParts)?;
-        // Build command batch from raw parts
-        izip!(&commands_ids, &commands_types, &commands_params)
-            .map(|(id, type_, encoded_params)| {
-                DecodedCommand::decode(*id, type_, destination_chain_id, encoded_params)
-            })
-            .collect::<Result<Vec<_>, _>>()?
-    };
-
+    let proof = decode_proof(&proof_bytes)?;
+    let commands = decode_command_batch(&command_batch_bytes)?;
     Ok((proof, commands))
 }
 
@@ -212,6 +226,13 @@ fn decode_execute_data() -> anyhow::Result<()> {
             payload_hash: zero_array,
         },
     };
-    assert_eq!(command_batch, &[command1, command2]);
+    let expected = DecodedCommandBatch {
+        commands: vec![command1, command2],
+        hash: hex::decode("469db1cce4ac0d38edbdf5478053d66879707e22ec8f2dbd26f58adc3db5417a")?
+            .try_into()
+            .expect("vector with 32 elements"),
+    };
+
+    assert_eq!(command_batch, expected);
     Ok(())
 }
