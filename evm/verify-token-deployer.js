@@ -45,6 +45,8 @@ async function processCommand(chain, options) {
         if (recoveredAddress.toLowerCase() !== sender.toLowerCase()) {
             throw new Error('Provided signer address does not match retrieved signer from message signature');
         }
+
+        console.log('Sender address matches recovered address.');
     } catch (error) {
         printError('Error', error.message);
     }
