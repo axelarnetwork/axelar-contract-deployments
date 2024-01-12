@@ -346,7 +346,7 @@ async function main(options) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('balances').description('Display balance of the wallet on specified chains.');
+    program.name('verify-contract').description('Verify selected contracts on specified chains.');
 
     addBaseOptions(program, { ignorePrivateKey: true, address: true });
 
