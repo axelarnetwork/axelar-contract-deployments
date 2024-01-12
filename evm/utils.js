@@ -1001,23 +1001,42 @@ function getContractJSON(contractName, artifactPath) {
  *
  * @returns {Object} An object containing gas options for the transaction.
  *
- * @throws {Error} Throws an error if fetching the gas price fails.
+ * @throws {Error} Throws an error if gas options are invalid and/or fetching the gas price fails when gasPriceAdjustment is present.
  *
  * Note:
+ * - If 'options.gasOptions' is present, cli gas options override any config values.
  * - If 'options.offline' is true, static gas options from the contract or chain config are used.
  * - If 'gasPriceAdjustment' is set in gas options and 'gasPrice' is not pre-defined, the gas price
  *   is fetched from the provider and adjusted according to 'gasPriceAdjustment'.
  */
 async function getGasOptions(chain, options, contractName, defaultGasOptions = {}) {
-    const { offline } = options;
+    const { offline, gasOptions: gasOptionsCli } = options;
 
     const contractConfig = contractName ? chain?.contracts[contractName] : null;
 
-    if (offline) {
-        return copyObject(contractConfig?.staticGasOptions || chain?.staticGasOptions || defaultGasOptions);
+    let gasOptions;
+
+    if (gasOptionsCli) {
+        try {
+            gasOptions = JSON.parse(gasOptionsCli);
+        } catch (error) {
+            throw new Error(`Invalid gas options override: ${gasOptionsCli}`);
+        }
+    } else if (offline) {
+        gasOptions = copyObject(contractConfig?.staticGasOptions || chain?.staticGasOptions || defaultGasOptions);
+    } else {
+        gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || defaultGasOptions);
     }
 
-    const gasOptions = copyObject(contractConfig?.gasOptions || chain?.gasOptions || defaultGasOptions);
+    validateGasOptions(gasOptions);
+    gasOptions = await handleGasPriceAdjustment(chain, gasOptions);
+
+    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+
+    return gasOptions;
+}
+
+async function handleGasPriceAdjustment(chain, gasOptions) {
     const gasPriceAdjustment = gasOptions.gasPriceAdjustment;
 
     if (gasPriceAdjustment && !gasOptions.gasPrice) {
@@ -1033,9 +1052,21 @@ async function getGasOptions(chain, options, contractName, defaultGasOptions = {
         delete gasOptions.gasPriceAdjustment;
     }
 
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
-
     return gasOptions;
+}
+
+function validateGasOptions(gasOptions) {
+    const allowedFields = ['gasLimit', 'gasPrice', 'maxPriorityFeePerGas', 'maxFeePerGas', 'gasPriceAdjustment'];
+
+    for (const [key, value] of Object.entries(gasOptions)) {
+        if (!allowedFields.includes(key)) {
+            throw new Error(`Invalid gas option field: ${key}`);
+        }
+
+        if (!isValidNumber(value)) {
+            throw new Error(`Invalid ${key} value: ${value}`);
+        }
+    }
 }
 
 module.exports = {
