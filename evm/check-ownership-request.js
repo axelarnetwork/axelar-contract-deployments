@@ -16,7 +16,7 @@ async function processCommand(_, chain, options) {
     const { rpc } = options;
     let { address, addresses } = options;
 
-    if(!isValidAddress(address)) {
+    if (!isValidAddress(address)) {
         throw new Error('Invalid address parameter.');
     }
 
@@ -26,8 +26,8 @@ async function processCommand(_, chain, options) {
         printError(`Error while parsing addresses: `, error.message);
     }
 
-    for(const index in addresses) {
-        if(!isValidAddress(addresses[index])) {
+    for (const index in addresses) {
+        if (!isValidAddress(addresses[index])) {
             throw new Error(`Invalid address at index ${index} in addresses parameter.`);
         }
     }
@@ -87,7 +87,9 @@ if (require.main === module) {
 
     program
         .name('check-ownership-request')
-        .description('Before signing the message check that the contract address provided is not for AXL or any of our other important contracts');
+        .description(
+            'Before signing the message check that the contract address provided is not for AXL or any of our other important contracts',
+        );
 
     addBaseOptions(program, { ignorePrivateKey: true, address: true });
 
