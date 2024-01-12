@@ -1152,7 +1152,8 @@
       },
       "confirmations": 3,
       "explorer": {
-        "url": "https://www.filfox.info"
+        "url": "https://www.filfox.info",
+        "api": "https://filfox.info/api/v1/tools/verifyContract"
       },
       "gasOptions": {
         "gasLimit": 500000000

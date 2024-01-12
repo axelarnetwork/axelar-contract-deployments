@@ -1252,7 +1252,8 @@
         }
       },
       "explorer": {
-        "url": "https://calibration.filfox.info"
+        "url": "https://calibration.filfox.info",
+        "api": "https://calibration.filfox.info/api/v1/tools/verifyContract"
       },
       "gasOptions": {
         "gasLimit": 300000000
