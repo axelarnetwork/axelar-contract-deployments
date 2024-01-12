@@ -2090,13 +2090,16 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "auth-weighted",
+ "axelar-wasm-std",
  "base64 0.21.5",
  "bcs",
  "borsh 1.2.1",
  "connection-router",
  "cosmwasm-std",
+ "fastrand",
  "hex",
  "itertools 0.12.0",
+ "k256",
  "multisig",
  "multisig-prover",
  "num-derive 0.4.1",
@@ -2616,9 +2619,9 @@ dependencies = [
 
 [[package]]
 name = "k256"
-version = "0.13.2"
+version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f01b677d82ef7a676aa37e099defd83a28e15687112cafdd112d60236b6115b"
+checksum = "956ff9b67e26e1a6a866cb758f12c6f8746208489e3e4a4b5580802f2f0a587b"
 dependencies = [
  "cfg-if",
  "ecdsa",
