@@ -153,11 +153,8 @@ mod tests {
             threshold,
         );
 
-        let input_1 = [1u8; 64].to_vec();
-        let input_2 = [3u8; 64].to_vec();
-
-        let signature_1 = Signature::try_from(input_1)?;
-        let signature_2 = Signature::try_from(input_2)?;
+        let signature_1 = Signature::try_from(vec![1u8; 64])?;
+        let signature_2 = Signature::try_from(vec![3u8; 64])?;
 
         let proof = Proof::new(
             operators.clone(),
