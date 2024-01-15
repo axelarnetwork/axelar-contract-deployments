@@ -122,17 +122,19 @@ impl Processor {
             }
         }
 
-        // Phase 2: Deserialization
-        solana_program::log::sol_log_compute_units();
         // Check: execute_data account was initialized
         let execute_data: GatewayExecuteData =
             borsh::from_slice(*execute_data_account.data.borrow())?;
-        solana_program::log::sol_log_compute_units();
-        let Ok((proof, decoded_commands)) = execute_data.decode() else {
+
+        // Phase 2: Deserialization & Proof Validation
+
+        let Ok((proof, command_batch)) = execute_data.decode() else {
             return Err(GatewayError::MalformedProof)?;
         };
-        solana_program::log::sol_log_compute_units();
-        proof.validate(todo!("message_hash (?)"));
+
+        proof
+            .validate(&command_batch.hash)
+            .map_err(GatewayError::from)?;
 
         Ok(())
     }
