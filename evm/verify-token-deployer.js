@@ -3,7 +3,7 @@
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const {
-    utils: { defaultAbiCoder, Interface },
+    utils: { defaultAbiCoder, Interface, verifyMessage },
     providers: { JsonRpcProvider },
     Contract,
 } = ethers;
@@ -98,7 +98,7 @@ async function processCommand(config, options, destChainName) {
         const sourceTx = await sourceChainProvider.getTransaction(sourceTxHash);
         const sender = sourceTx.from;
 
-        const recoveredAddress = ethers.utils.verifyMessage(message, signedHash);
+        const recoveredAddress = verifyMessage(message, signedHash);
 
         if (recoveredAddress.toLowerCase() !== sender.toLowerCase()) {
             throw new Error('Provided signer address does not match retrieved signer from message signature');
