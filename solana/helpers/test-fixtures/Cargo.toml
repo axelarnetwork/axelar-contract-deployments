@@ -1,0 +1,18 @@
+[package]
+name = "test-fixtures"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+axelar-wasm-std.workspace = true
+bcs.workspace = true
+connection-router.workspace = true
+cosmwasm-std.workspace = true
+fastrand = "2"
+hex.workspace = true
+itertools.workspace = true
+k256 = { version = "0.13.3", features = ["ecdsa"] }
+multisig-prover.workspace = true
+multisig.workspace = true
+rand_core = { version = "0.6.4", features = ["getrandom"] }
