@@ -1,6 +1,6 @@
 use std::iter::repeat_with;
 
-use anyhow::{anyhow, bail, ensure, Result};
+use anyhow::{anyhow, ensure, Result};
 use connection_router::state::Address;
 use connection_router::Message;
 use cosmwasm_std::{Addr, Uint256};
@@ -90,20 +90,27 @@ fn sign_batch(
     command_batch: &CommandBatch,
     signers: &[TestSigner],
 ) -> Result<Vec<Option<Signature>>> {
-    use k256::ecdsa::signature::Signer as _;
-    use k256::ecdsa::{self};
+    use sha3::{Digest, Keccak256};
 
     let message_to_sign = command_batch.msg_digest();
-    signers
-        .iter()
-        .map(|signer| signer.signing_key.sign(&message_to_sign))
-        .try_fold(vec![], |mut collected, signature: ecdsa::Signature| {
-            match (KeyType::Ecdsa, signature.to_vec().into()).try_into() {
-                Err(e) => bail!("failed to convert signature: {e}"),
-                Ok(sig) => collected.push(Some(sig)),
-            };
-            Ok(collected)
-        })
+    let mut signatures = vec![];
+
+    for signer in signers {
+        // Sign the message
+        let digest = Keccak256::new_with_prefix(&message_to_sign);
+        let (signature, recid) = signer.signing_key.sign_digest_recoverable(digest)?;
+
+        // Concatenate signature and recovery byte
+        let mut signature = signature.to_vec();
+        signature.push(recid.to_byte());
+        assert_eq!(signature.len(), 65);
+
+        // Convert into the Axelar signature type
+        let axelar_sig: multisig::key::Signature = (KeyType::Ecdsa, signature.into()).try_into()?;
+        assert!(matches!(axelar_sig, Signature::EcdsaRecoverable(_))); // confidence check
+        signatures.push(Some(axelar_sig));
+    }
+    Ok(signatures)
 }
 
 fn encode(
@@ -170,18 +177,19 @@ mod axelar_bcs_encoding {
         let signers = signers
             .into_iter()
             .map(|(signer, signature)| {
+                dbg!(&signer);
+                dbg!(&signature);
                 let mut signature = signature;
                 if let Some(Signature::Ecdsa(nonrecoverable)) = signature {
-                    signature = nonrecoverable
-                        .to_recoverable(
-                            command_batch.msg_digest().as_slice(),
-                            &signer.pub_key,
-                            identity,
-                        )
-                        .map(Signature::EcdsaRecoverable)
-                        .ok();
+                    signature = dbg!(nonrecoverable.to_recoverable(
+                        command_batch.msg_digest().as_slice(),
+                        &signer.pub_key,
+                        identity,
+                    ))
+                    .map(Signature::EcdsaRecoverable)
+                    .ok();
                 }
-
+                assert!(signature.is_some(), "Signature was erased");
                 (signer, signature)
             })
             .collect::<Vec<_>>();
@@ -276,4 +284,10 @@ mod axelar_bcs_encoding {
     fn u256_to_u128(val: Uint256) -> u128 {
         val.to_string().parse().expect("value is larger than u128")
     }
+}
+
+#[test]
+fn test_create_execute_data() {
+    let encode_data = create_execute_data(1, 2, 1);
+    assert!(encode_data.is_ok())
 }

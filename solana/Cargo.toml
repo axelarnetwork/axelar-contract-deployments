@@ -19,13 +19,18 @@ solana-sdk = "1.17.12"
 thiserror = "1"
 cosmwasm-std = "1.5"
 serde = "1"
+sha2 = "0.10"
+sha3 = "0.10"
+
+# solana programs
 auth-weighted = { path = "programs/auth-weighted" }
+operator = { path = "programs/operator" }
 
 # helper crates
 program-utils = { path = "helpers/program-utils" }
 random-array = { path = "helpers/random-array" }
 slice-iterator = { path = "helpers/slice-iterator" }
-operator = { path = "programs/operator" }
+test-fixtures = { path = "helpers/test-fixtures" }
 
 
 [workspace.dependencies.multisig]

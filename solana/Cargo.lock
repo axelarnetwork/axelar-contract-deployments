@@ -2107,6 +2107,7 @@ dependencies = [
  "solana-program",
  "solana-program-test",
  "solana-sdk",
+ "test-fixtures",
  "thiserror",
 ]
 
@@ -5999,6 +6000,8 @@ dependencies = [
  "multisig",
  "multisig-prover",
  "rand_core 0.6.4",
+ "sha2 0.10.8",
+ "sha3 0.10.8",
 ]
 
 [[package]]

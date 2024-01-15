@@ -34,3 +34,4 @@ hex.workspace = true
 random-array.workspace = true
 solana-program-test = "1.17.6"
 solana-sdk = "1.17.6"
+test-fixtures.workspace = true
