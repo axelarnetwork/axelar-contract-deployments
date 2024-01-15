@@ -1,44 +1,102 @@
 'use strict';
 
-const axios = require('axios');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const {
-    utils: { defaultAbiCoder, isHexString, keccak256, toUtf8Bytes },
+    utils: { defaultAbiCoder, Interface },
+    providers: { JsonRpcProvider },
+    Contract,
 } = ethers;
 
-const { loadConfig, printError } = require('./utils');
+const { loadConfig, printError, getContractJSON, printInfo, isKeccak256Hash } = require('./utils');
 
-async function processCommand(chain, options) {
+const EVENT_SIGNATURE_INDEX = 0;
+const TOKEN_ID_INDEX = 1;
+const EVENT_FILTER_START_BLOCK = 0;
+
+async function processCommand(config, options, destChainName) {
     try {
-        const { signedHash, env, address, message, api } = options;
-        const { txHash } = options;
-        const eventHash = keccak256(toUtf8Bytes('InterchainTokenDeployed(bytes32,address,address,string,string,uint8)'));
+        const { signedHash, address, message, txHash } = options;
 
-        if (!(txHash && txHash.startsWith('0x') && isHexString(txHash) && txHash.length === 66)) {
+        if (config.chains[destChainName.toLowerCase()] === undefined) {
+            throw new Error(`Chain ${destChainName} is not defined in the info file`);
+        }
+
+        const destChain = config.chains[destChainName.toLowerCase()];
+
+        const interchainTokenServiceABI = getContractJSON('InterchainTokenService').abi;
+        const interchainTokenServiceInterface = new Interface(interchainTokenServiceABI);
+        const interchainTokenDeployedEventHash = interchainTokenServiceInterface.getEventTopic('InterchainTokenDeployed');
+        const interchainTokenDeploymentStartedEventHash = interchainTokenServiceInterface.getEventTopic('InterchainTokenDeploymentStarted');
+
+        if (!isKeccak256Hash(txHash)) {
             throw new Error('Invalid transaction hash');
         }
 
-        const apiUrl = api || (env === 'testnet' ? 'https://testnet.api.gmp.axelarscan.io/' : 'https://api.gmp.axelarscan.io/');
-        const requestBody = {
-            txHash,
-            method: 'searchGMP',
-        };
+        const provider = new JsonRpcProvider(destChain.rpc);
 
-        const response = await axios.post(apiUrl, requestBody);
+        const interchainTokenABI = getContractJSON('InterchainToken').abi;
+        const interchainToken = new Contract(address, interchainTokenABI, provider);
 
-        if (!(response.data && response.data.data && Array.isArray(response.data.data))) {
-            throw new Error('No data found in the response.');
+        let tokenId;
+
+        try {
+            tokenId = await interchainToken.interchainTokenId();
+        } catch (error) {
+            throw new Error('Unable to fetch interchain token ID');
         }
 
-        const data = response.data.data;
+        const tx = await provider.getTransaction(txHash);
 
-        const sender = fetchSenderAddress(data, chain.name.toLowerCase());
-        const tokenAddress = fetchTokenAddress(data, eventHash);
+        const [, sourceChainName] = interchainTokenServiceInterface.decodeFunctionData('execute', tx.data);
+
+        const receipt = await tx.wait();
+
+        const tokenAddress = fetchTokenAddress(receipt.logs, interchainTokenDeployedEventHash, tokenId);
 
         if (address.toLowerCase() !== tokenAddress.toLowerCase()) {
             throw new Error('Provided token address does not match retrieved deployed interchain token address');
         }
+
+        if (config.chains[sourceChainName.toLowerCase()] === undefined) {
+            throw new Error(`Chain ${sourceChainName} is not defined in the info file`);
+        }
+
+        const sourceChain = config.chains[sourceChainName.toLowerCase()];
+
+        const sourceChainProvider = new JsonRpcProvider(sourceChain.rpc);
+
+        const filter = {
+            address: sourceChain.contracts.InterchainTokenService.address,
+            topics: [interchainTokenDeploymentStartedEventHash, tokenId],
+            fromBlock: EVENT_FILTER_START_BLOCK,
+        };
+
+        const logs = await sourceChainProvider.getLogs(filter);
+
+        let sourceTxHash;
+
+        for (const log of logs) {
+            if (log.topics[EVENT_SIGNATURE_INDEX] === interchainTokenDeploymentStartedEventHash && log.topics[TOKEN_ID_INDEX] === tokenId) {
+                const { destinationChain } = interchainTokenServiceInterface.decodeEventLog(
+                    'InterchainTokenDeploymentStarted',
+                    log.data,
+                    log.topics,
+                );
+
+                if (destinationChain === destChain.id) {
+                    sourceTxHash = log.transactionHash;
+                    break;
+                }
+            }
+        }
+
+        if (!sourceTxHash) {
+            throw new Error('Specied source chain tx not found');
+        }
+
+        const sourceTx = await sourceChainProvider.getTransaction(sourceTxHash);
+        const sender = sourceTx.from;
 
         const recoveredAddress = ethers.utils.verifyMessage(message, signedHash);
 
@@ -46,54 +104,24 @@ async function processCommand(chain, options) {
             throw new Error('Provided signer address does not match retrieved signer from message signature');
         }
 
-        console.log('Sender address matches recovered address.');
+        printInfo('Sender address matches recovered address.');
     } catch (error) {
         printError('Error', error.message);
     }
 }
 
-function fetchSenderAddress(data, chainName) {
-    const sender = data.find((item) => item.call?.chain === chainName)?.call.receipt.from;
-
-    if (!sender) {
-        throw new Error('Sender not found in the provided transaction details');
-    }
-
-    return sender;
-}
-
-function fetchTokenAddress(data, eventHash) {
+function fetchTokenAddress(logs, eventHash, tokenId) {
     let tokenAddress;
-    const EVENT_SIGNATURE_INDEX = 0;
 
-    for (const item of data) {
-        let logsData = item.call?.receipt?.logs;
-
-        for (const log of logsData) {
-            if (log.topics[EVENT_SIGNATURE_INDEX] === eventHash) {
-                [tokenAddress] = defaultAbiCoder.decode(['address'], log.data.substring(0, 66));
-                break;
-            }
-        }
-
-        if (!tokenAddress) {
-            logsData = item.executed?.receipt?.logs;
-
-            for (const log of logsData) {
-                if (log.topics[EVENT_SIGNATURE_INDEX] === eventHash) {
-                    [tokenAddress] = defaultAbiCoder.decode(['address'], log.data.substring(0, 66));
-                    break;
-                }
-            }
-        }
-
-        if (tokenAddress) {
+    for (const log of logs) {
+        if (log.topics[EVENT_SIGNATURE_INDEX] === eventHash && log.topics[TOKEN_ID_INDEX] === tokenId) {
+            [tokenAddress] = defaultAbiCoder.decode(['address'], log.data.substring(0, 66));
             break;
         }
     }
 
     if (!tokenAddress) {
-        throw new Error('No interchain token deployment found');
+        throw new Error('No interchain token deployment found with specified token id');
     }
 
     return tokenAddress;
@@ -103,13 +131,7 @@ async function main(options) {
     const { chainName, env } = options;
     const config = loadConfig(env);
 
-    if (config.chains[chainName.toLowerCase()] === undefined) {
-        throw new Error(`Chain ${chainName} is not defined in the info file`);
-    }
-
-    const chain = config.chains[chainName.toLowerCase()];
-
-    await processCommand(chain, options);
+    await processCommand(config, options, chainName);
 }
 
 if (require.main === module) {
@@ -127,13 +149,16 @@ if (require.main === module) {
             .env('ENV'),
     );
     program.addOption(
-        new Option('-n, --chainName <chainName>', 'origin chain from which transaction started').makeOptionMandatory(true).env('CHAIN'),
+        new Option('-n, --chainName <chainName>', 'destination chain on which token is deployed').makeOptionMandatory(true).env('CHAIN'),
     );
-    program.addOption(new Option('--api <gmp api>', 'gmp api to query transaction details').env('API_URL'));
-    program.addOption(new Option('-a, --address <token address>', 'deployed interchain token address'));
-    program.addOption(new Option('-t, --txHash <transaction hash>', 'transaction hash').makeOptionMandatory(true));
-    program.addOption(new Option('-m, --message <message>', 'message to be signed').makeOptionMandatory(true));
-    program.addOption(new Option('-s, --signedHash <signed hash>', 'signed hash').makeOptionMandatory(true));
+    program.addOption(new Option('-a, --address <token address>', 'deployed interchain token address').makeOptionMandatory(true));
+    program.addOption(new Option('-t, --txHash <transaction hash>', 'transaction hash on destinatino chain').makeOptionMandatory(true));
+    program.addOption(
+        new Option('-m, --message <message>', 'message to be signed').makeOptionMandatory(true).makeOptionMandatory(true).env('MESSAGE'),
+    );
+    program.addOption(
+        new Option('-s, --signedHash <signed hash>', 'signed hash').makeOptionMandatory(true).makeOptionMandatory(true).env('SIGNED_HASH'),
+    );
 
     program.action((options) => {
         main(options);
