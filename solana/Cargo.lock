@@ -2104,6 +2104,7 @@ dependencies = [
  "multisig-prover",
  "num-derive 0.4.1",
  "num-traits",
+ "rand_core 0.6.4",
  "random-array",
  "serde",
  "slice-iterator",

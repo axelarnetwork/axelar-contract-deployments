@@ -1,47 +1,49 @@
 use std::iter::repeat_with;
 
-use anyhow::{anyhow, Result};
-use axelar_wasm_std::nonempty::Uint256;
-use axelar_wasm_std::Participant;
+use anyhow::{anyhow, bail, ensure, Result};
 use connection_router::state::Address;
 use connection_router::Message;
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Uint256};
 use k256::ecdsa::SigningKey;
-use multisig::key::{PublicKey, Signature};
-use multisig::worker_set::WorkerSet;
+use multisig::key::{KeyType, PublicKey, Signature};
+use multisig::msg::Signer;
 use multisig_prover::encoding::{CommandBatchBuilder, Encoder};
 use multisig_prover::types::CommandBatch;
 
-struct Signer {
+#[derive(Debug)]
+struct TestSigner {
     address: Addr,
     weight: Uint256,
     signing_key: SigningKey,
-    public_key: PublicKey,
+    pub_key: PublicKey,
 }
 
-impl Into<Participant> for Signer {
-    fn into(self) -> Participant {
-        Participant {
-            address: self.address,
-            weight: self.weight,
+impl From<TestSigner> for Signer {
+    fn from(val: TestSigner) -> Self {
+        let TestSigner {
+            address,
+            weight,
+            pub_key,
+            ..
+        } = val;
+        Signer {
+            address,
+            weight,
+            pub_key,
         }
     }
 }
 
-pub fn create_execute_data(
-    num_messages: usize,
-    num_signers: usize,
-    threshold: u64,
-) -> Result<Vec<u8>> {
+pub fn create_execute_data(num_messages: usize, num_signers: usize) -> Result<Vec<u8>> {
     let messages: Vec<Message> = (0..num_messages)
         .map(|_| random_message())
         .collect::<Result<_, _>>()?;
-    let signers: Vec<Signer> = (0..num_signers)
+    let signers: Vec<TestSigner> = (0..num_signers)
         .map(|_| create_signer())
         .collect::<Result<_, _>>()?;
-    let command_batch: CommandBatch = create_command_batch(&messages, &signers, threshold)?;
-    let signatures: Vec<Option<Signature>> = sign_batch(&command_batch, &signers);
-    encode(&command_batch, &signers, &signatures)
+    let command_batch = create_command_batch(&messages)?;
+    let signatures: Vec<Option<Signature>> = sign_batch(&command_batch, &signers)?;
+    encode(&command_batch, signers, signatures)
 }
 
 fn random_message() -> Result<Message> {
@@ -55,55 +57,67 @@ fn random_message() -> Result<Message> {
     Ok(message)
 }
 
-fn create_command_batch(
-    messages: &[Message],
-    signers: &[Signer],
-    threshold: u64,
-) -> Result<CommandBatch> {
-    let participants: Vec<(Participant, PublicKey)> = signers
-        .iter()
-        .map(|signer| -> Result<(Participant, PublicKey)> {
-            let participant = Participant {
-                address: signer.address.clone(),
-                weight: signer.weight.try_into()?,
-            };
-            Ok((participant, signer.public_key.clone()))
-        })
-        .collect::<Result<_, _>>()?;
-
-    let worker_set = WorkerSet::new(participants, threshold.into(), 0);
-
+fn create_command_batch(messages: &[Message]) -> Result<CommandBatch> {
     let mut builder = CommandBatchBuilder::new(555u64.into(), Encoder::Bcs);
     for msg in messages {
         builder.add_message(msg.clone())?;
     }
-    builder.add_new_worker_set(worker_set)?;
-
     Ok(builder.build()?)
 }
 
-fn create_signer() -> Result<Signer> {
-    let signing_key = SigningKey::from_slice(&bytes(100))?;
-    let verifying_key = *signing_key.verifying_key();
+fn create_signer() -> Result<TestSigner> {
+    let signing_key = SigningKey::random(&mut rand_core::OsRng);
 
-    Ok(Signer {
+    let public_key: PublicKey = (
+        KeyType::Ecdsa,
+        signing_key.verifying_key().to_sec1_bytes().as_ref().into(),
+    )
+        .try_into()?;
+
+    Ok(TestSigner {
         signing_key,
-        public_key: todo!(),
+        pub_key: public_key,
         address: addr(),
         weight: cosmwasm_std::Uint256::one().try_into()?,
     })
 }
 
-fn sign_batch(command_batch: &CommandBatch, signers: &[Signer]) -> Vec<Option<Signature>> {
-    todo!()
+fn sign_batch(
+    command_batch: &CommandBatch,
+    signers: &[TestSigner],
+) -> Result<Vec<Option<Signature>>> {
+    use k256::ecdsa::signature::Signer as _;
+    use k256::ecdsa::{self};
+
+    let message_to_sign = command_batch.msg_digest();
+    signers
+        .iter()
+        .map(|signer| signer.signing_key.sign(&message_to_sign))
+        .try_fold(vec![], |mut collected, signature: ecdsa::Signature| {
+            match (KeyType::Ecdsa, signature.to_vec().into()).try_into() {
+                Err(e) => bail!("failed to convert signature: {e}"),
+                Ok(sig) => collected.push(Some(sig)),
+            };
+            Ok(collected)
+        })
 }
 
 fn encode(
     command_batch: &CommandBatch,
-    signers: &[Signer],
-    signatures: &[Option<Signature>],
+    signers: Vec<TestSigner>,
+    signatures: Vec<Option<Signature>>,
 ) -> Result<Vec<u8>> {
-    todo!()
+    ensure!(
+        signers.len() == signatures.len(),
+        "signers and signature missmatch"
+    );
+    let signers_and_signatures: Vec<(Signer, Option<Signature>)> = signers
+        .into_iter()
+        .map(Into::into)
+        .zip(signatures.into_iter())
+        .collect();
+
+    todo!("finish encoding")
 }
 
 fn string(n: usize) -> String {
@@ -119,7 +133,9 @@ fn array32() -> [u8; 32] {
 }
 
 fn address() -> Result<Address> {
-    string(20).parse().map_err(|_| anyhow!("bad test naddress"))
+    hex::encode(array32())
+        .parse()
+        .map_err(|_| anyhow!("bad test naddress"))
 }
 
 fn addr() -> Addr {
@@ -127,8 +143,7 @@ fn addr() -> Addr {
 }
 
 #[test]
-fn msg() {
-    let m = random_message();
-    dbg!(m);
-    panic!()
+fn msg() -> Result<()> {
+    create_execute_data(5, 3).unwrap();
+    bail!("finish this")
 }

@@ -35,5 +35,6 @@ random-array.workspace = true
 solana-program-test = "1.17.6"
 solana-sdk = "1.17.6"
 fastrand = "2"
+rand_core = { version = "0.6.4", features = ["getrandom"] }
 axelar-wasm-std.workspace = true
 k256 = { version = "0.13.3", features = ["ecdsa"] }
