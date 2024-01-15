@@ -182,7 +182,7 @@ pub fn decode(bytes: &[u8]) -> Result<(Proof, DecodedCommandBatch), DecodeError>
 }
 
 #[test]
-fn decode_execute_data() -> anyhow::Result<()> {
+fn decode_execute_data_from_axelar_repo() -> anyhow::Result<()> {
     // Copied from https://github.com/axelarnetwork/axelar-amplifier/blob/e04a85fc635448559cdd265da582d1f49a6b8f52/contracts/multisig-prover/src/encoding/bcs.rs#L509
     let approval = hex::decode("8a02010000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020213617070726f7665436f6e747261637443616c6c13617070726f7665436f6e747261637443616c6c0249034554480330783000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000004c064158454c415203307831000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000087010121037286a4f1177bea06c8e15cf6ec3df0b7747a01ac2329ca2999dfd74eff59902801640000000000000000000000000000000a0000000000000000000000000000000141ef5ce016a4beed7e11761e5831805e962fca3d8901696a61a6ffd3af2b646bdc3740f64643bdb164b8151d1424eb4943d03f71e71816c00726e2d68ee55600c600")?;
 
@@ -234,5 +234,21 @@ fn decode_execute_data() -> anyhow::Result<()> {
     };
 
     assert_eq!(command_batch, expected);
+    Ok(())
+}
+
+#[test]
+fn decode_custom_execute_data() -> anyhow::Result<()> {
+    let fixture: Vec<u8> = test_fixtures::execute_data::create_execute_data(5, 3, 2)?;
+    let (proof, command_batch) = decode(&fixture)?;
+
+    assert_eq!(command_batch.commands.len(), 5);
+    assert_eq!(proof.operators.addresses().len(), 3);
+    assert_eq!(proof.signatures().len(), 3);
+    assert_eq!(*proof.operators.threshold(), 2u8.into());
+
+    if let Err(error) = proof.validate(&command_batch.hash) {
+        panic!("Invalid proof: {error}")
+    };
     Ok(())
 }
