@@ -149,7 +149,7 @@ fn build_proof_from_raw_parts(
 #[inline]
 fn decode_proof(proof_bytes: &[u8]) -> Result<Proof, DecodeError> {
     let (addresses, weights, quorum, signatures): DecodedProofParts =
-        bcs::from_bytes(&proof_bytes).map_err(|_| DecodeError::FailedToDecodeProofParts)?;
+        bcs::from_bytes(proof_bytes).map_err(|_| DecodeError::FailedToDecodeProofParts)?;
     build_proof_from_raw_parts(addresses, weights, quorum, signatures)
 }
 
@@ -157,7 +157,7 @@ fn decode_proof(proof_bytes: &[u8]) -> Result<Proof, DecodeError> {
 fn decode_command_batch(command_batch_bytes: &[u8]) -> Result<DecodedCommandBatch, DecodeError> {
     // Decode command batch parts
     let (destination_chain_id, commands_ids, commands_types, commands_params): DecodedCommandBatchParts =
-                bcs::from_bytes(&command_batch_bytes).map_err(|_| DecodeError::FailedToDecodeCommandBatchParts)?;
+                bcs::from_bytes(command_batch_bytes).map_err(|_| DecodeError::FailedToDecodeCommandBatchParts)?;
     // Build command batch from raw parts
     let commands = izip!(&commands_ids, &commands_types, &commands_params)
         .map(|(id, type_, encoded_params)| {
