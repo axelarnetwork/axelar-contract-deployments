@@ -18,6 +18,7 @@ thiserror = "1"
 cosmwasm-std = "1.5"
 serde = "1"
 auth-weighted = { path = "programs/auth-weighted" }
+gateway = { path = "programs/gateway" }
 
 # helper crates
 program-utils = { path = "helpers/program-utils" }

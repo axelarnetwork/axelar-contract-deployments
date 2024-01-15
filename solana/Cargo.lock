@@ -2085,6 +2085,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "gas-service"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "auth-weighted",
+ "base64 0.21.5",
+ "borsh 1.2.1",
+ "gateway",
+ "hex",
+ "num-derive 0.4.1",
+ "num-traits",
+ "random-array",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "thiserror",
+]
+
+[[package]]
 name = "gateway"
 version = "0.1.0"
 dependencies = [
