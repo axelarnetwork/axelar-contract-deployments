@@ -1,7 +1,7 @@
 //! Proof types.
 
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
-use solana_program::{keccak, secp256k1_recover};
+use solana_program::keccak;
 
 use super::operator::Operators;
 use super::signature::Signature;
@@ -60,25 +60,8 @@ impl<'a> Proof {
         let mut weight = U256::from_le_bytes([0; 32]);
 
         for v in self.signatures() {
-            let recovery_id = 0; // TODO: check if it has to be switch 0, 1.
-            let signer = match secp256k1_recover::secp256k1_recover(
-                message_hash,
-                recovery_id,
-                v.signature(),
-            ) {
-                Ok(signer) => signer.to_bytes(),
-                Err(e) => match e {
-                    secp256k1_recover::Secp256k1RecoverError::InvalidHash => {
-                        return Err(AuthWeightedError::Secp256k1RecoveryFailedInvalidHash)
-                    }
-                    secp256k1_recover::Secp256k1RecoverError::InvalidRecoveryId => {
-                        return Err(AuthWeightedError::Secp256k1RecoveryFailedInvalidRecoveryId)
-                    }
-                    secp256k1_recover::Secp256k1RecoverError::InvalidSignature => {
-                        return Err(AuthWeightedError::Secp256k1RecoveryFailedInvalidSignature)
-                    }
-                },
-            };
+            let public_key = v.sol_recover_public_key(message_hash)?;
+            let signer = public_key.to_bytes();
             // First half of uncompressed key.
             let signer = &signer[..32];
 
@@ -153,8 +136,8 @@ mod tests {
             threshold,
         );
 
-        let signature_1 = Signature::try_from(vec![1u8; 64])?;
-        let signature_2 = Signature::try_from(vec![3u8; 64])?;
+        let signature_1 = Signature::try_from(vec![0u8; 65])?;
+        let signature_2 = Signature::try_from(vec![1u8; 65])?;
 
         let proof = Proof::new(
             operators.clone(),

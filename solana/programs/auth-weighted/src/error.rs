@@ -2,6 +2,7 @@
 
 use num_derive::FromPrimitive;
 use solana_program::program_error::ProgramError;
+use solana_program::secp256k1_recover::Secp256k1RecoverError;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
@@ -71,6 +72,14 @@ pub enum AuthWeightedError {
     #[error("could not recover public key due to invalid hash")]
     Secp256k1RecoveryFailedInvalidHash,
 
+    /// Failed to recover public key from message hash and recovery id
+    #[error("Failed to recover public key from message hash and recovery id")]
+    Secp256k1RecoveryFailed,
+
+    /// Failed to decode a valid signature
+    #[error("Failed to deserialize signature")]
+    Secp256k1InvalidSignature,
+
     /// Arithmetic overflow
     #[error("Program arithmetic overflowed")]
     ArithmeticOverflow,
@@ -81,6 +90,18 @@ impl From<AuthWeightedError> for ProgramError {
         match e {
             AuthWeightedError::ArithmeticOverflow => ProgramError::ArithmeticOverflow,
             _ => ProgramError::Custom(e as u32),
+        }
+    }
+}
+
+impl From<Secp256k1RecoverError> for AuthWeightedError {
+    fn from(solana_error: Secp256k1RecoverError) -> Self {
+        use AuthWeightedError::*;
+        use Secp256k1RecoverError::*;
+        match solana_error {
+            InvalidHash => Secp256k1RecoveryFailedInvalidHash,
+            InvalidRecoveryId => Secp256k1RecoveryFailedInvalidRecoveryId,
+            InvalidSignature => Secp256k1InvalidSignature,
         }
     }
 }

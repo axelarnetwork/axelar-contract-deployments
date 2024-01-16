@@ -1,43 +1,95 @@
 //! Signature
 
-use std::array::TryFromSliceError;
-
 use borsh::{BorshDeserialize, BorshSerialize};
-use hex::FromHexError;
+use k256::ecdsa::{self, RecoveryId};
+use solana_program::secp256k1_recover::Secp256k1Pubkey;
 use thiserror::Error;
+
+use crate::error::AuthWeightedError;
 
 /// Error variants for [SignatureError].
 #[derive(Error, Debug)]
 pub enum SignatureError {
-    /// When couldn't decode given hex.
-    #[error(transparent)]
-    FromHexDecode(#[from] FromHexError),
-
-    /// When couldn't read returned vec as slice.
-    #[error(transparent)]
-    FromHexAsSlice(#[from] TryFromSliceError),
-
     /// When given [Signature] length isn't the expected.
-    #[error("Invalid signature length: {0}")]
-    InvalidLength(usize),
+    #[error("Invalid signature length")]
+    InvalidLength,
+
+    /// Invalid recovery id
+    #[error("Invalid recovery id")]
+    InvalidRecoveryId,
+
+    /// Invalid signature
+    #[error("Invalid signature")]
+    InvalidSignatureBytes,
+
+    /// Public key recovery failed
+    #[error("Public key recovery failed")]
+    PubKeyRecoveryFailed,
 }
 
-/// [Signature] represents ECDSA signature with apended 1-byte recovery id.
+/// Wrapper type to hold bytes and handle serialization for the
+/// [`k256::ecdsa::Signature`] type and its recovery id.
 #[derive(BorshSerialize, BorshDeserialize, Clone, PartialEq, Debug)]
-pub struct Signature(Vec<u8>);
+pub struct Signature {
+    signature: [u8; Self::ECDSA_SIGNATURE_LEN],
+    recovery_id: u8,
+}
 
-impl<'a> Signature {
+impl Signature {
     /// Signature size in bytes.
     pub const ECDSA_SIGNATURE_LEN: usize = 64;
 
-    /// Returns last byte of the signature aka recovery id.
-    pub fn recovery_id(&'a self) -> &'a u8 {
-        &self.0[63]
+    /// Signature and recovery id size in bytes.
+    pub const ECDSA_RECOVERABLE_SIGNATURE_LEN: usize = Self::ECDSA_SIGNATURE_LEN + 1;
+    fn new(
+        signature: [u8; Self::ECDSA_SIGNATURE_LEN],
+        recovery_id: u8,
+    ) -> Result<Self, SignatureError> {
+        if RecoveryId::from_byte(recovery_id).is_some() {
+            Ok(Self {
+                signature,
+                recovery_id,
+            })
+        } else {
+            Err(SignatureError::InvalidRecoveryId)
+        }
     }
 
-    /// Returns first 63 byte of the signature.
-    pub fn signature(&'a self) -> &'a [u8] {
-        &self.0
+    /// Recovery id
+    pub fn recovery_id(&self) -> Result<ecdsa::RecoveryId, SignatureError> {
+        ecdsa::RecoveryId::try_from(self.recovery_id).map_err(|_| SignatureError::InvalidRecoveryId)
+    }
+
+    /// The recovery id as a byte
+    pub fn recovery_id_byte(&self) -> u8 {
+        self.recovery_id
+    }
+
+    /// The signature itself
+    pub fn signature(&self) -> Result<ecdsa::Signature, SignatureError> {
+        ecdsa::Signature::from_bytes(&self.signature.into())
+            .map_err(|_| SignatureError::InvalidSignatureBytes)
+    }
+
+    /// The signature bytes.
+    pub fn signature_bytes(&self) -> &[u8; Self::ECDSA_SIGNATURE_LEN] {
+        &self.signature
+    }
+
+    /// Recovers the public key on Solana runtime
+    pub fn sol_recover_public_key(
+        &self,
+        message_hash: &[u8],
+    ) -> Result<Secp256k1Pubkey, AuthWeightedError> {
+        if message_hash.len() != 32 {
+            return Err(AuthWeightedError::Secp256k1RecoveryFailedInvalidHash);
+        }
+
+        Ok(solana_program::secp256k1_recover::secp256k1_recover(
+            message_hash,
+            self.recovery_id,
+            &self.signature,
+        )?)
     }
 }
 
@@ -45,7 +97,9 @@ impl TryFrom<&str> for Signature {
     type Error = SignatureError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        hex::decode(value)?.try_into()
+        hex::decode(value)
+            .map_err(|_| SignatureError::InvalidLength)?
+            .try_into()
     }
 }
 
@@ -54,14 +108,27 @@ impl TryFrom<Vec<u8>> for Signature {
 
     fn try_from(mut bytes: Vec<u8>) -> Result<Self, Self::Error> {
         match bytes.len() {
-            64 => Ok(Self(bytes)),
-            65 => {
+            Self::ECDSA_RECOVERABLE_SIGNATURE_LEN => {
                 // Pop out the recovery byte.
                 // Unwrap: we just checked it have 65 elements.
-                bytes.pop().unwrap();
-                Ok(Self(bytes))
+                let recovery_id = bytes.pop().unwrap();
+                let signature: [u8; Self::ECDSA_SIGNATURE_LEN] = bytes.try_into().unwrap();
+                Self::new(signature, recovery_id)
             }
-            _ => Err(SignatureError::InvalidLength(bytes.len())),
+            _ => Err(SignatureError::InvalidLength),
+        }
+    }
+}
+
+impl From<SignatureError> for AuthWeightedError {
+    fn from(signature_error: SignatureError) -> Self {
+        use AuthWeightedError::*;
+        use SignatureError::*;
+        match signature_error {
+            InvalidLength => Secp256k1InvalidSignature,
+            InvalidRecoveryId => Secp256k1RecoveryFailedInvalidRecoveryId,
+            InvalidSignatureBytes => Secp256k1RecoveryFailedInvalidSignature,
+            PubKeyRecoveryFailed => Secp256k1RecoveryFailed,
         }
     }
 }
@@ -69,39 +136,27 @@ impl TryFrom<Vec<u8>> for Signature {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use test_fixtures::ecdsa_signature::{create_random_signature, TestSignature};
+    use test_fixtures::random_stuff::bytes;
 
     use super::*;
 
     #[test]
     fn test_recovery_id() -> Result<()> {
-        let (bytes, _) = get_testdata_bytes_hex();
-        let signature = Signature::try_from(bytes.to_vec())?;
+        let TestSignature {
+            signature,
+            recovery_id,
+            ..
+        } = create_random_signature(&bytes(100));
 
-        let actual = signature.recovery_id();
-        let expected = 2;
+        let mut input = signature.to_vec();
+        input.push(recovery_id.to_byte());
 
-        assert_eq!(&expected, actual);
+        let ours = Signature::try_from(input)?;
+
+        assert_eq!(ours.signature()?, signature);
+        assert_eq!(ours.recovery_id()?, recovery_id);
+
         Ok(())
-    }
-
-    #[test]
-    fn test_signature_from_hex() -> Result<()> {
-        let (bytes, hex) = get_testdata_bytes_hex();
-        let sig = Signature::try_from(hex)?;
-
-        assert_eq!(sig.0, bytes);
-        Ok(())
-    }
-
-    fn get_testdata_bytes_hex() -> ([u8; 64], &'static str) {
-        let bytes = [
-            0x28, 0x37, 0x86, 0xd8, 0x44, 0xa7, 0xc4, 0xd1, 0xd4, 0x24, 0x83, 0x70, 0x74, 0xd0,
-            0xc8, 0xec, 0x71, 0xbe, 0xcd, 0xcb, 0xa4, 0xdd, 0x42, 0xb5, 0x30, 0x7c, 0xb5, 0x43,
-            0xa0, 0xe2, 0xc8, 0xb8, 0x1c, 0x10, 0xad, 0x54, 0x1d, 0xef, 0xd5, 0xce, 0x84, 0xd2,
-            0xa6, 0x08, 0xfc, 0x45, 0x48, 0x27, 0xd0, 0xb6, 0x5b, 0x48, 0x65, 0xc8, 0x19, 0x2a,
-            0x2e, 0xa1, 0x73, 0x6a, 0x5c, 0x4b, 0x72, 0x02,
-        ];
-        let hex = "283786d844a7c4d1d424837074d0c8ec71becdcba4dd42b5307cb543a0e2c8b81c10ad541defd5ce84d2a608fc454827d0b65b4865c8192a2ea1736a5c4b7202";
-        (bytes, hex)
     }
 }
