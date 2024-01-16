@@ -1,7 +1,6 @@
-#![deny(missing_docs)]
-
 //! Axelar Gas Service program for the Solana blockchain.
-
+#![deny(missing_docs)]
+#[allow(clippy::too_many_arguments)]
 pub mod accounts;
 mod entrypoint;
 pub mod error;

@@ -1,6 +1,6 @@
 //! Program state processor
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::BorshDeserialize;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::hash::hash;
@@ -85,10 +85,12 @@ fn process_create_registered_chain(
         &[associated_account_signer_seeds],
     )?;
 
+    // ...
+
     let mut account_data = associated_chain_account.try_borrow_mut_data()?;
     let serialized_data = RegisteredChainAccount {
         chain_name,
-        owner: *owner_account_info.key,
+        owner: (*owner_account_info.key).into(),
     }
     .try_to_vec()
     .unwrap();

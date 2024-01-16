@@ -1,6 +1,6 @@
 //! Instruction types
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -51,8 +51,7 @@ pub fn build_create_registered_chain_instruction(
     owner: &Pubkey,
     chain_name: String,
 ) -> Result<Instruction, ProgramError> {
-    let init_data = InterchainAddressTrackerInstruction::CreateRegisteredChain { chain_name };
-    let data = init_data.try_to_vec()?;
+    let data = to_vec(&InterchainAddressTrackerInstruction::CreateRegisteredChain { chain_name })?;
 
     let accounts = vec![
         AccountMeta::new(*funder, true),
@@ -76,11 +75,10 @@ pub fn build_set_trusted_address_instruction(
     trusted_chain_name: String,
     trusted_chain_address: String,
 ) -> Result<Instruction, ProgramError> {
-    let init_data = InterchainAddressTrackerInstruction::SetTrustedAddress {
+    let data = to_vec(&InterchainAddressTrackerInstruction::SetTrustedAddress {
         chain_name: trusted_chain_name,
         address: trusted_chain_address,
-    };
-    let data = init_data.try_to_vec()?;
+    })?;
 
     let accounts = vec![
         AccountMeta::new(*funder, true),

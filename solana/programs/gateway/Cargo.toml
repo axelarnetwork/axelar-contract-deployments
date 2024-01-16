@@ -18,7 +18,6 @@ borsh.workspace = true
 bcs = "0.1.6"
 num-derive = "0.4.1"
 num-traits = "0.2.17"
-slice-iterator.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
 multisig-prover.workspace = true

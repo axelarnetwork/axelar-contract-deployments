@@ -7,6 +7,7 @@ use solana_program::program_pack::{Pack, Sealed};
 
 #[repr(C)]
 #[derive(Clone, Debug, Default, PartialEq, BorshSerialize, BorshDeserialize)]
+#[borsh(use_discriminant = true)]
 pub enum OperatorAccountType {
     #[default]
     Active = 1,
@@ -49,9 +50,8 @@ impl Sealed for OperatorAccount {}
 impl Pack for OperatorAccount {
     const LEN: usize = 1;
 
-    fn pack_into_slice(&self, dst: &mut [u8]) {
-        let data = self.try_to_vec().unwrap();
-        dst[..data.len()].copy_from_slice(&data);
+    fn pack_into_slice(&self, mut dst: &mut [u8]) {
+        self.serialize(&mut dst).unwrap();
     }
 
     fn unpack_from_slice(src: &[u8]) -> Result<Self, solana_program::program_error::ProgramError> {

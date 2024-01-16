@@ -208,6 +208,7 @@ pub fn emit_native_gas_paid_for_contract_call_event(
 }
 
 /// Emit a [`NativeGasPaidForContractCallWithToken`].
+#[allow(clippy::too_many_arguments)]
 pub fn emit_native_gas_paid_for_contract_call_with_token_event(
     sender: PubkeyWrapper,
     destination_chain: Vec<u8>,
@@ -252,6 +253,7 @@ pub fn emit_native_gas_paid_for_express_call_event(
 }
 
 /// Emit a [`NativeGasPaidForExpressCallWithToken`].
+#[allow(clippy::too_many_arguments)]
 pub fn emit_native_gas_paid_for_express_call_with_token_event(
     sender: PubkeyWrapper,
     destination_chain: Vec<u8>,

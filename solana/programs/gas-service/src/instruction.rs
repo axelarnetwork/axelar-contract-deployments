@@ -229,6 +229,7 @@ pub fn create_pay_native_gas_for_contract_call_ix(
 /// [amount] The amount of tokens to pay for gas.
 ///
 /// [fees] The amount of SOL to pay for gas.
+#[allow(clippy::too_many_arguments)]
 pub fn create_pay_native_gas_for_contract_call_with_token_ix(
     sender: Pubkey,
     refund_address: Pubkey,
@@ -323,6 +324,7 @@ pub fn create_pay_native_gas_for_express_call_ix(
 /// [amount] The amount of tokens.
 ///
 /// [fees] The amount of SOL to pay for gas.
+#[allow(clippy::too_many_arguments)]
 pub fn create_pay_native_gas_for_express_call_with_token_ix(
     sender: Pubkey,
     refund_address: Pubkey,

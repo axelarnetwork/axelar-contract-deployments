@@ -264,6 +264,7 @@ impl Processor {
     /// [fees] The amount of SOL to pay for gas.
     ///
     /// [refund_address] The address where refunds, if any, should be sent.
+    #[allow(clippy::too_many_arguments)]
     fn pay_native_gas_for_contract_call_with_token(
         accounts: &[AccountInfo],
         destination_chain: Vec<u8>,
@@ -416,6 +417,7 @@ impl Processor {
     /// [fees] The amount of SOL to pay for gas.
     ///
     /// [refund_address] The address where refunds, if any, should be sent.
+    #[allow(clippy::too_many_arguments)]
     fn pay_native_gas_for_express_call_with_token(
         accounts: &[AccountInfo],
         destination_chain: Vec<u8>,

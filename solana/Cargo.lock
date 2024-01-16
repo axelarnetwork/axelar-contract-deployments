@@ -2092,11 +2092,10 @@ dependencies = [
  "auth-weighted",
  "base64 0.21.5",
  "borsh 1.2.1",
- "gateway",
+ "gateway 0.1.0",
  "hex",
  "num-derive 0.4.1",
  "num-traits",
- "random-array",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
@@ -2122,7 +2121,6 @@ dependencies = [
  "num-traits",
  "random-array",
  "serde",
- "slice-iterator",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
@@ -2553,6 +2551,7 @@ name = "interchain-address-tracker"
 version = "0.1.0"
 dependencies = [
  "borsh 1.2.1",
+ "gateway 0.1.0",
  "num-derive 0.4.1",
  "num-traits",
  "solana-program",

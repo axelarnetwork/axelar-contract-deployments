@@ -3,6 +3,8 @@ name = "gas-service"
 version = "0.1.0"
 edition = "2021"
 
+[package.metadata.clippy]
+allow = ["too_many_arguments"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -24,5 +26,4 @@ auth-weighted = { workspace = true, features = ["no-entrypoint"] }
 solana-program-test.workspace = true
 anyhow.workspace = true
 hex.workspace = true
-random-array.workspace = true
 solana-sdk.workspace = true

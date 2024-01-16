@@ -173,7 +173,7 @@ async fn pay_native_gas_for_contract_call_with_token_happy_scenario() -> Result<
     let destination_chain = b"ETH".to_vec();
     let destination_address = b"0xb794f5ea0ba39494ce839613fffba74279579268".to_vec();
     let token_symbol = b"ETH".to_vec();
-    let token_amount = U256::from(10);
+    let token_amount = U256::ONE;
     let payload = b"some payload".to_vec();
     let fees = 100000000; // 1 sol in lamports;
 
@@ -365,7 +365,7 @@ async fn pay_native_gas_for_express_call_with_token_happy_scenario() -> Result<(
     let destination_chain = b"ETH".to_vec();
     let destination_address = b"0xb794f5ea0ba39494ce839613fffba74279579268".to_vec();
     let token_symbol = b"ETH".to_vec();
-    let token_amount = U256::from(10);
+    let token_amount = U256::ONE;
     let payload = b"some payload".to_vec();
     let fees = 100000000; // 1 sol in lamports;
 

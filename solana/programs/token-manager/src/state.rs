@@ -22,9 +22,8 @@ impl Sealed for TokenManagerAccount {}
 impl Pack for TokenManagerAccount {
     const LEN: usize = 8;
 
-    fn pack_into_slice(&self, dst: &mut [u8]) {
-        let data = self.try_to_vec().unwrap();
-        dst[..data.len()].copy_from_slice(&data);
+    fn pack_into_slice(&self, mut dst: &mut [u8]) {
+        self.serialize(&mut dst).unwrap();
     }
 
     fn unpack_from_slice(src: &[u8]) -> Result<Self, solana_program::program_error::ProgramError> {
@@ -50,9 +49,8 @@ impl Sealed for FlowInOutAccount {}
 impl Pack for FlowInOutAccount {
     const LEN: usize = 16;
 
-    fn pack_into_slice(&self, dst: &mut [u8]) {
-        let data = self.try_to_vec().unwrap();
-        dst[..data.len()].copy_from_slice(&data);
+    fn pack_into_slice(&self, mut dst: &mut [u8]) {
+        self.serialize(&mut dst).unwrap();
     }
 
     fn unpack_from_slice(src: &[u8]) -> Result<Self, solana_program::program_error::ProgramError> {

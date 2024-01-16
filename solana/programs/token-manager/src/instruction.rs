@@ -1,6 +1,6 @@
 //! Instruction types
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -96,8 +96,7 @@ pub fn build_setup_instruction(
     service_program_pda: &Pubkey,
     setup_data: Setup,
 ) -> Result<Instruction, ProgramError> {
-    let init_data = TokenManagerInstruction::Setup(setup_data);
-    let data = init_data.try_to_vec()?;
+    let data = to_vec(&TokenManagerInstruction::Setup(setup_data))?;
 
     let accounts = vec![
         AccountMeta::new(*funder, true),
@@ -129,8 +128,7 @@ pub fn build_set_flow_limit_instruction(
     service_program_pda: &Pubkey,
     amount: u64,
 ) -> Result<Instruction, ProgramError> {
-    let init_data = TokenManagerInstruction::SetFlowLimit { amount };
-    let data = init_data.try_to_vec()?;
+    let data = to_vec(&TokenManagerInstruction::SetFlowLimit { amount })?;
 
     let accounts = vec![
         AccountMeta::new(*token_manager_pda, false),
@@ -161,8 +159,7 @@ pub fn build_add_flow_instruction(
     service_program_pda: &Pubkey,
     flow_direction: FlowToAdd,
 ) -> Result<Instruction, ProgramError> {
-    let init_data = TokenManagerInstruction::AddFlowDirection(flow_direction);
-    let data = init_data.try_to_vec()?;
+    let data = to_vec(&TokenManagerInstruction::AddFlowDirection(flow_direction))?;
 
     let accounts = vec![
         AccountMeta::new(*funder, true),
