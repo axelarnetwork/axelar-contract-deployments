@@ -119,6 +119,14 @@ pub enum GatewayError {
     /// Operator set epoch is different than the current epoch
     #[error("Operator set epoch is different than the current epoch.")]
     EpochMissmatch,
+
+    /// Failed to decode a valid signature
+    #[error("Failed to deserialize signature")]
+    Secp256k1InvalidSignature,
+
+    /// Failed to recover public key from message hash and recovery id
+    #[error("Failed to recover public key from message hash and recovery id")]
+    Secp256k1RecoveryFailed,
 }
 
 impl From<GatewayError> for ProgramError {
@@ -156,6 +164,8 @@ impl From<AuthWeightedError> for GatewayError {
             }
             Secp256k1RecoveryFailedInvalidHash => GatewayError::Secp256k1RecoveryFailedInvalidHash,
             ArithmeticOverflow => GatewayError::ArithmeticOverflow,
+            Secp256k1RecoveryFailed => GatewayError::Secp256k1RecoveryFailed,
+            Secp256k1InvalidSignature => GatewayError::Secp256k1InvalidSignature,
         }
     }
 }
