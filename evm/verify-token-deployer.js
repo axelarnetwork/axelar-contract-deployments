@@ -1,137 +1,161 @@
 'use strict';
 
+const axios = require('axios');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
-const {
-    utils: { defaultAbiCoder, Interface, verifyMessage },
-    providers: { JsonRpcProvider },
-    Contract,
-} = ethers;
+const { Contract, getDefaultProvider } = ethers;
+const { loadConfig, printError, getContractJSON, printInfo, printWarn, isValidAddress, printObj } = require('./utils');
 
-const { loadConfig, printError, getContractJSON, printInfo, isKeccak256Hash } = require('./utils');
+const interchainTokenFactoryABI = getContractJSON('InterchainTokenFactory').abi;
+const interchainTokenABI = getContractJSON('InterchainToken').abi;
+const interchainTokenServiceABI = getContractJSON('InterchainTokenService').abi;
+const erc20ABI = getContractJSON('IERC20Named').abi;
 
-const EVENT_SIGNATURE_INDEX = 0;
-const TOKEN_ID_INDEX = 1;
-const EVENT_FILTER_START_BLOCK = 0;
-
-async function processCommand(config, options, destChainName) {
+async function processCommand(config, options) {
     try {
-        const { signedHash, address, message, txHash } = options;
+        const { deployer, address, its, rpc, api } = options;
+        let { source, destination } = options;
+        destination = JSON.parse(destination);
 
-        if (config.chains[destChainName.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${destChainName} is not defined in the info file`);
+        if (!isValidAddress(address)) {
+            throw new Error('Invalid address parameter.');
         }
 
-        const destChain = config.chains[destChainName.toLowerCase()];
+        const sourceChain = config.chains[source.toLowerCase()];
 
-        const interchainTokenServiceABI = getContractJSON('InterchainTokenService').abi;
-        const interchainTokenServiceInterface = new Interface(interchainTokenServiceABI);
-        const interchainTokenDeployedEventHash = interchainTokenServiceInterface.getEventTopic('InterchainTokenDeployed');
-        const interchainTokenDeploymentStartedEventHash = interchainTokenServiceInterface.getEventTopic('InterchainTokenDeploymentStarted');
-
-        if (!isKeccak256Hash(txHash)) {
-            throw new Error('Invalid transaction hash');
+        if (!sourceChain) {
+            throw new Error(`Chain ${source} is not defined in the info file`);
         }
 
-        const provider = new JsonRpcProvider(destChain.rpc);
+        const invalidDestinations = destination.filter((chain) => !config.chains[chain.toLowerCase()]);
 
-        const interchainTokenABI = getContractJSON('InterchainToken').abi;
+        if (invalidDestinations.length > 0) {
+            throw new Error(`Chains ${invalidDestinations.join(', ')} are not defined in the info file`);
+        }
+
+        const provider = getDefaultProvider(rpc || sourceChain.rpc);
+        const itsAddress = its || sourceChain.contracts.InterchainTokenService?.address;
+
+        if (deployer === 'gateway') {
+            const gatewayTokens = await fetchGatewayTokens(address, sourceChain.name.toLowerCase(), destination, provider, api);
+            printInfo(`Gateway Tokens on destination chains`);
+            printObj(gatewayTokens);
+            return;
+        }
+
+        if (await isTokenCanonical(address, itsAddress, provider)) {
+            printInfo(`Provided address ${address} is a canonical token`);
+            return;
+        }
+
         const interchainToken = new Contract(address, interchainTokenABI, provider);
-
-        let tokenId;
-
-        try {
-            tokenId = await interchainToken.interchainTokenId();
-        } catch (error) {
-            throw new Error('Unable to fetch interchain token ID');
-        }
-
-        const tx = await provider.getTransaction(txHash);
-
-        const [, sourceChainName] = interchainTokenServiceInterface.decodeFunctionData('execute', tx.data);
-
-        const receipt = await tx.wait();
-
-        const tokenAddress = fetchTokenAddress(receipt.logs, interchainTokenDeployedEventHash, tokenId);
-
-        if (address.toLowerCase() !== tokenAddress.toLowerCase()) {
-            throw new Error('Provided token address does not match retrieved deployed interchain token address');
-        }
-
-        if (config.chains[sourceChainName.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${sourceChainName} is not defined in the info file`);
-        }
-
-        const sourceChain = config.chains[sourceChainName.toLowerCase()];
-
-        const sourceChainProvider = new JsonRpcProvider(sourceChain.rpc);
-
-        const filter = {
-            address: sourceChain.contracts.InterchainTokenService.address,
-            topics: [interchainTokenDeploymentStartedEventHash, tokenId],
-            fromBlock: EVENT_FILTER_START_BLOCK,
-        };
-
-        const logs = await sourceChainProvider.getLogs(filter);
-
-        let sourceTxHash;
-
-        for (const log of logs) {
-            if (log.topics[EVENT_SIGNATURE_INDEX] === interchainTokenDeploymentStartedEventHash && log.topics[TOKEN_ID_INDEX] === tokenId) {
-                const { destinationChain } = interchainTokenServiceInterface.decodeEventLog(
-                    'InterchainTokenDeploymentStarted',
-                    log.data,
-                    log.topics,
-                );
-
-                if (destinationChain === destChain.id) {
-                    sourceTxHash = log.transactionHash;
-                    break;
-                }
-            }
-        }
-
-        if (!sourceTxHash) {
-            throw new Error('Specied source chain tx not found');
-        }
-
-        const sourceTx = await sourceChainProvider.getTransaction(sourceTxHash);
-        const sender = sourceTx.from;
-
-        const recoveredAddress = verifyMessage(message, signedHash);
-
-        if (recoveredAddress.toLowerCase() !== sender.toLowerCase()) {
-            throw new Error('Provided signer address does not match retrieved signer from message signature');
-        }
-
-        printInfo('Sender address matches recovered address.');
+        const tokenId = await isInterchainToken(interchainToken);
+        const interchainTokens = await fetchInterchainTokens(address, config, tokenId, destination, its);
+        printInfo(`Interchain Tokens on destination chains`);
+        printObj(interchainTokens);
     } catch (error) {
         printError('Error', error.message);
     }
 }
 
-function fetchTokenAddress(logs, eventHash, tokenId) {
-    let tokenAddress;
+async function isTokenCanonical(address, itsAddress, provider) {
+    let isCanonicalToken;
+    const its = new Contract(itsAddress, interchainTokenServiceABI, provider);
+    const itsFactory = new Contract(await its.interchainTokenFactory(), interchainTokenFactoryABI, provider);
+    const canonicalTokenId = await itsFactory.canonicalInterchainTokenId(address);
 
-    for (const log of logs) {
-        if (log.topics[EVENT_SIGNATURE_INDEX] === eventHash && log.topics[TOKEN_ID_INDEX] === tokenId) {
-            [tokenAddress] = defaultAbiCoder.decode(['address'], log.data.substring(0, 66));
-            break;
+    try {
+        const validCanonicalAddress = await its.validTokenAddress(canonicalTokenId);
+        isCanonicalToken = address === validCanonicalAddress;
+    } catch {}
+
+    return isCanonicalToken;
+}
+
+async function fetchInterchainTokens(address, config, tokenId, destination, itsAddress) {
+    const interchainTokens = [];
+
+    try {
+        for (const chain of destination) {
+            const chainConfig = config.chains[chain];
+            itsAddress = itsAddress || chainConfig.contracts.InterchainTokenService?.address;
+            const provider = getDefaultProvider(chainConfig.rpc);
+            const its = new Contract(itsAddress, interchainTokenServiceABI, provider);
+
+            if ((await its.validTokenAddress(tokenId)) === address) {
+                interchainTokens.push({ [chain]: address });
+            } else {
+                printWarn(`No Interchain token found for tokenId ${tokenId} on chain ${chain}`);
+            }
         }
-    }
 
-    if (!tokenAddress) {
-        throw new Error('No interchain token deployment found with specified token id');
-    }
+        if (destination.length !== interchainTokens.length) {
+            printError('Interchain tokens not found on all destination chains');
+        }
 
-    return tokenAddress;
+        return interchainTokens;
+    } catch (error) {
+        throw new Error('Unable to fetch interchain tokens on destination chains');
+    }
+}
+
+async function isInterchainToken(token) {
+    try {
+        return await token.interchainTokenId();
+    } catch {
+        throw new Error(`The token at address ${await token.address} is not a Interchain Token`);
+    }
+}
+
+async function isGatewayToken(apiUrl, address) {
+    try {
+        console.log('hhhhhhhhhh');
+        const { data: sourceData } = await axios.get(apiUrl);
+
+        if (!(sourceData.confirmed === true && sourceData.is_external === false)) {
+            throw new Error();
+        }
+    } catch {
+        console.log('inside catch');
+        throw new Error(`The token at address ${address} is not deployed through Axelar Gateway.`);
+    }
+}
+
+async function fetchGatewayTokens(address, source, destination, provider, api) {
+    const gatewayTokens = [];
+    const apiUrl = api || 'https://lcd-axelar.imperator.co/axelar/evm/v1beta1/token_info/';
+
+    await isGatewayToken(`${apiUrl}${source}?address=${address}`, address);
+
+    try {
+        const token = new Contract(address, erc20ABI, provider);
+        const symbol = await token.symbol();
+
+        for (const chain of destination) {
+            const { data: chainData } = await axios.get(`${apiUrl}${chain}?symbol=${symbol}`);
+
+            if (!(chainData.confirmed === true && chainData.is_external === false && chainData.address)) {
+                printWarn(`No Gateway token found for token symbol ${symbol} on chain ${chain}`);
+            } else {
+                gatewayTokens.push({ [chain]: chainData.address });
+            }
+        }
+
+        if (destination.length !== gatewayTokens.length) {
+            printError('Gateway tokens not found on all destination chains');
+        }
+
+        return gatewayTokens;
+    } catch (error) {
+        throw new Error('Unable to fetch gateway tokens on destination chains');
+    }
 }
 
 async function main(options) {
-    const { chainName, env } = options;
+    const env = 'mainnet';
     const config = loadConfig(env);
 
-    await processCommand(config, options, chainName);
+    await processCommand(config, options);
 }
 
 if (require.main === module) {
@@ -140,25 +164,21 @@ if (require.main === module) {
     program
         .name('verify-token-deployer')
         .description('Script to verify that the signer of a signature corresponds to the deployer address for the provided transaction.');
-
     program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
+        new Option('--deployer <deployer>', 'deployed through which axelar product').choices(['gateway', 'its']).makeOptionMandatory(true),
     );
     program.addOption(
-        new Option('-n, --chainName <chainName>', 'destination chain on which token is deployed').makeOptionMandatory(true).env('CHAIN'),
-    );
-    program.addOption(new Option('-a, --address <token address>', 'deployed interchain token address').makeOptionMandatory(true));
-    program.addOption(new Option('-t, --txHash <transaction hash>', 'transaction hash on destinatino chain').makeOptionMandatory(true));
-    program.addOption(
-        new Option('-m, --message <message>', 'message to be signed').makeOptionMandatory(true).makeOptionMandatory(true).env('MESSAGE'),
+        new Option('-s, --source <sourceChain>', 'source chain on which provided contract address is deployed').makeOptionMandatory(true),
     );
     program.addOption(
-        new Option('-s, --signedHash <signed hash>', 'signed hash').makeOptionMandatory(true).makeOptionMandatory(true).env('SIGNED_HASH'),
+        new Option('-d, --destination <destinationChain>', 'destination chain on which other tokens are deployed').makeOptionMandatory(
+            true,
+        ),
     );
+    program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch token information').env('RPC'));
+    program.addOption(new Option('-i, --its <its>', 'The Interchain token service address to be used if not want to use config address'));
+    program.addOption(new Option('--api <api>', 'api to check token deployed through gateway and  token details'));
+    program.addOption(new Option('-a, --address <token address>', 'deployed token address on source chain').makeOptionMandatory(true));
 
     program.action((options) => {
         main(options);
