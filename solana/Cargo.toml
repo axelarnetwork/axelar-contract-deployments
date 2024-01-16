@@ -11,6 +11,7 @@ borsh = { version = "1", features = ["derive"] }
 bnum = { version = "0.10", features = ["serde", "nightly"] }
 hex = "0.4.3"
 itertools = "0.12.0"
+k256 = { version = "0.13.3", features = ["ecdsa"] }
 num-derive = "0.4"
 num-traits = "0.2"
 solana-program = "1.17.12"
@@ -19,8 +20,9 @@ solana-sdk = "1.17.12"
 thiserror = "1"
 cosmwasm-std = "1.5"
 serde = "1"
-sha2 = "0.10"
-sha3 = "0.10"
+sha2 = "0.10.8"
+sha3 = "0.10.8"
+signature = "2"
 
 # solana programs
 auth-weighted = { path = "programs/auth-weighted" }

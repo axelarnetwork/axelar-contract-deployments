@@ -1,5 +1,3 @@
-use std::iter::repeat_with;
-
 use anyhow::{anyhow, ensure, Result};
 use connection_router::state::Address;
 use connection_router::Message;
@@ -9,6 +7,8 @@ use multisig::key::{KeyType, PublicKey, Signature};
 use multisig::msg::Signer;
 use multisig_prover::encoding::{CommandBatchBuilder, Encoder};
 use multisig_prover::types::CommandBatch;
+
+use crate::random_stuff::{array32, string};
 
 #[derive(Debug)]
 struct TestSigner {
@@ -82,7 +82,7 @@ fn create_signer() -> Result<TestSigner> {
         signing_key,
         pub_key: public_key,
         address: addr(),
-        weight: cosmwasm_std::Uint256::one().try_into()?,
+        weight: cosmwasm_std::Uint256::one(),
     })
 }
 
@@ -127,24 +127,12 @@ fn encode(
     let signers_and_signatures: Vec<(Signer, Option<Signature>)> = signers
         .into_iter()
         .map(Into::into)
-        .zip(signatures.into_iter())
+        .zip(signatures)
         .collect();
 
     axelar_bcs_encoding::encode_execute_data(command_batch, quorum, signers_and_signatures)
         .map_err(|e| anyhow!("failed to encode execute_data: {e}"))
         .map(|hexbinary| hexbinary.to_vec())
-}
-
-fn string(n: usize) -> String {
-    repeat_with(fastrand::alphanumeric).take(n).collect()
-}
-
-fn bytes(n: usize) -> Vec<u8> {
-    repeat_with(|| fastrand::u8(..)).take(n).collect()
-}
-
-fn array32() -> [u8; 32] {
-    bytes(32).try_into().unwrap()
 }
 
 fn address() -> Result<Address> {
@@ -177,17 +165,16 @@ mod axelar_bcs_encoding {
         let signers = signers
             .into_iter()
             .map(|(signer, signature)| {
-                dbg!(&signer);
-                dbg!(&signature);
                 let mut signature = signature;
                 if let Some(Signature::Ecdsa(nonrecoverable)) = signature {
-                    signature = dbg!(nonrecoverable.to_recoverable(
-                        command_batch.msg_digest().as_slice(),
-                        &signer.pub_key,
-                        identity,
-                    ))
-                    .map(Signature::EcdsaRecoverable)
-                    .ok();
+                    signature = nonrecoverable
+                        .to_recoverable(
+                            command_batch.msg_digest().as_slice(),
+                            &signer.pub_key,
+                            identity,
+                        )
+                        .map(Signature::EcdsaRecoverable)
+                        .ok();
                 }
                 assert!(signature.is_some(), "Signature was erased");
                 (signer, signature)

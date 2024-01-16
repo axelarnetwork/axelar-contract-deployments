@@ -12,9 +12,10 @@ cosmwasm-std.workspace = true
 fastrand = "2"
 hex.workspace = true
 itertools.workspace = true
-k256 = { version = "0.13.3", features = ["ecdsa"] }
+k256.workspace = true
 multisig-prover.workspace = true
 multisig.workspace = true
 rand_core = { version = "0.6.4", features = ["getrandom"] }
+signature.workspace = true
 sha3.workspace = true
 sha2.workspace = true
