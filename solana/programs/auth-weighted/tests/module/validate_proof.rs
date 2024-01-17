@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use ::base64::engine::general_purpose;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use auth_weighted::error::AuthWeightedError;
 use auth_weighted::types::account::state::AuthWeightedStateAccount;
 use auth_weighted::types::account::validate_proof::ValidateProofAccount;
@@ -148,14 +148,7 @@ async fn test_validate_proof_invalid_message_hash() -> Result<()> {
     // Mock data prepare; params account.
     let (_, proof) = prepare_valid_proof()?;
 
-    let invalid_message_hash: [u8; 32] = {
-        let mut array = [0; 32];
-        array.copy_from_slice(&hex::decode(
-            "fb0609efd1dfeedfdcc8ba51520fae2d5176b7621d2560f071e801b0817e1537",
-        )?);
-
-        array
-    };
+    let invalid_message_hash = [0u8; 32];
 
     let params_account_b64 =
         general_purpose::STANDARD.encode(borsh::to_vec(&ValidateProofAccount {

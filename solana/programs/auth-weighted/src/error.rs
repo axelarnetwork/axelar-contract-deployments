@@ -1,6 +1,7 @@
 //! Error types
 
 use num_derive::FromPrimitive;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::secp256k1_recover::Secp256k1RecoverError;
 use thiserror::Error;
@@ -87,6 +88,7 @@ pub enum AuthWeightedError {
 
 impl From<AuthWeightedError> for ProgramError {
     fn from(e: AuthWeightedError) -> Self {
+        msg!("Error: {}", e);
         match e {
             AuthWeightedError::ArithmeticOverflow => ProgramError::ArithmeticOverflow,
             _ => ProgramError::Custom(e as u32),

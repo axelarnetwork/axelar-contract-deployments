@@ -47,7 +47,7 @@ impl<'a> Operators {
 
 impl Operators {
     /// Returns threshold.
-    pub fn weights(&self) -> &Vec<U256> {
+    pub fn weights(&self) -> &[U256] {
         &self.weights
     }
 
@@ -62,7 +62,7 @@ impl Operators {
     }
 
     ///  Returns addresses.
-    pub fn addresses(&self) -> &Vec<Address> {
+    pub fn addresses(&self) -> &[Address] {
         &self.addresses
     }
 
