@@ -109,14 +109,12 @@ async function isInterchainToken(token) {
 
 async function isGatewayToken(apiUrl, address) {
     try {
-        console.log('hhhhhhhhhh');
         const { data: sourceData } = await axios.get(apiUrl);
 
         if (!(sourceData.confirmed === true && sourceData.is_external === false)) {
             throw new Error();
         }
     } catch {
-        console.log('inside catch');
         throw new Error(`The token at address ${address} is not deployed through Axelar Gateway.`);
     }
 }
@@ -175,10 +173,12 @@ if (require.main === module) {
             true,
         ),
     );
-    program.addOption(new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider to fetch token information').env('RPC'));
-    program.addOption(new Option('-i, --its <its>', 'The Interchain token service address to be used if not want to use config address'));
-    program.addOption(new Option('--api <api>', 'api to check token deployed through gateway and  token details'));
     program.addOption(new Option('-a, --address <token address>', 'deployed token address on source chain').makeOptionMandatory(true));
+    program.addOption(
+        new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider on source chain to fetch token information').env('RPC'),
+    );
+    program.addOption(new Option('-i, --its <its>', 'The Interchain token service address to be used if not want to use config address'));
+    program.addOption(new Option('--api <api>', 'api to check token deployed through gateway and the token details'));
 
     program.action((options) => {
         main(options);
