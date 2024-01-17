@@ -192,7 +192,7 @@ fn decode_execute_data_from_axelar_repo() -> anyhow::Result<()> {
     let signer_pubkey: Address =
         hex::decode("037286a4f1177bea06c8e15cf6ec3df0b7747a01ac2329ca2999dfd74eff599028")?
             .try_into()?;
-    let signature: Signature = hex::decode("ef5ce016a4beed7e11761e5831805e962fca3d8901696a61a6ffd3af2b646bdc3740f64643bdb164b8151d1424eb4943d03f71e71816c00726e2d68ee55600c6")?.try_into()?;
+    let signature: Signature = hex::decode("ef5ce016a4beed7e11761e5831805e962fca3d8901696a61a6ffd3af2b646bdc3740f64643bdb164b8151d1424eb4943d03f71e71816c00726e2d68ee55600c600")?.try_into()?;
     assert_eq!(proof.operators.addresses(), &[signer_pubkey]);
     assert_eq!(proof.operators.threshold(), &10u128.into());
     assert_eq!(proof.operators.weights(), &[100u128.into()]);
