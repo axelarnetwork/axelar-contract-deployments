@@ -22,6 +22,7 @@ const {
     isValidTokenId,
     getGasOptions,
     isNonEmptyString,
+    isValidChain,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -86,6 +87,14 @@ function compare(contractValue, configValue, variableName) {
             `Error: Value mismatch for '${variableName}'. Config value: ${configValue}, InterchainTokenService value: ${contractValue}`,
         );
     }
+}
+
+function isValidDestinationChain(config, destinationChain) {
+    if (destinationChain === '') {
+        return;
+    }
+
+    isValidChain(config, destinationChain);
 }
 
 async function processCommand(config, chain, options) {
@@ -227,6 +236,8 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
+            isValidDestinationChain(config, destinationChain);
+
             const tx = await interchainTokenService.deployTokenManager(
                 deploymentSalt,
                 destinationChain,
@@ -252,6 +263,8 @@ async function processCommand(config, chain, options) {
                 isAddress: { minter },
                 isValidNumber: { decimals, gasValue },
             });
+
+            isValidDestinationChain(config, destinationChain);
 
             const tx = await interchainTokenService.deployInterchainToken(
                 deploymentSalt,
@@ -315,6 +328,8 @@ async function processCommand(config, chain, options) {
                 isValidCalldata: { metadata },
             });
 
+            isValidDestinationChain(config, destinationChain);
+
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const tokenManager = new Contract(
@@ -366,6 +381,8 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { amount, gasValue },
                 isValidCalldata: { data },
             });
+
+            isValidDestinationChain(config, destinationChain);
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
@@ -686,4 +703,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { getDeploymentSalt, handleTx, getTrustedChainsAndAddresses };
+module.exports = { getDeploymentSalt, handleTx, getTrustedChainsAndAddresses, isValidDestinationChain };
