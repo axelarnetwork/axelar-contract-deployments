@@ -49,9 +49,9 @@ async function processCommand(config, options) {
         }
 
         const interchainToken = new Contract(address, interchainTokenABI, provider);
-        const tokenId = await isInterchainToken(interchainToken);
-        const interchainTokens = await fetchInterchainTokens(address, config, tokenId, destination, its);
-        printInfo(`Interchain Tokens on destination chains`);
+        const tokenId = await isNativeInterchainToken(interchainToken);
+        const interchainTokens = await fetchNativeInterchainTokens(address, config, tokenId, destination, its);
+        printInfo(`Native Interchain Tokens on destination chains`);
         printObj(interchainTokens);
     } catch (error) {
         printError('Error', error.message);
@@ -72,7 +72,7 @@ async function isTokenCanonical(address, itsAddress, provider) {
     return isCanonicalToken;
 }
 
-async function fetchInterchainTokens(address, config, tokenId, destination, itsAddress) {
+async function fetchNativeInterchainTokens(address, config, tokenId, destination, itsAddress) {
     const interchainTokens = [];
 
     try {
@@ -85,21 +85,21 @@ async function fetchInterchainTokens(address, config, tokenId, destination, itsA
             if ((await its.validTokenAddress(tokenId)) === address) {
                 interchainTokens.push({ [chain]: address });
             } else {
-                printWarn(`No Interchain token found for tokenId ${tokenId} on chain ${chain}`);
+                printWarn(`No native Interchain token found for tokenId ${tokenId} on chain ${chain}`);
             }
         }
 
         if (destination.length !== interchainTokens.length) {
-            printError('Interchain tokens not found on all destination chains');
+            printError('Native Interchain tokens not found on all destination chains');
         }
 
         return interchainTokens;
     } catch (error) {
-        throw new Error('Unable to fetch interchain tokens on destination chains');
+        throw new Error('Unable to fetch native interchain tokens on destination chains');
     }
 }
 
-async function isInterchainToken(token) {
+async function isNativeInterchainToken(token) {
     try {
         return await token.interchainTokenId();
     } catch {
@@ -169,7 +169,7 @@ if (require.main === module) {
         new Option('-s, --source <sourceChain>', 'source chain on which provided contract address is deployed').makeOptionMandatory(true),
     );
     program.addOption(
-        new Option('-d, --destination <destinationChain>', 'destination chain on which other tokens are deployed').makeOptionMandatory(
+        new Option('-d, --destination <destinationChain>', 'destination chains on which other tokens are deployed').makeOptionMandatory(
             true,
         ),
     );
