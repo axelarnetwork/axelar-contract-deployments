@@ -2,7 +2,6 @@
 
 const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
-const readlineSync = require('readline-sync');
 const { predictContractConstant } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const { Command } = require('commander');
 const chalk = require('chalk');
