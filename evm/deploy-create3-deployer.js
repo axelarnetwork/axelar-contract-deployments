@@ -7,7 +7,7 @@ const { predictContractConstant } = require('@axelar-network/axelar-gmp-sdk-soli
 const { Command } = require('commander');
 const chalk = require('chalk');
 
-const { printInfo, writeJSON, deployCreate2, getGasOptions } = require('./utils');
+const { printInfo, writeJSON, deployCreate2, getGasOptions, prompt } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
 const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
@@ -39,10 +39,8 @@ async function deployCreate3Deployer(wallet, chain, provider, options = {}, veri
     const create3DeployerAddress = await predictContractConstant(constAddressDeployer, wallet, contractJson, salt);
     printInfo('Create3 deployer will be deployed to', create3DeployerAddress);
 
-    if (!options.yes) {
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    if (options.predictOnly || prompt(`Does this match any existing deployments? Proceed with deployment on ${chain.name}?`, options.yes)) {
+        return;
     }
 
     const contract = await deployCreate2(constAddressDeployer, wallet, contractJson, [], salt, gasOptions.gasLimit, verifyOptions);
@@ -93,7 +91,7 @@ if (require.main === module) {
 
     program.name('deploy-create3-deployer').description('Deploy create3 deployer');
 
-    addExtendedOptions(program, { salt: true });
+    addExtendedOptions(program, { salt: true, predictOnly: true });
 
     program.action((options) => {
         main(options);
