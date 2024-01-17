@@ -387,7 +387,7 @@ async fn execute() -> Result<()> {
     let execute_data = hex::decode("8a02010000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020213617070726f7665436f6e747261637443616c6c13617070726f7665436f6e747261637443616c6c0249034554480330783000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000004c064158454c415203307831000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000087010121037286a4f1177bea06c8e15cf6ec3df0b7747a01ac2329ca2999dfd74eff59902801640000000000000000000000000000000a0000000000000000000000000000000141ef5ce016a4beed7e11761e5831805e962fca3d8901696a61a6ffd3af2b646bdc3740f64643bdb164b8151d1424eb4943d03f71e71816c00726e2d68ee55600c600")?;
     let execute_data_account = GatewayExecuteData::new(execute_data);
     let (execute_data_pda, _bump, _seeds) = execute_data_account.pda();
-    let execute_data_base64 = STANDARD.encode(&borsh::to_vec(&execute_data_account)?);
+    let execute_data_base64 = STANDARD.encode(borsh::to_vec(&execute_data_account)?);
 
     program_test.add_account_with_base64_data(
         execute_data_pda,
@@ -404,8 +404,8 @@ async fn execute() -> Result<()> {
     program_test.add_account_with_base64_data(config_pda, 999999, gateway::id(), &config_base64);
 
     // Provision the test progam with the message accounts.
-    let message_pdas: Vec<Pubkey> = (&[1, 2])
-        .into_iter()
+    let message_pdas: Vec<Pubkey> = ([1, 2])
+        .iter()
         .map(|suffix| {
             let mut id = [0u8; 32];
             id[31] = *suffix;
