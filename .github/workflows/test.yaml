@@ -138,3 +138,8 @@ jobs:
 
       - name: Redeploy ITS with gasOptions in Chain Config
         run: node evm/deploy-its.js -s "v1.0.0" -m create2 -y
+
+      - name: Redeploy ITS with gasOptions override via CLI
+        run: |
+          node evm/deploy-its.js -s "v1.0.0" -m create2 -y --gasOptions \
+          '{"gasLimit": 9000000,"gasPriceAdjustment": 1.1}'
