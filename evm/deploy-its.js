@@ -39,7 +39,7 @@ const { Command, Option } = require('commander');
  */
 
 async function deployAll(config, wallet, chain, options) {
-    const { env, artifactPath, deployMethod, proxyDeployMethod, skipExisting, verify, yes } = options;
+    const { env, artifactPath, deployMethod, proxyDeployMethod, skipExisting, verify, yes, predictOnly } = options;
     const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
 
     const provider = getDefaultProvider(chain.rpc);
@@ -122,7 +122,7 @@ async function deployAll(config, wallet, chain, options) {
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode');
     }
 
-    if (prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
+    if (predictOnly || prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
         return;
     }
 
@@ -348,7 +348,7 @@ async function deploy(config, chain, options) {
 }
 
 async function upgrade(config, chain, options) {
-    const { artifactPath, privateKey } = options;
+    const { artifactPath, privateKey, predictOnly } = options;
 
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(privateKey, provider);
@@ -374,7 +374,7 @@ async function upgrade(config, chain, options) {
     printInfo(`Current ITS implementation`, currImplementation);
     printInfo(`New ITS implementation`, contractConfig.implementation);
 
-    if (prompt(`Proceed with ITS upgrade on ${chain.name}?`, options.yes)) {
+    if (predictOnly || prompt(`Proceed with ITS upgrade on ${chain.name}?`, options.yes)) {
         return;
     }
 
@@ -400,6 +400,7 @@ async function upgrade(config, chain, options) {
     printInfo(`New ITS Factory implementation`, contractConfig.interchainTokenFactoryImplementation);
 
     if (
+        options.predictOnly ||
         prompt(
             `Proceed with ITS Factory upgrade to implementation ${contractConfig.interchainTokenFactoryImplementation} on ${chain.name}?`,
             options.yes,
@@ -449,7 +450,7 @@ if (require.main === module) {
             .default('create3'),
     );
 
-    addExtendedOptions(program, { skipExisting: true, upgrade: true });
+    addExtendedOptions(program, { skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments'));
     program.addOption(new Option('--contractName <contractName>', 'contract name').default('InterchainTokenService')); // added for consistency
