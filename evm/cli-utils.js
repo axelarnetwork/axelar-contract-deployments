@@ -13,6 +13,7 @@ const addBaseOptions = (program, options = {}) => {
             .env('ENV'),
     );
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
 
     if (!options.ignoreChainNames) {
         program.addOption(
