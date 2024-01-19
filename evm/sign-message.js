@@ -6,10 +6,12 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const { getWallet } = require('./sign-utils');
-const { printInfo } = require('./utils');
+const { printInfo, validateParameters } = require('./utils');
 
 async function processCommand(options) {
     const { message, privateKey } = options;
+
+    validateParameters({ isValidPrivateKey: { privateKey }, isNonEmptyString: { message } });
 
     const wallet = await getWallet(privateKey);
     printInfo('Wallet address', await wallet.getAddress());
