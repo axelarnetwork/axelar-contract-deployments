@@ -2,11 +2,10 @@
 
 const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider, ContractFactory } = ethers;
-const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
 const chalk = require('chalk');
 
-const { printInfo, writeJSON, predictAddressCreate, deployCreate, getGasOptions } = require('./utils');
+const { printInfo, writeJSON, predictAddressCreate, deployCreate, getGasOptions, prompt } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const contractJson = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json');
 const contractName = 'ConstAddressDeployer';
@@ -51,10 +50,8 @@ async function deployConstAddressDeployer(wallet, chain, options = {}, verifyOpt
     const constAddressDeployerAddress = await predictAddressCreate(wallet.address, nonce);
     printInfo('ConstAddressDeployer will be deployed to', constAddressDeployerAddress);
 
-    if (!options.yes) {
-        console.log('Does this match any existing deployments?');
-        const anwser = readlineSync.question(`Proceed with deployment on ${chain.name}? ${chalk.green('(y/n)')} `);
-        if (anwser !== 'y') return;
+    if (options.predictOnly || prompt(`Does this match any existing deployments? Proceed with deployment on ${chain.name}?`, options.yes)) {
+        return;
     }
 
     if (!gasOptions.gasLimit) {
@@ -122,7 +119,7 @@ if (require.main === module) {
 
     program.name('deploy-const-address-deployer').description('Deploy const address deployer');
 
-    addExtendedOptions(program);
+    addExtendedOptions(program, { predictOnly: true });
 
     program.addOption(new Option('-i, --ignore', 'ignore the nonce value check'));
     program.addOption(new Option('-f, --force', 'proceed with contract deployment even if address already returns a bytecode'));
