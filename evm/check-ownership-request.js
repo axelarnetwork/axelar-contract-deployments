@@ -1,10 +1,12 @@
 'use strict';
 
+require('dotenv').config();
+
 const axios = require('axios');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { Contract, getDefaultProvider } = ethers;
-const { loadConfig, printError, getContractJSON, printInfo, printWarn, isValidAddress, printObj } = require('./utils');
+const { loadConfig, validateParameters, printError, getContractJSON, printInfo, printWarn, printObj } = require('./utils');
 
 const interchainTokenFactoryABI = getContractJSON('InterchainTokenFactory').abi;
 const interchainTokenABI = getContractJSON('InterchainToken').abi;
@@ -15,11 +17,8 @@ async function processCommand(config, options) {
     try {
         const { deployer, address, its, rpc, api } = options;
         let { source, destination } = options;
-        destination = JSON.parse(destination);
 
-        if (!isValidAddress(address)) {
-            throw new Error('Invalid address parameter.');
-        }
+        validateParameters({ isValidAddress: { address }, isNonEmptyString: { source, destination } });
 
         const sourceChain = config.chains[source.toLowerCase()];
 
@@ -27,6 +26,7 @@ async function processCommand(config, options) {
             throw new Error(`Chain ${source} is not defined in the info file`);
         }
 
+        destination = JSON.parse(destination);
         const invalidDestinations = destination.filter((chain) => !config.chains[chain.toLowerCase()]);
 
         if (invalidDestinations.length > 0) {
@@ -159,26 +159,32 @@ async function main(options) {
 if (require.main === module) {
     const program = new Command();
 
-    program
-        .name('verify-token-deployer')
-        .description('Script to verify that the signer of a signature corresponds to the deployer address for the provided transaction.');
+    program.name('check-ownership-request').description('Script to check token ownership claim request');
+
     program.addOption(
-        new Option('--deployer <deployer>', 'deployed through which axelar product').choices(['gateway', 'its']).makeOptionMandatory(true),
+        new Option('--deployer <deployer>', 'deployed through which axelar product')
+            .choices(['gateway', 'its'])
+            .makeOptionMandatory(true)
+            .env('DEPLOYER'),
     );
     program.addOption(
-        new Option('-s, --source <sourceChain>', 'source chain on which provided contract address is deployed').makeOptionMandatory(true),
+        new Option('-s, --source <sourceChain>', 'source chain on which provided contract address is deployed')
+            .makeOptionMandatory(true)
+            .env('SOURCE'),
     );
     program.addOption(
-        new Option('-d, --destination <destinationChain>', 'destination chains on which other tokens are deployed').makeOptionMandatory(
-            true,
-        ),
+        new Option('-d, --destination <destinationChains>', 'destination chains on which other tokens are deployed')
+            .makeOptionMandatory(true)
+            .env('DESTINATION'),
     );
-    program.addOption(new Option('-a, --address <token address>', 'deployed token address on source chain').makeOptionMandatory(true));
+    program.addOption(
+        new Option('-a, --address <token address>', 'deployed token address on source chain').makeOptionMandatory(true).env('ADDRESS'),
+    );
     program.addOption(
         new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider on source chain to fetch token information').env('RPC'),
     );
     program.addOption(new Option('-i, --its <its>', 'The Interchain token service address to be used if not want to use config address'));
-    program.addOption(new Option('--api <api>', 'api to check token deployed through gateway and the token details'));
+    program.addOption(new Option('--api <apiUrl>', 'api url to check token deployed through gateway and the token details'));
 
     program.action((options) => {
         main(options);
