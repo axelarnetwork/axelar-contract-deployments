@@ -28,8 +28,6 @@
     "@axelar-network/interchain-token-service": "1.2.1",
     "@cosmjs/cosmwasm-stargate": "^0.32.1",
     "@ledgerhq/hw-app-eth": "6.32.2",
-    "@ledgerhq/hw-transport-node-hid": "^6.27.21",
-    "@openzeppelin/defender-relay-client": "^1.54.1",
     "path": "^0.12.7"
   },
   "devDependencies": {
@@ -44,7 +42,9 @@
     "hardhat": "^2.13.0",
     "mocha": "^10.2.0",
     "prettier": "^2.8.7",
-    "readline-sync": "^1.4.10"
+    "readline-sync": "^1.4.10",
+    "@ledgerhq/hw-transport-node-hid": "^6.27.21",
+    "@openzeppelin/defender-relay-client": "^1.54.1"
   },
   "engines": {
     "node": ">=16"

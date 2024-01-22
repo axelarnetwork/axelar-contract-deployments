@@ -30,7 +30,9 @@ async function main(options) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('sign message from defender relayer').description("generate signed message using defender's api.");
+    program
+        .name('sign-message-defender')
+        .description("Generate signed message using defender's api. Useful for token ownership verification on explorers.");
 
     program.addOption(
         new Option('-k, --apiKey <api key>', 'api key of defender-relay-client').makeOptionMandatory(true).env('DEFENDER_API_KEY'),
