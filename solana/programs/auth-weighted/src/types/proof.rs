@@ -71,7 +71,7 @@ impl<'a> Proof {
             if remaining_operators.is_empty() {
                 // There are no more operators to look up to.
                 // TODO: use a more descriptive error name
-                return Err(AuthWeightedError::MalformedSigners);
+                return Err(AuthWeightedError::OperatorsExhausted);
             }
 
             // Find a matching operator for this signer or move to the next.
@@ -103,7 +103,7 @@ impl<'a> Proof {
         if last_visited_operator_position == 0 {
             // This is specific condition means that not a single operator was matched by
             // any signer.
-            Err(AuthWeightedError::MalformedSigners)
+            Err(AuthWeightedError::AllSignersInvalid)
         } else {
             Err(AuthWeightedError::LowSignaturesWeight)
         }

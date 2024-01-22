@@ -9,6 +9,7 @@ use thiserror::Error;
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
 /// Errors of [AuthWeighted] program.
 pub enum AuthWeightedError {
+    // 0
     /// InvalidOperators
     #[error("invalid operators")]
     InvalidOperators,
@@ -25,14 +26,10 @@ pub enum AuthWeightedError {
     #[error("duplicate operators")]
     DuplicateOperators,
 
-    /// MalformedSigners
-    #[error("malformed signers")]
-    MalformedSigners,
-
     /// LowSignaturesWeight
     #[error("low signature weight")]
     LowSignaturesWeight,
-
+    // 5
     /// InvalidInstruction
     #[error("invalid instruction")]
     InvalidInstruction,
@@ -52,7 +49,7 @@ pub enum AuthWeightedError {
     /// MalformedTransferOperatorshipParams
     #[error("malformed transfer operatorship body")]
     MalformedTransferOperatorshipParams,
-
+    // 10
     /// EpochForHashNotFound
     #[error("could not find requested key")]
     EpochForHashNotFound,
@@ -72,7 +69,7 @@ pub enum AuthWeightedError {
     /// Secp256k1RecoveryFailedInvalidHash
     #[error("could not recover public key due to invalid hash")]
     Secp256k1RecoveryFailedInvalidHash,
-
+    // 15
     /// Failed to recover public key from message hash and recovery id
     #[error("Failed to recover public key from message hash and recovery id")]
     Secp256k1RecoveryFailed,
@@ -84,6 +81,15 @@ pub enum AuthWeightedError {
     /// Arithmetic overflow
     #[error("Program arithmetic overflowed")]
     ArithmeticOverflow,
+
+    /// All proof signers are invalid
+    #[error("All proof signers are invalid")]
+    AllSignersInvalid,
+
+    /// Operator list was exhausted during proof validation
+    #[error("Operator list was exhausted during proof validation")]
+    OperatorsExhausted,
+    // 20
 }
 
 impl From<AuthWeightedError> for ProgramError {

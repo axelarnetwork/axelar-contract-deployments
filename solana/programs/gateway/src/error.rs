@@ -46,14 +46,11 @@ pub enum GatewayError {
     #[error("duplicate operators")]
     DuplicateOperators,
 
-    /// MalformedSigners
-    #[error("malformed signers")]
-    MalformedSigners,
-    // 10
     /// LowSignaturesWeight
     #[error("low signature weight")]
     LowSignaturesWeight,
 
+    // 10
     /// InvalidProgramID
     #[error("invalid program id")]
     InvalidProgramID,
@@ -70,11 +67,11 @@ pub enum GatewayError {
     #[error("malformed transfer operatorship body")]
     MalformedTransferOperatorshipParams,
 
-    // 15
     /// EpochForHashNotFound
     #[error("could not find requested key")]
     EpochForHashNotFound,
 
+    // 15
     /// https://docs.rs/solana-program/latest/solana_program/secp256k1_recover/fn.secp256k1_recover.html#errors
     #[error("could not recover public key due to invalid signature")]
     Secp256k1RecoveryFailedInvalidSignature,
@@ -91,11 +88,11 @@ pub enum GatewayError {
     #[error("Invalid Account Address")]
     InvalidAccountAddress,
 
-    // 20
     /// Invalid Gateway Config account
     #[error("Invalid Gateway Config account")]
     InvalidConfigAccount,
 
+    // 20
     /// Invalid System Program account
     #[error("Invalid System Program account")]
     InvalidSystemAccount,
@@ -111,11 +108,12 @@ pub enum GatewayError {
     /// Failed to decode `execute_data`
     #[error("Falied to decode execute_data")]
     FailedToDecodeExecuteData,
-    // 25
+
     /// Arithmetic overflow
     #[error("Program arithmetic overflowed")]
     ArithmeticOverflow,
 
+    // 25
     /// Operator set epoch is different than the current epoch
     #[error("Operator set epoch is different than the current epoch.")]
     EpochMissmatch,
@@ -127,6 +125,15 @@ pub enum GatewayError {
     /// Failed to recover public key from message hash and recovery id
     #[error("Failed to recover public key from message hash and recovery id")]
     Secp256k1RecoveryFailed,
+
+    /// All proof signers are invalid
+    #[error("All proof signers are invalid")]
+    AllSignersInvalid,
+
+    /// Operator list was exhausted during proof validation
+    #[error("Operator list was exhausted during proof validation")]
+    OperatorsExhausted,
+    // 30
 }
 
 impl From<GatewayError> for ProgramError {
@@ -145,7 +152,6 @@ impl From<AuthWeightedError> for GatewayError {
             InvalidWeights => GatewayError::InvalidWeights,
             InvalidThreshold => GatewayError::InvalidThreshold,
             DuplicateOperators => GatewayError::DuplicateOperators,
-            MalformedSigners => GatewayError::MalformedSigners,
             LowSignaturesWeight => GatewayError::LowSignaturesWeight,
             InvalidInstruction => GatewayError::InvalidInstruction,
             InvalidProgramID => GatewayError::InvalidProgramID,
@@ -166,6 +172,8 @@ impl From<AuthWeightedError> for GatewayError {
             ArithmeticOverflow => GatewayError::ArithmeticOverflow,
             Secp256k1RecoveryFailed => GatewayError::Secp256k1RecoveryFailed,
             Secp256k1InvalidSignature => GatewayError::Secp256k1InvalidSignature,
+            AllSignersInvalid => GatewayError::AllSignersInvalid,
+            OperatorsExhausted => GatewayError::OperatorsExhausted,
         }
     }
 }

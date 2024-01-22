@@ -201,7 +201,7 @@ async fn test_validate_proof_invalid_message_hash() -> Result<()> {
             .unwrap(),
         TransactionError::InstructionError(
             0,
-            InstructionError::Custom(AuthWeightedError::MalformedSigners as u32)
+            InstructionError::Custom(AuthWeightedError::AllSignersInvalid as u32)
         )
     );
     Ok(())
