@@ -6,7 +6,17 @@ const axios = require('axios');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { Contract, getDefaultProvider } = ethers;
-const { loadConfig, validateParameters, printError, getContractJSON, printInfo, printWarn, printObj } = require('./utils');
+const {
+    loadConfig,
+    validateParameters,
+    printError,
+    getContractJSON,
+    printInfo,
+    printWarn,
+    printObj,
+    isValidAddress,
+    isStringArray,
+} = require('./utils');
 
 const interchainTokenFactoryABI = getContractJSON('InterchainTokenFactory').abi;
 const interchainTokenABI = getContractJSON('InterchainToken').abi;
@@ -26,7 +36,16 @@ async function processCommand(config, options) {
             throw new Error(`Chain ${source} is not defined in the info file`);
         }
 
-        destination = JSON.parse(destination);
+        try {
+            destination = JSON.parse(destination);
+        } catch (error) {
+            throw new Error(`Unable to parse destination chains: ${error}`);
+        }
+
+        if (!isStringArray(destination)) {
+            throw new Error(`Invalid destination chains type, expected string`);
+        }
+
         const invalidDestinations = destination.filter((chain) => !config.chains[chain.toLowerCase()]);
 
         if (invalidDestinations.length > 0) {
@@ -34,7 +53,17 @@ async function processCommand(config, options) {
         }
 
         const provider = getDefaultProvider(rpc || sourceChain.rpc);
-        const itsAddress = its || sourceChain.contracts.InterchainTokenService?.address;
+        let itsAddress;
+
+        if (its) {
+            if (isValidAddress(its)) {
+                itsAddress = its;
+            } else {
+                throw new Error(`Invalid ITS address: ${its}`);
+            }
+        } else {
+            itsAddress = sourceChain.contracts.InterchainTokenService?.address;
+        }
 
         if (deployer === 'gateway') {
             const gatewayTokens = await fetchGatewayTokens(address, sourceChain.name.toLowerCase(), destination, provider, api);
@@ -66,7 +95,7 @@ async function isTokenCanonical(address, itsAddress, provider) {
 
     try {
         const validCanonicalAddress = await its.validTokenAddress(canonicalTokenId);
-        isCanonicalToken = address === validCanonicalAddress;
+        isCanonicalToken = address.toLowerCase() === validCanonicalAddress.toLowerCase();
     } catch {}
 
     return isCanonicalToken;
@@ -82,7 +111,7 @@ async function fetchNativeInterchainTokens(address, config, tokenId, destination
             const provider = getDefaultProvider(chainConfig.rpc);
             const its = new Contract(itsAddress, interchainTokenServiceABI, provider);
 
-            if ((await its.validTokenAddress(tokenId)) === address) {
+            if ((await its.validTokenAddress(tokenId)).toLowerCase() === address.toLowerCase()) {
                 interchainTokens.push({ [chain]: address });
             } else {
                 printWarn(`No native Interchain token found for tokenId ${tokenId} on chain ${chain}`);
@@ -111,7 +140,7 @@ async function isGatewayToken(apiUrl, address) {
     try {
         const { data: sourceData } = await axios.get(apiUrl);
 
-        if (!(sourceData.confirmed === true && sourceData.is_external === false)) {
+        if (!(sourceData.confirmed && !sourceData.is_external)) {
             throw new Error();
         }
     } catch {
@@ -132,7 +161,7 @@ async function fetchGatewayTokens(address, source, destination, provider, api) {
         for (const chain of destination) {
             const { data: chainData } = await axios.get(`${apiUrl}${chain}?symbol=${symbol}`);
 
-            if (!(chainData.confirmed === true && chainData.is_external === false && chainData.address)) {
+            if (!(chainData.confirmed && !chainData.is_external && chainData.address)) {
                 printWarn(`No Gateway token found for token symbol ${symbol} on chain ${chain}`);
             } else {
                 gatewayTokens.push({ [chain]: chainData.address });
@@ -183,7 +212,7 @@ if (require.main === module) {
     program.addOption(
         new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider on source chain to fetch token information').env('RPC'),
     );
-    program.addOption(new Option('-i, --its <its>', 'The Interchain token service address to be used if not want to use config address'));
+    program.addOption(new Option('-i, --its <its>', 'Interchain token service override address'));
     program.addOption(new Option('--api <apiUrl>', 'api url to check token deployed through gateway and the token details'));
 
     program.action((options) => {
