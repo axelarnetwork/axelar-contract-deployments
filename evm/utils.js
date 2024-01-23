@@ -650,11 +650,7 @@ const getEVMAddresses = async (config, chain, options = {}) => {
 const getAmplifierKeyAddresses = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
     const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'get_worker_set');
-
-    const signers = [];
-    for(const address in workerSet.signers) {
-        signers.push(workerSet.signers[address]);
-    }
+    const signers = Object.values(workerSet.signers);
 
     const weightedAddresses = signers.map((signer) => ({
         address: computeAddress(`0x${signer.pub_key.ecdsa}`),
