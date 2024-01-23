@@ -43,11 +43,28 @@ impl From<TestSigner> for Signer {
     }
 }
 
-pub struct TestInputs {
+pub struct Fixtures {
     pub messages: Vec<AxelarMessage>,
     pub signers: Vec<TestSigner>,
     pub command_batch: CommandBatch,
     pub signatures: Vec<Option<Signature>>,
+}
+
+fn fixtures(num_messages: usize, num_signers: usize) -> Result<Fixtures> {
+    let messages: Vec<AxelarMessage> = (0..num_messages)
+        .map(|_| random_message())
+        .collect::<Result<_, _>>()?;
+    let signers: Vec<TestSigner> = (0..num_signers)
+        .map(|_| create_signer())
+        .collect::<Result<_, _>>()?;
+    let command_batch = create_command_batch(&messages)?;
+    let signatures: Vec<Option<Signature>> = sign_batch(&command_batch, &signers)?;
+    Ok(Fixtures {
+        messages,
+        signers,
+        command_batch,
+        signatures,
+    })
 }
 
 pub fn create_execute_data(
@@ -55,40 +72,28 @@ pub fn create_execute_data(
     num_signers: usize,
     quorum: u128,
 ) -> Result<Vec<u8>> {
-    let messages: Vec<AxelarMessage> = (0..num_messages)
-        .map(|_| random_message())
-        .collect::<Result<_, _>>()?;
-    let signers: Vec<TestSigner> = (0..num_signers)
-        .map(|_| create_signer())
-        .collect::<Result<_, _>>()?;
-    let command_batch = create_command_batch(&messages)?;
-    let signatures: Vec<Option<Signature>> = sign_batch(&command_batch, &signers)?;
-    encode(&command_batch, signers, signatures, quorum)
-}
-
-pub fn create_execute_data_and_inputs(
-    num_messages: usize,
-    num_signers: usize,
-    quorum: u128,
-) -> Result<(Vec<u8>, TestInputs)> {
-    let messages: Vec<AxelarMessage> = (0..num_messages)
-        .map(|_| random_message())
-        .collect::<Result<_, _>>()?;
-    let signers: Vec<TestSigner> = (0..num_signers)
-        .map(|_| create_signer())
-        .collect::<Result<_, _>>()?;
-    let command_batch = create_command_batch(&messages)?;
-    let signatures: Vec<Option<Signature>> = sign_batch(&command_batch, &signers)?;
-    let execute_data = encode(&command_batch, signers.clone(), signatures.clone(), quorum)?;
-
-    let test_inputs = TestInputs {
-        messages,
+    let Fixtures {
         signers,
         command_batch,
         signatures,
-    };
+        ..
+    } = fixtures(num_messages, num_signers)?;
+    encode(&command_batch, signers, signatures, quorum)
+}
 
-    Ok((execute_data, test_inputs))
+pub fn create_execute_data_with_inputs(
+    num_messages: usize,
+    num_signers: usize,
+    quorum: u128,
+) -> Result<(Vec<u8>, Fixtures)> {
+    let fxt = fixtures(num_messages, num_signers)?;
+    let execute_data = encode(
+        &fxt.command_batch,
+        fxt.signers.clone(),
+        fxt.signatures.clone(),
+        quorum,
+    )?;
+    Ok((execute_data, fxt))
 }
 
 fn random_message() -> Result<AxelarMessage> {

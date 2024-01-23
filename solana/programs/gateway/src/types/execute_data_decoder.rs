@@ -367,19 +367,16 @@ fn decode_execute_data_from_axelar_repo() -> anyhow::Result<()> {
 
 #[test]
 fn decode_custom_execute_data() -> anyhow::Result<()> {
-    let (fixture, test_inputs) =
-        test_fixtures::execute_data::create_execute_data_and_inputs(5, 3, 2)?;
+    let execute_data = test_fixtures::execute_data::create_execute_data(5, 3, 2)?;
 
-    let (proof, command_batch) = decode(&fixture)?;
+    let (proof, command_batch) = decode(&execute_data)?;
 
     assert_eq!(command_batch.commands.len(), 5);
     assert_eq!(proof.operators.addresses().len(), 3);
     assert_eq!(proof.signatures().len(), 3);
     assert_eq!(*proof.operators.threshold(), 2u8.into());
 
-    // if let Err(error) = proof.validate(&command_batch.hash) {
-    if let Err(error) = proof.validate(test_inputs.command_batch.msg_digest().as_ref().try_into()?)
-    {
+    if let Err(error) = proof.validate(&command_batch.hash) {
         panic!("Invalid proof: {error}")
     };
 
