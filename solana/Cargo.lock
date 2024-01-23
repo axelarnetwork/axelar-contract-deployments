@@ -2096,6 +2096,7 @@ dependencies = [
  "num-traits",
  "random-array",
  "serde",
+ "sha3 0.10.8",
  "slice-iterator",
  "solana-program",
  "solana-program-test",

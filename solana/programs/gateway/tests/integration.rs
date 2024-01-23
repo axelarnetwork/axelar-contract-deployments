@@ -270,7 +270,7 @@ async fn test_call_contract_instruction() -> Result<()> {
         .process_transaction_with_metadata(transaction)
         .await?;
 
-    assert!({ result.is_ok() });
+    assert!(result.is_ok(), "falied to process CallContract instruction");
 
     let expected_event = metadata
         .ok_or("expected transaction to have metadata")
@@ -432,7 +432,7 @@ async fn execute() -> Result<()> {
         .process_transaction_with_metadata(transaction)
         .await?;
 
-    assert!(result.is_ok());
+    assert!(result.is_ok(), "failed to process Execute instruction");
 
     panic!("finish this test: check logs");
 

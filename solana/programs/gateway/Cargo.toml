@@ -14,19 +14,20 @@ test-sbf = []
 [dependencies]
 auth-weighted = { workspace = true, features = ["no-entrypoint"] }
 base64.workspace = true
-borsh.workspace = true
 bcs.workspace = true
+borsh.workspace = true
+connection-router.workspace = true
+cosmwasm-std.workspace = true
+itertools.workspace = true
+multisig-prover.workspace = true
+multisig.workspace = true
 num-derive = "0.4.1"
 num-traits = "0.2.17"
+serde.workspace = true
+sha3.workspace = true
 slice-iterator.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
-multisig-prover.workspace = true
-connection-router.workspace = true
-multisig.workspace = true
-cosmwasm-std.workspace = true
-serde.workspace = true
-itertools.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true

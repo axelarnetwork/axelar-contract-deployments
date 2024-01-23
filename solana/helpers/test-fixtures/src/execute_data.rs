@@ -10,11 +10,20 @@ use multisig_prover::types::CommandBatch;
 
 use crate::random_stuff::{array32, string};
 
-#[derive(Debug)]
-struct TestSigner {
-    weight: Uint256,
-    secret_key: SecretKey,
-    public_key: AxelarPublicKey,
+#[derive(Debug, Clone)]
+pub struct TestSigner {
+    pub weight: Uint256,
+    pub secret_key: SecretKey,
+    pub public_key: AxelarPublicKey,
+}
+
+impl TestSigner {
+    pub fn uncompressed_public_key(&self) -> [u8; 64] {
+        let public_key = PublicKey::from_secret_key(&self.secret_key);
+        let serialized = public_key.serialize();
+        let (_tag, public_key_bytes) = serialized.split_at(1);
+        public_key_bytes.try_into().unwrap()
+    }
 }
 
 impl From<TestSigner> for Signer {
@@ -34,6 +43,13 @@ impl From<TestSigner> for Signer {
     }
 }
 
+pub struct TestInputs {
+    pub messages: Vec<AxelarMessage>,
+    pub signers: Vec<TestSigner>,
+    pub command_batch: CommandBatch,
+    pub signatures: Vec<Option<Signature>>,
+}
+
 pub fn create_execute_data(
     num_messages: usize,
     num_signers: usize,
@@ -48,6 +64,31 @@ pub fn create_execute_data(
     let command_batch = create_command_batch(&messages)?;
     let signatures: Vec<Option<Signature>> = sign_batch(&command_batch, &signers)?;
     encode(&command_batch, signers, signatures, quorum)
+}
+
+pub fn create_execute_data_and_inputs(
+    num_messages: usize,
+    num_signers: usize,
+    quorum: u128,
+) -> Result<(Vec<u8>, TestInputs)> {
+    let messages: Vec<AxelarMessage> = (0..num_messages)
+        .map(|_| random_message())
+        .collect::<Result<_, _>>()?;
+    let signers: Vec<TestSigner> = (0..num_signers)
+        .map(|_| create_signer())
+        .collect::<Result<_, _>>()?;
+    let command_batch = create_command_batch(&messages)?;
+    let signatures: Vec<Option<Signature>> = sign_batch(&command_batch, &signers)?;
+    let execute_data = encode(&command_batch, signers.clone(), signatures.clone(), quorum)?;
+
+    let test_inputs = TestInputs {
+        messages,
+        signers,
+        command_batch,
+        signatures,
+    };
+
+    Ok((execute_data, test_inputs))
 }
 
 fn random_message() -> Result<AxelarMessage> {
@@ -72,8 +113,8 @@ fn create_command_batch(messages: &[AxelarMessage]) -> Result<CommandBatch> {
 fn create_signer() -> Result<TestSigner> {
     let secret_key = SecretKey::random(&mut rand_core::OsRng);
     let public_key = PublicKey::from_secret_key(&secret_key);
-    let public_key: AxelarPublicKey =
-        (KeyType::Ecdsa, public_key.serialize().as_ref().into()).try_into()?;
+    let public_key_bytes = public_key.serialize_compressed();
+    let public_key: AxelarPublicKey = (KeyType::Ecdsa, public_key_bytes.into()).try_into()?;
 
     Ok(TestSigner {
         secret_key,
@@ -86,15 +127,31 @@ fn sign_batch(
     command_batch: &CommandBatch,
     signers: &[TestSigner],
 ) -> Result<Vec<Option<Signature>>> {
-    let message_to_sign = command_batch.msg_digest();
     let mut signatures = vec![];
-
+    let message_to_sign: [u8; 32] = command_batch.msg_digest().as_ref().try_into()?;
+    let message = Message::parse(&message_to_sign);
+    println!("Generated message hash: {}", hex::encode(message_to_sign)); // debug
     for signer in signers {
-        // Sign the message
-        let message_hash = solana_program::keccak::hash(&message_to_sign).to_bytes();
-        let message = Message::parse(&message_hash);
+        println!("\nGenerated"); // debug
 
+        // Sign the message
         let (signature, recovery_id) = sign(&message, &signer.secret_key);
+
+        println!(
+            "- Signer compressed public key:    {}",
+            hex::encode(&signer.public_key)
+        ); // debug
+        println!(
+            "- Signer uncompressed public keys: {}",
+            hex::encode(signer.uncompressed_public_key())
+        ); // debug
+
+        println!(
+            "- Signature: {} [{}] (recid: {})",
+            hex::encode(signature.serialize()),
+            signature.serialize().len(),
+            recovery_id.serialize()
+        ); //debug
 
         // Concatenate signature and recovery byte
         let mut extended_signature = [0u8; 65];
@@ -269,29 +326,43 @@ mod axelar_bcs_encoding {
 #[cfg(test)]
 mod tests {
 
-    use libsecp256k1::verify;
+    use libsecp256k1::{verify, RecoveryId};
     use solana_program::secp256k1_recover::secp256k1_recover;
 
     use super::*;
+    use crate::random_stuff;
 
     #[test]
     fn can_create_execute_data() {
         let encode_data = create_execute_data(1, 2, 1);
         assert!(encode_data.is_ok())
     }
-    #[test]
-    fn solana_recovery() -> anyhow::Result<()> {
+
+    fn test_data() -> (
+        SecretKey,
+        PublicKey,
+        Message,
+        libsecp256k1::Signature,
+        RecoveryId,
+    ) {
         // Create keypair
         let secret_key = SecretKey::random(&mut rand_core::OsRng);
         let public_key = PublicKey::from_secret_key(&secret_key);
 
         // Sign
-        let message_array = [1u8; 32];
+        let message_array = random_stuff::array32();
         let message = Message::parse(&message_array);
         let (signature, recovery_id) = sign(&message, &secret_key);
 
-        // Self Verify
+        // Confidence check: self verify
         assert!(verify(&message, &signature, &public_key));
+
+        (secret_key, public_key, message, signature, recovery_id)
+    }
+
+    #[test]
+    fn solana_recovery_uncompressed() -> anyhow::Result<()> {
+        let (_secret_key, public_key, message, signature, recovery_id) = test_data();
 
         // Recover
         let recovered_public_key = secp256k1_recover(
@@ -299,9 +370,33 @@ mod tests {
             recovery_id.serialize(),
             &signature.serialize(),
         )?;
+
+        // Parse to compare
         let parsed_recovered_public_key =
             PublicKey::parse_slice(&recovered_public_key.to_bytes(), None)?;
         assert_eq!(parsed_recovered_public_key, public_key);
+        Ok(())
+    }
+
+    #[test]
+    fn solana_recovery_compressed() -> anyhow::Result<()> {
+        let (_secret_key, public_key, message, signature, recovery_id) = test_data();
+
+        // Recover
+        let recovered_public_key_bytes = secp256k1_recover(
+            &message.serialize(),
+            recovery_id.serialize(),
+            &signature.serialize(),
+        )?
+        .to_bytes();
+
+        let recovered = PublicKey::parse_slice(&recovered_public_key_bytes, None)?;
+
+        assert_eq!(
+            recovered.serialize_compressed(),
+            public_key.serialize_compressed()
+        );
+
         Ok(())
     }
 }

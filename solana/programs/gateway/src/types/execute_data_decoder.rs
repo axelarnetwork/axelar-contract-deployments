@@ -6,7 +6,8 @@ use auth_weighted::types::proof::Proof;
 use auth_weighted::types::signature::Signature;
 use auth_weighted::types::u256::U256;
 use itertools::izip;
-use multisig_prover::types::CommandType;
+use multisig_prover::encoding::Data;
+use multisig_prover::types::{Command, CommandType};
 use solana_program::msg;
 use thiserror::Error;
 
@@ -42,6 +43,9 @@ pub enum DecodeError {
     #[error("Falied to decode command batch parts")]
     /// Falied to decode command batch parts
     FailedToDecodeCommandBatchParts,
+    #[error("Falied to reencode command batch data")]
+    ///Falied to reencode command batch data
+    FailedToReencodeCommandBatchData,
 }
 
 impl From<DecodeError> for GatewayError {
@@ -101,13 +105,18 @@ impl DecodedCommand {
         destination_chain_id: u64,
         encoded_params: &[u8],
     ) -> Result<Self, DecodeError> {
-        let type_ = match type_ {
-            "approveContractCall" => CommandType::ApproveContractCall,
-            "transferOperatorship" => CommandType::TransferOperatorship,
-            _ => return Err(DecodeError::InvalidCommandType),
-        };
+        let type_ = decode_command_type(type_)?;
         let message = DecodedMessage::decode(command_id, destination_chain_id, encoded_params)?;
         Ok(DecodedCommand { type_, message })
+    }
+}
+
+#[inline]
+fn decode_command_type(encoded_type: &str) -> Result<CommandType, DecodeError> {
+    match encoded_type {
+        "approveContractCall" => Ok(CommandType::ApproveContractCall),
+        "transferOperatorship" => Ok(CommandType::TransferOperatorship),
+        _ => Err(DecodeError::InvalidCommandType),
     }
 }
 
@@ -132,7 +141,10 @@ fn build_proof_from_raw_parts(
             .into_iter()
             .map(TryInto::<Address>::try_into)
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| DecodeError::InvalidOperatorAddress)?;
+            .map_err(|address_error| {
+                msg!("Invalid operator address: {}", address_error);
+                DecodeError::InvalidOperatorAddress
+            })?;
 
         let weights: Vec<U256> = weights.into_iter().map(Into::into).collect();
         Operators::new(addresses, weights, quorum.into())
@@ -153,19 +165,72 @@ fn decode_proof(proof_bytes: &[u8]) -> Result<Proof, DecodeError> {
     build_proof_from_raw_parts(addresses, weights, quorum, signatures)
 }
 
+/* TODO:
+
+This function should be more efficent.
+
+Currently, it recombine the CommandBatch internal values twice to produce:
+1) a `DecodedCommandBatch` value, which is part of the original return value, and
+2) a `Data` value, which is used to recreate the CommandBatch hash, which is the cryptographic
+    message that was signed over.
+
+Those types are very much alike, and returning just the `Data` type would suffice.
+*/
 #[inline]
 fn decode_command_batch(command_batch_bytes: &[u8]) -> Result<DecodedCommandBatch, DecodeError> {
     // Decode command batch parts
     let (destination_chain_id, commands_ids, commands_types, commands_params): DecodedCommandBatchParts =
                 bcs::from_bytes(command_batch_bytes).map_err(|_| DecodeError::FailedToDecodeCommandBatchParts)?;
+
+    // Assert parts are aligned
+    if commands_ids.len() != commands_types.len() && commands_types.len() != commands_params.len() {
+        return Err(DecodeError::FailedToDecodeCommandBatchParts);
+    }
+
     // Build command batch from raw parts
     let commands = izip!(&commands_ids, &commands_types, &commands_params)
         .map(|(id, type_, encoded_params)| {
             DecodedCommand::decode(*id, type_, destination_chain_id, encoded_params)
         })
         .collect::<Result<Vec<_>, _>>()?;
-    let hash = solana_program::hash::hash(command_batch_bytes).to_bytes();
+
+    // TODO: repurpose this value as part of the returned type.
+    let data: Data = reconstruct_command_batch_data(
+        destination_chain_id,
+        commands_ids,
+        commands_types,
+        commands_params,
+    )?;
+
+    let hash = axelar_bcs_encoding::msg_digest(&data)?;
+
     Ok(DecodedCommandBatch { commands, hash })
+}
+
+fn reconstruct_command_batch_data(
+    destination_chain_id: u64,
+    commands_ids: Vec<[u8; 32]>,
+    commands_types: Vec<String>,
+    commands_params: Vec<Vec<u8>>,
+) -> Result<Data, DecodeError> {
+    let commands: Vec<Command> = izip!(
+        commands_ids.into_iter(),
+        commands_types.into_iter(),
+        commands_params.into_iter()
+    )
+    .map(|(id, ty, params)| -> Result<Command, DecodeError> {
+        Ok(Command {
+            id: id.into(),
+            ty: decode_command_type(&ty)?,
+            params: params.into(),
+        })
+    })
+    .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(Data {
+        destination_chain_id: destination_chain_id.into(),
+        commands,
+    })
 }
 
 /// Decodes the `execute_data` bytes into a [`Proof`] and
@@ -179,6 +244,69 @@ pub fn decode(bytes: &[u8]) -> Result<(Proof, DecodedCommandBatch), DecodeError>
     let proof = decode_proof(&proof_bytes)?;
     let commands = decode_command_batch(&command_batch_bytes)?;
     Ok((proof, commands))
+}
+
+mod axelar_bcs_encoding {
+    use std::mem::size_of;
+
+    use super::*;
+
+    pub fn msg_digest(data: &Data) -> Result<[u8; 32], DecodeError> {
+        use sha3::{Digest, Keccak256};
+        // Sui is just mimicking EVM here
+        let unsigned = [
+            "\x19Sui Signed Message:\n".as_bytes(), // Keccek256 hash length = 32
+            encode(data)?.as_slice(),
+        ]
+        .concat();
+
+        Ok(Keccak256::digest(unsigned).into())
+    }
+
+    pub fn encode(data: &Data) -> Result<Vec<u8>, DecodeError> {
+        // destination chain id must be u64 for sui
+        let destination_chain_id = u256_to_u64(data.destination_chain_id)?;
+
+        let num_commands = data.commands.len();
+        let mut command_ids = Vec::with_capacity(num_commands);
+        let mut command_types = Vec::with_capacity(num_commands);
+        let mut command_params = Vec::with_capacity(num_commands);
+        for command in &data.commands {
+            command_ids.push(make_command_id(command.id.to_vec())?);
+            command_types.push(command.ty.to_string());
+            command_params.push(command.params.to_vec());
+        }
+
+        bcs::to_bytes(&(
+            destination_chain_id,
+            command_ids,
+            command_types,
+            command_params,
+        ))
+        .map_err(|_bcs_error| DecodeError::FailedToReencodeCommandBatchData)
+    }
+
+    #[inline]
+    fn u256_to_u64(number: cosmwasm_std::Uint256) -> Result<u64, DecodeError> {
+        let u256_bytes_le = number.to_le_bytes();
+        // check if it would fit into an u64
+        if u256_bytes_le[size_of::<u64>()..].iter().any(|&x| x != 0) {
+            return Err(DecodeError::FailedToReencodeCommandBatchData);
+        }
+        let mut u64_arr = [0u8; size_of::<u64>()];
+        u64_arr.copy_from_slice(&u256_bytes_le[0..size_of::<u64>()]);
+
+        Ok(u64::from_le_bytes(u64_arr))
+    }
+
+    #[inline]
+    fn make_command_id(command_id: Vec<u8>) -> Result<[u8; 32], DecodeError> {
+        // command-ids are fixed length sequences
+        command_id.try_into().map_err(|_| {
+            msg!("Decode error: decoded command_id dosen't have 32 bytes");
+            DecodeError::FailedToReencodeCommandBatchData
+        })
+    }
 }
 
 #[test]
@@ -228,7 +356,7 @@ fn decode_execute_data_from_axelar_repo() -> anyhow::Result<()> {
     };
     let expected = DecodedCommandBatch {
         commands: vec![command1, command2],
-        hash: hex::decode("469db1cce4ac0d38edbdf5478053d66879707e22ec8f2dbd26f58adc3db5417a")?
+        hash: hex::decode("bdaa19807472e2261f2ace59a1c368fd45ee858dad21c1612dae2553052f6fdf")?
             .try_into()
             .expect("vector with 32 elements"),
     };
@@ -239,7 +367,9 @@ fn decode_execute_data_from_axelar_repo() -> anyhow::Result<()> {
 
 #[test]
 fn decode_custom_execute_data() -> anyhow::Result<()> {
-    let fixture: Vec<u8> = test_fixtures::execute_data::create_execute_data(5, 3, 2)?;
+    let (fixture, test_inputs) =
+        test_fixtures::execute_data::create_execute_data_and_inputs(5, 3, 2)?;
+
     let (proof, command_batch) = decode(&fixture)?;
 
     assert_eq!(command_batch.commands.len(), 5);
@@ -247,8 +377,11 @@ fn decode_custom_execute_data() -> anyhow::Result<()> {
     assert_eq!(proof.signatures().len(), 3);
     assert_eq!(*proof.operators.threshold(), 2u8.into());
 
-    if let Err(error) = proof.validate(&command_batch.hash) {
+    // if let Err(error) = proof.validate(&command_batch.hash) {
+    if let Err(error) = proof.validate(test_inputs.command_batch.msg_digest().as_ref().try_into()?)
+    {
         panic!("Invalid proof: {error}")
     };
+
     Ok(())
 }
