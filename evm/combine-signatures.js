@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const {
     getDefaultProvider,
-    utils: { computePublicKey, keccak256, getAddress, arrayify, defaultAbiCoder, hashMessage },
+    utils: { computePublicKey, keccak256, getAddress, arrayify, defaultAbiCoder, hashMessage, recoverAddress },
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
@@ -158,12 +158,12 @@ async function processCommand(config, chain, options) {
 
                 const validatorAddress = getAddressFromPublicKey(pubKey);
 
-                // const signer = verifyMessage(msgHash, signature);
+                const signer = recoverAddress(msgHash, signature);
 
-                // if (signer.toLowerCase() !== validatorAddress.toLowerCase()) {
-                //     printError('Signature is invalid for the given validator address', validatorAddress);
-                //     return;
-                // }
+                if (signer.toLowerCase() !== validatorAddress.toLowerCase()) {
+                    printError('Signature is invalid for the given validator address', validatorAddress);
+                    return;
+                }
 
                 const validatorWeight = validatorWeights[validatorAddress.toLowerCase()];
 
