@@ -1,6 +1,6 @@
 //! Add an operator to an operator group
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{to_vec, BorshDeserialize};
 use program_utils::{check_program_account, init_pda};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -77,7 +77,7 @@ impl Processor {
             let mut account_data = new_operator_pda_account.try_borrow_mut_data()?;
             let mut data = OperatorAccount::try_from_slice(&account_data[..account_data.len()])?;
             data.make_active();
-            let serialized_data = data.try_to_vec()?;
+            let serialized_data = to_vec(&data).unwrap();
             account_data[..serialized_data.len()].copy_from_slice(&serialized_data);
         } else {
             return Err(ProgramError::IllegalOwner);

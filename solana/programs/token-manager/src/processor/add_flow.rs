@@ -1,6 +1,6 @@
 //! Set a new flow limit for a given token manager.
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{to_vec, BorshDeserialize};
 use program_utils::{check_program_account, init_pda};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -97,7 +97,7 @@ impl Processor {
             data.flow_in += flow_addition.add_flow_in;
             data.flow_out += flow_addition.add_flow_out;
             msg!("Updating flow limit PDA - new limit: {:?}", data);
-            let serialized_data = data.try_to_vec()?;
+            let serialized_data = to_vec(&data).unwrap();
             account_data[..serialized_data.len()].copy_from_slice(&serialized_data);
         } else {
             return Err(ProgramError::IllegalOwner);

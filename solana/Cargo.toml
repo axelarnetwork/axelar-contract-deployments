@@ -27,6 +27,7 @@ signature = "2"
 # solana programs
 auth-weighted = { path = "programs/auth-weighted" }
 operator = { path = "programs/operator" }
+gateway = { path = "programs/gateway" }
 
 # helper crates
 program-utils = { path = "helpers/program-utils" }

@@ -1,6 +1,6 @@
 //! Instruction types
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -47,8 +47,7 @@ pub fn build_create_group_instruction(
     operator: &Pubkey,
     op_id: String,
 ) -> Result<Instruction, ProgramError> {
-    let init_data = OperatorInstruction::CreateOperatorGroup { id: op_id };
-    let data = init_data.try_to_vec()?;
+    let data = to_vec(&OperatorInstruction::CreateOperatorGroup { id: op_id })?;
 
     let accounts = vec![
         AccountMeta::new(*funder, true),
@@ -73,8 +72,7 @@ pub fn build_add_operator_instruction(
     new_operator_acc_owner: &Pubkey,
     new_operator_pda_acc: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let init_data = OperatorInstruction::AddOperator;
-    let data = init_data.try_to_vec()?;
+    let data = to_vec(&OperatorInstruction::AddOperator)?;
 
     let accounts = vec![
         AccountMeta::new(*funder, true),

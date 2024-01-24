@@ -1,3 +1,4 @@
+use gateway::types::PubkeyWrapper;
 use interchain_address_tracker::get_associated_chain_address;
 use solana_program::program_pack::Pack;
 use solana_program_test::tokio;
@@ -60,5 +61,5 @@ async fn test_create_and_store_chain_name() {
         )
         .unwrap();
     assert_eq!(account_info.chain_name, "MyChainABC".to_string());
-    assert_eq!(account_info.owner, owner.pubkey());
+    assert_eq!(account_info.owner, PubkeyWrapper::from(owner.pubkey()));
 }

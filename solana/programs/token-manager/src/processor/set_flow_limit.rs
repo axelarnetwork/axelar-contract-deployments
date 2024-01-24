@@ -1,6 +1,6 @@
 //! Set a new flow limit for a given token manager.
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{to_vec, BorshDeserialize};
 use program_utils::check_program_account;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -52,7 +52,7 @@ impl Processor {
         let mut account_data = token_manager_pda.try_borrow_mut_data()?;
         let mut data = TokenManagerAccount::try_from_slice(&account_data[..account_data.len()])?;
         data.flow_limit = flow_limit;
-        let serialized_data = data.try_to_vec()?;
+        let serialized_data = to_vec(&data)?;
         account_data[..serialized_data.len()].copy_from_slice(&serialized_data);
 
         Ok(())

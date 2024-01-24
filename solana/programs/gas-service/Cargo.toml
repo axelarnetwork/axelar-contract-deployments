@@ -1,8 +1,10 @@
 [package]
-name = "interchain-address-tracker"
+name = "gas-service"
 version = "0.1.0"
-description = "Port of the https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/66325132bde3f61d2c18748cfcd3e181b063ea00/contracts/utils/InterchainAddressTracker.sol"
 edition = "2021"
+
+[package.metadata.clippy]
+allow = ["too_many_arguments"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -11,13 +13,17 @@ crate-type = ["cdylib", "lib"]
 no-entrypoint = []
 
 [dependencies]
-solana-program.workspace = true
-thiserror.workspace = true
+base64.workspace = true
 borsh.workspace = true
 num-derive.workspace = true
 num-traits.workspace = true
+solana-program.workspace = true
+thiserror.workspace = true
 gateway = { workspace = true, features = ["no-entrypoint"] }
+auth-weighted = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
 solana-program-test.workspace = true
+anyhow.workspace = true
+hex.workspace = true
 solana-sdk.workspace = true
