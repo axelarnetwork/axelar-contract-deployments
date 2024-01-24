@@ -102,6 +102,7 @@
         }
       },
       "explorer": {
+        "name": "Etherscan",
         "url": "https://goerli.etherscan.io",
         "api": "https://api-goerli.etherscan.io/api"
       }
@@ -204,6 +205,7 @@
         }
       },
       "explorer": {
+        "name": "Snowtrace",
         "url": "https://testnet.snowtrace.io",
         "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
       }
@@ -312,6 +314,7 @@
         }
       },
       "explorer": {
+        "name": "Ftmscan",
         "url": "https://testnet.ftmscan.com",
         "api": "https://api-testnet.ftmscan.com/api"
       },
@@ -417,6 +420,7 @@
         }
       },
       "explorer": {
+        "name": "Polygonscan",
         "url": "https://mumbai.polygonscan.com",
         "api": "https://api-testnet.polygonscan.com/api"
       },
@@ -524,6 +528,7 @@
         }
       },
       "explorer": {
+        "name": "Moonscan",
         "url": "https://moonbase.moonscan.io",
         "api": "https://api-moonbase.moonscan.io/api"
       },
@@ -629,6 +634,7 @@
         }
       },
       "explorer": {
+        "name": "Bscscan",
         "url": "https://testnet.bscscan.com",
         "api": "https://api-testnet.bscscan.com/api"
       }
@@ -734,6 +740,7 @@
         }
       },
       "explorer": {
+        "name": "Arbiscan",
         "url": "https://goerli.arbiscan.io",
         "api": "https://api-goerli.arbiscan.io/api"
       }
@@ -836,6 +843,7 @@
         }
       },
       "explorer": {
+        "name": "Celoscan",
         "url": "https://alfajores.celoscan.io",
         "api": "https://api-alfajores.celoscan.io/api"
       },
@@ -941,6 +949,7 @@
         }
       },
       "explorer": {
+        "name": "Kavascan",
         "url": "https://explorer.evm-alpha.kava.io"
       }
     },
@@ -1042,6 +1051,7 @@
         }
       },
       "explorer": {
+        "name": "Opscan",
         "url": "https://goerli-optimism.etherscan.io",
         "api": "https://api-goerli-optimism.etherscan.io/api"
       },
@@ -1148,6 +1158,7 @@
         }
       },
       "explorer": {
+        "name": "Basescan",
         "url": "https://goerli.basescan.org",
         "api": "https://api-goerli.basescan.org/api"
       },
@@ -1252,6 +1263,7 @@
         }
       },
       "explorer": {
+        "name": "Filfox",
         "url": "https://calibration.filfox.info"
       },
       "gasOptions": {
@@ -1358,6 +1370,7 @@
         }
       },
       "explorer": {
+        "name": "Lineascan",
         "url": "https://goerli.lineascan.build",
         "api": "https://api-goerli.lineascan.build/api"
       },
@@ -1463,6 +1476,7 @@
         }
       },
       "explorer": {
+        "name": "Polygonscan",
         "url": "https://testnet-zkevm.polygonscan.com",
         "api": "https://api-testnet-zkevm.polygonscan.com/api"
       },
@@ -1568,6 +1582,7 @@
         }
       },
       "explorer": {
+        "name": "Mantle Explorer",
         "url": "https://explorer.testnet.mantle.xyz",
         "api": "https://explorer.testnet.mantle.xyz/api"
       },
@@ -1670,8 +1685,9 @@
         }
       },
       "explorer": {
-        "url": "https://sepolia-blockscout.scroll.io",
-        "api": "https://sepolia-blockscout.scroll.io/api"
+        "name": "Scrollscan",
+        "url": "https://sepolia.scrollscan.dev",
+        "api": "https://api-sepolia.scrollscan.dev/api"
       },
       "confirmations": 2,
       "gasOptions": {
@@ -1764,6 +1780,7 @@
         "maxFeePerGas": 160000000000
       },
       "explorer": {
+        "name": "Immutable Explorer",
         "url": "https://explorer.testnet.immutable.com",
         "api": "https://explorer.testnet.immutable.com/api"
       }
@@ -1860,6 +1877,7 @@
         }
       },
       "explorer": {
+        "explorer": "Sepoliascan",
         "url": "https://sepolia.etherscan.io",
         "api": "https://api-sepolia.etherscan.io/api"
       },
@@ -1895,6 +1913,7 @@
         }
       },
       "explorer": {
+        "name": "Arbiscan",
         "url": "https://sepolia.arbiscan.io",
         "api": "https://api-sepolia.arbiscan.io/api"
       }
@@ -1983,6 +2002,7 @@
         "gasLimit": 8000000
       },
       "explorer": {
+        "name": "",
         "url": ""
       }
     }

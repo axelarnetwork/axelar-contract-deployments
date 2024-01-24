@@ -39,7 +39,7 @@ function getProxyParams(adminAddresses, adminThreshold) {
 }
 
 async function deploy(config, options) {
-    const { privateKey, skipExisting, adminAddresses, adminThreshold, verify, yes } = options;
+    const { privateKey, skipExisting, adminAddresses, adminThreshold, verify, yes, predictOnly } = options;
     const chainName = options.chainName.toLowerCase();
 
     const contractName = 'AxelarGateway';
@@ -90,7 +90,7 @@ async function deploy(config, options) {
     let implementation;
     const contractsToVerify = [];
 
-    if (prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
+    if (predictOnly || prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
         return;
     }
 
@@ -310,7 +310,7 @@ async function programHandler() {
 
     program.name('deploy-gateway-v4.3.x').description('Deploy gateway v4.3.x');
 
-    addExtendedOptions(program, { skipExisting: true, upgrade: true });
+    addExtendedOptions(program, { skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('-a, --adminAddresses <adminAddresses>', 'admin addresses').env('ADMIN_ADDRESSES'));
