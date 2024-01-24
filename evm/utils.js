@@ -32,6 +32,10 @@ const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
 };
 
+function getRandomBytes32() {
+    return keccak256(defaultAbiCoder.encode(['uint256'], [Math.floor(new Date().getTime() * Math.random())]));
+}
+
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
@@ -1136,4 +1140,5 @@ module.exports = {
     getSaltFromKey,
     getDeployOptions,
     isValidChain,
+    getRandomBytes32,
 };
