@@ -16,6 +16,7 @@ bnum.workspace = true
 borsh.workspace = true
 hex.workspace = true
 k256.workspace = true
+libsecp256k1.workspace = true
 num-derive.workspace = true
 num-traits.workspace = true
 solana-program.workspace = true

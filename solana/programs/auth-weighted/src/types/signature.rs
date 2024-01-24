@@ -1,7 +1,7 @@
 //! Signature
 
 use borsh::{BorshDeserialize, BorshSerialize};
-use k256::ecdsa::{self, RecoveryId};
+use libsecp256k1::RecoveryId;
 use solana_program::secp256k1_recover::Secp256k1Pubkey;
 use thiserror::Error;
 
@@ -27,8 +27,8 @@ pub enum SignatureError {
     PubKeyRecoveryFailed,
 }
 
-/// Wrapper type to hold bytes and handle serialization for the
-/// [`k256::ecdsa::Signature`] type and its recovery id.
+/// Wrapper type to hold bytes and handle serialization for the signed bytes and
+/// its recovery id of an ECDSA signature..
 #[derive(BorshSerialize, BorshDeserialize, Clone, PartialEq, Debug)]
 pub struct Signature {
     signature: [u8; Self::ECDSA_SIGNATURE_LEN],
@@ -41,11 +41,12 @@ impl Signature {
 
     /// Signature and recovery id size in bytes.
     pub const ECDSA_RECOVERABLE_SIGNATURE_LEN: usize = Self::ECDSA_SIGNATURE_LEN + 1;
+
     fn new(
         signature: [u8; Self::ECDSA_SIGNATURE_LEN],
         recovery_id: u8,
     ) -> Result<Self, SignatureError> {
-        if RecoveryId::from_byte(recovery_id).is_some() {
+        if RecoveryId::parse(recovery_id).is_ok() {
             Ok(Self {
                 signature,
                 recovery_id,
@@ -55,28 +56,20 @@ impl Signature {
         }
     }
 
-    /// Recovery id
-    pub fn recovery_id(&self) -> Result<ecdsa::RecoveryId, SignatureError> {
-        ecdsa::RecoveryId::try_from(self.recovery_id).map_err(|_| SignatureError::InvalidRecoveryId)
-    }
-
     /// The recovery id as a byte
+    #[inline]
     pub fn recovery_id_byte(&self) -> u8 {
         self.recovery_id
     }
 
-    /// The signature itself
-    pub fn signature(&self) -> Result<ecdsa::Signature, SignatureError> {
-        ecdsa::Signature::from_bytes(&self.signature.into())
-            .map_err(|_| SignatureError::InvalidSignatureBytes)
-    }
-
     /// The signature bytes.
+    #[inline]
     pub fn signature_bytes(&self) -> &[u8; Self::ECDSA_SIGNATURE_LEN] {
         &self.signature
     }
 
     /// Recovers the public key on Solana runtime
+    #[inline]
     pub fn sol_recover_public_key(
         &self,
         message_hash: &[u8],
@@ -149,13 +142,13 @@ mod tests {
             ..
         } = create_random_signature(&bytes(100));
 
-        let mut input = signature.to_vec();
-        input.push(recovery_id.to_byte());
+        let mut input = signature.serialize().to_vec();
+        input.push(recovery_id.serialize());
 
         let ours = Signature::try_from(input)?;
 
-        assert_eq!(ours.signature()?, signature);
-        assert_eq!(ours.recovery_id()?, recovery_id);
+        assert_eq!(*ours.signature_bytes(), signature.serialize());
+        assert_eq!(ours.recovery_id_byte(), recovery_id.serialize());
 
         Ok(())
     }
