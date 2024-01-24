@@ -65,9 +65,20 @@ impl Processor {
                 msg!("Instruction: TransferOperatorship");
                 Self::transfer_operatorship(program_id, accounts)
             }
-            GatewayInstruction::InitializeMessage { approved_message } => {
-                msg!("Instruction: Initialize Message ID");
-                Self::initialize_approved_message(accounts, &approved_message)
+            GatewayInstruction::InitializeMessage {
+                message_id,
+                source_chain,
+                source_address,
+                payload_hash,
+            } => {
+                msg!("Instruction: Initialize Approved Message");
+                Self::initialize_approved_message(
+                    accounts,
+                    message_id,
+                    source_chain,
+                    source_address,
+                    payload_hash,
+                )
             }
         }
     }
@@ -197,7 +208,10 @@ impl Processor {
 
     fn initialize_approved_message(
         accounts: &[AccountInfo<'_>],
-        approved_message: &GatewayApprovedMessage,
+        message_id: [u8; 32],
+        source_chain: Vec<u8>,
+        source_address: Vec<u8>,
+        payload_hash: [u8; 32],
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
 

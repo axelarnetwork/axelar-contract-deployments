@@ -17,7 +17,7 @@ pub enum GatewayInstruction {
     /// Accounts expected by this instruction:
     /// 0. [] Gateway Config PDA account
     /// 1. [WRITE] Execute Data PDA account
-    /// N. [WRITE] Message PDA accounts
+    /// N. [WRITE] Approved Message PDA accounts
     Execute {},
 
     /// Represents the `CallContract` Axelar event.
@@ -63,15 +63,24 @@ pub enum GatewayInstruction {
         execute_data: GatewayExecuteData,
     },
 
-    /// Initializes a Proceesed Message ID PDA account.
+    /// Initializes an Approved Message PDA account.
     ///
     /// Accounts expected by this instruction:
     /// 0. [WRITE, SIGNER] Funding account
-    /// 1. [WRITE] Message ID PDA account
+    /// 1. [WRITE] Approved Message PDA account
     /// 2. [] System Program account
     InitializeMessage {
-        /// The execute data that will be decoded.
-        approved_message: GatewayApprovedMessage,
+        /// The Axelar Message CCID, truncated to 32 bytes during proof
+        /// generation.
+        message_id: [u8; 32],
+        /// The source chain denomination, expressed as raw bytes, leaving
+        /// conversions to the caller's discretion.
+        source_chain: Vec<u8>,
+        /// The source address, expressed as raw bytes, leaving conversions to
+        /// the caller's discretion.
+        source_address: Vec<u8>,
+        /// The Axelar Message payload hash.
+        payload_hash: [u8; 32],
     },
 }
 
@@ -140,10 +149,20 @@ pub fn call_contract(
 /// Creates a [`GatewayInstruction::InitializeMessage`] instruction.
 pub fn initialize_messge(
     payer: Pubkey,
-    pda: Pubkey,
-    approved_message: GatewayApprovedMessage,
+    message_id: [u8; 32],
+    source_chain: &[u8],
+    source_address: &[u8],
+    payload_hash: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&GatewayInstruction::InitializeMessage { approved_message })?;
+    let data = to_vec(&GatewayInstruction::InitializeMessage {
+        message_id,
+        source_chain: source_chain.into(),
+        source_address: source_address.into(),
+        payload_hash,
+    })?;
+
+    let (pda, _bump) =
+        GatewayApprovedMessage::pda(message_id, source_chain, source_address, payload_hash);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
