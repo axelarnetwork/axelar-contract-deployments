@@ -13,7 +13,7 @@ use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_instruction, system_program};
 
-use crate::accounts::{GatewayConfig, GatewayExecuteData, GatewayMessageID};
+use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use crate::check_program_account;
 use crate::error::GatewayError;
 use crate::events::{emit_call_contract_event, emit_operatorship_transferred_event};
@@ -65,9 +65,9 @@ impl Processor {
                 msg!("Instruction: TransferOperatorship");
                 Self::transfer_operatorship(program_id, accounts)
             }
-            GatewayInstruction::InitializeMessage { message_id } => {
+            GatewayInstruction::InitializeMessage { approved_message } => {
                 msg!("Instruction: Initialize Message ID");
-                Self::initialize_message_id(accounts, &message_id)
+                Self::initialize_approved_message(accounts, &approved_message)
             }
         }
     }
@@ -195,14 +195,14 @@ impl Processor {
         )
     }
 
-    fn initialize_message_id(
+    fn initialize_approved_message(
         accounts: &[AccountInfo<'_>],
-        message_id: &GatewayMessageID,
+        approved_message: &GatewayApprovedMessage,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
         let payer = next_account_info(accounts_iter)?;
-        let message_id_account = next_account_info(accounts_iter)?;
+        let approved_message_account = next_account_info(accounts_iter)?;
         let system_account = next_account_info(accounts_iter)?;
 
         // Check: System Program Account
@@ -211,15 +211,15 @@ impl Processor {
         }
 
         // Check: Message ID account uses the canonical bump.
-        let (canonical_pda, bump, seeds) = message_id.pda();
-        if *message_id_account.key != canonical_pda {
+        let (canonical_pda, bump, seeds) = approved_message.pda();
+        if *approved_message_account.key != canonical_pda {
             return Err(GatewayError::InvalidMessageIDAccount.into());
         }
         init_pda(
             payer,
-            message_id_account,
+            approved_message_account,
             &[seeds.as_ref(), &[bump]],
-            message_id,
+            approved_message,
         )
     }
 

@@ -77,12 +77,12 @@ impl GatewayExecuteData {
 /// Gateway Message ID type.
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
 #[repr(C)]
-pub struct GatewayMessageID {
+pub struct GatewayApprovedMessage {
     discriminator: Discriminator<MessageID>,
     message_id: [u8; 32],
 }
 
-impl GatewayMessageID {
+impl GatewayApprovedMessage {
     /// Creates a new `GatewayMessageID` struct.
     pub fn new(message_id: [u8; 32]) -> Self {
         Self {
@@ -255,9 +255,9 @@ mod tests {
     }
 
     #[test]
-    fn message_id_pda() -> Result<()> {
-        let message_id = GatewayMessageID::new([42u8; 32]);
-        let (expected_pda, bump_seed, seed) = message_id.pda();
+    fn approved_message_pda() -> Result<()> {
+        let approved_message = GatewayApprovedMessage::new([42u8; 32]);
+        let (expected_pda, bump_seed, seed) = approved_message.pda();
         let actual_pda =
             Pubkey::create_program_address(&[seed.as_ref(), &[bump_seed]], &crate::ID)?;
         assert_eq!(expected_pda, actual_pda);

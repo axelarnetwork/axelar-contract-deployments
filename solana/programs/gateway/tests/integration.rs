@@ -6,7 +6,7 @@ use anyhow::{anyhow, Result};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use common::program_test;
-use gateway::accounts::{GatewayConfig, GatewayExecuteData, GatewayMessageID};
+use gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use gateway::events::GatewayEvent;
 use gateway::find_root_pda;
 use random_array::rand_array;
@@ -126,10 +126,14 @@ mod accounts {
         client: &mut BanksClient,
         payer: Keypair,
         pda: Pubkey,
-        message_id: GatewayMessageID,
+        approved_message: GatewayApprovedMessage,
     ) -> Result<()> {
         let recent_blockhash = client.get_latest_blockhash().await?;
-        let ix = gateway::instructions::initialize_messge(payer.pubkey(), pda, message_id.clone())?;
+        let ix = gateway::instructions::initialize_messge(
+            payer.pubkey(),
+            pda,
+            approved_message.clone(),
+        )?;
         let tx = Transaction::new_signed_with_payer(
             &[ix],
             Some(&payer.pubkey()),
@@ -140,8 +144,8 @@ mod accounts {
 
         let account = client.get_account(pda).await?.expect("metadata");
         assert_eq!(account.owner, gateway::id());
-        let deserialized_execute_data: GatewayMessageID = borsh::from_slice(&account.data)?;
-        assert_eq!(deserialized_execute_data, message_id);
+        let deserialized_execute_data: GatewayApprovedMessage = borsh::from_slice(&account.data)?;
+        assert_eq!(deserialized_execute_data, approved_message);
 
         Ok(())
     }
@@ -312,9 +316,10 @@ async fn initialize_execute_data() -> Result<()> {
 #[tokio::test]
 async fn initialize_message() -> Result<()> {
     let (mut banks_client, payer, _recent_blockhash) = program_test().start().await;
-    let message_id = GatewayMessageID::new([5; 32]);
-    let (execute_data_pda, _bump, _seeds) = message_id.pda();
-    accounts::initialize_message(&mut banks_client, payer, execute_data_pda, message_id).await?;
+    let approved_message = GatewayApprovedMessage::new([5; 32]);
+    let (execute_data_pda, _bump, _seeds) = approved_message.pda();
+    accounts::initialize_message(&mut banks_client, payer, execute_data_pda, approved_message)
+        .await?;
     Ok(())
 }
 
@@ -351,7 +356,7 @@ async fn execute_message() -> Result<()> {
         //   'Program failed to complete'.
         let batch_size = 14;
         (0..batch_size)
-            .map(|id| GatewayMessageID::new([id; 32]).pda().0)
+            .map(|id| GatewayApprovedMessage::new([id; 32]).pda().0)
             .collect()
     };
 
@@ -409,7 +414,7 @@ async fn execute() -> Result<()> {
         .map(|suffix| {
             let mut id = [0u8; 32];
             id[31] = *suffix;
-            let message = GatewayMessageID::new(id);
+            let message = GatewayApprovedMessage::new(id);
             let message_pda = message.pda();
             message_pda.0
         })

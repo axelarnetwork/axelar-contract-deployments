@@ -5,7 +5,7 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use crate::accounts::{GatewayConfig, GatewayExecuteData, GatewayMessageID};
+use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use crate::types::PubkeyWrapper;
 
 /// Instructions supported by the gateway program.
@@ -71,7 +71,7 @@ pub enum GatewayInstruction {
     /// 2. [] System Program account
     InitializeMessage {
         /// The execute data that will be decoded.
-        message_id: GatewayMessageID,
+        approved_message: GatewayApprovedMessage,
     },
 }
 
@@ -141,9 +141,9 @@ pub fn call_contract(
 pub fn initialize_messge(
     payer: Pubkey,
     pda: Pubkey,
-    message_id: GatewayMessageID,
+    approved_message: GatewayApprovedMessage,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&GatewayInstruction::InitializeMessage { message_id })?;
+    let data = to_vec(&GatewayInstruction::InitializeMessage { approved_message })?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -241,9 +241,13 @@ pub mod tests {
     #[test]
     fn round_trip_queue_function() {
         let execute_data_account = Keypair::new().pubkey();
-        let message_id_accounts = vec![Keypair::new().pubkey()];
-        let instruction = execute(crate::id(), execute_data_account, &message_id_accounts)
-            .expect("valid instruction construction");
+        let approved_message_accounts = vec![Keypair::new().pubkey()];
+        let instruction = execute(
+            crate::id(),
+            execute_data_account,
+            &approved_message_accounts,
+        )
+        .expect("valid instruction construction");
         let deserialized = from_slice(&instruction.data).expect("deserialized valid instruction");
         assert!(matches!(deserialized, GatewayInstruction::Execute {}));
     }
