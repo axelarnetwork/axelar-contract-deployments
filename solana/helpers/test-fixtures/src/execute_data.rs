@@ -8,7 +8,7 @@ use multisig::msg::Signer;
 use multisig_prover::encoding::{CommandBatchBuilder, Encoder};
 use multisig_prover::types::CommandBatch;
 
-use crate::random_stuff::{array32, string};
+use crate::primitives::{array32, string};
 
 #[derive(Debug, Clone)]
 pub struct TestSigner {
@@ -96,7 +96,7 @@ pub fn create_execute_data_with_inputs(
     Ok((execute_data, fxt))
 }
 
-fn random_message() -> Result<AxelarMessage> {
+pub fn random_message() -> Result<AxelarMessage> {
     let message = AxelarMessage {
         cc_id: format!("{}:{}", string(10), string(10)).parse()?,
         source_address: address()?,
@@ -335,7 +335,7 @@ mod tests {
     use solana_program::secp256k1_recover::secp256k1_recover;
 
     use super::*;
-    use crate::random_stuff;
+    use crate::primitives;
 
     #[test]
     fn can_create_execute_data() {
@@ -355,7 +355,7 @@ mod tests {
         let public_key = PublicKey::from_secret_key(&secret_key);
 
         // Sign
-        let message_array = random_stuff::array32();
+        let message_array = primitives::array32();
         let message = Message::parse(&message_array);
         let (signature, recovery_id) = sign(&message, &secret_key);
 

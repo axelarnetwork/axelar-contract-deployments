@@ -130,7 +130,7 @@ impl From<SignatureError> for AuthWeightedError {
 mod tests {
     use anyhow::Result;
     use test_fixtures::ecdsa_signature::{create_random_signature, TestSignature};
-    use test_fixtures::random_stuff::bytes;
+    use test_fixtures::primitives::bytes;
 
     use super::*;
 
