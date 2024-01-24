@@ -1,5 +1,4 @@
 use anyhow::{anyhow, ensure, Result};
-use connection_router::state::Address;
 use connection_router::Message as AxelarMessage;
 use cosmwasm_std::{Addr, Uint256};
 use libsecp256k1::{sign, Message, PublicKey, SecretKey};
@@ -8,7 +7,7 @@ use multisig::msg::Signer;
 use multisig_prover::encoding::{CommandBatchBuilder, Encoder};
 use multisig_prover::types::CommandBatch;
 
-use crate::primitives::{array32, string};
+use crate::axelar_message::message;
 
 #[derive(Debug, Clone)]
 pub struct TestSigner {
@@ -52,7 +51,7 @@ pub struct Fixtures {
 
 fn fixtures(num_messages: usize, num_signers: usize) -> Result<Fixtures> {
     let messages: Vec<AxelarMessage> = (0..num_messages)
-        .map(|_| random_message())
+        .map(|_| message())
         .collect::<Result<_, _>>()?;
     let signers: Vec<TestSigner> = (0..num_signers)
         .map(|_| create_signer())
@@ -94,17 +93,6 @@ pub fn create_execute_data_with_inputs(
         quorum,
     )?;
     Ok((execute_data, fxt))
-}
-
-pub fn random_message() -> Result<AxelarMessage> {
-    let message = AxelarMessage {
-        cc_id: format!("{}:{}", string(10), string(10)).parse()?,
-        source_address: address()?,
-        destination_chain: string(10).parse()?,
-        destination_address: address()?,
-        payload_hash: array32(),
-    };
-    Ok(message)
 }
 
 fn create_command_batch(messages: &[AxelarMessage]) -> Result<CommandBatch> {
@@ -192,12 +180,6 @@ fn encode(
     axelar_bcs_encoding::encode_execute_data(command_batch, quorum, signers_and_signatures)
         .map_err(|e| anyhow!("failed to encode execute_data: {e}"))
         .map(|hexbinary| hexbinary.to_vec())
-}
-
-fn address() -> Result<Address> {
-    hex::encode(array32())
-        .parse()
-        .map_err(|_| anyhow!("bad test naddress"))
 }
 
 /// Code copied from https://github.com/axelarnetwork/axelar-amplifier/blob/d34dce84e7c16327f05de1fea659fe094306bb7f/contracts/multisig-prover/src/encoding/bcs.rs
