@@ -112,12 +112,16 @@ impl Processor {
             return Err(ProgramError::InvalidAccountOwner);
         }
 
-        // Check: execute_data account is writable
+        // Check: execute_data account is writable.
         if !execute_data_account.is_writable {
             return Err(ProgramError::InvalidInstructionData);
         }
 
-        // Check: at least one message account
+        // Check: execute_data account was initialized.
+        let execute_data: GatewayExecuteData =
+            borsh::from_slice(*execute_data_account.data.borrow())?;
+
+        // Check: at least one message account.
         if message_accounts.is_empty() {
             return Err(ProgramError::NotEnoughAccountKeys);
         }
@@ -127,15 +131,21 @@ impl Processor {
                 return Err(ProgramError::InvalidInstructionData);
             }
 
-            // Check: All message accounts are uninitialized
-            if **message_account.lamports.borrow() > 0 {
-                return Err(ProgramError::AccountAlreadyInitialized);
+            // Check: All message accounts are initialized.
+            if **message_account.lamports.borrow() == 0 {
+                return Err(ProgramError::UninitializedAccount);
             }
-        }
 
-        // Check: execute_data account was initialized
-        let execute_data: GatewayExecuteData =
-            borsh::from_slice(*execute_data_account.data.borrow())?;
+            {
+                // Check:: All messages must be "Pending".
+                let borrowed_data = message_account.data.borrow();
+                let approved_message: GatewayApprovedMessage = borsh::from_slice(&*borrowed_data)?;
+                if !approved_message.is_pending() {
+                    // TODO: use a more descriptive GatewayError variant here.
+                    return Err(ProgramError::AccountAlreadyInitialized);
+                }
+            };
+        }
 
         // Phase 2: Deserialization & Proof Validation
 
@@ -143,9 +153,7 @@ impl Processor {
             return Err(GatewayError::MalformedProof)?;
         };
 
-        proof
-            .validate(&command_batch.hash)
-            .map_err(GatewayError::from)?;
+        proof.validate(&command_batch.hash)?;
 
         Ok(())
     }
@@ -224,16 +232,23 @@ impl Processor {
             return Err(GatewayError::InvalidSystemAccount.into());
         }
 
-        // Check: Message ID account uses the canonical bump.
-        let (canonical_pda, bump, seeds) = approved_message.pda();
+        // Check: Approved message account uses the canonical bump.
+        let (canonical_pda, bump, seed) = GatewayApprovedMessage::pda_with_seed(
+            message_id,
+            &source_chain,
+            &source_address,
+            payload_hash,
+        );
         if *approved_message_account.key != canonical_pda {
-            return Err(GatewayError::InvalidMessageIDAccount.into());
+            return Err(GatewayError::InvalidApprovedMessageAccount.into());
         }
+
+        let seeds: &[&[u8]] = &[&seed, &[bump]];
         init_pda(
             payer,
             approved_message_account,
-            &[seeds.as_ref(), &[bump]],
-            approved_message,
+            seeds,
+            &GatewayApprovedMessage::pending(),
         )
     }
 
