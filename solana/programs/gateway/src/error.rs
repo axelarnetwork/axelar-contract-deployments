@@ -101,9 +101,9 @@ pub enum GatewayError {
     #[error("Invalid Execute Data account")]
     InvalidExecuteDataAccount,
 
-    /// Invalid Message ID account
-    #[error("Invalid Message ID account")]
-    InvalidMessageIDAccount,
+    /// Invalid Approved Message account
+    #[error("Invalid Approved Message account")]
+    InvalidApprovedMessageAccount,
 
     /// Failed to decode `execute_data`
     #[error("Falied to decode execute_data")]
