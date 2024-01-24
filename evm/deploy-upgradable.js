@@ -97,7 +97,7 @@ function getUpgradeArgs(contractName) {
  * Deploy or upgrade an upgradable contract that's based on the init proxy pattern.
  */
 async function processCommand(_, chain, options) {
-    const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes } = options;
+    const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes, predictOnly } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
 
     if (deployMethod === 'create3' && (contractName === 'AxelarGasService' || contractName === 'AxelarDepositService')) {
@@ -154,7 +154,7 @@ async function processCommand(_, chain, options) {
             );
         }
 
-        if (prompt(`Perform an upgrade for ${chain.name}?`, yes)) {
+        if (predictOnly || prompt(`Perform an upgrade for ${chain.name}?`, yes)) {
             return;
         }
 
@@ -199,7 +199,7 @@ async function processCommand(_, chain, options) {
         printInfo('Deployer contract', deployerContract);
         printInfo(`${contractName} will be deployed to`, predictedAddress, chalk.cyan);
 
-        if (prompt(`Does derived address match existing deployments? Proceed with deployment on ${chain.name}?`, yes)) {
+        if (predictOnly || prompt(`Does derived address match existing deployments? Proceed with deployment on ${chain.name}?`, yes)) {
             return;
         }
 
@@ -287,7 +287,7 @@ if (require.main === module) {
 
     program.name('deploy-upgradable').description('Deploy upgradable contracts');
 
-    addExtendedOptions(program, { artifactPath: true, contractName: true, salt: true, skipChains: true, upgrade: true });
+    addExtendedOptions(program, { artifactPath: true, contractName: true, salt: true, skipChains: true, upgrade: true, predictOnly: true });
 
     program.addOption(
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
