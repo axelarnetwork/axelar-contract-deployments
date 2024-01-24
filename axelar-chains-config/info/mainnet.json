@@ -110,6 +110,7 @@
         }
       },
       "explorer": {
+        "name": "Etherscan",
         "url": "https://etherscan.io",
         "api": "https://api.etherscan.io/api"
       },
@@ -224,6 +225,7 @@
         }
       },
       "explorer": {
+        "name": "Snowtrace",
         "url": "https://snowtrace.io",
         "api": "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan"
       },
@@ -338,6 +340,7 @@
         }
       },
       "explorer": {
+        "name": "Ftmscan",
         "url": "https://ftmscan.com",
         "api": "https://api.ftmscan.com/api"
       },
@@ -456,6 +459,7 @@
         }
       },
       "explorer": {
+        "name": "Polygonscan",
         "url": "https://polygonscan.com",
         "api": "https://api.polygonscan.com/api"
       },
@@ -573,6 +577,7 @@
         }
       },
       "explorer": {
+        "name": "Moonscan",
         "url": "https://moonbeam.moonscan.io",
         "api": "https://api-moonbeam.moonscan.io/api"
       },
@@ -688,6 +693,7 @@
         }
       },
       "explorer": {
+        "name": "Bscscan",
         "url": "https://bscscan.com",
         "api": "https://api.bscscan.com/api"
       },
@@ -806,6 +812,7 @@
         }
       },
       "explorer": {
+        "name": "Arbiscan",
         "url": "https://arbiscan.io",
         "api": "https://api.arbiscan.io/api"
       },
@@ -923,6 +930,7 @@
         }
       },
       "explorer": {
+        "name": "Celoscan",
         "url": "https://celoscan.io",
         "api": "https://api.celoscan.io/api"
       },
@@ -1037,6 +1045,7 @@
         }
       },
       "explorer": {
+        "name": "Kavascan",
         "url": "https://kavascan.com",
         "api": "https://kavascan.com/api"
       },
@@ -1152,6 +1161,7 @@
       },
       "confirmations": 3,
       "explorer": {
+        "name": "Filfox",
         "url": "https://www.filfox.info"
       },
       "gasOptions": {
@@ -1269,6 +1279,7 @@
         }
       },
       "explorer": {
+        "name": "Opscan",
         "url": "https://optimistic.etherscan.io",
         "api": "https://api-optimistic.etherscan.io/api"
       },
@@ -1387,6 +1398,7 @@
         }
       },
       "explorer": {
+        "name": "Lineascan",
         "url": "https://lineascan.build",
         "api": "https://api.lineascan.build/api"
       },
@@ -1506,6 +1518,7 @@
       },
       "confirmations": 2,
       "explorer": {
+        "name": "Basescan",
         "url": "https://basescan.org",
         "api": "https://api.basescan.org/api"
       },
@@ -1621,6 +1634,7 @@
       },
       "confirmations": 2,
       "explorer": {
+        "name": "Mantle Explorer",
         "url": "https://explorer.mantle.xyz",
         "api": "https://explorer.mantle.xyz/api"
       },
@@ -1733,6 +1747,7 @@
         }
       },
       "explorer": {
+        "name": "Scroll Explorer",
         "url": "https://blockscout.scroll.io",
         "api": "https://blockscout.scroll.io/api"
       },
@@ -1833,6 +1848,7 @@
         "gasLimit": 8000000
       },
       "explorer": {
+        "name": "Subscan",
         "url": "https://centrifuge.subscan.io"
       },
       "staticGasOptions": {
@@ -1910,6 +1926,7 @@
         "maxFeePerGas": 100000000000
       },
       "explorer": {
+        "name": "Immutable Explorer",
         "url": "https://explorer.immutable.com",
         "api": "https://explorer.immutable.com/api"
       }
