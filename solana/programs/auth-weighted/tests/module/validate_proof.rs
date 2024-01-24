@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use ::base64::engine::general_purpose;
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use auth_weighted::error::AuthWeightedError;
 use auth_weighted::types::account::state::AuthWeightedStateAccount;
 use auth_weighted::types::account::validate_proof::ValidateProofAccount;

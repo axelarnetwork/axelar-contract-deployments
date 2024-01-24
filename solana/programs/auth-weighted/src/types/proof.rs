@@ -1,7 +1,7 @@
 //! Proof types.
 
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
-use solana_program::{keccak, msg};
+use solana_program::keccak;
 
 use super::operator::Operators;
 use super::signature::Signature;
