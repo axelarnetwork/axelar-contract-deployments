@@ -64,6 +64,10 @@ const addExtendedOptions = (program, options = {}) => {
         program.addOption(new Option('-u, --upgrade', 'upgrade a deployed contract').env('UPGRADE'));
     }
 
+    if (options.predictOnly) {
+        program.addOption(new Option('--predictOnly', 'output the predicted changes only').env('PREDICT_ONLY'));
+    }
+
     return program;
 };
 

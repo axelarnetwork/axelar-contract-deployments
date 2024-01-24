@@ -217,7 +217,7 @@ async function checkContract(contractName, contract, contractConfig) {
 }
 
 async function processCommand(config, chain, options) {
-    const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes } = options;
+    const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes, predictOnly } = options;
     const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
 
     if (!chain.contracts) {
@@ -301,7 +301,7 @@ async function processCommand(config, chain, options) {
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
     }
 
-    if (prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
+    if (predictOnly || prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
         return;
     }
 
@@ -345,7 +345,14 @@ if (require.main === module) {
 
     program.name('deploy-contract').description('Deploy contracts using create, create2, or create3');
 
-    addExtendedOptions(program, { artifactPath: true, contractName: true, salt: true, skipChains: true, skipExisting: true });
+    addExtendedOptions(program, {
+        artifactPath: true,
+        contractName: true,
+        salt: true,
+        skipChains: true,
+        skipExisting: true,
+        predictOnly: true,
+    });
 
     program.addOption(
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
