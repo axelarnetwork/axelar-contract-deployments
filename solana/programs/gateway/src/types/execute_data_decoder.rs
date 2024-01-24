@@ -59,12 +59,19 @@ impl From<DecodeError> for GatewayError {
 /// Decoded Axelar Message parts.
 #[derive(Debug, PartialEq)]
 pub struct DecodedMessage {
-    id: [u8; 32],
-    destination_chain: u64,
-    source_chain: String,
-    source_address: String,
-    destination_address: [u8; 32],
-    payload_hash: [u8; 32],
+    /// Decoded command id.
+    /// It was originally the Axelar Message ID.
+    pub id: [u8; 32],
+    /// Destination chain
+    pub destination_chain: u64,
+    /// Source chain
+    pub source_chain: String,
+    /// Source Address
+    pub source_address: String,
+    /// Destination address
+    pub destination_address: [u8; 32],
+    /// The payload hash
+    pub payload_hash: [u8; 32],
 }
 
 impl DecodedMessage {
@@ -94,8 +101,10 @@ impl DecodedMessage {
 /// Decoded command.
 #[derive(Debug, PartialEq)]
 pub struct DecodedCommand {
-    type_: CommandType,
-    message: DecodedMessage,
+    /// The decoded command type
+    pub type_: CommandType,
+    /// The decoded Axelar Message
+    pub message: DecodedMessage,
 }
 
 impl DecodedCommand {
