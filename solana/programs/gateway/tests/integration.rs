@@ -246,7 +246,7 @@ async fn execute() -> Result<()> {
     // Provision the test progam with the message accounts.
     let mut message_pdas: Vec<Pubkey> = vec![];
     let pending_message_account_base64 =
-        STANDARD.encode(&borsh::to_vec(&GatewayApprovedMessage::pending())?);
+        STANDARD.encode(borsh::to_vec(&GatewayApprovedMessage::pending())?);
     for command in command_batch.commands {
         let DecodedMessage {
             id,

@@ -9,7 +9,9 @@ use solana_program::pubkey::Pubkey;
 
 use self::discriminators::MessageID;
 use crate::error::GatewayError;
-use crate::types::execute_data_decoder::{decode as decode_execute_data, DecodedCommandBatch};
+use crate::types::execute_data_decoder::{
+    decode as decode_execute_data, DecodedCommand, DecodedCommandBatch, DecodedMessage,
+};
 
 /// Gateway configuration type.
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
@@ -92,7 +94,7 @@ pub struct GatewayApprovedMessage {
 
 impl GatewayApprovedMessage {
     /// Returns a message with pending approval.
-    pub fn pending() -> Self {
+    pub const fn pending() -> Self {
         Self {
             discriminator: Discriminator::new(),
             status: MessageApprovalStatus::Pending,
@@ -100,7 +102,7 @@ impl GatewayApprovedMessage {
     }
 
     /// Returns an approved message.
-    pub fn approved() -> Self {
+    pub const fn approved() -> Self {
         Self {
             discriminator: Discriminator::new(),
             status: MessageApprovalStatus::Approved,
@@ -145,6 +147,24 @@ impl GatewayApprovedMessage {
         let (pda, bump) = Pubkey::find_program_address(&[seeds_hash.as_slice()], &crate::ID);
         (pda, bump, seeds_hash)
     }
+
+    /// Finds the PDA for an Approved Message account from a `DecodedCommand`
+    pub fn pda_from_decoded_command(command: &DecodedCommand) -> Pubkey {
+        let DecodedMessage {
+            id,
+            source_chain,
+            source_address,
+            payload_hash,
+            ..
+        } = &command.message;
+        let (pda, _bump) = Self::pda(
+            *id,
+            source_chain.as_bytes(),
+            source_address.as_bytes(),
+            *payload_hash,
+        );
+        pda
+    }
 }
 
 mod discriminators {
@@ -170,7 +190,7 @@ mod discriminators {
     }
 
     impl<T: DiscriminatorTrait> Discriminator<T> {
-        pub fn new() -> Self {
+        pub const fn new() -> Self {
             Self {
                 _marker: PhantomData,
             }

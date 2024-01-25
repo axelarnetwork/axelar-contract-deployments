@@ -125,7 +125,33 @@ impl Processor {
         if message_accounts.is_empty() {
             return Err(ProgramError::NotEnoughAccountKeys);
         }
-        for message_account in message_accounts {
+
+        // Phase 2: Deserialization & Proof Validation
+
+        let Ok((proof, command_batch)) = execute_data.decode() else {
+            return Err(GatewayError::MalformedProof)?;
+        };
+
+        proof.validate(&command_batch.hash)?;
+
+        // Phase 3: Update approved message accounts
+
+        // Check approved message account initial premises post-validation so we iterate
+        // on them only once.
+        // TODO: Pairwise iterate over message accounts and validated commands from the
+        // command batch.
+        let mut last_visited_message_index = 0;
+        for (&message_account, approved_command) in
+            message_accounts.iter().zip(command_batch.commands.iter())
+        {
+            last_visited_message_index += 1;
+
+            // Check: Current message account represents the current aproved command.
+            let expected_pda = GatewayApprovedMessage::pda_from_decoded_command(approved_command);
+            if expected_pda != *message_account.key {
+                return Err(ProgramError::InvalidSeeds);
+            }
+
             // Check: All message accounts are writable.
             if !message_account.is_writable {
                 return Err(ProgramError::InvalidInstructionData);
@@ -136,24 +162,24 @@ impl Processor {
                 return Err(ProgramError::UninitializedAccount);
             }
 
-            {
-                // Check:: All messages must be "Pending".
-                let borrowed_data = message_account.data.borrow();
-                let approved_message: GatewayApprovedMessage = borsh::from_slice(&*borrowed_data)?;
-                if !approved_message.is_pending() {
-                    // TODO: use a more descriptive GatewayError variant here.
-                    return Err(ProgramError::AccountAlreadyInitialized);
-                }
-            };
+            // Check:: All messages must be "Pending".
+            let mut borrowed_data = message_account.data.borrow_mut();
+            let approved_message: GatewayApprovedMessage = borsh::from_slice(*borrowed_data)?;
+            if !approved_message.is_pending() {
+                // TODO: use a more descriptive GatewayError variant here.
+                return Err(ProgramError::AccountAlreadyInitialized);
+            }
+
+            // Success: update account message state to "Approved".
+            borrowed_data.copy_from_slice(&borsh::to_vec(&GatewayApprovedMessage::approved())?);
         }
 
-        // Phase 2: Deserialization & Proof Validation
-
-        let Ok((proof, command_batch)) = execute_data.decode() else {
-            return Err(GatewayError::MalformedProof)?;
-        };
-
-        proof.validate(&command_batch.hash)?;
+        // Check: all messages were visited
+        if last_visited_message_index != message_accounts.len()
+            || last_visited_message_index != command_batch.commands.len()
+        {
+            return Err(ProgramError::NotEnoughAccountKeys);
+        }
 
         Ok(())
     }
