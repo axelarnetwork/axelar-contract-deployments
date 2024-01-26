@@ -2010,10 +2010,10 @@
       "name": "Fraxtal",
       "id": "fraxtal",
       "chainId": 2522,
-      "rpc": "https://rpc.testnet.frax.com",
+      "rpc": "https://rpc.testnet.frax.com/v2",
       "tokenSymbol": "frxETH",
       "gasOptions": {
-        "gasLimit": 30000000
+        "gasLimit": 8000000
       }
     }
   },
