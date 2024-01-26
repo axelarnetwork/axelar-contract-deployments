@@ -25,7 +25,6 @@ num-derive = "0.4.1"
 num-traits = "0.2.17"
 serde.workspace = true
 sha3.workspace = true
-slice-iterator.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
 
