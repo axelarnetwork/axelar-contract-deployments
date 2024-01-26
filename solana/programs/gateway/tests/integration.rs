@@ -2,7 +2,7 @@
 
 mod common;
 
-use anyhow::Result;
+use anyhow::{anyhow, bail, ensure, Result};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use common::program_test;
@@ -247,19 +247,19 @@ async fn execute() -> Result<()> {
     let mut message_pdas: Vec<Pubkey> = vec![];
     let pending_message_account_base64 =
         STANDARD.encode(borsh::to_vec(&GatewayApprovedMessage::pending())?);
-    for command in command_batch.commands {
+    for command in &command_batch.commands {
         let DecodedMessage {
             id,
             source_chain,
             source_address,
             payload_hash,
             ..
-        } = command.message;
+        } = &command.message;
         let (approved_message_pda, _bump) = GatewayApprovedMessage::pda(
-            id,
+            *id,
             source_chain.as_bytes(),
             source_address.as_bytes(),
-            payload_hash,
+            *payload_hash,
         );
         program_test.add_account_with_base64_data(
             approved_message_pda,
@@ -283,19 +283,75 @@ async fn execute() -> Result<()> {
         &[&payer],
         recent_blockhash,
     );
-    let BanksTransactionResultWithMetadata {
-        result,
-        metadata: _,
-    } = banks_client
+    let BanksTransactionResultWithMetadata { result, metadata } = banks_client
         .process_transaction_with_metadata(transaction)
         .await?;
 
     assert!(result.is_ok(), "failed to process Execute instruction");
 
-    panic!("finish this test: check logs");
-    panic!(
-        "finish this test: check if every approved message account data was updated to 'Approved'"
-    );
+    // Check if every approved message account data was updated to 'Approved'.
+    for approved_message_address in &message_pdas {
+        let approved_message_account = banks_client
+            .get_account(*approved_message_address)
+            .await?
+            .expect("the account we created earlier");
+        let approved_message: GatewayApprovedMessage =
+            borsh::from_slice(&approved_message_account.data)?;
+        assert!(approved_message.is_approved());
+    }
 
+    // Check if the expected logs were emitted.
+    let mut events_logged = 0;
+    metadata
+        .ok_or(anyhow!("expected metadata"))?
+        .log_messages
+        .iter()
+        .filter_map(GatewayEvent::parse_log)
+        .filter(|event| matches!(event, GatewayEvent::MessageApproved { .. }))
+        .zip(
+            command_batch
+                .commands
+                .iter()
+                .map(|command| &command.message),
+        )
+        .try_for_each(|(event, message)| {
+            events_logged += 1;
+            ensure_message_approved_event_matches_decoded_message(&event, message)
+                .map_err(|err| anyhow!("Wrong event emitted: {err}"))
+        })?;
+
+    assert_eq!(
+        events_logged,
+        command_batch.commands.len(),
+        "Not all approved messages resulted in events being emitted"
+    );
+    Ok(())
+}
+
+fn ensure_message_approved_event_matches_decoded_message(
+    event: &GatewayEvent,
+    message: &DecodedMessage,
+) -> Result<()> {
+    let GatewayEvent::MessageApproved {
+        message_id,
+        source_chain,
+        source_address,
+        destination_address,
+        payload_hash,
+    } = event
+    else {
+        bail!("Wrong type of event")
+    };
+    ensure!(*message_id == message.id, "Wrong message id");
+    ensure!(*source_chain == message.source_chain, "Wrong source chain");
+    ensure!(
+        *source_address == message.source_address,
+        "Wrong source address"
+    );
+    ensure!(
+        *destination_address == message.destination_address,
+        "Wrong destination address"
+    );
+    ensure!(*payload_hash == message.payload_hash, "Wrong payload hash");
     Ok(())
 }

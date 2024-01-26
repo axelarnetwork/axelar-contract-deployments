@@ -109,6 +109,11 @@ impl GatewayApprovedMessage {
         }
     }
 
+    /// Returns `true` if this message was approved.
+    pub fn is_approved(&self) -> bool {
+        matches!(self.status, MessageApprovalStatus::Approved)
+    }
+
     /// Returns `true` if this message is still waiting for aproval.
     pub fn is_pending(&self) -> bool {
         matches!(self.status, MessageApprovalStatus::Pending)

@@ -16,8 +16,11 @@ use solana_program::{msg, system_instruction, system_program};
 use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use crate::check_program_account;
 use crate::error::GatewayError;
-use crate::events::{emit_call_contract_event, emit_operatorship_transferred_event};
+use crate::events::{
+    emit_call_contract_event, emit_message_approved_event, emit_operatorship_transferred_event,
+};
 use crate::instructions::GatewayInstruction;
+use crate::types::execute_data_decoder::DecodedMessage;
 
 /// Program state handler.
 pub struct Processor;
@@ -172,6 +175,25 @@ impl Processor {
 
             // Success: update account message state to "Approved".
             borrowed_data.copy_from_slice(&borsh::to_vec(&GatewayApprovedMessage::approved())?);
+
+            // Emit an event signaling message approval.
+            {
+                let DecodedMessage {
+                    id,
+                    source_chain,
+                    source_address,
+                    destination_address,
+                    payload_hash,
+                    ..
+                } = &approved_command.message;
+                emit_message_approved_event(
+                    *id,
+                    source_chain.clone(),
+                    source_address.clone(),
+                    *destination_address,
+                    *payload_hash,
+                )?;
+            }
         }
 
         // Check: all messages were visited
