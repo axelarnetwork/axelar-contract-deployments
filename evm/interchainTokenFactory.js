@@ -207,6 +207,18 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'registerGatewayToken': {
+            const { salt, symbol } = options;
+
+            validateParameters({ isKeccak256Hash: { salt }, isValidString: {symbol} });
+
+            const tx = await interchainTokenFactory.registerGatewayToken(salt, symbol, gasOptions);
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed');
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
