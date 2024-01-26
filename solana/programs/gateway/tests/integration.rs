@@ -1,5 +1,4 @@
 // #![cfg(feature = "test-sbf")]
-
 mod common;
 
 use anyhow::{anyhow, bail, ensure, Result};
@@ -11,7 +10,6 @@ use gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteDat
 use gateway::events::GatewayEvent;
 use gateway::find_root_pda;
 use gateway::types::execute_data_decoder::DecodedMessage;
-use random_array::rand_array;
 use solana_program::hash::hash;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{
@@ -128,8 +126,8 @@ async fn test_call_contract_instruction() -> Result<()> {
     let sender = Keypair::new();
     let destination_chain = "ethereum";
     let destination_address = hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862")?;
-    let payload = rand_array::<32>().to_vec();
-    let payload_hash = rand_array::<32>();
+    let payload = test_fixtures::primitives::array32().to_vec();
+    let payload_hash = test_fixtures::primitives::array32();
 
     let instruction = gateway::instructions::call_contract(
         gateway::id(),

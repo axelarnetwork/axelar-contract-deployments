@@ -32,7 +32,6 @@ gateway = { path = "programs/gateway" }
 
 # helper crates
 program-utils = { path = "helpers/program-utils" }
-random-array = { path = "helpers/random-array" }
 test-fixtures = { path = "helpers/test-fixtures" }
 
 

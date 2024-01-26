@@ -243,9 +243,9 @@ pub fn transfer_operatorship(
 pub mod tests {
 
     use borsh::from_slice;
-    use random_array::rand_array;
     use solana_sdk::signature::Keypair;
     use solana_sdk::signer::Signer;
+    use test_fixtures::primitives::{array32, bytes};
 
     use super::*;
 
@@ -277,8 +277,8 @@ pub mod tests {
         let destination_chain = "ethereum";
         let destination_contract_address =
             hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
-        let payload = rand_array::<100>();
-        let payload_hash = rand_array::<32>();
+        let payload = bytes(100);
+        let payload_hash = array32();
 
         let instruction = GatewayInstruction::CallContract {
             sender: sender.into(),
@@ -300,8 +300,8 @@ pub mod tests {
         let destination_chain = "ethereum";
         let destination_contract_address =
             hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
-        let payload = rand_array::<100>();
-        let payload_hash = rand_array::<32>();
+        let payload = bytes(100);
+        let payload_hash = array32();
 
         let instruction = call_contract(
             crate::id(),
