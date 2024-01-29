@@ -11,6 +11,7 @@ use crate::types::PubkeyWrapper;
 /// Gateway program logs.
 ///
 /// Used internally by the Gateway program to log messages.
+// TODO: We should use the `std::borrow::Cow` to avoid unecessary allocations.
 #[non_exhaustive]
 #[repr(u8)]
 #[derive(Debug, PartialEq, BorshDeserialize, BorshSerialize)]
@@ -32,6 +33,20 @@ pub enum GatewayEvent {
     OperatorshipTransferred {
         /// Pubkey of the account that stores the key rotation information.
         info_account_address: PubkeyWrapper,
+    },
+    /// Emitted for every approved message after the Gateway validates a command
+    /// batch.
+    MessageApproved {
+        /// The Message ID
+        message_id: [u8; 32],
+        /// Source chain.
+        source_chain: String,
+        /// Source address.
+        source_address: String,
+        /// Destination address on Solana.
+        destination_address: [u8; 32],
+        /// The payload hash.
+        payload_hash: [u8; 32],
     },
 }
 
@@ -83,6 +98,24 @@ fn decode_base64(input: &str) -> Option<Vec<u8>> {
 pub fn emit_operatorship_transferred_event(pubkey: Pubkey) -> Result<(), ProgramError> {
     let event = GatewayEvent::OperatorshipTransferred {
         info_account_address: pubkey.into(),
+    };
+    event.emit()
+}
+
+/// Emit a [`MessageApproved`].
+pub fn emit_message_approved_event(
+    id: [u8; 32],
+    source_chain: String,
+    source_address: String,
+    destination_address: [u8; 32],
+    payload_hash: [u8; 32],
+) -> Result<(), ProgramError> {
+    let event = GatewayEvent::MessageApproved {
+        message_id: id,
+        source_chain,
+        source_address,
+        destination_address,
+        payload_hash,
     };
     event.emit()
 }

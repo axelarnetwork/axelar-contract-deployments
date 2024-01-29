@@ -39,7 +39,7 @@ fn prepare_valid_proof() -> Result<([u8; 32], Proof)> {
                 0xc8, 0xec, 0x71, 0xbe, 0xcd, 0xcb, 0xa4, 0xdd, 0x42, 0xb5, 0x30, 0x7c, 0xb5, 0x43,
                 0xa0, 0xe2, 0xc8, 0xb8, 0x1c, 0x10, 0xad, 0x54, 0x1d, 0xef, 0xd5, 0xce, 0x84, 0xd2,
                 0xa6, 0x08, 0xfc, 0x45, 0x48, 0x27, 0xd0, 0xb6, 0x5b, 0x48, 0x65, 0xc8, 0x19, 0x2a,
-                0x2e, 0xa1, 0x73, 0x6a, 0x5c, 0x4b, 0x72, 0x02,
+                0x2e, 0xa1, 0x73, 0x6a, 0x5c, 0x4b, 0x72, 0x02, 0x00,
             ])?],
         ),
     ))
@@ -148,14 +148,7 @@ async fn test_validate_proof_invalid_message_hash() -> Result<()> {
     // Mock data prepare; params account.
     let (_, proof) = prepare_valid_proof()?;
 
-    let invalid_message_hash: [u8; 32] = {
-        let mut array = [0; 32];
-        array.copy_from_slice(&hex::decode(
-            "fb0609efd1dfeedfdcc8ba51520fae2d5176b7621d2560f071e801b0817e1537",
-        )?);
-
-        array
-    };
+    let invalid_message_hash = [0u8; 32];
 
     let params_account_b64 =
         general_purpose::STANDARD.encode(borsh::to_vec(&ValidateProofAccount {
@@ -208,7 +201,7 @@ async fn test_validate_proof_invalid_message_hash() -> Result<()> {
             .unwrap(),
         TransactionError::InstructionError(
             0,
-            InstructionError::Custom(AuthWeightedError::MalformedSigners as u32)
+            InstructionError::Custom(AuthWeightedError::AllSignersInvalid as u32)
         )
     );
     Ok(())

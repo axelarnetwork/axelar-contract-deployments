@@ -5,7 +5,7 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use crate::accounts::{GatewayConfig, GatewayExecuteData, GatewayMessageID};
+use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use crate::types::PubkeyWrapper;
 
 /// Instructions supported by the gateway program.
@@ -15,7 +15,9 @@ pub enum GatewayInstruction {
     /// Represents the `CallContract` Axelar event.
     ///
     /// Accounts expected by this instruction:
-    /// 0. [] ???  // TODO
+    /// 0. [] Gateway Config PDA account
+    /// 1. [WRITE] Execute Data PDA account
+    /// N. [WRITE] Approved Message PDA accounts
     Execute {},
 
     /// Represents the `CallContract` Axelar event.
@@ -61,15 +63,24 @@ pub enum GatewayInstruction {
         execute_data: GatewayExecuteData,
     },
 
-    /// Initializes a Proceesed Message ID PDA account.
+    /// Initializes an Approved Message PDA account.
     ///
     /// Accounts expected by this instruction:
     /// 0. [WRITE, SIGNER] Funding account
-    /// 1. [WRITE] Message ID PDA account
+    /// 1. [WRITE] Approved Message PDA account
     /// 2. [] System Program account
     InitializeMessage {
-        /// The execute data that will be decoded.
-        message_id: GatewayMessageID,
+        /// The Axelar Message CCID, truncated to 32 bytes during proof
+        /// generation.
+        message_id: [u8; 32],
+        /// The source chain denomination, expressed as raw bytes, leaving
+        /// conversions to the caller's discretion.
+        source_chain: Vec<u8>,
+        /// The source address, expressed as raw bytes, leaving conversions to
+        /// the caller's discretion.
+        source_address: Vec<u8>,
+        /// The Axelar Message payload hash.
+        payload_hash: [u8; 32],
     },
 }
 
@@ -138,10 +149,20 @@ pub fn call_contract(
 /// Creates a [`GatewayInstruction::InitializeMessage`] instruction.
 pub fn initialize_messge(
     payer: Pubkey,
-    pda: Pubkey,
-    message_id: GatewayMessageID,
+    message_id: [u8; 32],
+    source_chain: &[u8],
+    source_address: &[u8],
+    payload_hash: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&GatewayInstruction::InitializeMessage { message_id })?;
+    let data = to_vec(&GatewayInstruction::InitializeMessage {
+        message_id,
+        source_chain: source_chain.into(),
+        source_address: source_address.into(),
+        payload_hash,
+    })?;
+
+    let (pda, _bump) =
+        GatewayApprovedMessage::pda(message_id, source_chain, source_address, payload_hash);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -222,9 +243,9 @@ pub fn transfer_operatorship(
 pub mod tests {
 
     use borsh::from_slice;
-    use random_array::rand_array;
     use solana_sdk::signature::Keypair;
     use solana_sdk::signer::Signer;
+    use test_fixtures::primitives::{array32, bytes};
 
     use super::*;
 
@@ -239,9 +260,13 @@ pub mod tests {
     #[test]
     fn round_trip_queue_function() {
         let execute_data_account = Keypair::new().pubkey();
-        let message_id_accounts = vec![Keypair::new().pubkey()];
-        let instruction = execute(crate::id(), execute_data_account, &message_id_accounts)
-            .expect("valid instruction construction");
+        let approved_message_accounts = vec![Keypair::new().pubkey()];
+        let instruction = execute(
+            crate::id(),
+            execute_data_account,
+            &approved_message_accounts,
+        )
+        .expect("valid instruction construction");
         let deserialized = from_slice(&instruction.data).expect("deserialized valid instruction");
         assert!(matches!(deserialized, GatewayInstruction::Execute {}));
     }
@@ -252,8 +277,8 @@ pub mod tests {
         let destination_chain = "ethereum";
         let destination_contract_address =
             hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
-        let payload = rand_array::<100>();
-        let payload_hash = rand_array::<32>();
+        let payload = bytes(100);
+        let payload_hash = array32();
 
         let instruction = GatewayInstruction::CallContract {
             sender: sender.into(),
@@ -275,8 +300,8 @@ pub mod tests {
         let destination_chain = "ethereum";
         let destination_contract_address =
             hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
-        let payload = rand_array::<100>();
-        let payload_hash = rand_array::<32>();
+        let payload = bytes(100);
+        let payload_hash = array32();
 
         let instruction = call_contract(
             crate::id(),

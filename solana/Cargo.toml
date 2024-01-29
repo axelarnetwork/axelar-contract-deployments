@@ -6,25 +6,33 @@ resolver = "2"
 anchor-lang = "0.29.0"
 anyhow = "1"
 base64 = "0.21"
-borsh = { version = "1", features = ["derive"] }
+bcs = "0.1.6"
 bnum = { version = "0.10", features = ["serde", "nightly"] }
+borsh = { version = "1", features = ["derive"] }
+cosmwasm-std = "1.5"
 hex = "0.4.3"
+itertools = "0.12.0"
+k256 = { version = "0.13.3", features = ["ecdsa"] }
+libsecp256k1 = "0.7.0"
 num-derive = "0.4"
 num-traits = "0.2"
+serde = "1"
+sha2 = "0.10.8"
+sha3 = "0.10.8"
+signature = "2"
 solana-program = "1.17.12"
 solana-program-test = "1.17.12"
 solana-sdk = "1.17.12"
 thiserror = "1"
-cosmwasm-std = "1.5"
-serde = "1"
+
+# solana programs
 auth-weighted = { path = "programs/auth-weighted" }
+operator = { path = "programs/operator" }
 gateway = { path = "programs/gateway" }
 
 # helper crates
 program-utils = { path = "helpers/program-utils" }
-random-array = { path = "helpers/random-array" }
-slice-iterator = { path = "helpers/slice-iterator" }
-operator = { path = "programs/operator" }
+test-fixtures = { path = "helpers/test-fixtures" }
 
 
 [workspace.dependencies.multisig]
@@ -38,6 +46,11 @@ rev = "c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 features = ["library"]
 
 [workspace.dependencies.connection-router]
+git = "https://github.com/axelarnetwork/axelar-amplifier"
+rev = "c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
+features = ["library"]
+
+[workspace.dependencies.axelar-wasm-std]
 git = "https://github.com/axelarnetwork/axelar-amplifier"
 rev = "c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 features = ["library"]

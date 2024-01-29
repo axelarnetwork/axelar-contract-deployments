@@ -1,7 +1,7 @@
 //! Proof types.
 
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
-use solana_program::{keccak, secp256k1_recover};
+use solana_program::keccak;
 
 use super::operator::Operators;
 use super::signature::Signature;
@@ -54,66 +54,59 @@ impl<'a> Proof {
 
     /// Perform signatures validation with engagement of secp256k1 recovery
     /// similarly to ethereum ECDSA recovery.
+    // TODO: This function's iteration algorithm is overly complex because it
+    // operates on the serialized/packed representation for the `Operator` type.
+    // We could refactor that original type into a more ergonomic struct to simplify
+    // iteration/validation.
     pub fn validate(&self, message_hash: &[u8; 32]) -> Result<(), AuthWeightedError> {
-        let operators_len = self.operators.addresses_len();
-        let mut operator_index: usize = 0;
         let mut weight = U256::from_le_bytes([0; 32]);
+        let mut last_visited_operator_position: usize = 0;
+        for signature in self.signatures() {
+            let public_key = signature.sol_recover_public_key(message_hash)?.to_bytes();
+            let signer = &public_key[..32];
 
-        for v in self.signatures() {
-            let recovery_id = 0; // TODO: check if it has to be switch 0, 1.
-            let signer = match secp256k1_recover::secp256k1_recover(
-                message_hash,
-                recovery_id,
-                v.signature(),
-            ) {
-                Ok(signer) => signer.to_bytes(),
-                Err(e) => match e {
-                    secp256k1_recover::Secp256k1RecoverError::InvalidHash => {
-                        return Err(AuthWeightedError::Secp256k1RecoveryFailedInvalidHash)
-                    }
-                    secp256k1_recover::Secp256k1RecoverError::InvalidRecoveryId => {
-                        return Err(AuthWeightedError::Secp256k1RecoveryFailedInvalidRecoveryId)
-                    }
-                    secp256k1_recover::Secp256k1RecoverError::InvalidSignature => {
-                        return Err(AuthWeightedError::Secp256k1RecoveryFailedInvalidSignature)
-                    }
-                },
+            // Visiting remaining operators to find a match.
+            let remaining_operators = &self.operators.addresses()[last_visited_operator_position..];
+
+            if remaining_operators.is_empty() {
+                // There are no more operators to look up to.
+                // TODO: use a more descriptive error name
+                return Err(AuthWeightedError::OperatorsExhausted);
+            }
+
+            // Find a matching operator for this signer or move to the next.
+            let Some((operator_index, _match)) = remaining_operators
+                .iter()
+                .enumerate()
+                .find(|(_, op_addr)| op_addr.omit_prefix() == signer)
+            else {
+                continue;
             };
-            // First half of uncompressed key.
-            let signer = &signer[..32];
 
-            // Looping through remaining operators to find a match.
-            while operator_index < operators_len
-                && self
-                    .operators
-                    .address_by_index(operator_index)
-                    .omit_prefix()
-                    .ne(signer)
-            {
-                operator_index += 1;
-            }
+            // Update last visited operator position.
+            last_visited_operator_position = operator_index;
 
-            // Checking if we are out of operators.
-            if operator_index == operators_len {
-                return Err(AuthWeightedError::MalformedSigners);
-            }
-
-            // Accumulating signatures weight.
+            // Accumulate weight.
             weight = weight
                 .checked_add(*self.operators.weight_by_index(operator_index))
                 .ok_or(AuthWeightedError::ArithmeticOverflow)?;
 
-            // Weight needs to reach or surpass threshold.
+            // Check if there is sufficient weight to consider this proof valid.
             if weight >= *self.operators.threshold() {
-                // msg!("about to return ok");
                 return Ok(());
             }
-
-            // Increasing operators index if match was found.
-            operator_index += 1;
         }
 
-        Err(AuthWeightedError::LowSignaturesWeight)
+        // By this point, all operators were visited but there is not enough
+        // accumulated weight to consider this proof valid.
+
+        if last_visited_operator_position == 0 {
+            // This is specific condition means that not a single operator was matched by
+            // any signer.
+            Err(AuthWeightedError::AllSignersInvalid)
+        } else {
+            Err(AuthWeightedError::LowSignaturesWeight)
+        }
     }
 }
 
@@ -153,11 +146,8 @@ mod tests {
             threshold,
         );
 
-        let input_1 = [1u8; 64].to_vec();
-        let input_2 = [3u8; 64].to_vec();
-
-        let signature_1 = Signature::try_from(input_1)?;
-        let signature_2 = Signature::try_from(input_2)?;
+        let signature_1 = Signature::try_from(vec![0u8; 65])?;
+        let signature_2 = Signature::try_from(vec![1u8; 65])?;
 
         let proof = Proof::new(
             operators.clone(),

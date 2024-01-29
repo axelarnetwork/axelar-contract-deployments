@@ -1,5 +1,7 @@
 //! U256 implementation of uint256.
 
+use std::fmt::Display;
+
 use borsh::{BorshDeserialize, BorshSerialize};
 
 /// [U256] represents uint256.
@@ -65,6 +67,12 @@ impl BorshDeserialize for U256 {
         reader.read_exact(&mut buffer)?;
         let inner = bnum::types::U256::from_le_bytes(buffer);
         Ok(U256(inner))
+    }
+}
+
+impl Display for U256 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0.to_string())
     }
 }
 

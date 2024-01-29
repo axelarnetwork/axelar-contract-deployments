@@ -4,11 +4,14 @@ use auth_weighted::types::proof::Proof;
 use borsh::{BorshDeserialize, BorshSerialize};
 use discriminators::{Config, Discriminator, ExecuteData};
 use solana_program::hash::hash;
+use solana_program::keccak::hashv;
 use solana_program::pubkey::Pubkey;
 
 use self::discriminators::MessageID;
 use crate::error::GatewayError;
-use crate::types::execute_data_decoder::{decode as decode_execute_data, DecodedCommand};
+use crate::types::execute_data_decoder::{
+    decode as decode_execute_data, DecodedCommand, DecodedCommandBatch, DecodedMessage,
+};
 
 /// Gateway configuration type.
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
@@ -67,38 +70,105 @@ impl GatewayExecuteData {
 
     /// Decodes the `execute_data` into a Proof and a CommandBatch.
 
-    pub fn decode(&self) -> Result<(Proof, Vec<DecodedCommand>), GatewayError> {
+    pub fn decode(&self) -> Result<(Proof, DecodedCommandBatch), GatewayError> {
         decode_execute_data(&self.data).map_err(|e| e.into())
     }
 }
 
-/// Gateway Message ID type.
+/// Possible statuses for a [`GatewayApprovedMessage`].
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
-#[repr(C)]
-pub struct GatewayMessageID {
-    discriminator: Discriminator<MessageID>,
-    message_id: String,
+pub enum MessageApprovalStatus {
+    /// Message is still awaiting to be approved.
+    Pending,
+    /// Message was approved
+    Approved,
 }
 
-impl GatewayMessageID {
-    /// Creates a new `GatewayMessageID` struct.
-    pub fn new(message_id: String) -> Self {
+/// Gateway Approved Message type.
+#[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
+#[repr(C)]
+pub struct GatewayApprovedMessage {
+    discriminator: Discriminator<MessageID>,
+    status: MessageApprovalStatus,
+}
+
+impl GatewayApprovedMessage {
+    /// Returns a message with pending approval.
+    pub const fn pending() -> Self {
         Self {
             discriminator: Discriminator::new(),
-            message_id,
+            status: MessageApprovalStatus::Pending,
         }
     }
-    /// Returns the seeds for this account PDA.
-    pub fn seeds(&self) -> [u8; 32] {
-        hash(self.message_id.as_bytes()).to_bytes()
+
+    /// Returns an approved message.
+    pub const fn approved() -> Self {
+        Self {
+            discriminator: Discriminator::new(),
+            status: MessageApprovalStatus::Approved,
+        }
     }
 
-    /// Finds a PDA for this account. Returns its Pubkey, the canonical bump and
-    /// the seeds used to derive them.
-    pub fn pda(&self) -> (Pubkey, u8, [u8; 32]) {
-        let seeds = self.seeds();
-        let (pubkey, bump) = Pubkey::find_program_address(&[seeds.as_ref()], &crate::ID);
-        (pubkey, bump, seeds)
+    /// Returns `true` if this message was approved.
+    pub fn is_approved(&self) -> bool {
+        matches!(self.status, MessageApprovalStatus::Approved)
+    }
+
+    /// Returns `true` if this message is still waiting for aproval.
+    pub fn is_pending(&self) -> bool {
+        matches!(self.status, MessageApprovalStatus::Pending)
+    }
+
+    /// Finds a PDA for this account by hashing the parameters. Returns its
+    /// Pubkey and bump.
+    ///
+    ///`source_chain` and `source_address` are expected as byte-slices, leaving
+    /// the conversions to the caller's discretion.
+    pub fn pda(
+        message_id: [u8; 32],
+        source_chain: &[u8],
+        source_address: &[u8],
+        payload_hash: [u8; 32],
+    ) -> (Pubkey, u8) {
+        let (pubkey, bump, _seed) =
+            Self::pda_with_seed(message_id, source_chain, source_address, payload_hash);
+        (pubkey, bump)
+    }
+
+    /// Finds a PDA for this account by hashing the parameters. Returns its
+    /// Pubkey, the bump and the seed used to derive it.
+    ///
+    ///`source_chain` and `source_address` are expected as byte-slices, leaving
+    /// the conversions to the caller's discretion.
+    pub fn pda_with_seed(
+        message_id: [u8; 32],
+        source_chain: &[u8],
+        source_address: &[u8],
+        payload_hash: [u8; 32],
+    ) -> (Pubkey, u8, [u8; 32]) {
+        let seeds: &[&[u8]] = &[&message_id, source_chain, source_address, &payload_hash];
+        // Hashing is necessary because seed elements have arbitrary size.
+        let seeds_hash = hashv(seeds).to_bytes();
+        let (pda, bump) = Pubkey::find_program_address(&[seeds_hash.as_slice()], &crate::ID);
+        (pda, bump, seeds_hash)
+    }
+
+    /// Finds the PDA for an Approved Message account from a `DecodedCommand`
+    pub fn pda_from_decoded_command(command: &DecodedCommand) -> Pubkey {
+        let DecodedMessage {
+            id,
+            source_chain,
+            source_address,
+            payload_hash,
+            ..
+        } = &command.message;
+        let (pda, _bump) = Self::pda(
+            *id,
+            source_chain.as_bytes(),
+            source_address.as_bytes(),
+            *payload_hash,
+        );
+        pda
     }
 }
 
@@ -125,7 +195,7 @@ mod discriminators {
     }
 
     impl<T: DiscriminatorTrait> Discriminator<T> {
-        pub fn new() -> Self {
+        pub const fn new() -> Self {
             Self {
                 _marker: PhantomData,
             }
@@ -246,16 +316,6 @@ mod tests {
     fn execute_data_pda() -> Result<()> {
         let execute_data = GatewayExecuteData::new(vec![1, 2, 3]);
         let (expected_pda, bump_seed, seed) = execute_data.pda();
-        let actual_pda =
-            Pubkey::create_program_address(&[seed.as_ref(), &[bump_seed]], &crate::ID)?;
-        assert_eq!(expected_pda, actual_pda);
-        Ok(())
-    }
-
-    #[test]
-    fn message_id_pda() -> Result<()> {
-        let message_id = GatewayMessageID::new("Hello!".to_string());
-        let (expected_pda, bump_seed, seed) = message_id.pda();
         let actual_pda =
             Pubkey::create_program_address(&[seed.as_ref(), &[bump_seed]], &crate::ID)?;
         assert_eq!(expected_pda, actual_pda);

@@ -1,6 +1,5 @@
 //! Program state processor.
 
-use auth_weighted::error::AuthWeightedError;
 use auth_weighted::types::account::state::AuthWeightedStateAccount;
 use auth_weighted::types::account::transfer_operatorship::TransferOperatorshipAccount;
 use borsh::from_slice;
@@ -14,11 +13,14 @@ use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_instruction, system_program};
 
-use crate::accounts::{GatewayConfig, GatewayExecuteData, GatewayMessageID};
+use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use crate::check_program_account;
 use crate::error::GatewayError;
-use crate::events::{emit_call_contract_event, emit_operatorship_transferred_event};
+use crate::events::{
+    emit_call_contract_event, emit_message_approved_event, emit_operatorship_transferred_event,
+};
 use crate::instructions::GatewayInstruction;
+use crate::types::execute_data_decoder::DecodedMessage;
 
 /// Program state handler.
 pub struct Processor;
@@ -66,21 +68,141 @@ impl Processor {
                 msg!("Instruction: TransferOperatorship");
                 Self::transfer_operatorship(program_id, accounts)
             }
-            GatewayInstruction::InitializeMessage { message_id } => {
-                msg!("Instruction: Initialize Message ID");
-                Self::initialize_message_id(accounts, &message_id)
+            GatewayInstruction::InitializeMessage {
+                message_id,
+                source_chain,
+                source_address,
+                payload_hash,
+            } => {
+                msg!("Instruction: Initialize Approved Message");
+                Self::initialize_approved_message(
+                    accounts,
+                    message_id,
+                    source_chain,
+                    source_address,
+                    payload_hash,
+                )
             }
         }
     }
 
     fn execute(accounts: &[AccountInfo]) -> Result<(), ProgramError> {
-        // FIXME: implement the actual instruction here
-
-        // DEBUG: print all accounts
         let mut accounts = accounts.iter();
-        while let Ok(account) = next_account_info(&mut accounts) {
-            msg!("{}", account.is_writable);
+        let gateway_config_account = next_account_info(&mut accounts)?;
+        let execute_data_account = next_account_info(&mut accounts)?;
+        let message_accounts: Vec<_> = accounts.collect();
+
+        // Phase 1: Account validation
+
+        // Check: Config account uses the canonical bump.
+        let (canonical_pda, _canonical_bump) = crate::find_root_pda();
+        if *gateway_config_account.key != canonical_pda {
+            return Err(GatewayError::InvalidConfigAccount)?;
         }
+
+        // Check: Config account is owned by the Gateway program.
+        if *gateway_config_account.owner != crate::ID {
+            return Err(ProgramError::InvalidAccountOwner);
+        }
+
+        // Check: Config account is read only.
+        if gateway_config_account.is_writable {
+            return Err(ProgramError::InvalidInstructionData);
+        }
+
+        // Check: execute_data account is owned by the Gateway program.
+        if *execute_data_account.owner != crate::ID {
+            return Err(ProgramError::InvalidAccountOwner);
+        }
+
+        // Check: execute_data account is writable.
+        if !execute_data_account.is_writable {
+            return Err(ProgramError::InvalidInstructionData);
+        }
+
+        // Check: execute_data account was initialized.
+        let execute_data: GatewayExecuteData =
+            borsh::from_slice(*execute_data_account.data.borrow())?;
+
+        // Check: at least one message account.
+        if message_accounts.is_empty() {
+            return Err(ProgramError::NotEnoughAccountKeys);
+        }
+
+        // Phase 2: Deserialization & Proof Validation
+
+        let Ok((proof, command_batch)) = execute_data.decode() else {
+            return Err(GatewayError::MalformedProof)?;
+        };
+
+        proof.validate(&command_batch.hash)?;
+
+        // Phase 3: Update approved message accounts
+
+        // Check approved message account initial premises post-validation so we iterate
+        // on them only once.
+        // TODO: Pairwise iterate over message accounts and validated commands from the
+        // command batch.
+        let mut last_visited_message_index = 0;
+        for (&message_account, approved_command) in
+            message_accounts.iter().zip(command_batch.commands.iter())
+        {
+            last_visited_message_index += 1;
+
+            // Check: Current message account represents the current aproved command.
+            let expected_pda = GatewayApprovedMessage::pda_from_decoded_command(approved_command);
+            if expected_pda != *message_account.key {
+                return Err(ProgramError::InvalidSeeds);
+            }
+
+            // Check: All message accounts are writable.
+            if !message_account.is_writable {
+                return Err(ProgramError::InvalidInstructionData);
+            }
+
+            // Check: All message accounts are initialized.
+            if **message_account.lamports.borrow() == 0 {
+                return Err(ProgramError::UninitializedAccount);
+            }
+
+            // Check:: All messages must be "Pending".
+            let mut borrowed_data = message_account.data.borrow_mut();
+            let approved_message: GatewayApprovedMessage = borsh::from_slice(*borrowed_data)?;
+            if !approved_message.is_pending() {
+                // TODO: use a more descriptive GatewayError variant here.
+                return Err(ProgramError::AccountAlreadyInitialized);
+            }
+
+            // Success: update account message state to "Approved".
+            borrowed_data.copy_from_slice(&borsh::to_vec(&GatewayApprovedMessage::approved())?);
+
+            // Emit an event signaling message approval.
+            {
+                let DecodedMessage {
+                    id,
+                    source_chain,
+                    source_address,
+                    destination_address,
+                    payload_hash,
+                    ..
+                } = &approved_command.message;
+                emit_message_approved_event(
+                    *id,
+                    source_chain.clone(),
+                    source_address.clone(),
+                    *destination_address,
+                    *payload_hash,
+                )?;
+            }
+        }
+
+        // Check: all messages were visited
+        if last_visited_message_index != message_accounts.len()
+            || last_visited_message_index != command_batch.commands.len()
+        {
+            return Err(ProgramError::NotEnoughAccountKeys);
+        }
+
         Ok(())
     }
 
@@ -140,14 +262,17 @@ impl Processor {
         )
     }
 
-    fn initialize_message_id(
+    fn initialize_approved_message(
         accounts: &[AccountInfo<'_>],
-        message_id: &GatewayMessageID,
+        message_id: [u8; 32],
+        source_chain: Vec<u8>,
+        source_address: Vec<u8>,
+        payload_hash: [u8; 32],
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
         let payer = next_account_info(accounts_iter)?;
-        let message_id_account = next_account_info(accounts_iter)?;
+        let approved_message_account = next_account_info(accounts_iter)?;
         let system_account = next_account_info(accounts_iter)?;
 
         // Check: System Program Account
@@ -155,16 +280,23 @@ impl Processor {
             return Err(GatewayError::InvalidSystemAccount.into());
         }
 
-        // Check: Message ID account uses the canonical bump.
-        let (canonical_pda, bump, seeds) = message_id.pda();
-        if *message_id_account.key != canonical_pda {
-            return Err(GatewayError::InvalidMessageIDAccount.into());
+        // Check: Approved message account uses the canonical bump.
+        let (canonical_pda, bump, seed) = GatewayApprovedMessage::pda_with_seed(
+            message_id,
+            &source_chain,
+            &source_address,
+            payload_hash,
+        );
+        if *approved_message_account.key != canonical_pda {
+            return Err(GatewayError::InvalidApprovedMessageAccount.into());
         }
+
+        let seeds: &[&[u8]] = &[&seed, &[bump]];
         init_pda(
             payer,
-            message_id_account,
-            &[seeds.as_ref(), &[bump]],
-            message_id,
+            approved_message_account,
+            seeds,
+            &GatewayApprovedMessage::pending(),
         )
     }
 
@@ -190,17 +322,7 @@ impl Processor {
             borsh::de::from_slice::<TransferOperatorshipAccount>(new_operators_bytes)?;
 
         // Check: new operator data is valid.
-        if let Err(error) = new_operators.validate() {
-            // TODO: Error handling should not be this brittle. Consider merging this part
-            // of the AuthWeighted program into the Gateway.
-            let gateway_error = match error {
-                AuthWeightedError::InvalidOperators => GatewayError::InvalidOperators,
-                AuthWeightedError::InvalidWeights => GatewayError::InvalidWeights,
-                AuthWeightedError::InvalidThreshold => GatewayError::InvalidThreshold,
-                _ => panic!("Unexpected error received from AuthWeighted module"),
-            };
-            return Err(gateway_error)?;
-        };
+        new_operators.validate().map_err(GatewayError::from)?;
 
         // Hash the new operator set.
         let new_operators_hash = hash(new_operators_bytes).to_bytes();
@@ -212,15 +334,9 @@ impl Processor {
         };
 
         // Update epoch and operators.
-        if let Err(error) = state.update_epoch_and_operators(new_operators_hash) {
-            // TODO: Error handling should not be this brittle. Consider merging this part
-            // of the AuthWeighted program into the Gateway.
-            let gateway_error = match error {
-                AuthWeightedError::DuplicateOperators => GatewayError::DuplicateOperators,
-                _ => panic!("Unexpected error received from AuthWeighted module"),
-            };
-            return Err(gateway_error)?;
-        };
+        state
+            .update_epoch_and_operators(new_operators_hash)
+            .map_err(GatewayError::from)?;
 
         // Resize and refund state account space.
         state.reallocate(state_account, payer_account, system_account)?;
