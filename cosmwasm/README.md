@@ -22,7 +22,7 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
       },
       "Multisig": {
         "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
-        "gracePeriod": 5
+        "blockExpiry": 10
       },
       "Rewards": {
         "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
