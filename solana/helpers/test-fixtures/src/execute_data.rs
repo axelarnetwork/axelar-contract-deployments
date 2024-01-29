@@ -123,28 +123,10 @@ fn sign_batch(
     let mut signatures = vec![];
     let message_to_sign: [u8; 32] = command_batch.msg_digest().as_ref().try_into()?;
     let message = Message::parse(&message_to_sign);
-    println!("Generated message hash: {}", hex::encode(message_to_sign)); // debug
-    for signer in signers {
-        println!("\nGenerated"); // debug
 
+    for signer in signers {
         // Sign the message
         let (signature, recovery_id) = sign(&message, &signer.secret_key);
-
-        println!(
-            "- Signer compressed public key:    {}",
-            hex::encode(&signer.public_key)
-        ); // debug
-        println!(
-            "- Signer uncompressed public keys: {}",
-            hex::encode(signer.uncompressed_public_key())
-        ); // debug
-
-        println!(
-            "- Signature: {} [{}] (recid: {})",
-            hex::encode(signature.serialize()),
-            signature.serialize().len(),
-            recovery_id.serialize()
-        ); //debug
 
         // Concatenate signature and recovery byte
         let mut extended_signature = [0u8; 65];
