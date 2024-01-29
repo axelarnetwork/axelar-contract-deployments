@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use ::base64::engine::general_purpose;
 use anyhow::Result;
 use auth_weighted::error::AuthWeightedError;
@@ -59,23 +57,11 @@ fn prepare_valid_operators(weights: Vec<U256>, threshold: U256) -> Operators {
 }
 
 fn prepare_valid_state_account() -> Result<AuthWeightedStateAccount> {
-    let current_epoch = U256::ONE;
-
-    let mut epoch_for_hash: BTreeMap<[u8; 32], U256> = BTreeMap::new();
-    let mut hash_for_epoch: BTreeMap<U256, [u8; 32]> = BTreeMap::new();
-
     let (_, proof) = prepare_valid_proof()?;
     let operators_hash = proof.get_operators_hash();
-
-    // Populate.
-    epoch_for_hash.insert(operators_hash, current_epoch);
-    hash_for_epoch.insert(current_epoch, operators_hash);
-
-    Ok(AuthWeightedStateAccount {
-        current_epoch,
-        epoch_for_hash,
-        hash_for_epoch,
-    })
+    let mut auth_weighted_state_account = AuthWeightedStateAccount::default();
+    auth_weighted_state_account.update_epoch_and_operators(operators_hash)?;
+    Ok(auth_weighted_state_account)
 }
 
 #[tokio::test]
