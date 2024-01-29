@@ -210,7 +210,7 @@ async function processCommand(config, chain, options) {
         case 'registerGatewayToken': {
             const { salt, symbol } = options;
 
-            validateParameters({ isKeccak256Hash: { salt }, isValidString: {symbol} });
+            validateParameters({ isKeccak256Hash: { salt }, isValidString: { symbol } });
 
             const tx = await interchainTokenFactory.registerGatewayToken(salt, symbol, gasOptions);
 
