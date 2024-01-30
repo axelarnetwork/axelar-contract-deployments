@@ -4,7 +4,7 @@ inputs:
   toolchain:
     description: 'Override the default (nightly) toolchain to install'
     required: false
-    default: 'nightly-2023-12-03'
+    default: 'nightly-2024-01-30'
 
 runs:
   using: 'composite'
