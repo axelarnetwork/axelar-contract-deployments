@@ -126,7 +126,7 @@ async function getProposalCalldata(governance, chain, wallet, options) {
                 printWarn(`Current implementation ${currImplementation} matches new implementation ${implementation}`);
             }
 
-            const newImplementationCodeHash = await getBytecodeHash(implementation, chain.id, provider);
+            const newImplementationCodeHash = await getBytecodeHash(implementation, chain.axelarId, provider);
             printInfo('New implementation code hash', newImplementationCodeHash);
 
             const setupParams = await getSetupParams(governance, targetContractName, target, chain.contracts, wallet, options);
@@ -503,7 +503,7 @@ async function processCommand(_, chain, options) {
             description,
             contract_calls: [
                 {
-                    chain: chain.id,
+                    chain: chain.axelarId,
                     contract_address: governanceAddress,
                     payload: payloadBase64,
                 },
