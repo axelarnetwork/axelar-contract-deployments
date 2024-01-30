@@ -4,7 +4,6 @@ use auth_weighted::types::address::Address;
 use auth_weighted::types::operator::Operators;
 use auth_weighted::types::proof::Proof;
 use auth_weighted::types::signature::Signature;
-use auth_weighted::types::u256::U256;
 use itertools::izip;
 use multisig_prover::encoding::Data;
 use multisig_prover::types::{Command, CommandType};
@@ -12,6 +11,7 @@ use solana_program::msg;
 use thiserror::Error;
 
 use crate::error::GatewayError;
+use crate::types::u256::U256;
 
 type DecodedCommandBatchParts = (u64, Vec<[u8; 32]>, Vec<String>, Vec<Vec<u8>>);
 type DecodedProofParts = (Vec<Vec<u8>>, Vec<u128>, u128, Vec<Vec<u8>>);

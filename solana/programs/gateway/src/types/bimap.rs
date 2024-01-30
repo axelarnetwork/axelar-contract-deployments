@@ -1,11 +1,12 @@
 //! Module for the operator set and epoch biject map.
 
-use auth_weighted::types::u256::U256;
 use bimap::BiBTreeMap;
 use borsh::io::Error;
 use borsh::io::ErrorKind::{Interrupted, InvalidData};
 use borsh::{BorshDeserialize, BorshSerialize};
 use thiserror::Error;
+
+use crate::types::u256::U256;
 
 type OperatorsHash = [u8; 32];
 type Epoch = U256;

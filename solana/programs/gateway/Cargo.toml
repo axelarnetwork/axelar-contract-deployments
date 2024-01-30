@@ -16,6 +16,7 @@ auth-weighted = { workspace = true, features = ["no-entrypoint"] }
 base64.workspace = true
 bcs.workspace = true
 bimap = { version = "0.6.3", default-features = false }
+bnum.workspace = true
 borsh.workspace = true
 connection-router.workspace = true
 cosmwasm-std.workspace = true
