@@ -83,8 +83,8 @@ async function verify(dir, provider, address, chainId) {
         const directoryPath = artifactsDir.substring(0, artifactsDir.length - 'contracts'.length) + 'build-info';
         const res = await processDirectory(directoryPath, contractName);
 
+        if (res.length !== 2) throw new Error('Unable to find require metadata and solidity code for sourcify verification');
         const [sol, metadata] = res;
-        if (res.length !== 2) throw new Error('invalid contract data!');
 
         await uploadToSourcify(metadata, sol, address, chainId);
         console.log('Verified on Sourcify via uplaoding solidity code and metadata');
