@@ -61,7 +61,7 @@ async function deployAll(config, wallet, chain, options) {
     contracts[contractName] = contractConfig;
 
     const proxyJSON = getContractJSON('InterchainProxy', artifactPath);
-    const predeployCodehash = await getBytecodeHash(proxyJSON, chain.id);
+    const predeployCodehash = await getBytecodeHash(proxyJSON, chain.axelarId);
     const gasOptions = await getGasOptions(chain, options, contractName);
     const deployOptions = getDeployOptions(deployMethod, salt, chain);
 
@@ -100,7 +100,7 @@ async function deployAll(config, wallet, chain, options) {
     // Register all chains that ITS is or will be deployed on.
     // Add a "skip": true under ITS key in the config if the chain will not have ITS.
     const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
-    const trustedChains = itsChains.map((chain) => chain.id);
+    const trustedChains = itsChains.map((chain) => chain.axelarId);
     const trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address || interchainTokenService);
     printInfo('Trusted chains', trustedChains);
 
@@ -211,7 +211,7 @@ async function deployAll(config, wallet, chain, options) {
                     contracts.AxelarGateway.address,
                     contracts.AxelarGasService.address,
                     interchainTokenFactory,
-                    chain.id,
+                    chain.axelarId,
                     contractConfig.tokenManager,
                     contractConfig.tokenHandler,
                 ];
@@ -237,7 +237,7 @@ async function deployAll(config, wallet, chain, options) {
 
                 const deploymentParams = defaultAbiCoder.encode(
                     ['address', 'string', 'string[]', 'string[]'],
-                    [operatorAddress, chain.id, trustedChains, trustedAddresses],
+                    [operatorAddress, chain.axelarId, trustedChains, trustedAddresses],
                 );
                 contractConfig.predeployCodehash = predeployCodehash;
 
@@ -366,7 +366,7 @@ async function upgrade(config, chain, options) {
     const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
     const gasOptions = await getGasOptions(chain, options, contractName);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
-    const codehash = await getBytecodeHash(contractConfig.implementation, chain.id, provider);
+    const codehash = await getBytecodeHash(contractConfig.implementation, chain.axelarId, provider);
 
     printInfo(`ITS Proxy`, contract.address);
 
@@ -391,7 +391,7 @@ async function upgrade(config, chain, options) {
 
     const InterchainTokenFactory = getContractJSON('InterchainTokenFactory', artifactPath);
     const itsFactory = new Contract(contractConfig.interchainTokenFactory, InterchainTokenFactory.abi, wallet);
-    const factoryCodehash = await getBytecodeHash(contractConfig.interchainTokenFactoryImplementation, chain.id, provider);
+    const factoryCodehash = await getBytecodeHash(contractConfig.interchainTokenFactoryImplementation, chain.axelarId, provider);
 
     printInfo(`ITS Factory Proxy`, itsFactory.address);
 
