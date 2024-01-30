@@ -4,8 +4,8 @@ const { Command } = require('commander');
 const { mainProcessor, printInfo } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
-async function processCommand(_, chain, options) {
-    printInfo('Axelar Chain Name', chain.id);
+async function processCommand(_, chain, _) {
+    printInfo('Axelar Chain Name', chain.axelarId);
 }
 
 async function main(options) {
