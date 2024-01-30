@@ -70,8 +70,6 @@ pub struct AuthWeightedStateAccount {
 }
 
 impl AuthWeightedStateAccount {
-    /// Creates a new value with an empty collection.
-
     /// Updates the epoch and operators in the state.
     pub fn update_epoch_and_operators(
         &mut self,
