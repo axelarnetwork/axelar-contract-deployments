@@ -1,6 +1,5 @@
 //! Module for the `GatewayExecuteData` account type.
 
-use auth_weighted::types::proof::Proof;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::hash::hash;
 use solana_program::pubkey::Pubkey;
@@ -8,6 +7,7 @@ use solana_program::pubkey::Pubkey;
 use crate::accounts::discriminator::{Discriminator, ExecuteData};
 use crate::error::GatewayError;
 use crate::types::execute_data_decoder::{decode as decode_execute_data, DecodedCommandBatch};
+use crate::types::proof::Proof;
 
 /// Gateway Execute Data type.
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
