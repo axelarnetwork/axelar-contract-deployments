@@ -1,7 +1,5 @@
 mod common;
 
-use std::collections::BTreeMap;
-
 use ::base64::engine::general_purpose;
 use anyhow::Result;
 use auth_weighted::types::account::state::AuthWeightedStateAccount;
@@ -22,7 +20,7 @@ use solana_sdk::transaction::{Transaction, TransactionError};
 async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
     let accounts_owner = gateway::id();
     let params_account = Keypair::new().pubkey();
-    let (state_account, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
+    let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
     let will_be_there = TransferOperatorshipAccount {
         operators: vec![
@@ -53,28 +51,17 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
 
     let params_account_b64 = general_purpose::STANDARD.encode(borsh::to_vec(&will_be_there)?);
 
-    // Prepare program state.
+    // Prepare operator state.
     let current_epoch = U256::ONE;
-
-    let mut epoch_for_hash: BTreeMap<[u8; 32], U256> = BTreeMap::new();
-    let mut hash_for_epoch: BTreeMap<U256, [u8; 32]> = BTreeMap::new();
-
     let operators_hash = keccak::hash(&borsh::to_vec(&is_already_there)?).to_bytes();
-
-    epoch_for_hash.insert(operators_hash, current_epoch);
-    hash_for_epoch.insert(current_epoch, operators_hash);
-
-    let state_account_b64 =
-        general_purpose::STANDARD.encode(borsh::to_vec(&AuthWeightedStateAccount {
-            current_epoch,
-            epoch_for_hash,
-            hash_for_epoch,
-        })?);
+    let mut state_account = AuthWeightedStateAccount::default();
+    state_account.update_epoch_and_operators(operators_hash)?;
+    let state_account_b64 = general_purpose::STANDARD.encode(borsh::to_vec(&state_account)?);
 
     let mut program_test: ProgramTest = program_test();
 
     program_test.add_account_with_base64_data(
-        state_account,
+        state_account_address,
         999999,
         accounts_owner,
         &state_account_b64,
@@ -92,7 +79,7 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
     let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
 
     let state_data_after_before_mutation = banks_client
-        .get_account(state_account)
+        .get_account(state_account_address)
         .await?
         .expect("there is an account");
 
@@ -100,7 +87,7 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
     let instruction = gateway::instructions::transfer_operatorship(
         &payer.pubkey(),
         &params_account,
-        &state_account,
+        &state_account_address,
     )?;
 
     let transaction = Transaction::new_signed_with_payer(
@@ -115,7 +102,7 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
     // Checks.
 
     let state_data_after_mutation = banks_client
-        .get_account(state_account)
+        .get_account(state_account_address)
         .await?
         .expect("there is an account");
 
@@ -129,7 +116,7 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
 
     // Checks if current_epoch was mutated in the state.
     assert_eq!(
-        state_data_after_mutation_unpacked.current_epoch,
+        state_data_after_mutation_unpacked.current_epoch(),
         current_epoch
             .checked_add(U256::ONE)
             .expect("arithmetic overflow")
@@ -137,17 +124,13 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
 
     // TODO: check if epoch_for_hash is the valid one here.
     assert_eq!(
-        state_data_after_mutation_unpacked
-            .epoch_for_hash
-            .get(&operators_hash),
+        state_data_after_mutation_unpacked.epoch_for_operator_hash(&operators_hash),
         Some(U256::ONE).as_ref(),
     );
 
     // TODO: check if hash_for_epoch is the valid one here.
     assert_eq!(
-        state_data_after_mutation_unpacked
-            .hash_for_epoch
-            .get(&current_epoch.clone()),
+        state_data_after_mutation_unpacked.operator_hash_for_epoch(&current_epoch),
         Some(operators_hash).as_ref(),
     );
     Ok(())
@@ -157,7 +140,7 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
 async fn test_transfer_operatorship_duplicate_ops() -> Result<()> {
     let accounts_owner = gateway::id();
     let params_account = Keypair::new().pubkey();
-    let (state_account, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
+    let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
     let will_be_there = TransferOperatorshipAccount {
         operators: vec![
@@ -188,28 +171,16 @@ async fn test_transfer_operatorship_duplicate_ops() -> Result<()> {
 
     let params_account_b64 = general_purpose::STANDARD.encode(borsh::to_vec(&will_be_there)?);
 
-    // Prepare program state.
-    let current_epoch = U256::ONE;
-
-    let mut epoch_for_hash: BTreeMap<[u8; 32], U256> = BTreeMap::new();
-    let mut hash_for_epoch: BTreeMap<U256, [u8; 32]> = BTreeMap::new();
-
+    // Prepare operator state.
     let operators_hash = keccak::hash(&borsh::to_vec(&is_already_there)?).to_bytes();
-
-    epoch_for_hash.insert(operators_hash, current_epoch);
-    hash_for_epoch.insert(current_epoch, operators_hash);
-
-    let state_account_b64 =
-        general_purpose::STANDARD.encode(borsh::to_vec(&AuthWeightedStateAccount {
-            current_epoch,
-            epoch_for_hash,
-            hash_for_epoch,
-        })?);
+    let mut state_account = AuthWeightedStateAccount::default();
+    state_account.update_epoch_and_operators(operators_hash)?;
+    let state_account_b64 = general_purpose::STANDARD.encode(borsh::to_vec(&state_account)?);
 
     let mut program_test: ProgramTest = program_test();
 
     program_test.add_account_with_base64_data(
-        state_account,
+        state_account_address,
         999999,
         accounts_owner,
         &state_account_b64,
@@ -227,7 +198,7 @@ async fn test_transfer_operatorship_duplicate_ops() -> Result<()> {
     let instruction = gateway::instructions::transfer_operatorship(
         &payer.pubkey(),
         &params_account,
-        &state_account,
+        &state_account_address,
     )?;
 
     let transaction = Transaction::new_signed_with_payer(
@@ -255,7 +226,7 @@ async fn test_transfer_operatorship_duplicate_ops() -> Result<()> {
 async fn test_transfer_operatorship_invald_weights() -> Result<()> {
     let accounts_owner = gateway::id();
     let params_account = Keypair::new().pubkey();
-    let (state_account, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
+    let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
     let will_be_there = TransferOperatorshipAccount {
         operators: vec![Address::try_from(vec![
@@ -280,28 +251,16 @@ async fn test_transfer_operatorship_invald_weights() -> Result<()> {
 
     let params_account_b64 = general_purpose::STANDARD.encode(borsh::to_vec(&will_be_there)?);
 
-    // Prepare program state.
-    let current_epoch = U256::ONE;
-
-    let mut epoch_for_hash: BTreeMap<[u8; 32], U256> = BTreeMap::new();
-    let mut hash_for_epoch: BTreeMap<U256, [u8; 32]> = BTreeMap::new();
-
+    // Prepare operator state.
     let operators_hash = keccak::hash(&borsh::to_vec(&is_already_there)?).to_bytes();
-
-    epoch_for_hash.insert(operators_hash, current_epoch);
-    hash_for_epoch.insert(current_epoch, operators_hash);
-
-    let state_account_b64 =
-        general_purpose::STANDARD.encode(borsh::to_vec(&AuthWeightedStateAccount {
-            current_epoch,
-            epoch_for_hash,
-            hash_for_epoch,
-        })?);
+    let mut state_account = AuthWeightedStateAccount::default();
+    state_account.update_epoch_and_operators(operators_hash)?;
+    let state_account_b64 = general_purpose::STANDARD.encode(borsh::to_vec(&state_account)?);
 
     let mut program_test: ProgramTest = program_test();
 
     program_test.add_account_with_base64_data(
-        state_account,
+        state_account_address,
         999999,
         accounts_owner,
         &state_account_b64,
@@ -319,7 +278,7 @@ async fn test_transfer_operatorship_invald_weights() -> Result<()> {
     let instruction = gateway::instructions::transfer_operatorship(
         &payer.pubkey(),
         &params_account,
-        &state_account,
+        &state_account_address,
     )?;
 
     let transaction = Transaction::new_signed_with_payer(
@@ -347,7 +306,7 @@ async fn test_transfer_operatorship_invald_weights() -> Result<()> {
 async fn test_transfer_operatorship_zero_weights() -> Result<()> {
     let accounts_owner = gateway::id();
     let params_account = Keypair::new().pubkey();
-    let (state_account, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
+    let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
     let will_be_there = TransferOperatorshipAccount {
         operators: vec![
@@ -380,28 +339,16 @@ async fn test_transfer_operatorship_zero_weights() -> Result<()> {
 
     let params_account_b64 = general_purpose::STANDARD.encode(borsh::to_vec(&will_be_there)?);
 
-    // Prepare program state.
-    let current_epoch = U256::ONE;
-
-    let mut epoch_for_hash: BTreeMap<[u8; 32], U256> = BTreeMap::new();
-    let mut hash_for_epoch: BTreeMap<U256, [u8; 32]> = BTreeMap::new();
-
+    // Prepare operator state.
     let operators_hash = keccak::hash(&borsh::to_vec(&is_already_there)?).to_bytes();
-
-    epoch_for_hash.insert(operators_hash, current_epoch);
-    hash_for_epoch.insert(current_epoch, operators_hash);
-
-    let state_account_b64 =
-        general_purpose::STANDARD.encode(borsh::to_vec(&AuthWeightedStateAccount {
-            current_epoch,
-            epoch_for_hash,
-            hash_for_epoch,
-        })?);
+    let mut state_account = AuthWeightedStateAccount::default();
+    state_account.update_epoch_and_operators(operators_hash)?;
+    let state_account_b64 = general_purpose::STANDARD.encode(borsh::to_vec(&state_account)?);
 
     let mut program_test: ProgramTest = program_test();
 
     program_test.add_account_with_base64_data(
-        state_account,
+        state_account_address,
         999999,
         accounts_owner,
         &state_account_b64,
@@ -421,7 +368,7 @@ async fn test_transfer_operatorship_zero_weights() -> Result<()> {
     let instruction = gateway::instructions::transfer_operatorship(
         &payer.pubkey(),
         &params_account,
-        &state_account,
+        &state_account_address,
     )?;
 
     let transaction = Transaction::new_signed_with_payer(

@@ -91,6 +91,11 @@ impl AuthWeightedStateAccount {
         self.map.0.get_by_left(operators_hash)
     }
 
+    /// Returns the operator hash associated with the given epoch
+    pub fn operator_hash_for_epoch(&self, epoch: &U256) -> Option<&OperatorsHash> {
+        self.map.0.get_by_right(epoch)
+    }
+
     /// Reallocate the state account data.
     pub fn reallocate<'a>(
         &self,
