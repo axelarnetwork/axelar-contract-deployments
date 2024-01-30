@@ -2014,6 +2014,76 @@
       "tokenSymbol": "frxETH",
       "gasOptions": {
         "gasLimit": 8000000
+      },
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0x9C55Ada05B7Edc8AD455e5edB50Ce8A96FFCc1F2",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x17F1A4c4bD48a4A08afac6521ce20d725A80F99D",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "AxelarGateway": {
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "startingKeyIDs": [
+            "evm-fraxtal-genesis"
+          ],
+          "address": "0x0df3f0b3c2Fcab01B65c5B8f5e3444BA6f16601C",
+          "implementation": "0x6485479852aF29a32D95c88bB831365E6AACcFf6",
+          "implementationCodehash": "0x54fc9b44e64a4d36f8f3cda1802341ca5a27488b5447a1072f5af5c0d9744ef6",
+          "authModule": "0x185F12492D22bdFeCC79cd7B4d0400F8Fe293DDe",
+          "tokenDeployer": "0x3aD6416b57437Ae5F1590768c3bd8E4a84D2B778",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
+        "AxelarGasService": {
+          "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
+          "address": "0x753D45A11cEe8b08AAAF9D5B64429E51809C9791",
+          "implementation": "0x522896f5bF3DF26eAA8399D8f7D64a4826930496",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "InterchainGovernance": {
+          "address": "0xE5bE9A8720f05eDf653617737293f44D5b65483A",
+          "minimumTimeDelay": 300,
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create3",
+          "codehash": "0x0e8f60bfb77b8954fd67d24fbcf0c3b4dd3731f85ca91e877452895452d25f5a",
+          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
+          "salt": "InterchainGovernance v5.5"
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x15837c1318AB83d99b19392Fd4811813f520d843",
+            "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
+            "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
+          ],
+          "address": "0xB4ca0b8EDCAD5a0f8daf37A7529E791E32aE9253",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0xeF2f201d7481c76ad22E860cB3e8A9381E4EB5A5",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        }
       }
     }
   },
