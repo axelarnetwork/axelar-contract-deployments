@@ -1,5 +1,6 @@
 const { execSync } = require('child_process');
 const { writeFileSync } = require('fs');
+const { verify } = require('./sourcify');
 
 /**
  * Verifies a contract on etherscan-like explorer of the provided chain using hardhat.
@@ -12,7 +13,7 @@ const { writeFileSync } = require('fs');
  * @param {any[]} args
  * @returns {void}
  */
-const verifyContract = (env, chain, contract, args, options = {}) => {
+const verifyContract = async (env, chain, contract, args, options = {}) => {
     const stringArgs = args.map((arg) => JSON.stringify(arg));
     const content = `module.exports = [\n    ${stringArgs.join(',\n    ')}\n];`;
     const file = 'temp-arguments.js';
@@ -28,6 +29,8 @@ const verifyContract = (env, chain, contract, args, options = {}) => {
     console.log(cmd);
 
     execSync(cmd, { stdio: 'inherit' });
+
+    await verify(options.dir, options.provider, contract, options.chainId.toString());
 
     console.log('Verified!');
 };
