@@ -9,6 +9,7 @@ use connection_router::Message as AxelarMessage;
 use gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use gateway::events::GatewayEvent;
 use gateway::find_root_pda;
+use gateway::types::bimap::OperatorsAndEpochs;
 use gateway::types::execute_data_decoder::DecodedMessage;
 use solana_program::hash::hash;
 use solana_program::pubkey::Pubkey;
@@ -174,7 +175,8 @@ async fn test_call_contract_instruction() -> Result<()> {
 #[tokio::test]
 async fn initialize_config() -> Result<()> {
     let (mut banks_client, payer, _recent_blockhash) = program_test().start().await;
-    let gateway_config = GatewayConfig::new(1);
+    // TODO: try testing this without an empty operator set.
+    let gateway_config = GatewayConfig::new(1, OperatorsAndEpochs::default());
     accounts::initialize_config_account(&mut banks_client, &payer, &gateway_config).await
 }
 
@@ -260,7 +262,9 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
     );
 
     // Provision the test program with a Config account
-    let config = GatewayConfig::new(1);
+    // TODO: the final version of the `execute` instruction won't work with an empty
+    // operator set.
+    let config = GatewayConfig::new(1, OperatorsAndEpochs::default());
     let config_bytes = borsh::to_vec(&config)?;
     let config_base64 = STANDARD.encode(&config_bytes);
     let (config_pda, _bump) = find_root_pda();

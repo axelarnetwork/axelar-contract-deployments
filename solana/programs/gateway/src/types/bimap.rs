@@ -19,15 +19,12 @@ pub enum OperatorsAndEpochsError {
 }
 
 /// Biject map that associates the hash of an operator set with an epoch.
-#[derive(Clone, Debug, Default, PartialEq)]
-struct OperatorsAndEpochs(bimap::BiBTreeMap<OperatorsHash, Epoch>);
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct OperatorsAndEpochs(bimap::BiBTreeMap<OperatorsHash, Epoch>);
 
 impl OperatorsAndEpochs {
     /// Updates the epoch and operators in the state.
-    pub fn update_epoch_and_operators(
-        &mut self,
-        operators_hash: OperatorsHash,
-    ) -> Result<(), OperatorsAndEpochsError> {
+    pub fn update(&mut self, operators_hash: OperatorsHash) -> Result<(), OperatorsAndEpochsError> {
         // We add one so this epoch number matches with the value returned from
         // `Self::current_epoch`
         let epoch = self.0.len() as u128 + 1;
@@ -102,9 +99,7 @@ mod tests {
     fn test_adding_new_operators() {
         let mut operators_and_epochs = OperatorsAndEpochs::default();
         let operators_hash = [0u8; 32];
-        assert!(operators_and_epochs
-            .update_epoch_and_operators(operators_hash)
-            .is_ok());
+        assert!(operators_and_epochs.update(operators_hash).is_ok());
         assert_eq!(operators_and_epochs.current_epoch(), U256::ONE);
     }
 
@@ -112,11 +107,9 @@ mod tests {
     fn test_adding_duplicate_operators() {
         let mut operators_and_epochs = OperatorsAndEpochs::default();
         let operators_hash = [0u8; 32];
-        operators_and_epochs
-            .update_epoch_and_operators(operators_hash)
-            .unwrap();
+        operators_and_epochs.update(operators_hash).unwrap();
         assert_eq!(
-            operators_and_epochs.update_epoch_and_operators(operators_hash),
+            operators_and_epochs.update(operators_hash),
             Err(OperatorsAndEpochsError::DuplicateOperators)
         );
     }
@@ -125,9 +118,7 @@ mod tests {
     fn test_epoch_for_existing_operator_hash() {
         let mut operators_and_epochs = OperatorsAndEpochs::default();
         let operators_hash = [0u8; 32];
-        operators_and_epochs
-            .update_epoch_and_operators(operators_hash)
-            .unwrap();
+        operators_and_epochs.update(operators_hash).unwrap();
         assert_eq!(
             operators_and_epochs.epoch_for_operator_hash(&operators_hash),
             Some(&U256::ONE)
