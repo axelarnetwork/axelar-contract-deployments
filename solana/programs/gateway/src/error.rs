@@ -1,6 +1,5 @@
 //! Error types
 
-use auth_weighted::error::AuthWeightedError;
 use num_derive::FromPrimitive;
 use solana_program::program_error::ProgramError;
 use thiserror::Error;
@@ -29,9 +28,9 @@ pub enum GatewayError {
     #[error("Account already initialized")]
     AccountAlreadyInitialized,
     // 5
-    /// Invalid operators
-    #[error("Invalid operators")]
-    InvalidOperators,
+    /// The presented operator set was empty.
+    #[error("Operator array cannot be empty")]
+    EmptyOperators,
 
     /// Used for attempts to update the GatewayConfig with an already existing
     /// operator set.
@@ -135,50 +134,10 @@ pub enum GatewayError {
     /// Thresold was presented as zero, which is an invalid value.
     #[error("Threshold cannot be equal to zero")]
     ZeroThreshold,
-
-    /// The presented operator set was empty.
-    #[error("Operator array cannot be empty")]
-    EmptyOperators,
 }
 
 impl From<GatewayError> for ProgramError {
     fn from(e: GatewayError) -> Self {
         ProgramError::Custom(e as u32)
-    }
-}
-
-/// TODO: Once we merge `auth-weighted` types into this crate, most of their
-/// error variants should be removed as well.
-impl From<AuthWeightedError> for GatewayError {
-    fn from(error: AuthWeightedError) -> Self {
-        use AuthWeightedError::*;
-        match error {
-            DuplicateOperators => GatewayError::DuplicateOperators,
-            LowSignaturesWeight => GatewayError::LowSignaturesWeight,
-            InvalidInstruction => GatewayError::InvalidInstruction,
-            InvalidProgramID => GatewayError::InvalidProgramID,
-            MalformedProof => GatewayError::MalformedProof,
-            MalformedState => GatewayError::MalformedState,
-            MalformedTransferOperatorshipParams => {
-                GatewayError::MalformedTransferOperatorshipParams
-            }
-            EpochForHashNotFound => GatewayError::EpochForHashNotFound,
-            EpochMissmatch => GatewayError::EpochMissmatch,
-            Secp256k1RecoveryFailedInvalidSignature => {
-                GatewayError::Secp256k1RecoveryFailedInvalidSignature
-            }
-            Secp256k1RecoveryFailedInvalidRecoveryId => {
-                GatewayError::Secp256k1RecoveryFailedInvalidRecoveryId
-            }
-            Secp256k1RecoveryFailedInvalidHash => GatewayError::Secp256k1RecoveryFailedInvalidHash,
-            ArithmeticOverflow => GatewayError::ArithmeticOverflow,
-            Secp256k1RecoveryFailed => GatewayError::Secp256k1RecoveryFailed,
-            Secp256k1InvalidSignature => GatewayError::Secp256k1InvalidSignature,
-            AllSignersInvalid => GatewayError::AllSignersInvalid,
-            OperatorsExhausted => GatewayError::OperatorsExhausted,
-
-            // soon to be removed entirely:
-            InvalidOperators | InvalidWeights | InvalidThreshold => todo!("remove those errors"),
-        }
     }
 }

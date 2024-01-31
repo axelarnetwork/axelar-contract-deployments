@@ -1,7 +1,6 @@
 //! Operator types.
 
-use auth_weighted::error::AuthWeightedError;
-use borsh::{to_vec, BorshDeserialize, BorshSerialize};
+use borsh::{BorshDeserialize, BorshSerialize};
 
 use crate::types::address::Address;
 use crate::types::u256::U256;
@@ -20,7 +19,7 @@ pub struct Operators {
     threshold: U256,
 }
 
-impl<'a> Operators {
+impl Operators {
     /// Constructor for [Operators].
     pub fn new(addresses: Vec<Address>, weights: Vec<U256>, threshold: U256) -> Self {
         Self {
@@ -29,31 +28,12 @@ impl<'a> Operators {
             threshold,
         }
     }
-
-    /// Deserialize [Operators].
-    pub fn unpack(input: &'a [u8]) -> Result<Self, AuthWeightedError> {
-        match Self::try_from_slice(input) {
-            Ok(v) => Ok(v),
-            Err(_) => Err(AuthWeightedError::InvalidOperators),
-        }
-    }
-
-    /// Serialize [Operators].
-    pub fn pack(&self) -> Vec<u8> {
-        // It is safe to unwrap here, as to_vec doesn't return Error.
-        to_vec(&self).unwrap()
-    }
 }
 
 impl Operators {
     /// Returns threshold.
     pub fn weights(&self) -> &[U256] {
         &self.weights
-    }
-
-    /// Returns weight from index.
-    pub fn weight_by_index(&self, index: usize) -> &U256 {
-        &self.weights[index]
     }
 
     /// Returns threshold.
@@ -64,22 +44,5 @@ impl Operators {
     ///  Returns addresses.
     pub fn addresses(&self) -> &[Address] {
         &self.addresses
-    }
-
-    ///  Returns address from index.
-    pub fn address_by_index(&self, index: usize) -> &Address {
-        &self.addresses[index]
-    }
-}
-
-impl Operators {
-    /// Returns length of [addresses] vector.
-    pub fn addresses_len(&self) -> usize {
-        self.addresses.len()
-    }
-
-    /// Returns weight lenght.
-    pub fn weights_len(&self) -> usize {
-        self.weights.len()
     }
 }
