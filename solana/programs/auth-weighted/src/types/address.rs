@@ -23,7 +23,7 @@ pub enum AddressError {
 }
 
 /// [Address] represents ECDSA public key.
-#[derive(BorshSerialize, BorshDeserialize, Clone, PartialEq, Debug)]
+#[derive(BorshSerialize, BorshDeserialize, Clone, PartialEq, Debug, PartialOrd)]
 pub struct Address(Vec<u8>);
 
 impl AsRef<[u8]> for Address {
@@ -32,27 +32,9 @@ impl AsRef<[u8]> for Address {
     }
 }
 
-impl PartialEq<[u8; 64]> for Address {
-    fn eq(&self, other: &[u8; 64]) -> bool {
-        self.0.iter().zip(other.iter()).all(|(a, b)| a == b)
-    }
-}
-
-impl PartialEq<[u8; 32]> for Address {
-    fn eq(&self, other: &[u8; 32]) -> bool {
-        self.0.iter().zip(other.iter()).all(|(a, b)| a == b)
-    }
-}
-
 impl PartialEq<[u8]> for Address {
     fn eq(&self, other: &[u8]) -> bool {
         self.0 == other
-    }
-}
-
-impl PartialOrd for Address {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.0.cmp(&other.0))
     }
 }
 

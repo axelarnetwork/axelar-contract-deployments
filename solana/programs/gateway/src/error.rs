@@ -28,21 +28,14 @@ pub enum GatewayError {
     /// Account already initialized
     #[error("Account already initialized")]
     AccountAlreadyInitialized,
-
     // 5
     /// Invalid operators
     #[error("Invalid operators")]
     InvalidOperators,
 
-    /// Invalid weights
-    #[error("Invalid weights")]
-    InvalidWeights,
-
-    /// Invalid threshold
-    #[error("Invalid threshold")]
-    InvalidThreshold,
-
-    /// DuplicateOperators
+    /// Used for attempts to update the GatewayConfig with an already existing
+    /// operator set.
+    // TODO: use a more specific error name.
     #[error("duplicate operators")]
     DuplicateOperators,
 
@@ -50,7 +43,6 @@ pub enum GatewayError {
     #[error("low signature weight")]
     LowSignaturesWeight,
 
-    // 10
     /// InvalidProgramID
     #[error("invalid program id")]
     InvalidProgramID,
@@ -58,7 +50,7 @@ pub enum GatewayError {
     /// MalformedProof
     #[error("malformed proof body")]
     MalformedProof,
-
+    // 10
     /// MalformedState
     #[error("malformed state body")]
     MalformedState,
@@ -71,7 +63,6 @@ pub enum GatewayError {
     #[error("could not find requested key")]
     EpochForHashNotFound,
 
-    // 15
     /// https://docs.rs/solana-program/latest/solana_program/secp256k1_recover/fn.secp256k1_recover.html#errors
     #[error("could not recover public key due to invalid signature")]
     Secp256k1RecoveryFailedInvalidSignature,
@@ -79,7 +70,7 @@ pub enum GatewayError {
     /// Secp256k1RecoveryFailedInvalidRecoveryId
     #[error("could not recover public key due to invalid recovery id")]
     Secp256k1RecoveryFailedInvalidRecoveryId,
-
+    // 15
     /// Secp256k1RecoveryFailedInvalidHash
     #[error("could not recover public key due to invalid hash")]
     Secp256k1RecoveryFailedInvalidHash,
@@ -92,7 +83,6 @@ pub enum GatewayError {
     #[error("Invalid Gateway Config account")]
     InvalidConfigAccount,
 
-    // 20
     /// Invalid System Program account
     #[error("Invalid System Program account")]
     InvalidSystemAccount,
@@ -100,7 +90,7 @@ pub enum GatewayError {
     /// Invalid Execute Data account
     #[error("Invalid Execute Data account")]
     InvalidExecuteDataAccount,
-
+    // 20
     /// Invalid Approved Message account
     #[error("Invalid Approved Message account")]
     InvalidApprovedMessageAccount,
@@ -113,7 +103,6 @@ pub enum GatewayError {
     #[error("Program arithmetic overflowed")]
     ArithmeticOverflow,
 
-    // 25
     /// Operator set epoch is different than the current epoch
     #[error("Operator set epoch is different than the current epoch.")]
     EpochMissmatch,
@@ -121,7 +110,7 @@ pub enum GatewayError {
     /// Failed to decode a valid signature
     #[error("Failed to deserialize signature")]
     Secp256k1InvalidSignature,
-
+    // 25
     /// Failed to recover public key from message hash and recovery id
     #[error("Failed to recover public key from message hash and recovery id")]
     Secp256k1RecoveryFailed,
@@ -133,7 +122,23 @@ pub enum GatewayError {
     /// Operator list was exhausted during proof validation
     #[error("Operator list was exhausted during proof validation")]
     OperatorsExhausted,
+
+    /// The sum of operator weights was smaller than the required threshold.
+    #[error("Insufficient operator weight to resolve operatorship transfer")]
+    InsufficientOperatorWeight,
+
+    /// Proposed operator array was either unordered or contained duplicate
+    /// entries.
+    #[error("Operators array must be sorted (asc) and unique")]
+    UnorderedOrDuplicateOperators,
     // 30
+    /// Thresold was presented as zero, which is an invalid value.
+    #[error("Threshold cannot be equal to zero")]
+    ZeroThreshold,
+
+    /// The presented operator set was empty.
+    #[error("Operator array cannot be empty")]
+    EmptyOperators,
 }
 
 impl From<GatewayError> for ProgramError {
@@ -148,9 +153,6 @@ impl From<AuthWeightedError> for GatewayError {
     fn from(error: AuthWeightedError) -> Self {
         use AuthWeightedError::*;
         match error {
-            InvalidOperators => GatewayError::InvalidOperators,
-            InvalidWeights => GatewayError::InvalidWeights,
-            InvalidThreshold => GatewayError::InvalidThreshold,
             DuplicateOperators => GatewayError::DuplicateOperators,
             LowSignaturesWeight => GatewayError::LowSignaturesWeight,
             InvalidInstruction => GatewayError::InvalidInstruction,
@@ -174,6 +176,9 @@ impl From<AuthWeightedError> for GatewayError {
             Secp256k1InvalidSignature => GatewayError::Secp256k1InvalidSignature,
             AllSignersInvalid => GatewayError::AllSignersInvalid,
             OperatorsExhausted => GatewayError::OperatorsExhausted,
+
+            // soon to be removed entirely:
+            InvalidOperators | InvalidWeights | InvalidThreshold => todo!("remove those errors"),
         }
     }
 }

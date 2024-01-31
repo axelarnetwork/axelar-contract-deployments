@@ -85,3 +85,11 @@ pub struct MessageID;
 impl DiscriminatorTrait for MessageID {
     const DISCRIMINATOR: &'static [u8; 8] = b"GwMsgId1";
 }
+
+/// `TransferOperatorship` discriminator type
+#[derive(BorshSerialize, Debug, PartialEq, Eq, Clone)]
+pub struct TransferOperatorship;
+
+impl DiscriminatorTrait for TransferOperatorship {
+    const DISCRIMINATOR: &'static [u8; 8] = b"GwTrnOps";
+}

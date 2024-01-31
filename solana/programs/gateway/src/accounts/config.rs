@@ -1,7 +1,12 @@
 //! Module for the `GatewayConfig` account type.
 
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::program::invoke;
+use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::rent::Rent;
+use solana_program::system_instruction;
+use solana_program::sysvar::Sysvar;
 
 use crate::accounts::discriminator::{Config, Discriminator};
 use crate::types::bimap::OperatorsAndEpochs;
@@ -10,14 +15,14 @@ use crate::types::bimap::OperatorsAndEpochs;
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
 #[repr(C)]
 pub struct GatewayConfig {
-    /// TODO: Change this data type to include the Operators sets
     discriminator: Discriminator<Config>,
     version: u8,
-    operators_and_epochs: OperatorsAndEpochs,
+    /// The current set of registered operators hashes and their epochs.
+    pub operators_and_epochs: OperatorsAndEpochs,
 }
 
 impl GatewayConfig {
-    /// Creates a new
+    /// Creates a new `GatewayConfig` value.
     pub fn new(version: u8, operators_and_epochs: OperatorsAndEpochs) -> Self {
         Self {
             discriminator: Discriminator::new(),
@@ -29,6 +34,41 @@ impl GatewayConfig {
     /// Returns the Pubkey and canonical bump for this account.
     pub fn pda() -> (Pubkey, u8) {
         crate::find_root_pda()
+    }
+
+    /// Reallocate space to store the `GatewayConfig` data.
+    #[inline]
+    pub fn reallocate<'a>(
+        &self,
+        config_account: &solana_program::account_info::AccountInfo<'a>,
+        payer_account: &solana_program::account_info::AccountInfo<'a>,
+        system_account: &solana_program::account_info::AccountInfo<'a>,
+    ) -> Result<(), ProgramError> {
+        let data = borsh::to_vec(self)?;
+        let size = data.len();
+        let new_minimum_balance = Rent::get()?.minimum_balance(size);
+        let lamports_diff = new_minimum_balance.saturating_sub(config_account.lamports());
+        invoke(
+            &system_instruction::transfer(payer_account.key, config_account.key, lamports_diff),
+            &[
+                payer_account.clone(),
+                config_account.clone(),
+                system_account.clone(),
+            ],
+        )?;
+        config_account.realloc(size, false)?;
+        config_account.try_borrow_mut_data()?[..size].copy_from_slice(&data);
+        Ok(())
+    }
+}
+
+impl Default for GatewayConfig {
+    fn default() -> Self {
+        Self {
+            discriminator: Discriminator::new(),
+            version: 0,
+            operators_and_epochs: OperatorsAndEpochs::default(),
+        }
     }
 }
 

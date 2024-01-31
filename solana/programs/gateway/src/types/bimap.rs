@@ -4,8 +4,10 @@ use bimap::BiBTreeMap;
 use borsh::io::Error;
 use borsh::io::ErrorKind::{Interrupted, InvalidData};
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::msg;
 use thiserror::Error;
 
+use crate::error::GatewayError;
 use crate::types::u256::U256;
 
 type OperatorsHash = [u8; 32];
@@ -19,12 +21,23 @@ pub enum OperatorsAndEpochsError {
     DuplicateOperators,
 }
 
+impl From<OperatorsAndEpochsError> for GatewayError {
+    fn from(error: OperatorsAndEpochsError) -> Self {
+        use OperatorsAndEpochsError::*;
+        msg!("Transfer Operatorship Error: {}", error);
+        match error {
+            DuplicateOperators => GatewayError::DuplicateOperators,
+        }
+    }
+}
+
 /// Biject map that associates the hash of an operator set with an epoch.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct OperatorsAndEpochs(bimap::BiBTreeMap<OperatorsHash, Epoch>);
 
 impl OperatorsAndEpochs {
     /// Updates the epoch and operators in the state.
+    // TODO: Remove entries from older epochs, as we just need to keep the last 16.
     pub fn update(&mut self, operators_hash: OperatorsHash) -> Result<(), OperatorsAndEpochsError> {
         // We add one so this epoch number matches with the value returned from
         // `Self::current_epoch`

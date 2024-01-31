@@ -1,11 +1,8 @@
 //! Program state processor.
 
-use auth_weighted::types::account::state::AuthWeightedStateAccount;
-use auth_weighted::types::account::transfer_operatorship::TransferOperatorshipAccount;
 use borsh::from_slice;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::keccak::hash;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -13,6 +10,7 @@ use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_instruction, system_program};
 
+use crate::accounts::transfer_operatorship::TransferOperatorshipAccount;
 use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use crate::check_program_account;
 use crate::error::GatewayError;
@@ -310,12 +308,23 @@ impl Processor {
         let accounts_iter = &mut accounts.iter();
         let payer_account = next_account_info(accounts_iter)?;
         let new_operators_account = next_account_info(accounts_iter)?;
-        let state_account = next_account_info(accounts_iter)?;
+        let gateway_config_account = next_account_info(accounts_iter)?;
         let system_account = next_account_info(accounts_iter)?;
 
-        // Check: state info account is the canonical PDA.
+        // Check: Config account is the canonical PDA.
         let (expected_pda_info, _bump) = crate::find_root_pda();
-        helper::compare_address(state_account, expected_pda_info)?;
+        helper::compare_address(gateway_config_account, expected_pda_info)?;
+
+        // Check: Config account is owned by the Gateway program.
+        if *gateway_config_account.owner != crate::ID {
+            return Err(ProgramError::InvalidAccountOwner);
+        }
+
+        // Check: New operators account is owned by the Gateway program.
+        if *new_operators_account.owner != crate::ID {
+            return Err(ProgramError::InvalidAccountOwner);
+        }
+
         // Unpack the data from the new operators account.
         let new_operators_bytes: &[u8] = &new_operators_account.data.borrow();
         let new_operators =
@@ -325,25 +334,26 @@ impl Processor {
         new_operators.validate().map_err(GatewayError::from)?;
 
         // Hash the new operator set.
-        let new_operators_hash = hash(new_operators_bytes).to_bytes();
+        let new_operators_hash = new_operators.hash();
 
-        // Unpack state data.
-        let mut state: AuthWeightedStateAccount = {
-            let state_bytes_ref = state_account.try_borrow_mut_data()?;
+        // Unpack Gateway configuration data.
+        let mut config: GatewayConfig = {
+            let state_bytes_ref = gateway_config_account.try_borrow_mut_data()?;
             borsh::de::from_slice(&state_bytes_ref)?
         };
 
         // Update epoch and operators.
-        state
-            .update_epoch_and_operators(new_operators_hash)
+        config
+            .operators_and_epochs
+            .update(new_operators_hash)
             .map_err(GatewayError::from)?;
 
         // Resize and refund state account space.
-        state.reallocate(state_account, payer_account, system_account)?;
+        config.reallocate(gateway_config_account, payer_account, system_account)?;
 
         // Write the packed data back to the state account.
-        let serialized_state = borsh::to_vec(&state)?;
-        let mut state_data_ref = state_account.try_borrow_mut_data()?;
+        let serialized_state = borsh::to_vec(&config)?;
+        let mut state_data_ref = gateway_config_account.try_borrow_mut_data()?;
         state_data_ref[..serialized_state.len()].copy_from_slice(&serialized_state);
 
         // Emit an event to signal the successful operatorship transfer

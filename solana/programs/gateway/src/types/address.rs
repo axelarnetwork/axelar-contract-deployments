@@ -1,5 +1,5 @@
 //! Address
-
+// TODO: this whole module could be replaced by a trait on [u8; 33].
 use std::array::TryFromSliceError;
 
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -23,24 +23,12 @@ pub enum AddressError {
 }
 
 /// Represents an ECDSA public key.
-#[derive(BorshSerialize, BorshDeserialize, Clone, PartialEq, Debug)]
+#[derive(BorshSerialize, BorshDeserialize, Clone, PartialEq, Debug, PartialOrd)]
 pub struct Address(Vec<u8>);
 
 impl AsRef<[u8]> for Address {
     fn as_ref(&self) -> &[u8] {
         &self.0
-    }
-}
-
-impl PartialEq<[u8; 64]> for Address {
-    fn eq(&self, other: &[u8; 64]) -> bool {
-        self.0.iter().zip(other.iter()).all(|(a, b)| a == b)
-    }
-}
-
-impl PartialEq<[u8; 32]> for Address {
-    fn eq(&self, other: &[u8; 32]) -> bool {
-        self.0.iter().zip(other.iter()).all(|(a, b)| a == b)
     }
 }
 
@@ -50,17 +38,23 @@ impl PartialEq<[u8]> for Address {
     }
 }
 
-impl PartialOrd for Address {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.0.cmp(&other.0))
-    }
-}
-
 impl TryFrom<&str> for Address {
     type Error = AddressError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         hex::decode(value)?.try_into()
+    }
+}
+
+impl TryFrom<&[u8]> for Address {
+    type Error = AddressError;
+
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        if bytes.len() != Self::ECDSA_COMPRESSED_PUBKEY_LEN {
+            Err(AddressError::InvalidLength(bytes.len()))
+        } else {
+            Ok(Self(bytes.to_vec()))
+        }
     }
 }
 
