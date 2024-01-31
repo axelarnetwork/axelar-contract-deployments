@@ -101,7 +101,7 @@ async function deploy(config, options) {
     } else {
         printInfo(`Deploying auth contract`);
 
-        const params = await getAuthParams(config, chain.id);
+        const params = await getAuthParams(config, chain.axelarId);
         printInfo('Auth deployment args', params);
 
         auth = await authFactory.deploy(params, gasOptions);
