@@ -12,7 +12,6 @@ no-entrypoint = []
 test-sbf = []
 
 [dependencies]
-auth-weighted = { workspace = true, features = ["no-entrypoint"] }
 base64.workspace = true
 bcs.workspace = true
 bimap = { version = "0.6.3", default-features = false }

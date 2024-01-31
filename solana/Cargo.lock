@@ -1959,7 +1959,6 @@ name = "gateway"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "auth-weighted",
  "base64 0.21.7",
  "bcs",
  "bimap",
