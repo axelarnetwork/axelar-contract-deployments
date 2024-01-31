@@ -20,6 +20,7 @@ bnum.workspace = true
 borsh.workspace = true
 connection-router.workspace = true
 cosmwasm-std.workspace = true
+hex.workspace = true
 itertools.workspace = true
 multisig-prover.workspace = true
 multisig.workspace = true
@@ -32,7 +33,6 @@ thiserror.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true
-hex.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
 test-fixtures.workspace = true

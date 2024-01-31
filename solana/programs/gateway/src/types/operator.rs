@@ -1,9 +1,9 @@
 //! Operator types.
 
 use auth_weighted::error::AuthWeightedError;
-use auth_weighted::types::address::Address;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 
+use crate::types::address::Address;
 use crate::types::u256::U256;
 
 /// [Operators] consist of public keys of signers, weights (bond) and desired
