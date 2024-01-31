@@ -31,8 +31,8 @@ impl Proof {
         &self.signatures
     }
 
-    /// Generate hash of [Operators].
-    pub fn get_operators_hash(&self) -> [u8; 32] {
+    /// The operator set hash for this proof.
+    pub fn operators_hash(&self) -> [u8; 32] {
         self.operators.hash()
     }
 
