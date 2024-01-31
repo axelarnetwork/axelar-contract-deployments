@@ -1,6 +1,5 @@
 //! Module for the `execute_bytes` decoder function.
 
-use auth_weighted::types::signature::Signature;
 use itertools::izip;
 use multisig_prover::encoding::Data;
 use multisig_prover::types::{Command, CommandType};
@@ -11,6 +10,7 @@ use crate::error::GatewayError;
 use crate::types::address::Address;
 use crate::types::operator::Operators;
 use crate::types::proof::Proof;
+use crate::types::signature::Signature;
 use crate::types::u256::U256;
 
 type DecodedCommandBatchParts = (u64, Vec<[u8; 32]>, Vec<String>, Vec<Vec<u8>>);

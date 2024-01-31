@@ -1,11 +1,11 @@
 //! Proof types.
 
-use auth_weighted::types::signature::Signature;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::keccak;
 
 use crate::error::GatewayError;
 use crate::types::operator::Operators;
+use crate::types::signature::Signature;
 use crate::types::u256::U256;
 
 /// [Proof] represents the Prover produced proof.

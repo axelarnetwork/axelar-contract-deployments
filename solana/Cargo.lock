@@ -1969,6 +1969,7 @@ dependencies = [
  "cosmwasm-std",
  "hex",
  "itertools 0.12.1",
+ "libsecp256k1 0.7.1",
  "multisig",
  "multisig-prover",
  "num-derive 0.4.1",

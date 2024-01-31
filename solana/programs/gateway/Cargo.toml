@@ -22,6 +22,7 @@ connection-router.workspace = true
 cosmwasm-std.workspace = true
 hex.workspace = true
 itertools.workspace = true
+libsecp256k1.workspace = true
 multisig-prover.workspace = true
 multisig.workspace = true
 num-derive.workspace = true
