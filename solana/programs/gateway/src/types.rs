@@ -16,10 +16,10 @@ use self::address::Address;
 use self::u256::U256;
 
 /// Hashes the inputs for a new operator set.
-pub fn hash_new_operator_set(
-    operators_and_weights: &[(Address, U256)],
-    threshold: U256,
-) -> [u8; 32] {
+pub fn hash_new_operator_set<I>(operators_and_weights: I, threshold: U256) -> [u8; 32]
+where
+    I: Iterator<Item = (Address, U256)>,
+{
     let mut hasher = Hasher::default();
     for (operator, weight) in operators_and_weights {
         hasher.hash(operator.as_ref());

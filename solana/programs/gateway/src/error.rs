@@ -134,6 +134,15 @@ pub enum GatewayError {
     /// Thresold was presented as zero, which is an invalid value.
     #[error("Threshold cannot be equal to zero")]
     ZeroThreshold,
+
+    /// Used if the operator set for an incoming proof has a sufficiently oldn
+    /// epoch.
+    #[error("Operators' epoch is outdated")]
+    OutdatedOperatorsEpoch,
+
+    /// Operators' epoch was set to zero, which is an invalid value.
+    #[error("Operators' epoch cannot be equal to zero")]
+    EpochZero,
 }
 
 impl From<GatewayError> for ProgramError {

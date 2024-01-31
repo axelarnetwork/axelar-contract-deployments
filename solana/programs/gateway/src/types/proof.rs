@@ -1,7 +1,6 @@
 //! Proof types.
 
-use borsh::{to_vec, BorshDeserialize, BorshSerialize};
-use solana_program::keccak;
+use borsh::{BorshDeserialize, BorshSerialize};
 
 use crate::error::GatewayError;
 use crate::types::operator::Operators;
@@ -34,8 +33,7 @@ impl Proof {
 
     /// Generate hash of [Operators].
     pub fn get_operators_hash(&self) -> [u8; 32] {
-        // It is safe to unwrap here, as to_vec doesn't return Error.
-        keccak::hash(&to_vec(&self.operators).unwrap()).to_bytes()
+        self.operators.hash()
     }
 
     /// Perform signatures validation with engagement of secp256k1 recovery
@@ -110,8 +108,8 @@ mod tests {
 
     #[test]
     fn test_proof_roundtrip() -> Result<()> {
-        let address_1 = Address::try_from(vec![1; 33])?;
-        let address_2 = Address::try_from(vec![2; 33])?;
+        let address_1 = Address::from([1; 33]);
+        let address_2 = Address::from([2; 33]);
 
         let weight_1 = U256::from_le_bytes([1u8; 32]);
         let weight_2 = U256::from_le_bytes([2u8; 32]);

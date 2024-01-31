@@ -86,7 +86,7 @@ impl TransferOperatorshipAccount {
 
     /// Returns the internal hash for this type.
     pub fn hash(&self) -> [u8; 32] {
-        hash_new_operator_set(&self.operators_and_weights, self.threshold)
+        hash_new_operator_set(self.operators_and_weights.iter().copied(), self.threshold)
     }
 
     /// Validates transfer operatorship data.

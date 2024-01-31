@@ -235,7 +235,6 @@ async fn execute_with_fixtures() -> Result<()> {
     // - 4 messages and one signer
     for m in 1..4 {
         for s in 1..4 {
-            println!("Messages = {}, Signers = {}", m, s);
             let execute_data = create_execute_data(m, s, 1)?;
             execute(execute_data).await?;
         }

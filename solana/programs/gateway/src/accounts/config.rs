@@ -9,7 +9,11 @@ use solana_program::system_instruction;
 use solana_program::sysvar::Sysvar;
 
 use crate::accounts::discriminator::{Config, Discriminator};
+use crate::accounts::transfer_operatorship::sorted_and_unique;
+use crate::error::GatewayError;
 use crate::types::bimap::OperatorsAndEpochs;
+use crate::types::operator::Operators;
+use crate::types::u256::U256;
 
 /// Gateway configuration type.
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
@@ -58,6 +62,67 @@ impl GatewayConfig {
         )?;
         config_account.realloc(size, false)?;
         config_account.try_borrow_mut_data()?[..size].copy_from_slice(&data);
+        Ok(())
+    }
+
+    /// Validate if the given operator set is registered.
+    pub(crate) fn validate_proof_operators(
+        &self,
+        operators: &Operators,
+    ) -> Result<(), GatewayError> {
+        // Number of recent operator sets to be tracked.
+        const OLD_KEY_RETENTION: u8 = 16;
+
+        // TODO: The following checks are equal to the ones in the transfer operatorship
+        // account. We should encapsulate that logic into a function.
+        // Check: non-empty operator list.
+        if operators.addresses().is_empty() {
+            return Err(GatewayError::EmptyOperators);
+        }
+
+        // Check: threshold is non-zero.
+        if *operators.threshold() == U256::ZERO {
+            return Err(GatewayError::ZeroThreshold);
+        }
+
+        // Check: operator addresses are sorted and are unique.
+        if !sorted_and_unique(operators.addresses().iter()) {
+            return Err(GatewayError::UnorderedOrDuplicateOperators);
+        }
+
+        // Check: sufficient threshold.
+        let total_weight: U256 = operators
+            .weights()
+            .iter()
+            .try_fold(U256::ZERO, |a, &b| a.checked_add(b))
+            .ok_or(GatewayError::ArithmeticOverflow)?;
+        if total_weight < *operators.threshold() {
+            return Err(GatewayError::InsufficientOperatorWeight);
+        }
+
+        // Check: operators are registered
+        let operators_epoch = self
+            .operators_and_epochs
+            .epoch_for_operator_hash(&operators.hash())
+            .ok_or(GatewayError::EpochForHashNotFound)?;
+
+        let current_epoch = self.operators_and_epochs.current_epoch();
+
+        let operator_epoch_is_outdated = current_epoch
+            .checked_sub(*operators_epoch)
+            .ok_or(GatewayError::ArithmeticOverflow)?
+            >= U256::from(OLD_KEY_RETENTION);
+        if operator_epoch_is_outdated {
+            return Err(GatewayError::OutdatedOperatorsEpoch);
+        }
+
+        if *operators_epoch == U256::ZERO {
+            return Err(GatewayError::EpochZero)?;
+        };
+
+        if *operators_epoch != current_epoch {
+            return Err(GatewayError::EpochMissmatch)?;
+        }
         Ok(())
     }
 }

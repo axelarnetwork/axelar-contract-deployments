@@ -143,16 +143,18 @@ async fn test_transfer_operatorship_duplicate_ops() -> Result<()> {
     let params_account = Keypair::new().pubkey();
     let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
-    let duplicated_operator: Address = bytes(33).try_into()?;
+    let duplicated_operator: Address = bytes(33).as_slice().try_into()?;
     let proposed_operator_and_weights = vec![
-        (duplicated_operator.clone(), 200u8.into()),
+        (duplicated_operator, 200u8.into()),
         (duplicated_operator, 15u8.into()),
     ];
     let will_be_there =
         TransferOperatorshipAccount::new(proposed_operator_and_weights, 100u8.into());
 
-    let is_already_there =
-        TransferOperatorshipAccount::new(vec![(bytes(33).try_into()?, 100u8.into())], 10u8.into());
+    let is_already_there = TransferOperatorshipAccount::new(
+        vec![(bytes(33).as_slice().try_into()?, 100u8.into())],
+        10u8.into(),
+    );
 
     let params_account_b64 = general_purpose::STANDARD.encode(borsh::to_vec(&will_be_there)?);
 
@@ -213,11 +215,13 @@ async fn test_transfer_operatorship_zero_threshold() -> Result<()> {
     let params_account = Keypair::new().pubkey();
     let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
-    let operator_with_invalid_weight = vec![(bytes(33).try_into()?, 150u8.into())];
+    let operator_with_invalid_weight = vec![(bytes(33).as_slice().try_into()?, 150u8.into())];
     let will_be_there = TransferOperatorshipAccount::new(operator_with_invalid_weight, 0u8.into());
 
-    let is_already_there =
-        TransferOperatorshipAccount::new(vec![(bytes(33).try_into()?, 100u8.into())], 10u8.into());
+    let is_already_there = TransferOperatorshipAccount::new(
+        vec![(bytes(33).as_slice().try_into()?, 100u8.into())],
+        10u8.into(),
+    );
 
     let params_account_b64 = general_purpose::STANDARD.encode(borsh::to_vec(&will_be_there)?);
 

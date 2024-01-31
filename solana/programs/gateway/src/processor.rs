@@ -133,7 +133,17 @@ impl Processor {
             return Err(GatewayError::MalformedProof)?;
         };
 
+        // Check: proof is valid, internally.
         proof.validate(&command_batch.hash)?;
+
+        // Unpack Gateway configuration data.
+        let gateway_config: GatewayConfig = {
+            let gateway_account_bytes = gateway_config_account.try_borrow_mut_data()?;
+            borsh::de::from_slice(&gateway_account_bytes)?
+        };
+
+        // Check: proof operators are known.
+        gateway_config.validate_proof_operators(&proof.operators)?;
 
         // Phase 3: Update approved message accounts
 

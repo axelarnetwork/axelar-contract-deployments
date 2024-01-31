@@ -2,6 +2,7 @@
 
 use borsh::{BorshDeserialize, BorshSerialize};
 
+use super::hash_new_operator_set;
 use crate::types::address::Address;
 use crate::types::u256::U256;
 
@@ -27,6 +28,16 @@ impl Operators {
             weights,
             threshold,
         }
+    }
+
+    /// Returns the hash for this operator set.
+    pub fn hash(&self) -> [u8; 32] {
+        let iter = self
+            .addresses
+            .iter()
+            .copied()
+            .zip(self.weights.iter().copied());
+        hash_new_operator_set(iter, self.threshold)
     }
 }
 
