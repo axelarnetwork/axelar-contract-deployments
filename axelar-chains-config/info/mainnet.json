@@ -3,6 +3,7 @@
     "ethereum": {
       "name": "Ethereum",
       "id": "Ethereum",
+      "axelarId": "Ethereum",
       "chainId": 1,
       "rpc": "https://mainnet.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
       "tokenSymbol": "ETH",
@@ -122,6 +123,7 @@
     "avalanche": {
       "name": "Avalanche",
       "id": "Avalanche",
+      "axelarId": "Avalanche",
       "chainId": 43114,
       "rpc": "https://api.avax.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
@@ -237,6 +239,7 @@
     "fantom": {
       "name": "Fantom",
       "id": "Fantom",
+      "axelarId": "Fantom",
       "chainId": 250,
       "rpc": "https://rpc.ftm.tools",
       "tokenSymbol": "FTM",
@@ -356,6 +359,7 @@
     "polygon": {
       "name": "Polygon",
       "id": "Polygon",
+      "axelarId": "Polygon",
       "chainId": 137,
       "rpc": "https://polygon-rpc.com",
       "tokenSymbol": "MATIC",
@@ -474,6 +478,7 @@
     "moonbeam": {
       "name": "Moonbeam",
       "id": "Moonbeam",
+      "axelarId": "Moonbeam",
       "chainId": 1284,
       "rpc": "https://rpc.api.moonbeam.network",
       "tokenSymbol": "GLMR",
@@ -589,6 +594,7 @@
     "binance": {
       "name": "Binance",
       "id": "binance",
+      "axelarId": "binance",
       "chainId": 56,
       "rpc": "https://1rpc.io/bnb",
       "tokenSymbol": "BNB",
@@ -709,6 +715,7 @@
     "arbitrum": {
       "name": "Arbitrum",
       "id": "arbitrum",
+      "axelarId": "arbitrum",
       "chainId": 42161,
       "rpc": "https://arb1.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
@@ -825,6 +832,7 @@
     "celo": {
       "name": "Celo",
       "id": "celo",
+      "axelarId": "celo",
       "chainId": 42220,
       "rpc": "https://forno.celo.org",
       "tokenSymbol": "CELO",
@@ -942,6 +950,7 @@
     "kava": {
       "name": "Kava",
       "id": "kava",
+      "axelarId": "kava",
       "chainId": 2222,
       "rpc": "https://evm.kava.io",
       "tokenSymbol": "KAVA",
@@ -1057,6 +1066,7 @@
     "filecoin": {
       "name": "Filecoin",
       "id": "filecoin",
+      "axelarId": "filecoin",
       "chainId": 314,
       "rpc": "https://rpc.ankr.com/filecoin",
       "tokenSymbol": "FIL",
@@ -1176,6 +1186,7 @@
     "optimism": {
       "name": "Optimism",
       "id": "optimism",
+      "axelarId": "optimism",
       "chainId": 10,
       "rpc": "https://optimism-mainnet.public.blastapi.io",
       "tokenSymbol": "ETH",
@@ -1295,6 +1306,7 @@
     "linea": {
       "name": "Linea",
       "id": "linea",
+      "axelarId": "linea",
       "chainId": 59144,
       "rpc": "https://rpc.linea.build",
       "tokenSymbol": "ETH",
@@ -1414,6 +1426,7 @@
     "base": {
       "name": "Base",
       "id": "base",
+      "axelarId": "base",
       "chainId": 8453,
       "rpc": "https://developer-access-mainnet.base.org",
       "tokenSymbol": "ETH",
@@ -1530,6 +1543,7 @@
     "mantle": {
       "name": "Mantle",
       "id": "mantle",
+      "axelarId": "mantle",
       "chainId": 5000,
       "rpc": "https://rpc.mantle.xyz",
       "tokenSymbol": "MNT",
@@ -1650,6 +1664,7 @@
     "scroll": {
       "name": "Scroll",
       "id": "scroll",
+      "axelarId": "scroll",
       "chainId": 534352,
       "rpc": "https://rpc.scroll.io",
       "tokenSymbol": "ETH",
@@ -1763,6 +1778,7 @@
     "centrifuge": {
       "name": "Centrifuge",
       "id": "centrifuge",
+      "axelarId": "centrifuge",
       "chainId": 2031,
       "rpc": "https://fullnode.parachain.centrifuge.io",
       "tokenSymbol": "CFG",
@@ -1859,6 +1875,7 @@
     "immutable": {
       "name": "Immutable",
       "id": "immutable",
+      "axelarId": "immutable",
       "chainId": 13371,
       "rpc": "https://rpc.immutable.com/",
       "tokenSymbol": "IMX",
@@ -1934,6 +1951,7 @@
   },
   "axelar": {
     "id": "Axelarnet",
+    "axelarId": "Axelarnet",
     "rpc": "https://rpc-axelar.imperator.co:443",
     "lcd": "https://lcd-axelar.imperator.co:443",
     "grpc": "grpc-axelar.imperator.co:2062",
