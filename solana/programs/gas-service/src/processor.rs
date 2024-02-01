@@ -17,7 +17,7 @@ use crate::error::GasServiceError;
 use crate::events::emit_refunded_event;
 use crate::instruction::GasServiceInstruction;
 use crate::solana_program::system_instruction;
-use crate::{events, find_root_pda};
+use crate::{events, get_gas_service_root_pda};
 
 /// Program handler.
 pub struct Processor;
@@ -153,7 +153,7 @@ impl Processor {
         assert_eq!(new_account_root_pda.owner, &system_program::ID);
 
         // Check: Gateway Config account uses the canonical bump.
-        let (root_pda, bump) = find_root_pda();
+        let (root_pda, bump) = get_gas_service_root_pda();
         if *new_account_root_pda.key != root_pda {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -211,7 +211,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = find_root_pda();
+        let (addr, bumb) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -288,7 +288,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = find_root_pda();
+        let (addr, bumb) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -362,7 +362,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = find_root_pda();
+        let (addr, bumb) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -441,7 +441,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = find_root_pda();
+        let (addr, bumb) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -511,7 +511,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = find_root_pda();
+        let (addr, bumb) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -573,7 +573,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = find_root_pda();
+        let (addr, bumb) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -624,7 +624,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, _bumb) = find_root_pda();
+        let (addr, _bumb) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -689,7 +689,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, _bumb) = find_root_pda();
+        let (addr, _bumb) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }

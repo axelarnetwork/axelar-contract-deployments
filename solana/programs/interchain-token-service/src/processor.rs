@@ -1,6 +1,7 @@
 //! Program state processor
 mod deploy_interchain_token;
 mod deploy_token_manager;
+mod initialize;
 mod interchain_transfer;
 
 use borsh::BorshDeserialize;
@@ -41,6 +42,9 @@ impl Processor {
                         Self::deploy_token_manager(program_id, accounts, payload)
                     }
                 }
+            }
+            InterchainTokenServiceInstruction::Initialize {} => {
+                Self::process_initialize(program_id, accounts)
             }
         }
     }

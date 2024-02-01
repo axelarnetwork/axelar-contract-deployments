@@ -15,6 +15,9 @@ solana-program.workspace = true
 thiserror.workspace = true
 borsh.workspace = true
 interchain-token-transfer-gmp.workspace = true
+program-utils.workspace = true
+gateway = { workspace = true, features = ["no-entrypoint"] }
+gas-service = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
 solana-program-test.workspace = true

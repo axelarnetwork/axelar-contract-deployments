@@ -8,7 +8,7 @@ use common::program_test;
 use connection_router::Message as AxelarMessage;
 use gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use gateway::events::GatewayEvent;
-use gateway::find_root_pda;
+use gateway::get_gateway_root_config_pda;
 use gateway::types::execute_data_decoder::DecodedMessage;
 use solana_program::hash::hash;
 use solana_program::pubkey::Pubkey;
@@ -92,7 +92,7 @@ mod accounts {
         payload_hash: [u8; 32],
     ) -> Result<()> {
         let recent_blockhash = client.get_latest_blockhash().await?;
-        let ix = gateway::instructions::initialize_messge(
+        let ix = gateway::instructions::initialize_message(
             payer.pubkey(),
             message_id,
             source_chain,
@@ -263,7 +263,7 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
     let config = GatewayConfig::new(1);
     let config_bytes = borsh::to_vec(&config)?;
     let config_base64 = STANDARD.encode(&config_bytes);
-    let (config_pda, _bump) = find_root_pda();
+    let (config_pda, _bump) = get_gateway_root_config_pda();
     program_test.add_account_with_base64_data(config_pda, 999999, gateway::id(), &config_base64);
 
     // Provision the test progam with the message accounts.

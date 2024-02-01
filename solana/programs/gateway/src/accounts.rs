@@ -9,6 +9,7 @@ use solana_program::pubkey::Pubkey;
 
 use self::discriminators::MessageID;
 use crate::error::GatewayError;
+use crate::get_gateway_root_config_pda;
 use crate::types::execute_data_decoder::{
     decode as decode_execute_data, DecodedCommand, DecodedCommandBatch, DecodedMessage,
 };
@@ -33,7 +34,7 @@ impl GatewayConfig {
 
     /// Returns the Pubkey and canonical bump for this account.
     pub fn pda() -> (Pubkey, u8) {
-        crate::find_root_pda()
+        get_gateway_root_config_pda()
     }
 }
 

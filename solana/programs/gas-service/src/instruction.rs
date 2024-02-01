@@ -159,7 +159,7 @@ pub fn create_initialize_root_pda_ix(initializer: Pubkey) -> Result<Instruction,
 
     let accounts = vec![
         AccountMeta::new(initializer, true),
-        AccountMeta::new(crate::find_root_pda().0, false),
+        AccountMeta::new(crate::get_gas_service_root_pda().0, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
@@ -201,7 +201,7 @@ pub fn create_pay_native_gas_for_contract_call_ix(
 
     let accounts = vec![
         AccountMeta::new(sender, true),
-        AccountMeta::new(crate::find_root_pda().0, false),
+        AccountMeta::new(crate::get_gas_service_root_pda().0, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
@@ -254,7 +254,7 @@ pub fn create_pay_native_gas_for_contract_call_with_token_ix(
 
     let accounts = vec![
         AccountMeta::new(sender, true),
-        AccountMeta::new(crate::find_root_pda().0, false),
+        AccountMeta::new(crate::get_gas_service_root_pda().0, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
@@ -296,7 +296,7 @@ pub fn create_pay_native_gas_for_express_call_ix(
 
     let accounts = vec![
         AccountMeta::new(sender, true),
-        AccountMeta::new(crate::find_root_pda().0, false),
+        AccountMeta::new(crate::get_gas_service_root_pda().0, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
@@ -349,7 +349,7 @@ pub fn create_pay_native_gas_for_express_call_with_token_ix(
 
     let accounts = vec![
         AccountMeta::new(sender, true),
-        AccountMeta::new(crate::find_root_pda().0, false),
+        AccountMeta::new(crate::get_gas_service_root_pda().0, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
@@ -385,7 +385,7 @@ pub fn create_add_native_gas_ix(
 
     let accounts = vec![
         AccountMeta::new(sender, true),
-        AccountMeta::new(crate::find_root_pda().0, false),
+        AccountMeta::new(crate::get_gas_service_root_pda().0, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
@@ -421,7 +421,7 @@ pub fn create_add_native_express_gas_ix(
 
     let accounts = vec![
         AccountMeta::new(sender, true),
-        AccountMeta::new(crate::find_root_pda().0, false),
+        AccountMeta::new(crate::get_gas_service_root_pda().0, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
@@ -446,7 +446,7 @@ pub fn create_collect_fees_ix(
 
     let accounts = vec![
         AccountMeta::new(sender, true),
-        AccountMeta::new(crate::find_root_pda().0, false),
+        AccountMeta::new(crate::get_gas_service_root_pda().0, false),
         AccountMeta::new(receiver, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
@@ -472,7 +472,7 @@ pub fn create_refund_ix(
 
     let accounts = vec![
         AccountMeta::new(sender, true),
-        AccountMeta::new(crate::find_root_pda().0, false),
+        AccountMeta::new(crate::get_gas_service_root_pda().0, false),
         AccountMeta::new(receiver, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
