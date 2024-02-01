@@ -16,10 +16,11 @@ runs:
 
     - uses: Swatinem/rust-cache@v2
       with:
+        cache-all-crates: true
         cache-on-failure: true
+        workspaces: |
+          solana
 
-    - name: Cache compilation artifacts
-      uses: mozilla-actions/sccache-action@v0.0.3
 
     - name: Install cargo-make
       shell: bash

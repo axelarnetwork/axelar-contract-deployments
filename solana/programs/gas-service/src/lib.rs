@@ -26,6 +26,6 @@ pub fn check_program_account(program_id: &Pubkey) -> ProgramResult {
 }
 
 /// Finds the program root PDA.
-pub fn find_root_pda() -> (Pubkey, u8) {
+pub fn get_gas_service_root_pda() -> (Pubkey, u8) {
     Pubkey::find_program_address(&[&[]], &crate::id())
 }

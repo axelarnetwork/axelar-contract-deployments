@@ -21,7 +21,7 @@ use solana_sdk::transaction::{Transaction, TransactionError};
 async fn init_root_pda() -> Result<()> {
     let (mut banks_client, initializer_account, recent_blockhash) = program_test().start().await;
 
-    let (root_pda_address, _) = gas_service::find_root_pda();
+    let (root_pda_address, _) = gas_service::get_gas_service_root_pda();
 
     let ix = gas_service::instruction::create_initialize_root_pda_ix(initializer_account.pubkey())?;
 
@@ -47,7 +47,7 @@ async fn init_root_pda() -> Result<()> {
 async fn pay_native_gas_for_contract_call_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -140,7 +140,7 @@ async fn pay_native_gas_for_contract_call_happy_scenario() -> Result<()> {
 async fn pay_native_gas_for_contract_call_with_token_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -239,7 +239,7 @@ async fn pay_native_gas_for_contract_call_with_token_happy_scenario() -> Result<
 async fn pay_native_gas_for_express_call_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -332,7 +332,7 @@ async fn pay_native_gas_for_express_call_happy_scenario() -> Result<()> {
 async fn pay_native_gas_for_express_call_with_token_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -431,7 +431,7 @@ async fn pay_native_gas_for_express_call_with_token_happy_scenario() -> Result<(
 async fn add_native_gas_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -520,7 +520,7 @@ async fn add_native_gas_happy_scenario() -> Result<()> {
 async fn add_native_express_gas_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -609,7 +609,7 @@ async fn add_native_express_gas_happy_scenario() -> Result<()> {
 async fn collect_fees_unauthorized() -> Result<()> {
     let receiver_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -672,7 +672,7 @@ async fn collect_fees_unauthorized() -> Result<()> {
 #[tokio::test]
 async fn collect_fees_happy_scenario() -> Result<()> {
     let receiver_address = Keypair::new();
-    let (root_pda_address, _) = gas_service::find_root_pda();
+    let (root_pda_address, _) = gas_service::get_gas_service_root_pda();
     let mut program_test: ProgramTest = program_test();
 
     let receiver_saldo = 1000000;
@@ -780,7 +780,7 @@ async fn collect_fees_happy_scenario() -> Result<()> {
 #[tokio::test]
 async fn collect_fees_collect_more_than_could_be() -> Result<()> {
     let receiver_address = Keypair::new();
-    let (root_pda_address, _) = gas_service::find_root_pda();
+    let (root_pda_address, _) = gas_service::get_gas_service_root_pda();
     let mut program_test: ProgramTest = program_test();
 
     let receiver_saldo = 1000000;
@@ -878,7 +878,7 @@ async fn collect_fees_collect_more_than_could_be() -> Result<()> {
 #[tokio::test]
 async fn refund_happy_scenario() -> Result<()> {
     let receiver_address = Keypair::new();
-    let (root_pda_address, _) = gas_service::find_root_pda();
+    let (root_pda_address, _) = gas_service::get_gas_service_root_pda();
     let mut program_test: ProgramTest = program_test();
 
     let receiver_saldo = 1000000;
@@ -986,7 +986,7 @@ async fn refund_happy_scenario() -> Result<()> {
 #[tokio::test]
 async fn refund_more_than_could_be() -> Result<()> {
     let receiver_address = Keypair::new();
-    let (root_pda_address, _) = gas_service::find_root_pda();
+    let (root_pda_address, _) = gas_service::get_gas_service_root_pda();
     let mut program_test: ProgramTest = program_test();
 
     let receiver_saldo = 1000000;

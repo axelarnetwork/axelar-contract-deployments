@@ -6,6 +6,7 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
+use crate::get_gateway_root_config_pda;
 use crate::types::PubkeyWrapper;
 
 /// Instructions supported by the gateway program.
@@ -98,7 +99,7 @@ pub fn execute(
 
     let data = to_vec(&GatewayInstruction::Execute {})?;
 
-    let (gateway_config_account, _bump) = crate::find_root_pda();
+    let (gateway_config_account, _bump) = crate::get_gateway_root_config_pda();
 
     let mut accounts = vec![
         AccountMeta::new_readonly(gateway_config_account, false),
@@ -147,7 +148,7 @@ pub fn call_contract(
 }
 
 /// Creates a [`GatewayInstruction::InitializeMessage`] instruction.
-pub fn initialize_messge(
+pub fn initialize_message(
     payer: Pubkey,
     message_id: [u8; 32],
     source_chain: &[u8],
@@ -203,7 +204,7 @@ pub fn initialize_config(
     payer: Pubkey,
     config: GatewayConfig,
 ) -> Result<Instruction, ProgramError> {
-    let (gateway_config_pda, _bump) = Pubkey::find_program_address(&[], &crate::id());
+    let (gateway_config_pda, _bump) = get_gateway_root_config_pda();
     let data = to_vec(&GatewayInstruction::InitializeConfig { config })?;
     let accounts = vec![
         AccountMeta::new(payer, true),
