@@ -1,9 +1,9 @@
 'use strict';
 
 const axios = require('axios');
-const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const { readJSON } = require('./readJSON');
 
 async function findValue(obj, contractName, result = []) {
     if (obj && typeof obj === 'object') {
@@ -18,56 +18,59 @@ async function findValue(obj, contractName, result = []) {
 }
 
 async function readAndParseFile(filePath, targetKey) {
-    try {
-        const jsonData = await fs.promises.readFile(filePath, { encoding: 'utf8' });
-        const parsedData = JSON.parse(jsonData);
-        const result = [];
-        await findValue(parsedData, targetKey, result);
-        return result;
-    } catch (error) {
-        console.error(`Error reading or parsing file ${filePath}: ${error.message}`);
-        return [];
-    }
+    const parsedData = readJSON(filePath);
+    const result = [];
+    await findValue(parsedData, targetKey, result);
+    return result;
 }
 
 async function processDirectory(directoryPath, targetKey) {
-    try {
-        const fileNames = await fs.promises.readdir(directoryPath);
-        const filePaths = fileNames.map((fileName) => path.join(directoryPath, fileName));
-
-        const results = await Promise.all(filePaths.map((filePath) => readAndParseFile(filePath, targetKey)));
-
-        const uniqueResults = [...new Set(results.flat().filter(Boolean))];
-        return uniqueResults;
-    } catch (error) {
-        console.error(`Error reading directory ${directoryPath}: ${error.message}`);
-        return [];
-    }
+    const fileNames = await fs.promises.readdir(directoryPath);
+    const filePaths = fileNames.map((fileName) => path.join(directoryPath, fileName));
+    const results = await Promise.all(filePaths.map((filePath) => readAndParseFile(filePath, targetKey)));
+    const uniqueResults = [...new Set(results.flat().filter(Boolean))];
+    return uniqueResults;
 }
 
-function searchContractName(rootFolder, targetValue) {
+function searchContractName(rootFolder, bytecode) {
     const files = fs.readdirSync(rootFolder);
 
     for (const fileOrFolder of files) {
         const fullPath = path.join(rootFolder, fileOrFolder);
 
         if (fs.statSync(fullPath).isDirectory()) {
-            const contractName = searchContractName(fullPath, targetValue);
+            const contractName = searchContractName(fullPath, bytecode);
 
             if (contractName) {
                 return contractName;
             }
         } else if (fileOrFolder.endsWith('.json')) {
-            const jsonData = JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
+            const jsonData = readJSON(fullPath);
 
-            if (jsonData.deployedBytecode === targetValue) {
+            if (jsonData.deployedBytecode === bytecode) {
                 return jsonData.contractName;
             }
         }
     }
 }
 
-async function verify(dir, provider, address, chainId) {
+function findProjectRoot(startDir) {
+    let currentDir = startDir;
+
+    while (currentDir !== path.parse(currentDir).root) {
+        const potentialPackageJson = path.join(currentDir, 'package.sh');
+
+        if (fs.existsSync(potentialPackageJson)) {
+            return currentDir;
+        }
+
+        currentDir = path.resolve(currentDir, '..');
+    }
+
+    throw new Error('Unable to find project root');
+}
+
+async function verifyOnSourcify(dir, provider, address, chainId) {
     try {
         const bytecode = await provider.getCode(address);
 
@@ -75,7 +78,8 @@ async function verify(dir, provider, address, chainId) {
             throw new Error('Need to specify directory to verify on sourcify via solidity code');
         }
 
-        const artifactsDir = path.join(__dirname, `../../../${dir}/artifacts/contracts`);
+        const projectRoot = findProjectRoot(__dirname);
+        const artifactsDir = `${projectRoot}/${dir}/artifacts/contracts`;
         const contractName = await searchContractName(artifactsDir, bytecode);
 
         if (!contractName) throw new Error('Byte code match not found');
@@ -87,16 +91,12 @@ async function verify(dir, provider, address, chainId) {
         const [sol, metadata] = res;
 
         await uploadToSourcify(metadata, sol, address, chainId);
-        console.log('Verified on Sourcify via uplaoding solidity code and metadata');
+        console.log('Verified on Sourcify via uploading solidity code and metadata');
     } catch (error) {
         console.error('Unable to verify on Sourcify by uploading solidity code and metadata: ', error.message);
 
-        try {
-            await verifyFromEtherscan(chainId, address);
-            console.log('Verified on Sourcify via etherscan');
-        } catch {
-            console.error('Unable to verify on Sourcify');
-        }
+        await verifyFromEtherscan(chainId, address);
+        console.log('Verified on Sourcify via etherscan');
     }
 }
 
@@ -117,8 +117,17 @@ async function uploadToSourcify(metadata, sol, address, chainId) {
     const payload = JSON.stringify(payloadObj);
     const apiUrl = 'https://sourcify.dev/server/verify';
     const res = await axios.post(apiUrl, payload, { headers });
-    assert(res.data.result[0].status === 'perfect');
-    console.log(`Sourcify: contract verified., ${address}`);
+
+    switch (res.data.result[0].status) {
+        case 'perfect':
+            console.log(`Sourcify: contract verified perfectly., ${address}`);
+            break;
+        case 'partial':
+            console.log(`Sourcify: contract verified partially., ${address}`);
+            throw new Error('Partially verified using metadata!');
+        default:
+            throw new Error('Sourcify verification failed');
+    }
 }
 
 async function verifyFromEtherscan(chainId, address) {
@@ -133,8 +142,16 @@ async function verifyFromEtherscan(chainId, address) {
     const apiUrl = 'https://sourcify.dev/server/verify/etherscan';
     const res = await axios.post(apiUrl, payload, { headers });
 
-    assert(res.data.result[0].status === 'perfect');
-    console.log(`Sourcify: contract verified., ${address}`);
+    switch (res.data.result[0].status) {
+        case 'perfect':
+            console.log(`Sourcify: contract verified perfectly., ${address}`);
+            break;
+        case 'partial':
+            console.log(`Sourcify: contract verified partially., ${address}`);
+            break;
+        default:
+            throw new Error('Sourcify verification failed');
+    }
 }
 
-module.exports = { verify };
+module.exports = { verifyOnSourcify };
