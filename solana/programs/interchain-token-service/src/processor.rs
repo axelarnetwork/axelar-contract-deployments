@@ -1,6 +1,8 @@
 //! Program state processor
+
 mod deploy_interchain_token;
 mod deploy_token_manager;
+mod give_token;
 mod initialize;
 mod interchain_transfer;
 
@@ -46,6 +48,10 @@ impl Processor {
             InterchainTokenServiceInstruction::Initialize {} => {
                 Self::process_initialize(program_id, accounts)
             }
+            InterchainTokenServiceInstruction::GiveToken {
+                token_manager_type,
+                amount,
+            } => Self::give_token(program_id, accounts, token_manager_type, amount),
         }
     }
 }

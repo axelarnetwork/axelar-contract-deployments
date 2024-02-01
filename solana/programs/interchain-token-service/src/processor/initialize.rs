@@ -72,7 +72,7 @@ impl Processor {
 ///
 /// * `Result<u8, ProgramError>` - The result of the assertion. If successful,
 ///   it returns the bump seed. If not, it returns a program error.
-fn assert_interchain_token_service_root_pda(
+pub(crate) fn assert_interchain_token_service_root_pda(
     interchain_token_service_root_pda: &AccountInfo<'_>,
     gateway_root_pda: &AccountInfo<'_>,
     gas_service_root_pda: &AccountInfo<'_>,
@@ -90,7 +90,7 @@ fn assert_interchain_token_service_root_pda(
     Ok(bump_seed)
 }
 
-fn assert_gas_service_root_pda(gas_service_root_pda: &AccountInfo<'_>) {
+pub(crate) fn assert_gas_service_root_pda(gas_service_root_pda: &AccountInfo<'_>) {
     let (derived_gas_service_root_pda, _) = get_gas_service_root_pda();
     assert_eq!(
         derived_gas_service_root_pda, *gas_service_root_pda.key,
