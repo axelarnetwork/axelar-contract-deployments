@@ -12,13 +12,13 @@ use solana_program::{msg, system_instruction, system_program};
 
 use crate::accounts::transfer_operatorship::TransferOperatorshipAccount;
 use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
-use crate::check_program_account;
 use crate::error::GatewayError;
 use crate::events::{
     emit_call_contract_event, emit_message_approved_event, emit_operatorship_transferred_event,
 };
 use crate::instructions::GatewayInstruction;
 use crate::types::execute_data_decoder::DecodedMessage;
+use crate::{check_program_account, get_gateway_root_config_pda};
 
 /// Program state handler.
 pub struct Processor;
@@ -93,7 +93,7 @@ impl Processor {
         // Phase 1: Account validation
 
         // Check: Config account uses the canonical bump.
-        let (canonical_pda, _canonical_bump) = crate::find_root_pda();
+        let (canonical_pda, _canonical_bump) = get_gateway_root_config_pda();
         if *gateway_config_account.key != canonical_pda {
             return Err(GatewayError::InvalidConfigAccount)?;
         }
@@ -230,7 +230,7 @@ impl Processor {
         }
 
         // Check: Gateway Config account uses the canonical bump.
-        let (canonical_pda, canonical_bump) = crate::find_root_pda();
+        let (canonical_pda, canonical_bump) = crate::get_gateway_root_config_pda();
         if *gateway_config_account.key != canonical_pda {
             return Err(GatewayError::InvalidConfigAccount.into());
         }
@@ -322,7 +322,7 @@ impl Processor {
         let system_account = next_account_info(accounts_iter)?;
 
         // Check: Config account is the canonical PDA.
-        let (expected_pda_info, _bump) = crate::find_root_pda();
+        let (expected_pda_info, _bump) = crate::get_gateway_root_config_pda();
         helper::compare_address(gateway_config_account, expected_pda_info)?;
 
         // Check: Config account is owned by the Gateway program.

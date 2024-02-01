@@ -21,7 +21,7 @@ use solana_sdk::transaction::{Transaction, TransactionError};
 async fn init_root_pda() -> Result<()> {
     let (mut banks_client, initializer_account, recent_blockhash) = program_test().start().await;
 
-    let (root_pda_address, _) = gas_service::find_root_pda();
+    let (root_pda_address, _) = gas_service::get_gas_service_root_pda();
 
     let ix = gas_service::instruction::create_initialize_root_pda_ix(initializer_account.pubkey())?;
 
@@ -36,7 +36,7 @@ async fn init_root_pda() -> Result<()> {
 
     let root_pda_data = banks_client.get_account(root_pda_address).await?.unwrap();
     let root_pda_data =
-        gas_service::accounts::GasServiceRootPDA::try_from_slice(&root_pda_data.data.as_slice())?;
+        gas_service::accounts::GasServiceRootPDA::try_from_slice(root_pda_data.data.as_slice())?;
 
     assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
 
@@ -47,7 +47,7 @@ async fn init_root_pda() -> Result<()> {
 async fn pay_native_gas_for_contract_call_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -115,10 +115,10 @@ async fn pay_native_gas_for_contract_call_happy_scenario() -> Result<()> {
         from_meta,
         Some(GasServiceEvent::NativeGasPaidForContractCall {
             sender: PubkeyWrapper::from(sender.pubkey()),
-            destination_chain: destination_chain,
-            destination_address: destination_address,
+            destination_chain,
+            destination_address,
             payload_hash: hash(&payload).to_bytes(),
-            fees: fees,
+            fees,
             refund_address: PubkeyWrapper::from(refund_address.pubkey()),
         })
     );
@@ -140,7 +140,7 @@ async fn pay_native_gas_for_contract_call_happy_scenario() -> Result<()> {
 async fn pay_native_gas_for_contract_call_with_token_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -184,7 +184,7 @@ async fn pay_native_gas_for_contract_call_with_token_happy_scenario() -> Result<
         destination_address.clone(),
         payload.clone(),
         token_symbol.clone(),
-        token_amount.clone(),
+        token_amount,
         fees,
     )?;
 
@@ -216,8 +216,8 @@ async fn pay_native_gas_for_contract_call_with_token_happy_scenario() -> Result<
             destination_address,
             payload_hash: hash(&payload).to_bytes(),
             symbol: token_symbol.clone(),
-            amount: token_amount.clone(),
-            fees: fees,
+            amount: token_amount,
+            fees,
             refund_address: PubkeyWrapper::from(refund_address.pubkey()),
         })
     );
@@ -239,7 +239,7 @@ async fn pay_native_gas_for_contract_call_with_token_happy_scenario() -> Result<
 async fn pay_native_gas_for_express_call_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -307,10 +307,10 @@ async fn pay_native_gas_for_express_call_happy_scenario() -> Result<()> {
         from_meta,
         Some(GasServiceEvent::NativeGasPaidForExpressCall {
             sender: PubkeyWrapper::from(sender.pubkey()),
-            destination_chain: destination_chain,
-            destination_address: destination_address,
+            destination_chain,
+            destination_address,
             payload_hash: hash(&payload).to_bytes(),
-            fees: fees,
+            fees,
             refund_address: PubkeyWrapper::from(refund_address.pubkey()),
         })
     );
@@ -332,7 +332,7 @@ async fn pay_native_gas_for_express_call_happy_scenario() -> Result<()> {
 async fn pay_native_gas_for_express_call_with_token_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -376,7 +376,7 @@ async fn pay_native_gas_for_express_call_with_token_happy_scenario() -> Result<(
         destination_address.clone(),
         payload.clone(),
         token_symbol.clone(),
-        token_amount.clone(),
+        token_amount,
         fees,
     )?;
 
@@ -408,8 +408,8 @@ async fn pay_native_gas_for_express_call_with_token_happy_scenario() -> Result<(
             destination_address,
             payload_hash: hash(&payload).to_bytes(),
             symbol: token_symbol.clone(),
-            amount: token_amount.clone(),
-            fees: fees,
+            amount: token_amount,
+            fees,
             refund_address: PubkeyWrapper::from(refund_address.pubkey()),
         })
     );
@@ -431,7 +431,7 @@ async fn pay_native_gas_for_express_call_with_token_happy_scenario() -> Result<(
 async fn add_native_gas_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -468,8 +468,8 @@ async fn add_native_gas_happy_scenario() -> Result<()> {
     let ix = gas_service::instruction::create_add_native_gas_ix(
         sender.pubkey(),
         refund_address.pubkey(),
-        tx_hash.clone(),
-        log_index.clone(),
+        tx_hash,
+        log_index,
         fees,
     )?;
 
@@ -498,7 +498,7 @@ async fn add_native_gas_happy_scenario() -> Result<()> {
         Some(GasServiceEvent::NativeGasAdded {
             tx_hash,
             log_index,
-            fees: fees,
+            fees,
             refund_address: PubkeyWrapper::from(refund_address.pubkey()),
         })
     );
@@ -520,7 +520,7 @@ async fn add_native_gas_happy_scenario() -> Result<()> {
 async fn add_native_express_gas_happy_scenario() -> Result<()> {
     let refund_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -557,8 +557,8 @@ async fn add_native_express_gas_happy_scenario() -> Result<()> {
     let ix = gas_service::instruction::create_add_native_express_gas_ix(
         sender.pubkey(),
         refund_address.pubkey(),
-        tx_hash.clone(),
-        log_index.clone(),
+        tx_hash,
+        log_index,
         fees,
     )?;
 
@@ -587,7 +587,7 @@ async fn add_native_express_gas_happy_scenario() -> Result<()> {
         Some(GasServiceEvent::NativeExpressGasAdded {
             tx_hash,
             log_index,
-            fees: fees,
+            fees,
             refund_address: PubkeyWrapper::from(refund_address.pubkey()),
         })
     );
@@ -609,7 +609,7 @@ async fn add_native_express_gas_happy_scenario() -> Result<()> {
 async fn collect_fees_unauthorized() -> Result<()> {
     let receiver_address = Keypair::new();
     let initializer_address = Keypair::new();
-    let (root_pda_address, _bump) = gas_service::find_root_pda();
+    let (root_pda_address, _bump) = gas_service::get_gas_service_root_pda();
 
     let mut program_test: ProgramTest = program_test();
 
@@ -672,7 +672,7 @@ async fn collect_fees_unauthorized() -> Result<()> {
 #[tokio::test]
 async fn collect_fees_happy_scenario() -> Result<()> {
     let receiver_address = Keypair::new();
-    let (root_pda_address, _) = gas_service::find_root_pda();
+    let (root_pda_address, _) = gas_service::get_gas_service_root_pda();
     let mut program_test: ProgramTest = program_test();
 
     let receiver_saldo = 1000000;
@@ -699,7 +699,7 @@ async fn collect_fees_happy_scenario() -> Result<()> {
 
     let root_pda_data = banks_client.get_account(root_pda_address).await?.unwrap();
     let root_pda_data =
-        gas_service::accounts::GasServiceRootPDA::try_from_slice(&root_pda_data.data.as_slice())?;
+        gas_service::accounts::GasServiceRootPDA::try_from_slice(root_pda_data.data.as_slice())?;
 
     // Check: For initializer as authority.
     assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
@@ -712,8 +712,8 @@ async fn collect_fees_happy_scenario() -> Result<()> {
     let ix = gas_service::instruction::create_add_native_express_gas_ix(
         initializer_account.pubkey(),
         receiver_address.pubkey(),
-        tx_hash.clone(),
-        log_index.clone(),
+        tx_hash,
+        log_index,
         fees,
     )?;
 
@@ -780,7 +780,7 @@ async fn collect_fees_happy_scenario() -> Result<()> {
 #[tokio::test]
 async fn collect_fees_collect_more_than_could_be() -> Result<()> {
     let receiver_address = Keypair::new();
-    let (root_pda_address, _) = gas_service::find_root_pda();
+    let (root_pda_address, _) = gas_service::get_gas_service_root_pda();
     let mut program_test: ProgramTest = program_test();
 
     let receiver_saldo = 1000000;
@@ -807,7 +807,7 @@ async fn collect_fees_collect_more_than_could_be() -> Result<()> {
 
     let root_pda_data = banks_client.get_account(root_pda_address).await?.unwrap();
     let root_pda_data =
-        gas_service::accounts::GasServiceRootPDA::try_from_slice(&root_pda_data.data.as_slice())?;
+        gas_service::accounts::GasServiceRootPDA::try_from_slice(root_pda_data.data.as_slice())?;
 
     // Check: For initializer as authority.
     assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
@@ -820,8 +820,8 @@ async fn collect_fees_collect_more_than_could_be() -> Result<()> {
     let ix = gas_service::instruction::create_add_native_express_gas_ix(
         initializer_account.pubkey(),
         receiver_address.pubkey(),
-        tx_hash.clone(),
-        log_index.clone(),
+        tx_hash,
+        log_index,
         fees,
     )?;
 
@@ -878,7 +878,7 @@ async fn collect_fees_collect_more_than_could_be() -> Result<()> {
 #[tokio::test]
 async fn refund_happy_scenario() -> Result<()> {
     let receiver_address = Keypair::new();
-    let (root_pda_address, _) = gas_service::find_root_pda();
+    let (root_pda_address, _) = gas_service::get_gas_service_root_pda();
     let mut program_test: ProgramTest = program_test();
 
     let receiver_saldo = 1000000;
@@ -905,7 +905,7 @@ async fn refund_happy_scenario() -> Result<()> {
 
     let root_pda_data = banks_client.get_account(root_pda_address).await?.unwrap();
     let root_pda_data =
-        gas_service::accounts::GasServiceRootPDA::try_from_slice(&root_pda_data.data.as_slice())?;
+        gas_service::accounts::GasServiceRootPDA::try_from_slice(root_pda_data.data.as_slice())?;
 
     // Check: For initializer as authority.
     assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
@@ -918,8 +918,8 @@ async fn refund_happy_scenario() -> Result<()> {
     let ix = gas_service::instruction::create_add_native_express_gas_ix(
         initializer_account.pubkey(),
         receiver_address.pubkey(),
-        tx_hash.clone(),
-        log_index.clone(),
+        tx_hash,
+        log_index,
         fees,
     )?;
 
@@ -986,7 +986,7 @@ async fn refund_happy_scenario() -> Result<()> {
 #[tokio::test]
 async fn refund_more_than_could_be() -> Result<()> {
     let receiver_address = Keypair::new();
-    let (root_pda_address, _) = gas_service::find_root_pda();
+    let (root_pda_address, _) = gas_service::get_gas_service_root_pda();
     let mut program_test: ProgramTest = program_test();
 
     let receiver_saldo = 1000000;
@@ -1013,7 +1013,7 @@ async fn refund_more_than_could_be() -> Result<()> {
 
     let root_pda_data = banks_client.get_account(root_pda_address).await?.unwrap();
     let root_pda_data =
-        gas_service::accounts::GasServiceRootPDA::try_from_slice(&root_pda_data.data.as_slice())?;
+        gas_service::accounts::GasServiceRootPDA::try_from_slice(root_pda_data.data.as_slice())?;
 
     // Check: For initializer as authority.
     assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
@@ -1026,8 +1026,8 @@ async fn refund_more_than_could_be() -> Result<()> {
     let ix = gas_service::instruction::create_add_native_express_gas_ix(
         initializer_account.pubkey(),
         receiver_address.pubkey(),
-        tx_hash.clone(),
-        log_index.clone(),
+        tx_hash,
+        log_index,
         fees,
     )?;
 

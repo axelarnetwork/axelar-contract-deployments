@@ -1,0 +1,10 @@
+[package]
+name = "interchain-token-transfer-gmp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ethers-core.workspace = true
+
+[dev-dependencies]
+hex.workspace = true

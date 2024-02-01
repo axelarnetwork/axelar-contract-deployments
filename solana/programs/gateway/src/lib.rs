@@ -37,7 +37,12 @@ pub fn check_initialized(v: u64) -> ProgramResult {
     Ok(())
 }
 
-/// Finds the program root PDA.
-pub fn find_root_pda() -> (Pubkey, u8) {
-    Pubkey::find_program_address(&[&[]], &crate::id())
+/// Get the root PDA and bump seed for the given program ID.
+pub(crate) fn get_gateway_root_config_internal(program_id: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(&[], program_id)
+}
+
+/// Get the root PDA and bump seed for the given program ID.
+pub fn get_gateway_root_config_pda() -> (Pubkey, u8) {
+    get_gateway_root_config_internal(&crate::id())
 }

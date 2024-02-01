@@ -41,7 +41,23 @@ args = ["clippy", "--workspace", "--locked", "--", "-D", "warnings"]
 [tasks.test]
 workspace = false
 command = "cargo"
+# solana bpf tests
 args = ["test-sbf", "--workspace"]
+# normal tests that don't get picked up by test-sbf
+dependencies = ["test-non-sbf"]
+
+[tasks.test-non-sbf]
+workspace = false
+command = "cargo"
+args = [
+    "test",
+    "--package",
+    "test-fixtures",
+    "--package",
+    "interchain-token-transfer-gmp",
+    "--package",
+    "program-utils",
+]
 
 [tasks.audit]
 workspace = false
