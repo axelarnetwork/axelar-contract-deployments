@@ -1,6 +1,6 @@
 const { execSync } = require('child_process');
 const { writeFileSync } = require('fs');
-const { verify } = require('./sourcify');
+const { verifyOnSourcify } = require('./sourcify');
 
 /**
  * Verifies a contract on etherscan-like explorer of the provided chain using hardhat.
@@ -30,7 +30,11 @@ const verifyContract = async (env, chain, contract, args, options = {}) => {
 
     execSync(cmd, { stdio: 'inherit' });
 
-    await verify(options.dir, options.provider, contract, options.chainId.toString());
+    try {
+        await verifyOnSourcify(options.dir, options.provider, contract, options.chain.chainId.toString());
+    } catch (error) {
+        console.error('sourcify verification failed!');
+    }
 
     console.log('Verified!');
 };
