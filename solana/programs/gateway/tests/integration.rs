@@ -8,7 +8,7 @@ use common::program_test;
 use connection_router::Message as AxelarMessage;
 use gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use gateway::events::GatewayEvent;
-use gateway::find_root_pda;
+use gateway::get_gateway_root_config_pda;
 use gateway::types::bimap::OperatorsAndEpochs;
 use gateway::types::execute_data_decoder::DecodedMessage;
 use solana_program::hash::hash;

@@ -31,7 +31,7 @@ impl Processor {
         input: &[u8],
     ) -> ProgramResult {
         let instruction = from_slice::<GatewayInstruction>(input)?;
-        check_program_account(*program_id)?;
+        check_program_account(program_id)?;
         match instruction {
             GatewayInstruction::Execute {} => {
                 msg!("Instruction: Execute");
@@ -312,7 +312,7 @@ impl Processor {
         program_id: &Pubkey,
         accounts: &[AccountInfo],
     ) -> Result<(), ProgramError> {
-        check_program_account(*program_id)?;
+        check_program_account(program_id)?;
 
         // Extract required accounts.
         let accounts_iter = &mut accounts.iter();
@@ -322,7 +322,7 @@ impl Processor {
         let system_account = next_account_info(accounts_iter)?;
 
         // Check: Config account is the canonical PDA.
-        let (expected_pda_info, _bump) = crate::find_root_pda();
+        let (expected_pda_info, _bump) = crate::get_gateway_root_config_pda();
         helper::compare_address(gateway_config_account, expected_pda_info)?;
 
         // Check: Config account is owned by the Gateway program.
