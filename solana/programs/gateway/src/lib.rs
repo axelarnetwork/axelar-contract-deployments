@@ -20,8 +20,9 @@ use solana_program::pubkey::Pubkey;
 solana_program::declare_id!("4hz16cS4d82cPKzvaQNzMCadyKSqzZR8bqzw8FfzYH8a");
 
 /// Checks that the supplied program ID is the correct one
-pub fn check_program_account(program_id: Pubkey) -> ProgramResult {
-    if program_id != id() {
+#[inline]
+pub fn check_program_account(program_id: &Pubkey) -> ProgramResult {
+    if program_id != &ID {
         return Err(ProgramError::IncorrectProgramId);
     }
     Ok(())

@@ -91,7 +91,7 @@ pub fn execute(
     execute_data_account: Pubkey,
     message_accounts: &[Pubkey],
 ) -> Result<Instruction, ProgramError> {
-    crate::check_program_account(program_id)?;
+    crate::check_program_account(&program_id)?;
 
     if message_accounts.is_empty() {
         return Err(ProgramError::InvalidAccountData);
@@ -130,7 +130,7 @@ pub fn call_contract(
     payload: &[u8],
     payload_hash: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    crate::check_program_account(program_id)?;
+    crate::check_program_account(&program_id)?;
 
     let data = to_vec(&GatewayInstruction::CallContract {
         sender: sender.into(),
