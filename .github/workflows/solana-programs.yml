@@ -13,10 +13,6 @@ on:
       - .github/workflows/solana-programs.yml
 
 env:
-  CARGO_TERM_COLOR: always
-  RUSTC_WRAPPER: "sccache"
-  RUSTFLAGS: "-D warnings"
-  SCCACHE_GHA_ENABLED: "true"
   SOLANA_VERSION: "v1.18.0"
 
 defaults:
@@ -65,7 +61,7 @@ jobs:
         run: cargo make unused-deps
 
   tests:
-    name: Gateway Program - Integration tests
+    name: Solana Integration tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
