@@ -12,7 +12,7 @@ no-entrypoint = []
 
 [dependencies]
 base64.workspace = true
-bnum.workspace = true
+bnum = { workspace = true, features = ["nightly"] }
 borsh.workspace = true
 hex.workspace = true
 k256.workspace = true

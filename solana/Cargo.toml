@@ -9,8 +9,9 @@ resolver = "2"
 anyhow = "1"
 base64 = "0.21"
 bcs = "0.1.6"
-bnum = { version = "0.10", features = ["serde", "nightly"] }
+bnum = { version = "0.10", features = ["serde"] }
 borsh = { version = "1", features = ["derive"] }
+bytemuck = "1"
 cosmwasm-std = "1.5"
 hex = "0.4"
 itertools = "0.12.0"
