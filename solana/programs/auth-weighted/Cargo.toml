@@ -21,6 +21,7 @@ num-derive.workspace = true
 num-traits.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
+bimap = { version = "0.6.3", default-features = false }
 
 [dev-dependencies]
 anyhow.workspace = true

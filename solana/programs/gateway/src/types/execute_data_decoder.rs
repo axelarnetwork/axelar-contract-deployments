@@ -1,10 +1,5 @@
 //! Module for the `execute_bytes` decoder function.
 
-use auth_weighted::types::address::Address;
-use auth_weighted::types::operator::Operators;
-use auth_weighted::types::proof::Proof;
-use auth_weighted::types::signature::Signature;
-use auth_weighted::types::u256::U256;
 use itertools::izip;
 use multisig_prover::encoding::Data;
 use multisig_prover::types::{Command, CommandType};
@@ -12,8 +7,14 @@ use solana_program::msg;
 use thiserror::Error;
 
 use crate::error::GatewayError;
+use crate::types::address::Address;
+use crate::types::operator::Operators;
+use crate::types::proof::Proof;
+use crate::types::signature::Signature;
+use crate::types::u256::U256;
 
 type DecodedCommandBatchParts = (u64, Vec<[u8; 32]>, Vec<String>, Vec<Vec<u8>>);
+/// Addresses, Weights, Quorum, and Signatures
 type DecodedProofParts = (Vec<Vec<u8>>, Vec<u128>, u128, Vec<Vec<u8>>);
 
 #[derive(Error, Debug)]
@@ -148,7 +149,7 @@ fn build_proof_from_raw_parts(
     let operators = {
         let addresses = addresses
             .into_iter()
-            .map(TryInto::<Address>::try_into)
+            .map(|address| Address::try_from(address.as_slice()))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|address_error| {
                 msg!("Invalid operator address: {}", address_error);
@@ -335,6 +336,7 @@ fn decode_execute_data_from_axelar_repo() -> anyhow::Result<()> {
     // Check proof
     let signer_pubkey: Address =
         hex::decode("037286a4f1177bea06c8e15cf6ec3df0b7747a01ac2329ca2999dfd74eff599028")?
+            .as_slice()
             .try_into()?;
     let signature: Signature = hex::decode("ef5ce016a4beed7e11761e5831805e962fca3d8901696a61a6ffd3af2b646bdc3740f64643bdb164b8151d1424eb4943d03f71e71816c00726e2d68ee55600c600")?.try_into()?;
     assert_eq!(proof.operators.addresses(), &[signer_pubkey]);

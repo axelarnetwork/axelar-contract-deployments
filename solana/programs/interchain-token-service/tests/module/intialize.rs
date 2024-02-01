@@ -11,7 +11,7 @@ async fn test_init_root_pda_interchain_token_service() {
     let gas_service_root_pda = fixture.init_gas_service().await;
 
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::new(42))
+        .initialize_gateway_config_account(GatewayConfig::default())
         .await;
 
     let interchain_token_service_root_pda =

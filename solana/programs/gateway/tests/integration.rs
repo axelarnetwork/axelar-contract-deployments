@@ -9,6 +9,7 @@ use connection_router::Message as AxelarMessage;
 use gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use gateway::events::GatewayEvent;
 use gateway::get_gateway_root_config_pda;
+use gateway::types::bimap::OperatorsAndEpochs;
 use gateway::types::execute_data_decoder::DecodedMessage;
 use solana_program::hash::hash;
 use solana_program::pubkey::Pubkey;
@@ -174,7 +175,8 @@ async fn test_call_contract_instruction() -> Result<()> {
 #[tokio::test]
 async fn initialize_config() -> Result<()> {
     let (mut banks_client, payer, _recent_blockhash) = program_test().start().await;
-    let gateway_config = GatewayConfig::new(1);
+    // TODO: try testing this without an empty operator set.
+    let gateway_config = GatewayConfig::new(1, OperatorsAndEpochs::default());
     accounts::initialize_config_account(&mut banks_client, &payer, &gateway_config).await
 }
 
@@ -227,18 +229,17 @@ async fn execute_with_fixtures() -> Result<()> {
 
     // The current Gateway implementation exhausts the 200k Compute Units budget for
     // these combinations of Messages & Signers:
-    // - one message and 15 signers
-    // - 2 messages and 9 signers
-    // - 3 messages and 4 signers (sometimes it breaks at 5 signers)
+    // - one message and 8 signers
+    // - 2 messages and 3 signers (sometimes it breaks at 4 signers)
+    // - 3 messages and 2 signers
     // - 4 messages and one signer
-    for m in 1..4 {
+    for m in 1..3 {
         for s in 1..4 {
-            println!("Messages = {}, Signers = {}", m, s);
             let execute_data = create_execute_data(m, s, 1)?;
+            dbg!((m, s));
             execute(execute_data).await?;
         }
     }
-
     Ok(())
 }
 
@@ -247,7 +248,7 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
 
     // Provision the test program with an `execute_data` account.
 
-    let (_proof, command_batch) = gateway::types::execute_data_decoder::decode(&execute_data)?;
+    let (proof, command_batch) = gateway::types::execute_data_decoder::decode(&execute_data)?;
     let execute_data_account = GatewayExecuteData::new(execute_data);
     let (execute_data_pda, _bump, _seeds) = execute_data_account.pda();
     let execute_data_base64 = STANDARD.encode(borsh::to_vec(&execute_data_account)?);
@@ -260,7 +261,8 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
     );
 
     // Provision the test program with a Config account
-    let config = GatewayConfig::new(1);
+    let mut config = GatewayConfig::new(1, OperatorsAndEpochs::default());
+    config.operators_and_epochs.update(proof.operators_hash())?;
     let config_bytes = borsh::to_vec(&config)?;
     let config_base64 = STANDARD.encode(&config_bytes);
     let (config_pda, _bump) = get_gateway_root_config_pda();

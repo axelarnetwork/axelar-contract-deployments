@@ -59,18 +59,17 @@ impl Processor {
         let operators_hash = params_data.proof.get_operators_hash();
 
         let operators_epoch = state_data
-            .epoch_for_hash
-            .get(&operators_hash)
+            .epoch_for_operator_hash(&operators_hash)
             .ok_or(AuthWeightedError::EpochForHashNotFound)?;
 
-        let current_epoch = state_data.current_epoch;
+        let current_epoch = state_data.current_epoch();
 
-        if *operators_epoch == U256::ZERO
-            || current_epoch
-                .checked_sub(*operators_epoch)
-                .ok_or(ProgramError::ArithmeticOverflow)?
-                >= U256::from(OLD_KEY_RETENTION)
-        {
+        let operator_epoch_is_outdated = current_epoch
+            .checked_sub(*operators_epoch)
+            .ok_or(ProgramError::ArithmeticOverflow)?
+            >= U256::from(OLD_KEY_RETENTION);
+
+        if *operators_epoch == U256::ZERO || operator_epoch_is_outdated {
             return Err(AuthWeightedError::InvalidOperators)?;
         };
 
