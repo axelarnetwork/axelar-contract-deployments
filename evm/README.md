@@ -181,3 +181,72 @@ To get details of options provided in the command run:
 ```bash
 node evm/verify-contract.js --help
 ```
+
+## Combine Validator Signatures
+
+The following script is for emergency situations where we need to ask validators to manually sign gateway approvals. These validator signatures must be collected and stored within separate files in the signatures folder in the root directory. The script will then combine these signatures into a gateway batch and optionally execute this batch on the Axelar gateway contract on the specified chain.
+
+Below are instructions on how to utilize this script:
+
+1. Construct the gateway batch data by passing in the payload hash gotten from running the `governance.js` script.
+
+    ```bash
+    node evm/combine-signatures.js -e [ENV] -n [CHAIN_NAME] --action createBatchData --payloadHash [PAYLOAD_HASH]
+    ```
+
+    Note: Other gateway approval variables have default values but can be overriden via CLI options
+
+    - sourceChain: 'Axelarnet'
+    - sourceAddress: 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj'
+    - contractAddress = interchain governance address
+    - commandId = random bytes32 value
+
+2. Running the command above will output the raw batch data, the data hash, and the vald sign command that should be used to generate validator signatures. Here is an example output:
+
+    ```bash
+    axelard vald-sign evm-ethereum-2-3799882 [validator-addr] 0x2716d6d6c37ccfb1ea1db014b175ba23d0f522d7789f3676b7e5e64e4322731
+    ```
+
+    The validator address should be entered dynamically based on which validator is signing.
+
+3. Connect to AWS and switch to the correct context depending on which environment validators will be signing in.
+
+4. Get all the namespaces within this context:
+
+    ```bash
+    kubectl get ns
+    ```
+
+5. List pods for each validator namespace. Example for stagenet validator 1:
+
+    ```bash
+    kubectl get pods -n stagenet-validator1
+    ```
+
+6. Exec into the validator pod. Example for stagenet validator 1:
+
+    ```bash
+    kubectl exec -ti axelar-core-node-validator1-5b68db5c49-mf5q6 -n stagenet-validator1 -c vald -- sh
+    ```
+
+7. Within the validator container, run the vald command from step 2 with the correct validator address. Validator addresses can be found by appending this endpoint `/axelar/multisig/v1beta1/key?key_id=[KEY_ID]` to the Axelar lcd url in the chains config file. Running this command should result in a JSON output containing the signature, similar to the example below:
+
+    ```json
+    {
+        "key_id": "evm-ethereum-2-3799882",
+        "msg_hash": "9dd126c2fc8b8a29f92894eb8830e552b7caf1a3c25e89cc0d74b99bc1165039",
+        "pub_key": "030d0b5bff4bff1adb9ab47df8c70defe27bfae84b12b77fac64cdcc2263e8e51b",
+        "signature": "634cb96060d13c083572d5c57ec9f6441103532434824a046dec4e8dfa0645544ea155230656ee37329572e1c52df1c85e48f0ef5f283bc7e036b9fd51ade6661b",
+        "validator": "axelarvaloper1yfrz78wthyzykzf08h7z6pr0et0zlzf0dnehwx"
+    }
+    ```
+
+8. Create a signatures folder in the root directory of this repository. Repeat step 7 until enough signatures have been generated to surpass the threshold weight for the current epoch (threshold weight can be found at the same endpoint as validator addresses). Store each signature JSON in a separate file within the signatures folder, filenames do not have to follow any specific convention.
+
+9. Run the construct batch command passing in the raw batch data logged in step 1. This will generate the input bytes that can be passed directly into the execute command on Axelar gateway. You can also optionally pass the `--execute` command which will automatically execute the batch on the Axelar gateway contract.
+
+    ```bash
+    node evm/combine-signatures.js -e [ENV] -n [CHAIN_NAME] --action constructBatch --batchData [RAW_BATCH_DATA]
+    ```
+
+    Note: This step will generate the proof and validate it against the Axelar auth module before printing out the input bytes.
