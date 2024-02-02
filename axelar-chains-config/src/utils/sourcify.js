@@ -47,7 +47,7 @@ function searchContractName(rootFolder, bytecode) {
         } else if (fileOrFolder.endsWith('.json')) {
             const jsonData = readJSON(fullPath);
 
-            if (jsonData.deployedBytecode === bytecode) {
+            if (jsonData.deployedBytecode && jsonData.deployedBytecode.startsWith('0x') && jsonData.deployedBytecode === bytecode) {
                 return jsonData.contractName;
             }
         }
@@ -74,13 +74,17 @@ async function verifyOnSourcify(dir, provider, address, chainId) {
     try {
         const bytecode = await provider.getCode(address);
 
+        if (!bytecode && !bytecode.startsWith('0x')) {
+            throw new Error('Unable to fetch valid byte code from chain');
+        }
+
         if (!dir) {
             throw new Error('Need to specify directory to verify on sourcify via solidity code');
         }
 
         const projectRoot = findProjectRoot(__dirname);
         const artifactsDir = `${projectRoot}/${dir}/artifacts/contracts`;
-        const contractName = await searchContractName(artifactsDir, bytecode);
+        const contractName = searchContractName(artifactsDir, bytecode);
 
         if (!contractName) throw new Error('Byte code match not found');
 
