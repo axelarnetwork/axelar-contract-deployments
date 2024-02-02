@@ -5,7 +5,7 @@ const {
     getDefaultProvider,
     Contract,
     constants: { AddressZero },
-    utils: { keccak256, toUtf8Bytes, hexlify }
+    utils: { keccak256, toUtf8Bytes, hexlify },
 } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
@@ -216,27 +216,31 @@ async function processCommand(config, chain, options) {
             tokenInfoApi = tokenInfoApi || 'https://lcd-axelar.imperator.co/axelar/evm/v1beta1/token_info/';
             batchSize = batchSize || 20;
 
-            validateParameters({ isString: { assetApi }, isString: { tokenInfoApi }, isNumber: batchSize });
+            validateParameters({ isString: { assetApi, tokenInfoApi }, isNumber: { batchSize } });
 
             const { assets } = (await axios.get(`${assetApi}${chain.name}`)).data;
-            for(let i = 0; i < assets.length; i += batchSize) {
+
+            for (let i = 0; i < assets.length; i += batchSize) {
                 const asset = assets[i];
-                const salt = keccak256(hexlify(toUtf8Bytes(asset))); 
+                const salt = keccak256(hexlify(toUtf8Bytes(asset)));
                 const tokenId = await interchainTokenService.interchainTokenId(AddressZero, salt);
                 const tokenManagerAddress = await interchainTokenService.tokenManagerAddress(tokenId);
-                if((await provider.getCode(tokenManagerAddress)).length > 2) {
+
+                if ((await provider.getCode(tokenManagerAddress)).length > 2) {
                     continue;
-                } 
+                }
+
                 const multicallData = [];
-                for(let j = i; j < i + batchSize && j < assets.length; j++ ) {
+
+                for (let j = i; j < i + batchSize && j < assets.length; j++) {
                     const asset = assets[j];
-                    const salt = keccak256(hexlify(toUtf8Bytes(asset))); 
+                    const salt = keccak256(hexlify(toUtf8Bytes(asset)));
                     const { symbol } = (await axios.get(`${tokenInfoApi}${chain.name}?asset=${asset}`)).data.details;
                     console.log(symbol);
                     const { data } = await interchainTokenFactory.populateTransaction.registerGatewayToken(salt, symbol);
                     multicallData.push(data);
                 }
-                
+
                 await (await interchainTokenFactory.multicall(multicallData)).wait();
             }
 
