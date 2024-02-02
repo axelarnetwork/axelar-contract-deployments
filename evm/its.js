@@ -66,7 +66,7 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
 }
 
 async function getTrustedChainsAndAddresses(config, interchainTokenService) {
-    const allChains = Object.values(config.chains).map((chain) => chain.id);
+    const allChains = Object.values(config.chains).map((chain) => chain.axelarId);
     const trustedAddressesValues = await Promise.all(
         allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)),
     );
@@ -454,7 +454,7 @@ async function processCommand(config, chain, options) {
 
             if (options.trustedChain === 'all') {
                 const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
-                trustedChains = itsChains.map((chain) => chain.id);
+                trustedChains = itsChains.map((chain) => chain.axelarId);
                 trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address);
             } else {
                 const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.id;
@@ -588,7 +588,7 @@ async function processCommand(config, chain, options) {
             const configGasService = chain.contracts.AxelarGasService?.address;
 
             const chainNameHash = await interchainTokenService.chainNameHash();
-            const configChainNameHash = keccak256(toUtf8Bytes(chain.id));
+            const configChainNameHash = keccak256(toUtf8Bytes(chain.axelarId));
 
             compare(gateway, configGateway, 'AxelarGateway');
             compare(gasService, configGasService, 'AxelarGasService');
