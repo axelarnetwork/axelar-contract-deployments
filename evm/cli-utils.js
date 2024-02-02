@@ -13,6 +13,7 @@ const addBaseOptions = (program, options = {}) => {
             .env('ENV'),
     );
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
 
     if (!options.ignoreChainNames) {
         program.addOption(
@@ -61,6 +62,10 @@ const addExtendedOptions = (program, options = {}) => {
 
     if (options.upgrade) {
         program.addOption(new Option('-u, --upgrade', 'upgrade a deployed contract').env('UPGRADE'));
+    }
+
+    if (options.predictOnly) {
+        program.addOption(new Option('--predictOnly', 'output the predicted changes only').env('PREDICT_ONLY'));
     }
 
     return program;

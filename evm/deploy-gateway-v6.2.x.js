@@ -81,7 +81,7 @@ function getProxyParams(governance, mintLimiter) {
 }
 
 async function deploy(config, chain, options) {
-    const { privateKey, reuseProxy, reuseHelpers, verify, yes } = options;
+    const { privateKey, reuseProxy, reuseHelpers, verify, yes, predictOnly } = options;
 
     const contractName = 'AxelarGateway';
 
@@ -145,7 +145,7 @@ async function deploy(config, chain, options) {
     let proxyAddress;
 
     if (reuseProxy) {
-        proxyAddress = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.id));
+        proxyAddress = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.axelarId));
         printInfo('Reusing Gateway Proxy address', proxyAddress);
         gateway = gatewayFactory.attach(proxyAddress);
     } else {
@@ -168,7 +168,7 @@ async function deploy(config, chain, options) {
 
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
 
-    if (prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
+    if (predictOnly || prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
         return;
     }
 
@@ -181,7 +181,7 @@ async function deploy(config, chain, options) {
     } else {
         printInfo(`Deploying auth contract`);
 
-        const { params, keyIDs } = await getAuthParams(config, chain.id, options);
+        const { params, keyIDs } = await getAuthParams(config, chain.axelarId, options);
         printInfo('Auth deployment args', params);
 
         contractConfig.startingKeyIDs = keyIDs;
@@ -249,7 +249,7 @@ async function deploy(config, chain, options) {
 
     printInfo('Gateway Implementation', implementation.address);
 
-    const implementationCodehash = await getBytecodeHash(implementation, chain.id);
+    const implementationCodehash = await getBytecodeHash(implementation, chain.axelarId);
     printInfo('Gateway Implementation codehash', implementationCodehash);
 
     contractsToVerify.push({
@@ -397,7 +397,7 @@ async function deploy(config, chain, options) {
 }
 
 async function upgrade(_, chain, options) {
-    const { privateKey, yes, offline, env } = options;
+    const { privateKey, yes, offline, env, predictOnly } = options;
     const contractName = 'AxelarGateway';
     const chainName = chain.name.toLowerCase();
 
@@ -437,7 +437,7 @@ async function upgrade(_, chain, options) {
             throw new Error('mintLimiter address is not a contract');
         }
 
-        const codehash = await getBytecodeHash(contractConfig.implementation, chain.id, provider);
+        const codehash = await getBytecodeHash(contractConfig.implementation, chain.axelarId, provider);
 
         if (!implementationCodehash) {
             // retrieve codehash dynamically if not specified in the config file
@@ -474,7 +474,7 @@ async function upgrade(_, chain, options) {
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
-    if (prompt(`Proceed with an upgrade on ${chain.name}?`, yes)) {
+    if (predictOnly || prompt(`Proceed with an upgrade on ${chain.name}?`, yes)) {
         return;
     }
 
@@ -525,7 +525,7 @@ async function programHandler() {
 
     program.name('deploy-gateway-v6.2.x').description('Deploy gateway v6.2.x');
 
-    addExtendedOptions(program, { salt: true, skipExisting: true, upgrade: true });
+    addExtendedOptions(program, { salt: true, skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(

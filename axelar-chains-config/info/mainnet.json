@@ -3,6 +3,7 @@
     "ethereum": {
       "name": "Ethereum",
       "id": "Ethereum",
+      "axelarId": "Ethereum",
       "chainId": 1,
       "rpc": "https://mainnet.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
       "tokenSymbol": "ETH",
@@ -110,6 +111,7 @@
         }
       },
       "explorer": {
+        "name": "Etherscan",
         "url": "https://etherscan.io",
         "api": "https://api.etherscan.io/api"
       },
@@ -121,6 +123,7 @@
     "avalanche": {
       "name": "Avalanche",
       "id": "Avalanche",
+      "axelarId": "Avalanche",
       "chainId": 43114,
       "rpc": "https://api.avax.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
@@ -224,6 +227,7 @@
         }
       },
       "explorer": {
+        "name": "Snowtrace",
         "url": "https://snowtrace.io",
         "api": "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan"
       },
@@ -235,6 +239,7 @@
     "fantom": {
       "name": "Fantom",
       "id": "Fantom",
+      "axelarId": "Fantom",
       "chainId": 250,
       "rpc": "https://rpc.ftm.tools",
       "tokenSymbol": "FTM",
@@ -338,6 +343,7 @@
         }
       },
       "explorer": {
+        "name": "Ftmscan",
         "url": "https://ftmscan.com",
         "api": "https://api.ftmscan.com/api"
       },
@@ -353,6 +359,7 @@
     "polygon": {
       "name": "Polygon",
       "id": "Polygon",
+      "axelarId": "Polygon",
       "chainId": 137,
       "rpc": "https://polygon-rpc.com",
       "tokenSymbol": "MATIC",
@@ -456,6 +463,7 @@
         }
       },
       "explorer": {
+        "name": "Polygonscan",
         "url": "https://polygonscan.com",
         "api": "https://api.polygonscan.com/api"
       },
@@ -470,6 +478,7 @@
     "moonbeam": {
       "name": "Moonbeam",
       "id": "Moonbeam",
+      "axelarId": "Moonbeam",
       "chainId": 1284,
       "rpc": "https://rpc.api.moonbeam.network",
       "tokenSymbol": "GLMR",
@@ -573,6 +582,7 @@
         }
       },
       "explorer": {
+        "name": "Moonscan",
         "url": "https://moonbeam.moonscan.io",
         "api": "https://api-moonbeam.moonscan.io/api"
       },
@@ -584,6 +594,7 @@
     "binance": {
       "name": "Binance",
       "id": "binance",
+      "axelarId": "binance",
       "chainId": 56,
       "rpc": "https://1rpc.io/bnb",
       "tokenSymbol": "BNB",
@@ -688,6 +699,7 @@
         }
       },
       "explorer": {
+        "name": "Bscscan",
         "url": "https://bscscan.com",
         "api": "https://api.bscscan.com/api"
       },
@@ -703,6 +715,7 @@
     "arbitrum": {
       "name": "Arbitrum",
       "id": "arbitrum",
+      "axelarId": "arbitrum",
       "chainId": 42161,
       "rpc": "https://arb1.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
@@ -806,6 +819,7 @@
         }
       },
       "explorer": {
+        "name": "Arbiscan",
         "url": "https://arbiscan.io",
         "api": "https://api.arbiscan.io/api"
       },
@@ -818,6 +832,7 @@
     "celo": {
       "name": "Celo",
       "id": "celo",
+      "axelarId": "celo",
       "chainId": 42220,
       "rpc": "https://forno.celo.org",
       "tokenSymbol": "CELO",
@@ -923,6 +938,7 @@
         }
       },
       "explorer": {
+        "name": "Celoscan",
         "url": "https://celoscan.io",
         "api": "https://api.celoscan.io/api"
       },
@@ -934,6 +950,7 @@
     "kava": {
       "name": "Kava",
       "id": "kava",
+      "axelarId": "kava",
       "chainId": 2222,
       "rpc": "https://evm.kava.io",
       "tokenSymbol": "KAVA",
@@ -1037,6 +1054,7 @@
         }
       },
       "explorer": {
+        "name": "Kavascan",
         "url": "https://kavascan.com",
         "api": "https://kavascan.com/api"
       },
@@ -1048,6 +1066,7 @@
     "filecoin": {
       "name": "Filecoin",
       "id": "filecoin",
+      "axelarId": "filecoin",
       "chainId": 314,
       "rpc": "https://rpc.ankr.com/filecoin",
       "tokenSymbol": "FIL",
@@ -1152,6 +1171,7 @@
       },
       "confirmations": 3,
       "explorer": {
+        "name": "Filfox",
         "url": "https://www.filfox.info",
         "api": "https://filfox.info/api/v1/tools/verifyContract"
       },
@@ -1167,6 +1187,7 @@
     "optimism": {
       "name": "Optimism",
       "id": "optimism",
+      "axelarId": "optimism",
       "chainId": 10,
       "rpc": "https://optimism-mainnet.public.blastapi.io",
       "tokenSymbol": "ETH",
@@ -1270,6 +1291,7 @@
         }
       },
       "explorer": {
+        "name": "Opscan",
         "url": "https://optimistic.etherscan.io",
         "api": "https://api-optimistic.etherscan.io/api"
       },
@@ -1285,6 +1307,7 @@
     "linea": {
       "name": "Linea",
       "id": "linea",
+      "axelarId": "linea",
       "chainId": 59144,
       "rpc": "https://rpc.linea.build",
       "tokenSymbol": "ETH",
@@ -1388,6 +1411,7 @@
         }
       },
       "explorer": {
+        "name": "Lineascan",
         "url": "https://lineascan.build",
         "api": "https://api.lineascan.build/api"
       },
@@ -1403,6 +1427,7 @@
     "base": {
       "name": "Base",
       "id": "base",
+      "axelarId": "base",
       "chainId": 8453,
       "rpc": "https://developer-access-mainnet.base.org",
       "tokenSymbol": "ETH",
@@ -1507,6 +1532,7 @@
       },
       "confirmations": 2,
       "explorer": {
+        "name": "Basescan",
         "url": "https://basescan.org",
         "api": "https://api.basescan.org/api"
       },
@@ -1518,6 +1544,7 @@
     "mantle": {
       "name": "Mantle",
       "id": "mantle",
+      "axelarId": "mantle",
       "chainId": 5000,
       "rpc": "https://rpc.mantle.xyz",
       "tokenSymbol": "MNT",
@@ -1622,6 +1649,7 @@
       },
       "confirmations": 2,
       "explorer": {
+        "name": "Mantle Explorer",
         "url": "https://explorer.mantle.xyz",
         "api": "https://explorer.mantle.xyz/api"
       },
@@ -1637,6 +1665,7 @@
     "scroll": {
       "name": "Scroll",
       "id": "scroll",
+      "axelarId": "scroll",
       "chainId": 534352,
       "rpc": "https://rpc.scroll.io",
       "tokenSymbol": "ETH",
@@ -1734,6 +1763,7 @@
         }
       },
       "explorer": {
+        "name": "Scroll Explorer",
         "url": "https://blockscout.scroll.io",
         "api": "https://blockscout.scroll.io/api"
       },
@@ -1749,6 +1779,7 @@
     "centrifuge": {
       "name": "Centrifuge",
       "id": "centrifuge",
+      "axelarId": "centrifuge",
       "chainId": 2031,
       "rpc": "https://fullnode.parachain.centrifuge.io",
       "tokenSymbol": "CFG",
@@ -1834,6 +1865,7 @@
         "gasLimit": 8000000
       },
       "explorer": {
+        "name": "Subscan",
         "url": "https://centrifuge.subscan.io"
       },
       "staticGasOptions": {
@@ -1844,6 +1876,7 @@
     "immutable": {
       "name": "Immutable",
       "id": "immutable",
+      "axelarId": "immutable",
       "chainId": 13371,
       "rpc": "https://rpc.immutable.com/",
       "tokenSymbol": "IMX",
@@ -1911,6 +1944,7 @@
         "maxFeePerGas": 100000000000
       },
       "explorer": {
+        "name": "Immutable Explorer",
         "url": "https://explorer.immutable.com",
         "api": "https://explorer.immutable.com/api"
       }
@@ -1918,6 +1952,7 @@
   },
   "axelar": {
     "id": "Axelarnet",
+    "axelarId": "Axelarnet",
     "rpc": "https://rpc-axelar.imperator.co:443",
     "lcd": "https://lcd-axelar.imperator.co:443",
     "grpc": "grpc-axelar.imperator.co:2062",

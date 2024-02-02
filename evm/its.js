@@ -22,6 +22,7 @@ const {
     isValidTokenId,
     getGasOptions,
     isNonEmptyString,
+    isValidChain,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -65,7 +66,7 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
 }
 
 async function getTrustedChainsAndAddresses(config, interchainTokenService) {
-    const allChains = Object.values(config.chains).map((chain) => chain.id);
+    const allChains = Object.values(config.chains).map((chain) => chain.axelarId);
     const trustedAddressesValues = await Promise.all(
         allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)),
     );
@@ -86,6 +87,14 @@ function compare(contractValue, configValue, variableName) {
             `Error: Value mismatch for '${variableName}'. Config value: ${configValue}, InterchainTokenService value: ${contractValue}`,
         );
     }
+}
+
+function isValidDestinationChain(config, destinationChain) {
+    if (destinationChain === '') {
+        return;
+    }
+
+    isValidChain(config, destinationChain);
 }
 
 async function processCommand(config, chain, options) {
@@ -227,6 +236,8 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
+            isValidDestinationChain(config, destinationChain);
+
             const tx = await interchainTokenService.deployTokenManager(
                 deploymentSalt,
                 destinationChain,
@@ -252,6 +263,8 @@ async function processCommand(config, chain, options) {
                 isAddress: { minter },
                 isValidNumber: { decimals, gasValue },
             });
+
+            isValidDestinationChain(config, destinationChain);
 
             const tx = await interchainTokenService.deployInterchainToken(
                 deploymentSalt,
@@ -315,6 +328,8 @@ async function processCommand(config, chain, options) {
                 isValidCalldata: { metadata },
             });
 
+            isValidDestinationChain(config, destinationChain);
+
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const tokenManager = new Contract(
@@ -366,6 +381,8 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { amount, gasValue },
                 isValidCalldata: { data },
             });
+
+            isValidDestinationChain(config, destinationChain);
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
@@ -437,7 +454,7 @@ async function processCommand(config, chain, options) {
 
             if (options.trustedChain === 'all') {
                 const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
-                trustedChains = itsChains.map((chain) => chain.id);
+                trustedChains = itsChains.map((chain) => chain.axelarId);
                 trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address);
             } else {
                 const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.id;
@@ -571,7 +588,7 @@ async function processCommand(config, chain, options) {
             const configGasService = chain.contracts.AxelarGasService?.address;
 
             const chainNameHash = await interchainTokenService.chainNameHash();
-            const configChainNameHash = keccak256(toUtf8Bytes(chain.id));
+            const configChainNameHash = keccak256(toUtf8Bytes(chain.axelarId));
 
             compare(gateway, configGateway, 'AxelarGateway');
             compare(gasService, configGasService, 'AxelarGasService');
@@ -686,4 +703,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { getDeploymentSalt, handleTx, getTrustedChainsAndAddresses };
+module.exports = { getDeploymentSalt, handleTx, getTrustedChainsAndAddresses, isValidDestinationChain };

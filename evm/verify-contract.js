@@ -135,8 +135,8 @@ async function processCommand(config, chain, options) {
             const auth = await gateway.authModule();
             const tokenDeployer = await gateway.tokenDeployer();
 
-            const { addresses, weights, threshold } = await getEVMAddresses(config, chain.id, {
-                keyID: chain.contracts.AxelarGateway.startingKeyIDs[0] || options.args || `evm-${chain.id.toLowerCase()}-genesis`,
+            const { addresses, weights, threshold } = await getEVMAddresses(config, chain.axelarId, {
+                keyID: chain.contracts.AxelarGateway.startingKeyIDs[0] || options.args || `evm-${chain.axelarId.toLowerCase()}-genesis`,
             });
             const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
             const setupParams = defaultAbiCoder.encode(
@@ -237,7 +237,7 @@ async function processCommand(config, chain, options) {
 
             const setupParams = defaultAbiCoder.encode(
                 ['address', 'string', 'string[]', 'string[]'],
-                [contractConfig.deployer, chain.id, trustedChains, trustedAddresses],
+                [contractConfig.deployer, chain.axelarId, trustedChains, trustedAddresses],
             );
 
             await verifyContract(env, chain.name, tokenManagerDeployer, [], verifyOptions);
@@ -255,7 +255,7 @@ async function processCommand(config, chain, options) {
                     chain.contracts.AxelarGateway.address,
                     chain.contracts.AxelarGasService.address,
                     interchainTokenFactory,
-                    chain.id,
+                    chain.axelarId,
                     tokenManager,
                     tokenHandler,
                 ],

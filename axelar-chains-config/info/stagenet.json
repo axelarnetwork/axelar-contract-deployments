@@ -3,6 +3,7 @@
     "ethereum": {
       "name": "Ethereum",
       "id": "ethereum-2",
+      "axelarId": "ethereum-2",
       "chainId": 5,
       "rpc": "https://goerli.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
       "tokenSymbol": "ETH",
@@ -88,6 +89,7 @@
     "avalanche": {
       "name": "Avalanche",
       "id": "Avalanche",
+      "axelarId": "Avalanche",
       "chainId": 43113,
       "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
@@ -169,6 +171,7 @@
     "fantom": {
       "name": "Fantom",
       "id": "Fantom",
+      "axelarId": "Fantom",
       "chainId": 4002,
       "rpc": "https://xapi.testnet.fantom.network/lachesis",
       "tokenSymbol": "FTM",
@@ -250,6 +253,7 @@
     "polygon": {
       "name": "Polygon",
       "id": "Polygon",
+      "axelarId": "Polygon",
       "chainId": 80001,
       "rpc": "https://polygon-mumbai.g.alchemy.com/v2/Ksd4J1QVWaOJAJJNbr_nzTcJBJU-6uP3",
       "tokenSymbol": "MATIC",
@@ -331,6 +335,7 @@
     "moonbeam": {
       "name": "Moonbeam",
       "id": "Moonbeam",
+      "axelarId": "Moonbeam",
       "chainId": 1287,
       "rpc": "https://moonbeam-alpha.api.onfinality.io/public",
       "tokenSymbol": "DEV",
@@ -412,6 +417,7 @@
     "binance": {
       "name": "Binance",
       "id": "binance",
+      "axelarId": "binance",
       "chainId": 97,
       "rpc": "https://data-seed-prebsc-1-s1.binance.org:8545/",
       "tokenSymbol": "BNB",
@@ -493,6 +499,7 @@
     "arbitrum": {
       "name": "Arbitrum",
       "id": "arbitrum",
+      "axelarId": "arbitrum",
       "chainId": 421613,
       "rpc": "https://goerli-rollup.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
@@ -577,6 +584,7 @@
     "kava": {
       "name": "Kava",
       "id": "kava",
+      "axelarId": "kava",
       "chainId": 2221,
       "rpc": "https://evm.testnet.kava.io",
       "tokenSymbol": "KAVA",
@@ -658,6 +666,7 @@
     "optimism": {
       "name": "Optimism",
       "id": "optimism",
+      "axelarId": "optimism",
       "chainId": 420,
       "rpc": "https://optimism-goerli.public.blastapi.io",
       "tokenSymbol": "ETH",
@@ -742,6 +751,7 @@
     "base": {
       "name": "Base",
       "id": "base",
+      "axelarId": "base",
       "chainId": 84531,
       "rpc": "https://goerli.base.org",
       "tokenSymbol": "ETH",
@@ -825,6 +835,7 @@
     "immutable-devnet": {
       "name": "immutable-devnet",
       "id": "immutable-devnet",
+      "axelarId": "immutable-devnet",
       "chainId": 15003,
       "rpc": "",
       "tokenSymbol": "IMX",
@@ -920,6 +931,7 @@
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
       "id": "ethereum-sepolia",
+      "axelarId": "ethereum-sepolia",
       "chainId": 11155111,
       "rpc": "https://1rpc.io/sepolia",
       "tokenSymbol": "ETH",
@@ -988,6 +1000,7 @@
     "arbitrum-sepolia": {
       "name": "Arbitrum-Sepolia",
       "id": "arbitrum-sepolia",
+      "axelarId": "arbitrum-sepolia",
       "chainId": 421614,
       "rpc": "https://sepolia-rollup.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
@@ -1052,6 +1065,7 @@
     "centrifuge": {
       "name": "Centrifuge",
       "id": "centrifuge-2",
+      "axelarId": "centrifuge-2",
       "chainId": 2090,
       "rpc": "https://node-7118620155331796992.gx.onfinality.io/rpc?apikey=00538f2d-6297-44e3-8812-4b9d579524b2",
       "tokenSymbol": "CFG",
@@ -1116,6 +1130,7 @@
   },
   "axelar": {
     "id": "Axelarnet",
+    "axelarId": "Axelarnet",
     "rpc": "",
     "lcd": "",
     "grpc": "",
