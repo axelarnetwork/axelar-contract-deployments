@@ -4,7 +4,17 @@ const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString },
+    utils: {
+        computeAddress,
+        getContractAddress,
+        keccak256,
+        isAddress,
+        getCreate2Address,
+        defaultAbiCoder,
+        isHexString,
+        hexlify,
+        randomBytes,
+    },
     constants: { AddressZero },
     getDefaultProvider,
 } = ethers;
@@ -32,9 +42,9 @@ const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
 };
 
-function getRandomBytes32() {
-    return keccak256(defaultAbiCoder.encode(['uint256'], [Math.floor(new Date().getTime() * Math.random())]));
-}
+const getRandomBytes32 = () => {
+    return hexlify(randomBytes(32));
+};
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
