@@ -5,6 +5,7 @@ const {
     getDefaultProvider,
     Contract,
     constants: { AddressZero },
+    utils: { keccak256, toUtf8Bytes, hexlify }
 } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
@@ -13,6 +14,7 @@ const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its'
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
+const axios = require('axios');
 
 async function processCommand(config, chain, options) {
     const { privateKey, address, action, yes } = options;
@@ -207,14 +209,36 @@ async function processCommand(config, chain, options) {
             break;
         }
 
-        case 'registerGatewayToken': {
-            const { salt, symbol } = options;
+        case 'registerGatewayTokens': {
+            let { assetApi, tokenInfoApi, batchSize } = options;
 
-            validateParameters({ isKeccak256Hash: { salt }, isValidString: { symbol } });
+            assetApi = assetApi || 'https://lcd-axelar.imperator.co/axelar/nexus/v1beta1/assets/';
+            tokenInfoApi = tokenInfoApi || 'https://lcd-axelar.imperator.co/axelar/evm/v1beta1/token_info/';
+            batchSize = batchSize || 20;
 
-            const tx = await interchainTokenFactory.registerGatewayToken(salt, symbol, gasOptions);
+            validateParameters({ isString: { assetApi }, isString: { tokenInfoApi }, isNumber: batchSize });
 
-            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed');
+            const { assets } = (await axios.get(`${assetApi}${chain.name}`)).data;
+            for(let i = 0; i < assets.length; i += batchSize) {
+                const asset = assets[i];
+                const salt = keccak256(hexlify(toUtf8Bytes(asset))); 
+                const tokenId = await interchainTokenService.interchainTokenId(AddressZero, salt);
+                const tokenManagerAddress = await interchainTokenService.tokenManagerAddress(tokenId);
+                if((await provider.getCode(tokenManagerAddress)).length > 2) {
+                    continue;
+                } 
+                const multicallData = [];
+                for(let j = i; j < i + batchSize && j < assets.length; j++ ) {
+                    const asset = assets[j];
+                    const salt = keccak256(hexlify(toUtf8Bytes(asset))); 
+                    const { symbol } = (await axios.get(`${tokenInfoApi}${chain.name}?asset=${asset}`)).data.details;
+                    console.log(symbol);
+                    const { data } = await interchainTokenFactory.populateTransaction.registerGatewayToken(salt, symbol);
+                    multicallData.push(data);
+                }
+                
+                await (await interchainTokenFactory.multicall(multicallData)).wait();
+            }
 
             break;
         }
@@ -249,6 +273,7 @@ if (require.main === module) {
                 'deployRemoteInterchainToken',
                 'registerCanonicalInterchainToken',
                 'deployRemoteCanonicalInterchainToken',
+                'registerGatewayTokens',
             ])
             .makeOptionMandatory(true),
     );
