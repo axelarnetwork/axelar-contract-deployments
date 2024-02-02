@@ -120,7 +120,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'operators': {
-            const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain.id, options);
+            const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain.axelarId, options);
             printInfo('Axelar validator key id', keyID);
 
             const auth = new Contract(await gateway.authModule(), IAuth.abi, wallet);
@@ -141,7 +141,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'submitBatch': {
-            const batch = await getEVMBatch(config, chain.id, options.batchID);
+            const batch = await getEVMBatch(config, chain.axelarId, options.batchID);
 
             printInfo(`Submitting batch: ${options.batchID || 'latest'}`);
 
@@ -200,7 +200,7 @@ async function processCommand(config, chain, options) {
                 chain.chainId,
                 [commandID],
                 ['approveContractCall'],
-                [getApproveContractCall(chain.id, walletAddress, options.destination || walletAddress, payloadHash, id(''), 0)],
+                [getApproveContractCall(chain.axelarId, walletAddress, options.destination || walletAddress, payloadHash, id(''), 0)],
             );
 
             const signedData = await getSignedWeightedExecuteInput(data, [walletAddress], [1], 1, [wallet]);
