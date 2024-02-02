@@ -5,8 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const {
     getDefaultProvider,
-    utils: { computePublicKey, keccak256, getAddress, arrayify, defaultAbiCoder, hashMessage, recoverAddress },
-    constants: { HashZero },
+    utils: { computePublicKey, keccak256, getAddress, arrayify, defaultAbiCoder, hashMessage, recoverAddress, hexZeroPad, hexlify },
+    constants: { HashZero, MaxUint256 },
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
@@ -18,12 +18,12 @@ const {
     printError,
     validateParameters,
     getContractJSON,
-    getRandomBytes32,
     getEVMAddresses,
 } = require('./utils');
 const { handleTx } = require('./its');
 const { getWallet } = require('./sign-utils');
 const { addBaseOptions } = require('./cli-utils');
+const IAxelarGateway = getContractJSON('IAxelarGateway');
 
 function readSignatures() {
     const signaturesDir = path.join(__dirname, '../signatures');
@@ -52,6 +52,22 @@ function getAddressFromPublicKey(publicKey) {
     return getAddress('0x' + addressHash.slice(-40));
 }
 
+async function getCommandId(gateway) {
+    let currentValue = MaxUint256;
+
+    while (true) {
+        const isCommandIdExecuted = await gateway.isCommandExecuted(hexZeroPad(hexlify(currentValue), 32));
+
+        if (!isCommandIdExecuted) {
+            break;
+        }
+
+        currentValue = currentValue.sub(1);
+    }
+
+    return hexZeroPad(hexlify(currentValue), 32);
+}
+
 async function processCommand(config, chain, options) {
     const { address, action, privateKey } = options;
 
@@ -67,6 +83,9 @@ async function processCommand(config, chain, options) {
     const wallet = await getWallet(privateKey, provider, options);
     await printWalletInfo(wallet);
 
+    const gatewayAddress = address || contracts.AxelarGateway?.address;
+    const gateway = new Contract(gatewayAddress, IAxelarGateway.abi, wallet);
+
     printInfo('Batch Action', action);
 
     switch (action) {
@@ -76,7 +95,7 @@ async function processCommand(config, chain, options) {
             const sourceChain = options.sourceChain || 'Axelarnet';
             const sourceAddress = options.sourceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
             const contractAddress = options.contractAddress || contracts.InterchainGovernance?.address;
-            const commandID = commandId || getRandomBytes32();
+            const commandID = commandId || (await getCommandId(gateway));
 
             validateParameters({
                 isNonEmptyString: { sourceChain, sourceAddress },
@@ -228,10 +247,6 @@ async function processCommand(config, chain, options) {
                 printInfo('Executing gateway batch on chain', chain.name);
 
                 const contractName = 'AxelarGateway';
-
-                const IAxelarGateway = getContractJSON('IAxelarGateway');
-                const gatewayAddress = address || contracts.AxelarGateway?.address;
-                const gateway = new Contract(gatewayAddress, IAxelarGateway.abi, wallet);
 
                 const gasOptions = await getGasOptions(chain, options, contractName);
 

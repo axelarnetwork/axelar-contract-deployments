@@ -4,17 +4,7 @@ const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
-    utils: {
-        computeAddress,
-        getContractAddress,
-        keccak256,
-        isAddress,
-        getCreate2Address,
-        defaultAbiCoder,
-        isHexString,
-        hexlify,
-        randomBytes,
-    },
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString },
     constants: { AddressZero },
     getDefaultProvider,
 } = ethers;
@@ -40,10 +30,6 @@ const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
-};
-
-const getRandomBytes32 = () => {
-    return hexlify(randomBytes(32));
 };
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
@@ -1151,5 +1137,4 @@ module.exports = {
     getSaltFromKey,
     getDeployOptions,
     isValidChain,
-    getRandomBytes32,
 };
