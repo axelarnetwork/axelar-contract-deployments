@@ -247,7 +247,7 @@ async function processCommand(config, chain, options) {
 
     const contractJson = getContractJSON(contractName, artifactPath);
 
-    const predeployCodehash = await getBytecodeHash(contractJson, chain.id);
+    const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
 
     const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
@@ -316,7 +316,7 @@ async function processCommand(config, chain, options) {
         chain,
     );
 
-    const codehash = await getBytecodeHash(contract, chain.id);
+    const codehash = await getBytecodeHash(contract, chain.axelarId);
     printInfo('Deployed Contract bytecode hash', codehash);
 
     contractConfig.address = contract.address;

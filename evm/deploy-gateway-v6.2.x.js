@@ -145,7 +145,7 @@ async function deploy(config, chain, options) {
     let proxyAddress;
 
     if (reuseProxy) {
-        proxyAddress = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.id));
+        proxyAddress = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.axelarId));
         printInfo('Reusing Gateway Proxy address', proxyAddress);
         gateway = gatewayFactory.attach(proxyAddress);
     } else {
@@ -181,7 +181,7 @@ async function deploy(config, chain, options) {
     } else {
         printInfo(`Deploying auth contract`);
 
-        const { params, keyIDs } = await getAuthParams(config, chain.id, options);
+        const { params, keyIDs } = await getAuthParams(config, chain.axelarId, options);
         printInfo('Auth deployment args', params);
 
         contractConfig.startingKeyIDs = keyIDs;
@@ -249,7 +249,7 @@ async function deploy(config, chain, options) {
 
     printInfo('Gateway Implementation', implementation.address);
 
-    const implementationCodehash = await getBytecodeHash(implementation, chain.id);
+    const implementationCodehash = await getBytecodeHash(implementation, chain.axelarId);
     printInfo('Gateway Implementation codehash', implementationCodehash);
 
     contractsToVerify.push({
@@ -437,7 +437,7 @@ async function upgrade(_, chain, options) {
             throw new Error('mintLimiter address is not a contract');
         }
 
-        const codehash = await getBytecodeHash(contractConfig.implementation, chain.id, provider);
+        const codehash = await getBytecodeHash(contractConfig.implementation, chain.axelarId, provider);
 
         if (!implementationCodehash) {
             // retrieve codehash dynamically if not specified in the config file
