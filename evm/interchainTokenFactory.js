@@ -212,9 +212,9 @@ async function processCommand(config, chain, options) {
         case 'registerGatewayTokens': {
             let { assetApi, tokenInfoApi, batchSize } = options;
 
-            assetApi = assetApi || 'https://lcd-axelar.imperator.co/axelar/nexus/v1beta1/assets/';
-            tokenInfoApi = tokenInfoApi || 'https://lcd-axelar.imperator.co/axelar/evm/v1beta1/token_info/';
-            batchSize = batchSize || 20;
+            assetApi = assetApi || `${config.axelar.lcd}/axelar/nexus/v1beta1/assets/`;
+            tokenInfoApi = tokenInfoApi || `${config.axelar.lcd}/axelar/evm/v1beta1/token_info/`;
+            batchSize = batchSize || 10;
 
             validateParameters({ isString: { assetApi, tokenInfoApi }, isNumber: { batchSize } });
 
@@ -236,7 +236,6 @@ async function processCommand(config, chain, options) {
                     const asset = assets[j];
                     const salt = keccak256(hexlify(toUtf8Bytes(asset)));
                     const { symbol } = (await axios.get(`${tokenInfoApi}${chain.name}?asset=${asset}`)).data.details;
-                    console.log(symbol);
                     const { data } = await interchainTokenFactory.populateTransaction.registerGatewayToken(salt, symbol);
                     multicallData.push(data);
                 }
