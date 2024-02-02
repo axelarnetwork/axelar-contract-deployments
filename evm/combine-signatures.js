@@ -6,6 +6,7 @@ const path = require('path');
 const {
     getDefaultProvider,
     utils: { computePublicKey, keccak256, getAddress, arrayify, defaultAbiCoder, hashMessage, recoverAddress },
+    constants: { HashZero },
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
@@ -23,8 +24,6 @@ const {
 const { handleTx } = require('./its');
 const { getWallet } = require('./sign-utils');
 const { addBaseOptions } = require('./cli-utils');
-const IAxelarGateway = getContractJSON('IAxelarGateway');
-const IAxelarAuth = getContractJSON('IAxelarAuth');
 
 function readSignatures() {
     const signaturesDir = path.join(__dirname, '../signatures');
@@ -71,22 +70,25 @@ async function processCommand(config, chain, options) {
     printInfo('Batch Action', action);
 
     switch (action) {
-        case 'computeMessageHash': {
-            const { commandId, sourceChain, sourceAddress, contractAddress, payloadHash, sourceTxHash, sourceEventIndex } = options;
+        case 'createBatchData': {
+            const { commandId, payloadHash } = options;
+
+            const sourceChain = options.sourceChain || 'Axelarnet';
+            const sourceAddress = options.sourceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+            const contractAddress = options.contractAddress || contracts.InterchainGovernance?.address;
+            const commandID = commandId || getRandomBytes32();
 
             validateParameters({
                 isNonEmptyString: { sourceChain, sourceAddress },
                 isValidAddress: { contractAddress },
-                isKeccak256Hash: { commandId, payloadHash, sourceTxHash },
-                isValidNumber: { sourceEventIndex },
+                isKeccak256Hash: { commandID, payloadHash },
             });
 
             const chainId = chain.chainId;
-            const commandID = commandId || getRandomBytes32();
             const command = 'approveContractCall';
             const params = defaultAbiCoder.encode(
                 ['string', 'string', 'address', 'bytes32', 'bytes32', 'uint256'],
-                [sourceChain, sourceAddress, contractAddress, payloadHash, sourceTxHash, sourceEventIndex],
+                [sourceChain, sourceAddress, contractAddress, payloadHash, HashZero, 0],
             );
 
             const data = defaultAbiCoder.encode(
@@ -96,23 +98,21 @@ async function processCommand(config, chain, options) {
 
             const dataHash = hashMessage(arrayify(keccak256(data)));
 
+            const { keyID } = await getEVMAddresses(config, chain.id, options);
+
             printInfo('Original bytes message (pre-hash)', data);
             printInfo('Message hash for validators to sign', dataHash);
+            printInfo('Vald sign command', `axelard vald-sign ${keyID} [validator-addr] ${dataHash}`);
 
             break;
         }
 
         case 'constructBatch': {
-            const { message } = options;
+            const { batchData, execute } = options;
 
-            validateParameters({ isValidCalldata: { message } });
+            validateParameters({ isValidCalldata: { batchData } });
 
-            const {
-                addresses: validatorAddresses,
-                weights,
-                threshold,
-                keyID: expectedKeyId,
-            } = await getEVMAddresses(config, chain.id, options);
+            const { addresses: validatorAddresses, weights, threshold } = await getEVMAddresses(config, chain.id, options);
 
             const validatorWeights = {};
 
@@ -129,10 +129,12 @@ async function processCommand(config, chain, options) {
             });
 
             const batchSignatures = [];
+            const checkedAddresses = [];
 
+            const expectedMessageHash = hashMessage(arrayify(keccak256(batchData)));
+
+            let prevKeyId = sortedSignatures[0].key_id;
             let totalWeight = 0;
-
-            const expectedMessageHash = hashMessage(arrayify(keccak256(message)));
 
             for (const signatureJSON of sortedSignatures) {
                 const keyId = signatureJSON.key_id;
@@ -146,26 +148,35 @@ async function processCommand(config, chain, options) {
                     isValidCalldata: { pubKey, signature },
                 });
 
-                if (expectedKeyId !== keyId) {
-                    printError('Signature contains invalid key_id', keyId);
+                if (prevKeyId !== keyId) {
+                    printError('Signatures do not contain consistent key IDs', keyId);
                     return;
                 }
+
+                prevKeyId = keyId;
 
                 if (msgHash.toLowerCase() !== expectedMessageHash.toLowerCase()) {
                     printError('Message hash does not equal expected message hash', msgHash);
                     return;
                 }
 
-                const validatorAddress = getAddressFromPublicKey(pubKey);
+                const validatorAddress = getAddressFromPublicKey(pubKey).toLowerCase();
+
+                if (checkedAddresses.includes(validatorAddress)) {
+                    printError('Duplicate validator address', validatorAddress);
+                    return;
+                }
+
+                checkedAddresses.push(validatorAddress);
 
                 const signer = recoverAddress(msgHash, signature);
 
-                if (signer.toLowerCase() !== validatorAddress.toLowerCase()) {
+                if (signer.toLowerCase() !== validatorAddress) {
                     printError('Signature is invalid for the given validator address', validatorAddress);
                     return;
                 }
 
-                const validatorWeight = validatorWeights[validatorAddress.toLowerCase()];
+                const validatorWeight = validatorWeights[validatorAddress];
 
                 if (!validatorWeight) {
                     printError('Validator does not belong to current epoch', validatorAddress);
@@ -191,6 +202,7 @@ async function processCommand(config, chain, options) {
                 [validatorAddresses, weights, threshold, batchSignatures],
             );
 
+            const IAxelarAuth = getContractJSON('IAxelarAuth');
             const authAddress = address || contracts.AxelarGateway?.authModule;
             const auth = new Contract(authAddress, IAxelarAuth.abi, wallet);
 
@@ -208,28 +220,25 @@ async function processCommand(config, chain, options) {
                 return;
             }
 
-            const input = defaultAbiCoder.encode(['bytes', 'bytes'], [message, proof]);
+            const input = defaultAbiCoder.encode(['bytes', 'bytes'], [batchData, proof]);
 
-            printInfo('Batch input data for gateway execute function', input);
+            printInfo('Batch input (data and proof) for gateway execute function', input);
 
-            break;
-        }
+            if (execute) {
+                printInfo('Executing gateway batch on chain', chain.name);
 
-        case 'executeBatch': {
-            const { input } = options;
+                const contractName = 'AxelarGateway';
 
-            validateParameters({ isValidCalldata: { input } });
+                const IAxelarGateway = getContractJSON('IAxelarGateway');
+                const gatewayAddress = address || contracts.AxelarGateway?.address;
+                const gateway = new Contract(gatewayAddress, IAxelarGateway.abi, wallet);
 
-            const contractName = 'AxelarGateway';
+                const gasOptions = await getGasOptions(chain, options, contractName);
 
-            const gatewayAddress = address || contracts.AxelarGateway?.address;
-            const gateway = new Contract(gatewayAddress, IAxelarGateway.abi, wallet);
+                const tx = await gateway.execute(input, gasOptions);
 
-            const gasOptions = await getGasOptions(chain, options, contractName);
-
-            const tx = await gateway.execute(input, gasOptions);
-
-            await handleTx(tx, chain, gateway, action, 'Executed');
+                await handleTx(tx, chain, gateway, action, 'Executed');
+            }
 
             break;
         }
@@ -251,19 +260,16 @@ if (require.main === module) {
 
     addBaseOptions(program, { address: true });
 
+    program.addOption(new Option('--action <action>', 'signature action').choices(['createBatchData', 'constructBatch']));
     program.addOption(
-        new Option('--action <action>', 'signature action').choices(['computeMessageHash', 'constructBatch', 'executeBatch']),
+        new Option('-i, --batchData <batchData>', 'batch data to be combined with proof for gateway execute command').env('BATCH_DATA'),
     );
-    program.addOption(new Option('-m, --message <message>', 'bytes message (validators sign the hash of this message)').env('MESSAGE'));
-    program.addOption(new Option('-i, --input <input>', 'batch input consisting of bytes message (data) and bytes proof').env('INPUT'));
-
     program.addOption(new Option('--commandId <commandId>', 'gateway command id').env('COMMAND_ID'));
     program.addOption(new Option('--sourceChain <sourceChain>', 'source chain for contract call').env('SOURCE_CHAIN'));
     program.addOption(new Option('--sourceAddress <sourceAddress>', 'source address for contract call').env('SOURCE_ADDRESS'));
     program.addOption(new Option('--contractAddress <contractAddress>', 'contract address on current chain').env('CONTRACT_ADDRESS'));
     program.addOption(new Option('--payloadHash <payloadHash>', 'payload hash').env('PAYLOAD_HASH'));
-    program.addOption(new Option('--sourceTxHash <sourceTxHash>', 'source transaction hash').env('SOURCE_TX_HASH'));
-    program.addOption(new Option('--sourceEventIndex <sourceEventIndex>', 'source event index').env('SOURCE_EVENT_INDEX'));
+    program.addOption(new Option('--execute', 'whether or not to immediately execute the batch').env('EXECUTE'));
 
     program.action((options) => {
         main(options);
