@@ -21,7 +21,9 @@
     "jsonschema": "^1.4.1",
     "prettier": "^3.0.3",
     "typescript": "^5.2.2",
-    "vitest": "^0.34.4"
+    "vitest": "^0.34.4",
+    "path": "^0.12.7",
+    "axios": "^1.6.2"
   },
   "dependencies": {
     "@ethersproject/keccak256": "^5.7.0",
