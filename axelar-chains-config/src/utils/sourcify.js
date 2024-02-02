@@ -74,7 +74,7 @@ async function verifyOnSourcify(dir, provider, address, chainId) {
     try {
         const bytecode = await provider.getCode(address);
 
-        if (!bytecode && !bytecode.startsWith('0x')) {
+        if (!bytecode || !bytecode.startsWith('0x')) {
             throw new Error('Unable to fetch valid byte code from chain');
         }
 
