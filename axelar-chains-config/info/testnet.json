@@ -2014,6 +2014,19 @@
       "tokenSymbol": "frxETH",
       "gasOptions": {
         "gasLimit": 8000000
+      },
+      "contracts": {
+        "InterchainGovernance": {
+          "minimumTimeDelay": 300
+        },
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x15837c1318AB83d99b19392Fd4811813f520d843",
+            "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
+            "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
+          ]
+        }
       }
     }
   },
