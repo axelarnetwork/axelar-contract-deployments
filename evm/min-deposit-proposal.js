@@ -31,7 +31,7 @@ async function processCommand(_, chain, options) {
     }
 
     values.push({
-        chain: chain.id.toLowerCase(),
+        chain: chain.axelarId.toLowerCase(),
         contract_address: governanceAddress,
         min_deposits: [
             {
