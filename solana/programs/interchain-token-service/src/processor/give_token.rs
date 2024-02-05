@@ -52,35 +52,39 @@ impl Processor {
         };
 
         // if provided associated token account doesn't exist; create it
-        if **associated_token_account_info.try_borrow_lamports()? == 0 {
-            invoke(
-                &spl_associated_token_account::instruction::create_associated_token_account_idempotent(
-                    payer_info.key,
-                    wallet_info.key,
-                    mint_info.key,
-                    spl_token_program_info.key,
-                ),
-                &[
-                    payer_info.clone(),
-                    wallet_info.clone(),
-                    mint_info.clone(),
-                    associated_token_account_info.clone(),
-                    spl_token_program_info.clone(),
-                    system_program_info.clone(),
-                    spl_associated_token_account_program_info.clone(),
-                ],
-            )?;
-        }
+        invoke(
+            &spl_associated_token_account::instruction::create_associated_token_account_idempotent(
+                payer_info.key,
+                wallet_info.key,
+                mint_info.key,
+                spl_token_program_info.key,
+            ),
+            &[
+                payer_info.clone(),
+                wallet_info.clone(),
+                mint_info.clone(),
+                associated_token_account_info.clone(),
+                spl_token_program_info.clone(),
+                system_program_info.clone(),
+                spl_associated_token_account_program_info.clone(),
+            ],
+        )?;
 
-        if **interchain_token_service_root_pda_info.try_borrow_lamports()? == 0 {
+        if **interchain_token_service_root_pda_info.try_borrow_lamports()? == 0
+            && interchain_token_service_root_pda_info
+                .try_borrow_data()
+                .unwrap()
+                .len()
+                == 0
+            && interchain_token_service_root_pda_info.owner == program_id
+        {
             return Err(InterchainTokenServiceError::UninitializedITSRootPDA)?;
         }
 
-        if mint_info.owner != spl_token_program_info.key {
-            return Err(InterchainTokenServiceError::InvalidMintAccountOwner)?;
-        }
-
-        if **mint_info.try_borrow_lamports()? == 0 {
+        if **mint_info.try_borrow_lamports()? == 0
+            && mint_info.try_borrow_data()?.len() == 0
+            && mint_info.owner != spl_token_program_info.key
+        {
             return Err(InterchainTokenServiceError::UninitializedMintAccount)?;
         }
 
