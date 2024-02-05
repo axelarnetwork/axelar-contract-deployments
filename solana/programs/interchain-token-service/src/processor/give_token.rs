@@ -1,13 +1,11 @@
 //! Program give token instruction.
 
-use borsh::{BorshDeserialize, BorshSerialize};
 use program_utils::init_pda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::program::{invoke, invoke_signed};
 use solana_program::program_error::ProgramError;
-use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
-use solana_program::{system_instruction, system_program};
+use solana_program::system_program;
 use spl_token::instruction::mint_to;
 use {spl_associated_token_account, spl_token};
 
