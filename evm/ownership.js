@@ -35,7 +35,6 @@ async function processCommand(options, chain) {
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    printInfo('Chain', chain.name);
     printInfo('Contract name', contractName);
 
     const wallet = new Wallet(privateKey, provider);
