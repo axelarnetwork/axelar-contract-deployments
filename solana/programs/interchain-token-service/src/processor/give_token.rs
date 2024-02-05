@@ -66,20 +66,29 @@ impl Processor {
             program_id,
         );
 
-        // TODO:Check if its initialized, if not, initialize it?
-        init_pda(
-            payer_info,
-            the_pda_info,
-            program_id,
-            system_program_info,
-            ThePDA {},
-            &[
-                &interchain_token_service_root_pda_info.key.to_bytes(),
-                &wallet_info.key.to_bytes(),
-                &mint_info.key.to_bytes(),
-                &[the_pda_bump],
-            ],
-        )?;
+        // TODO: move to separate function
+        // crete ThePDA account if it doesn't exist
+        if **the_pda_info.try_borrow_lamports()? == 0
+            && interchain_token_service_root_pda_info
+                .try_borrow_data()
+                .unwrap()
+                .len()
+                == 0
+        {
+            init_pda(
+                payer_info,
+                the_pda_info,
+                program_id,
+                system_program_info,
+                ThePDA {},
+                &[
+                    &interchain_token_service_root_pda_info.key.to_bytes(),
+                    &wallet_info.key.to_bytes(),
+                    &mint_info.key.to_bytes(),
+                    &[the_pda_bump],
+                ],
+            )?;
+        }
 
         if the_pda_info.key != &the_pda_derived {
             return Err(InterchainTokenServiceError::InvalidThePDA)?;
@@ -104,27 +113,27 @@ impl Processor {
             ],
         )?;
 
-        // // TODO: move to separate function
-        // if **interchain_token_service_root_pda_info.try_borrow_lamports()? == 0
-        //     && interchain_token_service_root_pda_info
-        //         .try_borrow_data()
-        //         .unwrap()
-        //         .len()
-        //         == 0
-        //     && interchain_token_service_root_pda_info.owner == program_id
-        // {
-        //     return Err(InterchainTokenServiceError::UninitializedITSRootPDA)?;
-        // }
+        // TODO: move to separate function
+        if **interchain_token_service_root_pda_info.try_borrow_lamports()? == 0
+            && interchain_token_service_root_pda_info
+                .try_borrow_data()
+                .unwrap()
+                .len()
+                == 0
+            && interchain_token_service_root_pda_info.owner == program_id
+        {
+            return Err(InterchainTokenServiceError::UninitializedITSRootPDA)?;
+        }
 
         // // TODO: move to separate function
-        // if **mint_info.try_borrow_lamports()? == 0
-        //     && mint_info.try_borrow_data()?.len() == 0
-        //     && mint_info.owner != spl_token_program_info.key
-        // {
-        //     return Err(InterchainTokenServiceError::UninitializedMintAccount)?;
-        // }
+        if **mint_info.try_borrow_lamports()? == 0
+            && mint_info.try_borrow_data()?.len() == 0
+            && mint_info.owner != spl_token_program_info.key
+        {
+            return Err(InterchainTokenServiceError::UninitializedMintAccount)?;
+        }
 
-        // assert_gas_service_root_pda(gas_service_root_pda_info);
+        assert_gas_service_root_pda(gas_service_root_pda_info);
 
         // // TODO: Check if token manager type is associated with the token manager.
 
