@@ -240,7 +240,8 @@ async function processCommand(config, chain, options) {
                     multicallData.push(data);
                 }
 
-                await (await interchainTokenFactory.multicall(multicallData)).wait();
+                const tx = await interchainTokenFactory.multicall(multicallData, { gasOptions });
+                await handleTx(tx, chain, interchainTokenFactory, options.action, 'TokenManagerDeployed');
             }
 
             break;
