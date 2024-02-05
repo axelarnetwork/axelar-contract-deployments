@@ -28,6 +28,7 @@ solana-sdk = "1.18.0"
 thiserror = "1"
 ethers-core = "2"
 spl-token = "4.0.0"
+spl-associated-token-account = "2.3.0"
 
 # solana programs
 auth-weighted = { path = "programs/auth-weighted" }

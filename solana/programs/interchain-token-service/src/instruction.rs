@@ -96,12 +96,14 @@ pub fn build_execute_instruction(
 pub fn build_give_token_instruction(
     token_manager_type: TokenManagerType,
     amount: u64,
-    token_address: Pubkey,
+    payer: Pubkey,
+    mint_address: Pubkey,
     token_manager: Pubkey,
-    to: Pubkey,
+    wallet_address: Pubkey,
+    associated_token_account: Pubkey,
     interchain_token_service_root_pda: Pubkey,
-    gateway_root_pda: &Pubkey,
-    gas_service_root_pda: &Pubkey,
+    gateway_root_pda: Pubkey,
+    gas_service_root_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&InterchainTokenServiceInstruction::GiveToken {
         token_manager_type,
@@ -109,16 +111,22 @@ pub fn build_give_token_instruction(
     })?;
 
     let accounts = vec![
-        // Mint Account
-        AccountMeta::new(token_address, false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new(mint_address, false),
         AccountMeta::new_readonly(token_manager, false),
+        // ATA Owner
+        AccountMeta::new(wallet_address, false),
         // Destination
-        AccountMeta::new(to, false),
-        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new(associated_token_account, false),
         // Mint Authority
         AccountMeta::new_readonly(interchain_token_service_root_pda, false),
-        AccountMeta::new_readonly(*gateway_root_pda, false),
-        AccountMeta::new_readonly(*gas_service_root_pda, false),
+        // Used to derive ITS PDA
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(gas_service_root_pda, false),
+        // System programs
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
     Ok(Instruction {
