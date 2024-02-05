@@ -143,6 +143,7 @@ async fn give_token_mint_ata_create_success() -> Result<()> {
     let token_account = Account::unpack(&account.data).unwrap();
 
     assert_eq!(token_account.amount, amount);
+    assert_eq!(token_account.delegate, None.into());
     // assert_ne!(token_account.amount, amount + 1);
 
     Ok(())
