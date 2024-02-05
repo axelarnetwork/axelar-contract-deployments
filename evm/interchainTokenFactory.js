@@ -219,21 +219,23 @@ async function processCommand(config, chain, options) {
             validateParameters({ isString: { assetApi, tokenInfoApi }, isNumber: { batchSize } });
 
             const { assets } = (await axios.get(`${assetApi}${chain.name}`)).data;
+            const unregisteredAssets = [];
 
-            for (let i = 0; i < assets.length; i += batchSize) {
-                const asset = assets[i];
+            for (const asset of assets) {
                 const salt = keccak256(hexlify(toUtf8Bytes(asset)));
                 const tokenId = await interchainTokenService.interchainTokenId(AddressZero, salt);
                 const tokenManagerAddress = await interchainTokenService.tokenManagerAddress(tokenId);
 
-                if ((await provider.getCode(tokenManagerAddress)).length > 2) {
-                    continue;
+                if ((await provider.getCode(tokenManagerAddress)).length === 2) {
+                    unregisteredAssets.push(asset);
                 }
+            }
 
+            for (let i = 0; i < unregisteredAssets.length; i += batchSize) {
                 const multicallData = [];
 
-                for (let j = i; j < i + batchSize && j < assets.length; j++) {
-                    const asset = assets[j];
+                for (let j = i; j < i + batchSize && j < unregisteredAssets.length; j++) {
+                    const asset = unregisteredAssets[j];
                     const salt = keccak256(hexlify(toUtf8Bytes(asset)));
                     const { symbol } = (await axios.get(`${tokenInfoApi}${chain.name}?asset=${asset}`)).data.details;
                     const { data } = await interchainTokenFactory.populateTransaction.registerGatewayToken(salt, symbol);
@@ -277,7 +279,7 @@ if (require.main === module) {
                 'deployRemoteInterchainToken',
                 'registerCanonicalInterchainToken',
                 'deployRemoteCanonicalInterchainToken',
-                'registerGatewayTokens',
+                'registerAllGatewayTokens',
             ])
             .makeOptionMandatory(true),
     );
