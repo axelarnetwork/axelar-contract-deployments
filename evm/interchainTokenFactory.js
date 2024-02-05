@@ -209,7 +209,7 @@ async function processCommand(config, chain, options) {
             break;
         }
 
-        case 'registerGatewayTokens': {
+        case 'registerAllGatewayTokens': {
             let { assetApi, tokenInfoApi, batchSize } = options;
 
             assetApi = assetApi || `${config.axelar.lcd}/axelar/nexus/v1beta1/assets/`;
