@@ -104,6 +104,7 @@ pub fn build_give_token_instruction(
     interchain_token_service_root_pda: Pubkey,
     gateway_root_pda: Pubkey,
     gas_service_root_pda: Pubkey,
+    the_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&InterchainTokenServiceInstruction::GiveToken {
         token_manager_type,
@@ -127,6 +128,7 @@ pub fn build_give_token_instruction(
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(spl_associated_token_account::id(), false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new(the_pda, false), // TODO: maybe better name and comment
     ];
 
     Ok(Instruction {

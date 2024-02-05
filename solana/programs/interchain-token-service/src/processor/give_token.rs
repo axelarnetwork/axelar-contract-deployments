@@ -1,8 +1,11 @@
 //! Program give token instruction.
 
+use borsh::{BorshDeserialize, BorshSerialize};
+use program_utils::init_pda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::program::{invoke, invoke_signed};
 use solana_program::program_error::ProgramError;
+use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
 use spl_token::instruction::mint_to;
@@ -13,6 +16,7 @@ use crate::error::InterchainTokenServiceError;
 use crate::processor::initialize::{
     assert_gas_service_root_pda, assert_interchain_token_service_root_pda,
 };
+use crate::state::ThePDA;
 use crate::TokenManagerType;
 
 impl Processor {
@@ -42,6 +46,7 @@ impl Processor {
         let spl_token_program_info = next_account_info(accounts_iter)?;
         let spl_associated_token_account_program_info = next_account_info(accounts_iter)?;
         let system_program_info = next_account_info(accounts_iter)?;
+        let the_pda_info = next_account_info(accounts_iter)?;
 
         if !spl_token::check_id(spl_token_program_info.key) {
             return Err(InterchainTokenServiceError::InvalidSPLTokenProgram)?;
@@ -51,17 +56,46 @@ impl Processor {
             return Err(InterchainTokenServiceError::InvalidSystemAccount)?;
         };
 
+        // TODO: separate function?
+        let (the_pda_derived, the_pda_bump) = Pubkey::find_program_address(
+            &[
+                &interchain_token_service_root_pda_info.key.as_ref(),
+                &wallet_info.key.as_ref(),
+                &mint_info.key.as_ref(),
+            ],
+            program_id,
+        );
+
+        // TODO:Check if its initialized, if not, initialize it?
+        init_pda(
+            payer_info,
+            the_pda_info,
+            program_id,
+            system_program_info,
+            ThePDA {},
+            &[
+                &interchain_token_service_root_pda_info.key.to_bytes(),
+                &wallet_info.key.to_bytes(),
+                &mint_info.key.to_bytes(),
+                &[the_pda_bump],
+            ],
+        )?;
+
+        if the_pda_info.key != &the_pda_derived {
+            return Err(InterchainTokenServiceError::InvalidThePDA)?;
+        }
+
         // if provided associated token account doesn't exist; create it
         invoke(
             &spl_associated_token_account::instruction::create_associated_token_account_idempotent(
                 payer_info.key,
-                wallet_info.key,
+                the_pda_info.key,
                 mint_info.key,
                 spl_token_program_info.key,
             ),
             &[
                 payer_info.clone(),
-                wallet_info.clone(),
+                the_pda_info.clone(),
                 mint_info.clone(),
                 associated_token_account_info.clone(),
                 spl_token_program_info.clone(),
@@ -70,27 +104,29 @@ impl Processor {
             ],
         )?;
 
-        if **interchain_token_service_root_pda_info.try_borrow_lamports()? == 0
-            && interchain_token_service_root_pda_info
-                .try_borrow_data()
-                .unwrap()
-                .len()
-                == 0
-            && interchain_token_service_root_pda_info.owner == program_id
-        {
-            return Err(InterchainTokenServiceError::UninitializedITSRootPDA)?;
-        }
+        // // TODO: move to separate function
+        // if **interchain_token_service_root_pda_info.try_borrow_lamports()? == 0
+        //     && interchain_token_service_root_pda_info
+        //         .try_borrow_data()
+        //         .unwrap()
+        //         .len()
+        //         == 0
+        //     && interchain_token_service_root_pda_info.owner == program_id
+        // {
+        //     return Err(InterchainTokenServiceError::UninitializedITSRootPDA)?;
+        // }
 
-        if **mint_info.try_borrow_lamports()? == 0
-            && mint_info.try_borrow_data()?.len() == 0
-            && mint_info.owner != spl_token_program_info.key
-        {
-            return Err(InterchainTokenServiceError::UninitializedMintAccount)?;
-        }
+        // // TODO: move to separate function
+        // if **mint_info.try_borrow_lamports()? == 0
+        //     && mint_info.try_borrow_data()?.len() == 0
+        //     && mint_info.owner != spl_token_program_info.key
+        // {
+        //     return Err(InterchainTokenServiceError::UninitializedMintAccount)?;
+        // }
 
-        assert_gas_service_root_pda(gas_service_root_pda_info);
+        // assert_gas_service_root_pda(gas_service_root_pda_info);
 
-        // TODO: Check if token manager type is associated with the token manager.
+        // // TODO: Check if token manager type is associated with the token manager.
 
         let bump_seed = assert_interchain_token_service_root_pda(
             interchain_token_service_root_pda_info,
@@ -122,6 +158,8 @@ impl Processor {
                         &[bump_seed],
                     ]],
                 )?;
+
+                // TODO: Set Delegate to Wallet Address
             }
 
             TokenManagerType::LockUnlock => {
