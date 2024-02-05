@@ -148,10 +148,10 @@ async function verifyFromEtherscan(chainId, address) {
 
     switch (res.data.result[0].status) {
         case 'perfect':
-            console.log(`Sourcify: contract verified perfectly., ${address}`);
+            console.log(`Sourcify: contract verified perfectly at address ${address}`);
             break;
         case 'partial':
-            console.log(`Sourcify: contract verified partially., ${address}`);
+            console.log(`Sourcify: contract verified partially at address ${address}`);
             break;
         default:
             throw new Error('Sourcify verification failed');
