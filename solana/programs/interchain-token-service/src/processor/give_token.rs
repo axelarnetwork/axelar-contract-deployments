@@ -7,7 +7,7 @@ use solana_program::program::{invoke, invoke_signed};
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
-use solana_program::system_program;
+use solana_program::{system_instruction, system_program};
 use spl_token::instruction::mint_to;
 use {spl_associated_token_account, spl_token};
 
@@ -159,7 +159,29 @@ impl Processor {
                     ]],
                 )?;
 
-                // TODO: Set Delegate to Wallet Address
+                // // Set delegate to wallet address
+                invoke_signed(
+                    &spl_token::instruction::approve(
+                        spl_token_program_info.key,
+                        associated_token_account_info.key,
+                        wallet_info.key,
+                        the_pda_info.key,
+                        &[],
+                        amount,
+                    )?,
+                    &[
+                        spl_token_program_info.clone(),
+                        associated_token_account_info.clone(),
+                        wallet_info.clone(),
+                        the_pda_info.clone(),
+                    ],
+                    &[&[
+                        &interchain_token_service_root_pda_info.key.as_ref(),
+                        &wallet_info.key.as_ref(),
+                        &mint_info.key.as_ref(),
+                        &[the_pda_bump],
+                    ]],
+                )?;
             }
 
             TokenManagerType::LockUnlock => {

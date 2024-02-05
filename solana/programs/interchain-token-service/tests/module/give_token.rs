@@ -143,8 +143,12 @@ async fn give_token_mint_ata_create_success() -> Result<()> {
     let token_account = Account::unpack(&account.data).unwrap();
 
     assert_eq!(token_account.amount, amount);
-    assert_eq!(token_account.delegate, None.into());
-    // assert_ne!(token_account.amount, amount + 1);
+    assert_eq!(
+        token_account.delegate,
+        solana_sdk::program_option::COption::Some(wallet_address.pubkey())
+    );
+    assert_eq!(token_account.delegated_amount, amount);
+    assert_eq!(token_account.owner, the_pda_derived);
 
     Ok(())
 }
