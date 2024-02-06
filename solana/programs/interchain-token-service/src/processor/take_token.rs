@@ -1,27 +1,25 @@
-//! Program give token instruction.
+//! Program take token instruction.
 
-use program_utils::init_pda;
 use solana_program::account_info::{next_account_info, AccountInfo};
-use solana_program::program::{invoke, invoke_signed};
+use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
-use spl_token::instruction::mint_to;
+use spl_token;
+use spl_token::instruction::burn;
 use spl_token::state::Account;
-use {spl_associated_token_account, spl_token};
 
 use super::Processor;
 use crate::error::InterchainTokenServiceError;
 use crate::processor::initialize::{
     assert_gas_service_root_pda, assert_interchain_token_service_root_pda,
 };
-use crate::state::ITSATAPDA;
 use crate::{get_interchain_token_service_associated_token_account, TokenManagerType};
 
 impl Processor {
     #[allow(unreachable_patterns)]
-    pub(crate) fn give_token(
+    pub(crate) fn take_token(
         program_id: &Pubkey,
         accounts: &[AccountInfo],
         token_manager_type: TokenManagerType,
@@ -29,7 +27,7 @@ impl Processor {
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
-        let payer_info = next_account_info(accounts_iter)?;
+        let _payer_info = next_account_info(accounts_iter)?;
         let mint_info = next_account_info(accounts_iter)?;
         let _token_manager_info = next_account_info(accounts_iter)?;
         // aka wallet address
@@ -39,7 +37,7 @@ impl Processor {
         let gateway_root_pda_info = next_account_info(accounts_iter)?;
         let gas_service_root_pda_info = next_account_info(accounts_iter)?;
         let spl_token_program_info = next_account_info(accounts_iter)?;
-        let spl_associated_token_account_program_info = next_account_info(accounts_iter)?;
+        let _spl_associated_token_account_program_info = next_account_info(accounts_iter)?;
         let system_program_info = next_account_info(accounts_iter)?;
         let its_ata_info = next_account_info(accounts_iter)?;
 
@@ -62,44 +60,6 @@ impl Processor {
         if its_ata_info.key != &its_ata_derived {
             return Err(InterchainTokenServiceError::InvalidITSATA)?;
         }
-
-        // crete interchain token service associated token account, if it doesn't exist
-        if **its_ata_info.try_borrow_lamports()? == 0
-            && interchain_token_service_root_pda_info.data_len() == 0
-        {
-            init_pda(
-                payer_info,
-                its_ata_info,
-                program_id,
-                system_program_info,
-                ITSATAPDA {},
-                &[
-                    &interchain_token_service_root_pda_info.key.to_bytes(),
-                    &its_ata_delegate_authority_info.key.to_bytes(),
-                    &mint_info.key.to_bytes(),
-                    &[its_ata_bump],
-                ],
-            )?;
-        }
-
-        // if provided associated token account doesn't exist; create it
-        invoke(
-            &spl_associated_token_account::instruction::create_associated_token_account_idempotent(
-                payer_info.key,
-                its_ata_info.key,
-                mint_info.key,
-                spl_token_program_info.key,
-            ),
-            &[
-                payer_info.clone(),
-                its_ata_info.clone(),
-                mint_info.clone(),
-                associated_token_account_info.clone(),
-                spl_token_program_info.clone(),
-                system_program_info.clone(),
-                spl_associated_token_account_program_info.clone(),
-            ],
-        )?;
 
         // TODO: move to separate function
         if **interchain_token_service_root_pda_info.try_borrow_lamports()? == 0
@@ -125,7 +85,7 @@ impl Processor {
 
         // // TODO: Check if token manager type is associated with the token manager.
 
-        let bump_seed = assert_interchain_token_service_root_pda(
+        let _bump_seed = assert_interchain_token_service_root_pda(
             interchain_token_service_root_pda_info,
             gateway_root_pda_info,
             gas_service_root_pda_info,
@@ -133,31 +93,34 @@ impl Processor {
         )?;
 
         match token_manager_type {
-            TokenManagerType::MintBurn | TokenManagerType::MintBurnFrom => {
+            TokenManagerType::MintBurn => {
                 let current_delegate_amount =
                     Account::unpack(&associated_token_account_info.data.borrow())?.amount;
 
                 invoke_signed(
-                    &mint_to(
+                    &burn(
                         spl_token_program_info.key,
-                        mint_info.key,
                         associated_token_account_info.key,
-                        interchain_token_service_root_pda_info.key,
+                        mint_info.key,
+                        its_ata_info.key,
                         &[],
                         amount,
                     )?,
                     &[
                         spl_token_program_info.clone(),
-                        mint_info.clone(),
                         associated_token_account_info.clone(),
+                        mint_info.clone(),
                         interchain_token_service_root_pda_info.clone(),
+                        its_ata_info.clone(),
                     ],
                     &[&[
-                        &gateway_root_pda_info.key.to_bytes(),
-                        &gas_service_root_pda_info.key.to_bytes(),
-                        &[bump_seed],
+                        &interchain_token_service_root_pda_info.key.as_ref(),
+                        &its_ata_delegate_authority_info.key.as_ref(),
+                        &mint_info.key.as_ref(),
+                        &[its_ata_bump],
                     ]],
                 )?;
+
                 // Update delegate authority with amount allowance
                 invoke_signed(
                     &spl_token::instruction::approve(
@@ -166,7 +129,7 @@ impl Processor {
                         its_ata_delegate_authority_info.key,
                         its_ata_info.key,
                         &[],
-                        amount + current_delegate_amount,
+                        current_delegate_amount - amount,
                     )?,
                     &[
                         spl_token_program_info.clone(),
@@ -181,6 +144,10 @@ impl Processor {
                         &[its_ata_bump],
                     ]],
                 )?;
+            }
+
+            TokenManagerType::MintBurnFrom => {
+                return Err(InterchainTokenServiceError::Unimplemented)?;
             }
 
             TokenManagerType::LockUnlock => {

@@ -5,6 +5,7 @@ mod deploy_token_manager;
 mod give_token;
 mod initialize;
 mod interchain_transfer;
+mod take_token;
 
 use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::ethers_core::abi::AbiDecode;
@@ -52,6 +53,10 @@ impl Processor {
                 token_manager_type,
                 amount,
             } => Self::give_token(program_id, accounts, token_manager_type, amount),
+            InterchainTokenServiceInstruction::TakeToken {
+                token_manager_type,
+                amount,
+            } => Self::take_token(program_id, accounts, token_manager_type, amount),
         }
     }
 }

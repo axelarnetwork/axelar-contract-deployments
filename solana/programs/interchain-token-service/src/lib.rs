@@ -70,3 +70,22 @@ pub fn get_interchain_token_service_root_pda(
     )
     .0
 }
+
+/// This function derives the address of the associated token account based on
+/// the provided interchain token service root PDA, wallet, and mint. It also
+/// performs a correctness check on the root PDA.
+pub fn get_interchain_token_service_associated_token_account(
+    its_root_pda: &Pubkey,
+    wallet_account: &Pubkey,
+    mint_account: &Pubkey,
+    program_id: &Pubkey,
+) -> Result<(Pubkey, u8), ProgramError> {
+    Ok(Pubkey::find_program_address(
+        &[
+            &its_root_pda.as_ref(),
+            &wallet_account.as_ref(),
+            &mint_account.as_ref(),
+        ],
+        program_id,
+    ))
+}

@@ -20,14 +20,46 @@ pub enum InterchainTokenServiceInstruction {
         payload: Vec<u8>,
     },
     /// Instruction GiveToken.
-    /// This function gives token to a specified address from the token manager.
+    /// This function gives token to a specified address.
     ///
-    /// These are passed as accounts.
+    /// Accounts expected by this instruction:
     ///
-    /// [token_address] The address of the token to give.
-    /// [token_manager] The address of the token manager.
-    /// [to] The address to give tokens to.
+    /// 0. [signer] The address of payer.
+    /// 1. [writable] The address of the mint token account.
+    /// 2. [writable] The address of the token manager.
+    /// 3. [] The address of the wallet, known as well as delegate authority.
+    /// 4. [writable] The address of the associated token account.
+    /// 5. [] The address of the interchain token service root PDA.
+    /// 6. [] The address of the gateway root PDA.
+    /// 7. [] The address of the gas service root PDA.
+    /// 8. [] The address of the SPL token program.
+    /// 9. [writable] The address of the SPL associated token account program,
+    ///    calculated from the interchain token service root PDA, wallet address
+    ///    and mint address.
     GiveToken {
+        /// The token manager type.
+        token_manager_type: TokenManagerType,
+        /// The amount of tokens to give.
+        amount: u64,
+    },
+    /// Instruction TakeToken.
+    /// This function takes token from a specified address.
+    ///
+    /// Accounts expected by this instruction:
+    //
+    /// 0. [signer] The address of payer.
+    /// 1. [writable] The address of the mint token account.
+    /// 2. [writable] The address of the token manager.
+    /// 3. [] The address of the wallet, known as well as delegate authority.
+    /// 4. [writable] The address of the associated token account.
+    /// 5. [] The address of the interchain token service root PDA.
+    /// 6. [] The address of the gateway root PDA.
+    /// 7. [] The address of the gas service root PDA.
+    /// 8. [] The address of the SPL token program.
+    /// 9. [writable] The address of the SPL associated token account program,
+    ///    calculated from the interchain token service root PDA, wallet address
+    ///    and mint address.
+    TakeToken {
         /// The token manager type.
         token_manager_type: TokenManagerType,
         /// The amount of tokens to give.
@@ -104,7 +136,7 @@ pub fn build_give_token_instruction(
     interchain_token_service_root_pda: Pubkey,
     gateway_root_pda: Pubkey,
     gas_service_root_pda: Pubkey,
-    the_pda: Pubkey,
+    interchain_token_service_associated_token: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&InterchainTokenServiceInstruction::GiveToken {
         token_manager_type,
@@ -115,20 +147,57 @@ pub fn build_give_token_instruction(
         AccountMeta::new(payer, true),
         AccountMeta::new(mint_address, false),
         AccountMeta::new_readonly(token_manager, false),
-        // ATA Owner
-        AccountMeta::new(wallet_address, false),
-        // Destination
+        AccountMeta::new_readonly(wallet_address, false),
         AccountMeta::new(associated_token_account, false),
-        // Mint Authority
         AccountMeta::new_readonly(interchain_token_service_root_pda, false),
-        // Used to derive ITS PDA
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gas_service_root_pda, false),
-        // System programs
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(spl_associated_token_account::id(), false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
-        AccountMeta::new(the_pda, false), // TODO: maybe better name and comment
+        AccountMeta::new(interchain_token_service_associated_token, false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Create `TakeToken`` instruction
+#[allow(clippy::too_many_arguments)]
+pub fn build_take_token_instruction(
+    token_manager_type: TokenManagerType,
+    amount: u64,
+    payer: Pubkey,
+    mint_address: Pubkey,
+    token_manager: Pubkey,
+    wallet_address: Pubkey,
+    associated_token_account: Pubkey,
+    interchain_token_service_root_pda: Pubkey,
+    gateway_root_pda: Pubkey,
+    gas_service_root_pda: Pubkey,
+    interchain_token_service_associated_token: Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let data = to_vec(&InterchainTokenServiceInstruction::TakeToken {
+        token_manager_type,
+        amount,
+    })?;
+
+    let accounts = vec![
+        AccountMeta::new(payer, true),
+        AccountMeta::new(mint_address, false),
+        AccountMeta::new_readonly(token_manager, false),
+        AccountMeta::new_readonly(wallet_address, false),
+        AccountMeta::new(associated_token_account, false),
+        AccountMeta::new_readonly(interchain_token_service_root_pda, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(gas_service_root_pda, false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new(interchain_token_service_associated_token, false),
     ];
 
     Ok(Instruction {

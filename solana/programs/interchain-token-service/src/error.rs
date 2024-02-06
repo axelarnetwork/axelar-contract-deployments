@@ -39,9 +39,9 @@ pub enum InterchainTokenServiceError {
     #[error("invalid mint account owner")]
     InvalidMintAccountOwner,
 
-    /// InvalidThePDA
-    #[error("invalid The PDA")]
-    InvalidThePDA,
+    /// InvalidITSATA
+    #[error("invalid interchain token service, associated token account")]
+    InvalidITSATA,
 }
 
 impl From<InterchainTokenServiceError> for ProgramError {
