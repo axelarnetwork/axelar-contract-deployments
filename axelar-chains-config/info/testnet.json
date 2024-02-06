@@ -2031,7 +2031,7 @@
       "id": "fraxtal",
       "axelarId": "fraxtal",
       "chainId": 2522,
-      "rpc": "https://rpc.testnet.frax.com/v2",
+      "rpc": "https://rpc.testnet.frax.com",
       "tokenSymbol": "frxETH",
       "gasOptions": {
         "gasLimit": 8000000
