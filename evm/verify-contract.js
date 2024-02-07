@@ -341,9 +341,6 @@ if (require.main === module) {
     program.addOption(new Option('-d, --dir <dir>', 'contract artifacts dir'));
     program.addOption(new Option('--args <args>', 'contract args'));
     program.addOption(new Option('--constructorArgs <constructorArgs>', 'contract constructor args'));
-    program.addOption(new Option('--deployer <deployer>', 'interchain token deployer address'));
-    program.addOption(new Option('--salt <salt>', 'interchain token deployment salt'));
-    program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
     program.addOption(new Option('--minter <minter>', 'interchain token minter address'));
     program.addOption(new Option('--tokenId <tokenId>', 'interchain token tokenId'));
 
