@@ -97,6 +97,8 @@ async function processCommand(config, chain, options) {
             const contractAddress = options.contractAddress || contracts.InterchainGovernance?.address;
             const commandID = commandId || (await getCommandId(gateway));
 
+            printInfo('Command ID', commandID);
+
             validateParameters({
                 isNonEmptyString: { sourceChain, sourceAddress },
                 isValidAddress: { contractAddress },
@@ -212,7 +214,7 @@ async function processCommand(config, chain, options) {
             }
 
             if (totalWeight < threshold) {
-                printError('Total signer weight less than threshold', totalWeight);
+                printError(`Total signer weight ${totalWeight} less than threshold`, threshold);
                 return;
             }
 
