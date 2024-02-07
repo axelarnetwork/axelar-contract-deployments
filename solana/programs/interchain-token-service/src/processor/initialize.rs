@@ -1,6 +1,6 @@
 use gas_service::get_gas_service_root_pda;
 use gateway::get_gateway_root_config_pda;
-use program_utils::{check_program_account, init_pda};
+use program_utils::{check_program_account, init_pda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
@@ -24,12 +24,10 @@ impl Processor {
         let gas_service_root_pda = next_account_info(account_info_iter)?;
         let system_program_info = next_account_info(account_info_iter)?;
         // TODO add interchain_address_tracker_pda
-
         assert_gateway_root_pda(gateway_root_pda);
         assert_gas_service_root_pda(gas_service_root_pda);
 
-        assert!(funder_info.is_signer, "Funder must be signer");
-
+        interchain_token_service_root_pda.check_uninitialized_pda()?;
         let bump_seed = assert_interchain_token_service_root_pda(
             interchain_token_service_root_pda,
             gateway_root_pda,
@@ -39,6 +37,9 @@ impl Processor {
         if *interchain_token_service_root_pda.owner != system_program::id() {
             return Err(ProgramError::IllegalOwner);
         }
+
+        // TODO we need to instantiate a global operator group here, which will have
+        // operator-only access to ITS
 
         init_pda(
             funder_info,

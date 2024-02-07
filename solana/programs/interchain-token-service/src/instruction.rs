@@ -2,6 +2,7 @@
 
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use interchain_token_transfer_gmp::ethers_core::abi::AbiEncode;
+use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -100,7 +101,7 @@ pub fn build_initialize_instruction(
     })
 }
 
-/// Create `Execute` instruction
+/// Create a generic `Execute` instruction
 pub fn build_execute_instruction(
     funder: &Pubkey,
     incoming_accounts: &[AccountMeta],
@@ -110,10 +111,7 @@ pub fn build_execute_instruction(
     let init_data = InterchainTokenServiceInstruction::Execute { payload };
     let data = to_vec(&init_data)?;
 
-    let mut accounts = vec![
-        AccountMeta::new(*funder, true),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
-    ];
+    let mut accounts = vec![AccountMeta::new(*funder, true)];
     accounts.extend_from_slice(incoming_accounts);
 
     Ok(Instruction {
@@ -121,6 +119,39 @@ pub fn build_execute_instruction(
         accounts,
         data,
     })
+}
+
+/// Create `Execute::DeployTokenManager` instruction
+#[allow(clippy::too_many_arguments)]
+pub fn build_deploy_token_manager_instruction(
+    funder: &Pubkey,
+    token_manager_root_pda: &Pubkey,
+    operators_permission_group_pda: &Pubkey,
+    operators_permission_pda: &Pubkey,
+    operators_permission_pda_owner: &Pubkey,
+    flow_limiters_permission_group_pda: &Pubkey,
+    flow_limiters_permission_pda: &Pubkey,
+    flow_limiters_permission_pda_owner: &Pubkey,
+    interchain_token_service_root_pda: &Pubkey,
+    payload: DeployTokenManager,
+) -> Result<Instruction, ProgramError> {
+    build_execute_instruction(
+        funder,
+        &[
+            AccountMeta::new(*token_manager_root_pda, false),
+            AccountMeta::new(*operators_permission_group_pda, false),
+            AccountMeta::new(*operators_permission_pda, false),
+            AccountMeta::new(*operators_permission_pda_owner, false),
+            AccountMeta::new(*flow_limiters_permission_group_pda, false),
+            AccountMeta::new(*flow_limiters_permission_pda, false),
+            AccountMeta::new(*flow_limiters_permission_pda_owner, false),
+            AccountMeta::new(*interchain_token_service_root_pda, false),
+            AccountMeta::new(solana_program::system_program::id(), false),
+            AccountMeta::new(account_group::id(), false),
+            AccountMeta::new(token_manager::id(), false),
+        ],
+        GMPPayload::DeployTokenManager(payload),
+    )
 }
 
 /// Create `GiveToken`` instruction

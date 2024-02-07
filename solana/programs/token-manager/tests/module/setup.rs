@@ -6,7 +6,7 @@ use test_fixtures::account::CheckValidPDAInTests;
 use token_manager::{get_token_flow_account, get_token_manager_account, CalculatedEpoch};
 
 #[tokio::test]
-async fn test_setup() {
+async fn test_token_manager_setup() {
     let mut fixture = super::utils::TestFixture::new().await;
     let recent_blockhash = fixture.banks_client.get_latest_blockhash().await.unwrap();
 
@@ -38,11 +38,7 @@ async fn test_setup() {
     let transaction = Transaction::new_signed_with_payer(
         &[ix],
         Some(&fixture.payer.pubkey()),
-        &[
-            &fixture.payer,
-            &fixture.operator_repr.operator,
-            &fixture.flow_repr.operator,
-        ],
+        &[&fixture.payer],
         recent_blockhash,
     );
     fixture

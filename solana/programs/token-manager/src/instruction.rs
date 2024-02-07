@@ -83,13 +83,13 @@ pub struct FlowToAdd {
 #[allow(clippy::too_many_arguments)]
 pub fn build_setup_instruction(
     funder: &Pubkey,
-    token_manager_pda: &Pubkey,
-    permission_group_pda: &Pubkey,
-    permission_pda: &Pubkey,
-    permission_pda_owner: &Pubkey,
-    flow_limiter_group_pda: &Pubkey,
-    flow_limiter_pda: &Pubkey,
-    flow_limiter_pda_owner: &Pubkey,
+    token_manager_root_pda: &Pubkey,
+    operators_permission_group_pda: &Pubkey,
+    operators_permission_pda: &Pubkey,
+    operators_permission_pda_owner: &Pubkey,
+    flow_limiters_permission_group_pda: &Pubkey,
+    flow_limiters_permission_pda: &Pubkey,
+    flow_limiters_permission_pda_owner: &Pubkey,
     service_program_pda: &Pubkey,
     setup_data: Setup,
 ) -> Result<Instruction, ProgramError> {
@@ -97,13 +97,13 @@ pub fn build_setup_instruction(
 
     let accounts = vec![
         AccountMeta::new(*funder, true),
-        AccountMeta::new(*token_manager_pda, false),
-        AccountMeta::new_readonly(*permission_group_pda, false),
-        AccountMeta::new_readonly(*permission_pda, false),
-        AccountMeta::new_readonly(*permission_pda_owner, true),
-        AccountMeta::new_readonly(*flow_limiter_group_pda, false),
-        AccountMeta::new_readonly(*flow_limiter_pda, false),
-        AccountMeta::new_readonly(*flow_limiter_pda_owner, true),
+        AccountMeta::new(*token_manager_root_pda, false),
+        AccountMeta::new_readonly(*operators_permission_group_pda, false),
+        AccountMeta::new_readonly(*operators_permission_pda, false),
+        AccountMeta::new_readonly(*operators_permission_pda_owner, false),
+        AccountMeta::new_readonly(*flow_limiters_permission_group_pda, false),
+        AccountMeta::new_readonly(*flow_limiters_permission_pda, false),
+        AccountMeta::new_readonly(*flow_limiters_permission_pda_owner, false),
         AccountMeta::new_readonly(*service_program_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];

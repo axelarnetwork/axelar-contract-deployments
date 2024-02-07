@@ -43,7 +43,7 @@ async fn test_create_permission_group() {
     let transaction = Transaction::new_signed_with_payer(
         &[ix],
         Some(&payer.pubkey()),
-        &[&payer, &user],
+        &[&payer],
         recent_blockhash,
     );
     banks_client.process_transaction(transaction).await.unwrap();

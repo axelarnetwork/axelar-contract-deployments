@@ -7,7 +7,9 @@ pub mod error;
 pub mod instruction;
 pub mod processor;
 pub mod state;
+use account_group::instruction::GroupId;
 use borsh::{BorshDeserialize, BorshSerialize};
+use interchain_token_transfer_gmp::Bytes32;
 pub use solana_program;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
@@ -88,4 +90,40 @@ pub fn get_interchain_token_service_associated_token_account(
         ],
         program_id,
     ))
+}
+
+/// Derives the group ID for the operators permission group
+/// The token ID is the only unique identifier for a token manager
+/// therefore we use it as the group ID
+/// https://github.com/axelarnetwork/interchain-token-service/blob/9f89c148259ca3337ed856415df6407f830ec4ea/contracts/utils/TokenManagerDeployer.sol#L33
+pub fn get_operators_permission_group_id(
+    token_id: &Bytes32,
+    interchain_token_service_root_pda: &Pubkey,
+) -> GroupId {
+    GroupId::new(
+        [
+            &token_id.0,
+            &interchain_token_service_root_pda.to_bytes(),
+            "operators".as_bytes(),
+        ]
+        .concat(),
+    )
+}
+
+/// Derives the group ID for the flow limiters permission group
+/// The token ID is the only unique identifier for a token manager
+/// therefore we use it as the group ID
+/// https://github.com/axelarnetwork/interchain-token-service/blob/9f89c148259ca3337ed856415df6407f830ec4ea/contracts/utils/TokenManagerDeployer.sol#L33
+pub fn get_flow_limiters_permission_group_id(
+    token_id: &Bytes32,
+    interchain_token_service_root_pda: &Pubkey,
+) -> GroupId {
+    GroupId::new(
+        [
+            &token_id.0,
+            &interchain_token_service_root_pda.to_bytes(),
+            "flow_limiters".as_bytes(),
+        ]
+        .concat(),
+    )
 }

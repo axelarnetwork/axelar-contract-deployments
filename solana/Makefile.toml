@@ -43,8 +43,18 @@ workspace = false
 command = "cargo"
 # solana bpf tests
 args = ["test-sbf", "--workspace"]
-# normal tests that don't get picked up by test-sbf
-dependencies = ["test-non-sbf"]
+dependencies = [
+    # normal tests that don't get picked up by test-sbf
+    "test-non-sbf",
+    # For some reason, the `test-sbf` task doesn't pick up some Solana programs,
+    # so we pre-build them beforehand
+    "build-sbf"
+]
+
+[tasks.build-sbf]
+workspace = false
+command = "cargo"
+args = ["build-sbf"]
 
 [tasks.test-non-sbf]
 workspace = false

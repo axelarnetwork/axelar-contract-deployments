@@ -35,6 +35,7 @@ auth-weighted = { path = "programs/auth-weighted" }
 account-group = { path = "programs/account-group" }
 gateway = { path = "programs/gateway" }
 gas-service = { path = "programs/gas-service" }
+token-manager = { path = "programs/token-manager" }
 
 # helper crates
 program-utils = { path = "helpers/program-utils" }

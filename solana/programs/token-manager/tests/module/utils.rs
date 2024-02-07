@@ -115,11 +115,7 @@ impl TestFixture {
         let transaction = Transaction::new_signed_with_payer(
             &[ix],
             Some(&self.payer.pubkey()),
-            &[
-                &self.payer,
-                &self.operator_repr.operator,
-                &self.flow_repr.operator,
-            ],
+            &[&self.payer],
             recent_blockhash,
         );
         self.banks_client
@@ -168,7 +164,7 @@ async fn operator_group(
     let transaction = Transaction::new_signed_with_payer(
         &[ix],
         Some(&payer.pubkey()),
-        &[payer, operator],
+        &[payer],
         recent_blockhash,
     );
     banks_client.process_transaction(transaction).await.unwrap();

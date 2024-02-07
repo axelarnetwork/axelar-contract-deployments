@@ -19,11 +19,14 @@ program-utils.workspace = true
 num-derive.workspace = true
 num-traits.workspace = true
 gateway = { workspace = true, features = ["no-entrypoint"] }
+token-manager = { workspace = true, features = ["no-entrypoint"] }
+account-group = { workspace = true, features = ["no-entrypoint"] }
 gas-service = { workspace = true, features = ["no-entrypoint"] }
 spl-token = { workspace = true, features = ["no-entrypoint"] }
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
 solana-program-test.workspace = true
+test-fixtures.workspace = true
 solana-sdk.workspace = true
 anyhow.workspace = true

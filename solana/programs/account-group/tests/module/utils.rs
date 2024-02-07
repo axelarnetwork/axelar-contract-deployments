@@ -59,7 +59,7 @@ impl TestFixture {
         let transaction = Transaction::new_signed_with_payer(
             &[ix],
             Some(&payer.pubkey()),
-            &[&payer, &operator],
+            &[&payer],
             recent_blockhash,
         );
         banks_client.process_transaction(transaction).await.unwrap();

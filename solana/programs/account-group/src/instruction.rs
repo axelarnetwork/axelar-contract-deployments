@@ -80,7 +80,7 @@ pub fn build_setup_permission_group_instruction(
         AccountMeta::new(*funder, true),
         AccountMeta::new(*operator_group_pda, false),
         AccountMeta::new(*operator_pda, false),
-        AccountMeta::new_readonly(*operator, true),
+        AccountMeta::new_readonly(*operator, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
     Ok(Instruction {

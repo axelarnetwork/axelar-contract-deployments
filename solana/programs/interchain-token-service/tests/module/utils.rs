@@ -1,5 +1,12 @@
+use account_group::instruction::GroupId;
+use account_group::{get_permission_account, get_permission_group_account};
 use borsh::BorshDeserialize;
 use gateway::accounts::GatewayConfig;
+use interchain_token_service::{
+    get_flow_limiters_permission_group_id, get_interchain_token_service_root_pda,
+    get_operators_permission_group_id,
+};
+use interchain_token_transfer_gmp::Bytes32;
 use solana_program::hash::Hash;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{processor, BanksClient, ProgramTest, ProgramTestBanksClientExt};
@@ -24,6 +31,16 @@ pub fn program_test() -> ProgramTest {
         "gas_service",
         gas_service::id(),
         processor!(gas_service::processor::Processor::process_instruction),
+    );
+    pt.add_program(
+        "token_manager",
+        token_manager::id(),
+        processor!(token_manager::processor::Processor::process_instruction),
+    );
+    pt.add_program(
+        "account_group",
+        account_group::id(),
+        processor!(account_group::processor::Processor::process_instruction),
     );
 
     pt
@@ -123,4 +140,76 @@ impl TestFixture {
 
         gateway_config_pda
     }
+
+    pub async fn init_its_root_pda(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        gas_service_root_pda: &Pubkey,
+    ) -> Pubkey {
+        let interchain_token_service_root_pda =
+            get_interchain_token_service_root_pda(gateway_root_pda, gas_service_root_pda);
+        let ix = interchain_token_service::instruction::build_initialize_instruction(
+            &self.payer.pubkey(),
+            &interchain_token_service_root_pda,
+            gateway_root_pda,
+            gas_service_root_pda,
+        )
+        .unwrap();
+        let blockhash = self.refresh_blockhash().await;
+        let transaction = Transaction::new_signed_with_payer(
+            &[ix],
+            Some(&self.payer.pubkey()),
+            &[&self.payer],
+            blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+        interchain_token_service_root_pda
+    }
+
+    pub async fn derive_token_manager_permission_groups(
+        &self,
+        token_id: &Bytes32,
+        interchain_token_service_root_pda: &Pubkey,
+        init_operator: &Pubkey,
+    ) -> ITSTokenHandlerGroups {
+        let operator_group_id =
+            get_operators_permission_group_id(token_id, interchain_token_service_root_pda);
+        let operator_group_pda = get_permission_group_account(&operator_group_id);
+        let init_operator_pda_acc = get_permission_account(&operator_group_pda, init_operator);
+
+        let flow_group_id =
+            get_flow_limiters_permission_group_id(token_id, interchain_token_service_root_pda);
+        let flow_group_pda = get_permission_group_account(&flow_group_id);
+        let init_flow_pda_acc =
+            get_permission_account(&flow_group_pda, interchain_token_service_root_pda);
+
+        ITSTokenHandlerGroups {
+            operator_group: PermissionGroup {
+                id: operator_group_id,
+                group_pda: operator_group_pda,
+                group_pda_user: init_operator_pda_acc,
+                group_pda_user_owner: *init_operator,
+            },
+            flow_limiter_group: PermissionGroup {
+                id: flow_group_id,
+                group_pda: flow_group_pda,
+                group_pda_user: init_flow_pda_acc,
+                group_pda_user_owner: *interchain_token_service_root_pda,
+            },
+        }
+    }
+}
+
+pub struct PermissionGroup {
+    pub id: GroupId,
+    pub group_pda: Pubkey,
+    pub group_pda_user: Pubkey,
+    pub group_pda_user_owner: Pubkey,
+}
+pub struct ITSTokenHandlerGroups {
+    pub operator_group: PermissionGroup,
+    pub flow_limiter_group: PermissionGroup,
 }
