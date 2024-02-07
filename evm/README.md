@@ -174,6 +174,12 @@ Verify Axelar wrapped tokens deployed via the gateway (`BurnableMintableCappedER
 node evm/verify-contract.js -e mainnet -n [chain] -c BurnableMintableCappedERC20 --dir /path/to/axelar-cgp-solidity --args axlUSDC
 ```
 
+Verify TokenManagerProxy contract for ITS. `--tokenId` must be specified and `--minter` can be optionally specified (otherwise will default to `0x`).
+
+```bash
+node evm/verify-contract.js -e [env] -n [chain] -c TokenManagerProxy --dir /path/to/interchain-token-service --tokenId [tokenId]
+```
+
 #### Help
 
 To get details of options provided in the command run:
