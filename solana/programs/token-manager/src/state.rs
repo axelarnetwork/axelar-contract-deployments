@@ -13,13 +13,13 @@ use solana_program::program_pack::{Pack, Sealed};
 /// ```
 #[repr(C)]
 #[derive(Clone, Debug, Default, PartialEq, BorshSerialize, BorshDeserialize)]
-pub struct TokenManagerAccount {
+pub struct TokenManagerRootAccount {
     /// The total number of tokens that have flowed into the account.
     pub flow_limit: u64,
 }
 
-impl Sealed for TokenManagerAccount {}
-impl Pack for TokenManagerAccount {
+impl Sealed for TokenManagerRootAccount {}
+impl Pack for TokenManagerRootAccount {
     const LEN: usize = 8;
 
     fn pack_into_slice(&self, mut dst: &mut [u8]) {
@@ -38,15 +38,15 @@ impl Pack for TokenManagerAccount {
 /// Represents Flow In and Flow Out in the account state
 #[repr(C)]
 #[derive(Clone, Debug, Default, PartialEq, BorshSerialize, BorshDeserialize)]
-pub struct FlowInOutAccount {
+pub struct TokenManagerFlowInOutAccount {
     /// The total number of tokens that have flowed into the account.
     pub flow_in: u64,
     /// The total number of tokens that have flowed out of the account.
     pub flow_out: u64,
 }
 
-impl Sealed for FlowInOutAccount {}
-impl Pack for FlowInOutAccount {
+impl Sealed for TokenManagerFlowInOutAccount {}
+impl Pack for TokenManagerFlowInOutAccount {
     const LEN: usize = 16;
 
     fn pack_into_slice(&self, mut dst: &mut [u8]) {

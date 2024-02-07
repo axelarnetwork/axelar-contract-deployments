@@ -1,22 +1,15 @@
 use anyhow::{Ok, Result};
-use borsh::BorshDeserialize;
 use gateway::accounts::GatewayConfig;
-use gateway::types::PubkeyWrapper;
 use interchain_token_service::{
     get_interchain_token_service_associated_token_account, get_interchain_token_service_root_pda,
     TokenManagerType,
 };
-use solana_program::address_lookup_table::program;
-use solana_program::instruction::{AccountMeta, Instruction, InstructionError};
-use solana_program::keccak::hash;
 use solana_program::program_pack::Pack;
-use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
-use solana_program::{system_instruction, system_program};
-use solana_program_test::{processor, tokio, BanksTransactionResultWithMetadata, ProgramTest};
+use solana_program::system_instruction;
+use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
-use solana_sdk::transaction::{Transaction, TransactionError};
-use spl_associated_token_account;
+use solana_sdk::transaction::Transaction;
 use spl_token::state::{Account, Mint};
 
 #[tokio::test]
@@ -39,7 +32,7 @@ async fn give_token_mint_ata_create_success() -> Result<()> {
     let interchain_token_service_root_pda =
         get_interchain_token_service_root_pda(&gateway_root_pda, &gas_service_root_pda);
 
-    let (its_ata, its_ata_bump) = get_interchain_token_service_associated_token_account(
+    let (its_ata, _its_ata_bump) = get_interchain_token_service_associated_token_account(
         &interchain_token_service_root_pda,
         &delegate_authority.pubkey(),
         &mint_account.pubkey(),
@@ -169,7 +162,7 @@ async fn give_token_mint_ata_already_exist_success() -> Result<()> {
     let interchain_token_service_root_pda =
         get_interchain_token_service_root_pda(&gateway_root_pda, &gas_service_root_pda);
 
-    let (its_ata, its_ata_bump) = get_interchain_token_service_associated_token_account(
+    let (its_ata, _its_ata_bump) = get_interchain_token_service_associated_token_account(
         &interchain_token_service_root_pda,
         &delegate_authority.pubkey(),
         &mint_account.pubkey(),
@@ -238,7 +231,7 @@ async fn give_token_mint_ata_already_exist_success() -> Result<()> {
         &[
             spl_associated_token_account::instruction::create_associated_token_account(
                 &fixture.payer.pubkey(),
-                &&its_ata,
+                &its_ata,
                 &mint_account.pubkey(),
                 &spl_token::id(),
             ),

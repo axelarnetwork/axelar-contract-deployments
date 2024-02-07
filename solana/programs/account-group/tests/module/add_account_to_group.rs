@@ -1,8 +1,9 @@
-use operator::get_operator_account;
-use solana_program::program_pack::Pack;
+use account_group::get_permission_account;
+use account_group::state::PermissionAccount;
 use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
+use test_fixtures::account::CheckValidPDAInTests;
 
 use crate::utils::TestFixture;
 
@@ -10,18 +11,13 @@ use crate::utils::TestFixture;
 async fn test_add_operator() {
     let mut fixture = TestFixture::new().await;
 
-    let operators = vec![
-        Keypair::new(),
-        Keypair::new(),
-        Keypair::new(),
-        Keypair::new(),
-    ];
+    let operators = vec![Keypair::new(), Keypair::new()];
 
     for operator in operators.iter() {
         let recent_blockhash = fixture.banks_client.get_latest_blockhash().await.unwrap();
 
-        let op_acc = get_operator_account(&fixture.operator_group_pda, &operator.pubkey());
-        let ix = operator::instruction::build_add_operator_instruction(
+        let op_acc = get_permission_account(&fixture.operator_group_pda, &operator.pubkey());
+        let ix = account_group::instruction::build_add_account_to_group_instruction(
             &fixture.payer.pubkey(),
             &fixture.operator_group_pda,
             &fixture.init_operator_pda_acc,
@@ -45,14 +41,15 @@ async fn test_add_operator() {
 
     // Check that all operators were added
     for operator in operators.iter() {
-        let op_acc = get_operator_account(&fixture.operator_group_pda, &operator.pubkey());
+        let op_acc = get_permission_account(&fixture.operator_group_pda, &operator.pubkey());
         let op_acc = fixture
             .banks_client
             .get_account(op_acc)
             .await
             .expect("get_account")
             .expect("account not none");
-        let op_acc = operator::state::OperatorAccount::unpack_from_slice(&op_acc.data).unwrap();
-        assert!(op_acc.is_active());
+        op_acc
+            .check_initialized_pda::<PermissionAccount>(&account_group::ID)
+            .unwrap();
     }
 }

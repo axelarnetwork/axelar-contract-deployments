@@ -1,39 +1,33 @@
-//! Operator group account
+//! Permission group PDA account
+
+use std::mem::size_of;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::{Pack, Sealed};
 
-pub const OPERATOR_GROUP_TAG: &[u8; 16] = b"operator_group  ";
+use crate::instruction::GroupId;
 
 /// The operator group account is used as a top-level marker for
 /// all the operator accounts
 #[repr(C)]
 #[derive(Clone, Debug, Default, PartialEq, BorshSerialize, BorshDeserialize)]
-pub struct OperatorGroupAccount {
-    tag: [u8; 16],
-    id: [u8; 32],
+pub struct PermissionGroupAccount {
+    /// Unique identifier for the permission group
+    pub id: GroupId,
 }
 
-impl OperatorGroupAccount {
+impl PermissionGroupAccount {
     /// Create a new operator group account
-    pub fn new(id: [u8; 32]) -> Self {
-        Self {
-            id,
-            tag: *OPERATOR_GROUP_TAG,
-        }
-    }
-
-    /// Make sure that the tag is present and correct
-    pub fn is_initialized(&self) -> bool {
-        self.tag == *OPERATOR_GROUP_TAG
+    pub fn new(id: GroupId) -> Self {
+        Self { id }
     }
 }
 
-impl Sealed for OperatorGroupAccount {}
-impl Pack for OperatorGroupAccount {
-    const LEN: usize = 48;
+impl Sealed for PermissionGroupAccount {}
+impl Pack for PermissionGroupAccount {
+    const LEN: usize = size_of::<PermissionGroupAccount>();
 
     fn pack_into_slice(&self, mut dst: &mut [u8]) {
         self.serialize(&mut dst).unwrap();

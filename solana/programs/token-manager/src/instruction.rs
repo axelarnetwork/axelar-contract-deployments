@@ -17,10 +17,10 @@ pub enum TokenManagerInstruction {
     ///      created
     ///   2. `[writable]` The new TokenManager Flow Data PDA account that needs
     ///      to be created
-    ///   3. `[]` Operator Group PDA account that represents operators
-    ///   4. `[]` Operator PDA account that's a part of the operator group
-    ///   5. `[signer]` User account that is a part of the operator group
-    ///   6. `[]` Operator Group PDA account that represents flow limiters
+    ///   3. `[]` Permission Group PDA account that represents permissions
+    ///   4. `[]` Permission PDA account that's a part of the permission group
+    ///   5. `[signer]` User account that is a part of the permission group
+    ///   6. `[]` Permission Group PDA account that represents flow limiters
     ///   7. `[]` Flow limiter PDA account that's a part of the flow limiter
     ///      group
     ///   8. `[signer]` User account that is a part of the flow limiter group
@@ -30,10 +30,11 @@ pub enum TokenManagerInstruction {
     /// Used to set the flow limit of the account.
     /// Accounts expected by this instruction:
     ///  0. `[writeable]` The TokenManager PDA account
-    ///  1. `[]` Operator Group PDA account that represents flow limiters
-    ///  2. `[]` Operator PDA account that represents flow limiter
+    ///  1. `[]` Permission Group PDA account that represents flow limiters
+    ///  2. `[]` Permission PDA account that represents flow limiter
     ///  3. `[signer]` The flow limiter account
-    ///  4. `[]` Operator Group PDA account that represents operators limiters
+    ///  4. `[]` Permission Group PDA account that represents permissions
+    ///     limiters
     ///  5. `[]` Service program PDA account
     SetFlowLimit {
         /// The new flow limit.
@@ -45,10 +46,10 @@ pub enum TokenManagerInstruction {
     /// 0. `[writeable]` The TokenManager PDA account
     /// 1. `[writable]` The new TokenManager Flow Data PDA account that needs to
     ///    be created
-    /// 1. `[]` Operator Group PDA account that represents operators
-    /// 2. `[]` Operator PDA account that represents operator
-    /// 3. `[signer]` The operator account
-    /// 4. `[]` Operator Group PDA account that represents flow limiters
+    /// 1. `[]` Permission Group PDA account that represents permissions
+    /// 2. `[]` Permission PDA account that represents permission
+    /// 3. `[signer]` The permission account
+    /// 4. `[]` Permission Group PDA account that represents flow limiters
     /// 5. `[]` Service program PDA account
     ///   10. `[]` The system program
     AddFlowDirection(FlowToAdd),
@@ -57,10 +58,6 @@ pub enum TokenManagerInstruction {
 /// Setup instruction data
 #[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
 pub struct Setup {
-    /// The ID of the operator group.
-    pub operator_group_id: String,
-    /// The ID of the flow limiter group.
-    pub flow_limiter_group_id: String,
     /// The initial amount of tokens that have flowed into the account.
     pub flow_limit: u64,
 }
@@ -87,12 +84,12 @@ pub struct FlowToAdd {
 pub fn build_setup_instruction(
     funder: &Pubkey,
     token_manager_pda: &Pubkey,
-    operator_group_pda: &Pubkey,
-    operator_pda: &Pubkey,
-    operator: &Pubkey,
+    permission_group_pda: &Pubkey,
+    permission_pda: &Pubkey,
+    permission_pda_owner: &Pubkey,
     flow_limiter_group_pda: &Pubkey,
     flow_limiter_pda: &Pubkey,
-    flow_limiter: &Pubkey,
+    flow_limiter_pda_owner: &Pubkey,
     service_program_pda: &Pubkey,
     setup_data: Setup,
 ) -> Result<Instruction, ProgramError> {
@@ -101,12 +98,12 @@ pub fn build_setup_instruction(
     let accounts = vec![
         AccountMeta::new(*funder, true),
         AccountMeta::new(*token_manager_pda, false),
-        AccountMeta::new_readonly(*operator_group_pda, false),
-        AccountMeta::new_readonly(*operator_pda, false),
-        AccountMeta::new_readonly(*operator, true),
+        AccountMeta::new_readonly(*permission_group_pda, false),
+        AccountMeta::new_readonly(*permission_pda, false),
+        AccountMeta::new_readonly(*permission_pda_owner, true),
         AccountMeta::new_readonly(*flow_limiter_group_pda, false),
         AccountMeta::new_readonly(*flow_limiter_pda, false),
-        AccountMeta::new_readonly(*flow_limiter, true),
+        AccountMeta::new_readonly(*flow_limiter_pda_owner, true),
         AccountMeta::new_readonly(*service_program_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
@@ -124,7 +121,7 @@ pub fn build_set_flow_limit_instruction(
     flow_limiter_group_pda: &Pubkey,
     flow_limiter_pda: &Pubkey,
     flow_limiter: &Pubkey,
-    operator_group_pda: &Pubkey,
+    permission_group_pda: &Pubkey,
     service_program_pda: &Pubkey,
     amount: u64,
 ) -> Result<Instruction, ProgramError> {
@@ -135,7 +132,7 @@ pub fn build_set_flow_limit_instruction(
         AccountMeta::new_readonly(*flow_limiter_group_pda, false),
         AccountMeta::new_readonly(*flow_limiter_pda, false),
         AccountMeta::new_readonly(*flow_limiter, true),
-        AccountMeta::new_readonly(*operator_group_pda, false),
+        AccountMeta::new_readonly(*permission_group_pda, false),
         AccountMeta::new_readonly(*service_program_pda, false),
     ];
 
@@ -155,7 +152,7 @@ pub fn build_add_flow_instruction(
     flow_limiter_group_pda: &Pubkey,
     flow_limiter_pda: &Pubkey,
     flow_limiter: &Pubkey,
-    operator_group_pda: &Pubkey,
+    permission_group_pda: &Pubkey,
     service_program_pda: &Pubkey,
     flow_direction: FlowToAdd,
 ) -> Result<Instruction, ProgramError> {
@@ -168,7 +165,7 @@ pub fn build_add_flow_instruction(
         AccountMeta::new_readonly(*flow_limiter_group_pda, false),
         AccountMeta::new_readonly(*flow_limiter_pda, false),
         AccountMeta::new_readonly(*flow_limiter, true),
-        AccountMeta::new_readonly(*operator_group_pda, false),
+        AccountMeta::new_readonly(*permission_group_pda, false),
         AccountMeta::new_readonly(*service_program_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];

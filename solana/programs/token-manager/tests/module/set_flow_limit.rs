@@ -1,7 +1,7 @@
-use solana_program::program_pack::Pack;
 use solana_program_test::tokio;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
+use test_fixtures::account::CheckValidPDAInTests;
 
 #[tokio::test]
 async fn test_set_flow_limit() {
@@ -41,18 +41,14 @@ async fn test_set_flow_limit() {
         .await
         .expect("get_account")
         .expect("account not none");
-    assert_eq!(token_manager_pda.owner, token_manager::id());
+
+    let data = token_manager_pda
+        .check_initialized_pda::<token_manager::state::TokenManagerRootAccount>(&token_manager::ID)
+        .unwrap();
     assert_eq!(
-        token_manager_pda.data.len(),
-        token_manager::state::TokenManagerAccount::LEN
-    );
-    let token_manager_account =
-        token_manager::state::TokenManagerAccount::unpack_from_slice(&token_manager_pda.data)
-            .unwrap();
-    assert_eq!(
-        token_manager_account,
-        token_manager::state::TokenManagerAccount {
-            flow_limit: NEW_FLOW_LIMIT,
+        data,
+        token_manager::state::TokenManagerRootAccount {
+            flow_limit: NEW_FLOW_LIMIT
         }
     );
 }

@@ -63,7 +63,7 @@ impl Deref for CalculatedEpoch {
 ///
 /// # Arguments
 ///
-/// * `operator_group_pda`: The public key of the operator group's
+/// * `operators_permission_group_pda`: The public key of the operator group's
 ///   program-derived address (PDA).
 /// * `flow_limiter_group_pda`: The public key of the flow limiter group's
 ///   program-derived address (PDA).
@@ -74,12 +74,12 @@ impl Deref for CalculatedEpoch {
 ///
 /// This function returns the public key of the token manager account.
 pub fn get_token_manager_account(
-    operator_group_pda: &Pubkey,
+    operators_permission_group_pda: &Pubkey,
     flow_limiter_group_pda: &Pubkey,
     service_program_pda: &Pubkey,
 ) -> Pubkey {
     get_token_manager_account_and_bump_seed_internal(
-        operator_group_pda,
+        operators_permission_group_pda,
         flow_limiter_group_pda,
         service_program_pda,
         &id(),
@@ -94,15 +94,15 @@ pub fn get_token_flow_account(token_manager_pda: &Pubkey, epoch: CalculatedEpoch
 
 /// calculates the program-derived address (PDA) for the token manager account.
 pub(crate) fn get_token_manager_account_and_bump_seed_internal(
-    operator_group_pda: &Pubkey,
-    flow_limiter_group_pda: &Pubkey,
+    operators_permission_group_pda: &Pubkey,
+    flow_limiters_permission_group_pda: &Pubkey,
     service_program_pda: &Pubkey,
     program_id: &Pubkey,
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[
-            &operator_group_pda.as_ref(),
-            &flow_limiter_group_pda.as_ref(),
+            &operators_permission_group_pda.as_ref(),
+            &flow_limiters_permission_group_pda.as_ref(),
             &service_program_pda.as_ref(),
         ],
         program_id,

@@ -32,7 +32,7 @@ spl-associated-token-account = "2.3.0"
 
 # solana programs
 auth-weighted = { path = "programs/auth-weighted" }
-operator = { path = "programs/operator" }
+account-group = { path = "programs/account-group" }
 gateway = { path = "programs/gateway" }
 gas-service = { path = "programs/gas-service" }
 

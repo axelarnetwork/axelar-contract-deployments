@@ -3,6 +3,7 @@ use solana_program::program_pack::Pack;
 use solana_program_test::{tokio, BanksClientError};
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
+use test_fixtures::account::CheckValidPDAInTests;
 use token_manager::instruction::FlowToAdd;
 use token_manager::{get_token_flow_account, CalculatedEpoch};
 
@@ -56,15 +57,15 @@ async fn test_add_flow() {
         .expect("get_account")
         .expect("account not none");
     assert_eq!(token_flow_pda.owner, token_manager::id());
+
+    let data = token_flow_pda
+        .check_initialized_pda::<token_manager::state::TokenManagerFlowInOutAccount>(
+            &token_manager::ID,
+        )
+        .unwrap();
     assert_eq!(
-        token_flow_pda.data.len(),
-        token_manager::state::FlowInOutAccount::LEN
-    );
-    let token_flow_pda =
-        token_manager::state::FlowInOutAccount::unpack_from_slice(&token_flow_pda.data).unwrap();
-    assert_eq!(
-        token_flow_pda,
-        token_manager::state::FlowInOutAccount {
+        data,
+        token_manager::state::TokenManagerFlowInOutAccount {
             flow_in: 90,
             flow_out: 5,
         }
@@ -124,13 +125,17 @@ async fn test_add_flow_2_times() {
     assert_eq!(token_flow_pda.owner, token_manager::id());
     assert_eq!(
         token_flow_pda.data.len(),
-        token_manager::state::FlowInOutAccount::LEN
+        token_manager::state::TokenManagerFlowInOutAccount::LEN
     );
-    let token_flow_pda =
-        token_manager::state::FlowInOutAccount::unpack_from_slice(&token_flow_pda.data).unwrap();
+
+    let data = token_flow_pda
+        .check_initialized_pda::<token_manager::state::TokenManagerFlowInOutAccount>(
+            &token_manager::ID,
+        )
+        .unwrap();
     assert_eq!(
-        token_flow_pda,
-        token_manager::state::FlowInOutAccount {
+        data,
+        token_manager::state::TokenManagerFlowInOutAccount {
             flow_in: 180,
             flow_out: 10,
         }
@@ -264,16 +269,14 @@ async fn test_add_flow_in_exceeds_limit() {
         .await
         .expect("get_account")
         .expect("account not none");
-    assert_eq!(token_flow_pda.owner, token_manager::id());
+    let data = token_flow_pda
+        .check_initialized_pda::<token_manager::state::TokenManagerFlowInOutAccount>(
+            &token_manager::ID,
+        )
+        .unwrap();
     assert_eq!(
-        token_flow_pda.data.len(),
-        token_manager::state::FlowInOutAccount::LEN
-    );
-    let token_flow_pda =
-        token_manager::state::FlowInOutAccount::unpack_from_slice(&token_flow_pda.data).unwrap();
-    assert_eq!(
-        token_flow_pda,
-        token_manager::state::FlowInOutAccount {
+        data,
+        token_manager::state::TokenManagerFlowInOutAccount {
             flow_in: flow_limit - 1,
             flow_out: 0,
         }
@@ -331,13 +334,15 @@ async fn test_add_flow_in_works_fine() {
             .await
             .expect("get_account")
             .expect("account not none");
-        let token_flow_pda =
-            token_manager::state::FlowInOutAccount::unpack_from_slice(&token_flow_pda.data)
-                .unwrap();
 
+        let data = token_flow_pda
+            .check_initialized_pda::<token_manager::state::TokenManagerFlowInOutAccount>(
+                &token_manager::ID,
+            )
+            .unwrap();
         assert_eq!(
-            token_flow_pda,
-            token_manager::state::FlowInOutAccount {
+            data,
+            token_manager::state::TokenManagerFlowInOutAccount {
                 flow_in: idx + 1,
                 flow_out: 0,
             }
@@ -408,15 +413,17 @@ async fn test_add_flow_out_works_fine() {
             .await
             .expect("get_account")
             .expect("account not none");
-        let token_flow_pda =
-            token_manager::state::FlowInOutAccount::unpack_from_slice(&token_flow_pda.data)
-                .unwrap();
 
+        let data = token_flow_pda
+            .check_initialized_pda::<token_manager::state::TokenManagerFlowInOutAccount>(
+                &token_manager::ID,
+            )
+            .unwrap();
         assert_eq!(
-            token_flow_pda,
-            token_manager::state::FlowInOutAccount {
-                flow_in: 0,
+            data,
+            token_manager::state::TokenManagerFlowInOutAccount {
                 flow_out: idx + 1,
+                flow_in: 0,
             }
         );
     }

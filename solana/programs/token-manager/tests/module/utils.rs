@@ -1,4 +1,5 @@
-use operator::{get_operator_account, get_operator_group_account};
+use account_group::instruction::GroupId;
+use account_group::{get_permission_account, get_permission_group_account};
 use solana_program::clock::Clock;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{processor, BanksClient, ProgramTest};
@@ -15,9 +16,9 @@ pub fn program_test() -> ProgramTest {
     );
 
     program.add_program(
-        "operator",
-        operator::id(),
-        processor!(operator::processor::Processor::process_instruction),
+        "account_group",
+        account_group::id(),
+        processor!(account_group::processor::Processor::process_instruction),
     );
 
     program
@@ -34,7 +35,7 @@ pub struct OperatorRepr {
     pub operator_group_pda: Pubkey,
     pub init_operator_pda_acc: Pubkey,
     pub operator: Keypair,
-    pub operator_group_id: String,
+    pub operator_group_id: GroupId,
 }
 
 impl TestFixture {
@@ -44,11 +45,11 @@ impl TestFixture {
         let service_program_pda = Keypair::new();
         let operator = Keypair::new();
         let (mut banks_client, payer, recent_blockhash) = program_test().start().await;
-        let operator_group_id = "test-op-group-id";
-        let flow_group_id = "test-flow-group-id";
+        let operator_group_id = GroupId::new("test-op-group-id");
+        let flow_group_id = GroupId::new("test-flow-group-id");
 
         let (operator_group_pda, init_operator_pda_acc) = operator_group(
-            operator_group_id,
+            operator_group_id.clone(),
             &operator,
             &mut banks_client,
             &payer,
@@ -56,7 +57,7 @@ impl TestFixture {
         )
         .await;
         let (flow_group_pda, init_flow_pda_acc) = operator_group(
-            flow_group_id,
+            flow_group_id.clone(),
             &operator,
             &mut banks_client,
             &payer,
@@ -71,12 +72,12 @@ impl TestFixture {
                 operator: operator.insecure_clone(),
                 operator_group_pda: flow_group_pda,
                 init_operator_pda_acc: init_flow_pda_acc,
-                operator_group_id: flow_group_id.to_string(),
+                operator_group_id: flow_group_id,
             },
             operator_repr: OperatorRepr {
                 operator_group_pda,
                 init_operator_pda_acc,
-                operator_group_id: operator_group_id.to_string(),
+                operator_group_id,
                 operator: operator.insecure_clone(),
             },
         }
@@ -108,11 +109,7 @@ impl TestFixture {
             &self.flow_repr.init_operator_pda_acc,
             &self.flow_repr.operator.pubkey(),
             &self.service_program_pda.pubkey(),
-            token_manager::instruction::Setup {
-                operator_group_id: self.operator_repr.operator_group_id.clone(),
-                flow_limiter_group_id: self.flow_repr.operator_group_id.clone(),
-                flow_limit,
-            },
+            token_manager::instruction::Setup { flow_limit },
         )
         .unwrap();
         let transaction = Transaction::new_signed_with_payer(
@@ -135,14 +132,14 @@ impl TestFixture {
 }
 
 async fn operator_group(
-    operator_group_id: &str,
+    operator_group_id: GroupId,
     operator: &Keypair,
     banks_client: &mut BanksClient,
     payer: &Keypair,
     recent_blockhash: solana_program::hash::Hash,
 ) -> (Pubkey, Pubkey) {
-    let operator_group_pda = get_operator_group_account(operator_group_id);
-    let init_operator_pda_acc = get_operator_account(&operator_group_pda, &operator.pubkey());
+    let operator_group_pda = get_permission_group_account(&operator_group_id);
+    let init_operator_pda_acc = get_permission_account(&operator_group_pda, &operator.pubkey());
 
     // Associated account does not exist
     assert_eq!(
@@ -160,12 +157,12 @@ async fn operator_group(
         None,
     );
 
-    let ix = operator::instruction::build_create_group_instruction(
+    let ix = account_group::instruction::build_setup_permission_group_instruction(
         &payer.pubkey(),
         &operator_group_pda,
         &init_operator_pda_acc,
         &operator.pubkey(),
-        operator_group_id.to_string(),
+        operator_group_id,
     )
     .unwrap();
     let transaction = Transaction::new_signed_with_payer(

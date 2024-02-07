@@ -1,21 +1,15 @@
 use anyhow::{Ok, Result};
-use borsh::BorshDeserialize;
 use gateway::accounts::GatewayConfig;
-use gateway::types::PubkeyWrapper;
 use interchain_token_service::{
     get_interchain_token_service_associated_token_account, get_interchain_token_service_root_pda,
     TokenManagerType,
 };
-use solana_program::instruction::{AccountMeta, Instruction, InstructionError};
-use solana_program::keccak::hash;
 use solana_program::program_pack::Pack;
-use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
-use solana_program::{system_instruction, system_program};
-use solana_program_test::{processor, tokio, BanksTransactionResultWithMetadata, ProgramTest};
+use solana_program::system_instruction;
+use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
-use solana_sdk::transaction::{Transaction, TransactionError};
-use spl_associated_token_account;
+use solana_sdk::transaction::Transaction;
 use spl_token::state::{Account, Mint};
 
 #[tokio::test]
@@ -43,7 +37,7 @@ async fn take_token_mint_burn_ata_success() -> Result<()> {
     let interchain_token_service_root_pda =
         get_interchain_token_service_root_pda(&gateway_root_pda, &gas_service_root_pda);
 
-    let (its_ata, its_ata_bump) = get_interchain_token_service_associated_token_account(
+    let (its_ata, _its_ata_bump) = get_interchain_token_service_associated_token_account(
         &interchain_token_service_root_pda,
         &wallet_address.pubkey(),
         &mint_account.pubkey(),

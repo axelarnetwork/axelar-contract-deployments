@@ -1,4 +1,5 @@
-use operator::{get_operator_account, get_operator_group_account};
+use account_group::instruction::GroupId;
+use account_group::{get_permission_account, get_permission_group_account};
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{processor, BanksClient, ProgramTest};
 use solana_sdk::signature::Keypair;
@@ -8,8 +9,8 @@ use solana_sdk::transaction::Transaction;
 pub fn program_test() -> ProgramTest {
     ProgramTest::new(
         &env!("CARGO_PKG_NAME").replace('-', "_"),
-        operator::id(),
-        processor!(operator::processor::Processor::process_instruction),
+        account_group::id(),
+        processor!(account_group::processor::Processor::process_instruction),
     )
 }
 pub struct TestFixture {
@@ -18,7 +19,7 @@ pub struct TestFixture {
     pub init_operator: Keypair,
     pub init_operator_pda_acc: Pubkey,
     pub operator_group_pda: Pubkey,
-    pub operator_group_id: String,
+    pub operator_group_id: GroupId,
 }
 
 impl TestFixture {
@@ -26,9 +27,9 @@ impl TestFixture {
     /// created.
     pub async fn new() -> TestFixture {
         let operator = Keypair::new();
-        let operator_group_id = "test-operation-chain-id";
-        let operator_group_pda = get_operator_group_account(operator_group_id);
-        let init_operator_pda_acc = get_operator_account(&operator_group_pda, &operator.pubkey());
+        let operator_group_id = GroupId::new("test-operation-chain-id");
+        let operator_group_pda = get_permission_group_account(&operator_group_id);
+        let init_operator_pda_acc = get_permission_account(&operator_group_pda, &operator.pubkey());
         let (mut banks_client, payer, recent_blockhash) = program_test().start().await;
 
         // Associated account does not exist
@@ -47,12 +48,12 @@ impl TestFixture {
             None,
         );
 
-        let ix = operator::instruction::build_create_group_instruction(
+        let ix = account_group::instruction::build_setup_permission_group_instruction(
             &payer.pubkey(),
             &operator_group_pda,
             &init_operator_pda_acc,
             &operator.pubkey(),
-            operator_group_id.to_string(),
+            operator_group_id.clone(),
         )
         .unwrap();
         let transaction = Transaction::new_signed_with_payer(
@@ -67,7 +68,7 @@ impl TestFixture {
             payer,
             init_operator: operator,
             init_operator_pda_acc,
-            operator_group_id: operator_group_id.to_string(),
+            operator_group_id: operator_group_id.clone(),
             operator_group_pda,
         }
     }

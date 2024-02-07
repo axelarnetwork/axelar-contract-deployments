@@ -1,15 +1,16 @@
 //! Set a new flow limit for a given token manager.
 
-use borsh::{to_vec, BorshDeserialize};
-use program_utils::check_program_account;
+use account_group::state::{PermissionAccount, PermissionGroupAccount};
+use borsh::to_vec;
+use program_utils::{check_program_account, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use super::{assert_operator_pda, assert_token_manager_account, Processor};
+use super::{assert_permission_pda, assert_token_manager_account, Processor};
 use crate::check_id;
-use crate::state::TokenManagerAccount;
+use crate::processor::assert_permission_group_pda;
+use crate::state::TokenManagerRootAccount;
 
 impl Processor {
     /// Sets the flow limit for a given token manager.
@@ -27,32 +28,48 @@ impl Processor {
 
         let account_info_iter = &mut accounts.iter();
 
-        let token_manager_pda = next_account_info(account_info_iter)?;
-        let flow_limiter_group_pda = next_account_info(account_info_iter)?;
-        let flow_limiter_pda = next_account_info(account_info_iter)?;
-        let flow_limiter = next_account_info(account_info_iter)?;
-        let operator_group_pda = next_account_info(account_info_iter)?;
+        let token_manager_root_pda = next_account_info(account_info_iter)?;
+        let flow_limiters_permission_group_pda = next_account_info(account_info_iter)?;
+        let flow_limiters_permission_pda = next_account_info(account_info_iter)?;
+        let flow_limiters_permission_pda_owner = next_account_info(account_info_iter)?;
+        let operators_permission_group_pda = next_account_info(account_info_iter)?;
         let service_program_pda = next_account_info(account_info_iter)?;
 
-        assert_eq!(flow_limiter_group_pda.owner, &operator::ID);
-        assert_operator_pda(flow_limiter_group_pda, flow_limiter_pda, flow_limiter);
+        // Assert account groups
+        let flow_group = flow_limiters_permission_group_pda
+            .check_initialized_pda::<PermissionGroupAccount>(&account_group::ID)?
+            .id;
+        let _perm_pda = flow_limiters_permission_pda
+            .check_initialized_pda::<PermissionAccount>(&account_group::ID)?;
+        assert_permission_group_pda(flow_group, flow_limiters_permission_group_pda);
+        assert_permission_pda(
+            flow_limiters_permission_group_pda,
+            flow_limiters_permission_pda,
+            flow_limiters_permission_pda_owner,
+        );
 
-        assert!(flow_limiter.is_signer, "Flow limiter must be signer");
+        // Make sure that only someone with the flow limiters permission can set the
+        // flow limit
+        assert!(
+            flow_limiters_permission_pda_owner.is_signer,
+            "Flow limiter must be signer"
+        );
 
-        let _bump_seed = assert_token_manager_account(
-            token_manager_pda,
-            operator_group_pda,
-            flow_limiter_group_pda,
+        // Assert token manager account
+        let _token_manager_root_pda_bump = assert_token_manager_account(
+            token_manager_root_pda,
+            operators_permission_group_pda,
+            flow_limiters_permission_group_pda,
             service_program_pda,
             program_id,
         )?;
-        if token_manager_pda.owner != program_id {
-            return Err(ProgramError::IllegalOwner);
-        }
-        let mut account_data = token_manager_pda.try_borrow_mut_data()?;
-        let mut data = TokenManagerAccount::try_from_slice(&account_data[..account_data.len()])?;
+        let mut data =
+            token_manager_root_pda.check_initialized_pda::<TokenManagerRootAccount>(program_id)?;
+
+        // Set the flow limit
         data.flow_limit = flow_limit;
         let serialized_data = to_vec(&data)?;
+        let mut account_data = token_manager_root_pda.try_borrow_mut_data()?;
         account_data[..serialized_data.len()].copy_from_slice(&serialized_data);
 
         Ok(())

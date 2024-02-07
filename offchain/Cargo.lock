@@ -652,22 +652,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "auth-weighted"
-version = "0.1.0"
-dependencies = [
- "base64 0.21.7",
- "bnum 0.10.0",
- "borsh 1.3.0",
- "hex",
- "k256",
- "libsecp256k1 0.7.1",
- "num-derive 0.4.1",
- "num-traits",
- "solana-program",
- "thiserror",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -813,6 +797,12 @@ name = "bech32"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445"
+
+[[package]]
+name = "bimap"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "230c5f1ca6a325a32553f8640d31ac9b49f2411e901e427570154868b46da4f7"
 
 [[package]]
 name = "bincode"
@@ -2332,13 +2322,17 @@ dependencies = [
 name = "gateway"
 version = "0.1.0"
 dependencies = [
- "auth-weighted",
  "base64 0.21.7",
  "bcs",
+ "bimap",
+ "bnum 0.10.0",
  "borsh 1.3.0",
+ "bytemuck",
  "connection-router",
  "cosmwasm-std",
+ "hex",
  "itertools 0.12.1",
+ "libsecp256k1 0.7.1",
  "multisig",
  "multisig-prover",
  "num-derive 0.4.1",

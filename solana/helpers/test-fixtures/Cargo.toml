@@ -18,3 +18,5 @@ multisig.workspace = true
 rand_core = { version = "0.6.4", features = ["getrandom"] }
 signature.workspace = true
 solana-program.workspace = true
+solana-sdk.workspace = true
+borsh.workspace = true
