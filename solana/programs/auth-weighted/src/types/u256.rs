@@ -16,13 +16,15 @@ impl U256 {
     /// Create an integer value from its representation as a byte array in
     /// little endian.
     pub fn from_le_bytes(bytes: [u8; 32]) -> Self {
-        U256(bnum::types::U256::from_le_bytes(bytes))
+        let cast: [u64; 4] = bytemuck::cast(bytes);
+        U256(bnum::types::U256::from(cast))
     }
 
     /// Return the memory representation of this integer as a byte array in
     /// little-endian byte order.
     pub fn to_le_bytes(self) -> [u8; 32] {
-        self.0.to_le_bytes()
+        let bytes: [u64; 4] = self.0.into();
+        bytemuck::cast(bytes)
     }
 
     /// Checked integer addition. Computes `self + rhs`, returning `None` if
@@ -65,8 +67,7 @@ impl BorshDeserialize for U256 {
     fn deserialize_reader<R: std::io::Read>(reader: &mut R) -> Result<Self, std::io::Error> {
         let mut buffer = [0u8; 32];
         reader.read_exact(&mut buffer)?;
-        let inner = bnum::types::U256::from_le_bytes(buffer);
-        Ok(U256(inner))
+        Ok(U256::from_le_bytes(buffer))
     }
 }
 
