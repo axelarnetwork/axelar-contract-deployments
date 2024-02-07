@@ -186,6 +186,19 @@ node evm/verify-contract.js --help
 
 The following script is for emergency situations where we need to ask validators to manually sign gateway approvals. These validator signatures must be collected and stored within separate files in the signatures folder in the root directory. The script will then combine these signatures into a gateway batch and optionally execute this batch on the Axelar gateway contract on the specified chain.
 
+Ensure that the lcd endpoint has been provided for the specified environment in the chains config file under `axelar`:
+
+```json
+"axelar": {
+    "id": "Axelarnet",
+    "axelarId": "Axelarnet",
+    "rpc": "",
+    "lcd": "",
+    "grpc": "",
+    "tokenSymbol": "AXL"
+  }
+```
+
 Below are instructions on how to utilize this script:
 
 1. Construct the gateway batch data by passing in the payload hash gotten from running the `governance.js` script.
@@ -200,6 +213,18 @@ Below are instructions on how to utilize this script:
     - sourceAddress: 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj'
     - contractAddress = interchain governance address
     - commandId = random bytes32 value
+
+    Example payload hash generation via governance script for Axelar gateway upgrade. For more information see [here](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#governance):
+
+    ```bash
+    node evm/governance.js --targetContractName AxelarGateway --action upgrade --proposalAction schedule --date 2023-12-13T16:50:00 --file proposal.json
+    ```
+
+    Example output:
+
+    ```bash
+    Axelar Proposal payload hash: 0x485cc20898a043994a38827c04230ed642db5362e7d412b84b909b0504862024
+    ```
 
 2. Running the command above will output the raw batch data, the data hash, and the vald sign command that should be used to generate validator signatures. Here is an example output:
 
