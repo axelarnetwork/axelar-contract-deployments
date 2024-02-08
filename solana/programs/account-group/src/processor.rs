@@ -54,7 +54,7 @@ fn assert_permission_group_account(
     let (derived_account, bump_seed) =
         get_permission_group_account_and_bump_seed_internal(id, program_id);
     if derived_account != *permissions_group_pda.key {
-        msg!("Error: Associated address does not match seed derivation");
+        msg!("Error: Permission group address does not match the derived one");
         return Err(ProgramError::InvalidSeeds);
     }
 
@@ -72,7 +72,7 @@ fn assert_permission_account(
         program_id,
     );
     if derived_account != *permission_pda.key {
-        msg!("Error: Associated address does not match seed derivation");
+        msg!("Error: Permission account address does not match the derived one");
         return Err(ProgramError::InvalidSeeds);
     }
 

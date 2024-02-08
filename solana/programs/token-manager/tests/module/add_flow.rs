@@ -1,7 +1,7 @@
 use solana_program::clock::Clock;
 use solana_program::program_pack::Pack;
 use solana_program_test::{tokio, BanksClientError};
-use solana_sdk::signature::Signer;
+use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
 use test_fixtures::account::CheckValidPDAInTests;
 use token_manager::instruction::FlowToAdd;
@@ -10,21 +10,21 @@ use token_manager::{get_token_flow_account, CalculatedEpoch};
 #[tokio::test]
 async fn test_add_flow() {
     let flow_limit = 500;
-    let (mut fixture, token_manager_pda) = super::utils::TestFixture::new()
-        .await
-        .post_setup(flow_limit)
-        .await;
+    let mut fixture = super::utils::TestFixture::new().await;
+    let mint_authority = Keypair::new();
+    let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
+    let token_manager_pda_pubkey = fixture.setup_token_manager(flow_limit, token_mint).await;
 
     let clock = fixture.banks_client.get_sysvar::<Clock>().await.unwrap();
     let block_timestamp = clock.unix_timestamp;
 
     let token_flow_pda = get_token_flow_account(
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         CalculatedEpoch::new_with_timestamp(block_timestamp as u64),
     );
     let ix = token_manager::instruction::build_add_flow_instruction(
         &fixture.payer.pubkey(),
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         &token_flow_pda,
         &fixture.flow_repr.operator_group_pda,
         &fixture.flow_repr.init_operator_pda_acc,
@@ -76,21 +76,21 @@ async fn test_add_flow() {
 async fn test_add_flow_2_times() {
     let flow_limit = 500;
 
-    let (mut fixture, token_manager_pda) = super::utils::TestFixture::new()
-        .await
-        .post_setup(flow_limit)
-        .await;
+    let mut fixture = super::utils::TestFixture::new().await;
+    let mint_authority = Keypair::new();
+    let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
+    let token_manager_pda_pubkey = fixture.setup_token_manager(flow_limit, token_mint).await;
 
     let clock = fixture.banks_client.get_sysvar::<Clock>().await.unwrap();
     let block_timestamp = clock.unix_timestamp;
 
     let token_flow_pda = get_token_flow_account(
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         CalculatedEpoch::new_with_timestamp(block_timestamp as u64),
     );
     let ix = token_manager::instruction::build_add_flow_instruction(
         &fixture.payer.pubkey(),
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         &token_flow_pda,
         &fixture.flow_repr.operator_group_pda,
         &fixture.flow_repr.init_operator_pda_acc,
@@ -146,18 +146,19 @@ async fn test_add_flow_2_times() {
 async fn test_add_flow_old_pdas() {
     let flow_limit = 500;
     let block_timestamp = 10; // super old timestamp
-    let (mut fixture, token_manager_pda) = super::utils::TestFixture::new()
-        .await
-        .post_setup(flow_limit)
-        .await;
+
+    let mut fixture = super::utils::TestFixture::new().await;
+    let mint_authority = Keypair::new();
+    let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
+    let token_manager_pda_pubkey = fixture.setup_token_manager(flow_limit, token_mint).await;
 
     let token_flow_pda = get_token_flow_account(
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         CalculatedEpoch::new_with_timestamp(block_timestamp),
     );
     let ix = token_manager::instruction::build_add_flow_instruction(
         &fixture.payer.pubkey(),
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         &token_flow_pda,
         &fixture.flow_repr.operator_group_pda,
         &fixture.flow_repr.init_operator_pda_acc,
@@ -196,21 +197,22 @@ async fn test_add_flow_old_pdas() {
 #[tokio::test]
 async fn test_add_flow_in_exceeds_limit() {
     let flow_limit = 500;
-    let (mut fixture, token_manager_pda) = super::utils::TestFixture::new()
-        .await
-        .post_setup(flow_limit)
-        .await;
+
+    let mut fixture = super::utils::TestFixture::new().await;
+    let mint_authority = Keypair::new();
+    let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
+    let token_manager_pda_pubkey = fixture.setup_token_manager(flow_limit, token_mint).await;
 
     let clock = fixture.banks_client.get_sysvar::<Clock>().await.unwrap();
     let block_timestamp = clock.unix_timestamp;
 
     let token_flow_pda = get_token_flow_account(
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         CalculatedEpoch::new_with_timestamp(block_timestamp as u64),
     );
     let ix = token_manager::instruction::build_add_flow_instruction(
         &fixture.payer.pubkey(),
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         &token_flow_pda,
         &fixture.flow_repr.operator_group_pda,
         &fixture.flow_repr.init_operator_pda_acc,
@@ -236,7 +238,7 @@ async fn test_add_flow_in_exceeds_limit() {
         .unwrap();
     let ix2 = token_manager::instruction::build_add_flow_instruction(
         &fixture.payer.pubkey(),
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         &token_flow_pda,
         &fixture.flow_repr.operator_group_pda,
         &fixture.flow_repr.init_operator_pda_acc,
@@ -286,20 +288,21 @@ async fn test_add_flow_in_exceeds_limit() {
 #[tokio::test]
 async fn test_add_flow_in_works_fine() {
     let flow_limit = 5;
-    let (mut fixture, token_manager_pda) = super::utils::TestFixture::new()
-        .await
-        .post_setup(flow_limit)
-        .await;
+
+    let mut fixture = super::utils::TestFixture::new().await;
+    let mint_authority = Keypair::new();
+    let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
+    let token_manager_pda_pubkey = fixture.setup_token_manager(flow_limit, token_mint).await;
 
     let clock = fixture.banks_client.get_sysvar::<Clock>().await.unwrap();
     let block_timestamp = clock.unix_timestamp;
     let token_flow_pda = get_token_flow_account(
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         CalculatedEpoch::new_with_timestamp(block_timestamp as u64),
     );
     let ix = token_manager::instruction::build_add_flow_instruction(
         &fixture.payer.pubkey(),
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         &token_flow_pda,
         &fixture.flow_repr.operator_group_pda,
         &fixture.flow_repr.init_operator_pda_acc,
@@ -365,20 +368,21 @@ async fn test_add_flow_in_works_fine() {
 #[tokio::test]
 async fn test_add_flow_out_works_fine() {
     let flow_limit = 5;
-    let (mut fixture, token_manager_pda) = super::utils::TestFixture::new()
-        .await
-        .post_setup(flow_limit)
-        .await;
+
+    let mut fixture = super::utils::TestFixture::new().await;
+    let mint_authority = Keypair::new();
+    let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
+    let token_manager_pda_pubkey = fixture.setup_token_manager(flow_limit, token_mint).await;
 
     let clock = fixture.banks_client.get_sysvar::<Clock>().await.unwrap();
     let block_timestamp = clock.unix_timestamp;
     let token_flow_pda = get_token_flow_account(
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         CalculatedEpoch::new_with_timestamp(block_timestamp as u64),
     );
     let ix = token_manager::instruction::build_add_flow_instruction(
         &fixture.payer.pubkey(),
-        &token_manager_pda,
+        &token_manager_pda_pubkey,
         &token_flow_pda,
         &fixture.flow_repr.operator_group_pda,
         &fixture.flow_repr.init_operator_pda_acc,

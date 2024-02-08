@@ -4,8 +4,9 @@ use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
 use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};
 use solana_program::pubkey::Pubkey;
 use solana_program_test::tokio;
-use solana_sdk::signature::Signer;
+use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
+use spl_associated_token_account::get_associated_token_address;
 use test_fixtures::account::CheckValidPDAInTests;
 use token_manager::get_token_manager_account;
 
@@ -16,6 +17,7 @@ async fn test_deploy_token_manager() {
     let gas_service_root_pda = fixture.init_gas_service().await;
     let token_id = Bytes32(keccak256("random-token-id"));
     let init_operator = Pubkey::from([0; 32]);
+    let mint_authority = Keypair::new();
 
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(GatewayConfig::default())
@@ -23,6 +25,7 @@ async fn test_deploy_token_manager() {
     let interchain_token_service_root_pda = fixture
         .init_its_root_pda(&gateway_root_pda, &gas_service_root_pda)
         .await;
+    let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
     let its_token_manager_permission_groups = fixture
         .derive_token_manager_permission_groups(
             &token_id,
@@ -30,7 +33,7 @@ async fn test_deploy_token_manager() {
             &init_operator,
         )
         .await;
-    let token_manager_root_pda = get_token_manager_account(
+    let token_manager_root_pda_pubkey = get_token_manager_account(
         &its_token_manager_permission_groups.operator_group.group_pda,
         &its_token_manager_permission_groups
             .flow_limiter_group
@@ -41,11 +44,8 @@ async fn test_deploy_token_manager() {
     // Action
     let ix = interchain_token_service::instruction::build_deploy_token_manager_instruction(
         &fixture.payer.pubkey(),
-        &token_manager_root_pda,
+        &token_manager_root_pda_pubkey,
         &its_token_manager_permission_groups.operator_group.group_pda,
-        &its_token_manager_permission_groups
-            .operator_group
-            .group_pda_user,
         &its_token_manager_permission_groups
             .operator_group
             .group_pda_user_owner,
@@ -54,11 +54,9 @@ async fn test_deploy_token_manager() {
             .group_pda,
         &its_token_manager_permission_groups
             .flow_limiter_group
-            .group_pda_user,
-        &its_token_manager_permission_groups
-            .flow_limiter_group
             .group_pda_user_owner,
         &interchain_token_service_root_pda,
+        &token_mint,
         DeployTokenManager {
             token_id: Bytes32(keccak256("random-token-id")),
             token_manager_type: U256::from(42),
@@ -137,7 +135,7 @@ async fn test_deploy_token_manager() {
     // Token manager account
     let token_manager_root_pda = fixture
         .banks_client
-        .get_account(token_manager_root_pda)
+        .get_account(token_manager_root_pda_pubkey)
         .await
         .expect("get_account")
         .expect("account not none");
@@ -149,6 +147,13 @@ async fn test_deploy_token_manager() {
             .unwrap();
     assert_eq!(
         token_manager_root_pda,
-        token_manager::state::TokenManagerRootAccount { flow_limit: 0 }
+        token_manager::state::TokenManagerRootAccount {
+            flow_limit: 0,
+            associated_token_account: get_associated_token_address(
+                &token_manager_root_pda_pubkey,
+                &token_mint
+            ),
+            token_mint,
+        }
     )
 }

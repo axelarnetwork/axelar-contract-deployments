@@ -1,9 +1,12 @@
 //! State structures for token manager program
 
+use std::mem::size_of;
+
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::{Pack, Sealed};
+use solana_program::pubkey::Pubkey;
 
 /// Represents a Token Manager Account in the Solana blockchain.
 ///
@@ -16,11 +19,15 @@ use solana_program::program_pack::{Pack, Sealed};
 pub struct TokenManagerRootAccount {
     /// The total number of tokens that have flowed into the account.
     pub flow_limit: u64,
+    /// The actual token mint that TokenManager is managing
+    pub token_mint: Pubkey,
+    /// The associated token account that TokenManager has ownership over
+    pub associated_token_account: Pubkey,
 }
 
 impl Sealed for TokenManagerRootAccount {}
 impl Pack for TokenManagerRootAccount {
-    const LEN: usize = 8;
+    const LEN: usize = size_of::<TokenManagerRootAccount>();
 
     fn pack_into_slice(&self, mut dst: &mut [u8]) {
         self.serialize(&mut dst).unwrap();
@@ -47,7 +54,7 @@ pub struct TokenManagerFlowInOutAccount {
 
 impl Sealed for TokenManagerFlowInOutAccount {}
 impl Pack for TokenManagerFlowInOutAccount {
-    const LEN: usize = 16;
+    const LEN: usize = size_of::<TokenManagerFlowInOutAccount>();
 
     fn pack_into_slice(&self, mut dst: &mut [u8]) {
         self.serialize(&mut dst).unwrap();

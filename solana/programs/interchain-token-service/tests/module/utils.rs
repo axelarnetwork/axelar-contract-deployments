@@ -8,17 +8,20 @@ use interchain_token_service::{
 };
 use interchain_token_transfer_gmp::Bytes32;
 use solana_program::hash::Hash;
+use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
+use solana_program::system_instruction;
 use solana_program_test::{processor, BanksClient, ProgramTest, ProgramTestBanksClientExt};
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::Transaction;
+use spl_token::state::Mint;
 
 pub fn program_test() -> ProgramTest {
     // Add other programs here as needed
 
     let mut pt = ProgramTest::new(
-        &env!("CARGO_PKG_NAME").replace('-', "_"),
+        "interchain_token_service",
         interchain_token_service::id(),
         processor!(interchain_token_service::processor::Processor::process_instruction),
     );
@@ -200,6 +203,41 @@ impl TestFixture {
                 group_pda_user_owner: *interchain_token_service_root_pda,
             },
         }
+    }
+
+    pub async fn init_new_mint(&mut self, mint_authority: Pubkey) -> Pubkey {
+        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
+        let mint_account = Keypair::new();
+        let rent = self.banks_client.get_rent().await.unwrap();
+
+        let transaction = Transaction::new_signed_with_payer(
+            &[
+                system_instruction::create_account(
+                    &self.payer.pubkey(),
+                    &mint_account.pubkey(),
+                    rent.minimum_balance(Mint::LEN),
+                    Mint::LEN as u64,
+                    &spl_token::id(),
+                ),
+                spl_token::instruction::initialize_mint(
+                    &spl_token::id(),
+                    &mint_account.pubkey(),
+                    &mint_authority,
+                    None,
+                    0,
+                )
+                .unwrap(),
+            ],
+            Some(&self.payer.pubkey()),
+            &[&self.payer, &mint_account],
+            recent_blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+
+        mint_account.pubkey()
     }
 }
 

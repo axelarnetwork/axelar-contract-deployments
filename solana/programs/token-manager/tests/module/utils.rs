@@ -1,11 +1,14 @@
 use account_group::instruction::GroupId;
 use account_group::{get_permission_account, get_permission_group_account};
 use solana_program::clock::Clock;
+use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
+use solana_program::system_instruction;
 use solana_program_test::{processor, BanksClient, ProgramTest};
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::Transaction;
+use spl_token::state::Mint;
 use token_manager::CalculatedEpoch;
 
 pub fn program_test() -> ProgramTest {
@@ -83,7 +86,43 @@ impl TestFixture {
         }
     }
 
-    pub async fn post_setup(mut self, flow_limit: u64) -> (Self, Pubkey) {
+    pub async fn init_new_mint(&mut self, mint_authority: Pubkey) -> Pubkey {
+        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
+        let mint_account = Keypair::new();
+        let rent = self.banks_client.get_rent().await.unwrap();
+
+        let transaction = Transaction::new_signed_with_payer(
+            &[
+                system_instruction::create_account(
+                    &self.payer.pubkey(),
+                    &mint_account.pubkey(),
+                    rent.minimum_balance(Mint::LEN),
+                    Mint::LEN as u64,
+                    &spl_token::id(),
+                ),
+                spl_token::instruction::initialize_mint(
+                    &spl_token::id(),
+                    &mint_account.pubkey(),
+                    &mint_authority,
+                    None,
+                    0,
+                )
+                .unwrap(),
+            ],
+            Some(&self.payer.pubkey()),
+            &[&self.payer, &mint_account],
+            recent_blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+
+        mint_account.pubkey()
+    }
+
+    /// Returns token manager root pda
+    pub async fn setup_token_manager(&mut self, flow_limit: u64, token_mint: Pubkey) -> Pubkey {
         let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
 
         let token_manager_pda = token_manager::get_token_manager_account(
@@ -103,12 +142,11 @@ impl TestFixture {
             &self.payer.pubkey(),
             &token_manager_pda,
             &self.operator_repr.operator_group_pda,
-            &self.operator_repr.init_operator_pda_acc,
             &self.operator_repr.operator.pubkey(),
             &self.flow_repr.operator_group_pda,
-            &self.flow_repr.init_operator_pda_acc,
             &self.flow_repr.operator.pubkey(),
             &self.service_program_pda.pubkey(),
+            &token_mint,
             token_manager::instruction::Setup { flow_limit },
         )
         .unwrap();
@@ -123,7 +161,7 @@ impl TestFixture {
             .await
             .unwrap();
 
-        (self, token_manager_pda)
+        token_manager_pda
     }
 }
 

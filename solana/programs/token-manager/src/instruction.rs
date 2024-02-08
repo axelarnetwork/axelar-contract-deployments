@@ -1,9 +1,11 @@
 //! Instruction types
 
+use account_group::get_permission_account;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use spl_associated_token_account::get_associated_token_address;
 
 /// Instructions supported by the TokenManager program.
 /// Represents the different types of instructions that can be performed.
@@ -85,27 +87,38 @@ pub fn build_setup_instruction(
     funder: &Pubkey,
     token_manager_root_pda: &Pubkey,
     operators_permission_group_pda: &Pubkey,
-    operators_permission_pda: &Pubkey,
     operators_permission_pda_owner: &Pubkey,
     flow_limiters_permission_group_pda: &Pubkey,
-    flow_limiters_permission_pda: &Pubkey,
     flow_limiters_permission_pda_owner: &Pubkey,
     service_program_pda: &Pubkey,
+    token_mint: &Pubkey,
     setup_data: Setup,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&TokenManagerInstruction::Setup(setup_data))?;
-
+    let token_manager_ata = get_associated_token_address(token_manager_root_pda, token_mint);
+    let operators_permission_pda = get_permission_account(
+        operators_permission_group_pda,
+        operators_permission_pda_owner,
+    );
+    let flow_limiters_permission_pda = get_permission_account(
+        flow_limiters_permission_group_pda,
+        flow_limiters_permission_pda_owner,
+    );
     let accounts = vec![
         AccountMeta::new(*funder, true),
         AccountMeta::new(*token_manager_root_pda, false),
         AccountMeta::new_readonly(*operators_permission_group_pda, false),
-        AccountMeta::new_readonly(*operators_permission_pda, false),
+        AccountMeta::new_readonly(operators_permission_pda, false),
         AccountMeta::new_readonly(*operators_permission_pda_owner, false),
         AccountMeta::new_readonly(*flow_limiters_permission_group_pda, false),
-        AccountMeta::new_readonly(*flow_limiters_permission_pda, false),
+        AccountMeta::new_readonly(flow_limiters_permission_pda, false),
         AccountMeta::new_readonly(*flow_limiters_permission_pda_owner, false),
         AccountMeta::new_readonly(*service_program_pda, false),
+        AccountMeta::new_readonly(*token_mint, false),
+        AccountMeta::new(token_manager_ata, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
     ];
 
     Ok(Instruction {

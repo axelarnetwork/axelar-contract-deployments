@@ -30,14 +30,20 @@ impl Processor {
         let flow_limiters_permission_group_pda = next_account_info(account_info_iter)?;
         let flow_limiters_permission_pda = next_account_info(account_info_iter)?;
         let flow_limiters_permission_pda_owner = next_account_info(account_info_iter)?;
+        let token_mint = next_account_info(account_info_iter)?;
+        let token_manager_ata = next_account_info(account_info_iter)?;
 
         // Our accounts
         let its_root_pda = next_account_info(account_info_iter)?;
 
         // Executable accounts
         let system_program = next_account_info(account_info_iter)?;
-        let _account_group_exec = next_account_info(account_info_iter)?;
-        let _token_manager_exec = next_account_info(account_info_iter)?;
+        let _account_group_program = next_account_info(account_info_iter)?;
+        let _token_manager_program = next_account_info(account_info_iter)?;
+        let spl_associated_token_account_program = next_account_info(account_info_iter)?;
+        let spl_token_program = next_account_info(account_info_iter)?;
+
+        // TODO assert that `token_mint` is the same as `input.token_id`
 
         // Instantiate 2 new permission groups
         // Instantiate operator group
@@ -84,12 +90,11 @@ impl Processor {
                 funder.key,
                 token_manager_root_pda.key,
                 operators_permission_group_pda.key,
-                operators_permission_pda.key,
                 operators_permission_pda_owner.key,
                 flow_limiters_permission_group_pda.key,
-                flow_limiters_permission_pda.key,
                 flow_limiters_permission_pda_owner.key,
                 its_root_pda.key,
+                token_mint.key,
                 Setup { flow_limit: 0 },
             )?,
             &[
@@ -102,13 +107,15 @@ impl Processor {
                 flow_limiters_permission_pda.clone(),
                 flow_limiters_permission_pda_owner.clone(),
                 its_root_pda.clone(),
+                token_mint.clone(),
+                token_manager_ata.clone(),
                 system_program.clone(),
+                spl_associated_token_account_program.clone(),
+                spl_token_program.clone(),
             ],
         )?;
 
         // TODO port .postTokenManagerDeploy() code: https://github.com/axelarnetwork/interchain-token-service/blob/566e8504fe35ed63ae6c063dd8fd40a41fabc0c7/contracts/TokenHandler.sol#L159-L169
-
-        // TODO create an ATA that's assigned to the token manager root PDA
         Ok(())
     }
 }
