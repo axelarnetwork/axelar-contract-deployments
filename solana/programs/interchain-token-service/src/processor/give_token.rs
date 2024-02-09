@@ -7,7 +7,7 @@ use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
-use spl_token::instruction::{mint_to, transfer};
+use spl_token::instruction::mint_to;
 use spl_token::state::Account;
 use {spl_associated_token_account, spl_token};
 
@@ -179,34 +179,7 @@ impl Processor {
             }
 
             TokenManagerType::LockUnlock => {
-                // TODO: swap to function
-                if **associated_token_account_info.try_borrow_lamports()? == 0
-                    && associated_token_account_info.data_len() == 0
-                {
-                    return Err(InterchainTokenServiceError::UninitializedAssociatedTokenAccount)?;
-                }
-
-                invoke_signed(
-                    &transfer(
-                        spl_token_program_info.key,
-                        token_manager_ata_info.key,
-                        destination.key,
-                        interchain_token_service_root_pda_info.key,
-                        &[],
-                        amount,
-                    )?,
-                    &[
-                        spl_token_program_info.clone(),
-                        destination.clone(),
-                        associated_token_account_info.clone(),
-                        interchain_token_service_root_pda_info.clone(),
-                    ],
-                    &[&[
-                        &gateway_root_pda_info.key.to_bytes(),
-                        &gas_service_root_pda_info.key.to_bytes(),
-                        &[bump_seed],
-                    ]],
-                )?;
+                return Err(InterchainTokenServiceError::Unimplemented)?;
             }
 
             TokenManagerType::LockUnlockFee => {
