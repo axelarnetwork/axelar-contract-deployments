@@ -2025,6 +2025,17 @@
         "name": "",
         "url": ""
       }
+    },
+    "optimism-sepolia": {
+      "name": "Optimism-Sepolia",
+      "axelarId": "optimism-sepolia",
+      "chainId": 11155420,
+      "rpc": "https://sepolia.optimism.io",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+         "gasLimit": 8000000
+      },
+      "confirmations": 3
     }
   },
   "axelar": {
