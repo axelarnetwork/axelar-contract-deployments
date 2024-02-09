@@ -2033,7 +2033,7 @@
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
       "gasOptions": {
-         "gasLimit": 8000000
+        "gasLimit": 8000000
       },
       "confirmations": 3
     }
