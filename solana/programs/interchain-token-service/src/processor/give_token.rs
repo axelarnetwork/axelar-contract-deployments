@@ -31,7 +31,7 @@ impl Processor {
 
         let payer_info = next_account_info(accounts_iter)?;
         let mint_info = next_account_info(accounts_iter)?;
-        let token_manager_ata_info = next_account_info(accounts_iter)?;
+        let _token_manager_ata_info = next_account_info(accounts_iter)?;
         let destination = next_account_info(accounts_iter)?;
         let associated_token_account_info = next_account_info(accounts_iter)?;
         let interchain_token_service_root_pda_info = next_account_info(accounts_iter)?;
