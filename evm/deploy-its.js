@@ -281,7 +281,7 @@ async function deployAll(config, wallet, chain, options) {
         interchainTokenFactory: {
             name: 'Interchain Token Factory Proxy',
             async deploy() {
-                const args = [contractConfig.interchainTokenFactoryImplementation, wallet.address, '0x'];
+                const args = [contractConfigFactory.implementation, wallet.address, '0x'];
                 printInfo('ITS Factory Proxy args', args);
 
                 return await deployContract(
