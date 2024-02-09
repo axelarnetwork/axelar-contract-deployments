@@ -2025,6 +2025,18 @@
         "name": "",
         "url": ""
       }
+    },
+    "base-sepolia": {
+      "name": "Base Sepolia",
+      "id": "base-sepolia",
+      "axelarId": "base-sepolia",
+      "chainId": 84532,
+      "rpc": "https://sepolia.base.org",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 3000000
+      },
+      "confirmations": 2
     }
   },
   "axelar": {
