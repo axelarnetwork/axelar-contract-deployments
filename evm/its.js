@@ -601,8 +601,6 @@ async function processCommand(config, chain, options) {
                 tokenManager: await interchainTokenService.tokenManager(),
                 tokenHandler: await interchainTokenService.tokenHandler(),
                 implementation: await interchainTokenService.implementation(),
-                interchainTokenFactory,
-                interchainTokenFactoryImplementation,
             };
 
             for (const [key, value] of Object.entries(toCheck)) {
@@ -611,6 +609,23 @@ async function processCommand(config, chain, options) {
                     compare(value, configValue, key);
                 } else {
                     printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractName}.`);
+                }
+            }
+
+            const contractNameFactory = 'InterchainTokenFactory';
+            const contractConfigFactory = chain.contracts[contractNameFactory];
+
+            const toCheckFactory = {
+                address: interchainTokenFactory,
+                implementation: interchainTokenFactoryImplementation,
+            };
+
+            for (const [key, value] of Object.entries(toCheckFactory)) {
+                if (contractConfigFactory[key]) {
+                    const configValue = contractConfigFactory[key];
+                    compare(value, configValue, key);
+                } else {
+                    printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractNameFactory}.`);
                 }
             }
 

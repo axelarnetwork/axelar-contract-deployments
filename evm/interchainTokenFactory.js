@@ -20,7 +20,7 @@ async function processCommand(config, chain, options) {
     const contracts = chain.contracts;
     const contractName = 'InterchainTokenFactory';
 
-    const interchainTokenFactoryAddress = address || contracts.InterchainTokenService?.interchainTokenFactory;
+    const interchainTokenFactoryAddress = address || contracts.InterchainTokenFactory?.address;
     const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
 
     validateParameters({ isValidAddress: { interchainTokenFactoryAddress, interchainTokenServiceAddress } });
