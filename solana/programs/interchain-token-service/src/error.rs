@@ -42,6 +42,10 @@ pub enum InterchainTokenServiceError {
     /// InvalidITSATA
     #[error("invalid interchain token service, associated token account")]
     InvalidITSATA,
+
+    /// UninitializedAssociatedTokenAccount
+    #[error("uninitialized associated token account")]
+    UninitializedAssociatedTokenAccount,
 }
 
 impl From<InterchainTokenServiceError> for ProgramError {

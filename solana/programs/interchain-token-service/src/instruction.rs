@@ -174,15 +174,15 @@ pub fn build_deploy_token_manager_instruction(
 pub fn build_give_token_instruction(
     token_manager_type: TokenManagerType,
     amount: u64,
-    payer: Pubkey,
-    mint_address: Pubkey,
-    token_manager: Pubkey,
-    wallet_address: Pubkey,
-    associated_token_account: Pubkey,
-    interchain_token_service_root_pda: Pubkey,
-    gateway_root_pda: Pubkey,
-    gas_service_root_pda: Pubkey,
-    interchain_token_service_associated_token: Pubkey,
+    payer: &Pubkey,
+    mint_address: &Pubkey,
+    token_manager: &Pubkey,
+    wallet_address: &Pubkey,
+    associated_token_account: &Pubkey,
+    interchain_token_service_root_pda: &Pubkey,
+    gateway_root_pda: &Pubkey,
+    gas_service_root_pda: &Pubkey,
+    interchain_token_service_associated_token: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&InterchainTokenServiceInstruction::GiveToken {
         token_manager_type,
@@ -190,18 +190,18 @@ pub fn build_give_token_instruction(
     })?;
 
     let accounts = vec![
-        AccountMeta::new(payer, true),
-        AccountMeta::new(mint_address, false),
-        AccountMeta::new_readonly(token_manager, false),
-        AccountMeta::new_readonly(wallet_address, false),
-        AccountMeta::new(associated_token_account, false),
-        AccountMeta::new_readonly(interchain_token_service_root_pda, false),
-        AccountMeta::new_readonly(gateway_root_pda, false),
-        AccountMeta::new_readonly(gas_service_root_pda, false),
+        AccountMeta::new(*payer, true),
+        AccountMeta::new(*mint_address, false),
+        AccountMeta::new_readonly(*token_manager, false),
+        AccountMeta::new_readonly(*wallet_address, false),
+        AccountMeta::new(*associated_token_account, false),
+        AccountMeta::new_readonly(*interchain_token_service_root_pda, false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new_readonly(*gas_service_root_pda, false),
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(spl_associated_token_account::id(), false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
-        AccountMeta::new(interchain_token_service_associated_token, false),
+        AccountMeta::new(*interchain_token_service_associated_token, false),
     ];
 
     Ok(Instruction {

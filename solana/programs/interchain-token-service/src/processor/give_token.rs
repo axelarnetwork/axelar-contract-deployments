@@ -7,7 +7,7 @@ use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
-use spl_token::instruction::mint_to;
+use spl_token::instruction::{mint_to, transfer};
 use spl_token::state::Account;
 use {spl_associated_token_account, spl_token};
 
@@ -31,9 +31,8 @@ impl Processor {
 
         let payer_info = next_account_info(accounts_iter)?;
         let mint_info = next_account_info(accounts_iter)?;
-        let _token_manager_info = next_account_info(accounts_iter)?;
-        // aka wallet address
-        let its_ata_delegate_authority_info = next_account_info(accounts_iter)?;
+        let token_manager_ata_info = next_account_info(accounts_iter)?;
+        let destination = next_account_info(accounts_iter)?;
         let associated_token_account_info = next_account_info(accounts_iter)?;
         let interchain_token_service_root_pda_info = next_account_info(accounts_iter)?;
         let gateway_root_pda_info = next_account_info(accounts_iter)?;
@@ -54,7 +53,7 @@ impl Processor {
         let (its_ata_derived, its_ata_bump) =
             get_interchain_token_service_associated_token_account(
                 interchain_token_service_root_pda_info.key,
-                its_ata_delegate_authority_info.key,
+                destination.key,
                 mint_info.key,
                 program_id,
             )?;
@@ -63,45 +62,7 @@ impl Processor {
             return Err(InterchainTokenServiceError::InvalidITSATA)?;
         }
 
-        // crete interchain token service associated token account, if it doesn't exist
-        if **its_ata_info.try_borrow_lamports()? == 0
-            && interchain_token_service_root_pda_info.data_len() == 0
-        {
-            init_pda(
-                payer_info,
-                its_ata_info,
-                program_id,
-                system_program_info,
-                ITSATAPDA {},
-                &[
-                    &interchain_token_service_root_pda_info.key.to_bytes(),
-                    &its_ata_delegate_authority_info.key.to_bytes(),
-                    &mint_info.key.to_bytes(),
-                    &[its_ata_bump],
-                ],
-            )?;
-        }
-
-        // if provided associated token account doesn't exist; create it
-        invoke(
-            &spl_associated_token_account::instruction::create_associated_token_account_idempotent(
-                payer_info.key,
-                its_ata_info.key,
-                mint_info.key,
-                spl_token_program_info.key,
-            ),
-            &[
-                payer_info.clone(),
-                its_ata_info.clone(),
-                mint_info.clone(),
-                associated_token_account_info.clone(),
-                spl_token_program_info.clone(),
-                system_program_info.clone(),
-                spl_associated_token_account_program_info.clone(),
-            ],
-        )?;
-
-        // TODO: move to separate function
+        // TODO: move to function
         if **interchain_token_service_root_pda_info.try_borrow_lamports()? == 0
             && interchain_token_service_root_pda_info
                 .try_borrow_data()
@@ -113,7 +74,7 @@ impl Processor {
             return Err(InterchainTokenServiceError::UninitializedITSRootPDA)?;
         }
 
-        // // TODO: move to separate function
+        // // TODO: move to function
         if **mint_info.try_borrow_lamports()? == 0
             && mint_info.try_borrow_data()?.len() == 0
             && mint_info.owner != spl_token_program_info.key
@@ -134,6 +95,41 @@ impl Processor {
 
         match token_manager_type {
             TokenManagerType::MintBurn | TokenManagerType::MintBurnFrom => {
+                // TODO: swap to function
+                if **its_ata_info.try_borrow_lamports()? == 0
+                    && interchain_token_service_root_pda_info.data_len() == 0
+                {
+                    init_pda(
+                        payer_info,
+                        its_ata_info,
+                        program_id,
+                        system_program_info,
+                        ITSATAPDA {},
+                        &[
+                            &interchain_token_service_root_pda_info.key.to_bytes(),
+                            &destination.key.to_bytes(),
+                            &mint_info.key.to_bytes(),
+                            &[its_ata_bump],
+                        ],
+                    )?;
+                }
+                invoke(&spl_associated_token_account::instruction::create_associated_token_account_idempotent(
+                        payer_info.key,
+                        its_ata_info.key,
+                        mint_info.key,
+                        spl_token_program_info.key,
+                    ),
+                    &[
+                        payer_info.clone(),
+                        its_ata_info.clone(),
+                        mint_info.clone(),
+                        associated_token_account_info.clone(),
+                        spl_token_program_info.clone(),
+                        system_program_info.clone(),
+                        spl_associated_token_account_program_info.clone(),
+                    ],
+                )?;
+
                 let current_delegate_amount =
                     Account::unpack(&associated_token_account_info.data.borrow())?.amount;
 
@@ -158,12 +154,11 @@ impl Processor {
                         &[bump_seed],
                     ]],
                 )?;
-                // Update delegate authority with amount allowance
                 invoke_signed(
                     &spl_token::instruction::approve(
                         spl_token_program_info.key,
                         associated_token_account_info.key,
-                        its_ata_delegate_authority_info.key,
+                        destination.key,
                         its_ata_info.key,
                         &[],
                         amount + current_delegate_amount,
@@ -171,12 +166,12 @@ impl Processor {
                     &[
                         spl_token_program_info.clone(),
                         associated_token_account_info.clone(),
-                        its_ata_delegate_authority_info.clone(),
+                        destination.clone(),
                         its_ata_info.clone(),
                     ],
                     &[&[
                         &interchain_token_service_root_pda_info.key.as_ref(),
-                        &its_ata_delegate_authority_info.key.as_ref(),
+                        &destination.key.as_ref(),
                         &mint_info.key.as_ref(),
                         &[its_ata_bump],
                     ]],
@@ -184,13 +179,41 @@ impl Processor {
             }
 
             TokenManagerType::LockUnlock => {
-                return Err(InterchainTokenServiceError::Unimplemented)?;
+                // TODO: swap to function
+                if **associated_token_account_info.try_borrow_lamports()? == 0
+                    && associated_token_account_info.data_len() == 0
+                {
+                    return Err(InterchainTokenServiceError::UninitializedAssociatedTokenAccount)?;
+                }
+
+                invoke_signed(
+                    &transfer(
+                        spl_token_program_info.key,
+                        token_manager_ata_info.key,
+                        destination.key,
+                        interchain_token_service_root_pda_info.key,
+                        &[],
+                        amount,
+                    )?,
+                    &[
+                        spl_token_program_info.clone(),
+                        destination.clone(),
+                        associated_token_account_info.clone(),
+                        interchain_token_service_root_pda_info.clone(),
+                    ],
+                    &[&[
+                        &gateway_root_pda_info.key.to_bytes(),
+                        &gas_service_root_pda_info.key.to_bytes(),
+                        &[bump_seed],
+                    ]],
+                )?;
             }
 
             TokenManagerType::LockUnlockFee => {
                 return Err(InterchainTokenServiceError::Unimplemented)?;
             }
 
+            // TODO: Add support for `Gateway`?
             _ => {
                 return Err(InterchainTokenServiceError::UnsupportedTokenManagerType)?;
             }
