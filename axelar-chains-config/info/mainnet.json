@@ -1953,7 +1953,7 @@
       "id": "fraxtal",
       "axelarId": "fraxtal",
       "chainId": 252,
-      "rpc": "https://rpc.staging.mainnet.frax.com/axelar",
+      "rpc": "rpc.frax.com",
       "tokenSymbol": "frxETH",
       "gasOptions": {
         "gasLimit": 3000000
