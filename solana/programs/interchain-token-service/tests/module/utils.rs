@@ -6,7 +6,9 @@ use interchain_token_service::{
     get_flow_limiters_permission_group_id, get_interchain_token_service_root_pda,
     get_operators_permission_group_id,
 };
-use interchain_token_transfer_gmp::Bytes32;
+use interchain_token_transfer_gmp::ethers_core::types::U256;
+use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
+use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};
 use solana_program::hash::Hash;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
@@ -16,6 +18,9 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::Transaction;
 use spl_token::state::Mint;
+use test_fixtures::account::CheckValidPDAInTests;
+use token_manager::get_token_manager_account;
+use token_manager::state::TokenManagerRootAccount;
 
 pub fn program_test() -> ProgramTest {
     // Add other programs here as needed
@@ -238,6 +243,109 @@ impl TestFixture {
             .unwrap();
 
         mint_account.pubkey()
+    }
+
+    pub async fn mint_tokens_to(
+        &mut self,
+        mint: Pubkey,
+        to: Pubkey,
+        mint_authority: Keypair,
+        amount: u64,
+    ) {
+        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
+        let ix = spl_token::instruction::mint_to(
+            &spl_token::id(),
+            &mint,
+            &to,
+            &mint_authority.pubkey(),
+            &[&mint_authority.pubkey()],
+            amount,
+        )
+        .unwrap();
+        let transaction = Transaction::new_signed_with_payer(
+            &[ix],
+            Some(&self.payer.pubkey()),
+            &[&self.payer, &mint_authority],
+            recent_blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+    }
+
+    pub async fn init_new_token_manager(
+        &mut self,
+        interchain_token_service_root_pda: Pubkey,
+        token_mint: Pubkey,
+    ) -> (Pubkey, TokenManagerRootAccount, ITSTokenHandlerGroups) {
+        let token_id = Bytes32(keccak256("random-token-id"));
+        let init_operator = Pubkey::from([0; 32]);
+
+        let its_token_manager_permission_groups = self
+            .derive_token_manager_permission_groups(
+                &token_id,
+                &interchain_token_service_root_pda,
+                &init_operator,
+            )
+            .await;
+        let token_manager_root_pda_pubkey = get_token_manager_account(
+            &its_token_manager_permission_groups.operator_group.group_pda,
+            &its_token_manager_permission_groups
+                .flow_limiter_group
+                .group_pda,
+            &interchain_token_service_root_pda,
+        );
+
+        // Action
+        let ix = interchain_token_service::instruction::build_deploy_token_manager_instruction(
+            &self.payer.pubkey(),
+            &token_manager_root_pda_pubkey,
+            &its_token_manager_permission_groups.operator_group.group_pda,
+            &its_token_manager_permission_groups
+                .operator_group
+                .group_pda_user_owner,
+            &its_token_manager_permission_groups
+                .flow_limiter_group
+                .group_pda,
+            &its_token_manager_permission_groups
+                .flow_limiter_group
+                .group_pda_user_owner,
+            &interchain_token_service_root_pda,
+            &token_mint,
+            DeployTokenManager {
+                token_id: Bytes32(keccak256("random-token-id")),
+                token_manager_type: U256::from(42),
+                params: vec![],
+            },
+        )
+        .unwrap();
+        let transaction = Transaction::new_signed_with_payer(
+            &[ix],
+            Some(&self.payer.pubkey()),
+            &[&self.payer],
+            self.banks_client.get_latest_blockhash().await.unwrap(),
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+        let token_manager_data = self
+            .banks_client
+            .get_account(token_manager_root_pda_pubkey)
+            .await
+            .expect("get_account")
+            .expect("account not none");
+        let data = token_manager_data
+            .check_initialized_pda::<token_manager::state::TokenManagerRootAccount>(
+                &token_manager::ID,
+            )
+            .unwrap();
+        (
+            token_manager_root_pda_pubkey,
+            data,
+            its_token_manager_permission_groups,
+        )
     }
 }
 

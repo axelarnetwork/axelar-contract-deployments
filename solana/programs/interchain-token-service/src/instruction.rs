@@ -169,39 +169,36 @@ pub fn build_deploy_token_manager_instruction(
     )
 }
 
-/// Create `GiveToken`` instruction
+/// Create `GiveToken:MintBurn` instruction
 #[allow(clippy::too_many_arguments)]
-pub fn build_give_token_instruction(
-    token_manager_type: TokenManagerType,
+pub fn build_give_token_mint_burn_instruction(
     amount: u64,
     payer: &Pubkey,
-    mint_address: &Pubkey,
-    token_manager: &Pubkey,
-    wallet_address: &Pubkey,
-    associated_token_account: &Pubkey,
     interchain_token_service_root_pda: &Pubkey,
+    owner_of_its_ata_for_user_tokens_pda: &Pubkey,
+    its_ata_for_user_tokens_pda: &Pubkey,
+    mint_account_pda: &Pubkey,
+    delegate_authority: &Pubkey,
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
-    interchain_token_service_associated_token: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&InterchainTokenServiceInstruction::GiveToken {
-        token_manager_type,
+        token_manager_type: TokenManagerType::MintBurn,
         amount,
     })?;
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
-        AccountMeta::new(*mint_address, false),
-        AccountMeta::new_readonly(*token_manager, false),
-        AccountMeta::new_readonly(*wallet_address, false),
-        AccountMeta::new(*associated_token_account, false),
-        AccountMeta::new_readonly(*interchain_token_service_root_pda, false),
+        AccountMeta::new(*interchain_token_service_root_pda, false),
+        AccountMeta::new(*owner_of_its_ata_for_user_tokens_pda, false),
+        AccountMeta::new(*its_ata_for_user_tokens_pda, false),
+        AccountMeta::new(*mint_account_pda, false),
+        AccountMeta::new_readonly(*delegate_authority, false),
         AccountMeta::new_readonly(*gateway_root_pda, false),
         AccountMeta::new_readonly(*gas_service_root_pda, false),
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(spl_associated_token_account::id(), false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
-        AccountMeta::new(*interchain_token_service_associated_token, false),
     ];
 
     Ok(Instruction {
@@ -211,39 +208,75 @@ pub fn build_give_token_instruction(
     })
 }
 
-/// Create `TakeToken`` instruction
+/// Create `GiveToken:LockUnlock` instruction
 #[allow(clippy::too_many_arguments)]
-pub fn build_take_token_instruction(
-    token_manager_type: TokenManagerType,
+pub fn build_give_token_lock_unlock_instruction(
     amount: u64,
-    payer: Pubkey,
-    mint_address: Pubkey,
-    token_manager: Pubkey,
-    wallet_address: Pubkey,
-    associated_token_account: Pubkey,
-    interchain_token_service_root_pda: Pubkey,
-    gateway_root_pda: Pubkey,
-    gas_service_root_pda: Pubkey,
-    interchain_token_service_associated_token: Pubkey,
+    payer: &Pubkey,
+    interchain_token_service_root_pda: &Pubkey,
+    token_manager_ata_pda: &Pubkey,
+    owner_of_its_ata_for_user_tokens_pda: &Pubkey,
+    its_ata_for_user_tokens_pda: &Pubkey,
+    mint_account_pda: &Pubkey,
+    destination: &Pubkey,
+    gateway_root_pda: &Pubkey,
+    gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&InterchainTokenServiceInstruction::TakeToken {
-        token_manager_type,
+    let data = to_vec(&InterchainTokenServiceInstruction::GiveToken {
+        token_manager_type: TokenManagerType::LockUnlock,
         amount,
     })?;
 
     let accounts = vec![
-        AccountMeta::new(payer, true),
-        AccountMeta::new(mint_address, false),
-        AccountMeta::new_readonly(token_manager, false),
-        AccountMeta::new_readonly(wallet_address, false),
-        AccountMeta::new(associated_token_account, false),
-        AccountMeta::new_readonly(interchain_token_service_root_pda, false),
-        AccountMeta::new_readonly(gateway_root_pda, false),
-        AccountMeta::new_readonly(gas_service_root_pda, false),
+        AccountMeta::new(*payer, true),
+        AccountMeta::new(*interchain_token_service_root_pda, false),
+        AccountMeta::new(*token_manager_ata_pda, false),
+        AccountMeta::new(*owner_of_its_ata_for_user_tokens_pda, false),
+        AccountMeta::new(*its_ata_for_user_tokens_pda, false),
+        AccountMeta::new_readonly(*mint_account_pda, false),
+        AccountMeta::new_readonly(*destination, false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new_readonly(*gas_service_root_pda, false),
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(spl_associated_token_account::id(), false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
-        AccountMeta::new(interchain_token_service_associated_token, false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Create `TakeToken:MintBurn` instruction
+#[allow(clippy::too_many_arguments)]
+pub fn build_take_token_mint_burn_instruction(
+    amount: u64,
+    payer: &Pubkey,
+    interchain_token_service_root_pda: &Pubkey,
+    owner_of_its_ata_for_user_tokens_pda: &Pubkey,
+    its_ata_for_user_tokens_pda: &Pubkey,
+    mint_account_pda: &Pubkey,
+    delegate_authority: &Pubkey,
+    gateway_root_pda: &Pubkey,
+    gas_service_root_pda: &Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let data = to_vec(&InterchainTokenServiceInstruction::TakeToken {
+        token_manager_type: TokenManagerType::MintBurn,
+        amount,
+    })?;
+
+    let accounts = vec![
+        AccountMeta::new(*payer, true),
+        AccountMeta::new(*interchain_token_service_root_pda, false),
+        AccountMeta::new(*owner_of_its_ata_for_user_tokens_pda, false),
+        AccountMeta::new(*its_ata_for_user_tokens_pda, false),
+        AccountMeta::new(*mint_account_pda, false),
+        AccountMeta::new_readonly(*delegate_authority, false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new_readonly(*gas_service_root_pda, false),
+        AccountMeta::new_readonly(spl_token::id(), false),
     ];
 
     Ok(Instruction {

@@ -1,122 +1,56 @@
 use anyhow::{Ok, Result};
 use gateway::accounts::GatewayConfig;
-use interchain_token_service::{
-    get_interchain_token_service_associated_token_account, get_interchain_token_service_root_pda,
-    TokenManagerType,
-};
+use interchain_token_service::get_interchain_token_service_associated_token_account;
 use solana_program::program_pack::Pack;
-use solana_program::rent::Rent;
-use solana_program::system_instruction;
 use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
-use spl_token::state::{Account, Mint};
+use spl_token::state::Account;
 
 #[tokio::test]
-async fn take_token_mint_burn_ata_success() -> Result<()> {
+async fn take_token_mint_burn_success() -> Result<()> {
+    // Setup
     let mut fixture = super::utils::TestFixture::new().await;
-
-    let rent = Rent::default();
-    let amount: u64 = 100;
-    let amount_to_burn: u64 = 50;
-
-    // Aka "token address"
-    let mint_account = Keypair::new();
-    let token_manager = Keypair::new();
-    // Aka previously "to"
-    let wallet_address = Keypair::new();
-
-    // Setup Root PDA / Initialize
-
+    let delegate_authority = Keypair::new();
     let gas_service_root_pda = fixture.init_gas_service().await;
-
+    let amount_to_mint_preparations = 100;
+    let amount_to_burn = 50;
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(GatewayConfig::default())
         .await;
+    let interchain_token_service_root_pda = fixture
+        .init_its_root_pda(&gateway_root_pda, &gas_service_root_pda)
+        .await;
+    let mint_account_pda = fixture
+        .init_new_mint(interchain_token_service_root_pda)
+        .await;
 
-    let interchain_token_service_root_pda =
-        get_interchain_token_service_root_pda(&gateway_root_pda, &gas_service_root_pda);
-
-    let (its_ata, _its_ata_bump) = get_interchain_token_service_associated_token_account(
-        &interchain_token_service_root_pda,
-        &wallet_address.pubkey(),
-        &mint_account.pubkey(),
-        &interchain_token_service::id(),
-    )?;
-
-    // Derive ATA / new "to" address
-    let associated_token_account = spl_associated_token_account::get_associated_token_address(
-        &its_ata,
-        &mint_account.pubkey(),
+    let (owner_of_its_ata_for_user_tokens_pda, _) =
+        get_interchain_token_service_associated_token_account(
+            &interchain_token_service_root_pda,
+            &delegate_authority.pubkey(),
+            &mint_account_pda,
+            &interchain_token_service::id(),
+        )?;
+    let its_ata_for_user_pda = spl_associated_token_account::get_associated_token_address(
+        &owner_of_its_ata_for_user_tokens_pda,
+        &mint_account_pda,
     );
 
+    // Fund as part of the preparations
     let recent_blockhash = fixture.refresh_blockhash().await;
     let transaction = Transaction::new_signed_with_payer(
         &[
-            interchain_token_service::instruction::build_initialize_instruction(
+            interchain_token_service::instruction::build_give_token_mint_burn_instruction(
+                amount_to_mint_preparations,
                 &fixture.payer.pubkey(),
                 &interchain_token_service_root_pda,
+                &owner_of_its_ata_for_user_tokens_pda,
+                &its_ata_for_user_pda,
+                &mint_account_pda,
+                &delegate_authority.pubkey(),
                 &gateway_root_pda,
                 &gas_service_root_pda,
-            )?,
-        ],
-        Some(&fixture.payer.pubkey()),
-        &[&fixture.payer],
-        recent_blockhash,
-    );
-    fixture
-        .banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
-
-    // Setup Mint Account
-
-    let recent_blockhash = fixture.refresh_blockhash().await;
-    let transaction = Transaction::new_signed_with_payer(
-        &[
-            system_instruction::create_account(
-                &fixture.payer.pubkey(),
-                &mint_account.pubkey(),
-                rent.minimum_balance(Mint::LEN),
-                Mint::LEN as u64,
-                &spl_token::id(),
-            ),
-            spl_token::instruction::initialize_mint(
-                &spl_token::id(),
-                &mint_account.pubkey(),
-                &interchain_token_service_root_pda,
-                None,
-                0,
-            )
-            .unwrap(),
-        ],
-        Some(&fixture.payer.pubkey()),
-        &[&fixture.payer, &mint_account],
-        recent_blockhash,
-    );
-    fixture
-        .banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
-
-    // Setup ATA/ Mint to ATA
-
-    let transaction: Transaction = Transaction::new_signed_with_payer(
-        &[
-            interchain_token_service::instruction::build_give_token_instruction(
-                TokenManagerType::MintBurn,
-                amount,
-                &fixture.payer.pubkey(),
-                &mint_account.pubkey(),
-                &token_manager.pubkey(),
-                &wallet_address.pubkey(),
-                &associated_token_account,
-                &interchain_token_service_root_pda,
-                &gateway_root_pda,
-                &gas_service_root_pda,
-                &its_ata,
             )?,
         ],
         Some(&fixture.payer.pubkey()),
@@ -131,36 +65,30 @@ async fn take_token_mint_burn_ata_success() -> Result<()> {
 
     let account = fixture
         .banks_client
-        .get_account(associated_token_account)
+        .get_account(its_ata_for_user_pda)
         .await
         .unwrap()
         .unwrap();
     let token_account = Account::unpack(&account.data).unwrap();
-
-    assert_eq!(token_account.amount, amount);
     assert_eq!(
-        token_account.delegate,
-        solana_sdk::program_option::COption::Some(wallet_address.pubkey())
+        token_account.amount, amount_to_mint_preparations,
+        "incorrect amount after minting"
     );
-    assert_eq!(token_account.delegated_amount, amount);
-    assert_eq!(token_account.owner, its_ata);
 
-    // Final Part: TakeToken
-
-    let transaction: Transaction = Transaction::new_signed_with_payer(
+    // Action
+    let recent_blockhash = fixture.refresh_blockhash().await;
+    let transaction = Transaction::new_signed_with_payer(
         &[
-            interchain_token_service::instruction::build_take_token_instruction(
-                TokenManagerType::MintBurn,
+            interchain_token_service::instruction::build_take_token_mint_burn_instruction(
                 amount_to_burn,
-                fixture.payer.pubkey(),
-                mint_account.pubkey(),
-                token_manager.pubkey(),
-                wallet_address.pubkey(),  // owner of "to" account
-                associated_token_account, // previously "to" / ATA
-                interchain_token_service_root_pda,
-                gateway_root_pda,
-                gas_service_root_pda,
-                its_ata,
+                &fixture.payer.pubkey(),
+                &interchain_token_service_root_pda,
+                &owner_of_its_ata_for_user_tokens_pda,
+                &its_ata_for_user_pda,
+                &mint_account_pda,
+                &delegate_authority.pubkey(),
+                &gateway_root_pda,
+                &gas_service_root_pda,
             )?,
         ],
         Some(&fixture.payer.pubkey()),
@@ -173,21 +101,19 @@ async fn take_token_mint_burn_ata_success() -> Result<()> {
         .await
         .unwrap();
 
+    // Assert
     let account = fixture
         .banks_client
-        .get_account(associated_token_account)
+        .get_account(its_ata_for_user_pda)
         .await
         .unwrap()
         .unwrap();
     let token_account = Account::unpack(&account.data).unwrap();
-
-    assert_eq!(token_account.amount, (amount - amount_to_burn));
     assert_eq!(
-        token_account.delegate,
-        solana_sdk::program_option::COption::Some(wallet_address.pubkey())
+        token_account.amount,
+        amount_to_mint_preparations - amount_to_burn,
+        "incorrect amount after burning"
     );
-    assert_eq!(token_account.delegated_amount, (amount - amount_to_burn));
-    assert_eq!(token_account.owner, its_ata);
 
     Ok(())
 }
