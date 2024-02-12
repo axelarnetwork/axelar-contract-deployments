@@ -285,3 +285,44 @@ pub fn build_take_token_mint_burn_instruction(
         data,
     })
 }
+
+/// Create `TakeToken:LockUnlock` instruction
+#[allow(clippy::too_many_arguments)]
+pub fn build_take_token_lock_unlock_instruction(
+    amount: u64,
+    payer: &Pubkey,
+    interchain_token_service_root_pda: &Pubkey,
+    token_manager_ata_pda: &Pubkey,
+    owner_of_its_ata_for_user_tokens_pda: &Pubkey,
+    its_ata_for_user_tokens_pda: &Pubkey,
+    mint_account_pda: &Pubkey,
+    destination: &Pubkey,
+    gateway_root_pda: &Pubkey,
+    gas_service_root_pda: &Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let data = to_vec(&InterchainTokenServiceInstruction::TakeToken {
+        token_manager_type: TokenManagerType::LockUnlock,
+        amount,
+    })?;
+
+    let accounts = vec![
+        AccountMeta::new(*payer, true),
+        AccountMeta::new(*interchain_token_service_root_pda, false),
+        AccountMeta::new(*token_manager_ata_pda, false),
+        AccountMeta::new(*owner_of_its_ata_for_user_tokens_pda, false),
+        AccountMeta::new(*its_ata_for_user_tokens_pda, false),
+        AccountMeta::new_readonly(*mint_account_pda, false),
+        AccountMeta::new_readonly(*destination, false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new_readonly(*gas_service_root_pda, false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
