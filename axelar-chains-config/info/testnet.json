@@ -2036,7 +2036,12 @@
       "gasOptions": {
         "gasLimit": 3000000
       },
-      "confirmations": 2
+      "confirmations": 2,
+      "explorer": {
+        "name": "Basescan",
+        "url": "https://sepolia-explorer.base.org",
+        "api": "https://api-sepolia.basescan.org/api"
+      }
     }
   },
   "axelar": {
