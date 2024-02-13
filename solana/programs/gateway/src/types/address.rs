@@ -23,7 +23,7 @@ pub enum AddressError {
 }
 
 /// Represents an ECDSA public key.
-#[derive(BorshSerialize, BorshDeserialize, Clone, PartialEq, Debug, PartialOrd, Copy)]
+#[derive(BorshSerialize, BorshDeserialize, Clone, PartialEq, Debug, PartialOrd, Copy, Eq)]
 pub struct Address([u8; Self::ECDSA_COMPRESSED_PUBKEY_LEN]);
 
 impl AsRef<[u8]> for Address {
