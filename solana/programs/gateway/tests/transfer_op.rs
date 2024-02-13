@@ -15,14 +15,13 @@ use solana_program::instruction::InstructionError;
 use solana_program::keccak;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{tokio, ProgramTest};
-use solana_sdk::signature::{Keypair, Signer};
+use solana_sdk::signature::Signer;
 use solana_sdk::transaction::{Transaction, TransactionError};
 use test_fixtures::primitives::bytes;
 
 #[tokio::test]
 async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
     let accounts_owner = gmp_gateway::id();
-    let params_account = Keypair::new().pubkey();
     let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
     // Existing worker set
@@ -35,6 +34,7 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
 
     let will_be_there =
         TransferOperatorshipAccount::new(existing_operators_and_weights, 100u8.into());
+    let params_account = will_be_there.pda().0;
 
     // Proposed worker set
     let proposed_operators_and_weights: Vec<(Address, U256)> = vec![(
@@ -140,7 +140,6 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
 #[tokio::test]
 async fn test_transfer_operatorship_duplicate_ops() -> Result<()> {
     let accounts_owner = gmp_gateway::id();
-    let params_account = Keypair::new().pubkey();
     let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
     let duplicated_operator: Address = bytes(33).as_slice().try_into()?;
@@ -150,6 +149,7 @@ async fn test_transfer_operatorship_duplicate_ops() -> Result<()> {
     ];
     let will_be_there =
         TransferOperatorshipAccount::new(proposed_operator_and_weights, 100u8.into());
+    let (params_account, _) = will_be_there.pda();
 
     let is_already_there = TransferOperatorshipAccount::new(
         vec![(bytes(33).as_slice().try_into()?, 100u8.into())],
@@ -212,11 +212,11 @@ async fn test_transfer_operatorship_duplicate_ops() -> Result<()> {
 #[tokio::test]
 async fn test_transfer_operatorship_zero_threshold() -> Result<()> {
     let accounts_owner = gmp_gateway::id();
-    let params_account = Keypair::new().pubkey();
     let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
     let operator_with_invalid_weight = vec![(bytes(33).as_slice().try_into()?, 150u8.into())];
     let will_be_there = TransferOperatorshipAccount::new(operator_with_invalid_weight, 0u8.into());
+    let (params_account, _) = will_be_there.pda();
 
     let is_already_there = TransferOperatorshipAccount::new(
         vec![(bytes(33).as_slice().try_into()?, 100u8.into())],
