@@ -2111,6 +2111,39 @@
         "url": "https://holesky.fraxscan.com",
         "api": "https://api-holesky.fraxscan.com/api"
       }
+    },
+    "optimism-sepolia": {
+      "name": "Optimism-Sepolia",
+      "axelarId": "optimism-sepolia",
+      "chainId": 11155420,
+      "rpc": "https://sepolia.optimism.io",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "confirmations": 3,
+      "explorer": {
+        "name": "Opscan",
+        "url": "https://sepolia-optimistic.etherscan.io",
+        "api": "https://api-sepolia-optimistic.etherscan.io/api"
+      }
+    },
+    "base-sepolia": {
+      "name": "Base Sepolia",
+      "id": "base-sepolia",
+      "axelarId": "base-sepolia",
+      "chainId": 84532,
+      "rpc": "https://sepolia.base.org",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 3000000
+      },
+      "confirmations": 2,
+      "explorer": {
+        "name": "Basescan",
+        "url": "https://sepolia-explorer.base.org",
+        "api": "https://api-sepolia.basescan.org/api"
+      }
     }
   },
   "axelar": {
