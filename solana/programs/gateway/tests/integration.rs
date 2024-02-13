@@ -1,4 +1,4 @@
-// #![cfg(feature = "test-sbf")]
+#![cfg(feature = "test-sbf")]
 mod common;
 
 use anyhow::{anyhow, bail, ensure, Result};
@@ -9,8 +9,10 @@ use connection_router::Message as AxelarMessage;
 use gmp_gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use gmp_gateway::events::GatewayEvent;
 use gmp_gateway::get_gateway_root_config_pda;
+use gmp_gateway::types::address::Address;
 use gmp_gateway::types::bimap::OperatorsAndEpochs;
 use gmp_gateway::types::execute_data_decoder::DecodedMessage;
+use gmp_gateway::types::u256::U256;
 use solana_program::hash::hash;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{
@@ -18,8 +20,11 @@ use solana_program_test::{
 };
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
+use test_fixtures::primitives::array32;
 
 mod accounts {
+    use gmp_gateway::accounts::transfer_operatorship::TransferOperatorshipAccount;
+
     use super::*;
     pub(super) async fn initialize_config_account(
         client: &mut BanksClient,
@@ -119,6 +124,34 @@ mod accounts {
 
         Ok(())
     }
+
+    pub(crate) async fn initialize_transfer_operatorship(
+        client: &mut BanksClient,
+        payer: Keypair,
+        operators_and_weights: Vec<(Address, U256)>,
+        threshold: U256,
+    ) -> Result<()> {
+        let recent_blockhash = client.get_latest_blockhash().await?;
+        let ix = gmp_gateway::instructions::initialize_trasfer_operatorship(
+            &payer.pubkey(),
+            operators_and_weights.clone(),
+            threshold,
+        )?;
+        let tx = Transaction::new_signed_with_payer(
+            &[ix],
+            Some(&payer.pubkey()),
+            &[&payer],
+            recent_blockhash,
+        );
+        client.process_transaction(tx).await?;
+        let expected_account = TransferOperatorshipAccount::new(operators_and_weights, threshold);
+        let (pda, _bump) = expected_account.pda();
+        let account = client.get_account(pda).await?.unwrap();
+        assert_eq!(account.owner, gmp_gateway::ID);
+        let deserialized_data: TransferOperatorshipAccount = borsh::from_slice(&account.data)?;
+        assert_eq!(deserialized_data, expected_account);
+        Ok(())
+    }
 }
 
 #[tokio::test]
@@ -128,8 +161,8 @@ async fn test_call_contract_instruction() -> Result<()> {
     let sender = Keypair::new();
     let destination_chain = "ethereum";
     let destination_address = hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862")?;
-    let payload = test_fixtures::primitives::array32().to_vec();
-    let payload_hash = test_fixtures::primitives::array32();
+    let payload = array32().to_vec();
+    let payload_hash = array32();
 
     let instruction = gmp_gateway::instructions::call_contract(
         gmp_gateway::id(),
@@ -384,5 +417,28 @@ fn ensure_message_approved_event_matches_decoded_message(
         "Wrong destination address"
     );
     ensure!(*payload_hash == message.payload_hash, "Wrong payload hash");
+    Ok(())
+}
+
+#[tokio::test]
+async fn initialize_transfer_operatorship() -> Result<()> {
+    use test_fixtures::primitives::{array32, bytes};
+    let (mut banks_client, payer, _recent_blockhash) = program_test().start().await;
+
+    let mut operators_and_weights = vec![];
+    for _ in 0..3 {
+        let operator = Address::try_from(&*bytes(33))?;
+        let weight = U256::from_le_bytes(array32());
+        operators_and_weights.push((operator, weight))
+    }
+    let threshold = U256::from_le_bytes(array32());
+
+    accounts::initialize_transfer_operatorship(
+        &mut banks_client,
+        payer,
+        operators_and_weights,
+        threshold,
+    )
+    .await?;
     Ok(())
 }

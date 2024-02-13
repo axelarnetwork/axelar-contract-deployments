@@ -1,7 +1,9 @@
 //! Transfer Operatorship params account.
 
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::hash::hashv;
 use solana_program::msg;
+use solana_program::pubkey::Pubkey;
 use thiserror::Error;
 
 use crate::accounts::discriminator::{Discriminator, TransferOperatorship};
@@ -87,6 +89,21 @@ impl TransferOperatorshipAccount {
     /// Returns the internal hash for this type.
     pub fn hash(&self) -> [u8; 32] {
         hash_new_operator_set(self.operators_and_weights.iter().copied(), self.threshold)
+    }
+
+    #[inline]
+    /// Returns the PDA, bump and seeds for this account.
+    pub fn pda_with_seeds(&self) -> (Pubkey, u8, [u8; 32]) {
+        let seeds = hashv(&[b"transfer_operatorship", &self.hash()]).to_bytes();
+        let (pubkey, bump) = Pubkey::find_program_address(&[&seeds], &crate::ID);
+        (pubkey, bump, seeds)
+    }
+
+    /// Returns the PDA and the bump for this account.
+    #[inline]
+    pub fn pda(&self) -> (Pubkey, u8) {
+        let (pda, bump, _seeds) = self.pda_with_seeds();
+        (pda, bump)
     }
 
     /// Validates transfer operatorship data.
