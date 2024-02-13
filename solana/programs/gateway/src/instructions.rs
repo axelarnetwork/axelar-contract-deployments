@@ -5,8 +5,11 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+use crate::accounts::transfer_operatorship::TransferOperatorshipAccount;
 use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use crate::get_gateway_root_config_pda;
+use crate::types::address::Address;
+use crate::types::u256::U256;
 use crate::types::PubkeyWrapper;
 
 /// Instructions supported by the gateway program.
@@ -82,6 +85,18 @@ pub enum GatewayInstruction {
         source_address: Vec<u8>,
         /// The Axelar Message payload hash.
         payload_hash: [u8; 32],
+    },
+    /// Initializes the account to hold a new operator set.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [WRITE, SIGNER] Funding account
+    /// 1. [WRITE] New operator set PDA account
+    /// 2. [] System Program account
+    InitializeTransferOperatorship {
+        /// List of operator addresses and their weights.
+        operators_and_weights: Vec<(Address, U256)>,
+        /// Threshold for this operator set
+        threshold: U256,
     },
 }
 
@@ -232,6 +247,35 @@ pub fn transfer_operatorship(
     ];
 
     let data = borsh::to_vec(&GatewayInstruction::TransferOperatorship {})?;
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Creates a [`GatewayInstructon::InitializeTransferOperatorship`] instruction.
+pub fn initialize_trasfer_operatorship(
+    payer: &Pubkey,
+    operators_and_weights: Vec<(Address, U256)>,
+    threshold: U256,
+) -> Result<Instruction, ProgramError> {
+    let transfer_operatorship_account =
+        TransferOperatorshipAccount::new(operators_and_weights.clone(), threshold);
+
+    let (pda, _bump) = transfer_operatorship_account.pda();
+
+    let accounts = vec![
+        AccountMeta::new(*payer, true),
+        AccountMeta::new(pda, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    let data = borsh::to_vec(&GatewayInstruction::InitializeTransferOperatorship {
+        operators_and_weights,
+        threshold,
+    })?;
 
     Ok(Instruction {
         program_id: crate::id(),
