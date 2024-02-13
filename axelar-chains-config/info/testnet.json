@@ -2105,6 +2105,11 @@
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "salt": "Operators"
         }
+      },
+      "explorer": {
+        "name": "Fraxscan",
+        "url": "https://holesky.fraxscan.com",
+        "api": "https://api-holesky.fraxscan.com/api"
       }
     }
   },
