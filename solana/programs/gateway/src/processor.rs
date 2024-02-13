@@ -335,6 +335,10 @@ impl Processor {
             return Err(ProgramError::InvalidAccountOwner);
         }
 
+        // Check: New operators account is the expected PDA.
+        let (expected_new_operators_pda, _bump) = crate::get_gateway_root_config_pda();
+        helper::compare_address(new_operators_account, expected_new_operators_pda)?;
+
         // Unpack the data from the new operators account.
         let new_operators_bytes: &[u8] = &new_operators_account.data.borrow();
         let new_operators =
