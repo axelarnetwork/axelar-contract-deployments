@@ -81,6 +81,13 @@ impl Processor {
                     payload_hash,
                 )
             }
+            GatewayInstruction::InitializeTransferOperatorship {
+                operators_and_weights,
+                threshold,
+            } => {
+                msg!("Instruction: Initialize TransferOperatorship");
+                Self::initialize_transfer_operatorship(accounts, operators_and_weights, threshold)
+            }
         }
     }
 
@@ -335,14 +342,14 @@ impl Processor {
             return Err(ProgramError::InvalidAccountOwner);
         }
 
-        // Check: New operators account is the expected PDA.
-        let (expected_new_operators_pda, _bump) = crate::get_gateway_root_config_pda();
-        helper::compare_address(new_operators_account, expected_new_operators_pda)?;
-
         // Unpack the data from the new operators account.
         let new_operators_bytes: &[u8] = &new_operators_account.data.borrow();
         let new_operators =
             borsh::de::from_slice::<TransferOperatorshipAccount>(new_operators_bytes)?;
+
+        // Check: New operators account is the expected PDA.
+        let (expected_new_operators_pda, _bump) = new_operators.pda();
+        helper::compare_address(new_operators_account, expected_new_operators_pda)?;
 
         // Check: new operator data is valid.
         new_operators.validate().map_err(GatewayError::from)?;
@@ -373,6 +380,39 @@ impl Processor {
         // Emit an event to signal the successful operatorship transfer
         emit_operatorship_transferred_event(*new_operators_account.key)?;
         Ok(())
+    }
+
+    fn initialize_transfer_operatorship(
+        accounts: &[AccountInfo],
+        operators_and_weights: Vec<(crate::types::address::Address, crate::types::u256::U256)>,
+        threshold: crate::types::u256::U256,
+    ) -> Result<(), ProgramError> {
+        let accounts_iter = &mut accounts.iter();
+
+        let payer = next_account_info(accounts_iter)?;
+        let transfer_operatorship_account = next_account_info(accounts_iter)?;
+        let system_account = next_account_info(accounts_iter)?;
+
+        // Check: System Program Account
+        if !system_program::check_id(system_account.key) {
+            return Err(GatewayError::InvalidSystemAccount.into());
+        }
+
+        // Check: Transfer operatorship account uses the canonical bump.
+        let transfer_operatorship =
+            TransferOperatorshipAccount::new(operators_and_weights, threshold);
+        let (expected_pda, bump, seeds) = transfer_operatorship.pda_with_seeds();
+
+        if *transfer_operatorship_account.key != expected_pda {
+            return Err(GatewayError::InvalidAccountAddress.into());
+        }
+
+        init_pda(
+            payer,
+            transfer_operatorship_account,
+            &[seeds.as_ref(), &[bump]],
+            &transfer_operatorship,
+        )
     }
 }
 
