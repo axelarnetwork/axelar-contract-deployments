@@ -10,15 +10,16 @@ use solana_program::pubkey::Pubkey;
 use super::{
     assert_permission_group_pda, assert_permission_pda, assert_token_manager_account, Processor,
 };
-use crate::check_id;
+use crate::instruction::Setup;
 use crate::state::TokenManagerRootAccount;
+use crate::{check_id, TokenManagerType};
 
 impl Processor {
     /// Sets up a new Token Manager with the provided parameters.
     pub fn process_setup(
         program_id: &Pubkey,
         accounts: &[AccountInfo],
-        flow_limit: u64,
+        setup: Setup,
     ) -> ProgramResult {
         check_program_account(program_id, check_id)?;
 
@@ -35,6 +36,7 @@ impl Processor {
         let service_program_pda = next_account_info(account_info_iter)?;
         let token_mint = next_account_info(account_info_iter)?;
         let token_manager_ata = next_account_info(account_info_iter)?;
+        let gateway_root_pda = next_account_info(account_info_iter)?;
 
         let system_program = next_account_info(account_info_iter)?;
         let spl_associated_token_account_program = next_account_info(account_info_iter)?;
@@ -74,6 +76,9 @@ impl Processor {
             program_id,
         )?;
 
+        // Assert Gateway PDA
+        gateway_root_pda.check_initialized_pda_without_deserialization(&gateway::id())?;
+
         // Initialize root PDA
         init_pda(
             funder_info,
@@ -81,7 +86,8 @@ impl Processor {
             program_id,
             system_program,
             TokenManagerRootAccount {
-                flow_limit,
+                flow_limit: setup.flow_limit,
+                token_manager_type: setup.token_manager_type.clone(),
                 token_mint: *token_mint.key,
                 associated_token_account: *token_manager_ata.key,
             },
@@ -111,31 +117,63 @@ impl Processor {
                 spl_associated_token_account_program.clone(),
             ],
         )?;
-
-        // Set Delegate to `service_program_pda`
-        invoke_signed(
-            &spl_token::instruction::approve(
-                spl_token_program.key,
-                token_manager_ata.key,
-                service_program_pda.key,
-                token_manager_root_pda.key,
-                &[],
-                u64::MAX,
-            )
-            .unwrap(),
-            &[
-                spl_token_program.clone(),
-                token_manager_ata.clone(),
-                service_program_pda.clone(),
-                token_manager_root_pda.clone(),
-            ],
-            &[&[
-                &operators_permission_group_pda.key.to_bytes(),
-                &flow_limiters_permission_group_pda.key.to_bytes(),
-                &service_program_pda.key.to_bytes(),
-                &[token_manager_root_pda_bump],
-            ]],
-        )?;
+        match setup.token_manager_type {
+            TokenManagerType::LockUnlock | TokenManagerType::LockUnlockFee => {
+                // Set Delegate to `service_program_pda`
+                invoke_signed(
+                    &spl_token::instruction::approve(
+                        spl_token_program.key,
+                        token_manager_ata.key,
+                        service_program_pda.key,
+                        token_manager_root_pda.key,
+                        &[],
+                        u64::MAX,
+                    )
+                    .unwrap(),
+                    &[
+                        spl_token_program.clone(),
+                        token_manager_ata.clone(),
+                        service_program_pda.clone(),
+                        token_manager_root_pda.clone(),
+                    ],
+                    &[&[
+                        &operators_permission_group_pda.key.to_bytes(),
+                        &flow_limiters_permission_group_pda.key.to_bytes(),
+                        &service_program_pda.key.to_bytes(),
+                        &[token_manager_root_pda_bump],
+                    ]],
+                )?;
+            }
+            TokenManagerType::Gateway => {
+                // Set Delegate to `gateway_pda`
+                invoke_signed(
+                    &spl_token::instruction::approve(
+                        spl_token_program.key,
+                        token_manager_ata.key,
+                        gateway_root_pda.key,
+                        token_manager_root_pda.key,
+                        &[],
+                        u64::MAX,
+                    )
+                    .unwrap(),
+                    &[
+                        spl_token_program.clone(),
+                        token_manager_ata.clone(),
+                        gateway_root_pda.clone(),
+                        token_manager_root_pda.clone(),
+                    ],
+                    &[&[
+                        &operators_permission_group_pda.key.to_bytes(),
+                        &flow_limiters_permission_group_pda.key.to_bytes(),
+                        &service_program_pda.key.to_bytes(),
+                        &[token_manager_root_pda_bump],
+                    ]],
+                )?;
+            }
+            _ => {
+                // Do nothing
+            }
+        }
 
         Ok(())
     }

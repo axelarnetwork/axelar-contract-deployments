@@ -20,3 +20,12 @@ signature.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
 borsh.workspace = true
+
+token-manager.workspace = true
+spl-token.workspace = true
+solana-program-test.workspace = true
+interchain-token-transfer-gmp.workspace = true
+interchain-token-service.workspace = true
+gas-service.workspace = true
+gateway.workspace = true
+account-group.workspace = true

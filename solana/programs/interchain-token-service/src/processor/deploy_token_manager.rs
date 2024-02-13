@@ -5,6 +5,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke;
 use solana_program::pubkey::Pubkey;
 use token_manager::instruction::Setup;
+use token_manager::TokenManagerType;
 
 use super::Processor;
 use crate::state::RootPDA;
@@ -32,6 +33,7 @@ impl Processor {
         let flow_limiters_permission_pda_owner = next_account_info(account_info_iter)?;
         let token_mint = next_account_info(account_info_iter)?;
         let token_manager_ata = next_account_info(account_info_iter)?;
+        let gateway_root_pda = next_account_info(account_info_iter)?;
 
         // Our accounts
         let its_root_pda = next_account_info(account_info_iter)?;
@@ -83,6 +85,8 @@ impl Processor {
 
         // assert ITS root PDA
         its_root_pda.check_initialized_pda::<RootPDA>(program_id)?;
+        let token_manager_type =
+            TokenManagerType::try_from(input.token_manager_type.as_usize() as u8)?;
 
         // Instantiate a new TokenManager
         invoke(
@@ -95,10 +99,15 @@ impl Processor {
                 flow_limiters_permission_pda_owner.key,
                 its_root_pda.key,
                 token_mint.key,
-                Setup { flow_limit: 0 },
+                gateway_root_pda.key,
+                Setup {
+                    flow_limit: 0,
+                    token_manager_type,
+                },
             )?,
             &[
                 funder.clone(),
+                gateway_root_pda.clone(),
                 token_manager_root_pda.clone(),
                 operators_permission_group_pda.clone(),
                 operators_permission_pda.clone(),

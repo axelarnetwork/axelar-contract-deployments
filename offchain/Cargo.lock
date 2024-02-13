@@ -1943,7 +1943,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap 4.4.11",
- "gateway 0.1.0",
+ "gmp-gateway",
  "solana-client",
  "solana-program",
  "solana-sdk",
@@ -2321,31 +2321,6 @@ dependencies = [
 [[package]]
 name = "gateway"
 version = "0.1.0"
-dependencies = [
- "base64 0.21.7",
- "bcs",
- "bimap",
- "bnum 0.10.0",
- "borsh 1.3.0",
- "bytemuck",
- "connection-router",
- "cosmwasm-std",
- "hex",
- "itertools 0.12.1",
- "libsecp256k1 0.7.1",
- "multisig",
- "multisig-prover",
- "num-derive 0.4.1",
- "num-traits",
- "serde",
- "sha3 0.10.8",
- "solana-program",
- "thiserror",
-]
-
-[[package]]
-name = "gateway"
-version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
  "aggregate-verifier",
@@ -2419,6 +2394,31 @@ name = "gimli"
 version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
+
+[[package]]
+name = "gmp-gateway"
+version = "0.1.0"
+dependencies = [
+ "base64 0.21.7",
+ "bcs",
+ "bimap",
+ "bnum 0.10.0",
+ "borsh 1.3.0",
+ "bytemuck",
+ "connection-router",
+ "cosmwasm-std",
+ "hex",
+ "itertools 0.12.1",
+ "libsecp256k1 0.7.1",
+ "multisig",
+ "multisig-prover",
+ "num-derive 0.4.1",
+ "num-traits",
+ "serde",
+ "sha3 0.10.8",
+ "solana-program",
+ "thiserror",
+]
 
 [[package]]
 name = "goblin"
@@ -3178,7 +3178,7 @@ dependencies = [
  "either",
  "error-stack",
  "ethabi",
- "gateway 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "gateway",
  "hex",
  "itertools 0.11.0",
  "k256",
@@ -4026,7 +4026,7 @@ dependencies = [
  "base64 0.21.7",
  "clap 4.4.11",
  "env_logger 0.10.1",
- "gateway 0.1.0",
+ "gmp-gateway",
  "log",
  "regex",
  "serde",

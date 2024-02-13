@@ -11,5 +11,5 @@ solana-sdk.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
-gateway = { path = "../../../solana/programs/gateway" }
+gateway = { path = "../../../solana/programs/gateway", package = "gmp-gateway" }
 anyhow.workspace = true

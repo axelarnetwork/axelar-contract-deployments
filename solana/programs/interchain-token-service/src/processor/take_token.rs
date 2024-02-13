@@ -8,12 +8,13 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use spl_token;
 use spl_token::instruction::{burn, transfer};
+use token_manager::TokenManagerType;
 
 use super::Processor;
 use crate::error::InterchainTokenServiceError;
+use crate::get_interchain_token_service_associated_token_account;
 use crate::processor::initialize::assert_interchain_token_service_root_pda;
 use crate::state::RootPDA;
-use crate::{get_interchain_token_service_associated_token_account, TokenManagerType};
 
 impl Processor {
     pub(crate) fn take_token(
@@ -29,6 +30,7 @@ impl Processor {
                 Self::take_token_lock_unlock(*program_id, accounts, amount)
             }
             TokenManagerType::LockUnlockFee => todo!(),
+            TokenManagerType::Gateway => todo!(),
         }
     }
 

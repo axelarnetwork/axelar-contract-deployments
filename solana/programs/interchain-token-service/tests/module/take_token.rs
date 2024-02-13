@@ -6,6 +6,7 @@ use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
 use spl_token::state::Account;
+use token_manager::TokenManagerType;
 
 #[tokio::test]
 async fn take_token_lock_unlock_success() -> Result<()> {
@@ -27,7 +28,12 @@ async fn take_token_lock_unlock_success() -> Result<()> {
         token_manager_root_pda_account_data,
         _token_manager_handler_groups,
     ) = fixture
-        .init_new_token_manager(interchain_token_service_root_pda, mint_account_pda)
+        .init_new_token_manager(
+            interchain_token_service_root_pda,
+            mint_account_pda,
+            gateway_root_pda,
+            TokenManagerType::LockUnlock,
+        )
         .await;
     fixture
         .mint_tokens_to(

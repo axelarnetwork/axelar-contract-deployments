@@ -7,6 +7,8 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use spl_associated_token_account::get_associated_token_address;
 
+use crate::TokenManagerType;
+
 /// Instructions supported by the TokenManager program.
 /// Represents the different types of instructions that can be performed.
 #[repr(u8)]
@@ -62,6 +64,8 @@ pub enum TokenManagerInstruction {
 pub struct Setup {
     /// The initial amount of tokens that have flowed into the account.
     pub flow_limit: u64,
+    /// The type of token manager.
+    pub token_manager_type: TokenManagerType,
 }
 
 /// Flow addition instruction data
@@ -92,6 +96,7 @@ pub fn build_setup_instruction(
     flow_limiters_permission_pda_owner: &Pubkey,
     service_program_pda: &Pubkey,
     token_mint: &Pubkey,
+    gateway_root_pda: &Pubkey,
     setup_data: Setup,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&TokenManagerInstruction::Setup(setup_data))?;
@@ -116,6 +121,7 @@ pub fn build_setup_instruction(
         AccountMeta::new_readonly(*service_program_pda, false),
         AccountMeta::new_readonly(*token_mint, false),
         AccountMeta::new(token_manager_ata, false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new_readonly(spl_associated_token_account::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
@@ -134,7 +140,7 @@ pub fn build_set_flow_limit_instruction(
     flow_limiter_group_pda: &Pubkey,
     flow_limiter_pda: &Pubkey,
     flow_limiter: &Pubkey,
-    permission_group_pda: &Pubkey,
+    operator_permission_group_pda: &Pubkey,
     service_program_pda: &Pubkey,
     amount: u64,
 ) -> Result<Instruction, ProgramError> {
@@ -145,7 +151,7 @@ pub fn build_set_flow_limit_instruction(
         AccountMeta::new_readonly(*flow_limiter_group_pda, false),
         AccountMeta::new_readonly(*flow_limiter_pda, false),
         AccountMeta::new_readonly(*flow_limiter, true),
-        AccountMeta::new_readonly(*permission_group_pda, false),
+        AccountMeta::new_readonly(*operator_permission_group_pda, false),
         AccountMeta::new_readonly(*service_program_pda, false),
     ];
 

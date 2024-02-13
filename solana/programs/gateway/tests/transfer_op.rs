@@ -6,11 +6,11 @@ use ::base64::engine::general_purpose;
 use anyhow::Result;
 use base64::Engine;
 use common::program_test;
-use gateway::accounts::transfer_operatorship::TransferOperatorshipAccount;
-use gateway::accounts::GatewayConfig;
-use gateway::error::GatewayError;
-use gateway::types::address::Address;
-use gateway::types::u256::U256;
+use gmp_gateway::accounts::transfer_operatorship::TransferOperatorshipAccount;
+use gmp_gateway::accounts::GatewayConfig;
+use gmp_gateway::error::GatewayError;
+use gmp_gateway::types::address::Address;
+use gmp_gateway::types::u256::U256;
 use solana_program::instruction::InstructionError;
 use solana_program::keccak;
 use solana_program::pubkey::Pubkey;
@@ -21,7 +21,7 @@ use test_fixtures::primitives::bytes;
 
 #[tokio::test]
 async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
-    let accounts_owner = gateway::id();
+    let accounts_owner = gmp_gateway::id();
     let params_account = Keypair::new().pubkey();
     let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
@@ -79,7 +79,7 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
         .expect("there is an account");
 
     // Push.
-    let instruction = gateway::instructions::transfer_operatorship(
+    let instruction = gmp_gateway::instructions::transfer_operatorship(
         &payer.pubkey(),
         &params_account,
         &state_account_address,
@@ -139,7 +139,7 @@ async fn test_transfer_operatorship_happy_scenario() -> Result<()> {
 
 #[tokio::test]
 async fn test_transfer_operatorship_duplicate_ops() -> Result<()> {
-    let accounts_owner = gateway::id();
+    let accounts_owner = gmp_gateway::id();
     let params_account = Keypair::new().pubkey();
     let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
@@ -182,7 +182,7 @@ async fn test_transfer_operatorship_duplicate_ops() -> Result<()> {
 
     let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
 
-    let instruction = gateway::instructions::transfer_operatorship(
+    let instruction = gmp_gateway::instructions::transfer_operatorship(
         &payer.pubkey(),
         &params_account,
         &state_account_address,
@@ -211,7 +211,7 @@ async fn test_transfer_operatorship_duplicate_ops() -> Result<()> {
 
 #[tokio::test]
 async fn test_transfer_operatorship_zero_threshold() -> Result<()> {
-    let accounts_owner = gateway::id();
+    let accounts_owner = gmp_gateway::id();
     let params_account = Keypair::new().pubkey();
     let (state_account_address, _bump) = Pubkey::find_program_address(&[&[]], &accounts_owner);
 
@@ -249,7 +249,7 @@ async fn test_transfer_operatorship_zero_threshold() -> Result<()> {
 
     let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
 
-    let instruction = gateway::instructions::transfer_operatorship(
+    let instruction = gmp_gateway::instructions::transfer_operatorship(
         &payer.pubkey(),
         &params_account,
         &state_account_address,

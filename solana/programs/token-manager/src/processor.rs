@@ -9,7 +9,7 @@ use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use crate::instruction::{Setup, TokenManagerInstruction};
+use crate::instruction::TokenManagerInstruction;
 use crate::{
     get_token_flow_account_and_bump_seed_internal,
     get_token_manager_account_and_bump_seed_internal, CalculatedEpoch,
@@ -32,8 +32,8 @@ impl Processor {
         let instruction = TokenManagerInstruction::try_from_slice(input)?;
 
         match instruction {
-            TokenManagerInstruction::Setup(Setup { flow_limit }) => {
-                Processor::process_setup(program_id, accounts, flow_limit)
+            TokenManagerInstruction::Setup(setup) => {
+                Processor::process_setup(program_id, accounts, setup)
             }
             TokenManagerInstruction::SetFlowLimit { amount } => {
                 Processor::process_set_flow_limit(program_id, accounts, amount)

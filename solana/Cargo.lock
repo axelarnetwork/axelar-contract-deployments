@@ -2076,42 +2076,13 @@ dependencies = [
  "auth-weighted",
  "base64 0.21.7",
  "borsh 1.3.1",
- "gateway 0.1.0",
+ "gmp-gateway",
  "hex",
  "num-derive 0.4.1",
  "num-traits",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
- "thiserror",
-]
-
-[[package]]
-name = "gateway"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.21.7",
- "bcs",
- "bimap",
- "bnum 0.10.0",
- "borsh 1.3.1",
- "bytemuck",
- "connection-router",
- "cosmwasm-std",
- "hex",
- "itertools 0.12.1",
- "libsecp256k1 0.7.1",
- "multisig",
- "multisig-prover",
- "num-derive 0.4.1",
- "num-traits",
- "serde",
- "sha3 0.10.8",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "test-fixtures",
  "thiserror",
 ]
 
@@ -2191,6 +2162,35 @@ name = "gimli"
 version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
+
+[[package]]
+name = "gmp-gateway"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.21.7",
+ "bcs",
+ "bimap",
+ "bnum 0.10.0",
+ "borsh 1.3.1",
+ "bytemuck",
+ "connection-router",
+ "cosmwasm-std",
+ "hex",
+ "itertools 0.12.1",
+ "libsecp256k1 0.7.1",
+ "multisig",
+ "multisig-prover",
+ "num-derive 0.4.1",
+ "num-traits",
+ "serde",
+ "sha3 0.10.8",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "test-fixtures",
+ "thiserror",
+]
 
 [[package]]
 name = "goblin"
@@ -2587,7 +2587,7 @@ name = "interchain-address-tracker"
 version = "0.1.0"
 dependencies = [
  "borsh 1.3.1",
- "gateway 0.1.0",
+ "gmp-gateway",
  "num-derive 0.4.1",
  "num-traits",
  "solana-program",
@@ -2604,7 +2604,7 @@ dependencies = [
  "anyhow",
  "borsh 1.3.1",
  "gas-service",
- "gateway 0.1.0",
+ "gmp-gateway",
  "interchain-token-transfer-gmp",
  "num-derive 0.4.1",
  "num-traits",
@@ -3067,7 +3067,7 @@ dependencies = [
  "either",
  "error-stack",
  "ethabi",
- "gateway 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "gateway",
  "hex",
  "itertools 0.11.0",
  "k256",
@@ -6274,6 +6274,7 @@ dependencies = [
 name = "test-fixtures"
 version = "0.1.0"
 dependencies = [
+ "account-group",
  "anyhow",
  "axelar-wasm-std",
  "bcs",
@@ -6281,7 +6282,11 @@ dependencies = [
  "connection-router",
  "cosmwasm-std",
  "fastrand",
+ "gas-service",
+ "gmp-gateway",
  "hex",
+ "interchain-token-service",
+ "interchain-token-transfer-gmp",
  "itertools 0.12.1",
  "libsecp256k1 0.7.1",
  "multisig",
@@ -6289,7 +6294,10 @@ dependencies = [
  "rand_core 0.6.4",
  "signature 2.2.0",
  "solana-program",
+ "solana-program-test",
  "solana-sdk",
+ "spl-token",
+ "token-manager",
 ]
 
 [[package]]
@@ -6415,6 +6423,7 @@ version = "0.1.0"
 dependencies = [
  "account-group",
  "borsh 1.3.1",
+ "gmp-gateway",
  "num-derive 0.4.1",
  "num-traits",
  "program-utils",

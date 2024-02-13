@@ -33,9 +33,10 @@ spl-associated-token-account = "2.3.0"
 # solana programs
 auth-weighted = { path = "programs/auth-weighted" }
 account-group = { path = "programs/account-group" }
-gateway = { path = "programs/gateway" }
+gateway = { path = "programs/gateway", package = "gmp-gateway" }
 gas-service = { path = "programs/gas-service" }
 token-manager = { path = "programs/token-manager" }
+interchain-token-service = { path = "programs/interchain-token-service" }
 
 # helper crates
 program-utils = { path = "helpers/program-utils" }

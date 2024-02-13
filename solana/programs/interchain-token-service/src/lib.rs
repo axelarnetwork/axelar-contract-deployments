@@ -8,35 +8,11 @@ pub mod instruction;
 pub mod processor;
 pub mod state;
 use account_group::instruction::GroupId;
-use borsh::{BorshDeserialize, BorshSerialize};
 use interchain_token_transfer_gmp::Bytes32;
 pub use solana_program;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-
-/// The type of token manager.
-#[repr(u8)]
-#[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize)]
-pub enum TokenManagerType {
-    /// Will simply transfer tokens from a user to itself or vice versa to
-    /// initiate/fulfill cross-chain transfers.
-    MintBurn,
-
-    /// Works like the one above, but accounts for tokens that have a
-    /// fee-on-transfer giving less tokens to be locked than what it actually
-    /// transferred.
-    MintBurnFrom,
-
-    /// Will burn/mint tokens from/to the user to initiate/fulfill cross-chain
-    /// transfers. Tokens used with this kind of TokenManager need to be
-    /// properly permissioned to allow for this behaviour.
-    LockUnlock,
-
-    /// The same as the one above, but uses burnFrom instead of burn which is
-    /// the standard for some tokens and typically requires an approval.
-    LockUnlockFee,
-}
 
 solana_program::declare_id!("4ENH4KjzfcQwyXYr6SJdaF2nhMoGqdZJ2Hk5MoY9mU2G");
 

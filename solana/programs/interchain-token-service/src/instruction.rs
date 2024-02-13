@@ -8,8 +8,9 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use spl_associated_token_account::get_associated_token_address;
+use token_manager::TokenManagerType;
 
-use crate::{id, TokenManagerType};
+use crate::id;
 
 /// Instructions supported by the InterchainTokenService program.
 #[repr(u8)]
@@ -134,6 +135,7 @@ pub fn build_deploy_token_manager_instruction(
     flow_limiters_permission_pda_owner: &Pubkey,
     interchain_token_service_root_pda: &Pubkey,
     token_mint: &Pubkey,
+    gateway_root_pda: &Pubkey,
     payload: DeployTokenManager,
 ) -> Result<Instruction, ProgramError> {
     let token_manager_ata = get_associated_token_address(token_manager_root_pda, token_mint);
@@ -158,6 +160,7 @@ pub fn build_deploy_token_manager_instruction(
             AccountMeta::new_readonly(*flow_limiters_permission_pda_owner, false),
             AccountMeta::new_readonly(*token_mint, false),
             AccountMeta::new(token_manager_ata, false),
+            AccountMeta::new_readonly(*gateway_root_pda, false),
             AccountMeta::new_readonly(*interchain_token_service_root_pda, false),
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(account_group::id(), false),

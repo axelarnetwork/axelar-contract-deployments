@@ -40,15 +40,20 @@ args = ["clippy", "--workspace", "--locked", "--", "-D", "warnings"]
 
 [tasks.test]
 workspace = false
-command = "cargo"
-# solana bpf tests
-args = ["test-sbf", "--workspace"]
+# solana bpf tests. Run them like this because order of how they're run is
+# important to generate the appropriate .so artifacts for subsequent tests
+script = """
+cargo test-sbf --package account-group
+cargo test-sbf --package auth-weighted
+cargo test-sbf --package gas-service
+cargo test-sbf --package gmp-gateway
+cargo test-sbf --package interchain-address-tracker
+cargo test-sbf --package token-manager
+cargo test-sbf --package interchain-token-service
+"""
 dependencies = [
     # normal tests that don't get picked up by test-sbf
     "test-non-sbf",
-    # For some reason, the `test-sbf` task doesn't pick up some Solana programs,
-    # so we pre-build them beforehand
-    "build-sbf"
 ]
 
 [tasks.build-sbf]

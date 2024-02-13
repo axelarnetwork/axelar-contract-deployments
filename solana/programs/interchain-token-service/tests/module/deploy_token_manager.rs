@@ -57,9 +57,10 @@ async fn test_deploy_token_manager() {
             .group_pda_user_owner,
         &interchain_token_service_root_pda,
         &token_mint,
+        &gateway_root_pda,
         DeployTokenManager {
             token_id: Bytes32(keccak256("random-token-id")),
-            token_manager_type: U256::from(42),
+            token_manager_type: U256::from(token_manager::TokenManagerType::MintBurn as u8),
             params: vec![],
         },
     )
@@ -153,6 +154,7 @@ async fn test_deploy_token_manager() {
                 &token_manager_root_pda_pubkey,
                 &token_mint
             ),
+            token_manager_type: token_manager::TokenManagerType::MintBurn,
             token_mint,
         }
     )

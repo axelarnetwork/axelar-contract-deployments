@@ -6,11 +6,11 @@ use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use common::program_test;
 use connection_router::Message as AxelarMessage;
-use gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
-use gateway::events::GatewayEvent;
-use gateway::get_gateway_root_config_pda;
-use gateway::types::bimap::OperatorsAndEpochs;
-use gateway::types::execute_data_decoder::DecodedMessage;
+use gmp_gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
+use gmp_gateway::events::GatewayEvent;
+use gmp_gateway::get_gateway_root_config_pda;
+use gmp_gateway::types::bimap::OperatorsAndEpochs;
+use gmp_gateway::types::execute_data_decoder::DecodedMessage;
 use solana_program::hash::hash;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{
@@ -29,7 +29,8 @@ mod accounts {
         let recent_blockhash = client.get_latest_blockhash().await?;
         let (gateway_config_pda, _bump) = GatewayConfig::pda();
 
-        let ix = gateway::instructions::initialize_config(payer.pubkey(), gateway_config.clone())?;
+        let ix =
+            gmp_gateway::instructions::initialize_config(payer.pubkey(), gateway_config.clone())?;
         let tx = Transaction::new_signed_with_payer(
             &[ix],
             Some(&payer.pubkey()),
@@ -44,7 +45,7 @@ mod accounts {
             .await?
             .expect("metadata");
 
-        assert_eq!(account.owner, gateway::id());
+        assert_eq!(account.owner, gmp_gateway::id());
         let deserialized_gateway_config: GatewayConfig = borsh::from_slice(&account.data)?;
         assert_eq!(deserialized_gateway_config, *gateway_config);
 
@@ -57,7 +58,7 @@ mod accounts {
         execute_data: GatewayExecuteData,
     ) -> Result<()> {
         let recent_blockhash = context.banks_client.get_latest_blockhash().await?;
-        let ix = gateway::instructions::initialize_execute_data(
+        let ix = gmp_gateway::instructions::initialize_execute_data(
             context.payer.pubkey(),
             pda,
             execute_data.clone(),
@@ -77,7 +78,7 @@ mod accounts {
             .await?
             .expect("metadata");
 
-        assert_eq!(account.owner, gateway::id());
+        assert_eq!(account.owner, gmp_gateway::id());
         let deserialized_execute_data: GatewayExecuteData = borsh::from_slice(&account.data)?;
         assert_eq!(deserialized_execute_data, execute_data);
 
@@ -93,7 +94,7 @@ mod accounts {
         payload_hash: [u8; 32],
     ) -> Result<()> {
         let recent_blockhash = client.get_latest_blockhash().await?;
-        let ix = gateway::instructions::initialize_message(
+        let ix = gmp_gateway::instructions::initialize_message(
             payer.pubkey(),
             message_id,
             source_chain,
@@ -112,7 +113,7 @@ mod accounts {
             GatewayApprovedMessage::pda(message_id, source_chain, source_address, payload_hash);
 
         let account = client.get_account(pda).await?.expect("metadata");
-        assert_eq!(account.owner, gateway::id());
+        assert_eq!(account.owner, gmp_gateway::id());
         let deserialized_execute_data: GatewayApprovedMessage = borsh::from_slice(&account.data)?;
         assert_eq!(deserialized_execute_data, GatewayApprovedMessage::pending());
 
@@ -130,8 +131,8 @@ async fn test_call_contract_instruction() -> Result<()> {
     let payload = test_fixtures::primitives::array32().to_vec();
     let payload_hash = test_fixtures::primitives::array32();
 
-    let instruction = gateway::instructions::call_contract(
-        gateway::id(),
+    let instruction = gmp_gateway::instructions::call_contract(
+        gmp_gateway::id(),
         sender.pubkey(),
         destination_chain,
         &destination_address,
@@ -248,7 +249,7 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
 
     // Provision the test program with an `execute_data` account.
 
-    let (proof, command_batch) = gateway::types::execute_data_decoder::decode(&execute_data)?;
+    let (proof, command_batch) = gmp_gateway::types::execute_data_decoder::decode(&execute_data)?;
     let execute_data_account = GatewayExecuteData::new(execute_data);
     let (execute_data_pda, _bump, _seeds) = execute_data_account.pda();
     let execute_data_base64 = STANDARD.encode(borsh::to_vec(&execute_data_account)?);
@@ -256,7 +257,7 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
     program_test.add_account_with_base64_data(
         execute_data_pda,
         999999,
-        gateway::id(),
+        gmp_gateway::id(),
         &execute_data_base64,
     );
 
@@ -266,7 +267,12 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
     let config_bytes = borsh::to_vec(&config)?;
     let config_base64 = STANDARD.encode(&config_bytes);
     let (config_pda, _bump) = get_gateway_root_config_pda();
-    program_test.add_account_with_base64_data(config_pda, 999999, gateway::id(), &config_base64);
+    program_test.add_account_with_base64_data(
+        config_pda,
+        999999,
+        gmp_gateway::id(),
+        &config_base64,
+    );
 
     // Provision the test progam with the message accounts.
     let mut message_pdas: Vec<Pubkey> = vec![];
@@ -289,7 +295,7 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
         program_test.add_account_with_base64_data(
             approved_message_pda,
             999999,
-            gateway::id(),
+            gmp_gateway::id(),
             &pending_message_account_base64,
         );
         message_pdas.push(approved_message_pda);
@@ -300,7 +306,7 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
 
     // Prepare an `execute` instruction
     let instruction =
-        gateway::instructions::execute(gateway::id(), execute_data_pda, &message_pdas)?;
+        gmp_gateway::instructions::execute(gmp_gateway::id(), execute_data_pda, &message_pdas)?;
 
     let transaction = Transaction::new_signed_with_payer(
         &[instruction],

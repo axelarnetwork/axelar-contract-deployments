@@ -9,8 +9,10 @@ pub mod processor;
 pub mod state;
 use std::ops::Deref;
 
+use borsh::{BorshDeserialize, BorshSerialize};
 pub use solana_program;
 use solana_program::clock::Clock;
+use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
 
@@ -24,6 +26,55 @@ pub struct CalculatedEpoch(u64);
 impl Default for CalculatedEpoch {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// The type of token manager.
+#[repr(u8)]
+#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
+#[borsh(use_discriminant = true)]
+pub enum TokenManagerType {
+    /// Will simply transfer tokens from a user to itself or vice versa to
+    /// initiate/fulfill cross-chain transfers.
+    MintBurn = 0,
+
+    /// Works like the one above, but accounts for tokens that have a
+    /// fee-on-transfer giving less tokens to be locked than what it actually
+    /// transferred.
+    MintBurnFrom = 1,
+
+    /// Will burn/mint tokens from/to the user to initiate/fulfill cross-chain
+    /// transfers. Tokens used with this kind of TokenManager need to be
+    /// properly permissioned to allow for this behaviour.
+    LockUnlock = 2,
+
+    /// The same as the one above, but uses burnFrom instead of burn which is
+    /// the standard for some tokens and typically requires an approval.
+    LockUnlockFee = 3,
+
+    /// Represents a token manager that's associated with the
+    /// canonical gateway token.
+    Gateway = 4,
+}
+
+impl TryFrom<u8> for TokenManagerType {
+    type Error = ProgramError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::MintBurn),
+            1 => Ok(Self::MintBurnFrom),
+            2 => Ok(Self::LockUnlock),
+            3 => Ok(Self::LockUnlockFee),
+            4 => Ok(Self::Gateway),
+            _ => Err(ProgramError::InvalidArgument),
+        }
+    }
+}
+
+impl From<TokenManagerType> for u8 {
+    fn from(value: TokenManagerType) -> Self {
+        value as u8
     }
 }
 

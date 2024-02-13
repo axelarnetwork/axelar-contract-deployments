@@ -23,3 +23,4 @@ tokio.workspace = true
 [dependencies.gateway]
 path = "../../../solana/programs/gateway"
 features = ["no-entrypoint"]
+package = "gmp-gateway"

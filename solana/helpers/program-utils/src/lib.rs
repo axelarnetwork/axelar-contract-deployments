@@ -84,6 +84,13 @@ pub trait ValidPDA {
         expected_program_id: &Pubkey,
     ) -> Result<T, ProgramError>;
 
+    /// Check if the account is an initialized PDA without deserializing the
+    /// data
+    fn check_initialized_pda_without_deserialization(
+        &self,
+        expected_program_id: &Pubkey,
+    ) -> Result<(), ProgramError>;
+
     /// Check if the account is an initialized PDA
     fn check_uninitialized_pda(&self) -> Result<(), ProgramError>;
 }
@@ -93,6 +100,21 @@ impl<'a> ValidPDA for &AccountInfo<'a> {
         &self,
         expected_program_id: &Pubkey,
     ) -> Result<T, ProgramError> {
+        self.check_initialized_pda_without_deserialization(expected_program_id)?;
+
+        let data = self.try_borrow_data()?;
+        let has_correct_data_len = data.len() == T::get_packed_len();
+        if !has_correct_data_len {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        T::unpack_from_slice(data.borrow()).map_err(|_| ProgramError::InvalidAccountData)
+    }
+
+    fn check_initialized_pda_without_deserialization(
+        &self,
+        expected_program_id: &Pubkey,
+    ) -> Result<(), ProgramError> {
         let has_lamports = **self.try_borrow_lamports()? > 0;
         if !has_lamports {
             return Err(ProgramError::InsufficientFunds);
@@ -101,13 +123,8 @@ impl<'a> ValidPDA for &AccountInfo<'a> {
         if !has_correct_owner {
             return Err(ProgramError::IllegalOwner);
         }
-        let data = self.try_borrow_data()?;
-        let has_correct_data_len = data.len() == T::get_packed_len();
-        if !has_correct_data_len {
-            return Err(ProgramError::InvalidAccountData);
-        }
 
-        T::try_from_slice(data.borrow()).map_err(|_| ProgramError::InvalidAccountData)
+        Ok(())
     }
 
     fn check_uninitialized_pda(&self) -> Result<(), ProgramError> {

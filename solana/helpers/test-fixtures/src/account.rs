@@ -37,7 +37,7 @@ impl CheckValidPDAInTests for Account {
             ));
         }
 
-        T::try_from_slice(data).context("Failed to deserialize account data")
+        T::unpack_from_slice(data).context("Failed to deserialize account data")
     }
 
     fn check_uninitialized_pda(&self) -> anyhow::Result<()> {
