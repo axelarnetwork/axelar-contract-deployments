@@ -154,14 +154,14 @@ async function processCommand(config, chain, options) {
 
             const expectedMessageHash = hashMessage(arrayify(keccak256(batchData)));
 
-            let prevKeyId = sortedSignatures[0].key_id;
+            const prevKeyId = sortedSignatures[0].key_id;
             let totalWeight = 0;
 
             for (const signatureJSON of sortedSignatures) {
                 const keyId = signatureJSON.key_id;
-                const msgHash = `0x${signatureJSON.msg_hash}`;
-                const pubKey = `0x${signatureJSON.pub_key}`;
-                const signature = `0x${signatureJSON.signature}`;
+                const msgHash = signatureJSON.msg_hash.startsWith('0x') ? signatureJSON.msg_hash : `0x${signatureJSON.msg_hash}`;
+                const pubKey = signatureJSON.pub_key.startsWith('0x') ? signatureJSON.pub_key : `0x${signatureJSON.pub_key}`;
+                const signature = signatureJSON.signature.startsWith('0x') ? signatureJSON.signature : `0x${signatureJSON.signature}`;
 
                 validateParameters({
                     isNonEmptyString: { keyId },
@@ -173,8 +173,6 @@ async function processCommand(config, chain, options) {
                     printError('Signatures do not contain consistent key IDs', keyId);
                     return;
                 }
-
-                prevKeyId = keyId;
 
                 if (msgHash.toLowerCase() !== expectedMessageHash.toLowerCase()) {
                     printError('Message hash does not equal expected message hash', msgHash);
