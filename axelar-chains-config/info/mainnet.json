@@ -1958,7 +1958,16 @@
       "gasOptions": {
         "gasLimit": 3000000
       },
-      "confirmations": 1
+      "confirmations": 1,
+      "contracts": {
+        "AxelarGateway": {},
+        "AxelarGasService": {}
+      },
+      "explorer": {
+        "name": "Fraxscan",
+        "url": "https://fraxscan.com",
+        "api": "https://api.fraxscan.com/api"
+      }
     }
   },
   "axelar": {
