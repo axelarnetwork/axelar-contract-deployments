@@ -11,6 +11,7 @@ crate-type = ["cdylib", "lib"]
 no-entrypoint = []
 
 [dependencies]
+base64.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
 borsh.workspace = true

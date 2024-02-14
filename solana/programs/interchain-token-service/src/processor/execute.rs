@@ -1,6 +1,6 @@
 mod deploy_interchain_token;
-mod deploy_token_manager;
 mod interchain_transfer;
+mod relayer_gmp_deploy_token_manager;
 
 use gateway::accounts::GatewayApprovedMessage;
 use interchain_token_transfer_gmp::ethers_core::abi::AbiDecode;
@@ -40,7 +40,7 @@ impl Processor {
                 Self::deploy_interchain_token(program_id, accounts, payload)
             }
             GMPPayload::DeployTokenManager(payload) => {
-                Self::deploy_token_manager(program_id, accounts, payload)
+                Self::relayer_gmp_deploy_token_manager(program_id, accounts, payload)
             }
         }
     }

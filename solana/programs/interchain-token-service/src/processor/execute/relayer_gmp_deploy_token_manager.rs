@@ -13,7 +13,7 @@ use crate::{check_id, get_flow_limiters_permission_group_id, get_operators_permi
 
 impl Processor {
     /// Processes an instruction.
-    pub fn deploy_token_manager(
+    pub fn relayer_gmp_deploy_token_manager(
         program_id: &Pubkey,
         accounts: &[AccountInfo],
         input: DeployTokenManager,

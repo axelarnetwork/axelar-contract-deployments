@@ -1,5 +1,6 @@
 //! Program state processor
 
+mod deploy_token_manager;
 mod execute;
 mod give_token;
 mod initialize;
