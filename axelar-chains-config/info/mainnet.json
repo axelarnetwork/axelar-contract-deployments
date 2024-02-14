@@ -1953,7 +1953,7 @@
       "id": "fraxtal",
       "axelarId": "fraxtal",
       "chainId": 252,
-      "rpc": "rpc.frax.com",
+      "rpc": "https://rpc.frax.com",
       "tokenSymbol": "frxETH",
       "gasOptions": {
         "gasLimit": 3000000
@@ -1961,7 +1961,23 @@
       "confirmations": 1,
       "contracts": {
         "AxelarGateway": {},
-        "AxelarGasService": {}
+        "AxelarGasService": {
+          "collector": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C"
+        },
+        "Multisig": {
+          "threshold": 3,
+          "signers": [
+            "0x3f5876a2b06E54949aB106651Ab6694d0289b2b4",
+            "0x9256Fd872118ed3a97754B0fB42c15015d17E0CC",
+            "0x1486157d505C7F7E546aD00E3E2Eee25BF665C9b",
+            "0x2eC991B5c0B742AbD9d2ea31fe6c14a85e91C821",
+            "0xf505462A29E36E26f25Ef0175Ca1eCBa09CC118f",
+            "0x027c1882B975E2cd771AE068b0389FA38B9dda73"
+          ]
+        },
+        "InterchainGovernance": {
+          "minimumTimeDelay": 604800
+        }
       },
       "explorer": {
         "name": "Fraxscan",
