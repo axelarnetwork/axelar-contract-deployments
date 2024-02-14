@@ -468,7 +468,7 @@ async function processCommand(config, chain, options) {
                 trustedChains = itsChains.map((chain) => chain.axelarId);
                 trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address);
             } else {
-                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.id;
+                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.axelarId;
 
                 if (trustedChain === undefined) {
                     throw new Error(`Invalid chain: ${options.trustedChain}`);
@@ -501,7 +501,7 @@ async function processCommand(config, chain, options) {
             if (options.trustedChain === 'all') {
                 [trustedChains] = await getTrustedChainsAndAddresses(config, interchainTokenService);
             } else {
-                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.id;
+                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.axelarId;
 
                 if (trustedChain === undefined) {
                     throw new Error(`Invalid chain: ${options.trustedChain}`);
