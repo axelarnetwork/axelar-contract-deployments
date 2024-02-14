@@ -3,6 +3,16 @@
 pub use ethers_core;
 use ethers_core::abi::{self, AbiDecode, AbiEncode, Detokenize, ParamType, Tokenizable};
 use ethers_core::types::U256;
+use token_manager::TokenManagerType;
+
+/// The Remote one / TODO: better comment
+pub struct DeployInterchainTokenB {
+    pub salt: [u8; 32],
+    pub destination_chain: Vec<u8>,
+    pub token_manager: TokenManagerType,
+    pub params: Vec<u8>,
+    pub gas_value: U256, // TODO: check if this one is correct / there is like 4 of them now
+}
 
 /// The messages going through the Axelar Network between
 /// InterchainTokenServices need to have a consistent format to be

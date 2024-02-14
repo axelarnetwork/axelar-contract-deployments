@@ -2603,6 +2603,7 @@ version = "0.1.0"
 dependencies = [
  "account-group",
  "anyhow",
+ "base64 0.21.7",
  "borsh 1.3.1",
  "gas-service",
  "gmp-gateway",
@@ -2626,6 +2627,7 @@ version = "0.1.0"
 dependencies = [
  "ethers-core",
  "hex",
+ "token-manager",
 ]
 
 [[package]]
