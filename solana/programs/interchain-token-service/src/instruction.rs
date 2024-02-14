@@ -2,6 +2,7 @@
 
 use account_group::get_permission_account;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
+use gateway::types::u256::U256;
 use interchain_token_transfer_gmp::ethers_core::abi::AbiEncode;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program::instruction::{AccountMeta, Instruction};
@@ -68,6 +69,26 @@ pub enum InterchainTokenServiceInstruction {
         token_manager_type: TokenManagerType,
         /// The amount of tokens to give.
         amount: u64,
+    },
+    /// Instruction DeployTokenManager.
+    /// Used to deploy remote custom TokenManagers.
+    ///
+    /// Accounts expected by this instruction:
+    //
+    /// 0. [signer] The address of payer/ sender.
+    DeployTokenManager {
+        /// The salt to be used during deployment.
+        salt: [u8; 32],
+        /// The name of the chain to deploy the TokenManager and standardized
+        /// token to.
+        destination_chain: Vec<u8>,
+        /// The token manager to deploy.
+        token_manager: TokenManagerType,
+        /// The params that will be used to initialize the TokenManager.
+        params: Vec<u8>,
+        /// The amount of native tokens to be used to pay for gas for the remote
+        /// deployment.
+        gas_value: U256, // TODO: check if this one is correct / there is like 4 of them now
     },
 }
 
