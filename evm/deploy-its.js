@@ -46,11 +46,11 @@ async function deployAll(config, wallet, chain, options) {
     const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
 
     const contractName = 'InterchainTokenService';
-    const contractNameFactory = 'InterchainTokenFactory';
+    const itsFactoryContractName = 'InterchainTokenFactory';
     const contracts = chain.contracts;
 
     const contractConfig = contracts[contractName] || {};
-    const contractConfigFactory = contracts[contractNameFactory] || {};
+    const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
 
     const salt = options.salt ? `ITS ${options.salt}` : 'ITS';
     const proxySalt = options.proxySalt || options.salt ? `ITS ${options.proxySalt || options.salt}` : 'ITS';
@@ -61,11 +61,11 @@ async function deployAll(config, wallet, chain, options) {
     contractConfig.proxySalt = proxySalt;
     contractConfig.deployer = wallet.address;
 
-    contractConfigFactory.deployer = wallet.address;
-    contractConfigFactory.salt = factorySalt;
+    itsFactoryContractConfig.deployer = wallet.address;
+    itsFactoryContractConfig.salt = factorySalt;
 
     contracts[contractName] = contractConfig;
-    contracts[contractNameFactory] = contractConfigFactory;
+    contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
     const proxyJSON = getContractJSON('InterchainProxy', artifactPath);
     const predeployCodehash = await getBytecodeHash(proxyJSON, chain.axelarId);
@@ -89,7 +89,7 @@ async function deployAll(config, wallet, chain, options) {
     printInfo('Interchain Token Service will be deployed to', interchainTokenService);
 
     const interchainTokenFactory = options.reuseProxy
-        ? contractConfigFactory.address
+        ? itsFactoryContractConfig.address
         : await getDeployedAddress(wallet.address, proxyDeployMethod, {
               salt: factorySalt,
               deployerContract: getDeployOptions(proxyDeployMethod, factorySalt, chain).deployerContract,
@@ -281,7 +281,7 @@ async function deployAll(config, wallet, chain, options) {
         interchainTokenFactory: {
             name: 'Interchain Token Factory Proxy',
             async deploy() {
-                const args = [contractConfigFactory.implementation, wallet.address, '0x'];
+                const args = [itsFactoryContractConfig.implementation, wallet.address, '0x'];
                 printInfo('ITS Factory Proxy args', args);
 
                 return await deployContract(
@@ -309,7 +309,7 @@ async function deployAll(config, wallet, chain, options) {
         }
 
         if (key === 'interchainTokenFactory' && options.reuseProxy) {
-            printInfo(`Reusing ${deployment.name} deployment at ${contractConfigFactory.address}`);
+            printInfo(`Reusing ${deployment.name} deployment at ${itsFactoryContractConfig.address}`);
             continue;
         }
 
@@ -318,9 +318,9 @@ async function deployAll(config, wallet, chain, options) {
         const contract = await deployment.deploy();
 
         if (key === 'interchainTokenFactoryImplementation') {
-            contractConfigFactory.implementation = contract.address;
+            itsFactoryContractConfig.implementation = contract.address;
         } else if (key === 'interchainTokenFactory') {
-            contractConfigFactory.address = contract.address;
+            itsFactoryContractConfig.address = contract.address;
         } else {
             contractConfig[key] = contract.address;
         }
@@ -373,16 +373,16 @@ async function upgrade(_, chain, options) {
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(privateKey, provider);
     const contractName = 'InterchainTokenService';
-    const contractNameFactory = 'InterchainTokenFactory';
+    const itsFactoryContractName = 'InterchainTokenFactory';
 
     await printWalletInfo(wallet, options);
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName] || {};
-    const contractConfigFactory = contracts[contractNameFactory] || {};
+    const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
 
     contracts[contractName] = contractConfig;
-    contracts[contractNameFactory] = contractConfigFactory;
+    contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
     printInfo(`Upgrading Interchain Token Service.`);
 
@@ -413,24 +413,27 @@ async function upgrade(_, chain, options) {
     printInfo(`Upgraded Interchain Token Service`);
 
     const InterchainTokenFactory = getContractJSON('InterchainTokenFactory', artifactPath);
-    const itsFactory = new Contract(contractConfigFactory.address, InterchainTokenFactory.abi, wallet);
-    const factoryCodehash = await getBytecodeHash(contractConfigFactory.implementation, chain.axelarId, provider);
+    const itsFactory = new Contract(itsFactoryContractConfig.address, InterchainTokenFactory.abi, wallet);
+    const factoryCodehash = await getBytecodeHash(itsFactoryContractConfig.implementation, chain.axelarId, provider);
 
     printInfo(`ITS Factory Proxy`, itsFactory.address);
 
     const factoryImplementation = await itsFactory.implementation();
     printInfo(`Current ITS Factory implementation`, factoryImplementation);
-    printInfo(`New ITS Factory implementation`, contractConfigFactory.implementation);
+    printInfo(`New ITS Factory implementation`, itsFactoryContractConfig.implementation);
 
     if (
         options.predictOnly ||
-        prompt(`Proceed with ITS Factory upgrade to implementation ${contractConfigFactory.implementation} on ${chain.name}?`, options.yes)
+        prompt(
+            `Proceed with ITS Factory upgrade to implementation ${itsFactoryContractConfig.implementation} on ${chain.name}?`,
+            options.yes,
+        )
     ) {
         return;
     }
 
     const factoryReceipt = await itsFactory
-        .upgrade(contractConfigFactory.implementation, factoryCodehash, '0x', gasOptions)
+        .upgrade(itsFactoryContractConfig.implementation, factoryCodehash, '0x', gasOptions)
         .then((tx) => tx.wait(chain.confirmations));
 
     if (!wasEventEmitted(factoryReceipt, itsFactory, 'Upgraded')) {

@@ -89,6 +89,17 @@ function compare(contractValue, configValue, variableName) {
     }
 }
 
+function compareToConfig(contractConfig, contractName, toCheck) {
+    for (const [key, value] of Object.entries(toCheck)) {
+        if (contractConfig[key]) {
+            const configValue = contractConfig[key];
+            compare(value, configValue, key);
+        } else {
+            printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractName}.`);
+        }
+    }
+}
+
 function isValidDestinationChain(config, destinationChain) {
     if (destinationChain === '') {
         return;
@@ -603,31 +614,17 @@ async function processCommand(config, chain, options) {
                 implementation: await interchainTokenService.implementation(),
             };
 
-            for (const [key, value] of Object.entries(toCheck)) {
-                if (contractConfig[key]) {
-                    const configValue = contractConfig[key];
-                    compare(value, configValue, key);
-                } else {
-                    printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractName}.`);
-                }
-            }
+            compareToConfig(contractConfig, contractName, toCheck);
 
-            const contractNameFactory = 'InterchainTokenFactory';
-            const contractConfigFactory = chain.contracts[contractNameFactory];
+            const itsFactoryContractName = 'InterchainTokenFactory';
+            const itsFactoryContractConfig = chain.contracts[itsFactoryContractName];
 
             const toCheckFactory = {
                 address: interchainTokenFactory,
                 implementation: interchainTokenFactoryImplementation,
             };
 
-            for (const [key, value] of Object.entries(toCheckFactory)) {
-                if (contractConfigFactory[key]) {
-                    const configValue = contractConfigFactory[key];
-                    compare(value, configValue, key);
-                } else {
-                    printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractNameFactory}.`);
-                }
-            }
+            compareToConfig(itsFactoryContractConfig, itsFactoryContractName, toCheckFactory);
 
             break;
         }
