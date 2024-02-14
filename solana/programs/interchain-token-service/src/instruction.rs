@@ -130,7 +130,7 @@ pub fn build_execute_instruction(
 
 /// Create `Execute::DeployTokenManager` instruction
 #[allow(clippy::too_many_arguments)]
-pub fn build_deploy_token_manager_instruction(
+pub fn build_relayer_gmp_deploy_token_manager_instruction(
     gateway_approved_message_pda: &Pubkey,
     funder: &Pubkey,
     token_manager_root_pda: &Pubkey,

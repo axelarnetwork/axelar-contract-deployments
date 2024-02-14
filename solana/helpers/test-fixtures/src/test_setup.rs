@@ -279,7 +279,7 @@ impl TestFixture {
             .await;
 
         // Action
-        let ix = interchain_token_service::instruction::build_deploy_token_manager_instruction(
+        let ix = interchain_token_service::instruction::build_relayer_gmp_deploy_token_manager_instruction(
             &gateway_approved_message_pda,
             &self.payer.pubkey(),
             &token_manager_root_pda_pubkey,
