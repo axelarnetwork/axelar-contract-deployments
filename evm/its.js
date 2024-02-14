@@ -89,6 +89,17 @@ function compare(contractValue, configValue, variableName) {
     }
 }
 
+function compareToConfig(contractConfig, contractName, toCheck) {
+    for (const [key, value] of Object.entries(toCheck)) {
+        if (contractConfig[key]) {
+            const configValue = contractConfig[key];
+            compare(value, configValue, key);
+        } else {
+            printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractName}.`);
+        }
+    }
+}
+
 function isValidDestinationChain(config, destinationChain) {
     if (destinationChain === '') {
         return;
@@ -457,7 +468,7 @@ async function processCommand(config, chain, options) {
                 trustedChains = itsChains.map((chain) => chain.axelarId);
                 trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address);
             } else {
-                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.id;
+                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.axelarId;
 
                 if (trustedChain === undefined) {
                     throw new Error(`Invalid chain: ${options.trustedChain}`);
@@ -490,7 +501,7 @@ async function processCommand(config, chain, options) {
             if (options.trustedChain === 'all') {
                 [trustedChains] = await getTrustedChainsAndAddresses(config, interchainTokenService);
             } else {
-                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.id;
+                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.axelarId;
 
                 if (trustedChain === undefined) {
                     throw new Error(`Invalid chain: ${options.trustedChain}`);
@@ -601,18 +612,19 @@ async function processCommand(config, chain, options) {
                 tokenManager: await interchainTokenService.tokenManager(),
                 tokenHandler: await interchainTokenService.tokenHandler(),
                 implementation: await interchainTokenService.implementation(),
-                interchainTokenFactory,
-                interchainTokenFactoryImplementation,
             };
 
-            for (const [key, value] of Object.entries(toCheck)) {
-                if (contractConfig[key]) {
-                    const configValue = contractConfig[key];
-                    compare(value, configValue, key);
-                } else {
-                    printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractName}.`);
-                }
-            }
+            compareToConfig(contractConfig, contractName, toCheck);
+
+            const itsFactoryContractName = 'InterchainTokenFactory';
+            const itsFactoryContractConfig = chain.contracts[itsFactoryContractName];
+
+            const toCheckFactory = {
+                address: interchainTokenFactory,
+                implementation: interchainTokenFactoryImplementation,
+            };
+
+            compareToConfig(itsFactoryContractConfig, itsFactoryContractName, toCheckFactory);
 
             break;
         }
