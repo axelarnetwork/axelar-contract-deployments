@@ -1,4 +1,4 @@
-use interchain_token_transfer_gmp::ethers_core::k256::U256;
+use gateway::types::u256::U256;
 use interchain_token_transfer_gmp::DeployInterchainTokenB;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -13,7 +13,11 @@ impl Processor {
     pub fn deploy_token_manager(
         program_id: &Pubkey,
         accounts: &[AccountInfo],
-        input: DeployInterchainTokenB,
+        salt: [u8; 32],
+        destination_chain: Vec<u8>,
+        token_manager_type: TokenManagerType,
+        params: Vec<u8>,
+        gas_value: U256,
     ) -> ProgramResult {
         let account_info_iter = &mut accounts.iter();
         let sender = next_account_info(account_info_iter)?;
@@ -22,9 +26,9 @@ impl Processor {
         // TOKEN_FACTORY_DEPLOYER;
 
         emit_interchain_token_id_claimed_event(
-            Self::interchain_token_id(sender.key, input.salt),
+            Self::interchain_token_id(sender.key, salt),
             (*sender.key).into(),
-            input.salt,
+            salt,
         )
 
         // if (bytes(destinationChain).length == 0) {
