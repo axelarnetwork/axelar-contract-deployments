@@ -43,6 +43,21 @@ impl Processor {
                 token_manager_type,
                 amount,
             } => Self::take_token(program_id, accounts, token_manager_type, amount),
+            InterchainTokenServiceInstruction::DeployTokenManager {
+                salt,
+                destination_chain,
+                token_manager,
+                params,
+                gas_value,
+            } => Self::deploy_token_manager(
+                program_id,
+                accounts,
+                salt,
+                destination_chain,
+                token_manager,
+                params,
+                gas_value,
+            ),
         }
     }
 }
