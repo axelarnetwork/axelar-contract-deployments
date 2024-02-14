@@ -374,7 +374,7 @@ pub fn build_deploy_token_manager_instruction(
         gas_value,
     })?;
 
-    let accounts = vec![AccountMeta::new(*payer, true)];
+    let accounts = vec![AccountMeta::new(*sender, true)];
 
     Ok(Instruction {
         program_id: crate::id(),
