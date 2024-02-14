@@ -356,3 +356,29 @@ pub fn build_take_token_lock_unlock_instruction(
         data,
     })
 }
+
+/// Create `DeployTokenManager` instruction
+pub fn build_deploy_token_manager_instruction(
+    sender: &Pubkey,
+    salt: [u8; 32],
+    destination_chain: Vec<u8>,
+    token_manager: TokenManagerType,
+    params: Vec<u8>,
+    gas_value: U256, // TODO: check if this one is correct / there is like 4 of them now
+) -> Result<Instruction, ProgramError> {
+    let data = to_vec(&InterchainTokenServiceInstruction::DeployTokenManager {
+        salt,
+        destination_chain,
+        token_manager,
+        params,
+        gas_value,
+    })?;
+
+    let accounts = vec![AccountMeta::new(*payer, true)];
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
