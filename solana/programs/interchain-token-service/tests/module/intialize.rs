@@ -4,11 +4,14 @@ use solana_program_test::tokio;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
 use test_fixtures::account::CheckValidPDAInTests;
+use test_fixtures::test_setup::TestFixture;
+
+use crate::program_test;
 
 #[tokio::test]
 async fn test_init_root_pda_interchain_token_service() {
     // Setup
-    let mut fixture = super::utils::TestFixture::new().await;
+    let mut fixture = TestFixture::new(program_test()).await;
     let gas_service_root_pda = fixture.init_gas_service().await;
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(GatewayConfig::default())

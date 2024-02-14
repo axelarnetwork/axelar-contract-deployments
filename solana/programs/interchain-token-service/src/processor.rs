@@ -1,18 +1,14 @@
 //! Program state processor
 
-mod deploy_interchain_token;
-mod deploy_token_manager;
+mod execute;
 mod give_token;
 mod initialize;
-mod interchain_transfer;
 mod take_token;
 
 use borsh::BorshDeserialize;
-use interchain_token_transfer_gmp::ethers_core::abi::AbiDecode;
-use interchain_token_transfer_gmp::GMPPayload;
+use program_utils::check_program_account;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
-use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use crate::instruction::InterchainTokenServiceInstruction;
@@ -27,24 +23,13 @@ impl Processor {
         accounts: &[AccountInfo],
         input: &[u8],
     ) -> ProgramResult {
+        check_program_account(program_id, crate::check_id)?;
+
         let instruction = InterchainTokenServiceInstruction::try_from_slice(input)?;
 
         match instruction {
             InterchainTokenServiceInstruction::Execute { payload } => {
-                let res = GMPPayload::decode(payload.as_slice())
-                    .map_err(|_| ProgramError::InvalidInstructionData)?;
-
-                match res {
-                    GMPPayload::InterchainTransfer(payload) => {
-                        Self::interchain_transfer(program_id, accounts, payload)
-                    }
-                    GMPPayload::DeployInterchainToken(payload) => {
-                        Self::deploy_interchain_token(program_id, accounts, payload)
-                    }
-                    GMPPayload::DeployTokenManager(payload) => {
-                        Self::deploy_token_manager(program_id, accounts, payload)
-                    }
-                }
+                Self::execute(program_id, accounts, payload)
             }
             InterchainTokenServiceInstruction::Initialize {} => {
                 Self::process_initialize(program_id, accounts)

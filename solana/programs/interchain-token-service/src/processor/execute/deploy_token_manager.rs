@@ -23,6 +23,7 @@ impl Processor {
         let account_info_iter = &mut accounts.iter();
 
         // Accounts to proxy
+        let _gateway_approved_message_pda = next_account_info(account_info_iter)?;
         let funder = next_account_info(account_info_iter)?;
         let token_manager_root_pda = next_account_info(account_info_iter)?;
         let operators_permission_group_pda = next_account_info(account_info_iter)?;

@@ -180,6 +180,8 @@ pub fn initialize_message(
     let (pda, _bump) =
         GatewayApprovedMessage::pda(message_id, source_chain, source_address, payload_hash);
 
+    // TODO we need to add root pda to the accounts and make sure that the approved
+    //      message is derived with the root pda as one of the seeds!
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new(pda, false),

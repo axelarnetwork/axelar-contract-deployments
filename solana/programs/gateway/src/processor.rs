@@ -5,6 +5,7 @@ use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
+use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
@@ -182,14 +183,14 @@ impl Processor {
 
             // Check:: All messages must be "Pending".
             let mut borrowed_data = message_account.data.borrow_mut();
-            let approved_message: GatewayApprovedMessage = borsh::from_slice(*borrowed_data)?;
+            let approved_message = GatewayApprovedMessage::unpack_from_slice(*borrowed_data)?;
             if !approved_message.is_pending() {
                 // TODO: use a more descriptive GatewayError variant here.
                 return Err(ProgramError::AccountAlreadyInitialized);
             }
 
             // Success: update account message state to "Approved".
-            borrowed_data.copy_from_slice(&borsh::to_vec(&GatewayApprovedMessage::approved())?);
+            GatewayApprovedMessage::approved().pack_into_slice(&mut borrowed_data);
 
             // Emit an event signaling message approval.
             {
@@ -307,11 +308,15 @@ impl Processor {
         }
 
         let seeds: &[&[u8]] = &[&seed, &[bump]];
-        init_pda(
+        program_utils::init_pda(
             payer,
             approved_message_account,
+            &crate::id(),
+            system_account,
+            // The message by default is in "approved" state.
+            // https://github.com/axelarnetwork/axelar-cgp-solidity/blob/968c8964061f594c80dd111887edb93c5069e51e/contracts/AxelarGateway.sol#L509
+            GatewayApprovedMessage::approved(),
             seeds,
-            &GatewayApprovedMessage::pending(),
         )
     }
 

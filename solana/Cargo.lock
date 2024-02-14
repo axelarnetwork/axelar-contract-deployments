@@ -2183,6 +2183,7 @@ dependencies = [
  "multisig-prover",
  "num-derive 0.4.1",
  "num-traits",
+ "program-utils",
  "serde",
  "sha3 0.10.8",
  "solana-program",

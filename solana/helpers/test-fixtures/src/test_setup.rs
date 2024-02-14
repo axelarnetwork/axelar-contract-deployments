@@ -1,12 +1,11 @@
 use account_group::instruction::GroupId;
 use account_group::{get_permission_account, get_permission_group_account};
 use borsh::BorshDeserialize;
-use gateway::accounts::GatewayConfig;
+use gateway::accounts::{GatewayApprovedMessage, GatewayConfig};
 use interchain_token_service::{
     get_flow_limiters_permission_group_id, get_interchain_token_service_root_pda,
     get_operators_permission_group_id,
 };
-pub use interchain_token_transfer_gmp;
 use interchain_token_transfer_gmp::ethers_core::types::U256;
 use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
 use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};
@@ -22,6 +21,7 @@ use solana_sdk::transaction::Transaction;
 use spl_token::state::Mint;
 use token_manager::state::TokenManagerRootAccount;
 use token_manager::{get_token_manager_account, CalculatedEpoch, TokenManagerType};
+pub use {connection_router, interchain_token_transfer_gmp};
 
 use crate::account::CheckValidPDAInTests;
 
@@ -273,9 +273,14 @@ impl TestFixture {
                 .group_pda,
             &interchain_token_service_root_pda,
         );
+        let deploy_token_manager_message = crate::axelar_message::message().unwrap();
+        let gateway_approved_message_pda = self
+            .approve_gateway_message(&deploy_token_manager_message)
+            .await;
 
         // Action
         let ix = interchain_token_service::instruction::build_deploy_token_manager_instruction(
+            &gateway_approved_message_pda,
             &self.payer.pubkey(),
             &token_manager_root_pda_pubkey,
             &its_token_manager_permission_groups.operator_group.group_pda,
@@ -404,6 +409,49 @@ impl TestFixture {
             .process_transaction(transaction)
             .await
             .unwrap();
+    }
+
+    pub async fn approve_gateway_message(
+        &mut self,
+        message: &connection_router::Message,
+    ) -> Pubkey {
+        let message_id =
+            solana_program::hash::hash(message.cc_id.to_string().as_bytes()).to_bytes();
+        let source_chain = message.cc_id.to_string().into_bytes();
+        let source_address = message.source_address.as_bytes();
+
+        let (gateway_approved_message_pda, _bump) = GatewayApprovedMessage::pda(
+            message_id,
+            source_chain.as_slice(),
+            source_address,
+            message.payload_hash,
+        );
+        let ix = gateway::instructions::initialize_message(
+            self.payer.pubkey(),
+            message_id,
+            source_chain.as_slice(),
+            source_address,
+            message.payload_hash,
+        )
+        .unwrap();
+
+        self.recent_blockhash = self
+            .banks_client
+            .get_new_latest_blockhash(&self.recent_blockhash)
+            .await
+            .unwrap();
+        let transaction = Transaction::new_signed_with_payer(
+            &[ix],
+            Some(&self.payer.pubkey()),
+            &[&self.payer],
+            self.recent_blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+
+        gateway_approved_message_pda
     }
 }
 

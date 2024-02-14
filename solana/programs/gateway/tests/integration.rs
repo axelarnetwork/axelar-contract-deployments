@@ -24,6 +24,7 @@ use test_fixtures::primitives::array32;
 
 mod accounts {
     use gmp_gateway::accounts::transfer_operatorship::TransferOperatorshipAccount;
+    use solana_program::program_pack::Pack;
 
     use super::*;
     pub(super) async fn initialize_config_account(
@@ -119,8 +120,11 @@ mod accounts {
 
         let account = client.get_account(pda).await?.expect("metadata");
         assert_eq!(account.owner, gmp_gateway::id());
-        let deserialized_execute_data: GatewayApprovedMessage = borsh::from_slice(&account.data)?;
-        assert_eq!(deserialized_execute_data, GatewayApprovedMessage::pending());
+        let deserialized_execute_data = GatewayApprovedMessage::unpack_from_slice(&account.data)?;
+        assert_eq!(
+            deserialized_execute_data,
+            GatewayApprovedMessage::approved()
+        );
 
         Ok(())
     }

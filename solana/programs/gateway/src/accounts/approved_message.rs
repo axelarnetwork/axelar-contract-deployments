@@ -2,6 +2,9 @@
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::keccak::hashv;
+use solana_program::msg;
+use solana_program::program_error::ProgramError;
+use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
 
 use crate::accounts::discriminator::{Discriminator, MessageID};
@@ -101,5 +104,23 @@ impl GatewayApprovedMessage {
             *payload_hash,
         );
         pda
+    }
+}
+
+impl Sealed for GatewayApprovedMessage {}
+
+impl Pack for GatewayApprovedMessage {
+    const LEN: usize = 9;
+
+    fn pack_into_slice(&self, mut dst: &mut [u8]) {
+        self.serialize(&mut dst).unwrap();
+    }
+
+    fn unpack_from_slice(src: &[u8]) -> Result<Self, solana_program::program_error::ProgramError> {
+        let mut mut_src: &[u8] = src;
+        Self::deserialize(&mut mut_src).map_err(|err| {
+            msg!("Error: failed to deserialize account: {}", err);
+            ProgramError::InvalidAccountData
+        })
     }
 }

@@ -6,12 +6,15 @@ use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
 use spl_token::state::Account;
+use test_fixtures::test_setup::TestFixture;
 use token_manager::TokenManagerType;
+
+use crate::program_test;
 
 #[tokio::test]
 async fn take_token_lock_unlock_success() -> Result<()> {
     // Setup
-    let mut fixture = super::utils::TestFixture::new().await;
+    let mut fixture = TestFixture::new(program_test()).await;
     let destination = Keypair::new();
     let mint_authority = Keypair::new();
     let gas_service_root_pda = fixture.init_gas_service().await;
@@ -164,7 +167,7 @@ async fn take_token_lock_unlock_success() -> Result<()> {
 #[tokio::test]
 async fn take_token_mint_burn_success() -> Result<()> {
     // Setup
-    let mut fixture = super::utils::TestFixture::new().await;
+    let mut fixture = TestFixture::new(program_test()).await;
     let delegate_authority = Keypair::new();
     let gas_service_root_pda = fixture.init_gas_service().await;
     let amount_to_mint_preparations = 100;

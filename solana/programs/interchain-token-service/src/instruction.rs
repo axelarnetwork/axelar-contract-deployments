@@ -106,6 +106,7 @@ pub fn build_initialize_instruction(
 
 /// Create a generic `Execute` instruction
 pub fn build_execute_instruction(
+    gateway_approved_message_pda: &Pubkey,
     funder: &Pubkey,
     incoming_accounts: &[AccountMeta],
     payload: impl AbiEncode,
@@ -114,7 +115,10 @@ pub fn build_execute_instruction(
     let init_data = InterchainTokenServiceInstruction::Execute { payload };
     let data = to_vec(&init_data)?;
 
-    let mut accounts = vec![AccountMeta::new(*funder, true)];
+    let mut accounts = vec![
+        AccountMeta::new(*gateway_approved_message_pda, false),
+        AccountMeta::new(*funder, true),
+    ];
     accounts.extend_from_slice(incoming_accounts);
 
     Ok(Instruction {
@@ -127,6 +131,7 @@ pub fn build_execute_instruction(
 /// Create `Execute::DeployTokenManager` instruction
 #[allow(clippy::too_many_arguments)]
 pub fn build_deploy_token_manager_instruction(
+    gateway_approved_message_pda: &Pubkey,
     funder: &Pubkey,
     token_manager_root_pda: &Pubkey,
     operators_permission_group_pda: &Pubkey,
@@ -149,6 +154,7 @@ pub fn build_deploy_token_manager_instruction(
     );
 
     build_execute_instruction(
+        gateway_approved_message_pda,
         funder,
         &[
             AccountMeta::new(*token_manager_root_pda, false),
