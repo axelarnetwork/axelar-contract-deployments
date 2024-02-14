@@ -1955,14 +1955,14 @@
       "chainId": 252,
       "rpc": "https://rpc.frax.com",
       "tokenSymbol": "frxETH",
+      "confirmations": 2,
       "gasOptions": {
-        "gasLimit": 3000000
+        "gasLimit": 8000000
       },
-      "confirmations": 1,
       "contracts": {
         "AxelarGateway": {},
         "AxelarGasService": {
-          "collector": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C"
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
         "Multisig": {
           "threshold": 3,
