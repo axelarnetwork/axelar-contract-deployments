@@ -1,7 +1,5 @@
-use anyhow::Ok;
-use ethers_core::abi::{self, Token, Tokenizable};
+use ethers_core::abi::{self, Tokenizable};
 use gateway::types::u256::U256;
-use interchain_token_transfer_gmp::DeployInterchainTokenB;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::keccak::hash;
@@ -35,13 +33,13 @@ impl Processor {
     /// * `gas_value` - The amount of native tokens to be used to pay for gas
     ///   for the remote deployment.
     pub fn deploy_remote_token_manager(
-        program_id: &Pubkey,
+        _program_id: &Pubkey,
         accounts: &[AccountInfo],
         salt: [u8; 32],
         destination_chain: Vec<u8>,
         token_manager_type: TokenManagerType,
         params: Vec<u8>,
-        gas_value: U256,
+        _gas_value: U256,
     ) -> ProgramResult {
         let account_info_iter = &mut accounts.iter();
         let sender = next_account_info(account_info_iter)?;
@@ -83,11 +81,11 @@ impl Processor {
             hash(PREFIX_INTERCHAIN_TOKEN_ID.as_bytes())
                 .to_bytes()
                 .as_ref()
-                .into_iter(),
+                .iter(),
         )
         .into_token();
-        let sender = ethers_core::types::Bytes::from_iter(sender.as_ref().into_iter()).into_token();
-        let salt = ethers_core::types::Bytes::from_iter(salt.as_ref().into_iter()).into_token();
+        let sender = ethers_core::types::Bytes::from_iter(sender.as_ref().iter()).into_token();
+        let salt = ethers_core::types::Bytes::from_iter(salt.as_ref().iter()).into_token();
 
         hash(&abi::encode(&[prefix, sender, salt])).to_bytes()
     }

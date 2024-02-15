@@ -6,7 +6,6 @@ use borsh::{self, BorshDeserialize, BorshSerialize};
 use gateway::types::PubkeyWrapper;
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
-use solana_program::pubkey::Pubkey;
 use token_manager::TokenManagerType;
 
 /// Interchain Token Service logs.
