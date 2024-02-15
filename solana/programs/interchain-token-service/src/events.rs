@@ -7,6 +7,7 @@ use gateway::types::PubkeyWrapper;
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use token_manager::TokenManagerType;
 
 /// Interchain Token Service logs.
 #[non_exhaustive]
@@ -21,6 +22,17 @@ pub enum InterchainTokenServiceEvent {
         deployer: PubkeyWrapper,
         /// The salt to be used during deployment.
         salt: [u8; 32],
+    },
+    /// Emitted for token manager deployment starting.
+    TokenManagerDeploymentStarted {
+        /// The interchain token id.
+        token_id: [u8; 32],
+        /// The chain where the token manager will be deployed.
+        destination_chain: Vec<u8>,
+        /// The type of token manager to be deployed.
+        token_manager_type: TokenManagerType,
+        /// The additional parameters for the token manager deployment.
+        params: Vec<u8>,
     },
 }
 
@@ -61,6 +73,22 @@ pub fn emit_interchain_token_id_claimed_event(
         token_id,
         deployer,
         salt,
+    };
+    event.emit()
+}
+
+/// Emit a [`TokenManagerDeploymentStarted`].
+pub fn emit_token_manager_deployment_started_event(
+    token_id: [u8; 32],
+    destination_chain: Vec<u8>,
+    token_manager_type: TokenManagerType,
+    params: Vec<u8>,
+) -> Result<(), ProgramError> {
+    let event = InterchainTokenServiceEvent::TokenManagerDeploymentStarted {
+        token_id,
+        destination_chain,
+        token_manager_type,
+        params,
     };
     event.emit()
 }
