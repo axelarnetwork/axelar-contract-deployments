@@ -60,19 +60,13 @@ async function getConstructorArgs(contractName, chain, wallet) {
                 throw new Error(`Missing AxelarServiceGovernance.minimumTimeDelay in the chain info.`);
             }
 
-            const cosigners = contractConfig.cosigners;
+            const multisig = contractConfig.multisig
 
-            if (!isAddressArray(cosigners)) {
-                throw new Error(`Missing AxelarServiceGovernance.cosigners in the chain info.`);
+            if (!isAddress(multisig)) {
+                throw new Error(`Missing AxelarServiceGovernance.multisig address in the chain info.`);
             }
 
-            const threshold = contractConfig.threshold;
-
-            if (!isNumber(threshold)) {
-                throw new Error(`Missing AxelarServiceGovernance.threshold in the chain info.`);
-            }
-
-            return [gateway, governanceChain, governanceAddress, minimumTimeDelay, cosigners, threshold];
+            return [gateway, governanceChain, governanceAddress, minimumTimeDelay, multisig];
         }
 
         case 'InterchainProposalSender': {
