@@ -25,6 +25,7 @@ const {
     mainProcessor,
     isContract,
     getContractJSON,
+    isNumberArray,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
@@ -135,6 +136,30 @@ async function getConstructorArgs(contractName, chain, wallet) {
             }
 
             return [signers, threshold];
+        }
+
+        case 'InterchainMultisig': {
+            const chainName = chain.axelarId;
+
+            const signers = contractConfig.signers;
+
+            if (!isAddressArray(signers)) {
+                throw new Error(`Missing InterchainMultisig.signers in the chain info.`);
+            }
+
+            const weights = contractConfig.weights;
+
+            if (!isNumberArray(weights)) {
+                throw new Error(`Missing InterchainMultisig.weights in the chain info.`);
+            }
+
+            const threshold = contractConfig.threshold;
+
+            if (!isNumber(threshold)) {
+                throw new Error(`Missing InterchainMultisig.threshold in the chain info.`);
+            }
+
+            return [chainName, [signers, weights, threshold]];
         }
 
         case 'Operators': {
