@@ -10,7 +10,6 @@ use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData}
 use crate::get_gateway_root_config_pda;
 use crate::types::address::Address;
 use crate::types::u256::U256;
-use crate::types::PubkeyWrapper;
 
 /// Instructions supported by the gateway program.
 #[repr(u8)]
@@ -28,16 +27,12 @@ pub enum GatewayInstruction {
     ///
     /// No accounts are expected by this instruction.
     CallContract {
-        /// Message sender.
-        sender: PubkeyWrapper,
         /// The name of the target blockchain.
         destination_chain: String,
         /// The address of the target contract in the destination blockchain.
         destination_contract_address: Vec<u8>,
         /// Contract call data.
         payload: Vec<u8>,
-        /// Contract call data.
-        payload_hash: [u8; 32],
     },
 
     /// Initializes the Gateway configuration PDA account.
@@ -143,21 +138,20 @@ pub fn call_contract(
     destination_chain: &str,
     destination_contract_address: &[u8],
     payload: &[u8],
-    payload_hash: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
     crate::check_program_account(program_id)?;
 
     let data = to_vec(&GatewayInstruction::CallContract {
-        sender: sender.into(),
         destination_chain: destination_chain.to_owned(),
         destination_contract_address: destination_contract_address.to_vec(),
         payload: payload.to_vec(),
-        payload_hash,
     })?;
+
+    let accounts = vec![AccountMeta::new_readonly(sender, true)];
 
     Ok(Instruction {
         program_id,
-        accounts: vec![],
+        accounts,
         data,
     })
 }
@@ -320,19 +314,15 @@ pub mod tests {
 
     #[test]
     fn round_trip_call_contract() {
-        let sender = Keypair::new().pubkey();
         let destination_chain = "ethereum";
         let destination_contract_address =
             hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
         let payload = bytes(100);
-        let payload_hash = array32();
 
         let instruction = GatewayInstruction::CallContract {
-            sender: sender.into(),
             destination_chain: destination_chain.to_owned(),
             destination_contract_address,
             payload: payload.to_vec(),
-            payload_hash,
         };
 
         let serialized = to_vec(&instruction).expect("call contract to be serialized");
@@ -348,7 +338,6 @@ pub mod tests {
         let destination_contract_address =
             hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
         let payload = bytes(100);
-        let payload_hash = array32();
 
         let instruction = call_contract(
             crate::id(),
@@ -356,7 +345,6 @@ pub mod tests {
             destination_chain,
             &destination_contract_address,
             &payload,
-            payload_hash,
         )
         .expect("valid instruction construction");
 
@@ -364,20 +352,16 @@ pub mod tests {
 
         match deserialized {
             GatewayInstruction::CallContract {
-                sender: deserialized_sender,
                 destination_chain: deserialized_destination_chain,
                 destination_contract_address: deserialized_destination_contract_address,
                 payload: deserialized_payload,
-                payload_hash: deserialized_payload_hash,
             } => {
-                assert_eq!(sender, *deserialized_sender);
                 assert_eq!(destination_chain, deserialized_destination_chain);
                 assert_eq!(
                     destination_contract_address,
                     deserialized_destination_contract_address
                 );
                 assert_eq!(payload.as_slice(), deserialized_payload.as_slice());
-                assert_eq!(payload_hash, deserialized_payload_hash);
             }
             _ => panic!("Wrong instruction"),
         };

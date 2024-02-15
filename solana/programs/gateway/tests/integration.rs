@@ -1,6 +1,8 @@
 #![cfg(feature = "test-sbf")]
 mod common;
 
+use std::{assert, assert_eq};
+
 use anyhow::{anyhow, bail, ensure, Result};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
@@ -13,7 +15,7 @@ use gmp_gateway::types::address::Address;
 use gmp_gateway::types::bimap::OperatorsAndEpochs;
 use gmp_gateway::types::execute_data_decoder::DecodedMessage;
 use gmp_gateway::types::u256::U256;
-use solana_program::hash::hash;
+use solana_program::keccak::hash;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{
     tokio, BanksClient, BanksTransactionResultWithMetadata, ProgramTestContext,
@@ -160,13 +162,11 @@ mod accounts {
 
 #[tokio::test]
 async fn test_call_contract_instruction() -> Result<()> {
-    let (mut banks_client, payer, recent_blockhash) = program_test().start().await;
-
-    let sender = Keypair::new();
+    let (mut banks_client, sender, recent_blockhash) = program_test().start().await;
     let destination_chain = "ethereum";
     let destination_address = hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862")?;
-    let payload = array32().to_vec();
-    let payload_hash = array32();
+    let payload = [1u8; 32].to_vec();
+    let payload_hash = hash(&payload).to_bytes();
 
     let instruction = gmp_gateway::instructions::call_contract(
         gmp_gateway::id(),
@@ -174,13 +174,12 @@ async fn test_call_contract_instruction() -> Result<()> {
         destination_chain,
         &destination_address,
         &payload,
-        payload_hash,
     )?;
 
     let transaction = Transaction::new_signed_with_payer(
         &[instruction],
-        Some(&payer.pubkey()),
-        &[&payer],
+        Some(&sender.pubkey()),
+        &[&sender],
         recent_blockhash,
     );
 
