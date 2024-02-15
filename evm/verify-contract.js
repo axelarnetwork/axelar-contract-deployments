@@ -18,7 +18,7 @@ async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
     const provider = getDefaultProvider(chain.rpc);
     const wallet = Wallet.createRandom().connect(provider);
-    const verifyOptions = {};
+    const verifyOptions = { chain, provider };
 
     if (dir) {
         verifyOptions.dir = dir;
