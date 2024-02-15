@@ -78,6 +78,7 @@ impl Processor {
     // Returns the tokenId that the custom TokenManager would get (or has
     // gotten).
     fn interchain_token_id(sender: &Pubkey, salt: [u8; 32]) -> [u8; 32] {
+        // INFO: this could be pre-calculated to save gas.
         let prefix = ethers_core::types::Bytes::from_iter(
             hash(PREFIX_INTERCHAIN_TOKEN_ID.as_bytes())
                 .to_bytes()
