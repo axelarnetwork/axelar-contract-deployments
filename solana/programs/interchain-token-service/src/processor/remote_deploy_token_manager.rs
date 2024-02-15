@@ -1,3 +1,4 @@
+use anyhow::Ok;
 use ethers_core::abi::{self, Token, Tokenizable};
 use gateway::types::u256::U256;
 use interchain_token_transfer_gmp::DeployInterchainTokenB;
@@ -8,7 +9,10 @@ use solana_program::pubkey::Pubkey;
 use token_manager::TokenManagerType;
 
 use super::Processor;
-use crate::events::emit_interchain_token_id_claimed_event;
+use crate::events::{
+    emit_interchain_token_id_claimed_event, emit_token_manager_deployment_started_event,
+};
+use crate::PREFIX_INTERCHAIN_TOKEN_ID;
 
 impl Processor {
     /// Used to deploy remote custom TokenManagers.
@@ -30,7 +34,7 @@ impl Processor {
     ///   TokenManager.
     /// * `gas_value` - The amount of native tokens to be used to pay for gas
     ///   for the remote deployment.
-    pub fn deploy_token_manager(
+    pub fn deploy_remote_token_manager(
         program_id: &Pubkey,
         accounts: &[AccountInfo],
         salt: [u8; 32],
@@ -41,18 +45,28 @@ impl Processor {
     ) -> ProgramResult {
         let account_info_iter = &mut accounts.iter();
         let sender = next_account_info(account_info_iter)?;
+        let token_id = Self::interchain_token_id(sender.key, salt);
 
-        emit_interchain_token_id_claimed_event(
-            Self::interchain_token_id(sender.key, salt),
-            (*sender.key).into(),
-            salt,
-        )
+        emit_interchain_token_id_claimed_event(token_id, (*sender.key).into(), salt)?;
 
-        // if (bytes(destinationChain).length == 0) {
-        //     _deployTokenManager(tokenId, tokenManagerType, params);
-        // } else {
-        //     _deployRemoteTokenManager(tokenId, destinationChain, gasValue,
-        // tokenManagerType, params); }
+        // TODO: validTokenManagerAddress(tokenId);
+        // https://github.com/axelarnetwork/interchain-token-service/blob/566e8504fe35ed63ae6c063dd8fd40a41fabc0c7/contracts/InterchainTokenService.sol#L906
+
+        emit_token_manager_deployment_started_event(
+            token_id,
+            destination_chain,
+            token_manager_type,
+            params,
+        )?;
+
+        ProgramResult::Ok(())
+
+        //     bytes memory payload =
+        // abi.encode(MESSAGE_TYPE_DEPLOY_TOKEN_MANAGER,
+        // tokenId, tokenManagerType, params);
+
+        //     _callContract(destinationChain, payload,
+        // MetadataVersion.CONTRACT_CALL, gasValue); }
     }
 
     // Calculates the tokenId that would correspond to a link for a given
@@ -64,9 +78,16 @@ impl Processor {
     // Returns the tokenId that the custom TokenManager would get (or has
     // gotten).
     fn interchain_token_id(sender: &Pubkey, salt: [u8; 32]) -> [u8; 32] {
+        let prefix = ethers_core::types::Bytes::from_iter(
+            hash(PREFIX_INTERCHAIN_TOKEN_ID.as_bytes())
+                .to_bytes()
+                .as_ref()
+                .into_iter(),
+        )
+        .into_token();
         let sender = ethers_core::types::Bytes::from_iter(sender.as_ref().into_iter()).into_token();
         let salt = ethers_core::types::Bytes::from_iter(salt.as_ref().into_iter()).into_token();
 
-        hash(&abi::encode(&[sender, salt])).to_bytes()
+        hash(&abi::encode(&[prefix, sender, salt])).to_bytes()
     }
 }

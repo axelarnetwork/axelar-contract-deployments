@@ -70,20 +70,20 @@ pub enum InterchainTokenServiceInstruction {
         /// The amount of tokens to give.
         amount: u64,
     },
-    /// Instruction DeployTokenManager.
+    /// Instruction DeployRemoteTokenManager.
     /// Used to deploy remote custom TokenManagers.
     ///
     /// Accounts expected by this instruction:
     //
     /// 0. [signer] The address of payer/ sender.
-    DeployTokenManager {
+    DeployRemoteTokenManager {
         /// The salt to be used during deployment.
         salt: [u8; 32],
         /// The name of the chain to deploy the TokenManager and standardized
         /// token to.
         destination_chain: Vec<u8>,
         /// The token manager to deploy.
-        token_manager: TokenManagerType,
+        token_manager_type: TokenManagerType,
         /// The params that will be used to initialize the TokenManager.
         params: Vec<u8>,
         /// The amount of native tokens to be used to pay for gas for the remote
@@ -357,22 +357,24 @@ pub fn build_take_token_lock_unlock_instruction(
     })
 }
 
-/// Create `DeployTokenManager` instruction
-pub fn build_deploy_token_manager_instruction(
+/// Create `DeployRemoteTokenManager` instruction
+pub fn build_deploy_remote_token_manager_instruction(
     sender: &Pubkey,
     salt: [u8; 32],
     destination_chain: Vec<u8>,
-    token_manager: TokenManagerType,
+    token_manager_type: TokenManagerType,
     params: Vec<u8>,
-    gas_value: U256, // TODO: check if this one is correct / there is like 4 of them now
+    gas_value: U256,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&InterchainTokenServiceInstruction::DeployTokenManager {
-        salt,
-        destination_chain,
-        token_manager,
-        params,
-        gas_value,
-    })?;
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::DeployRemoteTokenManager {
+            salt,
+            destination_chain,
+            token_manager_type,
+            params,
+            gas_value,
+        },
+    )?;
 
     let accounts = vec![AccountMeta::new(*sender, true)];
 

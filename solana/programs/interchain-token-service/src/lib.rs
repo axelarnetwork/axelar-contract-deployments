@@ -14,6 +14,9 @@ pub use solana_program;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+/// Prefix PREFIX_INTERCHAIN_TOKEN_ID
+pub const PREFIX_INTERCHAIN_TOKEN_ID: &str = "its-interchain-token-id";
+
 solana_program::declare_id!("4ENH4KjzfcQwyXYr6SJdaF2nhMoGqdZJ2Hk5MoY9mU2G");
 
 /// Derives interchain token service root PDA
