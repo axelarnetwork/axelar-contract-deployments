@@ -24,9 +24,6 @@ impl Processor {
         let account_info_iter = &mut accounts.iter();
         let sender = next_account_info(account_info_iter)?;
 
-        // TODO: if (deployer == interchainTokenFactory) deployer =
-        // TOKEN_FACTORY_DEPLOYER;
-
         emit_interchain_token_id_claimed_event(
             Self::interchain_token_id(sender.key, salt),
             (*sender.key).into(),
