@@ -1,7 +1,9 @@
+use ethers_core::abi::{self, Token, Tokenizable};
 use gateway::types::u256::U256;
 use interchain_token_transfer_gmp::DeployInterchainTokenB;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::keccak::hash;
 use solana_program::pubkey::Pubkey;
 use token_manager::TokenManagerType;
 
@@ -39,8 +41,9 @@ impl Processor {
     }
 
     fn interchain_token_id(sender: &Pubkey, salt: [u8; 32]) -> [u8; 32] {
-        [1u8; 32] // TODO: implement
-                  // keccak256(abi.encode(PREFIX_INTERCHAIN_TOKEN_ID, sender,
-                  // salt))
+        let sender = ethers_core::types::Bytes::from_iter(sender.as_ref().into_iter()).into_token();
+        let salt = ethers_core::types::Bytes::from_iter(salt.as_ref().into_iter()).into_token();
+
+        hash(&abi::encode(&[sender, salt])).to_bytes()
     }
 }
