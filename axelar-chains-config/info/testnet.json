@@ -2126,6 +2126,23 @@
         "url": "https://sepolia-explorer.base.org",
         "api": "https://api-sepolia.basescan.org/api"
       }
+    },
+    "polygon-cardona": {
+      "name": "Polygon ZKEVM Cardona",
+      "id": "Polygon-zkevm-cardona",
+      "chainId": 2442,
+      "rpc": "https://rpc.cardona.zkevm-rpc.com",
+      "tokenSymbol": "ETH",
+      "confirmations": 3,
+      "contracts": {},
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "explorer": {
+        "name": "Polygonscan",
+        "url": "https://cardona-zkevm.polygonscan.com",
+        "api": "https://api-cardona-zkevm.polygonscan.com/api"
+      }
     }
   },
   "axelar": {
