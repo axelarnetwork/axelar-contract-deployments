@@ -331,8 +331,8 @@ const upload = (client, wallet, chainName, config, options) => {
                 }
 
                 if (chainConfig) {
-                    contractConfig[chainConfig.id] = {
-                        ...contractConfig[chainConfig.id],
+                    contractConfig[chainConfig.axelarId] = {
+                        ...contractConfig[chainConfig.axelarId],
                         address,
                     };
                 } else {
@@ -360,8 +360,8 @@ const instantiate = (client, wallet, chainName, config, options) => {
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
     return instantiateContract(client, wallet, initMsg, config, options).then((contractAddress) => {
         if (chainConfig) {
-            contractConfig[chainConfig.id] = {
-                ...contractConfig[chainConfig.id],
+            contractConfig[chainConfig.axelarId] = {
+                ...contractConfig[chainConfig.axelarId],
                 address: contractAddress,
             };
         } else {

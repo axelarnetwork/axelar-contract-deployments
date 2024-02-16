@@ -274,7 +274,7 @@ async function processCommand(config, chain, options) {
                 env,
                 chain.name,
                 interchainTokenFactory,
-                [interchainTokenFactoryImplementation, chain.contracts.InterchainTokenService.deployer, '0x'],
+                [interchainTokenFactoryImplementation, chain.contracts.InterchainTokenFactory.deployer, '0x'],
                 {
                     ...verifyOptions,
                     contractPath: 'contracts/proxies/InterchainProxy.sol:InterchainProxy',

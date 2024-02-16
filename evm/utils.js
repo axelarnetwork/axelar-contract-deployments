@@ -1073,7 +1073,7 @@ function validateGasOptions(gasOptions) {
 function isValidChain(config, chainName) {
     const chains = config.chains;
 
-    const validChain = Object.values(chains).some((chainObject) => chainObject.id === chainName);
+    const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
 
     if (!validChain) {
         throw new Error(`Invalid destination chain: ${chainName}`);
