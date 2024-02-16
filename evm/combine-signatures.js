@@ -285,6 +285,7 @@ if (require.main === module) {
     program.addOption(new Option('--contractAddress <contractAddress>', 'contract address on current chain').env('CONTRACT_ADDRESS'));
     program.addOption(new Option('--payloadHash <payloadHash>', 'payload hash').env('PAYLOAD_HASH'));
     program.addOption(new Option('--execute', 'whether or not to immediately execute the batch').env('EXECUTE'));
+    program.addOption(new Option('--keyID <keyID>', 'key ID for operators that have signed the message').env('KEY_ID'));
 
     program.action((options) => {
         main(options);
