@@ -3,12 +3,13 @@ const axelarSchema = {
     type: 'object',
     properties: {
         id: { type: 'string' },
+        axelarId: { type: 'string' },
         rpc: { type: 'string' },
         lcd: { type: 'string' },
         grpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
     },
-    required: ['id', 'rpc', 'lcd', 'grpc', 'tokenSymbol'],
+    required: ['id', 'axelarId', 'rpc', 'lcd', 'grpc', 'tokenSymbol'],
 };
 
 export const contractValueSchema = {
@@ -65,6 +66,7 @@ export const chainValueSchema = {
     properties: {
         name: { type: 'string' },
         id: { type: 'string' },
+        axelarId: { type: 'string' },
         chainId: { type: 'number' },
         rpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
@@ -73,7 +75,7 @@ export const chainValueSchema = {
         gasOptions: { $ref: gasOptionSchema.id },
         confirmations: { type: 'number' },
     },
-    required: ['name', 'id', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
+    required: ['name', 'id', 'axelarId', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
 };
 
 export const chainsSchema = {
