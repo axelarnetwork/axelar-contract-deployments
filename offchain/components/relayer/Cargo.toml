@@ -3,10 +3,13 @@ name = "relayer"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+
 [dependencies]
 anchor-client.workspace = true
 anchor-lang.workspace = true
-anyhow.workspace = true
+thiserror.workspace = true
 base64.workspace = true
 clap.workspace = true
 env_logger.workspace = true
@@ -18,9 +21,18 @@ solana-client.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
 solana-transaction-status.workspace = true
+tendermint-rpc.workspace = true
 tokio.workspace = true
+tracing-subscriber.workspace = true
+multisig-prover.workspace = true
+solana-pubsub-client = "1.18"
+futures-util = "0.3.29"
+amplifier-api = { path = "../amplifier-api" }
+tracing = { version = "0.1.40", features = ["attributes"] }
+tokio-stream = "0.1.14"
+bcs = "0.1.6"
+tonic = "0.10.2"
 
-[dependencies.gateway]
+[dependencies.gmp-gateway]
 path = "../../../solana/programs/gateway"
 features = ["no-entrypoint"]
-package = "gmp-gateway"

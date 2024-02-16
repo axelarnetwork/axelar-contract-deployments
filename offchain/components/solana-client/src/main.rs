@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use anyhow::anyhow;
 use clap::{Parser, ValueEnum};
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -7,6 +5,8 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::keypair::read_keypair_file;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::Transaction;
+use std::path::PathBuf;
+use tiny_keccak::Hasher;
 use tracing::{debug, error, info};
 use tracing_subscriber::{
     filter::{EnvFilter, LevelFilter},
@@ -76,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
 
     let client = RpcClient::new(args.cluster.url().to_string());
 
-    debug!(cluster = ?args.cluster, gateway_program_id = %gateway::id(), "Program start");
+    debug!(cluster = ?args.cluster, gateway_program_id = %gmp_gateway::id(), "Program start");
     gateway_call_contract(
         &client,
         &payer,
@@ -94,10 +94,16 @@ async fn gateway_call_contract(
     destination_contract_address: &[u8],
     payload: &[u8],
 ) -> anyhow::Result<()> {
-    let payload_hash = solana_program::hash::hash(payload).to_bytes();
+    // Explination, why this is commented:
+    // https://eig3r.slack.com/archives/C05TRKNJDQS/p1705935199156679?thread_ts=1705932493.150129&cid=C05TRKNJDQS
+    // let payload_hash = solana_program::hash::hash(payload).to_bytes();
+    let mut sha3 = tiny_keccak::Sha3::v256();
+    let mut payload_hash = [0u8; 32];
+    sha3.update(payload);
+    sha3.finalize(&mut payload_hash);
 
-    let ix = gateway::instruction::call_contract(
-        gateway::id(),
+    let ix = gmp_gateway::instructions::call_contract(
+        gmp_gateway::id(),
         payer.pubkey(),
         destination_chain,
         destination_contract_address,

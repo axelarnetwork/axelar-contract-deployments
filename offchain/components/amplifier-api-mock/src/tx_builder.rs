@@ -2,6 +2,7 @@ use cosmrs::tx::SignDoc;
 
 use crate::account::AxelarAccount;
 
+#[allow(dead_code)]
 pub struct AxelarTx {
     fee: cosmrs::tx::Fee,
     memo: String,
@@ -18,9 +19,7 @@ impl AxelarTx {
         let sign_doc =
             SignDoc::new(&self.body, &self.auth_info, &chain_id, account.number).unwrap();
 
-        let tx_signed = sign_doc.sign(&account.private_key).unwrap();
-
-        tx_signed
+        sign_doc.sign(&account.private_key).unwrap()
     }
 }
 
@@ -35,6 +34,7 @@ pub struct AxelarTxBuilder {
 
 impl AxelarTxBuilder {
     pub fn new(account: &AxelarAccount) -> AxelarTxBuilder {
+        println!("{}", account.public_key.to_json());
         AxelarTxBuilder {
             signer_info: cosmrs::tx::SignerInfo::single_direct(
                 Some(account.public_key),
@@ -47,18 +47,18 @@ impl AxelarTxBuilder {
         }
     }
 
-    pub fn set_memo(mut self, memo: String) -> AxelarTxBuilder {
-        self.memo = Some(memo);
-        self
-    }
-
-    pub fn set_timeout_height(
-        mut self,
-        timeout_height: tendermint::block::Height,
-    ) -> AxelarTxBuilder {
-        self.timeout_height = Some(timeout_height);
-        self
-    }
+    // pub fn set_memo(mut self, memo: String) -> AxelarTxBuilder {
+    //     self.memo = Some(memo);
+    //     self
+    // }
+    //
+    // pub fn set_timeout_height(
+    //     mut self,
+    //     timeout_height: tendermint::block::Height,
+    // ) -> AxelarTxBuilder {
+    //     self.timeout_height = Some(timeout_height);
+    //     self
+    // }
 
     pub fn set_fee(mut self, fee: cosmrs::tx::Fee) -> AxelarTxBuilder {
         self.fee = Some(fee);
@@ -76,7 +76,7 @@ impl AxelarTxBuilder {
     pub fn build(self) -> AxelarTx {
         let timeout_height = self
             .timeout_height
-            .unwrap_or(tendermint::block::Height::from(0 as u32));
+            .unwrap_or(tendermint::block::Height::from(0_u32));
         let memo = self.memo.unwrap_or_default();
         let fee = self.fee.expect("TX fee is required");
         let auth_info = self.signer_info.clone().auth_info(fee.clone());

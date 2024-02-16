@@ -11,5 +11,6 @@ solana-sdk.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
-gateway = { path = "../../../solana/programs/gateway", package = "gmp-gateway" }
+gmp-gateway = { path = "../../../solana/programs/gateway" }
 anyhow.workspace = true
+tiny-keccak = { version = "2.0.0", features = ["sha3"] }

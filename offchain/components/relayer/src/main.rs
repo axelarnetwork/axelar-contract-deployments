@@ -1,142 +1,100 @@
-mod axelar;
-mod common;
-
-use std::str::FromStr;
-
-use axelar::gateway_verify_messages::axelar_gateway_verify_messages;
-use axelar::verifier_is_verified::axelar_dummy_verifier_is_verified;
+use amplifier_api::axl_rpc::axelar_rpc_client::AxelarRpcClient;
+use approver::Approver;
 use clap::Parser;
-use common::client::Client;
-use common::types::{CcId, Message};
-use log::{info, warn};
-use solana_client::rpc_client::RpcClient;
-use solana_sdk::signature::Signature;
-use tokio::time::{interval, Duration};
+use config::RelayerConfig;
+use sentinel::Sentinel;
+use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_pubsub_client::nonblocking::pubsub_client::PubsubClient;
+use solana_sdk::signer::keypair::read_keypair_file;
+use std::sync::Arc;
+use tonic::transport::Channel;
+use tracing::{error, info};
+use tracing_subscriber::{
+    filter::{EnvFilter, LevelFilter},
+    fmt::{self},
+    layer::SubscriberExt,
+    util::SubscriberInitExt,
+};
+use verifier::Verifier;
 
-#[derive(Parser, Debug, Clone)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    /// Account address to pay for Axelar TXs
-    #[arg(short, long)]
-    axelar_payer: String,
+mod approver;
+mod config;
+mod sentinel;
+mod verifier;
 
-    /// Account address to pay for Axelar TXs
-    #[arg(short, long)]
-    solana_payer_path: String,
+pub fn init_logging() {
+    let filter = EnvFilter::builder()
+        .with_default_directive(LevelFilter::DEBUG.into())
+        .from_env_lossy();
 
-    /// Axelar node RPC endpoint
-    #[arg(short, long)]
-    rpc_addr: String,
+    let stdout = fmt::layer()
+        .compact()
+        // .with_file(true)
+        // .with_line_number(true)
+        // .with_thread_ids(true)
+        // .with_target(true)
+        // .with_span_events(FmtSpan::CLOSE)
+        .with_writer(std::io::stdout);
 
-    /// Axelar how much you will to pay for TX execution
-    #[arg(short, long)]
-    fees: String,
-
-    /// Axelar fees multiplier
-    #[arg(long)]
-    fees_ratio: String,
-
-    #[arg(long)]
-    axelar_gateway_addr: String,
-
-    #[arg(long)]
-    axelar_verifier_addr: String,
-
-    #[arg(long)]
-    solana_tx_commitment: String,
-
-    #[arg(long)]
-    solana_tx_limit: usize,
-
-    #[arg(long)]
-    solana_rpc_addr: String,
+    tracing_subscriber::registry()
+        .with(filter)
+        .with(stdout)
+        .init();
 }
 
 #[tokio::main]
 async fn main() {
-    let args = Args::parse();
-    env_logger::init();
-    let tick_rate = Duration::from_secs(2);
-    let mut ticker = interval(tick_rate);
+    init_logging();
 
-    let solana_basic_rpc_client = RpcClient::new(args.solana_rpc_addr);
-    let solana_rpc_client: Client<'_> =
-        Client::new_without_payer(&solana_basic_rpc_client, &args.solana_tx_commitment);
+    info!("Starting server");
 
-    loop {
-        let txs = solana_rpc_client.fetch_tx_signatures_per_address(
-            &gateway::id(),
-            None,
-            None,
-            args.solana_tx_limit,
-        );
+    start_workers().await;
+}
 
-        // request rate limit
-        ticker.tick().await;
+async fn start_workers() {
+    let config = RelayerConfig::parse();
+    let (amplifier_rpc_client, solana_rpc_client, solana_pubsub_client) =
+        start_clients(&config).await;
+    // Workers
+    // The broadcaster waits for ready for broadcasting solana txs, on the broadcast channel
+    let payer_keypair = Arc::new(
+        read_keypair_file(&config.solana_keypair_file)
+            .expect("Failed to read keypair file: {error}"),
+    );
+    let verifier = Verifier::start(amplifier_rpc_client.clone());
+    Sentinel::start(
+        config.solana_chain_name.clone(),
+        config.axl_gw_addr_on_solana.clone(),
+        solana_pubsub_client,
+        verifier,
+    );
+    let mut approver = Approver::new(
+        config.solana_chain_name.clone(),
+        amplifier_rpc_client.clone(),
+        solana_rpc_client.clone(),
+        payer_keypair.clone(),
+    );
 
-        for tx in txs {
-            let signature = Signature::from_str(tx.signature.as_str()).unwrap();
-
-            match solana_rpc_client.fetch_events_by_tx_signature_contract_call(signature) {
-                Ok(events) => {
-                    for (index, event) in events.iter().enumerate() {
-                        // prep for axelar
-                        let cc_id = CcId::from_chain_signature_and_index(
-                            "sol".to_owned(),
-                            signature,
-                            index,
-                        );
-                        let correct_request_body =
-                            Message::prepare_message_for_axelar_side(cc_id, event);
-
-                        info!("sending: {:?}", correct_request_body.clone());
-
-                        // push message to axelar gateway
-                        axelar_gateway_verify_messages(
-                            correct_request_body.clone(),
-                            &args.fees,
-                            &args.fees_ratio,
-                            &args.axelar_payer,
-                            &args.axelar_gateway_addr,
-                            &args.rpc_addr,
-                        );
-
-                        // check if state has changed happy scenario
-                        axelar_dummy_verifier_is_verified(
-                            correct_request_body.clone(),
-                            args.axelar_verifier_addr.clone(),
-                            args.rpc_addr.clone(),
-                        );
-
-                        //     // angry scenario
-                        //     axelar_dummy_verifier_is_verified(
-                        //     Message {
-                        //         cc_id: CcId {
-                        //             chain: "sol".to_owned(),
-                        //             id:
-                        // "wrong-command-id-should-be-false".to_owned(),
-                        //         },
-                        //         source_address: event.sender.to_string(), //
-                        // TODO: check if thats correct
-                        //         destination_chain:
-                        // event.destination_chain.clone(),
-                        //         destination_address:
-                        // event.destination_contract_address.clone(),
-                        //         payload_hash:
-                        //
-                        // "2CE2D8F68382ACFAF56AD8BF81DAFDBD558490431B701FD10F8969CD8669EB2D"
-                        //                 .to_string(),
-                        //     },
-                        //     args.axelar_verifier_addr.clone(),
-                        //     args.rpc_addr.clone(),
-                        // );
-                    }
-                }
-                Err(e) => warn!(
-                    "tx without correct commitment(wait for propagation): {:?}",
-                    e
-                ),
-            };
-        }
+    match approver.run().await {
+        Ok(_) => (),
+        Err(e) => error!("failed to run approver {e}"),
     }
+}
+
+async fn start_clients(
+    config: &RelayerConfig,
+) -> (AxelarRpcClient<Channel>, Arc<RpcClient>, PubsubClient) {
+    let amplifier_rpc_client = AxelarRpcClient::connect(config.amplifier_rpc.clone())
+        .await
+        .expect("Failed to create Amplifier RPC client");
+    let solana_rpc_client = Arc::new(RpcClient::new(config.solana_rpc.clone()));
+    let solana_pubsub_client = PubsubClient::new(&config.solana_ws)
+        .await
+        .expect("Failed to create Solana PubSub client");
+
+    (
+        amplifier_rpc_client,
+        solana_rpc_client,
+        solana_pubsub_client,
+    )
 }

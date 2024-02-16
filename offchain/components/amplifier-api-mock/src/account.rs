@@ -1,7 +1,5 @@
 use cosmos_sdk_proto::{
-    cosmos::auth::v1beta1::{
-        query_client::QueryClient, BaseAccount, QueryAccountRequest, QueryAccountResponse,
-    },
+    cosmos::auth::v1beta1::{query_client::QueryClient, BaseAccount, QueryAccountRequest},
     traits::Message,
 };
 use cosmrs::{
@@ -9,7 +7,7 @@ use cosmrs::{
     AccountId,
 };
 use tonic::transport::Channel;
-use tonic::{Response, Status};
+use tonic::Response;
 
 pub struct AxelarAccount {
     pub id: AccountId,
@@ -42,10 +40,9 @@ impl AxelarAccount {
             .map(Response::into_inner)
             .unwrap();
 
-        let account: AxelarAccount;
-        if resp.account.is_some() {
+        let account: AxelarAccount = if resp.account.is_some() {
             let base_acc = BaseAccount::decode(&resp.account.unwrap().value[..]).unwrap();
-            account = AxelarAccount {
+            AxelarAccount {
                 id: sender_account_id,
                 private_key: sender_private_key,
                 public_key: sender_public_key,
@@ -53,14 +50,14 @@ impl AxelarAccount {
                 sequence: base_acc.sequence,
             }
         } else {
-            account = AxelarAccount {
+            AxelarAccount {
                 id: sender_account_id,
                 private_key: sender_private_key,
                 public_key: sender_public_key,
                 number: 0,
                 sequence: cosmrs::tx::SequenceNumber::default(), // 0
             }
-        }
+        };
 
         account
     }

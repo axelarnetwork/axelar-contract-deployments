@@ -1,5 +1,4 @@
-# Test Suite - Relayer
-Part of development tools aka "simple scripts to listen events and trigger actions"
+# Axelar-Solana Relayer
 
 ## How to run?
 
