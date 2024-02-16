@@ -21,7 +21,7 @@ pub enum GasServiceEvent {
         sender: PubkeyWrapper,
 
         /// [destination_chain] The target chain.
-        destination_chain: Vec<u8>,
+        destination_chain: String,
 
         /// [destination_address] The target address on the destination chain.
         destination_address: Vec<u8>,
@@ -43,7 +43,7 @@ pub enum GasServiceEvent {
         sender: PubkeyWrapper,
 
         /// [destination_chain] The target chain.
-        destination_chain: Vec<u8>,
+        destination_chain: String,
 
         /// [destination_address] The target address on the destination chain.
         destination_address: Vec<u8>,
@@ -70,7 +70,7 @@ pub enum GasServiceEvent {
         sender: PubkeyWrapper,
 
         /// [destination_chain] The target chain.
-        destination_chain: Vec<u8>,
+        destination_chain: String,
 
         /// [destination_address] The target address on the destination chain.
         destination_address: Vec<u8>,
@@ -92,7 +92,7 @@ pub enum GasServiceEvent {
         sender: PubkeyWrapper,
 
         /// [destination_chain] The target chain.
-        destination_chain: Vec<u8>,
+        destination_chain: String,
 
         /// [destination_address] The target address on the destination chain.
         destination_address: Vec<u8>,
@@ -190,7 +190,7 @@ fn decode_base64(input: &str) -> Option<Vec<u8>> {
 /// Emit a [`NativeGasPaidForContractCall`].
 pub fn emit_native_gas_paid_for_contract_call_event(
     sender: PubkeyWrapper,
-    destination_chain: Vec<u8>,
+    destination_chain: String,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     fees: u64,
@@ -211,7 +211,7 @@ pub fn emit_native_gas_paid_for_contract_call_event(
 #[allow(clippy::too_many_arguments)]
 pub fn emit_native_gas_paid_for_contract_call_with_token_event(
     sender: PubkeyWrapper,
-    destination_chain: Vec<u8>,
+    destination_chain: String,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     symbol: Vec<u8>,
@@ -235,7 +235,7 @@ pub fn emit_native_gas_paid_for_contract_call_with_token_event(
 /// Emit a [`NativeGasPaidForExpressCall`].
 pub fn emit_native_gas_paid_for_express_call_event(
     sender: PubkeyWrapper,
-    destination_chain: Vec<u8>,
+    destination_chain: String,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     fees: u64,
@@ -256,7 +256,7 @@ pub fn emit_native_gas_paid_for_express_call_event(
 #[allow(clippy::too_many_arguments)]
 pub fn emit_native_gas_paid_for_express_call_with_token_event(
     sender: PubkeyWrapper,
-    destination_chain: Vec<u8>,
+    destination_chain: String,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     symbol: Vec<u8>,

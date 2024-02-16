@@ -2,7 +2,6 @@
 
 use account_group::get_permission_account;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
-use gateway::types::u256::U256;
 use interchain_token_transfer_gmp::ethers_core::abi::AbiEncode;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program::instruction::{AccountMeta, Instruction};
@@ -69,26 +68,6 @@ pub enum InterchainTokenServiceInstruction {
         token_manager_type: TokenManagerType,
         /// The amount of tokens to give.
         amount: u64,
-    },
-    /// Instruction DeployRemoteTokenManager.
-    /// Used to deploy remote custom TokenManagers.
-    ///
-    /// Accounts expected by this instruction:
-    //
-    /// 0. [signer] The address of payer/ sender.
-    DeployRemoteTokenManager {
-        /// The salt to be used during deployment.
-        salt: [u8; 32],
-        /// The name of the chain to deploy the TokenManager and standardized
-        /// token to.
-        destination_chain: Vec<u8>,
-        /// The token manager to deploy.
-        token_manager_type: TokenManagerType,
-        /// The params that will be used to initialize the TokenManager.
-        params: Vec<u8>,
-        /// The amount of native tokens to be used to pay for gas for the remote
-        /// deployment.
-        gas_value: U256, // TODO: check if this one is correct / there is like 4 of them now
     },
 }
 
@@ -349,34 +328,6 @@ pub fn build_take_token_lock_unlock_instruction(
         AccountMeta::new_readonly(spl_associated_token_account::id(), false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
-
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data,
-    })
-}
-
-/// Create `DeployRemoteTokenManager` instruction
-pub fn build_deploy_remote_token_manager_instruction(
-    sender: &Pubkey,
-    salt: [u8; 32],
-    destination_chain: Vec<u8>,
-    token_manager_type: TokenManagerType,
-    params: Vec<u8>,
-    gas_value: U256,
-) -> Result<Instruction, ProgramError> {
-    let data = to_vec(
-        &InterchainTokenServiceInstruction::DeployRemoteTokenManager {
-            salt,
-            destination_chain,
-            token_manager_type,
-            params,
-            gas_value,
-        },
-    )?;
-
-    let accounts = vec![AccountMeta::new(*sender, true)];
 
     Ok(Instruction {
         program_id: crate::id(),

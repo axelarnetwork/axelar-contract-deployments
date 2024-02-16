@@ -18,7 +18,7 @@ pub enum GasServiceInstruction {
     /// Instruction PayNativeGasForContractCall.
     PayNativeGasForContractCall {
         /// [destination_chain] The target chain.
-        destination_chain: Vec<u8>,
+        destination_chain: String,
 
         /// [destination_address] The target address on the destination chain.
         destination_address: Vec<u8>,
@@ -37,7 +37,7 @@ pub enum GasServiceInstruction {
     /// Instruction PayNativeGasForContractCallWithToken.
     PayNativeGasForContractCallWithToken {
         /// [destination_chain] The target chain.
-        destination_chain: Vec<u8>,
+        destination_chain: String,
 
         /// [destination_address] The target address on the destination chain.
         destination_address: Vec<u8>,
@@ -61,7 +61,7 @@ pub enum GasServiceInstruction {
     /// Instruction PayNativeGasForExpressCall.
     PayNativeGasForExpressCall {
         /// [destination_chain] The target chain.
-        destination_chain: Vec<u8>,
+        destination_chain: String,
 
         /// [destination_address] The target address on the destination chain.
         destination_address: Vec<u8>,
@@ -79,7 +79,7 @@ pub enum GasServiceInstruction {
     /// Instruction PayNativeGasForExpressCallWithToken.
     PayNativeGasForExpressCallWithToken {
         /// [destination_chain] The target chain.
-        destination_chain: Vec<u8>,
+        destination_chain: String,
 
         /// [destination_address] The target address on the destination chain.
         destination_address: Vec<u8>,
@@ -186,7 +186,7 @@ pub fn create_initialize_root_pda_ix(initializer: Pubkey) -> Result<Instruction,
 pub fn create_pay_native_gas_for_contract_call_ix(
     sender: Pubkey,
     refund_address: Pubkey,
-    destination_chain: Vec<u8>,
+    destination_chain: String,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     fees: u64,
@@ -233,7 +233,7 @@ pub fn create_pay_native_gas_for_contract_call_ix(
 pub fn create_pay_native_gas_for_contract_call_with_token_ix(
     sender: Pubkey,
     refund_address: Pubkey,
-    destination_chain: Vec<u8>,
+    destination_chain: String,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     symbol: Vec<u8>,
@@ -281,7 +281,7 @@ pub fn create_pay_native_gas_for_contract_call_with_token_ix(
 pub fn create_pay_native_gas_for_express_call_ix(
     sender: Pubkey,
     refund_address: Pubkey,
-    destination_chain: Vec<u8>,
+    destination_chain: String,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     fees: u64,
@@ -328,7 +328,7 @@ pub fn create_pay_native_gas_for_express_call_ix(
 pub fn create_pay_native_gas_for_express_call_with_token_ix(
     sender: Pubkey,
     refund_address: Pubkey,
-    destination_chain: Vec<u8>,
+    destination_chain: String,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     symbol: Vec<u8>,

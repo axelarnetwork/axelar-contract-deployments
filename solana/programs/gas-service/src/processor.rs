@@ -192,7 +192,7 @@ impl Processor {
     /// [refund_address] The address where refunds, if any, should be sent.
     fn pay_native_gas_for_contract_call(
         accounts: &[AccountInfo],
-        destination_chain: Vec<u8>,
+        destination_chain: String,
         destination_address: Vec<u8>,
         payload: Vec<u8>,
         fees: u64,
@@ -267,7 +267,7 @@ impl Processor {
     #[allow(clippy::too_many_arguments)]
     fn pay_native_gas_for_contract_call_with_token(
         accounts: &[AccountInfo],
-        destination_chain: Vec<u8>,
+        destination_chain: String,
         destination_address: Vec<u8>,
         payload: Vec<u8>,
         symbol: Vec<u8>,
@@ -343,7 +343,7 @@ impl Processor {
     /// [refund_address] The address where refunds, if any, should be sent.
     fn pay_native_gas_for_express_call(
         accounts: &[AccountInfo],
-        destination_chain: Vec<u8>,
+        destination_chain: String,
         destination_address: Vec<u8>,
         payload: Vec<u8>,
         fees: u64,
@@ -420,7 +420,7 @@ impl Processor {
     #[allow(clippy::too_many_arguments)]
     fn pay_native_gas_for_express_call_with_token(
         accounts: &[AccountInfo],
-        destination_chain: Vec<u8>,
+        destination_chain: String,
         destination_address: Vec<u8>,
         payload: Vec<u8>,
         symbol: Vec<u8>,
