@@ -286,7 +286,7 @@ pub mod tests {
     use borsh::from_slice;
     use solana_sdk::signature::Keypair;
     use solana_sdk::signer::Signer;
-    use test_fixtures::primitives::{array32, bytes};
+    use test_fixtures::primitives::bytes;
 
     use super::*;
 

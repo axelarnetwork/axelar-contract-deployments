@@ -17,7 +17,7 @@ use crate::error::GasServiceError;
 use crate::events::emit_refunded_event;
 use crate::instruction::GasServiceInstruction;
 use crate::solana_program::system_instruction;
-use crate::{events, get_gas_service_root_pda};
+use crate::{events, get_gas_service_root_pda, TxHash};
 
 /// Program handler.
 pub struct Processor;
@@ -493,7 +493,7 @@ impl Processor {
     /// [refund_address] The address where refunds, if any, should be sent.
     fn add_native_gas(
         accounts: &[AccountInfo],
-        tx_hash: [u8; 32],
+        tx_hash: TxHash,
         log_index: u64,
         fees: u64,
         refund_address: PubkeyWrapper,
@@ -555,7 +555,7 @@ impl Processor {
     /// [refund_address] The address where refunds, if any, should be sent.
     fn add_native_express_gas(
         accounts: &[AccountInfo],
-        tx_hash: [u8; 32],
+        tx_hash: TxHash,
         log_index: u64,
         fees: u64,
         refund_address: PubkeyWrapper,
@@ -671,7 +671,7 @@ impl Processor {
 
     fn refund(
         accounts: &[AccountInfo],
-        tx_hash: [u8; 32],
+        tx_hash: TxHash,
         log_index: u64,
         fees: u64,
     ) -> Result<(), ProgramError> {

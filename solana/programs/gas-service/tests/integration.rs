@@ -461,7 +461,7 @@ async fn add_native_gas_happy_scenario() -> Result<()> {
         initial_saldo
     );
 
-    let tx_hash = [1u8; 32];
+    let tx_hash = [1u8; 64];
     let log_index = 0;
     let fees = 100000000; // 1 sol in lamports;
 
@@ -550,7 +550,7 @@ async fn add_native_express_gas_happy_scenario() -> Result<()> {
         initial_saldo
     );
 
-    let tx_hash = [1u8; 32];
+    let tx_hash = [1u8; 64];
     let log_index = 0;
     let fees = 100000000; // 1 sol in lamports;
 
@@ -705,7 +705,7 @@ async fn collect_fees_happy_scenario() -> Result<()> {
     assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
 
     // Fund the root PDA account.
-    let tx_hash = [1u8; 32];
+    let tx_hash = [1u8; 64];
     let log_index = 0;
     let fees = 999999999999;
 
@@ -813,7 +813,7 @@ async fn collect_fees_collect_more_than_could_be() -> Result<()> {
     assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
 
     // Fund the root PDA account.
-    let tx_hash = [1u8; 32];
+    let tx_hash = [1u8; 64];
     let log_index = 0;
     let fees = 999999999999;
 
@@ -911,7 +911,7 @@ async fn refund_happy_scenario() -> Result<()> {
     assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
 
     // Fund the root PDA account.
-    let tx_hash = [1u8; 32];
+    let tx_hash = [1u8; 64];
     let log_index = 0;
     let fees = 999999999999;
 
@@ -1019,7 +1019,7 @@ async fn refund_more_than_could_be() -> Result<()> {
     assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
 
     // Fund the root PDA account.
-    let tx_hash = [1u8; 32];
+    let tx_hash = [1u8; 64];
     let log_index = 0;
     let fees = 999999999999;
 

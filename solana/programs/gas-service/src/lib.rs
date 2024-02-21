@@ -13,6 +13,9 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+type TxHash = [u8; 64];
+type LogIndex = u64;
+
 // The ID here is fake, and used only for development.
 // TODO: replace with real ID
 solana_program::declare_id!("3KS2k14CmtnuVv2fvYcvdrNgC94Y11WETBpMUGgXyWZL");

@@ -9,6 +9,8 @@ use solana_program::keccak::hash;
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 
+use crate::{LogIndex, TxHash};
+
 /// Gas Service program logs.
 #[non_exhaustive]
 #[repr(u8)]
@@ -117,10 +119,10 @@ pub enum GasServiceEvent {
     /// currency.
     NativeGasAdded {
         /// [tx_hash] The transaction hash of the cross-chain call.
-        tx_hash: [u8; 32],
+        tx_hash: TxHash,
 
         /// [log_index] The log index of the event.
-        log_index: u64,
+        log_index: LogIndex,
 
         /// [fees] The amount of SOL to pay for gas.
         fees: u64,
@@ -133,10 +135,10 @@ pub enum GasServiceEvent {
     /// currency.
     NativeExpressGasAdded {
         /// [tx_hash] The transaction hash of the cross-chain call.
-        tx_hash: [u8; 32],
+        tx_hash: TxHash,
 
         /// [log_index] The log index of the event.
-        log_index: u64,
+        log_index: LogIndex,
 
         /// [fees] The amount of SOL to pay for gas.
         fees: u64,
@@ -148,10 +150,10 @@ pub enum GasServiceEvent {
     /// Logged when the Gas Service refunds fees, if any, in native currency.
     Refunded {
         /// [tx_hash] The transaction hash of the cross-chain call.
-        tx_hash: [u8; 32],
+        tx_hash: TxHash,
 
         /// [log_index] The log index of the event.
-        log_index: u64,
+        log_index: LogIndex,
 
         /// [fees] The amount of SOL to pay for gas.
         fees: u64,
@@ -279,8 +281,8 @@ pub fn emit_native_gas_paid_for_express_call_with_token_event(
 
 /// Emit a [`NativeGasAdded`].
 pub fn emit_native_gas_added_event(
-    tx_hash: [u8; 32],
-    log_index: u64,
+    tx_hash: TxHash,
+    log_index: LogIndex,
     fees: u64,
     refund_address: PubkeyWrapper,
 ) -> Result<(), ProgramError> {
@@ -295,8 +297,8 @@ pub fn emit_native_gas_added_event(
 
 /// Emit a [`NativeExpressGasAdded`].
 pub fn emit_native_express_gas_added_event(
-    tx_hash: [u8; 32],
-    log_index: u64,
+    tx_hash: TxHash,
+    log_index: LogIndex,
     fees: u64,
     refund_address: PubkeyWrapper,
 ) -> Result<(), ProgramError> {
@@ -311,8 +313,8 @@ pub fn emit_native_express_gas_added_event(
 
 /// Emit a [`Refunded`].
 pub fn emit_refunded_event(
-    tx_hash: [u8; 32],
-    log_index: u64,
+    tx_hash: TxHash,
+    log_index: LogIndex,
     fees: u64,
     refund_address: PubkeyWrapper,
 ) -> Result<(), ProgramError> {

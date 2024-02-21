@@ -8,6 +8,8 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+use crate::{LogIndex, TxHash};
+
 /// Instructions supported by the program.
 #[repr(u8)]
 #[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize)]
@@ -24,7 +26,6 @@ pub enum GasServiceInstruction {
         destination_address: Vec<u8>,
 
         /// [payload] Data payload for the contract call.
-        /// TODO: check maybe it could be just hash of the payload.
         payload: Vec<u8>,
 
         /// [fees] The amount of SOL to pay for gas.
@@ -103,10 +104,10 @@ pub enum GasServiceInstruction {
     /// Instruction AddNativeGas.
     AddNativeGas {
         /// [tx_hash] The transaction hash of the cross-chain call.
-        tx_hash: [u8; 32],
+        tx_hash: TxHash,
 
         /// [log_index] The log index of the event.
-        log_index: u64,
+        log_index: LogIndex,
 
         /// [fees] The amount of SOL to pay for gas.
         fees: u64,
@@ -118,10 +119,10 @@ pub enum GasServiceInstruction {
     /// Instruction AddNativeExpressGas.
     AddNativeExpressGas {
         /// [tx_hash] The transaction hash of the cross-chain call.
-        tx_hash: [u8; 32],
+        tx_hash: TxHash,
 
         /// [log_index] The log index of the event.
-        log_index: u64,
+        log_index: LogIndex,
 
         /// [fees] The amount of SOL to pay for gas.
         fees: u64,
@@ -141,10 +142,10 @@ pub enum GasServiceInstruction {
     /// Authority only.
     Refund {
         /// [tx_hash] The transaction hash of the cross-chain call.
-        tx_hash: [u8; 32],
+        tx_hash: TxHash,
 
         /// [log_index] The log index of the event.
-        log_index: u64,
+        log_index: LogIndex,
 
         /// [fees] The amount of SOL to pay for gas.
         fees: u64,
@@ -372,8 +373,8 @@ pub fn create_pay_native_gas_for_express_call_with_token_ix(
 pub fn create_add_native_gas_ix(
     sender: Pubkey,
     refund_address: Pubkey,
-    tx_hash: [u8; 32],
-    log_index: u64,
+    tx_hash: TxHash,
+    log_index: LogIndex,
     fees: u64,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&GasServiceInstruction::AddNativeGas {
@@ -408,8 +409,8 @@ pub fn create_add_native_gas_ix(
 pub fn create_add_native_express_gas_ix(
     sender: Pubkey,
     refund_address: Pubkey,
-    tx_hash: [u8; 32],
-    log_index: u64,
+    tx_hash: TxHash,
+    log_index: LogIndex,
     fees: u64,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&GasServiceInstruction::AddNativeExpressGas {
