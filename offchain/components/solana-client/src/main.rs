@@ -94,21 +94,12 @@ async fn gateway_call_contract(
     destination_contract_address: &[u8],
     payload: &[u8],
 ) -> anyhow::Result<()> {
-    // Explination, why this is commented:
-    // https://eig3r.slack.com/archives/C05TRKNJDQS/p1705935199156679?thread_ts=1705932493.150129&cid=C05TRKNJDQS
-    // let payload_hash = solana_program::hash::hash(payload).to_bytes();
-    let mut sha3 = tiny_keccak::Sha3::v256();
-    let mut payload_hash = [0u8; 32];
-    sha3.update(payload);
-    sha3.finalize(&mut payload_hash);
-
     let ix = gmp_gateway::instructions::call_contract(
         gmp_gateway::id(),
         payer.pubkey(),
         destination_chain,
         destination_contract_address,
         payload,
-        payload_hash,
     )?;
 
     let latest_blockhash = client.get_latest_blockhash().await?;
