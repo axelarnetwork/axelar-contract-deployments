@@ -1,6 +1,6 @@
 mod deploy_interchain_token;
+mod deploy_token_manager;
 mod interchain_transfer;
-mod relayer_gmp_deploy_token_manager;
 
 use gateway::accounts::GatewayApprovedMessage;
 use interchain_token_transfer_gmp::ethers_core::abi::AbiDecode;

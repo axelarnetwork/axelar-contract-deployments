@@ -2,6 +2,7 @@ use account_group::instruction::GroupId;
 use account_group::{get_permission_account, get_permission_group_account};
 use borsh::BorshDeserialize;
 use gateway::accounts::{GatewayApprovedMessage, GatewayConfig};
+use interchain_address_tracker::{get_associated_chain_address, get_associated_trusted_address};
 use interchain_token_service::{
     get_flow_limiters_permission_group_id, get_interchain_token_service_root_pda,
     get_operators_permission_group_id,
@@ -279,7 +280,7 @@ impl TestFixture {
             .await;
 
         // Action
-        let ix = interchain_token_service::instruction::build_relayer_gmp_deploy_token_manager_instruction(
+        let ix = interchain_token_service::instruction::build_deploy_token_manager_instruction(
             &gateway_approved_message_pda,
             &self.payer.pubkey(),
             &token_manager_root_pda_pubkey,
@@ -452,6 +453,80 @@ impl TestFixture {
             .unwrap();
 
         gateway_approved_message_pda
+    }
+
+    pub async fn prepare_trusted_address_iatracker(
+        &mut self,
+        owner: Keypair,
+        trusted_chain_name: String,
+        trusted_chain_addr: String,
+    ) -> (Pubkey, String) {
+        let associated_chain_address = get_associated_chain_address(&owner.pubkey());
+
+        let recent_blockhash = self.refresh_blockhash().await;
+        let ix =
+            interchain_address_tracker::instruction::build_create_registered_chain_instruction(
+                &self.payer.pubkey(),
+                &associated_chain_address,
+                &owner.pubkey(),
+                trusted_chain_name.clone(),
+            )
+            .unwrap();
+        let transaction = Transaction::new_signed_with_payer(
+            &[ix],
+            Some(&self.payer.pubkey()),
+            &[&self.payer, &owner],
+            recent_blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+
+        let associated_trusted_address =
+            get_associated_trusted_address(&associated_chain_address, &trusted_chain_name);
+
+        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
+        let ix = interchain_address_tracker::instruction::build_set_trusted_address_instruction(
+            &self.payer.pubkey(),
+            &associated_chain_address,
+            &associated_trusted_address,
+            &owner.pubkey(),
+            trusted_chain_name,
+            trusted_chain_addr.clone(),
+        )
+        .unwrap();
+        let transaction = Transaction::new_signed_with_payer(
+            &[ix],
+            Some(&self.payer.pubkey()),
+            &[&self.payer, &owner],
+            recent_blockhash,
+        );
+
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+
+        // Associated account now exists
+        let associated_account = self
+            .banks_client
+            .get_account(associated_trusted_address)
+            .await
+            .expect("get_account")
+            .expect("associated_account not none");
+        let account_info =
+            interchain_address_tracker::state::RegisteredTrustedAddressAccount::unpack_from_slice(
+                associated_account.data.as_slice(),
+            )
+            .unwrap();
+        assert_eq!(account_info.address, trusted_chain_addr);
+        associated_account.check_initialized_pda::<interchain_address_tracker::state::RegisteredTrustedAddressAccount>(
+            &interchain_address_tracker::id(),
+        )
+        .unwrap();
+
+        (associated_trusted_address, account_info.address)
     }
 }
 

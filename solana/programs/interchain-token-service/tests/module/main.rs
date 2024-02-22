@@ -1,4 +1,5 @@
 mod deploy_interchain_token;
+mod deploy_remote_token_manager;
 mod deploy_token_manager;
 mod give_token;
 mod interchain_transfer;
@@ -31,6 +32,11 @@ pub fn program_test() -> ProgramTest {
     pt.add_program(
         "account_group",
         account_group::id(),
+        processor!(account_group::processor::Processor::process_instruction),
+    );
+    pt.add_program(
+        "interchain_address_tracker",
+        interchain_address_tracker::id(),
         processor!(account_group::processor::Processor::process_instruction),
     );
 

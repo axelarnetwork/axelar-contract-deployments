@@ -27,7 +27,7 @@ pub enum InterchainTokenServiceEvent {
         /// The interchain token id.
         token_id: [u8; 32],
         /// The chain where the token manager will be deployed.
-        destination_chain: Vec<u8>,
+        destination_chain: String,
         /// The type of token manager to be deployed.
         token_manager_type: TokenManagerType,
         /// The additional parameters for the token manager deployment.
@@ -79,7 +79,7 @@ pub fn emit_interchain_token_id_claimed_event(
 /// Emit a [`TokenManagerDeploymentStarted`].
 pub fn emit_token_manager_deployment_started_event(
     token_id: [u8; 32],
-    destination_chain: Vec<u8>,
+    destination_chain: String,
     token_manager_type: TokenManagerType,
     params: Vec<u8>,
 ) -> Result<(), ProgramError> {

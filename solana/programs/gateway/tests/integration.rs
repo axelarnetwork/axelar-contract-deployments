@@ -22,7 +22,6 @@ use solana_program_test::{
 };
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
-use test_fixtures::primitives::array32;
 
 mod accounts {
     use gmp_gateway::accounts::transfer_operatorship::TransferOperatorshipAccount;

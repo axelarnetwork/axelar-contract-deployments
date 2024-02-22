@@ -37,6 +37,7 @@ gateway = { path = "programs/gateway", package = "gmp-gateway" }
 gas-service = { path = "programs/gas-service" }
 token-manager = { path = "programs/token-manager" }
 interchain-token-service = { path = "programs/interchain-token-service" }
+interchain-address-tracker = {path = "programs/interchain-address-tracker"}
 
 # helper crates
 program-utils = { path = "helpers/program-utils" }

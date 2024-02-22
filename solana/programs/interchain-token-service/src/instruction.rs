@@ -69,6 +69,26 @@ pub enum InterchainTokenServiceInstruction {
         /// The amount of tokens to give.
         amount: u64,
     },
+    /// Instruction DeployRemoteTokenManager.
+    /// Used to deploy remote custom TokenManagers.
+    ///
+    /// Accounts expected by this instruction:
+    //
+    /// 0. [signer] The address of payer/ sender.
+    DeployRemoteTokenManager {
+        /// The salt to be used during deployment.
+        salt: [u8; 32],
+        /// The name of the chain to deploy the TokenManager and standardized
+        /// token to.
+        destination_chain: String,
+        /// The token manager to deploy.
+        token_manager_type: TokenManagerType,
+        /// The params that will be used to initialize the TokenManager.
+        params: Vec<u8>,
+        /// The amount of native tokens to be used to pay for gas for the remote
+        /// deployment.
+        gas_value: u64,
+    },
 }
 
 /// Builds a `Setup` instruction for the `TokenManager` program.
@@ -130,7 +150,7 @@ pub fn build_execute_instruction(
 
 /// Create `Execute::DeployTokenManager` instruction
 #[allow(clippy::too_many_arguments)]
-pub fn build_relayer_gmp_deploy_token_manager_instruction(
+pub fn build_deploy_token_manager_instruction(
     gateway_approved_message_pda: &Pubkey,
     funder: &Pubkey,
     token_manager_root_pda: &Pubkey,
@@ -326,6 +346,42 @@ pub fn build_take_token_lock_unlock_instruction(
         AccountMeta::new_readonly(*gas_service_root_pda, false),
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Create `DeployRemoteTokenManager` instruction
+pub fn build_deploy_remote_token_manager_instruction(
+    sender: &Pubkey,
+    salt: [u8; 32],
+    destination_chain: String,
+    token_manager_type: TokenManagerType,
+    params: Vec<u8>,
+    gas_value: u64,
+    associated_trusted_address: &Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::DeployRemoteTokenManager {
+            salt,
+            destination_chain,
+            token_manager_type,
+            params,
+            gas_value,
+        },
+    )?;
+
+    let accounts = vec![
+        AccountMeta::new(*sender, true),
+        AccountMeta::new_readonly(gateway::id(), false),
+        AccountMeta::new_readonly(gas_service::id(), false),
+        AccountMeta::new(gas_service::get_gas_service_root_pda().0, false),
+        AccountMeta::new_readonly(*associated_trusted_address, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 

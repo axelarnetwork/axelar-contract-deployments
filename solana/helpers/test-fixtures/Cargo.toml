@@ -29,3 +29,4 @@ interchain-token-service.workspace = true
 gas-service.workspace = true
 gateway.workspace = true
 account-group.workspace = true
+interchain-address-tracker.workspace = true

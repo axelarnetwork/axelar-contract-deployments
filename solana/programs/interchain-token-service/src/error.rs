@@ -46,6 +46,10 @@ pub enum InterchainTokenServiceError {
     /// UninitializedAssociatedTokenAccount
     #[error("uninitialized associated token account")]
     UninitializedAssociatedTokenAccount,
+
+    /// Emitted when the destination_chain length is 0.
+    #[error("untrusted chain")]
+    UntrustedChain,
 }
 
 impl From<InterchainTokenServiceError> for ProgramError {

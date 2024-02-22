@@ -66,31 +66,30 @@ async fn test_deploy_token_manager() {
     );
 
     // Action
-    let ix =
-        interchain_token_service::instruction::build_relayer_gmp_deploy_token_manager_instruction(
-            &gateway_approved_message_pda,
-            &fixture.payer.pubkey(),
-            &token_manager_root_pda_pubkey,
-            &its_token_manager_permission_groups.operator_group.group_pda,
-            &its_token_manager_permission_groups
-                .operator_group
-                .group_pda_user_owner,
-            &its_token_manager_permission_groups
-                .flow_limiter_group
-                .group_pda,
-            &its_token_manager_permission_groups
-                .flow_limiter_group
-                .group_pda_user_owner,
-            &interchain_token_service_root_pda,
-            &token_mint,
-            &gateway_root_pda,
-            DeployTokenManager {
-                token_id: Bytes32(keccak256("random-token-id")),
-                token_manager_type: U256::from(token_manager::TokenManagerType::MintBurn as u8),
-                params: vec![],
-            },
-        )
-        .unwrap();
+    let ix = interchain_token_service::instruction::build_deploy_token_manager_instruction(
+        &gateway_approved_message_pda,
+        &fixture.payer.pubkey(),
+        &token_manager_root_pda_pubkey,
+        &its_token_manager_permission_groups.operator_group.group_pda,
+        &its_token_manager_permission_groups
+            .operator_group
+            .group_pda_user_owner,
+        &its_token_manager_permission_groups
+            .flow_limiter_group
+            .group_pda,
+        &its_token_manager_permission_groups
+            .flow_limiter_group
+            .group_pda_user_owner,
+        &interchain_token_service_root_pda,
+        &token_mint,
+        &gateway_root_pda,
+        DeployTokenManager {
+            token_id: Bytes32(keccak256("random-token-id")),
+            token_manager_type: U256::from(token_manager::TokenManagerType::MintBurn as u8),
+            params: vec![],
+        },
+    )
+    .unwrap();
     let transaction = Transaction::new_signed_with_payer(
         &[ix],
         Some(&fixture.payer.pubkey()),
