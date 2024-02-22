@@ -2096,6 +2096,7 @@
     },
     "optimism-sepolia": {
       "name": "Optimism-Sepolia",
+      "id": "optimism-sepolia",
       "axelarId": "optimism-sepolia",
       "chainId": 11155420,
       "rpc": "https://sepolia.optimism.io",
