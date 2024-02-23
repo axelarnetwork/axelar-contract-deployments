@@ -1,5 +1,6 @@
 //! Program state processor
 
+mod deploy_remote_interchain_token;
 mod deploy_remote_token_manager;
 mod execute;
 mod give_token;
@@ -56,6 +57,25 @@ impl Processor {
                 destination_chain,
                 token_manager_type,
                 params,
+                gas_value,
+            ),
+            InterchainTokenServiceInstruction::DeployRemoteInterchainToken {
+                salt,
+                destination_chain,
+                name,
+                symbol,
+                decimals,
+                minter,
+                gas_value,
+            } => Self::deploy_remote_interchain_token(
+                program_id,
+                accounts,
+                salt,
+                destination_chain,
+                name,
+                symbol,
+                decimals,
+                minter,
                 gas_value,
             ),
         }

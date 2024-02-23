@@ -1,20 +1,18 @@
 use ethers_core::abi::AbiEncode;
-use ethers_core::types::U256;
 use gas_service::events::GasServiceEvent;
 use gateway::events::GatewayEvent;
-use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};
+use interchain_token_transfer_gmp::{Bytes32, DeployInterchainToken};
 use solana_program::keccak::hash;
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
 use solana_sdk::signature::Signer;
 use solana_sdk::signer::keypair::Keypair;
 use solana_sdk::transaction::Transaction;
 use test_fixtures::test_setup::TestFixture;
-use token_manager::TokenManagerType;
 
 use crate::program_test;
 
 #[tokio::test]
-async fn test_deploy_remote_token_manager() {
+async fn test_deploy_remote_interchain_token() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let gas_service_root_pda = fixture.init_gas_service().await;
@@ -39,15 +37,19 @@ async fn test_deploy_remote_token_manager() {
 
     let salt = [1u8; 32];
     let destination_chain = trusted_chain_name;
-    let token_manager_type = TokenManagerType::LockUnlock;
-    let params: Vec<u8> = vec![0, 1, 2, 3];
+    let name: String = "ethereum-token".into();
+    let symbol: String = "etht".into();
+    let decimals: u8 = 6;
+    let minter: Vec<u8> = vec![0, 1, 2, 3];
     let gas_value = 777; // fees
 
     let token_id = interchain_token_service::interchain_token_id(&fixture.payer.pubkey(), salt);
-    let payload = DeployTokenManager {
+    let payload = DeployInterchainToken {
         token_id: Bytes32(token_id),
-        token_manager_type: U256::from(token_manager_type.clone() as u8),
-        params: params.clone(),
+        name: name.clone(),
+        symbol: symbol.clone(),
+        decimals,
+        minter: minter.clone(),
     }
     .encode();
     let payload_hash = hash(&payload).to_bytes();
@@ -56,12 +58,14 @@ async fn test_deploy_remote_token_manager() {
     let recent_blockhash = fixture.refresh_blockhash().await;
     let transaction = Transaction::new_signed_with_payer(
         &[
-            interchain_token_service::instruction::build_deploy_remote_token_manager_instruction(
+            interchain_token_service::instruction::build_deploy_remote_interchain_token_instruction(
                 &fixture.payer.pubkey(),
                 salt,
                 destination_chain.clone(),
-                token_manager_type.clone(),
-                params,
+                name,
+                symbol,
+                decimals,
+                minter,
                 gas_value,
                 &associated_trusted_address,
             )

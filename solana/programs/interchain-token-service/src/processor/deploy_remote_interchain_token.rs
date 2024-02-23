@@ -1,47 +1,28 @@
 use ethers_core::abi::AbiEncode;
-use ethers_core::types::U256;
 use interchain_address_tracker::state::RegisteredTrustedAddressAccount;
-use interchain_token_transfer_gmp::DeployTokenManager;
+use interchain_token_transfer_gmp::DeployInterchainToken;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::program::invoke;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
-use token_manager::TokenManagerType;
 
 use super::Processor;
 use crate::error::InterchainTokenServiceError;
-use crate::events::{
-    emit_interchain_token_id_claimed_event, emit_token_manager_deployment_started_event,
-};
+use crate::events::emit_interchain_token_deployment_started_event;
 use crate::{interchain_token_id, Bytes32, ProgramError};
 
 impl Processor {
-    /// Used to deploy remote custom TokenManagers.
-    ///
-    /// At least the `gasValue` amount of native token must be passed to the
-    /// function call. `gasValue` exists because this function can be
-    /// part of a multicall involving multiple functions that could make remote
-    /// contract calls.
-    ///
-    /// # Arguments
-    ///
-    /// * `program_id` - The program ID of the Solana program.
-    /// * `accounts` - The accounts required for the transaction.
-    /// * `salt` - The salt to be used during deployment.
-    /// * `destination_chain` - The name of the chain to deploy the TokenManager
-    ///   and standardized token to.
-    /// * `token_manager_type` - The type of TokenManager to be deployed.
-    /// * `params` - The params that will be used to initialize the
-    ///   TokenManager.
-    /// * `gas_value` / `fees` - The amount of native tokens to be used to pay
-    ///   for gas for the remote deployment.
-    pub fn deploy_remote_token_manager(
+    /// Used to deploy remote interchain tokens.
+    #[allow(clippy::too_many_arguments)]
+    pub fn deploy_remote_interchain_token(
         _program_id: &Pubkey,
         accounts: &[AccountInfo],
         salt: [u8; 32],
         destination_chain: String,
-        token_manager_type: TokenManagerType,
-        params: Vec<u8>,
+        name: String,
+        symbol: String,
+        decimals: u8,
+        minter: Vec<u8>,
         fees: u64,
     ) -> Result<(), ProgramError> {
         if destination_chain.is_empty() {
@@ -64,18 +45,21 @@ impl Processor {
 
         assert!(sender.is_signer);
 
-        emit_interchain_token_id_claimed_event(token_id, (*sender.key).into(), salt)?;
-        emit_token_manager_deployment_started_event(
+        emit_interchain_token_deployment_started_event(
             token_id,
+            name.clone(),
+            symbol.clone(),
+            decimals,
+            minter.clone(),
             destination_chain.clone(),
-            token_manager_type.clone(),
-            params.clone(),
         )?;
 
-        let payload = DeployTokenManager {
+        let payload = DeployInterchainToken {
             token_id: Bytes32(token_id),
-            token_manager_type: U256::from(token_manager_type as u8),
-            params,
+            name,
+            symbol,
+            decimals,
+            minter,
         }
         .encode();
 

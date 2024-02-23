@@ -1,4 +1,5 @@
 mod deploy_interchain_token;
+mod deploy_remote_interchain_token;
 mod deploy_remote_token_manager;
 mod deploy_token_manager;
 mod give_token;

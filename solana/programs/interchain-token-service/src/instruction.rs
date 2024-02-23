@@ -89,6 +89,29 @@ pub enum InterchainTokenServiceInstruction {
         /// deployment.
         gas_value: u64,
     },
+    /// Instruction DeployRemoteInterchainToken.
+    /// Used to deploy remote interchain tokens.
+    ///
+    /// Accounts expected by this instruction:
+    //
+    /// 0. [signer] The address of payer/ sender.
+    DeployRemoteInterchainToken {
+        /// The salt to be used during deployment.
+        salt: [u8; 32],
+        /// The name of the destination chain to deploy to.
+        destination_chain: String,
+        /// The name of the token to be deployed.
+        name: String,
+        /// The symbol of the token to be deployed.
+        symbol: String,
+        /// The decimals of the token to be deployed.
+        decimals: u8,
+        /// The address that will be able to mint and burn the deployed token.
+        minter: Vec<u8>,
+        /// The amount of native tokens to be used to pay for gas for the remote
+        /// deployment.
+        gas_value: u64,
+    },
 }
 
 /// Builds a `Setup` instruction for the `TokenManager` program.
@@ -372,6 +395,47 @@ pub fn build_deploy_remote_token_manager_instruction(
             destination_chain,
             token_manager_type,
             params,
+            gas_value,
+        },
+    )?;
+
+    let accounts = vec![
+        AccountMeta::new(*sender, true),
+        AccountMeta::new_readonly(gateway::id(), false),
+        AccountMeta::new_readonly(gas_service::id(), false),
+        AccountMeta::new(gas_service::get_gas_service_root_pda().0, false),
+        AccountMeta::new_readonly(*associated_trusted_address, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Create `DeployRemoteInterchainToken` instruction
+#[allow(clippy::too_many_arguments)]
+pub fn build_deploy_remote_interchain_token_instruction(
+    sender: &Pubkey,
+    salt: [u8; 32],
+    destination_chain: String,
+    name: String,
+    symbol: String,
+    decimals: u8,
+    minter: Vec<u8>,
+    gas_value: u64,
+    associated_trusted_address: &Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::DeployRemoteInterchainToken {
+            salt,
+            destination_chain,
+            name,
+            symbol,
+            decimals,
+            minter,
             gas_value,
         },
     )?;

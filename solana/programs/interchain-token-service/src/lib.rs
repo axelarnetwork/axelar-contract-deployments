@@ -9,9 +9,11 @@ pub mod instruction;
 pub mod processor;
 pub mod state;
 use account_group::instruction::GroupId;
+use ethers_core::abi::{self, Tokenizable};
 use interchain_token_transfer_gmp::Bytes32;
 pub use solana_program;
 use solana_program::entrypoint::ProgramResult;
+use solana_program::keccak::hash;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
@@ -103,4 +105,27 @@ pub fn get_flow_limiters_permission_group_id(
         ]
         .concat(),
     )
+}
+
+/// Calculates the tokenId that would correspond to a link for a given
+/// deployer with a specified salt.
+///
+/// * `sender` - The address of the TokenManager deployer.
+/// * `salt` - The salt that the deployer uses for the deployment.
+///
+/// Returns the tokenId that the custom TokenManager would get (or has
+/// gotten).
+pub fn interchain_token_id(sender: &Pubkey, salt: [u8; 32]) -> [u8; 32] {
+    // INFO: this could be pre-calculated to save gas.
+    let prefix = ethers_core::types::Bytes::from_iter(
+        hash("its-interchain-token-id".as_bytes())
+            .to_bytes()
+            .as_ref()
+            .iter(),
+    )
+    .into_token();
+    let sender = ethers_core::types::Bytes::from_iter(sender.as_ref().iter()).into_token();
+    let salt = ethers_core::types::Bytes::from_iter(salt.as_ref().iter()).into_token();
+
+    hash(&abi::encode(&[prefix, sender, salt])).to_bytes()
 }

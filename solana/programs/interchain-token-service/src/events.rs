@@ -33,6 +33,21 @@ pub enum InterchainTokenServiceEvent {
         /// The additional parameters for the token manager deployment.
         params: Vec<u8>,
     },
+    /// Emitted for interchain token deployment starting.
+    InterchainTokenDeploymentStarted {
+        /// The interchain token id.
+        token_id: [u8; 32],
+        /// The name.
+        name: String,
+        /// The symbol.
+        symbol: String,
+        /// The decimals.
+        decimals: u8,
+        /// Minter some bytes.
+        minter: Vec<u8>,
+        /// The chain where the token manager will be deployed.
+        destination_chain: String,
+    },
 }
 
 impl InterchainTokenServiceEvent {
@@ -88,6 +103,26 @@ pub fn emit_token_manager_deployment_started_event(
         destination_chain,
         token_manager_type,
         params,
+    };
+    event.emit()
+}
+
+/// Emit a [`InterchainTokenDeploymentStarted`].
+pub fn emit_interchain_token_deployment_started_event(
+    token_id: [u8; 32],
+    name: String,
+    symbol: String,
+    decimals: u8,
+    minter: Vec<u8>,
+    destination_chain: String,
+) -> Result<(), ProgramError> {
+    let event = InterchainTokenServiceEvent::InterchainTokenDeploymentStarted {
+        token_id,
+        name,
+        symbol,
+        decimals,
+        minter,
+        destination_chain,
     };
     event.emit()
 }
