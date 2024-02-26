@@ -2,7 +2,7 @@ use clap::Parser;
 
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None)]
-pub struct RelayerConfig {
+pub struct Configuration {
     // /// Account address to pay for Axelar TXs
     // #[arg(long)]
     // pub axelar_payer_addr: String,
@@ -30,4 +30,8 @@ pub struct RelayerConfig {
     /// Axelar Amplifier API RPC URL
     #[arg(long)]
     pub amplifier_rpc: String,
+
+    /// Postgres database URL
+    #[arg(long)]
+    pub database_url: String,
 }

@@ -1,25 +1,33 @@
 use crate::verifier::Verifier;
+use crate::{entities::last_processed_block::Chain, state::PostgresStateTracker};
 use amplifier_api::axl_rpc;
 use futures_util::StreamExt;
 use gmp_gateway::events::GatewayEvent;
+
 use solana_client::{
-    nonblocking::pubsub_client,
+    client_error,
+    nonblocking::{pubsub_client, rpc_client::RpcClient},
     rpc_config::{RpcTransactionLogsConfig, RpcTransactionLogsFilter},
 };
 use solana_pubsub_client::nonblocking::pubsub_client::PubsubClient;
 use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
+use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::mpsc;
 use tracing::{error, info, warn};
 
 #[derive(Debug, Error)]
 pub enum SentinelError {
+    #[error("Solana RPC error - {0}")]
+    SolanaRPCError(client_error::ClientError),
     #[error("Failed to subscribe for Solana logs - {0}")]
     SubForLogs(pubsub_client::PubsubClientError),
     #[error("Failed to parse vec<u8> into a String - {0}")]
     ByteVecParsing(std::string::FromUtf8Error),
     #[error("Failed to send an axelar Message to the gmp_sender mpsc channel - {0}")]
     GmpSenderBroadcast(mpsc::error::SendError<axl_rpc::Message>),
+    #[error("Database error - {0}")]
+    Database(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
 
 /// listens for events coming
@@ -30,8 +38,10 @@ pub enum SentinelError {
 pub struct Sentinel {
     source_chain: String,
     source_address: String,
-    sol_pubsub_client: PubsubClient,
+    solana_rpc_client: Arc<RpcClient>,
+    solana_pubsub_client: PubsubClient,
     verifier: Verifier,
+    state: PostgresStateTracker,
 }
 
 impl Sentinel {
@@ -40,34 +50,58 @@ impl Sentinel {
     fn new(
         source_chain: String,
         source_address: String,
-        sol_pubsub_client: PubsubClient,
+        solana_rpc_client: Arc<RpcClient>,
+        solana_pubsub_client: PubsubClient,
         verifier: Verifier,
+        state: PostgresStateTracker,
     ) -> Self {
         Self {
             source_chain,
             source_address,
-            sol_pubsub_client,
+            solana_rpc_client,
+            solana_pubsub_client,
             verifier,
+            state,
         }
     }
 
     pub fn start(
         source_chain: String,
         source_address: String,
-        sol_pubsub_client: PubsubClient,
+        solana_rpc_client: Arc<RpcClient>,
+        solana_pubsub_client: PubsubClient,
         verifier: Verifier,
+        state: PostgresStateTracker,
     ) {
-        let sentinel = Self::new(source_chain, source_address, sol_pubsub_client, verifier);
+        let sentinel = Self::new(
+            source_chain,
+            source_address,
+            solana_rpc_client,
+            solana_pubsub_client,
+            verifier,
+            state,
+        );
         tokio::spawn(async move { sentinel.run().await });
     }
 
     /// Listens for gmp messages coming from the Axelar gateway smart contract on the Solana blockchain
     /// and forwards the messages through the gmp channel to the verifier
     async fn run(self) -> Result<(), SentinelError> {
-        // TODO: What should we do with unsubscription?
-        // TODO: Consider supporting multiple events per transaction.
-        let (mut log_events, _log_unsubscribe) = self
-            .sol_pubsub_client
+        let start_height = self.state.load().await?;
+
+        let current_slot = self
+            .solana_rpc_client
+            .get_slot()
+            .await
+            .map_err(SentinelError::SolanaRPCError)?;
+
+        // TODO
+        //
+        // We might have to catch up with the current slot here
+        //
+
+        let (mut log_events, log_unsubscribe) = self
+            .solana_pubsub_client
             .logs_subscribe(
                 RpcTransactionLogsFilter::Mentions(vec![self.source_address.clone()]),
                 RpcTransactionLogsConfig {

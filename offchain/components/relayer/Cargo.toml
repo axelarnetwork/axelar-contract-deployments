@@ -32,6 +32,8 @@ tracing = { version = "0.1.40", features = ["attributes"] }
 tokio-stream = "0.1.14"
 bcs = "0.1.6"
 tonic = "0.10.2"
+sea-orm = { version = "0.12", features = [ "sqlx-postgres", "runtime-tokio-rustls", "macros" ] }
+migrations = { path = "migrations" }
 
 [dependencies.gmp-gateway]
 path = "../../../solana/programs/gateway"

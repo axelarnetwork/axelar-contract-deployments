@@ -3,6 +3,7 @@ use amplifier_api::axl_rpc::{
     SubscribeToApprovalsResponse,
 };
 use gmp_gateway::{accounts::GatewayApprovedMessage, error::GatewayError};
+
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_program::{program_error::ProgramError, pubkey::Pubkey};
 use solana_sdk::{signature::Keypair, signature::Signer, transaction::Transaction};
@@ -10,6 +11,12 @@ use std::sync::Arc;
 use thiserror::Error;
 use tonic::transport::Channel;
 use tracing::{error, info, warn};
+
+use crate::{entities::last_processed_block::Chain, state::PostgresStateTracker};
+
+use self::block_messages::BlockMessages;
+
+mod block_messages;
 
 #[derive(Debug, Error)]
 pub enum ApproverError {
@@ -31,18 +38,20 @@ pub enum ApproverError {
     DecodePayload(bcs::Error),
     #[error("Failed to fetch proof from Amplifier API stream with status - {0}")]
     GetProofFromStream(tonic::Status),
+    #[error("State error - {0}")]
+    State(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
 
 /// Listens for approved messages (signed proofs) coming from the Axelar blockchain.
 ///
 /// Those will be payloads sent from other blockchains,
 /// which pass through axelar and are sent to Solana.
-
 pub struct Approver {
     source_chain: String,
     amplifier_rpc_client: AxelarRpcClient<Channel>,
     solana_rpc_client: Arc<RpcClient>,
     payer_keypair: Arc<Keypair>,
+    state: PostgresStateTracker,
 }
 
 impl Approver {
@@ -52,12 +61,14 @@ impl Approver {
         amplifier_rpc_client: AxelarRpcClient<Channel>,
         solana_rpc_client: Arc<RpcClient>,
         payer_keypair: Arc<Keypair>,
+        state: PostgresStateTracker,
     ) -> Self {
         Self {
             source_chain,
             amplifier_rpc_client,
             solana_rpc_client,
             payer_keypair,
+            state,
         }
     }
 
@@ -225,28 +236,42 @@ impl Approver {
             .map(|_| ())
     }
 
-    /// Listens for a signed proof, coming from the Axelar blockchain
-    /// and sends it directly to the Axelar gateway on the solana blockchain in the for of an
-    /// execute transaction.
-    /// Execute in the gateway actually approves the payload.
     pub async fn run(&mut self) -> Result<(), ApproverError> {
+        let start_height = self.state.load().await?;
+
         // Init the stream of proofs coming from the Amplifier API
         let mut stream = self
             .amplifier_rpc_client
             .subscribe_to_approvals(SubscribeToApprovalsRequest {
                 chain: self.source_chain.clone(),
-                start_height: None, // TODO: Get from state file/db/whatever
+                start_height,
             })
             .await
             .map_err(ApproverError::SubForApprovals)?
             .into_inner();
 
-        while let Some(axl_proof) = stream
-            .message()
-            .await
-            .map_err(ApproverError::GetProofFromStream)?
-        {
-            println!("PROOF RECEIVED");
+        let mut block_messages: BlockMessages = BlockMessages::new(0);
+
+        while let Some(axl_proof) = stream.message().await.unwrap() {
+            if let Some(messages) = block_messages.indicate_height(axl_proof.block_height) {
+                self.handle_block_messages(messages).await?;
+
+                self.state
+                    .save(Chain::Axelar, axl_proof.block_height)
+                    .await?;
+            }
+
+            block_messages.push(axl_proof);
+        }
+
+        Ok(())
+    }
+
+    async fn handle_block_messages(
+        &self,
+        block_messages: Vec<SubscribeToApprovalsResponse>,
+    ) -> Result<(), ApproverError> {
+        for axl_proof in block_messages {
             let proof_handle_resp = self.handle_proof(axl_proof).await;
             if let Err(error) = proof_handle_resp {
                 error!(%error);

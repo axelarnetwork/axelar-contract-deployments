@@ -1,11 +1,14 @@
 use amplifier_api::axl_rpc::axelar_rpc_client::AxelarRpcClient;
 use approver::Approver;
 use clap::Parser;
-use config::RelayerConfig;
+use configuration::Configuration;
+use migrations::MigratorTrait;
+use sea_orm::{ColumnTrait, ColumnType, DatabaseConnection, DbErr, EntityTrait, QueryFilter};
 use sentinel::Sentinel;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_pubsub_client::nonblocking::pubsub_client::PubsubClient;
 use solana_sdk::signer::keypair::read_keypair_file;
+use state::PostgresStateTracker;
 use std::sync::Arc;
 use tonic::transport::Channel;
 use tracing::{error, info};
@@ -17,9 +20,13 @@ use tracing_subscriber::{
 };
 use verifier::Verifier;
 
+use crate::entities::last_processed_block::{self, Chain};
+
 mod approver;
-mod config;
+mod configuration;
+mod entities;
 mod sentinel;
+mod state;
 mod verifier;
 
 pub fn init_logging() {
@@ -44,17 +51,34 @@ pub fn init_logging() {
 
 #[tokio::main]
 async fn main() {
+    let config = Configuration::parse();
+
     init_logging();
+
+    let database = setup_database(&config)
+        .await
+        .expect("Failed to setup database");
 
     info!("Starting server");
 
-    start_workers().await;
+    start_workers(&config, database).await;
 }
 
-async fn start_workers() {
-    let config = RelayerConfig::parse();
+async fn setup_database(config: &Configuration) -> Result<sea_orm::DatabaseConnection, DbErr> {
+    let database = sea_orm::Database::connect(config.database_url.clone())
+        .await
+        .expect("Failed to connect to database");
+
+    migrations::Migrator::up(&database, None).await?;
+
+    Ok(database)
+}
+
+async fn start_workers(config: &Configuration, database: DatabaseConnection) {
+    let state = PostgresStateTracker::new(database);
+
     let (amplifier_rpc_client, solana_rpc_client, solana_pubsub_client) =
-        start_clients(&config).await;
+        start_clients(config).await;
     // Workers
     // The broadcaster waits for ready for broadcasting solana txs, on the broadcast channel
     let payer_keypair = Arc::new(
@@ -65,14 +89,17 @@ async fn start_workers() {
     Sentinel::start(
         config.solana_chain_name.clone(),
         config.axl_gw_addr_on_solana.clone(),
+        solana_rpc_client.clone(),
         solana_pubsub_client,
         verifier,
+        state.clone(),
     );
     let mut approver = Approver::new(
         config.solana_chain_name.clone(),
         amplifier_rpc_client.clone(),
         solana_rpc_client.clone(),
         payer_keypair.clone(),
+        state,
     );
 
     match approver.run().await {
@@ -82,7 +109,7 @@ async fn start_workers() {
 }
 
 async fn start_clients(
-    config: &RelayerConfig,
+    config: &Configuration,
 ) -> (AxelarRpcClient<Channel>, Arc<RpcClient>, PubsubClient) {
     let amplifier_rpc_client = AxelarRpcClient::connect(config.amplifier_rpc.clone())
         .await
