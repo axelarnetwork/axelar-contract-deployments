@@ -10,6 +10,7 @@ use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
 use spl_associated_token_account::get_associated_token_address;
 use test_fixtures::account::CheckValidPDAInTests;
+use test_fixtures::execute_data::create_signer_with_weight;
 use test_fixtures::test_setup::TestFixture;
 use token_manager::get_token_manager_account;
 
@@ -21,11 +22,17 @@ async fn test_deploy_token_manager() {
     let mut fixture = TestFixture::new(program_test()).await;
     let gas_service_root_pda = fixture.init_gas_service().await;
     let token_id = Bytes32(keccak256("random-token-id"));
+    let gateway_operators = vec![
+        create_signer_with_weight(10).unwrap(),
+        create_signer_with_weight(4).unwrap(),
+    ];
     let init_operator = Pubkey::from([0; 32]);
     let mint_authority = Keypair::new();
-
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+        .initialize_gateway_config_account(GatewayConfig::new(
+            0,
+            fixture.init_operators_and_epochs(&gateway_operators),
+        ))
         .await;
     let interchain_token_service_root_pda = fixture
         .init_its_root_pda(&gateway_root_pda, &gas_service_root_pda)
@@ -39,12 +46,17 @@ async fn test_deploy_token_manager() {
             &init_operator,
         )
         .await;
-
-    let deploy_token_manager_message = test_fixtures::axelar_message::message().unwrap();
+    let deploy_token_manager_messages = [(
+        test_fixtures::axelar_message::message().unwrap(),
+        interchain_token_service_root_pda,
+    )];
     let gateway_approved_message_pda = fixture
-        .approve_gateway_message(&deploy_token_manager_message)
-        .await;
-
+        .fully_approve_messages(
+            &gateway_root_pda,
+            &deploy_token_manager_messages,
+            gateway_operators,
+        )
+        .await[0];
     let gateway_approved_message = fixture
         .banks_client
         .get_account(gateway_approved_message_pda)
@@ -56,7 +68,6 @@ async fn test_deploy_token_manager() {
         data.is_approved(),
         "GatewayApprovedMessage should be approved"
     );
-
     let token_manager_root_pda_pubkey = get_token_manager_account(
         &its_token_manager_permission_groups.operator_group.group_pda,
         &its_token_manager_permission_groups

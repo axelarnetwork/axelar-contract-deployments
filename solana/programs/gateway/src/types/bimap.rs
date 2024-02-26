@@ -7,6 +7,8 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::msg;
 use thiserror::Error;
 
+use super::address::Address;
+use super::hash_new_operator_set;
 use crate::error::GatewayError;
 use crate::types::u256::U256;
 
@@ -36,14 +38,30 @@ impl From<OperatorsAndEpochsError> for GatewayError {
 pub struct OperatorsAndEpochs(bimap::BiBTreeMap<OperatorsHash, Epoch>);
 
 impl OperatorsAndEpochs {
+    /// Creates a new `OperatorsAndEpochs` value.
+    pub fn new(
+        operators_and_weights: impl Iterator<Item = (Address, U256)>,
+        threshold: U256,
+    ) -> Self {
+        let mut instance = Self(BiBTreeMap::new());
+
+        let hash = hash_new_operator_set(operators_and_weights, threshold);
+        // safe to unwrap as we are creating a new
+        // instance and there are no duplicate entries to error on
+        instance.update(hash).unwrap();
+
+        instance
+    }
+
     /// Updates the epoch and operators in the state.
     // TODO: Remove entries from older epochs, as we just need to keep the last 16.
     pub fn update(&mut self, operators_hash: OperatorsHash) -> Result<(), OperatorsAndEpochsError> {
         // We add one so this epoch number matches with the value returned from
         // `Self::current_epoch`
-        let epoch = self.0.len() as u128 + 1;
+        let new_epoch = self.0.len() as u128 + 1;
+
         self.0
-            .insert_no_overwrite(operators_hash, epoch.into())
+            .insert_no_overwrite(operators_hash, new_epoch.into())
             .map_err(|_| OperatorsAndEpochsError::DuplicateOperators)
     }
 

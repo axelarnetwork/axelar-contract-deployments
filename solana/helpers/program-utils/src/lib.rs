@@ -14,6 +14,26 @@ use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use solana_program::{system_instruction, system_program};
 
+/// mini helper to log from native Rust or to the program log
+/// Very useful for debugging when you have to run some code on Solana and via
+/// native Rust
+#[macro_export]
+macro_rules! log_everywhere {
+    ($($arg:tt)*) => {{
+        let message = format!($($arg)*);
+
+        #[cfg(not(target_os = "solana"))]
+        {
+            println!("RUST: {}", message);
+        }
+
+        #[cfg(target_os = "solana")]
+        {
+            msg!("SOL: {}", message);
+        }
+    }}
+}
+
 /// Initialize an associated account
 pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack + borsh::BorshSerialize>(
     funder_info: &'a AccountInfo<'b>,

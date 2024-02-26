@@ -7,6 +7,7 @@ use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
 use spl_token::state::Account;
+use test_fixtures::execute_data::create_signer_with_weight;
 use test_fixtures::test_setup::TestFixture;
 use token_manager::TokenManagerType;
 
@@ -18,11 +19,18 @@ async fn give_token_lock_unlock_success() -> Result<()> {
     let mut fixture = TestFixture::new(program_test()).await;
     let destination = Keypair::new();
     let mint_authority = Keypair::new();
-    let gas_service_root_pda = fixture.init_gas_service().await;
     let amount_to_transfer = 100;
+    let gateway_operators = vec![
+        create_signer_with_weight(10).unwrap(),
+        create_signer_with_weight(4).unwrap(),
+    ];
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+        .initialize_gateway_config_account(GatewayConfig::new(
+            0,
+            fixture.init_operators_and_epochs(&gateway_operators),
+        ))
         .await;
+    let gas_service_root_pda = fixture.init_gas_service().await;
     let interchain_token_service_root_pda = fixture
         .init_its_root_pda(&gateway_root_pda, &gas_service_root_pda)
         .await;
@@ -37,6 +45,7 @@ async fn give_token_lock_unlock_success() -> Result<()> {
             mint_account_pda,
             gateway_root_pda,
             TokenManagerType::LockUnlock,
+            gateway_operators,
         )
         .await;
     fixture

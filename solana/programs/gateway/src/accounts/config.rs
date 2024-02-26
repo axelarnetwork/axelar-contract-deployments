@@ -90,6 +90,8 @@ impl GatewayConfig {
             return Err(GatewayError::UnorderedOrDuplicateOperators);
         }
 
+        // TODO Should we not be comparing the weights and operators against the current
+        // epoch? TODO: Double check with the Solidity implementation.
         // Check: sufficient threshold.
         let total_weight: U256 = operators
             .weights()

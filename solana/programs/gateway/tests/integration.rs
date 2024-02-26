@@ -1,4 +1,3 @@
-#![cfg(feature = "test-sbf")]
 mod common;
 
 use std::{assert, assert_eq};
@@ -7,7 +6,6 @@ use anyhow::{anyhow, bail, ensure, Result};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use common::program_test;
-use connection_router::Message as AxelarMessage;
 use gmp_gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use gmp_gateway::events::GatewayEvent;
 use gmp_gateway::get_gateway_root_config_pda;
@@ -25,7 +23,6 @@ use solana_sdk::transaction::Transaction;
 
 mod accounts {
     use gmp_gateway::accounts::transfer_operatorship::TransferOperatorshipAccount;
-    use solana_program::program_pack::Pack;
 
     use super::*;
     pub(super) async fn initialize_config_account(
@@ -88,44 +85,6 @@ mod accounts {
         assert_eq!(account.owner, gmp_gateway::id());
         let deserialized_execute_data: GatewayExecuteData = borsh::from_slice(&account.data)?;
         assert_eq!(deserialized_execute_data, execute_data);
-
-        Ok(())
-    }
-
-    pub(super) async fn initialize_message(
-        client: &mut BanksClient,
-        payer: Keypair,
-        message_id: [u8; 32],
-        source_chain: &[u8],
-        source_address: &[u8],
-        payload_hash: [u8; 32],
-    ) -> Result<()> {
-        let recent_blockhash = client.get_latest_blockhash().await?;
-        let ix = gmp_gateway::instructions::initialize_message(
-            payer.pubkey(),
-            message_id,
-            source_chain,
-            source_address,
-            payload_hash,
-        )?;
-        let tx = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&payer.pubkey()),
-            &[&payer],
-            recent_blockhash,
-        );
-        client.process_transaction(tx).await?;
-
-        let (pda, _bump) =
-            GatewayApprovedMessage::pda(message_id, source_chain, source_address, payload_hash);
-
-        let account = client.get_account(pda).await?.expect("metadata");
-        assert_eq!(account.owner, gmp_gateway::id());
-        let deserialized_execute_data = GatewayApprovedMessage::unpack_from_slice(&account.data)?;
-        assert_eq!(
-            deserialized_execute_data,
-            GatewayApprovedMessage::approved()
-        );
 
         Ok(())
     }
@@ -227,32 +186,6 @@ async fn initialize_execute_data() -> Result<()> {
 }
 
 #[tokio::test]
-async fn initialize_message() -> Result<()> {
-    let (mut banks_client, payer, _recent_blockhash) = program_test().start().await;
-
-    let AxelarMessage {
-        cc_id,
-        source_address,
-        payload_hash,
-        ..
-    } = test_fixtures::axelar_message::message()?;
-
-    // We hash it the same way as `[multisig_prover]` does during encoding.
-    let message_id = hash(cc_id.to_string().as_bytes()).to_bytes();
-
-    accounts::initialize_message(
-        &mut banks_client,
-        payer,
-        message_id,
-        cc_id.to_string().as_bytes(),
-        source_address.as_bytes(),
-        payload_hash,
-    )
-    .await?;
-    Ok(())
-}
-
-#[tokio::test]
 async fn execute_with_axelar_provided_data() -> Result<()> {
     // Copied from https://github.com/axelarnetwork/axelar-amplifier/blob/e04a85fc635448559cdd265da582d1f49a6b8f52/contracts/multisig-prover/src/encoding/bcs.rs#L509
     let execute_data = hex::decode("8a02010000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020213617070726f7665436f6e747261637443616c6c13617070726f7665436f6e747261637443616c6c0249034554480330783000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000004c064158454c415203307831000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000087010121037286a4f1177bea06c8e15cf6ec3df0b7747a01ac2329ca2999dfd74eff59902801640000000000000000000000000000000a0000000000000000000000000000000141ef5ce016a4beed7e11761e5831805e962fca3d8901696a61a6ffd3af2b646bdc3740f64643bdb164b8151d1424eb4943d03f71e71816c00726e2d68ee55600c600")?;
@@ -280,14 +213,14 @@ async fn execute_with_fixtures() -> Result<()> {
 }
 
 async fn execute(execute_data: Vec<u8>) -> Result<()> {
+    // Setup
     let mut program_test = program_test();
-
-    // Provision the test program with an `execute_data` account.
 
     let (proof, command_batch) = gmp_gateway::types::execute_data_decoder::decode(&execute_data)?;
     let execute_data_account = GatewayExecuteData::new(execute_data);
     let (execute_data_pda, _bump, _seeds) = execute_data_account.pda();
     let execute_data_base64 = STANDARD.encode(borsh::to_vec(&execute_data_account)?);
+    let allowed_executioner = Keypair::new();
 
     program_test.add_account_with_base64_data(
         execute_data_pda,
@@ -301,32 +234,22 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
     config.operators_and_epochs.update(proof.operators_hash())?;
     let config_bytes = borsh::to_vec(&config)?;
     let config_base64 = STANDARD.encode(&config_bytes);
-    let (config_pda, _bump) = get_gateway_root_config_pda();
+    let (gateway_root_pda, _bump) = get_gateway_root_config_pda();
     program_test.add_account_with_base64_data(
-        config_pda,
+        gateway_root_pda,
         999999,
         gmp_gateway::id(),
         &config_base64,
     );
 
-    // Provision the test progam with the message accounts.
+    // Provision the test program with the message accounts.
     let mut message_pdas: Vec<Pubkey> = vec![];
-    let pending_message_account_base64 =
-        STANDARD.encode(borsh::to_vec(&GatewayApprovedMessage::pending())?);
+    let pending_message_account_base64 = STANDARD.encode(borsh::to_vec(
+        &GatewayApprovedMessage::pending(allowed_executioner.pubkey()),
+    )?);
     for command in &command_batch.commands {
-        let DecodedMessage {
-            id,
-            source_chain,
-            source_address,
-            payload_hash,
-            ..
-        } = &command.message;
-        let (approved_message_pda, _bump) = GatewayApprovedMessage::pda(
-            *id,
-            source_chain.as_bytes(),
-            source_address.as_bytes(),
-            *payload_hash,
-        );
+        let approved_message_pda =
+            GatewayApprovedMessage::pda_from_decoded_command(gateway_root_pda, command);
         program_test.add_account_with_base64_data(
             approved_message_pda,
             999999,
@@ -340,8 +263,12 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
     let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
 
     // Prepare an `execute` instruction
-    let instruction =
-        gmp_gateway::instructions::execute(gmp_gateway::id(), execute_data_pda, &message_pdas)?;
+    let instruction = gmp_gateway::instructions::execute(
+        gmp_gateway::id(),
+        execute_data_pda,
+        gateway_root_pda,
+        &message_pdas,
+    )?;
 
     let transaction = Transaction::new_signed_with_payer(
         &[instruction],

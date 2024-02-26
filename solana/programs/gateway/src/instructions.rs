@@ -21,7 +21,7 @@ pub enum GatewayInstruction {
     /// 0. [] Gateway Config PDA account
     /// 1. [WRITE] Execute Data PDA account
     /// N. [WRITE] Approved Message PDA accounts
-    Execute {},
+    Execute,
 
     /// Represents the `CallContract` Axelar event.
     ///
@@ -68,18 +68,26 @@ pub enum GatewayInstruction {
     /// 0. [WRITE, SIGNER] Funding account
     /// 1. [WRITE] Approved Message PDA account
     /// 2. [] System Program account
+    // TODO: could we just pass `connection_router::Message` directly here? It
+    //       would eliminate the need for "leaving conversions to the caller's
+    //       discretion"
     InitializeMessage {
         /// The Axelar Message CCID, truncated to 32 bytes during proof
         /// generation.
         message_id: [u8; 32],
-        /// The source chain denomination, expressed as raw bytes, leaving
-        /// conversions to the caller's discretion.
-        source_chain: Vec<u8>,
+        /// The source chain denomination
+        source_chain: String,
         /// The source address, expressed as raw bytes, leaving conversions to
         /// the caller's discretion.
         source_address: Vec<u8>,
         /// The Axelar Message payload hash.
         payload_hash: [u8; 32],
+        /// The address of the allowed executer.
+        /// This references an account that will need to be a signer to change
+        /// the message status to `executed`.
+        /// This is different from `axelar_message.destination_address` (which
+        /// points to a program id) where as this points to a pubkey.
+        allowed_executer: Pubkey,
     },
     /// Initializes the account to hold a new operator set.
     ///
@@ -93,12 +101,21 @@ pub enum GatewayInstruction {
         /// Threshold for this operator set
         threshold: U256,
     },
+    /// Validates a contract call.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [] Gateway Config PDA account
+    /// 1. [] Execute Data PDA account
+    /// 2. [] Approved Message PDA accounts
+    /// 3. [] System Program account
+    ValidateContractCall,
 }
 
 /// Creates a [`GatewayInstruction::Execute`] instruction.
 pub fn execute(
     program_id: Pubkey,
     execute_data_account: Pubkey,
+    gateway_root_pda: Pubkey,
     message_accounts: &[Pubkey],
 ) -> Result<Instruction, ProgramError> {
     crate::check_program_account(program_id)?;
@@ -109,11 +126,8 @@ pub fn execute(
 
     let data = to_vec(&GatewayInstruction::Execute {})?;
 
-    let (gateway_config_account, _bump) = crate::get_gateway_root_config_pda();
-
     let mut accounts = vec![
-        AccountMeta::new_readonly(gateway_config_account, false),
-        // Needs to be writable so it can be marked as processed.
+        AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new(execute_data_account, false),
     ];
 
@@ -158,27 +172,33 @@ pub fn call_contract(
 
 /// Creates a [`GatewayInstruction::InitializeMessage`] instruction.
 pub fn initialize_message(
+    gateway_root_pda: Pubkey,
     payer: Pubkey,
-    message_id: [u8; 32],
-    source_chain: &[u8],
-    source_address: &[u8],
-    payload_hash: [u8; 32],
+    allowed_executer: Pubkey,
+    message: &connection_router::Message,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&GatewayInstruction::InitializeMessage {
+    let (
+        approved_message_pda,
+        _bump,
+        _seed,
         message_id,
-        source_chain: source_chain.into(),
-        source_address: source_address.into(),
+        source_chain,
+        source_address,
         payload_hash,
+    ) = GatewayApprovedMessage::pda_from_axelar_message(gateway_root_pda, message);
+
+    let data = to_vec(&GatewayInstruction::InitializeMessage {
+        message_id: *message_id.0.as_ref(),
+        source_chain: source_chain.0.to_string(),
+        source_address: source_address.0.into(),
+        payload_hash: *payload_hash.0,
+        allowed_executer,
     })?;
 
-    let (pda, _bump) =
-        GatewayApprovedMessage::pda(message_id, source_chain, source_address, payload_hash);
-
-    // TODO we need to add root pda to the accounts and make sure that the approved
-    //      message is derived with the root pda as one of the seeds!
     let accounts = vec![
         AccountMeta::new(payer, true),
-        AccountMeta::new(pda, false),
+        AccountMeta::new(approved_message_pda, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
@@ -192,14 +212,16 @@ pub fn initialize_message(
 /// Creates a [`GatewayInstruction::InitializeExecuteData`] instruction.
 pub fn initialize_execute_data(
     payer: Pubkey,
-    pda: Pubkey,
+    gateway_root_pda: Pubkey,
     execute_data: GatewayExecuteData,
 ) -> Result<Instruction, ProgramError> {
+    let (execute_data_pda, _, _) = execute_data.pda();
     let data = to_vec(&GatewayInstruction::InitializeExecuteData { execute_data })?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
-        AccountMeta::new(pda, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new(execute_data_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
@@ -280,6 +302,30 @@ pub fn initialize_trasfer_operatorship(
     })
 }
 
+/// Creates a [`GatewayInstructon::InitializeTransferOperatorship`] instruction.
+pub fn validate_contract_call(
+    payer: &Pubkey,
+    gateway_root_pda: &Pubkey,
+    approved_message_pda: &Pubkey,
+    caller: &Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let accounts = vec![
+        AccountMeta::new(*payer, true),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new(*approved_message_pda, false),
+        AccountMeta::new_readonly(*caller, true),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    let data = borsh::to_vec(&GatewayInstruction::ValidateContractCall)?;
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
 #[cfg(test)]
 pub mod tests {
 
@@ -301,10 +347,12 @@ pub mod tests {
     #[test]
     fn round_trip_queue_function() {
         let execute_data_account = Keypair::new().pubkey();
+        let (gateway_root_pda, _) = GatewayConfig::pda();
         let approved_message_accounts = vec![Keypair::new().pubkey()];
         let instruction = execute(
             crate::id(),
             execute_data_account,
+            gateway_root_pda,
             &approved_message_accounts,
         )
         .expect("valid instruction construction");

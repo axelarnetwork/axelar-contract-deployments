@@ -11,6 +11,7 @@ use borsh::BorshDeserialize;
 use program_utils::check_program_account;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
 use solana_program::pubkey::Pubkey;
 
 use crate::instruction::InterchainTokenServiceInstruction;
@@ -31,34 +32,45 @@ impl Processor {
 
         match instruction {
             InterchainTokenServiceInstruction::Execute { payload } => {
+                msg!("Instruction: Execute");
                 Self::execute(program_id, accounts, payload)
             }
             InterchainTokenServiceInstruction::Initialize {} => {
+                msg!("Instruction: Initialize");
                 Self::process_initialize(program_id, accounts)
             }
             InterchainTokenServiceInstruction::GiveToken {
                 token_manager_type,
                 amount,
-            } => Self::give_token(program_id, accounts, token_manager_type, amount),
+            } => {
+                msg!("Instruction: GiveToken");
+                Self::give_token(program_id, accounts, token_manager_type, amount)
+            }
             InterchainTokenServiceInstruction::TakeToken {
                 token_manager_type,
                 amount,
-            } => Self::take_token(program_id, accounts, token_manager_type, amount),
+            } => {
+                msg!("Instruction: TakeToken");
+                Self::take_token(program_id, accounts, token_manager_type, amount)
+            }
             InterchainTokenServiceInstruction::DeployRemoteTokenManager {
                 salt,
                 destination_chain,
                 token_manager_type,
                 params,
                 gas_value,
-            } => Self::deploy_remote_token_manager(
-                program_id,
-                accounts,
-                salt,
-                destination_chain,
-                token_manager_type,
-                params,
-                gas_value,
-            ),
+            } => {
+                msg!("Instruction: DeployRemoteTokenManager");
+                Self::deploy_remote_token_manager(
+                    program_id,
+                    accounts,
+                    salt,
+                    destination_chain,
+                    token_manager_type,
+                    params,
+                    gas_value,
+                )
+            }
             InterchainTokenServiceInstruction::DeployRemoteInterchainToken {
                 salt,
                 destination_chain,
@@ -67,17 +79,20 @@ impl Processor {
                 decimals,
                 minter,
                 gas_value,
-            } => Self::deploy_remote_interchain_token(
-                program_id,
-                accounts,
-                salt,
-                destination_chain,
-                name,
-                symbol,
-                decimals,
-                minter,
-                gas_value,
-            ),
+            } => {
+                msg!("Instruction: DeployRemoteInterchainToken");
+                Self::deploy_remote_interchain_token(
+                    program_id,
+                    accounts,
+                    salt,
+                    destination_chain,
+                    name,
+                    symbol,
+                    decimals,
+                    minter,
+                    gas_value,
+                )
+            }
         }
     }
 }

@@ -14,7 +14,7 @@ use crate::types::proof::Proof;
 #[repr(C)]
 pub struct GatewayExecuteData {
     discriminator: Discriminator<ExecuteData>,
-    /// This is the value produced by Axelar Proover
+    /// This is the value produced by Axelar Prover
     data: Vec<u8>,
 }
 
@@ -35,6 +35,7 @@ impl GatewayExecuteData {
     /// Finds a PDA for this account. Returns its Pubkey, the canonical bump and
     /// the seeds used to derive them.
     pub fn pda(&self) -> (Pubkey, u8, [u8; 32]) {
+        // TODO make this depend on the gateway root pda
         let seeds = self.seeds();
         let (pubkey, bump) = Pubkey::find_program_address(&[seeds.as_slice()], &crate::ID);
         (pubkey, bump, seeds)

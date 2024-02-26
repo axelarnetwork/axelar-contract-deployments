@@ -1,6 +1,9 @@
 //! Program state processor.
 
+use std::borrow::Cow;
+
 use borsh::from_slice;
+use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::keccak::hash;
@@ -12,6 +15,7 @@ use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_instruction, system_program};
 
+use crate::accounts::approved_message::{MessageId, PayloadHash, SourceAddress, SourceChain};
 use crate::accounts::transfer_operatorship::TransferOperatorshipAccount;
 use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use crate::error::GatewayError;
@@ -34,10 +38,11 @@ impl Processor {
     ) -> ProgramResult {
         let instruction = from_slice::<GatewayInstruction>(input)?;
         check_program_account(*program_id)?;
+
         match instruction {
             GatewayInstruction::Execute {} => {
                 msg!("Instruction: Execute");
-                Self::execute(accounts)
+                Self::execute(program_id, accounts)
             }
             GatewayInstruction::CallContract {
                 destination_chain,
@@ -77,14 +82,17 @@ impl Processor {
                 source_chain,
                 source_address,
                 payload_hash,
+                allowed_executer,
             } => {
                 msg!("Instruction: Initialize Approved Message");
                 Self::initialize_approved_message(
+                    program_id,
                     accounts,
                     message_id,
                     source_chain,
                     source_address,
                     payload_hash,
+                    allowed_executer,
                 )
             }
             GatewayInstruction::InitializeTransferOperatorship {
@@ -94,30 +102,33 @@ impl Processor {
                 msg!("Instruction: Initialize TransferOperatorship");
                 Self::initialize_transfer_operatorship(accounts, operators_and_weights, threshold)
             }
+            GatewayInstruction::ValidateContractCall {} => {
+                msg!("Instruction: Validate Contract Call");
+                Self::validate_contract_call(program_id, accounts)
+            }
         }
     }
 
-    fn execute(accounts: &[AccountInfo]) -> Result<(), ProgramError> {
+    fn execute(program_id: &Pubkey, accounts: &[AccountInfo]) -> Result<(), ProgramError> {
         let mut accounts = accounts.iter();
-        let gateway_config_account = next_account_info(&mut accounts)?;
+        let gateway_root_pda = next_account_info(&mut accounts)?;
         let execute_data_account = next_account_info(&mut accounts)?;
         let message_accounts: Vec<_> = accounts.collect();
-
         // Phase 1: Account validation
 
         // Check: Config account uses the canonical bump.
         let (canonical_pda, _canonical_bump) = get_gateway_root_config_pda();
-        if *gateway_config_account.key != canonical_pda {
+        if *gateway_root_pda.key != canonical_pda {
             return Err(GatewayError::InvalidConfigAccount)?;
         }
 
         // Check: Config account is owned by the Gateway program.
-        if *gateway_config_account.owner != crate::ID {
+        if *gateway_root_pda.owner != crate::ID {
             return Err(ProgramError::InvalidAccountOwner);
         }
 
         // Check: Config account is read only.
-        if gateway_config_account.is_writable {
+        if gateway_root_pda.is_writable {
             return Err(ProgramError::InvalidInstructionData);
         }
 
@@ -151,7 +162,7 @@ impl Processor {
 
         // Unpack Gateway configuration data.
         let gateway_config: GatewayConfig = {
-            let gateway_account_bytes = gateway_config_account.try_borrow_mut_data()?;
+            let gateway_account_bytes = gateway_root_pda.try_borrow_mut_data()?;
             borsh::de::from_slice(&gateway_account_bytes)?
         };
 
@@ -170,51 +181,53 @@ impl Processor {
         {
             last_visited_message_index += 1;
 
-            // Check: Current message account represents the current aproved command.
-            let expected_pda = GatewayApprovedMessage::pda_from_decoded_command(approved_command);
+            // Check: Current message account represents the current approved command.
+            let expected_pda = GatewayApprovedMessage::pda_from_decoded_command(
+                *gateway_root_pda.key,
+                approved_command,
+            );
             if expected_pda != *message_account.key {
                 return Err(ProgramError::InvalidSeeds);
             }
-
             // Check: All message accounts are writable.
             if !message_account.is_writable {
                 return Err(ProgramError::InvalidInstructionData);
             }
-
             // Check: All message accounts are initialized.
             if **message_account.lamports.borrow() == 0 {
                 return Err(ProgramError::UninitializedAccount);
             }
-
-            // Check:: All messages must be "Pending".
-            let mut borrowed_data = message_account.data.borrow_mut();
-            let approved_message = GatewayApprovedMessage::unpack_from_slice(*borrowed_data)?;
+            // Check:: All messages must be "Approved".
+            let mut approved_message =
+                message_account.check_initialized_pda::<GatewayApprovedMessage>(program_id)?;
             if !approved_message.is_pending() {
                 // TODO: use a more descriptive GatewayError variant here.
                 return Err(ProgramError::AccountAlreadyInitialized);
             }
 
             // Success: update account message state to "Approved".
-            GatewayApprovedMessage::approved().pack_into_slice(&mut borrowed_data);
+            // The message by default is in "approved" state.
+            // https://github.com/axelarnetwork/axelar-cgp-solidity/blob/968c8964061f594c80dd111887edb93c5069e51e/contracts/AxelarGateway.sol#L509
+            approved_message.set_approved();
+            let mut data = message_account.try_borrow_mut_data()?;
+            approved_message.pack_into_slice(&mut data);
 
             // Emit an event signaling message approval.
-            {
-                let DecodedMessage {
-                    id,
-                    source_chain,
-                    source_address,
-                    destination_address,
-                    payload_hash,
-                    ..
-                } = &approved_command.message;
-                emit_message_approved_event(
-                    *id,
-                    source_chain.clone(),
-                    source_address.clone(),
-                    *destination_address,
-                    *payload_hash,
-                )?;
-            }
+            let DecodedMessage {
+                id,
+                source_chain,
+                source_address,
+                destination_address,
+                payload_hash,
+                ..
+            } = &approved_command.message;
+            emit_message_approved_event(
+                *id,
+                source_chain.clone(),
+                source_address.clone(),
+                *destination_address,
+                *payload_hash,
+            )?;
         }
 
         // Check: all messages were visited
@@ -234,7 +247,7 @@ impl Processor {
         let accounts_iter = &mut accounts.iter();
 
         let payer = next_account_info(accounts_iter)?;
-        let gateway_config_account = next_account_info(accounts_iter)?;
+        let gateway_root_pda = next_account_info(accounts_iter)?;
         let system_account = next_account_info(accounts_iter)?;
 
         // Check: System Program Account
@@ -244,13 +257,13 @@ impl Processor {
 
         // Check: Gateway Config account uses the canonical bump.
         let (canonical_pda, canonical_bump) = crate::get_gateway_root_config_pda();
-        if *gateway_config_account.key != canonical_pda {
+        if *gateway_root_pda.key != canonical_pda {
             return Err(GatewayError::InvalidConfigAccount.into());
         }
 
         init_pda(
             payer,
-            gateway_config_account,
+            gateway_root_pda,
             &[&[canonical_bump]],
             gateway_config,
         )
@@ -262,6 +275,7 @@ impl Processor {
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
         let payer = next_account_info(accounts_iter)?;
+        let _gateway_root_pda = next_account_info(accounts_iter)?;
         let execute_data_account = next_account_info(accounts_iter)?;
         let system_account = next_account_info(accounts_iter)?;
 
@@ -284,17 +298,22 @@ impl Processor {
     }
 
     fn initialize_approved_message(
+        program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
         message_id: [u8; 32],
-        source_chain: Vec<u8>,
+        source_chain: String,
         source_address: Vec<u8>,
         payload_hash: [u8; 32],
+        allowed_executer: Pubkey,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
         let payer = next_account_info(accounts_iter)?;
-        let approved_message_account = next_account_info(accounts_iter)?;
+        let approved_message_pda = next_account_info(accounts_iter)?;
+        let gateway_root_pda = next_account_info(accounts_iter)?;
         let system_account = next_account_info(accounts_iter)?;
+
+        // TODO validate gateway root pda
 
         // Check: System Program Account
         if !system_program::check_id(system_account.key) {
@@ -302,48 +321,46 @@ impl Processor {
         }
 
         // Check: Approved message account uses the canonical bump.
-        let (canonical_pda, bump, seed) = GatewayApprovedMessage::pda_with_seed(
-            message_id,
-            &source_chain,
-            &source_address,
-            payload_hash,
+        let (canonical_pda, bump, seeds) = GatewayApprovedMessage::pda(
+            gateway_root_pda.key,
+            &MessageId(Cow::Owned(message_id)),
+            &SourceChain(Cow::Owned(source_chain)),
+            &SourceAddress(&source_address),
+            &PayloadHash(&payload_hash),
         );
-        if *approved_message_account.key != canonical_pda {
+
+        approved_message_pda.check_uninitialized_pda()?;
+        if *approved_message_pda.key != canonical_pda {
             return Err(GatewayError::InvalidApprovedMessageAccount.into());
         }
 
-        let seeds: &[&[u8]] = &[&seed, &[bump]];
         program_utils::init_pda(
             payer,
-            approved_message_account,
-            &crate::id(),
+            approved_message_pda,
+            program_id,
             system_account,
-            // The message by default is in "approved" state.
-            // https://github.com/axelarnetwork/axelar-cgp-solidity/blob/968c8964061f594c80dd111887edb93c5069e51e/contracts/AxelarGateway.sol#L509
-            GatewayApprovedMessage::approved(),
-            seeds,
+            GatewayApprovedMessage::pending(allowed_executer),
+            &[seeds.as_ref(), &[bump]],
         )
     }
 
     fn transfer_operatorship(
-        program_id: &Pubkey,
+        _program_id: &Pubkey,
         accounts: &[AccountInfo],
     ) -> Result<(), ProgramError> {
-        check_program_account(*program_id)?;
-
         // Extract required accounts.
         let accounts_iter = &mut accounts.iter();
         let payer_account = next_account_info(accounts_iter)?;
         let new_operators_account = next_account_info(accounts_iter)?;
-        let gateway_config_account = next_account_info(accounts_iter)?;
+        let gateway_root_pda = next_account_info(accounts_iter)?;
         let system_account = next_account_info(accounts_iter)?;
 
         // Check: Config account is the canonical PDA.
         let (expected_pda_info, _bump) = crate::get_gateway_root_config_pda();
-        helper::compare_address(gateway_config_account, expected_pda_info)?;
+        helper::compare_address(gateway_root_pda, expected_pda_info)?;
 
         // Check: Config account is owned by the Gateway program.
-        if *gateway_config_account.owner != crate::ID {
+        if *gateway_root_pda.owner != crate::ID {
             return Err(ProgramError::InvalidAccountOwner);
         }
 
@@ -369,7 +386,7 @@ impl Processor {
 
         // Unpack Gateway configuration data.
         let mut config: GatewayConfig = {
-            let state_bytes_ref = gateway_config_account.try_borrow_mut_data()?;
+            let state_bytes_ref = gateway_root_pda.try_borrow_mut_data()?;
             borsh::de::from_slice(&state_bytes_ref)?
         };
 
@@ -380,11 +397,11 @@ impl Processor {
             .map_err(GatewayError::from)?;
 
         // Resize and refund state account space.
-        config.reallocate(gateway_config_account, payer_account, system_account)?;
+        config.reallocate(gateway_root_pda, payer_account, system_account)?;
 
         // Write the packed data back to the state account.
         let serialized_state = borsh::to_vec(&config)?;
-        let mut state_data_ref = gateway_config_account.try_borrow_mut_data()?;
+        let mut state_data_ref = gateway_root_pda.try_borrow_mut_data()?;
         state_data_ref[..serialized_state.len()].copy_from_slice(&serialized_state);
 
         // Emit an event to signal the successful operatorship transfer
@@ -423,6 +440,42 @@ impl Processor {
             &[seeds.as_ref(), &[bump]],
             &transfer_operatorship,
         )
+    }
+
+    fn validate_contract_call(
+        program_id: &Pubkey,
+        accounts: &[AccountInfo],
+    ) -> Result<(), ProgramError> {
+        let accounts_iter = &mut accounts.iter();
+        let _payer = next_account_info(accounts_iter)?;
+        let gateway_root_pda = next_account_info(accounts_iter)?;
+        let approved_message_pda = next_account_info(accounts_iter)?;
+        let caller = next_account_info(accounts_iter)?;
+        let system_account = next_account_info(accounts_iter)?;
+
+        if !caller.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+        if !system_program::check_id(system_account.key) {
+            return Err(GatewayError::InvalidSystemAccount.into());
+        }
+        if gateway_root_pda.key != &GatewayConfig::pda().0 {
+            return Err(GatewayError::InvalidConfigAccount.into());
+        }
+        if approved_message_pda.owner != &crate::ID {
+            return Err(ProgramError::InvalidAccountOwner);
+        }
+        let mut approved_message =
+            approved_message_pda.check_initialized_pda::<GatewayApprovedMessage>(program_id)?;
+
+        // Action
+        approved_message.verify_caller(caller)?;
+
+        // Store the data back to the account.
+        let mut data = approved_message_pda.try_borrow_mut_data()?;
+        approved_message.pack_into_slice(&mut data);
+
+        Ok(())
     }
 }
 

@@ -130,6 +130,7 @@ pub enum GatewayError {
     /// entries.
     #[error("Operators array must be sorted (asc) and unique")]
     UnorderedOrDuplicateOperators,
+
     // 30
     /// Thresold was presented as zero, which is an invalid value.
     #[error("Threshold cannot be equal to zero")]
@@ -143,6 +144,20 @@ pub enum GatewayError {
     /// Operators' epoch was set to zero, which is an invalid value.
     #[error("Operators' epoch cannot be equal to zero")]
     EpochZero,
+
+    /// The provided caller is not authorized to execute this instruction
+    #[error("The provided caller is not authorized to execute this instruction")]
+    InvalidExecutor,
+
+    /// The GatewayApprovedMessage PDA has not been approved yet! Wait for the
+    /// `execute` instruction to be called.
+    #[error("The GatewayApprovedMessage PDA has not been approved yet! Wait for the `execute` instruction to be called.")]
+    GatewayMessageNotApproved,
+
+    /// The `caller` is not a signer, which is required verify that he wants to
+    /// execute the message.
+    #[error("The `caller` is not a signer, which is required verify that he wants to execute the message.")]
+    CallerNeedsToBeSigner,
 }
 
 impl From<GatewayError> for ProgramError {

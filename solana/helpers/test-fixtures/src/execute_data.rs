@@ -80,22 +80,7 @@ pub fn create_execute_data(
     encode(&command_batch, signers, signatures, quorum)
 }
 
-pub fn create_execute_data_with_inputs(
-    num_messages: usize,
-    num_signers: usize,
-    quorum: u128,
-) -> Result<(Vec<u8>, Fixtures)> {
-    let fxt = fixtures(num_messages, num_signers)?;
-    let execute_data = encode(
-        &fxt.command_batch,
-        fxt.signers.clone(),
-        fxt.signatures.clone(),
-        quorum,
-    )?;
-    Ok((execute_data, fxt))
-}
-
-fn create_command_batch(messages: &[AxelarMessage]) -> Result<CommandBatch> {
+pub fn create_command_batch(messages: &[AxelarMessage]) -> Result<CommandBatch> {
     let mut builder = CommandBatchBuilder::new(555u64.into(), Encoder::Bcs);
     for msg in messages {
         builder.add_message(msg.clone())?;
@@ -103,7 +88,11 @@ fn create_command_batch(messages: &[AxelarMessage]) -> Result<CommandBatch> {
     Ok(builder.build()?)
 }
 
-fn create_signer() -> Result<TestSigner> {
+pub fn create_signer() -> Result<TestSigner> {
+    create_signer_with_weight(1)
+}
+
+pub fn create_signer_with_weight(weight: u128) -> Result<TestSigner> {
     let secret_key = SecretKey::random(&mut rand_core::OsRng);
     let public_key = PublicKey::from_secret_key(&secret_key);
     let public_key_bytes = public_key.serialize_compressed();
@@ -112,11 +101,11 @@ fn create_signer() -> Result<TestSigner> {
     Ok(TestSigner {
         secret_key,
         public_key,
-        weight: cosmwasm_std::Uint256::one(),
+        weight: cosmwasm_std::Uint256::from_u128(weight),
     })
 }
 
-fn sign_batch(
+pub fn sign_batch(
     command_batch: &CommandBatch,
     signers: &[TestSigner],
 ) -> Result<Vec<Option<Signature>>> {
@@ -142,7 +131,7 @@ fn sign_batch(
     Ok(signatures)
 }
 
-fn encode(
+pub fn encode(
     command_batch: &CommandBatch,
     signers: Vec<TestSigner>,
     signatures: Vec<Option<Signature>>,

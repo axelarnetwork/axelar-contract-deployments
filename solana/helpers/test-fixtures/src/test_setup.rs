@@ -1,7 +1,10 @@
+use std::ops::Add;
+
 use account_group::instruction::GroupId;
 use account_group::{get_permission_account, get_permission_group_account};
 use borsh::BorshDeserialize;
-use gateway::accounts::{GatewayApprovedMessage, GatewayConfig};
+use gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
+use gateway::types::bimap::OperatorsAndEpochs;
 use interchain_address_tracker::{get_associated_chain_address, get_associated_trusted_address};
 use interchain_token_service::{
     get_flow_limiters_permission_group_id, get_interchain_token_service_root_pda,
@@ -16,6 +19,7 @@ use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_instruction;
 use solana_program_test::{BanksClient, ProgramTest, ProgramTestBanksClientExt};
+use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::Transaction;
@@ -25,6 +29,7 @@ use token_manager::{get_token_manager_account, CalculatedEpoch, TokenManagerType
 pub use {connection_router, interchain_token_transfer_gmp};
 
 use crate::account::CheckValidPDAInTests;
+use crate::execute_data::{create_command_batch, sign_batch, TestSigner};
 
 pub struct TestFixture {
     pub banks_client: BanksClient,
@@ -83,6 +88,28 @@ impl TestFixture {
         assert!(root_pda_data.check_authority(self.payer.pubkey().into()));
 
         root_pda_address
+    }
+
+    pub fn init_operators_and_epochs(&self, operators: &[TestSigner]) -> OperatorsAndEpochs {
+        let total_weights =
+            operators
+                .iter()
+                .map(|s| s.weight)
+                .fold(gateway::types::u256::U256::ZERO, |a, b| {
+                    let b = gateway::types::u256::U256::from_le_bytes(b.to_le_bytes());
+                    a.checked_add(b).unwrap()
+                });
+
+        let operators_and_weights = operators.iter().map(|s| {
+            let address: cosmwasm_std::HexBinary = s.public_key.clone().into();
+            let address = gateway::types::address::Address::try_from(address.as_slice()).unwrap();
+
+            (
+                address,
+                gateway::types::u256::U256::from_le_bytes(s.weight.to_le_bytes()),
+            )
+        });
+        OperatorsAndEpochs::new(operators_and_weights, total_weights)
     }
 
     pub async fn initialize_gateway_config_account(
@@ -254,6 +281,7 @@ impl TestFixture {
         token_mint: Pubkey,
         gateway_root_pda: Pubkey,
         token_manager_type: TokenManagerType,
+        gateway_operators: Vec<TestSigner>,
     ) -> (Pubkey, TokenManagerRootAccount, ITSTokenHandlerGroups) {
         let token_id = Bytes32(keccak256("random-token-id"));
         let init_operator = Pubkey::from([0; 32]);
@@ -274,10 +302,17 @@ impl TestFixture {
                 .group_pda,
             &interchain_token_service_root_pda,
         );
-        let deploy_token_manager_message = crate::axelar_message::message().unwrap();
+        let deploy_token_manager_messages = [(
+            crate::axelar_message::message().unwrap(),
+            interchain_token_service_root_pda,
+        )];
         let gateway_approved_message_pda = self
-            .approve_gateway_message(&deploy_token_manager_message)
-            .await;
+            .fully_approve_messages(
+                &gateway_root_pda,
+                &deploy_token_manager_messages,
+                gateway_operators,
+            )
+            .await[0];
 
         // Action
         let ix = interchain_token_service::instruction::build_deploy_token_manager_instruction(
@@ -412,27 +447,24 @@ impl TestFixture {
             .unwrap();
     }
 
-    pub async fn approve_gateway_message(
+    pub async fn init_execute_data(
         &mut self,
-        message: &connection_router::Message,
+        gateway_root_pda: &Pubkey,
+        messages: &[connection_router::Message],
+        signers: Vec<TestSigner>,
+        quorum: u128,
     ) -> Pubkey {
-        let message_id =
-            solana_program::hash::hash(message.cc_id.to_string().as_bytes()).to_bytes();
-        let source_chain = message.cc_id.to_string().into_bytes();
-        let source_address = message.source_address.as_bytes();
+        let command_batch = create_command_batch(messages).unwrap();
+        let signatures = sign_batch(&command_batch, &signers).unwrap();
+        let encoded_message =
+            crate::execute_data::encode(&command_batch, signers, signatures, quorum).unwrap();
+        let execute_data = GatewayExecuteData::new(encoded_message.clone());
+        let (execute_data_pda, _, _) = execute_data.pda();
 
-        let (gateway_approved_message_pda, _bump) = GatewayApprovedMessage::pda(
-            message_id,
-            source_chain.as_slice(),
-            source_address,
-            message.payload_hash,
-        );
-        let ix = gateway::instructions::initialize_message(
+        let ix = gateway::instructions::initialize_execute_data(
             self.payer.pubkey(),
-            message_id,
-            source_chain.as_slice(),
-            source_address,
-            message.payload_hash,
+            *gateway_root_pda,
+            execute_data,
         )
         .unwrap();
 
@@ -452,7 +484,85 @@ impl TestFixture {
             .await
             .unwrap();
 
-        gateway_approved_message_pda
+        execute_data_pda
+    }
+
+    pub async fn init_pending_gateway_messages(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        // message and the allowed executer for the message (supposed to be a PDA owned by
+        // message.destination_address)
+        messages: &[(connection_router::Message, Pubkey)],
+    ) -> Vec<Pubkey> {
+        let ixs = messages
+            .iter()
+            .map(|(message, allowed_executer)| {
+                let (gateway_approved_message_pda, _bump, _seeds, _, _, _, _) =
+                    GatewayApprovedMessage::pda_from_axelar_message(*gateway_root_pda, message);
+                let ix = gateway::instructions::initialize_message(
+                    *gateway_root_pda,
+                    self.payer.pubkey(),
+                    *allowed_executer,
+                    message,
+                )
+                .unwrap();
+                (gateway_approved_message_pda, ix)
+            })
+            .collect::<Vec<_>>();
+
+        self.recent_blockhash = self
+            .banks_client
+            .get_new_latest_blockhash(&self.recent_blockhash)
+            .await
+            .unwrap();
+        let gateway_approved_message_pdas = ixs.iter().map(|(pda, _)| *pda).collect::<Vec<_>>();
+        let ixs = ixs.into_iter().map(|(_, ix)| ix).collect::<Vec<_>>();
+        let transaction = Transaction::new_signed_with_payer(
+            &ixs,
+            Some(&self.payer.pubkey()),
+            &[&self.payer],
+            self.recent_blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+
+        gateway_approved_message_pdas
+    }
+
+    /// create an `execute` ix on the gateway to approve all pending PDAs
+    pub async fn approve_pending_gateway_messages(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        execute_data_pda: &Pubkey,
+        approved_message_pdas: &[Pubkey],
+    ) {
+        let ix = gateway::instructions::execute(
+            gateway::id(),
+            *execute_data_pda,
+            *gateway_root_pda,
+            approved_message_pdas,
+        )
+        .unwrap();
+
+        let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(400_000u32);
+        self.recent_blockhash = self
+            .banks_client
+            .get_new_latest_blockhash(&self.recent_blockhash)
+            .await
+            .unwrap();
+        let transaction = Transaction::new_signed_with_payer(
+            &[bump_budget, ix],
+            Some(&self.payer.pubkey()),
+            &[&self.payer],
+            self.recent_blockhash,
+        );
+
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
     }
 
     pub async fn prepare_trusted_address_iatracker(
@@ -527,6 +637,40 @@ impl TestFixture {
         .unwrap();
 
         (associated_trusted_address, account_info.address)
+    }
+
+    pub async fn fully_approve_messages(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        messages: &[(connection_router::Message, Pubkey)],
+        operators: Vec<TestSigner>,
+    ) -> Vec<Pubkey> {
+        let weight_of_quorum = operators
+            .iter()
+            .fold(cosmwasm_std::Uint256::zero(), |acc, i| acc.add(i.weight));
+        let weight_of_quorum = U256::from_big_endian(&weight_of_quorum.to_be_bytes());
+        let execute_data_pda = self
+            .init_execute_data(
+                gateway_root_pda,
+                &messages
+                    .iter()
+                    .map(|(message, _executer)| message.clone())
+                    .collect::<Vec<_>>(),
+                operators,
+                weight_of_quorum.as_u128(),
+            )
+            .await;
+        let gateway_approved_message_pdas = self
+            .init_pending_gateway_messages(gateway_root_pda, messages)
+            .await;
+        self.approve_pending_gateway_messages(
+            gateway_root_pda,
+            &execute_data_pda,
+            &gateway_approved_message_pdas,
+        )
+        .await;
+
+        gateway_approved_message_pdas
     }
 }
 

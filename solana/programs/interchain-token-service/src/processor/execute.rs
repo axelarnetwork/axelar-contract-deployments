@@ -23,11 +23,16 @@ impl Processor {
         let account_info_iter = &mut accounts.iter();
         let gateway_approved_message_pda = next_account_info(account_info_iter)?;
 
+        // TODO CPI call
         let approved_msg = gateway_approved_message_pda
             .check_initialized_pda::<GatewayApprovedMessage>(&gateway::id())?;
-        if approved_msg.is_pending() {
+        if !approved_msg.is_approved() {
             return Err(ProgramError::UninitializedAccount);
         }
+
+        // TODO we need check if the payload hash is the same as the one in the gateway
+        // approved message.      Otherwise someone could just send a different
+        // payload and it would be executed.
 
         let res = GMPPayload::decode(payload.as_slice())
             .map_err(|_| ProgramError::InvalidInstructionData)?;

@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 ethers-core.workspace = true
-token-manager.workspace = true
 
 [dev-dependencies]
 hex.workspace = true
