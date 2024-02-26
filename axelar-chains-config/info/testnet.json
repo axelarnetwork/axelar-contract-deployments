@@ -2127,6 +2127,23 @@
         "url": "https://sepolia-explorer.base.org",
         "api": "https://api-sepolia.basescan.org/api"
       }
+    },
+    "blast-sepolia": {
+      "name": "Blast Sepolia",
+      "id": "blast-sepolia",
+      "axelarId": "blast-sepolia",
+      "chainId": 168587773,
+      "rpc": "https://sepolia.blast.io/",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "confirmations": 2,
+      "explorer": {
+        "name": "Blastscan",
+        "url": "https://testnet.blastscan.io",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/168587773/etherscan"
+      }
     }
   },
   "axelar": {
