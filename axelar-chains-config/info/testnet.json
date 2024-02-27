@@ -2112,7 +2112,7 @@
       }
     },
     "base-sepolia": {
-      "name": "Base Sepolia",
+      "name": "Base-Sepolia",
       "id": "base-sepolia",
       "axelarId": "base-sepolia",
       "chainId": 84532,
@@ -2129,7 +2129,7 @@
       }
     },
     "blast-sepolia": {
-      "name": "Blast Sepolia",
+      "name": "Blast-Sepolia",
       "id": "blast-sepolia",
       "axelarId": "blast-sepolia",
       "chainId": 168587773,
