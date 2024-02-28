@@ -42,6 +42,7 @@ async fn give_token_lock_unlock_success() -> Result<()> {
     ) = fixture
         .init_new_token_manager(
             interchain_token_service_root_pda,
+            gas_service_root_pda,
             mint_account_pda,
             gateway_root_pda,
             TokenManagerType::LockUnlock,

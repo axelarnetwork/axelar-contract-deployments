@@ -30,13 +30,8 @@ impl CheckValidPDAInTests for Account {
             return Err(anyhow!("Account owner does not match expected program id"));
         }
         let data = self.data();
-        let has_correct_data_len = data.len() == T::get_packed_len();
-        if !has_correct_data_len {
-            return Err(anyhow!(
-                "Account data length does not match expected length"
-            ));
-        }
 
+        // TODO use T::unpack(data) instead, but we need T: IsInitialized for that
         T::unpack_from_slice(data).context("Failed to deserialize account data")
     }
 

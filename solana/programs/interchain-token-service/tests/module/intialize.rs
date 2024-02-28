@@ -1,6 +1,7 @@
 use gateway::accounts::GatewayConfig;
 use interchain_token_service::get_interchain_token_service_root_pda;
 use solana_program_test::tokio;
+use solana_sdk::program_pack::Pack;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
 use test_fixtures::account::CheckValidPDAInTests;
@@ -53,5 +54,16 @@ async fn test_init_root_pda_interchain_token_service() {
             &interchain_token_service::id(),
         )
         .unwrap();
-    assert_eq!(its_root_pda, interchain_token_service::state::RootPDA {});
+    assert_eq!(
+        its_root_pda,
+        interchain_token_service::state::RootPDA::new(its_root_pda.bump_seed)
+    );
+
+    let its_root_pda =
+        interchain_token_service::state::RootPDA::unpack(&interchain_token_service_root_pda.data)
+            .unwrap();
+    assert_eq!(
+        its_root_pda,
+        interchain_token_service::state::RootPDA::new(its_root_pda.bump_seed)
+    );
 }

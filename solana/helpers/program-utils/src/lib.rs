@@ -35,6 +35,7 @@ macro_rules! log_everywhere {
 }
 
 /// Initialize an associated account
+// TODO add constraint that the T: IsInitialized + Pack + BorshSerialize
 pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack + borsh::BorshSerialize>(
     funder_info: &'a AccountInfo<'b>,
     to_create: &'a AccountInfo<'b>,
@@ -61,8 +62,7 @@ pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack + borsh::BorshSeri
         &[signer_seeds],
     )?;
     let mut account_data = to_create.try_borrow_mut_data()?;
-    let serialized_data = borsh::to_vec(&data).unwrap();
-    account_data[..serialized_data.len()].copy_from_slice(&serialized_data);
+    T::pack(data, &mut account_data)?;
     Ok(())
 }
 
@@ -99,6 +99,7 @@ pub fn check_program_account(program_id: &Pubkey, check_f: fn(&Pubkey) -> bool) 
 /// PDA
 pub trait ValidPDA {
     /// Check if the account is an initialized PDA
+    // TODO add constraint that the T: IsInitialized + Pack + BorshSerialize
     fn check_initialized_pda<T: solana_program::program_pack::Pack + BorshDeserialize>(
         &self,
         expected_program_id: &Pubkey,

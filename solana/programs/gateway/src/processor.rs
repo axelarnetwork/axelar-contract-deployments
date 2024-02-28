@@ -447,21 +447,9 @@ impl Processor {
         accounts: &[AccountInfo],
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
-        let _payer = next_account_info(accounts_iter)?;
-        let gateway_root_pda = next_account_info(accounts_iter)?;
         let approved_message_pda = next_account_info(accounts_iter)?;
         let caller = next_account_info(accounts_iter)?;
-        let system_account = next_account_info(accounts_iter)?;
 
-        if !caller.is_signer {
-            return Err(ProgramError::MissingRequiredSignature);
-        }
-        if !system_program::check_id(system_account.key) {
-            return Err(GatewayError::InvalidSystemAccount.into());
-        }
-        if gateway_root_pda.key != &GatewayConfig::pda().0 {
-            return Err(GatewayError::InvalidConfigAccount.into());
-        }
         if approved_message_pda.owner != &crate::ID {
             return Err(ProgramError::InvalidAccountOwner);
         }

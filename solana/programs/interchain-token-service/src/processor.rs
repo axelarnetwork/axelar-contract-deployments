@@ -12,9 +12,11 @@ use program_utils::check_program_account;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
+use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use crate::instruction::InterchainTokenServiceInstruction;
+use crate::state::RootPDA;
 
 /// Program state handler.
 pub struct Processor;
@@ -95,4 +97,24 @@ impl Processor {
             }
         }
     }
+}
+
+pub(crate) fn assert_root_its_derivation(
+    gateway_root_pda: &AccountInfo<'_>,
+    gas_service_root_pda: &AccountInfo<'_>,
+    root_pda: &RootPDA,
+    its_root_pda: &AccountInfo<'_>,
+) -> Result<(), ProgramError> {
+    let actual_root_pda = Pubkey::create_program_address(
+        &[
+            &gateway_root_pda.key.as_ref(),
+            &gas_service_root_pda.key.as_ref(),
+            &[root_pda.bump_seed],
+        ],
+        &crate::id(),
+    )?;
+    if actual_root_pda != *its_root_pda.key {
+        return Err(ProgramError::InvalidSeeds);
+    }
+    Ok(())
 }

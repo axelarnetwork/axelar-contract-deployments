@@ -13,7 +13,7 @@ use token_manager::TokenManagerType;
 use super::Processor;
 use crate::error::InterchainTokenServiceError;
 use crate::get_interchain_token_service_associated_token_account;
-use crate::processor::initialize::assert_interchain_token_service_root_pda;
+use crate::processor::assert_root_its_derivation;
 use crate::state::RootPDA;
 
 impl Processor {
@@ -58,12 +58,13 @@ impl Processor {
         let spl_associated_token_account_program = next_account_info(accounts_iter)?;
         let system_program = next_account_info(accounts_iter)?;
 
-        let _ = interchain_token_service_root_pda.check_initialized_pda::<RootPDA>(&program_id)?;
-        let _its_root_bump_seed = assert_interchain_token_service_root_pda(
-            interchain_token_service_root_pda,
+        let root_pda =
+            interchain_token_service_root_pda.check_initialized_pda::<RootPDA>(&program_id)?;
+        assert_root_its_derivation(
             gateway_root_pda,
             gas_service_root_pda,
-            &program_id,
+            &root_pda,
+            interchain_token_service_root_pda,
         )?;
 
         assert_eq!(
@@ -143,12 +144,13 @@ impl Processor {
         // Programs
         let spl_token_program = next_account_info(accounts_iter)?;
 
-        interchain_token_service_root_pda.check_initialized_pda::<RootPDA>(&program_id)?;
-        assert_interchain_token_service_root_pda(
-            interchain_token_service_root_pda,
+        let root_pda =
+            interchain_token_service_root_pda.check_initialized_pda::<RootPDA>(&crate::id())?;
+        assert_root_its_derivation(
             gateway_root_pda,
             gas_service_root_pda,
-            &program_id,
+            &root_pda,
+            interchain_token_service_root_pda,
         )?;
 
         let (

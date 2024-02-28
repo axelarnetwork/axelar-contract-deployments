@@ -104,10 +104,8 @@ pub enum GatewayInstruction {
     /// Validates a contract call.
     ///
     /// Accounts expected by this instruction:
-    /// 0. [] Gateway Config PDA account
-    /// 1. [] Execute Data PDA account
-    /// 2. [] Approved Message PDA accounts
-    /// 3. [] System Program account
+    /// 1. [WRITE] Approved Message PDA account
+    /// 2. [SIGNER] Caller
     ValidateContractCall,
 }
 
@@ -302,19 +300,14 @@ pub fn initialize_trasfer_operatorship(
     })
 }
 
-/// Creates a [`GatewayInstructon::InitializeTransferOperatorship`] instruction.
+/// Creates a [`GatewayInstructon::ValidateContractCall`] instruction.
 pub fn validate_contract_call(
-    payer: &Pubkey,
-    gateway_root_pda: &Pubkey,
     approved_message_pda: &Pubkey,
     caller: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let accounts = vec![
-        AccountMeta::new(*payer, true),
-        AccountMeta::new_readonly(*gateway_root_pda, false),
         AccountMeta::new(*approved_message_pda, false),
         AccountMeta::new_readonly(*caller, true),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
     let data = borsh::to_vec(&GatewayInstruction::ValidateContractCall)?;

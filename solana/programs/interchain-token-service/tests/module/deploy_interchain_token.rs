@@ -41,7 +41,9 @@ async fn test_deploy_interchain_token() {
 
     let ix = interchain_token_service::instruction::build_execute_instruction(
         &gateway_approved_message_pda,
-        &fixture.payer.pubkey(),
+        &interchain_token_service_root_pda,
+        &gateway_root_pda,
+        &gas_service_root_pda,
         &[],
         GMPPayload::DeployInterchainToken(DeployInterchainToken {
             token_id: Bytes32(keccak256("random-token-id")),

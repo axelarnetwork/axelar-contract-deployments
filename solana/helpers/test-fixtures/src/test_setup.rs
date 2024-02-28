@@ -278,6 +278,7 @@ impl TestFixture {
     pub async fn init_new_token_manager(
         &mut self,
         interchain_token_service_root_pda: Pubkey,
+        gas_service_root_pda: Pubkey,
         token_mint: Pubkey,
         gateway_root_pda: Pubkey,
         token_manager_type: TokenManagerType,
@@ -317,6 +318,9 @@ impl TestFixture {
         // Action
         let ix = interchain_token_service::instruction::build_deploy_token_manager_instruction(
             &gateway_approved_message_pda,
+            &gateway_root_pda,
+            &interchain_token_service_root_pda,
+            &gas_service_root_pda,
             &self.payer.pubkey(),
             &token_manager_root_pda_pubkey,
             &its_token_manager_permission_groups.operator_group.group_pda,
@@ -329,9 +333,7 @@ impl TestFixture {
             &its_token_manager_permission_groups
                 .flow_limiter_group
                 .group_pda_user_owner,
-            &interchain_token_service_root_pda,
             &token_mint,
-            &gateway_root_pda,
             DeployTokenManager {
                 token_id: Bytes32(keccak256("random-token-id")),
                 token_manager_type: U256::from(token_manager_type as u8),

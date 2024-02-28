@@ -2,7 +2,6 @@
 
 use program_utils::{init_pda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
-use solana_program::msg;
 use solana_program::program::{invoke, invoke_signed};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -12,7 +11,7 @@ use {spl_associated_token_account, spl_token};
 
 use super::Processor;
 use crate::get_interchain_token_service_associated_token_account;
-use crate::processor::initialize::assert_interchain_token_service_root_pda;
+use crate::processor::assert_root_its_derivation;
 use crate::state::{RootPDA, ITSATAPDA};
 
 impl Processor {
@@ -61,12 +60,13 @@ impl Processor {
         let spl_associated_token_account_program = next_account_info(accounts_iter)?;
         let system_program = next_account_info(accounts_iter)?;
 
-        let _ = interchain_token_service_root_pda.check_initialized_pda::<RootPDA>(&program_id)?;
-        let its_root_bump_seed = assert_interchain_token_service_root_pda(
-            interchain_token_service_root_pda,
+        let root_pda =
+            interchain_token_service_root_pda.check_initialized_pda::<RootPDA>(&crate::id())?;
+        assert_root_its_derivation(
             gateway_root_pda,
             gas_service_root_pda,
-            &program_id,
+            &root_pda,
+            interchain_token_service_root_pda,
         )?;
 
         assert_eq!(
@@ -88,7 +88,6 @@ impl Processor {
             owner_of_its_ata_for_user_tokens_pda.key, &owner_of_its_ata_for_user_tokens_pda_derived,
             "Invalid ITS ATA for user wallet"
         );
-        msg!("!!!! INIT PDA");
         if **its_ata_for_user_tokens_pda.try_borrow_lamports()? == 0
             && its_ata_for_user_tokens_pda.data_len() == 0
         {
@@ -97,7 +96,7 @@ impl Processor {
                 owner_of_its_ata_for_user_tokens_pda,
                 &program_id,
                 system_program,
-                ITSATAPDA {},
+                ITSATAPDA::new(bump_seed),
                 &[
                     &interchain_token_service_root_pda.key.to_bytes(),
                     &destination_wallet.key.to_bytes(),
@@ -108,7 +107,6 @@ impl Processor {
         }
 
         // idempotent initialization for its_ata_for_user_owner_pda
-        msg!("!!!! INIT ATA PDA");
         invoke(
             &spl_associated_token_account::instruction::create_associated_token_account_idempotent(
                 payer.key,
@@ -127,7 +125,6 @@ impl Processor {
             ],
         )?;
 
-        msg!("!!!! SET DELEGATE");
         // Set Delegate to `destination_wallet` so user can withdraw the tokens whenever
         // they want
         invoke_signed(
@@ -158,7 +155,6 @@ impl Processor {
             ]],
         )?;
 
-        msg!("!!!!Transfer tokens");
         // Transfer the actual tokens from the token manager ATA to the user's ITS ATA
         invoke_signed(
             &transfer(
@@ -183,7 +179,7 @@ impl Processor {
             &[&[
                 &gateway_root_pda.key.to_bytes(),
                 &gas_service_root_pda.key.to_bytes(),
-                &[its_root_bump_seed],
+                &[root_pda.bump_seed],
             ]],
         )?;
 
@@ -214,12 +210,13 @@ impl Processor {
         let spl_associated_token_account_program = next_account_info(accounts_iter)?;
         let system_program = next_account_info(accounts_iter)?;
 
-        interchain_token_service_root_pda.check_initialized_pda::<RootPDA>(&program_id)?;
-        let its_root_pda_bump = assert_interchain_token_service_root_pda(
-            interchain_token_service_root_pda,
+        let root_pda =
+            interchain_token_service_root_pda.check_initialized_pda::<RootPDA>(&crate::id())?;
+        assert_root_its_derivation(
             gateway_root_pda,
             gas_service_root_pda,
-            &program_id,
+            &root_pda,
+            interchain_token_service_root_pda,
         )?;
 
         let (
@@ -248,7 +245,6 @@ impl Processor {
             "Invalid ITS ATA for user wallet"
         );
 
-        msg!("!!!! INIT PDA");
         if **its_ata_for_user_tokens_pda.try_borrow_lamports()? == 0
             && its_ata_for_user_tokens_pda.data_len() == 0
         {
@@ -257,7 +253,7 @@ impl Processor {
                 owner_of_its_ata_for_user_tokens_pda,
                 &program_id,
                 system_program,
-                ITSATAPDA {},
+                ITSATAPDA::new(owner_of_its_ata_for_user_tokens_pda_bump),
                 &[
                     &interchain_token_service_root_pda.key.to_bytes(),
                     &delegate_authority.key.to_bytes(),
@@ -268,7 +264,6 @@ impl Processor {
         }
 
         // idempotent initialization for its_ata_for_user_owner_pda
-        msg!("!!!! INIT ATA PDA");
         invoke(
             &spl_associated_token_account::instruction::create_associated_token_account_idempotent(
                 payer.key,
@@ -287,7 +282,6 @@ impl Processor {
             ],
         )?;
 
-        msg!("!!!! MINT TO");
         invoke_signed(
             &mint_to(
                 spl_token_program.key,
@@ -306,11 +300,10 @@ impl Processor {
             &[&[
                 &gateway_root_pda.key.to_bytes(),
                 &gas_service_root_pda.key.to_bytes(),
-                &[its_root_pda_bump],
+                &[root_pda.bump_seed],
             ]],
         )?;
 
-        msg!("!!!! SET DELEGATE");
         invoke_signed(
             &spl_token::instruction::approve(
                 spl_token_program.key,

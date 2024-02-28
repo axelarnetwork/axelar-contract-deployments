@@ -55,8 +55,6 @@ async fn test_successful_validate_contract_call() {
 
     // Action: set message status as executed
     let ix = gmp_gateway::instructions::validate_contract_call(
-        &fixture.payer.pubkey(),
-        &gateway_root_pda,
         &gateway_approved_message_pdas[0],
         &allowed_executer.pubkey(),
     )

@@ -31,6 +31,7 @@ ethers-core.workspace = true
 
 
 [dev-dependencies]
+cosmwasm-std.workspace = true
 solana-program-test.workspace = true
 test-fixtures.workspace = true
 solana-sdk.workspace = true

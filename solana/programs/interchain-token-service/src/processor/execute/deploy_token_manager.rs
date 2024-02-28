@@ -1,5 +1,5 @@
 use interchain_token_transfer_gmp::DeployTokenManager;
-use program_utils::{check_program_account, ValidPDA};
+use program_utils::check_program_account;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke;
@@ -17,13 +17,20 @@ impl Processor {
         program_id: &Pubkey,
         accounts: &[AccountInfo],
         input: DeployTokenManager,
+        _root_pda: &RootPDA,
     ) -> ProgramResult {
         check_program_account(program_id, check_id)?;
 
         let account_info_iter = &mut accounts.iter();
 
-        // Accounts to proxy
+        // Default `executable` accounts
         let _gateway_approved_message_pda = next_account_info(account_info_iter)?;
+        let its_root_pda = next_account_info(account_info_iter)?;
+        let gateway_root_pda = next_account_info(account_info_iter)?;
+        let _gas_service_root_pda = next_account_info(account_info_iter)?;
+        let _gateway_program = next_account_info(account_info_iter)?;
+
+        // Accounts specific for this ix
         let funder = next_account_info(account_info_iter)?;
         let token_manager_root_pda = next_account_info(account_info_iter)?;
         let operators_permission_group_pda = next_account_info(account_info_iter)?;
@@ -34,10 +41,6 @@ impl Processor {
         let flow_limiters_permission_pda_owner = next_account_info(account_info_iter)?;
         let token_mint = next_account_info(account_info_iter)?;
         let token_manager_ata = next_account_info(account_info_iter)?;
-        let gateway_root_pda = next_account_info(account_info_iter)?;
-
-        // Our accounts
-        let its_root_pda = next_account_info(account_info_iter)?;
 
         // Executable accounts
         let system_program = next_account_info(account_info_iter)?;
@@ -84,12 +87,9 @@ impl Processor {
             ],
         )?;
 
-        // assert ITS root PDA
-        its_root_pda.check_initialized_pda::<RootPDA>(program_id)?;
+        // Instantiate a new TokenManager
         let token_manager_type =
             TokenManagerType::try_from(input.token_manager_type.as_usize() as u8)?;
-
-        // Instantiate a new TokenManager
         invoke(
             &token_manager::instruction::build_setup_instruction(
                 funder.key,

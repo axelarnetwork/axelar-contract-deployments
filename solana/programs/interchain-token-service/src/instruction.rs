@@ -150,7 +150,9 @@ pub fn build_initialize_instruction(
 /// Create a generic `Execute` instruction
 pub fn build_execute_instruction(
     gateway_approved_message_pda: &Pubkey,
-    funder: &Pubkey,
+    its_root_pda: &Pubkey,
+    gateway_root_pda: &Pubkey,
+    gas_service_root_pda: &Pubkey,
     incoming_accounts: &[AccountMeta],
     payload: impl AbiEncode,
 ) -> Result<Instruction, ProgramError> {
@@ -160,7 +162,10 @@ pub fn build_execute_instruction(
 
     let mut accounts = vec![
         AccountMeta::new(*gateway_approved_message_pda, false),
-        AccountMeta::new(*funder, true),
+        AccountMeta::new_readonly(*its_root_pda, false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new_readonly(*gas_service_root_pda, false),
+        AccountMeta::new_readonly(gateway::id(), false),
     ];
     accounts.extend_from_slice(incoming_accounts);
 
@@ -175,15 +180,16 @@ pub fn build_execute_instruction(
 #[allow(clippy::too_many_arguments)]
 pub fn build_deploy_token_manager_instruction(
     gateway_approved_message_pda: &Pubkey,
+    gateway_root_pda: &Pubkey,
+    its_root_pda: &Pubkey,
+    gas_service_root_pda: &Pubkey,
     funder: &Pubkey,
     token_manager_root_pda: &Pubkey,
     operators_permission_group_pda: &Pubkey,
     operators_permission_pda_owner: &Pubkey,
     flow_limiters_permission_group_pda: &Pubkey,
     flow_limiters_permission_pda_owner: &Pubkey,
-    interchain_token_service_root_pda: &Pubkey,
     token_mint: &Pubkey,
-    gateway_root_pda: &Pubkey,
     payload: DeployTokenManager,
 ) -> Result<Instruction, ProgramError> {
     let token_manager_ata = get_associated_token_address(token_manager_root_pda, token_mint);
@@ -198,8 +204,11 @@ pub fn build_deploy_token_manager_instruction(
 
     build_execute_instruction(
         gateway_approved_message_pda,
-        funder,
+        its_root_pda,
+        gateway_root_pda,
+        gas_service_root_pda,
         &[
+            AccountMeta::new(*funder, false),
             AccountMeta::new(*token_manager_root_pda, false),
             AccountMeta::new(*operators_permission_group_pda, false),
             AccountMeta::new(operators_permission_pda, false),
@@ -209,8 +218,6 @@ pub fn build_deploy_token_manager_instruction(
             AccountMeta::new_readonly(*flow_limiters_permission_pda_owner, false),
             AccountMeta::new_readonly(*token_mint, false),
             AccountMeta::new(token_manager_ata, false),
-            AccountMeta::new_readonly(*gateway_root_pda, false),
-            AccountMeta::new_readonly(*interchain_token_service_root_pda, false),
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(account_group::id(), false),
             AccountMeta::new_readonly(token_manager::id(), false),

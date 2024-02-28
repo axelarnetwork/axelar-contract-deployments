@@ -8,10 +8,12 @@ use interchain_token_transfer_gmp::GMPPayload;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use super::Processor;
+use super::{assert_root_its_derivation, Processor};
+use crate::state::RootPDA;
 
 impl Processor {
     /// This function is used to initialize the program.
@@ -22,13 +24,32 @@ impl Processor {
     ) -> ProgramResult {
         let account_info_iter = &mut accounts.iter();
         let gateway_approved_message_pda = next_account_info(account_info_iter)?;
+        let its_root_pda = next_account_info(account_info_iter)?;
+        let gateway_root_pda = next_account_info(account_info_iter)?;
+        let gas_service_root_pda = next_account_info(account_info_iter)?;
 
-        // TODO CPI call
-        let approved_msg = gateway_approved_message_pda
+        let root_pda = its_root_pda.check_initialized_pda::<RootPDA>(&crate::id())?;
+        assert_root_its_derivation(
+            gateway_root_pda,
+            gas_service_root_pda,
+            &root_pda,
+            its_root_pda,
+        )?;
+
+        let _approved_msg = gateway_approved_message_pda
             .check_initialized_pda::<GatewayApprovedMessage>(&gateway::id())?;
-        if !approved_msg.is_approved() {
-            return Err(ProgramError::UninitializedAccount);
-        }
+        invoke_signed(
+            &gateway::instructions::validate_contract_call(
+                gateway_approved_message_pda.key,
+                its_root_pda.key,
+            )?,
+            &[gateway_approved_message_pda.clone(), its_root_pda.clone()],
+            &[&[
+                &gateway_root_pda.key.as_ref(),
+                &gas_service_root_pda.key.as_ref(),
+                &[root_pda.bump_seed],
+            ]],
+        )?;
 
         // TODO we need check if the payload hash is the same as the one in the gateway
         // approved message.      Otherwise someone could just send a different
@@ -39,13 +60,13 @@ impl Processor {
 
         match res {
             GMPPayload::InterchainTransfer(payload) => {
-                Self::interchain_transfer(program_id, accounts, payload)
+                Self::interchain_transfer(program_id, accounts, payload, &root_pda)
             }
             GMPPayload::DeployInterchainToken(payload) => {
-                Self::deploy_interchain_token(program_id, accounts, payload)
+                Self::deploy_interchain_token(program_id, accounts, payload, &root_pda)
             }
             GMPPayload::DeployTokenManager(payload) => {
-                Self::relayer_gmp_deploy_token_manager(program_id, accounts, payload)
+                Self::relayer_gmp_deploy_token_manager(program_id, accounts, payload, &root_pda)
             }
         }
     }

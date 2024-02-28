@@ -12,7 +12,7 @@ use crate::program_test;
 
 #[tokio::test]
 #[should_panic(expected = "TransactionError(InstructionError(0, ProgramFailedToComplete))")]
-async fn test_deploy_interchain_token() {
+async fn test_interchain_transfer() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let gateway_operators = vec![
@@ -44,7 +44,9 @@ async fn test_deploy_interchain_token() {
     // ACTION: deploy interchain token
     let ix = interchain_token_service::instruction::build_execute_instruction(
         &gateway_approved_message_pda,
-        &fixture.payer.pubkey(),
+        &interchain_token_service_root_pda,
+        &gateway_root_pda,
+        &gas_service_root_pda,
         &[],
         GMPPayload::InterchainTransfer(InterchainTransfer {
             token_id: Bytes32(keccak256("random-token-id")),

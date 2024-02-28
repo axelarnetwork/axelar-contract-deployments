@@ -27,12 +27,14 @@ impl Processor {
         assert_gas_service_root_pda(gas_service_root_pda);
 
         interchain_token_service_root_pda.check_uninitialized_pda()?;
-        let bump_seed = assert_interchain_token_service_root_pda(
-            interchain_token_service_root_pda,
-            gateway_root_pda,
-            gas_service_root_pda,
+        let (derived, bump_seed) = get_interchain_token_service_root_pda_internal(
+            gateway_root_pda.key,
+            gas_service_root_pda.key,
             program_id,
-        )?;
+        );
+        if derived != *interchain_token_service_root_pda.key {
+            return Err(ProgramError::InvalidSeeds);
+        }
 
         // TODO we need to instantiate a global operator group here, which will have
         // operator-only access to ITS
@@ -42,7 +44,7 @@ impl Processor {
             interchain_token_service_root_pda,
             program_id,
             system_program_info,
-            RootPDA {},
+            RootPDA::new(bump_seed),
             &[
                 &gateway_root_pda.key.to_bytes(),
                 &gas_service_root_pda.key.to_bytes(),
@@ -51,40 +53,6 @@ impl Processor {
         )?;
         Ok(())
     }
-}
-
-/// This function is used to assert the interchain token service root PDA.
-///
-/// # Arguments
-///
-/// * `interchain_token_service_root_pda` - A reference to the account
-///   information of the interchain token service root PDA.
-/// * `gateway_root_pda` - A reference to the account information of the gateway
-///   root PDA.
-/// * `gas_service_root_pda` - A reference to the account information of the gas
-///   service root PDA.
-/// * `program_id` - A reference to the public key of the program.
-///
-/// # Returns
-///
-/// * `Result<u8, ProgramError>` - The result of the assertion. If successful,
-///   it returns the bump seed. If not, it returns a program error.
-pub(crate) fn assert_interchain_token_service_root_pda(
-    interchain_token_service_root_pda: &AccountInfo<'_>,
-    gateway_root_pda: &AccountInfo<'_>,
-    gas_service_root_pda: &AccountInfo<'_>,
-    program_id: &Pubkey,
-) -> Result<u8, ProgramError> {
-    let (derived, bump_seed) = get_interchain_token_service_root_pda_internal(
-        gateway_root_pda.key,
-        gas_service_root_pda.key,
-        program_id,
-    );
-    if derived != *interchain_token_service_root_pda.key {
-        return Err(ProgramError::InvalidSeeds);
-    }
-
-    Ok(bump_seed)
 }
 
 pub(crate) fn assert_gas_service_root_pda(gas_service_root_pda: &AccountInfo<'_>) {
