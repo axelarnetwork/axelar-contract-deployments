@@ -2142,7 +2142,7 @@
       "explorer": {
         "name": "Blastscan",
         "url": "https://testnet.blastscan.io",
-        "api": "https://api.routescan.io/v2/network/testnet/evm/168587773/etherscan"
+        "api": "https://api.routescan.io/v2/network/testnet/evm/168587773/"
       }
     }
   },
