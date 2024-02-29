@@ -2086,6 +2086,24 @@
         "url": "https://fraxscan.com",
         "api": "https://api.fraxscan.com/api"
       }
+    },
+    "blast": {
+      "name": "Blast",
+      "id": "blast",
+      "axelarId": "blast",
+      "chainId": 81457,
+      "rpc": "<TO_ADD>",
+      "tokenSymbol": "ETH",
+      "contracts": {},
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "confirmations": 2,
+      "explorer": {
+        "name": "Blastscan",
+        "url": "https://81457.routescan.io",
+        "api": "https://api.routescan.io/v2/network/mainnet/evm/81457/"
+      }
     }
   },
   "axelar": {
