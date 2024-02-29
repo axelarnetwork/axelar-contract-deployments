@@ -89,11 +89,10 @@ To decode function calldata:
 1. Run the command below with the calldata being decoded
 
     ```bash
-    node evm/decode.js -c CONTRACT_NAME --calldata [calldata]
+    node evm/decode.js -c [contractName] --calldata [calldata]
     ```
 
-2. The resulting decoded function call and arguments will be printed to the console.
-   Example output for multicall data with `deployInterchainToken` and `interchainTransfer` calls:
+2. Example output for multicall data with `deployInterchainToken` and `interchainTransfer` calls. `contractName` can be `InterchainTokenService` or `InterchainTokenFactory` depending on which contract the ITS related method is for.
 
     ```
     Decoded calldata:
