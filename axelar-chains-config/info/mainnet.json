@@ -2094,7 +2094,10 @@
       "chainId": 81457,
       "rpc": "<TO_ADD>",
       "tokenSymbol": "ETH",
-      "contracts": {},
+      "contracts": {
+        "AxelarGateway": {},
+        "AxelarGasService": {}
+      },
       "gasOptions": {
         "gasLimit": 8000000
       },
