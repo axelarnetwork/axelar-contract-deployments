@@ -2381,6 +2381,7 @@
     },
     "optimism-sepolia": {
       "name": "Optimism-Sepolia",
+      "id": "optimism-sepolia",
       "axelarId": "optimism-sepolia",
       "chainId": 11155420,
       "rpc": "https://sepolia.optimism.io",
@@ -2396,7 +2397,7 @@
       }
     },
     "base-sepolia": {
-      "name": "Base Sepolia",
+      "name": "Base-Sepolia",
       "id": "base-sepolia",
       "axelarId": "base-sepolia",
       "chainId": 84532,
@@ -2410,6 +2411,23 @@
         "name": "Basescan",
         "url": "https://sepolia-explorer.base.org",
         "api": "https://api-sepolia.basescan.org/api"
+      }
+    },
+    "blast-sepolia": {
+      "name": "Blast-Sepolia",
+      "id": "blast-sepolia",
+      "axelarId": "blast-sepolia",
+      "chainId": 168587773,
+      "rpc": "https://sepolia.blast.io/",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "confirmations": 2,
+      "explorer": {
+        "name": "Blastscan",
+        "url": "https://testnet.blastscan.io",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/168587773/etherscan"
       }
     }
   },
