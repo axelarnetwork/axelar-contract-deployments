@@ -34,27 +34,20 @@ const ITokenManager = require('@axelar-network/interchain-token-service/interfac
 const IOperator = require('@axelar-network/interchain-token-service/interfaces/IOperator.json');
 const { parseEther } = require('ethers/lib/utils');
 const { getWallet, signTransaction, storeSignedTx } = require('./sign-utils');
+const { sortWeightedSignaturesProof, encodeInterchainCallsBatch } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 
-const getAddresses = (wallets) => wallets.map(({ address }) => address);
-const encodeInterchainCallsBatch = (batchId, calls) =>
-    defaultAbiCoder.encode(['uint256', 'tuple(string, address, address, bytes, uint256)[]'], [batchId, calls]);
-
-const getWeightedSignaturesProof = async (data, accounts, weights, threshold, signers) => {
-    const hash = arrayify(keccak256(data));
-    const signatures = await Promise.all(
-        sortBy(signers, (wallet) => wallet.address.toLowerCase()).map((wallet) => wallet.signMessage(hash)),
-    );
-    return defaultAbiCoder.encode(
-        ['address[]', 'uint256[]', 'uint256', 'bytes[]'],
-        [getAddresses(accounts), weights, threshold, signatures],
-    );
-};
-
-async function preExecutionChecks(multisigContract, action, wallet, target, calldata, nativeValue, yes) {
-    const address = await wallet.getAddress();
+async function preExecutionChecks(multisigContract, action, wallet, batchId, calls, signatures, nativeValue, yes) {
+    const walletAddress = await wallet.getAddress();
 
     // TODO hash the calls batch and validate signatures
 }
+
+const signCallsBatch = async (batchId, calls, wallet) => {
+    const callsBatchData = encodeInterchainCallsBatch(batchId, calls);
+    const hash = arrayify(keccak256(callsBatchData));
+
+    return wallet.signMessage(hash);
+};
 
 async function processCommand(_, chain, options) {
     const {
@@ -63,14 +56,15 @@ async function processCommand(_, chain, options) {
         address,
         action,
         batchId,
+        signatures,
         symbols,
         tokenIds,
         limits,
         mintLimiter,
         newMultisig,
-        signers,
-        weights,
-        threshold,
+        newSigners,
+        newWeights,
+        newThreshold,
         recipient,
         target,
         calldata,
@@ -96,6 +90,8 @@ async function processCommand(_, chain, options) {
         multisigAddress = contractConfig.address;
     }
 
+    const { signers, weights, threshold } = contractConfig;
+
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
 
@@ -117,7 +113,7 @@ async function processCommand(_, chain, options) {
         return;
     }
 
-    let tx;
+    let calls;
 
     switch (action) {
         case 'signers': {
@@ -159,8 +155,6 @@ async function processCommand(_, chain, options) {
             printInfo('Rate limit values', limitsArray);
 
             if (!offline) {
-                await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
-
                 // loop over each token
                 for (let i = 0; i < symbolsArray.length; i++) {
                     const token = await gateway.tokenAddresses(symbolsArray[i]);
@@ -170,11 +164,8 @@ async function processCommand(_, chain, options) {
                 }
             }
 
-            const calls = [[chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]];
-            // TODO add signing process
-            const proof = getWeightedSignaturesProof(encodeInterchainCallsBatch(batchId, calls), [wallet.address], [1], 1, [wallet]);
+            calls = [[chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]];
 
-            tx = await multisigContract.populateTransaction.executeCalls(batchId, calls, proof, gasOptions);
             break;
         }
 
@@ -192,15 +183,8 @@ async function processCommand(_, chain, options) {
             const gateway = new Contract(multisigTarget, IGateway.abi, wallet);
             const multisigCalldata = gateway.interface.encodeFunctionData('transferMintLimiter', [mintLimiter]);
 
-            if (!offline) {
-                await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
-            }
+            calls = [[chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]];
 
-            const calls = [[chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]];
-            // TODO add signing process
-            const proof = getWeightedSignaturesProof(encodeInterchainCallsBatch(batchId, calls), [wallet.address], [1], 1, [wallet]);
-
-            tx = await multisigContract.populateTransaction.executeCalls(batchId, calls, proof, gasOptions);
             break;
         }
 
@@ -218,45 +202,31 @@ async function processCommand(_, chain, options) {
             const governance = new Contract(multisigTarget, IGovernance.abi, wallet);
             const multisigCalldata = governance.interface.encodeFunctionData('transferMultisig', [newMultisig]);
 
-            if (!offline) {
-                await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
-            }
+            calls = [[chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]];
 
-            const calls = [[chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]];
-            // TODO add signing process
-            const proof = getWeightedSignaturesProof(encodeInterchainCallsBatch(batchId, calls), [wallet.address], [1], 1, [wallet]);
-
-            tx = await multisigContract.populateTransaction.executeCalls(batchId, calls, proof, gasOptions);
             break;
         }
 
         case 'rotateSigners': {
-            if (!isAddressArray(signers)) {
-                throw new Error(`Invalid new signers: ${signers}`);
+            if (!isAddressArray(newSigners)) {
+                throw new Error(`Invalid new signers: ${newSigners}`);
             }
 
-            if (!isNumberArray(weights)) {
-                throw new Error(`Invalid new weights: ${weights}`);
+            if (!isNumberArray(newWeights)) {
+                throw new Error(`Invalid new weights: ${newWeights}`);
             }
 
-            if (!isNumber(threshold)) {
-                throw new Error(`Invalid new threshold: ${threshold}`);
+            if (!isNumber(newThreshold)) {
+                throw new Error(`Invalid new threshold: ${newThreshold}`);
             }
 
             const multisigTarget = multisigContract.address;
 
             const multisig = new Contract(multisigTarget, IMultisig.abi, wallet);
-            const multisigCalldata = multisig.interface.encodeFunctionData('rotateSigners', [[signers, weights, threshold]]);
+            const multisigCalldata = multisig.interface.encodeFunctionData('rotateSigners', [[newSigners, newWeights, newThreshold]]);
 
-            if (!offline) {
-                await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
-            }
+            calls = [[chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]];
 
-            const calls = [[chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]];
-            // TODO add signing process
-            const proof = getWeightedSignaturesProof(encodeInterchainCallsBatch(batchId, calls), [wallet.address], [1], 1, [wallet]);
-
-            tx = await multisigContract.populateTransaction.executeCalls(batchId, calls, proof, gasOptions);
             break;
         }
 
@@ -272,8 +242,6 @@ async function processCommand(_, chain, options) {
             const amount = parseEther(withdrawAmount);
 
             if (!offline) {
-                await preExecutionChecks(multisigContract, action, wallet, recipient, '0x', amount, yes);
-
                 const balance = await provider.getBalance(multisigContract.address);
 
                 if (balance.lt(amount)) {
@@ -287,11 +255,8 @@ async function processCommand(_, chain, options) {
 
             const multisigCalldata = multisigContract.interface.encodeFunctionData('withdraw', [recipient, amount]);
 
-            const calls = [[chain.axelarId, multisigContract.address, multisigContract.address, multisigCalldata, 0]];
-            // TODO add signing process
-            const proof = getWeightedSignaturesProof(encodeInterchainCallsBatch(batchId, calls), [wallet.address], [1], 1, [wallet]);
+            calls = [[chain.axelarId, multisigContract.address, multisigContract.address, multisigCalldata, 0]];
 
-            tx = await multisigContract.populateTransaction.executeCalls(batchId, calls, proof, gasOptions);
             break;
         }
 
@@ -338,11 +303,8 @@ async function processCommand(_, chain, options) {
                 }
             }
 
-            const calls = [[chain.axelarId, multisigContract.address, target, calldata, nativeValue]];
-            // TODO add signing process
-            const proof = getWeightedSignaturesProof(encodeInterchainCallsBatch(batchId, calls), [wallet.address], [1], 1, [wallet]);
+            calls = [[chain.axelarId, multisigContract.address, target, calldata, nativeValue]];
 
-            tx = await multisigContract.populateTransaction.executeCalls(batchId, calls, proof, gasOptions);
             break;
         }
 
@@ -375,7 +337,6 @@ async function processCommand(_, chain, options) {
             printInfo('FLow limit values', limitsArray);
 
             if (!offline) {
-                await preExecutionChecks(multisigContract, action, wallet, multisigTarget, multisigCalldata, 0, yes);
                 const operatable = new Contract(multisigTarget, IOperator.abi, wallet);
                 const hasOperatorRole = await operatable.isOperator(multisigAddress);
 
@@ -393,47 +354,36 @@ async function processCommand(_, chain, options) {
                 }
             }
 
-            const calls = [[chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]];
-            // TODO add signing process
-            const proof = getWeightedSignaturesProof(encodeInterchainCallsBatch(batchId, calls), [wallet.address], [1], 1, [wallet]);
+            calls = [[chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]];
 
-            tx = await multisigContract.populateTransaction.executeCalls(batchId, calls, proof, gasOptions);
             break;
         }
 
         case 'voidBatch': {
-            if (!offline) {
-                await preExecutionChecks(multisigContract, action, wallet, recipient, '0x', 0, yes);
-            }
-
             const multisigCalldata = multisigContract.interface.encodeFunctionData('voidBatch', []);
 
-            const calls = [[chain.axelarId, multisigContract.address, multisigContract.address, multisigCalldata, 0]];
-            // TODO add signing process
-            const proof = getWeightedSignaturesProof(encodeInterchainCallsBatch(batchId, calls), [wallet.address], [1], 1, [wallet]);
+            calls = [[chain.axelarId, multisigContract.address, multisigContract.address, multisigCalldata, 0]];
 
-            tx = await multisigContract.populateTransaction.executeCalls(batchId, calls, proof, gasOptions);
             break;
         }
     }
 
-    const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
-
     if (offline) {
-        const filePath = `./tx/signed-tx-${env}-multisig-${action}-${chain.name.toLowerCase()}-address-${walletAddress}-nonce-${
-            baseTx.nonce
-        }.json`;
-        printInfo(`Storing signed Tx offline in file ${filePath}`);
+        const signature = await signCallsBatch(batchId, calls, wallet);
+        printInfo(`Token ${symbolsArray[i]} address`, token);
+        printInfo(`Token ${symbolsArray[i]} limit`, limit);
+        printInfo(`Wallet address`, walletAddress);
+        printInfo(`Signature`, signature);
+    } else {
+        await preExecutionChecks(multisigContract, action, wallet, batchId, calls, signatures, 0, yes);
 
-        // Storing the fields in the data that will be stored in file
-        const data = {
-            msg: `This transaction will perform multisig action ${action} on chain ${chain.name}`,
-            unsignedTx: baseTx,
-            signedTx,
-            status: 'PENDING',
-        };
+        const proof = sortWeightedSignaturesProof(encodeInterchainCallsBatch(batchId, calls), signers, weights, threshold, signatures);
 
-        storeSignedTx(filePath, data);
+        printInfo(`Submitting transaction to execute calls batch with id ${batchId} ...`);
+
+        await multisigContract.executeCalls(batchId, calls, proof, gasOptions);
+
+        printInfo(`Batch with id ${batchId} successfully executed.`);
     }
 }
 
@@ -467,6 +417,7 @@ if (require.main === module) {
     );
     program.addOption(new Option('--offline', 'run script in offline mode'));
     program.addOption(new Option('--batchId <batchId>', 'The id of the batch to be executed').makeOptionMandatory(true));
+    program.addOption(new Option('--signatures <signatures>', 'Signatures to ').makeOptionMandatory(true));
 
     // options for setTokenMintLimits
     program.addOption(new Option('--symbols <symbols>', 'token symbols').makeOptionMandatory(false));
@@ -479,9 +430,9 @@ if (require.main === module) {
     program.addOption(new Option('--newMultisig <newMultisig>', 'new mint multisig address').makeOptionMandatory(false));
 
     // options for rotateSigners
-    program.addOption(new Option('--signers <signers>', 'new signers').makeOptionMandatory(false));
-    program.addOption(new Option('--weights <weights>', 'new weights').makeOptionMandatory(false));
-    program.addOption(new Option('--threshold <threshold>', 'new threshold').makeOptionMandatory(false));
+    program.addOption(new Option('--newSigners <newSigners>', 'new signers').makeOptionMandatory(false));
+    program.addOption(new Option('--newWeights <newWeights>', 'new weights').makeOptionMandatory(false));
+    program.addOption(new Option('--newThreshold <newThreshold>', 'new threshold').makeOptionMandatory(false));
 
     // options for withdraw
     program.addOption(new Option('--recipient <recipient>', 'withdraw recipient address').makeOptionMandatory(false));
