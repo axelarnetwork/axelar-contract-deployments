@@ -159,6 +159,14 @@ async function getConstructorArgs(contractName, chain, wallet) {
                 throw new Error(`Missing InterchainMultisig.threshold in the chain info.`);
             }
 
+            if (signers.length !== weights.length) {
+                throw new Error('Signers and weights length mismatch');
+            }
+
+            if (weights.reduce((sum, weight) => sum + weight, 0) < threshold) {
+                throw new Error('The sum of the weights is less than the threshold');
+            }
+
             return [chainName, [signers, weights, threshold]];
         }
 
