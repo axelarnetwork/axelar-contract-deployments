@@ -60,6 +60,7 @@ async function preExecutionChecks(multisigContract, action, wallet, batchId, cal
     const signatureAddresses = signatures.map((signature) => recoverAddress(messageHash, signature).toLowerCase());
 
     const wrongSignatureAddresses = signatureAddresses.filter((address) => !signers.includes(address));
+
     if (wrongSignatureAddresses.length > 0) {
         throw new Error(
             'Invalid signatures: some of the signatures are not part of the multisig signers.' +
@@ -69,10 +70,12 @@ async function preExecutionChecks(multisigContract, action, wallet, batchId, cal
     }
 
     let signaturesThreshold = 0;
+
     for (const signatureAddress of signatureAddresses) {
         const weight = weights[signers.indexOf(signatureAddress)];
         signaturesThreshold += weight;
     }
+
     if (signaturesThreshold < threshold) {
         throw new Error(
             `Invalid signatures: the sum of the weights of the signatures (${signaturesThreshold})` +
@@ -81,6 +84,7 @@ async function preExecutionChecks(multisigContract, action, wallet, batchId, cal
     }
 
     const proof = sortWeightedSignaturesProof(callsBatchData, signers, weights, threshold, signatures);
+
     try {
         await multisigContract.validateProof(messageHash, proof);
     } catch (e) {
