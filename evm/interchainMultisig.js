@@ -83,6 +83,10 @@ async function preExecutionChecks(multisigContract, action, wallet, batchId, cal
         );
     }
 
+    if (await multisigContract.isBatchExecuted(batchId)) {
+        throw new Error(`The batch with id ${batchId} has already been executed`);
+    }
+
     const proof = sortWeightedSignaturesProof(callsBatchData, signers, weights, threshold, signatures);
 
     try {
