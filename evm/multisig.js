@@ -117,8 +117,6 @@ async function processCommand(_, chain, options) {
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    printInfo('Chain', chain.name);
-
     const wallet = await getWallet(privateKey, provider, options);
     const { address: walletAddress } = await printWalletInfo(wallet, options);
 

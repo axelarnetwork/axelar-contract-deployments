@@ -9,8 +9,6 @@ const values = [];
 async function processCommand(_, chain, options) {
     const { address, deposit } = options;
 
-    printInfo('Chain', chain.name);
-
     const contracts = chain.contracts;
     const contractConfig = contracts.InterchainGovernance;
 
