@@ -81,7 +81,7 @@ function getProxyParams(governance, mintLimiter) {
 }
 
 async function deploy(config, chain, options) {
-    const { privateKey, reuseProxy, reuseHelpers, verify, yes, predictOnly } = options;
+    const { privateKey, reuseProxy, reuseHelpers, reuseAuth, verify, yes, predictOnly } = options;
 
     const contractName = 'AxelarGateway';
 
@@ -176,7 +176,7 @@ async function deploy(config, chain, options) {
 
     if (options.skipExisting && contractConfig.authModule) {
         auth = authFactory.attach(contractConfig.authModule);
-    } else if (reuseProxy && reuseHelpers) {
+    } else if (reuseProxy && (reuseHelpers || reuseAuth)) {
         auth = authFactory.attach(await gateway.authModule());
     } else {
         printInfo(`Deploying auth contract`);
@@ -279,7 +279,7 @@ async function deploy(config, chain, options) {
         });
     }
 
-    if (!(reuseProxy && reuseHelpers)) {
+    if (!(reuseProxy && (reuseHelpers || reuseAuth))) {
         printInfo('Transferring auth ownership');
         await auth.transferOwnership(gateway.address, { gasLimit: 5e6, ...gasOptions }).then((tx) => tx.wait(chain.confirmations));
         printInfo('Transferred auth ownership. All done!');
@@ -534,6 +534,7 @@ async function programHandler() {
     program.addOption(
         new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment'),
     );
+    program.addOption(new Option('--reuseAuth', 'reuse auth module contract for new implementation deployment'));
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('--governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('--mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
