@@ -91,9 +91,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -188,9 +186,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -285,9 +281,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -382,9 +376,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -479,9 +471,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -576,9 +566,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -676,9 +664,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -773,9 +759,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -870,9 +854,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -969,9 +951,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -1072,9 +1052,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainGovernance": {
           "minimumTimeDelay": 300,
@@ -1147,9 +1125,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
@@ -1231,9 +1207,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
@@ -1311,9 +1285,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "Operators": {
           "owner": "0x9D97cf3AC20b73c81d8A5233d9FBe09618d4F8bd",
