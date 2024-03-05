@@ -2092,7 +2092,7 @@
       "id": "blast",
       "axelarId": "blast",
       "chainId": 81457,
-      "rpc": "<TO_ADD>",
+      "rpc": "https://rpc.blast.io",
       "tokenSymbol": "ETH",
       "contracts": {
         "ConstAddressDeployer": {
