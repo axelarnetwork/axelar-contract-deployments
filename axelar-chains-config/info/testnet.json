@@ -1972,7 +1972,7 @@
       }
     },
     "arbitrum-sepolia": {
-      "name": "Arbitrum Sepolia",
+      "name": "Arbitrum-Sepolia",
       "id": "arbitrum-sepolia",
       "axelarId": "arbitrum-sepolia",
       "chainId": 421614,
@@ -2212,7 +2212,7 @@
       }
     },
     "optimism-sepolia": {
-      "name": "Optimism Sepolia",
+      "name": "Optimism-Sepolia",
       "id": "optimism-sepolia",
       "axelarId": "optimism-sepolia",
       "chainId": 11155420,
@@ -2280,7 +2280,7 @@
       }
     },
     "base-sepolia": {
-      "name": "Base Sepolia",
+      "name": "Base-Sepolia",
       "id": "base-sepolia",
       "axelarId": "base-sepolia",
       "chainId": 84532,
@@ -2348,7 +2348,7 @@
       }
     },
     "blast-sepolia": {
-      "name": "Blast Sepolia",
+      "name": "Blast-Sepolia",
       "id": "blast-sepolia",
       "axelarId": "blast-sepolia",
       "chainId": 168587773,
@@ -2416,7 +2416,7 @@
       }
     },
     "mantle-sepolia": {
-      "name": "Mantle Sepolia",
+      "name": "Mantle-Sepolia",
       "id": "mantle-sepolia",
       "axelarId": "mantle-sepolia",
       "chainId": 5003,
@@ -2425,6 +2425,11 @@
       "confirmations": 2,
       "gasOptions": {
         "gasLimit": 10000000000
+      },
+      "explorer": {
+        "name": "Mantle Explorer",
+        "url": "https://explorer.sepolia.mantle.xyz",
+        "api": "https://explorer.sepolia.mantle.xyz/api"
       },
       "contracts": {
         "InterchainGovernance": {
