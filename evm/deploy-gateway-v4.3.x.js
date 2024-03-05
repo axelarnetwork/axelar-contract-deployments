@@ -265,7 +265,6 @@ async function upgrade(config, options) {
     const implementationCodehash = await getBytecodeHash(contractConfig.implementation, chainName, provider);
     const setupParams = '0x';
 
-    printInfo('Chain', chain.name);
     printInfo('Gateway Proxy', gateway.address);
     printInfo('Current implementation', await gateway.implementation());
     printInfo('Upgrading to implementation', contractConfig.implementation);
