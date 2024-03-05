@@ -459,7 +459,6 @@ async function upgrade(_, chain, options) {
         setupParams = getProxyParams(governance, mintLimiter);
     }
 
-    printInfo('Chain', chain.name);
     printInfo('Gateway Proxy', gateway.address);
 
     if (!offline) {
