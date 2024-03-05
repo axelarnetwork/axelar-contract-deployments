@@ -2152,8 +2152,8 @@
       "confirmations": 2,
       "explorer": {
         "name": "Blastscan",
-        "url": "https://www.blastscan.io",
-        "api": "https://api.routescan.io/v2/network/mainnet/evm/81457/"
+        "url": "https://blastscan.io",
+        "api": "https://api.blastscan.io/api"
       }
     }
   },
