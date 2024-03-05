@@ -102,9 +102,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -243,9 +241,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -384,9 +380,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -529,9 +523,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -673,9 +665,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -815,9 +805,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -960,9 +948,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1104,9 +1090,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1245,9 +1229,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1386,9 +1368,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1531,9 +1511,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1676,9 +1654,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1821,9 +1797,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1963,9 +1937,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2103,9 +2075,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2239,9 +2209,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "InterchainTokenService": {
           "skip": true
@@ -2342,9 +2310,7 @@
             1,
             1
           ],
-          "threshold": 3,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 3
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",

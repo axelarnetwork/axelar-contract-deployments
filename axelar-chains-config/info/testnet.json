@@ -98,9 +98,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -239,9 +237,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -368,9 +364,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -476,9 +470,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -604,9 +596,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -730,9 +720,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -856,9 +844,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -997,9 +983,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -1105,9 +1089,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -1245,9 +1227,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         }
       },
       "explorer": {
@@ -1354,9 +1334,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -1479,9 +1457,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -1606,9 +1582,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -1732,9 +1706,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -1858,9 +1830,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -1981,9 +1951,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "InterchainTokenService": {
           "salt": "ITS v1.2.1",
@@ -2087,9 +2055,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "Operators": {
           "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
@@ -2194,9 +2160,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "Operators": {
           "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
@@ -2348,9 +2312,7 @@
             1,
             1
           ],
-          "threshold": 2,
-          "deploymentMethod": "create3",
-          "salt": "Multisig v7.0"
+          "threshold": 2
         },
         "Operators": {
           "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
