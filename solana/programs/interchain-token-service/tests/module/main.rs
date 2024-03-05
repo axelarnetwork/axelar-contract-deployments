@@ -13,6 +13,7 @@ mod deploy_token_manager;
 mod give_token;
 mod interchain_transfer;
 mod intialize;
+mod remote_interchain_transfer;
 mod take_token;
 
 use solana_program_test::{processor, ProgramTest};

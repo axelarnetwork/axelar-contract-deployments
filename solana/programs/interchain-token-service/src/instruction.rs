@@ -10,7 +10,7 @@ use solana_program::pubkey::Pubkey;
 use spl_associated_token_account::get_associated_token_address;
 use token_manager::TokenManagerType;
 
-use crate::id;
+use crate::{id, MetadataVersion};
 
 /// Instructions supported by the InterchainTokenService program.
 #[repr(u8)]
@@ -111,6 +111,32 @@ pub enum InterchainTokenServiceInstruction {
         /// The amount of native tokens to be used to pay for gas for the remote
         /// deployment.
         gas_value: u64,
+    },
+
+    /// Instruction RemoteInterchainTransfer
+    /// used for transferring tokens to an account on a different chain
+    ///
+    /// Accounts expected by this instruction:
+    ///
+    /// 0. [signer] The address of payer / sender.
+    RemoteInterchainTransfer {
+        /// The unique identifier of the token to be transferred.
+        token_id: [u8; 32],
+        /// The destination chain to send the tokens to.
+        destination_chain: Vec<u8>,
+        /// The address on the destination chain to send the tokens to.
+        destination_address: Vec<u8>,
+        /// The amount of tokens to be transferred.
+        amount: u64,
+        /// The optional metadata for the call for additional effects (such as
+        /// calling a destination contract).
+        data: Vec<u8>,
+        /// Metadata version
+        metadata_version: MetadataVersion,
+        /// The token symbol / extra Solana field
+        symbol: Vec<u8>,
+        /// The token manager type / extra solana field
+        token_manager_type: TokenManagerType,
     },
 }
 
@@ -453,6 +479,156 @@ pub fn build_deploy_remote_interchain_token_instruction(
         AccountMeta::new_readonly(gas_service::id(), false),
         AccountMeta::new(gas_service::get_gas_service_root_pda().0, false),
         AccountMeta::new_readonly(*associated_trusted_address, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Create `RemoteInterchainTransfer::MintBurn` instruction
+#[allow(clippy::too_many_arguments)]
+pub fn build_remote_interchain_transfer_mint_burn_instruction(
+    sender: &Pubkey,
+    interchain_token_service_root_pda: &Pubkey,
+    owner_of_its_ata_for_user_tokens_pda: &Pubkey,
+    its_ata_for_user_tokens_pda: &Pubkey,
+    mint_account_pda: &Pubkey,
+    delegate_authority: &Pubkey,
+    gateway_root_pda: &Pubkey,
+    gas_service_root_pda: &Pubkey,
+    token_manager_pda: &Pubkey,
+    token_manager_flow_pda: &Pubkey,
+    flow_limiter_group_pda: &Pubkey,
+    flow_limiter_pda: &Pubkey,
+    flow_limiter: &Pubkey,
+    permission_group_pda: &Pubkey,
+    service_program_pda: &Pubkey,
+    token_id: [u8; 32],
+    destination_chain: Vec<u8>,
+    destination_address: Vec<u8>,
+    amount: u64,
+    data: Vec<u8>,
+    metadata_version: MetadataVersion,
+    symbol: Vec<u8>,
+) -> Result<Instruction, ProgramError> {
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::RemoteInterchainTransfer {
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            data,
+            metadata_version,
+            symbol,
+            token_manager_type: TokenManagerType::MintBurn,
+        },
+    )?;
+
+    let accounts = vec![
+        AccountMeta::new(*sender, true),
+        // Take Token
+        AccountMeta::new(*interchain_token_service_root_pda, false),
+        AccountMeta::new(*owner_of_its_ata_for_user_tokens_pda, false),
+        AccountMeta::new(*its_ata_for_user_tokens_pda, false),
+        AccountMeta::new(*mint_account_pda, false),
+        AccountMeta::new_readonly(*delegate_authority, false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new_readonly(*gas_service_root_pda, false),
+        // Add Flow
+        AccountMeta::new_readonly(*token_manager_pda, false),
+        AccountMeta::new(*token_manager_flow_pda, false),
+        AccountMeta::new_readonly(*flow_limiter_group_pda, false),
+        AccountMeta::new_readonly(*flow_limiter_pda, false),
+        AccountMeta::new_readonly(*flow_limiter, true),
+        AccountMeta::new_readonly(*permission_group_pda, false),
+        AccountMeta::new_readonly(*service_program_pda, false),
+        // Ours
+        AccountMeta::new_readonly(crate::id(), false),
+        AccountMeta::new_readonly(token_manager::id(), false),
+        AccountMeta::new_readonly(gateway::id(), false),
+        // System
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Create `RemoteInterchainTransfer::LockUnlock` instruction
+#[allow(clippy::too_many_arguments)]
+pub fn build_remote_interchain_transfer_lock_unlock_instruction(
+    sender: &Pubkey,
+    interchain_token_service_root_pda: &Pubkey,
+    token_manager_ata_pda: &Pubkey,
+    owner_of_its_ata_for_user_tokens_pda: &Pubkey,
+    its_ata_for_user_tokens_pda: &Pubkey,
+    mint_account_pda: &Pubkey,
+    destination: &Pubkey,
+    gateway_root_pda: &Pubkey,
+    gas_service_root_pda: &Pubkey,
+    token_manager_pda: &Pubkey,
+    token_manager_flow_pda: &Pubkey,
+    flow_limiter_group_pda: &Pubkey,
+    flow_limiter_pda: &Pubkey,
+    flow_limiter: &Pubkey,
+    permission_group_pda: &Pubkey,
+    service_program_pda: &Pubkey,
+    token_id: [u8; 32],
+    destination_chain: Vec<u8>,
+    destination_address: Vec<u8>,
+    amount: u64,
+    data: Vec<u8>,
+    metadata_version: MetadataVersion,
+    symbol: Vec<u8>,
+) -> Result<Instruction, ProgramError> {
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::RemoteInterchainTransfer {
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            data,
+            metadata_version,
+            symbol,
+            token_manager_type: TokenManagerType::LockUnlock,
+        },
+    )?;
+
+    let accounts = vec![
+        AccountMeta::new(*sender, true),
+        // Take Token
+        AccountMeta::new(*interchain_token_service_root_pda, false),
+        AccountMeta::new(*token_manager_ata_pda, false),
+        AccountMeta::new(*owner_of_its_ata_for_user_tokens_pda, false),
+        AccountMeta::new(*its_ata_for_user_tokens_pda, false),
+        AccountMeta::new(*mint_account_pda, false),
+        AccountMeta::new_readonly(*destination, false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new_readonly(*gas_service_root_pda, false),
+        // Add Flow
+        AccountMeta::new_readonly(*token_manager_pda, false),
+        AccountMeta::new(*token_manager_flow_pda, false),
+        AccountMeta::new_readonly(*flow_limiter_group_pda, false),
+        AccountMeta::new_readonly(*flow_limiter_pda, false),
+        AccountMeta::new_readonly(*flow_limiter, true),
+        AccountMeta::new_readonly(*permission_group_pda, false),
+        AccountMeta::new_readonly(*service_program_pda, false),
+        // Ours
+        AccountMeta::new_readonly(crate::id(), false),
+        AccountMeta::new_readonly(token_manager::id(), false),
+        AccountMeta::new_readonly(gateway::id(), false),
+        // System
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(spl_associated_token_account::id(), false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 

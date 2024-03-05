@@ -51,10 +51,6 @@ pub enum TokenManagerType {
     /// The same as the one above, but uses burnFrom instead of burn which is
     /// the standard for some tokens and typically requires an approval.
     LockUnlockFee = 3,
-
-    /// Represents a token manager that's associated with the
-    /// canonical gateway token.
-    Gateway = 4,
 }
 
 impl TryFrom<u8> for TokenManagerType {
@@ -66,7 +62,6 @@ impl TryFrom<u8> for TokenManagerType {
             1 => Ok(Self::MintBurnFrom),
             2 => Ok(Self::LockUnlock),
             3 => Ok(Self::LockUnlockFee),
-            4 => Ok(Self::Gateway),
             _ => Err(ProgramError::InvalidArgument),
         }
     }

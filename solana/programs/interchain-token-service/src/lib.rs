@@ -9,13 +9,28 @@ pub mod instruction;
 pub mod processor;
 pub mod state;
 use account_group::instruction::GroupId;
+use borsh::{BorshDeserialize, BorshSerialize};
 use ethers_core::abi::{self, Tokenizable};
+use ethers_core::types::U256 as EthersU256;
+use gateway::types::u256::U256 as GatewayU256;
 use interchain_token_transfer_gmp::Bytes32;
 pub use solana_program;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::keccak::hash;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+
+/// Supported Metadata versions.
+#[derive(Clone, Copy, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
+#[borsh(use_discriminant = false)]
+pub enum MetadataVersion {
+    /// Metadata ContractCall. Used for gas payments.
+    ContractCall = 0,
+    /// Metadata ExpressCall. Used for gas payments.
+    ExpressCall = 1,
+}
+/// Latest version of metadata that's supported.
+pub const LATEST_METADATA_VERSION: u8 = 1;
 
 solana_program::declare_id!("4ENH4KjzfcQwyXYr6SJdaF2nhMoGqdZJ2Hk5MoY9mU2G");
 
@@ -128,4 +143,42 @@ pub fn interchain_token_id(sender: &Pubkey, salt: [u8; 32]) -> [u8; 32] {
     let salt = ethers_core::types::Bytes::from_iter(salt.as_ref().iter()).into_token();
 
     hash(&abi::encode(&[prefix, sender, salt])).to_bytes()
+}
+
+/// Convert gateway u256 to ethers u256.
+pub fn convert_gateway_u256_to_ethers_u256(ours: GatewayU256) -> EthersU256 {
+    let bytes = ours.to_le_bytes();
+    EthersU256::from_little_endian(&bytes)
+}
+
+/// Convert ethers u256 to gateway u256.
+pub fn convert_ethers_u256_to_gateway_u256(ethers: EthersU256) -> GatewayU256 {
+    let mut bytes = [0u8; 32];
+    ethers.to_little_endian(&mut bytes);
+    GatewayU256::from_le_bytes(bytes)
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::Result;
+
+    use super::*;
+
+    #[test]
+    fn test_gateway_u256_to_ethers() -> Result<()> {
+        let bytes = [1u8; 32];
+        let gateway = GatewayU256::from_le_bytes(bytes);
+        EthersU256::from_little_endian(&bytes);
+        assert_eq!(gateway.to_le_bytes(), bytes);
+        Ok(())
+    }
+
+    #[test]
+    fn test_ethers_u256_to_gateway() -> Result<()> {
+        let bytes = [1u8; 32];
+        EthersU256::from_little_endian(&bytes);
+        let gateway = GatewayU256::from_le_bytes([1u8; 32]);
+        assert_eq!(gateway.to_le_bytes(), bytes);
+        Ok(())
+    }
 }

@@ -4,6 +4,7 @@ use base64::engine::general_purpose;
 use base64::Engine as _;
 use borsh::{self, BorshDeserialize, BorshSerialize};
 use gateway::types::PubkeyWrapper;
+use solana_program::keccak::hash;
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use token_manager::TokenManagerType;
@@ -47,6 +48,21 @@ pub enum InterchainTokenServiceEvent {
         minter: Vec<u8>,
         /// The chain where the token manager will be deployed.
         destination_chain: String,
+    },
+    /// Emitted for interchain token transfer.
+    InterchainTransfer {
+        /// The interchain token id.
+        token_id: [u8; 32],
+        /// The address where the token is coming from.
+        source_address: Vec<u8>,
+        /// The chain where the token manager will be deployed.
+        destination_chain: Vec<u8>,
+        /// The destination address for the interchain transfer.
+        destination_address: Vec<u8>,
+        /// The amount of tokens to send.
+        amount: u64,
+        /// The data hash / keccak256.
+        hash: [u8; 32],
     },
 }
 
@@ -123,6 +139,26 @@ pub fn emit_interchain_token_deployment_started_event(
         decimals,
         minter,
         destination_chain,
+    };
+    event.emit()
+}
+
+/// Emit a [`InterchainTransfer`].
+pub fn emit_interchain_transfer_event(
+    token_id: [u8; 32],
+    source_address: Vec<u8>,
+    destination_chain: Vec<u8>,
+    destination_address: Vec<u8>,
+    amount: u64,
+    data: Vec<u8>,
+) -> Result<(), ProgramError> {
+    let event = InterchainTokenServiceEvent::InterchainTransfer {
+        token_id,
+        source_address,
+        destination_chain,
+        destination_address,
+        amount,
+        hash: hash(&data).to_bytes(),
     };
     event.emit()
 }

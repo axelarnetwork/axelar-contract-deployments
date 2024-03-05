@@ -29,7 +29,6 @@ impl Processor {
                 Self::give_token_lock_unlock(*program_id, accounts, amount)
             }
             TokenManagerType::LockUnlockFee => todo!(),
-            TokenManagerType::Gateway => todo!(),
         }
     }
 

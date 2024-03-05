@@ -5,6 +5,7 @@ mod deploy_remote_token_manager;
 mod execute;
 mod give_token;
 mod initialize;
+mod remote_interchain_transfer;
 mod take_token;
 
 use borsh::BorshDeserialize;
@@ -93,6 +94,30 @@ impl Processor {
                     decimals,
                     minter,
                     gas_value,
+                )
+            }
+            InterchainTokenServiceInstruction::RemoteInterchainTransfer {
+                token_id,
+                destination_chain,
+                destination_address,
+                amount,
+                data,
+                metadata_version,
+                symbol,
+                token_manager_type,
+            } => {
+                msg!("Instruction: RemoteInterchainTransfer");
+                Self::remote_interchain_transfer(
+                    program_id,
+                    accounts,
+                    token_id,
+                    destination_chain,
+                    destination_address,
+                    amount,
+                    data,
+                    metadata_version,
+                    symbol,
+                    token_manager_type,
                 )
             }
         }

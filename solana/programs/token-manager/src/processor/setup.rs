@@ -144,32 +144,6 @@ impl Processor {
                     ]],
                 )?;
             }
-            TokenManagerType::Gateway => {
-                // Set Delegate to `gateway_pda`
-                invoke_signed(
-                    &spl_token::instruction::approve(
-                        spl_token_program.key,
-                        token_manager_ata.key,
-                        gateway_root_pda.key,
-                        token_manager_root_pda.key,
-                        &[],
-                        u64::MAX,
-                    )
-                    .unwrap(),
-                    &[
-                        spl_token_program.clone(),
-                        token_manager_ata.clone(),
-                        gateway_root_pda.clone(),
-                        token_manager_root_pda.clone(),
-                    ],
-                    &[&[
-                        &operators_permission_group_pda.key.to_bytes(),
-                        &flow_limiters_permission_group_pda.key.to_bytes(),
-                        &service_program_pda.key.to_bytes(),
-                        &[token_manager_root_pda_bump],
-                    ]],
-                )?;
-            }
             _ => {
                 // Do nothing
             }
