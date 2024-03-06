@@ -19,7 +19,8 @@ const {
     saveConfig,
     validateParameters,
     getContractJSON,
-    sortWeightedSigners, isValidBytes32,
+    sortWeightedSigners,
+    isValidBytes32,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');

@@ -265,7 +265,7 @@ const isValidBytes32 = (input) => {
     const hexPattern = /^[a-fA-F0-9]{64}$/;
 
     return hexPattern.test(input.slice(2));
-}
+};
 
 const isBytes32Array = (arr) => {
     if (!Array.isArray(arr)) {
