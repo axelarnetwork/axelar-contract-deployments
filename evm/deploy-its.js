@@ -330,7 +330,7 @@ async function deployAll(config, wallet, chain, options) {
         saveConfig(config, options.env);
 
         if (chain.chainId !== 31337) {
-            await sleep(2000);
+            await sleep(5000);
         }
 
         if (!(await isContract(contract.address, provider))) {

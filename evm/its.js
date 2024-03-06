@@ -116,6 +116,11 @@ async function processCommand(config, chain, options) {
 
     const interchainTokenServiceAddress = address || contracts.InterchainTokenService?.address;
 
+    if (!interchainTokenServiceAddress) {
+        printWarn(`No InterchainTokenService address found for chain ${chain.name}`);
+        return;
+    }
+
     validateParameters({ isValidAddress: { interchainTokenServiceAddress } });
 
     const rpc = chain.rpc;
@@ -457,9 +462,7 @@ async function processCommand(config, chain, options) {
                 throw new Error(`${action} can only be performed by contract owner: ${owner}`);
             }
 
-            const { trustedAddress } = options;
-
-            validateParameters({ isNonEmptyString: { trustedChain: options.trustedChain, trustedAddress } });
+            validateParameters({ isNonEmptyString: { trustedChain: options.trustedChain } });
 
             let trustedChains, trustedAddresses;
 
@@ -469,16 +472,20 @@ async function processCommand(config, chain, options) {
                 trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address);
             } else {
                 const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.axelarId;
+                const trustedAddress =
+                    options.trustedAddress || config.chains[options.trustedChain.toLowerCase()]?.contracts?.InterchainTokenService?.address;
 
-                if (trustedChain === undefined) {
-                    throw new Error(`Invalid chain: ${options.trustedChain}`);
+                if (trustedChain === undefined || trustedAddress === undefined) {
+                    throw new Error(`Invalid chain/address: ${options.trustedChain}`);
                 }
 
                 trustedChains = [trustedChain];
                 trustedAddresses = [trustedAddress];
             }
 
-            printInfo(`Setting trusted address for chain ${trustedChains} to ${trustedAddresses}`);
+            if (prompt(`Proceed with setting trusted address for chain ${trustedChains} to ${trustedAddresses}?`, options.yes)) {
+                return;
+            }
 
             for (const [trustedChain, trustedAddress] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
                 const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
