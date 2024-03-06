@@ -1,168 +1,178 @@
-use crate::verifier::Verifier;
-use crate::{entities::last_processed_block::Chain, state::PostgresStateTracker};
-use amplifier_api::axl_rpc;
-use futures_util::StreamExt;
-use gmp_gateway::events::GatewayEvent;
-
-use solana_client::{
-    client_error,
-    nonblocking::{pubsub_client, rpc_client::RpcClient},
-    rpc_config::{RpcTransactionLogsConfig, RpcTransactionLogsFilter},
+use crate::config::SOLANA_CHAIN_NAME;
+use crate::sentinel::error::SentinelError;
+use crate::sentinel::transaction_scanner::TransactionScanner;
+use crate::sentinel::types::{
+    SolanaTransaction,
+    TransactionScannerMessage::{Message, Terminated},
 };
-use solana_pubsub_client::nonblocking::pubsub_client::PubsubClient;
-use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
-use std::sync::Arc;
-use thiserror::Error;
-use tokio::sync::mpsc;
-use tracing::{error, info, warn};
+use crate::{state::State, tokio_utils::handle_join_error};
+use amplifier_api::axl_rpc;
+use gmp_gateway::events::GatewayEvent;
+use gmp_gateway::types::PubkeyWrapper;
+use solana_program::pubkey::Pubkey;
+use solana_sdk::signature::Signature;
+use std::time::Duration;
+use tokio::sync::mpsc::Sender;
+use tracing::{error, info, trace, warn};
+use url::Url;
 
-#[derive(Debug, Error)]
-pub enum SentinelError {
-    #[error("Solana RPC error - {0}")]
-    SolanaRPCError(client_error::ClientError),
-    #[error("Failed to subscribe for Solana logs - {0}")]
-    SubForLogs(pubsub_client::PubsubClientError),
-    #[error("Failed to parse vec<u8> into a String - {0}")]
-    ByteVecParsing(std::string::FromUtf8Error),
-    #[error("Failed to send an axelar Message to the gmp_sender mpsc channel - {0}")]
-    GmpSenderBroadcast(mpsc::error::SendError<axl_rpc::Message>),
-    #[error("Database error - {0}")]
-    Database(#[from] Box<dyn std::error::Error + Send + Sync>),
-}
+mod error;
+mod transaction_scanner;
+mod types;
 
-/// listens for events coming
-/// from the Axelar gateway smart contract on the Solana blockchain
+// TODO: All those contants should be configurable
+const FETCH_SIGNATURES_INTERVAL: Duration = Duration::from_secs(5);
+
+/// Solana Sentinel
 ///
-/// Those will be messages sent from Solana dapps,
-/// which pass through axelar and are sent to other blockchains.
-pub struct Sentinel {
-    source_chain: String,
-    source_address: String,
-    solana_rpc_client: Arc<RpcClient>,
-    solana_pubsub_client: PubsubClient,
-    verifier: Verifier,
-    state: PostgresStateTracker,
+/// Monitors the Solana Gateway program for relevant events.
+pub struct SolanaSentinel {
+    gateway_address: Pubkey,
+    rpc: Url,
+    verifier_channel: Sender<axl_rpc::Message>,
+    state: State,
 }
 
-impl Sentinel {
-    /// Create a new sentinel, which listens for events coming
-    /// from the Axelar gateway smart contract on the Solana blockchain
-    fn new(
-        source_chain: String,
-        source_address: String,
-        solana_rpc_client: Arc<RpcClient>,
-        solana_pubsub_client: PubsubClient,
-        verifier: Verifier,
-        state: PostgresStateTracker,
+impl SolanaSentinel {
+    pub fn new(
+        gateway_address: Pubkey,
+        rpc: Url,
+        verifier_channel: Sender<axl_rpc::Message>,
+        state: State,
     ) -> Self {
         Self {
-            source_chain,
-            source_address,
-            solana_rpc_client,
-            solana_pubsub_client,
-            verifier,
+            gateway_address,
+            rpc,
+            verifier_channel,
             state,
         }
     }
 
-    pub fn start(
-        source_chain: String,
-        source_address: String,
-        solana_rpc_client: Arc<RpcClient>,
-        solana_pubsub_client: PubsubClient,
-        verifier: Verifier,
-        state: PostgresStateTracker,
-    ) {
-        let sentinel = Self::new(
-            source_chain,
-            source_address,
-            solana_rpc_client,
-            solana_pubsub_client,
-            verifier,
-            state,
-        );
-        tokio::spawn(async move { sentinel.run().await });
+    #[tracing::instrument(name = "solana-sentinel", skip(self))]
+    pub async fn run(self) {
+        info!("task started");
+        match tokio::spawn(self.work()).await {
+            Ok(Ok(())) => {
+                warn!("worker returned without errors");
+            }
+            Ok(Err(sentinel_error)) => {
+                error!(%sentinel_error);
+            }
+            Err(join_error) => handle_join_error(join_error),
+        };
     }
 
-    /// Listens for gmp messages coming from the Axelar gateway smart contract on the Solana blockchain
-    /// and forwards the messages through the gmp channel to the verifier
-    async fn run(self) -> Result<(), SentinelError> {
-        let start_height = self.state.load().await?;
+    /// Listens to Gateway program logs and forward them to the Axelar Verifier worker.
+    async fn work(self) -> Result<(), SentinelError> {
+        let (transaction_scanner_handle, mut transaction_receiver) = TransactionScanner::start(
+            self.gateway_address,
+            self.state.clone(),
+            self.rpc.clone(),
+            FETCH_SIGNATURES_INTERVAL,
+        );
 
-        let current_slot = self
-            .solana_rpc_client
-            .get_slot()
-            .await
-            .map_err(SentinelError::SolanaRPCError)?;
-
-        // TODO
-        //
-        // We might have to catch up with the current slot here
-        //
-
-        let (mut log_events, log_unsubscribe) = self
-            .solana_pubsub_client
-            .logs_subscribe(
-                RpcTransactionLogsFilter::Mentions(vec![self.source_address.clone()]),
-                RpcTransactionLogsConfig {
-                    commitment: Some(CommitmentConfig {
-                        commitment: CommitmentLevel::Finalized,
-                    }),
-                },
-            )
-            .await
-            .map_err(SentinelError::SubForLogs)?;
-
-        while let Some(log) = log_events.next().await {
-            // parse solana log to a GatewayEvent
-            let gw_event_parsed: Option<GatewayEvent> =
-                log.value.logs.into_iter().find_map(GatewayEvent::parse_log);
-
-            // TODO: This is to be triggered every time a tx is sent to the gateway.
-            // So maybe we should not log anything to not spam our logs
-            // or should check if we can subscribe only for the txs which we care about
-            let Some(gw_event_parsed) = gw_event_parsed else {
-                // TODO: log error/warning that the logs were not parsed.
-                // Do we care about program logs that failed to parse?
-                warn!("not a GatewayEvent; skipping it");
-                continue;
+        // Listens for incoming Solana transactions and process them sequentially to propperly update the
+        // latest known transaction signature.
+        // TODO: use recv_many() to increase throughput and register the latest known signature only once per call.
+        while let Some(message) = transaction_receiver.recv().await {
+            let rpc_result = match message {
+                Message(join_handle) => join_handle.await?,
+                Terminated(error) => {
+                    error!(error = %error, "Transaction scanner terminated");
+                    transaction_scanner_handle.abort();
+                    return Err(*error);
+                }
             };
 
-            match gw_event_parsed {
-                // GMP message to be sent to Axelar for verification
-                GatewayEvent::CallContract {
-                    sender: _,
-                    destination_chain,
-                    destination_address,
-                    payload,
-                    payload_hash: _,
-                } => {
-                    // TODO: Handle scenario with multiple messages (Issue #103)
-                    let msg_id = format!("{}:{}:0", self.source_chain.clone(), log.value.signature);
-                    info!("SENDING GMP MSG FOR VERIFICATION {}", msg_id);
-                    // Construct an Axelar message and send it to Verifier for verification
-                    self.verifier
-                        .verify(axl_rpc::Message {
-                            id: msg_id,
-                            source_chain: self.source_chain.clone(),
-                            source_address: self.source_address.clone(), //TODO: gw address, not sender, right?
-                            destination_chain: String::from_utf8(destination_chain)
-                                .map_err(SentinelError::ByteVecParsing)?,
-                            // TODO: Should we hex encode it and prefix it with 0x?
-                            destination_address: String::from_utf8(destination_address)
-                                .map_err(SentinelError::ByteVecParsing)?,
-                            payload,
-                        })
-                        .map_err(SentinelError::GmpSenderBroadcast)?;
+            // Resolve the outcome of the fetch transaction RPC call
+            match rpc_result.map_err(|boxed| *boxed) {
+                Err(SentinelError::NonFatal(non_fatal_error)) => {
+                    // Don't halt operation for non-fatal errors
+                    warn!(error = %non_fatal_error, r#type = "non-fatal")
                 }
-                // TODO: Handle event
-                GatewayEvent::OperatorshipTransferred {
-                    info_account_address: _,
-                } => todo!(),
-                _ => todo!(),
+                Err(other) => return Err(other),
+                Ok(solana_transaction) => self.process_transaction(solana_transaction).await?,
             }
         }
 
-        Ok(())
+        // This function should never reach this point. If it ever does, return an error.
+        Err(SentinelError::Stopped)
+    }
+
+    async fn process_transaction(
+        &self,
+        solana_transaction: SolanaTransaction,
+    ) -> Result<(), SentinelError> {
+        trace!(transaction_sig = %solana_transaction.signature);
+        let gateway_events = solana_transaction
+            .logs
+            .iter()
+            .enumerate() // Enumerate before filtering to keep indices consistent
+            .filter_map(|(tx_index, log)| {
+                GatewayEvent::parse_log(log).map(|event| (tx_index, event))
+            });
+
+        for (tx_index, event) in gateway_events {
+            match event {
+                GatewayEvent::CallContract {
+                    destination_chain,
+                    destination_address,
+                    payload,
+                    sender,
+                    ..
+                } => {
+                    self.handle_gateway_call_contract_event(
+                        solana_transaction.signature,
+                        tx_index,
+                        sender,
+                        destination_chain,
+                        destination_address,
+                        payload,
+                    )
+                    .await?
+                }
+
+                GatewayEvent::OperatorshipTransferred {
+                    info_account_address: _,
+                } => todo!("Handle Operatorship Transferred event"),
+                _ => unimplemented!(),
+            };
+        }
+
+        // Mark this as the latest seen solana transaction
+        self.state
+            .update_solana_transaction(solana_transaction.signature)
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn handle_gateway_call_contract_event(
+        &self,
+        transaction_signature: Signature,
+        transaction_index: usize,
+        sender: PubkeyWrapper,
+        destination_chain: Vec<u8>,
+        destination_address: Vec<u8>,
+        payload: Vec<u8>,
+    ) -> Result<(), SentinelError> {
+        let message_ccid = format!(
+            "{}:{}:{}",
+            SOLANA_CHAIN_NAME, transaction_signature, transaction_index,
+        );
+        let message = axl_rpc::Message {
+            id: message_ccid,
+            source_chain: SOLANA_CHAIN_NAME.into(),
+            source_address: hex::encode(sender.to_bytes()),
+            destination_chain: String::from_utf8(destination_chain)
+                .map_err(SentinelError::ByteVecParsing)?,
+            destination_address: hex::encode(destination_address),
+            payload,
+        };
+        info!(?message);
+
+        self.verifier_channel
+            .send(message)
+            .await
+            .map_err(|message| SentinelError::SendMessageError(message.0.id))
     }
 }

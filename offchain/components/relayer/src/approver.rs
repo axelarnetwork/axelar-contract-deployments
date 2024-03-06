@@ -1,9 +1,9 @@
+use crate::state::State;
 use amplifier_api::axl_rpc::{
     axelar_rpc_client::AxelarRpcClient, GetPayloadRequest, SubscribeToApprovalsRequest,
     SubscribeToApprovalsResponse,
 };
-use gmp_gateway::{accounts::GatewayApprovedMessage, error::GatewayError};
-
+use gmp_gateway::{self, accounts::GatewayApprovedMessage, error::GatewayError};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_program::{program_error::ProgramError, pubkey::Pubkey};
 use solana_sdk::{signature::Keypair, signature::Signer, transaction::Transaction};
@@ -12,7 +12,7 @@ use thiserror::Error;
 use tonic::transport::Channel;
 use tracing::{error, info, warn};
 
-use crate::{entities::last_processed_block::Chain, state::PostgresStateTracker};
+use crate::config::SOLANA_CHAIN_NAME;
 
 use self::block_messages::BlockMessages;
 
@@ -39,7 +39,7 @@ pub enum ApproverError {
     #[error("Failed to fetch proof from Amplifier API stream with status - {0}")]
     GetProofFromStream(tonic::Status),
     #[error("State error - {0}")]
-    State(#[from] Box<dyn std::error::Error + Send + Sync>),
+    State(#[from] sqlx::Error),
 }
 
 /// Listens for approved messages (signed proofs) coming from the Axelar blockchain.
@@ -47,28 +47,28 @@ pub enum ApproverError {
 /// Those will be payloads sent from other blockchains,
 /// which pass through axelar and are sent to Solana.
 pub struct Approver {
-    source_chain: String,
     amplifier_rpc_client: AxelarRpcClient<Channel>,
     solana_rpc_client: Arc<RpcClient>,
     payer_keypair: Arc<Keypair>,
-    state: PostgresStateTracker,
+    state: State,
+    gmp_gateway_root_config_pda: Pubkey,
 }
 
 impl Approver {
     /// Create a new sentinel, watching for messages coming from Axelar
     pub fn new(
-        source_chain: String,
         amplifier_rpc_client: AxelarRpcClient<Channel>,
         solana_rpc_client: Arc<RpcClient>,
         payer_keypair: Arc<Keypair>,
-        state: PostgresStateTracker,
+        state: State,
     ) -> Self {
+        let (gmp_gateway_root_config_pda, _) = gmp_gateway::get_gateway_root_config_pda();
         Self {
-            source_chain,
             amplifier_rpc_client,
             solana_rpc_client,
             payer_keypair,
             state,
+            gmp_gateway_root_config_pda,
         }
     }
 
@@ -138,8 +138,8 @@ impl Approver {
             command_batch
                 .commands
                 .iter()
-                .map(GatewayApprovedMessage::pda_from_decoded_command)
-                .collect();
+            .map(|command |GatewayApprovedMessage::pda_from_decoded_command(gmp_gateway::ID, command))
+            .collect();
 
         // Construct the execute_data account
         let execute_data_account = {
@@ -153,6 +153,7 @@ impl Approver {
         let approve_ix = gmp_gateway::instructions::execute(
             gmp_gateway::ID,
             execute_data_account,
+            self.gmp_gateway_root_config_pda,
             &message_accounts,
         )
         .map_err(ApproverError::CreateExecuteIx)?;
@@ -237,14 +238,14 @@ impl Approver {
     }
 
     pub async fn run(&mut self) -> Result<(), ApproverError> {
-        let start_height = self.state.load().await?;
+        let start_height = self.state.get_axelar_block_height().await?;
 
         // Init the stream of proofs coming from the Amplifier API
         let mut stream = self
             .amplifier_rpc_client
             .subscribe_to_approvals(SubscribeToApprovalsRequest {
-                chain: self.source_chain.clone(),
-                start_height,
+                chain: SOLANA_CHAIN_NAME.into(),
+                start_height: Some(start_height as u64),
             })
             .await
             .map_err(ApproverError::SubForApprovals)?
@@ -257,7 +258,8 @@ impl Approver {
                 self.handle_block_messages(messages).await?;
 
                 self.state
-                    .save(Chain::Axelar, axl_proof.block_height)
+                    // FIXME: this cast might be problematic
+                    .update_axelar_block_height(axl_proof.block_height as i64)
                     .await?;
             }
 
