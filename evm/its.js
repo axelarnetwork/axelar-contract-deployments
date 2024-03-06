@@ -472,7 +472,8 @@ async function processCommand(config, chain, options) {
                 trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address);
             } else {
                 const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.axelarId;
-                const trustedAddress = options.trustedAddress || config.chains[options.trustedChain.toLowerCase()]?.contracts?.InterchainTokenService?.address;
+                const trustedAddress =
+                    options.trustedAddress || config.chains[options.trustedChain.toLowerCase()]?.contracts?.InterchainTokenService?.address;
 
                 if (trustedChain === undefined || trustedAddress === undefined) {
                     throw new Error(`Invalid chain/address: ${options.trustedChain}`);
