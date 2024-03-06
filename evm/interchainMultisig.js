@@ -460,7 +460,8 @@ async function submitTransactions(config, chain, options) {
 
     const proof = sortWeightedSignaturesProof(encodeInterchainCallsBatch(batchId, calls), signers, weights, threshold, signatures);
 
-    await multisigContract.executeCalls(formatBytes32String(batchId), calls, proof, gasOptions);
+    const tx = await multisigContract.executeCalls(formatBytes32String(batchId), calls, proof, gasOptions);
+    await tx.wait(chain.confirmations);
 
     if (action === 'rotateSigners') {
         const newSigners = options.newSigners.split(',');
