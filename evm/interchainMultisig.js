@@ -436,13 +436,13 @@ async function main(options) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('multisig').description('Script to manage multisig actions');
+    program.name('interchain-multisig').description('Script to manage interchain multisig actions');
 
     addBaseOptions(program, { address: true });
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('InterchainMultisig'));
     program.addOption(
-        new Option('--action <action>', 'multisig action')
+        new Option('--action <action>', 'interchain multisig action')
             .choices([
                 'signers',
                 'setTokenMintLimits',
@@ -458,7 +458,7 @@ if (require.main === module) {
     );
     program.addOption(new Option('--offline', 'run script in offline mode'));
     program.addOption(new Option('--batchId <batchId>', 'The id of the batch to be executed').makeOptionMandatory(true));
-    program.addOption(new Option('--signatures <signatures>', 'Signatures to '));
+    program.addOption(new Option('--signatures <signatures>', 'Signatures to ').env('SIGNATURES'));
 
     // options for setTokenMintLimits
     program.addOption(new Option('--symbols <symbols>', 'token symbols'));
