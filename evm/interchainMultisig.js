@@ -12,19 +12,12 @@ const { Command, Option } = require('commander');
 const {
     printInfo,
     printWalletInfo,
-    isNumber,
-    isValidCalldata,
     printWarn,
-    isNonEmptyStringArray,
-    isNumberArray,
     isValidAddress,
     mainProcessor,
-    isValidDecimal,
     prompt,
-    isBytes32Array,
     getGasOptions,
-    isAddressArray,
-    saveConfig,
+    saveConfig, validateParameters,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const IInterchainMultisig = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IInterchainMultisig.json');
@@ -49,9 +42,7 @@ async function preExecutionChecks(multisigContract, action, wallet, batchId, cal
         throw new Error('Invalid signers: the hash of the signers set does not match the one on the contract');
     }
 
-    if (!isNonEmptyStringArray(signatures)) {
-        throw new Error(`Invalid signatures: ${signatures}`);
-    }
+    validateParameters({ isNonEmptyStringArray: { signatures }});
 
     const callsBatchData = encodeInterchainCallsBatch(batchId, calls);
     const messageHash = arrayify(hashMessage(arrayify(keccak256(callsBatchData))));
@@ -175,13 +166,7 @@ async function processCommand(_, chain, options) {
             const symbolsArray = JSON.parse(symbols);
             const limitsArray = JSON.parse(limits);
 
-            if (!isNonEmptyStringArray(symbolsArray)) {
-                throw new Error(`Invalid token symbols: ${symbols})}`);
-            }
 
-            if (!isNumberArray(limitsArray)) {
-                throw new Error(`Invalid token limits: ${limits}`);
-            }
 
             if (symbolsArray.length !== limitsArray.length) {
                 throw new Error('Token symbols and token limits length mismatch');
@@ -189,9 +174,7 @@ async function processCommand(_, chain, options) {
 
             const multisigTarget = chain.contracts.AxelarGateway?.address;
 
-            if (!isValidAddress(multisigTarget)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
+            validateParameters({ isValidAddress: { multisigTarget }, isNumberArray: {limitsArray}, isNonEmptyStringArray: {symbolsArray}});
 
             const gateway = new Contract(multisigTarget, IGateway.abi, wallet);
             const multisigCalldata = gateway.interface.encodeFunctionData('setTokenMintLimits', [symbolsArray, limitsArray]);
@@ -201,11 +184,11 @@ async function processCommand(_, chain, options) {
 
             if (!offline) {
                 // loop over each token
-                for (let i = 0; i < symbolsArray.length; i++) {
-                    const token = await gateway.tokenAddresses(symbolsArray[i]);
-                    const limit = await gateway.tokenMintLimit(symbolsArray[i]);
-                    printInfo(`Token ${symbolsArray[i]} address`, token);
-                    printInfo(`Token ${symbolsArray[i]} limit`, limit);
+                for (const tokenSymbol of symbolsArray) {
+                    const token = await gateway.tokenAddresses(tokenSymbol);
+                    const limit = await gateway.tokenMintLimit(tokenSymbol);
+                    printInfo(`Token ${tokenSymbol} address`, token);
+                    printInfo(`Token ${tokenSymbol} limit`, limit);
                 }
             }
 
@@ -215,15 +198,9 @@ async function processCommand(_, chain, options) {
         }
 
         case 'transferMintLimiter': {
-            if (!isValidAddress(mintLimiter)) {
-                throw new Error(`Invalid new mint limiter address: ${mintLimiter}`);
-            }
-
             const multisigTarget = chain.contracts.AxelarGateway?.address;
 
-            if (!isValidAddress(multisigTarget)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
+            validateParameters({ isValidAddress: { mintLimiter, multisigTarget } });
 
             const gateway = new Contract(multisigTarget, IGateway.abi, wallet);
             const multisigCalldata = gateway.interface.encodeFunctionData('transferMintLimiter', [mintLimiter]);
@@ -234,15 +211,9 @@ async function processCommand(_, chain, options) {
         }
 
         case 'transferMultisig': {
-            if (!isValidAddress(newMultisig)) {
-                throw new Error(`Invalid new mint limiter address: ${newMultisig}`);
-            }
-
             const multisigTarget = chain.contracts.AxelarServiceGovernance?.address;
 
-            if (!isValidAddress(multisigTarget)) {
-                throw new Error(`Missing AxelarServiceGovernance address in the chain info.`);
-            }
+            validateParameters({ isValidAddress: { newMultisig, multisigTarget } });
 
             const governance = new Contract(multisigTarget, IGovernance.abi, wallet);
             const multisigCalldata = governance.interface.encodeFunctionData('transferMultisig', [newMultisig]);
@@ -253,17 +224,8 @@ async function processCommand(_, chain, options) {
         }
 
         case 'rotateSigners': {
-            if (!isAddressArray(newSigners)) {
-                throw new Error(`Invalid new signers: ${newSigners}`);
-            }
+            validateParameters({ isAddressArray: { newSigners }, isNumberArray: {newWeights}, isNumber: {newThreshold} });
 
-            if (!isNumberArray(newWeights)) {
-                throw new Error(`Invalid new weights: ${newWeights}`);
-            }
-
-            if (!isNumber(newThreshold)) {
-                throw new Error(`Invalid new threshold: ${newThreshold}`);
-            }
 
             if (newSigners.length !== newWeights.length) {
                 throw new Error('New signers and new weights length mismatch');
@@ -289,13 +251,7 @@ async function processCommand(_, chain, options) {
         }
 
         case 'withdraw': {
-            if (!isValidAddress(recipient)) {
-                throw new Error(`Invalid recipient address: ${recipient}`);
-            }
-
-            if (!isValidDecimal(withdrawAmount)) {
-                throw new Error(`Invalid withdraw amount: ${withdrawAmount}`);
-            }
+            validateParameters({ isValidAddress: { recipient }, isValidDecimal: {withdrawAmount}});
 
             const amount = parseEther(withdrawAmount);
 
@@ -319,14 +275,6 @@ async function processCommand(_, chain, options) {
         }
 
         case 'executeCalls': {
-            if (!isValidAddress(target)) {
-                throw new Error(`Invalid target for execute multisig calls: ${target}`);
-            }
-
-            if (!isValidCalldata(calldata)) {
-                throw new Error(`Invalid calldata for execute multisig calls: ${calldata}`);
-            }
-
             if (calldata === '0x') {
                 printWarn(`Calldata for execute multisig calls is empty.`);
 
@@ -335,15 +283,9 @@ async function processCommand(_, chain, options) {
                 }
             }
 
-            if (!isNumber(parseFloat(nativeValue))) {
-                throw new Error(`Invalid native value for execute multisig proposal: ${nativeValue}`);
-            }
-
             const governance = chain.contracts.AxelarServiceGovernance?.address;
 
-            if (!isValidAddress(governance)) {
-                throw new Error(`Missing AxelarServiceGovernance address in the chain info.`);
-            }
+            validateParameters({ isValidAddress: { target, governance }, isValidCalldata: {calldata}, isValidDecimal: {nativeValue}});
 
             if (!offline) {
                 const balance = await provider.getBalance(governance);
@@ -366,23 +308,13 @@ async function processCommand(_, chain, options) {
             const tokenIdsArray = JSON.parse(tokenIds);
             const limitsArray = JSON.parse(limits);
 
-            if (!isBytes32Array(tokenIdsArray)) {
-                throw new Error(`Invalid token symbols: ${tokenIds}`);
-            }
-
-            if (!isNumberArray(limitsArray)) {
-                throw new Error(`Invalid token limits: ${limits}`);
-            }
-
             if (tokenIdsArray.length !== limitsArray.length) {
                 throw new Error('Token ids and token flow limits length mismatch');
             }
 
             const multisigTarget = chain.contracts.InterchainTokenService?.address;
 
-            if (!isValidAddress(multisigTarget)) {
-                throw new Error(`Missing InterchainTokenService address in the chain info.`);
-            }
+            validateParameters({ isValidAddress:{multisigTarget }, isBytes32Array: { tokenIdsArray }, isNumberArray: {limitsArray}});
 
             const its = new Contract(multisigTarget, IInterchainTokenService.abi, wallet);
             const multisigCalldata = its.interface.encodeFunctionData('setFlowLimits', [tokenIdsArray, limitsArray]);
@@ -399,8 +331,8 @@ async function processCommand(_, chain, options) {
                 }
 
                 // loop over each token
-                for (let i = 0; i < tokenIdsArray.length; ++i) {
-                    const tokenManagerAddress = await its.validTokenManagerAddress(tokenIdsArray[i]);
+                for (const tokenId of tokenIdsArray) {
+                    const tokenManagerAddress = await its.validTokenManagerAddress(tokenId);
                     const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
                     const currentFlowLimit = await tokenManager.flowLimit();
                     printInfo(`TokenManager address`, tokenManagerAddress);
