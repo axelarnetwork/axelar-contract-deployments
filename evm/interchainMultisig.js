@@ -504,7 +504,7 @@ async function main(options) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('multisig').description('Script to manage multisig actions');
+    program.name('interchain-multisig').description('Script to manage interchain multisig actions');
 
     addBaseOptions(program, { address: true });
 
