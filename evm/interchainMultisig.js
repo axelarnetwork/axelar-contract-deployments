@@ -510,7 +510,7 @@ if (require.main === module) {
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('InterchainMultisig'));
     program.addOption(
-        new Option('--action <action>', 'multisig action')
+        new Option('--action <action>', 'interchain multisig action')
             .choices([
                 'signers',
                 'setTokenMintLimits',
