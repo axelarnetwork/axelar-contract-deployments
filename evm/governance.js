@@ -19,7 +19,6 @@ const {
     getCurrentTimeInSeconds,
     wasEventEmitted,
     printWarn,
-    printError,
     getBytecodeHash,
     isValidAddress,
     mainProcessor,
