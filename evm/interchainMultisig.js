@@ -201,7 +201,7 @@ async function processCommand(_, chain, options) {
 
             if (!offline) {
                 // loop over each token
-                for (let i = 0; i < symbolsArray.length; i++) {
+                for (const symbol of symbolsArray) {
                     const token = await gateway.tokenAddresses(symbolsArray[i]);
                     const limit = await gateway.tokenMintLimit(symbolsArray[i]);
                     printInfo(`Token ${symbolsArray[i]} address`, token);
