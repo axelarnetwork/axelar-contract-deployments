@@ -7,7 +7,6 @@ const {
     Contract,
     BigNumber,
 } = ethers;
-const { sortBy } = require('lodash');
 const { Command, Option } = require('commander');
 const {
     printInfo,
@@ -20,6 +19,7 @@ const {
     saveConfig,
     validateParameters,
     getContractJSON,
+    sortWeightedSigners, isValidBytes32,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -37,6 +37,10 @@ async function preExecutionChecks(multisigContract, action, wallet, batchId, cal
         throw new Error('Invalid signers: the hash of the signers set does not match the one on the contract');
     }
 
+    if (await multisigContract.isBatchExecuted(batchId)) {
+        throw new Error(`The batch with id ${batchId} has already been executed`);
+    }
+
     validateParameters({ isNonEmptyStringArray: { signatures } });
 
     const callsBatchData = encodeInterchainCallsBatch(batchId, calls);
@@ -49,7 +53,7 @@ async function preExecutionChecks(multisigContract, action, wallet, batchId, cal
 
     if (wrongSignatureAddresses.length > 0) {
         throw new Error(
-            'Invalid signatures: some of the signatures are not part of the multisig signers.' +
+            'Invalid signatures: some of the signatures are not part of the multisig signers.\n' +
                 'Wrong signature addresses:\n' +
                 wrongSignatureAddresses.join('\n'),
         );
@@ -67,10 +71,6 @@ async function preExecutionChecks(multisigContract, action, wallet, batchId, cal
             `Invalid signatures: the sum of the weights of the signatures (${signaturesThreshold})` +
                 ` is less than the threshold (${threshold})`,
         );
-    }
-
-    if (await multisigContract.isBatchExecuted(batchId)) {
-        throw new Error(`The batch with id ${batchId} has already been executed`);
     }
 
     const proof = sortWeightedSignaturesProof(callsBatchData, signers, weights, threshold, signatures);
@@ -110,10 +110,6 @@ async function processCommand(_, chain, options) {
         yes,
         offline,
     } = options;
-
-    const newSigners = options.newSigners.split(',');
-    const newWeights = options.newWeights.split(',').map(Number);
-    const newThreshold = Number(options.newThreshold);
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -221,6 +217,10 @@ async function processCommand(_, chain, options) {
         }
 
         case 'rotateSigners': {
+            const newSigners = options.newSigners?.split(',');
+            const newWeights = options.newWeights?.split(',').map(Number);
+            const newThreshold = Number(options.newThreshold);
+
             validateParameters({ isAddressArray: { newSigners }, isNumberArray: { newWeights }, isNumber: { newThreshold } });
 
             if (newSigners.length !== newWeights.length) {
@@ -233,10 +233,7 @@ async function processCommand(_, chain, options) {
 
             const multisigTarget = multisigContract.address;
 
-            const signersWithWeights = newSigners.map((address, i) => ({ address, weight: newWeights[i] }));
-            const sortedSignersWithWeights = sortBy(signersWithWeights, (signer) => signer.address.toLowerCase());
-            const sortedSigners = sortedSignersWithWeights.map(({ address }) => address);
-            const sortedWeights = sortedSignersWithWeights.map(({ weight }) => weight);
+            const { sortedSigners, sortedWeights } = sortWeightedSigners(newSigners, newWeights);
 
             const multisig = new Contract(multisigTarget, getContractJSON('IInterchainMultisig').abi, wallet);
             const multisigCalldata = multisig.interface.encodeFunctionData('rotateSigners', [[sortedSigners, sortedWeights, newThreshold]]);
@@ -342,7 +339,7 @@ async function processCommand(_, chain, options) {
         }
 
         case 'voidBatch': {
-            const multisigCalldata = multisigContract.interface.encodeFunctionData('voidBatch', []);
+            const multisigCalldata = multisigContract.interface.encodeFunctionData('noop', []);
 
             calls.push([chain.axelarId, multisigContract.address, multisigContract.address, multisigCalldata, 0]);
 
@@ -352,7 +349,8 @@ async function processCommand(_, chain, options) {
 }
 
 async function submitTransactions(config, chain, options) {
-    const { address, contractName, action, batchId, privateKey, yes } = options;
+    const { address, contractName, action, privateKey, yes } = options;
+    const batchId = isValidBytes32(options.batchId) ? options.batchId : formatBytes32String(options.batchId);
     const signatures = options.signatures.split(',');
 
     const contracts = chain.contracts;
@@ -388,7 +386,7 @@ async function submitTransactions(config, chain, options) {
 
     const proof = sortWeightedSignaturesProof(encodeInterchainCallsBatch(batchId, calls), signers, weights, threshold, signatures);
 
-    const tx = await multisigContract.executeCalls(formatBytes32String(batchId), calls, proof, gasOptions);
+    const tx = await multisigContract.executeCalls(batchId, calls, proof, gasOptions);
     await tx.wait(chain.confirmations);
 
     if (action === 'rotateSigners') {
@@ -403,7 +401,7 @@ async function submitTransactions(config, chain, options) {
         saveConfig(config, options.env);
     }
 
-    printInfo(`Batch with id ${batchId} successfully executed.`);
+    printInfo(`Batch with id ${batchId} was successfully executed on ${chain.name}.`);
 }
 
 async function main(options) {
@@ -414,14 +412,16 @@ async function main(options) {
     printInfo(`Interchain calls`, JSON.stringify(calls, null, 2));
 
     if (options.offline) {
-        const { batchId, privateKey, yes } = options;
+        const { privateKey, yes } = options;
+        const batchId = isValidBytes32(options.batchId) ? options.batchId : formatBytes32String(options.batchId);
 
         const wallet = await getWallet(privateKey, null, options);
-        const signature = await signCallsBatch(batchId, calls, wallet);
 
-        if (prompt(`Proceed with signing the calls batch with id ${batchId}?`, yes)) {
+        if (prompt(`Proceed with signing the calls batch with id ${batchId} by wallet ${wallet.address}?`, yes)) {
             return;
         }
+
+        const signature = await signCallsBatch(batchId, calls, wallet);
 
         printInfo(`Wallet address`, wallet.address);
         printInfo(`Signature`, signature);

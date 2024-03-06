@@ -25,7 +25,8 @@ const {
     mainProcessor,
     isContract,
     getContractJSON,
-    isNumberArray,
+    validateParameters,
+    sortWeightedSigners,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
@@ -140,24 +141,9 @@ async function getConstructorArgs(contractName, chain, wallet) {
 
         case 'InterchainMultisig': {
             const chainName = chain.axelarId;
+            const {signers, weights, threshold} = contractConfig;
 
-            const signers = contractConfig.signers;
-
-            if (!isAddressArray(signers)) {
-                throw new Error(`Missing InterchainMultisig.signers in the chain info.`);
-            }
-
-            const weights = contractConfig.weights;
-
-            if (!isNumberArray(weights)) {
-                throw new Error(`Missing InterchainMultisig.weights in the chain info.`);
-            }
-
-            const threshold = contractConfig.threshold;
-
-            if (!isNumber(threshold)) {
-                throw new Error(`Missing InterchainMultisig.threshold in the chain info.`);
-            }
+            validateParameters({ isAddressArray: { signers }, isNumberArray: { weights }, isNumber: { threshold } });
 
             if (signers.length !== weights.length) {
                 throw new Error('Signers and weights length mismatch');
@@ -167,7 +153,9 @@ async function getConstructorArgs(contractName, chain, wallet) {
                 throw new Error('The sum of the weights is less than the threshold');
             }
 
-            return [chainName, [signers, weights, threshold]];
+            const { sortedSigners, sortedWeights } = sortWeightedSigners(signers, weights);
+
+            return [chainName, [sortedSigners, sortedWeights, threshold]];
         }
 
         case 'Operators': {

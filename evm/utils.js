@@ -8,6 +8,7 @@ const {
     constants: { AddressZero },
     getDefaultProvider,
 } = ethers;
+const { sortBy } = require('lodash');
 const https = require('https');
 const http = require('http');
 const fs = require('fs');
@@ -254,13 +255,25 @@ const isAddressArray = (arr) => {
     return true;
 };
 
+const isValidBytes32 = (input) => {
+    // Ensure it's a string of 66 characters length and starts with '0x'
+    if (typeof input !== 'string' || input.length !== 66 || input.slice(0, 2) !== '0x') {
+        return false;
+    }
+
+    // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
+    const hexPattern = /^[a-fA-F0-9]{64}$/;
+
+    return hexPattern.test(input.slice(2));
+}
+
 const isBytes32Array = (arr) => {
     if (!Array.isArray(arr)) {
         return false;
     }
 
     for (const item of arr) {
-        if (typeof item !== 'string' || !item.startsWith('0x') || item.length !== 66) {
+        if (!isValidBytes32(item)) {
             return false;
         }
     }
@@ -281,15 +294,7 @@ const getCurrentTimeInSeconds = () => {
  * @returns {boolean} - Returns true if the input is a valid keccak256 hash, false otherwise.
  */
 function isKeccak256Hash(input) {
-    // Ensure it's a string of 66 characters length and starts with '0x'
-    if (typeof input !== 'string' || input.length !== 66 || input.slice(0, 2) !== '0x') {
-        return false;
-    }
-
-    // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
-    const hexPattern = /^[a-fA-F0-9]{64}$/;
-
-    return hexPattern.test(input.slice(2));
+    return isValidBytes32(input);
 }
 
 /**
@@ -423,7 +428,7 @@ function validateParameters(parameters) {
  * Parses the input string into an array of arguments, recognizing and converting
  * to the following types: boolean, number, array, and string.
  *
- * @param {string} input - The string of arguments to parse.
+ * @param {string} args - The string of arguments to parse.
  *
  * @returns {Array} - An array containing parsed arguments.
  *
@@ -455,6 +460,8 @@ const parseArgs = (args) => {
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
  * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
  * @param {Object} contractObject - An instance of the contract or a contract factory (ethers.js Contract or ContractFactory object)
+ * @param {string} chain - The chain name
+ * @param {Provider} provider - The provider to use for fetching the contract bytecode
  * @returns {Promise<string>} - The keccak256 hash of the contract bytecode
  */
 async function getBytecodeHash(contractObject, chain = '', provider = null) {
@@ -1080,6 +1087,15 @@ function isValidChain(config, chainName) {
     }
 }
 
+function sortWeightedSigners(signers, weights) {
+    const signersWithWeights = signers.map((address, i) => ({ address, weight: weights[i] }));
+    const sortedSignersWithWeights = sortBy(signersWithWeights, (signer) => signer.address.toLowerCase());
+    const sortedSigners = sortedSignersWithWeights.map(({ address }) => address);
+    const sortedWeights = sortedSignersWithWeights.map(({ weight }) => weight);
+
+    return { sortedSigners, sortedWeights };
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -1105,6 +1121,8 @@ module.exports = {
     isNumberArray,
     isNonEmptyStringArray,
     isAddressArray,
+    isValidBytes32,
+    isBytes32Array,
     isKeccak256Hash,
     isValidCalldata,
     isValidBytesAddress,
@@ -1132,9 +1150,9 @@ module.exports = {
     mainProcessor,
     getContractPath,
     getContractJSON,
-    isBytes32Array,
     getGasOptions,
     getSaltFromKey,
     getDeployOptions,
     isValidChain,
+    sortWeightedSigners,
 };
