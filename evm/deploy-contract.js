@@ -141,7 +141,7 @@ async function getConstructorArgs(contractName, chain, wallet) {
 
         case 'InterchainMultisig': {
             const chainName = chain.axelarId;
-            const {signers, weights, threshold} = contractConfig;
+            const { signers, weights, threshold } = contractConfig;
 
             validateParameters({ isAddressArray: { signers }, isNumberArray: { weights }, isNumber: { threshold } });
 
