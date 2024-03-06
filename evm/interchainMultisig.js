@@ -37,7 +37,7 @@ async function preExecutionChecks(multisigContract, action, wallet, batchId, cal
         throw new Error('Invalid signers: the hash of the signers set does not match the one on the contract');
     }
 
-    validateParameters({ isNonEmptyStringArray: { signatures }});
+    validateParameters({ isNonEmptyStringArray: { signatures } });
 
     const callsBatchData = encodeInterchainCallsBatch(batchId, calls);
     const messageHash = arrayify(hashMessage(arrayify(keccak256(callsBatchData))));
@@ -161,15 +161,17 @@ async function processCommand(_, chain, options) {
             const symbolsArray = JSON.parse(symbols);
             const limitsArray = JSON.parse(limits);
 
-
-
             if (symbolsArray.length !== limitsArray.length) {
                 throw new Error('Token symbols and token limits length mismatch');
             }
 
             const multisigTarget = chain.contracts.AxelarGateway?.address;
 
-            validateParameters({ isValidAddress: { multisigTarget }, isNumberArray: {limitsArray}, isNonEmptyStringArray: {symbolsArray}});
+            validateParameters({
+                isValidAddress: { multisigTarget },
+                isNumberArray: { limitsArray },
+                isNonEmptyStringArray: { symbolsArray },
+            });
 
             const gateway = new Contract(multisigTarget, getContractJSON('IGateway').abi, wallet);
             const multisigCalldata = gateway.interface.encodeFunctionData('setTokenMintLimits', [symbolsArray, limitsArray]);
@@ -219,8 +221,7 @@ async function processCommand(_, chain, options) {
         }
 
         case 'rotateSigners': {
-            validateParameters({ isAddressArray: { newSigners }, isNumberArray: {newWeights}, isNumber: {newThreshold} });
-
+            validateParameters({ isAddressArray: { newSigners }, isNumberArray: { newWeights }, isNumber: { newThreshold } });
 
             if (newSigners.length !== newWeights.length) {
                 throw new Error('New signers and new weights length mismatch');
@@ -246,7 +247,7 @@ async function processCommand(_, chain, options) {
         }
 
         case 'withdraw': {
-            validateParameters({ isValidAddress: { recipient }, isValidDecimal: {withdrawAmount}});
+            validateParameters({ isValidAddress: { recipient }, isValidDecimal: { withdrawAmount } });
 
             const amount = parseEther(withdrawAmount);
 
@@ -280,7 +281,7 @@ async function processCommand(_, chain, options) {
 
             const governance = chain.contracts.AxelarServiceGovernance?.address;
 
-            validateParameters({ isValidAddress: { target, governance }, isValidCalldata: {calldata}, isValidDecimal: {nativeValue}});
+            validateParameters({ isValidAddress: { target, governance }, isValidCalldata: { calldata }, isValidDecimal: { nativeValue } });
 
             if (!offline) {
                 const balance = await provider.getBalance(governance);
@@ -309,7 +310,7 @@ async function processCommand(_, chain, options) {
 
             const multisigTarget = chain.contracts.InterchainTokenService?.address;
 
-            validateParameters({ isValidAddress:{multisigTarget }, isBytes32Array: { tokenIdsArray }, isNumberArray: {limitsArray}});
+            validateParameters({ isValidAddress: { multisigTarget }, isBytes32Array: { tokenIdsArray }, isNumberArray: { limitsArray } });
 
             const its = new Contract(multisigTarget, getContractJSON('IInterchainTokenService').abi, wallet);
             const multisigCalldata = its.interface.encodeFunctionData('setFlowLimits', [tokenIdsArray, limitsArray]);
