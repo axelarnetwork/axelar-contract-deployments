@@ -46,7 +46,7 @@ jobs:
                   },
                   "AxelarServiceGovernance": {
                     "minimumTimeDelay": 3600,
-                     "multisig": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+                    "multisig": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
                   },
                   "Multisig": {
                     "signers": [
