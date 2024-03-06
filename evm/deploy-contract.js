@@ -60,7 +60,7 @@ async function getConstructorArgs(contractName, chain, wallet) {
                 throw new Error(`Missing AxelarServiceGovernance.minimumTimeDelay in the chain info.`);
             }
 
-            const multisig = contractConfig.multisig
+            const multisig = contractConfig.multisig;
 
             if (!isAddress(multisig)) {
                 throw new Error(`Missing AxelarServiceGovernance.multisig address in the chain info.`);
