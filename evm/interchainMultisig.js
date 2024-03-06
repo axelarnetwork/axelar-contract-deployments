@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { arrayify, keccak256, formatEther, formatBytes32String, hashMessage, recoverAddress },
+    utils: { arrayify, keccak256, formatEther, formatBytes32String, hashMessage, recoverAddress, parseEther },
     Contract,
     BigNumber,
 } = ethers;
@@ -17,16 +17,11 @@ const {
     mainProcessor,
     prompt,
     getGasOptions,
-    saveConfig, validateParameters,
+    saveConfig,
+    validateParameters,
+    getContractJSON,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const IInterchainMultisig = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IInterchainMultisig.json');
-const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
-const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
-const IInterchainTokenService = require('@axelar-network/interchain-token-service/interfaces/IInterchainTokenService.json');
-const ITokenManager = require('@axelar-network/interchain-token-service/interfaces/ITokenManager.json');
-const IOperator = require('@axelar-network/interchain-token-service/interfaces/IOperator.json');
-const { parseEther } = require('ethers/lib/utils');
 const { getWallet } = require('./sign-utils');
 const {
     getWeightedSignersSet,
@@ -143,7 +138,7 @@ async function processCommand(_, chain, options) {
     printInfo('Contract name', contractName);
     printInfo('Contract address', multisigAddress);
 
-    const multisigContract = new Contract(multisigAddress, IInterchainMultisig.abi, wallet);
+    const multisigContract = new Contract(multisigAddress, getContractJSON('IInterchainMultisig').abi, wallet);
 
     printInfo('InterchainMultisig Action', action);
 
@@ -176,7 +171,7 @@ async function processCommand(_, chain, options) {
 
             validateParameters({ isValidAddress: { multisigTarget }, isNumberArray: {limitsArray}, isNonEmptyStringArray: {symbolsArray}});
 
-            const gateway = new Contract(multisigTarget, IGateway.abi, wallet);
+            const gateway = new Contract(multisigTarget, getContractJSON('IGateway').abi, wallet);
             const multisigCalldata = gateway.interface.encodeFunctionData('setTokenMintLimits', [symbolsArray, limitsArray]);
 
             printInfo('Rate limit tokens', symbolsArray);
@@ -202,7 +197,7 @@ async function processCommand(_, chain, options) {
 
             validateParameters({ isValidAddress: { mintLimiter, multisigTarget } });
 
-            const gateway = new Contract(multisigTarget, IGateway.abi, wallet);
+            const gateway = new Contract(multisigTarget, getContractJSON('IGateway').abi, wallet);
             const multisigCalldata = gateway.interface.encodeFunctionData('transferMintLimiter', [mintLimiter]);
 
             calls.push([chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]);
@@ -215,7 +210,7 @@ async function processCommand(_, chain, options) {
 
             validateParameters({ isValidAddress: { newMultisig, multisigTarget } });
 
-            const governance = new Contract(multisigTarget, IGovernance.abi, wallet);
+            const governance = new Contract(multisigTarget, getContractJSON('IGovernance').abi, wallet);
             const multisigCalldata = governance.interface.encodeFunctionData('transferMultisig', [newMultisig]);
 
             calls.push([chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]);
@@ -242,7 +237,7 @@ async function processCommand(_, chain, options) {
             const sortedSigners = sortedSignersWithWeights.map(({ address }) => address);
             const sortedWeights = sortedSignersWithWeights.map(({ weight }) => weight);
 
-            const multisig = new Contract(multisigTarget, IInterchainMultisig.abi, wallet);
+            const multisig = new Contract(multisigTarget, getContractJSON('IInterchainMultisig').abi, wallet);
             const multisigCalldata = multisig.interface.encodeFunctionData('rotateSigners', [[sortedSigners, sortedWeights, newThreshold]]);
 
             calls.push([chain.axelarId, multisigContract.address, multisigTarget, multisigCalldata, 0]);
@@ -316,14 +311,14 @@ async function processCommand(_, chain, options) {
 
             validateParameters({ isValidAddress:{multisigTarget }, isBytes32Array: { tokenIdsArray }, isNumberArray: {limitsArray}});
 
-            const its = new Contract(multisigTarget, IInterchainTokenService.abi, wallet);
+            const its = new Contract(multisigTarget, getContractJSON('IInterchainTokenService').abi, wallet);
             const multisigCalldata = its.interface.encodeFunctionData('setFlowLimits', [tokenIdsArray, limitsArray]);
 
             printInfo('Token Ids', tokenIdsArray);
             printInfo('FLow limit values', limitsArray);
 
             if (!offline) {
-                const operatable = new Contract(multisigTarget, IOperator.abi, wallet);
+                const operatable = new Contract(multisigTarget, getContractJSON('IOperator').abi, wallet);
                 const hasOperatorRole = await operatable.isOperator(multisigAddress);
 
                 if (!hasOperatorRole) {
@@ -333,7 +328,7 @@ async function processCommand(_, chain, options) {
                 // loop over each token
                 for (const tokenId of tokenIdsArray) {
                     const tokenManagerAddress = await its.validTokenManagerAddress(tokenId);
-                    const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+                    const tokenManager = new Contract(tokenManagerAddress, getContractJSON('ITokenManager').abi, wallet);
                     const currentFlowLimit = await tokenManager.flowLimit();
                     printInfo(`TokenManager address`, tokenManagerAddress);
                     printInfo(`TokenManager current flowLimit`, currentFlowLimit);
@@ -385,7 +380,7 @@ async function submitTransactions(config, chain, options) {
     const wallet = await getWallet(privateKey, provider, options);
     await printWalletInfo(wallet, options);
 
-    const multisigContract = new Contract(multisigAddress, IInterchainMultisig.abi, wallet);
+    const multisigContract = new Contract(multisigAddress, getContractJSON('IInterchainMultisig').abi, wallet);
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     await preExecutionChecks(multisigContract, action, wallet, batchId, calls, signers, weights, threshold, signatures);
@@ -484,7 +479,7 @@ if (require.main === module) {
     program.addOption(new Option('--calldata <calldata>', 'execute multisig proposal calldata'));
     program.addOption(new Option('--nativeValue <nativeValue>', 'execute multisig proposal nativeValue').default(0));
 
-    // option for setFlowLimit in ITS
+    // option for setFlowLimit in getContractJSON('ITS')
     program.addOption(new Option('--tokenIds <tokenIds>', 'token ids'));
 
     program.action((options) => {
