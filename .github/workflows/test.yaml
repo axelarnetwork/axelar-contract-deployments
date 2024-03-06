@@ -122,7 +122,7 @@ jobs:
       - name: Deploy Multisig using create3
         run: node evm/deploy-contract.js -c Multisig -m create3 -y
 
-      - name: Deploy Multisig using create3
+      - name: Deploy InterchainMultisig using create3
         run: node evm/deploy-contract.js -c InterchainMultisig -m create3 -y
 
       - name: Deploy Operators using create3
