@@ -38,7 +38,7 @@ async fn init_root_pda() -> Result<()> {
     let root_pda_data =
         gas_service::accounts::GasServiceRootPDA::try_from_slice(root_pda_data.data.as_slice())?;
 
-    assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
+    assert!(root_pda_data.check_authority(initializer_account.pubkey()));
 
     Ok(())
 }
@@ -77,7 +77,7 @@ async fn pay_native_gas_for_contract_call_happy_scenario() -> Result<()> {
         initial_saldo
     );
 
-    let destination_chain = "ethereum".to_string();
+    let destination_chain = "ethereum".to_string().into_bytes();
     let destination_address = b"0xb794f5ea0ba39494ce839613fffba74279579268".to_vec();
     let payload = b"some payload".to_vec();
     let fees = 100000000; // 1 sol in lamports;
@@ -170,7 +170,7 @@ async fn pay_native_gas_for_contract_call_with_token_happy_scenario() -> Result<
         initial_saldo
     );
 
-    let destination_chain = "ethereum".to_string();
+    let destination_chain = "ethereum".to_string().into_bytes();
     let destination_address = b"0xb794f5ea0ba39494ce839613fffba74279579268".to_vec();
     let token_symbol = b"ETH".to_vec();
     let token_amount = U256::ONE;
@@ -269,7 +269,7 @@ async fn pay_native_gas_for_express_call_happy_scenario() -> Result<()> {
         initial_saldo
     );
 
-    let destination_chain = "ethereum".to_string();
+    let destination_chain = "ethereum".to_string().into_bytes();
     let destination_address = b"0xb794f5ea0ba39494ce839613fffba74279579268".to_vec();
     let payload = b"some payload".to_vec();
     let fees = 100000000; // 1 sol in lamports;
@@ -362,7 +362,7 @@ async fn pay_native_gas_for_express_call_with_token_happy_scenario() -> Result<(
         initial_saldo
     );
 
-    let destination_chain = "ethereum".to_string();
+    let destination_chain = "ethereum".to_string().into_bytes();
     let destination_address = b"0xb794f5ea0ba39494ce839613fffba74279579268".to_vec();
     let token_symbol = b"ETH".to_vec();
     let token_amount = U256::ONE;
@@ -702,7 +702,7 @@ async fn collect_fees_happy_scenario() -> Result<()> {
         gas_service::accounts::GasServiceRootPDA::try_from_slice(root_pda_data.data.as_slice())?;
 
     // Check: For initializer as authority.
-    assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
+    assert!(root_pda_data.check_authority(initializer_account.pubkey()));
 
     // Fund the root PDA account.
     let tx_hash = [1u8; 64];
@@ -810,7 +810,7 @@ async fn collect_fees_collect_more_than_could_be() -> Result<()> {
         gas_service::accounts::GasServiceRootPDA::try_from_slice(root_pda_data.data.as_slice())?;
 
     // Check: For initializer as authority.
-    assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
+    assert!(root_pda_data.check_authority(initializer_account.pubkey()));
 
     // Fund the root PDA account.
     let tx_hash = [1u8; 64];
@@ -908,7 +908,7 @@ async fn refund_happy_scenario() -> Result<()> {
         gas_service::accounts::GasServiceRootPDA::try_from_slice(root_pda_data.data.as_slice())?;
 
     // Check: For initializer as authority.
-    assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
+    assert!(root_pda_data.check_authority(initializer_account.pubkey()));
 
     // Fund the root PDA account.
     let tx_hash = [1u8; 64];
@@ -1016,7 +1016,7 @@ async fn refund_more_than_could_be() -> Result<()> {
         gas_service::accounts::GasServiceRootPDA::try_from_slice(root_pda_data.data.as_slice())?;
 
     // Check: For initializer as authority.
-    assert!(root_pda_data.check_authority(initializer_account.pubkey().into()));
+    assert!(root_pda_data.check_authority(initializer_account.pubkey()));
 
     // Fund the root PDA account.
     let tx_hash = [1u8; 64];

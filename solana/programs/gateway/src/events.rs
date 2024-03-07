@@ -74,14 +74,14 @@ impl GatewayEvent {
 /// Emits a [`ContractCallEventRef`].
 pub fn emit_call_contract_event(
     sender: Pubkey,
-    destination_chain: String,
+    destination_chain: Vec<u8>,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     payload_hash: [u8; 32],
 ) -> Result<(), ProgramError> {
     let event = GatewayEvent::CallContract {
-        sender: sender.into(),
-        destination_chain: destination_chain.into(),
+        sender,
+        destination_chain,
         destination_address,
         payload,
         payload_hash,
@@ -97,7 +97,7 @@ fn decode_base64(input: &str) -> Option<Vec<u8>> {
 /// Emit a [`OperatorshipTransferred`].
 pub fn emit_operatorship_transferred_event(pubkey: Pubkey) -> Result<(), ProgramError> {
     let event = GatewayEvent::OperatorshipTransferred {
-        info_account_address: pubkey.into(),
+        info_account_address: pubkey,
     };
     event.emit()
 }

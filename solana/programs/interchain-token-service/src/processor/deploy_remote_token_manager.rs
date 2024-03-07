@@ -39,7 +39,7 @@ impl Processor {
         _program_id: &Pubkey,
         accounts: &[AccountInfo],
         salt: [u8; 32],
-        destination_chain: String,
+        destination_chain: Vec<u8>,
         token_manager_type: TokenManagerType,
         params: Vec<u8>,
         fees: u64,
@@ -50,21 +50,22 @@ impl Processor {
 
         let account_info_iter = &mut accounts.iter();
         let sender = next_account_info(account_info_iter)?;
-        let _gateway = next_account_info(account_info_iter)?;
+        let gateway_root_pda = next_account_info(account_info_iter)?;
         let gas_service = next_account_info(account_info_iter)?;
         let gas_service_root_pda = next_account_info(account_info_iter)?;
         let associated_trusted_address = next_account_info(account_info_iter)?;
         let system_program = next_account_info(account_info_iter)?;
+        let _gateway_program = next_account_info(account_info_iter)?;
         let token_id = interchain_token_id(sender.key, salt);
 
         let associated_trusted_address_data = RegisteredTrustedAddressAccount::unpack_from_slice(
             &associated_trusted_address.try_borrow_mut_data()?,
         )?;
-        let destination_address = associated_trusted_address_data.address;
+        let destination_address = associated_trusted_address_data.address.into_bytes();
 
         assert!(sender.is_signer);
 
-        emit_interchain_token_id_claimed_event(token_id, (*sender.key).into(), salt)?;
+        emit_interchain_token_id_claimed_event(token_id, *sender.key, salt)?;
         emit_token_manager_deployment_started_event(
             token_id,
             destination_chain.clone(),
@@ -85,7 +86,7 @@ impl Processor {
                     *sender.key,
                     *sender.key,
                     destination_chain.clone(),
-                    destination_address.clone().into(),
+                    destination_address.clone(),
                     payload.clone(),
                     fees,
                 )?,
@@ -100,13 +101,13 @@ impl Processor {
 
         invoke(
             &gateway::instructions::call_contract(
-                gateway::id(),
+                *gateway_root_pda.key,
                 *sender.key,
-                &destination_chain.clone(),
-                destination_address.as_bytes(),
-                &payload.clone(),
+                destination_chain,
+                destination_address,
+                payload,
             )?,
-            &[sender.clone()],
+            &[sender.clone(), gateway_root_pda.clone()],
         )?;
 
         Ok(())

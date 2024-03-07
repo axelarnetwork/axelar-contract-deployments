@@ -18,7 +18,7 @@ impl Processor {
         _program_id: &Pubkey,
         accounts: &[AccountInfo],
         salt: [u8; 32],
-        destination_chain: String,
+        destination_chain: Vec<u8>,
         name: String,
         symbol: String,
         decimals: u8,
@@ -31,7 +31,7 @@ impl Processor {
 
         let account_info_iter = &mut accounts.iter();
         let sender = next_account_info(account_info_iter)?;
-        let _gateway = next_account_info(account_info_iter)?;
+        let gateway_root_pda = next_account_info(account_info_iter)?;
         let gas_service = next_account_info(account_info_iter)?;
         let gas_service_root_pda = next_account_info(account_info_iter)?;
         let associated_trusted_address = next_account_info(account_info_iter)?;
@@ -41,7 +41,7 @@ impl Processor {
         let associated_trusted_address_data = RegisteredTrustedAddressAccount::unpack_from_slice(
             &associated_trusted_address.try_borrow_mut_data()?,
         )?;
-        let destination_address = associated_trusted_address_data.address;
+        let destination_address = associated_trusted_address_data.address.into_bytes();
 
         assert!(sender.is_signer);
 
@@ -69,7 +69,7 @@ impl Processor {
                     *sender.key,
                     *sender.key,
                     destination_chain.clone(),
-                    destination_address.clone().into(),
+                    destination_address.clone(),
                     payload.clone(),
                     fees,
                 )?,
@@ -84,13 +84,13 @@ impl Processor {
 
         invoke(
             &gateway::instructions::call_contract(
-                gateway::id(),
+                *gateway_root_pda.key,
                 *sender.key,
-                &destination_chain.clone(),
-                destination_address.as_bytes(),
-                &payload.clone(),
+                destination_chain,
+                destination_address,
+                payload,
             )?,
-            &[sender.clone()],
+            &[sender.clone(), gateway_root_pda.clone()],
         )?;
 
         Ok(())

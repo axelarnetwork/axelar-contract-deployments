@@ -29,7 +29,7 @@ pub enum GatewayInstruction {
     /// No accounts are expected by this instruction.
     CallContract {
         /// The name of the target blockchain.
-        destination_chain: String,
+        destination_chain: Vec<u8>,
         /// The address of the target contract in the destination blockchain.
         destination_contract_address: Vec<u8>,
         /// Contract call data.
@@ -158,24 +158,25 @@ pub fn execute(
 
 /// Creates a [`CallContract`] instruction.
 pub fn call_contract(
-    program_id: Pubkey,
+    gateway_root_pda: Pubkey,
     sender: Pubkey,
-    destination_chain: &str,
-    destination_contract_address: &[u8],
-    payload: &[u8],
+    destination_chain: Vec<u8>,
+    destination_contract_address: Vec<u8>,
+    payload: Vec<u8>,
 ) -> Result<Instruction, ProgramError> {
-    crate::check_program_account(program_id)?;
-
     let data = to_vec(&GatewayInstruction::CallContract {
-        destination_chain: destination_chain.to_owned(),
-        destination_contract_address: destination_contract_address.to_vec(),
-        payload: payload.to_vec(),
+        destination_chain,
+        destination_contract_address,
+        payload,
     })?;
 
-    let accounts = vec![AccountMeta::new_readonly(sender, true)];
+    let accounts = vec![
+        AccountMeta::new_readonly(sender, true),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+    ];
 
     Ok(Instruction {
-        program_id,
+        program_id: crate::id(),
         accounts,
         data,
     })
@@ -372,7 +373,7 @@ pub mod tests {
 
     #[test]
     fn round_trip_call_contract() {
-        let destination_chain = "ethereum";
+        let destination_chain = "ethereum".as_bytes().to_vec();
         let destination_contract_address =
             hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
         let payload = bytes(100);
@@ -392,7 +393,7 @@ pub mod tests {
     #[test]
     fn round_trip_call_contract_function() {
         let sender = Keypair::new().pubkey();
-        let destination_chain = "ethereum";
+        let destination_chain = "ethereum".as_bytes().to_vec();
         let destination_contract_address =
             hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
         let payload = bytes(100);
@@ -400,9 +401,9 @@ pub mod tests {
         let instruction = call_contract(
             crate::id(),
             sender,
-            destination_chain,
-            &destination_contract_address,
-            &payload,
+            destination_chain.clone(),
+            destination_contract_address.clone(),
+            payload.clone(),
         )
         .expect("valid instruction construction");
 

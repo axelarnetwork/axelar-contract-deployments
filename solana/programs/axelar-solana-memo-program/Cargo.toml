@@ -17,9 +17,11 @@ borsh.workspace = true
 num-derive.workspace = true
 num-traits.workspace = true
 axelar-executable = { workspace = true }
+program-utils = { workspace = true }
+gateway = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
-gateway = { workspace = true, features = ["no-entrypoint"] }
 solana-program-test.workspace = true
 solana-sdk.workspace = true
 test-fixtures.workspace = true
+ethers-core.workspace = true

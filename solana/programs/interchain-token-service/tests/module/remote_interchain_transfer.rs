@@ -219,7 +219,7 @@ async fn test_remote_interchain_transfer_mint_burn() -> Result<()> {
     assert_eq!(
         gateway_event,
         Some(GatewayEvent::CallContract {
-            sender: fixture.payer.pubkey().into(),
+            sender: fixture.payer.pubkey(),
             destination_chain,
             destination_address,
             payload,
@@ -467,7 +467,7 @@ async fn test_remote_interchain_transfer_lock_unlock() -> Result<()> {
     assert_eq!(
         gateway_event,
         Some(GatewayEvent::CallContract {
-            sender: fixture.payer.pubkey().into(),
+            sender: fixture.payer.pubkey(),
             destination_chain,
             destination_address,
             payload,

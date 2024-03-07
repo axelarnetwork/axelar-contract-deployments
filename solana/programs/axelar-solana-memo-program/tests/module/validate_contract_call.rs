@@ -1,5 +1,5 @@
 use axelar_executable::axelar_message_primitives::DestinationProgramId;
-use axelar_solana_memo_program::build_memo;
+use axelar_solana_memo_program::from_axelar_to_solana::build_memo;
 use gateway::accounts::approved_message::MessageApprovalStatus;
 use gateway::accounts::{GatewayApprovedMessage, GatewayConfig};
 use solana_program_test::tokio;

@@ -55,9 +55,14 @@ impl Processor {
                 msg!("Instruction: Call Contract");
                 let accounts_iter = &mut accounts.iter();
                 let sender = next_account_info(accounts_iter)?;
+                let gateway_root_pda = next_account_info(accounts_iter)?;
+                // TODO we want to deserialize the PDA as well, otherwise we can't check if it's
+                // initialized
+                gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+
                 let payload_hash = hash(&payload).to_bytes();
 
-                assert!(sender.is_signer);
+                assert!(sender.is_signer, "Sender must be a signer");
 
                 emit_call_contract_event(
                     *sender.key,

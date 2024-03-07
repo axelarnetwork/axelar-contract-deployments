@@ -77,7 +77,7 @@ pub enum InterchainTokenServiceInstruction {
         salt: [u8; 32],
         /// The name of the chain to deploy the TokenManager and standardized
         /// token to.
-        destination_chain: String,
+        destination_chain: Vec<u8>,
         /// The token manager to deploy.
         token_manager_type: TokenManagerType,
         /// The params that will be used to initialize the TokenManager.
@@ -96,7 +96,7 @@ pub enum InterchainTokenServiceInstruction {
         /// The salt to be used during deployment.
         salt: [u8; 32],
         /// The name of the destination chain to deploy to.
-        destination_chain: String,
+        destination_chain: Vec<u8>,
         /// The name of the token to be deployed.
         name: String,
         /// The symbol of the token to be deployed.
@@ -153,7 +153,7 @@ pub fn build_initialize_instruction(
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Custom(
+    let data = to_vec(&AxelarCallableInstruction::Native(
         InterchainTokenServiceInstruction::Initialize {},
     ))?;
 
@@ -185,7 +185,7 @@ pub fn build_give_token_mint_burn_instruction(
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Custom(
+    let data = to_vec(&AxelarCallableInstruction::Native(
         InterchainTokenServiceInstruction::GiveToken {
             token_manager_type: TokenManagerType::MintBurn,
             amount,
@@ -227,7 +227,7 @@ pub fn build_give_token_lock_unlock_instruction(
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Custom(
+    let data = to_vec(&AxelarCallableInstruction::Native(
         InterchainTokenServiceInstruction::GiveToken {
             token_manager_type: TokenManagerType::LockUnlock,
             amount,
@@ -269,7 +269,7 @@ pub fn build_take_token_mint_burn_instruction(
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Custom(
+    let data = to_vec(&AxelarCallableInstruction::Native(
         InterchainTokenServiceInstruction::TakeToken {
             token_manager_type: TokenManagerType::MintBurn,
             amount,
@@ -309,7 +309,7 @@ pub fn build_take_token_lock_unlock_instruction(
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Custom(
+    let data = to_vec(&AxelarCallableInstruction::Native(
         InterchainTokenServiceInstruction::TakeToken {
             token_manager_type: TokenManagerType::LockUnlock,
             amount,
@@ -338,17 +338,20 @@ pub fn build_take_token_lock_unlock_instruction(
     })
 }
 
-/// Create `DeployRemoteTokenManager` instruction
+/// Create [`InterchainTokenServiceInstruction::DeployRemoteTokenManager`]
+/// instruction
+#[allow(clippy::too_many_arguments)]
 pub fn build_deploy_remote_token_manager_instruction(
     sender: &Pubkey,
     salt: [u8; 32],
-    destination_chain: String,
+    destination_chain: Vec<u8>,
     token_manager_type: TokenManagerType,
     params: Vec<u8>,
     gas_value: u64,
     associated_trusted_address: &Pubkey,
+    gateway_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Custom(
+    let data = to_vec(&AxelarCallableInstruction::Native(
         InterchainTokenServiceInstruction::DeployRemoteTokenManager {
             salt,
             destination_chain,
@@ -360,11 +363,12 @@ pub fn build_deploy_remote_token_manager_instruction(
 
     let accounts = vec![
         AccountMeta::new(*sender, true),
-        AccountMeta::new_readonly(gateway::id(), false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
         AccountMeta::new_readonly(gas_service::id(), false),
         AccountMeta::new(gas_service::get_gas_service_root_pda().0, false),
         AccountMeta::new_readonly(*associated_trusted_address, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(gateway::id(), false),
     ];
 
     Ok(Instruction {
@@ -379,15 +383,16 @@ pub fn build_deploy_remote_token_manager_instruction(
 pub fn build_deploy_remote_interchain_token_instruction(
     sender: &Pubkey,
     salt: [u8; 32],
-    destination_chain: String,
+    destination_chain: Vec<u8>,
     name: String,
     symbol: String,
     decimals: u8,
     minter: Vec<u8>,
     gas_value: u64,
     associated_trusted_address: &Pubkey,
+    gateway_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Custom(
+    let data = to_vec(&AxelarCallableInstruction::Native(
         InterchainTokenServiceInstruction::DeployRemoteInterchainToken {
             salt,
             destination_chain,
@@ -401,11 +406,12 @@ pub fn build_deploy_remote_interchain_token_instruction(
 
     let accounts = vec![
         AccountMeta::new(*sender, true),
-        AccountMeta::new_readonly(gateway::id(), false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
         AccountMeta::new_readonly(gas_service::id(), false),
         AccountMeta::new(gas_service::get_gas_service_root_pda().0, false),
         AccountMeta::new_readonly(*associated_trusted_address, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(gateway::id(), false),
     ];
 
     Ok(Instruction {
@@ -441,7 +447,7 @@ pub fn build_remote_interchain_transfer_mint_burn_instruction(
     metadata_version: MetadataVersion,
     symbol: Vec<u8>,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Custom(
+    let data = to_vec(&AxelarCallableInstruction::Native(
         InterchainTokenServiceInstruction::RemoteInterchainTransfer {
             token_id,
             destination_chain,
@@ -516,7 +522,7 @@ pub fn build_remote_interchain_transfer_lock_unlock_instruction(
     metadata_version: MetadataVersion,
     symbol: Vec<u8>,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Custom(
+    let data = to_vec(&AxelarCallableInstruction::Native(
         InterchainTokenServiceInstruction::RemoteInterchainTransfer {
             token_id,
             destination_chain,

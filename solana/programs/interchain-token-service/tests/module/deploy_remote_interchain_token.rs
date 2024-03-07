@@ -1,5 +1,6 @@
 use ethers_core::abi::AbiEncode;
 use gas_service::events::GasServiceEvent;
+use gateway::accounts::GatewayConfig;
 use gateway::events::GatewayEvent;
 use interchain_token_transfer_gmp::{Bytes32, DeployInterchainToken};
 use solana_program::keccak::hash;
@@ -15,6 +16,9 @@ use crate::program_test;
 async fn test_deploy_remote_interchain_token() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
+    let gateway_root_pda = fixture
+        .initialize_gateway_config_account(GatewayConfig::default())
+        .await;
     let gas_service_root_pda = fixture.init_gas_service().await;
     let gas_service_initial_saldo = fixture
         .banks_client
@@ -36,7 +40,7 @@ async fn test_deploy_remote_interchain_token() {
         .await;
 
     let salt = [1u8; 32];
-    let destination_chain = trusted_chain_name;
+    let destination_chain = trusted_chain_name.clone().into_bytes();
     let name: String = "ethereum-token".into();
     let symbol: String = "etht".into();
     let decimals: u8 = 6;
@@ -68,6 +72,7 @@ async fn test_deploy_remote_interchain_token() {
                 minter,
                 gas_value,
                 &associated_trusted_address,
+                &gateway_root_pda,
             )
             .unwrap(),
         ],
@@ -113,12 +118,12 @@ async fn test_deploy_remote_interchain_token() {
     assert_eq!(
         gas_service_event,
         Some(GasServiceEvent::NativeGasPaidForContractCall {
-            sender: fixture.payer.pubkey().into(),
+            sender: fixture.payer.pubkey(),
             destination_chain: destination_chain.clone(),
             destination_address: associated_trusted_address_from_account.clone().into(),
             payload_hash,
             fees: gas_value,
-            refund_address: fixture.payer.pubkey().into()
+            refund_address: fixture.payer.pubkey()
         })
     );
 
@@ -130,8 +135,8 @@ async fn test_deploy_remote_interchain_token() {
     assert_eq!(
         gateway_event,
         Some(GatewayEvent::CallContract {
-            sender: fixture.payer.pubkey().into(),
-            destination_chain: destination_chain.as_bytes().to_vec(),
+            sender: fixture.payer.pubkey(),
+            destination_chain,
             destination_address: associated_trusted_address_from_account.into(),
             payload,
             payload_hash

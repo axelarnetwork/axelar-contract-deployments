@@ -90,7 +90,7 @@ fn process_create_registered_chain(
     let mut account_data = associated_chain_account.try_borrow_mut_data()?;
     let serialized_data = RegisteredChainAccount {
         chain_name,
-        owner: (*owner_account_info.key).into(),
+        owner: (*owner_account_info.key),
     }
     .try_to_vec()
     .unwrap();

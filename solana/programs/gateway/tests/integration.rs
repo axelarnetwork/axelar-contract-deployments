@@ -121,17 +121,23 @@ mod accounts {
 #[tokio::test]
 async fn test_call_contract_instruction() -> Result<()> {
     let (mut banks_client, sender, recent_blockhash) = program_test().start().await;
-    let destination_chain = "ethereum";
+    let destination_chain = "ethereum".as_bytes().to_vec();
     let destination_address = hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862")?;
     let payload = [1u8; 32].to_vec();
     let payload_hash = hash(&payload).to_bytes();
 
+    let (gateway_root_pda, _) = GatewayConfig::pda();
+    let gateway_config = GatewayConfig::new(1, OperatorsAndEpochs::default());
+    accounts::initialize_config_account(&mut banks_client, &sender, &gateway_config)
+        .await
+        .unwrap();
+
     let instruction = gmp_gateway::instructions::call_contract(
-        gmp_gateway::id(),
+        gateway_root_pda,
         sender.pubkey(),
-        destination_chain,
-        &destination_address,
-        &payload,
+        destination_chain.clone(),
+        destination_address.clone(),
+        payload.clone(),
     )?;
 
     let transaction = Transaction::new_signed_with_payer(
@@ -157,8 +163,8 @@ async fn test_call_contract_instruction() -> Result<()> {
     assert_eq!(
         expected_event,
         Some(GatewayEvent::CallContract {
-            sender: sender.pubkey().into(),
-            destination_chain: destination_chain.as_bytes().to_vec(),
+            sender: sender.pubkey(),
+            destination_chain,
             destination_address,
             payload,
             payload_hash

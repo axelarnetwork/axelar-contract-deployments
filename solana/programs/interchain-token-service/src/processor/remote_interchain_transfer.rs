@@ -1,5 +1,3 @@
-use std::str::from_utf8;
-
 use ethers_core;
 use ethers_core::abi::AbiEncode;
 use interchain_token_transfer_gmp::{Bytes32, InterchainTransfer};
@@ -151,6 +149,7 @@ impl Processor {
 
         Self::transmit_interchain_transfer(
             sender,
+            gateway_root_pda,
             token_id,
             destination_chain,
             destination_address,
@@ -264,6 +263,7 @@ impl Processor {
 
         Self::transmit_interchain_transfer(
             sender,
+            gateway_root_pda,
             token_id,
             destination_chain,
             destination_address,
@@ -275,8 +275,10 @@ impl Processor {
         Ok(())
     }
 
-    fn transmit_interchain_transfer(
-        sender: &AccountInfo,
+    #[allow(clippy::too_many_arguments)]
+    fn transmit_interchain_transfer<'a, 'b>(
+        sender: &'a AccountInfo<'b>,
+        gateway_root_pda: &'a AccountInfo<'b>,
         token_id: [u8; 32],
         destination_chain: Vec<u8>,
         destination_address: Vec<u8>,
@@ -307,16 +309,15 @@ impl Processor {
             // _callContractWithToken(destinationChain, payload, symbol,
             //     // amount, metadataVersion, gasValue);
         } else {
-            let destination_chain = &destination_chain.clone();
             invoke(
                 &gateway::instructions::call_contract(
-                    gateway::id(),
+                    *gateway_root_pda.key,
                     *sender.key,
-                    from_utf8(destination_chain).unwrap(),
-                    &destination_address,
-                    &payload.clone(),
+                    destination_chain,
+                    destination_address,
+                    payload,
                 )?,
-                &[sender.clone()],
+                &[sender.clone(), gateway_root_pda.clone()],
             )?;
         }
 

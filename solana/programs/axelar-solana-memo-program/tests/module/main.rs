@@ -1,5 +1,6 @@
 use solana_program_test::{processor, ProgramTest};
 
+mod send_to_gateway;
 mod validate_contract_call;
 
 pub fn program_test() -> ProgramTest {

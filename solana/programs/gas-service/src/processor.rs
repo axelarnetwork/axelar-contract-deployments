@@ -192,7 +192,7 @@ impl Processor {
     /// [refund_address] The address where refunds, if any, should be sent.
     fn pay_native_gas_for_contract_call(
         accounts: &[AccountInfo],
-        destination_chain: String,
+        destination_chain: Vec<u8>,
         destination_address: Vec<u8>,
         payload: Vec<u8>,
         fees: u64,
@@ -237,12 +237,12 @@ impl Processor {
         )?;
 
         events::emit_native_gas_paid_for_contract_call_event(
-            (*sender_account.key).into(),
+            *sender_account.key,
             destination_chain,
             destination_address,
             payload,
             fees,
-            (*refund_address).into(),
+            refund_address,
         )?;
 
         Ok(())
@@ -267,7 +267,7 @@ impl Processor {
     #[allow(clippy::too_many_arguments)]
     fn pay_native_gas_for_contract_call_with_token(
         accounts: &[AccountInfo],
-        destination_chain: String,
+        destination_chain: Vec<u8>,
         destination_address: Vec<u8>,
         payload: Vec<u8>,
         symbol: Vec<u8>,
@@ -314,14 +314,14 @@ impl Processor {
         )?;
 
         events::emit_native_gas_paid_for_contract_call_with_token_event(
-            (*sender_account.key).into(),
+            *sender_account.key,
             destination_chain,
             destination_address,
             payload,
             symbol,
             amount,
             fees,
-            (*refund_address).into(),
+            refund_address,
         )?;
 
         Ok(())
@@ -343,7 +343,7 @@ impl Processor {
     /// [refund_address] The address where refunds, if any, should be sent.
     fn pay_native_gas_for_express_call(
         accounts: &[AccountInfo],
-        destination_chain: String,
+        destination_chain: Vec<u8>,
         destination_address: Vec<u8>,
         payload: Vec<u8>,
         fees: u64,
@@ -388,12 +388,12 @@ impl Processor {
         )?;
 
         events::emit_native_gas_paid_for_express_call_event(
-            (*sender_account.key).into(),
+            *sender_account.key,
             destination_chain,
             destination_address,
             payload,
             fees,
-            (*refund_address).into(),
+            refund_address,
         )?;
 
         Ok(())
@@ -420,7 +420,7 @@ impl Processor {
     #[allow(clippy::too_many_arguments)]
     fn pay_native_gas_for_express_call_with_token(
         accounts: &[AccountInfo],
-        destination_chain: String,
+        destination_chain: Vec<u8>,
         destination_address: Vec<u8>,
         payload: Vec<u8>,
         symbol: Vec<u8>,
@@ -467,14 +467,14 @@ impl Processor {
         )?;
 
         events::emit_native_gas_paid_for_express_call_with_token_event(
-            (*sender_account.key).into(),
+            *sender_account.key,
             destination_chain,
             destination_address,
             payload,
             symbol,
             amount,
             fees,
-            (*refund_address).into(),
+            refund_address,
         )?;
 
         Ok(())
@@ -648,7 +648,7 @@ impl Processor {
         let gas_service_root_pda_deserialized =
             GasServiceRootPDA::try_from_slice(&gas_service_root_pda_account.data.borrow())?;
 
-        if !gas_service_root_pda_deserialized.check_authority((*sender_account.key).into()) {
+        if !gas_service_root_pda_deserialized.check_authority(*sender_account.key) {
             return Err(GasServiceError::SenderAccountIsNotExpectedAuthority.into());
         }
 
@@ -713,7 +713,7 @@ impl Processor {
         let gas_service_root_pda_deserialized =
             GasServiceRootPDA::try_from_slice(&gas_service_root_pda_account.data.borrow())?;
 
-        if !gas_service_root_pda_deserialized.check_authority((*sender_account.key).into()) {
+        if !gas_service_root_pda_deserialized.check_authority(*sender_account.key) {
             return Err(GasServiceError::SenderAccountIsNotExpectedAuthority.into());
         }
 
@@ -731,7 +731,7 @@ impl Processor {
         **gas_service_root_pda_account.try_borrow_mut_lamports()? -= fees;
         **receiver_account.try_borrow_mut_lamports()? += fees;
 
-        emit_refunded_event(tx_hash, log_index, fees, (*receiver_account.key).into())?;
+        emit_refunded_event(tx_hash, log_index, fees, *receiver_account.key)?;
 
         Ok(())
     }

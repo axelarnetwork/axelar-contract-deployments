@@ -111,7 +111,7 @@ pub enum AxelarCallableInstruction<T> {
     /// The payload is coming from the Axelar Gateway (submitted by the relayer)
     AxelarExecute(AxelarExecutablePayload),
     /// The payload is coming from the user
-    Custom(T),
+    Native(T),
 }
 
 impl AxelarExecutablePayload {

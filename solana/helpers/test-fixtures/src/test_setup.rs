@@ -86,7 +86,7 @@ impl TestFixture {
             gas_service::accounts::GasServiceRootPDA::try_from_slice(root_pda_data.data.as_slice())
                 .unwrap();
 
-        assert!(root_pda_data.check_authority(self.payer.pubkey().into()));
+        assert!(root_pda_data.check_authority(self.payer.pubkey()));
 
         root_pda_address
     }

@@ -40,7 +40,7 @@ impl Processor {
                 msg!("Instruction: Execute");
                 Self::execute(program_id, accounts, payload)
             }
-            AxelarCallableInstruction::Custom(instruction) => match instruction {
+            AxelarCallableInstruction::Native(instruction) => match instruction {
                 InterchainTokenServiceInstruction::Initialize {} => {
                     msg!("Instruction: Initialize");
                     Self::process_initialize(program_id, accounts)

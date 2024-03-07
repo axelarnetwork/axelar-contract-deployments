@@ -1,6 +1,7 @@
 use ethers_core::abi::AbiEncode;
 use ethers_core::types::U256;
 use gas_service::events::GasServiceEvent;
+use gateway::accounts::GatewayConfig;
 use gateway::events::GatewayEvent;
 use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};
 use solana_program::keccak::hash;
@@ -17,6 +18,9 @@ use crate::program_test;
 async fn test_deploy_remote_token_manager() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
+    let gateway_root_pda = fixture
+        .initialize_gateway_config_account(GatewayConfig::default())
+        .await;
     let gas_service_root_pda = fixture.init_gas_service().await;
     let gas_service_initial_saldo = fixture
         .banks_client
@@ -38,7 +42,7 @@ async fn test_deploy_remote_token_manager() {
         .await;
 
     let salt = [1u8; 32];
-    let destination_chain = trusted_chain_name;
+    let destination_chain = trusted_chain_name.clone().into_bytes();
     let token_manager_type = TokenManagerType::LockUnlock;
     let params: Vec<u8> = vec![0, 1, 2, 3];
     let gas_value = 777; // fees
@@ -64,6 +68,7 @@ async fn test_deploy_remote_token_manager() {
                 params,
                 gas_value,
                 &associated_trusted_address,
+                &gateway_root_pda,
             )
             .unwrap(),
         ],
@@ -109,12 +114,12 @@ async fn test_deploy_remote_token_manager() {
     assert_eq!(
         gas_service_event,
         Some(GasServiceEvent::NativeGasPaidForContractCall {
-            sender: fixture.payer.pubkey().into(),
+            sender: fixture.payer.pubkey(),
             destination_chain: destination_chain.clone(),
             destination_address: associated_trusted_address_from_account.clone().into(),
             payload_hash,
             fees: gas_value,
-            refund_address: fixture.payer.pubkey().into()
+            refund_address: fixture.payer.pubkey()
         })
     );
 
@@ -126,8 +131,8 @@ async fn test_deploy_remote_token_manager() {
     assert_eq!(
         gateway_event,
         Some(GatewayEvent::CallContract {
-            sender: fixture.payer.pubkey().into(),
-            destination_chain: destination_chain.as_bytes().to_vec(),
+            sender: fixture.payer.pubkey(),
+            destination_chain,
             destination_address: associated_trusted_address_from_account.into(),
             payload,
             payload_hash
