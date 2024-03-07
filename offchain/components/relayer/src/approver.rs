@@ -132,13 +132,12 @@ impl Approver {
             .map_err(ApproverError::ExecuteDataDecode)?;
 
         // Construct msg accounts for the Solana tx
-        let message_accounts: Vec<Pubkey> =
-            // TODO: Prover should not include more than X msgs in the batch. We can also do that
-            // check here if needed?
-            command_batch
-                .commands
-                .iter()
-            .map(|command |GatewayApprovedMessage::pda_from_decoded_command(gmp_gateway::ID, command))
+        // TODO: Prover should not include more than X msgs in the batch. We can also do that
+        // check here if needed?
+        let message_accounts: Vec<Pubkey> = command_batch
+            .commands
+            .iter()
+            .map(|command| GatewayApprovedMessage::pda(&gmp_gateway::ID, &command.into()).0)
             .collect();
 
         // Construct the execute_data account
