@@ -20,13 +20,15 @@ signature.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
 borsh.workspace = true
+axelar-executable.workspace = true
+axelar-message-primitives.workspace = true
+solana-program-test = { workspace = true }
+interchain-token-transfer-gmp = { workspace = true }
 
-token-manager.workspace = true
-spl-token.workspace = true
-solana-program-test.workspace = true
-interchain-token-transfer-gmp.workspace = true
-interchain-token-service.workspace = true
-gas-service.workspace = true
-gateway.workspace = true
-account-group.workspace = true
-interchain-address-tracker.workspace = true
+token-manager = { workspace = true, features = ["no-entrypoint"] }
+spl-token = { workspace = true, features = ["no-entrypoint"] }
+interchain-token-service = { workspace = true, features = ["no-entrypoint"] }
+gas-service = { workspace = true, features = ["no-entrypoint"] }
+gateway = { workspace = true, features = ["no-entrypoint"] }
+account-group = { workspace = true, features = ["no-entrypoint"] }
+interchain-address-tracker = { workspace = true, features = ["no-entrypoint"] }

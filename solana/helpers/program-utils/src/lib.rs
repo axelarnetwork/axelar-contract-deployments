@@ -24,12 +24,12 @@ macro_rules! log_everywhere {
 
         #[cfg(not(target_os = "solana"))]
         {
-            println!("RUST: {}", message);
+            dbg!(message);
         }
 
         #[cfg(target_os = "solana")]
         {
-            msg!("SOL: {}", message);
+            solana_program::msg!("SOL: {}", message);
         }
     }}
 }
@@ -124,11 +124,6 @@ impl<'a> ValidPDA for &AccountInfo<'a> {
         self.check_initialized_pda_without_deserialization(expected_program_id)?;
 
         let data = self.try_borrow_data()?;
-        let has_correct_data_len = data.len() == T::get_packed_len();
-        if !has_correct_data_len {
-            return Err(ProgramError::InvalidAccountData);
-        }
-
         T::unpack_from_slice(data.borrow()).map_err(|_| ProgramError::InvalidAccountData)
     }
 

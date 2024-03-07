@@ -1,5 +1,6 @@
 //! Instruction types
 
+use axelar_message_primitives::{AxelarMessageParams, DestinationProgramId};
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
@@ -74,7 +75,7 @@ pub enum GatewayInstruction {
     InitializeMessage {
         /// The Axelar Message CCID, truncated to 32 bytes during proof
         /// generation.
-        message_id: [u8; 32],
+        command_id: [u8; 32],
         /// The source chain denomination
         source_chain: String,
         /// The source address, expressed as raw bytes, leaving conversions to
@@ -82,12 +83,9 @@ pub enum GatewayInstruction {
         source_address: Vec<u8>,
         /// The Axelar Message payload hash.
         payload_hash: [u8; 32],
-        /// The address of the allowed executer.
-        /// This references an account that will need to be a signer to change
-        /// the message status to `executed`.
-        /// This is different from `axelar_message.destination_address` (which
-        /// points to a program id) where as this points to a pubkey.
-        allowed_executer: Pubkey,
+        /// This is parsed `axelar_message.destination_address` (which
+        /// must be a valid program id)
+        destination_program: DestinationProgramId,
     },
     /// Initializes the account to hold a new operator set.
     ///
@@ -105,8 +103,23 @@ pub enum GatewayInstruction {
     ///
     /// Accounts expected by this instruction:
     /// 1. [WRITE] Approved Message PDA account
-    /// 2. [SIGNER] Caller
-    ValidateContractCall,
+    /// 2. [] Gateway Config PDA account
+    /// 3. [SIGNER] PDA signer account (caller)
+    ValidateContractCall {
+        /// The Axelar Message CCID, truncated to 32 bytes during proof
+        /// generation.
+        command_id: [u8; 32],
+        /// The source chain denomination
+        source_chain: String,
+        /// The source address, expressed as raw bytes, leaving conversions to
+        /// the caller's discretion.
+        source_address: Vec<u8>,
+        /// The Axelar Message payload hash.
+        payload_hash: [u8; 32],
+        /// This is parsed `axelar_message.destination_address` (which
+        /// must be a valid program id)
+        destination_program: DestinationProgramId,
+    },
 }
 
 /// Creates a [`GatewayInstruction::Execute`] instruction.
@@ -169,28 +182,21 @@ pub fn call_contract(
 }
 
 /// Creates a [`GatewayInstruction::InitializeMessage`] instruction.
-pub fn initialize_message(
+pub fn initialize_message<'a>(
     gateway_root_pda: Pubkey,
     payer: Pubkey,
-    allowed_executer: Pubkey,
-    message: &connection_router::Message,
+    message: impl Into<AxelarMessageParams<'a>>,
 ) -> Result<Instruction, ProgramError> {
-    let (
-        approved_message_pda,
-        _bump,
-        _seed,
-        message_id,
-        source_chain,
-        source_address,
-        payload_hash,
-    ) = GatewayApprovedMessage::pda_from_axelar_message(gateway_root_pda, message);
+    let message = message.into();
+    let (approved_message_pda, _bump, _seed) =
+        GatewayApprovedMessage::pda(&gateway_root_pda, &message);
 
     let data = to_vec(&GatewayInstruction::InitializeMessage {
-        message_id: *message_id.0.as_ref(),
-        source_chain: source_chain.0.to_string(),
-        source_address: source_address.0.into(),
-        payload_hash: *payload_hash.0,
-        allowed_executer,
+        command_id: *message.command_id.0.as_ref(),
+        source_chain: message.source_chain.0.to_string(),
+        source_address: message.source_address.0.into(),
+        payload_hash: *message.payload_hash.0,
+        destination_program: message.destination_program,
     })?;
 
     let accounts = vec![
@@ -301,16 +307,27 @@ pub fn initialize_trasfer_operatorship(
 }
 
 /// Creates a [`GatewayInstructon::ValidateContractCall`] instruction.
-pub fn validate_contract_call(
+pub fn validate_contract_call<'a>(
     approved_message_pda: &Pubkey,
+    gateway_root_pda: &Pubkey,
     caller: &Pubkey,
+    message: impl Into<AxelarMessageParams<'a>>,
 ) -> Result<Instruction, ProgramError> {
     let accounts = vec![
         AccountMeta::new(*approved_message_pda, false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
         AccountMeta::new_readonly(*caller, true),
     ];
 
-    let data = borsh::to_vec(&GatewayInstruction::ValidateContractCall)?;
+    let params = message.into();
+
+    let data = borsh::to_vec(&GatewayInstruction::ValidateContractCall {
+        destination_program: params.destination_program,
+        command_id: *params.command_id.0.as_ref(),
+        payload_hash: *params.payload_hash.0,
+        source_address: params.source_address.0.into(),
+        source_chain: params.source_chain.0.to_string(),
+    })?;
 
     Ok(Instruction {
         program_id: crate::id(),

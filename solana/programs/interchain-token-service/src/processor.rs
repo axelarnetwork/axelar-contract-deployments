@@ -8,6 +8,7 @@ mod initialize;
 mod remote_interchain_transfer;
 mod take_token;
 
+use axelar_executable::AxelarCallableInstruction;
 use borsh::BorshDeserialize;
 use program_utils::check_program_account;
 use solana_program::account_info::AccountInfo;
@@ -31,62 +32,52 @@ impl Processor {
     ) -> ProgramResult {
         check_program_account(program_id, crate::check_id)?;
 
-        let instruction = InterchainTokenServiceInstruction::try_from_slice(input)?;
+        let instruction =
+            AxelarCallableInstruction::<InterchainTokenServiceInstruction>::try_from_slice(input)?;
 
         match instruction {
-            InterchainTokenServiceInstruction::Execute { payload } => {
+            AxelarCallableInstruction::AxelarExecute(payload) => {
                 msg!("Instruction: Execute");
                 Self::execute(program_id, accounts, payload)
             }
-            InterchainTokenServiceInstruction::Initialize {} => {
-                msg!("Instruction: Initialize");
-                Self::process_initialize(program_id, accounts)
-            }
-            InterchainTokenServiceInstruction::GiveToken {
-                token_manager_type,
-                amount,
-            } => {
-                msg!("Instruction: GiveToken");
-                Self::give_token(program_id, accounts, token_manager_type, amount)
-            }
-            InterchainTokenServiceInstruction::TakeToken {
-                token_manager_type,
-                amount,
-            } => {
-                msg!("Instruction: TakeToken");
-                Self::take_token(program_id, accounts, token_manager_type, amount)
-            }
-            InterchainTokenServiceInstruction::DeployRemoteTokenManager {
-                salt,
-                destination_chain,
-                token_manager_type,
-                params,
-                gas_value,
-            } => {
-                msg!("Instruction: DeployRemoteTokenManager");
-                Self::deploy_remote_token_manager(
-                    program_id,
-                    accounts,
+            AxelarCallableInstruction::Custom(instruction) => match instruction {
+                InterchainTokenServiceInstruction::Initialize {} => {
+                    msg!("Instruction: Initialize");
+                    Self::process_initialize(program_id, accounts)
+                }
+                InterchainTokenServiceInstruction::GiveToken {
+                    token_manager_type,
+                    amount,
+                } => {
+                    msg!("Instruction: GiveToken");
+                    Self::give_token(program_id, accounts, token_manager_type, amount)
+                }
+                InterchainTokenServiceInstruction::TakeToken {
+                    token_manager_type,
+                    amount,
+                } => {
+                    msg!("Instruction: TakeToken");
+                    Self::take_token(program_id, accounts, token_manager_type, amount)
+                }
+                InterchainTokenServiceInstruction::DeployRemoteTokenManager {
                     salt,
                     destination_chain,
                     token_manager_type,
                     params,
                     gas_value,
-                )
-            }
-            InterchainTokenServiceInstruction::DeployRemoteInterchainToken {
-                salt,
-                destination_chain,
-                name,
-                symbol,
-                decimals,
-                minter,
-                gas_value,
-            } => {
-                msg!("Instruction: DeployRemoteInterchainToken");
-                Self::deploy_remote_interchain_token(
-                    program_id,
-                    accounts,
+                } => {
+                    msg!("Instruction: DeployRemoteTokenManager");
+                    Self::deploy_remote_token_manager(
+                        program_id,
+                        accounts,
+                        salt,
+                        destination_chain,
+                        token_manager_type,
+                        params,
+                        gas_value,
+                    )
+                }
+                InterchainTokenServiceInstruction::DeployRemoteInterchainToken {
                     salt,
                     destination_chain,
                     name,
@@ -94,22 +85,21 @@ impl Processor {
                     decimals,
                     minter,
                     gas_value,
-                )
-            }
-            InterchainTokenServiceInstruction::RemoteInterchainTransfer {
-                token_id,
-                destination_chain,
-                destination_address,
-                amount,
-                data,
-                metadata_version,
-                symbol,
-                token_manager_type,
-            } => {
-                msg!("Instruction: RemoteInterchainTransfer");
-                Self::remote_interchain_transfer(
-                    program_id,
-                    accounts,
+                } => {
+                    msg!("Instruction: DeployRemoteInterchainToken");
+                    Self::deploy_remote_interchain_token(
+                        program_id,
+                        accounts,
+                        salt,
+                        destination_chain,
+                        name,
+                        symbol,
+                        decimals,
+                        minter,
+                        gas_value,
+                    )
+                }
+                InterchainTokenServiceInstruction::RemoteInterchainTransfer {
                     token_id,
                     destination_chain,
                     destination_address,
@@ -118,8 +108,22 @@ impl Processor {
                     metadata_version,
                     symbol,
                     token_manager_type,
-                )
-            }
+                } => {
+                    msg!("Instruction: RemoteInterchainTransfer");
+                    Self::remote_interchain_transfer(
+                        program_id,
+                        accounts,
+                        token_id,
+                        destination_chain,
+                        destination_address,
+                        amount,
+                        data,
+                        metadata_version,
+                        symbol,
+                        token_manager_type,
+                    )
+                }
+            },
         }
     }
 }

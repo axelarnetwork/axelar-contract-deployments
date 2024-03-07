@@ -220,7 +220,6 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
     let execute_data_account = GatewayExecuteData::new(execute_data);
     let (execute_data_pda, _bump, _seeds) = execute_data_account.pda();
     let execute_data_base64 = STANDARD.encode(borsh::to_vec(&execute_data_account)?);
-    let allowed_executioner = Keypair::new();
 
     program_test.add_account_with_base64_data(
         execute_data_pda,
@@ -244,12 +243,12 @@ async fn execute(execute_data: Vec<u8>) -> Result<()> {
 
     // Provision the test program with the message accounts.
     let mut message_pdas: Vec<Pubkey> = vec![];
-    let pending_message_account_base64 = STANDARD.encode(borsh::to_vec(
-        &GatewayApprovedMessage::pending(allowed_executioner.pubkey()),
-    )?);
     for command in &command_batch.commands {
-        let approved_message_pda =
-            GatewayApprovedMessage::pda_from_decoded_command(gateway_root_pda, command);
+        let (approved_message_pda, approved_message_pda_bump, _seed) =
+            GatewayApprovedMessage::pda(&gateway_root_pda, &command.into());
+        let pending_message_account_base64 = STANDARD.encode(borsh::to_vec(
+            &GatewayApprovedMessage::pending(approved_message_pda_bump),
+        )?);
         program_test.add_account_with_base64_data(
             approved_message_pda,
             999999,

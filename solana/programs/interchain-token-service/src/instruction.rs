@@ -1,16 +1,18 @@
 //! Instruction types
 
 use account_group::get_permission_account;
+use axelar_executable::AxelarCallableInstruction;
+use axelar_message_primitives::DataPayload;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use interchain_token_transfer_gmp::ethers_core::abi::AbiEncode;
-use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
+use interchain_token_transfer_gmp::DeployTokenManager;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use spl_associated_token_account::get_associated_token_address;
 use token_manager::TokenManagerType;
 
-use crate::{id, MetadataVersion};
+use crate::MetadataVersion;
 
 /// Instructions supported by the InterchainTokenService program.
 #[repr(u8)]
@@ -18,11 +20,6 @@ use crate::{id, MetadataVersion};
 pub enum InterchainTokenServiceInstruction {
     /// Initialize the InterchainTokenService program
     Initialize {},
-    /// Execute a GMP payload
-    Execute {
-        /// GMP payload
-        payload: Vec<u8>,
-    },
     /// Instruction GiveToken.
     /// This function gives token to a specified address.
     ///
@@ -156,7 +153,9 @@ pub fn build_initialize_instruction(
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&InterchainTokenServiceInstruction::Initialize {})?;
+    let data = to_vec(&AxelarCallableInstruction::Custom(
+        InterchainTokenServiceInstruction::Initialize {},
+    ))?;
 
     let accounts = vec![
         AccountMeta::new(*funder, true),
@@ -173,87 +172,6 @@ pub fn build_initialize_instruction(
     })
 }
 
-/// Create a generic `Execute` instruction
-pub fn build_execute_instruction(
-    gateway_approved_message_pda: &Pubkey,
-    its_root_pda: &Pubkey,
-    gateway_root_pda: &Pubkey,
-    gas_service_root_pda: &Pubkey,
-    incoming_accounts: &[AccountMeta],
-    payload: impl AbiEncode,
-) -> Result<Instruction, ProgramError> {
-    let payload = payload.encode();
-    let init_data = InterchainTokenServiceInstruction::Execute { payload };
-    let data = to_vec(&init_data)?;
-
-    let mut accounts = vec![
-        AccountMeta::new(*gateway_approved_message_pda, false),
-        AccountMeta::new_readonly(*its_root_pda, false),
-        AccountMeta::new_readonly(*gateway_root_pda, false),
-        AccountMeta::new_readonly(*gas_service_root_pda, false),
-        AccountMeta::new_readonly(gateway::id(), false),
-    ];
-    accounts.extend_from_slice(incoming_accounts);
-
-    Ok(Instruction {
-        program_id: id(),
-        accounts,
-        data,
-    })
-}
-
-/// Create `Execute::DeployTokenManager` instruction
-#[allow(clippy::too_many_arguments)]
-pub fn build_deploy_token_manager_instruction(
-    gateway_approved_message_pda: &Pubkey,
-    gateway_root_pda: &Pubkey,
-    its_root_pda: &Pubkey,
-    gas_service_root_pda: &Pubkey,
-    funder: &Pubkey,
-    token_manager_root_pda: &Pubkey,
-    operators_permission_group_pda: &Pubkey,
-    operators_permission_pda_owner: &Pubkey,
-    flow_limiters_permission_group_pda: &Pubkey,
-    flow_limiters_permission_pda_owner: &Pubkey,
-    token_mint: &Pubkey,
-    payload: DeployTokenManager,
-) -> Result<Instruction, ProgramError> {
-    let token_manager_ata = get_associated_token_address(token_manager_root_pda, token_mint);
-    let operators_permission_pda = get_permission_account(
-        operators_permission_group_pda,
-        operators_permission_pda_owner,
-    );
-    let flow_limiters_permission_pda = get_permission_account(
-        flow_limiters_permission_group_pda,
-        flow_limiters_permission_pda_owner,
-    );
-
-    build_execute_instruction(
-        gateway_approved_message_pda,
-        its_root_pda,
-        gateway_root_pda,
-        gas_service_root_pda,
-        &[
-            AccountMeta::new(*funder, false),
-            AccountMeta::new(*token_manager_root_pda, false),
-            AccountMeta::new(*operators_permission_group_pda, false),
-            AccountMeta::new(operators_permission_pda, false),
-            AccountMeta::new_readonly(*operators_permission_pda_owner, false),
-            AccountMeta::new(*flow_limiters_permission_group_pda, false),
-            AccountMeta::new(flow_limiters_permission_pda, false),
-            AccountMeta::new_readonly(*flow_limiters_permission_pda_owner, false),
-            AccountMeta::new_readonly(*token_mint, false),
-            AccountMeta::new(token_manager_ata, false),
-            AccountMeta::new_readonly(solana_program::system_program::id(), false),
-            AccountMeta::new_readonly(account_group::id(), false),
-            AccountMeta::new_readonly(token_manager::id(), false),
-            AccountMeta::new_readonly(spl_associated_token_account::id(), false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-        ],
-        GMPPayload::DeployTokenManager(payload),
-    )
-}
-
 /// Create `GiveToken:MintBurn` instruction
 #[allow(clippy::too_many_arguments)]
 pub fn build_give_token_mint_burn_instruction(
@@ -267,10 +185,12 @@ pub fn build_give_token_mint_burn_instruction(
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&InterchainTokenServiceInstruction::GiveToken {
-        token_manager_type: TokenManagerType::MintBurn,
-        amount,
-    })?;
+    let data = to_vec(&AxelarCallableInstruction::Custom(
+        InterchainTokenServiceInstruction::GiveToken {
+            token_manager_type: TokenManagerType::MintBurn,
+            amount,
+        },
+    ))?;
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -307,10 +227,12 @@ pub fn build_give_token_lock_unlock_instruction(
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&InterchainTokenServiceInstruction::GiveToken {
-        token_manager_type: TokenManagerType::LockUnlock,
-        amount,
-    })?;
+    let data = to_vec(&AxelarCallableInstruction::Custom(
+        InterchainTokenServiceInstruction::GiveToken {
+            token_manager_type: TokenManagerType::LockUnlock,
+            amount,
+        },
+    ))?;
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -347,10 +269,12 @@ pub fn build_take_token_mint_burn_instruction(
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&InterchainTokenServiceInstruction::TakeToken {
-        token_manager_type: TokenManagerType::MintBurn,
-        amount,
-    })?;
+    let data = to_vec(&AxelarCallableInstruction::Custom(
+        InterchainTokenServiceInstruction::TakeToken {
+            token_manager_type: TokenManagerType::MintBurn,
+            amount,
+        },
+    ))?;
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -385,10 +309,12 @@ pub fn build_take_token_lock_unlock_instruction(
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&InterchainTokenServiceInstruction::TakeToken {
-        token_manager_type: TokenManagerType::LockUnlock,
-        amount,
-    })?;
+    let data = to_vec(&AxelarCallableInstruction::Custom(
+        InterchainTokenServiceInstruction::TakeToken {
+            token_manager_type: TokenManagerType::LockUnlock,
+            amount,
+        },
+    ))?;
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -422,15 +348,15 @@ pub fn build_deploy_remote_token_manager_instruction(
     gas_value: u64,
     associated_trusted_address: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(
-        &InterchainTokenServiceInstruction::DeployRemoteTokenManager {
+    let data = to_vec(&AxelarCallableInstruction::Custom(
+        InterchainTokenServiceInstruction::DeployRemoteTokenManager {
             salt,
             destination_chain,
             token_manager_type,
             params,
             gas_value,
         },
-    )?;
+    ))?;
 
     let accounts = vec![
         AccountMeta::new(*sender, true),
@@ -461,8 +387,8 @@ pub fn build_deploy_remote_interchain_token_instruction(
     gas_value: u64,
     associated_trusted_address: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(
-        &InterchainTokenServiceInstruction::DeployRemoteInterchainToken {
+    let data = to_vec(&AxelarCallableInstruction::Custom(
+        InterchainTokenServiceInstruction::DeployRemoteInterchainToken {
             salt,
             destination_chain,
             name,
@@ -471,7 +397,7 @@ pub fn build_deploy_remote_interchain_token_instruction(
             minter,
             gas_value,
         },
-    )?;
+    ))?;
 
     let accounts = vec![
         AccountMeta::new(*sender, true),
@@ -515,8 +441,8 @@ pub fn build_remote_interchain_transfer_mint_burn_instruction(
     metadata_version: MetadataVersion,
     symbol: Vec<u8>,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(
-        &InterchainTokenServiceInstruction::RemoteInterchainTransfer {
+    let data = to_vec(&AxelarCallableInstruction::Custom(
+        InterchainTokenServiceInstruction::RemoteInterchainTransfer {
             token_id,
             destination_chain,
             destination_address,
@@ -526,7 +452,7 @@ pub fn build_remote_interchain_transfer_mint_burn_instruction(
             symbol,
             token_manager_type: TokenManagerType::MintBurn,
         },
-    )?;
+    ))?;
 
     let accounts = vec![
         AccountMeta::new(*sender, true),
@@ -590,8 +516,8 @@ pub fn build_remote_interchain_transfer_lock_unlock_instruction(
     metadata_version: MetadataVersion,
     symbol: Vec<u8>,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(
-        &InterchainTokenServiceInstruction::RemoteInterchainTransfer {
+    let data = to_vec(&AxelarCallableInstruction::Custom(
+        InterchainTokenServiceInstruction::RemoteInterchainTransfer {
             token_id,
             destination_chain,
             destination_address,
@@ -601,7 +527,7 @@ pub fn build_remote_interchain_transfer_lock_unlock_instruction(
             symbol,
             token_manager_type: TokenManagerType::LockUnlock,
         },
-    )?;
+    ))?;
 
     let accounts = vec![
         AccountMeta::new(*sender, true),
@@ -637,4 +563,129 @@ pub fn build_remote_interchain_transfer_lock_unlock_instruction(
         accounts,
         data,
     })
+}
+
+/// Utilites for creating messages that are received from external chains
+///
+/// Useful in tests for creating messages that are received from external chains
+pub mod from_external_chains {
+    use std::borrow::Cow;
+
+    use axelar_message_primitives::SolanaAccountRepr;
+    use interchain_token_transfer_gmp::{DeployInterchainToken, InterchainTransfer};
+
+    use super::*;
+
+    /// Create a generic `Execute` instruction
+    fn build_execute_instruction<'a>(
+        payload: impl AbiEncode,
+        its_root_pda: &Pubkey,
+        gas_service_root_pda: &Pubkey,
+        incoming_accounts: &[AccountMeta],
+    ) -> DataPayload<'a> {
+        let mut accounts = vec![
+            // Our program also does generic validation of the ITS root PDA beforethe payload gets
+            // procesed and the message is executed. Hence why the next accounts are common to all
+            // GMP payloads.
+            AccountMeta::new_readonly(*its_root_pda, false),
+            AccountMeta::new_readonly(*gas_service_root_pda, false),
+        ];
+        accounts.extend_from_slice(incoming_accounts);
+        let accounts = accounts
+            .into_iter()
+            .map(|acc| acc.into())
+            .collect::<Vec<SolanaAccountRepr>>();
+
+        DataPayload::new_with_cow(Cow::Owned(payload.encode()), accounts)
+    }
+
+    /// Create `Execute::DeployTokenManager` instruction
+    #[allow(clippy::too_many_arguments)]
+    pub fn build_deploy_token_manager_from_gmp_instruction(
+        its_root_pda: &Pubkey,
+        gas_service_root_pda: &Pubkey,
+        funder: &Pubkey,
+        token_manager_root_pda: &Pubkey,
+        operators_permission_group_pda: &Pubkey,
+        operators_permission_pda_owner: &Pubkey,
+        flow_limiters_permission_group_pda: &Pubkey,
+        flow_limiters_permission_pda_owner: &Pubkey,
+        token_mint: &Pubkey,
+        payload: DeployTokenManager,
+    ) -> DataPayload<'static> {
+        let token_manager_ata = get_associated_token_address(token_manager_root_pda, token_mint);
+        let operators_permission_pda = get_permission_account(
+            operators_permission_group_pda,
+            operators_permission_pda_owner,
+        );
+        let flow_limiters_permission_pda = get_permission_account(
+            flow_limiters_permission_group_pda,
+            flow_limiters_permission_pda_owner,
+        );
+
+        build_execute_instruction(
+            payload,
+            its_root_pda,
+            gas_service_root_pda,
+            &[
+                AccountMeta::new(*funder, true),
+                AccountMeta::new(*token_manager_root_pda, false),
+                AccountMeta::new(*operators_permission_group_pda, false),
+                AccountMeta::new(operators_permission_pda, false),
+                AccountMeta::new_readonly(*operators_permission_pda_owner, false),
+                AccountMeta::new(*flow_limiters_permission_group_pda, false),
+                AccountMeta::new(flow_limiters_permission_pda, false),
+                AccountMeta::new_readonly(*flow_limiters_permission_pda_owner, false),
+                AccountMeta::new_readonly(*token_mint, false),
+                AccountMeta::new(token_manager_ata, false),
+                AccountMeta::new_readonly(solana_program::system_program::id(), false),
+                AccountMeta::new_readonly(account_group::id(), false),
+                AccountMeta::new_readonly(token_manager::id(), false),
+                AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+                AccountMeta::new_readonly(spl_token::id(), false),
+            ],
+        )
+    }
+
+    /// Create `Execute::DeployInterchainToken` instruction
+    #[allow(clippy::too_many_arguments)]
+    pub fn build_deploy_interchain_token_from_gmp_instruction(
+        its_root_pda: &Pubkey,
+        gas_service_root_pda: &Pubkey,
+        payload: DeployInterchainToken,
+    ) -> DataPayload<'static> {
+        build_execute_instruction(
+            payload,
+            its_root_pda,
+            gas_service_root_pda,
+            &[
+                AccountMeta::new_readonly(solana_program::system_program::id(), false),
+                AccountMeta::new_readonly(account_group::id(), false),
+                AccountMeta::new_readonly(token_manager::id(), false),
+                AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+                AccountMeta::new_readonly(spl_token::id(), false),
+            ],
+        )
+    }
+
+    /// Create `Execute::InterchainTransfer` instruction
+    #[allow(clippy::too_many_arguments)]
+    pub fn build_interchain_transfer_from_gmp_instruction(
+        its_root_pda: &Pubkey,
+        gas_service_root_pda: &Pubkey,
+        payload: InterchainTransfer,
+    ) -> DataPayload<'static> {
+        build_execute_instruction(
+            payload,
+            its_root_pda,
+            gas_service_root_pda,
+            &[
+                AccountMeta::new_readonly(solana_program::system_program::id(), false),
+                AccountMeta::new_readonly(account_group::id(), false),
+                AccountMeta::new_readonly(token_manager::id(), false),
+                AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+                AccountMeta::new_readonly(spl_token::id(), false),
+            ],
+        )
+    }
 }

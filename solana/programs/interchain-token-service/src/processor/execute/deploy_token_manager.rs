@@ -13,7 +13,7 @@ use crate::{check_id, get_flow_limiters_permission_group_id, get_operators_permi
 
 impl Processor {
     /// Processes an instruction.
-    pub fn relayer_gmp_deploy_token_manager(
+    pub(super) fn relayer_gmp_deploy_token_manager(
         program_id: &Pubkey,
         accounts: &[AccountInfo],
         input: DeployTokenManager,
@@ -22,13 +22,15 @@ impl Processor {
         check_program_account(program_id, check_id)?;
 
         let account_info_iter = &mut accounts.iter();
+        // Accounts provided for ValidateContractCall
+        let _gateway_approved_message_pda = next_account_info(account_info_iter)?;
+        let _signing_pda = next_account_info(account_info_iter)?;
+        let gateway_root_pda = next_account_info(account_info_iter)?;
+        let _gateway_program_id = next_account_info(account_info_iter)?;
 
         // Default `executable` accounts
-        let _gateway_approved_message_pda = next_account_info(account_info_iter)?;
         let its_root_pda = next_account_info(account_info_iter)?;
-        let gateway_root_pda = next_account_info(account_info_iter)?;
         let _gas_service_root_pda = next_account_info(account_info_iter)?;
-        let _gateway_program = next_account_info(account_info_iter)?;
 
         // Accounts specific for this ix
         let funder = next_account_info(account_info_iter)?;
@@ -125,7 +127,6 @@ impl Processor {
             ],
         )?;
 
-        // TODO port .postTokenManagerDeploy() code: https://github.com/axelarnetwork/interchain-token-service/blob/566e8504fe35ed63ae6c063dd8fd40a41fabc0c7/contracts/TokenHandler.sol#L159-L169
         Ok(())
     }
 }

@@ -1,0 +1,17 @@
+[package]
+name = "axelar-executable"
+description = "Defines helpers for easily integrating with the Solana Axelar Gateway"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+
+[dependencies]
+solana-program.workspace = true
+borsh.workspace = true
+axelar-message-primitives.workspace = true
+gateway = { workspace = true, features = ["no-entrypoint"] }
+
+[dev-dependencies]

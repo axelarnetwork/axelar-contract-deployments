@@ -32,6 +32,8 @@ sha3.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
 program-utils.workspace = true
+anyhow.workspace = true
+axelar-message-primitives.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true

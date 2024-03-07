@@ -1,0 +1,17 @@
+[package]
+name = "axelar-message-primitives"
+description = "Defines simple primitive data types that wrap around and work with Axelar's message types."
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+
+[dependencies]
+solana-program.workspace = true
+borsh.workspace = true
+connection-router.workspace = true
+hex.workspace = true
+
+[dev-dependencies]

@@ -29,6 +29,7 @@ use token_manager::{get_token_manager_account, CalculatedEpoch, TokenManagerType
 pub use {connection_router, interchain_token_transfer_gmp};
 
 use crate::account::CheckValidPDAInTests;
+use crate::axelar_message::custom_message;
 use crate::execute_data::{create_command_batch, sign_batch, TestSigner};
 
 pub struct TestFixture {
@@ -282,7 +283,7 @@ impl TestFixture {
         token_mint: Pubkey,
         gateway_root_pda: Pubkey,
         token_manager_type: TokenManagerType,
-        gateway_operators: Vec<TestSigner>,
+        operators: Vec<TestSigner>,
     ) -> (Pubkey, TokenManagerRootAccount, ITSTokenHandlerGroups) {
         let token_id = Bytes32(keccak256("random-token-id"));
         let init_operator = Pubkey::from([0; 32]);
@@ -303,49 +304,46 @@ impl TestFixture {
                 .group_pda,
             &interchain_token_service_root_pda,
         );
-        let deploy_token_manager_messages = [(
-            crate::axelar_message::message().unwrap(),
-            interchain_token_service_root_pda,
-        )];
-        let gateway_approved_message_pda = self
-            .fully_approve_messages(
-                &gateway_root_pda,
-                &deploy_token_manager_messages,
-                gateway_operators,
-            )
-            .await[0];
-
-        // Action
-        let ix = interchain_token_service::instruction::build_deploy_token_manager_instruction(
-            &gateway_approved_message_pda,
-            &gateway_root_pda,
+        let message_payload = interchain_token_service::instruction::from_external_chains::build_deploy_token_manager_from_gmp_instruction(
             &interchain_token_service_root_pda,
             &gas_service_root_pda,
             &self.payer.pubkey(),
             &token_manager_root_pda_pubkey,
-            &its_token_manager_permission_groups.operator_group.group_pda,
-            &its_token_manager_permission_groups
-                .operator_group
-                .group_pda_user_owner,
-            &its_token_manager_permission_groups
-                .flow_limiter_group
-                .group_pda,
-            &its_token_manager_permission_groups
-                .flow_limiter_group
-                .group_pda_user_owner,
+                &its_token_manager_permission_groups.operator_group.group_pda,
+                &its_token_manager_permission_groups
+                    .operator_group
+                    .group_pda_user_owner,
+                &its_token_manager_permission_groups
+                    .flow_limiter_group
+                    .group_pda,
+                &its_token_manager_permission_groups
+                    .flow_limiter_group
+                    .group_pda_user_owner,
             &token_mint,
-            DeployTokenManager {
-                token_id: Bytes32(keccak256("random-token-id")),
-                token_manager_type: U256::from(token_manager_type as u8),
-                params: vec![],
-            },
+                DeployTokenManager {
+                    token_id: Bytes32(keccak256("random-token-id")),
+                    token_manager_type: U256::from(token_manager_type as u8),
+                    params: vec![],
+                },
+            );
+        let message_to_execute =
+            custom_message(interchain_token_service::id(), message_payload.clone()).unwrap();
+        let gateway_approved_message_pda = self
+            .fully_approve_messages(&gateway_root_pda, &[message_to_execute.clone()], operators)
+            .await[0];
+        let ix = axelar_executable::construct_axelar_executable_ix(
+            &message_to_execute,
+            message_payload.encode(),
+            gateway_approved_message_pda,
+            gateway_root_pda,
         )
         .unwrap();
+        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
         let transaction = Transaction::new_signed_with_payer(
             &[ix],
             Some(&self.payer.pubkey()),
             &[&self.payer],
-            self.banks_client.get_latest_blockhash().await.unwrap(),
+            recent_blockhash,
         );
         self.banks_client
             .process_transaction(transaction)
@@ -494,18 +492,18 @@ impl TestFixture {
         gateway_root_pda: &Pubkey,
         // message and the allowed executer for the message (supposed to be a PDA owned by
         // message.destination_address)
-        messages: &[(connection_router::Message, Pubkey)],
+        messages: &[connection_router::Message],
     ) -> Vec<Pubkey> {
         let ixs = messages
             .iter()
-            .map(|(message, allowed_executer)| {
-                let (gateway_approved_message_pda, _bump, _seeds, _, _, _, _) =
-                    GatewayApprovedMessage::pda_from_axelar_message(*gateway_root_pda, message);
+            .map(|message| {
+                let message_params = message.into();
+                let (gateway_approved_message_pda, _bump, _seeds) =
+                    GatewayApprovedMessage::pda(gateway_root_pda, &message_params);
                 let ix = gateway::instructions::initialize_message(
                     *gateway_root_pda,
                     self.payer.pubkey(),
-                    *allowed_executer,
-                    message,
+                    message_params,
                 )
                 .unwrap();
                 (gateway_approved_message_pda, ix)
@@ -644,7 +642,7 @@ impl TestFixture {
     pub async fn fully_approve_messages(
         &mut self,
         gateway_root_pda: &Pubkey,
-        messages: &[(connection_router::Message, Pubkey)],
+        messages: &[connection_router::Message],
         operators: Vec<TestSigner>,
     ) -> Vec<Pubkey> {
         let weight_of_quorum = operators
@@ -654,10 +652,7 @@ impl TestFixture {
         let execute_data_pda = self
             .init_execute_data(
                 gateway_root_pda,
-                &messages
-                    .iter()
-                    .map(|(message, _executer)| message.clone())
-                    .collect::<Vec<_>>(),
+                messages,
                 operators,
                 weight_of_quorum.as_u128(),
             )

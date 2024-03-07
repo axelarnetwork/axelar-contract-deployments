@@ -154,10 +154,11 @@ pub enum GatewayError {
     #[error("The GatewayApprovedMessage PDA has not been approved yet! Wait for the `execute` instruction to be called.")]
     GatewayMessageNotApproved,
 
+    // 35
     /// The `caller` is not a signer, which is required verify that he wants to
     /// execute the message.
     #[error("The `caller` is not a signer, which is required verify that he wants to execute the message.")]
-    CallerNeedsToBeSigner,
+    MismatchedAllowedCallers,
 }
 
 impl From<GatewayError> for ProgramError {

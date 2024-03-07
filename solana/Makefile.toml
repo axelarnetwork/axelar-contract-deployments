@@ -48,6 +48,7 @@ cargo test-sbf --package auth-weighted
 cargo test-sbf --package gas-service
 cargo test-sbf --package gmp-gateway
 cargo test-sbf --package interchain-address-tracker
+cargo test-sbf --package axelar-solana-memo-program
 cargo test-sbf --package token-manager
 cargo test-sbf --package interchain-token-service
 """

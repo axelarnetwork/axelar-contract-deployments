@@ -1,57 +1,61 @@
-use gateway::accounts::GatewayConfig;
+use gateway::accounts::GatewayApprovedMessage;
 use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
-use interchain_token_transfer_gmp::{Bytes32, DeployInterchainToken, GMPPayload};
+use interchain_token_transfer_gmp::{Bytes32, DeployInterchainToken};
 use solana_program_test::tokio;
+use solana_sdk::account::ReadableAccount;
+use solana_sdk::program_pack::Pack;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
-use test_fixtures::execute_data::create_signer_with_weight;
-use test_fixtures::test_setup::TestFixture;
+use test_fixtures::axelar_message::custom_message;
 
-use crate::program_test;
+use crate::setup_its_root_fixture;
 
 #[tokio::test]
 #[should_panic(expected = "TransactionError(InstructionError(0, ProgramFailedToComplete))")]
 async fn test_deploy_interchain_token() {
-    let mut fixture = TestFixture::new(program_test()).await;
-    let gateway_operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
-    ];
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::new(
-            0,
-            fixture.init_operators_and_epochs(&gateway_operators),
-        ))
-        .await;
-    let gas_service_root_pda = fixture.init_gas_service().await;
-    let interchain_token_service_root_pda = fixture
-        .init_its_root_pda(&gateway_root_pda, &gas_service_root_pda)
-        .await;
-    let deploy_token_manager_messages = [(
-        test_fixtures::axelar_message::message().unwrap(),
+    // Setup
+    let (
+        mut fixture,
+        gas_service_root_pda,
+        gateway_root_pda,
         interchain_token_service_root_pda,
-    )];
+        _its_token_manager_permission_groups,
+        _token_manager_root_pda_pubkey,
+        gateway_operators,
+    ) = setup_its_root_fixture().await;
+    let message_payload = interchain_token_service::instruction::from_external_chains::build_deploy_interchain_token_from_gmp_instruction(
+        &interchain_token_service_root_pda,
+        &gas_service_root_pda,
+        DeployInterchainToken { token_id: Bytes32(keccak256("random-token-id")), name: "EgierToken".to_string(), symbol: "EGR".to_string(), decimals: 18, minter: Pubkey::new_unique().to_bytes().to_vec() },
+        );
+    let message_to_execute =
+        custom_message(interchain_token_service::id(), message_payload.clone()).unwrap();
     let gateway_approved_message_pda = fixture
         .fully_approve_messages(
             &gateway_root_pda,
-            &deploy_token_manager_messages,
+            &[message_to_execute.clone()],
             gateway_operators,
         )
         .await[0];
+    let gateway_approved_message = fixture
+        .banks_client
+        .get_account(gateway_approved_message_pda)
+        .await
+        .expect("get_account")
+        .expect("account not none");
+    let data = GatewayApprovedMessage::unpack_from_slice(gateway_approved_message.data()).unwrap();
+    assert!(
+        data.is_approved(),
+        "GatewayApprovedMessage should be approved"
+    );
 
-    let ix = interchain_token_service::instruction::build_execute_instruction(
-        &gateway_approved_message_pda,
-        &interchain_token_service_root_pda,
-        &gateway_root_pda,
-        &gas_service_root_pda,
-        &[],
-        GMPPayload::DeployInterchainToken(DeployInterchainToken {
-            token_id: Bytes32(keccak256("random-token-id")),
-            name: "Random Token".to_string(),
-            symbol: "RND".to_string(),
-            decimals: 18,
-            minter: fixture.payer.pubkey().to_bytes().to_vec(),
-        }),
+    // Action
+    let ix = axelar_executable::construct_axelar_executable_ix(
+        &message_to_execute,
+        message_payload.encode(),
+        gateway_approved_message_pda,
+        gateway_root_pda,
     )
     .unwrap();
     let transaction = Transaction::new_signed_with_payer(

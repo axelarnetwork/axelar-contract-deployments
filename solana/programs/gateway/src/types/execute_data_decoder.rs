@@ -1,9 +1,16 @@
 //! Module for the `execute_bytes` decoder function.
 
+use std::borrow::Cow;
+
+use axelar_message_primitives::{
+    AxelarMessageParams, CommandId, DataPayloadHash, DestinationProgramId, SourceAddress,
+    SourceChain,
+};
 use itertools::izip;
 use multisig_prover::encoding::Data;
 use multisig_prover::types::{Command, CommandType};
 use solana_program::msg;
+use solana_program::pubkey::Pubkey;
 use thiserror::Error;
 
 use crate::error::GatewayError;
@@ -118,6 +125,33 @@ impl DecodedCommand {
         let type_ = decode_command_type(type_)?;
         let message = DecodedMessage::decode(command_id, destination_chain_id, encoded_params)?;
         Ok(DecodedCommand { type_, message })
+    }
+}
+
+impl<'a> From<&'a DecodedCommand> for AxelarMessageParams<'a> {
+    fn from(command: &'a DecodedCommand) -> Self {
+        let DecodedMessage {
+            id,
+            source_chain,
+            source_address,
+            payload_hash,
+            destination_address,
+            ..
+        } = &command.message;
+
+        let message_id = CommandId(Cow::Borrowed(id));
+        let source_chain = SourceChain(Cow::Borrowed(source_chain));
+        let source_address = SourceAddress(source_address.as_bytes());
+        let destination_pubkey = DestinationProgramId(Pubkey::from(*destination_address));
+        let payload_hash = DataPayloadHash(Cow::Borrowed(payload_hash));
+
+        AxelarMessageParams {
+            command_id: message_id,
+            source_chain,
+            source_address,
+            destination_program: destination_pubkey,
+            payload_hash,
+        }
     }
 }
 
