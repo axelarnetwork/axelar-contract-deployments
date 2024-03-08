@@ -64,9 +64,11 @@ async function main(options) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('print difference b/w finalized block and latest block number').description('Script to perform gateway commands');
+    program
+        .name('print difference b/w finalized block and latest block number')
+        .description('Script to print difference in block numbers and update config for if the finalized tag is supported on that chain');
 
-    addBaseOptions(program, { address: true });
+    addBaseOptions(program);
 
     program.addOption(new Option('--rpc <RPC>', 'rpc to use to calculdate difference'));
     program.addOption(new Option('--update', 'update configurations based on result'));
