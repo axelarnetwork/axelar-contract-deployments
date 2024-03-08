@@ -122,7 +122,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 150000000000
-      }
+      },
+      "finality": "finalized"
     },
     "avalanche": {
       "name": "Avalanche",
@@ -242,7 +243,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 150000000000
-      }
+      },
+      "finality": "finalized"
     },
     "fantom": {
       "name": "Fantom",
@@ -366,7 +368,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 1000000000000
-      }
+      },
+      "finality": 1
     },
     "polygon": {
       "name": "Polygon",
@@ -489,7 +492,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 350000000000
-      }
+      },
+      "finality": "finalized"
     },
     "moonbeam": {
       "name": "Moonbeam",
@@ -609,7 +613,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 625000000000
-      }
+      },
+      "finality": "finalized"
     },
     "binance": {
       "name": "Binance",
@@ -734,7 +739,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 30000000000
-      }
+      },
+      "finality": "finalized"
     },
     "arbitrum": {
       "name": "Arbitrum",
@@ -855,7 +861,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 2000000000
-      }
+      },
+      "finality": "finalized"
     },
     "celo": {
       "name": "Celo",
@@ -977,7 +984,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 100000000000
-      }
+      },
+      "finality": 1
     },
     "kava": {
       "name": "Kava",
@@ -1097,7 +1105,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 50000000000
-      }
+      },
+      "finality": "finalized"
     },
     "filecoin": {
       "name": "Filecoin",
@@ -1221,7 +1230,8 @@
       "staticGasOptions": {
         "gasLimit": 100000000,
         "maxFeePerGas": 1000000000
-      }
+      },
+      "finality": 60
     },
     "optimism": {
       "name": "Optimism",
@@ -1345,7 +1355,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 10000000000
-      }
+      },
+      "finality": "finalized"
     },
     "linea": {
       "name": "Linea",
@@ -1469,7 +1480,8 @@
       "gasOptions": {
         "gasLimit": 8000000,
         "gasPriceAdjustment": 2
-      }
+      },
+      "finality": 60
     },
     "base": {
       "name": "Base",
@@ -1590,7 +1602,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 10000000000
-      }
+      },
+      "finality": "finalized"
     },
     "mantle": {
       "name": "Mantle",
@@ -1715,7 +1728,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 25000000000
-      }
+      },
+      "finality": 60
     },
     "scroll": {
       "name": "Scroll",
@@ -1833,7 +1847,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 25000000000
-      }
+      },
+      "finality": "finalized"
     },
     "centrifuge": {
       "name": "Centrifuge",
@@ -1930,7 +1945,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 40
-      }
+      },
+      "finality": "finalized"
     },
     "immutable": {
       "name": "Immutable",
@@ -2006,7 +2022,8 @@
         "name": "Immutable Explorer",
         "url": "https://explorer.immutable.com",
         "api": "https://explorer.immutable.com/api"
-      }
+      },
+      "finality": 1
     },
     "fraxtal": {
       "name": "Fraxtal",
@@ -2120,7 +2137,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 5001270
-      }
+      },
+      "finality": "finalized"
     },
     "blast": {
       "name": "Blast",
@@ -2234,7 +2252,8 @@
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 5641495
-      }
+      },
+      "finality": "finalized"
     }
   },
   "axelar": {

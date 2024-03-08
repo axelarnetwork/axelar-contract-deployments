@@ -110,7 +110,8 @@
         "name": "Etherscan",
         "url": "https://goerli.etherscan.io",
         "api": "https://api-goerli.etherscan.io/api"
-      }
+      },
+      "finality": "finalized"
     },
     "avalanche": {
       "name": "Avalanche",
@@ -218,7 +219,8 @@
         "name": "Snowtrace",
         "url": "https://testnet.snowtrace.io",
         "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
-      }
+      },
+      "finality": "finalized"
     },
     "fantom": {
       "name": "Fantom",
@@ -335,7 +337,8 @@
       },
       "gasOptions": {
         "gasLimit": 8000000
-      }
+      },
+      "finality": 1
     },
     "polygon": {
       "name": "Polygon",
@@ -446,7 +449,8 @@
       },
       "gasOptions": {
         "gasLimit": 8000000
-      }
+      },
+      "finality": "finalized"
     },
     "moonbeam": {
       "name": "Moonbeam",
@@ -559,7 +563,8 @@
       },
       "gasOptions": {
         "gasLimit": 12000000
-      }
+      },
+      "finality": "finalized"
     },
     "binance": {
       "name": "Binance",
@@ -670,7 +675,8 @@
         "name": "Bscscan",
         "url": "https://testnet.bscscan.com",
         "api": "https://api-testnet.bscscan.com/api"
-      }
+      },
+      "finality": "finalized"
     },
     "celo": {
       "name": "Celo",
@@ -781,7 +787,8 @@
       },
       "gasOptions": {
         "gasLimit": 8000000
-      }
+      },
+      "finality": 1
     },
     "kava": {
       "name": "Kava",
@@ -888,7 +895,8 @@
       "explorer": {
         "name": "Kavascan",
         "url": "https://explorer.evm-alpha.kava.io"
-      }
+      },
+      "finality": "finalized"
     },
     "filecoin": {
       "name": "Filecoin",
@@ -999,7 +1007,8 @@
         "gasLimit": 300000000
       },
       "confirmations": 3,
-      "eip1559": true
+      "eip1559": true,
+      "finality": 10
     },
     "linea": {
       "name": "Linea",
@@ -1111,7 +1120,8 @@
       "gasOptions": {
         "gasPrice": 3000000000
       },
-      "confirmations": 4
+      "confirmations": 4,
+      "finality": 30
     },
     "scroll": {
       "name": "Scroll",
@@ -1220,7 +1230,8 @@
       "gasOptions": {
         "gasLimit": 7000000,
         "gasPriceAdjustment": 0.25
-      }
+      },
+      "finality": "finalized"
     },
     "immutable": {
       "name": "Immutable",
@@ -1311,7 +1322,8 @@
         "name": "Immutable Explorer",
         "url": "https://explorer.testnet.immutable.com",
         "api": "https://explorer.testnet.immutable.com/api"
-      }
+      },
+      "finality": 1
     },
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
@@ -1416,7 +1428,8 @@
       },
       "gasOptions": {
         "gasLimit": 8000000
-      }
+      },
+      "finality": "finalized"
     },
     "arbitrum-sepolia": {
       "name": "Arbitrum-Sepolia",
@@ -1519,7 +1532,8 @@
         "name": "Arbiscan",
         "url": "https://sepolia.arbiscan.io",
         "api": "https://api-sepolia.arbiscan.io/api"
-      }
+      },
+      "finality": "finalized"
     },
     "centrifuge": {
       "name": "Centrifuge",
@@ -1608,7 +1622,8 @@
       "explorer": {
         "name": "",
         "url": ""
-      }
+      },
+      "finality": "finalized"
     },
     "fraxtal": {
       "name": "Fraxtal",
@@ -1713,7 +1728,8 @@
         "name": "Fraxscan",
         "url": "https://holesky.fraxscan.com",
         "api": "https://api-holesky.fraxscan.com/api"
-      }
+      },
+      "finality": "finalized"
     },
     "optimism-sepolia": {
       "name": "Optimism-Sepolia",
@@ -1819,7 +1835,8 @@
           "implementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
-      }
+      },
+      "finality": "finalized"
     },
     "base-sepolia": {
       "name": "Base-Sepolia",
@@ -1925,7 +1942,8 @@
           "implementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
-      }
+      },
+      "finality": "finalized"
     },
     "blast-sepolia": {
       "name": "Blast-Sepolia",
@@ -2031,7 +2049,8 @@
           "implementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
-      }
+      },
+      "finality": "finalized"
     },
     "mantle-sepolia": {
       "name": "Mantle-Sepolia",
@@ -2137,7 +2156,8 @@
           "implementation": "0x440B118f34d6224B20b4641835AC9161BD4f0994",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
-      }
+      },
+      "finality": "finalized"
     }
   },
   "axelar": {
