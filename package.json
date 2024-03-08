@@ -29,7 +29,9 @@
     "@cosmjs/cosmwasm-stargate": "^0.32.1",
     "@ledgerhq/hw-app-eth": "6.32.2",
     "path": "^0.12.7",
-    "axios": "^1.6.2"
+    "axios": "^1.6.2",
+    "@mysten/sui.js": "^0.47.0",
+    "@axelar-network/axelar-cgp-sui": "../axelar-cgp-sui"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
