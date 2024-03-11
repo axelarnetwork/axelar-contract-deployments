@@ -1,4 +1,4 @@
-use gateway::accounts::GatewayConfig;
+use gateway::state::GatewayConfig;
 use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
 use interchain_token_transfer_gmp::Bytes32;
 use solana_program::pubkey::Pubkey;

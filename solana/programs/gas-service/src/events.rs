@@ -4,10 +4,10 @@ use auth_weighted::types::u256::U256;
 use base64::engine::general_purpose;
 use base64::Engine as _;
 use borsh::{BorshDeserialize, BorshSerialize};
-use gateway::types::PubkeyWrapper;
 use solana_program::keccak::hash;
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
+use solana_program::pubkey::Pubkey;
 
 use crate::{LogIndex, TxHash};
 
@@ -20,7 +20,7 @@ pub enum GasServiceEvent {
     /// native currency.
     NativeGasPaidForContractCall {
         /// [sender] The address making the payment.
-        sender: PubkeyWrapper,
+        sender: Pubkey,
 
         /// [destination_chain] The target chain.
         destination_chain: Vec<u8>,
@@ -35,14 +35,14 @@ pub enum GasServiceEvent {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Logged when the Gas Service receives an payment for contract call in
     /// native currency with token.
     NativeGasPaidForContractCallWithToken {
         /// [sender] The address making the payment.
-        sender: PubkeyWrapper,
+        sender: Pubkey,
 
         /// [destination_chain] The target chain.
         destination_chain: Vec<u8>,
@@ -63,13 +63,13 @@ pub enum GasServiceEvent {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Logged when the Gas Service receives an payment for express call.
     NativeGasPaidForExpressCall {
         /// [sender] The address making the payment.
-        sender: PubkeyWrapper,
+        sender: Pubkey,
 
         /// [destination_chain] The target chain.
         destination_chain: Vec<u8>,
@@ -84,14 +84,14 @@ pub enum GasServiceEvent {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Logged when the Gas Service receives an payment for express call with
     /// token.
     NativeGasPaidForExpressCallWithToken {
         /// [sender] The address making the payment.
-        sender: PubkeyWrapper,
+        sender: Pubkey,
 
         /// [destination_chain] The target chain.
         destination_chain: Vec<u8>,
@@ -112,7 +112,7 @@ pub enum GasServiceEvent {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Logged when the Gas Service receives an payment for gas in native
@@ -128,7 +128,7 @@ pub enum GasServiceEvent {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Logged when the Gas Service receives an payment for gas with native
@@ -144,7 +144,7 @@ pub enum GasServiceEvent {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Logged when the Gas Service refunds fees, if any, in native currency.
@@ -159,7 +159,7 @@ pub enum GasServiceEvent {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 }
 
@@ -191,12 +191,12 @@ fn decode_base64(input: &str) -> Option<Vec<u8>> {
 
 /// Emit a [`NativeGasPaidForContractCall`].
 pub fn emit_native_gas_paid_for_contract_call_event(
-    sender: PubkeyWrapper,
+    sender: Pubkey,
     destination_chain: Vec<u8>,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     fees: u64,
-    refund_address: PubkeyWrapper,
+    refund_address: Pubkey,
 ) -> Result<(), ProgramError> {
     let event = GasServiceEvent::NativeGasPaidForContractCall {
         sender,
@@ -212,14 +212,14 @@ pub fn emit_native_gas_paid_for_contract_call_event(
 /// Emit a [`NativeGasPaidForContractCallWithToken`].
 #[allow(clippy::too_many_arguments)]
 pub fn emit_native_gas_paid_for_contract_call_with_token_event(
-    sender: PubkeyWrapper,
+    sender: Pubkey,
     destination_chain: Vec<u8>,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     symbol: Vec<u8>,
     amount: U256,
     fees: u64,
-    refund_address: PubkeyWrapper,
+    refund_address: Pubkey,
 ) -> Result<(), ProgramError> {
     let event = GasServiceEvent::NativeGasPaidForContractCallWithToken {
         sender,
@@ -236,12 +236,12 @@ pub fn emit_native_gas_paid_for_contract_call_with_token_event(
 
 /// Emit a [`NativeGasPaidForExpressCall`].
 pub fn emit_native_gas_paid_for_express_call_event(
-    sender: PubkeyWrapper,
+    sender: Pubkey,
     destination_chain: Vec<u8>,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     fees: u64,
-    refund_address: PubkeyWrapper,
+    refund_address: Pubkey,
 ) -> Result<(), ProgramError> {
     let event = GasServiceEvent::NativeGasPaidForExpressCall {
         sender,
@@ -257,14 +257,14 @@ pub fn emit_native_gas_paid_for_express_call_event(
 /// Emit a [`NativeGasPaidForExpressCallWithToken`].
 #[allow(clippy::too_many_arguments)]
 pub fn emit_native_gas_paid_for_express_call_with_token_event(
-    sender: PubkeyWrapper,
+    sender: Pubkey,
     destination_chain: Vec<u8>,
     destination_address: Vec<u8>,
     payload: Vec<u8>,
     symbol: Vec<u8>,
     amount: U256,
     fees: u64,
-    refund_address: PubkeyWrapper,
+    refund_address: Pubkey,
 ) -> Result<(), ProgramError> {
     let event = GasServiceEvent::NativeGasPaidForExpressCallWithToken {
         sender,
@@ -284,7 +284,7 @@ pub fn emit_native_gas_added_event(
     tx_hash: TxHash,
     log_index: LogIndex,
     fees: u64,
-    refund_address: PubkeyWrapper,
+    refund_address: Pubkey,
 ) -> Result<(), ProgramError> {
     let event = GasServiceEvent::NativeGasAdded {
         tx_hash,
@@ -300,7 +300,7 @@ pub fn emit_native_express_gas_added_event(
     tx_hash: TxHash,
     log_index: LogIndex,
     fees: u64,
-    refund_address: PubkeyWrapper,
+    refund_address: Pubkey,
 ) -> Result<(), ProgramError> {
     let event = GasServiceEvent::NativeExpressGasAdded {
         tx_hash,
@@ -316,7 +316,7 @@ pub fn emit_refunded_event(
     tx_hash: TxHash,
     log_index: LogIndex,
     fees: u64,
-    refund_address: PubkeyWrapper,
+    refund_address: Pubkey,
 ) -> Result<(), ProgramError> {
     let event = GasServiceEvent::Refunded {
         tx_hash,

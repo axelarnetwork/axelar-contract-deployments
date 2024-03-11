@@ -3,10 +3,10 @@
 use base64::engine::general_purpose;
 use base64::Engine as _;
 use borsh::{self, BorshDeserialize, BorshSerialize};
-use gateway::types::PubkeyWrapper;
 use solana_program::keccak::hash;
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
+use solana_program::pubkey::Pubkey;
 use token_manager::TokenManagerType;
 
 /// Interchain Token Service logs.
@@ -19,7 +19,7 @@ pub enum InterchainTokenServiceEvent {
         /// The interchain token id.
         token_id: [u8; 32],
         /// The message sender.
-        deployer: PubkeyWrapper,
+        deployer: Pubkey,
         /// The salt to be used during deployment.
         salt: [u8; 32],
     },
@@ -96,7 +96,7 @@ fn decode_base64(input: &str) -> Option<Vec<u8>> {
 /// Emit a [`InterchainTokenIdClaimed`].
 pub fn emit_interchain_token_id_claimed_event(
     token_id: [u8; 32],
-    deployer: PubkeyWrapper,
+    deployer: Pubkey,
     salt: [u8; 32],
 ) -> Result<(), ProgramError> {
     let event = InterchainTokenServiceEvent::InterchainTokenIdClaimed {

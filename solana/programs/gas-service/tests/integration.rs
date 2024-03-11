@@ -9,7 +9,6 @@ use common::program_test;
 use gas_service::accounts::GasServiceRootPDA;
 use gas_service::error::GasServiceError;
 use gas_service::events::GasServiceEvent;
-use gateway::types::PubkeyWrapper;
 use solana_program::instruction::InstructionError;
 use solana_program::keccak::hash;
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata, ProgramTest};
@@ -51,9 +50,7 @@ async fn pay_native_gas_for_contract_call_happy_scenario() -> Result<()> {
 
     let mut program_test: ProgramTest = program_test();
 
-    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(PubkeyWrapper::from(
-        initializer_address.pubkey(),
-    )))?;
+    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(initializer_address.pubkey()))?;
 
     let serialized_data = general_purpose::STANDARD.encode(serialized_data);
 
@@ -114,12 +111,12 @@ async fn pay_native_gas_for_contract_call_happy_scenario() -> Result<()> {
     assert_eq!(
         from_meta,
         Some(GasServiceEvent::NativeGasPaidForContractCall {
-            sender: PubkeyWrapper::from(sender.pubkey()),
+            sender: sender.pubkey(),
             destination_chain,
             destination_address,
             payload_hash: hash(&payload).to_bytes(),
             fees,
-            refund_address: PubkeyWrapper::from(refund_address.pubkey()),
+            refund_address: refund_address.pubkey(),
         })
     );
 
@@ -144,9 +141,7 @@ async fn pay_native_gas_for_contract_call_with_token_happy_scenario() -> Result<
 
     let mut program_test: ProgramTest = program_test();
 
-    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(PubkeyWrapper::from(
-        initializer_address.pubkey(),
-    )))?;
+    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(initializer_address.pubkey()))?;
 
     let serialized_data = general_purpose::STANDARD.encode(serialized_data);
 
@@ -211,14 +206,14 @@ async fn pay_native_gas_for_contract_call_with_token_happy_scenario() -> Result<
     assert_eq!(
         from_meta,
         Some(GasServiceEvent::NativeGasPaidForContractCallWithToken {
-            sender: PubkeyWrapper::from(sender.pubkey()),
+            sender: sender.pubkey(),
             destination_chain,
             destination_address,
             payload_hash: hash(&payload).to_bytes(),
             symbol: token_symbol.clone(),
             amount: token_amount,
             fees,
-            refund_address: PubkeyWrapper::from(refund_address.pubkey()),
+            refund_address: refund_address.pubkey(),
         })
     );
 
@@ -243,9 +238,7 @@ async fn pay_native_gas_for_express_call_happy_scenario() -> Result<()> {
 
     let mut program_test: ProgramTest = program_test();
 
-    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(PubkeyWrapper::from(
-        initializer_address.pubkey(),
-    )))?;
+    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(initializer_address.pubkey()))?;
 
     let serialized_data = general_purpose::STANDARD.encode(serialized_data);
 
@@ -306,12 +299,12 @@ async fn pay_native_gas_for_express_call_happy_scenario() -> Result<()> {
     assert_eq!(
         from_meta,
         Some(GasServiceEvent::NativeGasPaidForExpressCall {
-            sender: PubkeyWrapper::from(sender.pubkey()),
+            sender: sender.pubkey(),
             destination_chain,
             destination_address,
             payload_hash: hash(&payload).to_bytes(),
             fees,
-            refund_address: PubkeyWrapper::from(refund_address.pubkey()),
+            refund_address: refund_address.pubkey(),
         })
     );
 
@@ -336,9 +329,7 @@ async fn pay_native_gas_for_express_call_with_token_happy_scenario() -> Result<(
 
     let mut program_test: ProgramTest = program_test();
 
-    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(PubkeyWrapper::from(
-        initializer_address.pubkey(),
-    )))?;
+    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(initializer_address.pubkey()))?;
 
     let serialized_data = general_purpose::STANDARD.encode(serialized_data);
 
@@ -403,14 +394,14 @@ async fn pay_native_gas_for_express_call_with_token_happy_scenario() -> Result<(
     assert_eq!(
         from_meta,
         Some(GasServiceEvent::NativeGasPaidForExpressCallWithToken {
-            sender: PubkeyWrapper::from(sender.pubkey()),
+            sender: sender.pubkey(),
             destination_chain,
             destination_address,
             payload_hash: hash(&payload).to_bytes(),
             symbol: token_symbol.clone(),
             amount: token_amount,
             fees,
-            refund_address: PubkeyWrapper::from(refund_address.pubkey()),
+            refund_address: refund_address.pubkey(),
         })
     );
 
@@ -435,9 +426,7 @@ async fn add_native_gas_happy_scenario() -> Result<()> {
 
     let mut program_test: ProgramTest = program_test();
 
-    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(PubkeyWrapper::from(
-        initializer_address.pubkey(),
-    )))?;
+    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(initializer_address.pubkey()))?;
 
     let serialized_data = general_purpose::STANDARD.encode(serialized_data);
 
@@ -499,7 +488,7 @@ async fn add_native_gas_happy_scenario() -> Result<()> {
             tx_hash,
             log_index,
             fees,
-            refund_address: PubkeyWrapper::from(refund_address.pubkey()),
+            refund_address: refund_address.pubkey(),
         })
     );
 
@@ -524,9 +513,7 @@ async fn add_native_express_gas_happy_scenario() -> Result<()> {
 
     let mut program_test: ProgramTest = program_test();
 
-    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(PubkeyWrapper::from(
-        initializer_address.pubkey(),
-    )))?;
+    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(initializer_address.pubkey()))?;
 
     let serialized_data = general_purpose::STANDARD.encode(serialized_data);
 
@@ -588,7 +575,7 @@ async fn add_native_express_gas_happy_scenario() -> Result<()> {
             tx_hash,
             log_index,
             fees,
-            refund_address: PubkeyWrapper::from(refund_address.pubkey()),
+            refund_address: refund_address.pubkey(),
         })
     );
 
@@ -613,9 +600,7 @@ async fn collect_fees_unauthorized() -> Result<()> {
 
     let mut program_test: ProgramTest = program_test();
 
-    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(PubkeyWrapper::from(
-        initializer_address.pubkey(),
-    )))?;
+    let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(initializer_address.pubkey()))?;
 
     let serialized_data = general_purpose::STANDARD.encode(serialized_data);
 

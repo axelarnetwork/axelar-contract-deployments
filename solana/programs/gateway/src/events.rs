@@ -6,8 +6,6 @@ use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use crate::types::PubkeyWrapper;
-
 /// Gateway program logs.
 ///
 /// Used internally by the Gateway program to log messages.
@@ -19,7 +17,7 @@ pub enum GatewayEvent {
     /// Logged when the Gateway receives an outbound message.
     CallContract {
         /// Message sender.
-        sender: PubkeyWrapper,
+        sender: Pubkey,
         /// The name of the target blockchain.
         destination_chain: Vec<u8>,
         /// The address of the target contract in the destination blockchain.
@@ -32,7 +30,7 @@ pub enum GatewayEvent {
     /// The event emited after successful keys rotation.
     OperatorshipTransferred {
         /// Pubkey of the account that stores the key rotation information.
-        info_account_address: PubkeyWrapper,
+        info_account_address: Pubkey,
     },
     /// Emitted for every approved message after the Gateway validates a command
     /// batch.

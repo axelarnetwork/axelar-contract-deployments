@@ -1,4 +1,4 @@
-use gateway::accounts::GatewayConfig;
+use gateway::state::GatewayConfig;
 use solana_program::program_option::COption;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;

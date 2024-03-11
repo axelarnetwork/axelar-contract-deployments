@@ -3,7 +3,7 @@ use std::ops::Add;
 use account_group::instruction::GroupId;
 use account_group::{get_permission_account, get_permission_group_account};
 use borsh::BorshDeserialize;
-use gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
+use gateway::state::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use gateway::types::bimap::OperatorsAndEpochs;
 use interchain_address_tracker::{get_associated_chain_address, get_associated_trusted_address};
 use interchain_token_service::{

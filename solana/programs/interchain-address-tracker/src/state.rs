@@ -1,17 +1,17 @@
 //! State structures for the interchain-address-tracker program.
 
 use borsh::{BorshDeserialize, BorshSerialize};
-use gateway::types::PubkeyWrapper;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::{Pack, Sealed};
+use solana_program::pubkey::Pubkey;
 
 /// Registered Chain Account data.
 #[repr(C)]
 #[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
 pub struct RegisteredChainAccount {
     /// The owner of this account.
-    pub owner: PubkeyWrapper,
+    pub owner: Pubkey,
     /// The amount of tokens this account holds. Must be limited to 64 bytes.
     pub chain_name: String,
 }

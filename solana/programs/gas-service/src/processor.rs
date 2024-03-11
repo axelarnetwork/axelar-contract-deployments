@@ -2,7 +2,6 @@
 
 use auth_weighted::types::u256::U256;
 use borsh::BorshDeserialize;
-use gateway::types::PubkeyWrapper;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
@@ -136,9 +135,7 @@ impl Processor {
             return Err(GasServiceError::RootPDAAccountAlreadyInitialized.into());
         }
 
-        let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(PubkeyWrapper::from(
-            *initializer_account.key,
-        )))?;
+        let serialized_data = borsh::to_vec(&GasServiceRootPDA::new(*initializer_account.key))?;
 
         let space = serialized_data.len();
         let rent_sysvar = Rent::get()?;
@@ -196,7 +193,7 @@ impl Processor {
         destination_address: Vec<u8>,
         payload: Vec<u8>,
         fees: u64,
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
@@ -273,7 +270,7 @@ impl Processor {
         symbol: Vec<u8>,
         amount: U256,
         fees: u64,
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
@@ -347,7 +344,7 @@ impl Processor {
         destination_address: Vec<u8>,
         payload: Vec<u8>,
         fees: u64,
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
@@ -426,7 +423,7 @@ impl Processor {
         symbol: Vec<u8>,
         amount: U256,
         fees: u64,
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
@@ -496,7 +493,7 @@ impl Processor {
         tx_hash: TxHash,
         log_index: u64,
         fees: u64,
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
@@ -558,7 +555,7 @@ impl Processor {
         tx_hash: TxHash,
         log_index: u64,
         fees: u64,
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
 

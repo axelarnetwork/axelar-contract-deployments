@@ -1,4 +1,4 @@
-use gateway::accounts::GatewayApprovedMessage;
+use gateway::state::GatewayApprovedMessage;
 use interchain_token_transfer_gmp::ethers_core::types::U256;
 use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
 use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};

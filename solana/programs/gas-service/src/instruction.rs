@@ -3,7 +3,6 @@
 
 use auth_weighted::types::u256::U256;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
-use gateway::types::PubkeyWrapper;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -32,7 +31,7 @@ pub enum GasServiceInstruction {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Instruction PayNativeGasForContractCallWithToken.
@@ -56,7 +55,7 @@ pub enum GasServiceInstruction {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Instruction PayNativeGasForExpressCall.
@@ -74,7 +73,7 @@ pub enum GasServiceInstruction {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Instruction PayNativeGasForExpressCallWithToken.
@@ -98,7 +97,7 @@ pub enum GasServiceInstruction {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Instruction AddNativeGas.
@@ -113,7 +112,7 @@ pub enum GasServiceInstruction {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Instruction AddNativeExpressGas.
@@ -128,7 +127,7 @@ pub enum GasServiceInstruction {
         fees: u64,
 
         /// [refund_address] The address where refunds, if any, should be sent.
-        refund_address: PubkeyWrapper,
+        refund_address: Pubkey,
     },
 
     /// Instruction CollectFees
@@ -197,7 +196,7 @@ pub fn create_pay_native_gas_for_contract_call_ix(
         destination_address,
         payload,
         fees,
-        refund_address: PubkeyWrapper::from(refund_address),
+        refund_address,
     })?;
 
     let accounts = vec![
@@ -249,7 +248,7 @@ pub fn create_pay_native_gas_for_contract_call_with_token_ix(
             symbol,
             amount,
             fees,
-            refund_address: PubkeyWrapper::from(refund_address),
+            refund_address,
         },
     )?;
 
@@ -292,7 +291,7 @@ pub fn create_pay_native_gas_for_express_call_ix(
         destination_address,
         payload,
         fees,
-        refund_address: PubkeyWrapper::from(refund_address),
+        refund_address,
     })?;
 
     let accounts = vec![
@@ -344,7 +343,7 @@ pub fn create_pay_native_gas_for_express_call_with_token_ix(
             symbol,
             amount,
             fees,
-            refund_address: PubkeyWrapper::from(refund_address),
+            refund_address,
         },
     )?;
 
@@ -381,7 +380,7 @@ pub fn create_add_native_gas_ix(
         tx_hash,
         log_index,
         fees,
-        refund_address: PubkeyWrapper::from(refund_address),
+        refund_address,
     })?;
 
     let accounts = vec![
@@ -417,7 +416,7 @@ pub fn create_add_native_express_gas_ix(
         tx_hash,
         log_index,
         fees,
-        refund_address: PubkeyWrapper::from(refund_address),
+        refund_address,
     })?;
 
     let accounts = vec![

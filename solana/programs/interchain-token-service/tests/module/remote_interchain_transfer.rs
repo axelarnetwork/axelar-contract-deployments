@@ -1,7 +1,7 @@
 use anyhow::{Ok, Result};
 use ethers_core::abi::AbiEncode;
-use gateway::accounts::GatewayConfig;
 use gateway::events::GatewayEvent;
+use gateway::state::GatewayConfig;
 use interchain_token_service::events::InterchainTokenServiceEvent;
 use interchain_token_service::{
     get_interchain_token_service_associated_token_account, MetadataVersion,

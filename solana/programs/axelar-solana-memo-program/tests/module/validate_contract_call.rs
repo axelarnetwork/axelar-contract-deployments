@@ -1,7 +1,7 @@
 use axelar_executable::axelar_message_primitives::DestinationProgramId;
 use axelar_solana_memo_program::from_axelar_to_solana::build_memo;
-use gateway::accounts::approved_message::MessageApprovalStatus;
-use gateway::accounts::{GatewayApprovedMessage, GatewayConfig};
+use gateway::state::approved_message::MessageApprovalStatus;
+use gateway::state::{GatewayApprovedMessage, GatewayConfig};
 use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;

@@ -1,14 +1,23 @@
-name: 'Setup Repo Action'
-description: 'A reusable composite action that setups rust and other common tasks'
+name: "Setup Repo Action"
+description: "A reusable composite action that setups rust and other common tasks"
 inputs:
   toolchain:
-    description: 'Override the default (nightly) toolchain to install'
+    description: "Override the default (nightly) toolchain to install"
     required: false
-    default: 'nightly-2024-01-30'
+    default: "nightly-2024-01-30"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
+    - name: free disk space
+      shell: bash
+      run: |
+        sudo swapoff -a
+        sudo rm -f /swapfile
+        sudo apt clean
+        docker rmi $(docker image ls -aq)
+        df -h
+
     - name: Install nightly
       uses: dtolnay/rust-toolchain@master
       with:
@@ -20,7 +29,6 @@ runs:
         cache-on-failure: true
         workspaces: |
           solana
-
 
     - name: Install cargo-make
       shell: bash

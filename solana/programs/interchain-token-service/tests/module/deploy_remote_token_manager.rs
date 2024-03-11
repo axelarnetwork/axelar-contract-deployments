@@ -1,8 +1,8 @@
 use ethers_core::abi::AbiEncode;
 use ethers_core::types::U256;
 use gas_service::events::GasServiceEvent;
-use gateway::accounts::GatewayConfig;
 use gateway::events::GatewayEvent;
+use gateway::state::GatewayConfig;
 use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};
 use solana_program::keccak::hash;
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};

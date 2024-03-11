@@ -6,8 +6,8 @@ use solana_program::msg;
 use solana_program::pubkey::Pubkey;
 use thiserror::Error;
 
-use crate::accounts::discriminator::{Discriminator, TransferOperatorship};
 use crate::error::GatewayError;
+use crate::state::discriminator::{Discriminator, TransferOperatorship};
 use crate::types::address::Address;
 use crate::types::hash_new_operator_set;
 use crate::types::u256::U256;

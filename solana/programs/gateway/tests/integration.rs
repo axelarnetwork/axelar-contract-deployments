@@ -6,9 +6,9 @@ use anyhow::{anyhow, bail, ensure, Result};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use common::program_test;
-use gmp_gateway::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use gmp_gateway::events::GatewayEvent;
 use gmp_gateway::get_gateway_root_config_pda;
+use gmp_gateway::state::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use gmp_gateway::types::address::Address;
 use gmp_gateway::types::bimap::OperatorsAndEpochs;
 use gmp_gateway::types::execute_data_decoder::DecodedMessage;
@@ -22,7 +22,7 @@ use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
 
 mod accounts {
-    use gmp_gateway::accounts::transfer_operatorship::TransferOperatorshipAccount;
+    use gmp_gateway::state::transfer_operatorship::TransferOperatorshipAccount;
 
     use super::*;
     pub(super) async fn initialize_config_account(

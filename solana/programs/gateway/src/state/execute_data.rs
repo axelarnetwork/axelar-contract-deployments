@@ -4,8 +4,8 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::hash::hash;
 use solana_program::pubkey::Pubkey;
 
-use crate::accounts::discriminator::{Discriminator, ExecuteData};
 use crate::error::GatewayError;
+use crate::state::discriminator::{Discriminator, ExecuteData};
 use crate::types::execute_data_decoder::{decode as decode_execute_data, DecodedCommandBatch};
 use crate::types::proof::Proof;
 
@@ -53,7 +53,7 @@ mod tests {
     use anyhow::Result;
 
     use super::*;
-    use crate::accounts::discriminator::DiscriminatorTrait;
+    use crate::state::discriminator::DiscriminatorTrait;
     #[test]
     fn execute_data_deserialization() -> Result<()> {
         let mut bytes = vec![];

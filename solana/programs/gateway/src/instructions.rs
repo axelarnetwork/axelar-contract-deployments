@@ -6,9 +6,9 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use crate::accounts::transfer_operatorship::TransferOperatorshipAccount;
-use crate::accounts::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use crate::get_gateway_root_config_pda;
+use crate::state::transfer_operatorship::TransferOperatorshipAccount;
+use crate::state::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
 use crate::types::address::Address;
 use crate::types::u256::U256;
 

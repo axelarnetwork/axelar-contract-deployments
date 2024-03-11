@@ -11,8 +11,8 @@ use solana_program::program_error::ProgramError;
 use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
 
-use crate::accounts::discriminator::{Discriminator, MessageID};
 use crate::error::GatewayError;
+use crate::state::discriminator::{Discriminator, MessageID};
 
 /// Possible statuses for a [`GatewayApprovedMessage`].
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]

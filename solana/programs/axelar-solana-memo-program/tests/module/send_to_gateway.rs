@@ -1,7 +1,7 @@
 use axelar_solana_memo_program::call_gateway_with_memo;
 use ethers_core::utils::keccak256;
-use gateway::accounts::GatewayConfig;
 use gateway::events::GatewayEvent;
+use gateway::state::GatewayConfig;
 use solana_program_test::tokio;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;

@@ -1,4 +1,4 @@
-use gateway::accounts::GatewayConfig;
+use gateway::state::GatewayConfig;
 use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;

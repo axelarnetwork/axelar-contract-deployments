@@ -2,12 +2,12 @@
 
 //! Axelar Gateway program for the Solana blockchain
 
-pub mod accounts;
 mod entrypoint;
 pub mod error;
 pub mod events;
 pub mod instructions;
 pub mod processor;
+pub mod state;
 pub mod types;
 
 use error::GatewayError;

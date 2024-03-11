@@ -1,4 +1,4 @@
-use gateway::accounts::GatewayConfig;
+use gateway::state::GatewayConfig;
 use interchain_token_service::get_interchain_token_service_root_pda;
 use solana_program_test::tokio;
 use solana_sdk::program_pack::Pack;

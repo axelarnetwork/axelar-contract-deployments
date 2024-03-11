@@ -5,12 +5,10 @@ pub mod bimap;
 pub mod execute_data_decoder;
 pub mod operator;
 pub mod proof;
-pub mod pubkey_wrapper;
 pub mod signature;
 pub mod u256;
 
 use itertools::Itertools;
-pub use pubkey_wrapper::PubkeyWrapper;
 use solana_program::hash::Hasher;
 
 use self::address::Address;

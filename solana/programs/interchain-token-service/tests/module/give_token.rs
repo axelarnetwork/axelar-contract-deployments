@@ -1,5 +1,5 @@
 use anyhow::{Ok, Result};
-use gateway::accounts::GatewayConfig;
+use gateway::state::GatewayConfig;
 use interchain_token_service::get_interchain_token_service_associated_token_account;
 use solana_program::program_option::COption;
 use solana_program::program_pack::Pack;

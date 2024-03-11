@@ -8,9 +8,9 @@ use solana_program::rent::Rent;
 use solana_program::system_instruction;
 use solana_program::sysvar::Sysvar;
 
-use crate::accounts::discriminator::{Config, Discriminator};
-use crate::accounts::transfer_operatorship::sorted_and_unique;
 use crate::error::GatewayError;
+use crate::state::discriminator::{Config, Discriminator};
+use crate::state::transfer_operatorship::sorted_and_unique;
 use crate::types::bimap::OperatorsAndEpochs;
 use crate::types::operator::Operators;
 use crate::types::u256::U256;
