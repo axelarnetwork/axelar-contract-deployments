@@ -7,7 +7,7 @@ mod tokio_utils;
 mod verifier;
 
 use anyhow::anyhow;
-use config::parse_command_line_args;
+use config::Config;
 use tracing_subscriber::{
     filter::{EnvFilter, LevelFilter},
     fmt::{self, format::FmtSpan},
@@ -38,7 +38,7 @@ pub fn init_logging() {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     init_logging();
-    let config = parse_command_line_args()?;
+    let config = Config::from_env()?;
     let relayer = crate::relayer::Relayer::from_config(config).await?;
     relayer.run().await;
     Err(anyhow!("Terminating"))

@@ -1,8 +1,9 @@
-use anyhow::{bail, ensure};
+use anyhow::{bail, Ok};
 use clap::Parser;
+use figment::{providers::Env, Figment};
 use serde::{Deserialize, Deserializer};
 use solana_program::pubkey::Pubkey;
-use std::fs::read_to_string;
+use solana_sdk::signature::Keypair;
 use std::path::PathBuf;
 use std::str::FromStr;
 use url::Url;
@@ -20,7 +21,26 @@ pub struct Args {
     pub config: PathBuf,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
+pub struct ConfigEnv {
+    pub database_url: Url,
+    pub axelar_approver_url: Url,
+    pub solana_includer_rpc: Url,
+    #[serde(deserialize_with = "deserialize_keypair")]
+    pub solana_includer_keypair: Keypair,
+    #[serde(deserialize_with = "deserialize_pubkey")]
+    pub sentinel_gateway_address: Pubkey,
+    pub sentinel_rpc: Url,
+    pub verifier_rpc: Url,
+}
+
+impl ConfigEnv {
+    pub fn load() -> Result<Self, figment::Error> {
+        Figment::new().merge(Env::prefixed("RELAYER_")).extract()
+    }
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Config {
     pub axelar_to_solana: Option<AxelarToSolana>,
     pub solana_to_axelar: Option<SolanaToAxelar>,
@@ -35,71 +55,92 @@ impl Config {
             bail!("Relayer must be configured with at least one message transport direction")
         }
 
-        if let Some(axelar_to_solana) = &self.axelar_to_solana {
-            axelar_to_solana.validate()?
-        }
+        if let Some(_axelar_to_solana) = &self.axelar_to_solana {}
         if let Some(_solana_to_axelar) = &self.solana_to_axelar {
             // Put relevant validation logic here
         }
 
         Ok(())
     }
+
+    pub fn from_env() -> anyhow::Result<Config> {
+        let config = ConfigEnv::load()?;
+        Ok(Config {
+            axelar_to_solana: Some(AxelarToSolana {
+                approver: AxelarApprover {
+                    rpc: config.axelar_approver_url,
+                },
+                includer: SolanaIncluder {
+                    rpc: config.solana_includer_rpc,
+                    keypair: config.solana_includer_keypair,
+                },
+            }),
+            solana_to_axelar: Some(SolanaToAxelar {
+                sentinel: SolanaSentinel {
+                    gateway_address: config.sentinel_gateway_address,
+                    rpc: config.sentinel_rpc,
+                },
+                verifier: AxelarVerifier {
+                    rpc: config.verifier_rpc,
+                },
+            }),
+            database: Database {
+                url: config.database_url,
+            },
+        })
+    }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct AxelarToSolana {
     pub approver: AxelarApprover,
     pub includer: SolanaIncluder,
 }
-impl AxelarToSolana {
-    fn validate(&self) -> anyhow::Result<()> {
-        ensure!(
-            self.includer.keypair_file.exists(),
-            "Solana keypair file does not exist"
-        );
-        Ok(())
-    }
-}
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct SolanaToAxelar {
     pub sentinel: SolanaSentinel,
     pub verifier: AxelarVerifier,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Database {
     pub url: Url,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct AxelarApprover {
     pub rpc: Url,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct SolanaIncluder {
     pub rpc: Url,
-    pub keypair_file: PathBuf,
+    #[serde(deserialize_with = "deserialize_keypair")]
+    pub keypair: Keypair,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct SolanaSentinel {
     #[serde(deserialize_with = "deserialize_pubkey")]
     pub gateway_address: Pubkey,
     pub rpc: Url,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct AxelarVerifier {
     pub rpc: Url,
 }
 
-pub fn parse_command_line_args() -> anyhow::Result<Config> {
-    let args = Args::parse();
-    let config: Config = toml::from_str(&read_to_string(args.config)?)?;
-    config.validate()?;
-    Ok(config)
+fn deserialize_keypair<'de, D>(deserializer: D) -> Result<Keypair, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    let bytes = solana_sdk::bs58::decode(s)
+        .into_vec()
+        .map_err(serde::de::Error::custom)?;
+    Keypair::from_bytes(&bytes).map_err(serde::de::Error::custom)
 }
 
 fn deserialize_pubkey<'de, D>(deserializer: D) -> Result<Pubkey, D::Error>
@@ -112,64 +153,58 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::env;
+
+    use solana_sdk::signature::Keypair;
+
     use super::*;
 
     #[test]
-    fn parse_full_config() {
-        let toml_str = r#"
-            [axelar_to_solana.approver]
-            rpc = "https://approver.axelar.rpc.url"
+    fn can_parse_config_from_env() {
+        let db_url = "http://0.0.0.0/";
+        let approver_url = "http://0.0.0.1/";
+        let includer_rpc = "http://0.0.0.2/";
+        let gw_addr = "4hz16cS4d82cPKzvaQNzMCadyKSqzZR8bqzw8FfzYH8a";
+        let sentinel_rpc = "http://0.0.0.3/";
+        let verifier_rpc = "http://0.0.0.4/";
+        let keypair = Keypair::new();
 
-            [axelar_to_solana.includer]
-            rpc = "https://includer.solana.rpc.url"
-            keypair_file = "/path/to/solana/keypair/file"
+        env::set_var("RELAYER_DATABASE_URL", db_url);
+        env::set_var("RELAYER_AXELAR_APPROVER_URL", approver_url);
+        env::set_var("RELAYER_SOLANA_INCLUDER_RPC", includer_rpc);
+        env::set_var(
+            "RELAYER_SOLANA_INCLUDER_KEYPAIR",
+            keypair.to_base58_string(),
+        );
+        env::set_var("RELAYER_SENTINEL_GATEWAY_ADDRESS", gw_addr);
+        env::set_var("RELAYER_SENTINEL_RPC", sentinel_rpc);
+        env::set_var("RELAYER_VERIFIER_RPC", verifier_rpc);
 
-            [solana_to_axelar.sentinel]
-            gateway_address = "5ScCroHMfw56UbnLPAYxM61WSumAwS7hDwymNvkWfA5E"
-            rpc = "https://sentinel.solana.rpc.url"
-
-            [solana_to_axelar.verifier]
-            rpc = "https://verifier.axelar.rpc.url"
-
-            [database]
-            url = "postgres://username:password@localhost:5432/database_name"
-        "#;
-
-        toml::from_str::<Config>(toml_str).unwrap();
-    }
-
-    #[test]
-    fn parse_partial_inbound_config() {
-        let toml_str = r#"
-            [axelar_to_solana.approver]
-            rpc = "https://approver.axelar.rpc.url"
-
-            [axelar_to_solana.includer]
-            rpc = "https://includer.solana.rpc.url"
-            keypair_file = "/path/to/solana/keypair/file"
-
-            [database]
-            url = "postgres://username:password@localhost:5432/database_name"
-        "#;
-
-        toml::from_str::<Config>(toml_str).unwrap();
-    }
-
-    #[test]
-    fn parse_partial_outbound_config() {
-        let toml_str = r#"
-            [solana_to_axelar.sentinel]
-            keypair_file = "/path/to/solana/keypair/file"
-            gateway_address = "5ScCroHMfw56UbnLPAYxM61WSumAwS7hDwymNvkWfA5E"
-            rpc = "https://sentinel.solana.rpc.url"
-
-            [solana_to_axelar.verifier]
-            rpc = "https://verifier.axelar.rpc.url"
-
-            [database]
-            url = "postgres://username:password@localhost:5432/database_name"
-        "#;
-
-        toml::from_str::<Config>(toml_str).unwrap();
+        assert_eq!(
+            Config::from_env().unwrap(),
+            Config {
+                axelar_to_solana: Some(AxelarToSolana {
+                    approver: AxelarApprover {
+                        rpc: Url::from_str(approver_url).unwrap()
+                    },
+                    includer: SolanaIncluder {
+                        rpc: Url::from_str(includer_rpc).unwrap(),
+                        keypair,
+                    },
+                }),
+                solana_to_axelar: Some(SolanaToAxelar {
+                    sentinel: SolanaSentinel {
+                        gateway_address: Pubkey::from_str(gw_addr).unwrap(),
+                        rpc: Url::from_str(sentinel_rpc).unwrap(),
+                    },
+                    verifier: AxelarVerifier {
+                        rpc: Url::from_str(verifier_rpc).unwrap()
+                    },
+                }),
+                database: Database {
+                    url: Url::from_str(db_url).unwrap()
+                },
+            }
+        );
     }
 }
