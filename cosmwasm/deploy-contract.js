@@ -426,10 +426,9 @@ const programHandler = () => {
     program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
     program.addOption(new Option('-s, --salt <salt>', 'salt for instantiate2. defaults to contract name').env('SALT'));
     program.addOption(
-        new Option(
-            '--admin <address>',
-            'when instantiating contract, set an admin address other than the creator. Defaults to governance module account',
-        ).default(governanceAddress),
+        new Option('--admin <address>', 'when instantiating contract, set an admin address. Defaults to governance module account').default(
+            governanceAddress,
+        ),
     );
     program.addOption(
         new Option(
