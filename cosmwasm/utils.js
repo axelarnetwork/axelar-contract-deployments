@@ -68,16 +68,17 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
                       initMsg,
                       contractName,
                       initFee,
-                      { admin: admin || governanceAddress },
+                      { admin: admin },
                   )
                 : client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee, {
-                      admin: admin || governanceAddress,
+                      admin: admin,
                   });
         })
         .then(({ contractAddress }) => contractAddress);
 };
 
 module.exports = {
+    governanceAddress,
     uploadContract,
     instantiateContract,
     isValidCosmosAddress,
