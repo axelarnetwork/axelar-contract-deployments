@@ -6,7 +6,7 @@ const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 const { getSaltFromKey } = require('../evm/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
-const governanceAddress = "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj";
+const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
@@ -70,7 +70,9 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
                       initFee,
                       { admin: admin || governanceAddress },
                   )
-                : client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee, { admin: admin || governanceAddress });
+                : client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee, {
+                      admin: admin || governanceAddress,
+                  });
         })
         .then(({ contractAddress }) => contractAddress);
 };
