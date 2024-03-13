@@ -68,10 +68,10 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
                       initMsg,
                       contractName,
                       initFee,
-                      { admin: admin },
+                      { admin },
                   )
                 : client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee, {
-                      admin: admin,
+                      admin,
                   });
         })
         .then(({ contractAddress }) => contractAddress);
