@@ -47,7 +47,7 @@ const uploadContract = async (client, wallet, config, options) => {
         });
 };
 
-const instantiateContract = (client, wallet, initMsg, config, { contractName, salt, instantiate2, chainNames }) => {
+const instantiateContract = (client, wallet, initMsg, config, { contractName, salt, instantiate2, chainNames, admin }) => {
     return wallet
         .getAccounts()
         .then(([account]) => {
@@ -66,8 +66,9 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
                       initMsg,
                       contractName,
                       initFee,
+                      admin || account.address,
                   )
-                : client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee);
+                : client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee, admin || account.address);
         })
         .then(({ contractAddress }) => contractAddress);
 };

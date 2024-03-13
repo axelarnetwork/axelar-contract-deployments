@@ -425,6 +425,7 @@ const programHandler = () => {
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
     program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
     program.addOption(new Option('-s, --salt <salt>', 'salt for instantiate2. defaults to contract name').env('SALT'));
+    program.addOption(new Option('--admin <address>', 'when instantiating contract, set an admin address other than the creator'));
     program.addOption(
         new Option(
             '-u, --uploadOnly',
