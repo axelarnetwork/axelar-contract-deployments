@@ -7,7 +7,7 @@ const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 
 const { printInfo, loadConfig, saveConfig, isString, isStringArray, isNumber, prompt } = require('../evm/utils');
-const { uploadContract, instantiateContract, isValidCosmosAddress } = require('./utils');
+const { uploadContract, instantiateContract, isValidCosmosAddress, governanceAddress } = require('./utils');
 
 const { Command, Option } = require('commander');
 
@@ -425,6 +425,11 @@ const programHandler = () => {
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
     program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
     program.addOption(new Option('-s, --salt <salt>', 'salt for instantiate2. defaults to contract name').env('SALT'));
+    program.addOption(
+        new Option('--admin <address>', 'when instantiating contract, set an admin address. Defaults to governance module account').default(
+            governanceAddress,
+        ),
+    );
     program.addOption(
         new Option(
             '-u, --uploadOnly',
