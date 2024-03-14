@@ -6,6 +6,8 @@ const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 const { getSaltFromKey } = require('../evm/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
+const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
 const isValidCosmosAddress = (str) => {
@@ -47,7 +49,7 @@ const uploadContract = async (client, wallet, config, options) => {
         });
 };
 
-const instantiateContract = (client, wallet, initMsg, config, { contractName, salt, instantiate2, chainNames }) => {
+const instantiateContract = (client, wallet, initMsg, config, { contractName, salt, instantiate2, chainNames, admin }) => {
     return wallet
         .getAccounts()
         .then(([account]) => {
@@ -66,13 +68,17 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
                       initMsg,
                       contractName,
                       initFee,
+                      { admin },
                   )
-                : client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee);
+                : client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee, {
+                      admin,
+                  });
         })
         .then(({ contractAddress }) => contractAddress);
 };
 
 module.exports = {
+    governanceAddress,
     uploadContract,
     instantiateContract,
     isValidCosmosAddress,
