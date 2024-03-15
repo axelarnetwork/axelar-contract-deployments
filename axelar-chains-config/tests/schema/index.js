@@ -25,7 +25,7 @@ export const contractSchema = {
     id: '/info.chains.contracts',
     type: 'object',
     patternProperties: {
-        // PascalName e.g. 'AxelarGasService', 'AxelarGateway', 'InterchainGovernanceExecutor', etc.
+        // PascalName e.g. 'AxelarGasService', 'AxelarGateway' etc.
         '\b[A-Z][a-z]*([A-Z][a-z]*)*\b': {
             $ref: contractValueSchema.id,
         },
@@ -35,7 +35,7 @@ export const contractSchema = {
             type: 'boolean',
         },
     },
-    required: ['AxelarGateway', 'AxelarGasService'],
+    required: ['AxelarGateway'],
 };
 
 export const explorerSchema = {
