@@ -108,6 +108,7 @@ cache/
 artifacts/
 
 local.json
+localnet.json
 keys.json
 
 temp-arguments.js

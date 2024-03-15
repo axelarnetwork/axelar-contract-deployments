@@ -2147,5 +2147,74 @@
     "lcd": "https://lcd-axelar-testnet.imperator.co:443",
     "grpc": "grpc-axelar-testnet.imperator.co:2062",
     "tokenSymbol": "AXL"
+  },
+  "sui": {
+    "axelar": {
+      "packageId": "0x18307e5f3c1c635ab02f497f83534ca8ad0181c272b97308a359f5b0adb07624",
+      "gateway::Gateway": {
+        "objectType": "0x18307e5f3c1c635ab02f497f83534ca8ad0181c272b97308a359f5b0adb07624::gateway::Gateway",
+        "objectId": "0x7f1d1bae5bddbf7deaca246f1e332ca2ce0922eaad84a3c992aff15f62357467",
+        "version": "857970",
+        "digest": "6hEmYBiFiK1ca7Z6h3Jx9r5gkE7Fe8cf6Kvq6HS5Lxb7",
+        "approvals": "0xd7a12f64b4881787be32d52e1526b0e9c9dfd551dbd664bd99f74a7ddf5de4c5",
+        "validators": {
+          "epoch": "0",
+          "epoch_for_hash": {
+            "contents": []
+          }
+        }
+      },
+      "discovery::RelayerDiscovery": {
+        "objectType": "0x18307e5f3c1c635ab02f497f83534ca8ad0181c272b97308a359f5b0adb07624::discovery::RelayerDiscovery",
+        "objectId": "0x996a993150bbe7094f73e66d4e36f542ddbf50db5722168a9a28795562da589f",
+        "version": "857970",
+        "digest": "E6KHqrexFgmJPMP19dS4RHfQXqrBeJArLEKMmiwKb6Jt",
+        "configurations": "0xa8f54b840ef66f94109427ecc2dafae57177db4d5895e4b8a3717a8d8b2b2fab"
+      }
+    },
+    "governance": {
+      "packageId": "0xb283f6093d8001d617a48947a988a5b7a2e538059a05bafd70cb0af02b4981ed",
+      "governance::Governance": {
+        "objectType": "0xb283f6093d8001d617a48947a988a5b7a2e538059a05bafd70cb0af02b4981ed::governance::Governance",
+        "objectId": "0x3ae5b5776d255e04b2ed9e9c00218bfe0e95b7d0eff9f24259ab5bbac39d65bd",
+        "version": "857974",
+        "digest": "EL6wBjWPUtpQDaHCJqWYeqVhZCy2nw7FtzRx6FbHcFQN",
+        "caps": "0xe2ffd165a4e4f7975adb00dcb2c8104e1af3c8a602fbc1ffe048a0f93611cd98",
+        "channel": "0x03fe4b58434948bc2a38ee4178c277e7093e7bc79298e348246c2c59705239a4",
+        "message_type": "0",
+        "trusted_source_address": "the governance source addresss",
+        "trusted_source_chain": "Axelar"
+      }
+    },
+    "gas_service": {
+      "packageId": "0x9ffa7fc453f59ccda36e8462edaf27d8d4f70b37aa9626a2aefb1f889c44f67a",
+      "gas_service::GasService": {
+        "objectType": "0x9ffa7fc453f59ccda36e8462edaf27d8d4f70b37aa9626a2aefb1f889c44f67a::gas_service::GasService",
+        "objectId": "0x77c5c1d2ad57c195e8d5d21b35f8ecc48c1da07a01e1fa449b58b1c53e579571",
+        "version": "857972",
+        "digest": "6ufnwUFuXk3m7PpQ2mQ4TydADN2JS7r99Cx6h3QuQAEV",
+        "balance": "0"
+      }
+    },
+    "its": {
+      "packageId": "0x383dd420bae32523dec72992cb560df39a94d3d9d300cdf2b65c81a43aa7db20",
+      "its::ITS": {
+        "objectType": "0x383dd420bae32523dec72992cb560df39a94d3d9d300cdf2b65c81a43aa7db20::its::ITS",
+        "objectId": "0xb3a75ba8d5610687e5f1a6733c0f2e88b59fffcd253efe7257744717190038d3",
+        "version": "857973",
+        "digest": "GDndkEb9RRUFVX53ME1d9HS4FGjg5fNqVR6g3V2KBuwf",
+        "address_tracker": {
+          "trusted_addresses": "0x85262ea52e1b2bfc060beb7a78fb5d264aef2b7d51ba0a11af5b35bad7fa22a8"
+        },
+        "channel": "0xddd522d36b7acf9e39620fa01277ec2bfb776db8f10036e0e775178f1bd1f1a8",
+        "registered_coin_types": "0xc6536e4da6272f56896f8d2d7008c56ec8c774605ee31ff3f0ba3693066cdff3",
+        "registered_coins": "0x5fca198fbc3b7991ab438567ff632ffd3d40fb9bc8c11a15cb31e6df0f6290a1",
+        "unregistered_coin_info": "0x913c70c0c16aa29710ec3984474f5f241b4d27796e5fee1eca08b8d3a437f6b9",
+        "unregistered_coin_types": "0x14ccf2b6eeb11d8fd3c87451af781eeb42a9a05ca681c3bf1b253b710d7d2f55"
+      }
+    },
+    "abi": {
+      "packageId": "0xee543134189fb2ead06c2bcac39cce7bbaca0a4eadc2c3a90ca2d06c29da7326"
+    }
   }
 }
