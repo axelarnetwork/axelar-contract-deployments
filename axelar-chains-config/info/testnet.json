@@ -111,7 +111,8 @@
         "url": "https://goerli.etherscan.io",
         "api": "https://api-goerli.etherscan.io/api"
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
     },
     "avalanche": {
       "name": "Avalanche",
@@ -220,7 +221,8 @@
         "url": "https://testnet.snowtrace.io",
         "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
     },
     "fantom": {
       "name": "Fantom",
@@ -338,7 +340,8 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
-      "finality": 1
+      "finality": "1",
+      "approxFinalityWaitTime": 1
     },
     "polygon": {
       "name": "Polygon",
@@ -450,7 +453,8 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 5
     },
     "moonbeam": {
       "name": "Moonbeam",
@@ -564,7 +568,8 @@
       "gasOptions": {
         "gasLimit": 12000000
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     },
     "binance": {
       "name": "Binance",
@@ -676,7 +681,8 @@
         "url": "https://testnet.bscscan.com",
         "api": "https://api-testnet.bscscan.com/api"
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 2
     },
     "celo": {
       "name": "Celo",
@@ -788,7 +794,8 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
-      "finality": 1
+      "finality": "1",
+      "approxFinalityWaitTime": 1
     },
     "kava": {
       "name": "Kava",
@@ -896,7 +903,8 @@
         "name": "Kavascan",
         "url": "https://explorer.evm-alpha.kava.io"
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     },
     "filecoin": {
       "name": "Filecoin",
@@ -1008,7 +1016,8 @@
       },
       "confirmations": 3,
       "eip1559": true,
-      "finality": 10
+      "finality": "120",
+      "approxFinalityWaitTime": 60
     },
     "linea": {
       "name": "Linea",
@@ -1121,7 +1130,8 @@
         "gasPrice": 3000000000
       },
       "confirmations": 4,
-      "finality": 30
+      "finality": "400",
+      "approxFinalityWaitTime": 30
     },
     "scroll": {
       "name": "Scroll",
@@ -1231,7 +1241,8 @@
         "gasLimit": 7000000,
         "gasPriceAdjustment": 0.25
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 60
     },
     "immutable": {
       "name": "Immutable",
@@ -1323,7 +1334,8 @@
         "url": "https://explorer.testnet.immutable.com",
         "api": "https://explorer.testnet.immutable.com/api"
       },
-      "finality": 1
+      "finality": "1",
+      "approxFinalityWaitTime": 1
     },
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
@@ -1429,7 +1441,8 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
     },
     "arbitrum-sepolia": {
       "name": "Arbitrum-Sepolia",
@@ -1533,7 +1546,8 @@
         "url": "https://sepolia.arbiscan.io",
         "api": "https://api-sepolia.arbiscan.io/api"
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 25
     },
     "centrifuge": {
       "name": "Centrifuge",
@@ -1623,7 +1637,8 @@
         "name": "",
         "url": ""
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     },
     "fraxtal": {
       "name": "Fraxtal",
@@ -1729,7 +1744,8 @@
         "url": "https://holesky.fraxscan.com",
         "api": "https://api-holesky.fraxscan.com/api"
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 80
     },
     "optimism-sepolia": {
       "name": "Optimism-Sepolia",
@@ -1836,7 +1852,8 @@
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 25
     },
     "base-sepolia": {
       "name": "Base-Sepolia",
@@ -1943,7 +1960,8 @@
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 30
     },
     "blast-sepolia": {
       "name": "Blast-Sepolia",
@@ -2050,7 +2068,8 @@
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 25
     },
     "mantle-sepolia": {
       "name": "Mantle-Sepolia",
@@ -2157,7 +2176,8 @@
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       },
-      "finality": "finalized"
+      "finality": "finalized",
+      "approxFinalityWaitTime": 60
     }
   },
   "axelar": {

@@ -14,21 +14,20 @@ function updateFinality(finality, chain, update) {
     }
 }
 
+function updateFinalityWaitTime(approxFinalityWaitTime, chain, update) {
+    if (update) {
+        chain.approxFinalityWaitTime = approxFinalityWaitTime;
+    }
+}
+
 async function processCommand(_config, chain, options) {
-    let { rpc, confirmations, attempts, blockTime } = options;
+    let { confirmations, attempts, blockTime, delay } = options;
 
-    if (!rpc) {
-        rpc = chain.rpc;
-    }
-
-    if (!attempts) {
-        attempts = 200;
-    }
+    const rpc = options.rpc || chain.rpc;
 
     let max = 0;
     let min = Number.MAX_SAFE_INTEGER;
     let sum = 0;
-    const DELAY = 10000;
 
     const provider = new JsonRpcProvider(rpc);
 
@@ -40,6 +39,7 @@ async function processCommand(_config, chain, options) {
         if (confirmations) {
             confirmations = parseInt(confirmations);
             updateFinality(confirmations, chain, options.update);
+            updateFinalityWaitTime(confirmations * blockTime, chain, options.update);
             printInfo('Wait time', confirmations * blockTime);
         }
 
@@ -61,7 +61,7 @@ async function processCommand(_config, chain, options) {
         max = difference > max ? difference : max;
         min = difference < min ? difference : min;
 
-        await sleep(DELAY);
+        await sleep(delay);
     }
 
     const avg = sum / attempts;
@@ -75,6 +75,7 @@ async function processCommand(_config, chain, options) {
     printInfo('Min wait time', min * blockTime);
 
     updateFinality('finalized', chain, options.update);
+    updateFinalityWaitTime(max * blockTime, chain, options.update);
 }
 
 async function main(options) {
@@ -94,11 +95,12 @@ if (require.main === module) {
 
     program.addOption(new Option('--rpc <rpc>', 'chain rpc'));
     program.addOption(new Option('--update', 'update finality setting in the chain config based on result'));
-    program.addOption(new Option('--confirmations <Wait Time>', 'default wait time to add if finalized tag is not supported'));
+    program.addOption(new Option('--confirmations <confirmations>', 'default wait time to add if finalized tag is not supported'));
     program.addOption(
-        new Option('--attempts <Attempts>', 'number of attempts to calculate difference in block number to reach conclusion'),
+        new Option('--attempts <attempts>', 'number of attempts to calculate difference in block number to reach conclusion').default(200),
     );
-    program.addOption(new Option('--blockTime <Block Time>', 'difference in timestamp of 2 consecute blocks in seconds'));
+    program.addOption(new Option('--blockTime <blockTime>', 'default block confirmations to wait for if finalized tag is not supported'));
+    program.addOption(new Option('--delay <delay>', 'delay between calculating consecutive block finality differences').default(10));
 
     program.action((options) => {
         main(options);
