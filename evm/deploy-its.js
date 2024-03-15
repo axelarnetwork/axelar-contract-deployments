@@ -301,6 +301,10 @@ async function deployAll(config, wallet, chain, options) {
     for (const key in deployments) {
         if (skipExisting && contractConfig[key]) continue;
 
+        if (key !== 'implementation') {
+            continue;
+        }
+
         const deployment = deployments[key];
 
         if (key === 'address' && options.reuseProxy) {
@@ -412,6 +416,8 @@ async function upgrade(_, chain, options) {
 
     printInfo(`Upgraded Interchain Token Service`);
 
+    return;
+
     const InterchainTokenFactory = getContractJSON('InterchainTokenFactory', artifactPath);
     const itsFactory = new Contract(itsFactoryContractConfig.address, InterchainTokenFactory.abi, wallet);
     const factoryCodehash = await getBytecodeHash(itsFactoryContractConfig.implementation, chain.axelarId, provider);
@@ -473,7 +479,7 @@ if (require.main === module) {
             .default('create3'),
     );
 
-    addExtendedOptions(program, { skipExisting: true, upgrade: true, predictOnly: true });
+    addExtendedOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments'));
     program.addOption(new Option('--contractName <contractName>', 'contract name').default('InterchainTokenService')); // added for consistency
