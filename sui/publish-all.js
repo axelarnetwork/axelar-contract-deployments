@@ -10,7 +10,7 @@ const { transferOperatorship } = require('@axelar-network/axelar-cgp-sui/scripts
 const { Command, Option } = require('commander');
 
 async function main(options) {
-    options.validators = JSON.parse(options.validators).map(privKey => secp256k1.publicKeyCreate(Buffer.from(privKey, 'hex')));
+    options.validators = JSON.parse(options.validators).map((privKey) => secp256k1.publicKeyCreate(Buffer.from(privKey, 'hex')));
     options.weights = JSON.parse(options.weights);
     options.threshold = JSON.parse(options.threshold);
     const privKey = Buffer.from(options.privateKey, 'hex');
@@ -24,8 +24,8 @@ async function main(options) {
         config.sui = {};
     }
 
-    for (const package of ['axelar', 'governance', 'gas_service', 'its', 'abi']) {
-        config.sui[package] = getConfig(package, options.env);
+    for (const packageName of ['axelar', 'governance', 'gas_service', 'its', 'abi']) {
+        config.sui[packageName] = getConfig(packageName, options.env);
     }
 
     saveConfig(config, options.env);
