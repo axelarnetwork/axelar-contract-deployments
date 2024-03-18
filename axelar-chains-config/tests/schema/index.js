@@ -74,6 +74,8 @@ export const chainValueSchema = {
         explorer: { $ref: explorerSchema.id },
         gasOptions: { $ref: gasOptionSchema.id },
         confirmations: { type: 'number' },
+        finality: { type: 'string' },
+        approxFinalityWaitTime: { type: 'number' },
     },
     required: ['name', 'id', 'axelarId', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
 };
