@@ -1,13 +1,18 @@
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
 const { Ed25519Keypair } = require('@mysten/sui.js/keypairs/ed25519');
+const secp256k1 = require('secp256k1');
 const { saveConfig, loadConfig } = require('../evm/utils');
 const { publishAll } = require('@axelar-network/axelar-cgp-sui/scripts/publish-all');
 const { getConfig, parseEnv } = require('@axelar-network/axelar-cgp-sui/scripts/utils');
 const { setTrustedAddresses } = require('@axelar-network/axelar-cgp-sui/scripts/its/set-trusted-address');
 const { setItsDiscovery } = require('@axelar-network/axelar-cgp-sui/scripts/its/discovery');
+const { transferOperatorship } = require('@axelar-network/axelar-cgp-sui/scripts/gateway');
 const { Command, Option } = require('commander');
 
 async function main(options) {
+    options.validators = JSON.parse(options.validators).map(privKey => secp256k1.publicKeyCreate(Buffer.from(privKey, 'hex')));
+    options.weights = JSON.parse(options.weights);
+    options.threshold = JSON.parse(options.threshold);
     const privKey = Buffer.from(options.privateKey, 'hex');
     const keypair = Ed25519Keypair.fromSecretKey(privKey);
     const client = new SuiClient({ url: getFullnodeUrl(options.env) });
@@ -28,6 +33,7 @@ async function main(options) {
     await setTrustedAddresses(client, keypair, options.env, [], []);
 
     await setItsDiscovery(client, keypair, options.env);
+    await transferOperatorship(getConfig('axelar', options.env), client, keypair, options.validators, options.weights, options.threshold);
 }
 
 if (require.main === module) {
@@ -68,6 +74,4 @@ if (require.main === module) {
     });
 
     program.parse();
-} else {
-    module.exports = { deployITS: deploy };
 }
