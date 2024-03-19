@@ -47,8 +47,6 @@ async function processCommand(_, chain, options) {
         }
     }
 
-    printInfo('Chain', chain.name);
-
     const gasOptions = await getGasOptions(chain, options);
 
     if (
@@ -107,7 +105,7 @@ if (require.main === module) {
 
     program.addOption(new Option('-r, --recipients <recipients>', 'comma-separated recipients of tokens').makeOptionMandatory(true));
     program.addOption(new Option('-a, --amount <amount>', 'amount to transfer (in terms of ETH)'));
-    program.addOption(new Option('--gasUsage <gasUsage>', 'amount to transfer based on gas usage and gas price').default('5000000'));
+    program.addOption(new Option('--gasUsage <gasUsage>', 'amount to transfer based on gas usage and gas price').default('50000000'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
 
