@@ -26,7 +26,7 @@ async function getGasInfo(env, chain, destinationChains) {
 
     return Promise.all(
         destinationChains.map((destinationChain) => {
-            let feeType = 0;
+            let gasEstimationType = 0;
             let blobBaseFee = 0;
 
             switch (destinationChain.toLowerCase()) {
