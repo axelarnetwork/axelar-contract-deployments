@@ -46,7 +46,6 @@ async function getGasInfo(env, chain, destinationChains) {
                 // eslint-disable-next-line no-fallthrough
                 case 'optimism': {
                     feeType = 1; // Optimism Ecotone
-                    blobBaseFee = 0;
                     break;
                 }
             }
