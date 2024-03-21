@@ -65,7 +65,7 @@ async function getGasUpdates(env, chain, destinationChains) {
     );
 }
 
-async function processCommand(_, chain, options) {
+async function processCommand(config, chain, options) {
     const {
         env,
         contractName,
