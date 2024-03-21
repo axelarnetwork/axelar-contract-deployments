@@ -1,10 +1,7 @@
 'use strict';
 
 const { ethers } = require('hardhat');
-const {
-    getDefaultProvider,
-    Contract,
-} = ethers;
+const { getDefaultProvider, Contract } = ethers;
 const { Command, Option } = require('commander');
 const {
     printInfo,
@@ -16,7 +13,9 @@ const {
     getGasOptions,
     wasEventEmitted,
     isValidAddress,
-    validateParameters, httpPost, loadConfig,
+    validateParameters,
+    httpPost,
+    loadConfig,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -28,13 +27,14 @@ async function getGasUpdates(env, chain, destinationChains) {
     return Promise.all(
         destinationChains.map(async (destinationChain) => {
             const destinationConfig = config.chains[destinationChain];
+
             if (!destinationConfig) {
                 printInfo(`Error: chain ${destinationChain} not found in config.`);
                 printInfo(`Skipping ${destinationChain}.`);
                 return null;
             }
 
-            const {gasEstimationType = 0, blobBaseFee = 0 } = destinationConfig;
+            const { gasEstimationType = 0, blobBaseFee = 0 } = destinationConfig;
 
             const data = await httpPost(`${api}/gmp/getFees`, {
                 sourceChain: chain.axelarId,
@@ -54,7 +54,7 @@ async function getGasUpdates(env, chain, destinationChains) {
             const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals));
             const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier));
 
-            return [gasEstimationType, axelarBaseFee, relativeGasPrice, blobBaseFee * destinationTokenPrice / srcTokenPrice];
+            return [gasEstimationType, axelarBaseFee, relativeGasPrice, (blobBaseFee * destinationTokenPrice) / srcTokenPrice];
         }),
     );
 }
@@ -181,12 +181,7 @@ if (require.main === module) {
         new Option('-c, --contractName <contractName>', 'contract name').default('AxelarGasService').makeOptionMandatory(false),
     );
     program.addOption(
-        new Option('--action <action>', 'GasService action')
-            .choices([
-                'estimateGasFee',
-                'updateGasInfo',
-            ])
-            .makeOptionMandatory(true),
+        new Option('--action <action>', 'GasService action').choices(['estimateGasFee', 'updateGasInfo']).makeOptionMandatory(true),
     );
     program.addOption(new Option('--offline', 'run script in offline mode'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
