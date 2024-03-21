@@ -18,7 +18,9 @@ const {
     getGasOptions,
     wasEventEmitted,
     isValidAddress,
-    validateParameters, httpPost, loadConfig,
+    validateParameters,
+    httpPost,
+    loadConfig,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -30,13 +32,14 @@ async function getGasUpdates(env, chain, destinationChains) {
     return Promise.all(
         destinationChains.map(async (destinationChain) => {
             const destinationConfig = config.chains[destinationChain];
+
             if (!destinationConfig) {
                 printInfo(`Error: chain ${destinationChain} not found in config.`);
                 printInfo(`Skipping ${destinationChain}.`);
                 return null;
             }
 
-            const {gasEstimationType = 0, blobBaseFee = 0 } = destinationConfig;
+            const { gasEstimationType = 0, blobBaseFee = 0 } = destinationConfig;
 
             const data = await httpPost(`${api}/gmp/getFees`, {
                 sourceChain: chain.axelarId,
@@ -56,7 +59,7 @@ async function getGasUpdates(env, chain, destinationChains) {
             const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals));
             const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier));
 
-            return [gasEstimationType, axelarBaseFee, relativeGasPrice, blobBaseFee * destinationTokenPrice / srcTokenPrice];
+            return [gasEstimationType, axelarBaseFee, relativeGasPrice, (blobBaseFee * destinationTokenPrice) / srcTokenPrice];
         }),
     );
 }
