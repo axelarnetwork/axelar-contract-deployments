@@ -3,7 +3,6 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    FixedNumber,
     Contract,
     constants: { AddressZero },
 } = ethers;
@@ -75,20 +74,10 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 execute_gas_multiplier: multiplier = 1.1,
             } = data.result;
 
-            // sourceBaseFee * 10 ^ decimals
-            const axelarBaseFee = FixedNumber.from(parseFloat(sourceBaseFee).toFixed(10))
-                .mulUnsafe(FixedNumber.from(Math.pow(10, decimals).toFixed(10)))
-                .round();
-            // gasPrice * multiplier
-            const relativeGasPrice = FixedNumber.from(parseFloat(gasPrice))
-                .mulUnsafe(FixedNumber.from(parseFloat(multiplier).toFixed(10)))
-                .round();
-            // destinationTokenPrice / srcTokenPrice
-            const gasPriceRatio = FixedNumber.from(parseFloat(destinationTokenPrice).toFixed(10)).divUnsafe(
-                FixedNumber.from(parseFloat(srcTokenPrice).toFixed(10)),
-            );
-            // blobBaseFee * gasPriceRatio
-            const relativeBlobBaseFee = FixedNumber.from(parseFloat(blobBaseFee)).mulUnsafe(gasPriceRatio);
+            const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals));
+            const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier));
+            const gasPriceRatio = parseFloat(destinationTokenPrice) / parseFloat(srcTokenPrice);
+            const relativeBlobBaseFee = Math.ceil(blobBaseFee * gasPriceRatio);
 
             return {
                 chain: destinationChain,
