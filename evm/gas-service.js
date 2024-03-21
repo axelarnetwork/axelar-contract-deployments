@@ -40,7 +40,7 @@ async function getGasUpdates(env, chain, destinationChains) {
             const data = await httpPost(`${api}/gmp/getFees`, {
                 sourceChain: chain.axelarId,
                 destinationChain,
-                sourceTokenAddress: '0x0000000000000000000000000000000000000000',
+                sourceTokenAddress: AddressZero,
             });
 
             const {
