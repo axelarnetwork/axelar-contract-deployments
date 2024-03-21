@@ -35,7 +35,7 @@ async function getGasUpdates(env, chain, destinationChains) {
 
             if (!destinationConfig) {
                 printInfo(`Error: chain ${destinationChain} not found in config.`);
-                printInfo(`Skipping ${destinationChain}.`);
+                printError(`Skipping ${destinationChain}.`);
                 return null;
             }
 
