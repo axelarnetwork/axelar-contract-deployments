@@ -87,7 +87,7 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 40,
-      "gasOptions": {
+      "onchainGasEstimate": {
         "blobBaseFee": 50187563959
       }
     },
@@ -764,7 +764,9 @@
         "api": "https://api-goerli-optimism.etherscan.io/api"
       },
       "gasOptions": {
-        "gasLimit": 5000000,
+        "gasLimit": 5000000
+      },
+      "onchainGasEstimate": {
         "gasEstimationType": 1
       },
       "finality": "finalized",
@@ -851,7 +853,9 @@
         "api": "https://api-goerli.basescan.org/api"
       },
       "gasOptions": {
-        "gasLimit": 5000000,
+        "gasLimit": 5000000
+      },
+      "onchainGasEstimate": {
         "gasEstimationType": 1
       },
       "finality": "finalized",
@@ -1021,7 +1025,10 @@
       },
       "gasOptions": {
         "maxFeePerGas": 110000000,
-        "maxPriorityFeePerGas": 100000000,
+        "maxPriorityFeePerGas": 100000000
+      },
+      "onchainGasEstimate": {
+        "chainName": "ethereum",
         "blobBaseFee": 50187563959
       },
       "finality": "finalized",
