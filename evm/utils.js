@@ -192,16 +192,16 @@ const httpGet = (url) => {
     });
 };
 
-const httpPost = async (url, data) =>  {
+const httpPost = async (url, data) => {
     const response = await fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
-    })
-    return response.json()
-}
+    });
+    return response.json();
+};
 
 const isNonEmptyString = (arg) => {
     return typeof arg === 'string' && arg !== '';

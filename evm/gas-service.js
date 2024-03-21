@@ -18,25 +18,28 @@ const {
     getGasOptions,
     wasEventEmitted,
     isValidAddress,
-    validateParameters, httpPost, loadConfig,
+    validateParameters,
+    httpPost,
+    loadConfig,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 
 async function getGasUpdates(env, chain, destinationChains) {
-    const config = loadConfig(options.env);
+    const config = loadConfig(env);
     const api = config.axelar.api;
 
     return Promise.all(
         destinationChains.map(async (destinationChain) => {
             const destinationConfig = config.chains[destinationChain];
+
             if (!destinationConfig) {
                 printInfo(`Error: chain ${destinationChain} not found in config.`);
                 printInfo(`Skipping ${destinationChain}.`);
                 return null;
             }
 
-            const {gasEstimationType = 0, blobBaseFee = 0 } = destinationConfig;
+            const { gasEstimationType = 0, blobBaseFee = 0 } = destinationConfig;
 
             const data = await httpPost(`${api}/gmp/getFees`, {
                 sourceChain: chain.axelarId,
@@ -48,15 +51,21 @@ async function getGasUpdates(env, chain, destinationChains) {
                 source_base_fee: sourceBaseFee,
                 source_token: {
                     gas_price_in_units: { value: gasPrice },
+                    token_price: { usd: srcTokenPrice },
                     decimals,
+                },
+                destination_native_token: {
+                    token_price: { usd: destinationTokenPrice },
                 },
                 execute_gas_multiplier: multiplier = 1.1,
             } = data.result;
 
             const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals));
             const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier));
+            const gasPriceRatio = parseFloat(destinationTokenPrice) / parseFloat(srcTokenPrice);
+            const relativeBlobBaseFee = Math.ceil(blobBaseFee * gasPriceRatio);
 
-            return [gasEstimationType, axelarBaseFee, relativeGasPrice, blobBaseFee * destinationTokenPrice / srcTokenPrice];
+            return [gasEstimationType, axelarBaseFee, relativeGasPrice, relativeBlobBaseFee];
         }),
     );
 }
