@@ -1,7 +1,12 @@
 'use strict';
 
 const { ethers } = require('hardhat');
-const { getDefaultProvider, Contract } = ethers;
+const {
+    getDefaultProvider,
+    FixedNumber,
+    Contract,
+    constants: { AddressZero },
+} = ethers;
 const { Command, Option } = require('commander');
 const {
     printInfo,
@@ -24,6 +29,10 @@ let failedChainUpdates = [];
 
 async function getGasUpdates(config, env, chain, destinationChains) {
     const api = config.axelar.axelarscanApi;
+
+    validateParameters({
+        isNonEmptyStringArray: { destinationChains },
+    });
 
     return Promise.all(
         destinationChains.map(async (destinationChain) => {
@@ -67,10 +76,20 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 execute_gas_multiplier: multiplier = 1.1,
             } = data.result;
 
-            const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals));
-            const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier));
-            const gasPriceRatio = parseFloat(destinationTokenPrice) / parseFloat(srcTokenPrice);
-            const relativeBlobBaseFee = Math.ceil(blobBaseFee * gasPriceRatio);
+            // sourceBaseFee * 10 ^ decimals
+            const axelarBaseFee = FixedNumber.from(parseFloat(sourceBaseFee).toFixed(10))
+                .mulUnsafe(FixedNumber.from(Math.pow(10, decimals).toFixed(10)))
+                .round();
+            // gasPrice * multiplier
+            const relativeGasPrice = FixedNumber.from(parseFloat(gasPrice))
+                .mulUnsafe(FixedNumber.from(parseFloat(multiplier).toFixed(10)))
+                .round();
+            // destinationTokenPrice / srcTokenPrice
+            const gasPriceRatio = FixedNumber.from(parseFloat(destinationTokenPrice).toFixed(10)).divUnsafe(
+                FixedNumber.from(parseFloat(srcTokenPrice).toFixed(10)),
+            );
+            // blobBaseFee * gasPriceRatio
+            const relativeBlobBaseFee = FixedNumber.from(parseFloat(blobBaseFee)).mulUnsafe(gasPriceRatio);
 
             return {
                 chainName,
@@ -92,7 +111,7 @@ function printFailedChainUpdates() {
     failedChainUpdates = [];
 }
 
-async function processCommand(_config, chain, options) {
+async function processCommand(config, chain, options) {
     const { env, contractName, address, action, privateKey, chains, destinationChain, destinationAddress, executionGasLimit, yes } =
         options;
 
@@ -206,9 +225,7 @@ if (require.main === module) {
 
     addBaseOptions(program, { address: true });
 
-    program.addOption(
-        new Option('-c, --contractName <contractName>', 'contract name').default('AxelarGasService').makeOptionMandatory(false),
-    );
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarGasService'));
     program.addOption(
         new Option('--action <action>', 'GasService action').choices(['estimateGasFee', 'updateGasInfo']).makeOptionMandatory(true),
     );
@@ -216,13 +233,13 @@ if (require.main === module) {
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
 
     // options for estimateGasFee
-    program.addOption(new Option('--destinationChain <destinationChain>', 'Destination chain name').makeOptionMandatory(false));
-    program.addOption(new Option('--destinationAddress <destinationAddress>', 'Destination contract address').makeOptionMandatory(false));
-    program.addOption(new Option('--payload <payload>', 'Payload for the contract call').makeOptionMandatory(false));
-    program.addOption(new Option('--executionGasLimit <executionGasLimit>', 'Execution gas limit').makeOptionMandatory(false));
+    program.addOption(new Option('--destinationChain <destinationChain>', 'Destination chain name'));
+    program.addOption(new Option('--destinationAddress <destinationAddress>', 'Destination contract address'));
+    program.addOption(new Option('--payload <payload>', 'Payload for the contract call').env('PAYLOAD'));
+    program.addOption(new Option('--executionGasLimit <executionGasLimit>', 'Execution gas limit'));
 
     // options for updateGasInfo
-    program.addOption(new Option('--chains <chains...>', 'Chain names').makeOptionMandatory(false));
+    program.addOption(new Option('--chains <chains...>', 'Chain names'));
 
     program.action((options) => {
         main(options);
