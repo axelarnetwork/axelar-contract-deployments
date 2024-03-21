@@ -73,7 +73,7 @@ async function getGasInfo(env, chain, destinationChains) {
                     const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals));
                     const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier));
 
-                    return [feeType, axelarBaseFee, relativeGasPrice, blobBaseFee * relativeGasPrice];
+                    return [feeType, axelarBaseFee, relativeGasPrice, blobBaseFee * destinationTokenPrice / srcTokenPrice];
                 });
         }),
     );
