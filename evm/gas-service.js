@@ -346,6 +346,12 @@ if (require.main === module) {
             .choices([
                 'estimateGasFee',
                 'updateGasInfo',
+                'refund',
+                'collectFees',
+                'addGas',
+                'addNativeGas',
+                'addExpressGas',
+                'addNativeExpressGas',
             ])
             .makeOptionMandatory(true),
     );
