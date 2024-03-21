@@ -113,7 +113,7 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 40,
-      "gasOptions": {
+      "onchainGasEstimate": {
         "blobBaseFee": 50187563959
       }
     },
@@ -1442,7 +1442,10 @@
         "api": "https://api-sepolia.etherscan.io/api"
       },
       "gasOptions": {
-        "gasLimit": 8000000,
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "chainName": "ethereum",
         "blobBaseFee": 50187563959
       },
       "finality": "finalized",
@@ -1759,7 +1762,10 @@
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
       "gasOptions": {
-        "gasLimit": 8000000,
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "chainName": "optimism",
         "gasEstimationType": 1
       },
       "confirmations": 3,
@@ -1868,7 +1874,10 @@
       "rpc": "https://sepolia.base.org",
       "tokenSymbol": "ETH",
       "gasOptions": {
-        "gasLimit": 8000000,
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "chainName": "base",
         "gasEstimationType": 1
       },
       "confirmations": 2,
@@ -2193,6 +2202,6 @@
     "lcd": "https://lcd-axelar-testnet.imperator.co:443",
     "grpc": "grpc-axelar-testnet.imperator.co:2062",
     "tokenSymbol": "AXL",
-    "api": "https://testnet.api.axelarscan.io"
+    "axelarscanApi": "https://testnet.api.axelarscan.io"
   }
 }

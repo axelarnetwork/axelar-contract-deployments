@@ -16,14 +16,14 @@ const {
     isValidAddress,
     validateParameters,
     httpPost,
-    loadConfig,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 
-async function getGasUpdates(env, chain, destinationChains) {
-    const config = loadConfig(env);
-    const api = config.axelar.api;
+let failedChainUpdates = [];
+
+async function getGasUpdates(config, env, chain, destinationChains) {
+    const api = config.axelar.axelarscanApi;
 
     return Promise.all(
         destinationChains.map(async (destinationChain) => {
@@ -32,16 +32,27 @@ async function getGasUpdates(env, chain, destinationChains) {
             if (!destinationConfig) {
                 printError(`Error: chain ${destinationChain} not found in config.`);
                 printError(`Skipping ${destinationChain}.`);
+                failedChainUpdates.push({ chain: chain.axelarId, destinationChain });
                 return null;
             }
 
-            const { gasEstimationType = 0, blobBaseFee = 0 } = destinationConfig;
+            const { axelarId, onchainGasEstimate: { chainName = axelarId, gasEstimationType = 0, blobBaseFee = 0 } = {} } =
+                destinationConfig;
 
-            const data = await httpPost(`${api}/gmp/getFees`, {
-                sourceChain: chain.axelarId,
-                destinationChain,
-                sourceTokenAddress: AddressZero,
-            });
+            let data;
+
+            try {
+                data = await httpPost(`${api}/gmp/getFees`, {
+                    sourceChain: chain.axelarId,
+                    destinationChain: axelarId,
+                    sourceTokenAddress: AddressZero,
+                });
+            } catch (e) {
+                printError(`Error getting gas info for ${chain.axelarId} -> ${axelarId}`);
+                printError(e);
+                failedChainUpdates.push({ chain: chain.axelarId, destinationChain: axelarId });
+                return null;
+            }
 
             const {
                 source_base_fee: sourceBaseFee,
@@ -61,9 +72,24 @@ async function getGasUpdates(env, chain, destinationChains) {
             const gasPriceRatio = parseFloat(destinationTokenPrice) / parseFloat(srcTokenPrice);
             const relativeBlobBaseFee = Math.ceil(blobBaseFee * gasPriceRatio);
 
-            return [gasEstimationType, axelarBaseFee, relativeGasPrice, relativeBlobBaseFee];
+            return {
+                chainName,
+                gasInfo: [gasEstimationType, axelarBaseFee, relativeGasPrice, relativeBlobBaseFee],
+            };
         }),
     );
+}
+
+function printFailedChainUpdates() {
+    if (failedChainUpdates.length > 0) {
+        printError('Failed to update gas info for following chain combinations');
+
+        failedChainUpdates.forEach(({ chain, destinationChain }) => {
+            printError(`${chain} -> ${destinationChain}`);
+        });
+    }
+
+    failedChainUpdates = [];
 }
 
 async function processCommand(_config, chain, options) {
@@ -126,22 +152,29 @@ async function processCommand(_config, chain, options) {
                 isNonEmptyStringArray: { chains },
             });
 
-            let gasUpdates = await getGasUpdates(env, chain, chains);
+            let gasUpdates = await getGasUpdates(config, env, chain, chains);
 
-            const filteredChains = chains.filter((chain, i) => gasUpdates[i] !== null);
             gasUpdates = gasUpdates.filter((update) => update !== null);
 
             // Adding lowercase chain names for case insensitivity
-            filteredChains.forEach((destination, i) => {
-                if (destination.toLowerCase() !== destination) {
-                    filteredChains.push(destination.toLowerCase());
-                    gasUpdates.push(gasUpdates[i]);
+            gasUpdates.forEach(({ chainName, gasInfo }) => {
+                if (chainName.toLowerCase() !== chainName) {
+                    gasUpdates.push({
+                        chainName: chainName.toLowerCase(),
+                        gasInfo,
+                    });
                 }
             });
 
-            const tx = await gasService.updateGasInfo(filteredChains, gasUpdates, gasOptions);
+            const filteredChains = gasUpdates.map(({ chainName }) => chainName);
+            const gasInfoUpdates = gasUpdates.map(({ gasInfo }) => gasInfo);
 
-            printInfo('Call updateGasInfo with following chains', filteredChains);
+            if (prompt(`Update gas info for following chains ${filteredChains}?`, yes)) {
+                return;
+            }
+
+            const tx = await gasService.updateGasInfo(filteredChains, gasInfoUpdates, gasOptions);
+
             printInfo('TX', tx.hash);
 
             const receipt = await tx.wait(chain.confirmations);
@@ -162,6 +195,8 @@ async function processCommand(_config, chain, options) {
 
 async function main(options) {
     await mainProcessor(options, processCommand, false);
+
+    printFailedChainUpdates();
 }
 
 if (require.main === module) {
@@ -197,3 +232,4 @@ if (require.main === module) {
 }
 
 exports.getGasUpdates = getGasUpdates;
+exports.printFailedChainUpdates = printFailedChainUpdates;
