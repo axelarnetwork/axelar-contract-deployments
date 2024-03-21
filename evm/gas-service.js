@@ -29,7 +29,7 @@ async function getGasUpdates(env, chain, destinationChains) {
             const destinationConfig = config.chains[destinationChain];
 
             if (!destinationConfig) {
-                printInfo(`Error: chain ${destinationChain} not found in config.`);
+                printError(`Error: chain ${destinationChain} not found in config.`);
                 printError(`Skipping ${destinationChain}.`);
                 return null;
             }
