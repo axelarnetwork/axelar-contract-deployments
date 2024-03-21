@@ -20,13 +20,26 @@ const {
     prompt,
     getGasOptions,
     mainProcessor,
+    validateParameters,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
+const { getGasUpdates, printFailedChainUpdates } = require('./gas-service');
 const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
 const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
 
-async function processCommand(_, chain, options) {
-    const { contractName, address, action, privateKey, args, yes } = options;
+async function processCommand(config, chain, options) {
+    const {
+        env,
+        contractName,
+        address,
+        action,
+        privateKey,
+        args,
+
+        chains,
+
+        yes,
+    } = options;
 
     const argsArray = parseArgs(args);
 
@@ -229,6 +242,49 @@ async function processCommand(_, chain, options) {
             break;
         }
 
+        case 'updateGasInfo': {
+            const target = chain.contracts.AxelarGasService?.address;
+
+            validateParameters({
+                isNonEmptyStringArray: { chains },
+                isAddress: { target },
+            });
+
+            let gasUpdates = await getGasUpdates(config, env, chain, chains);
+
+            gasUpdates = gasUpdates.filter((update) => update !== null);
+
+            // Adding lowercase chain names for case insensitivity
+            gasUpdates.forEach(({ chainName, gasInfo }) => {
+                if (chainName.toLowerCase() !== chainName) {
+                    gasUpdates.push({
+                        chainName: chainName.toLowerCase(),
+                        gasInfo,
+                    });
+                }
+            });
+
+            const filteredChains = gasUpdates.map(({ chainName }) => chainName);
+            const gasInfoUpdates = gasUpdates.map(({ gasInfo }) => gasInfo);
+
+            if (prompt(`Update gas info for following chains ${filteredChains}?`, yes)) {
+                return;
+            }
+
+            const gasServiceInterface = new Interface(IAxelarGasService.abi);
+            const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [filteredChains, gasInfoUpdates]);
+
+            try {
+                const tx = await operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions);
+                printInfo('TX', tx.hash);
+                await tx.wait(chain.confirmations);
+            } catch (error) {
+                printError(error);
+            }
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown operator action: ${action}`);
         }
@@ -237,6 +293,8 @@ async function processCommand(_, chain, options) {
 
 async function main(options) {
     await mainProcessor(options, processCommand);
+
+    printFailedChainUpdates();
 }
 
 if (require.main === module) {
@@ -254,9 +312,13 @@ if (require.main === module) {
             'removeOperator',
             'collectFees',
             'refund',
+            'updateGasInfo',
         ]),
     );
     program.addOption(new Option('--args <args>', 'operator action arguments').makeOptionMandatory(true));
+
+    // options for updateGasInfo
+    program.addOption(new Option('--chains <chains...>', 'Chain names').makeOptionMandatory(false));
 
     program.action((options) => {
         main(options);
