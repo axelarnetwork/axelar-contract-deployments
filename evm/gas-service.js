@@ -3,6 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
+    BigNumber,
     FixedNumber,
     Contract,
     constants: { AddressZero },
