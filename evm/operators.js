@@ -18,12 +18,11 @@ const {
     getGasOptions,
     mainProcessor,
     validateParameters,
-    getContractJSON,
-    printWarn,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTransaction } = require('./gas-service');
-const { getWallet } = require('./sign-utils');
+const { getGasUpdates, printFailedChainUpdates } = require('./gas-service');
+const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
+const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
 
 async function processCommand(config, chain, options) {
     const {
@@ -33,6 +32,11 @@ async function processCommand(config, chain, options) {
         action,
         privateKey,
         args,
+
+        chains,
+
+        yes,
+    } = options;
 
         chains,
 
@@ -226,37 +230,35 @@ async function processCommand(config, chain, options) {
                 isAddress: { target },
             });
 
-            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
+            let gasUpdates = await getGasUpdates(config, env, chain, chains);
 
-            if (chainsToUpdate.length === 0) {
-                printWarn('No gas info updates found.');
+            gasUpdates = gasUpdates.filter((update) => update !== null);
+
+            // Adding lowercase chain names for case insensitivity
+            gasUpdates.forEach(({ chainName, gasInfo }) => {
+                if (chainName.toLowerCase() !== chainName) {
+                    gasUpdates.push({
+                        chainName: chainName.toLowerCase(),
+                        gasInfo,
+                    });
+                }
+            });
+
+            const filteredChains = gasUpdates.map(({ chainName }) => chainName);
+            const gasInfoUpdates = gasUpdates.map(({ gasInfo }) => gasInfo);
+
+            if (prompt(`Update gas info for following chains ${filteredChains}?`, yes)) {
                 return;
             }
 
-            printInfo('Collected gas info for the following chain names', chainsToUpdate.join(', '));
-
-            if (prompt(`Submit gas update transaction?`, yes)) {
-                return;
-            }
-
-            const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
-            const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
+            const gasServiceInterface = new Interface(IAxelarGasService.abi);
+            const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [filteredChains, gasInfoUpdates]);
 
             try {
-                await relayTransaction(
-                    options,
-                    chain,
-                    operatorsContract,
-                    'executeContract',
-                    [target, updateGasInfoCalldata, 0],
-                    0,
-                    gasOptions,
-                );
+                const tx = await operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions);
+                printInfo('TX', tx.hash);
+                await tx.wait(chain.confirmations);
             } catch (error) {
-                for (let i = 0; i < chainsToUpdate.length; i++) {
-                    addFailedChainUpdate(chain.name, chainsToUpdate[i]);
-                }
-
                 printError(error);
             }
 
@@ -300,6 +302,9 @@ if (require.main === module) {
     program.addOption(new Option('--chains <chains...>', 'Chain names'));
     program.addOption(new Option('--relayerAPI <relayerAPI>', 'Relay the tx through an external relayer API').env('RELAYER_API'));
     program.addOption(new Option('--ignoreError', 'Ignore errors and proceed to next chain'));
+
+    // options for updateGasInfo
+    program.addOption(new Option('--chains <chains...>', 'Chain names').makeOptionMandatory(false));
 
     program.action((options) => {
         main(options);
