@@ -1169,6 +1169,6 @@
     "lcd": "",
     "grpc": "",
     "tokenSymbol": "AXL",
-    "api": "https://testnet.api.axelarscan.io"
+    "axelarscanApi": "https://testnet.api.axelarscan.io"
   }
 }
