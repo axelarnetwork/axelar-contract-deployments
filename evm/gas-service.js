@@ -155,7 +155,7 @@ async function processCommand(_, chain, options) {
 
             const gasUpdates = await getGasInfo(env, chain, chains);
 
-            // Adding lowecase chain names for case insensitivity
+            // Adding lowercase chain names for case insensitivity
             chains.forEach((destination, i) => {
                 if (destination.toLowerCase() !== destination) {
                     chains.push(destination.toLowerCase());
