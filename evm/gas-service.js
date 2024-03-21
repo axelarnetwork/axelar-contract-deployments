@@ -7,6 +7,7 @@ const {
     printInfo,
     printWalletInfo,
     printWarn,
+    printError,
     mainProcessor,
     prompt,
     getContractJSON,
@@ -65,22 +66,9 @@ async function getGasUpdates(env, chain, destinationChains) {
     );
 }
 
-async function processCommand(config, chain, options) {
-    const {
-        env,
-        contractName,
-        address,
-        action,
-        privateKey,
-
-        chains,
-
-        destinationChain,
-        destinationAddress,
-        executionGasLimit,
-
-        yes,
-    } = options;
+async function processCommand(_config, chain, options) {
+    const { env, contractName, address, action, privateKey, chains, destinationChain, destinationAddress, executionGasLimit, yes } =
+        options;
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
