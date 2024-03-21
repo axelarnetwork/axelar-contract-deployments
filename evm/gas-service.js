@@ -12,69 +12,49 @@ const {
     printWarn,
     mainProcessor,
     prompt,
+    getContractJSON,
     getGasOptions,
     wasEventEmitted,
     isValidAddress,
-    validateParameters,
+    validateParameters, httpPost, loadConfig,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
 const { getWallet } = require('./sign-utils');
 
-async function getGasInfo(env, chain, destinationChains) {
-    const apiUrl = env === 'testnet' ? 'https://testnet.api.axelarscan.io/gmp/getFees' : 'https://api.axelarscan.io/gmp/getFees';
+async function getGasUpdates(env, chain, destinationChains) {
+    const config = loadConfig(options.env);
+    const api = config.axelar.api;
 
     return Promise.all(
-        destinationChains.map((destinationChain) => {
-            let gasEstimationType = 0;
-            let blobBaseFee = 0;
-
-            switch (destinationChain.toLowerCase()) {
-                case 'ethereum-sepolia':
-
-                // eslint-disable-next-line no-fallthrough
-                case 'ethereum': {
-                    feeType = 0;
-                    blobBaseFee = env === 'testnet' ? 50187563959 : 1;
-                    break;
-                }
-
-                case 'base':
-
-                // eslint-disable-next-line no-fallthrough
-                case 'optimism': {
-                    feeType = 1; // Optimism Ecotone
-                    break;
-                }
+        destinationChains.map(async (destinationChain) => {
+            const destinationConfig = config.chains[destinationChain];
+            if (!destinationConfig) {
+                printInfo(`Error: chain ${destinationChain} not found in config.`);
+                printInfo(`Skipping ${destinationChain}.`);
+                return null;
             }
 
-            return fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+            const {gasEstimationType = 0, blobBaseFee = 0 } = destinationConfig;
+
+            const data = await httpPost(`${api}/gmp/getFees`, {
+                sourceChain: chain.axelarId,
+                destinationChain,
+                sourceTokenAddress: '0x0000000000000000000000000000000000000000',
+            });
+
+            const {
+                source_base_fee: sourceBaseFee,
+                source_token: {
+                    gas_price_in_units: { value: gasPrice },
+                    decimals,
                 },
-                body: JSON.stringify({
-                    sourceChain: chain.axelarId,
-                    destinationChain,
-                    sourceTokenAddress: '0x0000000000000000000000000000000000000000',
-                }),
-            })
-                .then((res) => res.json())
-                .then(({ result }) => {
-                    const {
-                        source_base_fee: sourceBaseFee,
-                        source_token: {
-                            gas_price_in_units: { value: gasPrice },
-                            decimals,
-                        },
-                        execute_gas_multiplier: multiplier = 1.1,
-                    } = result;
+                execute_gas_multiplier: multiplier = 1.1,
+            } = data.result;
 
-                    const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals));
-                    const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier));
+            const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals));
+            const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier));
 
-                    return [feeType, axelarBaseFee, relativeGasPrice, blobBaseFee * destinationTokenPrice / srcTokenPrice];
-                });
+            return [gasEstimationType, axelarBaseFee, relativeGasPrice, blobBaseFee * destinationTokenPrice / srcTokenPrice];
         }),
     );
 }
@@ -115,17 +95,16 @@ async function processCommand(_, chain, options) {
     const provider = getDefaultProvider(rpc);
 
     const wallet = await getWallet(privateKey, provider, options);
-    const { address: walletAddress } = await printWalletInfo(wallet, options);
+    await printWalletInfo(wallet, options);
 
     printInfo('Contract name', contractName);
     printInfo('Contract address', GasServiceAddress);
 
-    const gasService = new Contract(GasServiceAddress, IAxelarGasService.abi, wallet);
+    const gasService = new Contract(GasServiceAddress, getContractJSON('IAxelarGasService').abi, wallet);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('GasService Action', action);
-    printInfo('Wallet', walletAddress);
 
     if (prompt(`Proceed with action ${action} on chain ${chain.name}?`, yes)) {
         return;
@@ -153,21 +132,23 @@ async function processCommand(_, chain, options) {
                 isNonEmptyStringArray: { chains },
             });
 
-            const gasUpdates = await getGasInfo(env, chain, chains);
+            let gasUpdates = await getGasUpdates(env, chain, chains);
+
+            const filteredChains = chains.filter((chain, i) => gasUpdates[i] !== null);
+            gasUpdates = gasUpdates.filter((update) => update !== null);
 
             // Adding lowercase chain names for case insensitivity
-            chains.forEach((destination, i) => {
+            filteredChains.forEach((destination, i) => {
                 if (destination.toLowerCase() !== destination) {
-                    chains.push(destination.toLowerCase());
+                    filteredChains.push(destination.toLowerCase());
                     gasUpdates.push(gasUpdates[i]);
                 }
             });
 
-            console.log({ chains, gasUpdates });
+            const tx = await gasService.updateGasInfo(filteredChains, gasUpdates, gasOptions);
 
-            const tx = await gasService.updateGasInfo(chains, gasUpdates, gasOptions);
-
-            printInfo('Call updateGasInfo', tx.hash);
+            printInfo('Call updateGasInfo with following chains', filteredChains);
+            printInfo('TX', tx.hash);
 
             const receipt = await tx.wait(chain.confirmations);
 
@@ -225,3 +206,5 @@ if (require.main === module) {
 
     program.parse();
 }
+
+exports.getGasUpdates = getGasUpdates;
