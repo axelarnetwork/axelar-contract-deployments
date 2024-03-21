@@ -122,7 +122,10 @@
         "blobBaseFee": 50187563959
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      "approxFinalityWaitTime": 40,
+      "gasOptions": {
+        "blobBaseFee": 50187563959
+      }
     },
     "avalanche": {
       "name": "Avalanche",
@@ -1505,7 +1508,8 @@
       "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
-        "gasLimit": 8000000
+        "gasLimit": 8000000,
+        "gasEstimationType": 1
       },
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
@@ -1621,7 +1625,8 @@
       "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
-        "gasLimit": 8000000
+        "gasLimit": 8000000,
+        "gasEstimationType": 1
       },
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
