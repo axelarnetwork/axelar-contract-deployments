@@ -112,7 +112,10 @@
         "api": "https://api-goerli.etherscan.io/api"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      "approxFinalityWaitTime": 40,
+      "gasOptions": {
+        "blobBaseFee": 50187563959
+      }
     },
     "avalanche": {
       "name": "Avalanche",
@@ -1439,7 +1442,8 @@
         "api": "https://api-sepolia.etherscan.io/api"
       },
       "gasOptions": {
-        "gasLimit": 8000000
+        "gasLimit": 8000000,
+        "blobBaseFee": 50187563959
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 40
@@ -1755,7 +1759,8 @@
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
       "gasOptions": {
-        "gasLimit": 8000000
+        "gasLimit": 8000000,
+        "gasEstimationType": 1
       },
       "confirmations": 3,
       "explorer": {
@@ -1863,7 +1868,8 @@
       "rpc": "https://sepolia.base.org",
       "tokenSymbol": "ETH",
       "gasOptions": {
-        "gasLimit": 8000000
+        "gasLimit": 8000000,
+        "gasEstimationType": 1
       },
       "confirmations": 2,
       "explorer": {
@@ -2186,6 +2192,7 @@
     "rpc": "https://rpc-axelar-testnet.imperator.co:443",
     "lcd": "https://lcd-axelar-testnet.imperator.co:443",
     "grpc": "grpc-axelar-testnet.imperator.co:2062",
-    "tokenSymbol": "AXL"
+    "tokenSymbol": "AXL",
+    "api": "https://testnet.api.axelarscan.io"
   }
 }
