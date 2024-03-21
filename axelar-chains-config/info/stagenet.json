@@ -86,7 +86,10 @@
         "api": "https://api-goerli.etherscan.io/api"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      "approxFinalityWaitTime": 40,
+      "gasOptions": {
+        "blobBaseFee": 50187563959
+      }
     },
     "avalanche": {
       "name": "Avalanche",
@@ -761,7 +764,8 @@
         "api": "https://api-goerli-optimism.etherscan.io/api"
       },
       "gasOptions": {
-        "gasLimit": 5000000
+        "gasLimit": 5000000,
+        "gasEstimationType": 1
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 25
@@ -847,7 +851,8 @@
         "api": "https://api-goerli.basescan.org/api"
       },
       "gasOptions": {
-        "gasLimit": 5000000
+        "gasLimit": 5000000,
+        "gasEstimationType": 1
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 30
@@ -1016,7 +1021,8 @@
       },
       "gasOptions": {
         "maxFeePerGas": 110000000,
-        "maxPriorityFeePerGas": 100000000
+        "maxPriorityFeePerGas": 100000000,
+        "blobBaseFee": 50187563959
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 40
@@ -1162,6 +1168,7 @@
     "rpc": "",
     "lcd": "",
     "grpc": "",
-    "tokenSymbol": "AXL"
+    "tokenSymbol": "AXL",
+    "api": "https://testnet.api.axelarscan.io"
   }
 }
