@@ -12,6 +12,7 @@ const {
     printInfo,
     printWalletInfo,
     printWarn,
+    printError,
     mainProcessor,
     prompt,
     getContractJSON,
