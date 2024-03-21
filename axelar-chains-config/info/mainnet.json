@@ -1434,7 +1434,7 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 25,
-      "gasOptions": {
+      "onchainGasEstimate": {
         "gasEstimationType": 1
       }
     },
@@ -1697,7 +1697,7 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 30,
-      "gasOptions": {
+      "onchainGasEstimate": {
         "gasEstimationType": 1
       }
     },

@@ -123,7 +123,7 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 40,
-      "gasOptions": {
+      "onchainGasEstimate": {
         "blobBaseFee": 50187563959
       }
     },
@@ -1508,7 +1508,10 @@
       "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
-        "gasLimit": 8000000,
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "chainName": "optimism",
         "gasEstimationType": 1
       },
       "onchainGasEstimate": {
@@ -1625,7 +1628,10 @@
       "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
-        "gasLimit": 8000000,
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "chainName": "base",
         "gasEstimationType": 1
       },
       "onchainGasEstimate": {
