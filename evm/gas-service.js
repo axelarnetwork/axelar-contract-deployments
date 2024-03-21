@@ -34,7 +34,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
         isNonEmptyStringArray: { destinationChains },
     });
 
-    return Promise.all(
+    let gasUpdates = Promise.all(
         destinationChains.map(async (destinationChain) => {
             const destinationConfig = config.chains[destinationChain];
 
@@ -45,8 +45,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 return null;
             }
 
-            const { axelarId, onchainGasEstimate: { chainName = axelarId, gasEstimationType = 0, blobBaseFee = 0 } = {} } =
-                destinationConfig;
+            const { axelarId, onchainGasEstimate: { gasEstimationType = 0, blobBaseFee = 0 } = {} } = destinationConfig;
 
             let data;
 
@@ -92,11 +91,51 @@ async function getGasUpdates(config, env, chain, destinationChains) {
             const relativeBlobBaseFee = FixedNumber.from(parseFloat(blobBaseFee)).mulUnsafe(gasPriceRatio);
 
             return {
-                chainName,
+                chain: destinationChain,
                 gasInfo: [gasEstimationType, axelarBaseFee, relativeGasPrice, relativeBlobBaseFee],
             };
         }),
     );
+
+    gasUpdates = gasUpdates.filter((update) => update !== null);
+
+    // Adding lowercase chain names for case insensitivity
+    gasUpdates.forEach((update) => {
+        const { chain: destination, gasInfo } = update;
+        const { axelarId, onchainGasEstimate: { chainName } = {} } = config.chains[destination];
+
+        update.chain = axelarId;
+
+        // Adding lowercase chain names for case insensitivity
+        if (axelarId.toLowerCase() !== axelarId) {
+            gasUpdates.push({
+                chain: axelarId.toLowerCase(),
+                gasInfo,
+            });
+        }
+
+        // Adding a duplicate entry for the specified chain name if it is different from axelarId
+        // Allows to have `ethereum` entry for `ethereum-sepolia` chain
+        if (chainName && chainName !== axelarId) {
+            gasUpdates.push({
+                chain: chainName,
+                gasInfo,
+            });
+
+            // Adding lowercase chain names for case insensitivity
+            if (chainName.toLowerCase() !== chainName) {
+                gasUpdates.push({
+                    chain: chainName.toLowerCase(),
+                    gasInfo,
+                });
+            }
+        }
+    });
+
+    return {
+        chainsToUpdate: gasUpdates.map(({ chainName }) => chainName),
+        gasInfoUpdates: gasUpdates.map(({ gasInfo }) => gasInfo),
+    };
 }
 
 function printFailedChainUpdates() {
@@ -171,28 +210,13 @@ async function processCommand(config, chain, options) {
                 isNonEmptyStringArray: { chains },
             });
 
-            let gasUpdates = await getGasUpdates(config, env, chain, chains);
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
 
-            gasUpdates = gasUpdates.filter((update) => update !== null);
-
-            // Adding lowercase chain names for case insensitivity
-            gasUpdates.forEach(({ chainName, gasInfo }) => {
-                if (chainName.toLowerCase() !== chainName) {
-                    gasUpdates.push({
-                        chainName: chainName.toLowerCase(),
-                        gasInfo,
-                    });
-                }
-            });
-
-            const filteredChains = gasUpdates.map(({ chainName }) => chainName);
-            const gasInfoUpdates = gasUpdates.map(({ gasInfo }) => gasInfo);
-
-            if (prompt(`Update gas info for following chains ${filteredChains}?`, yes)) {
+            if (prompt(`Update gas info for following chains ${chainsToUpdate}?`, yes)) {
                 return;
             }
 
-            const tx = await gasService.updateGasInfo(filteredChains, gasInfoUpdates, gasOptions);
+            const tx = await gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions);
 
             printInfo('TX', tx.hash);
 

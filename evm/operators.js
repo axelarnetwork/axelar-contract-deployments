@@ -250,29 +250,14 @@ async function processCommand(config, chain, options) {
                 isAddress: { target },
             });
 
-            let gasUpdates = await getGasUpdates(config, env, chain, chains);
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
 
-            gasUpdates = gasUpdates.filter((update) => update !== null);
-
-            // Adding lowercase chain names for case insensitivity
-            gasUpdates.forEach(({ chainName, gasInfo }) => {
-                if (chainName.toLowerCase() !== chainName) {
-                    gasUpdates.push({
-                        chainName: chainName.toLowerCase(),
-                        gasInfo,
-                    });
-                }
-            });
-
-            const filteredChains = gasUpdates.map(({ chainName }) => chainName);
-            const gasInfoUpdates = gasUpdates.map(({ gasInfo }) => gasInfo);
-
-            if (prompt(`Update gas info for following chains ${filteredChains}?`, yes)) {
+            if (prompt(`Update gas info for following chains ${chainsToUpdate}?`, yes)) {
                 return;
             }
 
             const gasServiceInterface = new Interface(IAxelarGasService.abi);
-            const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [filteredChains, gasInfoUpdates]);
+            const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
 
             try {
                 const tx = await operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions);

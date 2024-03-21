@@ -1766,6 +1766,7 @@
       },
       "onchainGasEstimate": {
         "chainName": "optimism",
+        "l1ChainName": "ethereum",
         "gasEstimationType": 1
       },
       "confirmations": 3,
@@ -1878,6 +1879,7 @@
       },
       "onchainGasEstimate": {
         "chainName": "base",
+        "l1ChainName": "ethereum",
         "gasEstimationType": 1
       },
       "confirmations": 2,
