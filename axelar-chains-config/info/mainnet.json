@@ -1435,6 +1435,7 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 25,
       "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
         "gasEstimationType": 1
       }
     },
@@ -1698,6 +1699,7 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 30,
       "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
         "gasEstimationType": 1
       }
     },
