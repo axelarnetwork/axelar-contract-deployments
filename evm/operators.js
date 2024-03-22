@@ -17,7 +17,8 @@ const {
     prompt,
     getGasOptions,
     mainProcessor,
-    validateParameters, getContractJSON,
+    validateParameters,
+    getContractJSON,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getGasUpdates, printFailedChainUpdates } = require('./gas-service');
