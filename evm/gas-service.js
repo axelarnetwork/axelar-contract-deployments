@@ -140,8 +140,7 @@ function printFailedChainUpdates() {
 }
 
 async function processCommand(config, chain, options) {
-    const { env, contractName, address, action, privateKey, chains, destinationChain, destinationAddress, yes } =
-        options;
+    const { env, contractName, address, action, privateKey, chains, destinationChain, destinationAddress, yes } = options;
     const executionGasLimit = parseInt(options.executionGasLimit);
 
     const contracts = chain.contracts;
@@ -188,9 +187,25 @@ async function processCommand(config, chain, options) {
 
             const payload = options.payload || '0x';
 
+            const api = config.axelar.axelarscanApi;
+
+            printInfo(`Estimating cross-chain gas fee from ${chain.axelarId} to ${destinationChain}`);
+
+            if (api) {
+                const estimate = await httpPost(`${api}/gmp/estimateGasFee`, {
+                    sourceChain: chain.axelarId,
+                    destinationChain,
+                    sourceTokenAddress: AddressZero,
+                    gasLimit: executionGasLimit,
+                    executeData: payload,
+                });
+
+                printInfo('AxelarScan estimate ', estimate);
+            }
+
             const gasEstimate = await gasService.estimateGasFee(destinationChain, destinationAddress, payload, executionGasLimit);
 
-            printInfo('Gas Estimate is:', gasEstimate.toString());
+            printInfo('GasService estimate ', gasEstimate.toString());
             printInfo('-'.repeat(50));
 
             break;
