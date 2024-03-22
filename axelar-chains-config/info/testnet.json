@@ -2178,6 +2178,25 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 60
+    },
+    "berachain": {
+      "name": "Berachain",
+      "id": "berachain",
+      "axelarId": "berachain",
+      "chainId": 80085,
+      "rpc": "https://rpc.ankr.com/berachain_testnet",
+      "tokenSymbol": "BERA",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "confirmations": 2,
+      "explorer": {
+        "name": "Beratrail",
+        "url": "https://artio.beratrail.io/",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/80085/etherscan/api/"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     }
   },
   "axelar": {
