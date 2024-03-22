@@ -66,6 +66,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
 
             const {
                 source_base_fee: sourceBaseFee,
+                source_express_fee: { total: sourceExpressFee },
                 source_token: {
                     gas_price_in_units: { value: gasPrice },
                     token_price: { usd: srcTokenPrice },
@@ -78,13 +79,14 @@ async function getGasUpdates(config, env, chain, destinationChains) {
             } = data.result;
 
             const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals)).toString();
+            const expressFee = Math.ceil(parseFloat(sourceExpressFee) * Math.pow(10, decimals)).toString();
             const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier)).toString();
             const gasPriceRatio = parseFloat(destinationTokenPrice) / parseFloat(srcTokenPrice);
             const relativeBlobBaseFee = Math.ceil(blobBaseFee * gasPriceRatio).toString();
 
             return {
                 chain: destinationChain,
-                gasInfo: [gasEstimationType, axelarBaseFee, relativeGasPrice, relativeBlobBaseFee],
+                gasInfo: [gasEstimationType, axelarBaseFee, expressFee, relativeGasPrice, relativeBlobBaseFee],
             };
         }),
     );
@@ -234,7 +236,7 @@ async function processCommand(config, chain, options) {
                 printInfo('AxelarScan estimate ', estimate);
             }
 
-            const gasEstimate = await gasService.estimateGasFee(destinationChain, destinationAddress, payload, executionGasLimit);
+            const gasEstimate = await gasService.estimateGasFee(destinationChain, destinationAddress, payload, executionGasLimit, isExpress);
 
             printInfo('GasService estimate ', gasEstimate.toString());
             printInfo('-'.repeat(50));
@@ -249,7 +251,7 @@ async function processCommand(config, chain, options) {
 
             const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
 
-            if (prompt(`Update gas info for following chains ${chainsToUpdate}?`, yes)) {
+            if (prompt(`Update gas info for following chains ${chainsToUpdate.join(', ')}?`, yes)) {
                 return;
             }
 
@@ -458,6 +460,7 @@ if (require.main === module) {
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'Destination contract address'));
     program.addOption(new Option('--payload <payload>', 'Payload for the contract call').env('PAYLOAD'));
     program.addOption(new Option('--executionGasLimit <executionGasLimit>', 'Execution gas limit'));
+    program.addOption(new Option('--isExpress', 'Estimate express gas fee'));
 
     // options for updateGasInfo
     program.addOption(new Option('--chains <chains...>', 'Chain names'));
