@@ -2195,7 +2195,10 @@
         "url": "https://artio.beratrail.io/",
         "api": "https://api.routescan.io/v2/network/testnet/evm/80085/etherscan/api/"
       },
-      "contracts": {},
+      "contracts": {
+        "AxelarGateway": {},
+        "AxelarGasService": {}
+      },
       "finality": "finalized",
       "approxFinalityWaitTime": 1
     }
