@@ -205,7 +205,13 @@ async function processCommand(config, chain, options) {
                 printInfo('AxelarScan estimate ', estimate);
             }
 
-            const gasEstimate = await gasService.estimateGasFee(destinationChain, destinationAddress, payload, executionGasLimit, isExpress);
+            const gasEstimate = await gasService.estimateGasFee(
+                destinationChain,
+                destinationAddress,
+                payload,
+                executionGasLimit,
+                isExpress,
+            );
 
             printInfo('GasService estimate ', gasEstimate.toString());
             printInfo('-'.repeat(50));
