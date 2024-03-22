@@ -74,10 +74,10 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 execute_gas_multiplier: multiplier = 1.1,
             } = data.result;
 
-            const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals));
-            const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier));
+            const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals)).toString();
+            const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier)).toString();
             const gasPriceRatio = parseFloat(destinationTokenPrice) / parseFloat(srcTokenPrice);
-            const relativeBlobBaseFee = Math.ceil(blobBaseFee * gasPriceRatio);
+            const relativeBlobBaseFee = Math.ceil(blobBaseFee * gasPriceRatio).toString();
 
             return {
                 chain: destinationChain,
