@@ -251,7 +251,7 @@ async function processCommand(config, chain, options) {
 
             const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
 
-            if (prompt(`Update gas info for following chains ${chainsToUpdate}?`, yes)) {
+            if (prompt(`Update gas info for following chains ${chainsToUpdate.join(', ')}?`, yes)) {
                 return;
             }
 
