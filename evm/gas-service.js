@@ -36,7 +36,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
         isNonEmptyStringArray: { destinationChains },
     });
 
-    let gasUpdates = Promise.all(
+    let gasUpdates = await Promise.all(
         destinationChains.map(async (destinationChain) => {
             const destinationConfig = config.chains[destinationChain];
 
@@ -125,7 +125,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
     });
 
     return {
-        chainsToUpdate: gasUpdates.map(({ chainName }) => chainName),
+        chainsToUpdate: gasUpdates.map(({ chain }) => chain),
         gasInfoUpdates: gasUpdates.map(({ gasInfo }) => gasInfo),
     };
 }
@@ -220,7 +220,8 @@ async function processCommand(config, chain, options) {
 
             const gasEstimate = await gasService.estimateGasFee(destinationChain, destinationAddress, payload, executionGasLimit);
 
-            printInfo('Gas Estimate', gasEstimate.toString());
+            printInfo('Gas Estimate is:', gasEstimate.toString());
+            printInfo('-'.repeat(50));
 
             break;
         }

@@ -17,12 +17,10 @@ const {
     prompt,
     getGasOptions,
     mainProcessor,
-    validateParameters,
+    validateParameters, getContractJSON,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getGasUpdates, printFailedChainUpdates } = require('./gas-service');
-const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
-const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
 
 async function processCommand(config, chain, options) {
     const {
@@ -32,11 +30,6 @@ async function processCommand(config, chain, options) {
         action,
         privateKey,
         args,
-
-        chains,
-
-        yes,
-    } = options;
 
         chains,
 
@@ -236,7 +229,7 @@ async function processCommand(config, chain, options) {
                 return;
             }
 
-            const gasServiceInterface = new Interface(IAxelarGasService.abi);
+            const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
             const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
 
             try {
@@ -289,7 +282,7 @@ if (require.main === module) {
     program.addOption(new Option('--ignoreError', 'Ignore errors and proceed to next chain'));
 
     // options for updateGasInfo
-    program.addOption(new Option('--chains <chains...>', 'Chain names').makeOptionMandatory(false));
+    program.addOption(new Option('--chains <chains...>', 'Chain names'));
 
     program.action((options) => {
         main(options);
