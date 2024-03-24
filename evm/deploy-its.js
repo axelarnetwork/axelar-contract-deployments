@@ -3,7 +3,7 @@ const {
     Wallet,
     Contract,
     getDefaultProvider,
-    utils: { defaultAbiCoder, isAddress },
+    utils: { defaultAbiCoder, isAddress, keccak256 },
 } = ethers;
 
 const {
@@ -136,6 +136,7 @@ async function deployAll(config, wallet, chain, options) {
     const deployments = {
         tokenManagerDeployer: {
             name: 'Token Manager Deployer',
+            contractName: 'TokenManagerDeployer',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -151,6 +152,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         interchainToken: {
             name: 'Interchain Token',
+            contractName: 'InterchainToken',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -166,6 +168,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         interchainTokenDeployer: {
             name: 'Interchain Token Deployer',
+            contractName: 'InterchainTokenDeployer',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -181,6 +184,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         tokenManager: {
             name: 'Token Manager',
+            contractName: 'TokenManager',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -196,6 +200,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         tokenHandler: {
             name: 'Token Handler',
+            contractName: 'TokenHandler',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -211,6 +216,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         implementation: {
             name: 'Interchain Token Service Implementation',
+            contractName: 'InterchainTokenService',
             async deploy() {
                 const args = [
                     contractConfig.tokenManagerDeployer,
@@ -239,6 +245,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         address: {
             name: 'Interchain Token Service Proxy',
+            contractName: 'InterchainProxy',
             async deploy() {
                 const operatorAddress = options.operatorAddress || wallet.address;
 
@@ -265,6 +272,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         interchainTokenFactoryImplementation: {
             name: 'Interchain Token Factory Implementation',
+            contractName: 'InterchainTokenFactory',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -280,6 +288,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         interchainTokenFactory: {
             name: 'Interchain Token Factory Proxy',
+            contractName: 'InterchainProxy',
             async deploy() {
                 const args = [itsFactoryContractConfig.implementation, wallet.address, '0x'];
                 printInfo('ITS Factory Proxy args', args);
@@ -301,11 +310,12 @@ async function deployAll(config, wallet, chain, options) {
     for (const key in deployments) {
         if (skipExisting && contractConfig[key]) continue;
 
-        if (key !== 'implementation') {
+        const deployment = deployments[key];
+
+        // check if key is in list
+        if (!['TokenManager', 'TokenHandler', 'InterchainTokenFactory', 'InterchainTokenService'].includes(deployment.contractName)) {
             continue;
         }
-
-        const deployment = deployments[key];
 
         if (key === 'address' && options.reuseProxy) {
             printInfo(`Reusing ${deployment.name} deployment at ${contractConfig.address}`);
@@ -320,6 +330,9 @@ async function deployAll(config, wallet, chain, options) {
         printInfo(`Deploying ${deployment.name}`);
 
         const contract = await deployment.deploy();
+        // const contract = getContractJSON(deployment.contractName, artifactPath);
+        // printInfo('Bytecode hash', keccak256(contract.bytecode));
+        // continue;
 
         if (key === 'interchainTokenFactoryImplementation') {
             itsFactoryContractConfig.implementation = contract.address;
