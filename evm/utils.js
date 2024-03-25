@@ -956,7 +956,7 @@ function getContractPath(contractName, projectRoot = '') {
     const searchDirs = [
         path.join(projectRoot, 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
         path.join(projectRoot, 'axelar-cgp-solidity', 'artifacts', 'contracts'),
-        path.join(__dirname, '..', '..', 'interchain-token-service', 'artifacts', 'contracts'),
+        path.join(projectRoot, 'interchain-token-service', 'artifacts', 'contracts'),
     ];
 
     for (const dir of searchDirs) {
