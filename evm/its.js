@@ -252,8 +252,7 @@ async function processCommand(config, chain, options) {
                 isString: { destinationChain },
                 isValidAddress: { tokenAddress },
                 isValidCalldata: { operator },
-                isValidNumber: { gasValue },
-                isValidNumber: { tokenManagerType },
+                isValidNumber: { gasValue, tokenManagerType },
             });
 
             isValidDestinationChain(config, destinationChain);

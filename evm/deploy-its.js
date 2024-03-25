@@ -3,7 +3,7 @@ const {
     Wallet,
     Contract,
     getDefaultProvider,
-    utils: { defaultAbiCoder, isAddress, keccak256 },
+    utils: { defaultAbiCoder, isAddress },
 } = ethers;
 
 const {
@@ -314,7 +314,7 @@ async function deployAll(config, wallet, chain, options) {
 
         // When upgrading/reusing proxy, avoid re-deploying the proxy and the interchain token contract
         if (options.reuseProxy && ['InterchainToken', 'InterchainProxy'].includes(deployment.contractName)) {
-            printInfo(`Reusing ${deployment.name} deployment for contract ${deployment.contractName} at ${contractConfig[key]}`)
+            printInfo(`Reusing ${deployment.name} deployment for contract ${deployment.contractName} at ${contractConfig[key]}`);
             continue;
         }
 
