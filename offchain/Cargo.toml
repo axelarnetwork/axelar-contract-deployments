@@ -37,6 +37,7 @@ thiserror = "1"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 tokio = { version = "1.34.0", features = ["rt", "rt-multi-thread", "macros"] }
 tokio-stream = "0.1.14"
+tokio-util = "0.7"
 toml = "0.8.10"
 tonic = "0.10.2"
 tracing = "0.1"

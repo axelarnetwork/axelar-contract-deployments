@@ -1,12 +1,18 @@
 use amplifier_api::axl_rpc;
 use anyhow::{Context, Result};
+use futures_util::FutureExt;
 use tokio::{
+    join, pin, select,
     sync::mpsc::{self, Receiver, Sender},
     task::JoinSet,
+    time::{timeout, Duration},
 };
+use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
 
 use crate::{config, sentinel::SolanaSentinel, state::State};
+
+const TIMEOUT: Duration = Duration::from_secs(30);
 
 pub struct Relayer {
     axelar_to_solana: Option<AxelarToSolanaHandler>,
@@ -41,8 +47,18 @@ impl Relayer {
     pub async fn run(self) {
         match (self.axelar_to_solana, self.solana_to_axelar) {
             (Some(axelar_to_solana), Some(solana_to_axelar)) => {
-                tokio::join!(solana_to_axelar.run(), axelar_to_solana.run());
+                let mut set = JoinSet::new();
+                set.spawn(solana_to_axelar.run());
+                set.spawn(axelar_to_solana.run());
+
+                // Await on both transports indefinitely.
+                // Unexpected termination of either transport indicates a non-recoverable error,
+                // requiring the Relayer to shut down.
+                set.join_next().await;
+                error!("One of the transports has terminated unexpectedly");
+                return;
             }
+
             (Some(axelar_to_solana), None) => {
                 axelar_to_solana.run().await;
             }
@@ -130,24 +146,43 @@ impl SolanaToAxelarHandler {
         }
     }
 
-    /// Runs this transport forever, restarting whenever any of the internal actors fail for any reason.
+    /// Runs the Solana-to-Axelar transport indefinitely.
+    ///
+    /// This function sets up the necessary actors (Sentinel and Verifier) and runs them concurrently.
+    /// If either fails for any reason, the entire transport will be restarted.
+    #[tracing::instrument(skip(self), name = "solana-to-axelar-transport")]
     async fn run(self) {
         loop {
             info!("Starting Solana to Axelar transport");
-            let (sentinel, verifier) = SolanaToAxelarHandler::setup_actors(
+            let (sentinel, verifier, cancellation_token) = SolanaToAxelarHandler::setup_actors(
                 &self.sentinel,
                 &self.verifier,
                 self.state.clone(),
             );
 
-            let mut set = JoinSet::new();
-            set.spawn(sentinel.run());
-            set.spawn(verifier.run());
-
-            while let Some(_) = set.join_next().await {
-                error!("Solana to Axelar transport failed. Restarting.");
-                set.abort_all();
+            // Fuse the futures to allow polling of the other future when one is waiting for shutdown.
+            pin! {
+                let sentinel_future = sentinel.run().fuse();
+                let verifier_future = verifier.run().fuse();
             }
+
+            // Run the Sentinel and Verifier concurrently, and wait for the first one to fail.
+            select! {
+                _ = &mut sentinel_future => error!("Solana Sentinel has failed"),
+                _ = &mut verifier_future => error!("Axelar Verifier has failed")
+            }
+
+            // Trigger cancellation and wait for both actors to gracefully shut down, up to `TIMEOUT`.
+            cancellation_token.cancel();
+            tracing::debug!(
+                timeout = TIMEOUT.as_secs(),
+                "Waiting for components to gracefully shutdown"
+            );
+            let _ = join!(
+                timeout(TIMEOUT, sentinel_future),
+                timeout(TIMEOUT, verifier_future)
+            );
+            tracing::warn!("Restarting Solana-to-Axelar transport")
         }
     }
 
@@ -155,20 +190,37 @@ impl SolanaToAxelarHandler {
         sentinel_config: &config::SolanaSentinel,
         _verifier_config: &config::AxelarVerifier,
         state: State,
-    ) -> (SolanaSentinel, VerifierActor) {
+    ) -> (SolanaSentinel, VerifierActor, CancellationToken) {
         // TODO: use config to properly initialize actors
         let (sender, receiver) = mpsc::channel::<axl_rpc::Message>(500); // FIXME: magic number
+
+        // This is the root cancelation token for this transport session.
+        // It is also used to derive child tokens for each subcomponent, so they can manage their own cancelation schedules.
+        // The root token will be cancelled if any subcomponent returns early.
+        let transport_cancelation_token = CancellationToken::new();
+        let sentinel_cancelation_token = transport_cancelation_token.child_token();
+        let verifier_cancelation_token = transport_cancelation_token.child_token();
 
         // Solana Sentinel
         let config::SolanaSentinel {
             gateway_address,
             rpc,
         } = sentinel_config;
-        let sentinel = SolanaSentinel::new(*gateway_address, rpc.clone(), sender, state.clone());
+        let sentinel = SolanaSentinel::new(
+            *gateway_address,
+            rpc.clone(),
+            sender,
+            state.clone(),
+            sentinel_cancelation_token,
+        );
 
         // Axelar Verifier
-        let verifier = VerifierActor { receiver, state };
-        (sentinel, verifier)
+        let verifier = VerifierActor {
+            receiver,
+            state,
+            cancellation_token: verifier_cancelation_token,
+        };
+        (sentinel, verifier, transport_cancelation_token)
     }
 }
 
@@ -181,6 +233,7 @@ impl SolanaToAxelarHandler {
 struct VerifierActor {
     receiver: Receiver<axl_rpc::Message>,
     state: State,
+    cancellation_token: CancellationToken,
 }
 
 impl VerifierActor {

@@ -63,6 +63,7 @@ impl State {
     // Solana Transaction
     //
 
+    #[tracing::instrument(skip(self), err)]
     pub async fn update_solana_transaction(&self, signature: Signature) -> Result<()> {
         let signature = signature.to_string();
         sqlx::query(
@@ -78,6 +79,7 @@ impl State {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self), err, ret)]
     pub async fn get_solana_transaction(&self) -> Result<Option<Signature>> {
         let optional_signature: Option<(String,)> = sqlx::query_as("")
             .bind(SINGLETON_ID)

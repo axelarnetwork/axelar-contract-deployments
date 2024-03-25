@@ -1,3 +1,5 @@
+use self::transaction_scanner::transaction_retriever::TransactionRetrieverError;
+use self::types::TransactionScannerMessage;
 use crate::config::SOLANA_CHAIN_NAME;
 use crate::sentinel::error::SentinelError;
 use crate::sentinel::transaction_scanner::TransactionScanner;
@@ -5,15 +7,17 @@ use crate::sentinel::types::{
     SolanaTransaction,
     TransactionScannerMessage::{Message, Terminated},
 };
-use crate::{state::State, tokio_utils::handle_join_error};
+use crate::state::State;
 use amplifier_api::axl_rpc;
 use gmp_gateway::events::GatewayEvent;
 use gmp_gateway::types::PubkeyWrapper;
 use solana_program::pubkey::Pubkey;
 use solana_sdk::signature::Signature;
 use std::time::Duration;
+use tokio::pin;
 use tokio::sync::mpsc::Sender;
-use tracing::{error, info, trace, warn};
+use tokio_util::sync::CancellationToken;
+use tracing::{error, info, warn};
 use url::Url;
 
 mod error;
@@ -31,6 +35,7 @@ pub struct SolanaSentinel {
     rpc: Url,
     verifier_channel: Sender<axl_rpc::Message>,
     state: State,
+    cancellation_token: CancellationToken,
 }
 
 impl SolanaSentinel {
@@ -39,71 +44,136 @@ impl SolanaSentinel {
         rpc: Url,
         verifier_channel: Sender<axl_rpc::Message>,
         state: State,
+        cancellation_token: CancellationToken,
     ) -> Self {
         Self {
             gateway_address,
             rpc,
             verifier_channel,
             state,
+            cancellation_token,
         }
     }
 
+    /// Tries to run [`SolanaSentinel::work`] forever.
+    /// If it ever returns, signal a cancellation request to all descendant tasks and wait for them
+    /// to finish before returning.
     #[tracing::instrument(name = "solana-sentinel", skip(self))]
     pub async fn run(self) {
         info!("task started");
-        match tokio::spawn(self.work()).await {
-            Ok(Ok(())) => {
-                warn!("worker returned without errors");
+
+        // Keep a copy of the root cancelation token before it is moved.
+        let cancellation_token = self.cancellation_token.clone();
+
+        tokio::select! {
+            _ = cancellation_token.cancelled() => {
+                warn!("cancellation signal received")
             }
-            Ok(Err(sentinel_error)) => {
-                error!(%sentinel_error);
+            error = self.work() => {
+                // Sentinel task should run forever, but it returned with some error.
+                match error {
+
+                    Ok(()) => warn!("worker returned without errors"),
+                    Err(sentinel_error) => error!(%sentinel_error),
+                }
             }
-            Err(join_error) => handle_join_error(join_error),
         };
     }
 
     /// Listens to Gateway program logs and forward them to the Axelar Verifier worker.
+    #[tracing::instrument(skip_all, err)]
     async fn work(self) -> Result<(), SentinelError> {
-        let (transaction_scanner_handle, mut transaction_receiver) = TransactionScanner::start(
+        let (transaction_scanner_future, mut transaction_receiver) = TransactionScanner::setup(
             self.gateway_address,
             self.state.clone(),
             self.rpc.clone(),
             FETCH_SIGNATURES_INTERVAL,
+            self.cancellation_token.child_token(),
         );
+        pin!(transaction_scanner_future);
+
+        // Cancelation routine
+        let cleanup = |error: SentinelError| -> Result<(), SentinelError> {
+            self.cancellation_token.cancel();
+            Err(error)
+        };
 
         // Listens for incoming Solana transactions and process them sequentially to propperly update the
         // latest known transaction signature.
-        // TODO: use recv_many() to increase throughput and register the latest known signature only once per call.
-        while let Some(message) = transaction_receiver.recv().await {
-            let rpc_result = match message {
-                Message(join_handle) => join_handle.await?,
-                Terminated(error) => {
-                    error!(error = %error, "Transaction scanner terminated");
-                    transaction_scanner_handle.abort();
-                    return Err(*error);
-                }
+        loop {
+            // Handling the message within the `tokio::select` scope triggers a compilation error suggesting the
+            // future isn't `Send`. To address this, we assign it to a variable and handle it outside of the
+            // macro's body.
+            let optional_message = tokio::select! {
+                _ = self.cancellation_token.cancelled() => { return cleanup(SentinelError::Stopped); }
+
+                // Advance the TransactionScanner future
+                _ = &mut transaction_scanner_future => { continue }
+
+                // TODO: use recv_many() to increase throughput and register the latest known signature only once per call.
+                message = transaction_receiver.recv() => { message }
             };
 
-            // Resolve the outcome of the fetch transaction RPC call
-            match rpc_result.map_err(|boxed| *boxed) {
-                Err(SentinelError::NonFatal(non_fatal_error)) => {
-                    // Don't halt operation for non-fatal errors
-                    warn!(error = %non_fatal_error, r#type = "non-fatal")
-                }
-                Err(other) => return Err(other),
-                Ok(solana_transaction) => self.process_transaction(solana_transaction).await?,
+            // Unpack the message
+            let Some(message) = optional_message else {
+                warn!(
+                    reason = "transaction scanner channel was closed",
+                    "emitting cancel signal"
+                );
+                return cleanup(SentinelError::TransactionScannerChannelClosed);
+            };
+
+            // Handle the message
+            if let Err(error) = self.process_message(message).await {
+                warn!(reason = %error, "emitting cancel signal");
+                return cleanup(error);
             }
         }
-
-        // This function should never reach this point. If it ever does, return an error.
-        Err(SentinelError::Stopped)
     }
 
+    #[tracing::instrument(skip_all, err)]
+    async fn process_message(
+        &self,
+        message: TransactionScannerMessage,
+    ) -> Result<(), SentinelError> {
+        // Resolve the TransactionScanner message, expecting to obtain a join handle that resolves
+        // into a `SolanaTransaction`.
+        let join_handle = match message {
+            Message(join_handle) => join_handle,
+            Terminated(error) => {
+                warn!(%error, "TransactionScanner terminated");
+                Err(error)?
+            }
+        };
+
+        // Wait for either the join handle to resolve or the cancellation signal.
+        let rpc_result = tokio::select! {
+            _ = self.cancellation_token.cancelled() => return Err(SentinelError::Stopped),
+            res = join_handle => res?
+        };
+
+        // Resolve the outcome of the 'fetch transaction' RPC call
+        match rpc_result {
+            // Don't halt operation for non-fatal errors
+            Err(TransactionRetrieverError::NonFatal(non_fatal_error)) => {
+                warn!(error = %non_fatal_error, r#type = "non-fatal");
+                Ok(())
+            }
+
+            // Fatal errors should interrupt the operation.
+            Err(fatal) => Err(fatal)?,
+
+            // Continue processing the Solana transaction
+            Ok(solana_transaction) => self.process_transaction(solana_transaction).await,
+        }
+    }
+
+    /// Searches for Gateway logs within a `SolanaTransaction` and process each one, in order.
+    #[tracing::instrument(level = "trace", skip_all, fields(solana_transaction = %solana_transaction.signature), err)]
     async fn process_transaction(
         &self,
         solana_transaction: SolanaTransaction,
     ) -> Result<(), SentinelError> {
-        trace!(transaction_sig = %solana_transaction.signature);
         let gateway_events = solana_transaction
             .logs
             .iter()
@@ -138,14 +208,16 @@ impl SolanaSentinel {
                 _ => unimplemented!(),
             };
         }
-
-        // Mark this as the latest seen solana transaction
-        self.state
-            .update_solana_transaction(solana_transaction.signature)
-            .await
-            .map_err(Into::into)
+        Ok(())
     }
 
+    /// Tries to build an `AxelarMessage` and send it to the Axelar Verifier component.
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(transaction_signature, transaction_index),
+        err
+    )]
     async fn handle_gateway_call_contract_event(
         &self,
         transaction_signature: Signature,
@@ -168,8 +240,7 @@ impl SolanaSentinel {
             destination_address: hex::encode(destination_address),
             payload,
         };
-        info!(?message);
-
+        info!(?message, "delivering message to Axelar Verifier");
         self.verifier_channel
             .send(message)
             .await

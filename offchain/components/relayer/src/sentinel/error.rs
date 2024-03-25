@@ -1,8 +1,11 @@
-use crate::sentinel::types::TransactionScannerMessage;
 use solana_client::client_error::ClientError;
-use solana_sdk::signature::{ParseSignatureError, Signature};
 use thiserror::Error;
-use tokio::{sync::mpsc::error::SendError, task::JoinError};
+use tokio::task::JoinError;
+
+use super::transaction_scanner::{
+    signature_scanner::SignatureScannerError, transaction_retriever::TransactionRetrieverError,
+    InternalError,
+};
 
 #[derive(Debug, Error)]
 pub enum SentinelError {
@@ -12,36 +15,38 @@ pub enum SentinelError {
     ByteVecParsing(std::string::FromUtf8Error),
     #[error("Database error - {0}")]
     Database(#[from] sqlx::Error),
-    #[error("Failed to decode base58 string as a Solana signature: {0}")]
-    SignatureParse(#[from] ParseSignatureError),
-    #[error("Failed to send message to Axelar Verifier: {0}")]
-    SendMessageError(String),
-    #[error("Failed to send transaction signature for fetching its details: {0}")]
-    SendSignatureError(#[from] SendError<Signature>),
-    #[error("Failed to send proceesed transaction for event analysis: {0}")]
-    SendTransactionError(#[from] SendError<TransactionScannerMessage>),
-    #[error("Transaction Scanner stopped working unexpectedly without errors")]
-    TransactionScannerStopped,
-    #[error("Failed to await on a solana transaction fetch task")]
-    FetchTransactionTaskJoinError(#[from] JoinError),
-    #[error("Failed to decode solana transaction: {signature}")]
-    TransactionDecode { signature: Signature },
     #[error("Solana Sentinel stopped working unexpectedly without errors")]
     Stopped,
     #[error(transparent)]
-    NonFatal(#[from] NonFatalError),
+    TransactionScanner(#[from] TransactionScannerError),
+    #[error("transaction scanner channel was closed")]
+    TransactionScannerChannelClosed,
+    #[error("Failed to await on a solana transaction fetch task")]
+    FetchTransactionTaskJoinError(#[from] JoinError),
+    #[error("Failed to send message to Axelar Verifier: {0}")]
+    SendMessageError(String),
 }
 
-/// Errors that shouldn't halt the Sentinel.
 #[derive(Error, Debug)]
-pub enum NonFatalError {
-    #[error("Got wrong signature from RPC. Expected: {expected}, received: {received}")]
-    WrongTransactionReceived {
-        expected: Signature,
-        received: Signature,
-    },
-    #[error("Got a transaction without meta attribute: {signature}")]
-    TransactionWithoutMeta { signature: Signature },
-    #[error("Got a transaction without logs: {signature}")]
-    TransactionWithoutLogs { signature: Signature },
+pub enum TransactionScannerError {
+    #[error(transparent)]
+    SignatureScanner(#[from] SignatureScannerError),
+    #[error(transparent)]
+    TransactionRetriever(#[from] TransactionRetrieverError),
+    #[error(transparent)]
+    Internal(#[from] InternalError),
+}
+
+impl From<SignatureScannerError> for SentinelError {
+    fn from(error: SignatureScannerError) -> Self {
+        let transaction_scanner: TransactionScannerError = error.into();
+        SentinelError::TransactionScanner(transaction_scanner)
+    }
+}
+
+impl From<TransactionRetrieverError> for SentinelError {
+    fn from(error: TransactionRetrieverError) -> Self {
+        let transaction_scanner: TransactionScannerError = error.into();
+        SentinelError::TransactionScanner(transaction_scanner)
+    }
 }

@@ -1,6 +1,7 @@
+use crate::sentinel::error::TransactionScannerError;
 use crate::sentinel::types::{SolanaTransaction, TransactionScannerMessage};
-use crate::sentinel::SentinelError;
 use crate::state::State;
+use futures_util::FutureExt;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_client::rpc_client::GetConfirmedSignaturesForAddress2Config;
 use solana_client::rpc_config::RpcTransactionConfig;
@@ -11,10 +12,11 @@ use solana_transaction_status::UiTransactionEncoding;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
+use thiserror::Error;
 use tokio::sync::mpsc::{self, Receiver, Sender};
 use tokio::sync::Semaphore;
-use tokio::task::{self, AbortHandle, JoinHandle};
-use tracing::{error, trace_span, warn, Instrument};
+use tokio_util::sync::CancellationToken;
+use tracing::{error, trace, warn};
 use url::Url;
 
 // TODO: All those contants should be configurable
@@ -22,123 +24,209 @@ const SIGNATURE_CHANNEL_CAPACITY: usize = 1_000;
 const TRANSACTION_CHANNEL_CAPACITY: usize = 1_000;
 const MAX_CONCURRENT_RPC_REQUESTS: usize = 20;
 
+#[derive(Error, Debug)]
+pub enum InternalError {
+    #[error("Transaction scanner received the cancellation signal")]
+    Cancelled,
+}
+
+/// Scans a Solana program for relevant transactions and provide them in a tokio channel.
+///
+/// The operation is orchestrated by two internal worker futures, defined in these modules:
+/// 1. [`signature_scanner`]
+/// 2. [`transaction_retriever`]
+///
+/// [`signature_scanner`] runs in a loop `getConfirmedSignaturesForAddress` Solana RPC endpoint in. As this
+/// method only returns the signatures, they are sent through a private tokio channel to the
+/// [`transaction_retriever`] future, which then spawns a tokio task to fetch the full transaction details for
+/// every incoming signature.
+///
+/// Signatures are processed in chronological order, but calls to `getTransaction` RPC endpoint happen
+/// concurrently. Final values are transmitted back to the caller wrapped in the [`TransactionScannerMessage`]
+/// type, which holds a [`tokio::spawn::JoinHandle`] with the results of the async call to `getTransaction`.
 pub struct TransactionScanner {
-    gateway_address: Pubkey,
+    /// Solana program address to monitor relevant transactions.
+    address: Pubkey,
+    //// Solana RPC endpoint.
     rpc: Url,
+    /// Database handle.
     state: State,
+    /// Results channel used by the Solana Sentinel.
     sender: Sender<TransactionScannerMessage>,
+    /// Wait time before scanning Solana RPC signature ranges in loop
     fetch_signatures_interval: Duration,
+    /// Shutdown signal.
+    cancellation_token: CancellationToken,
 }
 
 impl TransactionScanner {
-    pub fn start(
-        gateway_address: Pubkey,
+    /// Returns a worker future and a receiver channel for polling transactions from a given Solana address.
+    ///
+    /// The returned future represents [`TransactionScanner::run`], which will fetch Solana transactions at a
+    /// specified interval and send `TransactionScannerMessage` events through the returned `Receiver`.
+    ///
+    /// The returned future must be polled regularly, otherwise the receiving channel won't receive any messages.
+    pub fn setup(
+        address: Pubkey,
         state: State,
         rpc: Url,
         fetch_signatures_interval: Duration,
-    ) -> (AbortHandle, Receiver<TransactionScannerMessage>) {
+        cancellation_token: CancellationToken,
+    ) -> (
+        impl std::future::Future,
+        Receiver<TransactionScannerMessage>,
+    ) {
         let (sender, receiver) = mpsc::channel(TRANSACTION_CHANNEL_CAPACITY);
         let worker = TransactionScanner {
-            gateway_address,
+            address,
             rpc,
             state,
             sender,
             fetch_signatures_interval,
-        };
-        let abort = tokio::spawn(async move { worker.run().await }).abort_handle();
-        (abort, receiver)
+            cancellation_token,
+        }
+        .run()
+        .fuse();
+        (worker, receiver)
     }
 
     #[tracing::instrument(name = "transaction-scanner", skip(self))]
-    async fn run(&self) {
+    async fn run(self) {
         let (signature_sender, signature_receiver) =
             mpsc::channel::<Signature>(SIGNATURE_CHANNEL_CAPACITY);
 
-        // Start the pipeline tasks/futures
+        // Start the pipeline long-living futures.
         let signature_scanner = signature_scanner::run(
-            self.gateway_address,
+            self.address,
             self.rpc.clone(),
             self.state.clone(),
             signature_sender,
             self.fetch_signatures_interval,
+            self.cancellation_token.clone(),
         );
 
-        let transaction_retriever =
-            transaction_retriever::run(self.rpc.clone(), signature_receiver, self.sender.clone());
+        let transaction_retriever = transaction_retriever::run(
+            self.rpc.clone(),
+            signature_receiver,
+            self.sender.clone(),
+            self.cancellation_token.clone(),
+        );
 
-        // Both tasks should never terminate, so if the program ever reach this point
-        // it means the operation should be aborted.
-
-        let termination = |error: SentinelError| async {
-            self.sender
-                .send(TransactionScannerMessage::Terminated(Box::new(error)))
+        // Signals cancellation and sends an error message back to the Solana Sentinel.
+        let termination = |error: TransactionScannerError| async {
+            self.cancellation_token.cancel();
+            if let Err(send_error) = self
+                .sender
+                .send(TransactionScannerMessage::Terminated(error))
                 .await
-                .expect("failed to send termination message");
+            {
+                error!(%send_error, "Failed to send an error message back to the sentinel while terminating");
+            };
         };
 
         tokio::select! {
-            res = signature_scanner => {
-                let error = res.unwrap_or(SentinelError::TransactionScannerStopped);
-                termination(error).await;
+            // Listen for the cancellation signal
+            _ = self.cancellation_token.cancelled() => {
+                trace!("cancelled");
+                termination(InternalError::Cancelled.into()).await;
+            }
+
+            error = signature_scanner => {
+                warn!(%error, source="signature-scanner", "terminating");
+                termination(error.into()).await;
             },
-            () = transaction_retriever => {
-                termination(SentinelError::TransactionScannerStopped).await;
+
+            error = transaction_retriever => {
+                warn!(source="signature-scanner", "terminating");
+                termination(error.into()).await;
             }
         };
     }
 }
 
 /// Functions to obtain transaction signatures from Solana RPC.
-mod signature_scanner {
+pub mod signature_scanner {
+    use solana_client::client_error::ClientError;
+    use solana_sdk::signature::ParseSignatureError;
+    use tokio::sync::mpsc::error::SendError;
+    use tracing::trace;
+
     use super::*;
 
+    #[derive(Error, Debug)]
+    pub enum SignatureScannerError {
+        #[error("Signature scanner received the cancellation signal")]
+        Cancelled,
+        #[error("Failed to decode base58 string as a Solana signature: {0}")]
+        SignatureParse(#[from] ParseSignatureError),
+        #[error(transparent)]
+        SolanaClient(#[from] ClientError),
+        #[error("Failed to send transaction signature for fetching its details: {0}")]
+        SendSignatureError(#[from] SendError<Signature>),
+        #[error("Database error - {0}")]
+        Database(#[from] sqlx::Error),
+    }
+
     /// Continously fetches signatures from RPC and pipe them over a channel to further processing.
-    #[tracing::instrument(skip_all)]
-    pub fn run(
-        gateway_address: Pubkey,
+    ///
+    /// # Cancelation Safety
+    ///
+    /// This function is cancel safe. All lost work can be recovered as the task's savepoint is
+    /// sourced from the persistence layer, which remains unchanged in this context.
+    #[tracing::instrument(name = "signature scanner", skip_all)]
+    pub async fn run(
+        address: Pubkey,
         url: Url,
         state: State,
         signature_sender: Sender<Signature>,
         period: Duration,
-    ) -> JoinHandle<SentinelError> {
+        cancellation_token: CancellationToken,
+    ) -> SignatureScannerError {
         let mut interval = tokio::time::interval(period);
         interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        let rpc_client = Arc::new(RpcClient::new(url.to_string()));
 
-        task::spawn(
-            async move {
-                loop {
-                    if let Err(error) = collect_and_process_signatures(
-                        gateway_address,
-                        url.clone(),
-                        state.clone(),
-                        signature_sender.clone(),
-                    )
-                    .await
-                    {
-                        error!(%error);
-                        break error;
-                    };
-                    interval.tick().await;
+        loop {
+            let future = collect_and_process_signatures(
+                address,
+                rpc_client.clone(),
+                state.clone(),
+                signature_sender.clone(),
+            );
+
+            // TODO: Try await for all/max permits from the semaphore, as not to run concurrent with
+            // `transaction_retriever::fetch` tasks
+
+            tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    trace!("cancelled");
+                    return SignatureScannerError::Cancelled
                 }
-            }
-            .instrument(trace_span!("solana-signature-scanner")),
-        )
+
+                res = future => {
+                    if let Err(error) = res {
+                        trace!(%error, "failed to collect signatures");
+                        return error
+                    }
+                }
+
+            };
+            interval.tick().await;
+        }
     }
 
     /// Calls Solana RPC after relevant transaction signatures and send results over a channel.
     #[tracing::instrument(skip_all)]
     async fn collect_and_process_signatures(
-        gateway_address: Pubkey,
-        url: Url,
+        address: Pubkey,
+        rpc_client: Arc<RpcClient>,
         state: State,
         signature_sender: Sender<Signature>,
-    ) -> Result<(), SentinelError> {
-        let rpc_client = RpcClient::new(url.to_string());
-
+    ) -> Result<(), SignatureScannerError> {
         // Collect Signatures until exhaustion
         let last_known_signature: Option<Signature> = state.get_solana_transaction().await?;
         let collected_signatures =
-            fetch_signatures_until_exhaustion(rpc_client, gateway_address, last_known_signature)
+            fetch_signatures_until_exhaustion(rpc_client.clone(), address, last_known_signature)
                 .await?;
 
         // Iterate backwards so oldest signatures are picked up first on the other end.
@@ -148,13 +236,16 @@ mod signature_scanner {
         Ok(())
     }
 
-    /// Calls Solana RPC potentially multiple times until we get all undiscovered transactions.
-    #[tracing::instrument(skip(rpc_client, gateway_address))]
+    /// Fetches all Solana transaction signatures for an address until a specified signature is
+    /// reached or no more transactions are available.
+    #[tracing::instrument(skip(rpc_client, address), err)]
     async fn fetch_signatures_until_exhaustion(
-        rpc_client: RpcClient,
-        gateway_address: Pubkey,
+        rpc_client: Arc<RpcClient>,
+        address: Pubkey,
         until: Option<Signature>,
-    ) -> Result<Vec<Signature>, SentinelError> {
+    ) -> Result<Vec<Signature>, SignatureScannerError> {
+        /// This is the max number of signatures returned by the Solana RPC. It is used as an
+        /// indicator to tell if we need to continue querying the RPC for more signatures.
         const LIMIT: usize = 1_000;
 
         // Helper function to setup the configuration at each loop
@@ -169,7 +260,7 @@ mod signature_scanner {
         let mut last_visited: Option<Signature> = None;
         loop {
             let batch = rpc_client
-                .get_signatures_for_address_with_config(&gateway_address, config(last_visited))
+                .get_signatures_for_address_with_config(&address, config(last_visited))
                 .await?;
 
             // Get the last (oldest) signature on this batch or break if it is empty
@@ -195,50 +286,112 @@ mod signature_scanner {
 }
 
 /// Functions to resolve transaction signatures into full transactions, with metadata.
-mod transaction_retriever {
+pub mod transaction_retriever {
     use super::*;
-    use crate::sentinel::error::NonFatalError;
-    use futures_util::TryFutureExt;
+    use solana_client::client_error::ClientError;
     use solana_transaction_status::{
         option_serializer::OptionSerializer, EncodedConfirmedTransactionWithStatusMeta,
     };
-    use tracing::{debug, info};
+    use tokio::sync::{mpsc::error::SendError, AcquireError};
     use TransactionScannerMessage::Message;
 
-    /// For each incoming transaction signature, spawns a Tokio task to fetch the full transaction
-    /// information. Tasks wait for a semaphore permit before calling the Solana RPC endpoint.
+    #[derive(Error, Debug)]
+    pub enum TransactionRetrieverError {
+        #[error("Transaction Retriever received the cancellation signal")]
+        Cancelled,
+        #[error("Signature receiver channel closed unexpectedly")]
+        SignatureReceiverChannelClosed,
+        #[error("Failed to decode solana transaction: {signature}")]
+        TransactionDecode { signature: Signature },
+        #[error(transparent)]
+        NonFatal(#[from] NonFatalError),
+        /// This variant's value needs to be boxed to prevent a recursive type definition, since this error is
+        /// also part of [`TransactionScannerMessage`].
+        #[error("Failed to send proceesed transaction for event analysis: {0}")]
+        SendTransactionError(#[from] Box<SendError<TransactionScannerMessage>>),
+        #[error(transparent)]
+        SolanaClient(#[from] ClientError),
+        #[error("Failed to acquire a semaphore permit")]
+        SemaphoreClosed(#[from] AcquireError),
+    }
+
+    /// Errors that shouldn't halt the Sentinel.
+    #[derive(Error, Debug)]
+    pub enum NonFatalError {
+        #[error("Got wrong signature from RPC. Expected: {expected}, received: {received}")]
+        WrongTransactionReceived {
+            expected: Signature,
+            received: Signature,
+        },
+        #[error("Got a transaction without meta attribute: {signature}")]
+        TransactionWithoutMeta { signature: Signature },
+        #[error("Got a transaction without logs: {signature}")]
+        TransactionWithoutLogs { signature: Signature },
+    }
+
+    /// Asynchronously processes incoming transaction signatures by spawning Tokio tasks to
+    /// retrieve full transaction details.
+    ///
+    /// Tasks wait acquiring a semaphore permit before reaching the Solana RPC endpoint.
+    ///
+    /// Successfully fetched transactions are sent through a channel for
+    /// further processing.
+    ///
+    /// # Cancellation Safety
+    ///
+    /// This function is cancel safe. All lost work can be recovered as the task's savepoint is
+    /// sourced from the persistence layer, which remains unchanged in this context.
+    #[tracing::instrument(name = "transaction-retriever", skip_all)]
     pub async fn run(
         url: Url,
         mut signature_receiver: Receiver<Signature>,
         transaction_sender: Sender<TransactionScannerMessage>,
-    ) {
+        cancellation_token: CancellationToken,
+    ) -> TransactionRetrieverError {
         let rpc_client = Arc::new(RpcClient::new(url.to_string()));
         let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_RPC_REQUESTS));
+        let build_future = |signature: Signature| {
+            fetch_with_permit(
+                signature,
+                rpc_client.clone(),
+                semaphore.clone(),
+                cancellation_token.clone(),
+            )
+        };
 
-        while let Some(signature) = signature_receiver.recv().await {
-            let future = fetch_with_permit(signature, rpc_client.clone(), semaphore.clone())
-                .map_err(Box::new);
-            let task = task::spawn(future);
-            transaction_sender
-                .send(Message(task))
-                .await
-                .expect("failed to send task");
+        loop {
+            tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    trace!("cancelled");
+                    return TransactionRetrieverError::Cancelled
+                }
+                optional_message = signature_receiver.recv() => {
+                    let Some(signature) =  optional_message else {
+                        return TransactionRetrieverError::SignatureReceiverChannelClosed;
+                    };
+                    trace!(%signature);
+                    let future = build_future(signature);
+                    let task = tokio::task::spawn(future);
+                    if let Err(err) = transaction_sender.send(Message(task)).await {
+                        return Box::new(err).into();
+                    }
+                }
+            }
         }
     }
 
-    /// Calls `getTransactionWithConfig` RPC method and returns relevant fields of a Solana
-    /// transaction.
+    /// Fetches a Solana transaction by calling the `getTransactionWithConfig` RPC method with its
+    /// signature and decoding the result.
+    #[tracing::instrument(skip(rpc_client))]
     async fn fetch(
         signature: Signature,
         rpc_client: Arc<RpcClient>,
-    ) -> Result<SolanaTransaction, SentinelError> {
+    ) -> Result<SolanaTransaction, TransactionRetrieverError> {
         let config = RpcTransactionConfig {
             encoding: Some(UiTransactionEncoding::Base64),
             commitment: Some(CommitmentConfig::confirmed()),
             max_supported_transaction_version: Some(0),
         };
-
-        debug!(%signature, "fetching transaction");
 
         let EncodedConfirmedTransactionWithStatusMeta {
             block_time,
@@ -248,12 +401,10 @@ mod transaction_retriever {
             .get_transaction_with_config(&signature, config)
             .await?;
 
-        info!(%signature, "fetched transaction");
-
         let decoded_transaction = transaction_with_meta
             .transaction
             .decode()
-            .ok_or_else(|| SentinelError::TransactionDecode { signature })?;
+            .ok_or_else(|| TransactionRetrieverError::TransactionDecode { signature })?;
 
         // Check: This is the transaction we asked
         if !decoded_transaction.signatures.contains(&signature) {
@@ -282,15 +433,27 @@ mod transaction_retriever {
         })
     }
 
-    /// Calls the [fetch] function whenever a semaphore permit is acquired.
+    /// Fetches a Solana transaction for the given signature once a semaphore permit is acquired.
+    ///
+    /// # Cancellation Safety
+    ///
+    /// This function is cancel safe. It will return without reaching the Solana RPC endpoint if a
+    /// cancellation signal is received while waiting for a semaphore permit.
     async fn fetch_with_permit(
         signature: Signature,
         rpc_client: Arc<RpcClient>,
         semaphore: Arc<Semaphore>,
-    ) -> Result<SolanaTransaction, SentinelError> {
-        // Unwrap: This can return an error if the semaphore is closed, but we
-        // never close it, so this error can never happen.
-        let _permit = semaphore.clone().acquire_owned().await.unwrap();
-        fetch(signature, rpc_client).await
+        cancellation_token: CancellationToken,
+    ) -> Result<SolanaTransaction, TransactionRetrieverError> {
+        tokio::select! {
+            _ = cancellation_token.cancelled() => {
+                Err(TransactionRetrieverError::Cancelled)
+            }
+
+            permit = semaphore.acquire_owned() => {
+                let _permit = permit?;
+                fetch(signature, rpc_client).await
+            }
+        }
     }
 }
