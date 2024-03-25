@@ -312,27 +312,15 @@ async function deployAll(config, wallet, chain, options) {
 
         const deployment = deployments[key];
 
-        // check if key is in list
-        if (!['TokenManager', 'TokenHandler', 'InterchainTokenFactory', 'InterchainTokenService'].includes(deployment.contractName)) {
-            continue;
-        }
-
-        if (key === 'address' && options.reuseProxy) {
-            printInfo(`Reusing ${deployment.name} deployment at ${contractConfig.address}`);
-            continue;
-        }
-
-        if (key === 'interchainTokenFactory' && options.reuseProxy) {
-            printInfo(`Reusing ${deployment.name} deployment at ${itsFactoryContractConfig.address}`);
+        // When upgrading/reusing proxy, avoid re-deploying the proxy and the interchain token contract
+        if (options.reuseProxy && ['InterchainToken', 'InterchainProxy'].includes(deployment.contractName)) {
+            printInfo(`Reusing ${deployment.name} deployment for contract ${deployment.contractName} at ${contractConfig[key]}`)
             continue;
         }
 
         printInfo(`Deploying ${deployment.name}`);
 
         const contract = await deployment.deploy();
-        // const contract = getContractJSON(deployment.contractName, artifactPath);
-        // printInfo('Bytecode hash', keccak256(contract.bytecode));
-        // continue;
 
         if (key === 'interchainTokenFactoryImplementation') {
             itsFactoryContractConfig.implementation = contract.address;

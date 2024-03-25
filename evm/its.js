@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256 },
+    utils: { hexZeroPad, toUtf8Bytes, keccak256, defaultAbiCoder },
     BigNumber,
     constants: { AddressZero },
     Contract,
@@ -33,10 +33,11 @@ const IOwnable = getContractJSON('IOwnable');
 const { addExtendedOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const tokenManagerImplementations = {
-    MINT_BURN: 0,
+    INTERCHAIN_TOKEN: 0,
     MINT_BURN_FROM: 1,
     LOCK_UNLOCK: 2,
     LOCK_UNLOCK_FEE: 3,
+    MINT_BURN: 4,
 };
 
 function getDeploymentSalt(options) {
@@ -242,22 +243,27 @@ async function processCommand(config, chain, options) {
         }
 
         case 'deployTokenManager': {
-            const { destinationChain, type, params, gasValue } = options;
+            const { destinationChain, type, operator, tokenAddress, gasValue } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
+            const tokenManagerType = tokenManagerImplementations[type];
 
             validateParameters({
                 isString: { destinationChain },
-                isValidCalldata: { params },
+                isValidAddress: { tokenAddress },
+                isValidCalldata: { operator },
                 isValidNumber: { gasValue },
+                isValidNumber: { tokenManagerType },
             });
 
             isValidDestinationChain(config, destinationChain);
 
+            const params = defaultAbiCoder.encode(['bytes', 'address'], [operator, tokenAddress]);
+
             const tx = await interchainTokenService.deployTokenManager(
                 deploymentSalt,
                 destinationChain,
-                tokenManagerImplementations[type],
+                tokenManagerType,
                 params,
                 gasValue,
                 gasOptions,
@@ -697,6 +703,8 @@ if (require.main === module) {
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
     program.addOption(new Option('--params <params>', 'params for TokenManager deployment'));
+    program.addOption(new Option('--tokenAddress <tokenAddress>', 'token address to use for token manager deployment'));
+    program.addOption(new Option('--operator <operator>', 'operator address to use for token manager'));
     program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
     program.addOption(new Option('--name <name>', 'token name'));
     program.addOption(new Option('--symbol <symbol>', 'token symbol'));

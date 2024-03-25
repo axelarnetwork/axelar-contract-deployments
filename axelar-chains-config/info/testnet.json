@@ -569,7 +569,7 @@
       "id": "binance",
       "axelarId": "binance",
       "chainId": 97,
-      "rpc": "https://data-seed-prebsc-2-s2.bnbchain.org:8545",
+      "rpc": "https://bsc-testnet-rpc.publicnode.com",
       "tokenSymbol": "BNB",
       "gasOptions": {
         "gasPriceAdjustment": 1.4
