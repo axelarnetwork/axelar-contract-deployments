@@ -429,8 +429,6 @@ async function upgrade(_, chain, options) {
 
     printInfo(`Upgraded Interchain Token Service`);
 
-    return;
-
     const InterchainTokenFactory = getContractJSON('InterchainTokenFactory', artifactPath);
     const itsFactory = new Contract(itsFactoryContractConfig.address, InterchainTokenFactory.abi, wallet);
     const factoryCodehash = await getBytecodeHash(itsFactoryContractConfig.implementation, chain.axelarId, provider);
