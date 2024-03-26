@@ -43,7 +43,7 @@ if (require.main === module) {
 
     program.addOption(
         new Option('-e, --env <env>', 'environment')
-            .choices(['localnet', 'testnet', 'mainnet'])
+            .choices(['localnet', 'devnet', 'testnet', 'mainnet'])
             .default('testnet')
             .makeOptionMandatory(true)
             .env('ENV'),
