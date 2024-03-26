@@ -152,14 +152,18 @@ async function processCommand(config, chain, options) {
         action,
         privateKey,
 
+        chains,
+
+        destinationChain,
+        destinationAddress,
+        isExpress,
+
         txHash,
         logIndex,
 
         receiver,
         token,
         amount,
-
-        chains,
 
         collectorReceiver,
         collectTokens,
@@ -168,10 +172,6 @@ async function processCommand(config, chain, options) {
         gasToken,
         gasFeeAmount,
         refundAddress,
-
-        destinationChain,
-        destinationAddress,
-        executionGasLimit,
 
         yes,
     } = options;
