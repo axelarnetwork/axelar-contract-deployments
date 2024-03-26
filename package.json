@@ -48,6 +48,6 @@
     "@openzeppelin/defender-relay-client": "^1.54.1"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   }
 }
