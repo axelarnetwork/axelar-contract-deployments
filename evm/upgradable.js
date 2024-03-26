@@ -5,7 +5,7 @@ const { Contract, ContractFactory } = ethers;
 const { deployAndInitContractConstant, create3DeployAndInitContract } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 
-const { verifyContract, deployCreate, getBytecodeHash, deployContract, printInfo, getDeployedAddress, isContract } = require('./utils');
+const { verifyContract, deployCreate, getBytecodeHash, deployContract, printInfo, getDeployedAddress, isContract, prompt, printWarn } = require('./utils');
 
 async function deployUpgradable(
     wallet,
@@ -109,6 +109,7 @@ async function upgradeUpgradable(
     gasOptions = {},
     verifyOptions = null,
     chain = '',
+    options = {},
 ) {
     const proxy = new Contract(proxyAddress, IUpgradable.abi, wallet);
 
@@ -141,6 +142,11 @@ async function upgradeUpgradable(
 
     const implementationCodeHash = await getBytecodeHash(implementation, chain);
     printInfo('New Implementation Code Hash', implementationCodeHash);
+
+    if (prompt('Proceed with upgrade?', options.yes)) {
+        printWarn('Operation Cancelled');
+        return;
+    }
 
     const tx = await proxy.upgrade(implementation.address, implementationCodeHash, setupParams, gasOptions);
     await tx.wait();
