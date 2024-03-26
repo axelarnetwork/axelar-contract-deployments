@@ -145,7 +145,17 @@ function printFailedChainUpdates() {
 
 async function processCommand(config, chain, options) {
     const {
-        env, contractName, address, action, privateKey, chains, destinationChain, destinationAddress, isExpress,
+        env,
+        contractName,
+        address,
+        action,
+        privateKey,
+
+        chains,
+
+        destinationChain,
+        destinationAddress,
+        isExpress,
 
         txHash,
         logIndex,
@@ -153,7 +163,6 @@ async function processCommand(config, chain, options) {
         receiver,
         token,
         amount,
-
 
         collectorReceiver,
         collectTokens,
@@ -163,7 +172,7 @@ async function processCommand(config, chain, options) {
         gasFeeAmount,
         refundAddress,
 
-        yes
+        yes,
     } = options;
     const executionGasLimit = parseInt(options.executionGasLimit);
 
