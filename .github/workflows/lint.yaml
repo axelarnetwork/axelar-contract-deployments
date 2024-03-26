@@ -7,6 +7,7 @@ jobs:
     runs-on: blacksmith-2vcpu-ubuntu-2204
 
     steps:
+      - name: Checkout code
       - uses: actions/checkout@v4
 
       - name: Install Node.js
