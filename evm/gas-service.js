@@ -206,16 +206,10 @@ async function processCommand(config, chain, options) {
             }
 
             if (isExpress) {
-                printInfo('Estimating express gas fee')
+                printInfo('Estimating express gas fee');
             }
 
-            const gasEstimate = await gasService.estimateGasFee(
-                destinationChain,
-                destinationAddress,
-                payload,
-                executionGasLimit,
-                '0x',
-            );
+            const gasEstimate = await gasService.estimateGasFee(destinationChain, destinationAddress, payload, executionGasLimit, '0x');
 
             printInfo('GasService estimate ', gasEstimate.toString());
             printInfo('-'.repeat(50));
