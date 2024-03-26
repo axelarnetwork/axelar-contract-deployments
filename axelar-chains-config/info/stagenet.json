@@ -97,7 +97,9 @@
       "explorer": {
         "url": "https://goerli.etherscan.io",
         "api": "https://api-goerli.etherscan.io/api"
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
     },
     "avalanche": {
       "name": "Avalanche",
@@ -192,7 +194,9 @@
       "explorer": {
         "url": "https://testnet.snowtrace.io",
         "api": "https://api-testnet.snowtrace.io/api"
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     },
     "fantom": {
       "name": "Fantom",
@@ -287,7 +291,9 @@
       "explorer": {
         "url": "https://testnet.ftmscan.com",
         "api": "https://api-testnet.ftmscan.com/api"
-      }
+      },
+      "finality": "1",
+      "approxFinalityWaitTime": 1
     },
     "polygon": {
       "name": "Polygon",
@@ -382,7 +388,9 @@
       "explorer": {
         "url": "https://mumbai.polygonscan.com",
         "api": "https://api-testnet.polygonscan.com/api"
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 5
     },
     "moonbeam": {
       "name": "Moonbeam",
@@ -477,7 +485,9 @@
       "explorer": {
         "url": "https://moonbase.moonscan.io",
         "api": "https://api-moonbase.moonscan.io/api"
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     },
     "binance": {
       "name": "Binance",
@@ -572,7 +582,9 @@
       "explorer": {
         "url": "https://testnet.bscscan.com",
         "api": "https://api-testnet.bscscan.com/api"
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     },
     "arbitrum": {
       "name": "Arbitrum",
@@ -670,7 +682,9 @@
       "explorer": {
         "url": "https://goerli.arbiscan.io",
         "api": "https://api-goerli.arbiscan.io/api"
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 25
     },
     "kava": {
       "name": "Kava",
@@ -765,7 +779,9 @@
       "explorer": {
         "url": "https://explorer.evm-alpha.kava.io",
         "api": ""
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     },
     "optimism": {
       "name": "Optimism",
@@ -863,7 +879,9 @@
       },
       "gasOptions": {
         "gasLimit": 5000000
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 25
     },
     "base": {
       "name": "Base",
@@ -960,7 +978,9 @@
       },
       "gasOptions": {
         "gasLimit": 5000000
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 30
     },
     "immutable-devnet": {
       "name": "immutable-devnet",
@@ -1069,7 +1089,9 @@
       "explorer": {
         "url": "",
         "api": ""
-      }
+      },
+      "finality": "1",
+      "approxFinalityWaitTime": 1
     },
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
@@ -1151,7 +1173,9 @@
       "gasOptions": {
         "maxFeePerGas": 110000000,
         "maxPriorityFeePerGas": 100000000
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
     },
     "arbitrum-sepolia": {
       "name": "Arbitrum-Sepolia",
@@ -1229,7 +1253,9 @@
       "explorer": {
         "url": "https://sepolia.arbiscan.io",
         "api": "https://api-sepolia.arbiscan.io/api"
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 25
     },
     "centrifuge": {
       "name": "Centrifuge",
@@ -1307,7 +1333,9 @@
       "explorer": {
         "url": "",
         "api": ""
-      }
+      },
+      "finality": "1",
+      "approxFinalityWaitTime": 1
     }
   },
   "axelar": {
