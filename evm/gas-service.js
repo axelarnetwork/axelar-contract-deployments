@@ -4,7 +4,6 @@ const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
     BigNumber,
-    FixedNumber,
     Contract,
     constants: { AddressZero },
     utils: { formatEther, parseEther },
@@ -36,7 +35,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
         isNonEmptyStringArray: { destinationChains },
     });
 
-    return Promise.all(
+    let gasUpdates = await Promise.all(
         destinationChains.map(async (destinationChain) => {
             const destinationConfig = config.chains[destinationChain];
 
@@ -47,8 +46,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 return null;
             }
 
-            const { axelarId, onchainGasEstimate: { chainName = axelarId, gasEstimationType = 0, blobBaseFee = 0 } = {} } =
-                destinationConfig;
+            const { axelarId, onchainGasEstimate: { gasEstimationType = 0, blobBaseFee = 0 } = {} } = destinationConfig;
 
             let data;
 
@@ -67,6 +65,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
 
             const {
                 source_base_fee: sourceBaseFee,
+                source_express_fee: { total: sourceExpressFee },
                 source_token: {
                     gas_price_in_units: { value: gasPrice },
                     token_price: { usd: srcTokenPrice },
@@ -78,27 +77,58 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 execute_gas_multiplier: multiplier = 1.1,
             } = data.result;
 
-            // sourceBaseFee * 10 ^ decimals
-            const axelarBaseFee = FixedNumber.from(parseFloat(sourceBaseFee).toFixed(10))
-                .mulUnsafe(FixedNumber.from(Math.pow(10, decimals).toFixed(10)))
-                .round();
-            // gasPrice * multiplier
-            const relativeGasPrice = FixedNumber.from(parseFloat(gasPrice))
-                .mulUnsafe(FixedNumber.from(parseFloat(multiplier).toFixed(10)))
-                .round();
-            // destinationTokenPrice / srcTokenPrice
-            const gasPriceRatio = FixedNumber.from(parseFloat(destinationTokenPrice).toFixed(10)).divUnsafe(
-                FixedNumber.from(parseFloat(srcTokenPrice).toFixed(10)),
-            );
-            // blobBaseFee * gasPriceRatio
-            const relativeBlobBaseFee = FixedNumber.from(parseFloat(blobBaseFee)).mulUnsafe(gasPriceRatio);
+            const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals)).toString();
+            const expressFee = Math.ceil(parseFloat(sourceExpressFee) * Math.pow(10, decimals)).toString();
+            const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier)).toString();
+            const gasPriceRatio = parseFloat(destinationTokenPrice) / parseFloat(srcTokenPrice);
+            const relativeBlobBaseFee = Math.ceil(blobBaseFee * gasPriceRatio).toString();
 
             return {
-                chainName,
-                gasInfo: [gasEstimationType, axelarBaseFee, relativeGasPrice, relativeBlobBaseFee],
+                chain: destinationChain,
+                gasInfo: [gasEstimationType, axelarBaseFee, expressFee, relativeGasPrice, relativeBlobBaseFee],
             };
         }),
     );
+
+    gasUpdates = gasUpdates.filter((update) => update !== null);
+
+    // Adding lowercase chain names for case insensitivity
+    gasUpdates.forEach((update) => {
+        const { chain: destination, gasInfo } = update;
+        const { axelarId, onchainGasEstimate: { chainName } = {} } = config.chains[destination];
+
+        update.chain = axelarId;
+
+        // Adding lowercase chain names for case insensitivity
+        if (axelarId.toLowerCase() !== axelarId) {
+            gasUpdates.push({
+                chain: axelarId.toLowerCase(),
+                gasInfo,
+            });
+        }
+
+        // Adding a duplicate entry for the specified chain name if it is different from axelarId
+        // Allows to have `ethereum` entry for `ethereum-sepolia` chain
+        if (chainName && chainName !== axelarId) {
+            gasUpdates.push({
+                chain: chainName,
+                gasInfo,
+            });
+
+            // Adding lowercase chain names for case insensitivity
+            if (chainName.toLowerCase() !== chainName) {
+                gasUpdates.push({
+                    chain: chainName.toLowerCase(),
+                    gasInfo,
+                });
+            }
+        }
+    });
+
+    return {
+        chainsToUpdate: gasUpdates.map(({ chain }) => chain),
+        gasInfoUpdates: gasUpdates.map(({ gasInfo }) => gasInfo),
+    };
 }
 
 function printFailedChainUpdates() {
@@ -115,11 +145,7 @@ function printFailedChainUpdates() {
 
 async function processCommand(config, chain, options) {
     const {
-        env,
-        contractName,
-        address,
-        action,
-        privateKey,
+        env, contractName, address, action, privateKey, chains, destinationChain, destinationAddress, isExpress,
 
         txHash,
         logIndex,
@@ -128,7 +154,6 @@ async function processCommand(config, chain, options) {
         token,
         amount,
 
-        chains,
 
         collectorReceiver,
         collectTokens,
@@ -138,12 +163,9 @@ async function processCommand(config, chain, options) {
         gasFeeAmount,
         refundAddress,
 
-        destinationChain,
-        destinationAddress,
-        executionGasLimit,
-
-        yes,
+        yes
     } = options;
+    const executionGasLimit = parseInt(options.executionGasLimit);
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -189,9 +211,30 @@ async function processCommand(config, chain, options) {
 
             const payload = options.payload || '0x';
 
-            const gasEstimate = await gasService.estimateGasFee(destinationChain, destinationAddress, payload, executionGasLimit);
+            const api = config.axelar.axelarscanApi;
 
-            printInfo('Gas Estimate', gasEstimate.toString());
+            printInfo(`Estimating cross-chain gas fee from ${chain.axelarId} to ${destinationChain}`);
+
+            if (api) {
+                const estimate = await httpPost(`${api}/gmp/estimateGasFee`, {
+                    sourceChain: chain.axelarId,
+                    destinationChain,
+                    sourceTokenAddress: AddressZero,
+                    gasLimit: executionGasLimit,
+                    executeData: payload,
+                });
+
+                printInfo('AxelarScan estimate ', estimate);
+            }
+
+            if (isExpress) {
+                printInfo('Estimating express gas fee');
+            }
+
+            const gasEstimate = await gasService.estimateGasFee(destinationChain, destinationAddress, payload, executionGasLimit, '0x');
+
+            printInfo('GasService estimate ', gasEstimate.toString());
+            printInfo('-'.repeat(50));
 
             break;
         }
@@ -201,28 +244,13 @@ async function processCommand(config, chain, options) {
                 isNonEmptyStringArray: { chains },
             });
 
-            let gasUpdates = await getGasUpdates(config, env, chain, chains);
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
 
-            gasUpdates = gasUpdates.filter((update) => update !== null);
-
-            // Adding lowercase chain names for case insensitivity
-            gasUpdates.forEach(({ chainName, gasInfo }) => {
-                if (chainName.toLowerCase() !== chainName) {
-                    gasUpdates.push({
-                        chainName: chainName.toLowerCase(),
-                        gasInfo,
-                    });
-                }
-            });
-
-            const filteredChains = gasUpdates.map(({ chainName }) => chainName);
-            const gasInfoUpdates = gasUpdates.map(({ gasInfo }) => gasInfo);
-
-            if (prompt(`Update gas info for following chains ${filteredChains}?`, yes)) {
+            if (prompt(`Update gas info for following chains ${chainsToUpdate.join(', ')}?`, yes)) {
                 return;
             }
 
-            const tx = await gasService.updateGasInfo(filteredChains, gasInfoUpdates, gasOptions);
+            const tx = await gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions);
 
             printInfo('TX', tx.hash);
 
@@ -427,6 +455,7 @@ if (require.main === module) {
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'Destination contract address'));
     program.addOption(new Option('--payload <payload>', 'Payload for the contract call').env('PAYLOAD'));
     program.addOption(new Option('--executionGasLimit <executionGasLimit>', 'Execution gas limit'));
+    program.addOption(new Option('--isExpress', 'Estimate express gas fee'));
 
     // options for updateGasInfo
     program.addOption(new Option('--chains <chains...>', 'Chain names'));
