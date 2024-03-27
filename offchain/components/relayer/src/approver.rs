@@ -3,7 +3,11 @@ use amplifier_api::axl_rpc::{
     axelar_rpc_client::AxelarRpcClient, GetPayloadRequest, SubscribeToApprovalsRequest,
     SubscribeToApprovalsResponse,
 };
-use gmp_gateway::{self, accounts::GatewayApprovedMessage, error::GatewayError};
+
+use gmp_gateway::{
+    error::GatewayError,
+    state::{GatewayApprovedMessage, GatewayExecuteData},
+};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_program::{program_error::ProgramError, pubkey::Pubkey};
 use solana_sdk::{signature::Keypair, signature::Signer, transaction::Transaction};
@@ -76,7 +80,7 @@ impl Approver {
     async fn initialize_execute_data_account(
         &self,
         pda: Pubkey,
-        execute_data: gmp_gateway::accounts::GatewayExecuteData,
+        execute_data: GatewayExecuteData,
     ) -> Result<(), ApproverError> {
         let recent_blockhash = self
             .solana_rpc_client
@@ -126,7 +130,7 @@ impl Approver {
     #[tracing::instrument(level = "info", skip_all)]
     async fn handle_proof(&self, proof: SubscribeToApprovalsResponse) -> Result<(), ApproverError> {
         // Decode execute_data, get msg ids and construct accounts
-        let execute_data = gmp_gateway::accounts::GatewayExecuteData::new(proof.execute_data);
+        let execute_data = GatewayExecuteData::new(proof.execute_data);
         let (_proof, command_batch) = execute_data
             .decode()
             .map_err(ApproverError::ExecuteDataDecode)?;

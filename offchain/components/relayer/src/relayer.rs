@@ -1,3 +1,5 @@
+use std::net::SocketAddr;
+
 use amplifier_api::axl_rpc;
 use anyhow::{Context, Result};
 use futures_util::FutureExt;
@@ -10,13 +12,14 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
 
-use crate::{config, sentinel::SolanaSentinel, state::State};
+use crate::{config, healthcheck, sentinel::SolanaSentinel, state::State};
 
 const TIMEOUT: Duration = Duration::from_secs(30);
 
 pub struct Relayer {
     axelar_to_solana: Option<AxelarToSolanaHandler>,
     solana_to_axelar: Option<SolanaToAxelarHandler>,
+    health_check_server_addr: SocketAddr,
 }
 
 impl Relayer {
@@ -27,6 +30,7 @@ impl Relayer {
             axelar_to_solana,
             solana_to_axelar,
             database,
+            healthcheck_bind_addr,
         } = config;
 
         let state = State::from_url(database.url)
@@ -41,10 +45,23 @@ impl Relayer {
             }),
             solana_to_axelar: solana_to_axelar
                 .map(|config| SolanaToAxelarHandler::new(config.sentinel, config.verifier, state)),
+            health_check_server_addr: healthcheck_bind_addr,
         })
     }
 
     pub async fn run(self) {
+        // Start the health check server.
+        let _health_check_server = match healthcheck::start(self.health_check_server_addr).await {
+            Ok(guard) => {
+                info!(address = %self.health_check_server_addr, "Started health check server.");
+                guard
+            }
+            Err(error) => {
+                error!(%error, "Failed to start the health check server.");
+                return;
+            }
+        };
+
         match (self.axelar_to_solana, self.solana_to_axelar) {
             (Some(axelar_to_solana), Some(solana_to_axelar)) => {
                 let mut set = JoinSet::new();
@@ -60,10 +77,14 @@ impl Relayer {
             }
 
             (Some(axelar_to_solana), None) => {
-                axelar_to_solana.run().await;
+                let mut set = JoinSet::new();
+                set.spawn(axelar_to_solana.run());
+                set.join_next().await;
             }
             (None, Some(solana_to_axelar)) => {
-                solana_to_axelar.run().await;
+                let mut set = JoinSet::new();
+                set.spawn(solana_to_axelar.run());
+                set.join_next().await;
             }
             (None, None) => {
                 error!("Relayer was set to run without configured transports.")

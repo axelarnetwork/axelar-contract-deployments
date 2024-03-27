@@ -9,6 +9,7 @@ default = []
 [dependencies]
 amplifier-api = { path = "../amplifier-api" }
 anyhow.workspace = true
+axum.workspace = true
 base64.workspace = true
 bcs.workspace = true
 clap.workspace = true
@@ -38,6 +39,10 @@ tracing-subscriber.workspace = true
 tracing.workspace = true
 url.workspace = true
 figment.workspace = true
+
+
+[dev-dependencies]
+reqwest = "0.12"
 
 [dependencies.gmp-gateway]
 path = "../../../solana/programs/gateway"

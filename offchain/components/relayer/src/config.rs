@@ -4,6 +4,7 @@ use figment::{providers::Env, Figment};
 use serde::{Deserialize, Deserializer};
 use solana_program::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::str::FromStr;
 use url::Url;
@@ -32,6 +33,8 @@ pub struct ConfigEnv {
     pub sentinel_gateway_address: Pubkey,
     pub sentinel_rpc: Url,
     pub verifier_rpc: Url,
+    #[serde(deserialize_with = "deserialize_socket_addr")]
+    pub healthcheck_bind_addr: SocketAddr,
 }
 
 impl ConfigEnv {
@@ -45,6 +48,7 @@ pub struct Config {
     pub axelar_to_solana: Option<AxelarToSolana>,
     pub solana_to_axelar: Option<SolanaToAxelar>,
     pub database: Database,
+    pub healthcheck_bind_addr: SocketAddr,
 }
 
 impl Config {
@@ -87,6 +91,7 @@ impl Config {
             database: Database {
                 url: config.database_url,
             },
+            healthcheck_bind_addr: config.healthcheck_bind_addr,
         })
     }
 }
@@ -151,13 +156,18 @@ where
     Pubkey::from_str(&s).map_err(serde::de::Error::custom)
 }
 
+fn deserialize_socket_addr<'de, D>(deserializer: D) -> Result<SocketAddr, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    SocketAddr::from_str(&s).map_err(serde::de::Error::custom)
+}
+
 #[cfg(test)]
 mod tests {
-    use std::env;
-
-    use solana_sdk::signature::Keypair;
-
     use super::*;
+    use std::env;
 
     #[test]
     fn can_parse_config_from_env() {
@@ -168,6 +178,7 @@ mod tests {
         let sentinel_rpc = "http://0.0.0.3/";
         let verifier_rpc = "http://0.0.0.4/";
         let keypair = Keypair::new();
+        let healthcheck_bind_addr = "127.0.0.1:3000";
 
         env::set_var("RELAYER_DATABASE_URL", db_url);
         env::set_var("RELAYER_AXELAR_APPROVER_URL", approver_url);
@@ -179,6 +190,7 @@ mod tests {
         env::set_var("RELAYER_SENTINEL_GATEWAY_ADDRESS", gw_addr);
         env::set_var("RELAYER_SENTINEL_RPC", sentinel_rpc);
         env::set_var("RELAYER_VERIFIER_RPC", verifier_rpc);
+        env::set_var("RELAYER_HEALTHCHECK_BIND_ADDR", healthcheck_bind_addr);
 
         assert_eq!(
             Config::from_env().unwrap(),
@@ -204,6 +216,7 @@ mod tests {
                 database: Database {
                     url: Url::from_str(db_url).unwrap()
                 },
+                healthcheck_bind_addr: SocketAddr::from_str(healthcheck_bind_addr).unwrap()
             }
         );
     }

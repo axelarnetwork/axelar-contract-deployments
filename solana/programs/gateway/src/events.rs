@@ -1,7 +1,7 @@
 //! Types used for logging messages.
 use base64::engine::general_purpose;
 use base64::Engine as _;
-use borsh::{self, BorshDeserialize, BorshSerialize};
+use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;

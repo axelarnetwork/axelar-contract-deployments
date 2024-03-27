@@ -1,5 +1,6 @@
 mod approver;
 mod config;
+mod healthcheck;
 mod relayer;
 mod sentinel;
 mod state;

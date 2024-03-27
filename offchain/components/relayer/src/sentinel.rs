@@ -10,7 +10,6 @@ use crate::sentinel::types::{
 use crate::state::State;
 use amplifier_api::axl_rpc;
 use gmp_gateway::events::GatewayEvent;
-use gmp_gateway::types::PubkeyWrapper;
 use solana_program::pubkey::Pubkey;
 use solana_sdk::signature::Signature;
 use std::time::Duration;
@@ -222,7 +221,7 @@ impl SolanaSentinel {
         &self,
         transaction_signature: Signature,
         transaction_index: usize,
-        sender: PubkeyWrapper,
+        sender: Pubkey,
         destination_chain: Vec<u8>,
         destination_address: Vec<u8>,
         payload: Vec<u8>,

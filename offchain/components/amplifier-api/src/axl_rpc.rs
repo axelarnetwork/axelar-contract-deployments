@@ -62,10 +62,10 @@ pub struct SubscribeToApprovalsResponse {
     pub block_height: u64,
 }
 /// Generated client implementations.
+#[allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
 pub mod axelar_rpc_client {
-    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct AxelarRpcClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -109,9 +109,8 @@ pub mod axelar_rpc_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-            >>::Error: Into<StdError> + Send + Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
         {
             AxelarRpcClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -153,41 +152,32 @@ pub mod axelar_rpc_client {
             tonic::Response<tonic::codec::Streaming<super::VerifyResponse>>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/axl_rpc.AxelarRpc/Verify");
             let mut req = request.into_streaming_request();
-            req.extensions_mut().insert(GrpcMethod::new("axl_rpc.AxelarRpc", "Verify"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("axl_rpc.AxelarRpc", "Verify"));
             self.inner.streaming(req, path, codec).await
         }
         pub async fn get_payload(
             &mut self,
             request: impl tonic::IntoRequest<super::GetPayloadRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::GetPayloadResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::GetPayloadResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/axl_rpc.AxelarRpc/GetPayload",
-            );
+            let path = http::uri::PathAndQuery::from_static("/axl_rpc.AxelarRpc/GetPayload");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("axl_rpc.AxelarRpc", "GetPayload"));
@@ -197,24 +187,18 @@ pub mod axelar_rpc_client {
             &mut self,
             request: impl tonic::IntoRequest<super::SubscribeToApprovalsRequest>,
         ) -> std::result::Result<
-            tonic::Response<
-                tonic::codec::Streaming<super::SubscribeToApprovalsResponse>,
-            >,
+            tonic::Response<tonic::codec::Streaming<super::SubscribeToApprovalsResponse>>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/axl_rpc.AxelarRpc/SubscribeToApprovals",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/axl_rpc.AxelarRpc/SubscribeToApprovals");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("axl_rpc.AxelarRpc", "SubscribeToApprovals"));
@@ -223,8 +207,8 @@ pub mod axelar_rpc_client {
     }
 }
 /// Generated server implementations.
+#[allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
 pub mod axelar_rpc_server {
-    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with AxelarRpcServer.
     #[async_trait]
@@ -232,8 +216,7 @@ pub mod axelar_rpc_server {
         /// Server streaming response type for the Verify method.
         type VerifyStream: tonic::codegen::tokio_stream::Stream<
                 Item = std::result::Result<super::VerifyResponse, tonic::Status>,
-            >
-            + Send
+            > + Send
             + 'static;
         async fn verify(
             &self,
@@ -242,26 +225,16 @@ pub mod axelar_rpc_server {
         async fn get_payload(
             &self,
             request: tonic::Request<super::GetPayloadRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::GetPayloadResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::GetPayloadResponse>, tonic::Status>;
         /// Server streaming response type for the SubscribeToApprovals method.
         type SubscribeToApprovalsStream: tonic::codegen::tokio_stream::Stream<
-                Item = std::result::Result<
-                    super::SubscribeToApprovalsResponse,
-                    tonic::Status,
-                >,
-            >
-            + Send
+                Item = std::result::Result<super::SubscribeToApprovalsResponse, tonic::Status>,
+            > + Send
             + 'static;
         async fn subscribe_to_approvals(
             &self,
             request: tonic::Request<super::SubscribeToApprovalsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<Self::SubscribeToApprovalsStream>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<Self::SubscribeToApprovalsStream>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct AxelarRpcServer<T: AxelarRpc> {
@@ -286,10 +259,7 @@ pub mod axelar_rpc_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -345,26 +315,18 @@ pub mod axelar_rpc_server {
                 "/axl_rpc.AxelarRpc/Verify" => {
                     #[allow(non_camel_case_types)]
                     struct VerifySvc<T: AxelarRpc>(pub Arc<T>);
-                    impl<
-                        T: AxelarRpc,
-                    > tonic::server::StreamingService<super::VerifyRequest>
-                    for VerifySvc<T> {
+                    impl<T: AxelarRpc> tonic::server::StreamingService<super::VerifyRequest> for VerifySvc<T> {
                         type Response = super::VerifyResponse;
                         type ResponseStream = T::VerifyStream;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::ResponseStream>,
-                            tonic::Status,
-                        >;
+                        type Future =
+                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
                         fn call(
                             &mut self,
-                            request: tonic::Request<
-                                tonic::Streaming<super::VerifyRequest>,
-                            >,
+                            request: tonic::Request<tonic::Streaming<super::VerifyRequest>>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as AxelarRpc>::verify(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as AxelarRpc>::verify(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -394,23 +356,16 @@ pub mod axelar_rpc_server {
                 "/axl_rpc.AxelarRpc/GetPayload" => {
                     #[allow(non_camel_case_types)]
                     struct GetPayloadSvc<T: AxelarRpc>(pub Arc<T>);
-                    impl<
-                        T: AxelarRpc,
-                    > tonic::server::UnaryService<super::GetPayloadRequest>
-                    for GetPayloadSvc<T> {
+                    impl<T: AxelarRpc> tonic::server::UnaryService<super::GetPayloadRequest> for GetPayloadSvc<T> {
                         type Response = super::GetPayloadResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetPayloadRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as AxelarRpc>::get_payload(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as AxelarRpc>::get_payload(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -440,25 +395,21 @@ pub mod axelar_rpc_server {
                 "/axl_rpc.AxelarRpc/SubscribeToApprovals" => {
                     #[allow(non_camel_case_types)]
                     struct SubscribeToApprovalsSvc<T: AxelarRpc>(pub Arc<T>);
-                    impl<
-                        T: AxelarRpc,
-                    > tonic::server::ServerStreamingService<
-                        super::SubscribeToApprovalsRequest,
-                    > for SubscribeToApprovalsSvc<T> {
+                    impl<T: AxelarRpc>
+                        tonic::server::ServerStreamingService<super::SubscribeToApprovalsRequest>
+                        for SubscribeToApprovalsSvc<T>
+                    {
                         type Response = super::SubscribeToApprovalsResponse;
                         type ResponseStream = T::SubscribeToApprovalsStream;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::ResponseStream>,
-                            tonic::Status,
-                        >;
+                        type Future =
+                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::SubscribeToApprovalsRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as AxelarRpc>::subscribe_to_approvals(&inner, request)
-                                    .await
+                                <T as AxelarRpc>::subscribe_to_approvals(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -486,18 +437,14 @@ pub mod axelar_rpc_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        Ok(
-                            http::Response::builder()
-                                .status(200)
-                                .header("grpc-status", "12")
-                                .header("content-type", "application/grpc")
-                                .body(empty_body())
-                                .unwrap(),
-                        )
-                    })
-                }
+                _ => Box::pin(async move {
+                    Ok(http::Response::builder()
+                        .status(200)
+                        .header("grpc-status", "12")
+                        .header("content-type", "application/grpc")
+                        .body(empty_body())
+                        .unwrap())
+                }),
             }
         }
     }
