@@ -156,11 +156,24 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         },
     } = contracts;
     const {
-        [chainId]: { adminAddress, destinationChainID, signingThreshold, serviceName, workerSetDiffThreshold, encoder, keyType },
+        [chainId]: {
+            adminAddress,
+            governanceAddress,
+            destinationChainID,
+            signingThreshold,
+            serviceName,
+            workerSetDiffThreshold,
+            encoder,
+            keyType,
+        },
     } = contractConfig;
 
     if (!validateAddress(adminAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainId}].adminAddress in axelar info`);
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].governanceAddress in axelar info`);
     }
 
     if (!validateAddress(gatewayAddress)) {
@@ -205,6 +218,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
 
     return {
         admin_address: adminAddress,
+        governance_address: governanceAddress,
         gateway_address: gatewayAddress,
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,

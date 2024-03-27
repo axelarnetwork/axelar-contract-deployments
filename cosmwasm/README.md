@@ -18,14 +18,14 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
       },
       "ConnectionRouter": {
         "adminAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
-        "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
       },
       "Multisig": {
-        "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 10
       },
       "Rewards": {
-        "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "rewardsDenom": "uamplifier",
         "params": {
           "epoch_duration": "10",
@@ -69,6 +69,7 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
       },
       "MultisigProver": {
         "ethereum-2": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
           "destinationChainID": "0",
           "signingThreshold": [
