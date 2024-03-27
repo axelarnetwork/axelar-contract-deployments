@@ -4,21 +4,17 @@ on: pull_request
 
 jobs:
   test:
-    strategy:
-      matrix:
-        node-version:
-          - 18.x
-        os:
-          - ubuntu-latest
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
+    runs-on: blacksmith-2vcpu-ubuntu-2204
 
+    steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 18.x
+          cache: 'npm'
 
       - name: Install
         run: npm ci
@@ -46,12 +42,7 @@ jobs:
                   },
                   "AxelarServiceGovernance": {
                     "minimumTimeDelay": 3600,
-                    "cosigners": [
-                      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-                      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-                      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
-                    ],
-                    "threshold": 2
+                    "multisig": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
                   },
                   "Multisig": {
                     "signers": [
