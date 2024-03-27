@@ -16,6 +16,12 @@ async function main(options) {
     const privKey = Buffer.from(options.privateKey, 'hex');
     const keypair = Ed25519Keypair.fromSecretKey(privKey);
     const client = new SuiClient({ url: getFullnodeUrl(options.env) });
+    if (options.faucetUrl) {
+        await requestSuiFromFaucetV0({
+            host: options.faucetUrl,
+            recipient: keypair.toSuiAddress(),
+        });
+    }
     await publishAll(client, keypair, parseEnv(options.env));
 
     const config = loadConfig(options.env);
@@ -67,6 +73,10 @@ if (require.main === module) {
         new Option('--threshold <threshold>', 'threshold for the intiial validator set')
             .makeOptionMandatory(true)
             .env('SUI_INITIAL_VALIDATOR_THRESHOLD'),
+    );
+    program.addOption(
+        new Option('--faucetUrl <faucetUrl>', 'url for a faucet to request funds from')
+            .makeOptionMandatory(false)
     );
 
     program.action(async (options) => {
