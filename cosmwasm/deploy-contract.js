@@ -156,7 +156,16 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         },
     } = contracts;
     const {
-        [chainId]: { adminAddress, governanceAddress, destinationChainID, signingThreshold, serviceName, workerSetDiffThreshold, encoder, keyType },
+        [chainId]: {
+            adminAddress,
+            governanceAddress,
+            destinationChainID,
+            signingThreshold,
+            serviceName,
+            workerSetDiffThreshold,
+            encoder,
+            keyType,
+        },
     } = contractConfig;
 
     if (!validateAddress(adminAddress)) {
