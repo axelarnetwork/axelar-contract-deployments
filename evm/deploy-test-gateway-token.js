@@ -5,28 +5,16 @@ const {
     Contract,
     Wallet,
     providers: { JsonRpcProvider },
-    utils: { parseEther, keccak256, defaultAbiCoder, arrayify, hexlify, hexZeroPad },
-    constants: { AddressZero, MaxUint256 },
+    utils: { parseEther, keccak256, defaultAbiCoder, arrayify, hexlify, randomBytes },
+    constants: { AddressZero },
 } = ethers;
 const { Command, Option } = require('commander');
 
 const { mainProcessor, getContractJSON } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addBaseOptions } = require('./cli-utils');
 
 async function getCommandId(gateway) {
-    let currentValue = MaxUint256;
-
-    while (true) {
-        const isCommandIdExecuted = await gateway.isCommandExecuted(hexZeroPad(hexlify(currentValue), 32));
-
-        if (!isCommandIdExecuted) {
-            break;
-        }
-
-        currentValue = currentValue.sub(1);
-    }
-
-    return hexZeroPad(hexlify(currentValue), 32);
+    return hexlify(randomBytes(32));
 }
 
 async function processCommand(_, chain, options) {
@@ -63,7 +51,7 @@ if (require.main === module) {
         .name('deploy-test-gateway-token')
         .description('Deploy a native wrapped token and integrate with AxelarGateway in order to test AxelarDepositService deployment');
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    addExtendedOptions(program, {});
+    addBaseOptions(program);
 
     program.action((options) => {
         main(options);
