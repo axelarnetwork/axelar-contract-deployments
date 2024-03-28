@@ -33,7 +33,7 @@ jobs:
           else
             ENV="${{ github.event.inputs.environment }}"
           fi
-          
+
           case "$ENV" in
             testnet)
               PRIVATE_KEY="${{ secrets.TESTNET_PRIVATE_KEY }}"
@@ -45,9 +45,9 @@ jobs:
               PRIVATE_KEY="${{ secrets.STAGENET_PRIVATE_KEY }}"
               ;;
           esac
-          
+
           echo "PRIVATE_KEY=$PRIVATE_KEY" >> .env
           echo "ENV=$ENV" >> .env
           echo "CHAINS=all" >> .env
-          
+
           node evm/operators.js --action updateGasInfo --chains $(echo $(jq -r '.chains | keys | join(" ")' axelar-chains-config/info/$ENV.json))
