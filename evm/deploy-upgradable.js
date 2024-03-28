@@ -172,6 +172,7 @@ async function processCommand(_, chain, options) {
             gasOptions,
             verifyOptions,
             chain.name,
+            options,
         );
 
         contractConfig.implementation = await contract.implementation();
