@@ -1,6 +1,18 @@
 name: 'Update Gas Info on Testnet'
 
 on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to update gas info on
+        required: true
+        default: testnet
+        type: choice
+        options:
+          - testnet
+          - mainnet
+          - stagenet
+
   schedule:
     - cron: '0 */2 * * *'
 
@@ -15,9 +27,27 @@ jobs:
           node-version: '18.x'
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
-      - run: echo "
-          PRIVATE_KEY = ${{ secrets.TESTNET_PRIVATE_KEY }}
-          ENV = 'testnet'
-          CHAINS = 'all'
-          " > .env
-      - run: node evm/operators.js --action updateGasInfo --chains $(jq -r '.chains | keys | join(" ")' axelar-chains-config/info/testnet.json)
+      - run: |
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            ENV="testnet"
+          else
+            ENV="${{ github.event.inputs.environment }}"
+          fi
+          
+          case "$ENV" in
+            testnet)
+              PRIVATE_KEY="${{ secrets.TESTNET_PRIVATE_KEY }}"
+              ;;
+            mainnet)
+              PRIVATE_KEY="${{ secrets.MAINNET_PRIVATE_KEY }}"
+              ;;
+            stagenet)
+              PRIVATE_KEY="${{ secrets.STAGENET_PRIVATE_KEY }}"
+              ;;
+          esac
+          
+          echo "PRIVATE_KEY=$PRIVATE_KEY" >> .env
+          echo "ENV=$ENV" >> .env
+          echo "CHAINS=all" >> .env
+          
+          node evm/operators.js --action updateGasInfo --chains $(echo $(jq -r '.chains | keys | join(" ")' axelar-chains-config/info/$ENV.json))
