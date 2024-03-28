@@ -1,0 +1,24 @@
+name: 'Update Gas Info on Testnet'
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'
+
+jobs:
+  update-gas:
+    name: 'Update Gas Info'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run:
+          echo "
+              PRIVATE_KEY = ${{ secrets.TESTNET_PRIVATE_KEY }}
+              ENV = 'testnet'
+              CHAINS = 'all'
+            " > .env
+      - run: node evm/operators.js --action updateGasInfo --chains $(jq -r '.chains | keys | join(" ")' axelar-chains-config/info/testnet.json)
