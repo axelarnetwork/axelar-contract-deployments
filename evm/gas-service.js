@@ -20,6 +20,7 @@ const {
     isValidAddress,
     validateParameters,
     httpPost,
+    toBigNumberString,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -75,15 +76,15 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 execute_gas_multiplier: multiplier = 1.1,
             } = data.result;
 
-            const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals)).toString();
-            const expressFee = Math.ceil(parseFloat(sourceExpressFee) * Math.pow(10, decimals)).toString();
-            const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier)).toString();
+            const axelarBaseFee = parseFloat(sourceBaseFee) * Math.pow(10, decimals);
+            const expressFee = parseFloat(sourceExpressFee) * Math.pow(10, decimals);
+            const relativeGasPrice = parseFloat(gasPrice) * parseFloat(multiplier);
             const gasPriceRatio = parseFloat(destinationTokenPrice) / parseFloat(srcTokenPrice);
-            const relativeBlobBaseFee = Math.ceil(blobBaseFee * gasPriceRatio).toString();
+            const relativeBlobBaseFee = blobBaseFee * gasPriceRatio;
 
             return {
                 chain: destinationChain,
-                gasInfo: [gasEstimationType, axelarBaseFee, expressFee, relativeGasPrice, relativeBlobBaseFee],
+                gasInfo: [gasEstimationType, axelarBaseFee, expressFee, relativeGasPrice, relativeBlobBaseFee].map(toBigNumberString),
             };
         }),
     );

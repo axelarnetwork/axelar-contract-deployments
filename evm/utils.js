@@ -1093,6 +1093,10 @@ function isValidChain(config, chainName) {
     }
 }
 
+function toBigNumberString(number) {
+    return Math.ceil(number).toLocaleString('en', { useGrouping: false });
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -1151,4 +1155,5 @@ module.exports = {
     getSaltFromKey,
     getDeployOptions,
     isValidChain,
+    toBigNumberString,
 };
