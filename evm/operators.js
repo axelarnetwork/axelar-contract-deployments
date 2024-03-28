@@ -20,15 +20,27 @@ const {
     prompt,
     getGasOptions,
     mainProcessor,
+    validateParameters,
+    getContractJSON,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
-const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
+const { getGasUpdates, printFailedChainUpdates } = require('./gas-service');
 
-async function processCommand(_, chain, options) {
-    const { contractName, address, action, privateKey, args, yes } = options;
+async function processCommand(config, chain, options) {
+    const {
+        env,
+        contractName,
+        address,
+        action,
+        privateKey,
+        args,
 
-    const argsArray = parseArgs(args);
+        chains,
+
+        yes,
+    } = options;
+
+    const argsArray = args ? parseArgs(args) : [];
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -53,7 +65,7 @@ async function processCommand(_, chain, options) {
 
     printInfo('Contract name', contractName);
 
-    const operatorsContract = new Contract(operatorsAddress, IOperators.abi, wallet);
+    const operatorsContract = new Contract(operatorsAddress, getContractJSON('IOperators').abi, wallet);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
@@ -166,7 +178,7 @@ async function processCommand(_, chain, options) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = new Interface(IAxelarGasService.abi);
+            const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
             const collectFeesCalldata = gasServiceInterface.encodeFunctionData('collectFees', [receiver, tokens, amounts]);
 
             try {
@@ -217,11 +229,39 @@ async function processCommand(_, chain, options) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = new Interface(IAxelarGasService.abi);
+            const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
             const refundCalldata = gasServiceInterface.encodeFunctionData('refund', [txHash, logIndex, receiver, token, amount]);
 
             try {
                 await operatorsContract.executeContract(target, refundCalldata, 0, gasOptions).then((tx) => tx.wait());
+            } catch (error) {
+                printError(error);
+            }
+
+            break;
+        }
+
+        case 'updateGasInfo': {
+            const target = chain.contracts.AxelarGasService?.address;
+
+            validateParameters({
+                isNonEmptyStringArray: { chains },
+                isAddress: { target },
+            });
+
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
+
+            if (prompt(`Update gas info for following chains ${chainsToUpdate.join(', ')}?`, yes)) {
+                return;
+            }
+
+            const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
+            const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
+
+            try {
+                const tx = await operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions);
+                printInfo('TX', tx.hash);
+                await tx.wait(chain.confirmations);
             } catch (error) {
                 printError(error);
             }
@@ -237,6 +277,8 @@ async function processCommand(_, chain, options) {
 
 async function main(options) {
     await mainProcessor(options, processCommand);
+
+    printFailedChainUpdates();
 }
 
 if (require.main === module) {
@@ -246,7 +288,7 @@ if (require.main === module) {
 
     addBaseOptions(program, { address: true });
 
-    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators').makeOptionMandatory(false));
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators'));
     program.addOption(
         new Option('--action <action>', 'operator action').choices([
             'isOperator',
@@ -254,9 +296,13 @@ if (require.main === module) {
             'removeOperator',
             'collectFees',
             'refund',
+            'updateGasInfo',
         ]),
     );
-    program.addOption(new Option('--args <args>', 'operator action arguments').makeOptionMandatory(true));
+    program.addOption(new Option('--args <args>', 'operator action arguments'));
+
+    // options for updateGasInfo
+    program.addOption(new Option('--chains <chains...>', 'Chain names'));
 
     program.action((options) => {
         main(options);
