@@ -15,10 +15,9 @@ jobs:
           node-version: '18.x'
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
-      - run:
-          echo "
-              PRIVATE_KEY = ${{ secrets.TESTNET_PRIVATE_KEY }}
-              ENV = 'testnet'
-              CHAINS = 'all'
-            " > .env
+      - run: echo "
+          PRIVATE_KEY = ${{ secrets.TESTNET_PRIVATE_KEY }}
+          ENV = 'testnet'
+          CHAINS = 'all'
+          " > .env
       - run: node evm/operators.js --action updateGasInfo --chains $(jq -r '.chains | keys | join(" ")' axelar-chains-config/info/testnet.json)
