@@ -1,6 +1,8 @@
 name: 'Update Gas Info on Testnet'
 
 on:
+  pull_request: #delete before merge
+
   workflow_dispatch:
     inputs:
       environment:
@@ -28,10 +30,10 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
       - run: |
-          if [ "${{ github.event_name }}" == "schedule" ]; then
-            ENV="testnet"
-          else
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             ENV="${{ github.event.inputs.environment }}"
+          else
+            ENV="testnet"
           fi
 
           case "$ENV" in
