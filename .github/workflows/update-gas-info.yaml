@@ -52,4 +52,4 @@ jobs:
           echo "ENV=$ENV" >> .env
           echo "CHAINS=all" >> .env
 
-          node evm/operators.js --action updateGasInfo -y --chains $(echo $(jq -r '.chains | keys | join(" ")' axelar-chains-config/info/$ENV.json))
+          node evm/operators.js --action updateGasInfo --chains all -y

@@ -34,6 +34,10 @@ async function getGasUpdates(config, env, chain, destinationChains) {
         isNonEmptyStringArray: { destinationChains },
     });
 
+    if (destinationChains.includes('all')) {
+        destinationChains = Object.keys(config.chains);
+    }
+
     let gasUpdates = await Promise.all(
         destinationChains.map(async (destinationChain) => {
             const destinationConfig = config.chains[destinationChain];
