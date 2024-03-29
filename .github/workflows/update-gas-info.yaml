@@ -1,8 +1,6 @@
 name: 'Update Gas Info on Testnet'
 
 on:
-  pull_request: #delete before merge
-
   workflow_dispatch:
     inputs:
       environment:
