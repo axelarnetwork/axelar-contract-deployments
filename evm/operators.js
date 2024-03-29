@@ -264,8 +264,7 @@ async function processCommand(config, chain, options) {
                 const tx = await operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions);
                 printInfo('TX', tx.hash);
                 await tx.wait(chain.confirmations);
-            }
-            catch (error) {
+            } catch (error) {
                 for (let i = 0; i < chainsToUpdate.length; i++) {
                     addFailedChainUpdate(chain.name, chainsToUpdate[i]);
                 }
