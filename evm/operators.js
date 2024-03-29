@@ -24,7 +24,7 @@ const {
     getContractJSON,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getGasUpdates, printFailedChainUpdates } = require('./gas-service');
+const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate } = require('./gas-service');
 
 async function processCommand(config, chain, options) {
     const {
@@ -264,7 +264,12 @@ async function processCommand(config, chain, options) {
                 const tx = await operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions);
                 printInfo('TX', tx.hash);
                 await tx.wait(chain.confirmations);
-            } catch (error) {
+            }
+            catch (error) {
+                for (let i = 0; i < chainsToUpdate.length; i++) {
+                    addFailedChainUpdate(chain.name, chainsToUpdate[i]);
+                }
+
                 printError(error);
             }
 

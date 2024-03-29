@@ -27,6 +27,26 @@ const { getWallet } = require('./sign-utils');
 
 let failedChainUpdates = [];
 
+function addFailedChainUpdate(chain, destinationChain) {
+    failedChainUpdates.push({ chain, destinationChain });
+}
+
+function printFailedChainUpdates() {
+    if (failedChainUpdates.length > 0) {
+        printError('Failed to update gas info for following chain combinations');
+
+        failedChainUpdates.forEach(({ chain, destinationChain }) => {
+            printError(`${chain} -> ${destinationChain}`);
+        });
+
+        failedChainUpdates = [];
+
+        throw new Error('Failed to update gas info for the chain combinations above');
+    }
+
+    failedChainUpdates = [];
+}
+
 async function getGasUpdates(config, env, chain, destinationChains) {
     const api = config.axelar.axelarscanApi;
 
@@ -62,7 +82,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
             } catch (e) {
                 printError(`Error getting gas info for ${chain.axelarId} -> ${axelarId}`);
                 printError(e);
-                failedChainUpdates.push({ chain: chain.axelarId, destinationChain: axelarId });
+                addFailedChainUpdate(chain.axelarId, axelarId);
                 return null;
             }
 
@@ -132,18 +152,6 @@ async function getGasUpdates(config, env, chain, destinationChains) {
         chainsToUpdate: gasUpdates.map(({ chain }) => chain),
         gasInfoUpdates: gasUpdates.map(({ gasInfo }) => gasInfo),
     };
-}
-
-function printFailedChainUpdates() {
-    if (failedChainUpdates.length > 0) {
-        printError('Failed to update gas info for following chain combinations');
-
-        failedChainUpdates.forEach(({ chain, destinationChain }) => {
-            printError(`${chain} -> ${destinationChain}`);
-        });
-    }
-
-    failedChainUpdates = [];
 }
 
 async function processCommand(config, chain, options) {
@@ -235,16 +243,25 @@ async function processCommand(config, chain, options) {
                 return;
             }
 
-            const tx = await gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions);
+            try {
+                const tx = await gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions);
 
-            printInfo('TX', tx.hash);
+                printInfo('TX', tx.hash);
 
-            const receipt = await tx.wait(chain.confirmations);
+                const receipt = await tx.wait(chain.confirmations);
 
-            const eventEmitted = wasEventEmitted(receipt, gasService, 'GasInfoUpdated');
+                const eventEmitted = wasEventEmitted(receipt, gasService, 'GasInfoUpdated');
 
-            if (!eventEmitted) {
-                printWarn('Event not emitted in receipt.');
+                if (!eventEmitted) {
+                    printWarn('Event not emitted in receipt.');
+                }
+            }
+            catch (error) {
+                for (let i = 0; i < chainsToUpdate.length; i++) {
+                    addFailedChainUpdate(chain.name, chainsToUpdate[i]);
+                }
+
+                printError(error);
             }
 
             break;
@@ -293,4 +310,5 @@ if (require.main === module) {
 }
 
 exports.getGasUpdates = getGasUpdates;
+exports.addFailedChainUpdate = addFailedChainUpdate;
 exports.printFailedChainUpdates = printFailedChainUpdates;
