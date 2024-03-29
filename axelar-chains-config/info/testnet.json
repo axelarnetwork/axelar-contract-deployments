@@ -1536,6 +1536,9 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
+      "onchainGasEstimate": {
+        "chainName": "centrifuge"
+      },
       "explorer": {
         "name": "",
         "url": ""
