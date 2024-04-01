@@ -915,12 +915,10 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
             });
         };
 
-        const executeAllChains = async () => {
+        await (async () => {
             const chainPromises = chains.map((chainName) => executeChain(chainName));
             await Promise.all(chainPromises);
-        };
-
-        await executeAllChains();
+        })();
 
         if (save) {
             for (const chainName of successfullChains) {
