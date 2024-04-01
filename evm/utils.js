@@ -918,11 +918,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
             await sleep(2000);
         }
 
-        for (const chainName of successfullChainIndexes) {
-            config.chains[chainName.toLowerCase()] = loadSeparateConfig(options.env, chainName);
-        }
-
         if (save) {
+            for (const chainName of successfullChainIndexes) {
+                config.chains[chainName.toLowerCase()] = loadSeparateConfig(options.env, chainName);
+            }
+
             saveConfig(config, options.env);
         }
 
