@@ -882,11 +882,9 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
             cmds.push('-y');
         }
 
-        const failedChainIndexes = [];
-        const successfullChainIndexes = [];
-        let totalChains = 0;
+        const successfullChains = [];
 
-        for (const chainName of chains) {
+        const executeChain = (chainName) => {
             const chain = config.chains[chainName.toLowerCase()];
 
             if (
@@ -895,31 +893,37 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
                 (chain.contracts && chain.contracts[options.contractName]?.skip)
             ) {
                 printWarn('Skipping chain', chain.name);
-                continue;
+                return Promise.resolve();
             }
 
-            totalChains++;
-            cmds[chainCommandIndex + 1] = chainName;
+            return new Promise((resolve) => {
+                cmds[chainCommandIndex + 1] = chainName;
 
-            exec(cmds.join(' '), { stdio: 'inherit' }, (error, stdout) => {
-                printInfo(`logs for ${chainName}`, stdout);
+                exec(cmds.join(' '), { stdio: 'inherit' }, (error, stdout) => {
+                    printInfo('-------------------------------------------------------');
+                    printInfo(`Logs for ${chainName}`, stdout);
 
-                if (error) {
-                    failedChainIndexes.push(chainName);
-                    printError(`error while running script for ${chainName}`, error);
-                } else {
-                    successfullChainIndexes.push(chainName);
-                    printInfo(`finished running script for`, chainName);
-                }
+                    if (error) {
+                        printError(`Error while running script for ${chainName}`, error);
+                    } else {
+                        successfullChains.push(chainName);
+                        printInfo(`Finished running script for chain`, chainName);
+                    }
+
+                    resolve();
+                });
             });
-        }
+        };
 
-        while (successfullChainIndexes.length + failedChainIndexes.length < totalChains) {
-            await sleep(2000);
-        }
+        const executeAllChains = async () => {
+            const chainPromises = chains.map((chainName) => executeChain(chainName));
+            await Promise.all(chainPromises);
+        };
+
+        await executeAllChains();
 
         if (save) {
-            for (const chainName of successfullChainIndexes) {
+            for (const chainName of successfullChains) {
                 config.chains[chainName.toLowerCase()] = loadParallelExecutionConfig(options.env, chainName);
             }
 
