@@ -10,7 +10,7 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 
-const { mainProcessor, getContractJSON } = require('./utils');
+const { mainProcessor, getContractJSON, printInfo } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function getCommandId(gateway) {
@@ -18,6 +18,7 @@ async function getCommandId(gateway) {
 }
 
 async function processCommand(_, chain, options) {
+    printInfo('This script is for testing deployment, not for deployment in production');
     const provider = new JsonRpcProvider(chain.rpc);
     const wallet = new Wallet(options.privateKey, provider);
     const gatewayAddress = chain.contracts.AxelarGateway.address;
