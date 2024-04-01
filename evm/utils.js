@@ -669,7 +669,7 @@ function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
-function loadSeparateConfig(env, chain) {
+function loadParallelExecutionConfig(env, chain) {
     return require(`${__dirname}/../chains-info/${env}-${chain}.json`);
 }
 
@@ -677,7 +677,7 @@ function saveConfig(config, env) {
     writeJSON(config, `${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
-function saveSeparateConfig(config, env, chain) {
+function saveParallelExecutionConfig(config, env, chain) {
     writeJSON(config, `${__dirname}/../chains-info/${env}-${chain}.json`);
 }
 
@@ -920,7 +920,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
         if (save) {
             for (const chainName of successfullChainIndexes) {
-                config.chains[chainName.toLowerCase()] = loadSeparateConfig(options.env, chainName);
+                config.chains[chainName.toLowerCase()] = loadParallelExecutionConfig(options.env, chainName);
             }
 
             saveConfig(config, options.env);
@@ -956,7 +956,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
         if (save) {
             if (options.saveChainSeparately) {
-                saveSeparateConfig(config.chains[chainName.toLowerCase()], options.env, chainName);
+                saveParallelExecutionConfig(config.chains[chainName.toLowerCase()], options.env, chainName);
             } else {
                 saveConfig(config, options.env);
             }
