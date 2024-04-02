@@ -2064,6 +2064,26 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 60
+    },
+    "linea-sepolia": {
+      "name": "Linea-Sepolia",
+      "id": "linea-sepolia",
+      "axelarId": "linea-sepolia",
+      "chainId": 59141,
+      "rpc": "https://rpc.sepolia.linea.build",
+      "tokenSymbol": "ETH",
+      "contracts": {
+        "AxelarGateway": {}
+      },
+      "explorer": {
+        "name": "Lineascan",
+        "url": "https://sepolia.lineascan.build/",
+        "api": "https://api-sepolia.lineascan.build/api"
+      },
+      "gasOptions": {
+        "gasPrice": 1000000000,
+        "gasLimit": 61000000
+      }
     }
   },
   "axelar": {
