@@ -1,6 +1,6 @@
 //! Health check server.
 
-use axum::{http::StatusCode, routing::get};
+use axum::{http::StatusCode, routing::get, Router};
 use log::info;
 use std::{future::Future, io, net::SocketAddr};
 use tokio::{net::TcpListener, sync::oneshot};
@@ -65,7 +65,8 @@ async fn run_server<F>(tcp_listener: TcpListener, shutdown_signal: F) -> anyhow:
 where
     F: Future<Output = ()> + Send + 'static,
 {
-    axum::serve(tcp_listener, get(|| async { StatusCode::OK }))
+    let router = Router::new().route("/status", get(|| async { StatusCode::OK }));
+    axum::serve(tcp_listener, router)
         .with_graceful_shutdown(shutdown_signal)
         .await?;
     Ok(())
@@ -130,9 +131,16 @@ mod tests {
         warmup().await;
 
         let client = reqwest::Client::new();
-        let address = format!("http://{local_address}");
+        let address = format!("http://{local_address}/status");
         let resp = client.get(&address).send().await?;
         assert_eq!(resp.status(), reqwest::StatusCode::OK);
+
+        // Other paths return 404
+        for bad_path in ["/", "/bad", "/stat", "/status_"] {
+            let bad_address = format!("http://{local_address}/{bad_path}");
+            let bad_resp = client.get(&bad_address).send().await?;
+            assert_eq!(bad_resp.status(), reqwest::StatusCode::NOT_FOUND);
+        }
 
         // Shut down the server and let it cool down.
         drop(server);
