@@ -2064,6 +2064,28 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 60
+    },
+    "polygon-amoy": {
+      "name": "Polygon-Amoy",
+      "id": "polygon-amoy",
+      "axelarId": "polygon-amoy",
+      "chainId": 80002,
+      "rpc": "https://rpc-amoy.polygon.technology/",
+      "tokenSymbol": "MATIC",
+      "confirmations": 1,
+      "contracts": {
+        "AxelarGateway": {
+        }
+      },
+      "explorer": {
+        "name": "OkLink",
+        "url": "https://www.oklink.com/amoy"
+      },
+      "gasOptions": {
+        "gasLimit": 6000000
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     }
   },
   "axelar": {
