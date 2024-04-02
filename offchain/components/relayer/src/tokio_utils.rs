@@ -6,6 +6,7 @@ use tokio::task::{AbortHandle, JoinError};
 use tracing::error;
 
 /// Logs all information we can get out of a [`JoinError`].
+#[allow(dead_code)]
 pub(crate) fn log_join_error(join_error: JoinError) {
     let source: Cow<str> = join_error
         .source()

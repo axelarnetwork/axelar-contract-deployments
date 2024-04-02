@@ -1,0 +1,20 @@
+name: Relayer PR development checks
+on:
+  pull_request:
+    branches:
+      - "poc"
+    paths:
+      - "offchain/components/relayer/**"
+
+defaults:
+  run:
+    working-directory: "offchain/components/relayer"
+
+jobs:
+  code-qa:
+    name: "Code QA"
+    uses: ./.github/workflows/code-qa.yml
+    with:
+      working-directory: "offchain/components/relayer"
+      rust-cache-workspace: "offchain -> target"
+      rust-cache-key: "offchain"

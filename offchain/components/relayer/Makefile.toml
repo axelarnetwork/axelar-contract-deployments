@@ -1,0 +1,83 @@
+[config]
+# Skip loading of all core tasks which saves up a bit on toml parsing and task creation
+skip_core_tasks = true
+
+[tasks.nextest-base]
+workspace = false
+install_crate = "cargo-nextest"
+
+[tasks.test]
+workspace = false
+command = "cargo"
+args = [
+    "nextest",
+    "run",
+    "--package",
+    "relayer",
+    "--bins",
+    "--tests",
+    "--all-targets",
+    "--no-fail-fast",
+    "${@}",
+]
+dependencies = ["nextest-base"]
+
+[tasks.coverage-base]
+workspace = false
+env = { "CARGO_INCREMENTAL" = "0", "RUSTFLAGS" = "-Cinstrument-coverage", "LLVM_PROFILE_FILE" = "target/coverage/%p-%m.profraw" }
+command = "cargo"
+args = ["nextest", "run"]
+dependencies = ["nextest-base"]
+
+[tasks.coverage]
+workspace = false
+install_crate = "grcov"
+dependencies = ["coverage-base"]
+script = '''
+mkdir -p target/coverage
+grcov . --binary-path ./../../target/debug/deps/ -s . -t html,cobertura --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o target/coverage/
+echo "✅✅✅✅"
+echo "View the report: file://$(pwd)/target/coverage/html/index.html"
+cat target/coverage/html/coverage.json
+echo ""
+echo "✅✅✅✅"
+'''
+
+[tasks.fmt-clippy]
+workspace = false
+install_crate = "clippy"
+command = "cargo"
+args = [
+    "clippy",
+    "--fix",
+    "--allow-dirty",
+    "--allow-staged",
+    "--package",
+    "relayer",
+]
+
+[tasks.unused-deps]
+workspace = false
+install_crate = "cargo-machete"
+command = "cargo"
+args = ["machete"]
+
+[tasks.check]
+dependencies = ["fmt-check", "clippy-check"]
+
+[tasks.fmt-check]
+workspace = false
+command = "cargo"
+args = ["fmt", "--check", "--package", "relayer"]
+
+[tasks.clippy-check]
+workspace = false
+install_crate = "clippy"
+command = "cargo"
+args = ["clippy", "--package", "relayer", "--locked", "--", "-D", "warnings"]
+
+[tasks.audit]
+workspace = false
+install_crate = "cargo-audit"
+command = "cargo"
+args = ["audit"]

@@ -17,6 +17,7 @@ pub struct State {
     pool: Pool<Postgres>,
 }
 
+#[allow(dead_code)]
 impl State {
     pub async fn from_url(database_url: Url) -> Result<Self> {
         Pool::connect(database_url.as_str())

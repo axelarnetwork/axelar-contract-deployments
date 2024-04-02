@@ -103,6 +103,7 @@ impl Relayer {
 struct AxelarToSolanaHandler {
     approver: config::AxelarApprover,
     includer: config::SolanaIncluder,
+    #[allow(dead_code)]
     state: State,
 }
 
@@ -129,7 +130,7 @@ impl AxelarToSolanaHandler {
             set.spawn(approver.run());
             set.spawn(includer.run());
 
-            while let Some(_) = set.join_next().await {
+            while (set.join_next().await).is_some() {
                 error!("Axelar to Solana transport failed. Restarting.");
                 set.abort_all();
             }
@@ -251,6 +252,7 @@ impl SolanaToAxelarHandler {
 
 // TODO: Use the real worker types already defined in this crate.
 
+#[allow(dead_code)]
 struct VerifierActor {
     receiver: Receiver<axl_rpc::Message>,
     state: State,
@@ -266,6 +268,7 @@ impl VerifierActor {
 }
 
 struct ApproverActor {
+    #[allow(dead_code)]
     sender: Sender<()>,
 }
 
@@ -275,6 +278,7 @@ impl ApproverActor {
     }
 }
 
+#[allow(dead_code)]
 struct IncluderActor {
     receiver: Receiver<()>,
 }

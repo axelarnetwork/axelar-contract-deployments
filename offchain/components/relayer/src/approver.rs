@@ -23,6 +23,7 @@ use self::block_messages::BlockMessages;
 mod block_messages;
 
 #[derive(Debug, Error)]
+#[allow(dead_code)]
 pub enum ApproverError {
     #[error("Failed to subscribe for approvals from Axelar")]
     SubForApprovals(tonic::Status),
@@ -50,6 +51,7 @@ pub enum ApproverError {
 ///
 /// Those will be payloads sent from other blockchains,
 /// which pass through axelar and are sent to Solana.
+#[allow(dead_code)]
 pub struct Approver {
     amplifier_rpc_client: AxelarRpcClient<Channel>,
     solana_rpc_client: Arc<RpcClient>,

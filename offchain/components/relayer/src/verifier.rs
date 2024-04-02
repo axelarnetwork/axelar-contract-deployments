@@ -23,6 +23,7 @@ pub struct Verifier {
     tx: mpsc::UnboundedSender<axl_rpc::Message>,
 }
 
+#[allow(dead_code)]
 impl Verifier {
     pub fn start(client: AxelarRpcClient<Channel>) -> Self {
         let actor = VerifierActor::new(client);
@@ -51,6 +52,7 @@ struct VerifierActor {
     pub client: AxelarRpcClient<Channel>,
 }
 
+#[allow(dead_code)]
 impl VerifierActor {
     fn new(client: AxelarRpcClient<Channel>) -> Self {
         Self { client }

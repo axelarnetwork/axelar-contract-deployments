@@ -1,0 +1,77 @@
+name: Relayer deployment
+on:
+  push:
+    branches:
+      - "poc"
+    paths:
+      - "offchain/components/relayer/**"
+
+defaults:
+  run:
+    working-directory: "offchain/components/relayer"
+
+env:
+  # If one change any variable of this env block, all of them needs to be aligned, as
+  # we cannot re-user them.
+  IMAGE_NAME: relayer
+  IMAGE_VERSION: ${{ github.sha }}
+  IMAGE_ID: solanaaxelartestnetregistry.azurecr.io/solana-axelar/relayer
+  DEPLOYING_IMAGE_FQDN: solanaaxelartestnetregistry.azurecr.io/solana-axelar/relayer:${{ github.sha }}
+
+jobs:
+  code-checks:
+    name: "Code checks and tests"
+    uses: ./.github/workflows/code-qa.yml
+
+  docker-image:
+    needs: code-checks
+    runs-on: ubuntu-latest
+    name: "Build and push docker image"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: true
+          cache-on-failure: true
+          workspaces: "offchain -> target"
+          shared-key: "offchain"
+
+      - name: Build binary
+        run: cargo build --release --package relayer
+
+      - name: Build image
+        run: docker build ./../../target/release --file Dockerfile --tag $IMAGE_NAME --tag latest
+
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_REGISTRY_NAME }}.azurecr.io
+          username: ${{ secrets.AZ_SP_CLIENT_ID }}
+          password: ${{ secrets.AZ_SP_CLIENT_SECRET }}
+
+      - name: Push image
+        run: |
+          docker tag $IMAGE_NAME $IMAGE_ID:$IMAGE_VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:latest
+          docker push $DEPLOYING_IMAGE_FQDN
+
+  deployment:
+    needs: docker-image
+    runs-on: ubuntu-latest
+    name: "Deploy to k8s cluster"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: azure/setup-kubectl@v2.0
+
+      - uses: Azure/k8s-set-context@v2
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+          context: solanaaxelartestnetk8s
+
+      - name: Deploy image in k8s
+        run: kubectl set image deployment/relayer relayer=${{ env.DEPLOYING_IMAGE_FQDN }}

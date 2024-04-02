@@ -5,6 +5,7 @@ pub struct BlockMessages {
     pub messages: Vec<SubscribeToApprovalsResponse>,
 }
 
+#[allow(dead_code)]
 impl BlockMessages {
     pub fn new(height: u64) -> Self {
         Self {
