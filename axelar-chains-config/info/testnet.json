@@ -2074,8 +2074,7 @@
       "tokenSymbol": "MATIC",
       "confirmations": 1,
       "contracts": {
-        "AxelarGateway": {
-        }
+        "AxelarGateway": {}
       },
       "explorer": {
         "name": "OkLink",
