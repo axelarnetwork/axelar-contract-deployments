@@ -2,13 +2,12 @@
 
 use borsh::{BorshDeserialize, BorshSerialize};
 
-use super::hash_new_operator_set;
-use crate::types::address::Address;
-use crate::types::u256::U256;
+use super::{hash_new_operator_set, U256};
+use crate::Address;
 
 /// [Operators] consist of public keys of signers, weights (bond) and desired
 /// threshold.
-#[derive(BorshSerialize, BorshDeserialize, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub struct Operators {
     /// List of addresses; look [Address].
     addresses: Vec<Address>,
@@ -56,4 +55,34 @@ impl Operators {
     pub fn addresses(&self) -> &[Address] {
         &self.addresses
     }
+}
+#[inline]
+pub fn sorted_and_unique<I, T>(addresses: I) -> bool
+where
+    I: Iterator<Item = T>,
+    T: PartialOrd,
+{
+    let mut iterator = addresses.peekable();
+    while let (Some(a), Some(b)) = (iterator.next(), iterator.peek()) {
+        if a >= *b {
+            return false;
+        }
+    }
+    true
+}
+
+#[test]
+fn test_is_sorted_and_unique() {
+    assert!(
+        sorted_and_unique([[1; 33], [2; 33], [3; 33], [4; 33]].iter()),
+        "should return true for sorted and unique elements"
+    );
+    assert!(
+        !sorted_and_unique([[1; 33], [2; 33], [4; 33], [3; 33]].iter()),
+        "should return false for unsorted elements"
+    );
+    assert!(
+        !sorted_and_unique([[1; 33], [2; 33], [2; 33], [3; 33]].iter()),
+        "should return false for duplicated elements"
+    );
 }

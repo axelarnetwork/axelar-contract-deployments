@@ -1,6 +1,6 @@
 //! Program state processor.
 
-use borsh::from_slice;
+use borsh::BorshDeserialize;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
@@ -15,11 +15,9 @@ use crate::instructions::GatewayInstruction;
 
 mod call_contract;
 mod execute;
-mod initialize_approved_message;
+mod initialize_command;
 mod initialize_config;
 mod initialize_execute_data;
-mod initialize_transfer_operatorship;
-mod transfer_operatorship;
 mod validate_contract_call;
 
 /// Program state handler.
@@ -32,7 +30,7 @@ impl Processor {
         accounts: &[AccountInfo],
         input: &[u8],
     ) -> ProgramResult {
-        let instruction = from_slice::<GatewayInstruction>(input)?;
+        let instruction = GatewayInstruction::try_from_slice(input)?;
         check_program_account(*program_id)?;
 
         match instruction {
@@ -60,66 +58,22 @@ impl Processor {
             }
             GatewayInstruction::InitializeExecuteData { execute_data } => {
                 msg!("Instruction: Initialize Execute Data");
-                Self::process_initialize_execute_data(program_id, accounts, &execute_data)
+                Self::process_initialize_execute_data(program_id, accounts, execute_data)
             }
-            GatewayInstruction::TransferOperatorship {} => {
-                msg!("Instruction: TransferOperatorship");
-                Self::process_transfer_operatorship(program_id, accounts)
+            GatewayInstruction::InitializePendingCommand(command) => {
+                msg!("Instruction: Initialize Pending Command");
+                Self::process_initialize_command(program_id, accounts, command)
             }
-            GatewayInstruction::InitializeMessage {
-                command_id: message_id,
-                source_chain,
-                source_address,
-                payload_hash,
-                destination_program,
-            } => {
-                msg!("Instruction: Initialize Approved Message");
-                Self::process_initialize_approved_message(
-                    program_id,
-                    accounts,
-                    message_id,
-                    source_chain,
-                    source_address,
-                    payload_hash,
-                    destination_program,
-                )
-            }
-            GatewayInstruction::InitializeTransferOperatorship {
-                operators_and_weights,
-                threshold,
-            } => {
-                msg!("Instruction: Initialize TransferOperatorship");
-                Self::process_initialize_transfer_operatorship(
-                    program_id,
-                    accounts,
-                    operators_and_weights,
-                    threshold,
-                )
-            }
-            GatewayInstruction::ValidateContractCall {
-                destination_program,
-                command_id: message_id,
-                payload_hash,
-                source_address,
-                source_chain,
-            } => {
+            GatewayInstruction::ValidateContractCall(command) => {
                 msg!("Instruction: Validate Contract Call");
-                Self::process_validate_contract_call(
-                    program_id,
-                    message_id,
-                    source_chain,
-                    source_address,
-                    payload_hash,
-                    destination_program,
-                    accounts,
-                )
+                Self::process_validate_contract_call(program_id, accounts, command)
             }
         }
     }
 }
 
 /// Initialize a Gateway PDA
-fn init_pda<'a, 'b, T: borsh::BorshSerialize>(
+fn init_pda_with_dynamic_size<'a, 'b, T: borsh::BorshSerialize>(
     payer: &'a AccountInfo<'b>,
     new_account_pda: &'a AccountInfo<'b>,
     seeds: &[&[u8]],
@@ -154,23 +108,4 @@ fn init_pda<'a, 'b, T: borsh::BorshSerialize>(
     let mut account_data = new_account_pda.try_borrow_mut_data()?;
     account_data[..space].copy_from_slice(&serialized_data);
     Ok(())
-}
-
-mod helper {
-    use solana_program::account_info::AccountInfo;
-    use solana_program::pubkey::Pubkey;
-
-    use crate::error::GatewayError;
-
-    /// Compares the account address with the expected address.
-    pub(super) fn compare_address(
-        pda_info: &AccountInfo<'_>,
-        expected_pda_info: Pubkey,
-    ) -> Result<(), GatewayError> {
-        if pda_info.key != &expected_pda_info {
-            Err(GatewayError::IncorrectAccountAddr)
-        } else {
-            Ok(())
-        }
-    }
 }

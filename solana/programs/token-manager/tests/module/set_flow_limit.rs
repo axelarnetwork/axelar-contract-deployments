@@ -1,4 +1,3 @@
-use gateway::state::GatewayConfig;
 use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
@@ -23,7 +22,7 @@ async fn test_set_flow_limit() {
     let init_flow_limiter = Keypair::new();
     let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
     let gateway_root_config_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
         .await;
     let groups = fixture
         .derive_token_manager_permission_groups(

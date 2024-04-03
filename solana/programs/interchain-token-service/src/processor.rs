@@ -8,7 +8,7 @@ mod initialize;
 mod remote_interchain_transfer;
 mod take_token;
 
-use axelar_executable::AxelarCallableInstruction;
+use axelar_executable::axelar_message_primitives::AxelarCallableInstruction;
 use borsh::BorshDeserialize;
 use program_utils::check_program_account;
 use solana_program::account_info::AccountInfo;

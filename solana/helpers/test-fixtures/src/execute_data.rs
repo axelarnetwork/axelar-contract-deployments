@@ -1,9 +1,11 @@
 use anyhow::{anyhow, ensure, Result};
 use connection_router::Message as AxelarMessage;
 use cosmwasm_std::{Addr, Uint256};
+use itertools::{Either, Itertools};
 use libsecp256k1::{sign, Message, PublicKey, SecretKey};
 use multisig::key::{KeyType, PublicKey as AxelarPublicKey, Signature};
 use multisig::msg::Signer;
+use multisig::worker_set::WorkerSet;
 use multisig_prover::encoding::{CommandBatchBuilder, Encoder};
 use multisig_prover::types::CommandBatch;
 
@@ -43,15 +45,16 @@ impl From<TestSigner> for Signer {
 }
 
 pub struct Fixtures {
-    pub messages: Vec<AxelarMessage>,
+    pub messages: Vec<Either<AxelarMessage, WorkerSet>>,
     pub signers: Vec<TestSigner>,
     pub command_batch: CommandBatch,
     pub signatures: Vec<Option<Signature>>,
 }
 
 fn fixtures(num_messages: usize, num_signers: usize) -> Result<Fixtures> {
-    let messages: Vec<AxelarMessage> = (0..num_messages)
+    let messages: Vec<Either<AxelarMessage, _>> = (0..num_messages)
         .map(|_| message())
+        .map_ok(Either::Left)
         .collect::<Result<_, _>>()?;
     let signers: Vec<TestSigner> = (0..num_signers)
         .map(|_| create_signer())
@@ -80,10 +83,17 @@ pub fn create_execute_data(
     encode(&command_batch, signers, signatures, quorum)
 }
 
-pub fn create_command_batch(messages: &[AxelarMessage]) -> Result<CommandBatch> {
+pub fn create_command_batch(messages: &[Either<AxelarMessage, WorkerSet>]) -> Result<CommandBatch> {
     let mut builder = CommandBatchBuilder::new(555u64.into(), Encoder::Bcs);
     for msg in messages {
-        builder.add_message(msg.clone())?;
+        match msg {
+            Either::Left(msg) => {
+                builder.add_message(msg.clone())?;
+            }
+            Either::Right(worker_set) => {
+                builder.add_new_worker_set(worker_set.clone())?;
+            }
+        }
     }
     Ok(builder.build()?)
 }

@@ -1,4 +1,5 @@
-use gateway::state::GatewayApprovedMessage;
+use axelar_message_primitives::command::DecodedCommand;
+use gateway::state::GatewayApprovedCommand;
 use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
 use interchain_token_transfer_gmp::{Bytes32, DeployInterchainToken};
 use solana_program_test::tokio;
@@ -8,6 +9,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
 use test_fixtures::axelar_message::custom_message;
+use test_fixtures::Either;
 
 use crate::setup_its_root_fixture;
 
@@ -31,30 +33,35 @@ async fn test_deploy_interchain_token() {
         );
     let message_to_execute =
         custom_message(interchain_token_service::id(), message_payload.clone()).unwrap();
-    let gateway_approved_message_pda = fixture
+    let (gateway_approved_message_pda, execute_data, _gateway_execute_data_pda) = fixture
         .fully_approve_messages(
             &gateway_root_pda,
-            &[message_to_execute.clone()],
+            &[Either::Left(message_to_execute.clone())],
             gateway_operators,
         )
-        .await[0];
+        .await;
     let gateway_approved_message = fixture
         .banks_client
-        .get_account(gateway_approved_message_pda)
+        .get_account(gateway_approved_message_pda[0])
         .await
         .expect("get_account")
         .expect("account not none");
-    let data = GatewayApprovedMessage::unpack_from_slice(gateway_approved_message.data()).unwrap();
+    let DecodedCommand::ApproveContractCall(command_to_execute) =
+        execute_data.command_batch.commands[0].clone()
+    else {
+        panic!("Expected ApproveContractCall command");
+    };
+    let data = GatewayApprovedCommand::unpack_from_slice(gateway_approved_message.data()).unwrap();
     assert!(
-        data.is_approved(),
+        data.is_contract_call_approved(),
         "GatewayApprovedMessage should be approved"
     );
 
     // Action
     let ix = axelar_executable::construct_axelar_executable_ix(
-        &message_to_execute,
+        command_to_execute,
         message_payload.encode(),
-        gateway_approved_message_pda,
+        gateway_approved_message_pda[0],
         gateway_root_pda,
     )
     .unwrap();

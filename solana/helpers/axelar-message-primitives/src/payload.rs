@@ -72,6 +72,7 @@ impl<'payload> DataPayload<'payload> {
             self.payload_without_accounts.to_vec(),
             self.solana_accounts.to_vec(),
         ))
+        // TODO eliminate unwrap
         .unwrap()
     }
 
@@ -84,7 +85,9 @@ impl<'payload> DataPayload<'payload> {
         // 2. We need to switch AWAY from Borsh to something that can be easily digested
         //    by EVM and other chains
         let (payload_without_accounts, solana_accounts) =
-            borsh::from_slice::<(Vec<u8>, Vec<SolanaAccountRepr>)>(data).unwrap();
+            borsh::from_slice::<(Vec<u8>, Vec<SolanaAccountRepr>)>(data)
+                // TODO eliminate unwrap
+                .unwrap();
         Self::new_with_cow(Cow::Owned(payload_without_accounts), solana_accounts)
     }
 

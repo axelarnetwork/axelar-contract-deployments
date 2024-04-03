@@ -1,5 +1,4 @@
 use anyhow::{Ok, Result};
-use gateway::state::GatewayConfig;
 use interchain_token_service::get_interchain_token_service_associated_token_account;
 use solana_program::program_pack::Pack;
 use solana_program_test::tokio;
@@ -25,10 +24,7 @@ async fn take_token_lock_unlock_success() -> Result<()> {
         create_signer_with_weight(4).unwrap(),
     ];
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::new(
-            0,
-            fixture.init_operators_and_epochs(&gateway_operators),
-        ))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&gateway_operators))
         .await;
     let interchain_token_service_root_pda = fixture
         .init_its_root_pda(&gateway_root_pda, &gas_service_root_pda)
@@ -183,7 +179,7 @@ async fn take_token_mint_burn_success() -> Result<()> {
     let amount_to_mint_preparations = 100;
     let amount_to_burn = 50;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
         .await;
     let interchain_token_service_root_pda = fixture
         .init_its_root_pda(&gateway_root_pda, &gas_service_root_pda)

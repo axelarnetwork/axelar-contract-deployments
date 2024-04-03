@@ -1,4 +1,3 @@
-use gateway::state::GatewayConfig;
 use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
 use interchain_token_transfer_gmp::Bytes32;
 use solana_program::pubkey::Pubkey;
@@ -72,10 +71,7 @@ async fn setup_its_root_fixture() -> (
     ];
     let init_operator = Pubkey::from([0; 32]);
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::new(
-            0,
-            fixture.init_operators_and_epochs(&gateway_operators),
-        ))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&gateway_operators))
         .await;
     let interchain_token_service_root_pda = fixture
         .init_its_root_pda(&gateway_root_pda, &gas_service_root_pda)

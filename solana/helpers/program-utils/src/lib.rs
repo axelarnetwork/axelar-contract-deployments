@@ -102,14 +102,14 @@ pub trait ValidPDA {
     // TODO add constraint that the T: IsInitialized + Pack + BorshSerialize
     fn check_initialized_pda<T: solana_program::program_pack::Pack + BorshDeserialize>(
         &self,
-        expected_program_id: &Pubkey,
+        expected_owner_program_id: &Pubkey,
     ) -> Result<T, ProgramError>;
 
     /// Check if the account is an initialized PDA without deserializing the
     /// data
     fn check_initialized_pda_without_deserialization(
         &self,
-        expected_program_id: &Pubkey,
+        expected_owner_program_id: &Pubkey,
     ) -> Result<(), ProgramError>;
 
     /// Check if the account is an initialized PDA
@@ -119,9 +119,9 @@ pub trait ValidPDA {
 impl<'a> ValidPDA for &AccountInfo<'a> {
     fn check_initialized_pda<T: solana_program::program_pack::Pack + BorshDeserialize>(
         &self,
-        expected_program_id: &Pubkey,
+        expected_owner_program_id: &Pubkey,
     ) -> Result<T, ProgramError> {
-        self.check_initialized_pda_without_deserialization(expected_program_id)?;
+        self.check_initialized_pda_without_deserialization(expected_owner_program_id)?;
 
         let data = self.try_borrow_data()?;
         T::unpack_from_slice(data.borrow()).map_err(|_| ProgramError::InvalidAccountData)
@@ -129,13 +129,13 @@ impl<'a> ValidPDA for &AccountInfo<'a> {
 
     fn check_initialized_pda_without_deserialization(
         &self,
-        expected_program_id: &Pubkey,
+        expected_owner_program_id: &Pubkey,
     ) -> Result<(), ProgramError> {
         let has_lamports = **self.try_borrow_lamports()? > 0;
         if !has_lamports {
             return Err(ProgramError::InsufficientFunds);
         }
-        let has_correct_owner = self.owner == expected_program_id;
+        let has_correct_owner = self.owner == expected_owner_program_id;
         if !has_correct_owner {
             return Err(ProgramError::IllegalOwner);
         }

@@ -1,8 +1,9 @@
+use std::borrow::Cow;
+
 use ethers_core::abi::AbiEncode;
 use ethers_core::types::U256;
 use gas_service::events::GasServiceEvent;
 use gateway::events::GatewayEvent;
-use gateway::state::GatewayConfig;
 use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};
 use solana_program::keccak::hash;
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
@@ -19,7 +20,7 @@ async fn test_deploy_remote_token_manager() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
         .await;
     let gas_service_root_pda = fixture.init_gas_service().await;
     let gas_service_initial_saldo = fixture
@@ -130,12 +131,14 @@ async fn test_deploy_remote_token_manager() {
 
     assert_eq!(
         gateway_event,
-        Some(GatewayEvent::CallContract {
-            sender: fixture.payer.pubkey(),
-            destination_chain,
-            destination_address: associated_trusted_address_from_account.into(),
-            payload,
-            payload_hash
-        })
+        Some(GatewayEvent::CallContract(Cow::Owned(
+            gateway::events::CallContract {
+                sender: fixture.payer.pubkey(),
+                destination_chain,
+                destination_address: associated_trusted_address_from_account.into(),
+                payload,
+                payload_hash
+            }
+        )))
     );
 }

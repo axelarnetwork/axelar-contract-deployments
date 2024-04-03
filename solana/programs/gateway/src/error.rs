@@ -151,14 +151,26 @@ pub enum GatewayError {
 
     /// The GatewayApprovedMessage PDA has not been approved yet! Wait for the
     /// `execute` instruction to be called.
-    #[error("The GatewayApprovedMessage PDA has not been approved yet! Wait for the `execute` instruction to be called.")]
-    GatewayMessageNotApproved,
+    #[error("The GatewayApprovedCommand PDA has not been approved yet! Wait for the `execute` instruction to be called.")]
+    GatewayCommandNotApproved,
 
     // 35
     /// The `caller` is not a signer, which is required verify that he wants to
     /// execute the message.
     #[error("The `caller` is not a signer, which is required verify that he wants to execute the message.")]
     MismatchedAllowedCallers,
+
+    // 36
+    /// Auth weighted error
+    #[error("Auth weighted error")]
+    AxelarAuthWeightedError,
+
+    // 37
+    /// The GatewayCommandStatusMessage is not pending
+    #[error(
+        "The instruction expected the GatewayCommandStatusMessage to be pending, but it was not."
+    )]
+    GatewayCommandStatusNotPending,
 }
 
 impl From<GatewayError> for ProgramError {

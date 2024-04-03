@@ -4,10 +4,11 @@ use amplifier_api::axl_rpc::{
     SubscribeToApprovalsResponse,
 };
 
-use gmp_gateway::{
-    error::GatewayError,
-    state::{GatewayApprovedMessage, GatewayExecuteData},
+use axelar_executable::axelar_message_primitives::{
+    command::{ApproveContractCallCommand, DecodedCommand},
+    DataPayload,
 };
+use gmp_gateway::{error::GatewayError, state::GatewayApprovedCommand};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_program::{program_error::ProgramError, pubkey::Pubkey};
 use solana_sdk::{signature::Keypair, signature::Signer, transaction::Transaction};
@@ -81,21 +82,13 @@ impl Approver {
     #[tracing::instrument(level = "info", skip_all)]
     async fn initialize_execute_data_account(
         &self,
-        pda: Pubkey,
-        execute_data: GatewayExecuteData,
+        ix: solana_sdk::instruction::Instruction,
     ) -> Result<(), ApproverError> {
         let recent_blockhash = self
             .solana_rpc_client
             .get_latest_blockhash()
             .await
             .map_err(ApproverError::GetLatestBlockhash)?;
-
-        let ix = gmp_gateway::instructions::initialize_execute_data(
-            self.payer_keypair.pubkey(),
-            pda,
-            execute_data.clone(),
-        )
-        .map_err(ApproverError::CreateInitExecDataIx)?;
 
         // TODO: This will send the init exec data tx async
         // let tx = TxType::InitExecDataAccount(Transaction::new_signed_with_payer(
@@ -132,25 +125,31 @@ impl Approver {
     #[tracing::instrument(level = "info", skip_all)]
     async fn handle_proof(&self, proof: SubscribeToApprovalsResponse) -> Result<(), ApproverError> {
         // Decode execute_data, get msg ids and construct accounts
-        let execute_data = GatewayExecuteData::new(proof.execute_data);
-        let (_proof, command_batch) = execute_data
-            .decode()
-            .map_err(ApproverError::ExecuteDataDecode)?;
+
+        let (ix, decoded_execute_data) = gmp_gateway::instructions::initialize_execute_data(
+            self.payer_keypair.pubkey(),
+            self.gmp_gateway_root_config_pda,
+            proof.execute_data,
+        )
+        .map_err(ApproverError::CreateInitExecDataIx)?;
 
         // Construct msg accounts for the Solana tx
         // TODO: Prover should not include more than X msgs in the batch. We can also do that
         // check here if needed?
-        let message_accounts: Vec<Pubkey> = command_batch
+        let message_accounts: Vec<Pubkey> = decoded_execute_data
+            .command_batch
             .commands
             .iter()
-            .map(|command| GatewayApprovedMessage::pda(&gmp_gateway::ID, &command.into()).0)
+            .map(|command| {
+                GatewayApprovedCommand::pda(&self.gmp_gateway_root_config_pda, command).0
+            })
             .collect();
 
         // Construct the execute_data account
         let execute_data_account = {
-            let (execute_data_pda, _bump, _seeds) = execute_data.pda();
-            self.initialize_execute_data_account(execute_data_pda, execute_data)
-                .await?;
+            let (execute_data_pda, _bump, _seeds) =
+                decoded_execute_data.pda(&self.gmp_gateway_root_config_pda);
+            self.initialize_execute_data_account(ix).await?;
             execute_data_pda
         };
 
@@ -183,19 +182,32 @@ impl Approver {
             .await
             .map_err(ApproverError::SendAndConfirm)?;
 
-        for decoded_command in command_batch.commands {
-            self.execute(decoded_command.message).await?
+        for (decoded_command, approved_command_pda) in decoded_execute_data
+            .command_batch
+            .commands
+            .into_iter()
+            .zip(message_accounts)
+        {
+            match decoded_command {
+                DecodedCommand::ApproveContractCall(command) => {
+                    self.execute_destination_program(command, approved_command_pda)
+                        .await?;
+                }
+                DecodedCommand::TransferOperatorship(_command) => {
+                    // no-op because this already gets executed in the gatway.execute call
+                }
+            }
         }
 
         Ok(())
     }
 
-    async fn execute(
+    /// Execute a command from Axelar by calling the destination program!
+    async fn execute_destination_program(
         &self,
-        message: gmp_gateway::types::execute_data_decoder::DecodedMessage,
+        message: ApproveContractCallCommand,
+        approved_message_pda: Pubkey,
     ) -> Result<(), ApproverError> {
-        let destination_addr = Pubkey::from(message.destination_address);
-
         // Get the actual payload for that hash from Axelar
         let payload_bytes = self
             .amplifier_rpc_client
@@ -205,17 +217,23 @@ impl Approver {
             })
             .await
             .map_err(ApproverError::GetPayload)?;
+        // sanity check: decoding of the payload - no point to send & pay for a tx if we can check it here
+        let payload_bytes = payload_bytes.into_inner().payload;
+        let payload = DataPayload::decode(payload_bytes.as_ref());
 
         // Decode the payload as a solana Instruction type
-        let ix: solana_program::instruction::Instruction =
-            bcs::from_bytes(&payload_bytes.into_inner().payload)
-                .map_err(ApproverError::DecodePayload)?;
-        // ix.accounts
-        //     .insert(0, AccountMeta::new(s..payer_keypair.pubkey(), true));
+        let destinatoin_program = message.destination_program;
+        let ix = axelar_executable::construct_axelar_executable_ix(
+            message,
+            payload.encode(),
+            approved_message_pda,
+            self.gmp_gateway_root_config_pda,
+        )
+        .unwrap(); // todo handle error
 
         // mostly for accounting purposes
-        if ix.program_id != destination_addr {
-            warn!("program_id provided from the decoded instruction doesn't match with the destination_address passed in the Axelar message; ix - {}; msg - {}", ix.program_id, destination_addr);
+        if ix.program_id != destinatoin_program.0 {
+            warn!("program_id provided from the decoded instruction doesn't match with the destination_address passed in the Axelar message; ix - {}; msg - {}", ix.program_id, destinatoin_program.0);
 
             // TODO: Arguable if we should skip sending the tx or just pick what's in
             // the instruction as the correct one by default

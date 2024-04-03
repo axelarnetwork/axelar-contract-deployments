@@ -16,10 +16,6 @@ pub enum AddressError {
     /// When couldn't read returned vec as slice.
     #[error(transparent)]
     FromHexAsSlice(#[from] TryFromSliceError),
-
-    /// When given [Address] length isn't the expected.
-    #[error("Invalid address length: {0}")]
-    InvalidLength(usize),
 }
 
 /// Represents an ECDSA public key.
@@ -41,8 +37,15 @@ impl PartialEq<[u8]> for Address {
 impl TryFrom<&str> for Address {
     type Error = AddressError;
 
+    /// Tries to convert a hex string into an [Address].
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        hex::decode(value)?.as_slice().try_into()
+        // we need to get rid of the 0x prefix
+        let value = match value.split_once('x') {
+            Some((_, rest)) => rest,
+            None => value,
+        };
+        let decoded_val = hex::decode(value)?;
+        decoded_val.as_slice().try_into()
     }
 }
 
@@ -50,12 +53,8 @@ impl TryFrom<&[u8]> for Address {
     type Error = AddressError;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        if bytes.len() != Self::ECDSA_COMPRESSED_PUBKEY_LEN {
-            Err(AddressError::InvalidLength(bytes.len()))
-        } else {
-            // Unwrap: we just checked that the input size matches the inner array.
-            Ok(Self(bytes.try_into().unwrap()))
-        }
+        let bytes: [u8; Self::ECDSA_COMPRESSED_PUBKEY_LEN] = bytes.try_into()?;
+        Ok(Self(bytes))
     }
 }
 

@@ -12,6 +12,6 @@ crate-type = ["cdylib", "lib"]
 solana-program.workspace = true
 borsh.workspace = true
 axelar-message-primitives.workspace = true
-gateway = { workspace = true, features = ["no-entrypoint"] }
+gateway.workspace = true
 
 [dev-dependencies]

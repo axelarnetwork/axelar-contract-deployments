@@ -1,10 +1,13 @@
+use std::borrow::Cow;
+
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
-use crate::events::emit_call_contract_event;
+use crate::events::{CallContract, GatewayEvent};
+use crate::state::GatewayConfig;
 
 impl Processor {
     /// This function is used to initialize the program.
@@ -18,21 +21,21 @@ impl Processor {
         let accounts_iter = &mut accounts.iter();
         let sender = next_account_info(accounts_iter)?;
         let gateway_root_pda = next_account_info(accounts_iter)?;
-        // TODO we want to deserialize the PDA as well, otherwise we can't check if it's
-        // initialized
-        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+        let _ = gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
 
         let payload_hash = solana_program::keccak::hash(&payload).to_bytes();
 
         assert!(sender.is_signer, "Sender must be a signer");
 
-        emit_call_contract_event(
-            *sender.key,
+        let call_contract = CallContract {
             destination_chain,
-            destination_contract_address,
             payload,
             payload_hash,
-        )?;
+            sender: *sender.key,
+            destination_address: destination_contract_address,
+        };
+        let event = GatewayEvent::CallContract(Cow::Borrowed(&call_contract));
+        event.emit()?;
         Ok(())
     }
 }

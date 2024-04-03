@@ -4,8 +4,7 @@
 
 mod entrypoint;
 pub mod processor;
-use axelar_executable::axelar_message_primitives::DataPayload;
-use axelar_executable::AxelarCallableInstruction;
+use axelar_executable::axelar_message_primitives::{AxelarCallableInstruction, DataPayload};
 use borsh::{BorshDeserialize, BorshSerialize};
 pub use solana_program;
 use solana_program::instruction::{AccountMeta, Instruction};

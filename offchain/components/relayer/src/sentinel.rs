@@ -9,7 +9,7 @@ use crate::sentinel::types::{
 };
 use crate::state::State;
 use amplifier_api::axl_rpc;
-use gmp_gateway::events::GatewayEvent;
+use gmp_gateway::events::{CallContract, GatewayEvent};
 use solana_program::pubkey::Pubkey;
 use solana_sdk::signature::Signature;
 use std::time::Duration;
@@ -183,13 +183,14 @@ impl SolanaSentinel {
 
         for (tx_index, event) in gateway_events {
             match event {
-                GatewayEvent::CallContract {
-                    destination_chain,
-                    destination_address,
-                    payload,
-                    sender,
-                    ..
-                } => {
+                GatewayEvent::CallContract(data) => {
+                    let CallContract {
+                        sender,
+                        destination_chain,
+                        destination_address,
+                        payload,
+                        ..
+                    } = data.into_owned();
                     self.handle_gateway_call_contract_event(
                         solana_transaction.signature,
                         tx_index,
@@ -201,9 +202,9 @@ impl SolanaSentinel {
                     .await?
                 }
 
-                GatewayEvent::OperatorshipTransferred {
-                    info_account_address: _,
-                } => todo!("Handle Operatorship Transferred event"),
+                GatewayEvent::OperatorshipTransferred(_data) => {
+                    todo!("Handle Operatorship Transferred event")
+                }
                 _ => unimplemented!(),
             };
         }

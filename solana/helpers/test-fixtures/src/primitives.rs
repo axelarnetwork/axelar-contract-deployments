@@ -11,3 +11,7 @@ pub fn bytes(n: usize) -> Vec<u8> {
 pub fn array32() -> [u8; 32] {
     bytes(32).try_into().unwrap()
 }
+
+pub fn rand_u128() -> u128 {
+    fastrand::u128(..)
+}

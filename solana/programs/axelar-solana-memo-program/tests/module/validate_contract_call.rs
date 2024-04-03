@@ -1,7 +1,8 @@
+use axelar_executable::axelar_message_primitives::command::DecodedCommand;
 use axelar_executable::axelar_message_primitives::DestinationProgramId;
 use axelar_solana_memo_program::from_axelar_to_solana::build_memo;
-use gateway::state::approved_message::MessageApprovalStatus;
-use gateway::state::{GatewayApprovedMessage, GatewayConfig};
+use gateway::state::GatewayApprovedCommand;
+use itertools::Either;
 use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
@@ -31,19 +32,21 @@ async fn test_successful_validate_contract_call() {
     let message_to_execute =
         custom_message(destination_program_id, message_payload.clone()).unwrap();
     let message_to_stall = custom_message(destination_program_id, message_payload.clone()).unwrap();
-    let messages = vec![message_to_execute.clone(), message_to_stall.clone()];
-
+    let messages = [message_to_execute.clone(), message_to_stall.clone()]
+        .into_iter()
+        .map(Either::Left)
+        .collect::<Vec<_>>();
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::new(
-            0,
-            fixture.init_operators_and_epochs(&operators),
-        ))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
         .await;
-    let execute_data_pda = fixture
-        .init_execute_data(&gateway_root_pda, &messages, operators, weight_of_quorum)
+    let (execute_data_pda, gatewa_execute_data, _raw_execute_data) = fixture
+        .init_execute_data(&gateway_root_pda, &messages, &operators, weight_of_quorum)
         .await;
     let gateway_approved_message_pdas = fixture
-        .init_pending_gateway_messages(&gateway_root_pda, &messages)
+        .init_pending_gateway_commands(
+            &gateway_root_pda,
+            &gatewa_execute_data.command_batch.commands,
+        )
         .await;
     fixture
         .approve_pending_gateway_messages(
@@ -54,8 +57,13 @@ async fn test_successful_validate_contract_call() {
         .await;
 
     // Action: set message status as executed
+    let DecodedCommand::ApproveContractCall(approved_message) =
+        gatewa_execute_data.command_batch.commands[0].clone()
+    else {
+        panic!("expected ApproveContractCall command")
+    };
     let ix = axelar_executable::construct_axelar_executable_ix(
-        &message_to_execute,
+        approved_message,
         message_payload.encode(),
         gateway_approved_message_pdas[0],
         gateway_root_pda,
@@ -84,13 +92,10 @@ async fn test_successful_validate_contract_call() {
         .await
         .expect("get_account")
         .expect("account not none");
-    let gateway_approved_message_data = gateway_approved_message
-        .check_initialized_pda::<GatewayApprovedMessage>(&gateway::id())
+    let gateway_approved_command_data = gateway_approved_message
+        .check_initialized_pda::<GatewayApprovedCommand>(&gateway::id())
         .unwrap();
-    assert_eq!(
-        gateway_approved_message_data.status,
-        MessageApprovalStatus::Executed
-    );
+    assert!(gateway_approved_command_data.is_command_executed());
 
     // The second message is still in Approved status
     let gateway_approved_message = fixture
@@ -99,13 +104,10 @@ async fn test_successful_validate_contract_call() {
         .await
         .expect("get_account")
         .expect("account not none");
-    let gateway_approved_message_data = gateway_approved_message
-        .check_initialized_pda::<GatewayApprovedMessage>(&gateway::id())
+    let gateway_approved_command_data = gateway_approved_message
+        .check_initialized_pda::<GatewayApprovedCommand>(&gateway::id())
         .unwrap();
-    assert_eq!(
-        gateway_approved_message_data.status,
-        MessageApprovalStatus::Approved
-    );
+    assert!(gateway_approved_command_data.is_contract_call_approved());
 
     // We can get the memo from the logs
     let log_msgs = tx.metadata.unwrap().log_messages;

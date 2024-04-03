@@ -47,3 +47,6 @@ reqwest = "0.12"
 [dependencies.gmp-gateway]
 path = "../../../solana/programs/gateway"
 features = ["no-entrypoint"]
+
+[dependencies.axelar-executable]
+path = "../../../solana/helpers/axelar-executable"

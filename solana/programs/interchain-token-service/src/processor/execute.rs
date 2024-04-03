@@ -2,7 +2,8 @@ mod deploy_interchain_token;
 mod deploy_token_manager;
 mod interchain_transfer;
 
-use axelar_executable::{validate_contract_call, AxelarExecutablePayload};
+use axelar_executable::validate_contract_call;
+use axelar_message_primitives::AxelarExecutablePayload;
 use interchain_token_transfer_gmp::ethers_core::abi::AbiDecode;
 use interchain_token_transfer_gmp::GMPPayload;
 use program_utils::ValidPDA;

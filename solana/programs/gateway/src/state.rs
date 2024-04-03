@@ -1,11 +1,11 @@
 //! Module for the Gateway program account structs.
 
-pub mod approved_message;
+mod approved_command;
 pub mod config;
-pub mod discriminator;
 pub mod execute_data;
-pub mod transfer_operatorship;
 
-pub use approved_message::GatewayApprovedMessage;
+pub use approved_command::{
+    GatewayApprovedCommand, GatewayCommandStatus, TransferOperatorship, ValidateContractCall,
+};
 pub use config::GatewayConfig;
 pub use execute_data::GatewayExecuteData;

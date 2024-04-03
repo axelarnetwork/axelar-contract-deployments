@@ -1,7 +1,7 @@
 //! Instruction types
 
 use account_group::get_permission_account;
-use axelar_executable::AxelarCallableInstruction;
+use axelar_executable::axelar_message_primitives::AxelarCallableInstruction;
 use axelar_message_primitives::DataPayload;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use interchain_token_transfer_gmp::ethers_core::abi::AbiEncode;
@@ -227,12 +227,11 @@ pub fn build_give_token_lock_unlock_instruction(
     gateway_root_pda: &Pubkey,
     gas_service_root_pda: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Native(
-        InterchainTokenServiceInstruction::GiveToken {
-            token_manager_type: TokenManagerType::LockUnlock,
-            amount,
-        },
-    ))?;
+    let ix = AxelarCallableInstruction::Native(InterchainTokenServiceInstruction::GiveToken {
+        token_manager_type: TokenManagerType::LockUnlock,
+        amount,
+    });
+    let data = to_vec(&ix)?;
 
     let accounts = vec![
         AccountMeta::new(*payer, true),

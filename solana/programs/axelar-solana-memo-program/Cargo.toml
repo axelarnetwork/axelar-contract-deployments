@@ -25,3 +25,4 @@ solana-program-test.workspace = true
 solana-sdk.workspace = true
 test-fixtures.workspace = true
 ethers-core.workspace = true
+itertools.workspace = true

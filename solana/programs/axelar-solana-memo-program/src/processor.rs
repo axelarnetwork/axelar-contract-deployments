@@ -2,9 +2,10 @@
 
 use std::str::from_utf8;
 
-use axelar_executable::{
-    validate_contract_call, AxelarCallableInstruction, AxelarExecutablePayload,
+use axelar_executable::axelar_message_primitives::{
+    AxelarCallableInstruction, AxelarExecutablePayload,
 };
+use axelar_executable::validate_contract_call;
 use borsh::BorshDeserialize;
 use program_utils::check_program_account;
 use solana_program::account_info::{next_account_info, AccountInfo};

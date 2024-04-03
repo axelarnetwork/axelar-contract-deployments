@@ -1,7 +1,8 @@
+use std::borrow::Cow;
+
 use anyhow::{Ok, Result};
 use ethers_core::abi::AbiEncode;
 use gateway::events::GatewayEvent;
-use gateway::state::GatewayConfig;
 use interchain_token_service::events::InterchainTokenServiceEvent;
 use interchain_token_service::{
     get_interchain_token_service_associated_token_account, MetadataVersion,
@@ -37,7 +38,7 @@ async fn test_remote_interchain_transfer_mint_burn() -> Result<()> {
     let gas_service_root_pda = fixture.init_gas_service().await;
     let amount_to_mint_preparations = 100;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
         .await;
     let interchain_token_service_root_pda = fixture
         .init_its_root_pda(&gateway_root_pda, &gas_service_root_pda)
@@ -218,13 +219,15 @@ async fn test_remote_interchain_transfer_mint_burn() -> Result<()> {
 
     assert_eq!(
         gateway_event,
-        Some(GatewayEvent::CallContract {
-            sender: fixture.payer.pubkey(),
-            destination_chain,
-            destination_address,
-            payload,
-            payload_hash
-        })
+        Some(GatewayEvent::CallContract(Cow::Owned(
+            gateway::events::CallContract {
+                sender: fixture.payer.pubkey(),
+                destination_chain,
+                destination_address,
+                payload,
+                payload_hash
+            }
+        )))
     );
 
     let account = fixture
@@ -265,10 +268,7 @@ async fn test_remote_interchain_transfer_lock_unlock() -> Result<()> {
     let destination = Keypair::new();
     let gas_service_root_pda = fixture.init_gas_service().await;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::new(
-            0,
-            fixture.init_operators_and_epochs(&gateway_operators),
-        ))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&gateway_operators))
         .await;
 
     let interchain_token_service_root_pda = fixture
@@ -466,13 +466,15 @@ async fn test_remote_interchain_transfer_lock_unlock() -> Result<()> {
 
     assert_eq!(
         gateway_event,
-        Some(GatewayEvent::CallContract {
-            sender: fixture.payer.pubkey(),
-            destination_chain,
-            destination_address,
-            payload,
-            payload_hash
-        })
+        Some(GatewayEvent::CallContract(Cow::Owned(
+            gateway::events::CallContract {
+                sender: fixture.payer.pubkey(),
+                destination_chain,
+                destination_address,
+                payload,
+                payload_hash
+            }
+        )))
     );
 
     let account = fixture

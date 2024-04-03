@@ -1,132 +1,119 @@
+use std::borrow::Cow;
+
+use axelar_message_primitives::command::DecodedCommand;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
-use crate::error::GatewayError;
-use crate::events::emit_message_approved_event;
-use crate::get_gateway_root_config_pda;
-use crate::state::{GatewayApprovedMessage, GatewayConfig, GatewayExecuteData};
-use crate::types::execute_data_decoder::DecodedMessage;
+use crate::axelar_auth_weighted::OperatorshipTransferAllowed;
+use crate::events::GatewayEvent;
+use crate::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
 
 impl Processor {
     /// This function is used to initialize the program.
     pub fn process_execute(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
-        let mut accounts = accounts.iter();
-        let gateway_root_pda = next_account_info(&mut accounts)?;
-        let execute_data_account = next_account_info(&mut accounts)?;
-        let message_accounts: Vec<_> = accounts.collect();
-        // Phase 1: Account validation
+        let mut accounts_iter = accounts.iter();
+        let gateway_root_pda = next_account_info(&mut accounts_iter)?;
+        let gateway_execute_data_pda = next_account_info(&mut accounts_iter)?;
 
         // Check: Config account uses the canonical bump.
-        let (canonical_pda, _canonical_bump) = get_gateway_root_config_pda();
-        if *gateway_root_pda.key != canonical_pda {
-            return Err(GatewayError::InvalidConfigAccount)?;
-        }
-
-        // Check: Config account is owned by the Gateway program.
-        if *gateway_root_pda.owner != crate::ID {
-            return Err(ProgramError::InvalidAccountOwner);
-        }
-
-        // Check: Config account is read only.
-        if gateway_root_pda.is_writable {
-            return Err(ProgramError::InvalidInstructionData);
-        }
-
-        // Check: execute_data account is owned by the Gateway program.
-        if *execute_data_account.owner != crate::ID {
-            return Err(ProgramError::InvalidAccountOwner);
-        }
-
-        // Check: execute_data account was initialized.
-        let execute_data: GatewayExecuteData =
-            borsh::from_slice(*execute_data_account.data.borrow())?;
-
-        // Check: at least one message account.
-        if message_accounts.is_empty() {
-            return Err(ProgramError::NotEnoughAccountKeys);
-        }
-
-        // Phase 2: Deserialization & Proof Validation
-
-        let Ok((proof, command_batch)) = execute_data.decode() else {
-            return Err(GatewayError::MalformedProof)?;
-        };
-
-        // Check: proof is valid, internally.
-        proof.validate(&command_batch.hash)?;
-
         // Unpack Gateway configuration data.
-        let gateway_config: GatewayConfig = {
-            let gateway_account_bytes = gateway_root_pda.try_borrow_mut_data()?;
-            borsh::de::from_slice(&gateway_account_bytes)?
-        };
+        let mut gateway_config =
+            gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
+
+        gateway_execute_data_pda.check_initialized_pda_without_deserialization(program_id)?;
+        let execute_data =
+            borsh::from_slice::<GatewayExecuteData>(&gateway_execute_data_pda.data.borrow())?;
 
         // Check: proof operators are known.
-        gateway_config.validate_proof_operators(&proof.operators)?;
+        let mut allow_operatorship_transfer = gateway_config
+            .validate_proof(execute_data.command_batch_hash, execute_data.proof)
+            .unwrap(); // TODO propagate error
 
-        // Phase 3: Update approved message accounts
-
-        // Check approved message account initial premises post-validation so we iterate
-        // on them only once.
-        // TODO: Pairwise iterate over message accounts and validated commands from the
-        // command batch.
-        let mut last_visited_message_index = 0;
-        for (&message_account, approved_command) in
-            message_accounts.iter().zip(command_batch.commands.iter())
-        {
-            last_visited_message_index += 1;
-
-            // Check: Current message account represents the current approved command.
-            let (expected_pda, _bump, _hash) =
-                GatewayApprovedMessage::pda(gateway_root_pda.key, &approved_command.into());
-            if expected_pda != *message_account.key {
-                return Err(ProgramError::InvalidSeeds);
-            }
-
-            // Check:: All messages must be "Approved".
-            let mut approved_message =
-                message_account.check_initialized_pda::<GatewayApprovedMessage>(program_id)?;
-
-            if !approved_message.is_pending() {
-                // TODO: use a more descriptive GatewayError variant here.
-                return Err(ProgramError::AccountAlreadyInitialized);
-            }
-
-            // Success: update account message state to "Approved".
-            // The message by default is in "approved" state.
-            // https://github.com/axelarnetwork/axelar-cgp-solidity/blob/968c8964061f594c80dd111887edb93c5069e51e/contracts/AxelarGateway.sol#L509
-            approved_message.set_approved();
-            let mut data = message_account.try_borrow_mut_data()?;
-            approved_message.pack_into_slice(&mut data);
-
-            // Emit an event signaling message approval.
-            let DecodedMessage {
-                id,
-                source_chain,
-                source_address,
-                destination_address,
-                payload_hash,
-                ..
-            } = &approved_command.message;
-            emit_message_approved_event(
-                *id,
-                source_chain.clone(),
-                source_address.clone(),
-                *destination_address,
-                *payload_hash,
-            )?;
+        if execute_data.command_batch.commands.len() != (accounts_iter.len()) {
+            msg!("Mismatch between the number of commands and the number of accounts");
+            return Err(ProgramError::InvalidArgument);
         }
+        let commands = execute_data.command_batch.commands.into_iter();
+        for (message_account, decoded_command) in accounts_iter.zip(commands) {
+            // Check: The approved message PDA needs to already be initialized.
+            let mut approved_command_account = {
+                let approved_command_account = message_account
+                    .as_ref()
+                    .check_initialized_pda::<GatewayApprovedCommand>(program_id)?;
 
-        // Check: all messages were visited
-        if last_visited_message_index != message_accounts.len()
-            || last_visited_message_index != command_batch.commands.len()
-        {
-            return Err(ProgramError::NotEnoughAccountKeys);
+                // Check: Current message account represents the current approved command.
+                let seed_hash = GatewayApprovedCommand::calculate_seed_hash(
+                    gateway_root_pda.key,
+                    &decoded_command,
+                );
+                approved_command_account.assert_valid_pda(&seed_hash, message_account.key);
+
+                // https://github.com/axelarnetwork/cgp-spec/blob/c3010b9187ad9022dbba398525cf4ec35b75e7ae/solidity/contracts/AxelarGateway.sol#L103
+                if approved_command_account.is_command_executed()
+                    || approved_command_account.is_contract_call_approved()
+                {
+                    continue; // Ignore if duplicate commandId received
+                }
+
+                approved_command_account
+            };
+
+            match (decoded_command, &mut allow_operatorship_transfer) {
+                (DecodedCommand::ApproveContractCall(decoded_command), _) => {
+                    approved_command_account.set_ready_for_validate_contract_call()?;
+
+                    let call_contract = crate::events::MessageApproved {
+                        message_id: decoded_command.command_id,
+                        source_chain: decoded_command.source_chain,
+                        source_address: decoded_command.source_address,
+                        destination_address: decoded_command.destination_program.0.to_bytes(),
+                        payload_hash: decoded_command.payload_hash,
+                    };
+                    let event = GatewayEvent::MessageApproved(Cow::Borrowed(&call_contract));
+                    event.emit()?;
+                }
+                (
+                    DecodedCommand::TransferOperatorship(decoded_command),
+                    allow_operatorship_transfer @ OperatorshipTransferAllowed::Allowed,
+                ) => {
+                    // Only 1 transfer allowed per batch
+                    *allow_operatorship_transfer = OperatorshipTransferAllowed::NotAllowed;
+                    approved_command_account.set_transfer_operatorship_executed()?;
+
+                    // Perform the actual "transfer operatorship" process
+                    GatewayEvent::OperatorshipTransferred(Cow::Borrowed(&decoded_command))
+                        .emit()?;
+                    // We just ignore all errors here, as we don't want to fail the entire batch
+                    let _res = gateway_config.transfer_operatorship(decoded_command);
+
+                    // Store the data back to the account.
+                    let mut data = gateway_root_pda.try_borrow_mut_data()?;
+                    gateway_config.pack_into_slice(&mut data);
+                }
+                (
+                    DecodedCommand::TransferOperatorship(_),
+                    OperatorshipTransferAllowed::NotAllowed,
+                ) => {
+                    // Rules for transfer operatorship:
+                    // - Only 1 transfer allowed per batch, the rest are ignored
+                    // - Transfer can only be done by the latest operator set
+                    // And even then we don't want to fail the entire batch because the rest of the
+                    // messages are valid so we just ignore the error and
+                    // continue.
+                    msg!("Operatorship transfer not allowed");
+                    continue;
+                }
+            }
+
+            // Save the updated approved message account
+            let mut data = message_account.try_borrow_mut_data()?;
+            approved_command_account.pack_into_slice(&mut data);
         }
 
         Ok(())

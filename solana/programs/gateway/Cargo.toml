@@ -34,6 +34,7 @@ thiserror.workspace = true
 program-utils.workspace = true
 anyhow.workspace = true
 axelar-message-primitives.workspace = true
+cosmwasm-schema.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true

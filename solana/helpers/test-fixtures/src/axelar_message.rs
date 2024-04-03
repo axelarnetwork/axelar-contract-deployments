@@ -2,9 +2,13 @@ use std::ops::Deref;
 
 use anyhow::{anyhow, Result};
 use axelar_message_primitives::{DataPayload, DestinationProgramId};
+use axelar_wasm_std::{nonempty, Participant};
 use connection_router::state::Address;
 use connection_router::Message;
+use cosmwasm_std::{Addr, Uint256};
+use multisig::worker_set::WorkerSet;
 
+use crate::execute_data::TestSigner;
 use crate::primitives::{array32, string};
 
 pub fn message() -> Result<Message> {
@@ -16,6 +20,26 @@ pub fn message() -> Result<Message> {
         payload_hash: array32(),
     };
     Ok(message)
+}
+
+pub fn new_worker_set(
+    participants: &[TestSigner],
+    created_at_block: u64,
+    new_threshold: Uint256,
+) -> WorkerSet {
+    let participants = participants
+        .iter()
+        .map(|p| {
+            let public_key = p.public_key.clone();
+            let participant = Participant {
+                weight: nonempty::Uint256::try_from(p.weight).unwrap(),
+                address: Addr::unchecked(hex::encode(&p.public_key)),
+            };
+            (participant, public_key)
+        })
+        .collect::<Vec<_>>();
+
+    WorkerSet::new(participants, new_threshold, created_at_block)
 }
 
 pub fn custom_message(

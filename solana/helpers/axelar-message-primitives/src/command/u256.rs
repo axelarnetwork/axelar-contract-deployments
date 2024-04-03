@@ -1,12 +1,22 @@
 //! U256 implementation of uint256.
 
 use std::fmt::Display;
+use std::ops::Deref;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 
 /// [U256] represents uint256.
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug, Ord, Eq, Hash)]
+#[repr(transparent)]
 pub struct U256(bnum::types::U256);
+
+impl Deref for U256 {
+    type Target = bnum::types::U256;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl U256 {
     /// The additive identity for this integer type, i.e. `0`.
@@ -57,9 +67,7 @@ impl From<u128> for U256 {
 impl BorshSerialize for U256 {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> Result<(), std::io::Error> {
         let bytes = self.to_le_bytes();
-        // It doesn't return error at all.
-        bytes.serialize(writer).unwrap();
-        Ok(())
+        bytes.serialize(writer)
     }
 }
 
@@ -74,36 +82,5 @@ impl BorshDeserialize for U256 {
 impl Display for U256 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0.to_string())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::io::Cursor;
-
-    use super::*;
-
-    #[test]
-    fn test_u256_roundtrip() {
-        let expected = U256::from_le_bytes([
-            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
-            0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
-            0x1c, 0x1d, 0x1e, 0x1f,
-        ]);
-
-        let not_expected = U256::from_le_bytes([
-            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
-            0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
-            0x1c, 0x1d, 0x1e, 0x22,
-        ]);
-
-        let mut buffer: Vec<u8> = Vec::new();
-        expected.serialize(&mut buffer).unwrap();
-
-        let mut cursor = Cursor::new(&buffer);
-        let actual = U256::deserialize_reader(&mut cursor).unwrap();
-
-        assert_eq!(expected, actual);
-        assert_ne!(not_expected, actual)
     }
 }

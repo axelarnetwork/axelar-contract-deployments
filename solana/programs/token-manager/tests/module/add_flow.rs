@@ -1,4 +1,3 @@
-use gateway::state::GatewayConfig;
 use solana_program::clock::Clock;
 use solana_program::program_pack::Pack;
 use solana_program_test::{tokio, BanksClientError};
@@ -23,8 +22,8 @@ async fn test_add_flow_success() {
     let init_operator = Keypair::new();
     let init_flow_limiter = Keypair::new();
     let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
-    let gateway_root_config_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+    let gateway_config_pda = fixture
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
         .await;
     let groups = fixture
         .derive_token_manager_permission_groups(
@@ -43,7 +42,7 @@ async fn test_add_flow_success() {
             token_manager::TokenManagerType::LockUnlock,
             groups.clone(),
             500,
-            gateway_root_config_pda,
+            gateway_config_pda,
             token_mint,
             interchain_token_service_root_pda.pubkey(),
         )
@@ -120,8 +119,8 @@ async fn test_add_flow_2_times_success() {
     let init_operator = Keypair::new();
     let init_flow_limiter = Keypair::new();
     let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
-    let gateway_root_config_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+    let gateway_config_pda = fixture
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
         .await;
     let groups = fixture
         .derive_token_manager_permission_groups(
@@ -140,7 +139,7 @@ async fn test_add_flow_2_times_success() {
             token_manager::TokenManagerType::LockUnlock,
             groups.clone(),
             500,
-            gateway_root_config_pda,
+            gateway_config_pda,
             token_mint,
             interchain_token_service_root_pda.pubkey(),
         )
@@ -220,8 +219,8 @@ async fn test_add_flow_old_pdas_failure() {
     let init_operator = Keypair::new();
     let init_flow_limiter = Keypair::new();
     let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
-    let gateway_root_config_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+    let gateway_config_pda = fixture
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
         .await;
     let groups = fixture
         .derive_token_manager_permission_groups(
@@ -240,7 +239,7 @@ async fn test_add_flow_old_pdas_failure() {
             token_manager::TokenManagerType::LockUnlock,
             groups.clone(),
             500,
-            gateway_root_config_pda,
+            gateway_config_pda,
             token_mint,
             interchain_token_service_root_pda.pubkey(),
         )
@@ -300,8 +299,8 @@ async fn test_add_flow_in_exceeds_limit() {
     let init_operator = Keypair::new();
     let init_flow_limiter = Keypair::new();
     let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
-    let gateway_root_config_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+    let gateway_config_pda = fixture
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
         .await;
     let groups = fixture
         .derive_token_manager_permission_groups(
@@ -320,7 +319,7 @@ async fn test_add_flow_in_exceeds_limit() {
             token_manager::TokenManagerType::LockUnlock,
             groups.clone(),
             flow_limit,
-            gateway_root_config_pda,
+            gateway_config_pda,
             token_mint,
             interchain_token_service_root_pda.pubkey(),
         )
@@ -422,8 +421,8 @@ async fn test_add_flow_in_success() {
     let init_operator = Keypair::new();
     let init_flow_limiter = Keypair::new();
     let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
-    let gateway_root_config_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+    let gateway_config_pda = fixture
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
         .await;
     let groups = fixture
         .derive_token_manager_permission_groups(
@@ -442,7 +441,7 @@ async fn test_add_flow_in_success() {
             token_manager::TokenManagerType::LockUnlock,
             groups.clone(),
             flow_limit,
-            gateway_root_config_pda,
+            gateway_config_pda,
             token_mint,
             interchain_token_service_root_pda.pubkey(),
         )
@@ -536,8 +535,8 @@ async fn test_add_flow_out_success() {
     let init_operator = Keypair::new();
     let init_flow_limiter = Keypair::new();
     let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
-    let gateway_root_config_pda = fixture
-        .initialize_gateway_config_account(GatewayConfig::default())
+    let gateway_config_pda = fixture
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
         .await;
     let groups = fixture
         .derive_token_manager_permission_groups(
@@ -556,7 +555,7 @@ async fn test_add_flow_out_success() {
             token_manager::TokenManagerType::LockUnlock,
             groups.clone(),
             flow_limit,
-            gateway_root_config_pda,
+            gateway_config_pda,
             token_mint,
             interchain_token_service_root_pda.pubkey(),
         )

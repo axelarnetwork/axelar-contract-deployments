@@ -2,12 +2,10 @@
 
 //! Utility functions for on-chain integration with the Axelar Gatewey on Solana
 
-use std::borrow::Cow;
-use std::ops::Deref;
-
 pub use axelar_message_primitives;
+use axelar_message_primitives::command::ApproveContractCallCommand;
 use axelar_message_primitives::{
-    AxelarMessageParams, CommandId, DataPayload, DestinationProgramId, SourceAddress, SourceChain,
+    AxelarCallableInstruction, AxelarExecutablePayload, DataPayload, DestinationProgramId,
 };
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -24,7 +22,7 @@ use solana_program::pubkey::Pubkey;
 /// 0. `gateway_approved_message_pda` - GatewayApprovedMessage PDA
 /// 1. `signing_pda` - Signing PDA that's associated with the provided
 ///    `program_id`
-/// 2. `gateway_root_pda` - Gateway root PDA
+/// 2. `gateway_root_pda` - Gateway Root PDA
 /// 3. `gateway_program_id` - Gateway Prorgam ID
 /// N. accounts required by the `DataPayload` constructor
 pub fn validate_contract_call(
@@ -33,9 +31,9 @@ pub fn validate_contract_call(
     data: &AxelarExecutablePayload,
 ) -> ProgramResult {
     msg!("Validating contract call");
-    let command_id = data.command_id();
-    let source_chain = data.source_chain();
-    let source_address = data.source_address();
+    let command_id = data.command_id;
+    let source_chain = data.source_chain.clone();
+    let source_address = data.source_address.clone();
 
     let (relayer_prepended_accs, origin_chain_provided_accs) = accounts.split_at(4);
     let account_info_iter = &mut relayer_prepended_accs.iter();
@@ -56,18 +54,19 @@ pub fn validate_contract_call(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let command_id_slice = &command_id.0.deref().clone();
+    let command_id_slice = &command_id.clone();
     invoke_signed(
         &gateway::instructions::validate_contract_call(
             gateway_approved_message_pda.key,
             gateway_root_pda.key,
             signing_pda.key,
-            AxelarMessageParams {
+            ApproveContractCallCommand {
                 command_id,
+                destination_chain: 0,
                 source_chain,
                 source_address,
                 destination_program,
-                payload_hash: axelar_payload.hash(),
+                payload_hash: *axelar_payload.hash().0,
             },
         )?,
         &[
@@ -81,56 +80,6 @@ pub fn validate_contract_call(
     Ok(())
 }
 
-// TOOD: Optimisation - try using bytemuck crate
-/// This is the payload that the `execute` processor on the destinatoin program
-/// must expect
-#[derive(Debug, PartialEq, Clone, borsh::BorshSerialize, borsh::BorshDeserialize)]
-#[repr(C)]
-pub struct AxelarExecutablePayload {
-    /// The command_id which is the unique identifier for the Axelar command
-    ///
-    /// The Axelar Message CCID, truncated to 32 bytes during proof
-    /// generation.
-    pub command_id: [u8; 32],
-    /// The payload *without* the prefixed accounts
-    ///
-    /// This needs to be done by the relayer before calling the destination
-    /// program
-    pub payload_without_accounts: Vec<u8>,
-    /// The source chain of the command
-    pub source_chain: String,
-    /// The source address of the command
-    pub source_address: Vec<u8>,
-}
-
-// TOOD: Optimisation - try using bytemuck crate
-/// This is the wrapper instruction that the destination program should expect
-/// as the incoming &[u8]
-#[derive(Debug, PartialEq, Clone, borsh::BorshSerialize, borsh::BorshDeserialize)]
-pub enum AxelarCallableInstruction<T> {
-    /// The payload is coming from the Axelar Gateway (submitted by the relayer)
-    AxelarExecute(AxelarExecutablePayload),
-    /// The payload is coming from the user
-    Native(T),
-}
-
-impl AxelarExecutablePayload {
-    /// Get the command_id
-    pub fn command_id(&self) -> CommandId {
-        CommandId(Cow::Borrowed(&self.command_id))
-    }
-
-    /// Get the source chain
-    pub fn source_chain(&self) -> SourceChain {
-        SourceChain(Cow::Borrowed(&self.source_chain))
-    }
-
-    /// Get the source address
-    pub fn source_address(&self) -> SourceAddress {
-        SourceAddress(&self.source_address)
-    }
-}
-
 /// # Create a generic `Execute` instruction
 ///
 /// Intended to be used by the relayer when it is about to call the
@@ -140,11 +89,11 @@ impl AxelarExecutablePayload {
 /// 0. `gateway_approved_message_pda` - GatewayApprovedMessage PDA
 /// 1. `signing_pda` - Signing PDA that's associated with the provided
 ///    `program_id`
-/// 2. `gateway_root_pda` - Gateway root PDA
+/// 2. `gateway_root_pda` - Gateway Root PDA
 /// 3. `gateway_program_id` - Gateway Prorgam ID
 /// N... - The accounts provided in the `axelar_message_payload`
-pub fn construct_axelar_executable_ix<'a>(
-    incoming_message: impl Into<AxelarMessageParams<'a>>,
+pub fn construct_axelar_executable_ix(
+    incoming_message: ApproveContractCallCommand,
     // The payload of the incoming message, contains encoded accounts and the actual payload
     axelar_message_payload: Vec<u8>,
     // The PDA for the gateway approved message, this *must* be initialized
@@ -153,9 +102,8 @@ pub fn construct_axelar_executable_ix<'a>(
     // The PDA for the gateway root, this *must* be initialized beforehand
     gateway_root_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let incoming_message = incoming_message.into();
     let payload = DataPayload::decode(axelar_message_payload.as_slice());
-    if payload.hash() != incoming_message.payload_hash {
+    if payload.hash().0.as_ref() != &incoming_message.payload_hash {
         return Err(ProgramError::InvalidInstructionData);
     }
 
@@ -167,12 +115,11 @@ pub fn construct_axelar_executable_ix<'a>(
         .signing_pda(&incoming_message.command_id);
 
     let payload = AxelarExecutablePayload {
-        command_id: *incoming_message.command_id.0,
+        command_id: incoming_message.command_id,
         payload_without_accounts,
-        source_chain: incoming_message.source_chain.0.to_string(),
-        source_address: incoming_message.source_address.0.to_vec(),
+        source_chain: incoming_message.source_chain,
+        source_address: incoming_message.source_address,
     };
-
     let payload = AxelarCallableInstruction::<()>::AxelarExecute(payload);
 
     let mut accounts = vec![
