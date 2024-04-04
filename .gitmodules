@@ -1,0 +1,5 @@
+[submodule "offchain/components/relayer/proto/googleapis"]
+	path = offchain/components/relayer/proto/googleapis
+	url = https://github.com/googleapis/googleapis
+	branch = master
+	shallow = true

@@ -1,3 +1,4 @@
+mod amplifier_api;
 mod approver;
 mod config;
 mod healthcheck;
@@ -5,6 +6,7 @@ mod relayer;
 mod sentinel;
 mod state;
 mod tokio_utils;
+pub mod transports;
 mod verifier;
 
 use anyhow::anyhow;

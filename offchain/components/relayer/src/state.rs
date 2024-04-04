@@ -5,7 +5,7 @@ use sqlx::pool::Pool;
 use sqlx::prelude::FromRow;
 use sqlx::Postgres;
 use tiny_keccak::{Hasher, Keccak};
-use tracing::info;
+use tracing::{debug, info};
 use url::Url;
 
 type Result<T> = sqlx::Result<T>;
@@ -66,6 +66,7 @@ impl State {
 
     #[tracing::instrument(skip(self), err)]
     pub async fn update_solana_transaction(&self, signature: Signature) -> Result<()> {
+        debug!("updating solana_transaction table");
         let signature = signature.to_string();
         sqlx::query(
             "INSERT INTO solana_transaction (id, latest_signature, updated_at) \

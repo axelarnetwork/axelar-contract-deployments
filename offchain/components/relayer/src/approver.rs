@@ -1,8 +1,8 @@
-use crate::state::State;
-use amplifier_api::axl_rpc::{
-    axelar_rpc_client::AxelarRpcClient, GetPayloadRequest, SubscribeToApprovalsRequest,
+use crate::amplifier_api::{
+    amplifier_client::AmplifierClient, GetPayloadRequest, SubscribeToApprovalsRequest,
     SubscribeToApprovalsResponse,
 };
+use crate::state::State;
 
 use axelar_executable::axelar_message_primitives::{
     command::{ApproveContractCallCommand, DecodedCommand},
@@ -54,7 +54,7 @@ pub enum ApproverError {
 /// which pass through axelar and are sent to Solana.
 #[allow(dead_code)]
 pub struct Approver {
-    amplifier_rpc_client: AxelarRpcClient<Channel>,
+    amplifier_rpc_client: AmplifierClient<Channel>,
     solana_rpc_client: Arc<RpcClient>,
     payer_keypair: Arc<Keypair>,
     state: State,
@@ -64,7 +64,7 @@ pub struct Approver {
 impl Approver {
     /// Create a new sentinel, watching for messages coming from Axelar
     pub fn new(
-        amplifier_rpc_client: AxelarRpcClient<Channel>,
+        amplifier_rpc_client: AmplifierClient<Channel>,
         solana_rpc_client: Arc<RpcClient>,
         payer_keypair: Arc<Keypair>,
         state: State,
@@ -267,7 +267,7 @@ impl Approver {
         let mut stream = self
             .amplifier_rpc_client
             .subscribe_to_approvals(SubscribeToApprovalsRequest {
-                chain: SOLANA_CHAIN_NAME.into(),
+                chains: vec![SOLANA_CHAIN_NAME.into()],
                 start_height: Some(start_height as u64),
             })
             .await

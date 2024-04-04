@@ -1,4 +1,4 @@
-use amplifier_api::axl_rpc::SubscribeToApprovalsResponse;
+use crate::amplifier_api::SubscribeToApprovalsResponse;
 
 pub struct BlockMessages {
     height: u64,

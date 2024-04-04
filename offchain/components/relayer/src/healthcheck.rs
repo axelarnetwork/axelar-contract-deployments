@@ -1,10 +1,9 @@
 //! Health check server.
 
 use axum::{http::StatusCode, routing::get, Router};
-use log::info;
 use std::{future::Future, io, net::SocketAddr};
 use tokio::{net::TcpListener, sync::oneshot};
-use tracing::error;
+use tracing::{error, info};
 
 /// Guard to a running health check server.
 ///

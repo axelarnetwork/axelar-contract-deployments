@@ -1,8 +1,10 @@
-use std::net::SocketAddr;
-
-use amplifier_api::axl_rpc;
+use crate::{
+    config, healthcheck, sentinel::SolanaSentinel, state::State, transports::SolanaToAxelarMessage,
+    verifier::AxelarVerifier,
+};
 use anyhow::{Context, Result};
 use futures_util::FutureExt;
+use std::net::SocketAddr;
 use tokio::{
     join, pin, select,
     sync::mpsc::{self, Receiver, Sender},
@@ -11,8 +13,6 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
-
-use crate::{config, healthcheck, sentinel::SolanaSentinel, state::State};
 
 const TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -210,11 +210,10 @@ impl SolanaToAxelarHandler {
 
     fn setup_actors(
         sentinel_config: &config::SolanaSentinel,
-        _verifier_config: &config::AxelarVerifier,
+        verifier_config: &config::AxelarVerifier,
         state: State,
-    ) -> (SolanaSentinel, VerifierActor, CancellationToken) {
-        // TODO: use config to properly initialize actors
-        let (sender, receiver) = mpsc::channel::<axl_rpc::Message>(500); // FIXME: magic number
+    ) -> (SolanaSentinel, AxelarVerifier, CancellationToken) {
+        let (sender, receiver) = mpsc::channel::<SolanaToAxelarMessage>(500); // FIXME: magic number
 
         // This is the root cancelation token for this transport session.
         // It is also used to derive child tokens for each subcomponent, so they can manage their own cancelation schedules.
@@ -237,11 +236,13 @@ impl SolanaToAxelarHandler {
         );
 
         // Axelar Verifier
-        let verifier = VerifierActor {
+        let verifier = AxelarVerifier::new(
+            verifier_config.rpc.clone(),
             receiver,
             state,
-            cancellation_token: verifier_cancelation_token,
-        };
+            verifier_cancelation_token,
+        );
+
         (sentinel, verifier, transport_cancelation_token)
     }
 }
@@ -251,21 +252,6 @@ impl SolanaToAxelarHandler {
 //
 
 // TODO: Use the real worker types already defined in this crate.
-
-#[allow(dead_code)]
-struct VerifierActor {
-    receiver: Receiver<axl_rpc::Message>,
-    state: State,
-    cancellation_token: CancellationToken,
-}
-
-impl VerifierActor {
-    async fn run(self) {
-        loop {
-            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-        }
-    }
-}
 
 struct ApproverActor {
     #[allow(dead_code)]

@@ -1,5 +1,6 @@
 use self::transaction_scanner::transaction_retriever::TransactionRetrieverError;
 use self::types::TransactionScannerMessage;
+use crate::amplifier_api;
 use crate::config::SOLANA_CHAIN_NAME;
 use crate::sentinel::error::SentinelError;
 use crate::sentinel::transaction_scanner::TransactionScanner;
@@ -8,7 +9,7 @@ use crate::sentinel::types::{
     TransactionScannerMessage::{Message, Terminated},
 };
 use crate::state::State;
-use amplifier_api::axl_rpc;
+use crate::transports::SolanaToAxelarMessage;
 use gmp_gateway::events::{CallContract, GatewayEvent};
 use solana_program::pubkey::Pubkey;
 use solana_sdk::signature::Signature;
@@ -32,7 +33,7 @@ const FETCH_SIGNATURES_INTERVAL: Duration = Duration::from_secs(5);
 pub struct SolanaSentinel {
     gateway_address: Pubkey,
     rpc: Url,
-    verifier_channel: Sender<axl_rpc::Message>,
+    verifier_channel: Sender<SolanaToAxelarMessage>,
     state: State,
     cancellation_token: CancellationToken,
 }
@@ -41,7 +42,7 @@ impl SolanaSentinel {
     pub fn new(
         gateway_address: Pubkey,
         rpc: Url,
-        verifier_channel: Sender<axl_rpc::Message>,
+        verifier_channel: Sender<SolanaToAxelarMessage>,
         state: State,
         cancellation_token: CancellationToken,
     ) -> Self {
@@ -231,7 +232,7 @@ impl SolanaSentinel {
             "{}:{}:{}",
             SOLANA_CHAIN_NAME, transaction_signature, transaction_index,
         );
-        let message = axl_rpc::Message {
+        let message = amplifier_api::Message {
             id: message_ccid,
             source_chain: SOLANA_CHAIN_NAME.into(),
             source_address: hex::encode(sender.to_bytes()),
@@ -240,10 +241,17 @@ impl SolanaSentinel {
             destination_address: hex::encode(destination_address),
             payload,
         };
+
         info!(?message, "delivering message to Axelar Verifier");
+
+        let message = SolanaToAxelarMessage {
+            message,
+            signature: transaction_signature,
+        };
+
         self.verifier_channel
             .send(message)
             .await
-            .map_err(|message| SentinelError::SendMessageError(message.0.id))
+            .map_err(|message| SentinelError::SendMessageError(message.0.message.id))
     }
 }
