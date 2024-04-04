@@ -915,10 +915,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
             });
         };
 
-        await (async () => {
-            const chainPromises = chains.map((chainName) => executeChain(chainName));
-            await Promise.all(chainPromises);
-        })();
+        await Promise.all(chains.map(executeChain));
 
         if (save) {
             for (const chainName of successfullChains) {
