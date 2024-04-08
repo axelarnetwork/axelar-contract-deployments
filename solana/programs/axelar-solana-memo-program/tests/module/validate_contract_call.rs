@@ -1,5 +1,5 @@
 use axelar_executable::axelar_message_primitives::command::DecodedCommand;
-use axelar_executable::axelar_message_primitives::DestinationProgramId;
+use axelar_executable::axelar_message_primitives::{DestinationProgramId, EncodingScheme};
 use axelar_solana_memo_program::from_axelar_to_solana::build_memo;
 use gateway::state::GatewayApprovedCommand;
 use itertools::Either;
@@ -14,7 +14,16 @@ use test_fixtures::test_setup::TestFixture;
 use crate::program_test;
 
 #[tokio::test]
-async fn test_successful_validate_contract_call() {
+async fn test_successful_validate_contract_call_borsh_message() {
+    test_successful_validate_contract_call(EncodingScheme::Borsh).await;
+}
+
+#[tokio::test]
+async fn test_successful_validate_contract_call_abi_encoded_message() {
+    test_successful_validate_contract_call(EncodingScheme::AbiEncoding).await;
+}
+
+async fn test_successful_validate_contract_call(encoding_scheme: EncodingScheme) {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let random_account_used_by_ix = Keypair::new();
@@ -28,6 +37,7 @@ async fn test_successful_validate_contract_call() {
     let message_payload = build_memo(
         memo_string.as_bytes(),
         &[&random_account_used_by_ix.pubkey()],
+        encoding_scheme,
     );
     let message_to_execute =
         custom_message(destination_program_id, message_payload.clone()).unwrap();
@@ -64,7 +74,7 @@ async fn test_successful_validate_contract_call() {
     };
     let ix = axelar_executable::construct_axelar_executable_ix(
         approved_message,
-        message_payload.encode(),
+        message_payload.encode().unwrap(),
         gateway_approved_message_pdas[0],
         gateway_root_pda,
     )
@@ -81,7 +91,6 @@ async fn test_successful_validate_contract_call() {
         .process_transaction_with_metadata(transaction)
         .await
         .unwrap();
-
     assert!(tx.result.is_ok(), "transaction failed");
 
     // Assert

@@ -3,7 +3,7 @@ use std::ops::Add;
 use account_group::instruction::GroupId;
 use account_group::{get_permission_account, get_permission_group_account};
 use axelar_message_primitives::command::{DecodedCommand, U256 as GatewayU256};
-use axelar_message_primitives::Address;
+use axelar_message_primitives::{Address, EncodingScheme};
 use borsh::BorshDeserialize;
 use gateway::axelar_auth_weighted::AxelarAuthWeighted;
 use gateway::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
@@ -367,6 +367,7 @@ impl TestFixture {
                     token_manager_type: EthersU256::from(token_manager_type as u8),
                     params: vec![],
                 },
+                EncodingScheme::Borsh,
             );
         let message_to_execute =
             custom_message(interchain_token_service::id(), message_payload.clone()).unwrap();
@@ -384,7 +385,7 @@ impl TestFixture {
         };
         let ix = axelar_executable::construct_axelar_executable_ix(
             approved_command,
-            message_payload.encode(),
+            message_payload.encode().unwrap(),
             gateway_approved_message_pda[0],
             gateway_root_pda,
         )

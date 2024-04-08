@@ -64,29 +64,38 @@ pub fn call_gateway_with_memo(
 
 /// Helper function to build a memo payload instruction (to simulate )
 pub mod from_axelar_to_solana {
+    use axelar_executable::axelar_message_primitives::EncodingScheme;
+
     use super::*;
 
     /// Build a memo payload instruction
-    pub fn build_memo<'a>(memo: &'a [u8], pubkeys: &[&Pubkey]) -> DataPayload<'a> {
+    pub fn build_memo<'a>(
+        memo: &'a [u8],
+        pubkeys: &[&Pubkey],
+        encoding_scheme: EncodingScheme,
+    ) -> DataPayload<'a> {
         let accounts = pubkeys
             .iter()
             .map(|&pubkey| AccountMeta::new_readonly(*pubkey, false))
             .collect::<Vec<_>>();
-        DataPayload::new(memo, accounts.as_slice())
+        DataPayload::new(memo, accounts.as_slice(), encoding_scheme)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use axelar_executable::axelar_message_primitives::EncodingScheme;
+
     use super::*;
 
     #[test]
     fn test_build_memo() {
         let signer_pubkey = Pubkey::new_unique();
         let memo = "🐆".as_bytes();
-        let instruction = from_axelar_to_solana::build_memo(memo, &[&signer_pubkey]);
-        let payload = instruction.encode();
-        let instruction_decoded = DataPayload::decode(&payload);
+        let instruction =
+            from_axelar_to_solana::build_memo(memo, &[&signer_pubkey], EncodingScheme::Borsh);
+        let payload = instruction.encode().unwrap();
+        let instruction_decoded = DataPayload::decode(&payload).unwrap();
 
         assert_eq!(instruction, instruction_decoded);
     }

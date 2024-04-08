@@ -27,6 +27,8 @@ pub struct AxelarExecutablePayload {
     pub source_chain: Vec<u8>,
     /// The source address of the command
     pub source_address: Vec<u8>,
+    /// Encoding scheme of the payload
+    pub encoding_scheme: EncodingScheme,
 }
 
 // TODO: Optimisation - try using bytemuck crate

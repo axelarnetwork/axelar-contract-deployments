@@ -45,6 +45,7 @@ pub fn validate_contract_call(
     let axelar_payload = DataPayload::new(
         data.payload_without_accounts.as_slice(),
         origin_chain_provided_accs,
+        data.encoding_scheme,
     );
 
     let destination_program = DestinationProgramId(*program_id);
@@ -66,7 +67,7 @@ pub fn validate_contract_call(
                 source_chain,
                 source_address,
                 destination_program,
-                payload_hash: *axelar_payload.hash().0,
+                payload_hash: *axelar_payload.hash()?.0,
             },
         )?,
         &[
@@ -102,8 +103,8 @@ pub fn construct_axelar_executable_ix(
     // The PDA for the gateway root, this *must* be initialized beforehand
     gateway_root_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let payload = DataPayload::decode(axelar_message_payload.as_slice());
-    if payload.hash().0.as_ref() != &incoming_message.payload_hash {
+    let payload = DataPayload::decode(axelar_message_payload.as_slice())?;
+    if payload.hash()?.0.as_ref() != &incoming_message.payload_hash {
         return Err(ProgramError::InvalidInstructionData);
     }
 
@@ -119,6 +120,7 @@ pub fn construct_axelar_executable_ix(
         payload_without_accounts,
         source_chain: incoming_message.source_chain,
         source_address: incoming_message.source_address,
+        encoding_scheme: payload.encoding_scheme(),
     };
     let payload = AxelarCallableInstruction::<()>::AxelarExecute(payload);
 

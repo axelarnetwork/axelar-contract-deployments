@@ -1,5 +1,7 @@
 use axelar_message_primitives::command::DecodedCommand;
+use axelar_message_primitives::EncodingScheme;
 use gateway::state::GatewayApprovedCommand;
+use interchain_token_service::instruction::from_external_chains::build_deploy_token_manager_from_gmp_instruction;
 use interchain_token_transfer_gmp::ethers_core::types::U256;
 use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
 use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};
@@ -30,28 +32,29 @@ async fn test_deploy_token_manager() {
     ) = setup_its_root_fixture().await;
     let mint_authority = Keypair::new();
     let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
-    let message_payload = interchain_token_service::instruction::from_external_chains::build_deploy_token_manager_from_gmp_instruction(
+    let message_payload = build_deploy_token_manager_from_gmp_instruction(
         &interchain_token_service_root_pda,
         &gas_service_root_pda,
         &fixture.payer.pubkey(),
         &token_manager_root_pda_pubkey,
-            &its_token_manager_permission_groups.operator_group.group_pda,
-            &its_token_manager_permission_groups
-                .operator_group
-                .group_pda_user_owner,
-            &its_token_manager_permission_groups
-                .flow_limiter_group
-                .group_pda,
-            &its_token_manager_permission_groups
-                .flow_limiter_group
-                .group_pda_user_owner,
+        &its_token_manager_permission_groups.operator_group.group_pda,
+        &its_token_manager_permission_groups
+            .operator_group
+            .group_pda_user_owner,
+        &its_token_manager_permission_groups
+            .flow_limiter_group
+            .group_pda,
+        &its_token_manager_permission_groups
+            .flow_limiter_group
+            .group_pda_user_owner,
         &token_mint,
-            DeployTokenManager {
-                token_id: Bytes32(keccak256("random-token-id")),
-                token_manager_type: U256::from(TokenManagerType::MintBurn as u8),
-                params: vec![],
-            },
-        );
+        DeployTokenManager {
+            token_id: Bytes32(keccak256("random-token-id")),
+            token_manager_type: U256::from(TokenManagerType::MintBurn as u8),
+            params: vec![],
+        },
+        EncodingScheme::Borsh,
+    );
     let message_to_execute =
         custom_message(interchain_token_service::id(), message_payload.clone()).unwrap();
     let (gateway_approved_message_pda, execute_data, _gateway_execute_data_pda) = fixture
@@ -81,7 +84,7 @@ async fn test_deploy_token_manager() {
     // Action
     let ix = axelar_executable::construct_axelar_executable_ix(
         command_to_execute,
-        message_payload.encode(),
+        message_payload.encode().unwrap(),
         gateway_approved_message_pda[0],
         gateway_root_pda,
     )

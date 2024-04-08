@@ -1,5 +1,6 @@
 use axelar_message_primitives::command::DecodedCommand;
 use gateway::state::GatewayApprovedCommand;
+use interchain_token_service::instruction::from_external_chains::build_interchain_transfer_from_gmp_instruction;
 use interchain_token_transfer_gmp::ethers_core::types::U256;
 use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
 use interchain_token_transfer_gmp::{Bytes32, InterchainTransfer};
@@ -27,11 +28,18 @@ async fn test_interchain_transfer() {
         _token_manager_root_pda_pubkey,
         gateway_operators,
     ) = setup_its_root_fixture().await;
-    let message_payload = interchain_token_service::instruction::from_external_chains::build_interchain_transfer_from_gmp_instruction(
+    let message_payload = build_interchain_transfer_from_gmp_instruction(
         &interchain_token_service_root_pda,
         &gas_service_root_pda,
-        InterchainTransfer { token_id: Bytes32(keccak256("random-token-id")), source_address: Pubkey::new_unique().to_bytes().to_vec(), destination_address: Pubkey::new_unique().to_bytes().to_vec(), amount: U256::from(100), data: Vec::new() },
-        );
+        InterchainTransfer {
+            token_id: Bytes32(keccak256("random-token-id")),
+            source_address: Pubkey::new_unique().to_bytes().to_vec(),
+            destination_address: Pubkey::new_unique().to_bytes().to_vec(),
+            amount: U256::from(100),
+            data: Vec::new(),
+        },
+        axelar_message_primitives::EncodingScheme::Borsh,
+    );
     let message_to_execute =
         custom_message(interchain_token_service::id(), message_payload.clone()).unwrap();
     let (gateway_approved_message_pda, execute_data, _gateway_execute_data_pda) = fixture
@@ -61,7 +69,7 @@ async fn test_interchain_transfer() {
     // Action
     let ix = axelar_executable::construct_axelar_executable_ix(
         command_to_execute,
-        message_payload.encode(),
+        message_payload.encode().unwrap(),
         gateway_approved_message_pda[0],
         gateway_root_pda,
     )

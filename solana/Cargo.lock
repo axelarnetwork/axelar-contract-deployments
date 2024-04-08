@@ -471,6 +471,7 @@ dependencies = [
  "bytemuck",
  "connection-router",
  "cosmwasm-schema 2.0.0",
+ "ethers-core",
  "hex",
  "itertools 0.12.1",
  "libsecp256k1 0.7.1",

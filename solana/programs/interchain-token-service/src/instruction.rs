@@ -576,7 +576,7 @@ pub fn build_remote_interchain_transfer_lock_unlock_instruction(
 pub mod from_external_chains {
     use std::borrow::Cow;
 
-    use axelar_message_primitives::SolanaAccountRepr;
+    use axelar_message_primitives::{EncodingScheme, SolanaAccountRepr};
     use interchain_token_transfer_gmp::{DeployInterchainToken, InterchainTransfer};
 
     use super::*;
@@ -587,6 +587,7 @@ pub mod from_external_chains {
         its_root_pda: &Pubkey,
         gas_service_root_pda: &Pubkey,
         incoming_accounts: &[AccountMeta],
+        encoding_scheme: EncodingScheme,
     ) -> DataPayload<'a> {
         let mut accounts = vec![
             // Our program also does generic validation of the ITS root PDA beforethe payload gets
@@ -601,7 +602,7 @@ pub mod from_external_chains {
             .map(|acc| acc.into())
             .collect::<Vec<SolanaAccountRepr>>();
 
-        DataPayload::new_with_cow(Cow::Owned(payload.encode()), accounts)
+        DataPayload::new_with_cow(Cow::Owned(payload.encode()), accounts, encoding_scheme)
     }
 
     /// Create `Execute::DeployTokenManager` instruction
@@ -617,6 +618,7 @@ pub mod from_external_chains {
         flow_limiters_permission_pda_owner: &Pubkey,
         token_mint: &Pubkey,
         payload: DeployTokenManager,
+        encoding_scheme: EncodingScheme,
     ) -> DataPayload<'static> {
         let token_manager_ata = get_associated_token_address(token_manager_root_pda, token_mint);
         let operators_permission_pda = get_permission_account(
@@ -649,6 +651,7 @@ pub mod from_external_chains {
                 AccountMeta::new_readonly(spl_associated_token_account::id(), false),
                 AccountMeta::new_readonly(spl_token::id(), false),
             ],
+            encoding_scheme,
         )
     }
 
@@ -658,6 +661,7 @@ pub mod from_external_chains {
         its_root_pda: &Pubkey,
         gas_service_root_pda: &Pubkey,
         payload: DeployInterchainToken,
+        encoding_scheme: EncodingScheme,
     ) -> DataPayload<'static> {
         build_execute_instruction(
             payload,
@@ -670,6 +674,7 @@ pub mod from_external_chains {
                 AccountMeta::new_readonly(spl_associated_token_account::id(), false),
                 AccountMeta::new_readonly(spl_token::id(), false),
             ],
+            encoding_scheme,
         )
     }
 
@@ -679,6 +684,7 @@ pub mod from_external_chains {
         its_root_pda: &Pubkey,
         gas_service_root_pda: &Pubkey,
         payload: InterchainTransfer,
+        encoding_scheme: EncodingScheme,
     ) -> DataPayload<'static> {
         build_execute_instruction(
             payload,
@@ -691,6 +697,7 @@ pub mod from_external_chains {
                 AccountMeta::new_readonly(spl_associated_token_account::id(), false),
                 AccountMeta::new_readonly(spl_token::id(), false),
             ],
+            encoding_scheme,
         )
     }
 }

@@ -46,6 +46,8 @@ pub enum ApproverError {
     GetProofFromStream(tonic::Status),
     #[error("State error - {0}")]
     State(#[from] sqlx::Error),
+    #[error(transparent)]
+    PayloadError(#[from] axelar_executable::axelar_message_primitives::PayloadError),
 }
 
 /// Listens for approved messages (signed proofs) coming from the Axelar blockchain.
@@ -219,13 +221,13 @@ impl Approver {
             .map_err(ApproverError::GetPayload)?;
         // sanity check: decoding of the payload - no point to send & pay for a tx if we can check it here
         let payload_bytes = payload_bytes.into_inner().payload;
-        let payload = DataPayload::decode(payload_bytes.as_ref());
+        let payload = DataPayload::decode(payload_bytes.as_ref())?;
 
         // Decode the payload as a solana Instruction type
         let destinatoin_program = message.destination_program;
         let ix = axelar_executable::construct_axelar_executable_ix(
             message,
-            payload.encode(),
+            payload.encode()?,
             approved_message_pda,
             self.gmp_gateway_root_config_pda,
         )

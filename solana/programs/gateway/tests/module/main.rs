@@ -3,7 +3,7 @@ mod initialize_command;
 mod initialize_config;
 mod initialize_execute_data;
 
-use axelar_message_primitives::DataPayload;
+use axelar_message_primitives::{DataPayload, EncodingScheme};
 use cosmwasm_std::Uint256;
 use gmp_gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
 use multisig::worker_set::WorkerSet;
@@ -31,6 +31,7 @@ pub fn example_payload() -> DataPayload<'static> {
             AccountMeta::new_readonly(Pubkey::new_unique(), false),
             AccountMeta::new_readonly(Pubkey::new_unique(), false),
         ],
+        EncodingScheme::Borsh,
     );
     payload
 }

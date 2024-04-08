@@ -46,7 +46,7 @@ pub fn custom_message(
     destination_pubkey: impl Into<DestinationProgramId>,
     payload: DataPayload<'_>,
 ) -> Result<Message> {
-    let payload_hash = payload.hash();
+    let payload_hash = payload.hash().unwrap();
     let destination_pubkey = destination_pubkey.into();
 
     let message = Message {
