@@ -193,6 +193,17 @@ const httpGet = (url) => {
     });
 };
 
+const httpPost = async (url, data) => {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+    return response.json();
+};
+
 const isNonEmptyString = (arg) => {
     return typeof arg === 'string' && arg !== '';
 };
@@ -424,7 +435,7 @@ function validateParameters(parameters) {
  * Parses the input string into an array of arguments, recognizing and converting
  * to the following types: boolean, number, array, and string.
  *
- * @param {string} input - The string of arguments to parse.
+ * @param {string} args - The string of arguments to parse.
  *
  * @returns {Array} - An array containing parsed arguments.
  *
@@ -456,6 +467,8 @@ const parseArgs = (args) => {
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
  * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
  * @param {Object} contractObject - An instance of the contract or a contract factory (ethers.js Contract or ContractFactory object)
+ * @param {string} chain - The chain name
+ * @param {Object} provider - The provider to use for online deployment
  * @returns {Promise<string>} - The keccak256 hash of the contract bytecode
  */
 async function getBytecodeHash(contractObject, chain = '', provider = null) {
@@ -1168,6 +1181,7 @@ module.exports = {
     writeJSON,
     copyObject,
     httpGet,
+    httpPost,
     printObj,
     printLog,
     printInfo,
