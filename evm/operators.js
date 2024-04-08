@@ -24,7 +24,7 @@ const {
     getContractJSON,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate } = require('./gas-service');
+const { getGasUpdates, printFailedChainUpdates } = require('./gas-service');
 
 async function processCommand(config, chain, options) {
     const {

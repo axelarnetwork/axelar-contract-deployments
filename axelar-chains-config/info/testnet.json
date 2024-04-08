@@ -109,7 +109,10 @@
         "blobBaseFee": 50187563959
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      "approxFinalityWaitTime": 40,
+      "onchainGasEstimate": {
+        "blobBaseFee": 50187563959
+      }
     },
     "avalanche": {
       "name": "Avalanche",

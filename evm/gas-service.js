@@ -82,7 +82,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
             } catch (e) {
                 printError(`Error getting gas info for ${chain.axelarId} -> ${axelarId}`);
                 printError(e);
-                addFailedChainUpdate(chain.axelarId, axelarId);
+                failedChainUpdates.push({ chain: chain.axelarId, destinationChain: axelarId });
                 return null;
             }
 
@@ -100,15 +100,15 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 execute_gas_multiplier: multiplier = 1.1,
             } = data.result;
 
-            const axelarBaseFee = parseFloat(sourceBaseFee) * Math.pow(10, decimals);
-            const expressFee = parseFloat(sourceExpressFee) * Math.pow(10, decimals);
-            const relativeGasPrice = parseFloat(gasPrice) * parseFloat(multiplier);
+            const axelarBaseFee = Math.ceil(parseFloat(sourceBaseFee) * Math.pow(10, decimals)).toString();
+            const expressFee = Math.ceil(parseFloat(sourceExpressFee) * Math.pow(10, decimals)).toString();
+            const relativeGasPrice = Math.ceil(parseFloat(gasPrice) * parseFloat(multiplier)).toString();
             const gasPriceRatio = parseFloat(destinationTokenPrice) / parseFloat(srcTokenPrice);
-            const relativeBlobBaseFee = blobBaseFee * gasPriceRatio;
+            const relativeBlobBaseFee = Math.ceil(blobBaseFee * gasPriceRatio).toString();
 
             return {
                 chain: destinationChain,
-                gasInfo: [gasEstimationType, axelarBaseFee, expressFee, relativeGasPrice, relativeBlobBaseFee].map(toBigNumberString),
+                gasInfo: [gasEstimationType, axelarBaseFee, expressFee, relativeGasPrice, relativeBlobBaseFee],
             };
         }),
     );
@@ -246,15 +246,15 @@ async function processCommand(config, chain, options) {
             try {
                 const tx = await gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions);
 
-                printInfo('TX', tx.hash);
+            printInfo('TX', tx.hash);
 
-                const receipt = await tx.wait(chain.confirmations);
+            const receipt = await tx.wait(chain.confirmations);
 
-                const eventEmitted = wasEventEmitted(receipt, gasService, 'GasInfoUpdated');
+            const eventEmitted = wasEventEmitted(receipt, gasService, 'GasInfoUpdated');
 
-                if (!eventEmitted) {
-                    printWarn('Event not emitted in receipt.');
-                }
+            if (!eventEmitted) {
+                printWarn('Event not emitted in receipt.');
+            }
             } catch (error) {
                 for (let i = 0; i < chainsToUpdate.length; i++) {
                     addFailedChainUpdate(chain.name, chainsToUpdate[i]);
