@@ -2065,14 +2065,14 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 60
     },
-    "polygon-amoy": {
-      "name": "Polygon-Amoy",
-      "id": "polygon-amoy",
-      "axelarId": "polygon-amoy",
+    "polygon-sepolia": {
+      "name": "Polygon-Sepolia",
+      "id": "polygon-sepolia",
+      "axelarId": "polygon-sepolia",
       "chainId": 80002,
       "rpc": "https://rpc-amoy.polygon.technology/",
       "tokenSymbol": "MATIC",
-      "confirmations": 1,
+      "confirmations": 1000000,
       "contracts": {
         "AxelarGateway": {}
       },
