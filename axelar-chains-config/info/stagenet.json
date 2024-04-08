@@ -86,7 +86,10 @@
         "api": "https://api-goerli.etherscan.io/api"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      "approxFinalityWaitTime": 40,
+      "onchainGasEstimate": {
+        "blobBaseFee": 50187563959
+      }
     },
     "avalanche": {
       "name": "Avalanche",
@@ -763,6 +766,10 @@
       "gasOptions": {
         "gasLimit": 5000000
       },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1
+      },
       "finality": "finalized",
       "approxFinalityWaitTime": 25
     },
@@ -848,6 +855,10 @@
       },
       "gasOptions": {
         "gasLimit": 5000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 30
@@ -1018,6 +1029,10 @@
         "maxFeePerGas": 110000000,
         "maxPriorityFeePerGas": 100000000
       },
+      "onchainGasEstimate": {
+        "chainName": "ethereum",
+        "blobBaseFee": 50187563959
+      },
       "finality": "finalized",
       "approxFinalityWaitTime": 40
     },
@@ -1162,6 +1177,7 @@
     "rpc": "",
     "lcd": "",
     "grpc": "",
-    "tokenSymbol": "AXL"
+    "tokenSymbol": "AXL",
+    "axelarscanApi": "https://testnet.api.axelarscan.io"
   }
 }
