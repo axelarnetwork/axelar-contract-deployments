@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { defaultAbiCoder, keccak256, Interface, parseEther },
+    utils: { defaultAbiCoder, keccak256, parseEther },
     Contract,
     BigNumber,
     constants: { AddressZero },
@@ -19,7 +19,6 @@ const {
     getCurrentTimeInSeconds,
     wasEventEmitted,
     printWarn,
-    printError,
     getBytecodeHash,
     isValidAddress,
     mainProcessor,
@@ -423,62 +422,6 @@ async function processCommand(_, chain, options) {
             break;
         }
 
-        case 'executeMultisig': {
-            if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: ${action}`);
-            }
-
-            const proposalHash = keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
-            const isApproved = await governance.multisigApprovals(proposalHash);
-
-            if (!isApproved) {
-                throw new Error('Multisig proposal has not been approved.');
-            }
-
-            const isSigner = await governance.isSigner(wallet.address);
-
-            if (!isSigner) {
-                throw new Error(`Caller is not a valid signer address: ${wallet.address}`);
-            }
-
-            const executeInterface = new Interface(governance.interface.fragments);
-            const executeCalldata = executeInterface.encodeFunctionData('executeMultisigProposal', [target, calldata, nativeValue]);
-            const topic = keccak256(executeCalldata);
-
-            const hasSignerVoted = await governance.hasSignerVoted(wallet.address, topic);
-
-            if (hasSignerVoted) {
-                throw new Error(`Signer has already voted: ${wallet.address}`);
-            }
-
-            const signerVoteCount = await governance.getSignerVotesCount(topic);
-            printInfo(`${signerVoteCount} signers have already voted.`);
-
-            let receipt;
-
-            if (prompt('Proceed with executing this proposal?', yes)) {
-                throw new Error('Proposal execution cancelled.');
-            }
-
-            try {
-                const tx = await governance.executeMultisigProposal(target, calldata, nativeValue, gasOptions);
-                receipt = await tx.wait(chain.confirmations);
-            } catch (error) {
-                printError(error);
-                return;
-            }
-
-            const eventEmitted = wasEventEmitted(receipt, governance, 'MultisigExecuted');
-
-            if (!eventEmitted) {
-                throw new Error('Multisig proposal execution failed.');
-            }
-
-            printInfo('Multisig proposal executed.');
-
-            break;
-        }
-
         default: {
             throw new Error(`Unknown proposal action ${proposalAction}`);
         }
@@ -564,7 +507,6 @@ if (require.main === module) {
             'cancel',
             'scheduleMultisig',
             'submitMultisig',
-            'executeMultisig',
             'cancelMultisig',
         ]),
     );

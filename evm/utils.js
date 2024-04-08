@@ -26,6 +26,7 @@ const {
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
+const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const getSaltFromKey = (key) => {
@@ -668,8 +669,16 @@ function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
+function loadParallelExecutionConfig(env, chain) {
+    return require(`${__dirname}/../chains-info/${env}-${chain}.json`);
+}
+
 function saveConfig(config, env) {
     writeJSON(config, `${__dirname}/../axelar-chains-config/info/${env}.json`);
+}
+
+function saveParallelExecutionConfig(config, env, chain) {
+    writeJSON(config, `${__dirname}/../chains-info/${env}-${chain}.json`);
 }
 
 async function printWalletInfo(wallet, options = {}) {
@@ -852,6 +861,73 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         }
     }
 
+    if (options.parallel && chains.length > 1) {
+        const cmds = process.argv.filter((command) => command);
+        let chainCommandIndex = -1;
+        let skipPrompt = false;
+
+        for (let commandIndex = 0; commandIndex < cmds.length; commandIndex++) {
+            const cmd = cmds[commandIndex];
+
+            if (cmd === '-n' || cmd === '--chainName' || cmd === '--chainNames') {
+                chainCommandIndex = commandIndex;
+            } else if (cmd === '--parallel') {
+                cmds[commandIndex] = '--saveChainSeparately';
+            } else if (cmd === '-y' || cmd === '--yes') {
+                skipPrompt = true;
+            }
+        }
+
+        if (!skipPrompt) {
+            cmds.push('-y');
+        }
+
+        const successfullChains = [];
+
+        const executeChain = (chainName) => {
+            const chain = config.chains[chainName.toLowerCase()];
+
+            if (
+                chainsToSkip.includes(chain.name.toLowerCase()) ||
+                chain.status === 'deactive' ||
+                (chain.contracts && chain.contracts[options.contractName]?.skip)
+            ) {
+                printWarn('Skipping chain', chain.name);
+                return Promise.resolve();
+            }
+
+            return new Promise((resolve) => {
+                cmds[chainCommandIndex + 1] = chainName;
+
+                exec(cmds.join(' '), { stdio: 'inherit' }, (error, stdout) => {
+                    printInfo('-------------------------------------------------------');
+                    printInfo(`Logs for ${chainName}`, stdout);
+
+                    if (error) {
+                        printError(`Error while running script for ${chainName}`, error);
+                    } else {
+                        successfullChains.push(chainName);
+                        printInfo(`Finished running script for chain`, chainName);
+                    }
+
+                    resolve();
+                });
+            });
+        };
+
+        await Promise.all(chains.map(executeChain));
+
+        if (save) {
+            for (const chainName of successfullChains) {
+                config.chains[chainName.toLowerCase()] = loadParallelExecutionConfig(options.env, chainName);
+            }
+
+            saveConfig(config, options.env);
+        }
+
+        return;
+    }
+
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
@@ -878,7 +954,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         }
 
         if (save) {
-            saveConfig(config, options.env);
+            if (options.saveChainSeparately) {
+                saveParallelExecutionConfig(config.chains[chainName.toLowerCase()], options.env, chainName);
+            } else {
+                saveConfig(config, options.env);
+            }
         }
     }
 };

@@ -85,7 +85,7 @@ const makeVotingVerifierInstantiateMsg = (
     { id: chainId },
 ) => {
     const {
-        [chainId]: { serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight },
+        [chainId]: { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight },
     } = contractConfig;
 
     if (!validateAddress(serviceRegistryAddress)) {
@@ -94,6 +94,10 @@ const makeVotingVerifierInstantiateMsg = (
 
     if (!validateAddress(rewardsAddress)) {
         throw new Error('Missing or invalid Rewards.address in axelar info');
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainId}].governanceAddress in axelar info`);
     }
 
     if (!isString(serviceName)) {
@@ -119,6 +123,7 @@ const makeVotingVerifierInstantiateMsg = (
     return {
         service_registry_address: serviceRegistryAddress,
         rewards_address: rewardsAddress,
+        governance_address: governanceAddress,
         service_name: serviceName,
         source_gateway_address: sourceGatewayAddress,
         voting_threshold: votingThreshold,
@@ -156,11 +161,24 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         },
     } = contracts;
     const {
-        [chainId]: { adminAddress, destinationChainID, signingThreshold, serviceName, workerSetDiffThreshold, encoder, keyType },
+        [chainId]: {
+            adminAddress,
+            governanceAddress,
+            destinationChainID,
+            signingThreshold,
+            serviceName,
+            workerSetDiffThreshold,
+            encoder,
+            keyType,
+        },
     } = contractConfig;
 
     if (!validateAddress(adminAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainId}].adminAddress in axelar info`);
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].governanceAddress in axelar info`);
     }
 
     if (!validateAddress(gatewayAddress)) {
@@ -205,6 +223,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
 
     return {
         admin_address: adminAddress,
+        governance_address: governanceAddress,
         gateway_address: gatewayAddress,
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,
