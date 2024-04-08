@@ -2081,10 +2081,9 @@
         "api": "https://api-sepolia.lineascan.build/api"
       },
       "gasOptions": {
-        "gasPrice": 1000000000,
-        "gasLimit": 61000000
+        "gasLimit": 61000000000
       },
-      "confirmations": 4,
+      "confirmations": 1,
       "finality": "400",
       "approxFinalityWaitTime": 30
     }
