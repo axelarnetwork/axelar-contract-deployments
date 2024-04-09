@@ -2094,7 +2094,7 @@
         "api": "https://api-sepolia.lineascan.build/api"
       },
       "gasOptions": {
-        "gasLimit": 61000000
+        "gasLimit": 30000000
       },
       "confirmations": 1,
       "finality": "400",
