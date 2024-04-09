@@ -1,6 +1,7 @@
 'use strict';
 
 const { ethers } = require('hardhat');
+require('dotenv').config();
 const {
     utils: { isHexString, arrayify },
 } = ethers;
