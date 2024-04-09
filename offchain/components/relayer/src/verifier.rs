@@ -1,18 +1,22 @@
-use crate::amplifier_api::{
-    self, amplifier_client::AmplifierClient, VerifyRequest, VerifyResponse,
-};
-use crate::{state::State, transports::SolanaToAxelarMessage};
+use std::convert::Infallible as Never;
+use std::sync::Arc;
+
 use dashmap::DashMap;
 use futures::{FutureExt, TryFutureExt};
 use futures_concurrency::future::Race;
 use solana_sdk::signature::Signature;
-use std::{convert::Infallible as Never, sync::Arc};
 use thiserror::Error;
 use tokio::sync::mpsc;
-use tokio_stream::{wrappers::ReceiverStream, StreamExt};
+use tokio_stream::wrappers::ReceiverStream;
+use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
 use url::Url;
+
+use crate::amplifier_api::amplifier_client::AmplifierClient;
+use crate::amplifier_api::{self, VerifyRequest, VerifyResponse};
+use crate::state::State;
+use crate::transports::SolanaToAxelarMessage;
 
 #[derive(Debug, Error)]
 pub enum VerifierError {
@@ -59,20 +63,22 @@ impl AxelarVerifier {
 
     /// Runs the Axelar Verifier until an error or cancellation occurs.
     ///
-    /// Recovery is not possible because the receiving channel end being consumed by the
-    /// ReceiverStream to connect with the Amplifier API.
+    /// Recovery is not possible because the receiving channel end being
+    /// consumed by the ReceiverStream to connect with the Amplifier API.
     #[tracing::instrument(name = "axelar-verifier", skip_all)]
     pub async fn run(self) {
         let error = self.work().await.unwrap_err();
         error!(%error, "Axelar Verifier terminated");
     }
 
-    /// Sends incoming [`axl_rpc::Message`] values to the Amplifier API for verification.
+    /// Sends incoming [`axl_rpc::Message`] values to the Amplifier API for
+    /// verification.
     async fn work(self) -> Result<Never, VerifierError> {
         let mut client = AmplifierClient::connect(self.endpoint.to_string()).await?;
 
         // Track pending messages and their signatures.
-        // Signatures are registered by their Message ID, to be later retrieved (and removed) to update the Relayer state.
+        // Signatures are registered by their Message ID, to be later retrieved (and
+        // removed) to update the Relayer state.
         let pending = Arc::new(DashMap::new());
         let pending_incoming = pending.clone();
 
@@ -111,7 +117,8 @@ impl AxelarVerifier {
             .map_err(VerifierError::Subscription)?
             .into_inner();
 
-        // Listen for new verification responses until an error occurs or a shutdown signal is received.
+        // Listen for new verification responses until an error occurs or a shutdown
+        // signal is received.
         loop {
             let state = self.state.clone();
             let pending = pending.clone();
@@ -145,7 +152,8 @@ async fn process_response(
     match (message, error) {
         // Success case
         (Some(message), None) => {
-            // Retrieve Solana Signature associated with this message to update the Relayer state.
+            // Retrieve Solana Signature associated with this message to update the Relayer
+            // state.
             let Some((_, signature)) = pending.remove(&message.id) else {
                 return Err(VerifierError::UnknownMessageId(message.id));
             };

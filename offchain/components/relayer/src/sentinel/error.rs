@@ -2,10 +2,9 @@ use solana_client::client_error::ClientError;
 use thiserror::Error;
 use tokio::task::JoinError;
 
-use super::transaction_scanner::{
-    signature_scanner::SignatureScannerError, transaction_retriever::TransactionRetrieverError,
-    InternalError,
-};
+use super::transaction_scanner::signature_scanner::SignatureScannerError;
+use super::transaction_scanner::transaction_retriever::TransactionRetrieverError;
+use super::transaction_scanner::InternalError;
 
 #[derive(Debug, Error)]
 pub enum SentinelError {

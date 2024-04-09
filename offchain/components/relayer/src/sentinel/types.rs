@@ -3,10 +3,8 @@ use std::fmt::Display;
 use solana_sdk::signature::Signature;
 use tokio::task::JoinHandle;
 
-use super::{
-    error::TransactionScannerError,
-    transaction_scanner::transaction_retriever::TransactionRetrieverError,
-};
+use super::error::TransactionScannerError;
+use super::transaction_scanner::transaction_retriever::TransactionRetrieverError;
 
 pub struct SolanaTransaction {
     pub signature: Signature,
@@ -26,6 +24,7 @@ pub enum TransactionScannerMessage {
     /// Error that terminated the transaction scanner task.
     Terminated(TransactionScannerError),
     /// Typical message with the produced work.
-    /// Contains the handle to a task that resolves into a [`SolanaTransaction`].
+    /// Contains the handle to a task that resolves into a
+    /// [`SolanaTransaction`].
     Message(JoinHandle<Result<SolanaTransaction, TransactionRetrieverError>>),
 }

@@ -7,7 +7,6 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use spl_token::instruction::{mint_to, transfer};
 use token_manager::TokenManagerType;
-use {spl_associated_token_account, spl_token};
 
 use super::Processor;
 use crate::get_interchain_token_service_associated_token_account;

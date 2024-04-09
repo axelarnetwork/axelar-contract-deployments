@@ -28,7 +28,7 @@ pub(crate) fn get_associated_chain_address_and_bump_seed_internal(
     wallet_address: &Pubkey,
     program_id: &Pubkey,
 ) -> (Pubkey, u8) {
-    Pubkey::find_program_address(&[&wallet_address.as_ref()], program_id)
+    Pubkey::find_program_address(&[(wallet_address.as_ref())], program_id)
 }
 
 /// Derives the associated chain address for the given wallet address
@@ -45,7 +45,7 @@ pub(crate) fn get_associated_trusted_address_account_and_bump_seed_internal(
 ) -> (Pubkey, u8) {
     let chain_name = hash(chain_name.as_bytes());
     Pubkey::find_program_address(
-        &[&chain_name.to_bytes(), &associated_chain_address.as_ref()],
+        &[&chain_name.to_bytes(), (associated_chain_address.as_ref())],
         program_id,
     )
 }

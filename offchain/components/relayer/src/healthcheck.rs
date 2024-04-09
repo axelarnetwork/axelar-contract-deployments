@@ -1,8 +1,14 @@
 //! Health check server.
 
-use axum::{http::StatusCode, routing::get, Router};
-use std::{future::Future, io, net::SocketAddr};
-use tokio::{net::TcpListener, sync::oneshot};
+use std::future::Future;
+use std::io;
+use std::net::SocketAddr;
+
+use axum::http::StatusCode;
+use axum::routing::get;
+use axum::Router;
+use tokio::net::TcpListener;
+use tokio::sync::oneshot;
 use tracing::{error, info};
 
 /// Guard to a running health check server.
@@ -11,8 +17,8 @@ use tracing::{error, info};
 pub struct HealthCheckServerGuard {
     /// Sender half of the shutdown channel.
     ///
-    /// This must be wrapped in an `Option` beacause it is used inside `Drop`, which
-    /// exposes only `&mut self`.
+    /// This must be wrapped in an `Option` beacause it is used inside `Drop`,
+    /// which exposes only `&mut self`.
     shutdown: Option<oneshot::Sender<()>>,
 }
 
@@ -30,8 +36,8 @@ impl Drop for HealthCheckServerGuard {
 
 /// Starts the health check server in a dedicated Tokio task.
 ///
-/// Returns a `HealthCheckServerGuard` handle that gracefully shuts down the server when
-/// dropped.
+/// Returns a `HealthCheckServerGuard` handle that gracefully shuts down the
+/// server when dropped.
 pub async fn start(address: SocketAddr) -> Result<HealthCheckServerGuard, io::Error> {
     let listener = TcpListener::bind(address).await?;
     start_with_tcp_listener(listener).await
@@ -39,8 +45,9 @@ pub async fn start(address: SocketAddr) -> Result<HealthCheckServerGuard, io::Er
 
 /// Starts the health check server in a dedicated tokio task.
 ///
-/// Splitting this function in two was necessary because unit tests don't know which port to connect
-/// to beforehand, so they can only pass a [`TcpListener`] as an argument.
+/// Splitting this function in two was necessary because unit tests don't know
+/// which port to connect to beforehand, so they can only pass a [`TcpListener`]
+/// as an argument.
 async fn start_with_tcp_listener(
     listener: TcpListener,
 ) -> Result<HealthCheckServerGuard, io::Error> {
@@ -73,12 +80,14 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::sync::OnceLock;
+    use std::time::Duration;
+
     use figment::providers::{Env, Serialized};
     use figment::Figment;
     use serde::{Deserialize, Serialize};
-    use std::sync::OnceLock;
-    use std::time::Duration;
+
+    use super::*;
 
     #[derive(Serialize, Deserialize)]
     struct HealthCheckServerTestConfig {
@@ -120,7 +129,8 @@ mod tests {
     #[tokio::test]
     async fn server_lifecycle() -> anyhow::Result<()> {
         let host = "127.0.0.1";
-        // Bind to localhost at the port 0, which will let the OS assign an available port to us.
+        // Bind to localhost at the port 0, which will let the OS assign an available
+        // port to us.
         let listener = TcpListener::bind(format!("{host}:0")).await?;
         // Retrieve the local address assigned to us by the OS.
         let local_address = listener.local_addr()?;

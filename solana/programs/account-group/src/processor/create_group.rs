@@ -54,8 +54,8 @@ impl Processor {
             system_program_info,
             PermissionAccount,
             &[
-                &permission_group_account.key.as_ref(),
-                &permission_account_owner.key.as_ref(),
+                (permission_group_account.key.as_ref()),
+                (permission_account_owner.key.as_ref()),
                 &[bump_seed],
             ],
         )?;

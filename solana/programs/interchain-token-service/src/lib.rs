@@ -49,7 +49,7 @@ pub(crate) fn get_interchain_token_service_root_pda_internal(
     program_id: &Pubkey,
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
-        &[&gateway_root_pda.as_ref(), &gas_service_root_pda.as_ref()],
+        &[(gateway_root_pda.as_ref()), (gas_service_root_pda.as_ref())],
         program_id,
     )
 }
@@ -78,9 +78,9 @@ pub fn get_interchain_token_service_associated_token_account(
 ) -> Result<(Pubkey, u8), ProgramError> {
     Ok(Pubkey::find_program_address(
         &[
-            &its_root_pda.as_ref(),
-            &wallet_account.as_ref(),
-            &mint_account.as_ref(),
+            (its_root_pda.as_ref()),
+            (wallet_account.as_ref()),
+            (mint_account.as_ref()),
         ],
         program_id,
     ))

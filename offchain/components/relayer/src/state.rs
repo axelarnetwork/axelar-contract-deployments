@@ -151,6 +151,7 @@ impl State {
 }
 
 #[derive(FromRow)]
+#[allow(dead_code)]
 pub struct AxelarMessageRow {
     pub id: i32,
     pub source_address: String,

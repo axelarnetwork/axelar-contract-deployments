@@ -1,24 +1,24 @@
+use std::time::Duration;
+
+use gmp_gateway::events::{CallContract, GatewayEvent};
+use solana_program::pubkey::Pubkey;
+use solana_sdk::signature::Signature;
+use tokio::pin;
+use tokio::sync::mpsc::Sender;
+use tokio_util::sync::CancellationToken;
+use tracing::{error, info, warn};
+use url::Url;
+
 use self::transaction_scanner::transaction_retriever::TransactionRetrieverError;
 use self::types::TransactionScannerMessage;
 use crate::amplifier_api;
 use crate::config::SOLANA_CHAIN_NAME;
 use crate::sentinel::error::SentinelError;
 use crate::sentinel::transaction_scanner::TransactionScanner;
-use crate::sentinel::types::{
-    SolanaTransaction,
-    TransactionScannerMessage::{Message, Terminated},
-};
+use crate::sentinel::types::SolanaTransaction;
+use crate::sentinel::types::TransactionScannerMessage::{Message, Terminated};
 use crate::state::State;
 use crate::transports::SolanaToAxelarMessage;
-use gmp_gateway::events::{CallContract, GatewayEvent};
-use solana_program::pubkey::Pubkey;
-use solana_sdk::signature::Signature;
-use std::time::Duration;
-use tokio::pin;
-use tokio::sync::mpsc::Sender;
-use tokio_util::sync::CancellationToken;
-use tracing::{error, info, warn};
-use url::Url;
 
 mod error;
 mod transaction_scanner;
@@ -56,8 +56,8 @@ impl SolanaSentinel {
     }
 
     /// Tries to run [`SolanaSentinel::work`] forever.
-    /// If it ever returns, signal a cancellation request to all descendant tasks and wait for them
-    /// to finish before returning.
+    /// If it ever returns, signal a cancellation request to all descendant
+    /// tasks and wait for them to finish before returning.
     #[tracing::instrument(name = "solana-sentinel", skip(self))]
     pub async fn run(self) {
         info!("task started");
@@ -80,7 +80,8 @@ impl SolanaSentinel {
         };
     }
 
-    /// Listens to Gateway program logs and forward them to the Axelar Verifier worker.
+    /// Listens to Gateway program logs and forward them to the Axelar Verifier
+    /// worker.
     #[tracing::instrument(skip_all, err)]
     async fn work(self) -> Result<(), SentinelError> {
         let (transaction_scanner_future, mut transaction_receiver) = TransactionScanner::setup(
@@ -98,11 +99,12 @@ impl SolanaSentinel {
             Err(error)
         };
 
-        // Listens for incoming Solana transactions and process them sequentially to propperly update the
-        // latest known transaction signature.
+        // Listens for incoming Solana transactions and process them sequentially to
+        // propperly update the latest known transaction signature.
         loop {
-            // Handling the message within the `tokio::select` scope triggers a compilation error suggesting the
-            // future isn't `Send`. To address this, we assign it to a variable and handle it outside of the
+            // Handling the message within the `tokio::select` scope triggers a compilation
+            // error suggesting the future isn't `Send`. To address this, we
+            // assign it to a variable and handle it outside of the
             // macro's body.
             let optional_message = tokio::select! {
                 _ = self.cancellation_token.cancelled() => { return cleanup(SentinelError::Stopped); }
@@ -136,8 +138,8 @@ impl SolanaSentinel {
         &self,
         message: TransactionScannerMessage,
     ) -> Result<(), SentinelError> {
-        // Resolve the TransactionScanner message, expecting to obtain a join handle that resolves
-        // into a `SolanaTransaction`.
+        // Resolve the TransactionScanner message, expecting to obtain a join handle
+        // that resolves into a `SolanaTransaction`.
         let join_handle = match message {
             Message(join_handle) => join_handle,
             Terminated(error) => {
@@ -168,7 +170,8 @@ impl SolanaSentinel {
         }
     }
 
-    /// Searches for Gateway logs within a `SolanaTransaction` and process each one, in order.
+    /// Searches for Gateway logs within a `SolanaTransaction` and process each
+    /// one, in order.
     #[tracing::instrument(level = "trace", skip_all, fields(solana_transaction = %solana_transaction.signature), err)]
     async fn process_transaction(
         &self,
@@ -212,7 +215,8 @@ impl SolanaSentinel {
         Ok(())
     }
 
-    /// Tries to build an `AxelarMessage` and send it to the Axelar Verifier component.
+    /// Tries to build an `AxelarMessage` and send it to the Axelar Verifier
+    /// component.
     #[tracing::instrument(
         level = "debug",
         skip_all,

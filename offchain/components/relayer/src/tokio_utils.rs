@@ -1,6 +1,8 @@
 //! Utilities for dealing with tokio tasks
 
-use std::{borrow::Cow, error::Error, ops::Deref};
+use std::borrow::Cow;
+use std::error::Error;
+use std::ops::Deref;
 
 use tokio::task::{AbortHandle, JoinError};
 use tracing::error;

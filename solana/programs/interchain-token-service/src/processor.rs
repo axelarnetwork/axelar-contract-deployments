@@ -136,8 +136,8 @@ pub(crate) fn assert_root_its_derivation(
 ) -> Result<(), ProgramError> {
     let actual_root_pda = Pubkey::create_program_address(
         &[
-            &gateway_root_pda.key.as_ref(),
-            &gas_service_root_pda.key.as_ref(),
+            (gateway_root_pda.key.as_ref()),
+            (gas_service_root_pda.key.as_ref()),
             &[root_pda.bump_seed],
         ],
         &crate::id(),

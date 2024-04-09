@@ -147,9 +147,9 @@ pub(crate) fn get_token_manager_account_and_bump_seed_internal(
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[
-            &operators_permission_group_pda.as_ref(),
-            &flow_limiters_permission_group_pda.as_ref(),
-            &service_program_pda.as_ref(),
+            (operators_permission_group_pda.as_ref()),
+            (flow_limiters_permission_group_pda.as_ref()),
+            (service_program_pda.as_ref()),
         ],
         program_id,
     )
@@ -161,7 +161,7 @@ pub(crate) fn get_token_flow_account_and_bump_seed_internal(
     program_id: &Pubkey,
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
-        &[&token_manager_pda.as_ref(), &epoch.to_le_bytes()],
+        &[(token_manager_pda.as_ref()), &epoch.to_le_bytes()],
         program_id,
     )
 }

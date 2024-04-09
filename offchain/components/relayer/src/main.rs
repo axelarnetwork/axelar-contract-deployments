@@ -1,3 +1,11 @@
+use anyhow::anyhow;
+use config::Config;
+use tracing_subscriber::filter::{EnvFilter, LevelFilter};
+use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_subscriber::fmt::{self};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
+
 mod amplifier_api;
 mod approver;
 mod config;
@@ -6,17 +14,8 @@ mod relayer;
 mod sentinel;
 mod state;
 mod tokio_utils;
-pub mod transports;
+mod transports;
 mod verifier;
-
-use anyhow::anyhow;
-use config::Config;
-use tracing_subscriber::{
-    filter::{EnvFilter, LevelFilter},
-    fmt::{self, format::FmtSpan},
-    layer::SubscriberExt,
-    util::SubscriberInitExt,
-};
 
 pub fn init_logging() {
     let filter = EnvFilter::builder()

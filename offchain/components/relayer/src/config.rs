@@ -1,12 +1,14 @@
-use anyhow::{bail, Ok};
-use clap::Parser;
-use figment::{providers::Env, Figment};
-use serde::{Deserialize, Deserializer};
-use solana_program::pubkey::Pubkey;
-use solana_sdk::signature::Keypair;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::str::FromStr;
+
+use anyhow::{bail, Ok};
+use clap::Parser;
+use figment::providers::Env;
+use figment::Figment;
+use serde::{Deserialize, Deserializer};
+use solana_program::pubkey::Pubkey;
+use solana_sdk::signature::Keypair;
 use url::Url;
 
 /// Solana network name used to identify it on Axelar.
@@ -166,8 +168,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::env;
+
+    use super::*;
 
     #[test]
     fn can_parse_config_from_env() {

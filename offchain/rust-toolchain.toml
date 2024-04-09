@@ -1,3 +1,4 @@
-[toolchain]  
-channel = "stable"  
-components = [ "rustfmt", "clippy", "cargo", "llvm-tools-preview" ]
+[toolchain]
+# https://rust-lang.github.io/rustup-components-history/aarch64-apple-darwin.html
+channel = "nightly-2024-04-08"
+components = [ "rustfmt", "clippy", "cargo" ]

@@ -1,18 +1,19 @@
-use crate::{
-    config, healthcheck, sentinel::SolanaSentinel, state::State, transports::SolanaToAxelarMessage,
-    verifier::AxelarVerifier,
-};
+use std::net::SocketAddr;
+
 use anyhow::{Context, Result};
 use futures_util::FutureExt;
-use std::net::SocketAddr;
-use tokio::{
-    join, pin, select,
-    sync::mpsc::{self, Receiver, Sender},
-    task::JoinSet,
-    time::{timeout, Duration},
-};
+use tokio::sync::mpsc::{self, Receiver, Sender};
+use tokio::task::JoinSet;
+use tokio::time::{timeout, Duration};
+use tokio::{join, pin, select};
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
+
+use crate::sentinel::SolanaSentinel;
+use crate::state::State;
+use crate::transports::SolanaToAxelarMessage;
+use crate::verifier::AxelarVerifier;
+use crate::{config, healthcheck};
 
 const TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -98,7 +99,8 @@ impl Relayer {
 // Transport types
 //
 
-// TODO: Transports look very similar. We can make a single type that is generic over its actors.
+// TODO: Transports look very similar. We can make a single type that is generic
+// over its actors.
 
 struct AxelarToSolanaHandler {
     approver: config::AxelarApprover,
@@ -170,8 +172,9 @@ impl SolanaToAxelarHandler {
 
     /// Runs the Solana-to-Axelar transport indefinitely.
     ///
-    /// This function sets up the necessary actors (Sentinel and Verifier) and runs them concurrently.
-    /// If either fails for any reason, the entire transport will be restarted.
+    /// This function sets up the necessary actors (Sentinel and Verifier) and
+    /// runs them concurrently. If either fails for any reason, the entire
+    /// transport will be restarted.
     #[tracing::instrument(skip(self), name = "solana-to-axelar-transport")]
     async fn run(self) {
         loop {
@@ -182,19 +185,22 @@ impl SolanaToAxelarHandler {
                 self.state.clone(),
             );
 
-            // Fuse the futures to allow polling of the other future when one is waiting for shutdown.
+            // Fuse the futures to allow polling of the other future when one is waiting for
+            // shutdown.
             pin! {
                 let sentinel_future = sentinel.run().fuse();
                 let verifier_future = verifier.run().fuse();
             }
 
-            // Run the Sentinel and Verifier concurrently, and wait for the first one to fail.
+            // Run the Sentinel and Verifier concurrently, and wait for the first one to
+            // fail.
             select! {
                 _ = &mut sentinel_future => error!("Solana Sentinel has failed"),
                 _ = &mut verifier_future => error!("Axelar Verifier has failed")
             }
 
-            // Trigger cancellation and wait for both actors to gracefully shut down, up to `TIMEOUT`.
+            // Trigger cancellation and wait for both actors to gracefully shut down, up to
+            // `TIMEOUT`.
             cancellation_token.cancel();
             tracing::debug!(
                 timeout = TIMEOUT.as_secs(),
@@ -216,8 +222,9 @@ impl SolanaToAxelarHandler {
         let (sender, receiver) = mpsc::channel::<SolanaToAxelarMessage>(500); // FIXME: magic number
 
         // This is the root cancelation token for this transport session.
-        // It is also used to derive child tokens for each subcomponent, so they can manage their own cancelation schedules.
-        // The root token will be cancelled if any subcomponent returns early.
+        // It is also used to derive child tokens for each subcomponent, so they can
+        // manage their own cancelation schedules. The root token will be
+        // cancelled if any subcomponent returns early.
         let transport_cancelation_token = CancellationToken::new();
         let sentinel_cancelation_token = transport_cancelation_token.child_token();
         let verifier_cancelation_token = transport_cancelation_token.child_token();

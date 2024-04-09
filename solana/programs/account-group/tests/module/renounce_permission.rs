@@ -89,7 +89,7 @@ async fn renounce_permission(
     let transaction = Transaction::new_signed_with_payer(
         &[ix],
         Some(&fixture.payer.pubkey()),
-        &[&fixture.payer, &operator],
+        &[&fixture.payer, operator],
         recent_blockhash,
     );
     fixture

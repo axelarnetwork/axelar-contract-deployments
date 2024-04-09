@@ -30,8 +30,8 @@ pub(crate) fn get_permission_account_and_bump_seed_internal(
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[
-            &permission_group_pda.as_ref(),
-            &permission_pda_owner.as_ref(),
+            (permission_group_pda.as_ref()),
+            (permission_pda_owner.as_ref()),
         ],
         program_id,
     )

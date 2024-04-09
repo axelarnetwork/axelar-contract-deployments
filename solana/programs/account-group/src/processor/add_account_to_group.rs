@@ -62,8 +62,8 @@ impl Processor {
             system_program_info,
             PermissionAccount,
             &[
-                &existing_permission_group_pda.key.as_ref(),
-                &new_permission_owner_account.key.as_ref(),
+                (existing_permission_group_pda.key.as_ref()),
+                (new_permission_owner_account.key.as_ref()),
                 &[bump_seed],
             ],
         )?;

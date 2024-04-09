@@ -1,25 +1,27 @@
-use crate::amplifier_api::{
-    amplifier_client::AmplifierClient, GetPayloadRequest, SubscribeToApprovalsRequest,
-    SubscribeToApprovalsResponse,
-};
-use crate::state::State;
-
-use axelar_executable::axelar_message_primitives::{
-    command::{ApproveContractCallCommand, DecodedCommand},
-    DataPayload,
-};
-use gmp_gateway::{error::GatewayError, state::GatewayApprovedCommand};
-use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_program::{program_error::ProgramError, pubkey::Pubkey};
-use solana_sdk::{signature::Keypair, signature::Signer, transaction::Transaction};
 use std::sync::Arc;
+
+use axelar_executable::axelar_message_primitives::command::{
+    ApproveContractCallCommand, DecodedCommand,
+};
+use axelar_executable::axelar_message_primitives::DataPayload;
+use gmp_gateway::error::GatewayError;
+use gmp_gateway::state::GatewayApprovedCommand;
+use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_program::program_error::ProgramError;
+use solana_program::pubkey::Pubkey;
+use solana_sdk::signature::{Keypair, Signer};
+use solana_sdk::transaction::Transaction;
 use thiserror::Error;
 use tonic::transport::Channel;
 use tracing::{error, info, warn};
 
-use crate::config::SOLANA_CHAIN_NAME;
-
 use self::block_messages::BlockMessages;
+use crate::amplifier_api::amplifier_client::AmplifierClient;
+use crate::amplifier_api::{
+    GetPayloadRequest, SubscribeToApprovalsRequest, SubscribeToApprovalsResponse,
+};
+use crate::config::SOLANA_CHAIN_NAME;
+use crate::state::State;
 
 mod block_messages;
 
@@ -50,7 +52,8 @@ pub enum ApproverError {
     PayloadError(#[from] axelar_executable::axelar_message_primitives::PayloadError),
 }
 
-/// Listens for approved messages (signed proofs) coming from the Axelar blockchain.
+/// Listens for approved messages (signed proofs) coming from the Axelar
+/// blockchain.
 ///
 /// Those will be payloads sent from other blockchains,
 /// which pass through axelar and are sent to Solana.
@@ -118,8 +121,8 @@ impl Approver {
         // TODO: This will send the init exec data tx async
         // let broadcast_result = self.broadcast_sender.send(tx);
         // if let Err(err) = broadcast_result {
-        //     error!(%err, "failed to send 'init execute data account' for broadcasting");
-        // }
+        //     error!(%err, "failed to send 'init execute data account' for
+        // broadcasting"); }
 
         Ok(())
     }
@@ -136,8 +139,8 @@ impl Approver {
         .map_err(ApproverError::CreateInitExecDataIx)?;
 
         // Construct msg accounts for the Solana tx
-        // TODO: Prover should not include more than X msgs in the batch. We can also do that
-        // check here if needed?
+        // TODO: Prover should not include more than X msgs in the batch. We can also do
+        // that check here if needed?
         let message_accounts: Vec<Pubkey> = decoded_execute_data
             .command_batch
             .commands
@@ -155,7 +158,8 @@ impl Approver {
             execute_data_pda
         };
 
-        // Construct the execute (approve) Solana instruction to the Axelar gateway on solana
+        // Construct the execute (approve) Solana instruction to the Axelar gateway on
+        // solana
         let approve_ix = gmp_gateway::instructions::execute(
             gmp_gateway::ID,
             execute_data_account,
@@ -196,7 +200,8 @@ impl Approver {
                         .await?;
                 }
                 DecodedCommand::TransferOperatorship(_command) => {
-                    // no-op because this already gets executed in the gatway.execute call
+                    // no-op because this already gets executed in the
+                    // gatway.execute call
                 }
             }
         }
@@ -219,7 +224,8 @@ impl Approver {
             })
             .await
             .map_err(ApproverError::GetPayload)?;
-        // sanity check: decoding of the payload - no point to send & pay for a tx if we can check it here
+        // sanity check: decoding of the payload - no point to send & pay for a tx if we
+        // can check it here
         let payload_bytes = payload_bytes.into_inner().payload;
         let payload = DataPayload::decode(payload_bytes.as_ref())?;
 
@@ -237,8 +243,9 @@ impl Approver {
         if ix.program_id != destinatoin_program.0 {
             warn!("program_id provided from the decoded instruction doesn't match with the destination_address passed in the Axelar message; ix - {}; msg - {}", ix.program_id, destinatoin_program.0);
 
-            // TODO: Arguable if we should skip sending the tx or just pick what's in
-            // the instruction as the correct one by default
+            // TODO: Arguable if we should skip sending the tx or just pick
+            // what's in the instruction as the correct one by
+            // default
         }
 
         // Craft an execute tx and send to broadcast as TxType::Execute

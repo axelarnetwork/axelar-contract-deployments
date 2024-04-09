@@ -1,4 +1,3 @@
-use ethers_core;
 use ethers_core::abi::AbiEncode;
 use interchain_token_transfer_gmp::{Bytes32, InterchainTransfer};
 use solana_program::account_info::{next_account_info, AccountInfo};

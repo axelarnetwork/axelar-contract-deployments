@@ -6,7 +6,6 @@ use solana_program::msg;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use spl_token;
 use spl_token::instruction::{burn, transfer};
 use token_manager::TokenManagerType;
 
