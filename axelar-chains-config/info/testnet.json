@@ -104,11 +104,12 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 40,
       "onchainGasEstimate": {
+        "chainName": "ethereum",
         "blobBaseFee": 50187563959
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
     },
     "avalanche": {
       "name": "Avalanche",
@@ -1125,6 +1126,9 @@
       "gasOptions": {
         "gasPrice": 3000000000
       },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum"
+      },
       "confirmations": 4,
       "finality": "400",
       "approxFinalityWaitTime": 30
@@ -1236,6 +1240,10 @@
       "gasOptions": {
         "gasLimit": 7000000,
         "gasPriceAdjustment": 0.25
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 60
@@ -1436,7 +1444,11 @@
         "api": "https://api-sepolia.arbiscan.io/api"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      "approxFinalityWaitTime": 25,
+      "onchainGasEstimate": {
+        "chainName": "arbitrum",
+        "l1ChainName": "ethereum"
+      }
     },
     "centrifuge": {
       "name": "Centrifuge",
@@ -1522,6 +1534,9 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
+      "onchainGasEstimate": {
+        "chainName": "centrifuge"
+      },
       "explorer": {
         "name": "",
         "url": ""
@@ -1538,6 +1553,10 @@
       "tokenSymbol": "frxETH",
       "gasOptions": {
         "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1
       },
       "contracts": {
         "InterchainGovernance": {
@@ -1872,6 +1891,11 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
+      "onchainGasEstimate": {
+        "chainName": "blast",
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1
+      },
       "confirmations": 2,
       "explorer": {
         "name": "Blastscan",
@@ -1980,6 +2004,11 @@
       "confirmations": 2,
       "gasOptions": {
         "gasLimit": 50000000000
+      },
+      "onchainGasEstimate": {
+        "chainName": "mantle",
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1
       },
       "explorer": {
         "name": "Mantle Explorer",
