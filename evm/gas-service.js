@@ -67,7 +67,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 return null;
             }
 
-            const { axelarId, onchainGasEstimate: { gasEstimationType = 0, blobBaseFee = 0 } = {} } = destinationConfig;
+            const { axelarId, onchainGasEstimate: { gasEstimationType = 0, blobBaseFee = 0, multiplier: estimateMultiplier = 1.1 } = {} } = destinationConfig;
 
             let data;
 
@@ -100,7 +100,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
 
             const axelarBaseFee = parseFloat(sourceBaseFee) * Math.pow(10, decimals);
             const expressFee = parseFloat(sourceExpressFee) * Math.pow(10, decimals);
-            const relativeGasPrice = parseFloat(gasPrice) * parseFloat(multiplier);
+            const relativeGasPrice = parseFloat(gasPrice) * parseFloat(multiplier) * parseFloat(estimateMultiplier);
             const gasPriceRatio = parseFloat(destinationTokenPrice) / parseFloat(srcTokenPrice);
             const relativeBlobBaseFee = blobBaseFee * gasPriceRatio;
 

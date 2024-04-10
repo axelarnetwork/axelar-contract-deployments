@@ -109,10 +109,7 @@
         "blobBaseFee": 50187563959
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40,
-      "onchainGasEstimate": {
-        "blobBaseFee": 50187563959
-      }
+      "approxFinalityWaitTime": 40
     },
     "avalanche": {
       "name": "Avalanche",
@@ -1248,7 +1245,8 @@
         "gasPriceAdjustment": 0.25
       },
       "onchainGasEstimate": {
-        "l1ChainName": "ethereum"
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 60
