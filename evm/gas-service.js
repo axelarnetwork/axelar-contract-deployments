@@ -67,7 +67,8 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 return null;
             }
 
-            const { axelarId, onchainGasEstimate: { gasEstimationType = 0, blobBaseFee = 0, multiplier: estimateMultiplier = 1.1 } = {} } = destinationConfig;
+            const { axelarId, onchainGasEstimate: { gasEstimationType = 0, blobBaseFee = 0, multiplier: estimateMultiplier = 1.1 } = {} } =
+                destinationConfig;
 
             let data;
 

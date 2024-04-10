@@ -1011,9 +1011,6 @@
       "gasOptions": {
         "gasLimit": 300000000
       },
-      "onchainGasEstimate": {
-        "chainName": "filecoin"
-      },
       "confirmations": 3,
       "eip1559": true,
       "finality": "120",
