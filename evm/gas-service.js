@@ -90,7 +90,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
             let sourceFeeData;
 
             try {
-                destinationFeeData = await getFeeData(api, axelarId);
+                destinationFeeData = await getFeeData(api, destinationAxelarId);
                 sourceFeeData = await getFeeData(api, chain.axelarId);
             } catch (e) {
                 printError(`Error getting gas info for ${chain.axelarId} -> ${axelarId}`);
