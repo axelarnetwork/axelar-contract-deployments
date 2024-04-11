@@ -112,7 +112,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                     token_price: { usd: destTokenPrice },
                     gas_price_in_units: { value: gasPriceInDestToken },
                 },
-                execute_gas_multiplier: multiplier = 1.1,
+                execute_gas_multiplier: executeGasMultiplier = 1.1,
             } = destinationFeeData;
 
             const axelarBaseFee = parseFloat(baseFeeUsd) / parseFloat(srcTokenPrice);
