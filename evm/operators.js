@@ -22,9 +22,10 @@ const {
     mainProcessor,
     validateParameters,
     getContractJSON,
+    printWarn,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getGasUpdates, printFailedChainUpdates } = require('./gas-service');
+const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate } = require('./gas-service');
 
 async function processCommand(config, chain, options) {
     const {
@@ -251,7 +252,14 @@ async function processCommand(config, chain, options) {
 
             const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
 
-            if (prompt(`Update gas info for following chains ${chainsToUpdate.join(', ')}?`, yes)) {
+            if (chainsToUpdate.length === 0) {
+                printWarn('No gas info updates found.');
+                return;
+            }
+
+            printInfo('Collected gas info for the following chain names', chainsToUpdate.join(', '));
+
+            if (prompt(`Submit gas update transaction?`, yes)) {
                 return;
             }
 
@@ -263,6 +271,10 @@ async function processCommand(config, chain, options) {
                 printInfo('TX', tx.hash);
                 await tx.wait(chain.confirmations);
             } catch (error) {
+                for (let i = 0; i < chainsToUpdate.length; i++) {
+                    addFailedChainUpdate(chain.name, chainsToUpdate[i]);
+                }
+
                 printError(error);
             }
 
