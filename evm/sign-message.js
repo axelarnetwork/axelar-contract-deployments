@@ -7,6 +7,7 @@ const {
 const { Command, Option } = require('commander');
 const { getWallet } = require('./sign-utils');
 const { printInfo, validateParameters } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(options) {
     const { message, privateKey } = options;
@@ -38,8 +39,8 @@ if (require.main === module) {
 
     program.name('sign-message').description('sign a message from the user wallet');
 
+    addBaseOptions(program, { ignoreChainNames: true });
     program.addOption(new Option('-m, --message <message>', 'the message to be signed').makeOptionMandatory(true).env('MESSAGE'));
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 
     program.action((options) => {
         main(options);
