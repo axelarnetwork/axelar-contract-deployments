@@ -51,13 +51,11 @@ async function getFeeData(api, sourceChain, destinationChain) {
     const key = `${sourceChain}-${destinationChain}`;
 
     if (!feesCache[key]) {
-        const data = await httpPost(`${api}/gmp/getFees`, {
+        feesCache[key] = httpPost(`${api}/gmp/getFees`, {
             sourceChain,
             destinationChain,
             sourceTokenAddress: AddressZero,
-        });
-
-        feesCache[key] = data.result;
+        }).then(({ result }) => (feesCache[key] = result));
     }
 
     return feesCache[key];
@@ -74,7 +72,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
         destinationChains = Object.keys(config.chains);
     }
 
-    const l1Chain = Object.values(config.chains)[0];
+    const referenceChain = Object.values(config.chains)[0];
 
     let gasUpdates = await Promise.all(
         destinationChains.map(async (destinationChain) => {
@@ -96,8 +94,10 @@ async function getGasUpdates(config, env, chain, destinationChains) {
             let sourceFeeData;
 
             try {
-                destinationFeeData = await getFeeData(api, l1Chain.axelarId, destinationAxelarId);
-                sourceFeeData = await getFeeData(api, l1Chain.axelarId, chain.axelarId);
+                [sourceFeeData, destinationFeeData] = await Promise.all([
+                    getFeeData(api, referenceChain.axelarId, chain.axelarId),
+                    getFeeData(api, referenceChain.axelarId, destinationAxelarId),
+                ]);
             } catch (e) {
                 printError(`Error getting gas info for ${chain.axelarId} -> ${destinationAxelarId}`);
                 printError(e);
