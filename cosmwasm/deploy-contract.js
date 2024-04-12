@@ -189,7 +189,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
     if (!validateAddress(monitoringAddress)) {
         throw new Error('Missing or invalid Monitoring.address in axelar info');
     }
-    
+
     if (!validateAddress(multisigAddress)) {
         throw new Error('Missing or invalid Multisig.address in axelar info');
     }
