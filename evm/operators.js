@@ -22,6 +22,7 @@ const {
     mainProcessor,
     validateParameters,
     getContractJSON,
+    printWarn,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate } = require('./gas-service');
@@ -250,6 +251,11 @@ async function processCommand(config, chain, options) {
             });
 
             const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
+
+            if (chainsToUpdate.length === 0) {
+                printWarn('No gas info updates found.');
+                return;
+            }
 
             printInfo('Collected gas info for the following chain names', chainsToUpdate.join(', '));
 

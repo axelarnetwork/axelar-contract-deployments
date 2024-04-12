@@ -45,6 +45,22 @@ function printFailedChainUpdates() {
     }
 }
 
+const feesCache = {};
+
+async function getFeeData(api, sourceChain, destinationChain) {
+    const key = `${sourceChain}-${destinationChain}`;
+
+    if (!feesCache[key]) {
+        feesCache[key] = httpPost(`${api}/gmp/getFees`, {
+            sourceChain,
+            destinationChain,
+            sourceTokenAddress: AddressZero,
+        }).then(({ result }) => (feesCache[key] = result));
+    }
+
+    return feesCache[key];
+}
+
 async function getGasUpdates(config, env, chain, destinationChains) {
     const api = config.axelar.axelarscanApi;
 
@@ -55,6 +71,8 @@ async function getGasUpdates(config, env, chain, destinationChains) {
     if (destinationChains.includes('all')) {
         destinationChains = Object.keys(config.chains);
     }
+
+    const referenceChain = Object.values(config.chains)[0];
 
     let gasUpdates = await Promise.all(
         destinationChains.map(async (destinationChain) => {
@@ -67,42 +85,50 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 return null;
             }
 
-            const { axelarId, onchainGasEstimate: { gasEstimationType = 0, blobBaseFee = 0, multiplier: estimateMultiplier = 1.1 } = {} } =
-                destinationConfig;
+            const {
+                axelarId: destinationAxelarId,
+                onchainGasEstimate: { gasEstimationType = 0, blobBaseFee = 0, multiplier: onchainGasVolatilityMultiplier = 1.1 } = {},
+            } = destinationConfig;
 
-            let data;
+            let destinationFeeData;
+            let sourceFeeData;
 
             try {
-                data = await httpPost(`${api}/gmp/getFees`, {
-                    sourceChain: chain.axelarId,
-                    destinationChain: axelarId,
-                    sourceTokenAddress: AddressZero,
-                });
+                [sourceFeeData, destinationFeeData] = await Promise.all([
+                    getFeeData(api, referenceChain.axelarId, chain.axelarId),
+                    getFeeData(api, referenceChain.axelarId, destinationAxelarId),
+                ]);
             } catch (e) {
-                printError(`Error getting gas info for ${chain.axelarId} -> ${axelarId}`);
+                printError(`Error getting gas info for ${chain.axelarId} -> ${destinationAxelarId}`);
                 printError(e);
-                addFailedChainUpdate(chain.axelarId, axelarId);
+                addFailedChainUpdate(chain.axelarId, destinationAxelarId);
                 return null;
             }
 
             const {
-                source_base_fee: sourceBaseFee,
-                source_express_fee: { total: sourceExpressFee },
-                source_token: {
-                    gas_price_in_units: { value: gasPrice },
-                    token_price: { usd: srcTokenPrice },
-                    decimals,
-                },
                 destination_native_token: {
-                    token_price: { usd: destinationTokenPrice },
+                    token_price: { usd: srcTokenPrice },
+                    decimals: srcTokenDecimals,
                 },
-                execute_gas_multiplier: multiplier = 1.1,
-            } = data.result;
+            } = sourceFeeData;
 
-            const axelarBaseFee = parseFloat(sourceBaseFee) * Math.pow(10, decimals);
-            const expressFee = parseFloat(sourceExpressFee) * Math.pow(10, decimals);
-            const relativeGasPrice = parseFloat(gasPrice) * parseFloat(multiplier) * parseFloat(estimateMultiplier);
-            const gasPriceRatio = parseFloat(destinationTokenPrice) / parseFloat(srcTokenPrice);
+            const {
+                base_fee_usd: baseFeeUsd,
+                destination_express_fee: { total_usd: expressFeeUsd },
+                destination_native_token: {
+                    token_price: { usd: destTokenPrice },
+                    gas_price_in_units: { value: gasPriceInDestToken },
+                },
+                execute_gas_multiplier: executeGasMultiplier = 1.1,
+            } = destinationFeeData;
+
+            const axelarBaseFee = (parseFloat(baseFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
+            const expressFee = (parseFloat(expressFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
+            const gasPriceRatio = parseFloat(destTokenPrice) / parseFloat(srcTokenPrice);
+            const relativeGasPrice =
+                parseFloat(executeGasMultiplier) *
+                parseFloat(onchainGasVolatilityMultiplier) *
+                (parseFloat(gasPriceInDestToken) / gasPriceRatio);
             const relativeBlobBaseFee = blobBaseFee * gasPriceRatio;
 
             return {
@@ -235,6 +261,11 @@ async function processCommand(config, chain, options) {
             });
 
             const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
+
+            if (chainsToUpdate.length === 0) {
+                printWarn('No gas info updates found.');
+                return;
+            }
 
             printInfo('Collected gas info for the following chain names', chainsToUpdate.join(', '));
 
