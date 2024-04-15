@@ -159,6 +159,7 @@ const makeGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRout
 
 const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chainId }) => {
     const {
+        Monitoring: { address: monitoringAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
         VotingVerifier: {
@@ -191,6 +192,10 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
 
     if (!validateAddress(gatewayAddress)) {
         throw new Error(`Missing or invalid Gateway[${chainId}].address in axelar info`);
+    }
+
+    if (!validateAddress(monitoringAddress)) {
+        throw new Error('Missing or invalid Monitoring.address in axelar info');
     }
 
     if (!validateAddress(multisigAddress)) {
@@ -233,6 +238,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         admin_address: adminAddress,
         governance_address: governanceAddress,
         gateway_address: gatewayAddress,
+        monitoring_address: monitoringAddress,
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,
         voting_verifier_address: verifierAddress,
