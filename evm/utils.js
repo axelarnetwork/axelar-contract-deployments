@@ -26,6 +26,7 @@ const {
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
+const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const getSaltFromKey = (key) => {
@@ -190,6 +191,17 @@ const httpGet = (url) => {
             });
         });
     });
+};
+
+const httpPost = async (url, data) => {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+    return response.json();
 };
 
 const isNonEmptyString = (arg) => {
@@ -423,7 +435,7 @@ function validateParameters(parameters) {
  * Parses the input string into an array of arguments, recognizing and converting
  * to the following types: boolean, number, array, and string.
  *
- * @param {string} input - The string of arguments to parse.
+ * @param {string} args - The string of arguments to parse.
  *
  * @returns {Array} - An array containing parsed arguments.
  *
@@ -455,6 +467,8 @@ const parseArgs = (args) => {
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
  * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
  * @param {Object} contractObject - An instance of the contract or a contract factory (ethers.js Contract or ContractFactory object)
+ * @param {string} chain - The chain name
+ * @param {Object} provider - The provider to use for online deployment
  * @returns {Promise<string>} - The keccak256 hash of the contract bytecode
  */
 async function getBytecodeHash(contractObject, chain = '', provider = null) {
@@ -668,8 +682,16 @@ function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
+function loadParallelExecutionConfig(env, chain) {
+    return require(`${__dirname}/../chains-info/${env}-${chain}.json`);
+}
+
 function saveConfig(config, env) {
     writeJSON(config, `${__dirname}/../axelar-chains-config/info/${env}.json`);
+}
+
+function saveParallelExecutionConfig(config, env, chain) {
+    writeJSON(config, `${__dirname}/../chains-info/${env}-${chain}.json`);
 }
 
 async function printWalletInfo(wallet, options = {}) {
@@ -852,6 +874,73 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         }
     }
 
+    if (options.parallel && chains.length > 1) {
+        const cmds = process.argv.filter((command) => command);
+        let chainCommandIndex = -1;
+        let skipPrompt = false;
+
+        for (let commandIndex = 0; commandIndex < cmds.length; commandIndex++) {
+            const cmd = cmds[commandIndex];
+
+            if (cmd === '-n' || cmd === '--chainName' || cmd === '--chainNames') {
+                chainCommandIndex = commandIndex;
+            } else if (cmd === '--parallel') {
+                cmds[commandIndex] = '--saveChainSeparately';
+            } else if (cmd === '-y' || cmd === '--yes') {
+                skipPrompt = true;
+            }
+        }
+
+        if (!skipPrompt) {
+            cmds.push('-y');
+        }
+
+        const successfullChains = [];
+
+        const executeChain = (chainName) => {
+            const chain = config.chains[chainName.toLowerCase()];
+
+            if (
+                chainsToSkip.includes(chain.name.toLowerCase()) ||
+                chain.status === 'deactive' ||
+                (chain.contracts && chain.contracts[options.contractName]?.skip)
+            ) {
+                printWarn('Skipping chain', chain.name);
+                return Promise.resolve();
+            }
+
+            return new Promise((resolve) => {
+                cmds[chainCommandIndex + 1] = chainName;
+
+                exec(cmds.join(' '), { stdio: 'inherit' }, (error, stdout) => {
+                    printInfo('-------------------------------------------------------');
+                    printInfo(`Logs for ${chainName}`, stdout);
+
+                    if (error) {
+                        printError(`Error while running script for ${chainName}`, error);
+                    } else {
+                        successfullChains.push(chainName);
+                        printInfo(`Finished running script for chain`, chainName);
+                    }
+
+                    resolve();
+                });
+            });
+        };
+
+        await Promise.all(chains.map(executeChain));
+
+        if (save) {
+            for (const chainName of successfullChains) {
+                config.chains[chainName.toLowerCase()] = loadParallelExecutionConfig(options.env, chainName);
+            }
+
+            saveConfig(config, options.env);
+        }
+
+        return;
+    }
+
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
@@ -878,7 +967,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         }
 
         if (save) {
-            saveConfig(config, options.env);
+            if (options.saveChainSeparately) {
+                saveParallelExecutionConfig(config.chains[chainName.toLowerCase()], options.env, chainName);
+            } else {
+                saveConfig(config, options.env);
+            }
         }
     }
 };
@@ -1080,6 +1173,10 @@ function isValidChain(config, chainName) {
     }
 }
 
+function toBigNumberString(number) {
+    return Math.ceil(number).toLocaleString('en', { useGrouping: false });
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -1088,6 +1185,7 @@ module.exports = {
     writeJSON,
     copyObject,
     httpGet,
+    httpPost,
     printObj,
     printLog,
     printInfo,
@@ -1137,4 +1235,5 @@ module.exports = {
     getSaltFromKey,
     getDeployOptions,
     isValidChain,
+    toBigNumberString,
 };

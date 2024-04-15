@@ -1,0 +1,50 @@
+name: 'Update Gas Info on Testnet'
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to update gas info on
+        required: true
+        default: testnet
+        type: choice
+        options:
+          - testnet
+          - mainnet
+          - stagenet
+
+jobs:
+  update-gas:
+    name: 'Update Gas Info'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          else
+            ENV="testnet"
+          fi
+
+          case "$ENV" in
+            testnet)
+              PRIVATE_KEY="${{ secrets.TESTNET_PRIVATE_KEY }}"
+              ;;
+            mainnet)
+              PRIVATE_KEY="${{ secrets.MAINNET_PRIVATE_KEY }}"
+              ;;
+            stagenet)
+              PRIVATE_KEY="${{ secrets.STAGENET_PRIVATE_KEY }}"
+              ;;
+          esac
+
+          echo "PRIVATE_KEY=$PRIVATE_KEY" >> .env
+          echo "ENV=$ENV" >> .env
+          echo "CHAINS=all" >> .env
+
+          node evm/operators.js --action updateGasInfo --chains all -y
