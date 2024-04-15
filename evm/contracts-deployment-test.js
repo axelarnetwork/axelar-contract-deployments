@@ -2,7 +2,6 @@
 
 const { ethers } = require('hardhat');
 const { execSync } = require('child_process');
-const { readFileSync } = require('fs');
 const {
     Wallet,
     providers: { JsonRpcProvider },
@@ -11,7 +10,6 @@ const { Command, Option } = require('commander');
 
 const { mainProcessor, saveConfig } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const path = require('path');
 
 async function processCommand(config, chain, options) {
     const wallet = new Wallet(options.privateKey, new JsonRpcProvider(chain.rpc));
@@ -66,12 +64,8 @@ async function processCommand(config, chain, options) {
         );
     }
 
-    const _path = path.join(__dirname, '..', 'axelar-chains-config', 'info');
-    const file = `${options.env}.json`;
-
     for (let i = 0; i < cmds.length; i++) {
-        config = JSON.parse(readFileSync(path.join(_path, file)));
-        execSync(`${cmds[i]} -n ${options.chainNames} -p ${options.privateKey} ${options.yes ? '-y' : ''} ${i === 5 ? `` : ''}`, {
+        execSync(`${cmds[i]} -n ${options.chainNames} -p ${options.privateKey} ${options.yes ? '-y' : ''}`, {
             stdio: 'inherit',
         });
     }
