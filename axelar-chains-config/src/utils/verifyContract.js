@@ -27,7 +27,12 @@ const verifyContract = (env, chain, contract, args, options = {}) => {
     console.log(`Verifying contract ${contract} with args '${stringArgs.join(',')}'`);
     console.log(cmd);
 
-    execSync(cmd, { stdio: 'inherit' });
+    try {
+        execSync(cmd, { stdio: 'inherit' });
+    } catch (error) {
+        console.log(`Contract verification task failed for contract ${contract} on chain ${chain} with error: `, error);
+        return;
+    }
 
     console.log('Verified!');
 };
