@@ -2114,7 +2114,7 @@
       "chainId": 80002,
       "rpc": "https://rpc-amoy.polygon.technology/",
       "tokenSymbol": "MATIC",
-      "confirmations": 1000000,
+      "confirmations": 2,
       "contracts": {
         "AxelarGateway": {}
       },
