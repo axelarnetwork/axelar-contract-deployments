@@ -30,7 +30,7 @@ const verifyContract = (env, chain, contract, args, options = {}) => {
     try {
         execSync(cmd, { stdio: 'inherit' });
     } catch (error) {
-        console.log(`Contract verification task failed for contract ${contract} on chain ${chain} with error: `, error);
+        console.log(`Contract verification task failed for contract ${contract} on chain ${chain.name} with error: `, error);
         return;
     }
 
