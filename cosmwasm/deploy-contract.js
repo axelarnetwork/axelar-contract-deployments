@@ -15,6 +15,14 @@ const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
 
+const makeMonitoringInstantiateMsg = ({ governanceAddress }) => {
+    if (!validateAddress(governanceAddress)) {
+        throw new Error('Missing or invalid Monitoring.governanceAddress in axelar info');
+    }
+
+    return { governance_address: governanceAddress };
+};
+
 const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
     if (!validateAddress(governanceAccount)) {
         throw new Error('Missing or invalid ServiceRegistry.governanceAccount in axelar info');
@@ -253,6 +261,14 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     }
 
     switch (contractName) {
+        case 'Monitoring': {
+            if (chainConfig) {
+                throw new Error('Monitoring does not support chainNames option');
+            }
+
+            return makeMonitoringInstantiateMsg(contractConfig);
+        }
+
         case 'ServiceRegistry': {
             if (chainConfig) {
                 throw new Error('ServiceRegistry does not support chainNames option');

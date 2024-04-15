@@ -13,6 +13,9 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 ```
   "axelar": {
     "contracts": {
+      "Monitoring": {
+        "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
+      },
       "ServiceRegistry": {
         "governanceAccount": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
       },
