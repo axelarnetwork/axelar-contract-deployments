@@ -3,3 +3,6 @@
 	url = https://github.com/googleapis/googleapis
 	branch = master
 	shallow = true
+[submodule "evm-contracts/lib/forge-std"]
+	path = evm-contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
