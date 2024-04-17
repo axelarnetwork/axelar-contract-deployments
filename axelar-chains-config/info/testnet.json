@@ -1447,7 +1447,6 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 25,
       "onchainGasEstimate": {
-        "chainName": "arbitrum",
         "l1ChainName": "ethereum",
         "gasEstimationType": 3
       }
@@ -1535,9 +1534,6 @@
       },
       "gasOptions": {
         "gasLimit": 8000000
-      },
-      "onchainGasEstimate": {
-        "chainName": "centrifuge"
       },
       "explorer": {
         "name": "",
@@ -1669,7 +1665,6 @@
         "gasLimit": 8000000
       },
       "onchainGasEstimate": {
-        "chainName": "optimism",
         "l1ChainName": "ethereum",
         "gasEstimationType": 1,
         "l1FeeScalar": 7600
@@ -1783,7 +1778,6 @@
         "gasLimit": 8000000
       },
       "onchainGasEstimate": {
-        "chainName": "base",
         "l1ChainName": "ethereum",
         "gasEstimationType": 1,
         "l1FeeScalar": 1101
@@ -1897,7 +1891,6 @@
         "gasLimit": 8000000
       },
       "onchainGasEstimate": {
-        "chainName": "blast",
         "l1ChainName": "ethereum",
         "gasEstimationType": 2,
         "l1FeeScalar": 684000
@@ -2012,7 +2005,6 @@
         "gasLimit": 50000000000
       },
       "onchainGasEstimate": {
-        "chainName": "mantle",
         "l1ChainName": "ethereum",
         "gasEstimationType": 2,
         "l1FeeScalar": 10000
