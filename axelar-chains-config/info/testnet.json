@@ -1243,7 +1243,8 @@
       },
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 4,
+        "l1FeeScalar": 1150000000
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 60
@@ -1447,7 +1448,8 @@
       "approxFinalityWaitTime": 25,
       "onchainGasEstimate": {
         "chainName": "arbitrum",
-        "l1ChainName": "ethereum"
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 3
       }
     },
     "centrifuge": {
@@ -1556,7 +1558,8 @@
       },
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 2,
+        "l1FeeScalar": 50000
       },
       "contracts": {
         "InterchainGovernance": {
@@ -1668,7 +1671,8 @@
       "onchainGasEstimate": {
         "chainName": "optimism",
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 1,
+        "l1FeeScalar": 7600
       },
       "confirmations": 3,
       "explorer": {
@@ -1781,7 +1785,8 @@
       "onchainGasEstimate": {
         "chainName": "base",
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 1,
+        "l1FeeScalar": 1101
       },
       "confirmations": 2,
       "explorer": {
@@ -1894,7 +1899,8 @@
       "onchainGasEstimate": {
         "chainName": "blast",
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 2,
+        "l1FeeScalar": 684000
       },
       "confirmations": 2,
       "explorer": {
@@ -2008,7 +2014,8 @@
       "onchainGasEstimate": {
         "chainName": "mantle",
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 2,
+        "l1FeeScalar": 10000
       },
       "explorer": {
         "name": "Mantle Explorer",
