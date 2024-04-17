@@ -15,6 +15,14 @@ const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
 
+const makeMonitoringInstantiateMsg = ({ governanceAddress }) => {
+    if (!validateAddress(governanceAddress)) {
+        throw new Error('Missing or invalid Monitoring.governanceAddress in axelar info');
+    }
+
+    return { governance_address: governanceAddress };
+};
+
 const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
     if (!validateAddress(governanceAccount)) {
         throw new Error('Missing or invalid ServiceRegistry.governanceAccount in axelar info');
@@ -151,6 +159,7 @@ const makeGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRout
 
 const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chainId }) => {
     const {
+        Monitoring: { address: monitoringAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
         VotingVerifier: {
@@ -183,6 +192,10 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
 
     if (!validateAddress(gatewayAddress)) {
         throw new Error(`Missing or invalid Gateway[${chainId}].address in axelar info`);
+    }
+
+    if (!validateAddress(monitoringAddress)) {
+        throw new Error('Missing or invalid Monitoring.address in axelar info');
     }
 
     if (!validateAddress(multisigAddress)) {
@@ -225,6 +238,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         admin_address: adminAddress,
         governance_address: governanceAddress,
         gateway_address: gatewayAddress,
+        monitoring_address: monitoringAddress,
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,
         voting_verifier_address: verifierAddress,
@@ -253,6 +267,14 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     }
 
     switch (contractName) {
+        case 'Monitoring': {
+            if (chainConfig) {
+                throw new Error('Monitoring does not support chainNames option');
+            }
+
+            return makeMonitoringInstantiateMsg(contractConfig);
+        }
+
         case 'ServiceRegistry': {
             if (chainConfig) {
                 throw new Error('ServiceRegistry does not support chainNames option');
