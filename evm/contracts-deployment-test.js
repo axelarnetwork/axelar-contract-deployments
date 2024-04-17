@@ -8,40 +8,16 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 
-const { mainProcessor, saveConfig } = require('./utils');
+const { mainProcessor } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(config, chain, options) {
     const wallet = new Wallet(options.privateKey, new JsonRpcProvider(chain.rpc));
-
-    if (
-        !config.chains[options.chainNames].contracts.Multisig ||
-        !config.chains[options.chainNames].contracts.Multisig.signers ||
-        !config.chains[options.chainNames].contracts.Multisig.threshold
-    ) {
-        config.chains[options.chainNames].contracts.Multisig = { signers: [wallet.address], threshold: 1 };
-        saveConfig(config, options.env);
-    }
-
-    if (
-        !config.chains[options.chainNames].contracts.InterchainGovernance ||
-        !config.chains[options.chainNames].contracts.InterchainGovernance.minimumTimeDelay
-    ) {
-        config.chains[options.chainNames].contracts.InterchainGovernance = { minimumTimeDelay: 300 };
-        saveConfig(config, options.env);
-    }
-
-    if (
-        !config.chains[options.chainNames].contracts.AxelarDepositService ||
-        !config.chains[options.chainNames].contracts.AxelarDepositService.wrappedSymbol ||
-        !config.chains[options.chainNames].contracts.AxelarDepositService.refundIssuer
-    ) {
-        config.chains[options.chainNames].contracts.AxelarDepositService = {
-            wrappedSymbol: `W${chain.tokenSymbol}`,
-            refundIssuer: wallet.address,
-        };
-        saveConfig(config, options.env);
-    }
+    const deploymentMethod = options.env === 'testnet' ? 'create' : 'create2';
+    const signers = [wallet.address];
+    const threshold = 1;
+    const minimumTimeDelay = 300;
+    const args = [`W${chain.tokenSymbol}`, wallet.address];
 
     const cmds = [
         `node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json`,
@@ -49,9 +25,9 @@ async function processCommand(config, chain, options) {
         `node evm/deploy-gateway-v6.2.x.js -m create3 --keyID ${wallet.address} --mintLimiter ${wallet.address} --governance ${wallet.address}`,
         `node evm/gateway.js --action params`,
         `node evm/deploy-contract.js -c Operators -m create2`,
-        `node evm/deploy-upgradable.js -c AxelarGasService -m create${options.env === 'testnet' ? '' : '2'} --args ${wallet.address}`,
-        `node evm/deploy-contract.js -c Multisig -m create3 -s 'testSalt'`,
-        `node evm/deploy-contract.js -c InterchainGovernance -m create3`,
+        `node evm/deploy-upgradable.js -c AxelarGasService -m ${deploymentMethod} --args ${wallet.address}`,
+        `node evm/deploy-contract.js -c Multisig -m create3 -s 'testSalt' --signers ${signers} --threshold ${threshold}`,
+        `node evm/deploy-contract.js -c InterchainGovernance -m create3 --minTimeDelay ${minimumTimeDelay}`,
         `node evm/deploy-its.js -s "testSalt" --proxySalt 'testSalt'`,
         `node evm/gateway.js --action transferMintLimiter`,
         `node evm/gateway.js --action transferGovernance`,
@@ -60,7 +36,7 @@ async function processCommand(config, chain, options) {
     if (options.deployDepositService) {
         cmds.push(
             `node evm/deploy-test-gateway-token.js`,
-            `node evm/deploy-upgradable.js -c AxelarDepositService -m create --salt "testSalt"`,
+            `node evm/deploy-upgradable.js -c AxelarDepositService -m create --salt "testSalt --args ${args}"`,
         );
     }
 
@@ -80,7 +56,11 @@ if (require.main === module) {
 
     program.name('contracts-deployment-test').description('Deploy contracts to test deployment on chain');
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    program.addOption(new Option('--deployDepositService', 'include AxelarDepositService in deployment tests').env('deployDepositService'));
+    program.addOption(
+        new Option('--deployDepositService', 'include AxelarDepositService in deployment tests')
+            .makeOptionMandatory(true)
+            .env('DEPLOY_DEPOSIT_SERVICE'),
+    );
     addBaseOptions(program);
 
     program.action((options) => {

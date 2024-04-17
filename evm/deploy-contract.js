@@ -28,7 +28,8 @@ const {
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
-async function getConstructorArgs(contractName, chain, wallet) {
+async function getConstructorArgs(contractName, chain, wallet, options) {
+    console.log('options', options);
     const config = chain.contracts;
     const contractConfig = config[contractName];
 
@@ -105,7 +106,7 @@ async function getConstructorArgs(contractName, chain, wallet) {
                 throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
             }
 
-            const minimumTimeDelay = contractConfig.minimumTimeDelay;
+            const minimumTimeDelay = options.minTimeDelay ? parseInt(options.minTimeDelay) : contractConfig.minimumTimeDelay;
             contractConfig.minimumTimeDelay = minimumTimeDelay;
 
             if (!isNumber(minimumTimeDelay)) {
@@ -116,13 +117,13 @@ async function getConstructorArgs(contractName, chain, wallet) {
         }
 
         case 'Multisig': {
-            const signers = contractConfig.signers;
+            const signers = options.signers?.split(',').map((str) => str.trim()) || contractConfig.signers;
 
             if (!isAddressArray(signers)) {
                 throw new Error(`Missing Multisig.signers in the chain info.`);
             }
 
-            const threshold = contractConfig.threshold;
+            const threshold = options.threshold ? parseInt(options.threshold) : contractConfig.threshold;
 
             if (!isNumber(threshold)) {
                 throw new Error(`Missing Multisig.threshold in the chain info.`);
@@ -352,6 +353,9 @@ if (require.main === module) {
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
     );
     program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
+    program.addOption(new Option('--signers <signers>', 'signer addresses for multisig').env('SIGNERS'));
+    program.addOption(new Option('--threshold <threshold>', 'multisig threshold').env('THRESHOLD'));
+    program.addOption(new Option('--minTimeDelay <minTimeDelay>', 'minimum time delay').env('MIN_DELAY'));
 
     program.action((options) => {
         main(options);
