@@ -116,7 +116,9 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                     token_price: { usd: srcTokenPrice },
                     decimals: srcTokenDecimals,
                 },
-                ethereum_token: {token_price: {usd: ethPrice}},
+                ethereum_token: {
+                    token_price: { usd: ethPrice },
+                },
             } = sourceFeeData;
 
             let {
@@ -133,6 +135,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
             if (srcSymbol === 'ETH' && srcTokenPrice === 100) {
                 srcTokenPrice = ethPrice;
             }
+
             if (destSymbol === 'ETH' && destTokenPrice === 100) {
                 destTokenPrice = ethPrice;
             }
