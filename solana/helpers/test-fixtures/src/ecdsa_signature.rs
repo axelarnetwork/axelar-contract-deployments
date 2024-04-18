@@ -26,7 +26,7 @@ pub fn create_random_signature(message_to_sign: &[u8]) -> TestSignature {
 
 #[cfg(test)]
 mod tests {
-    use libsecp256k1::{recover, sign, verify};
+    use libsecp256k1::{recover, verify};
 
     use super::*;
 

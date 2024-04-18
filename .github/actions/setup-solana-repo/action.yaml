@@ -33,3 +33,16 @@ runs:
     - name: Install cargo-make
       shell: bash
       run: cargo install --debug cargo-make
+
+    # we rely on foundry for some specific tests
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+    - name: Run Forge build
+      shell: bash
+      run: |
+        cd evm-contracts
+        forge --version
+        forge build --sizes
+      id: build

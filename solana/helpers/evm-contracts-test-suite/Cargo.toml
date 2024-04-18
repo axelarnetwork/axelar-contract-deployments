@@ -1,0 +1,14 @@
+[package]
+name = "evm-contracts-test-suite"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ethers.workspace = true
+anyhow.workspace = true
+evm-contracts-rs.workspace = true
+
+[dev-dependencies]
+test-log.workspace = true
+tokio.workspace = true
+rstest.workspace = true

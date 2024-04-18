@@ -111,8 +111,6 @@ fn decode_base64(input: &str) -> Option<Vec<u8>> {
 
 #[cfg(test)]
 mod tests {
-    use solana_program::pubkey::Pubkey;
-
     use super::*;
 
     #[test]
