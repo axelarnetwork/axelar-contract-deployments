@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use anyhow::{Context, Result};
 use futures_util::FutureExt;
-use tokio::sync::mpsc::{self, Sender};
+use tokio::sync::mpsc;
 use tokio::task::JoinSet;
 use tokio::time::{timeout, Duration};
 use tokio::{join, pin, select};
@@ -10,6 +10,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
 
 use crate::amplifier_api::SubscribeToApprovalsResponse;
+use crate::approver::AxelarApprover;
 use crate::includer::SolanaIncluder;
 use crate::sentinel::SolanaSentinel;
 use crate::state::State;
@@ -163,10 +164,10 @@ impl AxelarToSolanaHandler {
     }
 
     fn setup_actors(
-        _approver_config: &config::AxelarApprover,
+        approver_config: &config::AxelarApprover,
         includer_config: &config::SolanaIncluder,
         state: State,
-    ) -> (ApproverActor, SolanaIncluder, CancellationToken) {
+    ) -> (AxelarApprover, SolanaIncluder, CancellationToken) {
         // TODO: use config to properly initialize actors
         let (sender, receiver) = mpsc::channel::<SubscribeToApprovalsResponse>(500); // FIXME: magic number
 
@@ -175,10 +176,19 @@ impl AxelarToSolanaHandler {
         // manage their own cancellation schedules. The root token will be
         // cancelled if any subcomponent returns early.
         let transport_cancelation_token = CancellationToken::new();
-        let _approver_cancelation_token = transport_cancelation_token.child_token();
+        let approver_cancelation_token = transport_cancelation_token.child_token();
         let includer_cancelation_token = transport_cancelation_token.child_token();
 
-        let approver = ApproverActor { sender };
+        let approver = {
+            let config::AxelarApprover { rpc } = approver_config;
+            AxelarApprover::new(
+                rpc.clone(),
+                sender,
+                state.clone(),
+                approver_cancelation_token,
+            )
+        };
+
         let includer = {
             let config::SolanaIncluder {
                 rpc,
@@ -300,22 +310,5 @@ impl SolanaToAxelarHandler {
         );
 
         (sentinel, verifier, transport_cancelation_token)
-    }
-}
-
-//
-// Actor Placheholder Types
-//
-
-// TODO: Use the real worker types already defined in this crate.
-
-struct ApproverActor {
-    #[allow(dead_code)]
-    sender: Sender<SubscribeToApprovalsResponse>,
-}
-
-impl ApproverActor {
-    async fn run(self) {
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
     }
 }
