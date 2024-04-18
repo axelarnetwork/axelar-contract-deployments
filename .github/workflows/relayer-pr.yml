@@ -2,7 +2,7 @@ name: Relayer PR development checks
 on:
   pull_request:
     branches:
-      - "poc"
+      - "main"
     paths:
       - "offchain/components/relayer/**"
 

@@ -10,6 +10,7 @@ mod amplifier_api;
 mod approver;
 mod config;
 mod healthcheck;
+mod includer;
 mod relayer;
 mod sentinel;
 mod state;

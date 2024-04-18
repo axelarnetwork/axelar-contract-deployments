@@ -34,12 +34,14 @@ impl State {
     // Axelar Block
     //
 
+    /// Updates the stored Axelar block height if the new value is greater.
     pub async fn update_axelar_block_height(&self, block_height: i64) -> Result<()> {
         sqlx::query(
             "INSERT INTO axelar_block (id, latest_block, updated_at) \
              VALUES ($1, $2, CURRENT_TIMESTAMP) \
              ON CONFLICT (id) DO UPDATE \
-             SET latest_block = EXCLUDED.latest_block, updated_at = EXCLUDED.updated_at;",
+             SET latest_block = EXCLUDED.latest_block, updated_at = EXCLUDED.updated_at \
+             WHERE EXCLUDED.latest_block > latest_block;",
         )
         .bind(SINGLETON_ID)
         .bind(block_height)

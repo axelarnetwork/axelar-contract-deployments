@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use anyhow::{bail, Ok};
 use clap::Parser;
@@ -30,9 +31,11 @@ pub struct ConfigEnv {
     pub axelar_approver_url: Url,
     pub solana_includer_rpc: Url,
     #[serde(deserialize_with = "deserialize_keypair")]
-    pub solana_includer_keypair: Keypair,
+    pub solana_includer_keypair: Arc<Keypair>,
     #[serde(deserialize_with = "deserialize_pubkey")]
     pub sentinel_gateway_address: Pubkey,
+    #[serde(deserialize_with = "deserialize_pubkey")]
+    pub sentinel_gateway_config_address: Pubkey,
     pub sentinel_rpc: Url,
     pub verifier_rpc: Url,
     #[serde(deserialize_with = "deserialize_socket_addr")]
@@ -79,6 +82,8 @@ impl Config {
                 includer: SolanaIncluder {
                     rpc: config.solana_includer_rpc,
                     keypair: config.solana_includer_keypair,
+                    gateway_address: config.sentinel_gateway_address,
+                    gateway_config_address: config.sentinel_gateway_config_address,
                 },
             }),
             solana_to_axelar: Some(SolanaToAxelar {
@@ -124,7 +129,9 @@ pub struct AxelarApprover {
 pub struct SolanaIncluder {
     pub rpc: Url,
     #[serde(deserialize_with = "deserialize_keypair")]
-    pub keypair: Keypair,
+    pub keypair: Arc<Keypair>,
+    pub gateway_address: Pubkey,
+    pub gateway_config_address: Pubkey,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
@@ -139,7 +146,7 @@ pub struct AxelarVerifier {
     pub rpc: Url,
 }
 
-fn deserialize_keypair<'de, D>(deserializer: D) -> Result<Keypair, D::Error>
+fn deserialize_keypair<'de, D>(deserializer: D) -> Result<Arc<Keypair>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -147,7 +154,9 @@ where
     let bytes = solana_sdk::bs58::decode(s)
         .into_vec()
         .map_err(serde::de::Error::custom)?;
-    Keypair::from_bytes(&bytes).map_err(serde::de::Error::custom)
+    Keypair::from_bytes(&bytes)
+        .map(Arc::new)
+        .map_err(serde::de::Error::custom)
 }
 
 fn deserialize_pubkey<'de, D>(deserializer: D) -> Result<Pubkey, D::Error>
@@ -178,9 +187,10 @@ mod tests {
         let approver_url = "http://0.0.0.1/";
         let includer_rpc = "http://0.0.0.2/";
         let gw_addr = "4hz16cS4d82cPKzvaQNzMCadyKSqzZR8bqzw8FfzYH8a";
+        let gw_config_addr = "11fDsmgXjuUtAVC6PXveUUrUgSVTNC4BMMmsD9AUdUB";
         let sentinel_rpc = "http://0.0.0.3/";
         let verifier_rpc = "http://0.0.0.4/";
-        let keypair = Keypair::new();
+        let keypair = Arc::new(Keypair::new());
         let healthcheck_bind_addr = "127.0.0.1:3000";
 
         env::set_var("RELAYER_DATABASE_URL", db_url);
@@ -191,6 +201,7 @@ mod tests {
             keypair.to_base58_string(),
         );
         env::set_var("RELAYER_SENTINEL_GATEWAY_ADDRESS", gw_addr);
+        env::set_var("RELAYER_SENTINEL_GATEWAY_CONFIG_ADDRESS", gw_config_addr);
         env::set_var("RELAYER_SENTINEL_RPC", sentinel_rpc);
         env::set_var("RELAYER_VERIFIER_RPC", verifier_rpc);
         env::set_var("RELAYER_HEALTHCHECK_BIND_ADDR", healthcheck_bind_addr);
@@ -205,6 +216,8 @@ mod tests {
                     includer: SolanaIncluder {
                         rpc: Url::from_str(includer_rpc).unwrap(),
                         keypair,
+                        gateway_address: Pubkey::from_str(gw_addr).unwrap(),
+                        gateway_config_address: Pubkey::from_str(gw_config_addr).unwrap(),
                     },
                 }),
                 solana_to_axelar: Some(SolanaToAxelar {

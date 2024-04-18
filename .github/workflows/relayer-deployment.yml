@@ -2,7 +2,7 @@ name: Relayer deployment
 on:
   push:
     branches:
-      - "poc"
+      - "main"
     paths:
       - "offchain/components/relayer/**"
 

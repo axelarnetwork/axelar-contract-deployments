@@ -2,13 +2,15 @@ use std::net::SocketAddr;
 
 use anyhow::{Context, Result};
 use futures_util::FutureExt;
-use tokio::sync::mpsc::{self, Receiver, Sender};
+use tokio::sync::mpsc::{self, Sender};
 use tokio::task::JoinSet;
 use tokio::time::{timeout, Duration};
 use tokio::{join, pin, select};
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
 
+use crate::amplifier_api::SubscribeToApprovalsResponse;
+use crate::includer::SolanaIncluder;
 use crate::sentinel::SolanaSentinel;
 use crate::state::State;
 use crate::transports::SolanaToAxelarMessage;
@@ -125,29 +127,76 @@ impl AxelarToSolanaHandler {
     async fn run(self) {
         loop {
             info!("Starting Axelar to Solana transport");
-            let (approver, includer) =
-                AxelarToSolanaHandler::setup_actors(&self.approver, &self.includer);
+            let (approver, includer, cancellation_token) = AxelarToSolanaHandler::setup_actors(
+                &self.approver,
+                &self.includer,
+                self.state.clone(),
+            );
 
-            let mut set = JoinSet::new();
-            set.spawn(approver.run());
-            set.spawn(includer.run());
-
-            while (set.join_next().await).is_some() {
-                error!("Axelar to Solana transport failed. Restarting.");
-                set.abort_all();
+            // Fuse the futures to allow polling of the other future when one is waiting for
+            // shutdown.
+            pin! {
+                let approver_future = approver.run().fuse();
+                let includer_future = includer.run().fuse();
             }
+
+            // Run the Approver and Includer concurrently, and wait for the first one to
+            // fail.
+            select! {
+                _ = &mut approver_future => error!("Axelar Approver has failed"),
+                _ = &mut includer_future => error!("Solana Includer has failed")
+            }
+
+            // Trigger cancellation and wait for both actors to gracefully shut down, up to
+            // `TIMEOUT`.
+            cancellation_token.cancel();
+            tracing::debug!(
+                timeout = TIMEOUT.as_secs(),
+                "Waiting for components to gracefully shutdown"
+            );
+            let _ = join!(
+                timeout(TIMEOUT, approver_future),
+                timeout(TIMEOUT, includer_future)
+            );
+            tracing::warn!("Restarting Axelar to Solana transport")
         }
     }
 
     fn setup_actors(
         _approver_config: &config::AxelarApprover,
-        _includer_config: &config::SolanaIncluder,
-    ) -> (ApproverActor, IncluderActor) {
+        includer_config: &config::SolanaIncluder,
+        state: State,
+    ) -> (ApproverActor, SolanaIncluder, CancellationToken) {
         // TODO: use config to properly initialize actors
-        let (sender, receiver) = mpsc::channel(500); // FIXME: magic number
+        let (sender, receiver) = mpsc::channel::<SubscribeToApprovalsResponse>(500); // FIXME: magic number
+
+        // This is the root cancellation token for this transport session.
+        // It is also used to derive child tokens for each subcomponent, so they can
+        // manage their own cancellation schedules. The root token will be
+        // cancelled if any subcomponent returns early.
+        let transport_cancelation_token = CancellationToken::new();
+        let _approver_cancelation_token = transport_cancelation_token.child_token();
+        let includer_cancelation_token = transport_cancelation_token.child_token();
+
         let approver = ApproverActor { sender };
-        let includer = IncluderActor { receiver };
-        (approver, includer)
+        let includer = {
+            let config::SolanaIncluder {
+                rpc,
+                keypair,
+                gateway_address,
+                gateway_config_address,
+            } = includer_config;
+            SolanaIncluder::new(
+                rpc.clone(),
+                keypair.clone(),
+                *gateway_address,
+                *gateway_config_address,
+                receiver,
+                state,
+                includer_cancelation_token,
+            )
+        };
+        (approver, includer, transport_cancelation_token)
     }
 }
 
@@ -262,24 +311,11 @@ impl SolanaToAxelarHandler {
 
 struct ApproverActor {
     #[allow(dead_code)]
-    sender: Sender<()>,
+    sender: Sender<SubscribeToApprovalsResponse>,
 }
 
 impl ApproverActor {
     async fn run(self) {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-    }
-}
-
-#[allow(dead_code)]
-struct IncluderActor {
-    receiver: Receiver<()>,
-}
-
-impl IncluderActor {
-    async fn run(self) {
-        loop {
-            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-        }
     }
 }

@@ -72,7 +72,6 @@ impl SolanaSentinel {
             error = self.work() => {
                 // Sentinel task should run forever, but it returned with some error.
                 match error {
-
                     Ok(()) => warn!("worker returned without errors"),
                     Err(sentinel_error) => error!(%sentinel_error),
                 }
