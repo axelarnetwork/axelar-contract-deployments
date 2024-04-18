@@ -22,7 +22,7 @@ const {
     mainProcessor,
     validateParameters,
     getContractJSON,
-    printWarn,
+    printWarn, timeout,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate } = require('./gas-service');
@@ -267,7 +267,12 @@ async function processCommand(config, chain, options) {
             const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
 
             try {
-                const tx = await operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions);
+
+                const tx = await timeout(
+                    operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions),
+                    chain.timeout || 60000,
+                    new Error(`Timeout updating gas info for ${chain.name}`),
+                );
                 printInfo('TX', tx.hash);
                 await tx.wait(chain.confirmations);
             } catch (error) {

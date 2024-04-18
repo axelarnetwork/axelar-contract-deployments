@@ -21,6 +21,7 @@ const {
     validateParameters,
     httpPost,
     toBigNumberString,
+    timeout,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -51,11 +52,20 @@ async function getFeeData(api, sourceChain, destinationChain) {
     const key = `${sourceChain}-${destinationChain}`;
 
     if (!feesCache[key]) {
-        feesCache[key] = httpPost(`${api}/gmp/getFees`, {
-            sourceChain,
-            destinationChain,
-            sourceTokenAddress: AddressZero,
-        }).then(({ result }) => (feesCache[key] = result));
+        feesCache[key] = timeout(
+            httpPost(`${api}/gmp/getFees`, {
+                sourceChain,
+                destinationChain,
+                sourceTokenAddress: AddressZero,
+            }),
+            10000,
+            new Error(`Timeout fetching fees for ${sourceChain} -> ${destinationChain}`),
+        )
+            .then(({ result }) => (feesCache[key] = result))
+            .catch((e) => {
+                delete feesCache[key];
+                throw e;
+            });
     }
 
     return feesCache[key];
@@ -304,7 +314,11 @@ async function processCommand(config, chain, options) {
             }
 
             try {
-                const tx = await gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions);
+                const tx = await timeout(
+                    gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions),
+                    chain.timeout || 60000,
+                    new Error(`Timeout updating gas info for ${chain.name}`),
+                );
 
                 printInfo('TX', tx.hash);
 
