@@ -100,7 +100,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 onchainGasEstimate: {
                     gasEstimationType = 0,
                     blobBaseFee = 0,
-                    multiplier: onchainGasVolatilityMultiplier = 1.1,
+                    multiplier: onchainGasVolatilityMultiplier = 2,
                     l1FeeScalar = 0,
                 } = {},
             } = destinationConfig;
