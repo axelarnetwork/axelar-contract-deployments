@@ -345,8 +345,8 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
 const prepareWallet = ({ mnemonic }) => DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
-const prepareClient = ({ axelar: { rpc } }, wallet) =>
-    SigningCosmWasmClient.connectWithSigner(rpc, wallet).then((client) => {
+const prepareClient = ({ axelar: { rpc, gasPrice } }, wallet) =>
+    SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice }).then((client) => {
         return { wallet, client };
     });
 
