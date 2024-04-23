@@ -157,7 +157,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
             const relativeGasPrice =
                 parseFloat(executeGasMultiplier) *
                 parseFloat(onchainGasVolatilityMultiplier) *
-                (parseFloat(gasPriceInDestToken) / Math.pow(10, destTokenDecimals) * gasPriceRatio * Math.pow(10, srcTokenDecimals));
+                ((parseFloat(gasPriceInDestToken) / Math.pow(10, destTokenDecimals)) * gasPriceRatio * Math.pow(10, srcTokenDecimals));
             const relativeBlobBaseFee = blobBaseFee * gasPriceRatio;
 
             const gasInfo = {
