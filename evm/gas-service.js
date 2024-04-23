@@ -138,6 +138,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                     symbol: destSymbol,
                     token_price: { usd: destTokenPrice },
                     gas_price_in_units: { value: gasPriceInDestToken },
+                    decimals: destTokenDecimals,
                 },
                 execute_gas_multiplier: executeGasMultiplier = 1.1,
             } = destinationFeeData;
@@ -156,7 +157,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
             const relativeGasPrice =
                 parseFloat(executeGasMultiplier) *
                 parseFloat(onchainGasVolatilityMultiplier) *
-                (parseFloat(gasPriceInDestToken) / gasPriceRatio);
+                (parseFloat(gasPriceInDestToken) / Math.pow(10, destTokenDecimals) * gasPriceRatio * Math.pow(10, srcTokenDecimals));
             const relativeBlobBaseFee = blobBaseFee * gasPriceRatio;
 
             const gasInfo = {
