@@ -31,7 +31,7 @@ const uploadContract = async (client, wallet, config, options) => {
             const {
                 axelar: { gasPrice, gasLimit },
             } = config;
-            const uploadFee = gasLimit ? calculateFee(gasLimit, GasPrice.fromString(gasPrice)) : 'auto';
+            const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
             return client.upload(account.address, wasm, uploadFee).then(({ checksum, codeId }) => ({ checksum, codeId, account }));
         })
         .then(({ account, checksum, codeId }) => {
@@ -57,7 +57,7 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
             const {
                 axelar: { gasPrice, gasLimit },
             } = config;
-            const initFee = gasLimit ? calculateFee(gasLimit, GasPrice.fromString(gasPrice)) : 'auto';
+            const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
             return instantiate2
                 ? client.instantiate2(
