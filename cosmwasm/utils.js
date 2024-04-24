@@ -35,16 +35,17 @@ const uploadContract = async (client, wallet, config, options) => {
             return client.upload(account.address, wasm, uploadFee).then(({ checksum, codeId }) => ({ checksum, codeId, account }));
         })
         .then(({ account, checksum, codeId }) => {
+            const usedSalt = salt || contractName.concat(chainNames);
             const address = instantiate2
                 ? instantiate2Address(
                       fromHex(checksum),
                       account.address,
-                      fromHex(getSaltFromKey(salt || contractName.concat(chainNames))),
+                      fromHex(getSaltFromKey(usedSalt)),
                       'axelar',
                   )
                 : null;
 
-            return { codeId, address };
+            return { codeId, address, usedSalt };
         });
 };
 

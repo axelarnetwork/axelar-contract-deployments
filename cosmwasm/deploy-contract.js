@@ -363,9 +363,10 @@ const upload = (client, wallet, chainName, config, options) => {
         printInfo('Uploading contract binary');
 
         return uploadContract(client, wallet, config, options)
-            .then(({ address, codeId }) => {
+            .then(({ address, codeId, usedSalt }) => {
                 printInfo('Uploaded contract binary');
                 contractConfig.codeId = codeId;
+                contractConfig.salt = usedSalt;
 
                 if (!address) {
                     return;
