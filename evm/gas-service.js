@@ -120,36 +120,23 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 return null;
             }
 
-            let {
+            const {
                 destination_native_token: {
-                    symbol: srcSymbol,
                     token_price: { usd: srcTokenPrice },
                     decimals: srcTokenDecimals,
                 },
-                ethereum_token: {
-                    token_price: { usd: ethPrice },
-                },
             } = sourceFeeData;
 
-            let {
+            const {
                 base_fee_usd: baseFeeUsd,
                 destination_express_fee: { total_usd: expressFeeUsd },
                 destination_native_token: {
-                    symbol: destSymbol,
                     token_price: { usd: destTokenPrice },
                     gas_price_in_units: { value: gasPriceInDestToken },
                     decimals: destTokenDecimals,
                 },
                 execute_gas_multiplier: executeGasMultiplier = 1.1,
             } = destinationFeeData;
-
-            if (srcSymbol === 'ETH' && srcTokenPrice === 100) {
-                srcTokenPrice = ethPrice;
-            }
-
-            if (destSymbol === 'ETH' && destTokenPrice === 100) {
-                destTokenPrice = ethPrice;
-            }
 
             const axelarBaseFee = (parseFloat(baseFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
             const expressFee = (parseFloat(expressFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
