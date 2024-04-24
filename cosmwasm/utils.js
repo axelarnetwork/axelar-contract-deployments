@@ -49,7 +49,7 @@ const uploadContract = async (client, wallet, config, options) => {
         });
 };
 
-const instantiateContract = (client, wallet, initMsg, config, { contractName, salt, instantiate2, chainNames, admin }) => {
+const instantiateContract = (client, wallet, initMsg, config, { contractName, instantiate2, admin }) => {
     return wallet
         .getAccounts()
         .then(([account]) => {
@@ -64,7 +64,7 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
                 ? client.instantiate2(
                       account.address,
                       contractConfig.codeId,
-                      fromHex(getSaltFromKey(salt || contractName.concat(chainNames))),
+                      contractConfig.salt,
                       initMsg,
                       contractName,
                       initFee,
