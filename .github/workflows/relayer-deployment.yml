@@ -22,6 +22,10 @@ jobs:
   code-checks:
     name: "Code checks and tests"
     uses: ./.github/workflows/code-qa.yml
+    with:
+      working-directory: "offchain/components/relayer"
+      rust-cache-workspace: "offchain -> target"
+      rust-cache-key: "offchain"
 
   docker-image:
     needs: code-checks
