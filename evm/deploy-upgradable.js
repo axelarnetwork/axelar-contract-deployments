@@ -20,15 +20,12 @@ function getProxy(wallet, proxyAddress) {
 }
 
 async function getImplementationArgs(contractName, config, options) {
+    const args = options.args ? JSON.parse(options.args) : undefined;
     const contractConfig = config[contractName];
 
     switch (contractName) {
         case 'AxelarGasService': {
-            if (options.args) {
-                contractConfig.collector = options.args;
-            }
-
-            const collector = contractConfig.collector;
+            const collector = args.collector ? (contractConfig.collector = args.collector) : contractConfig.collector;
 
             if (!isAddress(collector)) {
                 throw new Error(`Missing AxelarGasService.collector ${collector}.`);
@@ -38,8 +35,7 @@ async function getImplementationArgs(contractName, config, options) {
         }
 
         case 'AxelarDepositService': {
-            const args = options.args;
-            const symbol = args && Array.isArray(args) && args[0] ? args[0] : contractConfig.wrappedSymbol;
+            const symbol = args.symbol ? (contractConfig.wrappedSymbol = args.symbol) : contractConfig.wrappedSymbol;
 
             if (symbol === undefined) {
                 throw new Error(`Missing AxelarDepositService.wrappedSymbol in the chain info.`);
@@ -47,13 +43,13 @@ async function getImplementationArgs(contractName, config, options) {
                 console.log(`${config.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
             }
 
-            const refundIssuer = args && Array.isArray(args) && args[1] ? args[1] : contractConfig.refundIssuer;
+            const refundIssuer = args.refundIssuer ? (contractConfig.refundIssuer = args.refundIssuer) : contractConfig.refundIssuer;
 
             if (!isAddress(refundIssuer)) {
                 throw new Error(`${config.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
             }
 
-            const gateway = args && Array.isArray(args) && args[2] ? args[2] : config.AxelarGateway?.address;
+            const gateway = args.gatewayAddress ? (config.AxelarGateway.address = args.gatewayAddress) : config.AxelarGateway?.address;
 
             if (!isAddress(gateway)) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);

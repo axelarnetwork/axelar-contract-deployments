@@ -14,10 +14,16 @@ const { addBaseOptions } = require('./cli-utils');
 async function processCommand(config, chain, options) {
     const wallet = new Wallet(options.privateKey, new JsonRpcProvider(chain.rpc));
     const deploymentMethod = options.env === 'testnet' ? 'create' : 'create2';
+    const collector = wallet.address;
     const signers = [wallet.address];
     const threshold = 1;
     const minimumTimeDelay = 300;
-    const args = [`W${chain.tokenSymbol}`, wallet.address];
+    const symbol = `W${chain.tokenSymbol}`;
+    const refundIssuer = wallet.address;
+    const argsAxelarGasService = JSON.stringify({ collector });
+    const argsMultisig = JSON.stringify({ signers, threshold });
+    const argsInterchainGovernance = JSON.stringify({ minTimeDelay: minimumTimeDelay });
+    const argsAxelarDepositService = JSON.stringify({ symbol, refundIssuer });
 
     const cmds = [
         `node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json`,
@@ -25,9 +31,9 @@ async function processCommand(config, chain, options) {
         `node evm/deploy-gateway-v6.2.x.js -m create3 --keyID ${wallet.address} --mintLimiter ${wallet.address} --governance ${wallet.address}`,
         `node evm/gateway.js --action params`,
         `node evm/deploy-contract.js -c Operators -m create2`,
-        `node evm/deploy-upgradable.js -c AxelarGasService -m ${deploymentMethod} --args ${wallet.address}`,
-        `node evm/deploy-contract.js -c Multisig -m create3 -s 'testSalt' --signers ${signers} --threshold ${threshold}`,
-        `node evm/deploy-contract.js -c InterchainGovernance -m create3 --minTimeDelay ${minimumTimeDelay}`,
+        `node evm/deploy-upgradable.js -c AxelarGasService -m ${deploymentMethod} --args '${argsAxelarGasService}'`,
+        `node evm/deploy-contract.js -c Multisig -m create3 -s 'testSalt' --args '${argsMultisig}'`,
+        `node evm/deploy-contract.js -c InterchainGovernance -m create3 --args '${argsInterchainGovernance}'`,
         `node evm/deploy-its.js -s "testSalt" --proxySalt 'testSalt'`,
         `node evm/gateway.js --action transferMintLimiter`,
         `node evm/gateway.js --action transferGovernance`,
@@ -36,7 +42,7 @@ async function processCommand(config, chain, options) {
     if (options.deployDepositService) {
         cmds.push(
             `node evm/deploy-test-gateway-token.js`,
-            `node evm/deploy-upgradable.js -c AxelarDepositService -m create --salt "testSalt --args ${args}"`,
+            `node evm/deploy-upgradable.js -c AxelarDepositService -m create --salt 'testSalt' --args '${argsAxelarDepositService}'`,
         );
     }
 

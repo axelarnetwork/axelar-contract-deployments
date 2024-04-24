@@ -28,9 +28,8 @@ const {
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
-async function getConstructorArgs(contractName, chain, wallet, options) {
-    console.log('options', options);
-    const config = chain.contracts;
+async function getConstructorArgs(contractName, config, wallet, options) {
+    const args = options.args ? JSON.parse(options.args) : undefined;
     const contractConfig = config[contractName];
 
     switch (contractName) {
@@ -106,8 +105,9 @@ async function getConstructorArgs(contractName, chain, wallet, options) {
                 throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
             }
 
-            const minimumTimeDelay = options.minTimeDelay ? parseInt(options.minTimeDelay) : contractConfig.minimumTimeDelay;
-            contractConfig.minimumTimeDelay = minimumTimeDelay;
+            const minimumTimeDelay = args.minTimeDelay
+                ? (contractConfig.minimumTimeDelay = parseInt(args.minTimeDelay))
+                : contractConfig.minimumTimeDelay;
 
             if (!isNumber(minimumTimeDelay)) {
                 throw new Error(`Missing InterchainGovernance.minimumTimeDelay in the chain info.`);
@@ -117,13 +117,13 @@ async function getConstructorArgs(contractName, chain, wallet, options) {
         }
 
         case 'Multisig': {
-            const signers = options.signers?.split(',').map((str) => str.trim()) || contractConfig.signers;
+            const signers = args.signers ? (contractConfig.signers = args.signers) : contractConfig.signers;
 
             if (!isAddressArray(signers)) {
                 throw new Error(`Missing Multisig.signers in the chain info.`);
             }
 
-            const threshold = options.threshold ? parseInt(options.threshold) : contractConfig.threshold;
+            const threshold = args.threshold ? (contractConfig.threshold = parseInt(args.threshold)) : contractConfig.threshold;
 
             if (!isNumber(threshold)) {
                 throw new Error(`Missing Multisig.threshold in the chain info.`);
@@ -245,7 +245,7 @@ async function processCommand(config, chain, options) {
     const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
 
-    const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
+    const constructorArgs = await getConstructorArgs(contractName, contracts, wallet, options);
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
@@ -353,9 +353,7 @@ if (require.main === module) {
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
     );
     program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
-    program.addOption(new Option('--signers <signers>', 'signer addresses for multisig').env('SIGNERS'));
-    program.addOption(new Option('--threshold <threshold>', 'multisig threshold').env('THRESHOLD'));
-    program.addOption(new Option('--minTimeDelay <minTimeDelay>', 'minimum time delay').env('MIN_DELAY'));
+    program.addOption(new Option('--args <args>', 'custom deployment args'));
 
     program.action((options) => {
         main(options);
