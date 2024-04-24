@@ -1177,6 +1177,13 @@ function toBigNumberString(number) {
     return Math.ceil(number).toLocaleString('en', { useGrouping: false });
 }
 
+function timeout(prom, time, exception) {
+    let timer;
+    return Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]).finally(() =>
+        clearTimeout(timer),
+    );
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -1236,4 +1243,5 @@ module.exports = {
     getDeployOptions,
     isValidChain,
     toBigNumberString,
+    timeout,
 };

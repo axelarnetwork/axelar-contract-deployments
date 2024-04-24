@@ -28,11 +28,10 @@ const uploadContract = async (client, wallet, config, options) => {
         .getAccounts()
         .then(([account]) => {
             const wasm = readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
-
             const {
                 axelar: { gasPrice, gasLimit },
             } = config;
-            const uploadFee = calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+            const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
             return client.upload(account.address, wasm, uploadFee).then(({ checksum, codeId }) => ({ checksum, codeId, account }));
         })
         .then(({ account, checksum, codeId }) => {
@@ -58,7 +57,7 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
             const {
                 axelar: { gasPrice, gasLimit },
             } = config;
-            const initFee = calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+            const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
             return instantiate2
                 ? client.instantiate2(
