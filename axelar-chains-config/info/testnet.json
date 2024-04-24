@@ -2114,7 +2114,15 @@
       "rpc": "https://rpc.sepolia.linea.build",
       "tokenSymbol": "ETH",
       "contracts": {
-        "AxelarGateway": {}
+        "AxelarGateway": {},
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {}
       },
       "explorer": {
         "name": "Lineascan",
