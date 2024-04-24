@@ -29,7 +29,7 @@ const {
 const { addExtendedOptions } = require('./cli-utils');
 
 async function getConstructorArgs(contractName, config, wallet, options) {
-    const args = options.args ? JSON.parse(options.args) : undefined;
+    const args = options.args ? JSON.parse(options.args) : {};
     const contractConfig = config[contractName];
 
     switch (contractName) {

@@ -20,7 +20,7 @@ function getProxy(wallet, proxyAddress) {
 }
 
 async function getImplementationArgs(contractName, config, options) {
-    const args = options.args ? JSON.parse(options.args) : undefined;
+    const args = options.args ? JSON.parse(options.args) : {};
     const contractConfig = config[contractName];
 
     switch (contractName) {
