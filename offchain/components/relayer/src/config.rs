@@ -25,7 +25,8 @@ pub struct Args {
     pub config: PathBuf,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
+#[cfg_attr(test, derive(Debug))]
 pub struct ConfigEnv {
     pub database_url: Url,
     pub axelar_approver_url: Url,
@@ -48,7 +49,8 @@ impl ConfigEnv {
     }
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, PartialEq)]
+#[cfg_attr(test, derive(Debug))]
 pub struct Config {
     pub axelar_to_solana: Option<AxelarToSolana>,
     pub solana_to_axelar: Option<SolanaToAxelar>,
@@ -103,29 +105,34 @@ impl Config {
     }
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, PartialEq)]
+#[cfg_attr(test, derive(Debug))]
 pub struct AxelarToSolana {
     pub approver: AxelarApprover,
     pub includer: SolanaIncluder,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, PartialEq)]
+#[cfg_attr(test, derive(Debug))]
 pub struct SolanaToAxelar {
     pub sentinel: SolanaSentinel,
     pub verifier: AxelarVerifier,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, PartialEq)]
+#[cfg_attr(test, derive(Debug))]
 pub struct Database {
     pub url: Url,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, PartialEq)]
+#[cfg_attr(test, derive(Debug))]
 pub struct AxelarApprover {
     pub rpc: Url,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, PartialEq)]
+#[cfg_attr(test, derive(Debug))]
 pub struct SolanaIncluder {
     pub rpc: Url,
     #[serde(deserialize_with = "deserialize_keypair")]
@@ -134,14 +141,16 @@ pub struct SolanaIncluder {
     pub gateway_config_address: Pubkey,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, PartialEq)]
+#[cfg_attr(test, derive(Debug))]
 pub struct SolanaSentinel {
     #[serde(deserialize_with = "deserialize_pubkey")]
     pub gateway_address: Pubkey,
     pub rpc: Url,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, PartialEq)]
+#[cfg_attr(test, derive(Debug))]
 pub struct AxelarVerifier {
     pub rpc: Url,
 }
