@@ -17,7 +17,7 @@ use crate::sentinel::error::SentinelError;
 use crate::sentinel::transaction_scanner::TransactionScanner;
 use crate::sentinel::types::SolanaTransaction;
 use crate::sentinel::types::TransactionScannerMessage::{Message, Terminated};
-use crate::state::State;
+use crate::state::interface::State;
 use crate::transports::SolanaToAxelarMessage;
 
 mod error;
@@ -30,20 +30,26 @@ const FETCH_SIGNATURES_INTERVAL: Duration = Duration::from_secs(5);
 /// Solana Sentinel
 ///
 /// Monitors the Solana Gateway program for relevant events.
-pub struct SolanaSentinel {
+pub struct SolanaSentinel<S>
+where
+    S: State<Signature>,
+{
     gateway_address: Pubkey,
     rpc: Url,
     verifier_channel: Sender<SolanaToAxelarMessage>,
-    state: State,
+    state: S,
     cancellation_token: CancellationToken,
 }
 
-impl SolanaSentinel {
+impl<S> SolanaSentinel<S>
+where
+    S: State<Signature> + Clone,
+{
     pub fn new(
         gateway_address: Pubkey,
         rpc: Url,
         verifier_channel: Sender<SolanaToAxelarMessage>,
-        state: State,
+        state: S,
         cancellation_token: CancellationToken,
     ) -> Self {
         Self {

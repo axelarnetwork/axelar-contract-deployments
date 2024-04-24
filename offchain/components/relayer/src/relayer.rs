@@ -1,7 +1,9 @@
+use std::convert::Infallible as Never;
 use std::net::SocketAddr;
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use futures_util::FutureExt;
+use solana_sdk::signature::Signature;
 use tokio::sync::mpsc;
 use tokio::task::JoinSet;
 use tokio::time::{timeout, Duration};
@@ -13,6 +15,7 @@ use crate::amplifier_api::SubscribeToApprovalsResponse;
 use crate::approver::AxelarApprover;
 use crate::includer::SolanaIncluder;
 use crate::sentinel::SolanaSentinel;
+use crate::state::interface::State as StateInterface;
 use crate::state::State;
 use crate::transports::SolanaToAxelarMessage;
 use crate::verifier::AxelarVerifier;
@@ -53,7 +56,7 @@ impl Relayer {
         })
     }
 
-    pub async fn run(self) {
+    pub async fn run(self) -> Result<Never> {
         // Start the health check server.
         let _health_check_server = match healthcheck::start(self.health_check_server_addr).await {
             Ok(guard) => {
@@ -61,8 +64,7 @@ impl Relayer {
                 guard
             }
             Err(error) => {
-                error!(%error, "Failed to start the health check server.");
-                return;
+                return Err(error).context("Failed to start the health check server")?;
             }
         };
 
@@ -77,7 +79,7 @@ impl Relayer {
                 // requiring the Relayer to shut down.
                 set.join_next().await;
                 error!("One of the transports has terminated unexpectedly");
-                return;
+                return Err(anyhow!("Terminating"));
             }
 
             (Some(axelar_to_solana), None) => {
@@ -95,6 +97,7 @@ impl Relayer {
             }
         };
         info!("Relayer is shutting down");
+        Err(anyhow!("Terminating"))
     }
 }
 
@@ -125,7 +128,7 @@ impl AxelarToSolanaHandler {
         }
     }
 
-    async fn run(self) {
+    async fn run(self) -> Result<Never> {
         loop {
             info!("Starting Axelar to Solana transport");
             let (approver, includer, cancellation_token) = AxelarToSolanaHandler::setup_actors(
@@ -235,14 +238,15 @@ impl SolanaToAxelarHandler {
     /// runs them concurrently. If either fails for any reason, the entire
     /// transport will be restarted.
     #[tracing::instrument(skip(self), name = "solana-to-axelar-transport")]
-    async fn run(self) {
+    async fn run(self) -> Result<Never> {
         loop {
             info!("Starting Solana to Axelar transport");
             let (sentinel, verifier, cancellation_token) = SolanaToAxelarHandler::setup_actors(
                 &self.sentinel,
                 &self.verifier,
                 self.state.clone(),
-            );
+            )
+            .await?;
 
             // Fuse the futures to allow polling of the other future when one is waiting for
             // shutdown.
@@ -273,11 +277,14 @@ impl SolanaToAxelarHandler {
         }
     }
 
-    fn setup_actors(
+    async fn setup_actors<S>(
         sentinel_config: &config::SolanaSentinel,
         verifier_config: &config::AxelarVerifier,
-        state: State,
-    ) -> (SolanaSentinel, AxelarVerifier, CancellationToken) {
+        state: S,
+    ) -> Result<(SolanaSentinel<S>, AxelarVerifier<S>, CancellationToken)>
+    where
+        S: StateInterface<Signature> + Clone,
+    {
         let (sender, receiver) = mpsc::channel::<SolanaToAxelarMessage>(500); // FIXME: magic number
 
         // This is the root cancelation token for this transport session.
@@ -302,13 +309,15 @@ impl SolanaToAxelarHandler {
         );
 
         // Axelar Verifier
-        let verifier = AxelarVerifier::new(
+        let verifier = AxelarVerifier::new_from_uri(
             verifier_config.rpc.clone(),
             receiver,
             state,
             verifier_cancelation_token,
-        );
+        )
+        .await
+        .context("Axelar Verifier failed to connect")?;
 
-        (sentinel, verifier, transport_cancelation_token)
+        Ok((sentinel, verifier, transport_cancelation_token))
     }
 }

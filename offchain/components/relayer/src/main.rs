@@ -43,6 +43,6 @@ async fn main() -> anyhow::Result<()> {
     init_logging();
     let config = Config::from_env()?;
     let relayer = crate::relayer::Relayer::from_config(config).await?;
-    relayer.run().await;
-    Err(anyhow!("Terminating"))
+    relayer.run().await?;
+    Err(anyhow!("Terminated"))
 }

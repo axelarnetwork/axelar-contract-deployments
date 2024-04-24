@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use std::convert::Infallible as Never;
 use std::sync::Arc;
 
@@ -10,12 +13,12 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
+use tonic::transport::{Channel, Endpoint, Uri};
 use tracing::{error, info, warn};
-use url::Url;
 
 use crate::amplifier_api::amplifier_client::AmplifierClient;
 use crate::amplifier_api::{self, VerifyRequest, VerifyResponse};
-use crate::state::State;
+use crate::state::interface::State;
 use crate::transports::SolanaToAxelarMessage;
 
 #[derive(Debug, Error)]
@@ -31,7 +34,7 @@ pub enum VerifierError {
     #[error("The Amplifier API verification stream validated and returned an unknown message ID")]
     UnknownMessageId(String),
     #[error("Database error: {0}")]
-    Database(#[from] sqlx::Error),
+    Database(Box<dyn std::error::Error>),
     #[error("Cancellation signal received")]
     Cancelled,
 }
@@ -39,26 +42,48 @@ pub enum VerifierError {
 /// Axelar Verifier
 ///
 /// Listens for Solana Gateway events and registers them in the Amplifier API.
-pub struct AxelarVerifier {
-    endpoint: Url,
+pub struct AxelarVerifier<S>
+where
+    S: State<Signature>,
+{
+    client: AmplifierClient<Channel>,
     receiver: mpsc::Receiver<SolanaToAxelarMessage>,
-    state: State,
+    state: S,
     cancellation_token: CancellationToken,
 }
 
-impl AxelarVerifier {
+impl<S> AxelarVerifier<S>
+where
+    S: State<Signature>,
+{
     pub fn new(
-        endpoint: Url,
+        client: AmplifierClient<Channel>,
         receiver: mpsc::Receiver<SolanaToAxelarMessage>,
-        state: State,
+        state: S,
         cancellation_token: CancellationToken,
     ) -> Self {
         Self {
-            endpoint,
+            client,
             receiver,
             state,
             cancellation_token,
         }
+    }
+
+    pub async fn new_from_uri(
+        uri: Uri,
+        receiver: mpsc::Receiver<SolanaToAxelarMessage>,
+        state: S,
+        cancellation_token: CancellationToken,
+    ) -> Result<Self, tonic::transport::Error> {
+        let channel = Into::<Endpoint>::into(uri).connect().await?;
+        let client = AmplifierClient::new(channel);
+        Ok(AxelarVerifier::new(
+            client,
+            receiver,
+            state,
+            cancellation_token,
+        ))
     }
 
     /// Runs the Axelar Verifier until an error or cancellation occurs.
@@ -73,9 +98,7 @@ impl AxelarVerifier {
 
     /// Sends incoming [`axl_rpc::Message`] values to the Amplifier API for
     /// verification.
-    async fn work(self) -> Result<Never, VerifierError> {
-        let mut client = AmplifierClient::connect(self.endpoint.to_string()).await?;
-
+    async fn work(mut self) -> Result<Never, VerifierError> {
         // Track pending messages and their signatures.
         // Signatures are registered by their Message ID, to be later retrieved (and
         // removed) to update the Relayer state.
@@ -111,16 +134,18 @@ impl AxelarVerifier {
         });
 
         // Connect the Message stream to the verification stream
-        let mut verification_stream = client
+        let mut verification_stream = self
+            .client
             .verify(message_stream)
             .await
             .map_err(VerifierError::Subscription)?
             .into_inner();
 
+        let state = Arc::new(self.state);
         // Listen for new verification responses until an error occurs or a shutdown
         // signal is received.
         loop {
-            let state = self.state.clone();
+            let state = state.clone();
             let pending = pending.clone();
 
             let cancellation = self
@@ -142,10 +167,10 @@ impl AxelarVerifier {
 }
 
 #[tracing::instrument(skip_all)]
-async fn process_response(
+async fn process_response<S: State<Signature>>(
     response: VerifyResponse,
     pending: Arc<DashMap<String, Signature>>,
-    state: State,
+    state: Arc<S>,
 ) -> Result<(), VerifierError> {
     let VerifyResponse { message, error } = response;
 
@@ -158,7 +183,9 @@ async fn process_response(
                 return Err(VerifierError::UnknownMessageId(message.id));
             };
             info!(msg_id = message.id, %signature, "message verified");
-            state.update_solana_transaction(signature).await?;
+            if let Err(state_error) = state.set(signature).await {
+                return Err(VerifierError::Database(Box::new(state_error)));
+            };
         }
         // Error cases
         (Some(message), Some(error)) => {

@@ -19,7 +19,7 @@ use url::Url;
 
 use crate::sentinel::error::TransactionScannerError;
 use crate::sentinel::types::{SolanaTransaction, TransactionScannerMessage};
-use crate::state::State;
+use crate::state::interface::State;
 
 // TODO: All those contants should be configurable
 const SIGNATURE_CHANNEL_CAPACITY: usize = 1_000;
@@ -51,13 +51,16 @@ pub enum InternalError {
 /// transmitted back to the caller wrapped in the [`TransactionScannerMessage`]
 /// type, which holds a [`tokio::spawn::JoinHandle`] with the results of the
 /// async call to `getTransaction`.
-pub struct TransactionScanner {
+pub struct TransactionScanner<S>
+where
+    S: State<Signature>,
+{
     /// Solana program address to monitor relevant transactions.
     address: Pubkey,
     //// Solana RPC endpoint.
     rpc: Url,
     /// Database handle.
-    state: State,
+    state: S,
     /// Results channel used by the Solana Sentinel.
     sender: Sender<TransactionScannerMessage>,
     /// Wait time before scanning Solana RPC signature ranges in loop
@@ -66,7 +69,10 @@ pub struct TransactionScanner {
     cancellation_token: CancellationToken,
 }
 
-impl TransactionScanner {
+impl<S> TransactionScanner<S>
+where
+    S: State<Signature> + Clone,
+{
     /// Returns a worker future and a receiver channel for polling transactions
     /// from a given Solana address.
     ///
@@ -78,7 +84,7 @@ impl TransactionScanner {
     /// channel won't receive any messages.
     pub fn setup(
         address: Pubkey,
-        state: State,
+        state: S,
         rpc: Url,
         fetch_signatures_interval: Duration,
         cancellation_token: CancellationToken,
@@ -173,8 +179,8 @@ pub mod signature_scanner {
         SolanaClient(#[from] ClientError),
         #[error("Failed to send transaction signature for fetching its details: {0}")]
         SendSignatureError(#[from] SendError<Signature>),
-        #[error("Database error - {0}")]
-        Database(#[from] sqlx::Error),
+        #[error("State Error - {0}")]
+        State(Box<dyn std::error::Error + Send>),
     }
 
     /// Continously fetches signatures from RPC and pipe them over a channel to
@@ -186,14 +192,17 @@ pub mod signature_scanner {
     /// task's savepoint is sourced from the persistence layer, which
     /// remains unchanged in this context.
     #[tracing::instrument(name = "signature scanner", skip_all)]
-    pub async fn run(
+    pub async fn run<S>(
         address: Pubkey,
         url: Url,
-        state: State,
+        state: S,
         signature_sender: Sender<Signature>,
         period: Duration,
         cancellation_token: CancellationToken,
-    ) -> SignatureScannerError {
+    ) -> SignatureScannerError
+    where
+        S: State<Signature> + Clone,
+    {
         let mut interval = tokio::time::interval(period);
         interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
         let rpc_client = Arc::new(RpcClient::new(url.to_string()));
@@ -230,14 +239,21 @@ pub mod signature_scanner {
     /// Calls Solana RPC after relevant transaction signatures and send results
     /// over a channel.
     #[tracing::instrument(skip_all)]
-    async fn collect_and_process_signatures(
+    async fn collect_and_process_signatures<S>(
         address: Pubkey,
         rpc_client: Arc<RpcClient>,
-        state: State,
+        state: S,
         signature_sender: Sender<Signature>,
-    ) -> Result<(), SignatureScannerError> {
+    ) -> Result<(), SignatureScannerError>
+    where
+        S: State<Signature>,
+    {
         // Collect Signatures until exhaustion
-        let last_known_signature: Option<Signature> = state.get_solana_transaction().await?;
+        let last_known_signature: Option<Signature> = state
+            .get()
+            .await
+            .map_err(|state_error| SignatureScannerError::State(Box::new(state_error)))?;
+
         let collected_signatures =
             fetch_signatures_until_exhaustion(rpc_client.clone(), address, last_known_signature)
                 .await?;

@@ -25,14 +25,15 @@ solana-sdk.workspace = true
 solana-transaction-status.workspace = true
 sqlx.workspace = true
 thiserror.workspace = true
-tiny-keccak.workspace = true
 tokio-stream.workspace = true
 tokio-util.workspace = true
 tokio.workspace = true
 tonic.workspace = true
 tracing-subscriber.workspace = true
 tracing.workspace = true
+trait-variant.workspace = true
 url.workspace = true
+tower = "0.4.13"
 
 [dependencies.gmp-gateway]
 path = "../../../solana/programs/gateway"

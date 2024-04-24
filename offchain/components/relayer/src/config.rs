@@ -10,6 +10,7 @@ use figment::Figment;
 use serde::{Deserialize, Deserializer};
 use solana_program::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
+use tonic::transport::Uri;
 use url::Url;
 
 /// Solana network name used to identify it on Axelar.
@@ -38,7 +39,8 @@ pub struct ConfigEnv {
     #[serde(deserialize_with = "deserialize_pubkey")]
     pub sentinel_gateway_config_address: Pubkey,
     pub sentinel_rpc: Url,
-    pub verifier_rpc: Url,
+    #[serde(deserialize_with = "deserialize_uri")]
+    pub verifier_rpc: Uri,
     #[serde(deserialize_with = "deserialize_socket_addr")]
     pub healthcheck_bind_addr: SocketAddr,
 }
@@ -152,7 +154,8 @@ pub struct SolanaSentinel {
 #[derive(Deserialize, PartialEq)]
 #[cfg_attr(test, derive(Debug))]
 pub struct AxelarVerifier {
-    pub rpc: Url,
+    #[serde(deserialize_with = "deserialize_uri")]
+    pub rpc: Uri,
 }
 
 fn deserialize_keypair<'de, D>(deserializer: D) -> Result<Arc<Keypair>, D::Error>
@@ -182,6 +185,14 @@ where
 {
     let s = String::deserialize(deserializer)?;
     SocketAddr::from_str(&s).map_err(serde::de::Error::custom)
+}
+
+fn deserialize_uri<'de, D>(deserializer: D) -> Result<Uri, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    Uri::from_str(&s).map_err(serde::de::Error::custom)
 }
 
 #[cfg(test)]
@@ -235,7 +246,7 @@ mod tests {
                         rpc: Url::from_str(sentinel_rpc).unwrap(),
                     },
                     verifier: AxelarVerifier {
-                        rpc: Url::from_str(verifier_rpc).unwrap()
+                        rpc: Uri::from_str(verifier_rpc).unwrap()
                     },
                 }),
                 database: Database {
