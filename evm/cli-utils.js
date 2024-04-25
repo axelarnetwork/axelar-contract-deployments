@@ -56,7 +56,7 @@ const addExtendedOptions = (program, options = {}) => {
 
     if (options.deployMethod) {
         program.addOption(
-            new Option('--deployMethod <deployMethod>', 'deployment method')
+            new Option('-m, --deployMethod <deployMethod>', 'deployment method')
                 .choices(['create', 'create2', 'create3'])
                 .default(options.deployMethod),
         );
