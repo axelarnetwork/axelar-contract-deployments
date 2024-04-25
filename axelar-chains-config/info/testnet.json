@@ -2166,8 +2166,9 @@
         }
       },
       "explorer": {
-        "name": "OkLink",
-        "url": "https://www.oklink.com/amoy"
+        "name": "Polygonscan",
+        "url": "https://amoy.polygonscan.com",
+        "api": "https://api-amoy.polygonscan.com/api"
       },
       "gasOptions": {
         "gasLimit": 6000000
