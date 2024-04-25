@@ -7,7 +7,7 @@ const {
     ContractFactory,
     Contract,
     Wallet,
-    utils: { defaultAbiCoder, getContractAddress },
+    utils: { defaultAbiCoder, getContractAddress, keccak256 },
     constants: { HashZero },
     getDefaultProvider,
 } = ethers;
@@ -29,7 +29,7 @@ const {
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
-const { WEIGHTED_SIGNERS_TYPE } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
+const { WEIGHTED_SIGNERS_TYPE, encodeWeightedSigners } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const AxelarAmplifierGatewayProxy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGatewayProxy.sol/AxelarAmplifierGatewayProxy.json');
 const AxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json');
 
@@ -59,7 +59,12 @@ async function getWeightedSigners(config, chain, options) {
         };
     }
 
-    return defaultAbiCoder.encode([`${WEIGHTED_SIGNERS_TYPE}[]`], [[signers]]);
+    return [signers];
+}
+
+async function getSetupParams(config, chain, options) {
+    const signerSets = await getWeightedSigners(config, chain, options);
+    return defaultAbiCoder.encode([`${WEIGHTED_SIGNERS_TYPE}[]`], [signerSets]);
 }
 
 async function deploy(config, chain, options) {
@@ -150,7 +155,7 @@ async function deploy(config, chain, options) {
     const salt = options.salt || '';
 
     printInfo(`Deploying gateway implementation contract`);
-    printInfo('Gateway Implementation args', `${options.previousSignerRetention}, ${domainSeparator}`);
+    printInfo('Gateway Implementation args', `${options.previousSignersRetention}, ${domainSeparator}`);
     printInfo('Deploy method', options.deployMethod);
     printInfo('Deploy salt (if not create based deployment)', salt);
 
@@ -165,7 +170,7 @@ async function deploy(config, chain, options) {
             options.deployMethod,
             wallet,
             AxelarAmplifierGateway,
-            [options.previousSignerRetention, domainSeparator],
+            [options.previousSignersRetention, domainSeparator],
             { salt: implementationSalt, deployerContract },
             gasOptions,
             {},
@@ -182,7 +187,7 @@ async function deploy(config, chain, options) {
         proxyAddress = chain.contracts.AxelarGateway?.address;
         gateway = gatewayFactory.attach(proxyAddress);
     } else if (!reuseProxy) {
-        const params = await getWeightedSigners(config, chain, options);
+        const params = await getSetupParams(config, chain, options);
 
         printInfo('Deploying gateway proxy contract');
         printInfo('Proxy deployment args', `${implementation.address}, ${params}`);
@@ -226,6 +231,40 @@ async function deploy(config, chain, options) {
         error = true;
     }
 
+    if (options.previousSignersRetention !== (await gateway.previousSignersRetention()).toNumber()) {
+        printError('ERROR: Previous signer retention mismatch');
+        error = true;
+    }
+
+    if (domainSeparator !== (await gateway.domainSeparator())) {
+        printError('ERROR: Domain separator mismatch');
+        error = true;
+    }
+
+    if (!reuseProxy) {
+        const signerSets = await getWeightedSigners(config, chain, options);
+
+        for (let i = 0; i < signerSets.length; i++) {
+            const signerHash = keccak256(encodeWeightedSigners(signerSets[i]));
+            const epoch = (await gateway.epochBySignerHash(signerHash)).toNumber();
+            const signerHashByEpoch = await gateway.signerHashByEpoch(i + 1);
+
+            if (epoch !== i + 1) {
+                printError(`ERROR: Epoch mismatch for signer set ${i + 1}`);
+                printError(`   Actual:   ${epoch}`);
+                printError(`   Expected: ${i + 1}`);
+                error = true;
+            }
+
+            if (signerHashByEpoch !== signerHash) {
+                printError(`ERROR: Signer hash mismatch for signer set ${i + 1}`);
+                printError(`   Actual:   ${signerHashByEpoch}`);
+                printError(`   Expected: ${signerHash}`);
+                error = true;
+            }
+        }
+    }
+
     if (error) {
         printError('Deployment status', 'FAILED');
         return;
@@ -235,7 +274,7 @@ async function deploy(config, chain, options) {
     contractConfig.implementation = implementation.address;
     contractConfig.implementationCodehash = implementationCodehash;
     contractConfig.deploymentMethod = options.deployMethod;
-    contractConfig.previousSignerRetention = options.previousSignerRetention;
+    contractConfig.previousSignersRetention = options.previousSignersRetention;
     contractConfig.domainSeparator = domainSeparator;
 
     if (options.deployMethod !== 'create') {
@@ -363,7 +402,7 @@ async function programHandler() {
     addExtendedOptions(program, { salt: true, deployMethod: 'create3', skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
-    program.addOption(new Option('--previousSignerRetention <previousSignerRetention>', 'previous signer retention').default(15));
+    program.addOption(new Option('--previousSignersRetention <previousSignersRetention>', 'previous signer retention').default(15));
 
     program.addOption(new Option('--reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));

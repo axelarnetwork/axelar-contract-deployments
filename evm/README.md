@@ -17,11 +17,11 @@ Deploy the gateway contract.
 
 ## Axelar Amplifier Gateway
 
-Deploy the Axelar Amplifier Gateway contract.
+Deploy the Axelar Amplifier Gateway contract. This is the required gateway contract for EVM chains connecting via Axelar's Amplifier protocol.
 
 `node evm/deploy-amplifier-gateway.js -e testnet -n ethereum`
 
-For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. Iit'll default to the deployer and can be transferred to governance later.
+For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. It'll default to the deployer and can be transferred to governance later.
 
 ## Gateway Upgrade
 
