@@ -93,7 +93,7 @@ const makeVotingVerifierInstantiateMsg = (
     { id: chainId },
 ) => {
     const {
-        [chainId]: { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat},
+        [chainId]: { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat },
     } = contractConfig;
 
     if (!validateAddress(serviceRegistryAddress)) {
@@ -129,7 +129,7 @@ const makeVotingVerifierInstantiateMsg = (
     }
 
     if (!isString(msgIdFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].msgIdFormat in axelar info`)
+        throw new Error(`Missing or invalid VotingVerifier[${chainId}].msgIdFormat in axelar info`);
     }
 
     return {
