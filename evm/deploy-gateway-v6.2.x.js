@@ -524,12 +524,9 @@ async function programHandler() {
 
     program.name('deploy-gateway-v6.2.x').description('Deploy gateway v6.2.x');
 
-    addExtendedOptions(program, { salt: true, skipExisting: true, upgrade: true, predictOnly: true });
+    addExtendedOptions(program, { salt: true, deployMethod: 'create', skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
-    program.addOption(
-        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
-    );
     program.addOption(new Option('--reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
     program.addOption(
         new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment'),
