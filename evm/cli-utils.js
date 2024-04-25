@@ -54,6 +54,14 @@ const addExtendedOptions = (program, options = {}) => {
         program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     }
 
+    if (options.deployMethod) {
+        program.addOption(
+            new Option('--deployMethod <deployMethod>', 'deployment method')
+                .choices(['create', 'create2', 'create3'])
+                .default(options.deployMethod),
+        );
+    }
+
     if (options.salt) {
         program.addOption(new Option('-s, --salt <salt>', 'salt to use for create2 deployment').env('SALT'));
     }
