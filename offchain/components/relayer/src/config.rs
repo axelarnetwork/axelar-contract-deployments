@@ -10,6 +10,7 @@ use figment::Figment;
 use serde::{Deserialize, Deserializer};
 use solana_program::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
+use solana_sdk::signer::Signer;
 use tonic::transport::Uri;
 use url::Url;
 
@@ -82,6 +83,7 @@ impl Config {
             axelar_to_solana: Some(AxelarToSolana {
                 approver: AxelarApprover {
                     rpc: config.axelar_approver_url,
+                    relayer_account: config.solana_includer_keypair.pubkey(),
                 },
                 includer: SolanaIncluder {
                     rpc: config.solana_includer_rpc,
@@ -131,6 +133,7 @@ pub struct Database {
 #[cfg_attr(test, derive(Debug))]
 pub struct AxelarApprover {
     pub rpc: Url,
+    pub relayer_account: Pubkey,
 }
 
 #[derive(Deserialize, PartialEq)]
@@ -231,7 +234,8 @@ mod tests {
             Config {
                 axelar_to_solana: Some(AxelarToSolana {
                     approver: AxelarApprover {
-                        rpc: Url::from_str(approver_url).unwrap()
+                        rpc: Url::from_str(approver_url).unwrap(),
+                        relayer_account: keypair.pubkey(),
                     },
                     includer: SolanaIncluder {
                         rpc: Url::from_str(includer_rpc).unwrap(),

@@ -183,10 +183,14 @@ impl AxelarToSolanaHandler {
         let includer_cancelation_token = transport_cancelation_token.child_token();
 
         let approver = {
-            let config::AxelarApprover { rpc } = approver_config;
+            let config::AxelarApprover {
+                rpc,
+                relayer_account,
+            } = approver_config;
             AxelarApprover::new(
                 rpc.clone(),
                 sender,
+                *relayer_account,
                 state.clone(),
                 approver_cancelation_token,
             )
