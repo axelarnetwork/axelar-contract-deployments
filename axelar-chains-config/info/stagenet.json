@@ -1169,6 +1169,66 @@
       },
       "finality": "1",
       "approxFinalityWaitTime": 1
+    },
+    "mantle": {
+      "name": "Mantle",
+      "id": "mantle",
+      "axelarId": "mantle",
+      "chainId": 5003,
+      "rpc": "https://rpc.sepolia.mantle.xyz",
+      "tokenSymbol": "MNT",
+      "confirmations": 2,
+      "gasOptions": {
+        "gasLimit": 50000000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 10000
+      },
+      "explorer": {
+        "name": "Mantle Explorer",
+        "url": "https://explorer.sepolia.mantle.xyz",
+        "api": "https://explorer.sepolia.mantle.xyz/api"
+      }
+    },
+    "blast": {
+      "name": "Blast",
+      "id": "blast",
+      "axelarId": "blast",
+      "chainId": 168587773,
+      "rpc": "https://sepolia.blast.io/",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 684000
+      },
+      "confirmations": 2,
+      "explorer": {
+        "name": "Blastscan",
+        "url": "https://testnet.blastscan.io",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/168587773/etherscan"
+      }
+    },
+    "fraxtal": {
+      "name": "Fraxtal",
+      "id": "fraxtal",
+      "axelarId": "fraxtal",
+      "chainId": 2522,
+      "rpc": "https://rpc.testnet.frax.com",
+      "tokenSymbol": "frxETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 50000
+      }
     }
   },
   "axelar": {

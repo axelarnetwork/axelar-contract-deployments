@@ -27,7 +27,7 @@
     "@axelar-network/axelar-gmp-sdk-solidity": "5.8.0",
     "@axelar-network/interchain-token-service": "1.2.4",
     "@cosmjs/cosmwasm-stargate": "^0.32.1",
-    "@ledgerhq/hw-app-eth": "6.32.2",
+    "@ledgerhq/hw-app-eth": "^6.36.0",
     "axios": "^1.6.2",
     "path": "^0.12.7"
   },
