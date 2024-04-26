@@ -14,10 +14,19 @@ pub use ethers;
 /// contracts.
 #[allow(clippy::all, missing_docs)]
 pub mod contracts {
-    use ethers::contract::abigen;
+    pub mod example_encoder {
+        include!(concat!(env!("OUT_DIR"), "/ExampleEncoder.rs"));
+    }
 
-    abigen!(
-        ExampleEncoder,
-        "../../../evm-contracts/out/ExampleEncoder.sol/ExampleSolanaGatewayEncoder.json"
-    );
+    pub mod axelar_memo {
+        include!(concat!(env!("OUT_DIR"), "/AxelarMemo.rs"));
+    }
+
+    pub mod axelar_gateway {
+        include!(concat!(env!("OUT_DIR"), "/AxelarGateway.rs"));
+    }
+
+    pub mod axelar_auth_weighted {
+        include!(concat!(env!("OUT_DIR"), "/AxelarAuthWeighted.rs"));
+    }
 }

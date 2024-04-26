@@ -68,15 +68,19 @@ command = "cargo"
 args = [
     "test",
     "--package",
-    "test-fixtures",
-    "--package",
     "axelar-executable",
     "--package",
     "axelar-message-primitives",
     "--package",
+    "evm-contracts-rs",
+    "--package",
+    "evm-contracts-test-suite",
+    "--package",
     "interchain-token-transfer-gmp",
     "--package",
     "program-utils",
+    "--package",
+    "test-fixtures",
 ]
 
 [tasks.audit]

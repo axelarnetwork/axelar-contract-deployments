@@ -137,9 +137,7 @@ fn create_invalid_output_type(msg: &str) -> ethers_core::abi::InvalidOutputType 
 
 #[cfg(test)]
 mod tests {
-
-    use ethers_core::abi::AbiEncode;
-    use evm_contracts_rs::contracts::ExampleEncoder;
+    use evm_contracts_rs::contracts::example_encoder::ExampleEncoder;
     use evm_contracts_rs::ethers;
     use evm_contracts_test_suite::chain::TestBlockchain;
     use evm_contracts_test_suite::ContractMiddleware;
@@ -181,11 +179,12 @@ mod tests {
 
         // Action
         let evm_encoded_payload: ethers::types::Bytes = contract
-            .encode(evm_contracts_rs::contracts::SolanaGatewayPayload {
-                scheme: crate::EncodingScheme::AbiEncoding.to_u8(),
-                execute_payload: payload_without_accounts.clone().into(),
-                accounts: evm_account_repr,
-            })
+            .encode(
+                evm_contracts_rs::contracts::example_encoder::SolanaGatewayPayload {
+                    execute_payload: payload_without_accounts.clone().into(),
+                    accounts: evm_account_repr,
+                },
+            )
             .await
             .unwrap();
         let payload_redecoded = DataPayload::decode(evm_encoded_payload.as_ref()).unwrap();
@@ -203,8 +202,7 @@ mod tests {
         let (_accounts, evm_account_repr) = utils::evm_accounts_fixture();
         let payload_without_accounts = vec![42, 111];
         let (contract, _evm_chain) = utils::chain_setup().await;
-        let payload = evm_contracts_rs::contracts::SolanaGatewayPayload {
-            scheme: crate::EncodingScheme::AbiEncoding.to_u8(),
+        let payload = evm_contracts_rs::contracts::example_encoder::SolanaGatewayPayload {
             execute_payload: payload_without_accounts.into(),
             accounts: evm_account_repr,
         };
@@ -234,16 +232,12 @@ mod tests {
         let (contract, _evm_chain) = utils::chain_setup().await;
 
         // Action
-        let evm_decoded_payload: evm_contracts_rs::contracts::SolanaGatewayPayload = contract
+        let evm_decoded_payload: evm_contracts_rs::contracts::example_encoder::SolanaGatewayPayload = contract
             .decode(canonical_payload_encoded.into())
             .await
             .unwrap();
 
         // Assert
-        assert_eq!(
-            evm_decoded_payload.scheme,
-            canonical_payload.encoding_scheme.to_u8()
-        );
         assert_eq!(
             evm_decoded_payload.execute_payload.to_vec(),
             canonical_payload.payload_without_accounts.to_vec()
@@ -264,7 +258,7 @@ mod tests {
 
         pub fn evm_accounts_fixture() -> (
             Vec<AccountMeta>,
-            Vec<evm_contracts_rs::contracts::SolanaAccountRepr>,
+            Vec<evm_contracts_rs::contracts::example_encoder::SolanaAccountRepr>,
         ) {
             let accounts = account_fixture()
                 .into_iter()
@@ -273,11 +267,13 @@ mod tests {
             let evm_account_repr = accounts
                 .clone()
                 .into_iter()
-                .map(|x| evm_contracts_rs::contracts::SolanaAccountRepr {
-                    pubkey: x.pubkey.to_bytes(),
-                    is_signer: x.is_signer,
-                    is_writable: x.is_writable,
-                })
+                .map(
+                    |x| evm_contracts_rs::contracts::example_encoder::SolanaAccountRepr {
+                        pubkey: x.pubkey.to_bytes(),
+                        is_signer: x.is_signer,
+                        is_writable: x.is_writable,
+                    },
+                )
                 .collect::<Vec<_>>();
             (accounts, evm_account_repr)
         }

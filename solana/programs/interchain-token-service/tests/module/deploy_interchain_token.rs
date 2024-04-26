@@ -46,7 +46,7 @@ async fn test_deploy_interchain_token() {
         .fully_approve_messages(
             &gateway_root_pda,
             &[Either::Left(message_to_execute.clone())],
-            gateway_operators,
+            &gateway_operators,
         )
         .await;
     let gateway_approved_message = fixture

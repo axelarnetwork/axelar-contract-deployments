@@ -26,3 +26,5 @@ solana-sdk.workspace = true
 test-fixtures.workspace = true
 ethers-core.workspace = true
 itertools.workspace = true
+evm-contracts-test-suite.workspace = true
+rstest.workspace = true

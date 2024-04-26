@@ -5,8 +5,6 @@ using AbiSolanaGatewayPayload for SolanaGatewayPayload global;
 
 /// @notice Represents a payload that can be executed in the Solana network.
 struct SolanaGatewayPayload {
-    /// @notice The encoding scheme that's used for encoding the payload.
-    uint8 scheme;
     /// @notice The specific instructions to be executed, encoded in bytes.
     bytes executePayload;
     /// @notice An array of Solana accounts involved in the transaction.
@@ -23,14 +21,12 @@ struct SolanaAccountRepr {
     bool isWritable;
 }
 
-
 // The ABI scheme used for encoding the SolanaGatewayPayload.
 // The value is manually synced with the Rust implementation.
 uint8 constant ABI_SCHEME = 1;
 
 /// @notice Library for encoding and decoding SolanaGatewayPayload structs.
 library AbiSolanaGatewayPayload {
-
     /// @dev Decodes a byte array into a `SolanaGatewayPayload` struct.
     /// Assumes the first byte indicates the ABI scheme used for encoding.
     /// @param data The byte array containing the encoded SolanaGatewayPayload.
@@ -45,7 +41,7 @@ library AbiSolanaGatewayPayload {
         (bytes memory executePayload, SolanaAccountRepr[] memory accounts) =
             abi.decode(data[1:], (bytes, SolanaAccountRepr[]));
 
-        return SolanaGatewayPayload({scheme: ABI_SCHEME, executePayload: executePayload, accounts: accounts});
+        return SolanaGatewayPayload({executePayload: executePayload, accounts: accounts});
     }
 
     /// @dev Encodes a `SolanaGatewayPayload` struct into a byte array.

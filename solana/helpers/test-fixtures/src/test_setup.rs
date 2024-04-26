@@ -375,7 +375,7 @@ impl TestFixture {
             .fully_approve_messages(
                 &gateway_root_pda,
                 &[Either::Left(message_to_execute.clone())],
-                operators,
+                operators.as_slice(),
             )
             .await;
         let DecodedCommand::ApproveContractCall(approved_command) =
@@ -690,11 +690,18 @@ impl TestFixture {
         (associated_trusted_address, account_info.address)
     }
 
+    /// Create a new execute data PDA, command PDAs, and call gateway.execute on
+    /// them.
+    ///
+    /// Returns:
+    /// - approved command PDA
+    /// - execute data thats stored inside the execute data PDA
+    /// - execute data PDA
     pub async fn fully_approve_messages(
         &mut self,
         gateway_root_pda: &Pubkey,
         messages: &[Either<connection_router::Message, WorkerSet>],
-        operators: Vec<TestSigner>,
+        operators: &[TestSigner],
     ) -> (Vec<Pubkey>, GatewayExecuteData, Pubkey) {
         let weight_of_quorum = operators
             .iter()
@@ -704,7 +711,7 @@ impl TestFixture {
             .init_execute_data(
                 gateway_root_pda,
                 messages,
-                &operators,
+                operators,
                 weight_of_quorum.as_u128(),
             )
             .await;

@@ -13,17 +13,11 @@ use test_fixtures::test_setup::TestFixture;
 
 use crate::program_test;
 
+#[rstest::rstest]
+#[case(EncodingScheme::Borsh)]
+#[case(EncodingScheme::AbiEncoding)]
 #[tokio::test]
-async fn test_successful_validate_contract_call_borsh_message() {
-    test_successful_validate_contract_call(EncodingScheme::Borsh).await;
-}
-
-#[tokio::test]
-async fn test_successful_validate_contract_call_abi_encoded_message() {
-    test_successful_validate_contract_call(EncodingScheme::AbiEncoding).await;
-}
-
-async fn test_successful_validate_contract_call(encoding_scheme: EncodingScheme) {
+async fn test_successful_validate_contract_call(#[case] encoding_scheme: EncodingScheme) {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let random_account_used_by_ix = Keypair::new();
