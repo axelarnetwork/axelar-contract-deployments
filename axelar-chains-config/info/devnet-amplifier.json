@@ -365,6 +365,7 @@
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
           "address": "axelar1466nf3zuxpya8q9emxukd7vftaf6h4psr0a07srl5zw74zh84yjq4687qd"
         },
         "codeId": 6,
@@ -377,6 +378,7 @@
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
           "address": "axelar1fyr2mptjswz4w6xmgnpgm93x0q4s4wdl6srv3rtz3utc4f6fmxeq27n223"
         },
         "ethereum-sepolia": {
@@ -388,6 +390,7 @@
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
           "address": "axelar132xmxm33vwjlur2pszl4hu9r32lqmqagvunnuc5hq4htps7rr3kqprupcw"
         },
         "op-sepolia": {
@@ -399,6 +402,7 @@
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
           "address": "axelar1pd7kfgvr5tpcv0xnlv46c4jsq9jg2r799xxrcwqdm4l2jhq2pjwqje99z6"
         }
       },
