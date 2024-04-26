@@ -1742,8 +1742,8 @@
       "confirmations": 2,
       "explorer": {
         "name": "Mantle Explorer",
-        "url": "https://explorer.mantle.xyz",
-        "api": "https://explorer.mantle.xyz/api"
+        "url": "https://mantlescan.xyz",
+        "api": "https://api.mantlescan.xyz/api"
       },
       "skipRevertTests": true,
       "staticGasOptions": {
