@@ -10,9 +10,8 @@ default = []
 anyhow.workspace = true
 axum.workspace = true
 bcs.workspace = true
-clap.workspace = true
+clap = { workspace = true, features = ["derive"] }
 dashmap.workspace = true
-figment.workspace = true
 futures-concurrency.workspace = true
 futures-util.workspace = true
 futures.workspace = true
@@ -28,6 +27,7 @@ thiserror.workspace = true
 tokio-stream.workspace = true
 tokio-util.workspace = true
 tokio.workspace = true
+toml.workspace = true
 tonic.workspace = true
 tracing-subscriber.workspace = true
 tracing.workspace = true
@@ -44,6 +44,7 @@ path = "../../../solana/helpers/axelar-executable"
 
 [dev-dependencies]
 reqwest = "0.12"
+temp-env = "0.3.6"
 
 [build-dependencies]
 tonic-build.workspace = true

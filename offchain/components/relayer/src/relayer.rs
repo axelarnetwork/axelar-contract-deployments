@@ -4,6 +4,7 @@ use std::net::SocketAddr;
 use anyhow::{anyhow, Context, Result};
 use futures_util::FutureExt;
 use solana_sdk::signature::Signature;
+use solana_sdk::signer::Signer;
 use tokio::sync::mpsc;
 use tokio::task::JoinSet;
 use tokio::time::{timeout, Duration};
@@ -37,7 +38,7 @@ impl Relayer {
             axelar_to_solana,
             solana_to_axelar,
             database,
-            healthcheck_bind_addr,
+            health_check,
         } = config;
 
         let state = State::from_url(database.url)
@@ -52,7 +53,7 @@ impl Relayer {
             }),
             solana_to_axelar: solana_to_axelar
                 .map(|config| SolanaToAxelarHandler::new(config.sentinel, config.verifier, state)),
-            health_check_server_addr: healthcheck_bind_addr,
+            health_check_server_addr: health_check.bind_addr,
         })
     }
 
@@ -183,14 +184,15 @@ impl AxelarToSolanaHandler {
         let includer_cancelation_token = transport_cancelation_token.child_token();
 
         let approver = {
-            let config::AxelarApprover {
-                rpc,
-                relayer_account,
-            } = approver_config;
+            let config::AxelarApprover { rpc } = approver_config;
+
+            // Derive account from secret key
+            let relayer_account = includer_config.keypair.pubkey();
+
             AxelarApprover::new(
                 rpc.clone(),
                 sender,
-                *relayer_account,
+                relayer_account,
                 state.clone(),
                 approver_cancelation_token,
             )

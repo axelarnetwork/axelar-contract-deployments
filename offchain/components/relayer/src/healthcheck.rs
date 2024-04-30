@@ -83,16 +83,32 @@ mod tests {
     use std::sync::OnceLock;
     use std::time::Duration;
 
-    use figment::providers::{Env, Serialized};
-    use figment::Figment;
-    use serde::{Deserialize, Serialize};
+    use anyhow::Context as _;
 
     use super::*;
 
-    #[derive(Serialize, Deserialize)]
     struct HealthCheckServerTestConfig {
         warmup_millis: u64,
         cooldown_millis: u64,
+    }
+
+    impl HealthCheckServerTestConfig {
+        fn from_env() -> Result<Self, anyhow::Error> {
+            let mut test_config = Self::default();
+            let warmup_env = "RELAYER_TEST_HEALTHCHECK_WARMUP_MILLIS";
+            let cooldown_env = "RELAYER_TEST_HEALTHCHECK_COOLDOWN_MILLIS";
+            if let Ok(value) = std::env::var(warmup_env) {
+                test_config.warmup_millis = value
+                    .parse()
+                    .context(format!("{warmup_env} is not a valid integer"))?;
+            }
+            if let Ok(value) = std::env::var(cooldown_env) {
+                test_config.cooldown_millis = value
+                    .parse()
+                    .context(format!("{cooldown_env} is not a valid integer"))?;
+            }
+            Ok(test_config)
+        }
     }
 
     impl Default for HealthCheckServerTestConfig {
@@ -106,12 +122,7 @@ mod tests {
 
     fn test_config() -> &'static HealthCheckServerTestConfig {
         static CONFIG: OnceLock<HealthCheckServerTestConfig> = OnceLock::new();
-        CONFIG.get_or_init(|| {
-            Figment::from(Serialized::defaults(HealthCheckServerTestConfig::default()))
-                .merge(Env::prefixed("RELAYER_TEST_HEALTHCHECK_"))
-                .extract()
-                .expect("failed to parse Relayer test configuration")
-        })
+        CONFIG.get_or_init(|| HealthCheckServerTestConfig::from_env().unwrap())
     }
 
     async fn wait(millis: u64) {

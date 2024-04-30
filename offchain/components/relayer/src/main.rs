@@ -1,4 +1,6 @@
 use anyhow::anyhow;
+use clap::Parser;
+use cli::Cli;
 use config::Config;
 use tracing_subscriber::filter::{EnvFilter, LevelFilter};
 use tracing_subscriber::fmt::format::FmtSpan;
@@ -8,6 +10,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 
 mod amplifier_api;
 mod approver;
+mod cli;
 mod config;
 mod healthcheck;
 mod includer;
@@ -41,7 +44,8 @@ pub fn init_logging() {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     init_logging();
-    let config = Config::from_env()?;
+    let args = Cli::parse();
+    let config = Config::from_file(&args.config)?;
     let relayer = crate::relayer::Relayer::from_config(config).await?;
     relayer.run().await?;
     Err(anyhow!("Terminated"))

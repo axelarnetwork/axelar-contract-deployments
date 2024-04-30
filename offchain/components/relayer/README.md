@@ -15,19 +15,57 @@ $ cargo build --release --package relayer
 ## Running
 
 ```sh
-$ ./target/release/relayer
+$ ./target/release/relayer --config <path to configuration file>
 ```
 
 ### Configuration
 
-All the following environment variables must be set when running the Relayer:
+The Relayer is configured by a TOML file, which path is passed in the `--config` CLI argument.
 
-- `RELAYER_DATABASE_URL`: PostgreSQL connection string to the Relayer database.
-- `RELAYER_AXELAR_APPROVER_URL`: URL to the Amplifier API used to obtain approved messages
-- `RELAYER_SOLANA_INCLUDER_RPC`: URL for the Solana JSON RPC endpoint used to submit transactions.
-- `RELAYER_SOLANA_INCLUDER_KEYPAIR`: Keypair (private key) used to sign Solana transactions, in base58 format.
-- `RELAYER_SENTINEL_GATEWAY_ADDRESS`: The address for the Solana Gateway, in base58 format.
-- `RELAYER_SENTINEL_GATEWAY_CONFIG_ADDRESS`: The address for the Solana Gateway Root configuration PDA , in base58 format.
-- `RELAYER_SENTINEL_RPC`: URL for the Solana JSON RPC endpoint used to monitor the Gateway program.
-- `RELAYER_VERIFIER_RPC`: URL for the Amplifier API used to verify messages originated from the Solana Gateway.
-- `RELAYER_HEALTHCHECK_BIND_ADDR`: Socket address to be used by the health check HTTP server, in IPv4 or IPv6 format.
+Example:
+
+```toml
+[axelar_to_solana.approver]
+rpc = "http://0.0.0.1/"
+
+[axelar_to_solana.includer]
+rpc = "http://0.0.0.2/"
+keypair = "< the Relayer's secret key in base-58 format >"
+gateway_address = "1111111QLbz7JHiBTspS962RLKV8GndWFwiEaqKM"
+gateway_config_address = "1111111ogCyDbaRMvkdsHB3qfdyFYaG1WtRUAfdh"
+
+[solana_to_axelar.sentinel]
+gateway_address = "1111111QLbz7JHiBTspS962RLKV8GndWFwiEaqKM"
+rpc = "http://0.0.0.3/"
+
+[solana_to_axelar.verifier]
+rpc = "http://0.0.0.4/"
+
+[database]
+url = "postgres://user:password@localhost:5432/dbname"
+
+[health_check]
+bind_addr = "127.0.0.1:8000"
+```
+
+### Partial operation
+
+The Relayer can be configured to operate on a single transport direction by ommiting either the
+`axelar_to_solana` or the `solana_to_axelar` TOML tables in the configuration file.
+
+
+### Reference secret key in an environment variable
+
+The `axelar_to_solana.includer.keypair` variable can be fetched from an environment variable if its
+value is prefixed by a dollar sign an the environment variable name.
+
+Example:
+```toml
+[axelar_to_solana.includer]
+rpc = "http://0.0.0.2/"
+keypair = "$RELAYER_SECRET_KEY"
+gateway_address = "1111111QLbz7JHiBTspS962RLKV8GndWFwiEaqKM"
+gateway_config_address = "1111111ogCyDbaRMvkdsHB3qfdyFYaG1WtRUAfdh"
+```
+
+The configuration above will fetch the `keypair` value from the `RELAYER_SECRET_KEY` environment variable.
