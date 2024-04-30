@@ -138,8 +138,10 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 execute_gas_multiplier: executeGasMultiplier = 1.1,
             } = destinationFeeData;
 
-            const axelarBaseFee = onchainGasVolatilityMultiplier * (parseFloat(baseFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
-            const expressFee = onchainGasVolatilityMultiplier * (parseFloat(expressFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
+            const axelarBaseFee =
+                onchainGasVolatilityMultiplier * (parseFloat(baseFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
+            const expressFee =
+                onchainGasVolatilityMultiplier * (parseFloat(expressFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
             const gasPriceRatio = parseFloat(destTokenPrice) / parseFloat(srcTokenPrice);
             const relativeGasPrice =
                 parseFloat(onchainGasVolatilityMultiplier) *
