@@ -2011,8 +2011,8 @@
       },
       "explorer": {
         "name": "Mantle Explorer",
-        "url": "https://explorer.sepolia.mantle.xyz",
-        "api": "https://explorer.sepolia.mantle.xyz/api"
+        "url": "https://sepolia.mantlescan.xyz",
+        "api": "https://api-sepolia.mantlescan.xyz/api"
       },
       "contracts": {
         "InterchainGovernance": {
