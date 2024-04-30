@@ -100,7 +100,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 onchainGasEstimate: {
                     gasEstimationType = 0,
                     blobBaseFee = 0,
-                    multiplier: onchainGasVolatilityMultiplier = 2,
+                    multiplier: onchainGasVolatilityMultiplier = 1.5,
                     l1FeeScalar = 0,
                 } = {},
             } = destinationConfig;
@@ -138,14 +138,14 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 execute_gas_multiplier: executeGasMultiplier = 1.1,
             } = destinationFeeData;
 
-            const axelarBaseFee = (parseFloat(baseFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
-            const expressFee = (parseFloat(expressFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
+            const axelarBaseFee = onchainGasVolatilityMultiplier * (parseFloat(baseFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
+            const expressFee = onchainGasVolatilityMultiplier * (parseFloat(expressFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
             const gasPriceRatio = parseFloat(destTokenPrice) / parseFloat(srcTokenPrice);
             const relativeGasPrice =
-                parseFloat(executeGasMultiplier) *
                 parseFloat(onchainGasVolatilityMultiplier) *
+                parseFloat(executeGasMultiplier) *
                 ((parseFloat(gasPriceInDestToken) / Math.pow(10, destTokenDecimals)) * gasPriceRatio * Math.pow(10, srcTokenDecimals));
-            const relativeBlobBaseFee = blobBaseFee * gasPriceRatio;
+            const relativeBlobBaseFee = onchainGasVolatilityMultiplier * blobBaseFee * gasPriceRatio;
 
             const gasInfo = {
                 gasEstimationType,
