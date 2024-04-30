@@ -1243,7 +1243,8 @@
       },
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 4,
+        "l1FeeScalar": 1150000000
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 60
@@ -1446,8 +1447,8 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 25,
       "onchainGasEstimate": {
-        "chainName": "arbitrum",
-        "l1ChainName": "ethereum"
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 3
       }
     },
     "centrifuge": {
@@ -1534,9 +1535,6 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
-      "onchainGasEstimate": {
-        "chainName": "centrifuge"
-      },
       "explorer": {
         "name": "",
         "url": ""
@@ -1556,7 +1554,8 @@
       },
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 2,
+        "l1FeeScalar": 50000
       },
       "contracts": {
         "InterchainGovernance": {
@@ -1666,9 +1665,9 @@
         "gasLimit": 8000000
       },
       "onchainGasEstimate": {
-        "chainName": "optimism",
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 1,
+        "l1FeeScalar": 7600
       },
       "confirmations": 3,
       "explorer": {
@@ -1779,9 +1778,9 @@
         "gasLimit": 8000000
       },
       "onchainGasEstimate": {
-        "chainName": "base",
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 1,
+        "l1FeeScalar": 1101
       },
       "confirmations": 2,
       "explorer": {
@@ -1892,9 +1891,9 @@
         "gasLimit": 8000000
       },
       "onchainGasEstimate": {
-        "chainName": "blast",
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 2,
+        "l1FeeScalar": 684000
       },
       "confirmations": 2,
       "explorer": {
@@ -2006,14 +2005,14 @@
         "gasLimit": 50000000000
       },
       "onchainGasEstimate": {
-        "chainName": "mantle",
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
+        "gasEstimationType": 2,
+        "l1FeeScalar": 10000
       },
       "explorer": {
         "name": "Mantle Explorer",
-        "url": "https://explorer.sepolia.mantle.xyz",
-        "api": "https://explorer.sepolia.mantle.xyz/api"
+        "url": "https://sepolia.mantlescan.xyz",
+        "api": "https://api-sepolia.mantlescan.xyz/api"
       },
       "contracts": {
         "InterchainGovernance": {
@@ -2106,6 +2105,76 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 60
+    },
+    "polygon-sepolia": {
+      "name": "Polygon-Sepolia",
+      "id": "polygon-sepolia",
+      "axelarId": "polygon-sepolia",
+      "chainId": 80002,
+      "rpc": "https://rpc-amoy.polygon.technology/",
+      "tokenSymbol": "MATIC",
+      "confirmations": 2,
+      "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "startingKeyIDs": [
+            "evm-polygon-sepolia-genesis"
+          ],
+          "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
+          "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
+          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
+          "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "InterchainGovernance": {
+          "address": "0x943AAd94e45bad24A3da01a3ba815C03fCAC53FC"
+        },
+        "Multisig": {
+          "address": "0x943AAd94e45bad24A3da01a3ba815C03fCAC53FC"
+        },
+        "Operators": {
+          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
+          "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
+          "implementation": "0xCD6b34FaF1FD1056C728A27426AB6807f84BAa1b",
+          "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
+        }
+      },
+      "explorer": {
+        "name": "Polygonscan",
+        "url": "https://amoy.polygonscan.com",
+        "api": "https://api-amoy.polygonscan.com/api"
+      },
+      "gasOptions": {
+        "gasLimit": 6000000
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     }
   },
   "axelar": {

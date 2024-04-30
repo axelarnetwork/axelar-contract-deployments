@@ -21,6 +21,7 @@ const {
     validateParameters,
     httpPost,
     toBigNumberString,
+    timeout,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -51,11 +52,20 @@ async function getFeeData(api, sourceChain, destinationChain) {
     const key = `${sourceChain}-${destinationChain}`;
 
     if (!feesCache[key]) {
-        feesCache[key] = httpPost(`${api}/gmp/getFees`, {
-            sourceChain,
-            destinationChain,
-            sourceTokenAddress: AddressZero,
-        }).then(({ result }) => (feesCache[key] = result));
+        feesCache[key] = timeout(
+            httpPost(`${api}/gmp/getFees`, {
+                sourceChain,
+                destinationChain,
+                sourceTokenAddress: AddressZero,
+            }),
+            10000,
+            new Error(`Timeout fetching fees for ${sourceChain} -> ${destinationChain}`),
+        )
+            .then(({ result }) => (feesCache[key] = result))
+            .catch((e) => {
+                delete feesCache[key];
+                throw e;
+            });
     }
 
     return feesCache[key];
@@ -87,7 +97,12 @@ async function getGasUpdates(config, env, chain, destinationChains) {
 
             const {
                 axelarId: destinationAxelarId,
-                onchainGasEstimate: { gasEstimationType = 0, blobBaseFee = 0, multiplier: onchainGasVolatilityMultiplier = 1.1 } = {},
+                onchainGasEstimate: {
+                    gasEstimationType = 0,
+                    blobBaseFee = 0,
+                    multiplier: onchainGasVolatilityMultiplier = 1.1,
+                    l1FeeScalar = 0,
+                } = {},
             } = destinationConfig;
 
             let destinationFeeData;
@@ -105,22 +120,35 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 return null;
             }
 
-            const {
+            let {
                 destination_native_token: {
+                    symbol: srcSymbol,
                     token_price: { usd: srcTokenPrice },
                     decimals: srcTokenDecimals,
                 },
+                ethereum_token: {
+                    token_price: { usd: ethPrice },
+                },
             } = sourceFeeData;
 
-            const {
+            let {
                 base_fee_usd: baseFeeUsd,
                 destination_express_fee: { total_usd: expressFeeUsd },
                 destination_native_token: {
+                    symbol: destSymbol,
                     token_price: { usd: destTokenPrice },
                     gas_price_in_units: { value: gasPriceInDestToken },
                 },
                 execute_gas_multiplier: executeGasMultiplier = 1.1,
             } = destinationFeeData;
+
+            if (srcSymbol === 'ETH' && srcTokenPrice === 100) {
+                srcTokenPrice = ethPrice;
+            }
+
+            if (destSymbol === 'ETH' && destTokenPrice === 100) {
+                destTokenPrice = ethPrice;
+            }
 
             const axelarBaseFee = (parseFloat(baseFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
             const expressFee = (parseFloat(expressFeeUsd) / parseFloat(srcTokenPrice)) * Math.pow(10, srcTokenDecimals);
@@ -131,9 +159,21 @@ async function getGasUpdates(config, env, chain, destinationChains) {
                 (parseFloat(gasPriceInDestToken) / gasPriceRatio);
             const relativeBlobBaseFee = blobBaseFee * gasPriceRatio;
 
+            const gasInfo = {
+                gasEstimationType,
+                l1FeeScalar,
+                axelarBaseFee,
+                relativeGasPrice,
+                relativeBlobBaseFee,
+                expressFee,
+            };
+            Object.keys(gasInfo).forEach((key) => {
+                gasInfo[key] = toBigNumberString(gasInfo[key]);
+            });
+
             return {
                 chain: destinationChain,
-                gasInfo: [gasEstimationType, axelarBaseFee, expressFee, relativeGasPrice, relativeBlobBaseFee].map(toBigNumberString),
+                gasInfo,
             };
         }),
     );
@@ -274,7 +314,11 @@ async function processCommand(config, chain, options) {
             }
 
             try {
-                const tx = await gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions);
+                const tx = await timeout(
+                    gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions),
+                    chain.timeout || 60000,
+                    new Error(`Timeout updating gas info for ${chain.name}`),
+                );
 
                 printInfo('TX', tx.hash);
 
