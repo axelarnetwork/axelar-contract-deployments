@@ -74,7 +74,7 @@
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "InterchainTokenService": {
@@ -132,7 +132,7 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
@@ -245,7 +245,7 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
@@ -476,7 +476,7 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
@@ -592,7 +592,7 @@
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
@@ -816,7 +816,7 @@
           "salt": "AxelarGasService",
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
@@ -927,7 +927,7 @@
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbe406f0189a0b4cf3a05c286473d23791dd44cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85",
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
@@ -1039,7 +1039,7 @@
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1138,7 +1138,7 @@
       "id": "scroll",
       "axelarId": "scroll",
       "chainId": 534351,
-      "rpc": "https://scroll-testnet-public.unifra.io",
+      "rpc": "https://sepolia-rpc.scroll.io",
       "tokenSymbol": "ETH",
       "contracts": {
         "AxelarGateway": {
@@ -1156,7 +1156,7 @@
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "AxelarDepositService": {
@@ -1238,8 +1238,7 @@
       },
       "confirmations": 2,
       "gasOptions": {
-        "gasLimit": 7000000,
-        "gasPriceAdjustment": 0.25
+        "gasLimit": 7000000
       },
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
@@ -1322,7 +1321,7 @@
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "InterchainTokenService": {
@@ -1416,7 +1415,7 @@
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "InterchainTokenService": {
@@ -1525,7 +1524,7 @@
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "InterchainTokenService": {
@@ -1614,7 +1613,7 @@
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "Operators": {
@@ -1741,7 +1740,7 @@
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "InterchainTokenService": {
@@ -1854,7 +1853,7 @@
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "InterchainTokenService": {
@@ -1967,7 +1966,7 @@
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "InterchainTokenService": {
@@ -2080,7 +2079,7 @@
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "implementation": "0x697F0BB8e15958a640EAD2C4D366B11Fc89a4c0e",
+          "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "InterchainTokenService": {
