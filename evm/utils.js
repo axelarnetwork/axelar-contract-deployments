@@ -1179,9 +1179,14 @@ function toBigNumberString(number) {
 
 function timeout(prom, time, exception) {
     let timer;
-    return Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]).finally(() =>
+
+    const race = Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]);
+
+    race.finally(() =>
         clearTimeout(timer),
     );
+
+    return race;
 }
 
 module.exports = {
