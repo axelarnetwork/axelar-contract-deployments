@@ -1,7 +1,10 @@
+use std::fmt::Display;
+
 use axelar_executable::axelar_message_primitives::command::{decode, DecodeError};
 use axelar_executable::axelar_message_primitives::{DataPayload, PayloadError};
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
+use solana_sdk::keccak;
 use solana_sdk::pubkey::Pubkey;
 use thiserror::Error;
 use tokio::sync::mpsc::Sender as TokioSender;
@@ -120,14 +123,14 @@ impl AxelarApprover {
                     let unvalidated_approval = message
                         .map_err(ApproverError::ApprovalsPull)?
                         .ok_or(ApproverError::ApprovalsStreamClosed)?;
-                    info!("Approval received");
+                    info!(approval = %ApprovalLogWrapper(&unvalidated_approval), "Unvalidated approval received");
                     validation_futures.push(self.validate(client.clone(), unvalidated_approval));
                 }
                 // Send validated approvals downstream.
                 Some(validation_result) = validation_futures.next() => {
                     match validation_result {
                         Ok(validated_approval) => {
-                            info!("Validated incoming approval");
+                            info!(approval = %ApprovalLogWrapper(&validated_approval), "Approval validated");
                             self.includer_sender
                                 .send(validated_approval)
                                 .await
@@ -208,4 +211,35 @@ async fn get_payload(
 struct PayloadAndHash {
     payload: Vec<u8>,
     hash: [u8; 32],
+}
+
+/// Wrapper for `SubscribeToApprovalsResponse` to be used in logs.
+struct ApprovalLogWrapper<'a>(&'a SubscribeToApprovalsResponse);
+
+impl Display for ApprovalLogWrapper<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let SubscribeToApprovalsResponse {
+            chain,
+            execute_data,
+            block_height,
+        } = &self.0;
+        let hash = hex::encode(keccak::hash(execute_data).as_ref());
+        write!(
+            f,
+            "Approval[chain={chain};block={block_height};execute_data_hash={hash}]",
+        )
+    }
+}
+
+#[test]
+fn test_approval_log_wrapper() {
+    let approval = SubscribeToApprovalsResponse {
+        chain: "test-chain".into(),
+        execute_data: b"foobar".to_vec(),
+        block_height: 42,
+    };
+    let wrapper = ApprovalLogWrapper(&approval);
+    let hash = hex::encode(keccak::hash(&approval.execute_data).as_ref());
+    let expected = format!("Approval[chain=test-chain;block=42;execute_data_hash={hash}]");
+    assert_eq!(wrapper.to_string(), expected)
 }
