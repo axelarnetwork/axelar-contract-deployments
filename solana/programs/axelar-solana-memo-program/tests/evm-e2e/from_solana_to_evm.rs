@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use axelar_solana_memo_program::call_gateway_with_memo;
+use axelar_solana_memo_program::instruction::call_gateway_with_memo;
 use ethers_core::utils::keccak256;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo::ReceivedMemoFilter;
 use gateway::events::{CallContract, GatewayEvent};
@@ -13,7 +13,7 @@ use crate::{axelar_evm_setup, axelar_solana_setup};
 #[tokio::test]
 async fn test_send_from_solana_to_evm() {
     // Setup - Solana
-    let (mut solana_chain, gateway_root_pda, _operators) = axelar_solana_setup().await;
+    let (mut solana_chain, gateway_root_pda, _operators, _counter) = axelar_solana_setup().await;
     // Setup - EVM
     let (evm_chain, evm_signer, _evm_aw, evm_gateway, mut operators) = axelar_evm_setup().await;
     let evm_memo = evm_signer

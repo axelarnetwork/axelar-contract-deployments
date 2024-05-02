@@ -3,7 +3,7 @@ use std::ops::Add;
 use account_group::instruction::GroupId;
 use account_group::{get_permission_account, get_permission_group_account};
 use axelar_message_primitives::command::{DecodedCommand, U256 as GatewayU256};
-use axelar_message_primitives::{Address, EncodingScheme};
+use axelar_message_primitives::{Address, DataPayload, EncodingScheme};
 use borsh::BorshDeserialize;
 use gateway::axelar_auth_weighted::AxelarAuthWeighted;
 use gateway::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
@@ -733,6 +733,43 @@ impl TestFixture {
             execute_data,
             execute_data_pda,
         )
+    }
+
+    pub async fn get_account<T: solana_program::program_pack::Pack + BorshDeserialize>(
+        &mut self,
+        account: &Pubkey,
+        expected_owner: &Pubkey,
+    ) -> T {
+        let account = self
+            .banks_client
+            .get_account(*account)
+            .await
+            .expect("get_account")
+            .expect("account not none");
+        account.check_initialized_pda::<T>(expected_owner).unwrap()
+    }
+
+    pub async fn call_execute_on_axelar_executable<'a>(
+        &mut self,
+        gateway_decoded_command: &DecodedCommand,
+        decoded_payload: &DataPayload<'a>,
+        gateway_approved_command_pda: &solana_sdk::pubkey::Pubkey,
+        gateway_root_pda: solana_sdk::pubkey::Pubkey,
+    ) -> solana_program_test::BanksTransactionResultWithMetadata {
+        let DecodedCommand::ApproveContractCall(approved_message) = gateway_decoded_command.clone()
+        else {
+            panic!("expected ApproveContractCall command")
+        };
+        let ix = axelar_executable::construct_axelar_executable_ix(
+            approved_message,
+            decoded_payload.encode().unwrap(),
+            *gateway_approved_command_pda,
+            gateway_root_pda,
+        )
+        .unwrap();
+        let tx = self.send_tx_with_metadata(&[ix]).await;
+        assert!(tx.result.is_ok(), "transaction failed");
+        tx
     }
 }
 

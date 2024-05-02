@@ -20,7 +20,7 @@ use crate::error::GatewayError;
 pub struct GatewayApprovedCommand {
     /// Status of the command
     status: GatewayCommandStatus,
-    /// The pubkey of the account that is allowed to execute this command
+    /// The bump that was used to create the PDA
     pub bump: u8,
 }
 

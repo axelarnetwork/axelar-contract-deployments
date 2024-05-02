@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use axelar_solana_memo_program::call_gateway_with_memo;
+use axelar_solana_memo_program::instruction::call_gateway_with_memo;
 use ethers_core::utils::keccak256;
 use gateway::events::GatewayEvent;
 use solana_program_test::tokio;

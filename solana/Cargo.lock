@@ -527,15 +527,12 @@ dependencies = [
  "evm-contracts-test-suite",
  "gmp-gateway",
  "itertools 0.12.1",
- "num-derive 0.4.2",
- "num-traits",
  "program-utils",
  "rstest",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
  "test-fixtures",
- "thiserror",
 ]
 
 [[package]]

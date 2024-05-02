@@ -3,6 +3,8 @@ use evm_contracts_test_suite::evm_contracts_rs::contracts::{axelar_auth_weighted
 use evm_contracts_test_suite::evm_operators::OperatorSet;
 use evm_contracts_test_suite::ContractMiddleware;
 use solana_program_test::{processor, ProgramTest};
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signer::Signer;
 use test_fixtures::execute_data::{create_signer_with_weight, TestSigner};
 use test_fixtures::test_setup::TestFixture;
 
@@ -25,7 +27,12 @@ pub fn program_test() -> ProgramTest {
     pt
 }
 
-async fn axelar_solana_setup() -> (TestFixture, solana_sdk::pubkey::Pubkey, Vec<TestSigner>) {
+async fn axelar_solana_setup() -> (
+    TestFixture,
+    solana_sdk::pubkey::Pubkey,
+    Vec<TestSigner>,
+    Pubkey,
+) {
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
         create_signer_with_weight(10).unwrap(),
@@ -34,7 +41,18 @@ async fn axelar_solana_setup() -> (TestFixture, solana_sdk::pubkey::Pubkey, Vec<
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
         .await;
-    (fixture, gateway_root_pda, operators)
+    let (counter_pda, counter_bump) =
+        axelar_solana_memo_program::get_counter_pda(&gateway_root_pda);
+    fixture
+        .send_tx(&[axelar_solana_memo_program::instruction::initialize(
+            &fixture.payer.pubkey(),
+            &gateway_root_pda,
+            &(counter_pda, counter_bump),
+        )
+        .unwrap()])
+        .await;
+
+    (fixture, gateway_root_pda, operators, counter_pda)
 }
 
 async fn axelar_evm_setup() -> (
