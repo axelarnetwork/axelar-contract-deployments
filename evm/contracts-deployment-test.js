@@ -18,12 +18,12 @@ async function processCommand(config, chain, options) {
     const signers = [wallet.address];
     const threshold = 1;
     const minimumTimeDelay = 300;
-    const symbol = `W${chain.tokenSymbol}`;
+    const wrappedSymbol = `W${chain.tokenSymbol}`;
     const refundIssuer = wallet.address;
     const argsAxelarGasService = JSON.stringify({ collector });
     const argsMultisig = JSON.stringify({ signers, threshold });
-    const argsInterchainGovernance = JSON.stringify({ minTimeDelay: minimumTimeDelay });
-    const argsAxelarDepositService = JSON.stringify({ symbol, refundIssuer });
+    const argsInterchainGovernance = JSON.stringify({ minimumTimeDelay });
+    const argsAxelarDepositService = JSON.stringify({ wrappedSymbol, refundIssuer });
 
     const cmds = [
         `node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json`,

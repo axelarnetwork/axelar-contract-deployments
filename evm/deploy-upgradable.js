@@ -22,10 +22,11 @@ function getProxy(wallet, proxyAddress) {
 async function getImplementationArgs(contractName, config, options) {
     const args = options.args ? JSON.parse(options.args) : {};
     const contractConfig = config[contractName];
+    Object.assign(contractConfig, args);
 
     switch (contractName) {
         case 'AxelarGasService': {
-            const collector = args.collector ? (contractConfig.collector = args.collector) : contractConfig.collector;
+            const collector = contractConfig.collector;
 
             if (!isAddress(collector)) {
                 throw new Error(`Missing AxelarGasService.collector ${collector}.`);
@@ -35,7 +36,7 @@ async function getImplementationArgs(contractName, config, options) {
         }
 
         case 'AxelarDepositService': {
-            const symbol = args.symbol ? (contractConfig.wrappedSymbol = args.symbol) : contractConfig.wrappedSymbol;
+            const symbol = contractConfig.wrappedSymbol;
 
             if (symbol === undefined) {
                 throw new Error(`Missing AxelarDepositService.wrappedSymbol in the chain info.`);
@@ -43,13 +44,14 @@ async function getImplementationArgs(contractName, config, options) {
                 console.log(`${config.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
             }
 
-            const refundIssuer = args.refundIssuer ? (contractConfig.refundIssuer = args.refundIssuer) : contractConfig.refundIssuer;
+            const refundIssuer = contractConfig.refundIssuer;
 
             if (!isAddress(refundIssuer)) {
                 throw new Error(`${config.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
             }
 
-            const gateway = args.gatewayAddress ? (config.AxelarGateway.address = args.gatewayAddress) : config.AxelarGateway?.address;
+            const gateway = contractConfig.gatewayAddress ?? config.AxelarGateway?.address;
+            config.AxelarGateway.address = gateway;
 
             if (!isAddress(gateway)) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);

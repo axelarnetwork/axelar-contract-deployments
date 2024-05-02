@@ -31,6 +31,7 @@ const { addExtendedOptions } = require('./cli-utils');
 async function getConstructorArgs(contractName, config, wallet, options) {
     const args = options.args ? JSON.parse(options.args) : {};
     const contractConfig = config[contractName];
+    Object.assign(contractConfig, args);
 
     switch (contractName) {
         case 'AxelarServiceGovernance': {
@@ -105,9 +106,7 @@ async function getConstructorArgs(contractName, config, wallet, options) {
                 throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
             }
 
-            const minimumTimeDelay = args.minTimeDelay
-                ? (contractConfig.minimumTimeDelay = parseInt(args.minTimeDelay))
-                : contractConfig.minimumTimeDelay;
+            const minimumTimeDelay = contractConfig.minimumTimeDelay;
 
             if (!isNumber(minimumTimeDelay)) {
                 throw new Error(`Missing InterchainGovernance.minimumTimeDelay in the chain info.`);
@@ -117,13 +116,13 @@ async function getConstructorArgs(contractName, config, wallet, options) {
         }
 
         case 'Multisig': {
-            const signers = args.signers ? (contractConfig.signers = args.signers) : contractConfig.signers;
+            const signers = contractConfig.signers;
 
             if (!isAddressArray(signers)) {
                 throw new Error(`Missing Multisig.signers in the chain info.`);
             }
 
-            const threshold = args.threshold ? (contractConfig.threshold = parseInt(args.threshold)) : contractConfig.threshold;
+            const threshold = contractConfig.threshold;
 
             if (!isNumber(threshold)) {
                 throw new Error(`Missing Multisig.threshold in the chain info.`);
