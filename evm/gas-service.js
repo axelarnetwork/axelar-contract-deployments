@@ -312,7 +312,11 @@ async function processCommand(config, chain, options) {
 
                 printInfo('TX', tx.hash);
 
-                const receipt = await tx.wait(chain.confirmations);
+                const receipt = await timeout(
+                    tx.wait(chain.confirmations),
+                    chain.timeout || 60000,
+                    new Error(`Timeout updating gas info for ${chain.name}`),
+                );
 
                 const eventEmitted = wasEventEmitted(receipt, gasService, 'GasInfoUpdated');
 

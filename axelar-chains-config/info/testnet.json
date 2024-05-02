@@ -1125,7 +1125,8 @@
       },
       "confirmations": 2,
       "gasOptions": {
-        "gasLimit": 7000000
+        "gasLimit": 7000000,
+        "gasPriceAdjustment": 1.5
       },
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
