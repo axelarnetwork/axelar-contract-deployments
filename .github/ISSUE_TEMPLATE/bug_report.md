@@ -10,6 +10,7 @@ A clear and concise description of what the bug is. Provide links to any resourc
 **To Reproduce**
 
 Steps to reproduce the behavior:
+
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
@@ -20,6 +21,14 @@ A clear and concise description of what you expected to happen.
 
 **Versions**
 
-
 **Additional context**
 Add any other context about the problem here.
+
+**Ready-ready checklist**
+
+- [ ] Labels (ticket type and component) are set
+- [ ] Project & Phase is assigned
+- [ ] Estimations are provided
+- [ ] Ticket is placed on the timeline
+- [ ] 'Needs clarification' label is removed
+- [ ] This checklist is removed

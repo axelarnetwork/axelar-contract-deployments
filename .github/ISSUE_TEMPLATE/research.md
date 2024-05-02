@@ -15,3 +15,13 @@ The reasons because we are doing this research. What could it bring to the proje
 **Final conclusions**
 
 Research issues can contains many information in form of comments and go throw multiple phases till a conclusion/decision is reached. This should be filled only at the end of the research, before closing the issue. Many times, a research issue can derive in other implementation issues, they should be listed here.
+
+**Ready-ready checklist**
+
+- [ ] Rationale and requirements are provided (other sections are optional)
+- [ ] Labels (ticket type and component) are set
+- [ ] Project & Phase is assigned
+- [ ] Estimations are provided
+- [ ] Ticket is placed on the timeline
+- [ ] 'Needs clarification' label is removed
+- [ ] This checklist is removed
