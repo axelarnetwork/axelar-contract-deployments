@@ -1182,9 +1182,7 @@ function timeout(prom, time, exception) {
 
     const race = Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]);
 
-    race.finally(() =>
-        clearTimeout(timer),
-    );
+    race.finally(() => clearTimeout(timer));
 
     return race;
 }

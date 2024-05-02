@@ -278,7 +278,7 @@ async function processCommand(config, chain, options) {
                 await timeout(
                     tx.wait(chain.confirmations),
                     chain.timeout || 60000,
-                    new Error(`Timeout updating gas info for ${chain.name}`)
+                    new Error(`Timeout updating gas info for ${chain.name}`),
                 );
             } catch (error) {
                 for (let i = 0; i < chainsToUpdate.length; i++) {
