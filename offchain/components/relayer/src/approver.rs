@@ -21,8 +21,6 @@ use crate::state::State;
 
 type Sender = TokioSender<SubscribeToApprovalsResponse>;
 
-use crate::config::SOLANA_CHAIN_NAME;
-
 #[derive(Debug, Error)]
 pub enum ApproverError {
     #[error(transparent)]
@@ -62,6 +60,7 @@ pub struct AxelarApprover {
     relayer_account: Pubkey,
     state: State,
     cancellation_token: CancellationToken,
+    solana_chain_name: String,
 }
 
 impl AxelarApprover {
@@ -72,6 +71,7 @@ impl AxelarApprover {
         relayer_account: Pubkey,
         state: State,
         cancellation_token: CancellationToken,
+        solana_chain_name: String,
     ) -> Self {
         Self {
             rpc_url,
@@ -79,6 +79,7 @@ impl AxelarApprover {
             relayer_account,
             state,
             cancellation_token,
+            solana_chain_name,
         }
     }
 
@@ -104,7 +105,7 @@ impl AxelarApprover {
         // Connect to the Amplifier API for an approval stream.
         let mut stream = client
             .subscribe_to_approvals(SubscribeToApprovalsRequest {
-                chains: vec![SOLANA_CHAIN_NAME.into()],
+                chains: vec![self.solana_chain_name.clone()],
                 start_height: Some(start_height as u64),
             })
             .await

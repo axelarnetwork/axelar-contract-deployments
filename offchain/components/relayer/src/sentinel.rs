@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use gmp_gateway::events::{CallContract, GatewayEvent};
 use solana_program::pubkey::Pubkey;
 use solana_sdk::signature::Signature;
@@ -11,21 +9,17 @@ use url::Url;
 
 use self::transaction_scanner::transaction_retriever::TransactionRetrieverError;
 use self::types::TransactionScannerMessage;
-use crate::amplifier_api;
-use crate::config::SOLANA_CHAIN_NAME;
 use crate::sentinel::error::SentinelError;
 use crate::sentinel::transaction_scanner::TransactionScanner;
 use crate::sentinel::types::SolanaTransaction;
 use crate::sentinel::types::TransactionScannerMessage::{Message, Terminated};
 use crate::state::interface::State;
 use crate::transports::SolanaToAxelarMessage;
+use crate::{amplifier_api, config};
 
 mod error;
 mod transaction_scanner;
 mod types;
-
-// TODO: All those contants should be configurable
-const FETCH_SIGNATURES_INTERVAL: Duration = Duration::from_secs(5);
 
 /// Solana Sentinel
 ///
@@ -39,6 +33,8 @@ where
     verifier_channel: Sender<SolanaToAxelarMessage>,
     state: S,
     cancellation_token: CancellationToken,
+    transaction_scanner: config::TransactionScanner,
+    solana_chain_name: String,
 }
 
 impl<S> SolanaSentinel<S>
@@ -51,6 +47,8 @@ where
         verifier_channel: Sender<SolanaToAxelarMessage>,
         state: S,
         cancellation_token: CancellationToken,
+        solana_chain_name: String,
+        transaction_scanner: config::TransactionScanner,
     ) -> Self {
         Self {
             gateway_address,
@@ -58,6 +56,8 @@ where
             verifier_channel,
             state,
             cancellation_token,
+            solana_chain_name,
+            transaction_scanner,
         }
     }
 
@@ -93,8 +93,8 @@ where
             self.gateway_address,
             self.state.clone(),
             self.rpc.clone(),
-            FETCH_SIGNATURES_INTERVAL,
             self.cancellation_token.child_token(),
+            self.transaction_scanner,
         );
         pin!(transaction_scanner_future);
 
@@ -239,11 +239,11 @@ where
     ) -> Result<(), SentinelError> {
         let message_ccid = format!(
             "{}:{}:{}",
-            SOLANA_CHAIN_NAME, transaction_signature, transaction_index,
+            &self.solana_chain_name, transaction_signature, transaction_index,
         );
         let message = amplifier_api::Message {
             id: message_ccid,
-            source_chain: SOLANA_CHAIN_NAME.into(),
+            source_chain: self.solana_chain_name.clone(),
             source_address: hex::encode(sender.to_bytes()),
             destination_chain: String::from_utf8(destination_chain)
                 .map_err(SentinelError::ByteVecParsing)?,

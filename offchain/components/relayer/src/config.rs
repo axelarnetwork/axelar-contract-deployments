@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::Arc;
+use std::time::Duration;
 
 use anyhow::bail;
 use clap::Parser;
@@ -10,9 +11,6 @@ use solana_program::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use tonic::transport::Uri;
 use url::Url;
-
-/// Solana network name used to identify it on Axelar.
-pub const SOLANA_CHAIN_NAME: &str = "solana";
 
 /// Solana GMP Gateway root config PDA
 
@@ -31,6 +29,11 @@ pub struct Config {
     pub solana_to_axelar: Option<SolanaToAxelar>,
     pub database: Database,
     pub health_check: HealthCheck,
+    #[serde(
+        rename = "cancellation_timeout_in_seconds",
+        default = "config_defaults::cancellation_timeout"
+    )]
+    pub cancellation_timeout: Duration,
 }
 
 impl Config {
@@ -82,6 +85,8 @@ pub struct HealthCheck {
 pub struct AxelarApprover {
     #[serde(deserialize_with = "serde_utils::deserialize_url")]
     pub rpc: Url,
+    #[serde(default = "config_defaults::solana_chain_name")]
+    pub solana_chain_name: String,
 }
 
 #[derive(Deserialize, PartialEq)]
@@ -104,6 +109,34 @@ pub struct SolanaSentinel {
     pub gateway_address: Pubkey,
     #[serde(deserialize_with = "serde_utils::deserialize_url")]
     pub rpc: Url,
+    #[serde(default = "config_defaults::solana_chain_name")]
+    pub solana_chain_name: String,
+    #[serde(default)]
+    pub transaction_scanner: TransactionScanner,
+}
+
+#[derive(Deserialize, PartialEq, Clone, Copy)]
+#[cfg_attr(test, derive(Debug))]
+pub struct TransactionScanner {
+    #[serde(
+        rename = "fetch_signatures_interval_in_seconds",
+        default = "config_defaults::sentinel_fetch_signatures_interval"
+    )]
+    pub fetch_signatures_interval: Duration,
+    #[serde(default = "config_defaults::sentinel_max_concurrent_rpc_requests")]
+    pub max_concurrent_rpc_requests: usize,
+    #[serde(default = "config_defaults::sentinel_queue_capacity")]
+    pub queue_capacity: usize,
+}
+
+impl Default for TransactionScanner {
+    fn default() -> Self {
+        Self {
+            fetch_signatures_interval: config_defaults::sentinel_fetch_signatures_interval(),
+            max_concurrent_rpc_requests: config_defaults::sentinel_max_concurrent_rpc_requests(),
+            queue_capacity: config_defaults::sentinel_queue_capacity(),
+        }
+    }
 }
 
 #[derive(Deserialize, PartialEq)]
@@ -176,6 +209,26 @@ mod serde_utils {
     }
 }
 
+mod config_defaults {
+    use super::*;
+    pub fn cancellation_timeout() -> Duration {
+        Duration::from_secs(30)
+    }
+    pub fn sentinel_fetch_signatures_interval() -> Duration {
+        Duration::from_secs(5)
+    }
+    pub fn sentinel_max_concurrent_rpc_requests() -> usize {
+        20
+    }
+    pub fn sentinel_queue_capacity() -> usize {
+        1_000
+    }
+
+    pub fn solana_chain_name() -> String {
+        "solana".into()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -217,6 +270,7 @@ mod tests {
         let expected = Config {
             axelar_to_solana: Some(AxelarToSolana {
                 approver: AxelarApprover {
+                    solana_chain_name: "solana".into(),
                     rpc: Url::parse("http://0.0.0.1/")?,
                 },
                 includer: SolanaIncluder {
@@ -228,8 +282,10 @@ mod tests {
             }),
             solana_to_axelar: Some(SolanaToAxelar {
                 sentinel: SolanaSentinel {
+                    solana_chain_name: "solana".into(),
                     gateway_address,
                     rpc: Url::parse("http://0.0.0.3/")?,
+                    transaction_scanner: Default::default(),
                 },
                 verifier: AxelarVerifier {
                     rpc: Uri::from_static("http://0.0.0.4/"),
@@ -241,6 +297,7 @@ mod tests {
             health_check: HealthCheck {
                 bind_addr: SocketAddr::from_str(healthcheck_bind_addr)?,
             },
+            cancellation_timeout: Duration::from_secs(30),
         };
         assert_eq!(parsed, expected);
         assert!(parsed.validate().is_ok());
@@ -278,6 +335,7 @@ mod tests {
             axelar_to_solana: Some(AxelarToSolana {
                 approver: AxelarApprover {
                     rpc: Url::parse("http://0.0.0.1/")?,
+                    solana_chain_name: "solana".into(),
                 },
                 includer: SolanaIncluder {
                     rpc: Url::parse("http://0.0.0.2/")?,
@@ -293,6 +351,7 @@ mod tests {
             health_check: HealthCheck {
                 bind_addr: SocketAddr::from_str(healthcheck_bind_addr)?,
             },
+            cancellation_timeout: Duration::from_secs(30),
         };
         assert_eq!(parsed, expected);
         assert!(parsed.validate().is_ok());
@@ -325,8 +384,10 @@ mod tests {
             axelar_to_solana: None,
             solana_to_axelar: Some(SolanaToAxelar {
                 sentinel: SolanaSentinel {
+                    solana_chain_name: "solana".into(),
                     gateway_address,
                     rpc: Url::parse("http://0.0.0.3/")?,
+                    transaction_scanner: Default::default(),
                 },
                 verifier: AxelarVerifier {
                     rpc: Uri::from_static("http://0.0.0.4/"),
@@ -338,6 +399,7 @@ mod tests {
             health_check: HealthCheck {
                 bind_addr: SocketAddr::from_str(healthcheck_bind_addr)?,
             },
+            cancellation_timeout: Duration::from_secs(30),
         };
         assert_eq!(parsed, expected);
         assert!(parsed.validate().is_ok());
@@ -443,6 +505,7 @@ mod tests {
             axelar_to_solana: Some(AxelarToSolana {
                 approver: AxelarApprover {
                     rpc: Url::parse(approver_rpc)?,
+                    solana_chain_name: "solana".into(),
                 },
                 includer: SolanaIncluder {
                     rpc: Url::parse(includer_rpc)?,
@@ -453,8 +516,10 @@ mod tests {
             }),
             solana_to_axelar: Some(SolanaToAxelar {
                 sentinel: SolanaSentinel {
+                    solana_chain_name: "solana".into(),
                     gateway_address,
                     rpc: Url::parse(sentinel_rpc)?,
+                    transaction_scanner: Default::default(),
                 },
                 verifier: AxelarVerifier {
                     rpc: Uri::from_static(verifier_rpc),
@@ -466,6 +531,7 @@ mod tests {
             health_check: HealthCheck {
                 bind_addr: SocketAddr::from_str(healthcheck_bind_addr)?,
             },
+            cancellation_timeout: Duration::from_secs(30),
         };
         assert_eq!(parsed, expected);
         assert!(parsed.validate().is_ok());

@@ -22,8 +22,6 @@ use crate::transports::SolanaToAxelarMessage;
 use crate::verifier::AxelarVerifier;
 use crate::{config, healthcheck};
 
-const TIMEOUT: Duration = Duration::from_secs(30);
-
 pub struct Relayer {
     axelar_to_solana: Option<AxelarToSolanaHandler>,
     solana_to_axelar: Option<SolanaToAxelarHandler>,
@@ -39,6 +37,7 @@ impl Relayer {
             solana_to_axelar,
             database,
             health_check,
+            cancellation_timeout,
         } = config;
 
         let state = State::from_url(database.url)
@@ -49,10 +48,21 @@ impl Relayer {
 
         Ok(Relayer {
             axelar_to_solana: axelar_to_solana.map(|config| {
-                AxelarToSolanaHandler::new(config.approver, config.includer, state.clone())
+                AxelarToSolanaHandler::new(
+                    config.approver,
+                    config.includer,
+                    state.clone(),
+                    cancellation_timeout,
+                )
             }),
-            solana_to_axelar: solana_to_axelar
-                .map(|config| SolanaToAxelarHandler::new(config.sentinel, config.verifier, state)),
+            solana_to_axelar: solana_to_axelar.map(|config| {
+                SolanaToAxelarHandler::new(
+                    config.sentinel,
+                    config.verifier,
+                    state,
+                    cancellation_timeout,
+                )
+            }),
             health_check_server_addr: health_check.bind_addr,
         })
     }
@@ -114,6 +124,7 @@ struct AxelarToSolanaHandler {
     includer: config::SolanaIncluder,
     #[allow(dead_code)]
     state: State,
+    cancellation_timeout: Duration,
 }
 
 impl AxelarToSolanaHandler {
@@ -121,11 +132,13 @@ impl AxelarToSolanaHandler {
         approver: config::AxelarApprover,
         includer: config::SolanaIncluder,
         state: State,
+        cancellation_timeout: Duration,
     ) -> Self {
         Self {
             approver,
             includer,
             state,
+            cancellation_timeout,
         }
     }
 
@@ -152,16 +165,15 @@ impl AxelarToSolanaHandler {
                 _ = &mut includer_future => error!("Solana Includer has failed")
             }
 
-            // Trigger cancellation and wait for both actors to gracefully shut down, up to
-            // `TIMEOUT`.
+            // Trigger cancellation and wait for both actors to gracefully shut down
             cancellation_token.cancel();
             tracing::debug!(
-                timeout = TIMEOUT.as_secs(),
+                timeout_seconds = self.cancellation_timeout.as_secs(),
                 "Waiting for components to gracefully shutdown"
             );
             let _ = join!(
-                timeout(TIMEOUT, approver_future),
-                timeout(TIMEOUT, includer_future)
+                timeout(self.cancellation_timeout, approver_future),
+                timeout(self.cancellation_timeout, includer_future)
             );
             tracing::warn!("Restarting Axelar to Solana transport")
         }
@@ -184,7 +196,10 @@ impl AxelarToSolanaHandler {
         let includer_cancelation_token = transport_cancelation_token.child_token();
 
         let approver = {
-            let config::AxelarApprover { rpc } = approver_config;
+            let config::AxelarApprover {
+                rpc,
+                solana_chain_name,
+            } = approver_config;
 
             // Derive account from secret key
             let relayer_account = includer_config.keypair.pubkey();
@@ -195,6 +210,7 @@ impl AxelarToSolanaHandler {
                 relayer_account,
                 state.clone(),
                 approver_cancelation_token,
+                solana_chain_name.clone(),
             )
         };
 
@@ -223,6 +239,7 @@ struct SolanaToAxelarHandler {
     sentinel: config::SolanaSentinel,
     verifier: config::AxelarVerifier,
     state: State,
+    cancellation_timeout: Duration,
 }
 
 impl SolanaToAxelarHandler {
@@ -230,11 +247,13 @@ impl SolanaToAxelarHandler {
         sentinel: config::SolanaSentinel,
         verifier: config::AxelarVerifier,
         state: State,
+        cancellation_timeout: Duration,
     ) -> Self {
         Self {
             sentinel,
             verifier,
             state,
+            cancellation_timeout,
         }
     }
 
@@ -272,12 +291,12 @@ impl SolanaToAxelarHandler {
             // `TIMEOUT`.
             cancellation_token.cancel();
             tracing::debug!(
-                timeout = TIMEOUT.as_secs(),
+                timeout_seconds = self.cancellation_timeout.as_secs(),
                 "Waiting for components to gracefully shutdown"
             );
             let _ = join!(
-                timeout(TIMEOUT, sentinel_future),
-                timeout(TIMEOUT, verifier_future)
+                timeout(self.cancellation_timeout, sentinel_future),
+                timeout(self.cancellation_timeout, verifier_future)
             );
             tracing::warn!("Restarting Solana-to-Axelar transport")
         }
@@ -305,6 +324,8 @@ impl SolanaToAxelarHandler {
         let config::SolanaSentinel {
             gateway_address,
             rpc,
+            solana_chain_name,
+            transaction_scanner,
         } = sentinel_config;
         let sentinel = SolanaSentinel::new(
             *gateway_address,
@@ -312,6 +333,8 @@ impl SolanaToAxelarHandler {
             sender,
             state.clone(),
             sentinel_cancelation_token,
+            solana_chain_name.clone(),
+            *transaction_scanner,
         );
 
         // Axelar Verifier
