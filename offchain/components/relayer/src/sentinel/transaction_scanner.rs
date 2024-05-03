@@ -110,6 +110,7 @@ where
     async fn run(self) {
         let (signature_sender, signature_receiver) =
             mpsc::channel::<Signature>(SIGNATURE_CHANNEL_CAPACITY);
+        let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_RPC_REQUESTS));
 
         // Start the pipeline long-living futures.
         let signature_scanner = signature_scanner::run(
@@ -119,6 +120,7 @@ where
             signature_sender,
             self.fetch_signatures_interval,
             self.cancellation_token.clone(),
+            semaphore.clone(),
         );
 
         let transaction_retriever = transaction_retriever::run(
@@ -126,6 +128,7 @@ where
             signature_receiver,
             self.sender.clone(),
             self.cancellation_token.clone(),
+            semaphore,
         );
 
         // Signals cancellation and sends an error message back to the Solana Sentinel.
@@ -147,7 +150,7 @@ where
                 termination(InternalError::Cancelled.into()).await;
             }
 
-            error = signature_scanner => {
+            Err(error) = signature_scanner => {
                 warn!(%error, source="signature-scanner", "terminating");
                 termination(error.into()).await;
             },
@@ -162,9 +165,12 @@ where
 
 /// Functions to obtain transaction signatures from Solana RPC.
 pub mod signature_scanner {
+    use std::convert::Infallible as Never;
+
     use solana_client::client_error::ClientError;
     use solana_sdk::signature::ParseSignatureError;
     use tokio::sync::mpsc::error::SendError;
+    use tokio::sync::AcquireError;
     use tracing::trace;
 
     use super::*;
@@ -181,6 +187,8 @@ pub mod signature_scanner {
         SendSignatureError(#[from] SendError<Signature>),
         #[error("State Error - {0}")]
         State(Box<dyn std::error::Error + Send>),
+        #[error("Failed to acquire a semaphore permit")]
+        SemaphoreClosed(#[from] AcquireError),
     }
 
     /// Continously fetches signatures from RPC and pipe them over a channel to
@@ -191,7 +199,7 @@ pub mod signature_scanner {
     /// This function is cancel safe. All lost work can be recovered as the
     /// task's savepoint is sourced from the persistence layer, which
     /// remains unchanged in this context.
-    #[tracing::instrument(name = "signature scanner", skip_all)]
+    #[tracing::instrument(name = "signature scanner", skip_all, err)]
     pub async fn run<S>(
         address: Pubkey,
         url: Url,
@@ -199,7 +207,8 @@ pub mod signature_scanner {
         signature_sender: Sender<Signature>,
         period: Duration,
         cancellation_token: CancellationToken,
-    ) -> SignatureScannerError
+        semaphore: Arc<Semaphore>,
+    ) -> Result<Never, SignatureScannerError>
     where
         S: State<Signature> + Clone,
     {
@@ -208,37 +217,42 @@ pub mod signature_scanner {
         let rpc_client = Arc::new(RpcClient::new(url.to_string()));
 
         loop {
+            // Greedly ask for all available permits from this semaphore, to ensure this
+            // task will not concur with `transaction_retriever::fetch` tasks.
+            let wait_for_all_permits = semaphore
+                .clone()
+                .acquire_many_owned(MAX_CONCURRENT_RPC_REQUESTS as u32);
+            let all_permits = tokio::select! {
+                all_permits = wait_for_all_permits => { all_permits? }
+                _ = cancellation_token.cancelled() => { Err(SignatureScannerError::Cancelled)? }
+            };
+            trace!("acquired all semaphore permits (exclusive access)");
+
+            // Now that we have all permits, scan for signatures while waiting for the
+            // cancelation signal.
             let future = collect_and_process_signatures(
                 address,
                 rpc_client.clone(),
                 state.clone(),
                 signature_sender.clone(),
             );
-
-            // TODO: Try await for all/max permits from the semaphore, as not to run
-            // concurrent with `transaction_retriever::fetch` tasks
-
             tokio::select! {
-                _ = cancellation_token.cancelled() => {
-                    trace!("cancelled");
-                    return SignatureScannerError::Cancelled
-                }
+                res = future => { res }
+                _ = cancellation_token.cancelled() => { Err(SignatureScannerError::Cancelled) }
+            }?;
 
-                res = future => {
-                    if let Err(error) = res {
-                        trace!(%error, "failed to collect signatures");
-                        return error
-                    }
-                }
+            // Give back all permits to the semaphore.
+            drop(all_permits);
 
-            };
+            // Give some time for downstream futures to acquire permits from this semaphore.
+            trace!("sleeping");
             interval.tick().await;
         }
     }
 
     /// Calls Solana RPC after relevant transaction signatures and send results
     /// over a channel.
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all, err)]
     async fn collect_and_process_signatures<S>(
         address: Pubkey,
         rpc_client: Arc<RpcClient>,
@@ -385,9 +399,9 @@ pub mod transaction_retriever {
         mut signature_receiver: Receiver<Signature>,
         transaction_sender: Sender<TransactionScannerMessage>,
         cancellation_token: CancellationToken,
+        semaphore: Arc<Semaphore>,
     ) -> TransactionRetrieverError {
         let rpc_client = Arc::new(RpcClient::new(url.to_string()));
-        let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_RPC_REQUESTS));
         let build_future = |signature: Signature| {
             fetch_with_permit(
                 signature,
