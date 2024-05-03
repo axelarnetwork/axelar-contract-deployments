@@ -13,6 +13,9 @@ on:
           - mainnet
           - stagenet
 
+  schedule:
+    - cron: '0 */12 * * *'
+
 jobs:
   update-gas:
     name: 'Update Gas Info'
