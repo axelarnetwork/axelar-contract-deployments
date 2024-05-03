@@ -1179,6 +1179,9 @@ function toBigNumberString(number) {
 
 function timeout(prom, time, exception) {
     let timer;
+
+    // Racing the promise with a timer
+    // If the timer resolves first, the promise is rejected with the exception
     return Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]).finally(() =>
         clearTimeout(timer),
     );
