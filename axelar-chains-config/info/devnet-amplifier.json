@@ -1,7 +1,7 @@
 {
   "chains": {
     "avalanche": {
-      "name": "avalanche",
+      "name": "Avalanche",
       "id": "avalanche",
       "axelarId": "avalanche",
       "chainId": 43113,
