@@ -8,7 +8,10 @@ use futures::future::try_join_all;
 use futures::stream::{FuturesUnordered, StreamExt};
 use gmp_gateway::instructions;
 use gmp_gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
+use solana_client::client_error::ClientErrorKind;
 use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_client::rpc_request::RpcError;
+use solana_sdk::account::Account;
 use solana_sdk::hash::Hash;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signature};
@@ -198,6 +201,16 @@ impl SolanaIncluder {
             approval.execute_data,
         )
         .map_err(IncluderError::InitializeExecuteDataInstruction)?;
+        let (execute_data_pda, ..) = execute_data.pda(&gateway_config_pda);
+
+        // Exit early if execute account is already initialized.
+        if Self::fetch_solana_account(rpc, execute_data_pda)
+            .await?
+            .is_some()
+        {
+            info!("execute_data account is already initialized");
+            return Ok((execute_data, execute_data_pda));
+        };
         let transaction = Transaction::new_signed_with_payer(
             &[instruction],
             Some(&payer.pubkey()),
@@ -218,7 +231,7 @@ impl SolanaIncluder {
 
     /// Sends a transaction with the `initialize_pending_command` instruction to
     /// the Gateway. Returns the address of the command account.
-    #[tracing::instrument(skip_all, fields(recent_block_hash), err)]
+    #[tracing::instrument(skip_all, err, fields(command_id=hex::encode(command.command_id())))]
     async fn initialize_pending_command(
         rpc: &RpcClient,
         gateway_config_pda: Pubkey,
@@ -226,8 +239,13 @@ impl SolanaIncluder {
         command: DecodedCommand,
         recent_blockhash: Hash,
     ) -> Result<Pubkey, IncluderError> {
-        let command_id = hex::encode(command.command_id());
+        // Check if the command account has been initialized or executed.
         let (command_address, ..) = GatewayApprovedCommand::pda(&gateway_config_pda, &command);
+        let CommandAccountState::Uninitialized =
+            Self::check_approved_command_status(rpc, command_address).await?
+        else {
+            return Ok(command_address);
+        };
         let instruction =
             instructions::initialize_pending_command(&gateway_config_pda, &payer.pubkey(), command)
                 .map_err(IncluderError::InitializePendingCommandInstruction)?;
@@ -243,9 +261,48 @@ impl SolanaIncluder {
             .map_err(|client_error| {
                 IncluderError::InitializePendingCommandTransaction(client_error)
             })?;
-        debug!(%signature, %command_id, "initialized pending command account");
+        debug!(%signature, "initialized pending command account");
 
         Ok(command_address)
+    }
+
+    /// Fetch a given Solana account, if it exists.
+    #[tracing::instrument(skip(rpc), err)]
+    async fn fetch_solana_account(
+        rpc: &RpcClient,
+        account: Pubkey,
+    ) -> Result<Option<Account>, IncluderError> {
+        rpc.get_account(&account)
+            .await
+            .map(Some)
+            .or_else(|error| match error.kind() {
+                // Account doesn't exist
+                ClientErrorKind::RpcError(RpcError::ForUser(_)) => Ok(None),
+                _other_error => {
+                    Err(IncluderError::AccountPreInitializationCheck { error, account })
+                }
+            })
+    }
+
+    /// Checks whether the approved command PDA exists or has been initialized.
+    #[tracing::instrument(skip(rpc), err)]
+    async fn check_approved_command_status(
+        rpc: &RpcClient,
+        command_pda: Pubkey,
+    ) -> Result<CommandAccountState, IncluderError> {
+        let Some(account) = Self::fetch_solana_account(rpc, command_pda).await? else {
+            trace!("command account is uninitialized");
+            return Ok(CommandAccountState::Uninitialized);
+        };
+        let approved_command: GatewayApprovedCommand = borsh::from_slice(&account.data)
+            .map_err(IncluderError::ApprovedCommandDeserialization)?;
+        if approved_command.is_command_pending() {
+            info!("command account has already been initialized");
+            Ok(CommandAccountState::Initialized)
+        } else {
+            info!("command account has already been executed");
+            Ok(CommandAccountState::Executed)
+        }
     }
 
     /// Initialize all pending commands for the given ´execute_data`.
@@ -304,4 +361,17 @@ impl SolanaIncluder {
         info!(%signature, %execute_data_account, "called `execute`");
         Ok(signature)
     }
+}
+
+/// Possible command account statuses for operatorship transfer or call contract
+/// variants.
+enum CommandAccountState {
+    /// The command account does not exist.
+    Uninitialized,
+    /// Command account exists and is in the desired state, so initialization
+    /// can be skipped.
+    Initialized,
+    /// Command account has already been executed, so initializing it would lead
+    /// to an error.
+    Executed,
 }

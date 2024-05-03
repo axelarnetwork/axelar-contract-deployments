@@ -126,6 +126,15 @@ impl GatewayApprovedCommand {
     }
 
     /// Returns `true` if this command was executed by the gateway.
+    pub fn is_command_pending(&self) -> bool {
+        matches!(
+            self.status,
+            GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Pending)
+                | GatewayCommandStatus::TransferOperatorship(TransferOperatorship::Pending)
+        )
+    }
+
+    /// Returns `true` if this command was executed by the gateway.
     pub fn is_command_executed(&self) -> bool {
         matches!(
             self.status,

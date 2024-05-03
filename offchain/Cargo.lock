@@ -4457,6 +4457,7 @@ dependencies = [
  "axelar-executable",
  "axum 0.7.5",
  "bcs",
+ "borsh 1.4.0",
  "clap 4.5.4",
  "dashmap",
  "futures",

@@ -10,6 +10,7 @@ default = []
 anyhow.workspace = true
 axum.workspace = true
 bcs.workspace = true
+borsh.workspace = true
 clap = { workspace = true, features = ["derive"] }
 dashmap.workspace = true
 futures-concurrency.workspace = true

@@ -1,6 +1,7 @@
 use axelar_executable::axelar_message_primitives::command::DecodeError;
 use solana_client::client_error::ClientError;
 use solana_sdk::program_error::ProgramError;
+use solana_sdk::pubkey::Pubkey;
 
 /// Errors that can happen within the Solana Includer module.
 #[derive(Debug, thiserror::Error)]
@@ -36,6 +37,19 @@ pub(super) enum IncluderError {
     /// Used when we fail to submit an `execute` transaction.
     #[error("failed to submit an execute transaction")]
     ExecuteTransaction(#[source] ClientError),
+
+    /// Used when we fail to verify if an account exists before attempt to
+    /// initialize it.
+    #[error("failed to check if an account was initialized")]
+    AccountPreInitializationCheck {
+        #[source]
+        error: ClientError,
+        account: Pubkey,
+    },
+
+    /// Used when we fail to deserialize a `GatewayApprovedCommand`
+    #[error("failed to deserialize an approved command account")]
+    ApprovedCommandDeserialization(#[source] std::io::Error),
 
     /// Used when the Solana RPC fails to return a recent block hash to be used
     /// as a transaction parameter.
