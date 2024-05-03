@@ -901,7 +901,8 @@
       "confirmations": 3,
       "eip1559": true,
       "finality": "120",
-      "approxFinalityWaitTime": 60
+      "approxFinalityWaitTime": 60,
+      "timeout": 180000
     },
     "linea": {
       "name": "Linea",
