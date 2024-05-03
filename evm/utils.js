@@ -1182,11 +1182,9 @@ function timeout(prom, time, exception) {
 
     // Racing the promise with a timer
     // If the timer resolves first, the promise is rejected with the exception
-    const race = Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]);
-
-    race.finally(() => clearTimeout(timer));
-
-    return race;
+    return Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]).finally(() =>
+        clearTimeout(timer),
+    );
 }
 
 module.exports = {
