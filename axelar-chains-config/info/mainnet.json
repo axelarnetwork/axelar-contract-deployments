@@ -368,7 +368,7 @@
       },
       "gasOptions": {
         "gasLimit": 8000000,
-        "gasPriceAdjustment": 1.4
+        "gasPriceAdjustment": 1.8
       },
       "staticGasOptions": {
         "gasLimit": 3000000,
@@ -2282,6 +2282,17 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 25
     }
+  },
+  "stellar": {
+    "id": "stellar",
+    "rpc": "https://rpc.ankr.com/stellar_soroban",
+    "horizonRpc": "https://horizon.stellar.org",
+    "networkType": "mainnet",
+    "explorer": {
+      "name": "Soroban Nownodes",
+      "url": "https://soroban.nownodes.io"
+    },
+    "tokenSymbol": "XLM"
   },
   "axelar": {
     "id": "Axelarnet",
