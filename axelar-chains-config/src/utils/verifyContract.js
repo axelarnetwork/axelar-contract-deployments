@@ -28,12 +28,15 @@ const verifyContract = (env, chain, contract, args, options = {}) => {
     console.log(cmd);
 
     try {
-        execSync(cmd, { stdio: 'inherit' });
+        execSync(cmd, { stdio: ['inherit', 'pipe', 'pipe'] });
         console.log('Verified!');
-    } catch(error) {
-        console.error(`Error occured while trying to verify ${contract} on ${chain.toLowerCase()}: ${error}`);
+    } catch (error) {
+        if (error.message.includes('Reason: Already Verified')) {
+            console.log(`Contract ${contract} is already verified on ${chain.toLowerCase()}.`);
+        } else {
+            throw new Error(`An error occurred while trying to verify ${contract} on ${chain.toLowerCase()}: ${error}`);
+        }
     }
-
 };
 
 module.exports = {
