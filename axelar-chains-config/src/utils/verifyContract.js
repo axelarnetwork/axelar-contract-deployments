@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const { execSync } = require('child_process');
 const { writeFileSync } = require('fs');
 
 /**
@@ -12,7 +12,7 @@ const { writeFileSync } = require('fs');
  * @param {any[]} args
  * @returns {void}
  */
-const verifyContract = async (env, chain, contract, args, options = {}) => {
+const verifyContract = (env, chain, contract, args, options = {}) => {
     const stringArgs = args.map((arg) => JSON.stringify(arg));
     const content = `module.exports = [\n    ${stringArgs.join(',\n    ')}\n];`;
     const file = 'temp-arguments.js';
@@ -27,26 +27,13 @@ const verifyContract = async (env, chain, contract, args, options = {}) => {
     console.log(`Verifying contract ${contract} with args '${stringArgs.join(',')}'`);
     console.log(cmd);
 
-    await new Promise((resolve, reject) => {
-        exec(cmd, { stdio: 'inherit' }, (error, stdout, stderr) => {
-            console.log(stdout);
+    try {
+        execSync(cmd, { stdio: 'inherit' });
+        console.log('Verified!');
+    } catch(error) {
+        console.error(`Error occured while trying to verify ${contract} on ${chain.toLowerCase()}: ${error}`);
+    }
 
-            if (error) {
-                if (stderr && stderr.includes('Reason: Already Verified')) {
-                    resolve();
-                    return;
-                }
-
-                console.error(`Error occured while trying to verify ${contract} on ${chain.toLowerCase()}.`);
-                reject(error);
-                return;
-            }
-
-            resolve();
-        });
-    });
-
-    console.log('Verified');
 };
 
 module.exports = {
