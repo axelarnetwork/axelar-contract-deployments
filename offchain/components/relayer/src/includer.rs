@@ -61,6 +61,19 @@ impl SolanaIncluder {
         }
     }
 
+    /// Creates a new `Worker` based on this `SolanaIncuder`
+    fn worker(&self) -> Worker {
+        // Arc is necessary because `RpcClient` isn't `Send`.
+        let client = Arc::new(RpcClient::new(self.rpc.to_string()));
+        Worker {
+            client,
+            keypair: self.keypair.clone(),
+            gateway_address: self.gateway_address,
+            gateway_config_address: self.gateway_config_address,
+            state: self.state.clone(),
+        }
+    }
+
     /// Tries to run [`SolanaIncluder`] forever.
     #[tracing::instrument(name = "solana-includer", skip(self))]
     pub async fn run(self) {
@@ -75,21 +88,8 @@ impl SolanaIncluder {
     /// Listens for incoming messages from the Axelar Approver and process them
     /// concurrently until an error is found or the shutdown signal is received.
     async fn work(mut self) -> Result<Never, IncluderError> {
+        let worker = self.worker();
         let receiver = &mut self.receiver;
-        let solana_client = RpcClient::new(self.rpc.to_string());
-
-        // Creates a worker future for this context.
-        let worker_future = |approval: SubscribeToApprovalsResponse| {
-            Self::include(
-                &solana_client,
-                self.gateway_address,
-                self.gateway_config_address,
-                approval,
-                self.keypair.clone(),
-                self.state.clone(),
-            )
-        };
-
         let mut futures = FuturesUnordered::new();
 
         // Listen for new approvals and process them concurrently until an error occurs
@@ -106,7 +106,8 @@ impl SolanaIncluder {
                 message = receiver.recv() => {
                     trace!("received a new message");
                     let approval = message.ok_or(IncluderError::ChannelClosed)?;
-                    futures.push(worker_future(approval));
+                    let worker_clone = worker.clone();
+                    futures.push(async move {worker_clone.include(approval).await});
                 }
 
                 // Advance the `FuturesUnordered` internal state and return
@@ -120,23 +121,47 @@ impl SolanaIncluder {
             };
         }
     }
+}
 
+/// Possible command account statuses for operatorship transfer or call contract
+/// variants.
+enum CommandAccountState {
+    /// The command account does not exist.
+    Uninitialized,
+    /// Command account exists and is in the desired state, so initialization
+    /// can be skipped.
+    Initialized,
+    /// Command account has already been executed, so initializing it would lead
+    /// to an error.
+    Executed,
+}
+
+/// Worker struct for Solana inclusion process.
+///
+/// Performs all steps required to include an Axelar message into Solana.
+///
+/// Necessary because `SolanaIncluder` cannot be referenced while its input
+/// channel is being listened to.
+#[derive(Clone)]
+struct Worker {
+    client: Arc<RpcClient>,
+    keypair: Arc<Keypair>,
+    gateway_address: Pubkey,
+    gateway_config_address: Pubkey,
+    state: State,
+}
+
+impl Worker {
     /// Tries to include the Axelar approved message into the Solana Gateway.
     #[tracing::instrument(skip_all)]
-    async fn include(
-        rpc: &RpcClient,
-        gateway_address: Pubkey,
-        gateway_config_pda: Pubkey,
-        approval: SubscribeToApprovalsResponse,
-        payer: Arc<Keypair>,
-        state: State,
-    ) -> Result<(), IncluderError> {
+    async fn include(&self, approval: SubscribeToApprovalsResponse) -> Result<(), IncluderError> {
         let axelar_block_height = approval.block_height;
 
         // Try to reuse the block hash for upcoming transactions if  possible.
         // If hashes get too old, we could then move this call into the individual
         // tasks/futures.
-        let recent_blockhash = rpc
+        let recent_blockhash = self
+            .client
             .get_latest_blockhash()
             .await
             .map_err(IncluderError::LatestBlockHash)?;
@@ -145,134 +170,105 @@ impl SolanaIncluder {
         //
         // Optimization: We could send the initialize_execute_data transaction
         // in parallel with the initialize_pending_command transactions.
-        let (execute_data, execute_data_account) =
-            Self::submit_initialize_execute_data_transaction(
-                rpc,
-                gateway_config_pda,
-                approval,
-                payer.clone(),
-                recent_blockhash,
-            )
+        let (execute_data, execute_data_account) = self
+            .submit_initialize_execute_data_transaction(approval, recent_blockhash)
             .await?;
 
         // Initialize command accounts.
-        let command_accounts = Self::initialize_pending_commands(
-            rpc,
-            gateway_config_pda,
-            execute_data,
-            payer.clone(),
-            recent_blockhash,
-        )
-        .await?;
+        let command_accounts = self
+            .initialize_pending_commands(execute_data, recent_blockhash)
+            .await?;
 
         // Call excute
-        Self::submit_execute_transaction(
-            rpc,
-            gateway_address,
-            gateway_config_pda,
-            execute_data_account,
-            &command_accounts,
-            payer,
-            recent_blockhash,
-        )
-        .await?;
+        self.submit_execute_transaction(execute_data_account, &command_accounts, recent_blockhash)
+            .await?;
 
         // Persist the current block number
-        state
+        self.state
             .update_axelar_block_height(axelar_block_height.try_into()?)
             .await?;
 
         Ok(())
     }
 
+    /// Sends a transaction with the `execute` instruction to the Gateway.
+    #[tracing::instrument(skip_all, err)]
+    async fn submit_execute_transaction(
+        &self,
+        execute_data_account: Pubkey,
+        command_accounts: &[Pubkey],
+        recent_blockhash: Hash,
+    ) -> Result<Signature, IncluderError> {
+        let instruction = instructions::execute(
+            self.gateway_address,
+            execute_data_account,
+            self.gateway_config_address,
+            command_accounts,
+        )
+        .map_err(IncluderError::ExecuteInstruction)?;
+        let transaction = Transaction::new_signed_with_payer(
+            &[instruction],
+            Some(&self.keypair.pubkey()),
+            &[&self.keypair],
+            recent_blockhash,
+        );
+        let signature = self
+            .client
+            .send_and_confirm_transaction(&transaction)
+            .await
+            .map_err(IncluderError::ExecuteTransaction)?;
+        info!(%signature, %execute_data_account, "called `execute`");
+        Ok(signature)
+    }
+
     /// Sends a transaction with the `initialize_execute_data` instruction to
     /// the Gateway.
     #[tracing::instrument(skip_all, fields(recent_blockhash))]
     async fn submit_initialize_execute_data_transaction(
-        rpc: &RpcClient,
-        gateway_config_pda: Pubkey,
+        &self,
         approval: SubscribeToApprovalsResponse,
-        payer: Arc<Keypair>,
         recent_blockhash: Hash,
     ) -> Result<(GatewayExecuteData, Pubkey), IncluderError> {
         let (instruction, execute_data) = instructions::initialize_execute_data(
-            payer.pubkey(),
-            gateway_config_pda,
+            self.keypair.pubkey(),
+            self.gateway_config_address,
             approval.execute_data,
         )
         .map_err(IncluderError::InitializeExecuteDataInstruction)?;
-        let (execute_data_pda, ..) = execute_data.pda(&gateway_config_pda);
+        let (execute_data_pda, ..) = execute_data.pda(&self.gateway_config_address);
 
         // Exit early if execute account is already initialized.
-        if Self::fetch_solana_account(rpc, execute_data_pda)
-            .await?
-            .is_some()
-        {
+        if self.fetch_solana_account(execute_data_pda).await?.is_some() {
             info!("execute_data account is already initialized");
             return Ok((execute_data, execute_data_pda));
         };
         let transaction = Transaction::new_signed_with_payer(
             &[instruction],
-            Some(&payer.pubkey()),
-            &[&payer],
+            Some(&self.keypair.pubkey()),
+            &[&self.keypair],
             recent_blockhash,
         );
-        let signature = rpc
+        let signature = self
+            .client
             .send_and_confirm_transaction(&transaction)
             .await
             .map_err(|client_error| {
                 IncluderError::InitializeExecuteDataTransaction(client_error)
             })?;
 
-        let (account, ..) = execute_data.pda(&gateway_config_pda);
+        let (account, ..) = execute_data.pda(&self.gateway_config_address);
         debug!(%signature, %account, "initialized execute_data account");
         Ok((execute_data, account))
     }
 
-    /// Sends a transaction with the `initialize_pending_command` instruction to
-    /// the Gateway. Returns the address of the command account.
-    #[tracing::instrument(skip_all, err, fields(command_id=hex::encode(command.command_id())))]
-    async fn initialize_pending_command(
-        rpc: &RpcClient,
-        gateway_config_pda: Pubkey,
-        payer: Arc<Keypair>,
-        command: DecodedCommand,
-        recent_blockhash: Hash,
-    ) -> Result<Pubkey, IncluderError> {
-        // Check if the command account has been initialized or executed.
-        let (command_address, ..) = GatewayApprovedCommand::pda(&gateway_config_pda, &command);
-        let CommandAccountState::Uninitialized =
-            Self::check_approved_command_status(rpc, command_address).await?
-        else {
-            return Ok(command_address);
-        };
-        let instruction =
-            instructions::initialize_pending_command(&gateway_config_pda, &payer.pubkey(), command)
-                .map_err(IncluderError::InitializePendingCommandInstruction)?;
-        let transaction = Transaction::new_signed_with_payer(
-            &[instruction],
-            Some(&payer.pubkey()),
-            &[&payer],
-            recent_blockhash,
-        );
-        let signature = rpc
-            .send_and_confirm_transaction(&transaction)
-            .await
-            .map_err(|client_error| {
-                IncluderError::InitializePendingCommandTransaction(client_error)
-            })?;
-        debug!(%signature, "initialized pending command account");
-
-        Ok(command_address)
-    }
-
     /// Fetch a given Solana account, if it exists.
-    #[tracing::instrument(skip(rpc), err)]
+    #[tracing::instrument(skip(self), err)]
     async fn fetch_solana_account(
-        rpc: &RpcClient,
+        &self,
         account: Pubkey,
     ) -> Result<Option<Account>, IncluderError> {
-        rpc.get_account(&account)
+        self.client
+            .get_account(&account)
             .await
             .map(Some)
             .or_else(|error| match error.kind() {
@@ -284,13 +280,53 @@ impl SolanaIncluder {
             })
     }
 
+    /// Sends a transaction with the `initialize_pending_command` instruction to
+    /// the Gateway. Returns the address of the command account.
+    #[tracing::instrument(skip_all, err, fields(command_id=hex::encode(command.command_id())))]
+    async fn initialize_pending_command(
+        &self,
+        command: DecodedCommand,
+        recent_blockhash: Hash,
+    ) -> Result<Pubkey, IncluderError> {
+        // Check if the command account has been initialized or executed.
+        let (command_address, ..) =
+            GatewayApprovedCommand::pda(&self.gateway_config_address, &command);
+        let CommandAccountState::Uninitialized =
+            self.check_approved_command_status(command_address).await?
+        else {
+            return Ok(command_address);
+        };
+        let instruction = instructions::initialize_pending_command(
+            &self.gateway_config_address,
+            &self.keypair.pubkey(),
+            command,
+        )
+        .map_err(IncluderError::InitializePendingCommandInstruction)?;
+        let transaction = Transaction::new_signed_with_payer(
+            &[instruction],
+            Some(&self.keypair.pubkey()),
+            &[&self.keypair],
+            recent_blockhash,
+        );
+        let signature = self
+            .client
+            .send_and_confirm_transaction(&transaction)
+            .await
+            .map_err(|client_error| {
+                IncluderError::InitializePendingCommandTransaction(client_error)
+            })?;
+        debug!(%signature, "initialized pending command account");
+
+        Ok(command_address)
+    }
+
     /// Checks whether the approved command PDA exists or has been initialized.
-    #[tracing::instrument(skip(rpc), err)]
+    #[tracing::instrument(skip(self), err)]
     async fn check_approved_command_status(
-        rpc: &RpcClient,
+        &self,
         command_pda: Pubkey,
     ) -> Result<CommandAccountState, IncluderError> {
-        let Some(account) = Self::fetch_solana_account(rpc, command_pda).await? else {
+        let Some(account) = self.fetch_solana_account(command_pda).await? else {
             trace!("command account is uninitialized");
             return Ok(CommandAccountState::Uninitialized);
         };
@@ -308,70 +344,19 @@ impl SolanaIncluder {
     /// Initialize all pending commands for the given ´execute_data`.
     #[tracing::instrument(skip_all, err, fields(command_batch = hex::encode(execute_data.command_batch_hash)))]
     async fn initialize_pending_commands(
-        rpc: &RpcClient,
-        gateway_config_pda: Pubkey,
+        &self,
         execute_data: GatewayExecuteData,
-        payer: Arc<Keypair>,
         recent_blockhash: Hash,
     ) -> Result<Vec<Pubkey>, IncluderError> {
-        let command_addresses = try_join_all(execute_data.command_batch.commands.into_iter().map(
-            |command| {
-                Self::initialize_pending_command(
-                    rpc,
-                    gateway_config_pda,
-                    payer.clone(),
-                    command,
-                    recent_blockhash,
-                )
-            },
-        ))
+        let command_addresses = try_join_all(
+            execute_data
+                .command_batch
+                .commands
+                .into_iter()
+                .map(|command| self.initialize_pending_command(command, recent_blockhash)),
+        )
         .await?;
         debug!("initialized all pending command accounts");
         Ok(command_addresses)
     }
-
-    /// Sends a transaction with the `execute` instruction to the Gateway.
-    #[tracing::instrument(skip_all, err)]
-    async fn submit_execute_transaction(
-        rpc: &RpcClient,
-        gateway_address: Pubkey,
-        gateway_config_pda: Pubkey,
-        execute_data_account: Pubkey,
-        command_accounts: &[Pubkey],
-        payer: Arc<Keypair>,
-        recent_blockhash: Hash,
-    ) -> Result<Signature, IncluderError> {
-        let instruction = instructions::execute(
-            gateway_address,
-            execute_data_account,
-            gateway_config_pda,
-            command_accounts,
-        )
-        .map_err(IncluderError::ExecuteInstruction)?;
-        let transaction = Transaction::new_signed_with_payer(
-            &[instruction],
-            Some(&payer.pubkey()),
-            &[&payer],
-            recent_blockhash,
-        );
-        let signature = rpc
-            .send_and_confirm_transaction(&transaction)
-            .await
-            .map_err(IncluderError::ExecuteTransaction)?;
-        info!(%signature, %execute_data_account, "called `execute`");
-        Ok(signature)
-    }
-}
-
-/// Possible command account statuses for operatorship transfer or call contract
-/// variants.
-enum CommandAccountState {
-    /// The command account does not exist.
-    Uninitialized,
-    /// Command account exists and is in the desired state, so initialization
-    /// can be skipped.
-    Initialized,
-    /// Command account has already been executed, so initializing it would lead
-    /// to an error.
-    Executed,
 }
