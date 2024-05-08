@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO solana_transaction (id, latest_signature, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP) ON CONFLICT (id) DO UPDATE SET latest_signature = EXCLUDED.latest_signature, updated_at = EXCLUDED.updated_at;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b9fb23c9ecdd3030860468911b0cd2ea2b9211e28b8c82cef6f8bb5d277998bc"
+}
