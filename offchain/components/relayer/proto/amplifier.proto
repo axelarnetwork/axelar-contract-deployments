@@ -22,6 +22,11 @@ service Amplifier {
       body : "*"
     };
   }
+  rpc GetReceipt(GetReceiptRequest) returns (GetReceiptResponse) {
+    option (google.api.http) = {
+      get : "/v1beta1/receipt/{receipt_id}"
+    };
+  }
 }
 
 message Message {
@@ -55,7 +60,6 @@ message VerifyRequest { Message message = 1; }
 
 message VerifyResponse {
   Message message = 1;
-//  bool success = 2;
   optional Error error = 2;
 }
 
@@ -64,11 +68,13 @@ enum ErrorCode {
   INTERNAL_ERROR = 1;
   AXELAR_NETWORK_ERROR = 2;
   INSUFFICIENT_GAS = 3;
+  FAILED_ON_CHAIN = 4;
+  MESSAGE_NOT_FOUND = 5;
 }
 
 message Error {
-    string error = 1;
-    ErrorCode error_code = 2;
+  string error = 1;
+  ErrorCode error_code = 2;
 }
 
 message SubscribeToWasmEventsRequest { optional uint64 start_height = 1; }
@@ -90,5 +96,14 @@ message BroadcastRequest {
 }
 
 message BroadcastResponse {
-  bool result = 1;
+  bool published = 1;
+  string receipt_id = 2;
+}
+
+message GetReceiptRequest {
+  string receipt_id = 1;
+}
+
+message GetReceiptResponse {
+  string tx_hash = 1;
 }

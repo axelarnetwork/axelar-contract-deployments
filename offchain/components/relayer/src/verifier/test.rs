@@ -15,9 +15,10 @@ use tower::service_fn;
 use crate::amplifier_api::amplifier_client::AmplifierClient;
 use crate::amplifier_api::amplifier_server::{Amplifier, AmplifierServer};
 use crate::amplifier_api::{
-    self, BroadcastRequest, BroadcastResponse, GetPayloadRequest, GetPayloadResponse, Message,
-    SubscribeToApprovalsRequest, SubscribeToApprovalsResponse, SubscribeToWasmEventsRequest,
-    SubscribeToWasmEventsResponse, VerifyRequest, VerifyResponse,
+    self, BroadcastRequest, BroadcastResponse, GetPayloadRequest, GetPayloadResponse,
+    GetReceiptRequest, GetReceiptResponse, Message, SubscribeToApprovalsRequest,
+    SubscribeToApprovalsResponse, SubscribeToWasmEventsRequest, SubscribeToWasmEventsResponse,
+    VerifyRequest, VerifyResponse,
 };
 use crate::state::interface::State;
 use crate::transports::SolanaToAxelarMessage;
@@ -172,6 +173,13 @@ impl Amplifier for MockServer {
         &self,
         _request: Request<BroadcastRequest>,
     ) -> Result<Response<BroadcastResponse>, Status> {
+        unimplemented!()
+    }
+
+    async fn get_receipt(
+        &self,
+        _request: tonic::Request<GetReceiptRequest>,
+    ) -> std::result::Result<tonic::Response<GetReceiptResponse>, tonic::Status> {
         unimplemented!()
     }
 }
