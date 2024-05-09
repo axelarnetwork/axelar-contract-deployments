@@ -1,5 +1,6 @@
 'use strict';
 
+const axios = require('axios');
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
@@ -53,6 +54,21 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
         ['bytes', 'bytes'],
         [data, await getWeightedSignaturesProof(data, operators, weights, threshold, signers)],
     );
+};
+
+const fetchBatchData = async (apiUrl, batchID) => {
+    try {
+        const response = await axios.post(apiUrl, { batchId });
+        const data = response.data?.data;
+
+        if (!Array.isArray(data) || !data[0] || !data[0].execute_data) {
+            throw new Error('Invalid data format or execute_data is empty.');
+        }
+
+        return '0x' + data[0].execute_data;
+    } catch (error) {
+        throw new Error(`Failed to fetch batch data: ${error.message}`);
+    }
 };
 
 async function processCommand(config, chain, options) {
@@ -175,6 +191,41 @@ async function processCommand(config, chain, options) {
             const receipt = await tx.wait(chain.confirmations);
 
             const eventEmitted = wasEventEmitted(receipt, gateway, 'ContractCall');
+
+            if (!eventEmitted) {
+                printWarn('Event not emitted in receipt.');
+            }
+
+            break;
+        }
+
+        case 'approveWithBatch': {
+            const { batchID, api, env } = options;
+
+            if (!batchID) {
+                throw new Error('Batch ID is required for the approve action');
+            }
+
+            const batchId = batchID.startsWith('0x') ? batchID.substring(2) : batchID;
+            const apiUrl =
+                api ||
+                (env === 'testnet'
+                    ? 'https://testnet.api.axelarscan.io/token/searchBatches'
+                    : 'https://api.axelarscan.io/token/searchBatches');
+
+            const executeData = await fetchBatchData(apiUrl, batchId);
+
+            const tx = {
+                to: gatewayAddress,
+                data: executeData,
+                ...gasOptions,
+            };
+
+            const response = await wallet.sendTransaction(tx);
+            printInfo('Approve tx', response.hash);
+
+            const receipt = await response.wait(chain.confirmations);
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'ContractCallApproved');
 
             if (!eventEmitted) {
                 printWarn('Event not emitted in receipt.');
@@ -389,6 +440,7 @@ if (require.main === module) {
                 'transferMintLimiter',
                 'mintLimit',
                 'params',
+                'approveWithBatch',
             ])
             .makeOptionMandatory(true),
     );
