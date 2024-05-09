@@ -124,7 +124,10 @@
         "gasPrice": 150000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      "approxFinalityWaitTime": 40,
+      "onchainGasEstimate": {
+        "blobBaseFee": 1
+      }
     },
     "avalanche": {
       "name": "Avalanche",
@@ -1367,7 +1370,11 @@
         "gasPrice": 10000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      "approxFinalityWaitTime": 25,
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1
+      }
     },
     "linea": {
       "name": "Linea",
@@ -1616,7 +1623,11 @@
         "gasPrice": 10000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 30
+      "approxFinalityWaitTime": 30,
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1
+      }
     },
     "mantle": {
       "name": "Mantle",
@@ -1731,8 +1742,8 @@
       "confirmations": 2,
       "explorer": {
         "name": "Mantle Explorer",
-        "url": "https://explorer.mantle.xyz",
-        "api": "https://explorer.mantle.xyz/api"
+        "url": "https://mantlescan.xyz",
+        "api": "https://api.mantlescan.xyz/api"
       },
       "skipRevertTests": true,
       "staticGasOptions": {
@@ -2278,6 +2289,7 @@
     "rpc": "https://rpc-axelar.imperator.co:443",
     "lcd": "https://lcd-axelar.imperator.co:443",
     "grpc": "grpc-axelar.imperator.co:2062",
-    "tokenSymbol": "AXL"
+    "tokenSymbol": "AXL",
+    "axelarscanApi": "https://api.axelarscan.io"
   }
 }

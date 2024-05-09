@@ -106,6 +106,7 @@ dist
 build/
 cache/
 artifacts/
+chains-info/
 
 local.json
 localnet.json
