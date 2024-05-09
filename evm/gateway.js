@@ -56,7 +56,7 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
     );
 };
 
-const fetchBatchData = async (apiUrl, batchID) => {
+const fetchBatchData = async (apiUrl, batchId) => {
     try {
         const response = await axios.post(apiUrl, { batchId });
         const data = response.data?.data;
