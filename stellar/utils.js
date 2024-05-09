@@ -24,7 +24,7 @@ function getNetworkPassphrase(networkType) {
         default:
             throw new Error(`Unknown network type: ${networkType}`);
     }
-};
+}
 
 async function buildTransaction(operation, server, wallet, networkType, options = {}) {
     const account = await server.getAccount(wallet.publicKey());

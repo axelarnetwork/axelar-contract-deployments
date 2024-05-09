@@ -1,4 +1,4 @@
-const { Contract, Address } = require('@stellar/stellar-sdk');
+const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { getWallet, prepareTransaction, buildTransaction, sendTransaction, estimateCost } = require('./utils');
 const { loadConfig, printInfo } = require('../evm/utils');
@@ -11,18 +11,30 @@ async function processCommand(options, _, chain) {
     const contract = new Contract(options.address || chain.contracts?.axelar_operators?.address);
 
     let operation;
+    let operator, target, method, args;
 
-    const address = Address.fromString(options.args || wallet.publicKey());
+    if (['is_operator', 'add_operator', 'remove_operator'].includes(options.action)) {
+        operator = Address.fromString(options.args || wallet.publicKey()).toScVal();
+    } else if (options.action === 'execute') {
+        operator = Address.fromString(wallet.publicKey()).toScVal();
+    }
 
     switch (options.action) {
         case 'is_operator':
-            operation = contract.call('is_operator', address.toScVal());
+            operation = contract.call('is_operator', operator);
             break;
         case 'add_operator':
-            operation = contract.call('add_operator', address.toScVal());
+            operation = contract.call('add_operator', operator);
             break;
         case 'remove_operator':
-            operation = contract.call('remove_operator', address.toScVal());
+            operation = contract.call('remove_operator', operator);
+            break;
+        case 'execute':
+            target = Address.fromString(options.target).toScVal();
+            method = nativeToScVal(options.method, { type: 'symbol' });
+            args = options.args ? nativeToScVal(options.args.split(',')) : [];
+
+            operation = contract.call('execute', operator, target, method, args);
             break;
         default:
             throw new Error(`Unknown action: ${options.action}`);
@@ -56,12 +68,14 @@ if (require.main === module) {
     program.addOption(new Option('-v, --verbose', 'verbose output').default(false));
     program.addOption(
         new Option('--action <action>', 'operator contract action')
-            .choices(['is_operator', 'add_operator', 'remove_operator'])
+            .choices(['is_operator', 'add_operator', 'remove_operator', 'execute'])
             .makeOptionMandatory(true),
     );
     program.addOption(new Option('--estimateCost', 'estimate on-chain resources').default(false));
+    program.addOption(new Option('--address <address>', 'operators contract address'));
     program.addOption(new Option('--args <args>', 'arguments for the contract call'));
-    program.addOption(new Option('--address <address>', 'contract address'));
+    program.addOption(new Option('--target <target>', 'target contract for the execute call'));
+    program.addOption(new Option('--method <method>', 'target method for the execute call'));
 
     program.action((options) => {
         const config = loadConfig(options.env);
