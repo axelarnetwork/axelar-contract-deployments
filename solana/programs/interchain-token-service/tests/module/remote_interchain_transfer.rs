@@ -259,8 +259,8 @@ async fn test_remote_interchain_transfer_lock_unlock() -> Result<()> {
 
     let _mint_authority = Keypair::new();
     let gateway_operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
 
     let init_operator = Keypair::new();

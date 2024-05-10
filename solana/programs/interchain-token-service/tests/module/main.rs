@@ -66,8 +66,8 @@ async fn setup_its_root_fixture() -> (
     let gas_service_root_pda = fixture.init_gas_service().await;
     let token_id = Bytes32(keccak256("random-token-id"));
     let gateway_operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let init_operator = Pubkey::from([0; 32]);
     let gateway_root_pda = fixture

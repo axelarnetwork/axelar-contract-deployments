@@ -10,6 +10,7 @@ use bimap::BiBTreeMap;
 use borsh::io::Error;
 use borsh::io::ErrorKind::{Interrupted, InvalidData};
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::msg;
 use thiserror::Error;
 
 type OperatorsHash = [u8; 32];
@@ -201,7 +202,11 @@ impl AxelarAuthWeighted {
         if self.map.len() > Self::OLD_KEY_RETENTION as usize {
             // Safe to unwrap as we are removing the oldest entry and we know
             // OLD_KEY_RETENTION is > 0
-            let oldest_epoch = *self.map.iter().next().unwrap().1;
+            let oldest_epoch = self
+                .current_epoch
+                .checked_sub(U256::from(Self::OLD_KEY_RETENTION))
+                .ok_or(AxelarAuthWeightedError::EpochCalculationOverflow)?;
+            msg!(&format!("removing {}", oldest_epoch));
             self.map.remove_by_right(&oldest_epoch);
         }
 
@@ -209,13 +214,23 @@ impl AxelarAuthWeighted {
     }
 
     /// Returns the epoch associated with the given operator hash
-    fn epoch_for_operator_hash(&self, operators_hash: &OperatorsHash) -> Option<&U256> {
+    pub fn epoch_for_operator_hash(&self, operators_hash: &OperatorsHash) -> Option<&U256> {
         self.map.get_by_left(operators_hash)
     }
 
+    /// Returns the operator hash associated with the given epoch
+    pub fn operator_hash_for_epoch(&self, epoch: &U256) -> Option<&OperatorsHash> {
+        self.map.get_by_right(epoch)
+    }
+
     /// Returns the current epoch.
-    fn current_epoch(&self) -> U256 {
+    pub fn current_epoch(&self) -> U256 {
         self.current_epoch
+    }
+
+    /// Get read only access to the underlying operator map
+    pub fn operators(&self) -> &bimap::BiBTreeMap<OperatorsHash, Epoch> {
+        &self.map
     }
 }
 

@@ -33,7 +33,10 @@ impl Processor {
         // Check: proof operators are known.
         let mut allow_operatorship_transfer = gateway_config
             .validate_proof(execute_data.command_batch_hash, execute_data.proof)
-            .unwrap(); // TODO propagate error
+            .map_err(|err| {
+                msg!("Proof validation failed: {:?}", err);
+                ProgramError::InvalidArgument
+            })?;
 
         if execute_data.command_batch.commands.len() != (accounts_iter.len()) {
             msg!("Mismatch between the number of commands and the number of accounts");
@@ -67,15 +70,8 @@ impl Processor {
             match (decoded_command, &mut allow_operatorship_transfer) {
                 (DecodedCommand::ApproveContractCall(decoded_command), _) => {
                     approved_command_account.set_ready_for_validate_contract_call()?;
-
-                    let call_contract = crate::events::MessageApproved {
-                        message_id: decoded_command.command_id,
-                        source_chain: decoded_command.source_chain,
-                        source_address: decoded_command.source_address,
-                        destination_address: decoded_command.destination_program.0.to_bytes(),
-                        payload_hash: decoded_command.payload_hash,
-                    };
-                    let event = GatewayEvent::MessageApproved(Cow::Borrowed(&call_contract));
+                    let message_approved = decoded_command.into();
+                    let event = GatewayEvent::MessageApproved(Cow::Borrowed(&message_approved));
                     event.emit()?;
                 }
                 (

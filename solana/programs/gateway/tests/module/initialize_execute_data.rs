@@ -19,8 +19,8 @@ async fn test_successfylly_initialize_execute_data() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_config_pda = fixture
@@ -66,12 +66,12 @@ async fn test_succesfully_initialize_transfer_operatorship() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let new_operators = vec![
-        create_signer_with_weight(33).unwrap(),
-        create_signer_with_weight(150).unwrap(),
+        create_signer_with_weight(33_u128).unwrap(),
+        create_signer_with_weight(150_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
@@ -118,12 +118,12 @@ async fn test_succesfully_initialize_transfer_operatorship_message_together_with
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let new_operators = vec![
-        create_signer_with_weight(33).unwrap(),
-        create_signer_with_weight(150).unwrap(),
+        create_signer_with_weight(33_u128).unwrap(),
+        create_signer_with_weight(150_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
@@ -182,8 +182,8 @@ async fn test_fail_on_invalid_root_pda() {
     );
     let mut fixture = TestFixture::new(program_test).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let _gateway_config_pda = fixture
@@ -237,8 +237,8 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
     );
     let mut fixture = TestFixture::new(program_test).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let _gateway_config_pda = fixture
@@ -280,8 +280,8 @@ async fn test_fail_on_uninitialized_root_pda() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let (uninitialized_gateway_config_pda, _bump) = GatewayConfig::pda();
@@ -321,8 +321,8 @@ async fn test_fail_on_already_initialized_execute_data_account() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
@@ -378,7 +378,7 @@ async fn test_size_limits_for_different_operators() {
     // Setup
     for amount_of_operators in [2, 4, 8, 16, 17, 18, 19] {
         dbg!(amount_of_operators);
-        let operators = (0..amount_of_operators)
+        let operators = (0_u128..amount_of_operators)
             .map(|x| create_signer_with_weight(x + 1).unwrap())
             .collect::<Vec<_>>();
         let quorum =
@@ -430,7 +430,7 @@ async fn test_message_limits_with_different_amounts() {
     // Setup
     for amount_of_messages in [1, 2, 4, 8, 16] {
         dbg!(amount_of_messages);
-        let operators = vec![create_signer_with_weight(4).unwrap()];
+        let operators = vec![create_signer_with_weight(4_u128).unwrap()];
         let quorum = 4;
         let mut fixture = TestFixture::new(program_test()).await;
         let gateway_root_pda = fixture

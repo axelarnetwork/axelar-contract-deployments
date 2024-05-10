@@ -139,12 +139,8 @@ impl GatewayApprovedCommand {
         matches!(
             self.status,
             GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Executed)
-        ) || matches!(
-            self.status,
-            GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Approved)
-        ) || matches!(
-            self.status,
-            GatewayCommandStatus::TransferOperatorship(TransferOperatorship::Executed)
+                | GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Approved)
+                | GatewayCommandStatus::TransferOperatorship(TransferOperatorship::Executed)
         )
     }
 

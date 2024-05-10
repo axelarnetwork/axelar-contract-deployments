@@ -73,6 +73,14 @@ impl TestFixture {
             hash,
         );
         self.banks_client.process_transaction(tx).await.unwrap();
+
+        // make everything slower on CI to prevent flaky tests
+        if std::env::var("CI").is_ok() {
+            // sleep for 200 millis to allow the transaction to be processed. The solana
+            // test program otherwise can't keep up with the speed of the transactions for
+            // some more intense tests on weaker CI machines
+            tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+        }
     }
 
     pub async fn send_tx_with_metadata(
@@ -96,20 +104,7 @@ impl TestFixture {
         let (root_pda_address, _) = gas_service::get_gas_service_root_pda();
         let ix =
             gas_service::instruction::create_initialize_root_pda_ix(self.payer.pubkey()).unwrap();
-        self.recent_blockhash = self
-            .banks_client
-            .get_new_latest_blockhash(&self.recent_blockhash)
-            .await
-            .unwrap();
-
-        let tx = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&self.payer.pubkey()),
-            &[&self.payer],
-            self.recent_blockhash,
-        );
-
-        self.banks_client.process_transaction(tx).await.unwrap();
+        self.send_tx(&[ix]).await;
 
         let root_pda_data = self
             .banks_client
@@ -158,25 +153,13 @@ impl TestFixture {
     ) -> Pubkey {
         let (gateway_config_pda, bump) = GatewayConfig::pda();
         let gateway_config = GatewayConfig::new(bump, auth_weighted);
-        self.recent_blockhash = self
-            .banks_client
-            .get_new_latest_blockhash(&self.recent_blockhash)
-            .await
-            .unwrap();
         let ix = gateway::instructions::initialize_config(
             self.payer.pubkey(),
             gateway_config.clone(),
             gateway_config_pda,
         )
         .unwrap();
-        let tx = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&self.payer.pubkey()),
-            &[&self.payer],
-            self.recent_blockhash,
-        );
-
-        self.banks_client.process_transaction(tx).await.unwrap();
+        self.send_tx(&[ix]).await;
 
         let account = self
             .banks_client
@@ -206,17 +189,7 @@ impl TestFixture {
             gas_service_root_pda,
         )
         .unwrap();
-        let blockhash = self.refresh_blockhash().await;
-        let transaction = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&self.payer.pubkey()),
-            &[&self.payer],
-            blockhash,
-        );
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
+        self.send_tx(&[ix]).await;
         interchain_token_service_root_pda
     }
 
@@ -390,17 +363,7 @@ impl TestFixture {
             gateway_root_pda,
         )
         .unwrap();
-        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
-        let transaction = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&self.payer.pubkey()),
-            &[&self.payer],
-            recent_blockhash,
-        );
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
+        self.send_tx(&[ix]).await;
         let token_manager_data = self
             .banks_client
             .get_account(token_manager_root_pda_pubkey)
@@ -442,7 +405,6 @@ impl TestFixture {
             CalculatedEpoch::new_with_timestamp(block_timestamp as u64),
         );
 
-        self.recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
         let ix = token_manager::instruction::build_setup_instruction(
             &self.payer.pubkey(),
             &token_manager_pda,
@@ -459,17 +421,7 @@ impl TestFixture {
             },
         )
         .unwrap();
-        let transaction = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&self.payer.pubkey()),
-            &[&self.payer],
-            self.recent_blockhash,
-        );
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
-
+        self.send_tx(&[ix]).await;
         token_manager_pda
     }
 
@@ -482,21 +434,7 @@ impl TestFixture {
             group.id.clone(),
         )
         .unwrap();
-        self.recent_blockhash = self
-            .banks_client
-            .get_new_latest_blockhash(&self.recent_blockhash)
-            .await
-            .unwrap();
-        let transaction = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&self.payer.pubkey()),
-            &[&self.payer],
-            self.recent_blockhash,
-        );
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
+        self.send_tx(&[ix]).await;
     }
 
     pub async fn init_execute_data(
@@ -508,35 +446,36 @@ impl TestFixture {
     ) -> (Pubkey, GatewayExecuteData, Vec<u8>) {
         let (execute_data, raw_data) =
             prepare_execute_data(messages, signers, quorum, gateway_root_pda);
+
+        let execute_data_pda = self
+            .init_execute_data_with_custom_data(gateway_root_pda, &raw_data, &execute_data)
+            .await;
+
+        (execute_data_pda, execute_data, raw_data)
+    }
+
+    pub async fn init_execute_data_with_custom_data(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        raw_data: &[u8],
+        execute_data: &GatewayExecuteData,
+    ) -> Pubkey {
         let (execute_data_pda, _, _) = execute_data.pda(gateway_root_pda);
 
         let (ix, _) = gateway::instructions::initialize_execute_data(
             self.payer.pubkey(),
             *gateway_root_pda,
-            raw_data.clone(),
+            raw_data.to_vec(),
         )
         .unwrap();
 
-        self.recent_blockhash = self
-            .banks_client
-            .get_new_latest_blockhash(&self.recent_blockhash)
-            .await
-            .unwrap();
-        let transaction = Transaction::new_signed_with_payer(
-            &[
-                ComputeBudgetInstruction::set_compute_unit_limit(1399850_u32),
-                ix,
-            ],
-            Some(&self.payer.pubkey()),
-            &[&self.payer],
-            self.recent_blockhash,
-        );
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
+        self.send_tx(&[
+            ComputeBudgetInstruction::set_compute_unit_limit(1399850_u32),
+            ix,
+        ])
+        .await;
 
-        (execute_data_pda, execute_data, raw_data)
+        execute_data_pda
     }
 
     pub async fn init_pending_gateway_commands(
@@ -561,23 +500,9 @@ impl TestFixture {
             })
             .collect::<Vec<_>>();
 
-        self.recent_blockhash = self
-            .banks_client
-            .get_new_latest_blockhash(&self.recent_blockhash)
-            .await
-            .unwrap();
         let gateway_approved_command_pdas = ixs.iter().map(|(pda, _)| *pda).collect::<Vec<_>>();
         let ixs = ixs.into_iter().map(|(_, ix)| ix).collect::<Vec<_>>();
-        let transaction = Transaction::new_signed_with_payer(
-            &ixs,
-            Some(&self.payer.pubkey()),
-            &[&self.payer],
-            self.recent_blockhash,
-        );
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
+        self.send_tx(&ixs).await;
 
         gateway_approved_command_pdas
     }
@@ -589,6 +514,23 @@ impl TestFixture {
         execute_data_pda: &Pubkey,
         approved_command_pdas: &[Pubkey],
     ) {
+        let res = self
+            .approve_pending_gateway_messages_with_metadata(
+                gateway_root_pda,
+                execute_data_pda,
+                approved_command_pdas,
+            )
+            .await;
+        assert!(res.result.is_ok());
+    }
+
+    /// create an `execute` ix on the gateway to approve all pending PDAs
+    pub async fn approve_pending_gateway_messages_with_metadata(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        execute_data_pda: &Pubkey,
+        approved_command_pdas: &[Pubkey],
+    ) -> BanksTransactionResultWithMetadata {
         let ix = gateway::instructions::execute(
             gateway::id(),
             *execute_data_pda,
@@ -596,24 +538,8 @@ impl TestFixture {
             approved_command_pdas,
         )
         .unwrap();
-
         let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(400_000u32);
-        self.recent_blockhash = self
-            .banks_client
-            .get_new_latest_blockhash(&self.recent_blockhash)
-            .await
-            .unwrap();
-        let transaction = Transaction::new_signed_with_payer(
-            &[bump_budget, ix],
-            Some(&self.payer.pubkey()),
-            &[&self.payer],
-            self.recent_blockhash,
-        );
-
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
+        self.send_tx_with_metadata(&[bump_budget, ix]).await
     }
 
     pub async fn prepare_trusted_address_iatracker(
@@ -703,6 +629,23 @@ impl TestFixture {
         messages: &[Either<connection_router::Message, WorkerSet>],
         operators: &[TestSigner],
     ) -> (Vec<Pubkey>, GatewayExecuteData, Pubkey) {
+        let (command_pdas, execute_data, execute_data_pda, tx) = self
+            .fully_approve_messages_with_execute_metadata(gateway_root_pda, messages, operators)
+            .await;
+        assert!(tx.result.is_ok());
+        (command_pdas, execute_data, execute_data_pda)
+    }
+    pub async fn fully_approve_messages_with_execute_metadata(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        messages: &[Either<connection_router::Message, WorkerSet>],
+        operators: &[TestSigner],
+    ) -> (
+        Vec<Pubkey>,
+        GatewayExecuteData,
+        Pubkey,
+        BanksTransactionResultWithMetadata,
+    ) {
         let weight_of_quorum = operators
             .iter()
             .fold(cosmwasm_std::Uint256::zero(), |acc, i| acc.add(i.weight));
@@ -721,17 +664,19 @@ impl TestFixture {
                 execute_data.command_batch.commands.as_ref(),
             )
             .await;
-        self.approve_pending_gateway_messages(
-            gateway_root_pda,
-            &execute_data_pda,
-            &gateway_approved_command_pdas,
-        )
-        .await;
+        let tx = self
+            .approve_pending_gateway_messages_with_metadata(
+                gateway_root_pda,
+                &execute_data_pda,
+                &gateway_approved_command_pdas,
+            )
+            .await;
 
         (
             gateway_approved_command_pdas,
             execute_data,
             execute_data_pda,
+            tx,
         )
     }
 

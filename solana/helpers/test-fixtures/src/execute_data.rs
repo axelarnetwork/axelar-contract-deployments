@@ -1,4 +1,4 @@
-use anyhow::{anyhow, ensure, Result};
+use anyhow::{anyhow, Result};
 use connection_router::Message as AxelarMessage;
 use cosmwasm_std::{Addr, Uint256};
 use itertools::{Either, Itertools};
@@ -99,10 +99,10 @@ pub fn create_command_batch(messages: &[Either<AxelarMessage, WorkerSet>]) -> Re
 }
 
 pub fn create_signer() -> Result<TestSigner> {
-    create_signer_with_weight(1)
+    create_signer_with_weight(1_u128)
 }
 
-pub fn create_signer_with_weight(weight: u128) -> Result<TestSigner> {
+pub fn create_signer_with_weight(weight: impl Into<cosmwasm_std::Uint256>) -> Result<TestSigner> {
     let secret_key = SecretKey::random(&mut rand_core::OsRng);
     let public_key = PublicKey::from_secret_key(&secret_key);
     let public_key_bytes = public_key.serialize_compressed();
@@ -111,7 +111,7 @@ pub fn create_signer_with_weight(weight: u128) -> Result<TestSigner> {
     Ok(TestSigner {
         secret_key,
         public_key,
-        weight: cosmwasm_std::Uint256::from_u128(weight),
+        weight: weight.into(),
     })
 }
 
@@ -147,16 +147,20 @@ pub fn encode(
     signatures: Vec<Option<Signature>>,
     quorum: u128,
 ) -> Result<Vec<u8>> {
-    ensure!(
-        signers.len() == signatures.len(),
-        "signers and signature missmatch"
-    );
+    use itertools::*;
+
     let quorum: Uint256 = quorum.into();
-    let signers_and_signatures: Vec<(Signer, Option<Signature>)> = signers
+    let signers_and_signatures = signers
         .into_iter()
-        .map(Into::into)
-        .zip(signatures)
-        .collect();
+        .zip_longest(signatures)
+        .map(|left| match left {
+            EitherOrBoth::Both(signer, signature) => (signer.into(), signature),
+            EitherOrBoth::Left(signer) => (signer.into(), None),
+            EitherOrBoth::Right(signature) => {
+                unimplemented!("signature without signer: {:?}", signature)
+            }
+        })
+        .collect_vec();
 
     axelar_bcs_encoding::encode_execute_data(command_batch, quorum, signers_and_signatures)
         .map_err(|e| anyhow!("failed to encode execute_data: {e}"))
@@ -194,7 +198,6 @@ mod axelar_bcs_encoding {
                         .map(Signature::EcdsaRecoverable)
                         .ok();
                 }
-                assert!(signature.is_some(), "Signature was erased");
                 (signer, signature)
             })
             .collect::<Vec<_>>();

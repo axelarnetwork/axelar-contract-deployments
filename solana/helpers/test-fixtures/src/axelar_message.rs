@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use anyhow::{anyhow, Result};
+use axelar_message_primitives::command::hash_new_operator_set;
 use axelar_message_primitives::{DataPayload, DestinationProgramId};
 use axelar_wasm_std::{nonempty, Participant};
 use connection_router::state::Address;
@@ -65,4 +66,26 @@ fn address() -> Result<Address> {
     hex::encode(array32())
         .parse()
         .map_err(|_| anyhow!("bad test naddress"))
+}
+
+pub trait WorkerSetExt {
+    /// the [`WorkerSet`] has a method `.hash()` which uses serde_json to
+    /// generate a hash. That's not what we need nor want.
+    fn hash_solana_way(&self) -> [u8; 32];
+}
+
+impl WorkerSetExt for WorkerSet {
+    fn hash_solana_way(&self) -> [u8; 32] {
+        hash_new_operator_set(
+            self.signers.iter().map(|(addr, signer)| {
+                (
+                    axelar_message_primitives::Address::try_from(addr.as_str()).unwrap(),
+                    axelar_message_primitives::command::U256::from_le_bytes(
+                        signer.weight.to_le_bytes(),
+                    ),
+                )
+            }),
+            axelar_message_primitives::command::U256::from_le_bytes(self.threshold.to_le_bytes()),
+        )
+    }
 }

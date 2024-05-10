@@ -20,8 +20,8 @@ async fn give_token_lock_unlock_success() -> Result<()> {
     let mint_authority = Keypair::new();
     let amount_to_transfer = 100;
     let gateway_operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(fixture.init_auth_weighted_module(&gateway_operators))

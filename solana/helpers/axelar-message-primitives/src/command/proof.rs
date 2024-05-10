@@ -73,6 +73,7 @@ impl Proof {
         let mut weight = U256::ZERO;
         let op_len = self.operators.addresses().len();
         let mut last_visited_operator_position: usize = 0;
+        // todo: switch to https://docs.rs/solana-sdk/latest/solana_sdk/secp256k1_instruction/index.html
         for signature in self.signatures() {
             let signer = solana_program::secp256k1_recover::secp256k1_recover(
                 message_hash,

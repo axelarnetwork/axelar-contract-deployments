@@ -1,13 +1,9 @@
-use axelar_executable::axelar_message_primitives::command::DecodedCommand;
 use axelar_executable::axelar_message_primitives::{DestinationProgramId, EncodingScheme};
-use axelar_solana_memo_program::get_counter_pda;
 use axelar_solana_memo_program::instruction::from_axelar_to_solana::build_memo;
 use gateway::state::GatewayApprovedCommand;
 use itertools::Either;
 use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
-use solana_sdk::transaction::Transaction;
-use test_fixtures::account::CheckValidPDAInTests;
 use test_fixtures::axelar_message::custom_message;
 use test_fixtures::execute_data::{create_signer_with_weight, TestSigner};
 use test_fixtures::test_setup::TestFixture;
@@ -106,8 +102,8 @@ async fn solana_setup() -> (
 ) {
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))

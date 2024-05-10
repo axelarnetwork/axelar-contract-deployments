@@ -12,7 +12,7 @@ use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use test_fixtures::axelar_message::new_worker_set;
-use test_fixtures::execute_data::create_signer_with_weight;
+use test_fixtures::execute_data::{create_signer_with_weight, TestSigner};
 use test_fixtures::test_setup::TestFixture;
 
 pub fn program_test() -> ProgramTest {
@@ -21,6 +21,25 @@ pub fn program_test() -> ProgramTest {
         gmp_gateway::id(),
         processor!(gmp_gateway::processor::Processor::process_instruction),
     )
+}
+
+pub async fn setup_initialised_gateway(
+    initial_operator_weights: &[u128],
+    custom_quorum: Option<u128>,
+) -> (TestFixture, u128, Vec<TestSigner>, Pubkey) {
+    let mut fixture = TestFixture::new(program_test()).await;
+    let quorum = custom_quorum.unwrap_or_else(|| initial_operator_weights.iter().sum());
+    let operators = initial_operator_weights
+        .iter()
+        .map(|weight| create_signer_with_weight(*weight).unwrap())
+        .collect::<Vec<_>>();
+    let gateway_root_pda = fixture
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module_custom_threshold(&operators, quorum.into()),
+        )
+        .await;
+
+    (fixture, quorum, operators, gateway_root_pda)
 }
 
 pub fn example_payload() -> DataPayload<'static> {

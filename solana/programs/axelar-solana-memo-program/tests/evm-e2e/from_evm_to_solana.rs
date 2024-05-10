@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use axelar_executable::axelar_message_primitives::command::DecodedCommand;
 use axelar_executable::axelar_message_primitives::{DataPayload, DestinationProgramId};
 use axelar_solana_memo_program::state::Counter;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_gateway::ContractCallFilter;
@@ -9,8 +8,6 @@ use evm_contracts_test_suite::evm_contracts_rs::contracts::{axelar_gateway, axel
 use evm_contracts_test_suite::ContractMiddleware;
 use itertools::Either;
 use solana_program_test::tokio;
-use solana_sdk::signature::Signer;
-use solana_sdk::transaction::Transaction;
 use test_fixtures::axelar_message::custom_message;
 
 use crate::{axelar_evm_setup, axelar_solana_setup};

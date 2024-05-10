@@ -17,8 +17,8 @@ async fn succesfully_initialize_validate_contract_call_command() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
@@ -69,8 +69,8 @@ async fn succesfully_initialize_transfer_operatorship_message() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
@@ -122,8 +122,8 @@ async fn succesfully_initialize_transfer_operatorship_message_together_with_call
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
@@ -197,8 +197,8 @@ async fn fail_when_gateway_root_pda_not_initialized() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = Pubkey::new_unique();
@@ -235,8 +235,8 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
@@ -292,8 +292,8 @@ async fn fail_when_validate_contract_call_already_initialized() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
@@ -336,8 +336,8 @@ async fn fail_when_transfer_operatorship_is_already_initialized() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
@@ -388,8 +388,8 @@ async fn fail_when_transfer_operatorship_has_unchanged_block_height() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let operators = vec![
-        create_signer_with_weight(10).unwrap(),
-        create_signer_with_weight(4).unwrap(),
+        create_signer_with_weight(10_u128).unwrap(),
+        create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture

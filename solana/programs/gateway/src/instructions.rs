@@ -104,14 +104,10 @@ pub fn execute(
 ) -> Result<Instruction, ProgramError> {
     crate::check_program_account(program_id)?;
 
-    if command_accounts.is_empty() {
-        return Err(ProgramError::InvalidAccountData);
-    }
-
     let data = to_vec(&GatewayInstruction::Execute {})?;
 
     let mut accounts = vec![
-        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new(gateway_root_pda, false),
         AccountMeta::new(execute_data_account, false),
     ];
 

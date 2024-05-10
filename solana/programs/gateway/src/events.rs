@@ -2,7 +2,9 @@
 
 use std::borrow::Cow;
 
-use axelar_message_primitives::command::TransferOperatorshipCommand;
+use axelar_message_primitives::command::{
+    ApproveContractCallCommand, DecodedCommand, TransferOperatorshipCommand,
+};
 use base64::engine::general_purpose;
 use base64::Engine as _;
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -79,6 +81,31 @@ impl<'a> BorshDeserialize for GatewayEvent<'a> {
                 std::io::ErrorKind::InvalidData,
                 format!("Invalid tag: {}", tag),
             )),
+        }
+    }
+}
+
+impl From<DecodedCommand> for GatewayEvent<'_> {
+    fn from(command: DecodedCommand) -> Self {
+        match command {
+            DecodedCommand::ApproveContractCall(appove_call_command) => {
+                GatewayEvent::MessageApproved(Cow::Owned(appove_call_command.into()))
+            }
+            DecodedCommand::TransferOperatorship(transfer_operatorship_command) => {
+                GatewayEvent::OperatorshipTransferred(Cow::Owned(transfer_operatorship_command))
+            }
+        }
+    }
+}
+
+impl From<ApproveContractCallCommand> for MessageApproved {
+    fn from(command: ApproveContractCallCommand) -> Self {
+        MessageApproved {
+            message_id: command.command_id,
+            source_chain: command.source_chain,
+            source_address: command.source_address,
+            destination_address: command.destination_program.0.to_bytes(),
+            payload_hash: command.payload_hash,
         }
     }
 }

@@ -7370,6 +7370,7 @@ dependencies = [
  "solana-sdk",
  "spl-token",
  "token-manager",
+ "tokio",
 ]
 
 [[package]]
