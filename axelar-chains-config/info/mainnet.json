@@ -368,7 +368,7 @@
       },
       "gasOptions": {
         "gasLimit": 8000000,
-        "gasPriceAdjustment": 1.8
+        "gasPriceAdjustment": 1.4
       },
       "staticGasOptions": {
         "gasLimit": 3000000,

@@ -2,8 +2,7 @@ const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { getWallet, prepareTransaction, buildTransaction, sendTransaction, estimateCost } = require('./utils');
 const { loadConfig, printInfo, parseArgs } = require('../evm/utils');
-
-require('dotenv').config();
+require('./cli-utils');
 
 async function processCommand(options, _, chain) {
     const [wallet, server] = await getWallet(chain, options);
@@ -20,15 +19,20 @@ async function processCommand(options, _, chain) {
     }
 
     switch (options.action) {
-        case 'is_operator':
+        case 'is_operator': {
             operation = contract.call('is_operator', operator);
             break;
-        case 'add_operator':
+        }
+
+        case 'add_operator': {
             operation = contract.call('add_operator', operator);
             break;
-        case 'remove_operator':
+        }
+
+        case 'remove_operator': {
             operation = contract.call('remove_operator', operator);
             break;
+        }
 
         case 'refund': {
             // eslint-disable-next-line no-case-declarations
@@ -61,20 +65,24 @@ async function processCommand(options, _, chain) {
             break;
         }
 
-        default:
+        default: {
             throw new Error(`Unknown action: ${options.action}`);
+        }
     }
 
     if (options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
-        await estimateCost(tx, server);
+        const resourceCost = await estimateCost(tx, server);
+        printInfo('Resource cost', JSON.stringify(resourceCost, null, 2));
         return;
     }
 
     const signedTx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
     const returnValue = await sendTransaction(signedTx, server);
 
-    if (options.action === 'is_operator') printInfo('is_operator', returnValue);
+    if (returnValue) {
+        printInfo('Return value', returnValue);
+    }
 }
 
 if (require.main === module) {
