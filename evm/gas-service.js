@@ -211,18 +211,6 @@ async function getGasUpdates(config, env, chain, destinationChains) {
     };
 }
 
-function printFailedChainUpdates() {
-    if (failedChainUpdates.length > 0) {
-        printError('Failed to update gas info for following chain combinations');
-
-        failedChainUpdates.forEach(({ chain, destinationChain }) => {
-            printError(`${chain} -> ${destinationChain}`);
-        });
-    }
-
-    failedChainUpdates = [];
-}
-
 async function processCommand(config, chain, options) {
     const {
         env,
@@ -376,6 +364,7 @@ async function processCommand(config, chain, options) {
 
             break;
         }
+
         case 'refund': {
             validateParameters({
                 isKeccak256Hash: { txHash },
@@ -519,6 +508,7 @@ async function processCommand(config, chain, options) {
 
             break;
         }
+
         default:
             throw new Error(`Unknown action: ${action}`);
     }

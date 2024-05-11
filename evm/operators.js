@@ -253,34 +253,6 @@ async function processCommand(config, chain, options) {
 
             const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
 
-            if (prompt(`Update gas info for following chains ${chainsToUpdate.join(', ')}?`, yes)) {
-                return;
-            }
-
-            const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
-            const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
-
-            try {
-                const tx = await operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions);
-                printInfo('TX', tx.hash);
-                await tx.wait(chain.confirmations);
-            } catch (error) {
-                printError(error);
-            }
-
-            break;
-        }
-
-        case 'updateGasInfo': {
-            const target = chain.contracts.AxelarGasService?.address;
-
-            validateParameters({
-                isNonEmptyStringArray: { chains },
-                isAddress: { target },
-            });
-
-            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
-
             if (chainsToUpdate.length === 0) {
                 printWarn('No gas info updates found.');
                 return;
