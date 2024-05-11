@@ -34,13 +34,17 @@ async function processCommand(options, _, chain) {
 
     if (options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
-        await estimateCost(tx, server);
+        const resourceCost = await estimateCost(tx, server);
+        printInfo('Resource cost', JSON.stringify(resourceCost, null, 2));
         return;
     }
 
     const signedTx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
     const returnValue = await sendTransaction(signedTx, server);
-    printInfo('is_operator', returnValue);
+
+    if (returnValue) {
+        printInfo('Return value', returnValue);
+    }
 }
 
 if (require.main === module) {

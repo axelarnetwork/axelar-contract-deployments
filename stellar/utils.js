@@ -79,7 +79,7 @@ async function sendTransaction(tx, server, options = {}) {
         }
 
         let getResponse = await server.getTransaction(sendResponse.hash);
-        const retryWait = 1000;  // 1 sec
+        const retryWait = 1000; // 1 sec
         let retries = 10;
 
         while (getResponse.status === 'NOT_FOUND' && retries > 0) {
@@ -158,7 +158,7 @@ async function estimateCost(tx, server) {
 
     const sorobanTransactionData = SorobanTransactionData.fromXDR(response.transactionData, 'base64');
 
-    console.log({
+    return {
         // the first two lines are incorrect. use sorobanTransactionData instead of `cost`
         cpu_instructions: Number(response.cost.cpuInsns),
         ram: Number(response.cost.memBytes),
@@ -170,7 +170,7 @@ async function estimateCost(tx, server) {
         ledger_entry_writes: sorobanTransactionData.resources().footprint().readWrite().length,
         events_and_return_value_size: eventsAndReturnValueSize,
         transaction_size: Buffer.from(response.transactionData, 'base64').length,
-    });
+    };
 }
 
 module.exports = {
