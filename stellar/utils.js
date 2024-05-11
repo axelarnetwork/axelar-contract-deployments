@@ -24,7 +24,7 @@ function getNetworkPassphrase(networkType) {
         default:
             throw new Error(`Unknown network type: ${networkType}`);
     }
-};
+}
 
 async function buildTransaction(operation, server, wallet, networkType, options = {}) {
     const account = await server.getAccount(wallet.publicKey());
@@ -79,11 +79,15 @@ async function sendTransaction(tx, server, options = {}) {
         }
 
         let getResponse = await server.getTransaction(sendResponse.hash);
+        const retryWait = 1000;  // 1 sec
+        let retries = 10;
 
-        while (getResponse.status === 'NOT_FOUND') {
-            await sleep(1000);
+        while (getResponse.status === 'NOT_FOUND' && retries > 0) {
+            await sleep(retryWait);
 
             getResponse = await server.getTransaction(sendResponse.hash);
+
+            retries -= 1;
         }
 
         if (options.verbose) {
