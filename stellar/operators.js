@@ -4,7 +4,6 @@ const { getWallet, prepareTransaction, buildTransaction, sendTransaction, estima
 const { loadConfig, printInfo } = require('../evm/utils');
 require('./cli-utils');
 
-
 async function processCommand(options, _, chain) {
     const [wallet, server] = await getWallet(chain, options);
 
@@ -19,14 +18,17 @@ async function processCommand(options, _, chain) {
             operation = contract.call('is_operator', address.toScVal());
             break;
         }
+
         case 'add_operator': {
             operation = contract.call('add_operator', address.toScVal());
             break;
         }
+
         case 'remove_operator': {
             operation = contract.call('remove_operator', address.toScVal());
             break;
         }
+
         default: {
             throw new Error(`Unknown action: ${options.action}`);
         }
