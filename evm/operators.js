@@ -22,9 +22,11 @@ const {
     mainProcessor,
     validateParameters,
     getContractJSON,
+    printWarn,
+    timeout,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getGasUpdates, printFailedChainUpdates } = require('./gas-service');
+const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate } = require('./gas-service');
 
 async function processCommand(config, chain, options) {
     const {
@@ -263,6 +265,54 @@ async function processCommand(config, chain, options) {
                 printInfo('TX', tx.hash);
                 await tx.wait(chain.confirmations);
             } catch (error) {
+                printError(error);
+            }
+
+            break;
+        }
+
+        case 'updateGasInfo': {
+            const target = chain.contracts.AxelarGasService?.address;
+
+            validateParameters({
+                isNonEmptyStringArray: { chains },
+                isAddress: { target },
+            });
+
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
+
+            if (chainsToUpdate.length === 0) {
+                printWarn('No gas info updates found.');
+                return;
+            }
+
+            printInfo('Collected gas info for the following chain names', chainsToUpdate.join(', '));
+
+            if (prompt(`Submit gas update transaction?`, yes)) {
+                return;
+            }
+
+            const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
+            const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
+
+            try {
+                const tx = await timeout(
+                    operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions),
+                    chain.timeout || 60000,
+                    new Error(`Timeout updating gas info for ${chain.name}`),
+                );
+                printInfo('TX', tx.hash);
+
+                await timeout(
+                    tx.wait(chain.confirmations),
+                    chain.timeout || 60000,
+                    new Error(`Timeout updating gas info for ${chain.name}`),
+                );
+            } catch (error) {
+                for (let i = 0; i < chainsToUpdate.length; i++) {
+                    addFailedChainUpdate(chain.name, chainsToUpdate[i]);
+                }
+
                 printError(error);
             }
 
