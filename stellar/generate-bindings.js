@@ -5,6 +5,7 @@ const { execSync } = require('child_process');
 const { loadConfig } = require('../evm/utils');
 const path = require('path');
 const { getNetworkPassphrase } = require('./utils');
+require('./cli-utils');
 
 function processCommand(options, config) {
     const { wasmPath, contractId, outputDir } = options;

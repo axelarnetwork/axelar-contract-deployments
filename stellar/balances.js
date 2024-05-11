@@ -1,8 +1,7 @@
 const { Command, Option } = require('commander');
 const { getWallet } = require('./utils');
 const { loadConfig } = require('../evm/utils');
-
-require('dotenv').config();
+require('./cli-utils');
 
 async function processCommand(options, _, chain) {
     await getWallet(chain, options);

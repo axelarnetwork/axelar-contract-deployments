@@ -2,8 +2,8 @@ const { Contract, Address } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { getWallet, prepareTransaction, buildTransaction, sendTransaction, estimateCost } = require('./utils');
 const { loadConfig, printInfo } = require('../evm/utils');
+require('./cli-utils');
 
-require('dotenv').config();
 
 async function processCommand(options, _, chain) {
     const [wallet, server] = await getWallet(chain, options);
@@ -15,17 +15,21 @@ async function processCommand(options, _, chain) {
     const address = Address.fromString(options.args || wallet.publicKey());
 
     switch (options.action) {
-        case 'is_operator':
+        case 'is_operator': {
             operation = contract.call('is_operator', address.toScVal());
             break;
-        case 'add_operator':
+        }
+        case 'add_operator': {
             operation = contract.call('add_operator', address.toScVal());
             break;
-        case 'remove_operator':
+        }
+        case 'remove_operator': {
             operation = contract.call('remove_operator', address.toScVal());
             break;
-        default:
+        }
+        default: {
             throw new Error(`Unknown action: ${options.action}`);
+        }
     }
 
     if (options.estimateCost) {
