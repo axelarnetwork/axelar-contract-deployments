@@ -226,7 +226,14 @@ async function processCommand(config, chain, options) {
 
             const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
 
-            if (prompt(`Update gas info for following chains ${chainsToUpdate.join(', ')}?`, yes)) {
+            if (chainsToUpdate.length === 0) {
+                printWarn('No gas info updates found.');
+                return;
+            }
+
+            printInfo('Collected gas info for the following chain names', chainsToUpdate.join(', '));
+
+            if (prompt(`Submit gas update transaction?`, yes)) {
                 return;
             }
 
@@ -234,10 +241,23 @@ async function processCommand(config, chain, options) {
             const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
 
             try {
-                const tx = await operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions);
+                const tx = await timeout(
+                    operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions),
+                    chain.timeout || 60000,
+                    new Error(`Timeout updating gas info for ${chain.name}`),
+                );
                 printInfo('TX', tx.hash);
-                await tx.wait(chain.confirmations);
+
+                await timeout(
+                    tx.wait(chain.confirmations),
+                    chain.timeout || 60000,
+                    new Error(`Timeout updating gas info for ${chain.name}`),
+                );
             } catch (error) {
+                for (let i = 0; i < chainsToUpdate.length; i++) {
+                    addFailedChainUpdate(chain.name, chainsToUpdate[i]);
+                }
+
                 printError(error);
             }
 

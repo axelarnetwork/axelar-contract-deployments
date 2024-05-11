@@ -132,18 +132,6 @@ async function getGasUpdates(config, env, chain, destinationChains) {
     };
 }
 
-function printFailedChainUpdates() {
-    if (failedChainUpdates.length > 0) {
-        printError('Failed to update gas info for following chain combinations');
-
-        failedChainUpdates.forEach(({ chain, destinationChain }) => {
-            printError(`${chain} -> ${destinationChain}`);
-        });
-    }
-
-    failedChainUpdates = [];
-}
-
 async function processCommand(config, chain, options) {
     const {
         env,
