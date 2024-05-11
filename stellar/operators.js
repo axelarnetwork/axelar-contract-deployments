@@ -36,7 +36,7 @@ async function processCommand(options, _, chain) {
 
         case 'refund': {
             // eslint-disable-next-line no-case-declarations
-            const gasService = options.target || chain.contracts?.GasService?.address;
+            const gasService = options.target || chain.contracts?.axelar_gas_service?.address;
             if (!gasService) throw new Error(`Missing AxelarGasService address in the chain info.`);
 
             const target = Address.fromString(gasService).toScVal();
