@@ -2133,6 +2133,18 @@
       "approxFinalityWaitTime": 30
     }
   },
+  "stellar": {
+    "id": "stellar",
+    "rpc": "https://soroban-testnet.stellar.org:443",
+    "horizonRpc": "https://horizon-testnet.stellar.org",
+    "networkType": "testnet",
+    "explorer": {
+      "name": "Soroban Nownodes",
+      "url": "https://soroban.nownodes.io/testnet"
+    },
+    "tokenSymbol": "XLM",
+    "contracts": {}
+  },
   "axelar": {
     "id": "Axelarnet",
     "axelarId": "Axelarnet",
