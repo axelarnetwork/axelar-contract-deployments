@@ -102,7 +102,7 @@ if (require.main === module) {
     program.addOption(new Option('-v, --verbose', 'verbose output').default(false));
     program.addOption(
         new Option('--action <action>', 'operator contract action')
-            .choices(['is_operator', 'add_operator', 'remove_operator', 'execute'])
+            .choices(['is_operator', 'add_operator', 'remove_operator', 'refund', 'execute'])
             .makeOptionMandatory(true),
     );
     program.addOption(new Option('--estimateCost', 'estimate on-chain resources').default(false));
