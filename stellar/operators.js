@@ -1,7 +1,7 @@
 const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { getWallet, prepareTransaction, buildTransaction, sendTransaction, estimateCost } = require('./utils');
-const { loadConfig, printInfo } = require('../evm/utils');
+const { loadConfig, printInfo, parseArgs } = require('../evm/utils');
 
 require('dotenv').config();
 
@@ -10,12 +10,12 @@ async function processCommand(options, _, chain) {
 
     const contract = new Contract(options.address || chain.contracts?.axelar_operators?.address);
 
-    let operation;
-    let operator, target, method, args;
+    let operator, operation;
 
     if (['is_operator', 'add_operator', 'remove_operator'].includes(options.action)) {
-        operator = Address.fromString(options.args || wallet.publicKey()).toScVal();
-    } else if (options.action === 'execute') {
+        if (!options.args) throw new Error(`Missing --args operatorAddress the params.`);
+        operator = Address.fromString(options.args).toScVal();
+    } else {
         operator = Address.fromString(wallet.publicKey()).toScVal();
     }
 
@@ -29,13 +29,38 @@ async function processCommand(options, _, chain) {
         case 'remove_operator':
             operation = contract.call('remove_operator', operator);
             break;
-        case 'execute':
-            target = Address.fromString(options.target).toScVal();
-            method = nativeToScVal(options.method, { type: 'symbol' });
-            args = options.args ? nativeToScVal(options.args.split(',')) : [];
+
+        case 'refund': {
+            // eslint-disable-next-line no-case-declarations
+            const gasService = options.target || chain.contracts?.GasService?.address;
+            if (!gasService) throw new Error(`Missing AxelarGasService address in the chain info.`);
+
+            const target = Address.fromString(gasService).toScVal();
+            const method = nativeToScVal('refund', { type: 'symbol' });
+            const [messageId, receiver, tokenAddress, tokenAmount] = parseArgs(options.args || '');
+            const args = nativeToScVal([
+                messageId,
+                Address.fromString(receiver),
+                { address: Address.fromString(tokenAddress), amount: tokenAmount },
+            ]);
 
             operation = contract.call('execute', operator, target, method, args);
             break;
+        }
+
+        case 'execute': {
+            if (!options.target) throw new Error(`Missing target address param.`);
+            const target = Address.fromString(options.target).toScVal();
+
+            if (!options.method) throw new Error(`Missing method name param.`);
+            const method = nativeToScVal(options.method, { type: 'symbol' });
+
+            const args = nativeToScVal(parseArgs(options.args || ''));
+
+            operation = contract.call('execute', operator, target, method, args);
+            break;
+        }
+
         default:
             throw new Error(`Unknown action: ${options.action}`);
     }
@@ -48,7 +73,8 @@ async function processCommand(options, _, chain) {
 
     const signedTx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
     const returnValue = await sendTransaction(signedTx, server);
-    printInfo('is_operator', returnValue);
+
+    if (options.action === 'is_operator') printInfo('is_operator', returnValue);
 }
 
 if (require.main === module) {

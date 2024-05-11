@@ -12,10 +12,8 @@ const {
     printInfo,
     printError,
     printWalletInfo,
-    isNumber,
     isAddressArray,
     isNumberArray,
-    isKeccak256Hash,
     parseArgs,
     prompt,
     getGasOptions,
@@ -193,11 +191,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'refund': {
-            const txHash = argsArray[0];
-            const logIndex = argsArray[1];
-            const receiver = argsArray[2];
-            const token = argsArray[3];
-            const amount = argsArray[4];
+            const [txHash, logIndex, receiver, token, amount] = argsArray;
 
             const isOperator = await operatorsContract.isOperator(wallet.address);
 
@@ -205,31 +199,13 @@ async function processCommand(config, chain, options) {
                 throw new Error(`Caller ${wallet.address} is not an operator.`);
             }
 
-            if (!isKeccak256Hash(txHash)) {
-                throw new Error(`Invalid tx hash: ${txHash}`);
-            }
-
-            if (!isNumber(logIndex)) {
-                throw new Error(`Invalid log index: ${logIndex}`);
-            }
-
-            if (!isAddress(receiver)) {
-                throw new Error(`Invalid receiver address: ${receiver}`);
-            }
-
-            if (!isAddress(token)) {
-                throw new Error(`Invalid token address: ${token}`);
-            }
-
-            if (!isNumber(amount)) {
-                throw new Error(`Invalid token amount: ${amount}`);
-            }
-
             const target = chain.contracts.AxelarGasService?.address;
 
-            if (!isAddress(target)) {
-                throw new Error(`Missing AxelarGasService address in the chain info.`);
-            }
+            validateParameters({
+                isKeccak256Hash: { txHash },
+                isNumber: { logIndex, amount },
+                isAddress: { receiver, token, target },
+            });
 
             const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
             const refundCalldata = gasServiceInterface.encodeFunctionData('refund', [txHash, logIndex, receiver, token, amount]);
