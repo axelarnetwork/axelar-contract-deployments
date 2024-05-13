@@ -1859,8 +1859,8 @@
       },
       "explorer": {
         "name": "Scroll Explorer",
-        "url": "https://blockscout.scroll.io",
-        "api": "https://blockscout.scroll.io/api"
+        "url": "https://scrollscan.com/",
+        "api": "https://api.scrollscan.com/api"
       },
       "confirmations": 2,
       "gasOptions": {
