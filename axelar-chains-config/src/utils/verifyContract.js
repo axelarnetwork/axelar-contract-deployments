@@ -34,7 +34,7 @@ const verifyContract = (env, chain, contract, args, options = {}) => {
         if (error.message.includes('Reason: Already Verified')) {
             console.log(`Contract ${contract} is already verified on ${chain.toLowerCase()}.`);
         } else {
-            throw new Error(`An error occurred while trying to verify ${contract} on ${chain.toLowerCase()}: ${error}`);
+            throw new Error(`An error occurred while trying to verify ${contract} on ${chain.toLowerCase()}:\n${error}`);
         }
     }
 };
