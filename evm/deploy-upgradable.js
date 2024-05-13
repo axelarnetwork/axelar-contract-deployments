@@ -12,7 +12,7 @@ const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const { Command, Option } = require('commander');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
-const { printInfo, printError, printWalletInfo, getDeployedAddress, prompt, getGasOptions, mainProcessor } = require('./utils');
+const { printInfo, printError, printWalletInfo, getDeployedAddress, prompt, getGasOptions, mainProcessor, printLog } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
 function getProxy(wallet, proxyAddress) {
@@ -20,7 +20,16 @@ function getProxy(wallet, proxyAddress) {
 }
 
 async function getImplementationArgs(contractName, config, options) {
-    const args = options.args ? JSON.parse(options.args) : {};
+    let args;
+
+    try {
+        args = options.args ? JSON.parse(options.args) : {};
+        console.log('Parsed args:\n');
+        printLog(args);
+    } catch (error) {
+        console.error('Error parsing args:\n', error.message);
+    }
+
     const contractConfig = config[contractName];
     Object.assign(contractConfig, args);
 
@@ -50,8 +59,7 @@ async function getImplementationArgs(contractName, config, options) {
                 throw new Error(`${config.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
             }
 
-            const gateway = contractConfig.gatewayAddress ?? config.AxelarGateway?.address;
-            config.AxelarGateway.address = gateway;
+            const gateway = config.AxelarGateway?.address;
 
             if (!isAddress(gateway)) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
