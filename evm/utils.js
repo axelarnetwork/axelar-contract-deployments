@@ -671,7 +671,7 @@ const getAmplifierKeyAddresses = async (config, chain) => {
         weight: signer.weight,
     }));
 
-    return { addresses: weightedAddresses, threshold: workerSet.threshold };
+    return { addresses: weightedAddresses, threshold: workerSet.threshold, created_at: workerSet.created_at };
 };
 
 function sleep(ms) {
