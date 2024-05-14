@@ -5,6 +5,7 @@ const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
     utils: { keccak256, id, defaultAbiCoder, arrayify },
+    constants: { HashZero },
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
@@ -21,6 +22,7 @@ const {
     printError,
     getGasOptions,
     httpGet,
+    getContractJSON,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -28,6 +30,7 @@ const { getWallet } = require('./sign-utils');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 const IAxelarExecutable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarExecutable.json');
 const IAuth = require('@axelar-network/axelar-cgp-solidity/interfaces/IAxelarAuthWeighted.json');
+const { getWeightedSignersProof, WEIGHTED_SIGNERS_TYPE } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 
 const getApproveContractCall = (sourceChain, source, destination, payloadHash, sourceTxHash, sourceEventIndex) => {
     return defaultAbiCoder.encode(
@@ -399,6 +402,45 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'rotateSigners': {
+            // TODO: use args for new signers
+            const gateway = new Contract(gatewayAddress, getContractJSON('AxelarAmplifierGateway').abi, wallet);
+
+            const weightedSigners = {
+                signers: [
+                    {
+                        signer: wallet.address,
+                        weight: 1,
+                    },
+                ],
+                threshold: 1,
+                nonce: HashZero,
+            };
+
+            const newSigners = {
+                ...weightedSigners,
+                nonce: id('1'),
+            };
+
+            const data = defaultAbiCoder.encode(
+                ['uint8', WEIGHTED_SIGNERS_TYPE],
+                [1, newSigners],
+            );
+            console.log(JSON.stringify(newSigners, null, 2));
+            const proof = await getWeightedSignersProof(data, HashZero, weightedSigners, [wallet])
+            const tx = await gateway.rotateSigners(newSigners, proof, gasOptions);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'SignersRotated');
+
+            if (!eventEmitted) {
+                throw new Error('Event not emitted in receipt.');
+            }
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -434,6 +476,7 @@ if (require.main === module) {
                 'mintLimit',
                 'params',
                 'approveWithBatch',
+                'rotateSigners',
             ])
             .makeOptionMandatory(true),
     );
