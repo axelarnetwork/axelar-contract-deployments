@@ -422,12 +422,9 @@ async function processCommand(config, chain, options) {
                 nonce: id('1'),
             };
 
-            const data = defaultAbiCoder.encode(
-                ['uint8', WEIGHTED_SIGNERS_TYPE],
-                [1, newSigners],
-            );
+            const data = defaultAbiCoder.encode(['uint8', WEIGHTED_SIGNERS_TYPE], [1, newSigners]);
             console.log(JSON.stringify(newSigners, null, 2));
-            const proof = await getWeightedSignersProof(data, HashZero, weightedSigners, [wallet])
+            const proof = await getWeightedSignersProof(data, HashZero, weightedSigners, [wallet]);
             const tx = await gateway.rotateSigners(newSigners, proof, gasOptions);
 
             const receipt = await tx.wait(chain.confirmations);

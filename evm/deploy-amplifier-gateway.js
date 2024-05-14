@@ -153,7 +153,7 @@ async function deploy(config, chain, options) {
 
     contractConfig.deployer = wallet.address;
     const domainSeparator = options.domainSeparator; // TODO: retrieve domain separator from amplifier / calculate the same way
-    const minimumRotationDelay = 24 * 60 * 60; // 24 hrs
+    const minimumRotationDelay = options.minimumRotationDelay;
     const salt = options.salt || '';
 
     printInfo(`Deploying gateway implementation contract`);
@@ -291,6 +291,7 @@ async function deploy(config, chain, options) {
     contractConfig.deploymentMethod = options.deployMethod;
     contractConfig.previousSignersRetention = options.previousSignersRetention;
     contractConfig.domainSeparator = domainSeparator;
+    contractConfig.minimumRotationDelay = minimumRotationDelay;
 
     if (options.deployMethod !== 'create') {
         contractConfig.salt = salt;
@@ -419,6 +420,9 @@ async function programHandler() {
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('--previousSignersRetention <previousSignersRetention>', 'previous signer retention').default(15));
     program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
+    program.addOption(
+        new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations').default(24 * 60 * 60),
+    ); // 1 day
 
     program.addOption(new Option('--reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
