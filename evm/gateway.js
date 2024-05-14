@@ -20,6 +20,7 @@ const {
     mainProcessor,
     printError,
     getGasOptions,
+    httpGet,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -53,6 +54,17 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
         ['bytes', 'bytes'],
         [data, await getWeightedSignaturesProof(data, operators, weights, threshold, signers)],
     );
+};
+
+const fetchBatchData = async (apiUrl, batchId) => {
+    try {
+        const response = await httpGet(`${apiUrl}/${batchId}`);
+        const data = response?.execute_data;
+
+        return '0x' + data;
+    } catch (error) {
+        throw new Error(`Failed to fetch batch data: ${error.message}`);
+    }
 };
 
 async function processCommand(config, chain, options) {
@@ -175,6 +187,38 @@ async function processCommand(config, chain, options) {
             const receipt = await tx.wait(chain.confirmations);
 
             const eventEmitted = wasEventEmitted(receipt, gateway, 'ContractCall');
+
+            if (!eventEmitted) {
+                printWarn('Event not emitted in receipt.');
+            }
+
+            break;
+        }
+
+        case 'approveWithBatch': {
+            const { batchID, api } = options;
+
+            if (!batchID) {
+                throw new Error('Batch ID is required for the approve action');
+            }
+
+            const batchId = batchID.startsWith('0x') ? batchID.substring(2) : batchID;
+            let apiUrl = api || `${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.name.toLowerCase()}`;
+            apiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+
+            const executeData = await fetchBatchData(apiUrl, batchId);
+
+            const tx = {
+                to: gatewayAddress,
+                data: executeData,
+                ...gasOptions,
+            };
+
+            const response = await wallet.sendTransaction(tx);
+            printInfo('Approve tx', response.hash);
+
+            const receipt = await response.wait(chain.confirmations);
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'ContractCallApproved');
 
             if (!eventEmitted) {
                 printWarn('Event not emitted in receipt.');
@@ -389,6 +433,7 @@ if (require.main === module) {
                 'transferMintLimiter',
                 'mintLimit',
                 'params',
+                'approveWithBatch',
             ])
             .makeOptionMandatory(true),
     );
