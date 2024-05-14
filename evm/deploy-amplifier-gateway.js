@@ -62,9 +62,10 @@ async function getWeightedSigners(config, chain, options) {
     return [signers];
 }
 
-async function getSetupParams(config, chain, options) {
+async function getSetupParams(config, chain, operator, options) {
     const signerSets = await getWeightedSigners(config, chain, options);
-    return defaultAbiCoder.encode([`${WEIGHTED_SIGNERS_TYPE}[]`], [signerSets]);
+    printInfo('Setup params', [operator, signerSets]);
+    return defaultAbiCoder.encode([`address`, `${WEIGHTED_SIGNERS_TYPE}[]`], [operator, signerSets]);
 }
 
 async function deploy(config, chain, options) {
@@ -152,10 +153,11 @@ async function deploy(config, chain, options) {
 
     contractConfig.deployer = wallet.address;
     const domainSeparator = HashZero; // TODO: retrieve domain separator from amplifier / calculate the same way
+    const minimumRotationDelay = 24 * 60 * 60; // 24 hrs
     const salt = options.salt || '';
 
     printInfo(`Deploying gateway implementation contract`);
-    printInfo('Gateway Implementation args', `${options.previousSignersRetention}, ${domainSeparator}`);
+    printInfo('Gateway Implementation args', `${options.previousSignersRetention}, ${domainSeparator}, ${minimumRotationDelay}`);
     printInfo('Deploy method', options.deployMethod);
     printInfo('Deploy salt (if not create based deployment)', salt);
 
@@ -170,7 +172,7 @@ async function deploy(config, chain, options) {
             options.deployMethod,
             wallet,
             AxelarAmplifierGateway,
-            [options.previousSignersRetention, domainSeparator],
+            [options.previousSignersRetention, domainSeparator, minimumRotationDelay],
             { salt: implementationSalt, deployerContract },
             gasOptions,
             {},
@@ -184,13 +186,16 @@ async function deploy(config, chain, options) {
     printInfo('Gateway Implementation codehash', implementationCodehash);
 
     if (options.skipExisting && contractConfig.address) {
-        proxyAddress = chain.contracts.AxelarGateway?.address;
+        proxyAddress = contractConfig?.address;
         gateway = gatewayFactory.attach(proxyAddress);
     } else if (!reuseProxy) {
-        const params = await getSetupParams(config, chain, options);
+        const operator = options.operator || contractConfig.operator || wallet.address;
+        const params = await getSetupParams(config, chain, operator, options);
 
         printInfo('Deploying gateway proxy contract');
         printInfo('Proxy deployment args', `${implementation.address}, ${params}`);
+
+        contractConfig.operator = operator;
 
         const gatewayProxy = await deployContract(
             options.deployMethod,
@@ -238,6 +243,16 @@ async function deploy(config, chain, options) {
 
     if (domainSeparator !== (await gateway.domainSeparator())) {
         printError('ERROR: Domain separator mismatch');
+        error = true;
+    }
+
+    if (minimumRotationDelay !== (await gateway.minimumRotationDelay()).toNumber()) {
+        printError('ERROR: Minimum rotation delay mismatch');
+        error = true;
+    }
+
+    if (contractConfig.operator !== (await gateway.operator())) {
+        printError('ERROR: Operator mismatch');
         error = true;
     }
 
@@ -407,6 +422,7 @@ async function programHandler() {
     program.addOption(new Option('--reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('--owner <owner>', 'owner/governance address').env('OWNER'));
+    program.addOption(new Option('--operator <operator>', 'gateway operator address'));
     program.addOption(new Option('--keyID <keyID>', 'use the specified key ID address instead of the querying the chain').env('KEY_ID'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
