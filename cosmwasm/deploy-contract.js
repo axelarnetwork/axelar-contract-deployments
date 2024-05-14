@@ -6,7 +6,7 @@ const { isNil } = require('lodash');
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 
-const { printInfo, loadConfig, saveConfig, isString, isStringArray, isNumber, prompt } = require('../evm/utils');
+const { printInfo, loadConfig, saveConfig, isString, isStringArray, isNumberArray, isNumber, prompt } = require('../evm/utils');
 const { uploadContract, instantiateContract, isValidCosmosAddress, governanceAddress } = require('./utils');
 
 const { Command, Option } = require('commander');
@@ -215,7 +215,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         throw new Error(`Missing or invalid VotingVerifier[${chainId}].address in axelar info`);
     }
 
-    if (!isString(domainSeparator)) {
+    if (!isNumberArray(domainSeparator)) {
         throw new Error(`Missing or invalid MultisigProver[${chainId}].domainSeparator in axelar info`);
     }
 
