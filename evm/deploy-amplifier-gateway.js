@@ -152,7 +152,7 @@ async function deploy(config, chain, options) {
     }
 
     contractConfig.deployer = wallet.address;
-    const domainSeparator = HashZero; // TODO: retrieve domain separator from amplifier / calculate the same way
+    const domainSeparator = options.domainSeparator; // TODO: retrieve domain separator from amplifier / calculate the same way
     const minimumRotationDelay = 24 * 60 * 60; // 24 hrs
     const salt = options.salt || '';
 
@@ -418,6 +418,7 @@ async function programHandler() {
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('--previousSignersRetention <previousSignersRetention>', 'previous signer retention').default(15));
+    program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
 
     program.addOption(new Option('--reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
