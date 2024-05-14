@@ -178,6 +178,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         [chainId]: {
             adminAddress,
             governanceAddress,
+            domainSeparator,
             signingThreshold,
             serviceName,
             workerSetDiffThreshold,
@@ -214,6 +215,10 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         throw new Error(`Missing or invalid VotingVerifier[${chainId}].address in axelar info`);
     }
 
+    if (!isString(domainSeparator)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].domainSeparator in axelar info`);
+    }
+
     if (!isStringArray(signingThreshold)) {
         throw new Error(`Missing or invalid MultisigProver[${chainId}].signingThreshold in axelar info`);
     }
@@ -242,6 +247,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,
         voting_verifier_address: verifierAddress,
+        domain_separator: domainSeparator,
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainId,
