@@ -1,6 +1,5 @@
 'use strict';
 
-const axios = require('axios');
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
@@ -21,6 +20,7 @@ const {
     mainProcessor,
     printError,
     getGasOptions,
+    httpGet,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -58,14 +58,10 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
 
 const fetchBatchData = async (apiUrl, batchId) => {
     try {
-        const response = await axios.post(apiUrl, { batchId });
-        const data = response.data?.data;
+        const response = await httpGet(`${apiUrl}/${batchId}`);
+        const data = response?.execute_data;
 
-        if (!Array.isArray(data) || !data[0] || !data[0].execute_data) {
-            throw new Error('Invalid data format or execute_data is empty.');
-        }
-
-        return '0x' + data[0].execute_data;
+        return '0x' + data;
     } catch (error) {
         throw new Error(`Failed to fetch batch data: ${error.message}`);
     }
@@ -200,18 +196,15 @@ async function processCommand(config, chain, options) {
         }
 
         case 'approveWithBatch': {
-            const { batchID, api, env } = options;
+            const { batchID, api } = options;
 
             if (!batchID) {
                 throw new Error('Batch ID is required for the approve action');
             }
 
             const batchId = batchID.startsWith('0x') ? batchID.substring(2) : batchID;
-            const apiUrl =
-                api ||
-                (env === 'testnet'
-                    ? 'https://testnet.api.axelarscan.io/token/searchBatches'
-                    : 'https://api.axelarscan.io/token/searchBatches');
+            let apiUrl = api || `${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.name.toLowerCase()}`;
+            apiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
 
             const executeData = await fetchBatchData(apiUrl, batchId);
 
