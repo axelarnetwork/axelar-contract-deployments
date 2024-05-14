@@ -7,6 +7,7 @@ const {
     ContractFactory,
     Contract,
     Wallet,
+    BigNumber,
     utils: { defaultAbiCoder, getContractAddress, keccak256 },
     constants: { HashZero },
     getDefaultProvider,
@@ -52,10 +53,12 @@ async function getWeightedSigners(config, chain, options) {
         };
     } else {
         const addresses = getAmplifierKeyAddresses(config, chain.axelarId);
+        const nonce = ethers.utils.hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
+
         signers = {
             signers: addresses.addresses.map(({ address, weight }) => ({ signer: address, weight })),
-            threshold: addresses.threshold,
-            nonce: HashZero, // TODO: set nonce
+            threshold: Number(addresses.threshold),
+            nonce,
         };
     }
 
@@ -64,7 +67,7 @@ async function getWeightedSigners(config, chain, options) {
 
 async function getSetupParams(config, chain, operator, options) {
     const signerSets = await getWeightedSigners(config, chain, options);
-    printInfo('Setup params', [operator, signerSets]);
+    printInfo('Setup params', JSON.stringify([operator, signerSets], null, 2));
     return defaultAbiCoder.encode([`address`, `${WEIGHTED_SIGNERS_TYPE}[]`], [operator, signerSets]);
 }
 
