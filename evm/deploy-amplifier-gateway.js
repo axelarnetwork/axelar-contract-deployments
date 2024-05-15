@@ -8,7 +8,7 @@ const {
     Contract,
     Wallet,
     BigNumber,
-    utils: { defaultAbiCoder, getContractAddress, keccak256 },
+    utils: { defaultAbiCoder, getContractAddress, keccak256, hexlify },
     constants: { HashZero },
     getDefaultProvider,
 } = ethers;
@@ -26,6 +26,7 @@ const {
     deployContract,
     getGasOptions,
     isValidAddress,
+    getContractConfig,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
@@ -107,6 +108,16 @@ async function deploy(config, chain, options) {
         printInfo('Owner address', owner);
     }
 
+    const domainSeparator = options.domainSeparator;
+    const actualDomainSeparator = hexlify((await getContractConfig(config, chain.name)).domain_separator);
+    
+    if (domainSeparator.toUpperCase() !== actualDomainSeparator.toUpperCase()) {
+        printWarn(`Provided domain separator does not match actual domain separator (expected ${domainSeparator}, got ${actualDomainSeparator})`);
+        process.exit(1);
+    }
+
+    printInfo('Domain separator', actualDomainSeparator);
+
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     const gatewayFactory = new ContractFactory(AxelarAmplifierGateway.abi, AxelarAmplifierGateway.bytecode, wallet);
@@ -155,7 +166,6 @@ async function deploy(config, chain, options) {
     }
 
     contractConfig.deployer = wallet.address;
-    const domainSeparator = options.domainSeparator; // TODO: retrieve domain separator from amplifier / calculate the same way
     const minimumRotationDelay = options.minimumRotationDelay;
     const salt = options.salt || '';
 
