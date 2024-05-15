@@ -8,7 +8,9 @@ default = []
 
 [dependencies]
 anyhow.workspace = true
+async-trait.workspace = true
 axum.workspace = true
+backoff = { workspace = true, features = ["tokio"] }
 bcs.workspace = true
 borsh.workspace = true
 clap = { workspace = true, features = ["derive"] }
@@ -19,7 +21,10 @@ futures.workspace = true
 hex.workspace = true
 prost.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 solana-client.workspace = true
+solana-rpc-client.workspace = true
+solana-rpc-client-api.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
 solana-transaction-status.workspace = true

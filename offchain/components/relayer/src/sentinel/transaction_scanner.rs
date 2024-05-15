@@ -345,6 +345,7 @@ pub mod signature_scanner {
 /// metadata.
 pub mod transaction_retriever {
     use solana_client::client_error::ClientError;
+    use solana_client::rpc_client::RpcClientConfig;
     use solana_transaction_status::option_serializer::OptionSerializer;
     use solana_transaction_status::EncodedConfirmedTransactionWithStatusMeta;
     use tokio::sync::mpsc::error::SendError;
@@ -353,6 +354,7 @@ pub mod transaction_retriever {
     use TransactionScannerMessage::Message;
 
     use super::*;
+    use crate::retrying_http_sender::RetryingHttpSender;
 
     #[derive(Error, Debug)]
     pub enum TransactionRetrieverError {
@@ -411,7 +413,12 @@ pub mod transaction_retriever {
         cancellation_token: CancellationToken,
         semaphore: Arc<Semaphore>,
     ) -> TransactionRetrieverError {
-        let rpc_client = Arc::new(RpcClient::new(url.to_string()));
+        let rpc_client = {
+            let sender = RetryingHttpSender::new(url.to_string());
+            let config = RpcClientConfig::with_commitment(CommitmentConfig::confirmed());
+            let client = RpcClient::new_sender(sender, config);
+            Arc::new(client)
+        };
 
         let build_future = |signature: Signature| {
             fetch_with_permit(

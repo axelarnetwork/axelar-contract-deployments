@@ -10,8 +10,10 @@ use gmp_gateway::instructions;
 use gmp_gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
 use solana_client::client_error::ClientErrorKind;
 use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_client::rpc_client::RpcClientConfig;
 use solana_client::rpc_request::RpcError;
 use solana_sdk::account::Account;
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::hash::Hash;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signature};
@@ -24,6 +26,7 @@ use url::Url;
 
 use self::error::IncluderError;
 use crate::amplifier_api::SubscribeToApprovalsResponse;
+use crate::retrying_http_sender::RetryingHttpSender;
 use crate::state::State;
 
 /// Solana Includer
@@ -63,8 +66,13 @@ impl SolanaIncluder {
 
     /// Creates a new `Worker` based on this `SolanaIncuder`
     fn worker(&self) -> Worker {
-        // Arc is necessary because `RpcClient` isn't `Send`.
-        let client = Arc::new(RpcClient::new(self.rpc.to_string()));
+        let client = {
+            let sender = RetryingHttpSender::new(self.rpc.to_string());
+            let config = RpcClientConfig::with_commitment(CommitmentConfig::confirmed());
+            let client = RpcClient::new_sender(sender, config);
+            Arc::new(client)
+        };
+
         Worker {
             client,
             keypair: self.keypair.clone(),
