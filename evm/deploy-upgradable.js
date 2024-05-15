@@ -12,7 +12,7 @@ const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const { Command, Option } = require('commander');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
-const { printInfo, printError, printWalletInfo, getDeployedAddress, prompt, getGasOptions, mainProcessor } = require('./utils');
+const { printInfo, printError, printWalletInfo, getDeployedAddress, prompt, getGasOptions, mainProcessor, printLog } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
 function getProxy(wallet, proxyAddress) {
@@ -20,14 +20,21 @@ function getProxy(wallet, proxyAddress) {
 }
 
 async function getImplementationArgs(contractName, config, options) {
+    let args;
+
+    try {
+        args = options.args ? JSON.parse(options.args) : {};
+        console.log('Parsed args:\n');
+        printLog(args);
+    } catch (error) {
+        console.error('Error parsing args:\n', error.message);
+    }
+
     const contractConfig = config[contractName];
+    Object.assign(contractConfig, args);
 
     switch (contractName) {
         case 'AxelarGasService': {
-            if (options.args) {
-                contractConfig.collector = options.args;
-            }
-
             const collector = contractConfig.collector;
 
             if (!isAddress(collector)) {

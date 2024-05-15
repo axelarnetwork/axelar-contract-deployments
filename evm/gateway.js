@@ -5,6 +5,7 @@ const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
     utils: { keccak256, id, defaultAbiCoder, arrayify },
+    constants: { HashZero },
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
@@ -20,6 +21,8 @@ const {
     mainProcessor,
     printError,
     getGasOptions,
+    httpGet,
+    getContractJSON,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -27,6 +30,7 @@ const { getWallet } = require('./sign-utils');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 const IAxelarExecutable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarExecutable.json');
 const IAuth = require('@axelar-network/axelar-cgp-solidity/interfaces/IAxelarAuthWeighted.json');
+const { getWeightedSignersProof, WEIGHTED_SIGNERS_TYPE } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 
 const getApproveContractCall = (sourceChain, source, destination, payloadHash, sourceTxHash, sourceEventIndex) => {
     return defaultAbiCoder.encode(
@@ -53,6 +57,17 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
         ['bytes', 'bytes'],
         [data, await getWeightedSignaturesProof(data, operators, weights, threshold, signers)],
     );
+};
+
+const fetchBatchData = async (apiUrl, batchId) => {
+    try {
+        const response = await httpGet(`${apiUrl}/${batchId}`);
+        const data = response?.execute_data;
+
+        return '0x' + data;
+    } catch (error) {
+        throw new Error(`Failed to fetch batch data: ${error.message}`);
+    }
 };
 
 async function processCommand(config, chain, options) {
@@ -175,6 +190,38 @@ async function processCommand(config, chain, options) {
             const receipt = await tx.wait(chain.confirmations);
 
             const eventEmitted = wasEventEmitted(receipt, gateway, 'ContractCall');
+
+            if (!eventEmitted) {
+                printWarn('Event not emitted in receipt.');
+            }
+
+            break;
+        }
+
+        case 'approveWithBatch': {
+            const { batchID, api } = options;
+
+            if (!batchID) {
+                throw new Error('Batch ID is required for the approve action');
+            }
+
+            const batchId = batchID.startsWith('0x') ? batchID.substring(2) : batchID;
+            let apiUrl = api || `${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.name.toLowerCase()}`;
+            apiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+
+            const executeData = await fetchBatchData(apiUrl, batchId);
+
+            const tx = {
+                to: gatewayAddress,
+                data: executeData,
+                ...gasOptions,
+            };
+
+            const response = await wallet.sendTransaction(tx);
+            printInfo('Approve tx', response.hash);
+
+            const receipt = await response.wait(chain.confirmations);
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'ContractCallApproved');
 
             if (!eventEmitted) {
                 printWarn('Event not emitted in receipt.');
@@ -355,6 +402,42 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'rotateSigners': {
+            // TODO: use args for new signers
+            const gateway = new Contract(gatewayAddress, getContractJSON('AxelarAmplifierGateway').abi, wallet);
+
+            const weightedSigners = {
+                signers: [
+                    {
+                        signer: wallet.address,
+                        weight: 1,
+                    },
+                ],
+                threshold: 1,
+                nonce: HashZero,
+            };
+
+            const newSigners = {
+                ...weightedSigners,
+                nonce: id('1'),
+            };
+
+            const data = defaultAbiCoder.encode(['uint8', WEIGHTED_SIGNERS_TYPE], [1, newSigners]);
+            console.log(JSON.stringify(newSigners, null, 2));
+            const proof = await getWeightedSignersProof(data, HashZero, weightedSigners, [wallet]);
+            const tx = await gateway.rotateSigners(newSigners, proof, gasOptions);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'SignersRotated');
+
+            if (!eventEmitted) {
+                throw new Error('Event not emitted in receipt.');
+            }
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -389,6 +472,8 @@ if (require.main === module) {
                 'transferMintLimiter',
                 'mintLimit',
                 'params',
+                'approveWithBatch',
+                'rotateSigners',
             ])
             .makeOptionMandatory(true),
     );

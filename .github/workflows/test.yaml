@@ -73,8 +73,11 @@ jobs:
       - name: Deploy Create3Deployer
         run: node evm/deploy-contract.js -c Create3Deployer -m create2 -y
 
+      - name: Deploy AxelarAmplifierGateway
+        run: node evm/deploy-amplifier-gateway.js --deployMethod create3 -s "AxelarAmplifierGateway v5.8" --owner 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
+
       - name: Deploy AxelarGateway
-        run: node evm/deploy-gateway-v6.2.x.js -m create3 -s "AxelarGateway v6.2" --governance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --mintLimiter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
+        run: node evm/deploy-gateway-v6.2.x.js --deployMethod create3 -s "AxelarGateway v6.2" --governance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --mintLimiter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
 
       - name: Call Method on Gateway
         run: node evm/gateway.js --action callContract --destinationChain test2 -y
