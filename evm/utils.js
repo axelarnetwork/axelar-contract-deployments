@@ -673,10 +673,12 @@ const getAmplifierKeyAddresses = async (config, chain) => {
     const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'get_worker_set');
     const signers = Object.values(workerSet.signers);
 
-    const weightedAddresses = signers.map((signer) => ({
-        address: computeAddress(`0x${signer.pub_key.ecdsa}`),
-        weight: signer.weight,
-    })).sort((a,b) => a.address.localeCompare(b.address));
+    const weightedAddresses = signers
+        .map((signer) => ({
+            address: computeAddress(`0x${signer.pub_key.ecdsa}`),
+            weight: signer.weight,
+        }))
+        .sort((a, b) => a.address.localeCompare(b.address));
 
     return { addresses: weightedAddresses, threshold: workerSet.threshold, created_at: workerSet.created_at };
 };
