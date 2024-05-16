@@ -69,12 +69,13 @@ async function getWeightedSigners(config, chain, options) {
 
 async function getDomainSeparator(config, chain, options) {
     printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
+
     if (isKeccak256Hash(options.domainSeparator)) {
         // return the domainSeparator for debug deployments
         return options.domainSeparator;
-    } else {
-        return hexlify((await getContractConfig(config, chain.name)).domain_separator);
     }
+    
+    return hexlify((await getContractConfig(config, chain.name)).domain_separator);
 }
 
 async function getSetupParams(config, chain, operator, options) {
