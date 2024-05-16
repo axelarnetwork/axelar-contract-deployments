@@ -58,7 +58,7 @@ async function getWeightedSigners(config, chain, options) {
         const nonce = ethers.utils.hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {
-            signers: addresses.addresses.map(({ address, weight }) => ({ signer: address, weight })),
+            signers: addresses.addresses.map(({ address, weight }) => ({ signer: address, weight: Number(weight) })),
             threshold: Number(addresses.threshold),
             nonce,
         };
@@ -169,7 +169,7 @@ async function deploy(config, chain, options) {
 
     contractConfig.deployer = wallet.address;
     const domainSeparator = await getDomainSeparator(config, chain, options);
-    const minimumRotationDelay = options.minimumRotationDelay;
+    const minimumRotationDelay = Number(options.minimumRotationDelay);
     const salt = options.salt || '';
 
     printInfo(`Deploying gateway implementation contract`);
@@ -252,7 +252,7 @@ async function deploy(config, chain, options) {
         error = true;
     }
 
-    if (options.previousSignersRetention !== (await gateway.previousSignersRetention()).toNumber()) {
+    if (Number(options.previousSignersRetention) !== (await gateway.previousSignersRetention()).toNumber()) {
         printError('ERROR: Previous signer retention mismatch');
         error = true;
     }

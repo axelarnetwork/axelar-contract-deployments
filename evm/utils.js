@@ -676,7 +676,7 @@ const getAmplifierKeyAddresses = async (config, chain) => {
     const weightedAddresses = signers.map((signer) => ({
         address: computeAddress(`0x${signer.pub_key.ecdsa}`),
         weight: signer.weight,
-    }));
+    })).sort((a,b) => a.address.localeCompare(b.address));
 
     return { addresses: weightedAddresses, threshold: workerSet.threshold, created_at: workerSet.created_at };
 };
