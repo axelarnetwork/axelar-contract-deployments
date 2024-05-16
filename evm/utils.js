@@ -1247,5 +1247,4 @@ module.exports = {
     isValidChain,
     toBigNumberString,
     timeout,
-    getAmplifierKeyAddresses,
 };
