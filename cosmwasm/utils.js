@@ -35,10 +35,12 @@ const uploadContract = async (client, wallet, config, options) => {
             console.log('gasLimit:', gasLimit);
             console.log('gasPrice:', gasPrice);
 
+            console.log('account:', account);
+
             const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
             console.log('uploadFee:', uploadFee);
-            
+
             return client.upload(account.address, wasm, uploadFee).then(({ checksum, codeId }) => ({ checksum, codeId, account }));
         })
         .then(({ account, checksum, codeId }) => {
