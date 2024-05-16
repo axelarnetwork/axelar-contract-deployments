@@ -74,7 +74,7 @@ async function getDomainSeparator(config, chain, options) {
         // return the domainSeparator for debug deployments
         return options.domainSeparator;
     }
-    
+
     return hexlify((await getContractConfig(config, chain.name)).domain_separator);
 }
 
