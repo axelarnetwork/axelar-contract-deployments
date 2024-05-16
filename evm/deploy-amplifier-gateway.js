@@ -108,15 +108,9 @@ async function deploy(config, chain, options) {
         printInfo('Owner address', owner);
     }
 
-    const domainSeparator = options.domainSeparator;
-    const actualDomainSeparator = hexlify((await getContractConfig(config, chain.name)).domain_separator);
-    
-    if (domainSeparator.toUpperCase() !== actualDomainSeparator.toUpperCase()) {
-        printWarn(`Provided domain separator does not match actual domain separator (expected ${domainSeparator}, got ${actualDomainSeparator})`);
-        process.exit(1);
-    }
+    const domainSeparator = hexlify((await getContractConfig(config, chain.name)).domain_separator);
 
-    printInfo('Domain separator', actualDomainSeparator);
+    printInfo('Domain separator', domainSeparator);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
@@ -432,7 +426,6 @@ async function programHandler() {
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('--previousSignersRetention <previousSignersRetention>', 'previous signer retention').default(15));
-    program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
     program.addOption(
         new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations').default(24 * 60 * 60),
     ); // 1 day
