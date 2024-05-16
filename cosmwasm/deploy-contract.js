@@ -6,7 +6,7 @@ const { isNil } = require('lodash');
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 
-const { printInfo, loadConfig, saveConfig, isString, isStringArray, isNumber, prompt } = require('../evm/utils');
+const { printInfo, loadConfig, saveConfig, isString, isStringArray, isNumberArray, isNumber, prompt } = require('../evm/utils');
 const { uploadContract, instantiateContract, isValidCosmosAddress, governanceAddress } = require('./utils');
 
 const { Command, Option } = require('commander');
@@ -178,7 +178,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         [chainId]: {
             adminAddress,
             governanceAddress,
-            destinationChainID,
+            domainSeparator,
             signingThreshold,
             serviceName,
             workerSetDiffThreshold,
@@ -215,8 +215,8 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         throw new Error(`Missing or invalid VotingVerifier[${chainId}].address in axelar info`);
     }
 
-    if (!isString(destinationChainID)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].destinationChainID in axelar info`);
+    if (!isNumberArray(domainSeparator)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].domainSeparator in axelar info`);
     }
 
     if (!isStringArray(signingThreshold)) {
@@ -247,7 +247,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,
         voting_verifier_address: verifierAddress,
-        destination_chain_id: destinationChainID,
+        domain_separator: domainSeparator,
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainId,
