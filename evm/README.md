@@ -15,6 +15,14 @@ Deploy the gateway contract.
 
 `node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
 
+## Axelar Amplifier Gateway
+
+Deploy the Axelar Amplifier Gateway contract. This is the required gateway contract for EVM chains connecting via Axelar's Amplifier protocol.
+
+`node evm/deploy-amplifier-gateway.js -e testnet -n ethereum`
+
+For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. It'll default to the deployer and can be transferred to governance later.
+
 ## Gateway Upgrade
 
 1. When upgrading the gateway, the proxy contract will be reused.
@@ -128,6 +136,25 @@ To decode function calldata:
 
 To update the min deposit on Axelar with a param change proposal, you can generate the proposal via
 `node evm/min-deposit-proposal.js -e mainnet -n all --deposit 1000000`
+
+## Mock Deployment of Contracts
+
+Test mock deployment of contracts using the `contracts-deployment-test.js` script:
+
+```bash
+node evm/contracts-deployment-test.js -e <environment> -n <chainNames>
+```
+
+For example, to deploy contracts on the Famtom chain in the testnet environment:
+```bash
+node evm/contracts-deployment-test.js -e testnet -n fantom
+```
+The script also supports optional flag parameters -y and --deployDepositService, which can also be specified in a .env file under the variables YES and DEPLOY_DEPOSIT_SERVICE.
+
+Example with optional flags
+```bash
+node evm/contracts-deployment-test.js -e testnet -n fantom -y --deployDepositService
+```
 
 ## Contract Verification
 

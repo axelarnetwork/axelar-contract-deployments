@@ -661,6 +661,13 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     return { addresses, weights, threshold, keyID: evmAddresses.key_id };
 };
 
+const getContractConfig = async (config, chain) => {
+    const key = Buffer.from('config');
+    const client = await CosmWasmClient.connect(config.axelar.rpc);
+    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
+    return JSON.parse(Buffer.from(value).toString('ascii'));
+};
+
 const getAmplifierKeyAddresses = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
     const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'get_worker_set');
@@ -671,7 +678,7 @@ const getAmplifierKeyAddresses = async (config, chain) => {
         weight: signer.weight,
     }));
 
-    return { addresses: weightedAddresses, threshold: workerSet.threshold };
+    return { addresses: weightedAddresses, threshold: workerSet.threshold, created_at: workerSet.created_at };
 };
 
 function sleep(ms) {
@@ -1179,6 +1186,9 @@ function toBigNumberString(number) {
 
 function timeout(prom, time, exception) {
     let timer;
+
+    // Racing the promise with a timer
+    // If the timer resolves first, the promise is rejected with the exception
     return Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]).finally(() =>
         clearTimeout(timer),
     );
@@ -1244,4 +1254,6 @@ module.exports = {
     isValidChain,
     toBigNumberString,
     timeout,
+    getAmplifierKeyAddresses,
+    getContractConfig,
 };
