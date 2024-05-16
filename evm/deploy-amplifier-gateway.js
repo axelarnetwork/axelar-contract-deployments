@@ -108,10 +108,6 @@ async function deploy(config, chain, options) {
         printInfo('Owner address', owner);
     }
 
-    const domainSeparator = hexlify((await getContractConfig(config, chain.name)).domain_separator);
-
-    printInfo('Domain separator', domainSeparator);
-
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     const gatewayFactory = new ContractFactory(AxelarAmplifierGateway.abi, AxelarAmplifierGateway.bytecode, wallet);
@@ -160,6 +156,7 @@ async function deploy(config, chain, options) {
     }
 
     contractConfig.deployer = wallet.address;
+    const domainSeparator = hexlify((await getContractConfig(config, chain.name)).domain_separator);
     const minimumRotationDelay = options.minimumRotationDelay;
     const salt = options.salt || '';
 
