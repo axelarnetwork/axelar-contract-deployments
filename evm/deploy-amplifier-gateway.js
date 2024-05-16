@@ -168,7 +168,7 @@ async function deploy(config, chain, options) {
     }
 
     contractConfig.deployer = wallet.address;
-    const domainSeparator = getDomainSeparator(config, chain, options);
+    const domainSeparator = await getDomainSeparator(config, chain, options);
     const minimumRotationDelay = options.minimumRotationDelay;
     const salt = options.salt || '';
 
