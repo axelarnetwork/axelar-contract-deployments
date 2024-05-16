@@ -53,7 +53,7 @@ async function getWeightedSigners(config, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = getAmplifierKeyAddresses(config, chain.axelarId);
+        const addresses = await getAmplifierKeyAddresses(config, chain.axelarId);
         const nonce = ethers.utils.hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {
