@@ -8,7 +8,7 @@ const {
     Contract,
     Wallet,
     BigNumber,
-    utils: { defaultAbiCoder, getContractAddress, keccak256 },
+    utils: { defaultAbiCoder, getContractAddress, keccak256, hexlify },
     constants: { HashZero },
     getDefaultProvider,
 } = ethers;
@@ -26,6 +26,8 @@ const {
     deployContract,
     getGasOptions,
     isValidAddress,
+    isKeccak256Hash,
+    getContractConfig,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
@@ -52,7 +54,7 @@ async function getWeightedSigners(config, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = getAmplifierKeyAddresses(config, chain.axelarId);
+        const addresses = await getAmplifierKeyAddresses(config, chain.axelarId);
         const nonce = ethers.utils.hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {
@@ -63,6 +65,17 @@ async function getWeightedSigners(config, chain, options) {
     }
 
     return [signers];
+}
+
+async function getDomainSeparator(config, chain, options) {
+    printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
+
+    if (isKeccak256Hash(options.domainSeparator)) {
+        // return the domainSeparator for debug deployments
+        return options.domainSeparator;
+    }
+
+    return hexlify((await getContractConfig(config, chain.name)).domain_separator);
 }
 
 async function getSetupParams(config, chain, operator, options) {
@@ -155,7 +168,7 @@ async function deploy(config, chain, options) {
     }
 
     contractConfig.deployer = wallet.address;
-    const domainSeparator = options.domainSeparator; // TODO: retrieve domain separator from amplifier / calculate the same way
+    const domainSeparator = await getDomainSeparator(config, chain, options);
     const minimumRotationDelay = options.minimumRotationDelay;
     const salt = options.salt || '';
 
@@ -422,7 +435,7 @@ async function programHandler() {
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('--previousSignersRetention <previousSignersRetention>', 'previous signer retention').default(15));
-    program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
+    program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator'));
     program.addOption(
         new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations').default(24 * 60 * 60),
     ); // 1 day
