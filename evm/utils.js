@@ -1230,7 +1230,6 @@ module.exports = {
     getProxy,
     getEVMBatch,
     getEVMAddresses,
-    getAmplifierKeyAddresses,
     getConfigByChainId,
     sleep,
     loadConfig,
