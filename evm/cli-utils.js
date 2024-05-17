@@ -7,7 +7,7 @@ const { Option } = require('commander');
 const addBaseOptions = (program, options = {}) => {
     program.addOption(
         new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'devnet-amplifiers', 'stagenet', 'testnet', 'mainnet'])
+            .choices(['local', 'devnet', 'devnet-amplifier', 'devnet-verifiers', 'stagenet', 'testnet', 'mainnet'])
             .default('testnet')
             .makeOptionMandatory(true)
             .env('ENV'),
