@@ -1,8 +1,10 @@
+use futures::stream::FuturesUnordered;
 use gmp_gateway::events::{CallContract, GatewayEvent};
 use solana_program::pubkey::Pubkey;
 use solana_sdk::signature::Signature;
 use tokio::pin;
 use tokio::sync::mpsc::Sender;
+use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
 use url::Url;
@@ -89,6 +91,7 @@ where
     /// worker.
     #[tracing::instrument(skip_all, err)]
     async fn work(self) -> Result<(), SentinelError> {
+        // Set up transaction scanner and receiver for incoming transactions.
         let (transaction_scanner_future, mut transaction_receiver) = TransactionScanner::setup(
             self.gateway_address,
             self.state.clone(),
@@ -98,43 +101,41 @@ where
         );
         pin!(transaction_scanner_future);
 
-        // Cancelation routine
-        let cleanup = |error: SentinelError| -> Result<(), SentinelError> {
-            self.cancellation_token.cancel();
-            Err(error)
-        };
+        // Handles incoming transactions concurrently.
+        let mut transactions_in_progress = FuturesUnordered::new();
 
-        // Listens for incoming Solana transactions and process them sequentially to
-        // propperly update the latest known transaction signature.
+        // Listens for and processes incoming Solana transactions sequentially.
         loop {
-            // Handling the message within the `tokio::select` scope triggers a compilation
-            // error suggesting the future isn't `Send`. To address this, we
-            // assign it to a variable and handle it outside of the
-            // macro's body.
-            let optional_message = tokio::select! {
-                _ = self.cancellation_token.cancelled() => { return cleanup(SentinelError::Stopped); }
+            tokio::select! {
+                // Cancel if cancellation token is triggered.
+                _ = self.cancellation_token.cancelled() => {
+                    return Err(SentinelError::Stopped)
+                }
 
-                // Advance the TransactionScanner future
+
+                // Advance the TransactionScanner future.
                 _ = &mut transaction_scanner_future => { continue }
 
-                // TODO: use recv_many() to increase throughput and register the latest known signature only once per call.
-                message = transaction_receiver.recv() => { message }
-            };
+                // Process incoming transaction scanner messages.
+                message = transaction_receiver.recv() => {
+                    let Some(message) = message else {
+                        warn!(
+                            reason = "transaction scanner channel was closed",
+                            "emitting cancel signal"
+                        );
+                        self.cancellation_token.cancel();
+                        return Err(SentinelError::TransactionScannerChannelClosed);
+                    };
+                    transactions_in_progress.push(self.process_message(message))
+                }
 
-            // Unpack the message
-            let Some(message) = optional_message else {
-                warn!(
-                    reason = "transaction scanner channel was closed",
-                    "emitting cancel signal"
-                );
-                return cleanup(SentinelError::TransactionScannerChannelClosed);
+                // Handle errors while processing transactions.
+                Some(Err(error)) = transactions_in_progress.next() => {
+                    warn!(reason = %error, "emitting cancel signal");
+                    self.cancellation_token.cancel();
+                    return Err(error)
+                }
             };
-
-            // Handle the message
-            if let Err(error) = self.process_message(message).await {
-                warn!(reason = %error, "emitting cancel signal");
-                return cleanup(error);
-            }
         }
     }
 
