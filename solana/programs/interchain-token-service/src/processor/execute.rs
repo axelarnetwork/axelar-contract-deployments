@@ -2,7 +2,7 @@ mod deploy_interchain_token;
 mod deploy_token_manager;
 mod interchain_transfer;
 
-use axelar_executable::validate_contract_call;
+use axelar_executable::validate_message;
 use axelar_message_primitives::AxelarExecutablePayload;
 use interchain_token_transfer_gmp::ethers_core::abi::AbiDecode;
 use interchain_token_transfer_gmp::GMPPayload;
@@ -23,7 +23,7 @@ impl Processor {
         accounts: &[AccountInfo],
         payload: AxelarExecutablePayload,
     ) -> ProgramResult {
-        validate_contract_call(program_id, accounts, &payload)?;
+        validate_message(program_id, accounts, &payload)?;
 
         let account_info_iter = &mut accounts.iter();
         let _gateway_approved_message_pda = next_account_info(account_info_iter)?;

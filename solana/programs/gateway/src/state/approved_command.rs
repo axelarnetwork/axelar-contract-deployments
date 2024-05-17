@@ -35,7 +35,7 @@ pub enum GatewayCommandStatus {
 }
 
 /// After the command itself is marked as `Approved`, the command can be used
-/// for CPI gateway::validateContractCall instruction.
+/// for CPI [`GatewayInstructon::ValidateMessage`] instruction.
 /// This maps to [these lines in the Solidity Gateway](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/78fde453094074ca93ef7eea1e1395fba65ba4f6/contracts/AxelarGateway.sol#L636-L648)
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
 pub enum ApprovedMessageStatus {
@@ -43,8 +43,8 @@ pub enum ApprovedMessageStatus {
     Pending,
     /// The state of the command after it has been approved
     Approved,
-    /// `ValidateContractCall` has been called and the command has been executed
-    /// by the destination program.
+    /// [`GatewayInstructon::ValidateMessage`] has been called and the command
+    /// has been executed by the destination program.
     Executed,
 }
 
@@ -97,7 +97,7 @@ impl GatewayApprovedCommand {
 
     /// Makes sure that the attached account info is the expected one
     /// If successful verification: will update the status to `Executed`
-    pub fn validate_contract_call(
+    pub fn validate_message(
         &mut self,
         command_id: &[u8; 32],
         destination_pubkey: &DestinationProgramId,
@@ -111,7 +111,7 @@ impl GatewayApprovedCommand {
         if !caller.is_signer {
             return Err(ProgramError::MissingRequiredSignature);
         }
-        if !self.is_contract_call_approved() {
+        if !self.is_command_approved() {
             return Err(GatewayError::GatewayCommandNotApproved.into());
         }
 
@@ -121,7 +121,7 @@ impl GatewayApprovedCommand {
     }
 
     /// Sets the command status as approved.
-    pub fn set_ready_for_validate_contract_call(&mut self) -> Result<(), ProgramError> {
+    pub fn set_ready_for_validate_message(&mut self) -> Result<(), ProgramError> {
         if !matches!(
             self.status,
             GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
@@ -165,16 +165,18 @@ impl GatewayApprovedCommand {
     }
 
     /// Returns `true` if this command was executed by the gatewy and the
-    /// destination program has called the `validateContractCall` instruction.
-    pub fn is_contract_call_validated(&self) -> bool {
+    /// destination program has called the
+    /// [`GatewayInstructon::ValidateMessage`] instruction.
+    pub fn is_validate_message_executed(&self) -> bool {
         matches!(
             self.status,
             GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Executed)
         )
     }
 
-    /// Returns `true` if this command was approved.
-    pub fn is_contract_call_approved(&self) -> bool {
+    /// Returns `true` if this command was approved. Done after the
+    /// [`GatewayInstructon::ApproveMessages`] has been called.
+    pub fn is_command_approved(&self) -> bool {
         matches!(
             self.status,
             GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Approved)

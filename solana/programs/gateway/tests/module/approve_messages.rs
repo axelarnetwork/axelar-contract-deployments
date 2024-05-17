@@ -41,10 +41,10 @@ async fn successfully_process_execute_when_there_are_no_commands() {
     assert!(tx.result.is_ok())
 }
 
-/// successfully process execute when there are 3 validate contract call
+/// successfully process execute when there are 3 validate message
 /// commands - emits message approved events
 #[tokio::test]
-async fn successfully_process_execute_when_there_are_3_validate_contract_call_commands() {
+async fn successfully_process_execute_when_there_are_3_validate_message_commands() {
     // Setup
     let (mut fixture, quorum, signers, gateway_root_pda) =
         setup_initialised_gateway(&[11, 42, 33], None).await;
@@ -88,12 +88,12 @@ async fn successfully_process_execute_when_there_are_3_validate_contract_call_co
     for gateway_approved_command_pda in gateway_approved_command_pdas.iter() {
         let approved_command =
             get_approved_command(&mut fixture, gateway_approved_command_pda).await;
-        assert!(approved_command.is_contract_call_approved());
+        assert!(approved_command.is_command_approved());
     }
 }
 
-/// successfully process execute when there is 1 rotate signer set and 3
-/// validate contract call commands
+/// fail on processing approve messages when there is a rotate signers command
+/// in there
 #[tokio::test]
 async fn fail_on_processing_approve_messages_when_there_is_rotate_signers_command_in_there() {
     // Setup

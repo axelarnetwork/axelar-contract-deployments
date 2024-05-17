@@ -13,7 +13,7 @@ use crate::program_test;
 #[case(EncodingScheme::Borsh)]
 #[case(EncodingScheme::AbiEncoding)]
 #[tokio::test]
-async fn test_successful_validate_contract_call(#[case] encoding_scheme: EncodingScheme) {
+async fn test_successful_validate_message(#[case] encoding_scheme: EncodingScheme) {
     // Setup
     let (mut solana_chain, gateway_root_pda, solana_signers, counter_pda) = solana_setup().await;
 
@@ -65,7 +65,7 @@ async fn test_successful_validate_contract_call(#[case] encoding_scheme: Encodin
     let gateway_approved_message = solana_chain
         .get_account::<GatewayApprovedCommand>(&gateway_approved_command_pdas[1], &gateway::id())
         .await;
-    assert!(gateway_approved_message.is_contract_call_approved());
+    assert!(gateway_approved_message.is_command_approved());
 
     // We can get the memo from the logs
     let log_msgs = tx.metadata.unwrap().log_messages;

@@ -10,8 +10,8 @@ use super::Processor;
 use crate::state::{GatewayApprovedCommand, GatewayConfig};
 
 impl Processor {
-    /// This function is used to initialize the program.
-    pub fn process_validate_contract_call(
+    /// Validate a message approval, and mark it as used
+    pub fn process_validate_message(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
         command: ApproveMessagesCommand,
@@ -39,11 +39,7 @@ impl Processor {
         approved_message.assert_valid_pda(&seed_hash, approved_message_pda.key);
 
         // Action
-        approved_message.validate_contract_call(
-            &command_id,
-            &command.destination_program,
-            caller,
-        )?;
+        approved_message.validate_message(&command_id, &command.destination_program, caller)?;
 
         // Store the data back to the account.
         let mut data = approved_message_pda.try_borrow_mut_data()?;

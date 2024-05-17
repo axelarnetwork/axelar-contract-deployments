@@ -2,7 +2,7 @@ use solana_program_test::{processor, ProgramTest};
 
 mod initialize;
 mod send_to_gateway;
-mod validate_contract_call;
+mod validate_message;
 
 pub fn program_test() -> ProgramTest {
     let mut pt = ProgramTest::new(

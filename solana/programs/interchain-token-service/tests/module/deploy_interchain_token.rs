@@ -61,7 +61,7 @@ async fn test_deploy_interchain_token() {
     };
     let data = GatewayApprovedCommand::unpack_from_slice(gateway_approved_message.data()).unwrap();
     assert!(
-        data.is_contract_call_approved(),
+        data.is_command_approved(),
         "GatewayApprovedMessage should be approved"
     );
 

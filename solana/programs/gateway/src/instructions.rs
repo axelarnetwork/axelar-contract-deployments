@@ -87,7 +87,7 @@ pub enum GatewayInstruction {
     /// 3. [] System Program account
     InitializePendingCommand(DecodedCommand),
 
-    /// Validates a contract call.
+    /// Validates message.
     /// It is the responsibility of the destination program (contract) that
     /// receives a message from Axelar to validate that the message has been
     /// approved by the Gateway.
@@ -100,7 +100,7 @@ pub enum GatewayInstruction {
     /// 2. [] Gateway Root Config PDA account
     /// 3. [SIGNER] PDA signer account (caller). Dervied from the destination
     ///    program id.
-    ValidateContractCall(ApproveMessagesCommand),
+    ValidateMessage(ApproveMessagesCommand),
 }
 
 /// Creates a [`GatewayInstruction::ApproveMessages`] instruction.
@@ -272,8 +272,8 @@ pub fn initialize_config(
     })
 }
 
-/// Creates a [`GatewayInstructon::ValidateContractCall`] instruction.
-pub fn validate_contract_call(
+/// Creates a [`GatewayInstructon::ValidateMessage`] instruction.
+pub fn validate_message(
     approved_message_pda: &Pubkey,
     gateway_root_pda: &Pubkey,
     caller: &Pubkey,
@@ -285,7 +285,7 @@ pub fn validate_contract_call(
         AccountMeta::new_readonly(*caller, true),
     ];
 
-    let data = borsh::to_vec(&GatewayInstruction::ValidateContractCall(message))?;
+    let data = borsh::to_vec(&GatewayInstruction::ValidateMessage(message))?;
 
     Ok(Instruction {
         program_id: crate::id(),

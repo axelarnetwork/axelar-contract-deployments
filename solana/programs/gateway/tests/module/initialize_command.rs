@@ -13,7 +13,7 @@ use test_fixtures::test_setup::{prepare_execute_data, TestFixture};
 use crate::{example_payload, example_signer_set, gateway_approved_command_ixs, program_test};
 
 #[tokio::test]
-async fn succesfully_initialize_validate_contract_call_command() {
+async fn succesfully_initialize_validate_message_command() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let signers = vec![
@@ -56,7 +56,7 @@ async fn succesfully_initialize_validate_contract_call_command() {
             .check_initialized_pda::<GatewayApprovedCommand>(&gmp_gateway::id())
             .unwrap();
         assert!(!gateway_approved_command.is_command_executed());
-        assert!(!gateway_approved_command.is_contract_call_approved());
+        assert!(!gateway_approved_command.is_validate_message_executed());
         assert!(matches!(
             gateway_approved_command.status(),
             GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
@@ -109,7 +109,7 @@ async fn succesfully_initialize_rotate_signers_message() {
             .check_initialized_pda::<GatewayApprovedCommand>(&gmp_gateway::id())
             .unwrap();
         assert!(!gateway_approved_command.is_command_executed());
-        assert!(!gateway_approved_command.is_contract_call_approved());
+        assert!(!gateway_approved_command.is_validate_message_executed());
         assert!(matches!(
             gateway_approved_command.status(),
             GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
@@ -167,7 +167,7 @@ async fn succesfully_initialize_rotate_signers_message_together_with_call_contra
             .check_initialized_pda::<GatewayApprovedCommand>(&gmp_gateway::id())
             .unwrap();
         assert!(!gateway_approved_command.is_command_executed());
-        assert!(!gateway_approved_command.is_contract_call_approved());
+        assert!(!gateway_approved_command.is_validate_message_executed());
         assert!(matches!(
             gateway_approved_command.status(),
             GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
@@ -184,7 +184,7 @@ async fn succesfully_initialize_rotate_signers_message_together_with_call_contra
             .check_initialized_pda::<GatewayApprovedCommand>(&gmp_gateway::id())
             .unwrap();
         assert!(!gateway_approved_command.is_command_executed());
-        assert!(!gateway_approved_command.is_contract_call_approved());
+        assert!(!gateway_approved_command.is_validate_message_executed());
         assert!(matches!(
             gateway_approved_command.status(),
             GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
@@ -279,7 +279,7 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
             .check_initialized_pda::<GatewayApprovedCommand>(&gmp_gateway::id())
             .unwrap();
         assert!(!gateway_approved_command.is_command_executed());
-        assert!(!gateway_approved_command.is_contract_call_approved());
+        assert!(!gateway_approved_command.is_validate_message_executed());
         assert!(matches!(
             gateway_approved_command.status(),
             GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
@@ -288,7 +288,7 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
 }
 
 #[tokio::test]
-async fn fail_when_validate_contract_call_already_initialized() {
+async fn fail_when_validate_message_already_initialized() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let signers = vec![

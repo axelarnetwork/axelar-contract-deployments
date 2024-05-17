@@ -25,7 +25,7 @@ use solana_program::pubkey::Pubkey;
 /// 2. `gateway_root_pda` - Gateway Root PDA
 /// 3. `gateway_program_id` - Gateway Prorgam ID
 /// N. accounts required by the `DataPayload` constructor
-pub fn validate_contract_call(
+pub fn validate_message(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
     data: &AxelarExecutablePayload,
@@ -57,7 +57,7 @@ pub fn validate_contract_call(
 
     let command_id_slice = &command_id.clone();
     invoke_signed(
-        &gateway::instructions::validate_contract_call(
+        &gateway::instructions::validate_message(
             gateway_approved_message_pda.key,
             gateway_root_pda.key,
             signing_pda.key,
@@ -125,7 +125,7 @@ pub fn construct_axelar_executable_ix(
     let payload = AxelarCallableInstruction::<()>::AxelarExecute(payload);
 
     let mut accounts = vec![
-        // The expected accounts for the `ValidateContractCall` ix
+        // The expected accounts for the `ValidateMessage` ix
         AccountMeta::new(gateway_approved_message_pda, false),
         AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),
         AccountMeta::new_readonly(gateway_root_pda, false),

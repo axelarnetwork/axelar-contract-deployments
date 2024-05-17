@@ -19,7 +19,7 @@ mod initialize_command;
 mod initialize_config;
 mod initialize_execute_data;
 mod rotate_signers;
-mod validate_contract_call;
+mod validate_message;
 
 /// Program state handler.
 pub struct Processor;
@@ -69,9 +69,9 @@ impl Processor {
                 msg!("Instruction: Initialize Pending Command");
                 Self::process_initialize_command(program_id, accounts, command)
             }
-            GatewayInstruction::ValidateContractCall(command) => {
-                msg!("Instruction: Validate Contract Call");
-                Self::process_validate_contract_call(program_id, accounts, command)
+            GatewayInstruction::ValidateMessage(command) => {
+                msg!("Instruction: Validate Message");
+                Self::process_validate_message(program_id, accounts, command)
             }
         }
     }

@@ -76,7 +76,7 @@ async fn test_deploy_token_manager() {
     };
     let data = GatewayApprovedCommand::unpack_from_slice(gateway_approved_message.data()).unwrap();
     assert!(
-        data.is_contract_call_approved(),
+        data.is_command_approved(),
         "GatewayApprovedMessage should be approved"
     );
 
@@ -189,7 +189,7 @@ async fn test_deploy_token_manager() {
         .expect("account not none");
     let data = GatewayApprovedCommand::unpack_from_slice(gateway_approved_message.data()).unwrap();
     assert!(
-        data.is_contract_call_validated(),
+        data.is_validate_message_executed(),
         "GatewayApprovedMessage should be `executed`"
     );
 }

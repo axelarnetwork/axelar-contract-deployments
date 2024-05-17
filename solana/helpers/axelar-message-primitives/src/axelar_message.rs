@@ -17,7 +17,7 @@ impl DestinationProgramId {
     ///
     /// Only the destination program is allowed to sign the message for
     /// validating that a message is being executed - this is reference to
-    /// gateway.validateContractCall.
+    /// gateway.validateMessage.
     pub fn signing_pda(&self, command_id: &[u8; 32]) -> (Pubkey, u8) {
         Pubkey::find_program_address(&[command_id], &self.0)
     }
