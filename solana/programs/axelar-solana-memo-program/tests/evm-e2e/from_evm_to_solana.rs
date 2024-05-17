@@ -14,7 +14,7 @@ use crate::{axelar_evm_setup, axelar_solana_setup};
 #[tokio::test]
 async fn test_send_from_evm_to_solana() {
     // Setup - Solana
-    let (mut solana_chain, gateway_root_pda, solana_operators, counter_pda) =
+    let (mut solana_chain, gateway_root_pda, solana_signers, counter_pda) =
         axelar_solana_setup().await;
     // Setup - EVM
     let (_evm_chain, evm_signer, _evm_aw, evm_gateway, _operators) = axelar_evm_setup().await;
@@ -42,11 +42,11 @@ async fn test_send_from_evm_to_solana() {
         &evm_gateway,
     )
     .await;
-    // - Solana operators approve the message
+    // - Solana signers approve the message
     // - The relayer relays the message to the Solana gateway
     let (decoded_payload, msg_from_evm_axelar) = prase_evm_log_into_axelar_message(&log);
     let (gateway_approved_command_pdas, gateway_execute_data, _) = solana_chain
-        .fully_approve_messages(&gateway_root_pda, &[msg_from_evm_axelar], &solana_operators)
+        .fully_approve_messages(&gateway_root_pda, &[msg_from_evm_axelar], &solana_signers)
         .await;
     // - Relayer calls the Solana memo program with the memo payload coming from the
     //   EVM memo program

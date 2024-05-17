@@ -44,10 +44,10 @@ impl crate::EvmSigner {
     /// Deploys the `AxelarAuthWeighted` contract.
     pub async fn deploy_axelar_auth_weighted(
         &self,
-        recent_operators: &[crate::evm_operators::OperatorSet],
+        recent_signer_sets: &[crate::evm_operators::OperatorSet],
     ) -> anyhow::Result<axelar_auth_weighted::AxelarAuthWeighted<ContractMiddleware>> {
         let constructor_params =
-            crate::evm_operators::get_weighted_auth_deploy_param(recent_operators);
+            crate::evm_operators::get_weighted_auth_deploy_param(recent_signer_sets);
 
         let contract = axelar_auth_weighted::AxelarAuthWeighted::deploy(
             self.signer.clone(),

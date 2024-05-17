@@ -15,7 +15,7 @@ use crate::program_test;
 #[tokio::test]
 async fn test_successful_validate_contract_call(#[case] encoding_scheme: EncodingScheme) {
     // Setup
-    let (mut solana_chain, gateway_root_pda, solana_operators, counter_pda) = solana_setup().await;
+    let (mut solana_chain, gateway_root_pda, solana_signers, counter_pda) = solana_setup().await;
 
     // Test scoped constants
     let random_account_used_by_ix = Keypair::new();
@@ -39,7 +39,7 @@ async fn test_successful_validate_contract_call(#[case] encoding_scheme: Encodin
         .fully_approve_messages(
             &gateway_root_pda,
             &[message_to_execute, other_message_in_the_batch],
-            &solana_operators,
+            &solana_signers,
         )
         .await;
 
@@ -100,12 +100,12 @@ async fn solana_setup() -> (
     solana_sdk::pubkey::Pubkey,
 ) {
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let (counter_pda, counter_bump) =
         axelar_solana_memo_program::get_counter_pda(&gateway_root_pda);
@@ -118,5 +118,5 @@ async fn solana_setup() -> (
         .unwrap()])
         .await;
 
-    (fixture, gateway_root_pda, operators, counter_pda)
+    (fixture, gateway_root_pda, signers, counter_pda)
 }

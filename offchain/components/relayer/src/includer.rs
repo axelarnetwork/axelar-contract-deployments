@@ -64,7 +64,7 @@ impl SolanaIncluder {
         }
     }
 
-    /// Creates a new `Worker` based on this `SolanaIncuder`
+    /// Creates a new `Worker` based on this `SolanaIncluder`
     fn worker(&self) -> Worker {
         let client = {
             let sender = RetryingHttpSender::new(self.rpc.to_string());
@@ -187,7 +187,7 @@ impl Worker {
             .initialize_pending_commands(execute_data, recent_blockhash)
             .await?;
 
-        // Call excute
+        // Call execute
         self.submit_execute_transaction(execute_data_account, &command_accounts, recent_blockhash)
             .await?;
 

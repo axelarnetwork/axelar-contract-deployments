@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use anyhow::{anyhow, Result};
-use axelar_message_primitives::command::hash_new_operator_set;
+use axelar_message_primitives::command::hash_new_signer_set;
 use axelar_message_primitives::{DataPayload, DestinationProgramId};
 use axelar_wasm_std::{nonempty, Participant};
 use connection_router::state::Address;
@@ -24,7 +24,7 @@ pub fn message() -> Result<Message> {
     Ok(message)
 }
 
-pub fn new_worker_set(
+pub fn new_signer_set(
     participants: &[TestSigner],
     created_at_block: u64,
     new_threshold: Uint256,
@@ -66,7 +66,7 @@ pub fn custom_message(
 fn address() -> Result<Address> {
     hex::encode(array32())
         .parse()
-        .map_err(|_| anyhow!("bad test naddress"))
+        .map_err(|_| anyhow!("bad test address"))
 }
 
 pub trait WorkerSetExt {
@@ -86,7 +86,7 @@ impl WorkerSetExt for WorkerSet {
             axelar_message_primitives::command::U256::from_le_bytes(signer.weight.to_le_bytes())
         });
 
-        hash_new_operator_set(
+        hash_new_signer_set(
             addresses.iter().zip(weights),
             axelar_message_primitives::command::U256::from_le_bytes(self.threshold.to_le_bytes()),
         )

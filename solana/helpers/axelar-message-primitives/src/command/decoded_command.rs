@@ -6,7 +6,7 @@ use solana_program::msg;
 use solana_program::pubkey::Pubkey;
 use thiserror::Error;
 
-use super::{Operators, Proof, U256};
+use super::{Proof, SignerSet, U256};
 use crate::command::Signature;
 use crate::{Address, DestinationProgramId};
 
@@ -63,9 +63,9 @@ pub enum DecodeError {
     #[error("Invalid command type")]
     /// Invalid command type
     InvalidCommandType,
-    #[error("Invalid operator address")]
-    /// Invalid operator address
-    InvalidOperatorAddress,
+    #[error("Invalid signer address")]
+    /// Invalid signer address
+    InvalidSignerAddress,
     #[error("Invalid signature")]
     /// Invalid signature
     InvalidSignature,
@@ -131,7 +131,7 @@ pub struct RotateSignersCommand {
     pub command_id: [u8; 32],
     /// Destination chain
     pub destination_chain: u64,
-    pub operators: Vec<Address>,
+    pub signer_set: Vec<Address>,
     pub weights: Vec<u128>,
     pub quorum: u128,
 }
@@ -142,20 +142,19 @@ impl RotateSignersCommand {
         destination_chain: u64,
         encoded_params: &[u8],
     ) -> Result<Self, DecodeError> {
-        let (operators, weights, quorum) =
+        let (signers, weights, quorum) =
             bcs::from_bytes::<(Vec<Vec<u8>>, Vec<u128>, u128)>(encoded_params)
                 .map_err(|_| DecodeError::FailedToDecodeProofParts)?;
-        let operators = operators
+        let signers = signers
             .into_iter()
             .map(|address| {
-                Address::try_from(address.as_slice())
-                    .map_err(|_| DecodeError::InvalidOperatorAddress)
+                Address::try_from(address.as_slice()).map_err(|_| DecodeError::InvalidSignerAddress)
             })
             .collect::<Result<Vec<Address>, DecodeError>>()?;
         Ok(RotateSignersCommand {
             command_id,
             destination_chain,
-            operators,
+            signer_set: signers,
             weights,
             quorum,
         })
@@ -220,18 +219,18 @@ fn build_proof_from_raw_parts(
     quorum: u128,
     signatures: Vec<Vec<u8>>,
 ) -> Result<Proof, DecodeError> {
-    let operators = {
+    let signers = {
         let addresses = addresses
             .into_iter()
             .map(|address| Address::try_from(address.as_slice()))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|address_error| {
-                msg!("Invalid operator address: {}", address_error);
-                DecodeError::InvalidOperatorAddress
+                msg!("Invalid signer address: {}", address_error);
+                DecodeError::InvalidSignerAddress
             })?;
 
         let weights: Vec<U256> = weights.into_iter().map(Into::into).collect();
-        Operators::new(addresses, weights, quorum.into())
+        SignerSet::new(addresses, weights, quorum.into())
     };
     let signatures = signatures
         .into_iter()
@@ -239,7 +238,7 @@ fn build_proof_from_raw_parts(
         .collect::<Result<Vec<_>, _>>()
         .map_err(|_| DecodeError::InvalidSignature)?;
 
-    Ok(Proof::new(operators, signatures))
+    Ok(Proof::new(signers, signatures))
 }
 
 #[inline]
@@ -348,9 +347,9 @@ fn decode_execute_data_from_axelar_repo() -> anyhow::Result<()> {
             .as_slice()
             .try_into()?;
     let signature: Signature = hex::decode("ef5ce016a4beed7e11761e5831805e962fca3d8901696a61a6ffd3af2b646bdc3740f64643bdb164b8151d1424eb4943d03f71e71816c00726e2d68ee55600c600")?.try_into()?;
-    assert_eq!(proof.operators.addresses(), &[signer_pubkey]);
-    assert_eq!(proof.operators.threshold(), &10u128.into());
-    assert_eq!(proof.operators.weights(), &[100u128.into()]);
+    assert_eq!(proof.signer_set.addresses(), &[signer_pubkey]);
+    assert_eq!(proof.signer_set.threshold(), &10u128.into());
+    assert_eq!(proof.signer_set.weights(), &[100u128.into()]);
     assert_eq!(proof.signatures(), &[signature]);
 
     // Check command batch
@@ -395,9 +394,9 @@ fn decode_custom_execute_data() -> anyhow::Result<()> {
     let (proof, command_batch, command_batch_hash) = decode(&execute_data)?;
 
     assert_eq!(command_batch.commands.len(), 5);
-    assert_eq!(proof.operators.addresses().len(), 3);
+    assert_eq!(proof.signer_set.addresses().len(), 3);
     assert_eq!(proof.signatures().len(), 3);
-    assert_eq!(*proof.operators.threshold(), 2u8.into());
+    assert_eq!(*proof.signer_set.threshold(), 2u8.into());
 
     if let Err(error) = proof.validate_signatures(&command_batch_hash) {
         panic!("Invalid proof: {error}")

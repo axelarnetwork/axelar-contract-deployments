@@ -17,7 +17,7 @@ use crate::axelar_auth_weighted::AxelarAuthWeighted;
 pub struct GatewayConfig {
     /// The canonical bump for this account.
     pub bump: u8,
-    /// The current set of registered operators hashes and their epochs.
+    /// The current set of registered signer set hashes and their epochs.
     pub auth_weighted: AxelarAuthWeighted,
 }
 

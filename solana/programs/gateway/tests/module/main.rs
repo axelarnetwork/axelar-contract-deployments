@@ -14,7 +14,7 @@ use solana_program_test::{processor, ProgramTest};
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
-use test_fixtures::axelar_message::new_worker_set;
+use test_fixtures::axelar_message::new_signer_set;
 use test_fixtures::execute_data::{
     create_command_batch, create_signer_with_weight, sign_batch, TestSigner,
 };
@@ -29,22 +29,22 @@ pub fn program_test() -> ProgramTest {
 }
 
 pub async fn setup_initialised_gateway(
-    initial_operator_weights: &[u128],
+    initial_signer_weights: &[u128],
     custom_quorum: Option<u128>,
 ) -> (TestFixture, u128, Vec<TestSigner>, Pubkey) {
     let mut fixture = TestFixture::new(program_test()).await;
-    let quorum = custom_quorum.unwrap_or_else(|| initial_operator_weights.iter().sum());
-    let operators = initial_operator_weights
+    let quorum = custom_quorum.unwrap_or_else(|| initial_signer_weights.iter().sum());
+    let signers = initial_signer_weights
         .iter()
         .map(|weight| create_signer_with_weight(*weight).unwrap())
         .collect::<Vec<_>>();
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module_custom_threshold(&operators, quorum.into()),
+            fixture.init_auth_weighted_module_custom_threshold(&signers, quorum.into()),
         )
         .await;
 
-    (fixture, quorum, operators, gateway_root_pda)
+    (fixture, quorum, signers, gateway_root_pda)
 }
 
 pub fn example_payload() -> DataPayload<'static> {
@@ -60,10 +60,10 @@ pub fn example_payload() -> DataPayload<'static> {
     payload
 }
 
-pub fn example_worker_set(new_weight: u128, created_at_block: u64) -> WorkerSet {
-    let new_operators = vec![create_signer_with_weight(new_weight).unwrap()];
-    new_worker_set(
-        &new_operators,
+pub fn example_signer_set(new_weight: u128, created_at_block: u64) -> WorkerSet {
+    let new_signers = vec![create_signer_with_weight(new_weight).unwrap()];
+    new_signer_set(
+        &new_signers,
         created_at_block,
         Uint256::from_u128(new_weight),
     )
@@ -115,7 +115,7 @@ fn get_gateway_events(
         .collect::<Vec<_>>()
 }
 
-pub async fn get_approved_commmand(
+pub async fn get_approved_command(
     fixture: &mut test_fixtures::test_setup::TestFixture,
     gateway_approved_command_pda: &Pubkey,
 ) -> GatewayApprovedCommand {
@@ -127,11 +127,11 @@ pub async fn get_approved_commmand(
         .await
 }
 
-pub fn create_worker_set(
+pub fn create_signer_set(
     weights: &[impl Into<Uint256> + Copy],
     threshold: impl Into<Uint256>,
 ) -> (multisig::worker_set::WorkerSet, Vec<TestSigner>) {
-    let new_operators = weights
+    let new_signers = weights
         .iter()
         .map(|weight| {
             create_signer_with_weight({
@@ -141,8 +141,8 @@ pub fn create_worker_set(
             .unwrap()
         })
         .collect::<Vec<_>>();
-    let new_worker_set = new_worker_set(&new_operators, 0, threshold.into());
-    (new_worker_set, new_operators)
+    let new_signer_set = new_signer_set(&new_signers, 0, threshold.into());
+    (new_signer_set, new_signers)
 }
 
 pub fn prepare_questionable_execute_data(

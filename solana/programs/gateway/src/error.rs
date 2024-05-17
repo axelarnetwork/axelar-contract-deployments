@@ -28,15 +28,15 @@ pub enum GatewayError {
     #[error("Account already initialized")]
     AccountAlreadyInitialized,
     // 5
-    /// The presented operator set was empty.
-    #[error("Operator array cannot be empty")]
-    EmptyOperators,
+    /// The presented signer set was empty.
+    #[error("Signer set cannot be empty")]
+    EmptySignerSet,
 
     /// Used for attempts to update the GatewayConfig with an already existing
-    /// operator set.
+    /// signer set.
     // TODO: use a more specific error name.
-    #[error("duplicate operators")]
-    DuplicateOperators,
+    #[error("duplicate signer set")]
+    DuplicateSignerSet,
 
     /// LowSignaturesWeight
     #[error("low signature weight")]
@@ -54,9 +54,9 @@ pub enum GatewayError {
     #[error("malformed state body")]
     MalformedState,
 
-    /// MalformedTransferOperatorshipParams
-    #[error("malformed transfer operatorship body")]
-    MalformedTransferOperatorshipParams,
+    /// MalformedTransferSignerSetParams
+    #[error("malformed rotate signers body")]
+    MalformedRotateSignerSetParams,
 
     /// EpochForHashNotFound
     #[error("could not find requested key")]
@@ -102,8 +102,8 @@ pub enum GatewayError {
     #[error("Program arithmetic overflowed")]
     ArithmeticOverflow,
 
-    /// Operator set epoch is different than the current epoch
-    #[error("Operator set epoch is different than the current epoch.")]
+    /// Signer Set set epoch is different than the current epoch
+    #[error("Signer Set set epoch is different than the current epoch.")]
     EpochMissmatch,
 
     /// Failed to decode a valid signature
@@ -118,31 +118,31 @@ pub enum GatewayError {
     #[error("All proof signers are invalid")]
     AllSignersInvalid,
 
-    /// Operator list was exhausted during proof validation
-    #[error("Operator list was exhausted during proof validation")]
-    OperatorsExhausted,
+    /// Signer Set list was exhausted during proof validation
+    #[error("Signer Set list was exhausted during proof validation")]
+    SignerSetExhausted,
 
-    /// The sum of operator weights was smaller than the required threshold.
-    #[error("Insufficient operator weight to resolve operatorship transfer")]
-    InsufficientOperatorWeight,
+    /// The sum of signer set weights was smaller than the required threshold.
+    #[error("Insufficient signer weight to rotate signers set")]
+    InsufficientSignerWeight,
 
-    /// Proposed operator array was either unordered or contained duplicate
+    /// Proposed signer sets was either unordered or contained duplicate
     /// entries.
-    #[error("Operators array must be sorted (asc) and unique")]
-    UnorderedOrDuplicateOperators,
+    #[error("Signer set array must be sorted (asc) and unique")]
+    UnorderedOrDuplicateSignerSet,
 
     // 30
     /// Thresold was presented as zero, which is an invalid value.
     #[error("Threshold cannot be equal to zero")]
     ZeroThreshold,
 
-    /// Used if the operator set for an incoming proof has a sufficiently oldn
+    /// Used if the signer set for an incoming proof has a sufficiently old
     /// epoch.
-    #[error("Operators' epoch is outdated")]
-    OutdatedOperatorsEpoch,
+    #[error("Signer set epoch is outdated")]
+    OutdatedSignerSetEpoch,
 
-    /// Operators' epoch was set to zero, which is an invalid value.
-    #[error("Operators' epoch cannot be equal to zero")]
+    /// Signer set epoch was set to zero, which is an invalid value.
+    #[error("Signer set epoch cannot be equal to zero")]
     EpochZero,
 
     /// The provided caller is not authorized to execute this instruction

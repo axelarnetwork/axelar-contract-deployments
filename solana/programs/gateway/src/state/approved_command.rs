@@ -133,7 +133,7 @@ impl GatewayApprovedCommand {
         Ok(())
     }
     /// Sets the command status as executed.
-    pub fn set_transfer_operatorship_executed(&mut self) -> Result<(), ProgramError> {
+    pub fn set_signers_rotated_executed(&mut self) -> Result<(), ProgramError> {
         if !matches!(
             self.status,
             GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
@@ -226,9 +226,9 @@ impl GatewayApprovedCommand {
             }
             DecodedCommand::RotateSigners(command_params) => {
                 let res = command_params
-                    .operators
+                    .signer_set
                     .iter()
-                    .map(|operator| operator.omit_prefix())
+                    .map(|signer| signer.omit_prefix())
                     .chain(command_params.weights.iter().map(|x| {
                         let mut bytes = [0; 32];
                         bytes[0..16].copy_from_slice(&x.to_be_bytes());

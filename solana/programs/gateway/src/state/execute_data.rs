@@ -54,7 +54,7 @@ impl GatewayExecuteData {
                 gateway_root_pda.as_ref(),
                 self.command_batch_hash.as_slice(),
                 self.proof.signature_hash().as_slice(),
-                self.proof.operators.hash().as_slice(),
+                self.proof.signer_set.hash().as_slice(),
             ]
             .as_ref(),
         )

@@ -15,12 +15,12 @@ use crate::program_test;
 async fn test_succesfully_send_to_gateway() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let memo = "🐪🐪🐪🐪";
     let destination_address = ethers_core::types::Address::random().0.to_vec();

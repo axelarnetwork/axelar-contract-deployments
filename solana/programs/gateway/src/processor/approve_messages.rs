@@ -23,19 +23,19 @@ impl Processor {
     ) -> ProgramResult {
         let mut accounts_iter = accounts.iter();
         let gateway_root_pda = next_account_info(&mut accounts_iter)?;
-        let gateway_appove_messages_execute_data_pda = next_account_info(&mut accounts_iter)?;
+        let gateway_approve_messages_execute_data_pda = next_account_info(&mut accounts_iter)?;
 
         // Check: Config account uses the canonical bump.
         // Unpack Gateway configuration data.
         let gateway_config = gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
 
-        gateway_appove_messages_execute_data_pda
+        gateway_approve_messages_execute_data_pda
             .check_initialized_pda_without_deserialization(program_id)?;
         let execute_data = borsh::from_slice::<GatewayExecuteData>(
-            &gateway_appove_messages_execute_data_pda.data.borrow(),
+            &gateway_approve_messages_execute_data_pda.data.borrow(),
         )?;
 
-        // Check: proof operators are known.
+        // Check: proof signer set is known.
         gateway_config
             .validate_proof(execute_data.command_batch_hash, &execute_data.proof)
             .map_err(|err| {

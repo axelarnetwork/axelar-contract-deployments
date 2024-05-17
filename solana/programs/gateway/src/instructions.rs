@@ -104,7 +104,7 @@ pub enum GatewayInstruction {
 }
 
 /// Creates a [`GatewayInstruction::ApproveMessages`] instruction.
-pub fn approve_messgaes(
+pub fn approve_messages(
     program_id: Pubkey,
     execute_data_account: Pubkey,
     gateway_root_pda: Pubkey,
@@ -142,7 +142,7 @@ pub fn rotate_signers(
 }
 
 /// Helper to create an instruction with the given ExecuteData and accounts.
-#[deprecated = "Use `rotate_signers` or `approve_messgaes` instead"]
+#[deprecated = "Use `rotate_signers` or `approve_messages` instead"]
 pub fn handle_execute_data(
     gateway_root_pda: Pubkey,
     execute_data_account: Pubkey,
@@ -318,7 +318,7 @@ pub mod tests {
         let _payer = Keypair::new().pubkey();
         let (gateway_root_pda, _) = GatewayConfig::pda();
         let approved_message_accounts = vec![Keypair::new().pubkey()];
-        let instruction = approve_messgaes(
+        let instruction = approve_messages(
             crate::id(),
             execute_data_account,
             gateway_root_pda,

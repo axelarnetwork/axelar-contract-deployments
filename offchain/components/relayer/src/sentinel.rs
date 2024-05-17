@@ -211,7 +211,7 @@ where
                     .await?
                 }
 
-                GatewayEvent::OperatorshipTransferred(_data) => {
+                GatewayEvent::SignersRotated(_data) => {
                     todo!("Handle Operatorship Transferred event")
                 }
                 _ => unimplemented!(),

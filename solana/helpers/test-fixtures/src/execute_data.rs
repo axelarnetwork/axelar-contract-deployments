@@ -242,7 +242,7 @@ mod axelar_bcs_encoding {
         quorum: Uint256,
         signers: Vec<(Signer, Option<Signature>)>,
     ) -> Result<HexBinary, ContractError> {
-        let mut operators = make_operators_with_sigs(signers);
+        let mut operators = make_signers_with_signatures(signers);
         operators.sort(); // gateway requires operators to be sorted
 
         let (addresses, weights, signatures): (Vec<_>, Vec<_>, Vec<_>) = operators
@@ -269,7 +269,7 @@ mod axelar_bcs_encoding {
             .expect("couldn't convert command id to 32 byte array")
     }
 
-    fn make_operators_with_sigs(
+    fn make_signers_with_signatures(
         signers_with_sigs: Vec<(Signer, Option<Signature>)>,
     ) -> Vec<Operator> {
         signers_with_sigs

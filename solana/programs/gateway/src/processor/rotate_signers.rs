@@ -31,7 +31,7 @@ impl Processor {
     ) -> ProgramResult {
         let mut accounts_iter = accounts.iter();
         let gateway_root_pda = next_account_info(&mut accounts_iter)?;
-        let gateway_appove_messages_execute_data_pda = next_account_info(&mut accounts_iter)?;
+        let gateway_approve_messages_execute_data_pda = next_account_info(&mut accounts_iter)?;
         let message_account = next_account_info(&mut accounts_iter)?;
 
         // Check: Config account uses the canonical bump.
@@ -39,31 +39,31 @@ impl Processor {
         let mut gateway_config =
             gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
 
-        gateway_appove_messages_execute_data_pda
+        gateway_approve_messages_execute_data_pda
             .check_initialized_pda_without_deserialization(program_id)?;
         let execute_data = borsh::from_slice::<GatewayExecuteData>(
-            &gateway_appove_messages_execute_data_pda.data.borrow(),
+            &gateway_approve_messages_execute_data_pda.data.borrow(),
         )?;
 
-        let [decoded_command @ DecodedCommand::RotateSigners(transfer_ops)] =
+        let [decoded_command @ DecodedCommand::RotateSigners(rotate_signers)] =
             execute_data.command_batch.commands.as_slice()
         else {
             msg!("expected exactly one `RotateSigners` command");
             return Err(ProgramError::InvalidArgument);
         };
 
-        // todo: check if we need to eforce rotation delay
+        // todo: check if we need to enforce rotation delay
 
         let mut approved_command_account = message_account
             .as_ref()
             .check_initialized_pda::<GatewayApprovedCommand>(program_id)?
             .command_valid_and_pending(gateway_root_pda.key, decoded_command, message_account)?
             .ok_or_else(|| {
-                msg!("Command already execited");
+                msg!("Command already executed");
                 ProgramError::InvalidArgument
             })?;
 
-        // Check: proof operators are known.
+        // Check: proof signer set is known.
         let signer_data = gateway_config
             .validate_proof(execute_data.command_batch_hash, &execute_data.proof)
             .map_err(|err| {
@@ -78,7 +78,7 @@ impl Processor {
         };
 
         // Set command state as executed
-        approved_command_account.set_transfer_operatorship_executed()?;
+        approved_command_account.set_signers_rotated_executed()?;
 
         // Save the updated approved message account
         let mut data = message_account.try_borrow_mut_data()?;
@@ -86,15 +86,15 @@ impl Processor {
 
         // Try to set the new signer set - but if we fail, it's not an error because we
         // still need to persist the command execution state.
-        if let Err(err) = gateway_config.rotate_signers(transfer_ops) {
+        if let Err(err) = gateway_config.rotate_signers(rotate_signers) {
             msg!("Failed to rotate signers {:?}", err);
             return Ok(());
         };
 
-        // Emit event if the operatorship was transferred.
-        GatewayEvent::OperatorshipTransferred(Cow::Borrowed(transfer_ops)).emit()?;
+        // Emit event if the signers were rotated
+        GatewayEvent::SignersRotated(Cow::Borrowed(rotate_signers)).emit()?;
 
-        // Store the gatewau data back to the account.
+        // Store the gateway data back to the account.
         let mut data = gateway_root_pda.try_borrow_mut_data()?;
         gateway_config.pack_into_slice(&mut data);
 

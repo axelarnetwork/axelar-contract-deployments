@@ -121,8 +121,8 @@ impl TestFixture {
         root_pda_address
     }
 
-    pub fn init_auth_weighted_module(&self, operators: &[TestSigner]) -> AxelarAuthWeighted {
-        let total_weights = operators
+    pub fn init_auth_weighted_module(&self, signers: &[TestSigner]) -> AxelarAuthWeighted {
+        let total_weights = signers
             .iter()
             .map(|s| s.weight)
             .fold(GatewayU256::ZERO, |a, b| {
@@ -130,15 +130,15 @@ impl TestFixture {
                 a.checked_add(b).unwrap()
             });
 
-        self.init_auth_weighted_module_custom_threshold(operators, total_weights)
+        self.init_auth_weighted_module_custom_threshold(signers, total_weights)
     }
 
     pub fn init_auth_weighted_module_custom_threshold(
         &self,
-        operators: &[TestSigner],
+        signers: &[TestSigner],
         threshold: GatewayU256,
     ) -> AxelarAuthWeighted {
-        let addresses = operators
+        let addresses = signers
             .iter()
             .map(|s| {
                 let address: cosmwasm_std::HexBinary = s.public_key.clone().into();
@@ -146,7 +146,7 @@ impl TestFixture {
                 address
             })
             .collect_vec();
-        let weights = operators
+        let weights = signers
             .iter()
             .map(|s| GatewayU256::from_le_bytes(s.weight.to_le_bytes()));
 
@@ -304,7 +304,7 @@ impl TestFixture {
         token_mint: Pubkey,
         gateway_root_pda: Pubkey,
         token_manager_type: TokenManagerType,
-        operators: Vec<TestSigner>,
+        signers: Vec<TestSigner>,
     ) -> (Pubkey, TokenManagerRootAccount, ITSTokenHandlerGroups) {
         let token_id = Bytes32(keccak256("random-token-id"));
         let init_operator = Pubkey::from([0; 32]);
@@ -354,7 +354,7 @@ impl TestFixture {
             .fully_approve_messages(
                 &gateway_root_pda,
                 &[message_to_execute.clone()],
-                operators.as_slice(),
+                signers.as_slice(),
             )
             .await;
         let DecodedCommand::ApproveMessages(approved_command) =
@@ -537,7 +537,7 @@ impl TestFixture {
         execute_data_pda: &Pubkey,
         approved_command_pdas: &[Pubkey],
     ) -> BanksTransactionResultWithMetadata {
-        let ix = gateway::instructions::approve_messgaes(
+        let ix = gateway::instructions::approve_messages(
             gateway::id(),
             *execute_data_pda,
             *gateway_root_pda,
@@ -642,6 +642,8 @@ impl TestFixture {
 
     /// Create a new execute data PDA, command PDAs, and call
     /// gateway.approve_messages on them.
+    /// Create a new execute data PDA, command PDAs, and call
+    /// gateway.approve_messages on them.
     ///
     /// Returns:
     /// - approved command PDA
@@ -651,10 +653,10 @@ impl TestFixture {
         &mut self,
         gateway_root_pda: &Pubkey,
         messages: &[connection_router::Message],
-        operators: &[TestSigner],
+        signers: &[TestSigner],
     ) -> (Vec<Pubkey>, GatewayExecuteData, Pubkey) {
         let (command_pdas, execute_data, execute_data_pda, tx) = self
-            .fully_approve_messages_with_execute_metadata(gateway_root_pda, messages, operators)
+            .fully_approve_messages_with_execute_metadata(gateway_root_pda, messages, signers)
             .await;
         assert!(tx.result.is_ok());
         (command_pdas, execute_data, execute_data_pda)
@@ -664,14 +666,14 @@ impl TestFixture {
         &mut self,
         gateway_root_pda: &Pubkey,
         messages: &[connection_router::Message],
-        operators: &[TestSigner],
+        signers: &[TestSigner],
     ) -> (
         Vec<Pubkey>,
         GatewayExecuteData,
         Pubkey,
         BanksTransactionResultWithMetadata,
     ) {
-        let weight_of_quorum = operators
+        let weight_of_quorum = signers
             .iter()
             .fold(cosmwasm_std::Uint256::zero(), |acc, i| acc.add(i.weight));
         let weight_of_quorum = EthersU256::from_big_endian(&weight_of_quorum.to_be_bytes());
@@ -682,7 +684,7 @@ impl TestFixture {
                     .iter()
                     .map(|x| Either::Left(x.clone()))
                     .collect_vec(),
-                operators,
+                signers,
                 weight_of_quorum.as_u128(),
             )
             .await;
@@ -708,8 +710,8 @@ impl TestFixture {
         )
     }
 
-    /// Create a new execute data PDA, command PDA, and execute
-    /// [`GatewayInstruction::RotateSigners`].
+    /// Create a new execute data PDA, command PDA, and call
+    /// gateway.rotate_signers.
     ///
     /// Returns:
     /// - approved command PDA
@@ -719,36 +721,27 @@ impl TestFixture {
         &mut self,
         gateway_root_pda: &Pubkey,
         signer_set: WorkerSet,
-        operators: &[TestSigner],
+        signers: &[TestSigner],
     ) -> (Pubkey, GatewayExecuteData, Pubkey) {
         let (command_pdas, execute_data, execute_data_pda, tx) = self
-            .fully_rotate_signers_with_execute_metadata(gateway_root_pda, signer_set, operators)
+            .fully_rotate_signers_with_execute_metadata(gateway_root_pda, signer_set, signers)
             .await;
         assert!(tx.result.is_ok());
         (command_pdas, execute_data, execute_data_pda)
     }
 
-    /// Create a new execute data PDA, command PDA, and execute
-    /// [`GatewayInstruction::RotateSigners`].
-    ///
-    /// Returns:
-    /// - approved command PDA
-    /// - execute data thats stored inside the execute data PDA
-    /// - execute data PDA
-    /// - the transaction metadata (your own responsibility to assert if it
-    ///   succeeded)
     pub async fn fully_rotate_signers_with_execute_metadata(
         &mut self,
         gateway_root_pda: &Pubkey,
         signer_set: WorkerSet,
-        operators: &[TestSigner],
+        signers: &[TestSigner],
     ) -> (
         Pubkey,
         GatewayExecuteData,
         Pubkey,
         BanksTransactionResultWithMetadata,
     ) {
-        let weight_of_quorum = operators
+        let weight_of_quorum = signers
             .iter()
             .fold(cosmwasm_std::Uint256::zero(), |acc, i| acc.add(i.weight));
         let weight_of_quorum = EthersU256::from_big_endian(&weight_of_quorum.to_be_bytes());
@@ -756,7 +749,7 @@ impl TestFixture {
             .init_execute_data(
                 gateway_root_pda,
                 &[Either::Right(signer_set)],
-                operators,
+                signers,
                 weight_of_quorum.as_u128(),
             )
             .await;

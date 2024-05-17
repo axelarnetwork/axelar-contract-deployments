@@ -8,7 +8,7 @@ use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::system_program;
-use test_fixtures::axelar_message::{custom_message, new_worker_set};
+use test_fixtures::axelar_message::{custom_message, new_signer_set};
 use test_fixtures::execute_data::create_signer_with_weight;
 use test_fixtures::test_setup::{prepare_execute_data, TestFixture};
 
@@ -18,20 +18,20 @@ use crate::{example_payload, program_test};
 async fn test_successfylly_initialize_execute_data() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_config_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (gateway_execute_data, raw_execute_data) = prepare_execute_data(
         &[Either::Left(
             custom_message(destination_program_id, example_payload()).unwrap(),
         )],
-        &operators,
+        &signers,
         quorum,
         &gateway_config_pda,
     );
@@ -62,28 +62,28 @@ async fn test_successfylly_initialize_execute_data() {
 }
 
 #[tokio::test]
-async fn test_succesfully_initialize_transfer_operatorship() {
+async fn test_succesfully_initialize_rotate_signers() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
-    let new_operators = vec![
+    let new_signers = vec![
         create_signer_with_weight(33_u128).unwrap(),
         create_signer_with_weight(150_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let (gateway_execute_data, raw_execute_data) = prepare_execute_data(
-        &[Either::Right(new_worker_set(
-            &new_operators,
+        &[Either::Right(new_signer_set(
+            &new_signers,
             42,
             Uint256::from_u128(42),
         ))],
-        &operators,
+        &signers,
         quorum,
         &gateway_root_pda,
     );
@@ -114,28 +114,28 @@ async fn test_succesfully_initialize_transfer_operatorship() {
 }
 
 #[tokio::test]
-async fn test_succesfully_initialize_transfer_operatorship_message_together_with_call_contract() {
+async fn test_succesfully_initialize_rotate_signers_message_together_with_call_contract() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
-    let new_operators = vec![
+    let new_signers = vec![
         create_signer_with_weight(33_u128).unwrap(),
         create_signer_with_weight(150_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (gateway_execute_data, raw_execute_data) = prepare_execute_data(
         &[
             Either::Left(custom_message(destination_program_id, example_payload()).unwrap()),
-            Either::Right(new_worker_set(&new_operators, 42, Uint256::from_u128(42))),
+            Either::Right(new_signer_set(&new_signers, 42, Uint256::from_u128(42))),
         ],
-        &operators,
+        &signers,
         quorum,
         &gateway_root_pda,
     );
@@ -181,20 +181,20 @@ async fn test_fail_on_invalid_root_pda() {
         },
     );
     let mut fixture = TestFixture::new(program_test).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let _gateway_config_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_gateway_execute_data, raw_execute_data) = prepare_execute_data(
         &[Either::Left(
             custom_message(destination_program_id, example_payload()).unwrap(),
         )],
-        &operators,
+        &signers,
         quorum,
         &fake_gateway_root_pda,
     );
@@ -236,20 +236,20 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
         },
     );
     let mut fixture = TestFixture::new(program_test).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let _gateway_config_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_gateway_execute_data, raw_execute_data) = prepare_execute_data(
         &[Either::Left(
             custom_message(destination_program_id, example_payload()).unwrap(),
         )],
-        &operators,
+        &signers,
         quorum,
         &fake_gateway_root_pda,
     );
@@ -279,7 +279,7 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
 async fn test_fail_on_uninitialized_root_pda() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
@@ -290,7 +290,7 @@ async fn test_fail_on_uninitialized_root_pda() {
         &[Either::Left(
             custom_message(destination_program_id, example_payload()).unwrap(),
         )],
-        &operators,
+        &signers,
         quorum,
         &uninitialized_gateway_config_pda,
     );
@@ -320,13 +320,13 @@ async fn test_fail_on_uninitialized_root_pda() {
 async fn test_fail_on_already_initialized_execute_data_account() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
 
     // Action
@@ -339,7 +339,7 @@ async fn test_fail_on_already_initialized_execute_data_account() {
             &[Either::Left(
                 custom_message(destination_program_id, example_payload()).unwrap(),
             )],
-            &operators,
+            &signers,
             quorum,
         )
         .await;
@@ -363,29 +363,29 @@ async fn test_fail_on_already_initialized_execute_data_account() {
         .any(|x| x.contains("invalid account data for instruction")),);
 }
 
-/// processing any more than 19 operators results in `memory allocation failed,
+/// processing any more than 19 signers results in `memory allocation failed,
 /// out of memory` Which means that we exceeded the 32kb heap memory limit
 /// [docs](https://solana.com/docs/programs/faq#heap-size)
 ///
 /// Technically we could try using a custom allocator to clean up the heap
 /// because we still have a lot of compute budget to work with:
-/// `consumed 690929 of 1399850 compute units` - on 33 operator amount
+/// `consumed 690929 of 1399850 compute units` - on 33 signer amount
 ///
 /// 1399850 - this is the maximum amount of compute units that we can use, if we
 /// try setting a larger value, it just gets rounded to this one.
 #[tokio::test]
-async fn test_size_limits_for_different_operators() {
+async fn test_size_limits_for_different_signers() {
     // Setup
-    for amount_of_operators in [2, 4, 8, 16, 17, 18, 19] {
-        dbg!(amount_of_operators);
-        let operators = (0_u128..amount_of_operators)
+    for amount_of_signers in [2, 4, 8, 16, 17, 18, 19] {
+        dbg!(amount_of_signers);
+        let signers = (0_u128..amount_of_signers)
             .map(|x| create_signer_with_weight(x + 1).unwrap())
             .collect::<Vec<_>>();
         let quorum =
-            ((0..amount_of_operators as i64).sum::<i64>() + amount_of_operators as i64) as u128;
+            ((0..amount_of_signers as i64).sum::<i64>() + amount_of_signers as i64) as u128;
         let mut fixture = TestFixture::new(program_test()).await;
         let gateway_root_pda = fixture
-            .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+            .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
             .await;
 
         let destination_program_id = DestinationProgramId(Pubkey::new_unique());
@@ -393,7 +393,7 @@ async fn test_size_limits_for_different_operators() {
             &[Either::Left(
                 custom_message(destination_program_id, example_payload()).unwrap(),
             )],
-            &operators,
+            &signers,
             quorum,
             &gateway_root_pda,
         );
@@ -430,11 +430,11 @@ async fn test_message_limits_with_different_amounts() {
     // Setup
     for amount_of_messages in [1, 2, 4, 8, 16] {
         dbg!(amount_of_messages);
-        let operators = vec![create_signer_with_weight(4_u128).unwrap()];
+        let signers = vec![create_signer_with_weight(4_u128).unwrap()];
         let quorum = 4;
         let mut fixture = TestFixture::new(program_test()).await;
         let gateway_root_pda = fixture
-            .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+            .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
             .await;
 
         let destination_program_id = DestinationProgramId(Pubkey::new_unique());
@@ -443,7 +443,7 @@ async fn test_message_limits_with_different_amounts() {
                 Either::Left(custom_message(destination_program_id, example_payload()).unwrap());
                 amount_of_messages
             ],
-            &operators,
+            &signers,
             quorum,
             &gateway_root_pda,
         );

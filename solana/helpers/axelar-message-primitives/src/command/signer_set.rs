@@ -1,26 +1,26 @@
-//! Operator types.
+//! SignerSet types.
 
 use borsh::{BorshDeserialize, BorshSerialize};
 
-use super::{hash_new_operator_set, U256};
+use super::{hash_new_signer_set, U256};
 use crate::Address;
 
-/// [Operators] consist of public keys of signers, weights (bond) and desired
+/// [SignerSet] consist of public keys of signers, weights (bond) and desired
 /// threshold.
 #[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
-pub struct Operators {
+pub struct SignerSet {
     /// List of addresses; look [Address].
     addresses: Vec<Address>,
 
     /// List of weights / bond.
     weights: Vec<U256>,
 
-    /// Desired treshold.
+    /// Desired threshold.
     threshold: U256,
 }
 
-impl Operators {
-    /// Constructor for [Operators].
+impl SignerSet {
+    /// Constructor for [SignerSet].
     pub fn new(addresses: Vec<Address>, weights: Vec<U256>, threshold: U256) -> Self {
         Self {
             addresses,
@@ -29,14 +29,14 @@ impl Operators {
         }
     }
 
-    /// Returns the hash for this operator set.
+    /// Returns the hash for this signer set.
     pub fn hash(&self) -> [u8; 32] {
         let iter = self.addresses.iter().zip(self.weights.iter().copied());
-        hash_new_operator_set(iter, self.threshold)
+        hash_new_signer_set(iter, self.threshold)
     }
 }
 
-impl Operators {
+impl SignerSet {
     /// Returns threshold.
     pub fn weights(&self) -> &[U256] {
         &self.weights

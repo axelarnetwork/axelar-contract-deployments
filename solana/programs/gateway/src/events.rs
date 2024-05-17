@@ -54,8 +54,8 @@ pub struct MessageApproved {
 pub enum GatewayEvent<'a> {
     /// Logged when the Gateway receives an outbound message.
     CallContract(Cow<'a, CallContract>),
-    /// The event emited after successful keys rotation.
-    OperatorshipTransferred(Cow<'a, RotateSignersCommand>),
+    /// The event emitted after successful keys rotation.
+    SignersRotated(Cow<'a, RotateSignersCommand>),
     /// Emitted for every approved message after the Gateway validates a command
     /// batch
     MessageApproved(Cow<'a, MessageApproved>),
@@ -71,7 +71,7 @@ impl<'a> BorshDeserialize for GatewayEvent<'a> {
             0 => Ok(GatewayEvent::CallContract(Cow::Owned(
                 CallContract::deserialize_reader(reader)?,
             ))),
-            1 => Ok(GatewayEvent::OperatorshipTransferred(Cow::Owned(
+            1 => Ok(GatewayEvent::SignersRotated(Cow::Owned(
                 RotateSignersCommand::deserialize_reader(reader)?,
             ))),
             2 => Ok(GatewayEvent::MessageApproved(Cow::Owned(
@@ -88,11 +88,11 @@ impl<'a> BorshDeserialize for GatewayEvent<'a> {
 impl From<DecodedCommand> for GatewayEvent<'_> {
     fn from(command: DecodedCommand) -> Self {
         match command {
-            DecodedCommand::ApproveMessages(appove_call_command) => {
-                GatewayEvent::MessageApproved(Cow::Owned(appove_call_command.into()))
+            DecodedCommand::ApproveMessages(approve_call_command) => {
+                GatewayEvent::MessageApproved(Cow::Owned(approve_call_command.into()))
             }
-            DecodedCommand::RotateSigners(transfer_operatorship_command) => {
-                GatewayEvent::OperatorshipTransferred(Cow::Owned(transfer_operatorship_command))
+            DecodedCommand::RotateSigners(rotate_signer_command) => {
+                GatewayEvent::SignersRotated(Cow::Owned(rotate_signer_command))
             }
         }
     }
@@ -150,10 +150,10 @@ mod tests {
             payload: b"function_call()".to_vec(),
             payload_hash: [1; 32],
         };
-        let transfer_operatorship_command = RotateSignersCommand {
+        let rotate_signers_command = RotateSignersCommand {
             command_id: [1; 32],
             destination_chain: 222,
-            operators: vec![],
+            signer_set: vec![],
             weights: vec![],
             quorum: 42,
         };
@@ -166,14 +166,12 @@ mod tests {
         };
         let events_owned = vec![
             GatewayEvent::CallContract(Cow::Owned(call_contract.clone())),
-            GatewayEvent::OperatorshipTransferred(Cow::Owned(
-                transfer_operatorship_command.clone(),
-            )),
+            GatewayEvent::SignersRotated(Cow::Owned(rotate_signers_command.clone())),
             GatewayEvent::MessageApproved(Cow::Owned(message_approved.clone())),
         ];
         let events_borrowed = vec![
             GatewayEvent::CallContract(Cow::Borrowed(&call_contract)),
-            GatewayEvent::OperatorshipTransferred(Cow::Borrowed(&transfer_operatorship_command)),
+            GatewayEvent::SignersRotated(Cow::Borrowed(&rotate_signers_command)),
             GatewayEvent::MessageApproved(Cow::Borrowed(&message_approved)),
         ];
 

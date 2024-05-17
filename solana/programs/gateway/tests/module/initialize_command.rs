@@ -10,19 +10,19 @@ use test_fixtures::axelar_message::custom_message;
 use test_fixtures::execute_data::create_signer_with_weight;
 use test_fixtures::test_setup::{prepare_execute_data, TestFixture};
 
-use crate::{example_payload, example_worker_set, gateway_approved_command_ixs, program_test};
+use crate::{example_payload, example_signer_set, gateway_approved_command_ixs, program_test};
 
 #[tokio::test]
 async fn succesfully_initialize_validate_contract_call_command() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_execute_data_pubkey, execute_data, _) = fixture
@@ -33,7 +33,7 @@ async fn succesfully_initialize_validate_contract_call_command() {
                 Either::Left(custom_message(destination_program_id, example_payload()).unwrap()),
                 Either::Left(custom_message(destination_program_id, example_payload()).unwrap()),
             ],
-            &operators,
+            &signers,
             quorum,
         )
         .await;
@@ -65,16 +65,16 @@ async fn succesfully_initialize_validate_contract_call_command() {
 }
 
 #[tokio::test]
-async fn succesfully_initialize_transfer_operatorship_message() {
+async fn succesfully_initialize_rotate_signers_message() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let (_execute_data_pubkey, execute_data, _) = fixture
         .init_execute_data(
@@ -82,11 +82,11 @@ async fn succesfully_initialize_transfer_operatorship_message() {
             // Every worker set is slightly different to prevent hash collisions because there's no
             // random data
             &[
-                Either::Right(example_worker_set(42, 42)),
-                Either::Right(example_worker_set(43, 43)),
-                Either::Right(example_worker_set(44, 44)),
+                Either::Right(example_signer_set(42, 42)),
+                Either::Right(example_signer_set(43, 43)),
+                Either::Right(example_signer_set(44, 44)),
             ],
-            &operators,
+            &signers,
             quorum,
         )
         .await;
@@ -118,16 +118,16 @@ async fn succesfully_initialize_transfer_operatorship_message() {
 }
 
 #[tokio::test]
-async fn succesfully_initialize_transfer_operatorship_message_together_with_call_contract() {
+async fn succesfully_initialize_rotate_signers_message_together_with_call_contract() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_execute_data_pubkey, execute_data, _) = fixture
@@ -139,11 +139,11 @@ async fn succesfully_initialize_transfer_operatorship_message_together_with_call
                 Either::Left(custom_message(destination_program_id, example_payload()).unwrap()),
                 Either::Left(custom_message(destination_program_id, example_payload()).unwrap()),
                 Either::Left(custom_message(destination_program_id, example_payload()).unwrap()),
-                Either::Right(example_worker_set(42, 42)),
-                Either::Right(example_worker_set(43, 44)),
-                Either::Right(example_worker_set(44, 44)),
+                Either::Right(example_signer_set(42, 42)),
+                Either::Right(example_signer_set(43, 44)),
+                Either::Right(example_signer_set(44, 44)),
             ],
-            &operators,
+            &signers,
             quorum,
         )
         .await;
@@ -151,7 +151,7 @@ async fn succesfully_initialize_transfer_operatorship_message_together_with_call
     // Action
     let ixs = gateway_approved_command_ixs(execute_data, gateway_root_pda, &fixture);
     let pdas = ixs.iter().map(|(pda, _)| *pda).collect::<Vec<_>>();
-    let (call_contract_ops, transfer_ops) = pdas.split_at(3);
+    let (call_contract_ops, rotate_signers) = pdas.split_at(3);
     let ixs = ixs.into_iter().map(|(_, ix)| ix).collect::<Vec<_>>();
     fixture.send_tx(&ixs).await;
 
@@ -173,7 +173,7 @@ async fn succesfully_initialize_transfer_operatorship_message_together_with_call
             GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
         ));
     }
-    for pda in transfer_ops {
+    for pda in rotate_signers {
         let account = fixture
             .banks_client
             .get_account(*pda)
@@ -196,7 +196,7 @@ async fn succesfully_initialize_transfer_operatorship_message_together_with_call
 async fn fail_when_gateway_root_pda_not_initialized() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
@@ -207,7 +207,7 @@ async fn fail_when_gateway_root_pda_not_initialized() {
         &[Either::Left(
             custom_message(destination_program_id, example_payload()).unwrap(),
         )],
-        &operators,
+        &signers,
         quorum,
         &gateway_root_pda,
     );
@@ -234,13 +234,13 @@ async fn fail_when_gateway_root_pda_not_initialized() {
 async fn succesfully_initialize_command_which_belongs_to_a_different_execute_data_set() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_execute_data_pubkey_1, _execute_data_1, _) = fixture
@@ -249,7 +249,7 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
             &[Either::Left(
                 custom_message(destination_program_id, example_payload()).unwrap(),
             )],
-            &operators,
+            &signers,
             quorum,
         )
         .await;
@@ -257,7 +257,7 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
         &[Either::Left(
             custom_message(destination_program_id, example_payload()).unwrap(),
         )],
-        &operators,
+        &signers,
         quorum,
         &gateway_root_pda,
     );
@@ -291,13 +291,13 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
 async fn fail_when_validate_contract_call_already_initialized() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_execute_data_pubkey, execute_data, _) = fixture
@@ -306,7 +306,7 @@ async fn fail_when_validate_contract_call_already_initialized() {
             &[Either::Left(
                 custom_message(destination_program_id, example_payload()).unwrap(),
             )],
-            &operators,
+            &signers,
             quorum,
         )
         .await;
@@ -332,23 +332,23 @@ async fn fail_when_validate_contract_call_already_initialized() {
 }
 
 #[tokio::test]
-async fn fail_when_transfer_operatorship_is_already_initialized() {
+async fn fail_when_rotate_signers_is_already_initialized() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
-    let new_worker_set = example_worker_set(42, 43);
+    let new_signer_set = example_signer_set(42, 43);
     let (_execute_data_pubkey, execute_data, _) = fixture
         .init_execute_data(
             &gateway_root_pda,
-            &[Either::Right(new_worker_set)],
-            &operators,
+            &[Either::Right(new_signer_set)],
+            &signers,
             quorum,
         )
         .await;
@@ -384,38 +384,38 @@ async fn fail_when_transfer_operatorship_is_already_initialized() {
 /// This means that if we change the `created_at` field, the hash of the
 /// `WorkerSet` WILL NOT change.
 #[tokio::test]
-async fn fail_when_transfer_operatorship_has_unchanged_block_height() {
+async fn fail_when_rotate_signers_has_unchanged_block_height() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let operators = vec![
+    let signers = vec![
         create_signer_with_weight(10_u128).unwrap(),
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&operators))
+        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
         .await;
     let initial_created_at = 180;
     let new_created_at = 360;
-    let new_worker_set = example_worker_set(111, initial_created_at);
-    let same_worker_set_with_different_created_at = {
-        let mut tmp = new_worker_set.clone();
+    let new_signer_set = example_signer_set(111, initial_created_at);
+    let same_signer_set_with_different_created_at = {
+        let mut tmp = new_signer_set.clone();
         tmp.created_at = new_created_at;
         tmp
     };
     let (_execute_data_pubkey_1, execute_data_1, _) = fixture
         .init_execute_data(
             &gateway_root_pda,
-            &[Either::Right(new_worker_set)],
-            &operators,
+            &[Either::Right(new_signer_set)],
+            &signers,
             quorum,
         )
         .await;
     let (_execute_data_pubkey_2, execute_data_2, _) = fixture
         .init_execute_data(
             &gateway_root_pda,
-            &[Either::Right(same_worker_set_with_different_created_at)],
-            &operators,
+            &[Either::Right(same_signer_set_with_different_created_at)],
+            &signers,
             quorum,
         )
         .await;
