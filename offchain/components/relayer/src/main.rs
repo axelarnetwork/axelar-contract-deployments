@@ -18,7 +18,6 @@ mod relayer;
 mod retrying_http_sender;
 mod sentinel;
 mod state;
-mod tokio_utils;
 mod transports;
 mod verifier;
 
