@@ -20,9 +20,13 @@ pub(super) enum IncluderError {
     #[error("failed to create an 'initialize_execute_data' instruction: {0}")]
     InitializeExecuteDataInstruction(#[source] ProgramError),
 
-    /// Used when an 'execute' instruction can't be constructed.
-    #[error("failed to create an 'execute_data' instruction: {0}")]
-    ExecuteInstruction(#[source] ProgramError),
+    /// Used when an `ApproveMessages` instruction can't be constructed.
+    #[error("failed to create an `ApproveMessages` instruction: {0}")]
+    ApproveMessagesInstruction(#[source] ProgramError),
+
+    /// Used when a `RotateSigners` instruction can't be constructed.
+    #[error("failed to create a `RotateSigners` instruction: {0}")]
+    RotateSignersInstruction(#[source] ProgramError),
 
     /// Used when we fail to submit a transaction to initialize a pending
     /// command's PDA.
@@ -72,6 +76,23 @@ pub(super) enum IncluderError {
     /// Used when persisting the latest known block height.
     #[error("Failed to persist the latest block height: {0}")]
     State(#[from] sqlx::Error),
+
+    /// Used when an unexpected number of command accounts were found when
+    /// handling a `RotateSigners` instruction.
+    ///
+    /// This should rarely happen as this invariant is enforced by the Gateway
+    /// decoding functions, but we check it here just in case.
+    #[error(
+        "Expected a single command account for the `RotateSigners` instructions but found {length}"
+    )]
+    MissingOrMultipleRotateSignersCommandAccounts { length: usize },
+
+    /// Used when a command batch has an empty command list.
+    ///
+    /// This should rarely happen as this invariant is enforced by the Gateway
+    /// decoding functions, but we check it here just in case.
+    #[error("Empty command account list")]
+    EmptyCommandsList,
 }
 
 impl IncluderError {

@@ -184,12 +184,17 @@ impl Worker {
 
         // Initialize command accounts.
         let command_accounts = self
-            .initialize_pending_commands(execute_data, recent_blockhash)
+            .initialize_pending_commands(&execute_data, recent_blockhash)
             .await?;
 
-        // Call execute
-        self.submit_execute_transaction(execute_data_account, &command_accounts, recent_blockhash)
-            .await?;
+        // Either approve the message batch or rotate the signers.
+        self.submit_transaction(
+            execute_data,
+            execute_data_account,
+            &command_accounts,
+            recent_blockhash,
+        )
+        .await?;
 
         // Persist the current block number
         self.state
@@ -199,21 +204,46 @@ impl Worker {
         Ok(())
     }
 
-    /// Sends a transaction with the `execute` instruction to the Gateway.
+    /// Sends a transaction with either the `ApproveMessages` or `RotateSigners`
+    /// instruction to the Gateway.
     #[tracing::instrument(skip_all, err)]
-    async fn submit_execute_transaction(
+    async fn submit_transaction(
         &self,
+        execute_data: GatewayExecuteData,
         execute_data_account: Pubkey,
         command_accounts: &[Pubkey],
         recent_blockhash: Hash,
     ) -> Result<Signature, IncluderError> {
-        let instruction = instructions::execute(
-            self.gateway_address,
-            execute_data_account,
-            self.gateway_config_address,
-            command_accounts,
-        )
-        .map_err(IncluderError::ExecuteInstruction)?;
+        // Peek into the first command type to determine the appropriate instruction.
+        // The Gateway should fail if mixed command types are used in the same
+        // instruction, but we are not responsible for filtering those here.
+        let instruction = match execute_data.command_batch.commands[..] {
+            [] => return Err(IncluderError::EmptyCommandsList),
+            [DecodedCommand::RotateSigners(_), ..] => {
+                let &[command_account] = command_accounts else {
+                    return Err(
+                        IncluderError::MissingOrMultipleRotateSignersCommandAccounts {
+                            length: command_accounts.len(),
+                        },
+                    );
+                };
+                instructions::rotate_signers(
+                    self.gateway_address,
+                    execute_data_account,
+                    self.gateway_config_address,
+                    command_account,
+                )
+                .map_err(IncluderError::RotateSignersInstruction)?
+            }
+            [DecodedCommand::ApproveMessages(_), ..] => instructions::approve_messages(
+                self.gateway_address,
+                execute_data_account,
+                self.gateway_config_address,
+                command_accounts,
+            )
+            .map_err(IncluderError::ApproveMessagesInstruction)?,
+        };
+
         let transaction = Transaction::new_signed_with_payer(
             &[instruction],
             Some(&self.keypair.pubkey()),
@@ -353,17 +383,16 @@ impl Worker {
     #[tracing::instrument(skip_all, err, fields(command_batch = hex::encode(execute_data.command_batch_hash)))]
     async fn initialize_pending_commands(
         &self,
-        execute_data: GatewayExecuteData,
+        execute_data: &GatewayExecuteData,
         recent_blockhash: Hash,
     ) -> Result<Vec<Pubkey>, IncluderError> {
-        let command_addresses = try_join_all(
-            execute_data
-                .command_batch
-                .commands
-                .into_iter()
-                .map(|command| self.initialize_pending_command(command, recent_blockhash)),
-        )
-        .await?;
+        let command_addresses =
+            try_join_all(
+                execute_data.command_batch.commands.iter().map(|command| {
+                    self.initialize_pending_command(command.clone(), recent_blockhash)
+                }),
+            )
+            .await?;
         debug!("initialized all pending command accounts");
         Ok(command_addresses)
     }
