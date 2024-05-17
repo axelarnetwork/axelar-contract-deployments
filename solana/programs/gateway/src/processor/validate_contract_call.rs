@@ -1,4 +1,4 @@
-use axelar_message_primitives::command::{ApproveContractCallCommand, DecodedCommand};
+use axelar_message_primitives::command::{ApproveMessagesCommand, DecodedCommand};
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
@@ -13,8 +13,8 @@ impl Processor {
     /// This function is used to initialize the program.
     pub fn process_validate_contract_call(
         program_id: &Pubkey,
-        accounts: &[AccountInfo],
-        command: ApproveContractCallCommand,
+        accounts: &[AccountInfo<'_>],
+        command: ApproveMessagesCommand,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
         let approved_message_pda = next_account_info(accounts_iter)?;
@@ -27,11 +27,11 @@ impl Processor {
             gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
 
         let command_id = command.command_id;
-        let command = DecodedCommand::ApproveContractCall(command);
+        let command = DecodedCommand::ApproveMessages(command);
         let seed_hash = GatewayApprovedCommand::calculate_seed_hash(gateway_root_pda.key, &command);
 
         // Check: we only operate on approved contract call command types
-        let DecodedCommand::ApproveContractCall(command) = command else {
+        let DecodedCommand::ApproveMessages(command) = command else {
             msg!("Invalid command type after we had just constr");
             return Err(ProgramError::InvalidArgument);
         };

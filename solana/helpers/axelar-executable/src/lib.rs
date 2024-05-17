@@ -3,7 +3,7 @@
 //! Utility functions for on-chain integration with the Axelar Gatewey on Solana
 
 pub use axelar_message_primitives;
-use axelar_message_primitives::command::ApproveContractCallCommand;
+use axelar_message_primitives::command::ApproveMessagesCommand;
 use axelar_message_primitives::{
     AxelarCallableInstruction, AxelarExecutablePayload, DataPayload, DestinationProgramId,
 };
@@ -61,7 +61,7 @@ pub fn validate_contract_call(
             gateway_approved_message_pda.key,
             gateway_root_pda.key,
             signing_pda.key,
-            ApproveContractCallCommand {
+            ApproveMessagesCommand {
                 command_id,
                 destination_chain: 0,
                 source_chain,
@@ -94,7 +94,7 @@ pub fn validate_contract_call(
 /// 3. `gateway_program_id` - Gateway Prorgam ID
 /// N... - The accounts provided in the `axelar_message_payload`
 pub fn construct_axelar_executable_ix(
-    incoming_message: ApproveContractCallCommand,
+    incoming_message: ApproveMessagesCommand,
     // The payload of the incoming message, contains encoded accounts and the actual payload
     axelar_message_payload: Vec<u8>,
     // The PDA for the gateway approved message, this *must* be initialized

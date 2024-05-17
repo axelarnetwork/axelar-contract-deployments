@@ -7,6 +7,7 @@ use axelar_wasm_std::{nonempty, Participant};
 use connection_router::state::Address;
 use connection_router::Message;
 use cosmwasm_std::{Addr, Uint256};
+use itertools::*;
 use multisig::worker_set::WorkerSet;
 
 use crate::execute_data::TestSigner;
@@ -76,15 +77,17 @@ pub trait WorkerSetExt {
 
 impl WorkerSetExt for WorkerSet {
     fn hash_solana_way(&self) -> [u8; 32] {
+        let addresses = self
+            .signers
+            .keys()
+            .map(|addr| axelar_message_primitives::Address::try_from(addr.as_str()).unwrap())
+            .collect_vec();
+        let weights = self.signers.values().map(|signer| {
+            axelar_message_primitives::command::U256::from_le_bytes(signer.weight.to_le_bytes())
+        });
+
         hash_new_operator_set(
-            self.signers.iter().map(|(addr, signer)| {
-                (
-                    axelar_message_primitives::Address::try_from(addr.as_str()).unwrap(),
-                    axelar_message_primitives::command::U256::from_le_bytes(
-                        signer.weight.to_le_bytes(),
-                    ),
-                )
-            }),
+            addresses.iter().zip(weights),
             axelar_message_primitives::command::U256::from_le_bytes(self.threshold.to_le_bytes()),
         )
     }

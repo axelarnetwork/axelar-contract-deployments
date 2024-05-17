@@ -11,7 +11,6 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
 use test_fixtures::axelar_message::custom_message;
-use test_fixtures::Either;
 
 use crate::setup_its_root_fixture;
 
@@ -45,7 +44,7 @@ async fn test_deploy_interchain_token() {
     let (gateway_approved_message_pda, execute_data, _gateway_execute_data_pda) = fixture
         .fully_approve_messages(
             &gateway_root_pda,
-            &[Either::Left(message_to_execute.clone())],
+            &[message_to_execute.clone()],
             &gateway_operators,
         )
         .await;
@@ -55,10 +54,10 @@ async fn test_deploy_interchain_token() {
         .await
         .expect("get_account")
         .expect("account not none");
-    let DecodedCommand::ApproveContractCall(command_to_execute) =
+    let DecodedCommand::ApproveMessages(command_to_execute) =
         execute_data.command_batch.commands[0].clone()
     else {
-        panic!("Expected ApproveContractCall command");
+        panic!("Expected ApproveMessages command");
     };
     let data = GatewayApprovedCommand::unpack_from_slice(gateway_approved_message.data()).unwrap();
     assert!(

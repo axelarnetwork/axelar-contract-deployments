@@ -1,6 +1,6 @@
 //! Instruction types
 
-use axelar_message_primitives::command::{ApproveContractCallCommand, DecodedCommand};
+use axelar_message_primitives::command::{ApproveMessagesCommand, DecodedCommand};
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
@@ -12,15 +12,23 @@ use crate::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
 #[repr(u8)]
 #[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub enum GatewayInstruction {
-    /// Processes incoming batch of commands from Axelar
+    /// Processes incoming batch of ApproveMessage commands from Axelar
     ///
     /// Accounts expected by this instruction:
     /// 0. [] Gateway Root Config PDA account
     /// 1. [WRITE] Gateway ExecuteData PDA account
-    /// 2..N [] Gateway ApprovedCommand PDA accounts. It' expected that the
-    ///         number of accounts is equal to the number of commands in the
-    ///         execute data batch.
-    Execute,
+    /// 2..N [WRITE] Gateway ApprovedCommand PDA accounts. All commands needs to
+    ///         be `ApproveMessages`.
+    ApproveMessages,
+
+    /// Rotate signers for the Gateway Root Config PDA account.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [] Gateway Root Config PDA account
+    /// 1. [WRITE] Gateway ExecuteData PDA account
+    /// 2. [WRITE] Gateway ApprovedCommand PDA accounts. The command needs to be
+    ///    `RotateSigners`.
+    RotateSigners,
 
     /// Represents the `CallContract` Axelar event.
     ///
@@ -92,20 +100,56 @@ pub enum GatewayInstruction {
     /// 2. [] Gateway Root Config PDA account
     /// 3. [SIGNER] PDA signer account (caller). Dervied from the destination
     ///    program id.
-    ValidateContractCall(ApproveContractCallCommand),
+    ValidateContractCall(ApproveMessagesCommand),
 }
 
-/// Creates a [`GatewayInstruction::Execute`] instruction.
-pub fn execute(
+/// Creates a [`GatewayInstruction::ApproveMessages`] instruction.
+pub fn approve_messgaes(
     program_id: Pubkey,
     execute_data_account: Pubkey,
     gateway_root_pda: Pubkey,
     command_accounts: &[Pubkey],
 ) -> Result<Instruction, ProgramError> {
     crate::check_program_account(program_id)?;
+    let data = to_vec(&GatewayInstruction::ApproveMessages)?;
+    #[allow(deprecated)]
+    handle_execute_data(
+        gateway_root_pda,
+        execute_data_account,
+        command_accounts,
+        program_id,
+        data,
+    )
+}
 
-    let data = to_vec(&GatewayInstruction::Execute {})?;
+/// Creates a [`GatewayInstruction::RotateSigners`] instruction.
+pub fn rotate_signers(
+    program_id: Pubkey,
+    execute_data_account: Pubkey,
+    gateway_root_pda: Pubkey,
+    command_account: Pubkey,
+) -> Result<Instruction, ProgramError> {
+    crate::check_program_account(program_id)?;
+    let data = to_vec(&GatewayInstruction::RotateSigners)?;
+    #[allow(deprecated)]
+    handle_execute_data(
+        gateway_root_pda,
+        execute_data_account,
+        &[command_account],
+        program_id,
+        data,
+    )
+}
 
+/// Helper to create an instruction with the given ExecuteData and accounts.
+#[deprecated = "Use `rotate_signers` or `approve_messgaes` instead"]
+pub fn handle_execute_data(
+    gateway_root_pda: Pubkey,
+    execute_data_account: Pubkey,
+    command_accounts: &[Pubkey],
+    program_id: Pubkey,
+    data: Vec<u8>,
+) -> Result<Instruction, ProgramError> {
     let mut accounts = vec![
         AccountMeta::new(gateway_root_pda, false),
         AccountMeta::new(execute_data_account, false),
@@ -233,7 +277,7 @@ pub fn validate_contract_call(
     approved_message_pda: &Pubkey,
     gateway_root_pda: &Pubkey,
     caller: &Pubkey,
-    message: ApproveContractCallCommand,
+    message: ApproveMessagesCommand,
 ) -> Result<Instruction, ProgramError> {
     let accounts = vec![
         AccountMeta::new(*approved_message_pda, false),
@@ -262,7 +306,7 @@ pub mod tests {
 
     #[test]
     fn round_trip_queue() {
-        let original = GatewayInstruction::Execute {};
+        let original = GatewayInstruction::ApproveMessages {};
         let serialized = to_vec(&original).unwrap();
         let deserialized = from_slice::<GatewayInstruction>(&serialized).unwrap();
         assert_eq!(deserialized, original);
@@ -274,7 +318,7 @@ pub mod tests {
         let _payer = Keypair::new().pubkey();
         let (gateway_root_pda, _) = GatewayConfig::pda();
         let approved_message_accounts = vec![Keypair::new().pubkey()];
-        let instruction = execute(
+        let instruction = approve_messgaes(
             crate::id(),
             execute_data_account,
             gateway_root_pda,
@@ -282,7 +326,10 @@ pub mod tests {
         )
         .expect("valid instruction construction");
         let deserialized = from_slice(&instruction.data).expect("deserialized valid instruction");
-        assert!(matches!(deserialized, GatewayInstruction::Execute {}));
+        assert!(matches!(
+            deserialized,
+            GatewayInstruction::ApproveMessages {}
+        ));
     }
 
     #[test]

@@ -13,7 +13,7 @@ impl Processor {
     /// This function is used to initialize the program.
     pub fn process_call_contract(
         program_id: &Pubkey,
-        accounts: &[AccountInfo],
+        accounts: &[AccountInfo<'_>],
         destination_chain: Vec<u8>,
         destination_contract_address: Vec<u8>,
         payload: Vec<u8>,

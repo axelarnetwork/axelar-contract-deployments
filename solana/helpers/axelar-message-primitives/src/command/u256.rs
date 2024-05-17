@@ -64,6 +64,12 @@ impl From<u128> for U256 {
     }
 }
 
+impl From<&u128> for U256 {
+    fn from(value: &u128) -> Self {
+        U256(bnum::types::U256::from(*value))
+    }
+}
+
 impl BorshSerialize for U256 {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> Result<(), std::io::Error> {
         let bytes = self.to_le_bytes();

@@ -13,11 +13,12 @@ use solana_program::{msg, system_instruction, system_program};
 use crate::check_program_account;
 use crate::instructions::GatewayInstruction;
 
+mod approve_messages;
 mod call_contract;
-mod execute;
 mod initialize_command;
 mod initialize_config;
 mod initialize_execute_data;
+mod rotate_signers;
 mod validate_contract_call;
 
 /// Program state handler.
@@ -27,16 +28,20 @@ impl Processor {
     /// Processes an instruction.
     pub fn process_instruction(
         program_id: &Pubkey,
-        accounts: &[AccountInfo],
+        accounts: &[AccountInfo<'_>],
         input: &[u8],
     ) -> ProgramResult {
         let instruction = GatewayInstruction::try_from_slice(input)?;
         check_program_account(*program_id)?;
 
         match instruction {
-            GatewayInstruction::Execute {} => {
-                msg!("Instruction: Execute");
-                Self::process_execute(program_id, accounts)
+            GatewayInstruction::ApproveMessages {} => {
+                msg!("Instruction: Approve Messages");
+                Self::process_approve_messages(program_id, accounts)
+            }
+            GatewayInstruction::RotateSigners {} => {
+                msg!("Instruction: Rotate Signers");
+                Self::process_rotate_signers(program_id, accounts)
             }
             GatewayInstruction::CallContract {
                 destination_chain,

@@ -1,18 +1,23 @@
-mod execute;
+mod approve_messages;
 mod initialize_command;
 mod initialize_config;
 mod initialize_execute_data;
+mod rotate_signers;
 
 use axelar_message_primitives::{DataPayload, EncodingScheme};
 use cosmwasm_std::Uint256;
+use gmp_gateway::events::GatewayEvent;
 use gmp_gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
+use itertools::Either;
 use multisig::worker_set::WorkerSet;
 use solana_program_test::{processor, ProgramTest};
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use test_fixtures::axelar_message::new_worker_set;
-use test_fixtures::execute_data::{create_signer_with_weight, TestSigner};
+use test_fixtures::execute_data::{
+    create_command_batch, create_signer_with_weight, sign_batch, TestSigner,
+};
 use test_fixtures::test_setup::TestFixture;
 
 pub fn program_test() -> ProgramTest {
@@ -86,4 +91,78 @@ pub fn gateway_approved_command_ixs(
         })
         .collect::<Vec<_>>();
     ixs
+}
+
+fn get_gateway_events_from_execute_data(
+    commands: &[axelar_message_primitives::command::DecodedCommand],
+) -> Vec<GatewayEvent<'static>> {
+    commands
+        .iter()
+        .cloned()
+        .map(gmp_gateway::events::GatewayEvent::from)
+        .collect::<Vec<_>>()
+}
+
+fn get_gateway_events(
+    tx: &solana_program_test::BanksTransactionResultWithMetadata,
+) -> Vec<GatewayEvent<'static>> {
+    tx.metadata
+        .as_ref()
+        .unwrap()
+        .log_messages
+        .iter()
+        .filter_map(GatewayEvent::parse_log)
+        .collect::<Vec<_>>()
+}
+
+pub async fn get_approved_commmand(
+    fixture: &mut test_fixtures::test_setup::TestFixture,
+    gateway_approved_command_pda: &Pubkey,
+) -> GatewayApprovedCommand {
+    fixture
+        .get_account::<gmp_gateway::state::GatewayApprovedCommand>(
+            gateway_approved_command_pda,
+            &gmp_gateway::ID,
+        )
+        .await
+}
+
+pub fn create_worker_set(
+    weights: &[impl Into<Uint256> + Copy],
+    threshold: impl Into<Uint256>,
+) -> (multisig::worker_set::WorkerSet, Vec<TestSigner>) {
+    let new_operators = weights
+        .iter()
+        .map(|weight| {
+            create_signer_with_weight({
+                let weight: Uint256 = (*weight).into();
+                weight
+            })
+            .unwrap()
+        })
+        .collect::<Vec<_>>();
+    let new_worker_set = new_worker_set(&new_operators, 0, threshold.into());
+    (new_worker_set, new_operators)
+}
+
+pub fn prepare_questionable_execute_data(
+    messages_for_signing: &[Either<connection_router::Message, WorkerSet>],
+    messages_for_execute_data: &[Either<connection_router::Message, WorkerSet>],
+    signers_for_signatures: &[TestSigner],
+    signers_in_the_execute_data: &[TestSigner],
+    quorum: u128,
+    gateway_root_pda: &Pubkey,
+) -> (GatewayExecuteData, Vec<u8>) {
+    let command_batch_for_signing = create_command_batch(messages_for_signing).unwrap();
+    let command_batch_for_execute_data = create_command_batch(messages_for_execute_data).unwrap();
+    let signatures = sign_batch(&command_batch_for_signing, signers_for_signatures).unwrap();
+    let encoded_message = test_fixtures::execute_data::encode(
+        &command_batch_for_execute_data,
+        signers_in_the_execute_data.to_vec(),
+        signatures,
+        quorum,
+    )
+    .unwrap();
+    let execute_data = GatewayExecuteData::new(encoded_message.as_ref(), gateway_root_pda).unwrap();
+    (execute_data, encoded_message)
 }

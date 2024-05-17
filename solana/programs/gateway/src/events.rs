@@ -3,7 +3,7 @@
 use std::borrow::Cow;
 
 use axelar_message_primitives::command::{
-    ApproveContractCallCommand, DecodedCommand, TransferOperatorshipCommand,
+    ApproveMessagesCommand, DecodedCommand, RotateSignersCommand,
 };
 use base64::engine::general_purpose;
 use base64::Engine as _;
@@ -55,7 +55,7 @@ pub enum GatewayEvent<'a> {
     /// Logged when the Gateway receives an outbound message.
     CallContract(Cow<'a, CallContract>),
     /// The event emited after successful keys rotation.
-    OperatorshipTransferred(Cow<'a, TransferOperatorshipCommand>),
+    OperatorshipTransferred(Cow<'a, RotateSignersCommand>),
     /// Emitted for every approved message after the Gateway validates a command
     /// batch
     MessageApproved(Cow<'a, MessageApproved>),
@@ -72,7 +72,7 @@ impl<'a> BorshDeserialize for GatewayEvent<'a> {
                 CallContract::deserialize_reader(reader)?,
             ))),
             1 => Ok(GatewayEvent::OperatorshipTransferred(Cow::Owned(
-                TransferOperatorshipCommand::deserialize_reader(reader)?,
+                RotateSignersCommand::deserialize_reader(reader)?,
             ))),
             2 => Ok(GatewayEvent::MessageApproved(Cow::Owned(
                 MessageApproved::deserialize_reader(reader)?,
@@ -88,18 +88,18 @@ impl<'a> BorshDeserialize for GatewayEvent<'a> {
 impl From<DecodedCommand> for GatewayEvent<'_> {
     fn from(command: DecodedCommand) -> Self {
         match command {
-            DecodedCommand::ApproveContractCall(appove_call_command) => {
+            DecodedCommand::ApproveMessages(appove_call_command) => {
                 GatewayEvent::MessageApproved(Cow::Owned(appove_call_command.into()))
             }
-            DecodedCommand::TransferOperatorship(transfer_operatorship_command) => {
+            DecodedCommand::RotateSigners(transfer_operatorship_command) => {
                 GatewayEvent::OperatorshipTransferred(Cow::Owned(transfer_operatorship_command))
             }
         }
     }
 }
 
-impl From<ApproveContractCallCommand> for MessageApproved {
-    fn from(command: ApproveContractCallCommand) -> Self {
+impl From<ApproveMessagesCommand> for MessageApproved {
+    fn from(command: ApproveMessagesCommand) -> Self {
         MessageApproved {
             message_id: command.command_id,
             source_chain: command.source_chain,
@@ -150,7 +150,7 @@ mod tests {
             payload: b"function_call()".to_vec(),
             payload_hash: [1; 32],
         };
-        let transfer_operatorship_command = TransferOperatorshipCommand {
+        let transfer_operatorship_command = RotateSignersCommand {
             command_id: [1; 32],
             destination_chain: 222,
             operators: vec![],

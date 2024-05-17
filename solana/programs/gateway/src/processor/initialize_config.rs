@@ -13,7 +13,7 @@ impl Processor {
     /// This function is used to initialize the program.
     pub fn process_initialize_config(
         program_id: &Pubkey,
-        accounts: &[AccountInfo],
+        accounts: &[AccountInfo<'_>],
         config: GatewayConfig,
     ) -> ProgramResult {
         let accounts_iter = &mut accounts.iter();

@@ -1,21 +1,19 @@
-use axelar_message_primitives::command::{DecodedCommand, U256};
+use axelar_message_primitives::command::U256;
 use axelar_message_primitives::DestinationProgramId;
 use cosmwasm_std::Uint256;
-use gmp_gateway::events::GatewayEvent;
-use gmp_gateway::state::{
-    GatewayApprovedCommand, GatewayCommandStatus, GatewayConfig, GatewayExecuteData,
-};
+use gmp_gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
 use itertools::{Either, Itertools};
 use multisig::key::Signature;
-use multisig::worker_set::WorkerSet;
 use solana_program_test::tokio;
 use solana_sdk::pubkey::Pubkey;
-use test_fixtures::axelar_message::{custom_message, new_worker_set, WorkerSetExt};
-use test_fixtures::execute_data::{
-    self, create_command_batch, create_signer_with_weight, sign_batch, TestSigner,
-};
+use test_fixtures::axelar_message::{custom_message, new_worker_set};
+use test_fixtures::execute_data::{self, create_command_batch, sign_batch};
 
-use crate::{example_payload, setup_initialised_gateway};
+use crate::{
+    create_worker_set, example_payload, get_approved_commmand, get_gateway_events,
+    get_gateway_events_from_execute_data, prepare_questionable_execute_data,
+    setup_initialised_gateway,
+};
 
 #[tokio::test]
 async fn successfully_process_execute_when_there_are_no_commands() {
@@ -94,84 +92,10 @@ async fn successfully_process_execute_when_there_are_3_validate_contract_call_co
     }
 }
 
-/// successfully process execute when there is 1 transfer operatorship commands
-#[tokio::test]
-async fn successfully_process_execute_when_there_is_1_transfer_operatorship_command() {
-    // Setup
-    let (mut fixture, quorum, operators, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 42, 33], None).await;
-    let (new_worker_set, new_signers) = create_worker_set(&[500_u128, 200_u128], 700_u128);
-    let messages = [new_worker_set.clone()].map(Either::Right);
-    let (execute_data_pda, execute_data, _) = fixture
-        .init_execute_data(&gateway_root_pda, &messages, &operators, quorum)
-        .await;
-    let gateway_approved_command_pdas = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &execute_data.command_batch.commands)
-        .await;
-
-    // Action
-    let tx = fixture
-        .approve_pending_gateway_messages_with_metadata(
-            &gateway_root_pda,
-            &execute_data_pda,
-            &gateway_approved_command_pdas,
-        )
-        .await;
-
-    // Assert
-    assert!(tx.result.is_ok());
-    // - expected events
-    let emitted_events = get_gateway_events(&tx);
-    let expected_approved_command_logs =
-        get_gateway_events_from_execute_data(&execute_data.command_batch.commands);
-    for (actual, expected) in emitted_events
-        .iter()
-        .zip(expected_approved_command_logs.iter())
-    {
-        assert_eq!(actual, expected);
-    }
-
-    // - command PDAs get updated
-    for gateway_approved_command_pda in gateway_approved_command_pdas.iter() {
-        let approved_commmand =
-            get_approved_commmand(&mut fixture, gateway_approved_command_pda).await;
-        assert!(approved_commmand.is_command_executed());
-    }
-
-    // - operators have been updated
-    let root_pda_data = fixture
-        .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let new_epoch = U256::from(2_u8);
-    assert_eq!(root_pda_data.auth_weighted.current_epoch(), new_epoch);
-    assert_eq!(
-        root_pda_data
-            .auth_weighted
-            .operator_hash_for_epoch(&new_epoch)
-            .unwrap(),
-        &new_worker_set.hash_solana_way(),
-    );
-
-    // - test that both operator sets can sign new messages
-    for operator_set in [new_signers, operators] {
-        let destination_program_id = DestinationProgramId(Pubkey::new_unique());
-        fixture
-            .fully_approve_messages(
-                &gateway_root_pda,
-                &[Either::Left(
-                    custom_message(destination_program_id, example_payload()).unwrap(),
-                )],
-                &operator_set,
-            )
-            .await;
-    }
-}
-
 /// successfully process execute when there is 1 transfer operatorship and 3
 /// validate contract call commands
 #[tokio::test]
-async fn successfully_process_execute_when_there_is_1_transfer_operatorship_command_and_3_validate_contract_call_commands(
-) {
+async fn fail_on_processing_approve_messages_when_there_is_rotate_signers_command_in_there() {
     // Setup
     let (mut fixture, quorum, operators, gateway_root_pda) =
         setup_initialised_gateway(&[11, 42, 33], None).await;
@@ -200,118 +124,13 @@ async fn successfully_process_execute_when_there_is_1_transfer_operatorship_comm
         .await;
 
     // Assert
-    assert!(tx.result.is_ok());
-    // - events emitted
-    let emitted_events = get_gateway_events(&tx);
-    let expected_approved_command_logs =
-        get_gateway_events_from_execute_data(&execute_data.command_batch.commands);
-    for (actual, expected) in emitted_events
-        .iter()
-        .zip(expected_approved_command_logs.iter())
-    {
-        assert_eq!(actual, expected);
-    }
-
-    // - command PDAs get updated
-    for gateway_approved_command_pda in gateway_approved_command_pdas.iter() {
-        let approved_commmand =
-            get_approved_commmand(&mut fixture, gateway_approved_command_pda).await;
-        assert!(approved_commmand.is_command_executed());
-    }
-
-    // - operators updated
-    let root_pda_data = fixture
-        .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let new_epoch = U256::from(2_u8);
-    assert_eq!(root_pda_data.auth_weighted.current_epoch(), new_epoch);
-    assert_eq!(
-        root_pda_data
-            .auth_weighted
-            .operator_hash_for_epoch(&new_epoch)
-            .unwrap(),
-        &new_worker_set.hash_solana_way(),
-    );
-}
-
-/// successfully process execute when there are 3 transfer operatorship commands
-/// - only the first one should be executed
-#[tokio::test]
-async fn successfully_process_execute_when_there_are_3_transfer_operatorship_commands() {
-    // Setup
-    let (mut fixture, quorum, operators, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 42, 33], None).await;
-
-    let (new_worker_set_one, _) = create_worker_set(&[11_u128, 22_u128], 10_u128);
-    let (new_worker_set_two, _) = create_worker_set(&[33_u128, 44_u128], 10_u128);
-    let (new_worker_set_three, _) = create_worker_set(&[55_u128, 66_u128], 10_u128);
-
-    let messages = [
-        new_worker_set_one.clone(),
-        new_worker_set_two.clone(),
-        new_worker_set_three.clone(),
-    ]
-    .map(Either::Right);
-    let (execute_data_pda, execute_data, _) = fixture
-        .init_execute_data(&gateway_root_pda, &messages, &operators, quorum)
-        .await;
-    let gateway_approved_command_pdas = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &execute_data.command_batch.commands)
-        .await;
-
-    // Action
-    let tx = fixture
-        .approve_pending_gateway_messages_with_metadata(
-            &gateway_root_pda,
-            &execute_data_pda,
-            &gateway_approved_command_pdas,
-        )
-        .await;
-
-    // Assert
-    assert!(tx.result.is_ok());
-    // - events emitted
-    let emitted_events = get_gateway_events(&tx);
-    assert_eq!(
-        emitted_events.len(),
-        1,
-        "only a single event expected (1 transfer ops executed, rest ignored)"
-    );
-    let expected_approved_command_logs =
-        gmp_gateway::events::GatewayEvent::from(execute_data.command_batch.commands[0].clone());
-    assert_eq!(emitted_events[0], expected_approved_command_logs);
-    // - all commands get updated
-    let approved_commmand =
-        get_approved_commmand(&mut fixture, &gateway_approved_command_pdas[0]).await;
-    assert!(
-        approved_commmand.is_command_executed(),
-        "the first transfer command is expected to be executed"
-    );
-    for gateway_approved_command_pda in gateway_approved_command_pdas.iter().skip(1) {
-        let approved_commmand =
-            get_approved_commmand(&mut fixture, gateway_approved_command_pda).await;
-        assert_eq!(
-            approved_commmand.status(),
-            &GatewayCommandStatus::TransferOperatorship(
-                gmp_gateway::state::TransferOperatorship::Pending
-            ),
-            "subsequet transfer ops must remain ignored and unaltered"
-        );
-    }
-
-    // - operators updated
-    let root_pda_data = fixture
-        .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let new_epoch = U256::from(2_u8);
-    assert_eq!(root_pda_data.auth_weighted.current_epoch(), new_epoch);
-    assert_eq!(
-        root_pda_data
-            .auth_weighted
-            .operator_hash_for_epoch(&new_epoch)
-            .unwrap(),
-        &new_worker_set_one.hash_solana_way(),
-    );
+    assert!(tx.result.is_err());
+    assert!(tx
+        .metadata
+        .unwrap()
+        .log_messages
+        .into_iter()
+        .any(|msg| { msg.contains("Non-approve command provided to 'approve-messages':") }));
 }
 
 /// calling the same execute flow multiple times with the same execute data will
@@ -697,9 +516,13 @@ async fn fail_if_operator_epoch_is_older_than_16() {
             .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
             .await;
         assert_eq!(root_pda_data.auth_weighted.current_epoch(), new_epoch);
-        let messages = [new_worker_set.clone()].map(Either::Right);
+
         fixture
-            .fully_approve_messages(&gateway_root_pda, &messages, current_worker_set_signers)
+            .fully_rotate_signers(
+                &gateway_root_pda,
+                new_worker_set.clone(),
+                current_worker_set_signers,
+            )
             .await;
     }
 
@@ -716,9 +539,7 @@ async fn fail_if_operator_epoch_is_older_than_16() {
         fixture
             .fully_approve_messages(
                 &gateway_root_pda,
-                &[Either::Left(
-                    custom_message(destination_program_id, example_payload()).unwrap(),
-                )],
+                &[custom_message(destination_program_id, example_payload()).unwrap()],
                 operator_set,
             )
             .await;
@@ -729,9 +550,7 @@ async fn fail_if_operator_epoch_is_older_than_16() {
     let (.., tx) = fixture
         .fully_approve_messages_with_execute_metadata(
             &gateway_root_pda,
-            &[Either::Left(
-                custom_message(destination_program_id, example_payload()).unwrap(),
-            )],
+            &[custom_message(destination_program_id, example_payload()).unwrap()],
             &initial_operators,
         )
         .await;
@@ -904,7 +723,7 @@ async fn fail_if_subset_without_expected_weight_signed_batch() {
         .any(|msg| { msg.contains("ProofError(LowSignaturesWeight)") }));
 }
 
-/// succeed if the larger (by wight) subset of operators signed the command
+/// succeed if the larger (by weight) subset of operators signed the command
 /// batch
 #[tokio::test]
 async fn succeed_if_majority_of_subset_without_expected_weight_signed_batch() {
@@ -1041,41 +860,6 @@ async fn fail_if_quorum_differs_between_registered_and_signed() {
         .any(|msg| { msg.contains("EpochNotFound") }));
 }
 
-/// disallow operatorship transfer if any other operator besides the most recent
-/// epoch signed the proof
-#[tokio::test]
-async fn ignore_transfer_ops_call_if_old_ops_set_initiates_it() {
-    // Setup
-    let (mut fixture, _quorum, operators, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
-    let (new_worker_set, _new_signers) = create_worker_set(&[500_u128, 200_u128], 700_u128);
-    let messages = [new_worker_set.clone()].map(Either::Right);
-    fixture
-        .fully_approve_messages(&gateway_root_pda, &messages, &operators)
-        .await;
-
-    // Action - the transfer ops gets ignored because we use `operators`
-    let (newer_worker_set, _newer_signers) = create_worker_set(&[444_u128, 555_u128], 333_u128);
-    let messages = [newer_worker_set.clone()].map(Either::Right);
-    fixture
-        .fully_approve_messages(&gateway_root_pda, &messages, &operators)
-        .await;
-
-    // Assert
-    let gateway = fixture
-        .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let new_epoch = U256::from(2_u8);
-    assert_eq!(gateway.auth_weighted.current_epoch(), new_epoch);
-    assert_eq!(
-        gateway
-            .auth_weighted
-            .operator_hash_for_epoch(&new_epoch)
-            .unwrap(),
-        &new_worker_set.hash_solana_way(),
-    );
-}
-
 /// fail if command len does not match provided account iter len
 #[tokio::test]
 async fn fail_if_command_len_does_not_match_provided_account_iter_len() {
@@ -1157,365 +941,4 @@ async fn fail_if_command_was_not_initialised() {
         // note: error message is not very informative
         msg.contains("insufficient funds for instruction")
     }));
-}
-
-#[tokio::test]
-async fn fail_if_order_of_commands_is_not_the_same_as_order_of_accounts() {
-    // Setup
-    let (mut fixture, quorum, operators, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
-    let destination_program_id = DestinationProgramId(Pubkey::new_unique());
-    let messages = [
-        custom_message(destination_program_id, example_payload()).unwrap(),
-        custom_message(destination_program_id, example_payload()).unwrap(),
-        custom_message(destination_program_id, example_payload()).unwrap(),
-    ]
-    .map(Either::Left);
-
-    let (execute_data_pda, execute_data, ..) = fixture
-        .init_execute_data(&gateway_root_pda, &messages, &operators, quorum)
-        .await;
-
-    // Action
-    let mut gateway_approved_command_pdas = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &execute_data.command_batch.commands)
-        .await;
-    gateway_approved_command_pdas.reverse();
-
-    let tx = fixture
-        .approve_pending_gateway_messages_with_metadata(
-            &gateway_root_pda,
-            &execute_data_pda,
-            &gateway_approved_command_pdas,
-        )
-        .await;
-
-    // Assert
-    assert!(tx.result.is_err());
-}
-
-/// `transfer_operatorship` is ignored if new operator len is 0 (tx succeeds)
-#[tokio::test]
-async fn ignore_transfer_ops_if_new_ops_len_is_zero() {
-    // Setup
-    let (mut fixture, quorum, operators, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
-    let (new_worker_set, _signers) = create_worker_set(&([] as [u128; 0]), 10_u128);
-    let messages = [new_worker_set.clone()].map(Either::Right);
-    let (execute_data_pda, execute_data, ..) = fixture
-        .init_execute_data(&gateway_root_pda, &messages, &operators, quorum)
-        .await;
-
-    // Action
-    let gateway_approved_command_pdas = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &execute_data.command_batch.commands)
-        .await;
-
-    let tx = fixture
-        .approve_pending_gateway_messages_with_metadata(
-            &gateway_root_pda,
-            &execute_data_pda,
-            &gateway_approved_command_pdas,
-        )
-        .await;
-
-    // Assert
-    assert!(tx.result.is_ok());
-    let gateway = fixture
-        .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let constant_epoch = U256::from(1_u8);
-    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch);
-    assert_ne!(
-        gateway
-            .auth_weighted
-            .operator_hash_for_epoch(&constant_epoch)
-            .unwrap(),
-        &new_worker_set.hash_solana_way(),
-    );
-}
-
-/// `transfer_operatorship` is ignored if new operators are not sorted (tx
-/// succeeds)
-#[tokio::test]
-#[ignore = "cannot implement this without changing the bcs encoding of the `TransferOperatorship` command"]
-async fn ignore_transfer_ops_if_new_ops_are_not_sorted() {
-    // Setup
-    let (mut fixture, quorum, operators, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
-    let (new_worker_set, _signers) = create_worker_set(&[555_u128, 678_u128], 10_u128);
-    let messages = [new_worker_set.clone()].map(Either::Right);
-
-    let (mut execute_data, gateway_execute_data_raw) = prepare_questionable_execute_data(
-        &messages,
-        &messages,
-        &operators,
-        &operators,
-        quorum,
-        &gateway_root_pda,
-    );
-    // reverse the operators
-    let decoded_command = execute_data.command_batch.commands.get_mut(0).unwrap();
-    if let DecodedCommand::TransferOperatorship(ops) = decoded_command {
-        ops.operators.reverse();
-    }
-
-    let execute_data_pda = fixture
-        .init_execute_data_with_custom_data(
-            &gateway_root_pda,
-            // issue: updating the `execute_data` does not update the `gateway_execute_data_raw`
-            // which is what we actually use when encoding the data.
-            &gateway_execute_data_raw,
-            &execute_data,
-        )
-        .await;
-    let gateway_approved_command_pdas = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &execute_data.command_batch.commands)
-        .await;
-    // Action
-    let tx = fixture
-        .approve_pending_gateway_messages_with_metadata(
-            &gateway_root_pda,
-            &execute_data_pda,
-            &gateway_approved_command_pdas,
-        )
-        .await;
-
-    assert!(tx.result.is_ok());
-    let gateway = fixture
-        .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let constant_epoch = U256::from(1_u8);
-    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch);
-    assert_ne!(
-        gateway
-            .auth_weighted
-            .operator_hash_for_epoch(&constant_epoch)
-            .unwrap(),
-        &new_worker_set.hash_solana_way(),
-    );
-}
-
-/// `transfer_operatorship` is ignored if operator len does not match weigths
-/// len (tx succeeds)
-#[tokio::test]
-#[ignore = "cannot implement this without changing the bcs encoding of the `TransferOperatorship` command"]
-async fn ignore_transfer_ops_if_len_does_not_match_weigh_len() {
-    // Setup
-    let (mut fixture, quorum, operators, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
-    let (new_worker_set, _signers) = create_worker_set(&[555_u128, 678_u128], 10_u128);
-
-    let messages = [new_worker_set.clone()].map(Either::Right);
-
-    let (execute_data, gateway_execute_data_raw) = prepare_questionable_execute_data(
-        &messages,
-        &messages,
-        &operators,
-        &operators,
-        quorum,
-        &gateway_root_pda,
-    );
-    // todo: update the len of operators or weights
-    let execute_data_pda = fixture
-        .init_execute_data_with_custom_data(
-            &gateway_root_pda,
-            // issue: updating the `execute_data` does not update the `gateway_execute_data_raw`
-            // which is what we actually use when encoding the data.
-            &gateway_execute_data_raw,
-            &execute_data,
-        )
-        .await;
-    let gateway_approved_command_pdas = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &execute_data.command_batch.commands)
-        .await;
-    // Action
-    let tx = fixture
-        .approve_pending_gateway_messages_with_metadata(
-            &gateway_root_pda,
-            &execute_data_pda,
-            &gateway_approved_command_pdas,
-        )
-        .await;
-
-    assert!(tx.result.is_ok());
-    let gateway = fixture
-        .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let constant_epoch = U256::from(1_u8);
-    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch);
-    assert_ne!(
-        gateway
-            .auth_weighted
-            .operator_hash_for_epoch(&constant_epoch)
-            .unwrap(),
-        &new_worker_set.hash_solana_way(),
-    );
-}
-
-/// transfer_operatorship` is ignored if total weights sum exceed u256 max (tx
-/// succeeds)
-#[tokio::test]
-#[ignore = "cannot test because the bcs encoding transforms the u256 to a u128 and fails before we actually get to the on-chain logic"]
-async fn ignore_transfer_ops_if_total_weight_sum_exceeds_u256() {
-    // Setup
-    let (mut fixture, _quorum, operators, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
-    let (new_worker_set, _signers) = create_worker_set(&[Uint256::MAX, Uint256::MAX], 10_u128);
-    let messages = [new_worker_set.clone()].map(Either::Right);
-
-    // Action
-    let (.., tx) = fixture
-        .fully_approve_messages_with_execute_metadata(&gateway_root_pda, &messages, &operators)
-        .await;
-
-    assert!(tx.result.is_ok());
-    let gateway = fixture
-        .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let constant_epoch = U256::from(1_u8);
-    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch);
-    assert_ne!(
-        gateway
-            .auth_weighted
-            .operator_hash_for_epoch(&constant_epoch)
-            .unwrap(),
-        &new_worker_set.hash_solana_way(),
-    );
-}
-
-/// `transfer_operatorship` is ignored if total weights == 0 (tx succeeds)
-#[tokio::test]
-#[ignore = "cannot test because the bcs encoding transforms the u256 to a u128 and fails before we actually get to the on-chain logic"]
-async fn ignore_transfer_ops_if_total_weight_sum_is_zero() {
-    // Setup
-    let (mut fixture, _quorum, operators, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
-    let (new_worker_set, _signers) =
-        create_worker_set(&[Uint256::zero(), Uint256::zero()], 10_u128);
-    let messages = [new_worker_set.clone()].map(Either::Right);
-
-    // Action
-    let (.., tx) = fixture
-        .fully_approve_messages_with_execute_metadata(&gateway_root_pda, &messages, &operators)
-        .await;
-
-    assert!(tx.result.is_ok());
-    let gateway = fixture
-        .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let constant_epoch = U256::from(1_u8);
-    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch);
-    assert_ne!(
-        gateway
-            .auth_weighted
-            .operator_hash_for_epoch(&constant_epoch)
-            .unwrap(),
-        &new_worker_set.hash_solana_way(),
-    );
-}
-
-/// `transfer_operatorship` is ignored if total weight is smaller than new
-/// command weight quorum (tx succeeds)
-#[tokio::test]
-async fn ignore_transfer_ops_if_total_weight_is_smaller_than_quorum() {
-    // Setup
-    let (mut fixture, _quorum, operators, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
-    let (new_worker_set, _signers) = create_worker_set(&[Uint256::one(), Uint256::one()], 10_u128);
-    let messages = [new_worker_set.clone()].map(Either::Right);
-
-    // Action
-    let (.., tx) = fixture
-        .fully_approve_messages_with_execute_metadata(&gateway_root_pda, &messages, &operators)
-        .await;
-
-    assert!(tx.result.is_ok());
-    let gateway = fixture
-        .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let constant_epoch = U256::from(1_u8);
-    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch);
-    assert_eq!(gateway.auth_weighted.operators().len(), 1);
-    assert_ne!(
-        gateway
-            .auth_weighted
-            .operator_hash_for_epoch(&constant_epoch)
-            .unwrap(),
-        &new_worker_set.hash_solana_way(),
-    );
-}
-
-fn get_gateway_events_from_execute_data(
-    commands: &[axelar_message_primitives::command::DecodedCommand],
-) -> Vec<GatewayEvent<'static>> {
-    commands
-        .iter()
-        .cloned()
-        .map(gmp_gateway::events::GatewayEvent::from)
-        .collect::<Vec<_>>()
-}
-
-fn get_gateway_events(
-    tx: &solana_program_test::BanksTransactionResultWithMetadata,
-) -> Vec<GatewayEvent<'static>> {
-    tx.metadata
-        .as_ref()
-        .unwrap()
-        .log_messages
-        .iter()
-        .filter_map(GatewayEvent::parse_log)
-        .collect::<Vec<_>>()
-}
-
-async fn get_approved_commmand(
-    fixture: &mut test_fixtures::test_setup::TestFixture,
-    gateway_approved_command_pda: &Pubkey,
-) -> GatewayApprovedCommand {
-    fixture
-        .get_account::<gmp_gateway::state::GatewayApprovedCommand>(
-            gateway_approved_command_pda,
-            &gmp_gateway::ID,
-        )
-        .await
-}
-
-fn create_worker_set(
-    weights: &[impl Into<Uint256> + Copy],
-    threshold: impl Into<Uint256>,
-) -> (multisig::worker_set::WorkerSet, Vec<TestSigner>) {
-    let new_operators = weights
-        .iter()
-        .map(|weight| {
-            create_signer_with_weight({
-                let weight: Uint256 = (*weight).into();
-                weight
-            })
-            .unwrap()
-        })
-        .collect::<Vec<_>>();
-    let new_worker_set = new_worker_set(&new_operators, 0, threshold.into());
-    (new_worker_set, new_operators)
-}
-
-pub fn prepare_questionable_execute_data(
-    messages_for_signing: &[Either<connection_router::Message, WorkerSet>],
-    messages_for_execute_data: &[Either<connection_router::Message, WorkerSet>],
-    signers_for_signatures: &[TestSigner],
-    signers_in_the_execute_data: &[TestSigner],
-    quorum: u128,
-    gateway_root_pda: &Pubkey,
-) -> (GatewayExecuteData, Vec<u8>) {
-    let command_batch_for_signing = create_command_batch(messages_for_signing).unwrap();
-    let command_batch_for_execute_data = create_command_batch(messages_for_execute_data).unwrap();
-    let signatures = sign_batch(&command_batch_for_signing, signers_for_signatures).unwrap();
-    let encoded_message = execute_data::encode(
-        &command_batch_for_execute_data,
-        signers_in_the_execute_data.to_vec(),
-        signatures,
-        quorum,
-    )
-    .unwrap();
-    let execute_data = GatewayExecuteData::new(encoded_message.as_ref(), gateway_root_pda).unwrap();
-    (execute_data, encoded_message)
 }

@@ -3,6 +3,14 @@ name = "gmp-gateway"
 version = "0.1.0"
 edition = "2021"
 
+[lints.rust]
+unused_imports = "deny"
+rust_2018_idioms = "deny"
+missing_docs = "warn"
+unreachable_pub = "warn"
+unused_crate_dependencies = "warn"
+unused_must_use = "deny"
+
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -13,31 +21,22 @@ test-sbf = []
 
 [dependencies]
 base64.workspace = true
-bcs.workspace = true
 bimap = { version = "0.6.3", default-features = false }
-bnum.workspace = true
 borsh.workspace = true
-bytemuck.workspace = true
-connection-router.workspace = true
-cosmwasm-std.workspace = true
-hex.workspace = true
 itertools.workspace = true
-libsecp256k1.workspace = true
-multisig-prover.workspace = true
-multisig.workspace = true
 num-derive.workspace = true
 num-traits.workspace = true
-serde.workspace = true
-sha3.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
 program-utils.workspace = true
-anyhow.workspace = true
 axelar-message-primitives.workspace = true
-cosmwasm-schema.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
 test-fixtures.workspace = true
+multisig.workspace = true
+cosmwasm-std.workspace = true
+connection-router.workspace = true
+hex.workspace = true

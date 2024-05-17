@@ -27,19 +27,18 @@ pub struct GatewayApprovedCommand {
 /// Differnet states of the command
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
 pub enum GatewayCommandStatus {
-    /// The Command has been executed.
+    /// The status of a single `ApprovedMessage` command
     /// Maps to this [line in the Solidity Gateway](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/78fde453094074ca93ef7eea1e1395fba65ba4f6/contracts/AxelarGateway.sol#L525)
-    ValidateContractCall(ValidateContractCall),
-    /// The Command has been executed.
-    /// And the command type was `TransferOperatorship`
-    TransferOperatorship(TransferOperatorship),
+    ApprovedMessage(ApprovedMessageStatus),
+    /// The status of a single `RotateSigners` command
+    RotateSigners(RotateSignersStatus),
 }
 
 /// After the command itself is marked as `Approved`, the command can be used
 /// for CPI gateway::validateContractCall instruction.
 /// This maps to [these lines in the Solidity Gateway](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/78fde453094074ca93ef7eea1e1395fba65ba4f6/contracts/AxelarGateway.sol#L636-L648)
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
-pub enum ValidateContractCall {
+pub enum ApprovedMessageStatus {
     /// The state of the command before it has been approved
     Pending,
     /// The state of the command after it has been approved
@@ -49,13 +48,13 @@ pub enum ValidateContractCall {
     Executed,
 }
 
-/// Represents the state of a `TransferOperatorship` command that comes from the
+/// Represents the state of a `RotateSigners` command that comes from the
 /// Axelar network.
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
-pub enum TransferOperatorship {
+pub enum RotateSignersStatus {
     /// The state of the command before it has been approved
     Pending,
-    /// `TransferOperatorship` has been called and the command has been executed
+    /// `RotateSigners` has been called and the command has been executed
     Executed,
 }
 
@@ -64,15 +63,36 @@ impl GatewayApprovedCommand {
     pub fn pending(bump: u8, command: &DecodedCommand) -> Self {
         let status = {
             match command {
-                DecodedCommand::ApproveContractCall(_command) => {
-                    GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Pending)
+                DecodedCommand::ApproveMessages(_command) => {
+                    GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
                 }
-                DecodedCommand::TransferOperatorship(_command) => {
-                    GatewayCommandStatus::TransferOperatorship(TransferOperatorship::Pending)
+                DecodedCommand::RotateSigners(_command) => {
+                    GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
                 }
             }
         };
         Self { status, bump }
+    }
+
+    /// Ensures that the command is valid (seed hash matches) and is in a
+    /// pending state.
+    pub fn command_valid_and_pending(
+        self,
+        gateway_root_pda: &Pubkey,
+        command: &DecodedCommand,
+        message_account: &AccountInfo<'_>,
+    ) -> Result<Option<Self>, ProgramError> {
+        // Check: Current message account represents the current approved command.
+        let seed_hash = GatewayApprovedCommand::calculate_seed_hash(gateway_root_pda, command);
+
+        self.assert_valid_pda(&seed_hash, message_account.key);
+
+        // https://github.com/axelarnetwork/cgp-spec/blob/c3010b9187ad9022dbba398525cf4ec35b75e7ae/solidity/contracts/AxelarGateway.sol#L103
+        if !self.is_command_pending() {
+            return Ok(None);
+        }
+
+        Ok(Some(self))
     }
 
     /// Makes sure that the attached account info is the expected one
@@ -95,7 +115,7 @@ impl GatewayApprovedCommand {
             return Err(GatewayError::GatewayCommandNotApproved.into());
         }
 
-        self.status = GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Executed);
+        self.status = GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Executed);
 
         Ok(())
     }
@@ -104,11 +124,11 @@ impl GatewayApprovedCommand {
     pub fn set_ready_for_validate_contract_call(&mut self) -> Result<(), ProgramError> {
         if !matches!(
             self.status,
-            GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Pending)
+            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
         ) {
             return Err(GatewayError::GatewayCommandStatusNotPending.into());
         }
-        self.status = GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Approved);
+        self.status = GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Approved);
 
         Ok(())
     }
@@ -116,11 +136,11 @@ impl GatewayApprovedCommand {
     pub fn set_transfer_operatorship_executed(&mut self) -> Result<(), ProgramError> {
         if !matches!(
             self.status,
-            GatewayCommandStatus::TransferOperatorship(TransferOperatorship::Pending)
+            GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
         ) {
             return Err(GatewayError::GatewayCommandStatusNotPending.into());
         }
-        self.status = GatewayCommandStatus::TransferOperatorship(TransferOperatorship::Executed);
+        self.status = GatewayCommandStatus::RotateSigners(RotateSignersStatus::Executed);
 
         Ok(())
     }
@@ -129,8 +149,8 @@ impl GatewayApprovedCommand {
     pub fn is_command_pending(&self) -> bool {
         matches!(
             self.status,
-            GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Pending)
-                | GatewayCommandStatus::TransferOperatorship(TransferOperatorship::Pending)
+            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
+                | GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
         )
     }
 
@@ -138,9 +158,9 @@ impl GatewayApprovedCommand {
     pub fn is_command_executed(&self) -> bool {
         matches!(
             self.status,
-            GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Executed)
-                | GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Approved)
-                | GatewayCommandStatus::TransferOperatorship(TransferOperatorship::Executed)
+            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Executed)
+                | GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Approved)
+                | GatewayCommandStatus::RotateSigners(RotateSignersStatus::Executed)
         )
     }
 
@@ -149,7 +169,7 @@ impl GatewayApprovedCommand {
     pub fn is_contract_call_validated(&self) -> bool {
         matches!(
             self.status,
-            GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Executed)
+            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Executed)
         )
     }
 
@@ -157,7 +177,7 @@ impl GatewayApprovedCommand {
     pub fn is_contract_call_approved(&self) -> bool {
         matches!(
             self.status,
-            GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Approved)
+            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Approved)
         )
     }
 
@@ -186,7 +206,7 @@ impl GatewayApprovedCommand {
         use solana_program::keccak::hashv;
 
         match command_params {
-            DecodedCommand::ApproveContractCall(command_params) => {
+            DecodedCommand::ApproveMessages(command_params) => {
                 let (signing_pda_for_destination_pubkey, signing_pda_bump) = command_params
                     .destination_program
                     .signing_pda(&command_params.command_id);
@@ -204,7 +224,7 @@ impl GatewayApprovedCommand {
                 // Hashing is necessary because otherwise the seeds would be too long
                 hashv(seeds).to_bytes()
             }
-            DecodedCommand::TransferOperatorship(command_params) => {
+            DecodedCommand::RotateSigners(command_params) => {
                 let res = command_params
                     .operators
                     .iter()

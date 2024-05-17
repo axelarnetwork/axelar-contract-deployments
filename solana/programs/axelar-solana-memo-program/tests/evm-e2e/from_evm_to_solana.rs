@@ -6,7 +6,6 @@ use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_gateway::Contr
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo::SolanaAccountRepr;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::{axelar_gateway, axelar_memo};
 use evm_contracts_test_suite::ContractMiddleware;
-use itertools::Either;
 use solana_program_test::tokio;
 use test_fixtures::axelar_message::custom_message;
 
@@ -46,9 +45,8 @@ async fn test_send_from_evm_to_solana() {
     // - Solana operators approve the message
     // - The relayer relays the message to the Solana gateway
     let (decoded_payload, msg_from_evm_axelar) = prase_evm_log_into_axelar_message(&log);
-    let messages = vec![Either::Left(msg_from_evm_axelar.clone())];
     let (gateway_approved_command_pdas, gateway_execute_data, _) = solana_chain
-        .fully_approve_messages(&gateway_root_pda, &messages, &solana_operators)
+        .fully_approve_messages(&gateway_root_pda, &[msg_from_evm_axelar], &solana_operators)
         .await;
     // - Relayer calls the Solana memo program with the memo payload coming from the
     //   EVM memo program

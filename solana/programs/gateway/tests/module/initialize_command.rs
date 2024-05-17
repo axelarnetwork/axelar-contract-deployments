@@ -1,6 +1,6 @@
 use axelar_message_primitives::DestinationProgramId;
 use gmp_gateway::state::{
-    GatewayApprovedCommand, GatewayCommandStatus, TransferOperatorship, ValidateContractCall,
+    ApprovedMessageStatus, GatewayApprovedCommand, GatewayCommandStatus, RotateSignersStatus,
 };
 use itertools::Either;
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
@@ -59,7 +59,7 @@ async fn succesfully_initialize_validate_contract_call_command() {
         assert!(!gateway_approved_command.is_contract_call_approved());
         assert!(matches!(
             gateway_approved_command.status(),
-            GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Pending)
+            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
         ));
     }
 }
@@ -112,7 +112,7 @@ async fn succesfully_initialize_transfer_operatorship_message() {
         assert!(!gateway_approved_command.is_contract_call_approved());
         assert!(matches!(
             gateway_approved_command.status(),
-            GatewayCommandStatus::TransferOperatorship(TransferOperatorship::Pending)
+            GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
         ));
     }
 }
@@ -170,7 +170,7 @@ async fn succesfully_initialize_transfer_operatorship_message_together_with_call
         assert!(!gateway_approved_command.is_contract_call_approved());
         assert!(matches!(
             gateway_approved_command.status(),
-            GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Pending)
+            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
         ));
     }
     for pda in transfer_ops {
@@ -187,7 +187,7 @@ async fn succesfully_initialize_transfer_operatorship_message_together_with_call
         assert!(!gateway_approved_command.is_contract_call_approved());
         assert!(matches!(
             gateway_approved_command.status(),
-            GatewayCommandStatus::TransferOperatorship(TransferOperatorship::Pending)
+            GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
         ));
     }
 }
@@ -282,7 +282,7 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
         assert!(!gateway_approved_command.is_contract_call_approved());
         assert!(matches!(
             gateway_approved_command.status(),
-            GatewayCommandStatus::ValidateContractCall(ValidateContractCall::Pending)
+            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
         ));
     }
 }

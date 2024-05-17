@@ -1,5 +1,3 @@
-#![deny(missing_docs)]
-
 //! Axelar Gateway program for the Solana blockchain
 
 pub mod axelar_auth_weighted;

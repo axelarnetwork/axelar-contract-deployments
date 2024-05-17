@@ -1,7 +1,6 @@
 use axelar_executable::axelar_message_primitives::{DestinationProgramId, EncodingScheme};
 use axelar_solana_memo_program::instruction::from_axelar_to_solana::build_memo;
 use gateway::state::GatewayApprovedCommand;
-use itertools::Either;
 use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
 use test_fixtures::axelar_message::custom_message;
@@ -34,14 +33,14 @@ async fn test_successful_validate_contract_call(#[case] encoding_scheme: Encodin
         custom_message(destination_program_id, message_payload.clone()).unwrap();
     let other_message_in_the_batch =
         custom_message(destination_program_id, message_payload.clone()).unwrap();
-    let messages = vec![
-        Either::Left(message_to_execute.clone()),
-        Either::Left(other_message_in_the_batch),
-    ];
 
     // Action: "Relayer" calls Gateway to approve messages
     let (gateway_approved_command_pdas, gateway_execute_data, _) = solana_chain
-        .fully_approve_messages(&gateway_root_pda, &messages, &solana_operators)
+        .fully_approve_messages(
+            &gateway_root_pda,
+            &[message_to_execute, other_message_in_the_batch],
+            &solana_operators,
+        )
         .await;
 
     // Action: set message status as executed by calling the destination program

@@ -3,7 +3,7 @@
 use std::mem::size_of;
 
 use axelar_message_primitives::command::{
-    hash_new_operator_set, sorted_and_unique, Proof, ProofError, TransferOperatorshipCommand, U256,
+    hash_new_operator_set, sorted_and_unique, Proof, ProofError, RotateSignersCommand, U256,
 };
 use axelar_message_primitives::Address;
 use bimap::BiBTreeMap;
@@ -76,12 +76,13 @@ pub struct AxelarAuthWeighted {
     current_epoch: Epoch,
 }
 
-/// Allow or disallow operatorship transfer.
-pub enum OperatorshipTransferAllowed {
-    /// Indicates that the transfer of operatorship is allowed.
-    Allowed,
-    /// Indicates that the transfer of operatorship is not allowed.
-    NotAllowed,
+/// Derived metadata information about the signer set.
+pub enum SignerSetMetadata {
+    /// Indicates theat the signer set is the most recent-known one.
+    Latest,
+    /// Indicates that the signer set is a valid but is not the most
+    /// recent-known one.
+    ValidOld,
 }
 
 impl AxelarAuthWeighted {
@@ -97,8 +98,8 @@ impl AxelarAuthWeighted {
     };
 
     /// Creates a new `AxelarAuthWeighted` value.
-    pub fn new(
-        operators_and_weights: impl Iterator<Item = (Address, U256)>,
+    pub fn new<'a>(
+        operators_and_weights: impl Iterator<Item = (&'a Address, U256)>,
         threshold: U256,
     ) -> Self {
         let mut instance = Self {
@@ -120,8 +121,8 @@ impl AxelarAuthWeighted {
     pub fn validate_proof(
         &self,
         message_hash: [u8; 32],
-        proof: Proof,
-    ) -> Result<OperatorshipTransferAllowed, AxelarAuthWeightedError> {
+        proof: &Proof,
+    ) -> Result<SignerSetMetadata, AxelarAuthWeightedError> {
         let operator_hash = proof.operators_hash();
         let operators_epoch = self
             .epoch_for_operator_hash(&operator_hash)
@@ -138,16 +139,16 @@ impl AxelarAuthWeighted {
         proof.validate_signatures(&message_hash)?;
 
         if epoch == *operators_epoch {
-            Ok(OperatorshipTransferAllowed::Allowed)
+            Ok(SignerSetMetadata::Latest)
         } else {
-            Ok(OperatorshipTransferAllowed::NotAllowed)
+            Ok(SignerSetMetadata::ValidOld)
         }
     }
 
     /// Ported code from [here](https://github.com/axelarnetwork/cgp-spec/blob/c3010b9187ad9022dbba398525cf4ec35b75e7ae/solidity/contracts/auth/AxelarAuthWeighted.sol#L61)
-    pub fn transfer_operatorship(
+    pub fn rotate_signers(
         &mut self,
-        new_command: TransferOperatorshipCommand,
+        new_command: &RotateSignersCommand,
     ) -> Result<(), AxelarAuthWeightedError> {
         // operators must be sorted binary or alphabetically in lower case
         if new_command.operators.is_empty() || !sorted_and_unique(new_command.operators.iter()) {
@@ -169,10 +170,7 @@ impl AxelarAuthWeighted {
         }
 
         let new_operator_hash = hash_new_operator_set(
-            new_command
-                .operators
-                .into_iter()
-                .zip(new_command.weights.into_iter().map(U256::from)),
+            new_command.operators.iter().zip(new_command.weights.iter()),
             new_command.quorum.into(),
         );
         if self.epoch_for_operator_hash(&new_operator_hash).is_some() {

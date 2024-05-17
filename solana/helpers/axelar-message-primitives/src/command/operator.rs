@@ -31,11 +31,7 @@ impl Operators {
 
     /// Returns the hash for this operator set.
     pub fn hash(&self) -> [u8; 32] {
-        let iter = self
-            .addresses
-            .iter()
-            .copied()
-            .zip(self.weights.iter().copied());
+        let iter = self.addresses.iter().zip(self.weights.iter().copied());
         hash_new_operator_set(iter, self.threshold)
     }
 }

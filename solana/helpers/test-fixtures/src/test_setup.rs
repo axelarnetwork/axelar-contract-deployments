@@ -15,7 +15,7 @@ use interchain_token_service::{
 use interchain_token_transfer_gmp::ethers_core::types::U256 as EthersU256;
 use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
 use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};
-use itertools::Either;
+use itertools::{Either, Itertools};
 use multisig::worker_set::WorkerSet;
 use solana_program::clock::Clock;
 use solana_program::hash::Hash;
@@ -138,13 +138,19 @@ impl TestFixture {
         operators: &[TestSigner],
         threshold: GatewayU256,
     ) -> AxelarAuthWeighted {
-        let operators_and_weights = operators.iter().map(|s| {
-            let address: cosmwasm_std::HexBinary = s.public_key.clone().into();
-            let address = Address::try_from(address.as_slice()).unwrap();
+        let addresses = operators
+            .iter()
+            .map(|s| {
+                let address: cosmwasm_std::HexBinary = s.public_key.clone().into();
+                let address = Address::try_from(address.as_slice()).unwrap();
+                address
+            })
+            .collect_vec();
+        let weights = operators
+            .iter()
+            .map(|s| GatewayU256::from_le_bytes(s.weight.to_le_bytes()));
 
-            (address, GatewayU256::from_le_bytes(s.weight.to_le_bytes()))
-        });
-        AxelarAuthWeighted::new(operators_and_weights, threshold)
+        AxelarAuthWeighted::new(addresses.iter().zip(weights), threshold)
     }
 
     pub async fn initialize_gateway_config_account(
@@ -347,11 +353,11 @@ impl TestFixture {
         let (gateway_approved_message_pda, execute_data, _execute_data_pda) = self
             .fully_approve_messages(
                 &gateway_root_pda,
-                &[Either::Left(message_to_execute.clone())],
+                &[message_to_execute.clone()],
                 operators.as_slice(),
             )
             .await;
-        let DecodedCommand::ApproveContractCall(approved_command) =
+        let DecodedCommand::ApproveMessages(approved_command) =
             execute_data.command_batch.commands[0].clone()
         else {
             panic!("no approved command")
@@ -531,11 +537,29 @@ impl TestFixture {
         execute_data_pda: &Pubkey,
         approved_command_pdas: &[Pubkey],
     ) -> BanksTransactionResultWithMetadata {
-        let ix = gateway::instructions::execute(
+        let ix = gateway::instructions::approve_messgaes(
             gateway::id(),
             *execute_data_pda,
             *gateway_root_pda,
             approved_command_pdas,
+        )
+        .unwrap();
+        let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(400_000u32);
+        self.send_tx_with_metadata(&[bump_budget, ix]).await
+    }
+
+    /// create an `RotateSigners` ix on the gateway rotate signers
+    pub async fn rotate_signers_with_metadata(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        execute_data_pda: &Pubkey,
+        rotate_signers_pda: &Pubkey,
+    ) -> BanksTransactionResultWithMetadata {
+        let ix = gateway::instructions::rotate_signers(
+            gateway::id(),
+            *execute_data_pda,
+            *gateway_root_pda,
+            *rotate_signers_pda,
         )
         .unwrap();
         let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(400_000u32);
@@ -616,8 +640,8 @@ impl TestFixture {
         (associated_trusted_address, account_info.address)
     }
 
-    /// Create a new execute data PDA, command PDAs, and call gateway.execute on
-    /// them.
+    /// Create a new execute data PDA, command PDAs, and call
+    /// gateway.approve_messages on them.
     ///
     /// Returns:
     /// - approved command PDA
@@ -626,7 +650,7 @@ impl TestFixture {
     pub async fn fully_approve_messages(
         &mut self,
         gateway_root_pda: &Pubkey,
-        messages: &[Either<connection_router::Message, WorkerSet>],
+        messages: &[connection_router::Message],
         operators: &[TestSigner],
     ) -> (Vec<Pubkey>, GatewayExecuteData, Pubkey) {
         let (command_pdas, execute_data, execute_data_pda, tx) = self
@@ -635,10 +659,11 @@ impl TestFixture {
         assert!(tx.result.is_ok());
         (command_pdas, execute_data, execute_data_pda)
     }
+
     pub async fn fully_approve_messages_with_execute_metadata(
         &mut self,
         gateway_root_pda: &Pubkey,
-        messages: &[Either<connection_router::Message, WorkerSet>],
+        messages: &[connection_router::Message],
         operators: &[TestSigner],
     ) -> (
         Vec<Pubkey>,
@@ -653,7 +678,10 @@ impl TestFixture {
         let (execute_data_pda, execute_data, _) = self
             .init_execute_data(
                 gateway_root_pda,
-                messages,
+                &messages
+                    .iter()
+                    .map(|x| Either::Left(x.clone()))
+                    .collect_vec(),
                 operators,
                 weight_of_quorum.as_u128(),
             )
@@ -680,6 +708,73 @@ impl TestFixture {
         )
     }
 
+    /// Create a new execute data PDA, command PDA, and execute
+    /// [`GatewayInstruction::RotateSigners`].
+    ///
+    /// Returns:
+    /// - approved command PDA
+    /// - execute data thats stored inside the execute data PDA
+    /// - execute data PDA
+    pub async fn fully_rotate_signers(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        signer_set: WorkerSet,
+        operators: &[TestSigner],
+    ) -> (Pubkey, GatewayExecuteData, Pubkey) {
+        let (command_pdas, execute_data, execute_data_pda, tx) = self
+            .fully_rotate_signers_with_execute_metadata(gateway_root_pda, signer_set, operators)
+            .await;
+        assert!(tx.result.is_ok());
+        (command_pdas, execute_data, execute_data_pda)
+    }
+
+    /// Create a new execute data PDA, command PDA, and execute
+    /// [`GatewayInstruction::RotateSigners`].
+    ///
+    /// Returns:
+    /// - approved command PDA
+    /// - execute data thats stored inside the execute data PDA
+    /// - execute data PDA
+    /// - the transaction metadata (your own responsibility to assert if it
+    ///   succeeded)
+    pub async fn fully_rotate_signers_with_execute_metadata(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        signer_set: WorkerSet,
+        operators: &[TestSigner],
+    ) -> (
+        Pubkey,
+        GatewayExecuteData,
+        Pubkey,
+        BanksTransactionResultWithMetadata,
+    ) {
+        let weight_of_quorum = operators
+            .iter()
+            .fold(cosmwasm_std::Uint256::zero(), |acc, i| acc.add(i.weight));
+        let weight_of_quorum = EthersU256::from_big_endian(&weight_of_quorum.to_be_bytes());
+        let (execute_data_pda, execute_data, _) = self
+            .init_execute_data(
+                gateway_root_pda,
+                &[Either::Right(signer_set)],
+                operators,
+                weight_of_quorum.as_u128(),
+            )
+            .await;
+        let gateway_command_pda = self
+            .init_pending_gateway_commands(
+                gateway_root_pda,
+                execute_data.command_batch.commands.as_ref(),
+            )
+            .await
+            .pop()
+            .unwrap();
+        let tx = self
+            .rotate_signers_with_metadata(gateway_root_pda, &execute_data_pda, &gateway_command_pda)
+            .await;
+
+        (gateway_command_pda, execute_data, execute_data_pda, tx)
+    }
+
     pub async fn get_account<T: solana_program::program_pack::Pack + BorshDeserialize>(
         &mut self,
         account: &Pubkey,
@@ -701,9 +796,9 @@ impl TestFixture {
         gateway_approved_command_pda: &solana_sdk::pubkey::Pubkey,
         gateway_root_pda: solana_sdk::pubkey::Pubkey,
     ) -> solana_program_test::BanksTransactionResultWithMetadata {
-        let DecodedCommand::ApproveContractCall(approved_message) = gateway_decoded_command.clone()
+        let DecodedCommand::ApproveMessages(approved_message) = gateway_decoded_command.clone()
         else {
-            panic!("expected ApproveContractCall command")
+            panic!("expected ApproveMessages command")
         };
         let ix = axelar_executable::construct_axelar_executable_ix(
             approved_message,

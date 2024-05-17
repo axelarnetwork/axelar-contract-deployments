@@ -13,36 +13,36 @@ use crate::{Address, DestinationProgramId};
 /// Decoded command.
 #[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub enum DecodedCommand {
-    ApproveContractCall(ApproveContractCallCommand),
-    TransferOperatorship(TransferOperatorshipCommand),
+    ApproveMessages(ApproveMessagesCommand),
+    RotateSigners(RotateSignersCommand),
 }
 
 impl DecodedCommand {
     pub fn command_id(&self) -> [u8; 32] {
         match self {
-            DecodedCommand::ApproveContractCall(command) => command.command_id,
-            DecodedCommand::TransferOperatorship(command) => command.command_id,
+            DecodedCommand::ApproveMessages(command) => command.command_id,
+            DecodedCommand::RotateSigners(command) => command.command_id,
         }
     }
 
     pub fn destination_chain(&self) -> u64 {
         match self {
-            DecodedCommand::ApproveContractCall(command) => command.destination_chain,
-            DecodedCommand::TransferOperatorship(command) => command.destination_chain,
+            DecodedCommand::ApproveMessages(command) => command.destination_chain,
+            DecodedCommand::RotateSigners(command) => command.destination_chain,
         }
     }
 
     pub fn destination_program(&self) -> Option<DestinationProgramId> {
         match self {
-            DecodedCommand::ApproveContractCall(command) => Some(command.destination_program),
-            DecodedCommand::TransferOperatorship(_command) => None,
+            DecodedCommand::ApproveMessages(command) => Some(command.destination_program),
+            DecodedCommand::RotateSigners(_command) => None,
         }
     }
 
     pub fn payload_hash(&self) -> Option<[u8; 32]> {
         match self {
-            DecodedCommand::ApproveContractCall(command) => Some(command.payload_hash),
-            DecodedCommand::TransferOperatorship(_command) => None,
+            DecodedCommand::ApproveMessages(command) => Some(command.payload_hash),
+            DecodedCommand::RotateSigners(_command) => None,
         }
     }
 }
@@ -85,7 +85,7 @@ pub enum DecodeError {
 
 /// Decoded Axelar Message parts.
 #[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
-pub struct ApproveContractCallCommand {
+pub struct ApproveMessagesCommand {
     /// Decoded command id.
     /// It was originally the Axelar Message ID.
     pub command_id: [u8; 32],
@@ -101,7 +101,7 @@ pub struct ApproveContractCallCommand {
     pub payload_hash: [u8; 32],
 }
 
-impl ApproveContractCallCommand {
+impl ApproveMessagesCommand {
     fn decode(
         command_id: [u8; 32],
         destination_chain: u64,
@@ -113,7 +113,7 @@ impl ApproveContractCallCommand {
         let payload_hash: [u8; 32] = payload_hash
             .try_into()
             .map_err(|_| DecodeError::InvalidPayloadHashSize)?;
-        Ok(ApproveContractCallCommand {
+        Ok(ApproveMessagesCommand {
             command_id,
             destination_chain,
             source_chain,
@@ -125,7 +125,7 @@ impl ApproveContractCallCommand {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
-pub struct TransferOperatorshipCommand {
+pub struct RotateSignersCommand {
     /// Decoded command id.
     /// It was originally the Axelar Message ID.
     pub command_id: [u8; 32],
@@ -136,7 +136,7 @@ pub struct TransferOperatorshipCommand {
     pub quorum: u128,
 }
 
-impl TransferOperatorshipCommand {
+impl RotateSignersCommand {
     fn decode(
         command_id: [u8; 32],
         destination_chain: u64,
@@ -152,7 +152,7 @@ impl TransferOperatorshipCommand {
                     .map_err(|_| DecodeError::InvalidOperatorAddress)
             })
             .collect::<Result<Vec<Address>, DecodeError>>()?;
-        Ok(TransferOperatorshipCommand {
+        Ok(RotateSignersCommand {
             command_id,
             destination_chain,
             operators,
@@ -167,7 +167,7 @@ impl TransferOperatorshipCommand {
 #[cosmwasm_schema::cw_serde]
 #[derive(Eq, BorshSerialize, BorshDeserialize)]
 pub enum CommandType {
-    ApproveContractCall,
+    ApproveMessages,
     TransferOperatorship,
 }
 
@@ -180,21 +180,18 @@ impl DecodedCommand {
     ) -> Result<Self, DecodeError> {
         let type_ = decode_command_type(type_)?;
         match type_ {
-            CommandType::ApproveContractCall => {
-                let message = ApproveContractCallCommand::decode(
+            CommandType::ApproveMessages => {
+                let message = ApproveMessagesCommand::decode(
                     command_id,
                     destination_chain_id,
                     encoded_params,
                 )?;
-                Ok(DecodedCommand::ApproveContractCall(message))
+                Ok(DecodedCommand::ApproveMessages(message))
             }
             CommandType::TransferOperatorship => {
-                let message = TransferOperatorshipCommand::decode(
-                    command_id,
-                    destination_chain_id,
-                    encoded_params,
-                )?;
-                Ok(DecodedCommand::TransferOperatorship(message))
+                let message =
+                    RotateSignersCommand::decode(command_id, destination_chain_id, encoded_params)?;
+                Ok(DecodedCommand::RotateSigners(message))
             }
         }
     }
@@ -203,7 +200,7 @@ impl DecodedCommand {
 #[inline]
 fn decode_command_type(encoded_type: &str) -> Result<CommandType, DecodeError> {
     match encoded_type {
-        "approveContractCall" => Ok(CommandType::ApproveContractCall),
+        "approveContractCall" => Ok(CommandType::ApproveMessages),
         "transferOperatorship" => Ok(CommandType::TransferOperatorship),
         _ => Err(DecodeError::InvalidCommandType),
     }
@@ -333,12 +330,9 @@ fn decode_transfer_operatorship() {
     let command_id = [0; 32];
 
     // we just want to see if it can be decoded
-    let _transfer_message = TransferOperatorshipCommand::decode(
-        command_id,
-        destination_chain,
-        transfer_message.as_ref(),
-    )
-    .unwrap();
+    let _transfer_message =
+        RotateSignersCommand::decode(command_id, destination_chain, transfer_message.as_ref())
+            .unwrap();
 }
 
 #[test]
@@ -365,7 +359,7 @@ fn decode_execute_data_from_axelar_repo() -> anyhow::Result<()> {
     let mut message_id2 = [0u8; 32];
     message_id2[31] = 2;
     let zero_array = [0u8; 32];
-    let command1 = DecodedCommand::ApproveContractCall(ApproveContractCallCommand {
+    let command1 = DecodedCommand::ApproveMessages(ApproveMessagesCommand {
         command_id: message_id1,
         destination_chain: 1,
         source_chain: b"ETH".to_vec(),
@@ -373,7 +367,7 @@ fn decode_execute_data_from_axelar_repo() -> anyhow::Result<()> {
         destination_program: DestinationProgramId(Pubkey::from(zero_array)),
         payload_hash: zero_array,
     });
-    let command2 = DecodedCommand::ApproveContractCall(ApproveContractCallCommand {
+    let command2 = DecodedCommand::ApproveMessages(ApproveMessagesCommand {
         command_id: message_id2,
         destination_chain: 1,
         source_chain: b"AXELAR".to_vec(),
