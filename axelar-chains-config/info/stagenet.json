@@ -1169,6 +1169,110 @@
       },
       "finality": "1",
       "approxFinalityWaitTime": 1
+    },
+    "mantle-sepolia": {
+      "name": "Mantle",
+      "id": "mantle",
+      "axelarId": "mantle",
+      "chainId": 5003,
+      "rpc": "https://rpc.sepolia.mantle.xyz",
+      "tokenSymbol": "MNT",
+      "confirmations": 2,
+      "gasOptions": {
+        "gasLimit": 50000000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 10000
+      },
+      "explorer": {
+        "name": "Mantle Explorer",
+        "url": "https://explorer.sepolia.mantle.xyz",
+        "api": "https://explorer.sepolia.mantle.xyz/api"
+      }
+    },
+    "blast-sepolia": {
+      "name": "Blast",
+      "id": "blast",
+      "axelarId": "blast",
+      "chainId": 168587773,
+      "rpc": "https://sepolia.blast.io/",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 684000
+      },
+      "confirmations": 2,
+      "explorer": {
+        "name": "Blastscan",
+        "url": "https://testnet.blastscan.io",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/168587773/etherscan"
+      }
+    },
+    "optimism-sepolia": {
+      "name": "Optimism-Sepolia",
+      "id": "optimism-sepolia",
+      "axelarId": "optimism-sepolia",
+      "chainId": 11155420,
+      "rpc": "https://sepolia.optimism.io",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1,
+        "l1FeeScalar": 7600
+      },
+      "confirmations": 3,
+      "explorer": {
+        "name": "Opscan",
+        "url": "https://sepolia-optimistic.etherscan.io",
+        "api": "https://api-sepolia-optimistic.etherscan.io/api"
+      }
+    },
+    "base-sepolia": {
+      "name": "Base-Sepolia",
+      "id": "base-sepolia",
+      "axelarId": "base-sepolia",
+      "chainId": 84532,
+      "rpc": "https://sepolia.base.org",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1,
+        "l1FeeScalar": 1101
+      },
+      "confirmations": 2,
+      "explorer": {
+        "name": "Basescan",
+        "url": "https://sepolia-explorer.base.org",
+        "api": "https://api-sepolia.basescan.org/api"
+      }
+    },
+    "fraxtal-sepolia": {
+      "name": "Fraxtal",
+      "id": "fraxtal",
+      "axelarId": "fraxtal",
+      "chainId": 2522,
+      "rpc": "https://rpc.testnet.frax.com",
+      "tokenSymbol": "frxETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 50000
+      }
     }
   },
   "axelar": {
