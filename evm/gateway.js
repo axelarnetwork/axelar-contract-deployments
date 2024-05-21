@@ -195,14 +195,22 @@ async function processCommand(config, chain, options) {
             }
 
             const batchId = batchID.startsWith('0x') ? batchID.substring(2) : batchID;
-            let apiUrl = `${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.axelarId}/${batchId}`;
+            const apiUrl = `${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.axelarId}/${batchId}`;
 
             let executeData;
 
             try {
                 const response = await httpGet(`${apiUrl}`);
-                executeData = '0x' + response?.execute_data;
-        
+
+                if (response == null || !response.execute_data) {
+                    throw new Error('Response does not contain execute_data');
+                }
+
+                if (response.status !== 'BATCHED_COMMANDS_STATUS_SIGNED') {
+                    throw new Error('Data is not yet signed by operators');
+                }
+
+                executeData = '0x' + response.execute_data;
             } catch (error) {
                 throw new Error(`Failed to fetch batch data: ${error.message}`);
             }

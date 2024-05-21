@@ -5,6 +5,7 @@ const axelarSchema = {
         id: { type: 'string' },
         axelarId: { type: 'string' },
         rpc: { type: 'string' },
+        // Matches for "" "http://example.com:443" "https://example.com:443" "https://example.com" "http://example.com"
         lcd: { type: 'string', pattern: '^$|^(https?:\\/\\/[^\\/\\:]+(:\\d+)?)$' },
         grpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
@@ -89,22 +90,6 @@ export const chainsSchema = {
         },
     },
 };
-
-// export const lcdUrlValueSchema = {
-//     id: '/info.axelar.lcd.value',
-//     type: 'string',
-//     required: ['lcd'],
-// };
-
-// export const lcdUrlSchema = {
-//     id: '/info.axelar.lcd',
-//     type: 'string',
-//     pattern: {
-//         '/^(https?:\/\/[^\/]+)(?:|\:\d+)$/': {
-//             $ref: lcdUrlValueSchema.id,
-//         },
-//     }
-// };
 
 export const schema = {
     id: '/info',
