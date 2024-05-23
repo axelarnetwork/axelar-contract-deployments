@@ -201,18 +201,17 @@ async function processCommand(config, chain, options) {
 
             try {
                 const response = await httpGet(`${apiUrl}`);
-
-                if (response == null || !response.execute_data) {
-                    throw new Error('Response does not contain execute_data');
-                }
-
-                if (response.status !== 'BATCHED_COMMANDS_STATUS_SIGNED') {
-                    throw new Error('Data is not yet signed by operators');
-                }
-
                 executeData = '0x' + response.execute_data;
             } catch (error) {
                 throw new Error(`Failed to fetch batch data: ${error.message}`);
+            }
+
+            if (response == null || !response.execute_data) {
+                throw new Error('Response does not contain execute_data');
+            }
+
+            if (response.status !== 'BATCHED_COMMANDS_STATUS_SIGNED') {
+                throw new Error('Data is not yet signed by operators');
             }
 
             const tx = {
