@@ -59,17 +59,6 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
     );
 };
 
-const fetchBatchData = async (apiUrl, batchId) => {
-    try {
-        const response = await httpGet(`${apiUrl}/${batchId}`);
-        const data = response?.execute_data;
-
-        return '0x' + data;
-    } catch (error) {
-        throw new Error(`Failed to fetch batch data: ${error.message}`);
-    }
-};
-
 async function processCommand(config, chain, options) {
     const { privateKey, address, action, yes } = options;
 
@@ -199,17 +188,31 @@ async function processCommand(config, chain, options) {
         }
 
         case 'approveWithBatch': {
-            const { batchID, api } = options;
+            const { batchID } = options;
 
             if (!batchID) {
                 throw new Error('Batch ID is required for the approve action');
             }
 
             const batchId = batchID.startsWith('0x') ? batchID.substring(2) : batchID;
-            let apiUrl = api || `${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.name.toLowerCase()}`;
-            apiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+            const apiUrl = `${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.axelarId}/${batchId}`;
 
-            const executeData = await fetchBatchData(apiUrl, batchId);
+            let executeData, response;
+
+            try {
+                response = await httpGet(`${apiUrl}`);
+                executeData = '0x' + response.execute_data;
+            } catch (error) {
+                throw new Error(`Failed to fetch batch data: ${error.message}`);
+            }
+
+            if (response == null || !response.execute_data) {
+                throw new Error('Response does not contain execute_data');
+            }
+
+            if (response.status !== 'BATCHED_COMMANDS_STATUS_SIGNED') {
+                throw new Error('Data is not yet signed by operators');
+            }
 
             const tx = {
                 to: gatewayAddress,
@@ -217,8 +220,8 @@ async function processCommand(config, chain, options) {
                 ...gasOptions,
             };
 
-            const response = await wallet.sendTransaction(tx);
-            printInfo('Approve tx', response.hash);
+            const txResponse = await wallet.sendTransaction(tx);
+            printInfo('Approve tx', txResponse.hash);
 
             const receipt = await response.wait(chain.confirmations);
             const eventEmitted = wasEventEmitted(receipt, gateway, 'ContractCallApproved');
