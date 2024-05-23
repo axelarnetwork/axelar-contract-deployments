@@ -197,10 +197,10 @@ async function processCommand(config, chain, options) {
             const batchId = batchID.startsWith('0x') ? batchID.substring(2) : batchID;
             const apiUrl = `${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.axelarId}/${batchId}`;
 
-            let executeData;
+            let executeData, response;
 
             try {
-                const response = await httpGet(`${apiUrl}`);
+                response = await httpGet(`${apiUrl}`);
                 executeData = '0x' + response.execute_data;
             } catch (error) {
                 throw new Error(`Failed to fetch batch data: ${error.message}`);
@@ -220,8 +220,8 @@ async function processCommand(config, chain, options) {
                 ...gasOptions,
             };
 
-            const response = await wallet.sendTransaction(tx);
-            printInfo('Approve tx', response.hash);
+            const txResponse = await wallet.sendTransaction(tx);
+            printInfo('Approve tx', txResponse.hash);
 
             const receipt = await response.wait(chain.confirmations);
             const eventEmitted = wasEventEmitted(receipt, gateway, 'ContractCallApproved');
