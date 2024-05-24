@@ -679,6 +679,7 @@ function sleep(ms) {
 }
 
 function loadConfig(env) {
+    if(!fs.existsSync(`${__dirname}/../axelar-chains-config/info/${env}.json`)) return {};
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 

@@ -2075,13 +2075,13 @@
   },
   "sui": {
     "axelar": {
-      "packageId": "0x18307e5f3c1c635ab02f497f83534ca8ad0181c272b97308a359f5b0adb07624",
+      "packageId": "0x5bc98aa806eef7895c79be2f2e0147692215293034dfe27a5d0e1bb0d04af8ff",
       "gateway::Gateway": {
-        "objectType": "0x18307e5f3c1c635ab02f497f83534ca8ad0181c272b97308a359f5b0adb07624::gateway::Gateway",
-        "objectId": "0x7f1d1bae5bddbf7deaca246f1e332ca2ce0922eaad84a3c992aff15f62357467",
-        "version": "857970",
-        "digest": "6hEmYBiFiK1ca7Z6h3Jx9r5gkE7Fe8cf6Kvq6HS5Lxb7",
-        "approvals": "0xd7a12f64b4881787be32d52e1526b0e9c9dfd551dbd664bd99f74a7ddf5de4c5",
+        "objectType": "0x5bc98aa806eef7895c79be2f2e0147692215293034dfe27a5d0e1bb0d04af8ff::gateway::Gateway",
+        "objectId": "0xc4c2a651b5288494c3162015477f7211653f30203de1935444495104563268bc",
+        "version": "857987",
+        "digest": "2XNDwDGZs4STS5rEPTkxk7jTVyDdE1o6LVcSWqMfaTLr",
+        "approvals": "0x552b61b308c8d371295c92287dd5b61305429101351988135316055c988c8775",
         "validators": {
           "epoch": "0",
           "epoch_for_hash": {
@@ -2090,57 +2090,58 @@
         }
       },
       "discovery::RelayerDiscovery": {
-        "objectType": "0x18307e5f3c1c635ab02f497f83534ca8ad0181c272b97308a359f5b0adb07624::discovery::RelayerDiscovery",
-        "objectId": "0x996a993150bbe7094f73e66d4e36f542ddbf50db5722168a9a28795562da589f",
-        "version": "857970",
-        "digest": "E6KHqrexFgmJPMP19dS4RHfQXqrBeJArLEKMmiwKb6Jt",
-        "configurations": "0xa8f54b840ef66f94109427ecc2dafae57177db4d5895e4b8a3717a8d8b2b2fab"
+        "objectType": "0x5bc98aa806eef7895c79be2f2e0147692215293034dfe27a5d0e1bb0d04af8ff::discovery::RelayerDiscovery",
+        "objectId": "0xdc82e130b2e9241823364ebb1d0ac6d537bf4016f206faf2b12cc8a97e4a866a",
+        "version": "857987",
+        "digest": "Ax6uhrVssYwxVSrFbTnfsHu73TnDqfKv8Br6JcxEzhi",
+        "configurations": "0x515543a2e68efbf435de97ad3067a7375d99a89f5d264471dcce3dbdedb10773"
       }
     },
     "governance": {
-      "packageId": "0xb283f6093d8001d617a48947a988a5b7a2e538059a05bafd70cb0af02b4981ed",
+      "packageId": "0x070c411cd2aa17c7c3bd19e96569dd15ece610ba3e6b5260f274a6ed1553923b",
       "governance::Governance": {
-        "objectType": "0xb283f6093d8001d617a48947a988a5b7a2e538059a05bafd70cb0af02b4981ed::governance::Governance",
-        "objectId": "0x3ae5b5776d255e04b2ed9e9c00218bfe0e95b7d0eff9f24259ab5bbac39d65bd",
-        "version": "857974",
-        "digest": "EL6wBjWPUtpQDaHCJqWYeqVhZCy2nw7FtzRx6FbHcFQN",
-        "caps": "0xe2ffd165a4e4f7975adb00dcb2c8104e1af3c8a602fbc1ffe048a0f93611cd98",
-        "channel": "0x03fe4b58434948bc2a38ee4178c277e7093e7bc79298e348246c2c59705239a4",
+        "objectType": "0x070c411cd2aa17c7c3bd19e96569dd15ece610ba3e6b5260f274a6ed1553923b::governance::Governance",
+        "objectId": "0xd266b904dbf62c5a750ab7e2e7faf458b3c9616d57b0e9798adc90cd2d9c846a",
+        "version": "857991",
+        "digest": "DbH4AgwDE4BAGFVZu8QBHpA7rYD8LYnJEgbTZMw1rCvb",
+        "caps": "0xf81a6d4c07c9e54fcd23797af92374c0d367fadfb77ae97d887a774c666d8e61",
+        "channel": "0x4724826f2dda7aec7f81b64def61814acfebed5364050d1c42de9595836254a1",
         "message_type": "0",
         "trusted_source_address": "the governance source addresss",
         "trusted_source_chain": "Axelar"
       }
     },
     "gas_service": {
-      "packageId": "0x9ffa7fc453f59ccda36e8462edaf27d8d4f70b37aa9626a2aefb1f889c44f67a",
+      "packageId": "0x4b3b3ccb2ea09e5c96dd150b6d9ee02beb8a086b5fd622172d31f0b67287fd0d",
       "gas_service::GasService": {
-        "objectType": "0x9ffa7fc453f59ccda36e8462edaf27d8d4f70b37aa9626a2aefb1f889c44f67a::gas_service::GasService",
-        "objectId": "0x77c5c1d2ad57c195e8d5d21b35f8ecc48c1da07a01e1fa449b58b1c53e579571",
-        "version": "857972",
-        "digest": "6ufnwUFuXk3m7PpQ2mQ4TydADN2JS7r99Cx6h3QuQAEV",
+        "objectType": "0x4b3b3ccb2ea09e5c96dd150b6d9ee02beb8a086b5fd622172d31f0b67287fd0d::gas_service::GasService",
+        "objectId": "0x21b8cf9cd0686b50b0fefe0ae7ba6c6afe380570ab622d3b06191755afeb9f93",
+        "version": "857989",
+        "digest": "GUbnmbRKQ3Q7XzrYaSxuYGZAsdN9DNz92yYRGx9ZGhk4",
         "balance": "0"
       }
     },
     "its": {
-      "packageId": "0x383dd420bae32523dec72992cb560df39a94d3d9d300cdf2b65c81a43aa7db20",
+      "packageId": "0xe175d783ade2b36181a8aa914a9df52cea991205348852944af1fdf422d30c43",
       "its::ITS": {
-        "objectType": "0x383dd420bae32523dec72992cb560df39a94d3d9d300cdf2b65c81a43aa7db20::its::ITS",
-        "objectId": "0xb3a75ba8d5610687e5f1a6733c0f2e88b59fffcd253efe7257744717190038d3",
-        "version": "857973",
-        "digest": "GDndkEb9RRUFVX53ME1d9HS4FGjg5fNqVR6g3V2KBuwf",
+        "objectType": "0xe175d783ade2b36181a8aa914a9df52cea991205348852944af1fdf422d30c43::its::ITS",
+        "objectId": "0xb8c955e855ccb0edca24f3c68b24716c43a97634c79b2c513a59e71f07896f6a",
+        "version": "857990",
+        "digest": "4JkxVU8TAzceDVt5se7CGjB2e8M2qZY1FzGRd8nXwpRe",
         "address_tracker": {
-          "trusted_addresses": "0x85262ea52e1b2bfc060beb7a78fb5d264aef2b7d51ba0a11af5b35bad7fa22a8"
+          "trusted_addresses": "0xd1c0286a50de071ff7559760a67c608866e243aa6312d5321f3c56f47781d1d2"
         },
-        "channel": "0xddd522d36b7acf9e39620fa01277ec2bfb776db8f10036e0e775178f1bd1f1a8",
-        "registered_coin_types": "0xc6536e4da6272f56896f8d2d7008c56ec8c774605ee31ff3f0ba3693066cdff3",
-        "registered_coins": "0x5fca198fbc3b7991ab438567ff632ffd3d40fb9bc8c11a15cb31e6df0f6290a1",
-        "unregistered_coin_info": "0x913c70c0c16aa29710ec3984474f5f241b4d27796e5fee1eca08b8d3a437f6b9",
-        "unregistered_coin_types": "0x14ccf2b6eeb11d8fd3c87451af781eeb42a9a05ca681c3bf1b253b710d7d2f55"
+        "channel": "0xe4943e2857d15bdc9f58d26fff6522824ccc478ca3dddc8847d9a34bc008e6db",
+        "registered_coin_types": "0xff215e424695470fe87b9e16230efa991359788ef16b631b1d28b584bb8a33da",
+        "registered_coins": "0x29d77d097d39faaf73fbe880d9da6f08b0fc1986774c5bc066be1c6be26d9b0f",
+        "relayer_discovery_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "unregistered_coin_info": "0x8694cfbc7db5317d392074f923db38d7577f3725c13d504c47dff0e193e348c4",
+        "unregistered_coin_types": "0xe72e28eae32b736fd8682e1bb19483ab0975b18f8a9564554a0b86a0241ee232"
       }
     },
     "abi": {
-      "packageId": "0xee543134189fb2ead06c2bcac39cce7bbaca0a4eadc2c3a90ca2d06c29da7326"
-    }
+      "packageId": "0x149b9d029df03de4aad48a5e0d1cccedfcb0d779488beee12a0a8413e5879dec"
+    },
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://testnet.api.axelarscan.io"
   }
