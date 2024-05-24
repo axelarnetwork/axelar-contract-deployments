@@ -55,7 +55,6 @@ if (require.main === module) {
             .env('ENV'),
     );
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    // program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
 
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('SUI_PRIVATE_KEY'));
 
