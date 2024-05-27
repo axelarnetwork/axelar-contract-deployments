@@ -59,7 +59,7 @@ if (require.main === module) {
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('SUI_PRIVATE_KEY'));
 
     program.addOption(
-        new Option('--validators <validatorAddresses>', 'addresses of the intiial validator set')
+        new Option('--validators <validatorAddresses>', 'addresses of the initial validator set')
             .makeOptionMandatory(true)
             .env('SUI_INITIAL_VALIDATOR_ADDRESSES'),
     );
