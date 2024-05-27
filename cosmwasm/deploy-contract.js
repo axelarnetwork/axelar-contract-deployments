@@ -193,7 +193,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, env, { id: 
         },
     } = contractConfig;
 
-    const separator = domainSeparator ? domainSeparator : keccak256(Buffer.from(`${chainId}${routerAddress}${env}`));
+    const separator = domainSeparator || keccak256(Buffer.from(`${chainId}${routerAddress}${env}`));
 
     if (!validateAddress(adminAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainId}].adminAddress in axelar info`);
