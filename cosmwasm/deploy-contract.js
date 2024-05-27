@@ -13,7 +13,7 @@ const { Command, Option } = require('commander');
 
 const { ethers } = require('hardhat');
 const {
-    utils: { keccak256 },
+    utils: { keccak256, arrayify },
 } = ethers;
 
 const validateAddress = (address) => {
@@ -259,7 +259,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, env, { id: 
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,
         voting_verifier_address: verifierAddress,
-        domain_separator: separator,
+        domain_separator: arrayify(separator),
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainId,
