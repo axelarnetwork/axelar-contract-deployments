@@ -195,7 +195,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
             domainSeparator,
             signingThreshold,
             serviceName,
-            workerSetDiffThreshold,
+            verifierSetDiffThreshold,
             encoder,
             keyType,
         },
@@ -247,8 +247,8 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         throw new Error(`Missing or invalid MultisigProver[${chainId}].serviceName in axelar info`);
     }
 
-    if (!isNumber(workerSetDiffThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].workerSetDiffThreshold in axelar info`);
+    if (!isNumber(verifierSetDiffThreshold)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].verifierSetDiffThreshold in axelar info`);
     }
 
     if (!isString(encoder)) {
@@ -271,7 +271,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainId,
-        worker_set_diff_threshold: workerSetDiffThreshold,
+        verifier_set_diff_threshold: verifierSetDiffThreshold,
         encoder,
         key_type: keyType,
     };
