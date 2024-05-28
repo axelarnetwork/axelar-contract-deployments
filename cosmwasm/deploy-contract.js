@@ -169,7 +169,7 @@ const makeGatewayInstantiateMsg = ({ Router: { address: routerAddress }, VotingV
 
 const makeMultisigProverInstantiateMsg = (config, chainName) => {
     const {
-        axelar: { contracts, network, axelarId },
+        axelar: { contracts, chainId: network, axelarId },
         chains: { [chainName]: chainConfig },
     } = config;
 
