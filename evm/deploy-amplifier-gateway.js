@@ -29,6 +29,7 @@ const {
     isKeccak256Hash,
     getContractConfig,
 } = require('./utils');
+const { calculateDomainSeparator } = require('../cosmwasm/utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
@@ -167,10 +168,21 @@ async function deploy(config, chain, options) {
         return;
     }
 
+    const {
+        axelar: { contracts, network, axelarId },
+    } = config;
+    const {
+        Router: { address: routerAddress },
+    } = contracts;
     contractConfig.deployer = wallet.address;
     const domainSeparator = await getDomainSeparator(config, chain, options);
+    const expectedDomainSeparator = calculateDomainSeparator(axelarId, routerAddress, network);
     const minimumRotationDelay = Number(options.minimumRotationDelay);
     const salt = options.salt || '';
+
+    if (domainSeparator !== expectedDomainSeparator) {
+        throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
+    }
 
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${options.previousSignersRetention}, ${domainSeparator}, ${minimumRotationDelay}`);
