@@ -10,7 +10,7 @@ async function processCommand(config, chain, options) {
 
     printInfo('Keypair generated');
     printInfo('Public key', keypair.getPublicKey());
-    printInfo('Address', keypair.toSuiAddress())
+    printInfo('Address', keypair.toSuiAddress());
     printInfo('Private key', keypair.export());
 }
 

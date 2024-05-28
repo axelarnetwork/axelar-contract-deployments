@@ -6,7 +6,7 @@ const { getWallet } = require('./sign-utils');
 const { Command } = require('commander');
 const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
-async function processCommand(_, chain, options) {
+async function processCommand(config, chain, options) {
     const [keypair, _] = await getWallet(chain, options);
 
     await requestSuiFromFaucetV0({

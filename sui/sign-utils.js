@@ -1,5 +1,6 @@
 'use strict';
 
+const { ethers } = require('hardhat');
 const { decodeSuiPrivateKey } = require('@mysten/sui.js/cryptography');
 const { Ed25519Keypair } = require('@mysten/sui.js/keypairs/ed25519');
 const { Secp256k1Keypair } = require('@mysten/sui.js/keypairs/secp256k1');
@@ -57,14 +58,15 @@ async function getWallet(chain, options) {
     }
 
     printInfo('Wallet address', keypair.toSuiAddress());
+    printInfo('Wallet Pubkey', ethers.utils.hexlify(keypair.getPublicKey().toRawBytes()));
 
     const client = new SuiClient({ url: getFullnodeUrl(chain.networkType) });
 
-    const coins = await client.getCoins({ owner: keypair.toSuiAddress() });
+    // const coins = await client.getCoins({ owner: keypair.toSuiAddress() });
 
-    coins.data.forEach((coin) => {
-        printInfo(`Wallet balance ${coin.coinType}`, `${coin.balance / 1e9}`);
-    });
+    // coins.data.forEach((coin) => {
+    //     printInfo(`Wallet balance ${coin.coinType}`, `${coin.balance / 1e9}`);
+    // });
 
     return [keypair, client];
 }

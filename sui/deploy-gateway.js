@@ -1,4 +1,4 @@
-const { saveConfig, loadConfig, prompt } = require('../evm/utils');
+const { saveConfig, loadConfig, prompt, printInfo } = require('../evm/utils');
 const { Command, Option } = require('commander');
 const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
@@ -15,9 +15,11 @@ const { getAmplifierSigners } = require('./utils');
 
 async function getSigners(config, chain, options) {
     if (options.signers) {
+        printInfo('Using provided signers', options.signers);
+
         const signers = JSON.parse(options.signers);
         return {
-            signers: signers.map((pubkey, weight) => {
+            signers: signers.signers.map(({ pubkey, weight }) => {
                 return { signer: arrayify(pubkey), weight };
             }),
             threshold: signers.threshold,
@@ -39,6 +41,7 @@ async function processCommand(config, chain, options) {
 
     const contractConfig = chain.contracts.axelar_gateway;
     const { operator, minimumRotationDelay, domainSeparator } = options;
+    const signers = await getSigners(config, chain, options);
 
     if (prompt(`Proceed with deployment on ${chain.name}?`, options.yes)) {
         return;
@@ -68,8 +71,6 @@ async function processCommand(config, chain, options) {
         threshold: bcs.u128(),
         nonce: bytes32Struct,
     });
-
-    const signers = await getSigners(config, chain, options);
 
     const encodedSigners = signersStruct
         .serialize({
