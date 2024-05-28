@@ -25,6 +25,15 @@ jobs:
       - name: Prepare local.json
         run: |
           echo '{
+            "axelar": {
+              "chainId": "axelar-local-1",
+              "axelarId": "Axelarnet",
+              "contracts": {
+                "Router": {
+                  "address": "axelar1zgf04c99ft27dd8qj9ntn6lyyuz62jks02xahln4g5jl6fnywzwq0gw3pc"
+                }
+              }
+            },
             "chains": {
               "test": {
                 "name": "Test",
