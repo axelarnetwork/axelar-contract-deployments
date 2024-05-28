@@ -169,7 +169,7 @@ const makeGatewayInstantiateMsg = ({ Router: { address: routerAddress }, VotingV
 
 const makeMultisigProverInstantiateMsg = (config, chainName) => {
     const {
-        axelar: { contracts, chainId: network, axelarId },
+        axelar: { contracts, chainId: axelarChainId, axelarId },
         chains: { [chainName]: chainConfig },
     } = config;
 
@@ -201,7 +201,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         },
     } = contractConfig;
 
-    const separator = domainSeparator || calculateDomainSeparator(axelarId, routerAddress, network);
+    const separator = domainSeparator || calculateDomainSeparator(axelarId, routerAddress, axelarChainId);
 
     if (!validateAddress(adminAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainId}].adminAddress in axelar info`);

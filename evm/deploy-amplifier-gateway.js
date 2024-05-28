@@ -76,7 +76,18 @@ async function getDomainSeparator(config, chain, options) {
         return options.domainSeparator;
     }
 
-    return hexlify((await getContractConfig(config, chain.name)).domain_separator);
+    const {
+        axelar: { contracts, chainId, axelarId },
+    } = config;
+    const {
+        Router: { address: routerAddress },
+    } = contracts;
+    const domainSeparator = hexlify((await getContractConfig(config, chain.name)).domain_separator);
+    const expectedDomainSeparator = calculateDomainSeparator(axelarId, routerAddress, chainId);
+
+    if (domainSeparator !== expectedDomainSeparator) {
+        throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
+    }
 }
 
 async function getSetupParams(config, chain, operator, options) {
@@ -168,21 +179,10 @@ async function deploy(config, chain, options) {
         return;
     }
 
-    const {
-        axelar: { contracts, network, axelarId },
-    } = config;
-    const {
-        Router: { address: routerAddress },
-    } = contracts;
     contractConfig.deployer = wallet.address;
     const domainSeparator = await getDomainSeparator(config, chain, options);
-    const expectedDomainSeparator = calculateDomainSeparator(axelarId, routerAddress, network);
     const minimumRotationDelay = Number(options.minimumRotationDelay);
     const salt = options.salt || '';
-
-    if (domainSeparator !== expectedDomainSeparator) {
-        throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
-    }
 
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${options.previousSignersRetention}, ${domainSeparator}, ${minimumRotationDelay}`);
