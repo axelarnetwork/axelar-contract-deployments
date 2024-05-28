@@ -13,7 +13,7 @@ const { Command, Option } = require('commander');
 
 const { ethers } = require('hardhat');
 const {
-    utils: { keccak256, arrayify },
+    utils: { arrayify },
 } = ethers;
 
 const validateAddress = (address) => {

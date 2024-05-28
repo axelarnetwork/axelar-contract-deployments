@@ -1,5 +1,10 @@
 'use strict';
 
+const { ethers } = require('hardhat');
+const {
+    utils: { keccak256 },
+} = ethers;
+
 const { readFileSync } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
