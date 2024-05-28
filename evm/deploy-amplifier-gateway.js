@@ -29,6 +29,7 @@ const {
     isKeccak256Hash,
     getContractConfig,
 } = require('./utils');
+const { calculateDomainSeparator } = require('../cosmwasm/utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
@@ -75,7 +76,20 @@ async function getDomainSeparator(config, chain, options) {
         return options.domainSeparator;
     }
 
-    return hexlify((await getContractConfig(config, chain.name)).domain_separator);
+    const {
+        axelar: { contracts, chainId, axelarId },
+    } = config;
+    const {
+        Router: { address: routerAddress },
+    } = contracts;
+    const domainSeparator = hexlify((await getContractConfig(config, chain.name)).domain_separator);
+    const expectedDomainSeparator = calculateDomainSeparator(axelarId, routerAddress, chainId);
+
+    if (domainSeparator !== expectedDomainSeparator) {
+        throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
+    }
+
+    return domainSeparator;
 }
 
 async function getSetupParams(config, chain, operator, options) {
