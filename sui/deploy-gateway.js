@@ -1,4 +1,3 @@
-const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
 const { saveConfig, loadConfig, prompt } = require('../evm/utils');
 const { Command, Option } = require('commander');
 const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
@@ -30,8 +29,7 @@ async function getSigners(config, chain, options) {
 }
 
 async function processCommand(config, chain, options) {
-    const keypair = await getWallet(chain, options);
-    const client = new SuiClient({ url: getFullnodeUrl(chain.networkType) });
+    const [keypair, client] = await getWallet(chain, options);
 
     if (!chain.contracts) {
         chain.contracts = {
@@ -125,7 +123,7 @@ async function mainProcessor(options, processor) {
         config.sui = {};
     }
 
-    await processor(options, config, config.sui);
+    await processor(config, config.sui, options);
     saveConfig(config, options.env);
 }
 

@@ -21,9 +21,16 @@ const addBaseOptions = (program, options = {}) => {
         program.addOption(
             new Option('--privateKeyType <privateKeyType>', 'private key type')
                 .makeOptionMandatory(true)
+                .choices(['bech32', 'mnemonic', 'hex'])
+                .default('bech32')
+                .env('PRIVATE_KEY_TYPE'),
+        );
+
+        program.addOption(
+            new Option('--signatureScheme <signatureScheme>', 'signature scheme to use')
                 .choices(['ed25519', 'secp256k1', 'secp256r1'])
                 .default('ed25519')
-                .env('PRIVATE_KEY_TYPE'),
+                .env('SIGNATURE_SCHEME'),
         );
     }
 

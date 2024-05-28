@@ -3,21 +3,23 @@
 const { addBaseOptions } = require('./cli-utils');
 const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui.js/faucet');
 const { getWallet } = require('./sign-utils');
-const { Command, Option } = require('commander');
-const { saveConfig, loadConfig } = require('../evm/utils');
+const { Command } = require('commander');
+const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
 async function processCommand(_, chain, options) {
-    const keypair = await getWallet(chain, options);
+    const [keypair, _] = await getWallet(chain, options);
 
     await requestSuiFromFaucetV0({
         host: getFaucetHost(chain.networkType),
         recipient: keypair.toSuiAddress(),
     });
+
+    printInfo('Funds requested');
 }
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    await processor(options, config, config.sui);
+    await processor(config, config.sui, options);
     saveConfig(config, options.env);
 }
 
