@@ -167,7 +167,14 @@ const makeGatewayInstantiateMsg = ({ Router: { address: routerAddress }, VotingV
     return { router_address: routerAddress, verifier_address: verifierAddress };
 };
 
-const makeMultisigProverInstantiateMsg = (contractConfig, contracts, env, { id: chainId }) => {
+const makeMultisigProverInstantiateMsg = (config, chainName) => {
+    const {
+        axelar: { contracts, network, axelarId },
+        chains: { [chainName]: chainConfig },
+    } = config;
+
+    const {id: chainId } = chainConfig;
+
     const {
         Router: { address: routerAddress },
         Coordinator: { address: coordinatorAddress },
@@ -179,6 +186,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, env, { id: 
         Gateway: {
             [chainId]: { address: gatewayAddress },
         },
+        MultisigProver: contractConfig,
     } = contracts;
     const {
         [chainId]: {
@@ -193,7 +201,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, env, { id: 
         },
     } = contractConfig;
 
-    const separator = domainSeparator || keccak256(Buffer.from(`${chainId}${routerAddress}${env}`));
+    const separator = domainSeparator || calculateDomainSeparator(axelarId, routerAddress, network);
 
     if (!validateAddress(adminAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainId}].adminAddress in axelar info`);
@@ -269,7 +277,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, env, { id: 
     };
 };
 
-const makeInstantiateMsg = (env, contractName, chainName, config) => {
+const makeInstantiateMsg = (contractName, chainName, config) => {
     const {
         axelar: { contracts },
         chains: { [chainName]: chainConfig },
@@ -353,7 +361,7 @@ const makeInstantiateMsg = (env, contractName, chainName, config) => {
                 throw new Error('MultisigProver requires chainNames option');
             }
 
-            return makeMultisigProverInstantiateMsg(contractConfig, contracts, env, chainConfig);
+            return makeMultisigProverInstantiateMsg(config, chainName);
         }
     }
 
@@ -407,7 +415,7 @@ const upload = (client, wallet, chainName, config, options) => {
 };
 
 const instantiate = (client, wallet, chainName, config, options) => {
-    const { contractName, env } = options;
+    const { contractName } = options;
     const {
         axelar: {
             contracts: { [contractName]: contractConfig },
@@ -415,7 +423,7 @@ const instantiate = (client, wallet, chainName, config, options) => {
         chains: { [chainName]: chainConfig },
     } = config;
 
-    const initMsg = makeInstantiateMsg(env, contractName, chainName, config);
+    const initMsg = makeInstantiateMsg(contractName, chainName, config);
     return instantiateContract(client, wallet, initMsg, config, options).then((contractAddress) => {
         if (chainConfig) {
             contractConfig[chainConfig.axelarId] = {

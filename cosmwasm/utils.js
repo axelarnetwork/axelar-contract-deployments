@@ -22,6 +22,8 @@ const isValidCosmosAddress = (str) => {
 
 const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'));
 
+const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
+
 const uploadContract = async (client, wallet, config, options) => {
     const { artifactPath, contractName, instantiate2, salt, aarch64, chainNames } = options;
     return wallet
@@ -78,6 +80,7 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
 
 module.exports = {
     governanceAddress,
+    calculateDomainSeparator,
     uploadContract,
     instantiateContract,
     isValidCosmosAddress,
