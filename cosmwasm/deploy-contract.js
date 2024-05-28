@@ -173,7 +173,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         chains: { [chainName]: chainConfig },
     } = config;
 
-    const {id: chainId } = chainConfig;
+    const {axelarId: chainId } = chainConfig;
 
     const {
         Router: { address: routerAddress },
