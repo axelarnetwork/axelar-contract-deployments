@@ -16,42 +16,43 @@ const { requestSuiFromFaucetV0 } = require('@mysten/sui.js/faucet');
 async function main(options) {
     options.validatorAddresses = JSON.parse(options.validatorAddresses);
     options.weights = JSON.parse(options.weights);
-    options.validators = options.validatorAddresses.map((val, index) => {return {signer: arrayify(val), weight: options.weights[index]}});
+    options.validators = options.validatorAddresses.map((val, index) => {
+        return { signer: arrayify(val), weight: options.weights[index] };
+    });
     options.threshold = JSON.parse(options.threshold);
     const privKey = Buffer.from(options.privateKey, 'hex');
     const keypair = Ed25519Keypair.fromSecretKey(privKey);
     const client = new SuiClient({ url: getFullnodeUrl(options.env) });
+
     if (options.faucetUrl) {
         await requestSuiFromFaucetV0({
             host: options.faucetUrl,
             recipient: keypair.toSuiAddress(),
         });
     }
+
     const published = await publishPackage('test', client, keypair, parseEnv(options.env));
 
-    const singleton = published.publishTxn.objectChanges.find(change => change.objectType === `${published.packageId}::test::Singleton`);
-    
+    const singleton = published.publishTxn.objectChanges.find((change) => change.objectType === `${published.packageId}::test::Singleton`);
+
     const tx = new TransactionBlock();
 
     const config = loadConfig(options.env);
 
     tx.moveCall({
         target: `${published.packageId}::test::register_transaction`,
-        arguments: [
-            tx.object(config.sui.relayerDiscovery),
-            tx.object(singleton.objectId)
-        ]
+        arguments: [tx.object(config.sui.relayerDiscovery), tx.object(singleton.objectId)],
     });
 
     const publishTxn = await client.signAndExecuteTransactionBlock({
-		transactionBlock: tx,
-		signer: keypair,
-		options: {
-			showEffects: true,
-			showObjectChanges: true,
-            showContent: true
-		},
-	});
+        transactionBlock: tx,
+        signer: keypair,
+        options: {
+            showEffects: true,
+            showObjectChanges: true,
+            showContent: true,
+        },
+    });
 
     config.sui.testSingleton = singleton.objectId;
 
@@ -88,31 +89,21 @@ if (require.main === module) {
         new Option('--threshold <threshold>', 'threshold for the intiial validator set')
             .makeOptionMandatory(true)
             .env('SUI_INITIAL_VALIDATOR_THRESHOLD'),
-    );    
-    program.addOption(
-        new Option('--nonce <nonce>', 'nonce for the intiial validator set')
-            .makeOptionMandatory(true)
-            .env('SUI_INITIAL_NONCE'),
     );
     program.addOption(
-        new Option('--operator <operator>', 'operator for the sui gateway')
-            .makeOptionMandatory(true)
-            .env('SUI_OPERATOR'),
+        new Option('--nonce <nonce>', 'nonce for the intiial validator set').makeOptionMandatory(true).env('SUI_INITIAL_NONCE'),
     );
+    program.addOption(new Option('--operator <operator>', 'operator for the sui gateway').makeOptionMandatory(true).env('SUI_OPERATOR'));
     program.addOption(
         new Option('--rotationDelay <rotationDelay>', 'minimum rotation delay for validators')
             .makeOptionMandatory(true)
             .env('SUI_MINIMUM_ROTATION_DELAY'),
     );
     program.addOption(
-        new Option('--domainSeparator <domainSeparator>', 'domain separator')
-            .makeOptionMandatory(true)
-            .env('SUI_DOMAIN_SEPARATOR'),
+        new Option('--domainSeparator <domainSeparator>', 'domain separator').makeOptionMandatory(true).env('SUI_DOMAIN_SEPARATOR'),
     );
     program.addOption(
-        new Option('--faucetUrl <faucetUrl>', 'url for a faucet to request funds from')
-            .makeOptionMandatory(false)
-            .env('SUI_FAUCET_URL'),
+        new Option('--faucetUrl <faucetUrl>', 'url for a faucet to request funds from').makeOptionMandatory(false).env('SUI_FAUCET_URL'),
     );
 
     program.action(async (options) => {

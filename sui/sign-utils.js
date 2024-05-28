@@ -3,6 +3,7 @@
 const { Ed25519Keypair } = require('@mysten/sui.js/keypairs/ed25519');
 const { Secp256k1Keypair } = require('@mysten/sui.js/keypairs/secp256k1');
 const { Secp256r1Keypair } = require('@mysten/sui.js/keypairs/secp256r1');
+const { printInfo } = require('../evm/utils');
 
 async function getWallet(chain, options) {
     const privKey = Buffer.from(options.privateKey, 'hex');

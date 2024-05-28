@@ -18,8 +18,12 @@ const addBaseOptions = (program, options = {}) => {
     if (!options.ignorePrivateKey) {
         program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 
-        program.addOption(new Option('--privateKeyType <privateKeyType>', 'private key type')
-            .makeOptionMandatory(true).choices(['ed25519', 'secp256k1', 'secp256r1']).default('ed25519').env('PRIVATE_KEY_TYPE')
+        program.addOption(
+            new Option('--privateKeyType <privateKeyType>', 'private key type')
+                .makeOptionMandatory(true)
+                .choices(['ed25519', 'secp256k1', 'secp256r1'])
+                .default('ed25519')
+                .env('PRIVATE_KEY_TYPE'),
         );
     }
 

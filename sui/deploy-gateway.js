@@ -1,7 +1,5 @@
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
-const { Ed25519Keypair } = require('@mysten/sui.js/keypairs/ed25519');
 const { saveConfig, loadConfig, prompt } = require('../evm/utils');
-const { getConfig, parseEnv } = require('@axelar-network/axelar-cgp-sui/scripts/utils');
 const { Command, Option } = require('commander');
 const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
@@ -20,10 +18,12 @@ async function getSigners(config, chain, options) {
     if (options.signers) {
         const signers = JSON.parse(options.signers);
         return {
-            signers: signers.map((pubkey, weight) => { return { signer: arrayify(pubkey), weight } }),
+            signers: signers.map((pubkey, weight) => {
+                return { signer: arrayify(pubkey), weight };
+            }),
             threshold: signers.threshold,
             nonce: signers.nonce || HashZero,
-        }
+        };
     }
 
     return getAmplifierSigners(config, chain);
@@ -46,11 +46,15 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const published = await publishPackage('axelar_gateway', client, keypair, parseEnv(options.env));
+    const published = await publishPackage('axelar_gateway', client, keypair);
     updateMoveToml('axelar_gateway', published.packageId);
 
-    const creatorCap = published.publishTxn.objectChanges.find(change => change.objectType === `${published.packageId}::gateway::CreatorCap`);
-    const relayerDiscovery = published.publishTxn.objectChanges.find(change => change.objectType === `${published.packageId}::discovery::RelayerDiscovery`);
+    const creatorCap = published.publishTxn.objectChanges.find(
+        (change) => change.objectType === `${published.packageId}::gateway::CreatorCap`,
+    );
+    const relayerDiscovery = published.publishTxn.objectChanges.find(
+        (change) => change.objectType === `${published.packageId}::discovery::RelayerDiscovery`,
+    );
 
     const signerStruct = bcs.struct('WeightedSigner', {
         pubkey: bcs.vector(bcs.u8()),
@@ -69,18 +73,18 @@ async function processCommand(config, chain, options) {
 
     const signers = await getSigners(config, chain, options);
 
-    const encodedSigners = signersStruct.serialize({
-        ...signers,
-        nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
-    }).toBytes();
+    const encodedSigners = signersStruct
+        .serialize({
+            ...signers,
+            nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
+        })
+        .toBytes();
 
     const tx = new TransactionBlock();
 
     const separator = tx.moveCall({
         target: `${published.packageId}::bytes32::new`,
-        arguments: [
-            tx.pure(arrayify(options.domainSeparator)),
-        ],
+        arguments: [tx.pure(arrayify(options.domainSeparator))],
     });
 
     tx.moveCall({
@@ -92,20 +96,20 @@ async function processCommand(config, chain, options) {
             tx.pure(options.rotationDelay),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
             tx.object('0x6'),
-        ]
+        ],
     });
 
     const result = await client.signAndExecuteTransactionBlock({
-		transactionBlock: tx,
-		signer: keypair,
-		options: {
-			showEffects: true,
-			showObjectChanges: true,
-            showContent: true
-		},
-	});
+        transactionBlock: tx,
+        signer: keypair,
+        options: {
+            showEffects: true,
+            showObjectChanges: true,
+            showContent: true,
+        },
+    });
 
-    const gateway = result.objectChanges.find(change => change.objectType === `${published.packageId}::gateway::Gateway`);
+    const gateway = result.objectChanges.find((change) => change.objectType === `${published.packageId}::gateway::Gateway`);
 
     contractConfig.gateway = gateway.objectId;
     contractConfig.relayerDiscovery = relayerDiscovery.objectId;
@@ -132,14 +136,12 @@ if (require.main === module) {
 
     addBaseOptions(program);
 
+    program.addOption(new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'));
+    program.addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)'));
     program.addOption(
-        new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'),
-    );
-    program.addOption(
-        new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)'),
-    );
-    program.addOption(
-        new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(24 * 60 * 60 * 1000),
+        new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(
+            24 * 60 * 60 * 1000,
+        ),
     ); // 1 day (in ms)
     program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
 

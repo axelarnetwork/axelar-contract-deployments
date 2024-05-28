@@ -1,7 +1,10 @@
 'use strict';
 
 const { ethers } = require('hardhat');
-const { BigNumber, utils: { arrayify } } = ethers;
+const {
+    BigNumber,
+    utils: { arrayify },
+} = ethers;
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 const getAmplifierSigners = async (config, chain) => {
