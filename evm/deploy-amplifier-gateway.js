@@ -88,6 +88,8 @@ async function getDomainSeparator(config, chain, options) {
     if (domainSeparator !== expectedDomainSeparator) {
         throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
     }
+
+    return domainSeparator;
 }
 
 async function getSetupParams(config, chain, operator, options) {
