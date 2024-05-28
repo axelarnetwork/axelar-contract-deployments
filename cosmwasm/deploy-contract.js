@@ -7,7 +7,7 @@ const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 
 const { printInfo, loadConfig, saveConfig, isString, isStringArray, isKeccak256Hash, isNumber, prompt } = require('../evm/utils');
-const { uploadContract, instantiateContract, isValidCosmosAddress, governanceAddress } = require('./utils');
+const { uploadContract, instantiateContract, isValidCosmosAddress, calculateDomainSeparator, governanceAddress } = require('./utils');
 
 const { Command, Option } = require('commander');
 
