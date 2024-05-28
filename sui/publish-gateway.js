@@ -13,7 +13,8 @@ const {
 } = ethers;
 
 const { addBaseOptions } = require('./cli-utils');
-const { getAmplifierSigners, getWallet } = require('./utils');
+const { getWallet } = require('./sign-utils');
+const { getAmplifierSigners } = require('./utils');
 
 async function getSigners(config, chain, options) {
     if (options.signers) {
@@ -132,7 +133,7 @@ if (require.main === module) {
     addBaseOptions(program);
 
     program.addOption(
-        new Option('--signers <signers>', 'JSON with the initial signer set'),
+        new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'),
     );
     program.addOption(
         new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)'),
