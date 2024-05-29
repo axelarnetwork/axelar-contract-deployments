@@ -11,14 +11,14 @@ const {
 
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
-const { getAmplifierSigners } = require('./utils');
+const { getAmplifierSigners, loadSuiConfig } = require('./utils');
 
 async function getSigners(config, chain, options) {
     if (options.signers) {
         const signers = JSON.parse(options.signers);
         return {
-            signers: signers.map((pubkey, weight) => {
-                return { signer: arrayify(pubkey), weight };
+            signers: signers.signers.map((signer) => {
+                return { signer: arrayify(signer.pubkey), weight: signer.weight };
             }),
             threshold: signers.threshold,
             nonce: signers.nonce || HashZero,
@@ -117,11 +117,7 @@ async function processCommand(config, chain, options) {
 }
 
 async function mainProcessor(options, processor) {
-    const config = loadConfig(options.env);
-
-    if (!config.sui) {
-        config.sui = {};
-    }
+    const config = loadSuiConfig(options.env);
 
     await processor(config, config.sui, options);
     saveConfig(config, options.env);

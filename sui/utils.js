@@ -1,11 +1,13 @@
 'use strict';
 
 const { ethers } = require('hardhat');
+const { loadConfig, } = require('../evm/utils');
 const {
     BigNumber,
     utils: { arrayify },
 } = ethers;
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+const { getFullnodeUrl } = require('@mysten/sui.js/client');
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -26,6 +28,22 @@ const getAmplifierSigners = async (config, chain) => {
     };
 };
 
+const loadSuiConfig = (env) => {
+    const config = loadConfig(env);
+    const suiEnv = env === "local" ? "localnet" : env;
+    if (!config.sui) {
+        config.sui = {
+            networkType: suiEnv,
+            name: "Sui",
+            contracts: {
+                "axelar_gateway": {}
+            },
+        };
+    }
+    return config;
+};
+
 module.exports = {
     getAmplifierSigners,
+    loadSuiConfig,
 };
