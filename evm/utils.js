@@ -1196,6 +1196,39 @@ function timeout(prom, time, exception) {
     );
 }
 
+async function relayTransaction(options, chain, contract, method, params, nativeValue = 0, gasOptions = {}, expectedEvent = null) {
+    if (options.relayerAPI) {
+        const result = await httpPost(options.relayerAPI, {
+            chain: chain.axelarId,
+            to: contract.address,
+            call_data: contract.interface.encodeFunctionData(method, params),
+            value: nativeValue,
+        });
+
+        printInfo('Relay ID', result.relay_id);
+    } else {
+        await timeout(
+            (async () => {
+                const tx = await contract[method](...params, gasOptions);
+                printInfo('TX', tx.hash);
+
+                const receipt = await tx.wait(chain.confirmations);
+
+                if (expectedEvent) {
+                    const eventEmitted = wasEventEmitted(receipt, contract, expectedEvent);
+
+                    if (!eventEmitted) {
+                        printWarn('Event not emitted in receipt.');
+                    }
+                }
+            })(),
+
+            chain.timeout || 60000,
+            new Error(`Timeout updating gas info for ${chain.name}`),
+        );
+    }
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -1258,4 +1291,5 @@ module.exports = {
     timeout,
     getAmplifierKeyAddresses,
     getContractConfig,
+    relayTransaction,
 };
