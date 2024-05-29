@@ -4,7 +4,7 @@ const { ethers } = require('hardhat');
 const {
     providers: { JsonRpcProvider },
 } = ethers;
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 const { printInfo, mainProcessor } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
@@ -36,7 +36,7 @@ if (require.main === module) {
 
     program.name('check-finality').description('Script to check when is finality achieved for a tx');
     addBaseOptions(program);
-    program.addArgument('txHash', 'tx hash to check for finality');
+    program.addOption(new Option('-t, --txHash <txHash>', 'tx hash to check for finality').makeOptionMandatory(true));
     program.action((options) => {
         main(options);
     });
