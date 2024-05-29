@@ -1,7 +1,7 @@
 'use strict';
 
 const { ethers } = require('hardhat');
-const { loadConfig, } = require('../evm/utils');
+const { loadConfig } = require('../evm/utils');
 const {
     BigNumber,
     utils: { arrayify },
@@ -31,15 +31,17 @@ const getAmplifierSigners = async (config, chain) => {
 const loadSuiConfig = (env) => {
     const config = loadConfig(env);
     const suiEnv = env === "local" ? "localnet" : env;
+
     if (!config.sui) {
         config.sui = {
             networkType: suiEnv,
             name: "Sui",
             contracts: {
-                "axelar_gateway": {}
+                "axelar_gateway": {},
             },
         };
     }
+
     return config;
 };
 

@@ -1,4 +1,4 @@
-const { saveConfig, loadConfig, prompt, printInfo } = require('../evm/utils');
+const { saveConfig, prompt, printInfo } = require('../evm/utils');
 const { Command, Option } = require('commander');
 const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
@@ -58,7 +58,7 @@ async function processCommand(config, chain, options) {
     );
 
     const signerStruct = bcs.struct('WeightedSigner', {
-        pubkey: bcs.vector(bcs.u8()),
+        signer: bcs.vector(bcs.u8()),
         weight: bcs.u128(),
     });
     const bytes32Struct = bcs.fixedArray(32, bcs.u8()).transform({
@@ -71,7 +71,7 @@ async function processCommand(config, chain, options) {
         threshold: bcs.u128(),
         nonce: bytes32Struct,
     });
-
+    
     const encodedSigners = signersStruct
         .serialize({
             ...signers,
@@ -83,21 +83,20 @@ async function processCommand(config, chain, options) {
 
     const separator = tx.moveCall({
         target: `${published.packageId}::bytes32::new`,
-        arguments: [tx.pure(arrayify(options.domainSeparator))],
+        arguments: [tx.pure(arrayify(domainSeparator))],
     });
 
     tx.moveCall({
         target: `${published.packageId}::gateway::setup`,
         arguments: [
             tx.object(creatorCap.objectId),
-            tx.pure.address(options.operator),
+            tx.pure.address(operator),
             separator,
-            tx.pure(options.rotationDelay),
+            tx.pure(minimumRotationDelay),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
             tx.object('0x6'),
         ],
     });
-
     const result = await client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
         signer: keypair,
@@ -107,7 +106,7 @@ async function processCommand(config, chain, options) {
             showContent: true,
         },
     });
-
+    
     const gateway = result.objectChanges.find((change) => change.objectType === `${published.packageId}::gateway::Gateway`);
 
     contractConfig.gateway = gateway.objectId;
@@ -132,7 +131,7 @@ if (require.main === module) {
     addBaseOptions(program);
 
     program.addOption(new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'));
-    program.addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)'));
+    program.addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'));
     program.addOption(
         new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(
             24 * 60 * 60 * 1000,
