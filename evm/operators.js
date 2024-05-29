@@ -26,7 +26,7 @@ const {
     timeout,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate } = require('./gas-service');
+const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTransaction } = require('./gas-service');
 
 async function processCommand(config, chain, options) {
     const {
@@ -268,18 +268,36 @@ async function processCommand(config, chain, options) {
             const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
 
             try {
-                const tx = await timeout(
-                    operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions),
-                    chain.timeout || 60000,
-                    new Error(`Timeout updating gas info for ${chain.name}`),
-                );
-                printInfo('TX', tx.hash);
+                if (options.useRelay) {
+                    const gasLimit = Number(await operatorsContract.estimateGas.executeContract(target, updateGasInfoCalldata, 0));
 
-                await timeout(
-                    tx.wait(chain.confirmations),
-                    chain.timeout || 60000,
-                    new Error(`Timeout updating gas info for ${chain.name}`),
-                );
+                    const tx = await timeout(
+                        relayTransaction(
+                            chain.axelarId,
+                            operatorsContract.address,
+                            operatorsContract.interface.encodeFunctionData('executeContract', [target, updateGasInfoCalldata, 0]),
+                            0,
+                            gasLimit,
+                        ),
+                        chain.timeout || 60000,
+                        new Error(`Timeout updating gas info for ${chain.name}`),
+                    );
+
+                    printInfo('Relayed TX', tx.hash);
+                } else {
+                    const tx = await timeout(
+                        operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions),
+                        chain.timeout || 60000,
+                        new Error(`Timeout updating gas info for ${chain.name}`),
+                    );
+                    printInfo('TX', tx.hash);
+
+                    await timeout(
+                        tx.wait(chain.confirmations),
+                        chain.timeout || 60000,
+                        new Error(`Timeout updating gas info for ${chain.name}`),
+                    );
+                }
             } catch (error) {
                 for (let i = 0; i < chainsToUpdate.length; i++) {
                     addFailedChainUpdate(chain.name, chainsToUpdate[i]);
@@ -325,6 +343,7 @@ if (require.main === module) {
 
     // options for updateGasInfo
     program.addOption(new Option('--chains <chains...>', 'Chain names'));
+    program.addOption(new Option('--useRelay', 'Relaying the transaction through the internal API'));
 
     program.action((options) => {
         main(options);

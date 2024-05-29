@@ -71,6 +71,16 @@ async function getFeeData(api, sourceChain, destinationChain) {
     return feesCache[key];
 }
 
+async function relayTransaction(chain, address, calldata, nativeValue, gasLimit) {
+    return httpPost(process.env.RELAYER_API_ENDPOINT, {
+        chain,
+        to: address,
+        call_data: calldata,
+        value: nativeValue,
+        gas_limit: gasLimit,
+    });
+}
+
 async function getGasUpdates(config, env, chain, destinationChains) {
     const api = config.axelar.axelarscanApi;
 
@@ -304,24 +314,42 @@ async function processCommand(config, chain, options) {
             }
 
             try {
-                const tx = await timeout(
-                    gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions),
-                    chain.timeout || 60000,
-                    new Error(`Timeout updating gas info for ${chain.name}`),
-                );
+                if (options.useRelay) {
+                    const gasLimit = Number(await gasService.estimateGas.updateGasInfo(chainsToUpdate, gasInfoUpdates));
 
-                printInfo('TX', tx.hash);
+                    const tx = await timeout(
+                        relayTransaction(
+                            chain.axelarId,
+                            gasService.address,
+                            gasService.interface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]),
+                            0,
+                            gasLimit,
+                        ),
+                        chain.timeout || 60000,
+                        new Error(`Timeout updating gas info for ${chain.name}`),
+                    );
 
-                const receipt = await timeout(
-                    tx.wait(chain.confirmations),
-                    chain.timeout || 60000,
-                    new Error(`Timeout updating gas info for ${chain.name}`),
-                );
+                    printInfo('Relayed TX', tx.hash);
+                } else {
+                    const tx = await timeout(
+                        gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions),
+                        chain.timeout || 60000,
+                        new Error(`Timeout updating gas info for ${chain.name}`),
+                    );
 
-                const eventEmitted = wasEventEmitted(receipt, gasService, 'GasInfoUpdated');
+                    printInfo('TX', tx.hash);
 
-                if (!eventEmitted) {
-                    printWarn('Event not emitted in receipt.');
+                    const receipt = await timeout(
+                        tx.wait(chain.confirmations),
+                        chain.timeout || 60000,
+                        new Error(`Timeout updating gas info for ${chain.name}`),
+                    );
+
+                    const eventEmitted = wasEventEmitted(receipt, gasService, 'GasInfoUpdated');
+
+                    if (!eventEmitted) {
+                        printWarn('Event not emitted in receipt.');
+                    }
                 }
             } catch (error) {
                 for (let i = 0; i < chainsToUpdate.length; i++) {
@@ -368,6 +396,7 @@ if (require.main === module) {
 
     // options for updateGasInfo
     program.addOption(new Option('--chains <chains...>', 'Chain names'));
+    program.addOption(new Option('--useRelay', 'Relaying the transaction through the internal API'));
 
     program.action((options) => {
         main(options);
@@ -379,3 +408,4 @@ if (require.main === module) {
 exports.getGasUpdates = getGasUpdates;
 exports.addFailedChainUpdate = addFailedChainUpdate;
 exports.printFailedChainUpdates = printFailedChainUpdates;
+exports.relayTransaction = relayTransaction;
