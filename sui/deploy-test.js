@@ -6,6 +6,7 @@ const { ethers } = require('hardhat');
 const {
     constants: { HashZero },
 } = ethers;
+const { loadSuiConfig } = require('./utils');
 
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -15,30 +16,27 @@ const { getWallet } = require('./sign-utils');
 async function processCommand(config, chain, options) {
     const [keypair, client] = await getWallet(chain, options);
 
-    if (!chain.contracts) {
-        chain.contracts = {
-            axelar_gateway: {},
-        };
+    if (!chain.contracts.test) {
+        chain.contracts.test = {};
     }
-
-    const contractConfig = chain.contracts.test;
 
     if (prompt(`Proceed with deployment on ${chain.name}?`, options.yes)) {
         return;
     }
 
-    const published = await publishPackage('test', client, keypair, parseEnv(options.env));
-    updateMoveToml('axelar_gateway', published.packageId);
+    const published = await publishPackage('test', client, keypair);
+    updateMoveToml('test', published.packageId);
 
     const singleton = published.publishTxn.objectChanges.find((change) => change.objectType === `${published.packageId}::test::Singleton`);
 
     const tx = new TransactionBlock();
-
-    const config = loadConfig(options.env);
-
+    
     tx.moveCall({
         target: `${published.packageId}::test::register_transaction`,
-        arguments: [tx.object(config.sui.relayerDiscovery), tx.object(singleton.objectId)],
+        arguments: [
+            tx.object(config.sui.contracts.axelar_gateway.relayerDiscovery), 
+            tx.object(singleton.objectId)
+        ],
     });
 
     await client.signAndExecuteTransactionBlock({
@@ -51,20 +49,11 @@ async function processCommand(config, chain, options) {
         },
     });
 
-    contractConfig.singleton = singleton.objectId;
+    chain.contracts.test = {singleton: singleton.objectId};
 }
 
 async function mainProcessor(options, processor) {
-    const config = loadConfig(options.env);
-
-    if (!config.sui) {
-        config.sui = {
-        networkType: "localnet",
-        name: "Sui",
-        contracts: {
-            "axelar_gateway": {}
-        }
-    }
+    const config = loadSuiConfig(options.env);
 
     await processor(config, config.sui, options);
     saveConfig(config, options.env);

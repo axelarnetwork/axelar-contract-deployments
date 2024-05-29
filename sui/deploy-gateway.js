@@ -114,6 +114,7 @@ async function processCommand(config, chain, options) {
     contractConfig.domainSeparator = domainSeparator;
     contractConfig.operator = operator;
     contractConfig.minimumRotationDelay = minimumRotationDelay;
+    console.log(contractConfig);
 }
 
 async function mainProcessor(options, processor) {
