@@ -71,7 +71,7 @@ async function processCommand(config, chain, options) {
         threshold: bcs.u128(),
         nonce: bytes32Struct,
     });
-    
+
     const encodedSigners = signersStruct
         .serialize({
             ...signers,
@@ -106,7 +106,7 @@ async function processCommand(config, chain, options) {
             showContent: true,
         },
     });
-    
+
     const gateway = result.objectChanges.find((change) => change.objectType === `${published.packageId}::gateway::Gateway`);
 
     contractConfig.gateway = gateway.objectId;

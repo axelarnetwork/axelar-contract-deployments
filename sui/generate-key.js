@@ -6,7 +6,7 @@ const { Command, Option } = require('commander');
 const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
 async function processCommand(config, chain, options) {
-    const [keypair, _] = await generateKeypair(options);
+    const [keypair] = await generateKeypair(options);
 
     printInfo('Keypair generated');
     printInfo('Public key', keypair.getPublicKey());

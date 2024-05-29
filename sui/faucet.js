@@ -7,7 +7,7 @@ const { Command } = require('commander');
 const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
 async function processCommand(config, chain, options) {
-    const [keypair, _] = await getWallet(chain, options);
+    const [keypair] = await getWallet(chain, options);
 
     await requestSuiFromFaucetV0({
         host: getFaucetHost(chain.networkType),

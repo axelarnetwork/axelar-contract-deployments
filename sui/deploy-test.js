@@ -1,4 +1,4 @@
-const { saveConfig, loadConfig, prompt } = require('../evm/utils');
+const { saveConfig, prompt } = require('../evm/utils');
 const { Command, Option } = require('commander');
 const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
@@ -10,8 +10,6 @@ const { loadSuiConfig } = require('./utils');
 
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
-
-
 
 async function processCommand(config, chain, options) {
     const [keypair, client] = await getWallet(chain, options);
@@ -30,13 +28,10 @@ async function processCommand(config, chain, options) {
     const singleton = published.publishTxn.objectChanges.find((change) => change.objectType === `${published.packageId}::test::Singleton`);
 
     const tx = new TransactionBlock();
-    
+
     tx.moveCall({
         target: `${published.packageId}::test::register_transaction`,
-        arguments: [
-            tx.object(config.sui.contracts.axelar_gateway.relayerDiscovery), 
-            tx.object(singleton.objectId)
-        ],
+        arguments: [tx.object(config.sui.contracts.axelar_gateway.relayerDiscovery), tx.object(singleton.objectId)],
     });
 
     await client.signAndExecuteTransactionBlock({
@@ -49,7 +44,7 @@ async function processCommand(config, chain, options) {
         },
     });
 
-    chain.contracts.test = {singleton: singleton.objectId};
+    chain.contracts.test = { singleton: singleton.objectId };
 }
 
 async function mainProcessor(options, processor) {
