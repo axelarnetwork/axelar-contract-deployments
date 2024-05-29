@@ -11,7 +11,7 @@ const {
 
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
-const { getAmplifierSigners } = require('./utils');
+const { getAmplifierSigners, loadSuiConfig } = require('./utils');
 
 async function getSigners(config, chain, options) {
     if (options.signers) {
@@ -118,11 +118,7 @@ async function processCommand(config, chain, options) {
 }
 
 async function mainProcessor(options, processor) {
-    const config = loadConfig(options.env);
-
-    if (!config.sui) {
-        config.sui = {};
-    }
+    const config = loadSuiConfig(options.env);
 
     await processor(config, config.sui, options);
     saveConfig(config, options.env);
