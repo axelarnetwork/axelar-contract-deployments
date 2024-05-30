@@ -51,9 +51,7 @@ async function processCommand(config, chain, options) {
 
     updateMoveToml('axelar_gateway', packageId);
 
-    const creatorCap = published.publishTxn.objectChanges.find(
-        (change) => change.objectType === `${packageId}::gateway::CreatorCap`,
-    );
+    const creatorCap = published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::gateway::CreatorCap`);
     const relayerDiscovery = published.publishTxn.objectChanges.find(
         (change) => change.objectType === `${packageId}::discovery::RelayerDiscovery`,
     );
