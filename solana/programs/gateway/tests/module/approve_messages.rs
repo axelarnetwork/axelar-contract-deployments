@@ -496,15 +496,19 @@ async fn fail_if_epoch_for_signers_was_not_found() {
 /// `validate_proof`)
 #[tokio::test]
 async fn fail_if_signer_set_epoch_is_older_than_16() {
-    // Setup
+    // We setup a new gateway that has an initial signer set registered.
     let (mut fixture, _quorum, initial_signers, gateway_root_pda) =
         setup_initialised_gateway(&[11, 22], None).await;
     let initial_signer_set = new_signer_set(&initial_signers, 0, Uint256::from_u128(33));
     let initial_signer_set = [(initial_signer_set.clone(), initial_signers.clone())];
-    let new_signer_sets = (1..=16)
+    // We generate 4 new unique signer sets (not registered yet)
+    let new_signer_sets = (1..=4)
         .map(|x| create_signer_set(&[55_u128, x], 55_u128 + x))
         .collect::<Vec<_>>();
-
+    // Only the latest signer set is allowed to call "rotate signers" ix
+    // to register the next latest signer set. We iterate over all signer sets,
+    // calling "rotate signer" with the last known signer set to register
+    // the next latest signer set.
     for (idx, ((_current_signer_set, current_signer_set_signers), (new_signer_set, _))) in
         (initial_signer_set.iter().chain(new_signer_sets.iter()))
             .tuple_windows::<(_, _)>()
@@ -528,11 +532,15 @@ async fn fail_if_signer_set_epoch_is_older_than_16() {
     let root_pda_data = fixture
         .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
         .await;
-    let new_epoch = U256::from(17_u8);
+    // Now we have registered 5 sets in total (1 initial signer set + 4 that we
+    // generated). The "epoch" is an incremental counter. But the data structure
+    // only kept around 4 entries.
+    let new_epoch = U256::from(5_u8);
     assert_eq!(root_pda_data.auth_weighted.current_epoch(), new_epoch);
-    assert_eq!(root_pda_data.auth_weighted.signer_sets().len(), 16);
+    assert_eq!(root_pda_data.auth_weighted.signer_sets().len(), 4);
     // Action
-    // we can use any of the 16 signers to sign messages
+    // Any of the lastest 4 signer sets are allowed to "approve messages" coming
+    // Axelar->Solana direction.
     for (_, signer_set) in new_signer_sets.iter() {
         let destination_program_id = DestinationProgramId(Pubkey::new_unique());
         fixture
@@ -544,7 +552,7 @@ async fn fail_if_signer_set_epoch_is_older_than_16() {
             .await;
     }
 
-    // we cannot use the first signer set anymore
+    // We cannot use the first signer set anymore.
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (.., tx) = fixture
         .fully_approve_messages_with_execute_metadata(

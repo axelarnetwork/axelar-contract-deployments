@@ -86,10 +86,10 @@ pub enum SignerSetMetadata {
 }
 
 impl AxelarAuthWeighted {
-    const OLD_KEY_RETENTION: u8 = 16;
+    const OLD_KEY_RETENTION: u8 = 4;
     /// Size of the `AxelarAuthWeighted` struct when serialized.
     pub const SIZE_WHEN_SERIALIZED: usize = {
-        // len of map + len of current_epoch + len of 16 signer_sets_hash + len of 16
+        // len of map + len of current_epoch + len of 4 signer_sets_hash + len of 4
         // epochs
         size_of::<u8>()
             + size_of::<U256>()
@@ -359,7 +359,6 @@ mod tests {
     #[test]
     fn borsh_traits() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert([1u8; 32], U256::from(5u8));
         bimap.insert([2u8; 32], U256::from(4u8));
         bimap.insert([3u8; 32], U256::from(3u8));
         bimap.insert([4u8; 32], U256::from(2u8));
