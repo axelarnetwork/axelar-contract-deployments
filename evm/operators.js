@@ -2,7 +2,6 @@
 
 const { ethers } = require('hardhat');
 const {
-    Wallet,
     getDefaultProvider,
     utils: { isAddress, Interface },
     Contract,
@@ -26,6 +25,7 @@ const {
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTransaction } = require('./gas-service');
+const { getWallet } = require('./sign-utils');
 
 async function processCommand(config, chain, options) {
     const {
@@ -61,8 +61,8 @@ async function processCommand(config, chain, options) {
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    const wallet = new Wallet(privateKey, provider);
-    await printWalletInfo(wallet);
+    const wallet = await getWallet(privateKey, provider, options);
+    await printWalletInfo(wallet, options);
 
     printInfo('Contract name', contractName);
 
@@ -317,6 +317,7 @@ if (require.main === module) {
             'updateGasInfo',
         ]),
     );
+    program.addOption(new Option('--offline', 'run script in offline mode'));
     program.addOption(new Option('--args <args>', 'operator action arguments'));
 
     // options for updateGasInfo
