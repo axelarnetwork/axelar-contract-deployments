@@ -6,10 +6,15 @@ const { isNil } = require('lodash');
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 
-const { printInfo, loadConfig, saveConfig, isString, isStringArray, isNumberArray, isNumber, prompt } = require('../evm/utils');
-const { uploadContract, instantiateContract, isValidCosmosAddress, governanceAddress } = require('./utils');
+const { printInfo, loadConfig, saveConfig, isString, isStringArray, isKeccak256Hash, isNumber, prompt } = require('../evm/utils');
+const { uploadContract, instantiateContract, isValidCosmosAddress, calculateDomainSeparator, governanceAddress } = require('./utils');
 
 const { Command, Option } = require('commander');
+
+const { ethers } = require('hardhat');
+const {
+    utils: { arrayify },
+} = ethers;
 
 const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
@@ -162,8 +167,16 @@ const makeGatewayInstantiateMsg = ({ Router: { address: routerAddress }, VotingV
     return { router_address: routerAddress, verifier_address: verifierAddress };
 };
 
-const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chainId }) => {
+const makeMultisigProverInstantiateMsg = (config, chainName) => {
     const {
+        axelar: { contracts, chainId: axelarChainId, axelarId },
+        chains: { [chainName]: chainConfig },
+    } = config;
+
+    const { axelarId: chainId } = chainConfig;
+
+    const {
+        Router: { address: routerAddress },
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
@@ -173,6 +186,7 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         Gateway: {
             [chainId]: { address: gatewayAddress },
         },
+        MultisigProver: contractConfig,
     } = contracts;
     const {
         [chainId]: {
@@ -181,11 +195,13 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
             domainSeparator,
             signingThreshold,
             serviceName,
-            workerSetDiffThreshold,
+            verifierSetDiffThreshold,
             encoder,
             keyType,
         },
     } = contractConfig;
+
+    const separator = domainSeparator || calculateDomainSeparator(axelarId, routerAddress, axelarChainId);
 
     if (!validateAddress(adminAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainId}].adminAddress in axelar info`);
@@ -197,6 +213,10 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
 
     if (!validateAddress(gatewayAddress)) {
         throw new Error(`Missing or invalid Gateway[${chainId}].address in axelar info`);
+    }
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
     }
 
     if (!validateAddress(coordinatorAddress)) {
@@ -215,8 +235,8 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         throw new Error(`Missing or invalid VotingVerifier[${chainId}].address in axelar info`);
     }
 
-    if (!isNumberArray(domainSeparator)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].domainSeparator in axelar info`);
+    if (!isKeccak256Hash(separator)) {
+        throw new Error(`Invalid MultisigProver[${chainId}].domainSeparator in axelar info`);
     }
 
     if (!isStringArray(signingThreshold)) {
@@ -227,8 +247,8 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         throw new Error(`Missing or invalid MultisigProver[${chainId}].serviceName in axelar info`);
     }
 
-    if (!isNumber(workerSetDiffThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].workerSetDiffThreshold in axelar info`);
+    if (!isNumber(verifierSetDiffThreshold)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainId}].verifierSetDiffThreshold in axelar info`);
     }
 
     if (!isString(encoder)) {
@@ -247,11 +267,11 @@ const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chain
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,
         voting_verifier_address: verifierAddress,
-        domain_separator: domainSeparator,
+        domain_separator: [...arrayify(separator)],
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainId,
-        worker_set_diff_threshold: workerSetDiffThreshold,
+        verifier_set_diff_threshold: verifierSetDiffThreshold,
         encoder,
         key_type: keyType,
     };
@@ -341,7 +361,7 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
                 throw new Error('MultisigProver requires chainNames option');
             }
 
-            return makeMultisigProverInstantiateMsg(contractConfig, contracts, chainConfig);
+            return makeMultisigProverInstantiateMsg(config, chainName);
         }
     }
 
