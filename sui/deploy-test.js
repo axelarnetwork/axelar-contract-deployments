@@ -1,4 +1,4 @@
-const { saveConfig, prompt } = require('../evm/utils');
+const { saveConfig, prompt, printInfo } = require('../evm/utils');
 const { Command, Option } = require('commander');
 const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
