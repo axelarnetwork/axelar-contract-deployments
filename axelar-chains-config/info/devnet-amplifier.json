@@ -16,16 +16,21 @@
           "gasOptions": {
             "gasLimit": 5000000
           },
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "startingKeyIDs": [
             null
           ],
-          "address": "0xeA3D3979ffa953FB209FcF6D13EA49AFC0A05604",
-          "implementation": "0xfF99ED85b998bD7e2DD973cEFCb738c0C8F560EA",
-          "implementationCodehash": "0x57eb84f26ff5fab154371ae86f74219e19497e6c2c70ba1dc4116a8dc85c4eaf",
+          "address": "0x146cbBBD1D03DA0619baa96Ed1d145A549959499",
+          "implementation": "0x25C97DC353fF1dBBD04d8096AC6C87B5244D856d",
+          "implementationCodehash": "0xfd4a15c7e849df6fd0feb9a9bfd642a6c4311f53295101b0d3e1207dc206521c",
           "authModule": "0x8d0Fbce6554ef89BBB2b200389C5e7B0Ef8Aa54b",
           "tokenDeployer": "0xBf428fb6B2831EC30d7c098A3c3dC4d6972686d9",
-          "deploymentMethod": "create"
+          "deploymentMethod": "create3",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x598ba04d225cec385d1ce3cf3c9a076af803aa5c614bc0e0d176f04ac8d28f55",
+          "minimumRotationDelay": 300,
+          "salt": "AxelarAmplifierGateway devnet-amplifier"
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
@@ -84,7 +89,7 @@
       "id": "fantom",
       "axelarId": "fantom",
       "chainId": 4002,
-      "rpc": "https://fantom.api.onfinality.io/public",
+      "rpc": "https://rpc.testnet.fantom.network",
       "tokenSymbol": "ETH",
       "confirmations": 1,
       "gasOptions": {
@@ -95,16 +100,21 @@
           "gasOptions": {
             "gasLimit": 5000000
           },
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "startingKeyIDs": [
             null
           ],
-          "address": "0xBC647142c98b6a886a3581cccb0d9E6148Ed76B9",
-          "implementation": "0xb6EaD9BBB2c8581128F01b57719Ec130a36922aB",
-          "implementationCodehash": "0x3c3d115c7f9dbc903af3a1dd327af83842396dfe797f50e7acc38e1b02a82c3d",
+          "address": "0xFe34259F1EEc1Ea702A175bC5C2a4a29df6cfb43",
+          "implementation": "0x37e6F01C4BA68BA121dA57CfB0d54B822006010d",
+          "implementationCodehash": "0x6b7c920082c38c45886db0d7e1826ee424079993209d249b1ec714622f01e23f",
           "authModule": "0x40fEA06609ce54A1F0Ca829c980D3633f73b1869",
           "tokenDeployer": "0xC0be3306fE72D59f8B56Ad587a3751e0be406D8C",
-          "deploymentMethod": "create"
+          "deploymentMethod": "create3",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x9799ef60ed6cac8cd489e8932dcac928ed47c499a9cda8d128dcf1e934a196b4",
+          "minimumRotationDelay": 300,
+          "salt": "AxelarAmplifierGateway devnet-amplifier"
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
@@ -174,16 +184,21 @@
           "gasOptions": {
             "gasLimit": 5000000
           },
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "startingKeyIDs": [
             null
           ],
-          "address": "0xADb2C397B2496fB2Ef9d3BFAad322c888A3E182d",
-          "implementation": "0x3f7235dFD12Ef2fCa128078937C7503421EAbC7E",
-          "implementationCodehash": "0x80b4ebdab0c0d249caed3f39e5ce7dc0d28b0d63c30e705fa8ab8029c103025a",
+          "address": "0xeE9E463Fd8bE9AF266e1B143C27F7D42648f4006",
+          "implementation": "0x957E7eC2da3Cd93Fd49E1ac7DF0499a3EC9814a1",
+          "implementationCodehash": "0x325acd254c3c32b5da3a8f4379dfe6a3dccef30f6697bbc53e2cbef3fd5bd3c1",
           "authModule": "0x3bBF2f935177dc06356dCbD83365788C0F21a865",
           "tokenDeployer": "0x17310d0967626063af4C81cc7d0A9C631d9546c0",
-          "deploymentMethod": "create"
+          "deploymentMethod": "create3",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x5034999c74b28c4db74dca67073b78629cc0ff7bf005f2f79cd8caf7d9588406",
+          "minimumRotationDelay": 300,
+          "salt": "AxelarAmplifierGateway devnet-amplifier"
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
@@ -253,16 +268,21 @@
           "gasOptions": {
             "gasLimit": 5000000
           },
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "startingKeyIDs": [
             null
           ],
-          "address": "0x774299C3C101a5934B31264DC695a7D472Cf0B6B",
-          "implementation": "0xF093D641d5D3c79b45F351C9d1C4062Bb474Ae70",
-          "implementationCodehash": "0xe27d102637cb5caf15ff440e968f8bf622eb550f4c0b00480a2cb39c418007b1",
+          "address": "0x4a6991003d59c55710FD4D9ecE71e93883961510",
+          "implementation": "0xC7547fb5bc2Fde4Aec37De85DecA111FF3E0169b",
+          "implementationCodehash": "0x88ada364cc70966a39887ae006d790a7af331377a0f073472f4efdf2cc60e717",
           "authModule": "0xFB427588ea4107A59bC6dEb2Fa342d5519800f26",
           "tokenDeployer": "0xEe0c0Cb87ee21e5f3CC5ed23cbF374F913369Ab7",
-          "deploymentMethod": "create"
+          "deploymentMethod": "create3",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x6d61fa7631ca30c4a3c6e731891c867f9eddf00e909ef07a76e0790994dcd592",
+          "minimumRotationDelay": 300,
+          "salt": "AxelarAmplifierGateway devnet-amplifier"
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
