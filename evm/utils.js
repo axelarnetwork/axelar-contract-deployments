@@ -1210,7 +1210,7 @@ async function relayTransaction(options, chain, contract, method, params, native
         await timeout(
             (async () => {
                 const tx = await contract[method](...params, gasOptions);
-                printInfo('TX', tx.hash);
+                printInfo('Tx hash', tx.hash);
 
                 const receipt = await tx.wait(chain.confirmations);
 
