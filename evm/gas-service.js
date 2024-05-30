@@ -359,7 +359,7 @@ if (require.main === module) {
 
     // options for updateGasInfo
     program.addOption(new Option('--chains <chains...>', 'Chain names'));
-    program.addOption(new Option('--relayerAPI <relayerAPI>', 'Relay the tx through an external relayer API').env('RELAYER_API_ENDPOINT'));
+    program.addOption(new Option('--relayerAPI <relayerAPI>', 'Relay the tx through an external relayer API').env('RELAYER_API'));
 
     program.action((options) => {
         main(options);
