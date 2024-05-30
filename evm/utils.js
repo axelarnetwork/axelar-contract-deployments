@@ -1206,27 +1206,28 @@ async function relayTransaction(options, chain, contract, method, params, native
         });
 
         printInfo('Relay ID', result.relay_id);
-    } else {
-        await timeout(
-            (async () => {
-                const tx = await contract[method](...params, gasOptions);
-                printInfo('Tx hash', tx.hash);
-
-                const receipt = await tx.wait(chain.confirmations);
-
-                if (expectedEvent) {
-                    const eventEmitted = wasEventEmitted(receipt, contract, expectedEvent);
-
-                    if (!eventEmitted) {
-                        printWarn('Event not emitted in receipt.');
-                    }
-                }
-            })(),
-
-            chain.timeout || 60000,
-            new Error(`Timeout updating gas info for ${chain.name}`),
-        );
+        return;
     }
+
+    await timeout(
+        (async () => {
+            const tx = await contract[method](...params, gasOptions);
+            printInfo('Tx hash', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            if (expectedEvent) {
+                const eventEmitted = wasEventEmitted(receipt, contract, expectedEvent);
+
+                if (!eventEmitted) {
+                    printWarn('Event not emitted in receipt.');
+                }
+            }
+        })(),
+
+        chain.timeout || 60000,
+        new Error(`Timeout updating gas info for ${chain.name}`),
+    );
 }
 
 module.exports = {
