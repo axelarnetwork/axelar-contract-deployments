@@ -44,7 +44,10 @@ async function processCommand(config, chain, options) {
         },
     });
 
-    chain.contracts.test = { singleton: singleton.objectId };
+    chain.contracts.test.address = published.packageId;
+    chain.contracts.test.objects = { singleton: singleton.objectId };
+
+    printInfo('Test package deployed', JSON.stringify(chain.contracts.test, null, 2));
 }
 
 async function mainProcessor(options, processor) {

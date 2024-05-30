@@ -20,7 +20,7 @@ async function getSigners(config, chain, options) {
         const signers = JSON.parse(options.signers);
         return {
             signers: signers.signers.map(({ pubkey, weight }) => {
-                return { signer: arrayify(pubkey), weight };
+                return { pubkey: arrayify(pubkey), weight };
             }),
             threshold: signers.threshold,
             nonce: signers.nonce || HashZero,
@@ -33,32 +33,33 @@ async function getSigners(config, chain, options) {
 async function processCommand(config, chain, options) {
     const [keypair, client] = await getWallet(chain, options);
 
-    if (!chain.contracts) {
-        chain.contracts = {
-            axelar_gateway: {},
-        };
+    if (!chain.contracts.axelar_gateway) {
+        chain.contracts.axelar_gateway = {};
     }
 
     const contractConfig = chain.contracts.axelar_gateway;
-    const { operator, minimumRotationDelay, domainSeparator } = options;
+    const { minimumRotationDelay, domainSeparator } = options;
     const signers = await getSigners(config, chain, options);
+    const operator = options.operator || keypair.toSuiAddress();
 
     if (prompt(`Proceed with deployment on ${chain.name}?`, options.yes)) {
         return;
     }
 
     const published = await publishPackage('axelar_gateway', client, keypair);
-    updateMoveToml('axelar_gateway', published.packageId);
+    const packageId = published.packageId;
+
+    updateMoveToml('axelar_gateway', packageId);
 
     const creatorCap = published.publishTxn.objectChanges.find(
-        (change) => change.objectType === `${published.packageId}::gateway::CreatorCap`,
+        (change) => change.objectType === `${packageId}::gateway::CreatorCap`,
     );
     const relayerDiscovery = published.publishTxn.objectChanges.find(
-        (change) => change.objectType === `${published.packageId}::discovery::RelayerDiscovery`,
+        (change) => change.objectType === `${packageId}::discovery::RelayerDiscovery`,
     );
 
     const signerStruct = bcs.struct('WeightedSigner', {
-        signer: bcs.vector(bcs.u8()),
+        pubkey: bcs.vector(bcs.u8()),
         weight: bcs.u128(),
     });
     const bytes32Struct = bcs.fixedArray(32, bcs.u8()).transform({
@@ -82,12 +83,12 @@ async function processCommand(config, chain, options) {
     const tx = new TransactionBlock();
 
     const separator = tx.moveCall({
-        target: `${published.packageId}::bytes32::new`,
+        target: `${packageId}::bytes32::new`,
         arguments: [tx.pure(arrayify(domainSeparator))],
     });
 
     tx.moveCall({
-        target: `${published.packageId}::gateway::setup`,
+        target: `${packageId}::gateway::setup`,
         arguments: [
             tx.object(creatorCap.objectId),
             tx.pure.address(operator),
@@ -107,14 +108,18 @@ async function processCommand(config, chain, options) {
         },
     });
 
-    const gateway = result.objectChanges.find((change) => change.objectType === `${published.packageId}::gateway::Gateway`);
+    const gateway = result.objectChanges.find((change) => change.objectType === `${packageId}::gateway::Gateway`);
 
-    contractConfig.gateway = gateway.objectId;
-    contractConfig.relayerDiscovery = relayerDiscovery.objectId;
+    contractConfig.address = packageId;
+    contractConfig.objects = {
+        gateway: gateway.objectId,
+        relayerDiscovery: relayerDiscovery.objectId,
+    };
     contractConfig.domainSeparator = domainSeparator;
     contractConfig.operator = operator;
     contractConfig.minimumRotationDelay = minimumRotationDelay;
-    console.log(contractConfig);
+
+    printInfo('Gateway deployed', JSON.stringify(contractConfig, null, 2));
 }
 
 async function mainProcessor(options, processor) {
