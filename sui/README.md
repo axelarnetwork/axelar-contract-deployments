@@ -21,4 +21,4 @@ Set `PRIVATE_KEY=[suiprivkey...]` in your `.env` file. Other private key types a
 
 2. Deploy gateway:
 
-`node sui/deploy-gateway.js --signers '{"signers": [{"pubkey": "0x81b2ab171135fad70d3be5570c1c75fc2351f7a065103821335d6f2800d5398100", "weight": 1}], "threshold": 1, "nonce": ""}'`
+`node sui/deploy-gateway.js --signers '{"signers": [{"pubkey": "0x9076afa53e8a21bcf01b3e99b93044e4a005fcab5351f4ea5f72a34e31e0d5fc00", "weight": 1}], "threshold": 1, "nonce": ""}'`
