@@ -2027,6 +2027,18 @@
     "tokenSymbol": "XLM",
     "contracts": {}
   },
+  "sui": {
+    "name": "Sui",
+    "axelarId": "sui",
+    "networkType": "testnet",
+    "rpc": "https://fullnode.testnet.sui.io:443",
+    "tokenSymbol": "SUI",
+    "explorer": {
+      "name": "Suiscan",
+      "url": "https://suiscan.xyz"
+    },
+    "contracts": {}
+  },
   "axelar": {
     "id": "Axelarnet",
     "axelarId": "Axelarnet",
