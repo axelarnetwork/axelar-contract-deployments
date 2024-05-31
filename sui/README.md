@@ -21,9 +21,9 @@ sui keytool export --key-identity wallet
 node sui/generate-keypair.js
 ```
 
-Set `PRIVATE_KEY=[suiprivkey...]` in your `.env` file. Other private key types are supported via `--privateKeyType` and `--signatureScheme` flags.
+Set `PRIVATE_KEY="suiprivkey..."` in your `.env` file. Other private key types are supported via `--privateKeyType` and `--signatureScheme` flags.
 
-If you want to run against a local Sui network, then create a `local.json` config containing:
+If you want to run against a local Sui network, then create a `axelar-chains-config/info/local.json` config containing:
 
 ```bash
 {
