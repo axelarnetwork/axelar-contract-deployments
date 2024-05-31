@@ -13,7 +13,7 @@ on:
       - .github/workflows/solana-programs.yml
 
 env:
-  SOLANA_VERSION: "v1.18.0"
+  SOLANA_VERSION: "v1.18.13"
 
 defaults:
   run:
@@ -57,6 +57,10 @@ jobs:
       - name: Setup repo
         uses: ./.github/actions/setup-solana-repo
 
+      - name: Install needed tooling
+        run: |
+          sudo apt-get install protobuf-compiler
+
       - name: Unused deps
         run: cargo make unused-deps
 
@@ -69,6 +73,10 @@ jobs:
 
       - name: Setup repo
         uses: ./.github/actions/setup-solana-repo
+      
+      - name: Install needed tooling
+        run: |
+          sudo apt-get install protobuf-compiler
 
       - name: Cache Solana
         uses: actions/cache@v3

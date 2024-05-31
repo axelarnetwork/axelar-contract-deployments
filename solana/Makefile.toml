@@ -81,6 +81,8 @@ args = [
     "program-utils",
     "--package",
     "test-fixtures",
+    "--package",
+    "xtask",
 ]
 
 [tasks.audit]
