@@ -1201,11 +1201,16 @@ async function relayTransaction(options, chain, contract, method, params, native
         const result = await httpPost(options.relayerAPI, {
             chain: chain.axelarId,
             to: contract.address,
-            call_data: contract.interface.encodeFunctionData(method, params),
-            value: nativeValue,
+            calldata: contract.interface.encodeFunctionData(method, params),
+            value: nativeValue.toString(),
         });
 
-        printInfo('Relay ID', result.relay_id);
+        if (!result.error) {
+            printInfo('Relay ID', result.relayId);
+        } else {
+            printInfo('Relay Error', result.error);
+        }
+
         return;
     }
 
