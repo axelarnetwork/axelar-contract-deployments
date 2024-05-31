@@ -5,11 +5,16 @@ const {
     providers: { JsonRpcProvider },
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, mainProcessor } = require('./utils');
+const { printInfo, mainProcessor, isKeccak256Hash } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(_config, chain, options) {
     const txHash = options.txHash;
+
+    if (!isKeccak256Hash(txHash)) {
+        throw new Error(`Invalid tx format: ${txHash}`);
+    }
+
     const rpc = chain.rpc;
     const provider = new JsonRpcProvider(rpc);
     const tx = await provider.getTransaction(txHash);
@@ -19,9 +24,9 @@ async function processCommand(_config, chain, options) {
         const finalizedBlock = await provider.getBlock('finalized');
 
         if (finalizedBlock.number >= txBlock) {
-            console.log('latest finalized block', finalizedBlock.number);
-            printInfo('block for tx', txBlock);
-            console.log('timestamp for finalized block', Date.now());
+            printInfo('Latest finalized block', finalizedBlock.number);
+            printInfo('Block for tx', txBlock);
+            printInfo('Timestamp for finalized block', Date.now());
             break;
         }
     }
