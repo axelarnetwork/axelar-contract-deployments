@@ -341,24 +341,24 @@
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
-        "codeId": 11,
+        "codeId": 28,
         "address": "axelar1qk00h5atutpsv900x202pxx42npjr9thg58dnqpa72f2p7m2luas9x8txw"
       },
       "Router": {
         "adminAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
         "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
-        "codeId": 9,
+        "codeId": 27,
         "address": "axelar1q3g7fdqfpftqfpuakwn7x037k80wv35jj9ged7v5e798pds7hnasgj6azz"
       },
       "Multisig": {
         "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
         "blockExpiry": 10,
-        "codeId": 14,
+        "codeId": 23,
         "address": "axelar15nczwuqh0zcu6syeqsc4td6dphql7n2p7cgkl9raz97z5s3zdjrsc8we9y"
       },
       "Coordinator": {
         "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
-        "codeId": 13,
+        "codeId": 21,
         "address": "axelar12wrtrzqt7atsen2wsl9k5hu82jsj6739h7pck20gtdd24mqyxv6q43lyh7"
       },
       "Rewards": {
@@ -372,12 +372,12 @@
             "10"
           ]
         },
-        "codeId": 12,
+        "codeId": 26,
         "address": "axelar1guczj53xxl4347adagh23eelyhnxvugw2nqq0q0dr6kws7q35jyqqnan33"
       },
       "NexusGateway": {
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
-        "codeId": 10,
+        "codeId": 25,
         "address": "axelar1e77ukfqk3yjjpscurp0la3ae3ssafw5zmvxfqsvljh0duectfcnqzxc86l"
       },
       "VotingVerifier": {
@@ -394,7 +394,7 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "address": "axelar1elaymnd2epmfr498h2x9p2nezc4eklv95uv92u9csfs8wl75w7yqdc0h67"
         },
-        "codeId": 18,
+        "codeId": 29,
         "fantom": {
           "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
           "serviceName": "validators",
@@ -439,7 +439,7 @@
         "avalanche": {
           "address": "axelar1vnfn0e4vnn58ydpm05wqcc9zp8t5ztwd5rw5f895lykqaezmuccqujmwl2"
         },
-        "codeId": 19,
+        "codeId": 22,
         "fantom": {
           "address": "axelar12xk7d7lksh6z94vvt4qqur765trqdcn7w86mfak62qjz63zvmhvstaswtt"
         },
@@ -465,7 +465,7 @@
           "keyType": "ecdsa",
           "address": "axelar1qt0gkcrvcpv765k8ec4tl2svvg6hd3e3td8pvg2fsncrt3dzjefswsq3w2"
         },
-        "codeId": 20,
+        "codeId": 24,
         "fantom": {
           "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
           "adminAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
