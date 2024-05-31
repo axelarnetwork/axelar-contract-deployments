@@ -75,3 +75,9 @@ node sui/deploy-gateway.js -e testnet --signers '{"signers": [{"pubkey": "0x0201
 ```bash
 node sui/deploy-test.js
 ```
+
+## Troubleshooting
+
+1. Move build error during the deployment step
+
+Delete the `node_modules` folder and `package-lock.json` file and then run `npm install` again.
