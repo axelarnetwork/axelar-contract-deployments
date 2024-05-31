@@ -42,8 +42,11 @@ if (require.main === module) {
     const program = new Command();
 
     program.name('check-finality').description('Script to check when is finality achieved for a tx');
+
     addBaseOptions(program);
+
     program.addOption(new Option('-t, --txHash <txHash>', 'tx hash to check for finality').makeOptionMandatory(true));
+
     program.action((options) => {
         main(options);
     });
