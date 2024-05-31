@@ -2,12 +2,14 @@
 
 const { addBaseOptions } = require('./cli-utils');
 const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui.js/faucet');
-const { getWallet } = require('./sign-utils');
+const { getWallet, printWalletInfo } = require('./sign-utils');
 const { Command } = require('commander');
 const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
 async function processCommand(config, chain, options) {
-    const [keypair] = await getWallet(chain, options);
+    const [keypair, client] = getWallet(chain, options);
+
+    await printWalletInfo(keypair, client, chain, options);
 
     await requestSuiFromFaucetV0({
         host: getFaucetHost(chain.networkType),

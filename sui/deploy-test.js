@@ -12,10 +12,18 @@ const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 
 async function processCommand(config, chain, options) {
-    const [keypair, client] = await getWallet(chain, options);
+    const [keypair, client] = getWallet(chain, options);
+
+    await printWalletInfo(keypair, client, chain, options);
 
     if (!chain.contracts.test) {
         chain.contracts.test = {};
+    }
+
+    const relayerDiscovery = config.sui.contracts.axelar_gateway?.objects?.relayerDiscovery;
+
+    if (!relayerDiscovery) {
+        throw new Error('Relayer discovery object not found');
     }
 
     if (prompt(`Proceed with deployment on ${chain.name}?`, options.yes)) {
@@ -31,7 +39,7 @@ async function processCommand(config, chain, options) {
 
     tx.moveCall({
         target: `${published.packageId}::test::register_transaction`,
-        arguments: [tx.object(config.sui.contracts.axelar_gateway.relayerDiscovery), tx.object(singleton.objectId)],
+        arguments: [tx.object(relayerDiscovery), tx.object(singleton.objectId)],
     });
 
     await client.signAndExecuteTransactionBlock({

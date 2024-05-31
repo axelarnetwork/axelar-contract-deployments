@@ -5,13 +5,16 @@ const { generateKeypair } = require('./sign-utils');
 const { Command, Option } = require('commander');
 const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
+const { ethers } = require('hardhat');
+const { hexlify } = ethers.utils;
+
 async function processCommand(config, chain, options) {
-    const [keypair] = await generateKeypair(options);
+    const keypair = await generateKeypair(options);
 
     printInfo('Keypair generated');
-    printInfo('Public key', keypair.getPublicKey());
+    printInfo('Public key', hexlify(keypair.getPublicKey().toRawBytes()));
     printInfo('Address', keypair.toSuiAddress());
-    printInfo('Private key', keypair.export());
+    printInfo('Private key', keypair.getSecretKey());
 }
 
 async function mainProcessor(options, processor) {

@@ -28,8 +28,8 @@ const addBaseOptions = (program, options = {}) => {
 
         program.addOption(
             new Option('--signatureScheme <signatureScheme>', 'signature scheme to use')
-                .choices(['ed25519', 'secp256k1', 'secp256r1'])
-                .default('ed25519')
+                .choices(['secp256k1', 'ed25519', 'secp256r1'])
+                .default('secp256k1')
                 .env('SIGNATURE_SCHEME'),
         );
     }

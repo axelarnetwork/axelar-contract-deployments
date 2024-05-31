@@ -10,7 +10,7 @@ const {
 } = ethers;
 
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet } = require('./sign-utils');
+const { getWallet, printWalletInfo } = require('./sign-utils');
 const { getAmplifierSigners, loadSuiConfig } = require('./utils');
 
 async function getSigners(config, chain, options) {
@@ -31,7 +31,9 @@ async function getSigners(config, chain, options) {
 }
 
 async function processCommand(config, chain, options) {
-    const [keypair, client] = await getWallet(chain, options);
+    const [keypair, client] = getWallet(chain, options);
+
+    await printWalletInfo(keypair, client, chain, options);
 
     if (!chain.contracts.axelar_gateway) {
         chain.contracts.axelar_gateway = {};

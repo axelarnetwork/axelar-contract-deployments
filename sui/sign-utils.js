@@ -1,6 +1,5 @@
 'use strict';
 
-const { ethers } = require('hardhat');
 const { decodeSuiPrivateKey } = require('@mysten/sui.js/cryptography');
 const { Ed25519Keypair } = require('@mysten/sui.js/keypairs/ed25519');
 const { Secp256k1Keypair } = require('@mysten/sui.js/keypairs/secp256k1');
@@ -8,7 +7,7 @@ const { Secp256r1Keypair } = require('@mysten/sui.js/keypairs/secp256r1');
 const { printInfo } = require('../evm/utils');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
 
-async function getWallet(chain, options) {
+function getWallet(chain, options) {
     let keypair;
     let scheme;
 
@@ -57,18 +56,16 @@ async function getWallet(chain, options) {
         }
     }
 
-    printInfo('Wallet address', keypair.toSuiAddress());
-    printInfo('Wallet Pubkey', ethers.utils.hexlify(keypair.getPublicKey().toRawBytes()));
-
     const client = new SuiClient({ url: getFullnodeUrl(chain.networkType) });
 
-    // const coins = await client.getCoins({ owner: keypair.toSuiAddress() });
-
-    // coins.data.forEach((coin) => {
-    //     printInfo(`Wallet balance ${coin.coinType}`, `${coin.balance / 1e9}`);
-    // });
-
     return [keypair, client];
+}
+
+async function printWalletInfo(keypair, client, chain, options) {
+    printInfo('Wallet address', keypair.toSuiAddress());
+
+    const coins = await client.getBalance({ owner: keypair.toSuiAddress() });
+    printInfo('Wallet balance', `${coins.totalBalance / 1e9} ${chain.tokenSymbol || coins.coinType}`);
 }
 
 async function generateKeypair(options) {
@@ -88,5 +85,6 @@ async function generateKeypair(options) {
 
 module.exports = {
     getWallet,
+    printWalletInfo,
     generateKeypair,
 };
