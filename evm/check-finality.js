@@ -5,7 +5,7 @@ const {
     providers: { JsonRpcProvider },
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, mainProcessor, isKeccak256Hash } = require('./utils');
+const { printInfo, mainProcessor, isKeccak256Hash, sleep } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(_config, chain, options) {
@@ -29,6 +29,8 @@ async function processCommand(_config, chain, options) {
             printInfo('Timestamp for finalized block', Date.now());
             break;
         }
+
+        await sleep(1000);
     }
 }
 
