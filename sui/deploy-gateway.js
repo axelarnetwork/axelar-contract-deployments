@@ -13,8 +13,21 @@ const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo } = require('./sign-utils');
 const { getAmplifierSigners, loadSuiConfig } = require('./utils');
 
-async function getSigners(config, chain, options) {
-    if (options.signers) {
+async function getSigners(keypair, config, chain, options) {
+    if (options.signers === 'wallet') {
+        const pubkey = keypair.getPublicKey().toRawBytes();
+        printInfo('Using wallet pubkey as the signer for the gateway', hexlify(pubkey));
+
+        if (keypair.getKeyScheme() !== 'Secp256k1') {
+            throw new Error('Only Secp256k1 pubkeys are supported by the gateway');
+        }
+
+        return {
+            signers: [{ pubkey, weight: 1 }],
+            threshold: 1,
+            nonce: HashZero,
+        };
+    } else if (options.signers) {
         printInfo('Using provided signers', options.signers);
 
         const signers = JSON.parse(options.signers);
@@ -23,7 +36,7 @@ async function getSigners(config, chain, options) {
                 return { pubkey: arrayify(pubkey), weight };
             }),
             threshold: signers.threshold,
-            nonce: signers.nonce || HashZero,
+            nonce: arrayify(signers.nonce) || HashZero,
         };
     }
 
@@ -41,7 +54,7 @@ async function processCommand(config, chain, options) {
 
     const contractConfig = chain.contracts.axelar_gateway;
     const { minimumRotationDelay, domainSeparator } = options;
-    const signers = await getSigners(config, chain, options);
+    const signers = await getSigners(keypair, config, chain, options);
     const operator = options.operator || keypair.toSuiAddress();
 
     if (prompt(`Proceed with deployment on ${chain.name}?`, options.yes)) {
