@@ -21,9 +21,9 @@ sui keytool export --key-identity wallet
 node sui/generate-keypair.js
 ```
 
-Set `PRIVATE_KEY=[suiprivkey...]` in your `.env` file. Other private key types are supported via `--privateKeyType` and `--signatureScheme` flags.
+Set `PRIVATE_KEY="suiprivkey..."` in your `.env` file. Other private key types are supported via `--privateKeyType` and `--signatureScheme` flags.
 
-If you want to run against a local Sui network, then create a `local.json` config containing:
+If you want to run against a local Sui network, then create a `axelar-chains-config/info/local.json` config containing:
 
 ```bash
 {
@@ -32,7 +32,7 @@ If you want to run against a local Sui network, then create a `local.json` confi
         "axelarId": "sui",
         "networkType": "localnet",
         "tokenSymbol": "SUI",
-        "rpc": "[local rpc]",
+        "rpc": "http://127.0.0.1:9000",
         "contracts": {}
     }
 }
@@ -75,3 +75,9 @@ node sui/deploy-gateway.js -e testnet --signers '{"signers": [{"pubkey": "0x0201
 ```bash
 node sui/deploy-test.js
 ```
+
+## Troubleshooting
+
+1. Move build error during the deployment step
+
+Delete the `node_modules` folder and `package-lock.json` file and then run `npm install` again.
