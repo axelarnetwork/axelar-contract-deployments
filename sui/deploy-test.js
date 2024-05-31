@@ -9,7 +9,7 @@ const {
 const { loadSuiConfig } = require('./utils');
 
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet } = require('./sign-utils');
+const { getWallet, printWalletInfo } = require('./sign-utils');
 
 async function processCommand(config, chain, options) {
     const [keypair, client] = getWallet(chain, options);
