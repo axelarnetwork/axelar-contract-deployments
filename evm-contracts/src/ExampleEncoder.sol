@@ -4,8 +4,8 @@ pragma solidity 0.8.19;
 import {AbiSolanaGatewayPayload, SolanaGatewayPayload} from "./SolanaGatewayPayload.sol";
 
 // Importing just so the `forge build` picks it up and produces the artifact for us.
-import {AxelarGateway} from "cgp-spec/solidity/contracts/AxelarGateway.sol";
-import {AxelarAuthWeighted} from "cgp-spec/solidity/contracts/auth/AxelarAuthWeighted.sol";
+import {AxelarAmplifierGateway} from "axelar-gmp-sdk-solidity/gateway/AxelarAmplifierGateway.sol";
+import {AxelarAmplifierGatewayProxy} from "axelar-gmp-sdk-solidity/gateway/AxelarAmplifierGatewayProxy.sol";
 
 /// @title Example Solana Gateway Encoder
 /// @dev This contract provides functionalities to encode and decode SolanaGatewayPayload structures

@@ -1,5 +1,7 @@
+use ethers::types::{Address, U256};
+use ethers::utils::keccak256;
 use evm_contracts_rs::contracts::{
-    axelar_auth_weighted, axelar_gateway, axelar_memo, example_encoder,
+    axelar_amplifier_gateway, axelar_amplifier_gateway_proxy, axelar_memo, example_encoder,
 };
 
 use crate::ContractMiddleware;
@@ -27,46 +29,49 @@ impl crate::EvmSigner {
     /// This function deploys the `AxelarGateway` contract using the signer
     /// stored in the `EvmSigner` instance. The deployment is done on the
     /// blockchain network that the signer is connected to.
-    pub async fn deploy_axelar_gateway(
+    pub async fn deploy_axelar_amplifier_gateway(
         &self,
-        auth_weighted: &axelar_auth_weighted::AxelarAuthWeighted<ContractMiddleware>,
-    ) -> anyhow::Result<axelar_gateway::AxelarGateway<ContractMiddleware>> {
-        let contract =
-            axelar_gateway::AxelarGateway::deploy(self.signer.clone(), auth_weighted.address())?
-                .send()
-                .await?;
-        Ok(axelar_gateway::AxelarGateway::<ContractMiddleware>::new(
-            contract.address(),
+        recent_signer_sets: &[crate::evm_weighted_signers::WeightedSigners],
+        owner: Address,
+        operator: Address,
+    ) -> anyhow::Result<axelar_amplifier_gateway::AxelarAmplifierGateway<ContractMiddleware>> {
+        let previous_signer_retention = U256::from(4_u128);
+        let minimum_rotation_delay = U256::from(1_u128);
+        let domain_separator = get_domain_separator();
+        let contract = axelar_amplifier_gateway::AxelarAmplifierGateway::deploy(
             self.signer.clone(),
-        ))
-    }
-
-    /// Deploys the `AxelarAuthWeighted` contract.
-    pub async fn deploy_axelar_auth_weighted(
-        &self,
-        recent_signer_sets: &[crate::evm_operators::OperatorSet],
-    ) -> anyhow::Result<axelar_auth_weighted::AxelarAuthWeighted<ContractMiddleware>> {
-        let constructor_params =
-            crate::evm_operators::get_weighted_auth_deploy_param(recent_signer_sets);
-
-        let contract = axelar_auth_weighted::AxelarAuthWeighted::deploy(
-            self.signer.clone(),
-            constructor_params,
+            (
+                previous_signer_retention,
+                domain_separator,
+                minimum_rotation_delay,
+            ),
         )?
         .send()
         .await?;
-        Ok(
-            axelar_auth_weighted::AxelarAuthWeighted::<ContractMiddleware>::new(
+
+        let bytes_params = crate::evm_weighted_signers::get_gateway_proxy_setup_signers(
+            recent_signer_sets,
+            operator,
+        );
+        let proxy = axelar_amplifier_gateway_proxy::AxelarAmplifierGatewayProxy::deploy(
+            self.signer.clone(),
+            (
                 contract.address(),
-                self.signer.clone(),
+                owner,
+                ethers::abi::Token::Bytes(bytes_params),
             ),
-        )
+        )?
+        .send()
+        .await?;
+        Ok(axelar_amplifier_gateway::AxelarAmplifierGateway::<
+            ContractMiddleware,
+        >::new(proxy.address(), self.signer.clone()))
     }
 
     /// Deploys the `AxelarMemo` contract.
     pub async fn deploy_axelar_memo(
         &self,
-        gateway: axelar_gateway::AxelarGateway<ContractMiddleware>,
+        gateway: axelar_amplifier_gateway::AxelarAmplifierGateway<ContractMiddleware>,
     ) -> anyhow::Result<axelar_memo::AxelarMemo<ContractMiddleware>> {
         let contract = axelar_memo::AxelarMemo::deploy(self.signer.clone(), gateway.address())?
             .send()
@@ -78,6 +83,15 @@ impl crate::EvmSigner {
     }
 }
 
+/// Return a hardcoded domain separator
+/// This is used to append to message hashes when signers are signing a payload
+pub fn get_domain_separator() -> [u8; 32] {
+    let chaint_name = "chain";
+    let router = "router";
+
+    keccak256(format!("{chaint_name}{router}axelar-1"))
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -85,7 +99,7 @@ mod tests {
     use test_log::test;
 
     use crate::chain::TestBlockchain;
-    use crate::evm_operators::create_operator_set;
+    use crate::evm_weighted_signers::create_operator_set;
 
     #[rstest]
     #[timeout(std::time::Duration::from_secs(2))]
@@ -102,31 +116,22 @@ mod tests {
     #[rstest]
     #[timeout(std::time::Duration::from_secs(2))]
     #[test(tokio::test)]
-    async fn can_deploy_axelar_auth_weighted() {
+    async fn can_deploy_axelar_amplifier_gateway() {
         // Setup
         let chain = TestBlockchain::new();
         let alice = chain.construct_provider_with_signer(0);
+        let bob = chain.construct_provider_with_signer(1);
         let operators1 = create_operator_set(&chain, 0..5);
-        let operators2 = create_operator_set(&chain, 5..10);
 
         // Action
         let _contract = alice
-            .deploy_axelar_auth_weighted(&[operators1, operators2])
+            .deploy_axelar_amplifier_gateway(
+                &[operators1],
+                alice.signer.address(),
+                bob.signer.address(),
+            )
             .await
             .unwrap();
-    }
-
-    #[rstest]
-    #[timeout(std::time::Duration::from_secs(2))]
-    #[test(tokio::test)]
-    async fn can_deploy_axelar_gateway() {
-        // Setup
-        let chain = TestBlockchain::new();
-        let alice = chain.construct_provider_with_signer(0);
-        let aw = alice.deploy_axelar_auth_weighted(&[]).await.unwrap();
-
-        // Action
-        let _contract = alice.deploy_axelar_gateway(&aw).await.unwrap();
     }
 
     #[rstest]
@@ -136,9 +141,17 @@ mod tests {
         // Setup
         let chain = TestBlockchain::new();
         let alice = chain.construct_provider_with_signer(0);
-        let aw = alice.deploy_axelar_auth_weighted(&[]).await.unwrap();
-        let gateway = alice.deploy_axelar_gateway(&aw).await.unwrap();
+        let bob = chain.construct_provider_with_signer(1);
+        let operators1 = create_operator_set(&chain, 0..5);
 
+        let gateway = alice
+            .deploy_axelar_amplifier_gateway(
+                &[operators1],
+                alice.signer.address(),
+                bob.signer.address(),
+            )
+            .await
+            .unwrap();
         // Action
         let _contract = alice.deploy_axelar_memo(gateway).await.unwrap();
     }

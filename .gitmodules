@@ -6,6 +6,6 @@
 [submodule "evm-contracts/lib/forge-std"]
 	path = evm-contracts/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "evm-contracts/lib/cgp-spec"]
-	path = evm-contracts/lib/cgp-spec
-	url = https://github.com/axelarnetwork/cgp-spec
+[submodule "evm-contracts/lib/axelar-gmp-sdk-solidity"]
+	path = evm-contracts/lib/axelar-gmp-sdk-solidity
+	url = https://github.com/axelarnetwork/axelar-gmp-sdk-solidity

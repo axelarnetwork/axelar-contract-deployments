@@ -15,7 +15,8 @@ async fn test_send_from_solana_to_evm() {
     // Setup - Solana
     let (mut solana_chain, gateway_root_pda, _signers, _counter) = axelar_solana_setup().await;
     // Setup - EVM
-    let (evm_chain, evm_signer, _evm_aw, evm_gateway, mut operators) = axelar_evm_setup().await;
+    let (evm_chain, evm_signer, evm_gateway, mut weighted_signers, domain_separator) =
+        axelar_evm_setup().await;
     let evm_memo = evm_signer
         .deploy_axelar_memo(evm_gateway.clone())
         .await
@@ -38,25 +39,31 @@ async fn test_send_from_solana_to_evm() {
     )
     .await;
     // - EVM operators sign the contract call
-    let (command_id, signed_weighted_execute_input) =
-        evm_prepare_approve_contract_call(solana_id, &call_contract, &evm_chain, &mut operators);
+    let (messages, proof) = evm_prepare_approve_contract_call(
+        solana_id,
+        &call_contract,
+        &mut weighted_signers,
+        domain_separator,
+    );
+    let message = messages[0].clone();
     // - The relayer relays the contract call to the EVM gateway
+    // evm_gateway.message_hash_to_sign(, )
     let _tx_reciept = evm_gateway
-        .execute(signed_weighted_execute_input.into())
+        .approve_messages(messages, proof)
         .send()
         .await
         .unwrap()
         .await
         .unwrap();
 
-    // Assert - we check that the contract call was approved
+    // Assert - we check that the message was approved
     let is_approved = evm_gateway
-        .is_contract_call_approved(
-            command_id,
-            solana_id.to_string(),
-            call_contract.sender.to_string(),
-            ethers_core::types::Address::from_slice(call_contract.destination_address.as_slice()),
-            call_contract.payload_hash,
+        .is_message_approved(
+            message.source_chain.clone(),
+            message.message_id.clone(),
+            message.source_address.clone(),
+            message.contract_address,
+            message.payload_hash,
         )
         .await
         .unwrap();
@@ -73,9 +80,9 @@ async fn test_send_from_solana_to_evm() {
     // Action - Relayer calls the EVM memo program with the payload
     evm_memo
         .execute(
-            command_id,
-            solana_id.to_string(),
-            call_contract.sender.to_string(),
+            message.source_chain,
+            message.message_id,
+            message.source_address,
             call_contract.payload.into(),
         )
         .send()
@@ -104,33 +111,32 @@ async fn test_send_from_solana_to_evm() {
 fn evm_prepare_approve_contract_call(
     solana_id: &str,
     call_contract: &CallContract,
-    evm_chain: &evm_contracts_test_suite::chain::TestBlockchain,
-    operators: &mut evm_contracts_test_suite::evm_operators::OperatorSet,
-) -> ([u8; 32], Vec<u8>) {
+    signer_set: &mut evm_contracts_test_suite::evm_weighted_signers::WeightedSigners,
+    domain_separator: [u8; 32],
+) -> (
+    Vec<evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::Message>,
+    evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::Proof,
+) {
+    let message =
+        evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::Message {
+            source_chain: solana_id.to_string(),
+            message_id: "message555".to_string(),
+            source_address: call_contract.sender.to_string(),
+            contract_address: ethers_core::types::Address::from_slice(
+                call_contract.destination_address.as_slice(),
+            ),
+            payload_hash: call_contract.payload_hash,
+        };
     let approve_contract_call_command =
-        evm_contracts_test_suite::evm_operators::get_approve_contract_call(
-            solana_id.to_string(),
-            call_contract.sender.to_string(),
-            ethers_core::types::Address::from_slice(call_contract.destination_address.as_slice()),
-            call_contract.payload_hash,
-            [11; 32], // random values - not checked by anything
-            42.into(),
-        );
+        evm_contracts_test_suite::evm_weighted_signers::get_approve_contract_call(message.clone());
     // build command batch
-    let command_id = [42; 32]; // random uniqu command id
-    let command_batch = evm_contracts_test_suite::evm_operators::build_command_batch(
-        evm_chain.anvil.chain_id(),
-        &[command_id],
-        vec!["approveContractCall".to_string()],
-        vec![approve_contract_call_command],
-    );
-    // get signed weighted execute input
     let signed_weighted_execute_input =
-        evm_contracts_test_suite::evm_operators::get_signed_weighted_execute_input(
-            command_batch,
-            operators,
+        evm_contracts_test_suite::evm_weighted_signers::get_weighted_signatures_proof(
+            &approve_contract_call_command,
+            signer_set,
+            domain_separator,
         );
-    (command_id, signed_weighted_execute_input)
+    (vec![message], signed_weighted_execute_input)
 }
 
 async fn call_solana_gateway(

@@ -22,11 +22,11 @@ pub mod contracts {
         include!(concat!(env!("OUT_DIR"), "/AxelarMemo.rs"));
     }
 
-    pub mod axelar_gateway {
-        include!(concat!(env!("OUT_DIR"), "/AxelarGateway.rs"));
+    pub mod axelar_amplifier_gateway {
+        include!(concat!(env!("OUT_DIR"), "/AxelarAmplifierGateway.rs"));
     }
 
-    pub mod axelar_auth_weighted {
-        include!(concat!(env!("OUT_DIR"), "/AxelarAuthWeighted.rs"));
+    pub mod axelar_amplifier_gateway_proxy {
+        include!(concat!(env!("OUT_DIR"), "/AxelarAmplifierGatewayProxy.rs"));
     }
 }

@@ -1,7 +1,7 @@
 use evm_contracts_test_suite::chain::TestBlockchain;
-use evm_contracts_test_suite::evm_contracts_rs::contracts::{axelar_auth_weighted, axelar_gateway};
-use evm_contracts_test_suite::evm_operators::OperatorSet;
-use evm_contracts_test_suite::ContractMiddleware;
+use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway;
+use evm_contracts_test_suite::evm_weighted_signers::WeightedSigners;
+use evm_contracts_test_suite::{get_domain_separator, ContractMiddleware};
 use solana_program_test::{processor, ProgramTest};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
@@ -58,19 +58,32 @@ async fn axelar_solana_setup() -> (
 async fn axelar_evm_setup() -> (
     TestBlockchain,
     evm_contracts_test_suite::EvmSigner,
-    axelar_auth_weighted::AxelarAuthWeighted<ContractMiddleware>,
-    axelar_gateway::AxelarGateway<ContractMiddleware>,
-    OperatorSet,
+    axelar_amplifier_gateway::AxelarAmplifierGateway<ContractMiddleware>,
+    WeightedSigners,
+    [u8; 32],
 ) {
+    use evm_contracts_test_suite::ethers::signers::Signer;
+
     let evm_chain = evm_contracts_test_suite::chain::TestBlockchain::new();
     let alice = evm_chain.construct_provider_with_signer(0);
-    let operators1 = evm_contracts_test_suite::evm_operators::create_operator_set(&evm_chain, 0..5);
-    let operators2 = evm_contracts_test_suite::evm_operators::create_operator_set(&evm_chain, 5..9);
-    let evm_aw = alice
-        .deploy_axelar_auth_weighted(&[operators1, operators2.clone()])
+    let operators1 =
+        evm_contracts_test_suite::evm_weighted_signers::create_operator_set(&evm_chain, 0..5);
+    let operators2 =
+        evm_contracts_test_suite::evm_weighted_signers::create_operator_set(&evm_chain, 5..9);
+    let evm_gateway = alice
+        .deploy_axelar_amplifier_gateway(
+            &[operators1, operators2.clone()],
+            alice.walelt.address(),
+            alice.walelt.address(),
+        )
         .await
         .unwrap();
-    let evm_gateway = alice.deploy_axelar_gateway(&evm_aw).await.unwrap();
 
-    (evm_chain, alice, evm_aw, evm_gateway, operators2)
+    (
+        evm_chain,
+        alice,
+        evm_gateway,
+        operators2,
+        get_domain_separator(),
+    )
 }

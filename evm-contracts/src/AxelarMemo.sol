@@ -2,21 +2,23 @@
 pragma solidity 0.8.19;
 
 import {AbiSolanaGatewayPayload, SolanaGatewayPayload, SolanaAccountRepr} from "./SolanaGatewayPayload.sol";
-import {AxelarExecutable} from "cgp-spec/solidity/contracts/executable/AxelarExecutable.sol";
-
+import {IBaseAmplifierGateway} from "axelar-gmp-sdk-solidity/interfaces/IBaseAmplifierGateway.sol";
 
 /// @title Axelar Memo Contract
 /// @dev This contract provides functionalities to send and receive a memo message to Solana using Axelar Gateway
-contract AxelarMemo is AxelarExecutable {
-
+contract AxelarMemo {
     /// @dev The number of messages received
     uint256 public MESSAGES_RECEIVED;
+
+    /// @dev The amplifier gateway address
+    IBaseAmplifierGateway public gateway;
 
     /// @dev Event emitted when a memo message is received
     /// @param memoMessage The memo message received
     event ReceivedMemo(string memoMessage);
 
-    constructor(address gateway_) AxelarExecutable(gateway_) {
+    constructor(address gateway_) {
+        gateway = IBaseAmplifierGateway(gateway_);
         MESSAGES_RECEIVED = 0;
     }
 
@@ -42,8 +44,16 @@ contract AxelarMemo is AxelarExecutable {
     }
 
     /// @dev Receives a memo message from Solana
-    function _execute(string calldata, string calldata, bytes calldata payload) internal override {
+    function execute(
+        string calldata sourceChain,
+        string calldata messageId,
+        string calldata sourceAddress,
+        bytes calldata payload
+    ) external {
         MESSAGES_RECEIVED += 1;
+
+        bool valid = gateway.validateMessage(sourceChain, messageId, sourceAddress, keccak256(payload));
+        require(valid, "the message is not valid");
 
         string memory converted = string(payload);
         emit ReceivedMemo(converted);

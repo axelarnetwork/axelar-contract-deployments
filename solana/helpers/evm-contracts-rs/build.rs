@@ -22,13 +22,13 @@ fn main() {
             "../../../evm-contracts/out/AxelarMemo.sol/AxelarMemo.json",
         ),
         (
-            "AxelarGateway",
-            "../../../evm-contracts/out/AxelarGateway.sol/AxelarGateway.json",
+            "AxelarAmplifierGateway",
+            "../../../evm-contracts/out/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json",
         ),
         (
-            "AxelarAuthWeighted",
-            "../../../evm-contracts/out/AxelarAuthWeighted.sol/AxelarAuthWeighted.json",
-        ),
+            "AxelarAmplifierGatewayProxy",
+            "../../../evm-contracts/out/AxelarAmplifierGatewayProxy.sol/AxelarAmplifierGatewayProxy.json",
+        )
     ];
     for (contract_name, path) in contracts {
         let mut output = output_dir.clone();

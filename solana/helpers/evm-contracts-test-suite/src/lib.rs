@@ -18,6 +18,7 @@ use ethers::signers::{LocalWallet, Wallet};
 pub use {ethers, evm_contracts_rs};
 pub mod chain;
 mod deployments;
+pub use deployments::get_domain_separator;
 
 /// A wrapper around the `SignerMiddleware` that provides some extra helpers
 pub struct EvmSigner {
@@ -34,30 +35,35 @@ pub struct EvmSigner {
 pub type ContractMiddleware = SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>;
 
 /// Utilities for interacting with the Axelar EVM contracts
-pub mod evm_operators {
+pub mod evm_weighted_signers {
     use std::ops::Range;
 
     use ethers::abi::{encode_packed, Tokenizable};
     use ethers::signers::Signer;
+    use ethers::types::Address;
+    use ethers::utils::keccak256;
 
     use crate::chain::TestBlockchain;
 
     /// Represents an operator in the `AxelarAuthWeighted` contract.
     #[derive(Debug, Clone, PartialEq)]
-    pub struct Operator {
+    pub struct WeightedSigner {
         /// The wallet of the operator
         pub wallet: ethers::signers::LocalWallet,
         /// The weight of the operator
-        pub weight: ethers::types::U256,
+        pub weight: ethers::types::U128,
     }
 
     /// Represents an operator set in the `AxelarAuthWeighted` contract.
     #[derive(Debug, Clone, PartialEq)]
-    pub struct OperatorSet {
+    pub struct WeightedSigners {
         /// The threshold for the operator set
-        pub threshold: ethers::types::U256,
+        pub threshold: ethers::types::U128,
+        /// Unique nonce represent used to differentiate otherwise unique
+        /// operator sets
+        pub nonce: [u8; 32],
         /// The operators in the set
-        pub operators: Vec<Operator>,
+        pub signers: Vec<WeightedSigner>,
     }
 
     /// Create a new operator set using the given range of indices which map to
@@ -65,10 +71,10 @@ pub mod evm_operators {
     pub fn create_operator_set(
         chain: &TestBlockchain,
         range: Range<usize>,
-    ) -> crate::evm_operators::OperatorSet {
+    ) -> crate::evm_weighted_signers::WeightedSigners {
         let mut operators = range
             .map(|x| chain.construct_provider_with_signer(x))
-            .map(|x| crate::evm_operators::Operator {
+            .map(|x| crate::evm_weighted_signers::WeightedSigner {
                 wallet: x.walelt,
                 weight: 2.into(),
             })
@@ -76,9 +82,10 @@ pub mod evm_operators {
 
         sort_by_address(&mut operators);
 
-        crate::evm_operators::OperatorSet {
+        crate::evm_weighted_signers::WeightedSigners {
             threshold: (operators.len() * 2).into(),
-            operators,
+            signers: operators,
+            nonce: keccak256("123"),
         }
     }
 
@@ -127,17 +134,17 @@ pub mod evm_operators {
     ///     );
     /// };
     /// ```
-    pub fn get_weighted_auth_deploy_param(operator_sets: &[OperatorSet]) -> ethers::abi::Token {
+    pub fn get_weighted_auth_deploy_param(operator_sets: &[WeightedSigners]) -> ethers::abi::Token {
         let sets = operator_sets
             .iter()
             .map(|operator_set| {
                 let operators = operator_set
-                    .operators
+                    .signers
                     .iter()
                     .map(|x| x.wallet.address())
                     .collect::<Vec<_>>();
                 let weights = operator_set
-                    .operators
+                    .signers
                     .iter()
                     .map(|x| x.weight)
                     .collect::<Vec<_>>();
@@ -154,66 +161,40 @@ pub mod evm_operators {
         ethers::abi::Token::Array(sets)
     }
 
-    /// Builds a transfer weighted operatorship command for the
-    /// `Gateway` contract.
-    ///
-    /// ported from the following TypeScript code:
-    /// ```typescript
-    /// const getTransferWeightedOperatorshipCommand = (newOperators, newWeights, threshold) =>
-    ///      defaultAbiCoder.encode(
-    ///          ['address[]', 'uint256[]', 'uint256'],
-    ///          [sortBy(newOperators, (address) => address.toLowerCase()), newWeights,  threshold],
-    /// );
-    /// ```
-    pub fn get_transfer_weighted_operatorship_command(
-        new_operators: &mut OperatorSet,
-        threshold: ethers::types::U256,
-    ) -> Vec<u8> {
-        sort_by_address(&mut new_operators.operators);
-        let operators = new_operators
-            .operators
-            .iter()
-            .map(|x| x.wallet.address())
-            .map(ethers::abi::Token::Address)
-            .collect::<Vec<_>>();
-        let weights = new_operators
-            .operators
-            .iter()
-            .map(|x| x.weight)
-            .map(ethers::abi::Token::Uint)
-            .collect::<Vec<_>>();
-        ethers::abi::encode(&[
-            ethers::abi::Token::Array(operators),
-            ethers::abi::Token::Array(weights),
-            ethers::abi::Token::Uint(threshold),
-        ])
-    }
-
     /// Encodes an approve contract call for the `Gateway` contract.
     ///
     /// ported from the following TypeScript code:
     /// ```typescript
-    /// const getApproveContractCall = (sourceChain, source, destination, payloadHash, sourceTxHash, sourceEventIndex) =>
-    ///     defaultAbiCoder.encode(
-    ///         ['string', 'string', 'address', 'bytes32', 'bytes32', 'uint256'],
-    ///         [sourceChain, source, destination, payloadHash, sourceTxHash, sourceEventIndex],
+    /// const getApproveMessageData = (messages) => {
+    ///     return defaultAbiCoder.encode(
+    ///         [
+    ///             'uint8',
+    ///             'tuple(string sourceChain, string messageId, string sourceAddress, address contractAddress, bytes32 payloadHash)[] messages',
+    ///         ],
+    ///         [APPROVE_MESSAGES, messages],
     ///     );
+    /// };
     /// ```
     pub fn get_approve_contract_call(
-        source_chain: String,
-        source: String,
-        destination: ethers::types::Address,
-        payload_hash: [u8; 32],
-        source_tx_hash: [u8; 32],
-        source_event_index: ethers::types::U256,
+        message: evm_contracts_rs::contracts::axelar_amplifier_gateway::Message,
     ) -> Vec<u8> {
+        const APPROVE_MESSAGE: u8 = 0;
+
         ethers::abi::encode(&[
-            ethers::abi::Token::String(source_chain),
-            ethers::abi::Token::String(source),
-            ethers::abi::Token::Address(destination),
-            ethers::abi::Token::FixedBytes(payload_hash.to_vec()),
-            ethers::abi::Token::FixedBytes(source_tx_hash.to_vec()),
-            ethers::abi::Token::Uint(source_event_index),
+            ethers::abi::Token::Uint(APPROVE_MESSAGE.into()),
+            ethers::abi::Token::Array(
+                [ethers::abi::Token::Tuple(
+                    [
+                        ethers::abi::Token::String(message.source_chain),
+                        ethers::abi::Token::String(message.message_id),
+                        ethers::abi::Token::String(message.source_address),
+                        ethers::abi::Token::Address(message.contract_address),
+                        ethers::abi::Token::FixedBytes(message.payload_hash.to_vec()),
+                    ]
+                    .to_vec(),
+                )]
+                .to_vec(),
+            ),
         ])
     }
 
@@ -221,75 +202,113 @@ pub mod evm_operators {
     ///
     /// ported from the following TypeScript code:
     /// ```typescript
-    /// const getWeightedSignaturesProof = async (data, operators, weights, threshold, signers) => {
-    ///     const hash = arrayify(keccak256(data));
-    ///     const signatures = await Promise.all(
-    ///         sortBy(signers, (wallet) => wallet.address.toLowerCase()).map((wallet) => wallet.signMessage(hash)),
-    ///     );
-    ///     return defaultAbiCoder.encode(
-    ///         ['address[]', 'uint256[]', 'uint256', 'bytes[]'],
-    ///         [getAddresses(operators), weights, threshold, signatures],
-    ///     );
+    /// 
+    /// const WEIGHTED_SIGNERS_TYPE = 'tuple(tuple(address signer,uint128 weight)[] signers,uint128 threshold,bytes32 nonce)';
+    /// const encodeWeightedSigners = (weightedSigners) => {
+    ///     return defaultAbiCoder.encode([WEIGHTED_SIGNERS_TYPE], [weightedSigners]);
     /// };
+    ///
+    /// const encodeWeightedSignersMessage = (data, domainSeparator, weightedSignerHash) => {
+    ///     return arrayify(domainSeparator + weightedSignerHash.slice(2) + keccak256(arrayify(data)).slice(2));
+    /// };
+    ///
+    /// const encodeMessageHash = (data, domainSeparator, weightedSignerHash) => {
+    ///     return hashMessage(encodeWeightedSignersMessage(data, domainSeparator, weightedSignerHash));
+    /// };
+    ///
+    /// const getWeightedSignersProof = async (data, domainSeparator, weightedSigners, wallets) => {
+    ///     const weightedSignerHash = keccak256(encodeWeightedSigners(weightedSigners));
+    ///     const message = encodeWeightedSignersMessage(data, domainSeparator, weightedSignerHash);
+    ///
+    ///     const signatures = await Promise.all(wallets.map((wallet) => wallet.signMessage(message)));
+    ///
+    ///     return { signers: weightedSigners, signatures };
+    /// };  
     /// ```
-    pub fn get_weighted_signatures_proof(data: &[u8], operator_set: &mut OperatorSet) -> Vec<u8> {
-        let hash = ethers::utils::keccak256(data);
+    pub fn get_weighted_signatures_proof(
+        data: &[u8],
+        signer_set: &mut WeightedSigners,
+        domain_separator: [u8; 32],
+    ) -> evm_contracts_rs::contracts::axelar_amplifier_gateway::Proof {
+        let weighted_signer_hash =
+            keccak256(ethers::abi::encode(&[get_weighted_signers(signer_set)]));
         let packed_msg = encode_packed(&[
-            ethers::abi::Token::String("\x19Ethereum Signed Message:\n32".to_string()),
-            ethers::abi::Token::FixedBytes(hash.to_vec()),
+            ethers::abi::Token::String("\x19Ethereum Signed Message:\n96".to_string()),
+            ethers::abi::Token::FixedBytes(domain_separator.to_vec()),
+            ethers::abi::Token::FixedBytes(weighted_signer_hash.to_vec()),
+            ethers::abi::Token::FixedBytes(keccak256(data).to_vec()),
         ])
         .unwrap();
         let hash = ethers::utils::keccak256(packed_msg);
-        sort_by_address(&mut operator_set.operators);
-        let signatures = operator_set
-            .operators
+        sort_by_address(&mut signer_set.signers);
+        let signatures = signer_set
+            .signers
             .iter()
-            .map(|operator| {
-                let signature = operator.wallet.sign_hash(hash.into()).unwrap();
+            .map(|signer| {
+                let signature = signer.wallet.sign_hash(hash.into()).unwrap();
                 signature.to_vec()
             })
-            .map(ethers::abi::Token::Bytes)
+            .map(|x| x.into())
             .collect::<Vec<_>>();
-        let weights = operator_set
-            .operators
-            .iter()
-            .map(|operator| operator.weight)
-            .map(ethers::abi::Token::Uint)
-            .collect::<Vec<_>>();
-        let operators = operator_set
-            .operators
-            .iter()
-            .map(|operator| operator.wallet.address())
-            .map(ethers::abi::Token::Address)
-            .collect::<Vec<_>>();
-        ethers::abi::encode(&[
-            ethers::abi::Token::Array(operators),
-            ethers::abi::Token::Array(weights),
-            ethers::abi::Token::Uint(operator_set.threshold),
-            ethers::abi::Token::Array(signatures),
-        ])
+        evm_contracts_rs::contracts::axelar_amplifier_gateway::Proof {
+            signers: evm_contracts_rs::contracts::axelar_amplifier_gateway::WeightedSigners {
+                signers: signer_set
+                    .signers
+                    .iter()
+                    .map(|x| {
+                        evm_contracts_rs::contracts::axelar_amplifier_gateway::WeightedSigner {
+                            signer: x.wallet.address(),
+                            weight: x.weight.as_u128(),
+                        }
+                    })
+                    .collect::<Vec<_>>(),
+                threshold: signer_set.threshold.as_u128(),
+                nonce: signer_set.nonce,
+            },
+            signatures,
+        }
     }
 
-    /// Signs a payload with the given operator set, concatenates the signature
-    /// with the payload.
-    ///
-    /// ported from the following TypeScript code:
-    /// ```typescript
-    /// const getSignedWeightedExecuteInput = async (data, operators, weights, threshold, signers) =>
-    /// defaultAbiCoder.encode(['bytes', 'bytes'], [data, await getWeightedSignaturesProof(data, operators, weights, threshold, signers)]);
-    /// ```
-    pub fn get_signed_weighted_execute_input(
-        data: Vec<u8>,
-        operators: &mut OperatorSet,
+    /// (address operator_, WeightedSigners[] memory signers) =
+    /// abi.decode(data, (address, WeightedSigners[]));
+    pub fn get_gateway_proxy_setup_signers(
+        recent_signer_sets: &[crate::evm_weighted_signers::WeightedSigners],
+        operator: Address,
     ) -> Vec<u8> {
-        let proof = crate::evm_operators::get_weighted_signatures_proof(&data, operators);
+        let signer_sets = recent_signer_sets
+            .iter()
+            .map(get_weighted_signers)
+            .collect::<Vec<_>>();
         ethers::abi::encode(&[
-            ethers::abi::Token::Bytes(data),
-            ethers::abi::Token::Bytes(proof),
+            ethers::abi::Token::Address(operator),
+            ethers::abi::Token::Array(signer_sets),
         ])
     }
 
-    pub(crate) fn sort_by_address(operators: &mut [Operator]) {
+    /// const WEIGHTED_SIGNERS_TYPE = 'tuple(tuple(address signer,uint128
+    /// weight)[] signers,uint128 threshold,bytes32 nonce)';
+    pub fn get_weighted_signers(
+        signer_set: &crate::evm_weighted_signers::WeightedSigners,
+    ) -> ethers::abi::Token {
+        let signers = signer_set
+            .signers
+            .iter()
+            .map(|x| {
+                ethers::abi::Token::Tuple(vec![
+                    ethers::abi::Token::Address(x.wallet.address()),
+                    ethers::abi::Token::Uint(x.weight.into()),
+                ])
+            })
+            .collect::<Vec<_>>();
+
+        ethers::abi::Token::Tuple(vec![
+            ethers::abi::Token::Array(signers),
+            ethers::abi::Token::Uint(signer_set.threshold.into()),
+            ethers::abi::Token::FixedBytes(signer_set.nonce.into()),
+        ])
+    }
+
+    pub(crate) fn sort_by_address(operators: &mut [WeightedSigner]) {
         operators.sort_by(|a, b| a.wallet.address().cmp(&b.wallet.address()));
     }
 }

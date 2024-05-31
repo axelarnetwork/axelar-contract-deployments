@@ -2,9 +2,11 @@ use std::str::FromStr;
 
 use axelar_executable::axelar_message_primitives::{DataPayload, DestinationProgramId};
 use axelar_solana_memo_program::state::Counter;
-use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_gateway::ContractCallFilter;
+use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo::SolanaAccountRepr;
-use evm_contracts_test_suite::evm_contracts_rs::contracts::{axelar_gateway, axelar_memo};
+use evm_contracts_test_suite::evm_contracts_rs::contracts::{
+    axelar_amplifier_gateway, axelar_memo,
+};
 use evm_contracts_test_suite::ContractMiddleware;
 use solana_program_test::tokio;
 use test_fixtures::axelar_message::custom_message;
@@ -17,7 +19,8 @@ async fn test_send_from_evm_to_solana() {
     let (mut solana_chain, gateway_root_pda, solana_signers, counter_pda) =
         axelar_solana_setup().await;
     // Setup - EVM
-    let (_evm_chain, evm_signer, _evm_aw, evm_gateway, _operators) = axelar_evm_setup().await;
+    let (_evm_chain, evm_signer, evm_gateway, _weighted_signers, _domain_separator) =
+        axelar_evm_setup().await;
     let evm_memo = evm_signer
         .deploy_axelar_memo(evm_gateway.clone())
         .await
@@ -95,7 +98,7 @@ async fn call_evm_gateway(
     solana_id: &str,
     memo: &str,
     solana_accounts_to_provide: Vec<SolanaAccountRepr>,
-    evm_gateway: &axelar_gateway::AxelarGateway<ContractMiddleware>,
+    evm_gateway: &axelar_amplifier_gateway::AxelarAmplifierGateway<ContractMiddleware>,
 ) -> ContractCallFilter {
     let _receipt = evm_memo
         .send_to_solana(
