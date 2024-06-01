@@ -1208,7 +1208,7 @@ async function relayTransaction(options, chain, contract, method, params, native
         if (!result.error) {
             printInfo('Relay ID', result.relayId);
         } else {
-            printInfo('Relay Error', result.error);
+            throw new Error(`Relay Error: ${result.error}`);
         }
 
         return;
