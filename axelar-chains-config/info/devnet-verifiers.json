@@ -16,16 +16,21 @@
           "gasOptions": {
             "gasLimit": 5000000
           },
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "startingKeyIDs": [
             null
           ],
-          "address": "0x3bcBd03B123d817f98bccBf45B38631739496E94",
-          "implementation": "0x0cAF30063a94382bd55AAbc834bB23129D030012",
-          "implementationCodehash": "0xf39269736d1c878058c823265bbbafe6cb28827ae30b3230a49bc12b14a11439",
+          "address": "0x8a2DB90356402a00dbfFeeF2629F590B4929Df5F",
+          "implementation": "0x6d7963f2d9434ecC04ff75AADD95a139EFa25232",
+          "implementationCodehash": "0xd1bce68cd5cf6762f20829ac314d9652a95642f988296fc62ba66af84bfd558f",
           "authModule": "0x7fF4F27f1C476e24c555556C5D47bd7D29151e5d",
           "tokenDeployer": "0xDa41938e8bbE78517a15e3A6ab897fABb23f3d35",
-          "deploymentMethod": "create"
+          "deploymentMethod": "create3",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x333e4afab949ca00f9b5daa5a021f942b614c91cb5ced70ded38cd89da2b55ef",
+          "minimumRotationDelay": 300,
+          "salt": "AxelarAmplifierGateway devnet-verifiers"
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
@@ -84,7 +89,7 @@
       "id": "fantom",
       "axelarId": "fantom",
       "chainId": 4002,
-      "rpc": "https://fantom.api.onfinality.io/public",
+      "rpc": "https://rpc.testnet.fantom.network",
       "tokenSymbol": "ETH",
       "confirmations": 1,
       "gasOptions": {
@@ -95,16 +100,21 @@
           "gasOptions": {
             "gasLimit": 5000000
           },
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "startingKeyIDs": [
             null
           ],
-          "address": "0xE5Cd4e66082352b293Ae8e8B0Ef256b26B6A9658",
-          "implementation": "0x90135db9eCE092818948c50cF5b266ef64D49e85",
-          "implementationCodehash": "0x1408bf6cf8720e377efdc26389859c8d0bf7e5d546e680fd58044c8365b1c15a",
+          "address": "0x7970e55CabBee82cA951EdE2B288665f080823b6",
+          "implementation": "0x77e04bBdE02a37F7d626Df532d225D0C7198c8B5",
+          "implementationCodehash": "0xf5b21542bff700ece279b93c934ce7831363a0749fbb2126cd0c2bf5ea10d542",
           "authModule": "0xDe3dE140a4b1621B6b04673c5CC4178daad01256",
           "tokenDeployer": "0xB0d15dBCa48449999c53AC330F84fdEB0Df974bB",
-          "deploymentMethod": "create"
+          "deploymentMethod": "create3",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x5c23b70b5d42a8e1368b5837e80a18c7e19c0e7d60b43c1e91d01225fd786344",
+          "minimumRotationDelay": 300,
+          "salt": "AxelarAmplifierGateway devnet-verifiers"
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
@@ -174,16 +184,21 @@
           "gasOptions": {
             "gasLimit": 5000000
           },
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "startingKeyIDs": [
             null
           ],
-          "address": "0xFef54D5C6648aB29C2B0D13CA6fadc46B811fD6D",
-          "implementation": "0xe8b3DeDa0804387f2A1F41Ed910cc5bF0412A84C",
-          "implementationCodehash": "0xae93179b77858c665289631ac7bb55f00eefe0915bde2b67fb3e86fc32839fbb",
+          "address": "0x2A8465a312ebBa54D774972f01D64574a5acFC63",
+          "implementation": "0xEc37bb3AeC26639F3510414fF30A000f2f4F7922",
+          "implementationCodehash": "0x71118f24d4e1a15a18879f340c8e583e8314dcd3de920e43b02a2cff0fdf30e7",
           "authModule": "0x2c24A8E6Dfb973d9C5D9309519C62065e6a75651",
           "tokenDeployer": "0xF2eF04A73Ef579de638b5658072BEB676530C5F2",
-          "deploymentMethod": "create"
+          "deploymentMethod": "create3",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x8c7bcafb223d3c1d45e52d64b1c8d262601cb5e263714b2b5024c4bdfb917158",
+          "minimumRotationDelay": 300,
+          "salt": "AxelarAmplifierGateway devnet-verifiers"
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
@@ -253,16 +268,21 @@
           "gasOptions": {
             "gasLimit": 5000000
           },
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "startingKeyIDs": [
             null
           ],
-          "address": "0x4e6d2B261a28066db189D02cDCfaF092d8e5003a",
-          "implementation": "0x8A109C9d0Af3d8755b7d3ca4E38f4a0f2F811363",
-          "implementationCodehash": "0xd5955d12167011f693b3c36705be2dc0d20a57dc7465671badebf06b3bf4b736",
+          "address": "0x88E1790FF0F03F5e35fcE8Fbe31b9df9CB850718",
+          "implementation": "0x30c5F5df4465cf98096557F3E8ce1411723BD663",
+          "implementationCodehash": "0xfa7687cdbc2be6ed9bb328af1b8336ace04132b717a63144e4942f0ff5193cec",
           "authModule": "0x626DE43fc27396deE25f81343d7f20863179F5dE",
           "tokenDeployer": "0x032ee8934e4f50CBc58f5F84FA487dfD46401618",
-          "deploymentMethod": "create"
+          "deploymentMethod": "create3",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0xca4397f116cb317164af5decdf823ef51285f6b02c245310391489e0d97216fd",
+          "minimumRotationDelay": 300,
+          "salt": "AxelarAmplifierGateway devnet-verifiers"
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
@@ -321,24 +341,24 @@
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
-        "codeId": 11,
+        "codeId": 28,
         "address": "axelar1qk00h5atutpsv900x202pxx42npjr9thg58dnqpa72f2p7m2luas9x8txw"
       },
       "Router": {
         "adminAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
         "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
-        "codeId": 9,
+        "codeId": 27,
         "address": "axelar1q3g7fdqfpftqfpuakwn7x037k80wv35jj9ged7v5e798pds7hnasgj6azz"
       },
       "Multisig": {
         "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
         "blockExpiry": 10,
-        "codeId": 14,
+        "codeId": 23,
         "address": "axelar15nczwuqh0zcu6syeqsc4td6dphql7n2p7cgkl9raz97z5s3zdjrsc8we9y"
       },
       "Coordinator": {
         "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
-        "codeId": 13,
+        "codeId": 21,
         "address": "axelar12wrtrzqt7atsen2wsl9k5hu82jsj6739h7pck20gtdd24mqyxv6q43lyh7"
       },
       "Rewards": {
@@ -352,12 +372,12 @@
             "10"
           ]
         },
-        "codeId": 12,
+        "codeId": 26,
         "address": "axelar1guczj53xxl4347adagh23eelyhnxvugw2nqq0q0dr6kws7q35jyqqnan33"
       },
       "NexusGateway": {
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
-        "codeId": 10,
+        "codeId": 25,
         "address": "axelar1e77ukfqk3yjjpscurp0la3ae3ssafw5zmvxfqsvljh0duectfcnqzxc86l"
       },
       "VotingVerifier": {
@@ -374,7 +394,7 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "address": "axelar1elaymnd2epmfr498h2x9p2nezc4eklv95uv92u9csfs8wl75w7yqdc0h67"
         },
-        "codeId": 18,
+        "codeId": 29,
         "fantom": {
           "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
           "serviceName": "validators",
@@ -419,7 +439,7 @@
         "avalanche": {
           "address": "axelar1vnfn0e4vnn58ydpm05wqcc9zp8t5ztwd5rw5f895lykqaezmuccqujmwl2"
         },
-        "codeId": 19,
+        "codeId": 22,
         "fantom": {
           "address": "axelar12xk7d7lksh6z94vvt4qqur765trqdcn7w86mfak62qjz63zvmhvstaswtt"
         },
@@ -445,7 +465,7 @@
           "keyType": "ecdsa",
           "address": "axelar1qt0gkcrvcpv765k8ec4tl2svvg6hd3e3td8pvg2fsncrt3dzjefswsq3w2"
         },
-        "codeId": 20,
+        "codeId": 24,
         "fantom": {
           "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
           "adminAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
