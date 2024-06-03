@@ -633,6 +633,7 @@
   "axelar": {
     "id": "Axelarnet",
     "axelarId": "Axelarnet",
+    "chainId": "axelar-stagenet-1",
     "rpc": "",
     "lcd": "",
     "grpc": "",
