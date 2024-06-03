@@ -85,15 +85,15 @@ async function getDomainSeparator(config, chain, options) {
     } = contracts;
 
     if (!isString(chain.axelarId)) {
-        throw new Error(`invalid axelar ID for chain ${chain.axelarId}`);
+        throw new Error(`missing or invalid axelar ID for chain ${chain.axelarId}`);
     }
 
     if (!isString(routerAddress) || !isValidCosmosAddress(routerAddress)) {
-        throw new Error(`invalid router address`);
+        throw new Error(`missing or invalid router address`);
     }
 
     if (!isString(chainId)) {
-        throw new Error(`invalid chain ID`);
+        throw new Error(`missing or invalid chain ID`);
     }
 
     const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);

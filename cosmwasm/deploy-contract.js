@@ -201,6 +201,18 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         },
     } = contractConfig;
 
+    if (!isString(chainId)) {
+        throw new Error(`Missing or invalid axelar ID for chain ${chainName}`);
+    }
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    if (!isString(axelarChainId)) {
+        throw new Error(`Missing or invalid chain ID`);
+    }
+
     const separator = domainSeparator || calculateDomainSeparator(chainId, routerAddress, axelarChainId);
 
     if (!validateAddress(adminAddress)) {
@@ -213,10 +225,6 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
 
     if (!validateAddress(gatewayAddress)) {
         throw new Error(`Missing or invalid Gateway[${chainId}].address in axelar info`);
-    }
-
-    if (!validateAddress(routerAddress)) {
-        throw new Error('Missing or invalid Router.address in axelar info');
     }
 
     if (!validateAddress(coordinatorAddress)) {
