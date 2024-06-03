@@ -2312,6 +2312,7 @@
   "axelar": {
     "id": "Axelarnet",
     "axelarId": "Axelarnet",
+    "chainId": "axelar-dojo-1",
     "rpc": "https://rpc-axelar.imperator.co:443",
     "lcd": "https://lcd-axelar.imperator.co:443",
     "grpc": "grpc-axelar.imperator.co:2062",

@@ -512,6 +512,7 @@
     },
     "id": "Axelarnet",
     "axelarId": "Axelarnet",
+    "chainId": "devnet-verifiers",
     "rpc": "http://devnet-verifiers.axelar.dev:26657",
     "lcd": "http://devnet-verifiers.axelar.dev:1317",
     "grpc": "devnet-verifiers.axelar.dev:9090",
