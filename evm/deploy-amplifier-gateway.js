@@ -28,8 +28,9 @@ const {
     isValidAddress,
     isKeccak256Hash,
     getContractConfig,
+    isString,
 } = require('./utils');
-const { calculateDomainSeparator } = require('../cosmwasm/utils');
+const { calculateDomainSeparator, isValidCosmosAddress } = require('../cosmwasm/utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
@@ -82,6 +83,17 @@ async function getDomainSeparator(config, chain, options) {
     const {
         Router: { address: routerAddress },
     } = contracts;
+
+    if (!isString(chain.axelarId)) {
+        throw new Error(`invalid axelar ID for chain ${chain.axelarId}`);
+    }
+    if (!isValidCosmosAddress(routerAddress)) {
+        throw new Error(`invalid router address`);
+    }
+    if (!isString(chainId)) {
+        throw new Error(`invalid chain ID`);
+    }
+
     const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
     const expectedDomainSeparator = calculateDomainSeparator(chain.axelarId, routerAddress, chainId);
 
