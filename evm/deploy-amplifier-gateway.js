@@ -88,7 +88,7 @@ async function getDomainSeparator(config, chain, options) {
         throw new Error(`invalid axelar ID for chain ${chain.axelarId}`);
     }
 
-    if (!isValidCosmosAddress(routerAddress)) {
+    if (!isString(routerAddress) || !isValidCosmosAddress(routerAddress)) {
         throw new Error(`invalid router address`);
     }
 
