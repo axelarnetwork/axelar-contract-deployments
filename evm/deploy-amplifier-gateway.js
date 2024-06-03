@@ -82,7 +82,7 @@ async function getDomainSeparator(config, chain, options) {
     const {
         Router: { address: routerAddress },
     } = contracts;
-    const domainSeparator = hexlify((await getContractConfig(config, chain.name)).domain_separator);
+    const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
     const expectedDomainSeparator = calculateDomainSeparator(axelarId, routerAddress, chainId);
 
     if (domainSeparator !== expectedDomainSeparator) {
