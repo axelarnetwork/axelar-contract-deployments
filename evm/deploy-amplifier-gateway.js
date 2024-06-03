@@ -184,7 +184,7 @@ async function deploy(config, chain, options) {
     contractConfig.deployer = wallet.address;
     const domainSeparator = await getDomainSeparator(config, chain, options);
     const minimumRotationDelay = Number(options.minimumRotationDelay);
-    const salt = options.salt || '';
+    const salt = options.salt || `AxelarAmplifierGateway ${config.axelar.chainId}`;
 
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${options.previousSignersRetention}, ${domainSeparator}, ${minimumRotationDelay}`);
