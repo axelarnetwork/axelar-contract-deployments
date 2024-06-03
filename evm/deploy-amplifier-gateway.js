@@ -91,7 +91,7 @@ async function getDomainSeparator(config, chain, options) {
     if (!isValidCosmosAddress(routerAddress)) {
         throw new Error(`invalid router address`);
     }
-    
+
     if (!isString(chainId)) {
         throw new Error(`invalid chain ID`);
     }
