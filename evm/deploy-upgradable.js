@@ -12,7 +12,7 @@ const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const { Command, Option } = require('commander');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
-const { printInfo, printError, printWalletInfo, getDeployedAddress, prompt, getGasOptions, mainProcessor, printLog } = require('./utils');
+const { printInfo, printError, printWalletInfo, getDeployedAddress, prompt, getGasOptions, mainProcessor } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
 function getProxy(wallet, proxyAddress) {
