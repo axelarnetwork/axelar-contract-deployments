@@ -55,7 +55,7 @@ class CoinManager {
             CoinManager.doSplitCoins(tx, coins, splitAmount);
         } else {
             for (const coinType in coinTypeToCoins) {
-                if(this.isGasToken(coinTypeToCoins[coinType].data[0])) continue;
+                if (this.isGasToken(coinTypeToCoins[coinType].data[0])) continue;
                 CoinManager.doSplitCoins(tx, coinTypeToCoins[coinType], splitAmount);
             }
         }
