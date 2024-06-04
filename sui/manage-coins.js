@@ -36,23 +36,57 @@ async function getAllCoins(client, account) {
     return coinTypeToCoins;
 }
 
+function checkCoinType(coinType, coinTypeToCoins) {
+    if (coinType && !coinTypeToCoins[coinType]) {
+        console.error(`No coins found for coin type ${coinType}`);
+        process.exit(0);
+    }
+}
+
+async function splitCoins(tx, coinTypeToCoins, options) {
+    checkSplitAmount(options);
+    const splitAmount = BigInt(options.split);
+
+    console.log('\n==== Splitting Coins ====');
+
+    const coinType = options.coinType;
+
+    // Throw an error if the coin type is specified but no coins are found
+    checkCoinType(coinType, coinTypeToCoins);
+
+    if (coinType) {
+        const coins = coinTypeToCoins[coinType];
+        doSplitCoins(tx, coins, splitAmount);
+    } else {
+        for (const coinType in coinTypeToCoins) {
+            doSplitCoins(tx, coinTypeToCoins[coinType], splitAmount);
+        }
+    }
+
+    // The transaction will fail if the gas budget is not set for splitting coins transaction
+    tx.setGasBudget(1e8);
+}
+
+function doSplitCoins(tx, coins, splitAmount) {
+    const firstObjectId = coins.data[0].coinObjectId;
+    tx.splitCoins(firstObjectId, [splitAmount]);
+    console.log(`Split coins of type '${coins.data[0].coinType}' with amount ${splitAmount}`);
+}
+
 async function mergeCoin(tx, coinTypeToCoins, options) {
     const coinType = options.coinType;
     console.log('\n==== Merging Coins ====');
 
+    // Throw an error if the coin type is specified but no coins are found
+    checkCoinType(coinType, coinTypeToCoins);
+
     if (coinType) {
         const coins = coinTypeToCoins[coinType];
-
-        if (!coins) {
-            console.error(`No coins found for coin type ${coinType}`);
-            return;
-        }
-
-        await doMergeCoin(tx, coins.data);
+        await doMergeCoin(tx, coins);
     } else {
         for (const coinType in coinTypeToCoins) {
             const coins = coinTypeToCoins[coinType];
-            await doMergeCoin(tx, coins.data);
+            await doMergeCoin(tx, coins);
         }
     }
 }
@@ -61,8 +95,17 @@ function isGasToken(coin) {
     return coin.coinType === '0x2::sui::SUI';
 }
 
+function checkSplitAmount(options) {
+    try {
+        parseInt(options.split);
+    } catch (e) {
+        console.error('\nError: Please specify a valid split amount');
+        process.exit(0);
+    }
+}
+
 async function doMergeCoin(tx, coins) {
-    const coinObjectIds = coins.map((coin) => coin.coinObjectId);
+    const coinObjectIds = coins.data.map((coin) => coin.coinObjectId);
 
     // If the first coin is a gas token, remove it from the list. Otherwise, the merge will fail.
     if (isGasToken(coins[0])) {
@@ -78,7 +121,7 @@ async function doMergeCoin(tx, coins) {
     const remainingCoins = coinObjectIds.map((id) => tx.object(id));
 
     tx.mergeCoins(firstCoin, remainingCoins);
-    console.log(`Merged ${coins.length} coins of type '${coins[0].coinType}'`);
+    console.log(`Merged ${coins.data.length} coins of type '${coins.data[0].coinType}'`);
 }
 
 function printAllCoins(coinTypeToCoins) {
@@ -105,6 +148,7 @@ async function processCommand(config, chain, options) {
     if (options.merge) {
         await mergeCoin(tx, coinTypeToCoins, options);
     } else if (options.split) {
+        await splitCoins(tx, coinTypeToCoins, options);
     }
 
     const requireBroadcast = options.merge || options.split;
@@ -113,6 +157,7 @@ async function processCommand(config, chain, options) {
         await client.signAndExecuteTransactionBlock({
             transactionBlock: tx,
             signer: keypair,
+
             options: {
                 showEffects: true,
                 showObjectChanges: true,
