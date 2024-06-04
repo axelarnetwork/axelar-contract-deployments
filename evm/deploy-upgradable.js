@@ -24,8 +24,6 @@ async function getImplementationArgs(contractName, config, options) {
 
     try {
         args = options.args ? JSON.parse(options.args) : {};
-        console.log('Parsed args:\n');
-        printLog(args);
     } catch (error) {
         console.error('Error parsing args:\n', error.message);
     }
