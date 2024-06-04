@@ -290,7 +290,7 @@
         "avalanche": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
-          "sourceGatewayAddress": "0xeA3D3979ffa953FB209FcF6D13EA49AFC0A05604",
+          "sourceGatewayAddress": "0x146cbBBD1D03DA0619baa96Ed1d145A549959499",
           "votingThreshold": [
             "6",
             "10"
@@ -304,7 +304,7 @@
         "fantom": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
-          "sourceGatewayAddress": "0xBC647142c98b6a886a3581cccb0d9E6148Ed76B9",
+          "sourceGatewayAddress": "0xFe34259F1EEc1Ea702A175bC5C2a4a29df6cfb43",
           "votingThreshold": [
             "6",
             "10"
@@ -317,7 +317,7 @@
         "ethereum-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
-          "sourceGatewayAddress": "0xADb2C397B2496fB2Ef9d3BFAad322c888A3E182d",
+          "sourceGatewayAddress": "0xeE9E463Fd8bE9AF266e1B143C27F7D42648f4006",
           "votingThreshold": [
             "6",
             "10"
@@ -330,7 +330,7 @@
         "op-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
-          "sourceGatewayAddress": "0x774299C3C101a5934B31264DC695a7D472Cf0B6B",
+          "sourceGatewayAddress": "0x4a6991003d59c55710FD4D9ecE71e93883961510",
           "votingThreshold": [
             "6",
             "10"
@@ -366,7 +366,7 @@
             "10"
           ],
           "serviceName": "validators",
-          "workerSetDiffThreshold": 1,
+          "verifierSetDiffThreshold": 1,
           "encoder": "abi",
           "keyType": "ecdsa",
           "address": "axelar1g6520uhs8u37el40wqngf60z06mjgk6z7nezytd2mxrmh7yesnmsyc0zjw"
@@ -381,7 +381,7 @@
             "10"
           ],
           "serviceName": "validators",
-          "workerSetDiffThreshold": 1,
+          "verifierSetDiffThreshold": 1,
           "encoder": "abi",
           "keyType": "ecdsa",
           "address": "axelar17fa8wruwmk2y0h32wrg5rxwespvcvz5zc2hjnczz58tnmg8enh0sunsshp"
@@ -395,7 +395,7 @@
             "10"
           ],
           "serviceName": "validators",
-          "workerSetDiffThreshold": 1,
+          "verifierSetDiffThreshold": 1,
           "encoder": "abi",
           "keyType": "ecdsa",
           "address": "axelar1274ntw3prlrzzys4m0mc5xxhzu09x0r3d37886xdz65w59ey7mgs6v0j5z"
@@ -409,7 +409,7 @@
             "10"
           ],
           "serviceName": "validators",
-          "workerSetDiffThreshold": 1,
+          "verifierSetDiffThreshold": 1,
           "encoder": "abi",
           "keyType": "ecdsa",
           "address": "axelar1xdmwwl44tcdpljupjkafqpznrny4t60xgyyqw7hgnvztjtvlgurqx9k960"
