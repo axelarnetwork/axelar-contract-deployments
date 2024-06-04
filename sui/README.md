@@ -81,3 +81,13 @@ node sui/deploy-test.js
 1. Move build error during the deployment step
 
 Delete the `node_modules` folder and `package-lock.json` file and then run `npm install` again.
+
+## Transfer object
+
+Please note shared objects cannot be transferred via this script.
+
+```bash
+node sui/transfer-object.js --objectId <object id to be transferred> --recipient <recipient address>
+
+node sui/transfer-object.js --contractName <Can be checked from config> --objectName <picked from config> --recipient <recipient address>
+```
