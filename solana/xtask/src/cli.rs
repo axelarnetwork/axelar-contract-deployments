@@ -144,6 +144,7 @@ mod tests {
     use borsh::from_slice;
     use gmp_gateway::axelar_auth_weighted::AxelarAuthWeighted;
     use gmp_gateway::state::GatewayConfig;
+    use serial_test::serial;
     use solana_test_validator::{TestValidatorGenesis, UpgradeableProgramInfo};
     use tempfile::NamedTempFile;
     use tests::path::contracts_artifact_dir;
@@ -152,6 +153,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    #[serial]
     async fn build_actually_works() {
         let args = vec!["xtask", "build", "gmp-gateway"];
 
@@ -168,6 +170,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn deploy_actually_works() {
         solana_logger::setup_with_default("solana_program_runtime=warn");
 
@@ -218,6 +221,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn initialize_gateway_contract_works() {
         solana_logger::setup_with_default("solana_program_runtime=warn");
 
