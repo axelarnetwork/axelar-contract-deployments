@@ -10,7 +10,7 @@ async function transferCap(options) {
     const [keypair, client] = getWallet(config.sui, options);
     const tx = new TransactionBlock();
 
-    tx.transferObjects([`${options.objectId}`], tx.pure(options.reciepent));
+    tx.transferObjects([`${options.objectId}`], tx.pure(options.recipient));
 
     const result = await client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
@@ -31,8 +31,8 @@ async function getConfigAndTransferObject(options) {
 }
 
 async function main(options) {
-    if (!isKeccak256Hash(options.reciepent)) {
-        throw new Error(`Invalid reciepent [${options.reciepent}]`);
+    if (!isKeccak256Hash(options.recipient)) {
+        throw new Error(`Invalid recipient [${options.recipient}]`);
     }
 
     if (options.objectId) {
@@ -62,15 +62,11 @@ if (require.main === module) {
     program.name('transfer-object').description('Transfer object to recipient address');
 
     addBaseOptions(program);
-
-    program.addOption(new Option('--objectId <objectId>', 'object id to be transfered').env('SUI_OBJECT_ID'));
-
+    program.addOption(new Option('--objectId <objectId>', 'object id to be transferred').env('SUI_OBJECT_ID'));
     program.addOption(new Option('--contractName <contractName>', 'contract name').env('CONTRACT_NAME'));
-
-    program.addOption(new Option('--objectName <objectName>', 'object name to be transfered').env('SUI_OBJECT_NAME'));
-
+    program.addOption(new Option('--objectName <objectName>', 'object name to be transferred').env('SUI_OBJECT_NAME'));
     program.addOption(
-        new Option('--reciepent <reciepentAddress>', 'reciepent to transfer object to').makeOptionMandatory(true).env('RECIEPENT_ADDRESS'),
+        new Option('--recipient <recipientAddress>', 'recipient to transfer object to').makeOptionMandatory(true).env('RECIEPENT_ADDRESS'),
     );
 
     program.action(async (options) => {
