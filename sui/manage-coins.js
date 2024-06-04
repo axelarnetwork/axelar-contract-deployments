@@ -13,7 +13,7 @@ class CoinManager {
         const coinTypeToCoins = {};
 
         do {
-            const coinsAtCursor = await client.getCoins({
+            const coinsAtCursor = await client.getAllCoins({
                 owner: account,
                 limit: 100,
                 cursor,
