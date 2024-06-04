@@ -96,8 +96,8 @@ class CoinManager {
         }
 
         if (coinObjectIds.length < 2) {
-            console.error('\nError: Need at least 2 coins to merge');
-            process.exit(0);
+            // Need at least 2 coins to merge
+            return;
         }
 
         const firstCoin = coinObjectIds.shift();
