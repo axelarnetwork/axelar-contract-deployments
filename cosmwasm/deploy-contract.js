@@ -214,6 +214,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
     }
 
     const separator = domainSeparator || calculateDomainSeparator(chainId, routerAddress, axelarChainId);
+    contractConfig[chainId].domainSeparator = separator;
 
     if (!validateAddress(adminAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainId}].adminAddress in axelar info`);

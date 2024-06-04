@@ -369,6 +369,7 @@
           "verifierSetDiffThreshold": 1,
           "encoder": "abi",
           "keyType": "ecdsa",
+          "domainSeparator": "0x598ba04d225cec385d1ce3cf3c9a076af803aa5c614bc0e0d176f04ac8d28f55",
           "address": "axelar1g6520uhs8u37el40wqngf60z06mjgk6z7nezytd2mxrmh7yesnmsyc0zjw"
         },
         "codeId": 219,
@@ -384,6 +385,7 @@
           "verifierSetDiffThreshold": 1,
           "encoder": "abi",
           "keyType": "ecdsa",
+          "domainSeparator": "0x9799ef60ed6cac8cd489e8932dcac928ed47c499a9cda8d128dcf1e934a196b4",
           "address": "axelar17fa8wruwmk2y0h32wrg5rxwespvcvz5zc2hjnczz58tnmg8enh0sunsshp"
         },
         "ethereum-sepolia": {
@@ -398,6 +400,7 @@
           "verifierSetDiffThreshold": 1,
           "encoder": "abi",
           "keyType": "ecdsa",
+          "domainSeparator": "0x5034999c74b28c4db74dca67073b78629cc0ff7bf005f2f79cd8caf7d9588406",
           "address": "axelar1274ntw3prlrzzys4m0mc5xxhzu09x0r3d37886xdz65w59ey7mgs6v0j5z"
         },
         "op-sepolia": {
@@ -412,6 +415,7 @@
           "verifierSetDiffThreshold": 1,
           "encoder": "abi",
           "keyType": "ecdsa",
+          "domainSeparator": "0x6d61fa7631ca30c4a3c6e731891c867f9eddf00e909ef07a76e0790994dcd592",
           "address": "axelar1xdmwwl44tcdpljupjkafqpznrny4t60xgyyqw7hgnvztjtvlgurqx9k960"
         }
       }
