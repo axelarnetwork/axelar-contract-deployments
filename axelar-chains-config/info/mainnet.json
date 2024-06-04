@@ -1244,7 +1244,8 @@
         "maxFeePerGas": 1000000000
       },
       "finality": "120",
-      "approxFinalityWaitTime": 60
+      "approxFinalityWaitTime": 60,
+      "txTimeout": 180000
     },
     "optimism": {
       "name": "Optimism",
