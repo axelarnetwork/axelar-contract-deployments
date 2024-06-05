@@ -8,6 +8,8 @@ const chalk = require('chalk');
 const { loadSuiConfig } = require('./utils');
 
 class CoinManager {
+    static SUI_COIN_ID = '0x2::sui::SUI';
+
     static async getAllCoins(client, account) {
         let cursor;
         const coinTypeToCoins = {};
@@ -45,29 +47,48 @@ class CoinManager {
 
         console.log('\n==== Splitting Coins ====');
 
-        const coinType = options.coinType;
-
-        // Throw an error if the coin type is specified but no coins are found
-        CoinManager.checkCoinType(coinType, coinTypeToCoins);
+        // Set coin type to given coin type or the first coin type if there's only one if it's a SUI token.
+        const hasOnlyGasToken = Object.keys(coinTypeToCoins).length === 1 && coinTypeToCoins[CoinManager.SUI_COIN_ID];
+        const coinType = options.coinType || hasOnlyGasToken ? CoinManager.SUI_COIN_ID : undefined;
 
         if (coinType) {
+            // Throw an error if the coin type is specified but no coins are found
+            CoinManager.checkCoinType(coinType, coinTypeToCoins);
             const coins = coinTypeToCoins[coinType];
-            CoinManager.doSplitCoins(tx, coins, splitAmount);
+            const [coin] = CoinManager.doSplitCoins(tx, coins, splitAmount);
+
+            if (options.transfer) {
+                CoinManager.doTransfer(tx, coin, options.transfer);
+            }
         } else {
             for (const coinType in coinTypeToCoins) {
-                if (this.isGasToken(coinTypeToCoins[coinType].data[0])) continue;
-                CoinManager.doSplitCoins(tx, coinTypeToCoins[coinType], splitAmount);
+                const coins = coinTypeToCoins[coinType];
+                if (this.isGasToken(coins.data[0])) continue;
+                const [coin] = CoinManager.doSplitCoins(tx, coins, splitAmount);
+
+                if (options.transfer) {
+                    CoinManager.doTransfer(tx, coin, options.transfer);
+                }
             }
+        }
+
+        if (options.transfer) {
+            console.log(`\nTransfer ${splitAmount} coins for every split coin to ${chalk.green(options.transfer)}`);
         }
 
         // The transaction will fail if the gas budget is not set for splitting coins transaction
         tx.setGasBudget(1e8);
     }
 
+    static doTransfer(tx, coin, recipient) {
+        tx.transferObjects([coin], recipient);
+    }
+
     static doSplitCoins(tx, coins, splitAmount) {
-        const firstObjectId = coins.data[0].coinObjectId;
-        tx.splitCoins(firstObjectId, [splitAmount]);
+        const firstObjectId = this.isGasToken(coins.data[0]) ? tx.gas : coins.data[0].coinObjectId;
+        const response = tx.splitCoins(firstObjectId, [splitAmount]);
         console.log(`Split coins of type '${chalk.green(coins.data[0].coinType)}' with amount ${splitAmount}`);
+        return response;
     }
 
     static async mergeCoin(tx, coinTypeToCoins, options) {
@@ -126,7 +147,7 @@ class CoinManager {
         const requireBroadcast = options.merge || options.split;
 
         if (requireBroadcast) {
-            await client.signAndExecuteTransactionBlock({
+            const receipt = await client.signAndExecuteTransactionBlock({
                 transactionBlock: tx,
                 signer: keypair,
                 options: {
@@ -135,6 +156,8 @@ class CoinManager {
                     showContent: true,
                 },
             });
+
+            // console.log(receipt);
 
             console.log(`\nDone`);
         }
@@ -188,6 +211,7 @@ if (require.main === module) {
         .option('--merge', 'Merge all coins')
         .option('--split <amount>', 'Split coins')
         .option('--coin-type <coinType>', 'Coin type to merge/split')
+        .option('--transfer <recipientAddress>', 'Used with --split to transfer the split coins to the recipient address')
         .action((options) => {
             mainProcessor(options, CoinManager.processCommand);
         })
