@@ -148,7 +148,7 @@ class CoinManager {
         const requireBroadcast = options.merge || options.split;
 
         if (requireBroadcast) {
-            const receipt = await client.signAndExecuteTransactionBlock({
+            await client.signAndExecuteTransactionBlock({
                 transactionBlock: tx,
                 signer: keypair,
                 options: {
@@ -157,8 +157,6 @@ class CoinManager {
                     showContent: true,
                 },
             });
-
-            // console.log(receipt);
 
             console.log(`\nDone`);
         }
