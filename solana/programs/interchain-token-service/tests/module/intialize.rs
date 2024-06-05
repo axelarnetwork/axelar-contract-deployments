@@ -1,6 +1,7 @@
 use interchain_token_service::get_interchain_token_service_root_pda;
 use solana_program_test::tokio;
 use solana_sdk::program_pack::Pack;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
 use test_fixtures::account::CheckValidPDAInTests;
@@ -14,7 +15,10 @@ async fn test_init_root_pda_interchain_token_service() {
     let mut fixture = TestFixture::new(program_test()).await;
     let gas_service_root_pda = fixture.init_gas_service().await;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&[]),
+            Pubkey::new_unique(),
+        )
         .await;
     let interchain_token_service_root_pda =
         get_interchain_token_service_root_pda(&gateway_root_pda, &gas_service_root_pda);

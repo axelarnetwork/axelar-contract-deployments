@@ -12,14 +12,19 @@ use test_fixtures::execute_data::{self, create_command_batch, sign_batch};
 use crate::{
     create_signer_set, example_payload, get_approved_command, get_gateway_events,
     get_gateway_events_from_execute_data, prepare_questionable_execute_data,
-    setup_initialised_gateway,
+    setup_initialised_gateway, InitialisedGatewayMetadata,
 };
 
 #[tokio::test]
 async fn successfully_process_execute_when_there_are_no_commands() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 42, 33], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 42, 33], None).await;
     let messages = [];
     let (execute_data_pda, execute_data, _) = fixture
         .init_execute_data(&gateway_root_pda, &messages, &signers, quorum)
@@ -46,8 +51,13 @@ async fn successfully_process_execute_when_there_are_no_commands() {
 #[tokio::test]
 async fn successfully_process_execute_when_there_are_3_validate_message_commands() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 42, 33], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 42, 33], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages = [
         custom_message(destination_program_id, example_payload()).unwrap(),
@@ -97,8 +107,13 @@ async fn successfully_process_execute_when_there_are_3_validate_message_commands
 #[tokio::test]
 async fn fail_on_processing_approve_messages_when_there_is_rotate_signers_command_in_there() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 42, 33], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 42, 33], None).await;
     let (new_signer_set, _) = create_signer_set(&[500_u128, 200_u128], 700_u128);
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages = [
@@ -138,8 +153,13 @@ async fn fail_on_processing_approve_messages_when_there_is_rotate_signers_comman
 #[tokio::test]
 async fn successfully_consumes_repeating_commands_idempotency_same_batch() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 42, 33], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 42, 33], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -180,8 +200,13 @@ async fn successfully_consumes_repeating_commands_idempotency_same_batch() {
 #[tokio::test]
 async fn successfully_consumes_repeating_commands_idempotency_unique_batches() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 42, 33], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 42, 33], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -243,8 +268,12 @@ async fn successfully_consumes_repeating_commands_idempotency_unique_batches() {
 #[tokio::test]
 async fn fail_if_gateway_config_has_no_signers_signed_by_unknown_signer_set() {
     // Setup
-    let (mut fixture, quorum, _signers, gateway_root_pda) =
-        setup_initialised_gateway(&[], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -280,8 +309,13 @@ async fn fail_if_gateway_config_has_no_signers_signed_by_unknown_signer_set() {
 #[tokio::test]
 async fn fail_if_gateway_config_has_no_signers_signed_by_empty_set() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -316,8 +350,13 @@ async fn fail_if_gateway_config_has_no_signers_signed_by_empty_set() {
 #[tokio::test]
 async fn fail_if_root_config_not_initialised() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22], None).await;
     let messages = [].map(Either::Left);
     let (execute_data_pda, execute_data, _) = fixture
         .init_execute_data(&gateway_root_pda, &messages, &signers, quorum)
@@ -350,8 +389,13 @@ async fn fail_if_root_config_not_initialised() {
 #[tokio::test]
 async fn fail_if_execute_data_not_initialised() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22], None).await;
     let messages = [].map(Either::Left);
     let (_execute_data_pda, execute_data, _) = fixture
         .init_execute_data(&gateway_root_pda, &messages, &signers, quorum)
@@ -384,8 +428,13 @@ async fn fail_if_execute_data_not_initialised() {
 #[tokio::test]
 async fn fail_if_invalid_account_for_gateway() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -419,8 +468,13 @@ async fn fail_if_invalid_account_for_gateway() {
 #[tokio::test]
 async fn fail_if_invalid_account_for_execute_data() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -456,8 +510,12 @@ async fn fail_if_epoch_for_signers_was_not_found() {
     // Setup
     let (_unregistered_signer_set, unregistered_signer_set_signers) =
         create_signer_set(&[55_u128, 66_u128], 10_u128);
-    let (mut fixture, quorum, _signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -496,9 +554,13 @@ async fn fail_if_epoch_for_signers_was_not_found() {
 /// `validate_proof`)
 #[tokio::test]
 async fn fail_if_signer_set_epoch_is_older_than_16() {
-    // We setup a new gateway that has an initial signer set registered.
-    let (mut fixture, _quorum, initial_signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22], None).await;
+    // Setup
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        signers: initial_signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22], None).await;
     let initial_signer_set = new_signer_set(&initial_signers, 0, Uint256::from_u128(33));
     let initial_signer_set = [(initial_signer_set.clone(), initial_signers.clone())];
     // We generate 4 new unique signer sets (not registered yet)
@@ -577,8 +639,13 @@ async fn fail_if_signer_set_epoch_is_older_than_16() {
 #[tokio::test]
 async fn fail_if_invalid_signatures() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -637,8 +704,13 @@ async fn fail_if_invalid_signatures() {
 async fn fail_if_invalid_signer_set_signed_command_batch() {
     // Setup
     let unregistered_signer_set_signer = create_signer_set(&[66_u128], 10_u128).1[0].clone();
-    let (mut fixture, quorum, signer_set, gateway_root_pda) =
-        setup_initialised_gateway(&[11], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers: signer_set,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -686,8 +758,13 @@ async fn fail_if_invalid_signer_set_signed_command_batch() {
 #[tokio::test]
 async fn fail_if_subset_without_expected_weight_signed_batch() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22, 150], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -735,8 +812,13 @@ async fn fail_if_subset_without_expected_weight_signed_batch() {
 #[tokio::test]
 async fn succeed_if_majority_of_subset_without_expected_weight_signed_batch() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], Some(150)).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22, 150], Some(150)).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -776,8 +858,13 @@ async fn succeed_if_majority_of_subset_without_expected_weight_signed_batch() {
 #[tokio::test]
 async fn fail_if_signed_commands_differ_from_the_execute_ones() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22, 150], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -824,8 +911,13 @@ async fn fail_if_signed_commands_differ_from_the_execute_ones() {
 #[tokio::test]
 async fn fail_if_quorum_differs_between_registered_and_signed() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22, 150], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages =
         [custom_message(destination_program_id, example_payload()).unwrap()].map(Either::Left);
@@ -871,8 +963,13 @@ async fn fail_if_quorum_differs_between_registered_and_signed() {
 #[tokio::test]
 async fn fail_if_command_len_does_not_match_provided_account_iter_len() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22, 150], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages = [
         custom_message(destination_program_id, example_payload()).unwrap(),
@@ -908,8 +1005,13 @@ async fn fail_if_command_len_does_not_match_provided_account_iter_len() {
 #[tokio::test]
 async fn fail_if_command_was_not_initialised() {
     // Setup
-    let (mut fixture, quorum, signers, gateway_root_pda) =
-        setup_initialised_gateway(&[11, 22, 150], None).await;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[11, 22, 150], None).await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let messages = [
         custom_message(destination_program_id, example_payload()).unwrap(),

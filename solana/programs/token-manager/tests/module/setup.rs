@@ -22,7 +22,10 @@ async fn test_token_manager_setup() {
     let init_flow_manager = Pubkey::from([0; 32]);
     let token_mint = fixture.init_new_mint(mint_authority.pubkey()).await;
     let gateway_root_config_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&[]),
+            Pubkey::new_unique(),
+        )
         .await;
     let groups = fixture
         .derive_token_manager_permission_groups(

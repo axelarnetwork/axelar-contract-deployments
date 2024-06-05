@@ -24,7 +24,10 @@ async fn test_successfylly_initialize_execute_data() {
     ];
     let quorum = 14;
     let gateway_config_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (gateway_execute_data, raw_execute_data) = prepare_execute_data(
@@ -75,7 +78,10 @@ async fn test_succesfully_initialize_rotate_signers() {
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let (gateway_execute_data, raw_execute_data) = prepare_execute_data(
         &[Either::Right(new_signer_set(
@@ -127,7 +133,10 @@ async fn test_succesfully_initialize_rotate_signers_message_together_with_call_c
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (gateway_execute_data, raw_execute_data) = prepare_execute_data(
@@ -187,7 +196,10 @@ async fn test_fail_on_invalid_root_pda() {
     ];
     let quorum = 14;
     let _gateway_config_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_gateway_execute_data, raw_execute_data) = prepare_execute_data(
@@ -242,7 +254,10 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
     ];
     let quorum = 14;
     let _gateway_config_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_gateway_execute_data, raw_execute_data) = prepare_execute_data(
@@ -326,7 +341,10 @@ async fn test_fail_on_already_initialized_execute_data_account() {
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
 
     // Action
@@ -385,7 +403,10 @@ async fn test_size_limits_for_different_signers() {
             ((0..amount_of_signers as i64).sum::<i64>() + amount_of_signers as i64) as u128;
         let mut fixture = TestFixture::new(program_test()).await;
         let gateway_root_pda = fixture
-            .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+            .initialize_gateway_config_account(
+                fixture.init_auth_weighted_module(&signers),
+                Pubkey::new_unique(),
+            )
             .await;
 
         let destination_program_id = DestinationProgramId(Pubkey::new_unique());
@@ -434,7 +455,10 @@ async fn test_message_limits_with_different_amounts() {
         let quorum = 4;
         let mut fixture = TestFixture::new(program_test()).await;
         let gateway_root_pda = fixture
-            .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+            .initialize_gateway_config_account(
+                fixture.init_auth_weighted_module(&signers),
+                Pubkey::new_unique(),
+            )
             .await;
 
         let destination_program_id = DestinationProgramId(Pubkey::new_unique());

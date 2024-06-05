@@ -7,6 +7,7 @@ use gateway::events::GatewayEvent;
 use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};
 use solana_program::keccak::hash;
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::signer::keypair::Keypair;
 use solana_sdk::transaction::Transaction;
@@ -20,7 +21,10 @@ async fn test_deploy_remote_token_manager() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&[]),
+            Pubkey::new_unique(),
+        )
         .await;
     let gas_service_root_pda = fixture.init_gas_service().await;
     let gas_service_initial_saldo = fixture

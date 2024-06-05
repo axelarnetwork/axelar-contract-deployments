@@ -136,6 +136,7 @@ impl Cli {
 mod tests {
 
     use std::io::Write;
+    use std::str::FromStr;
     use std::thread;
     use std::time::Duration;
 
@@ -173,22 +174,16 @@ mod tests {
     #[serial]
     async fn deploy_actually_works() {
         solana_logger::setup_with_default("solana_program_runtime=warn");
-
         let validator = TestValidatorGenesis::default();
-
         let (validator, keypair) = validator.start_async().await;
-
         validator.set_startup_verification_complete_for_tests();
-
         let mut file = NamedTempFile::new().unwrap();
-
         write!(file, "{:?}", keypair.to_bytes()).unwrap();
 
         // Bindings for cmd creation
         let file_path = file.path().to_string_lossy();
         let rpc_url = validator.rpc_url();
         let rpc_pubsub_url = validator.rpc_pubsub_url();
-
         let args = vec![
             "xtask",
             "deploy",
@@ -200,13 +195,9 @@ mod tests {
             &rpc_pubsub_url,
             "gmp-gateway",
         ];
-
         let cli: Cli = Cli::try_parse_from(args).unwrap();
-
         let result = cli.run().await.unwrap();
-
         let validator_rpc_client = validator.get_async_rpc_client();
-
         let contract_id = match result {
             Report::Deploy(report) => report,
             _ => panic!("result not expected."),
@@ -216,17 +207,15 @@ mod tests {
             .get_account(&contract_id)
             .await
             .unwrap();
-
         assert!(account_info.executable)
     }
 
     #[tokio::test]
     #[serial]
     async fn initialize_gateway_contract_works() {
+        // Setup
         solana_logger::setup_with_default("solana_program_runtime=warn");
-
         build_gateway_contract();
-
         // Bring up the validator + the target contract to initialise.
         let mut seed_validator = TestValidatorGenesis::default();
         let program_id = gmp_gateway::id();
@@ -239,15 +228,12 @@ mod tests {
                 .join(Contract::GmpGateway.file()),
         }]);
         let (validator, keypair) = seed_validator.start_async().await;
-
         // Save private keypair to temp file for the test
         let mut file = NamedTempFile::new().unwrap();
         write!(file, "{:?}", keypair.to_bytes()).unwrap();
-
         // Prepare cmd
         let rpc_url = validator.rpc_url();
         let payer_kp = file.path().to_string_lossy();
-
         let args = vec![
             "xtask",
             "init",
@@ -257,14 +243,12 @@ mod tests {
             "--payer-kp-path",
             &payer_kp, // We use the already funded keypair.
             "--auth-weighted-file",
-            "tests/auth_weighted.toml",
+            "tests/gateway_init_config.toml",
         ];
-
         // Wait to programs to be consolidated in the validator.
         thread::sleep(Duration::from_millis(15000));
 
         // Execute CLI
-
         let cli: Cli = Cli::try_parse_from(args).unwrap();
         cli.run().await.unwrap();
 
@@ -274,9 +258,7 @@ mod tests {
             .get_program_accounts(&program_id)
             .await
             .unwrap();
-
         let account = accounts.first().unwrap().clone().1;
-
         assert_eq!(account.owner, gmp_gateway::id());
 
         // Expected values from the tests/auth_weighted.toml file
@@ -288,6 +270,9 @@ mod tests {
             Address::try_from("508efe1eb50545edd0f762ba61290c579d513a38239bebaa97379628cefe82e62d")
                 .unwrap();
         let sig2_weight = U256::from(2u8);
+        let hardcoded_operator =
+            solana_sdk::pubkey::Pubkey::from_str("3KS2k14CmtnuVv2fvYcvdrNgC94Y11WETBpMUGgXyWZL")
+                .unwrap();
 
         let signers_and_weights = [(sig1_address, sig1_weight), (sig2_address, sig2_weight)];
         let auth_weighted = AxelarAuthWeighted::new(
@@ -297,8 +282,9 @@ mod tests {
                 .fold(U256::ZERO, |a, b| a.checked_add(b.1).unwrap()),
         );
         let (_, bump) = GatewayConfig::pda();
-        let gateway_config = GatewayConfig::new(bump, auth_weighted);
-        let deserialized_gateway_config: GatewayConfig = from_slice(&account.data).unwrap();
+
+        let gateway_config = GatewayConfig::new(bump, auth_weighted, hardcoded_operator);
+        let deserialized_gateway_config = from_slice::<GatewayConfig>(&account.data).unwrap();
         assert_eq!(deserialized_gateway_config, gateway_config);
     }
 }

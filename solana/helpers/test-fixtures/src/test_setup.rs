@@ -24,11 +24,16 @@ use solana_program::pubkey::Pubkey;
 use solana_program::system_instruction;
 use solana_program_test::{
     BanksClient, BanksTransactionResultWithMetadata, ProgramTest, ProgramTestBanksClientExt,
+    ProgramTestContext,
 };
+use solana_sdk::account::{AccountSharedData, WritableAccount};
+use solana_sdk::account_utils::StateMut;
+use solana_sdk::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
+use solana_sdk::signers::Signers;
 use solana_sdk::transaction::Transaction;
 use spl_token::state::Mint;
 use token_manager::state::TokenManagerRootAccount;
@@ -40,6 +45,7 @@ use crate::axelar_message::custom_message;
 use crate::execute_data::{create_command_batch, sign_batch, TestSigner};
 
 pub struct TestFixture {
+    pub context: ProgramTestContext,
     pub banks_client: BanksClient,
     pub payer: Keypair,
     pub recent_blockhash: Hash,
@@ -47,11 +53,12 @@ pub struct TestFixture {
 
 impl TestFixture {
     pub async fn new(pt: ProgramTest) -> TestFixture {
-        let (banks_client, payer, recent_blockhash) = pt.start().await;
+        let context = pt.start_with_context().await;
         TestFixture {
-            banks_client,
-            payer,
-            recent_blockhash,
+            banks_client: context.banks_client.clone(),
+            payer: context.payer.insecure_clone(),
+            recent_blockhash: context.last_blockhash,
+            context,
         }
     }
 
@@ -65,14 +72,38 @@ impl TestFixture {
     }
 
     pub async fn send_tx(&mut self, ixs: &[Instruction]) {
+        self.send_tx_with_custom_signers(ixs, &[&self.payer.insecure_clone()])
+            .await;
+    }
+
+    pub async fn send_tx_with_custom_signers<T: Signers + ?Sized>(
+        &mut self,
+        ixs: &[Instruction],
+        signing_keypairs: &T,
+    ) {
+        let tx = self
+            .send_tx_with_custom_signers_with_metadata(ixs, signing_keypairs)
+            .await;
+        assert!(tx.result.is_ok());
+    }
+
+    pub async fn send_tx_with_custom_signers_with_metadata<T: Signers + ?Sized>(
+        &mut self,
+        ixs: &[Instruction],
+        signing_keypairs: &T,
+    ) -> BanksTransactionResultWithMetadata {
         let hash = self.refresh_blockhash().await;
         let tx = Transaction::new_signed_with_payer(
             ixs,
             Some(&self.payer.pubkey()),
-            &[&self.payer],
+            signing_keypairs,
             hash,
         );
-        self.banks_client.process_transaction(tx).await.unwrap();
+        let tx = self
+            .banks_client
+            .process_transaction_with_metadata(tx)
+            .await
+            .unwrap();
 
         // make everything slower on CI to prevent flaky tests
         if std::env::var("CI").is_ok() {
@@ -81,23 +112,148 @@ impl TestFixture {
             // some more intense tests on weaker CI machines
             tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
         }
+
+        tx
     }
 
     pub async fn send_tx_with_metadata(
         &mut self,
         ixs: &[Instruction],
     ) -> BanksTransactionResultWithMetadata {
-        let hash = self.refresh_blockhash().await;
-        let tx = Transaction::new_signed_with_payer(
-            ixs,
-            Some(&self.payer.pubkey()),
-            &[&self.payer],
-            hash,
+        self.send_tx_with_custom_signers_with_metadata(ixs, &[&self.payer.insecure_clone()])
+            .await
+    }
+
+    /// Go through all the steps of deploying an upgradeable solana program -
+    /// the same way that's described in [Solana docs](https://solana.com/docs/programs/deploying#state-accounts)
+    ///
+    /// Although this is not practical for our tests because we cannot ensure
+    /// that the program id does not change. Currently this is used in a
+    /// test to assert that the programdata accounts get initialized the same
+    /// way when manually registering the state accounts.
+    /// See `test_manually_added_bpf_upgradeable_accounts_contain_expected_state` test for usage.
+    ///
+    /// For in-test usage see `register_upgradeable_program` method instead.
+    #[deprecated = "use `register_upgradeable_program`"]
+    pub async fn deploy_upgradeable_program(
+        &mut self,
+        program_bytecode: &[u8],
+        upgrade_authority: &Keypair,
+        program_keypair: &Keypair,
+    ) -> Pubkey {
+        let buffer_keypair = Keypair::new();
+        let buffer_pubkey = buffer_keypair.pubkey();
+        let program_address = program_keypair.pubkey();
+        let (program_data_pda, _) = Pubkey::find_program_address(
+            &[program_address.as_ref()],
+            &bpf_loader_upgradeable::id(),
         );
-        self.banks_client
-            .process_transaction_with_metadata(tx.clone())
+        let program_bytecode_size =
+            UpgradeableLoaderState::size_of_programdata(program_bytecode.len());
+        let rent = self
+            .banks_client
+            .get_rent()
             .await
             .unwrap()
+            .minimum_balance(program_bytecode_size)
+            * 2; // for some reason without this we get an error
+
+        let fee_payer_signer = self.payer.insecure_clone();
+
+        let ixs = bpf_loader_upgradeable::create_buffer(
+            &fee_payer_signer.pubkey(),
+            &buffer_pubkey,
+            &upgrade_authority.pubkey(),
+            rent,
+            program_bytecode.len(),
+        )
+        .unwrap();
+        self.send_tx_with_custom_signers(&ixs, &[&self.payer.insecure_clone(), &buffer_keypair])
+            .await;
+        let chunk_size = 1024; // Adjust the chunk size as needed
+
+        let mut offset = 0;
+        for chunk in program_bytecode.chunks(chunk_size) {
+            println!("writing to buffer");
+            let write_ix = bpf_loader_upgradeable::write(
+                &buffer_pubkey,
+                &upgrade_authority.pubkey(),
+                offset,
+                chunk.to_vec(),
+            );
+            self.send_tx_with_custom_signers(
+                &[write_ix],
+                &[&self.payer.insecure_clone(), upgrade_authority],
+            )
+            .await;
+
+            offset += chunk.len() as u32;
+        }
+
+        let deploy_ix = bpf_loader_upgradeable::deploy_with_max_program_len(
+            &self.payer.pubkey(),
+            &program_address,
+            &buffer_pubkey,
+            &upgrade_authority.pubkey(),
+            rent,
+            program_bytecode.len(),
+        )
+        .unwrap();
+        self.send_tx_with_custom_signers(
+            &deploy_ix,
+            &[
+                &self.payer.insecure_clone(),
+                program_keypair,
+                upgrade_authority,
+            ],
+        )
+        .await;
+        program_data_pda
+    }
+
+    /// Register the necessary bpf_loader_upgradeable PDAs for a given program
+    /// bytecode to ensure that the program is upgradable.
+    /// This feature is not provided by the solana_program_test crate - https://github.com/solana-labs/solana/issues/22950 - we could create a pr and upstream the changes
+    pub async fn register_upgradeable_program(
+        &mut self,
+        program_bytecode: &[u8],
+        upgrade_authority: &Pubkey,
+        program_keypair: &Pubkey,
+    ) -> Pubkey {
+        let (program_data_pda, _) = Pubkey::find_program_address(
+            &[program_keypair.as_ref()],
+            &bpf_loader_upgradeable::id(),
+        );
+
+        add_upgradeable_loader_account(
+            &mut self.context,
+            program_keypair,
+            &UpgradeableLoaderState::Program {
+                programdata_address: program_data_pda,
+            },
+            UpgradeableLoaderState::size_of_program(),
+            |_| {},
+        )
+        .await;
+        let programdata_data_offset = UpgradeableLoaderState::size_of_programdata_metadata();
+        let program_data_len = program_bytecode.len() + programdata_data_offset;
+        println!("program data len {program_data_len}");
+        add_upgradeable_loader_account(
+            &mut self.context,
+            &program_data_pda,
+            &UpgradeableLoaderState::ProgramData {
+                slot: 0,
+                upgrade_authority_address: Some(*upgrade_authority),
+            },
+            program_data_len,
+            |account| {
+                account.data_as_mut_slice()[programdata_data_offset..]
+                    .copy_from_slice(program_bytecode)
+            },
+        )
+        .await;
+
+        program_data_pda
     }
 
     pub async fn init_gas_service(&mut self) -> Pubkey {
@@ -156,9 +312,10 @@ impl TestFixture {
     pub async fn initialize_gateway_config_account(
         &mut self,
         auth_weighted: AxelarAuthWeighted,
+        init_operator: Pubkey,
     ) -> Pubkey {
         let (gateway_config_pda, bump) = GatewayConfig::pda();
-        let gateway_config = GatewayConfig::new(bump, auth_weighted);
+        let gateway_config = GatewayConfig::new(bump, auth_weighted, init_operator);
         let ix = gateway::instructions::initialize_config(
             self.payer.pubkey(),
             gateway_config.clone(),
@@ -560,6 +717,7 @@ impl TestFixture {
             *execute_data_pda,
             *gateway_root_pda,
             *rotate_signers_pda,
+            None,
         )
         .unwrap();
         let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(400_000u32);
@@ -832,4 +990,126 @@ pub struct PermissionGroup {
 pub struct ITSTokenHandlerGroups {
     pub operator_group: PermissionGroup,
     pub flow_limiter_group: PermissionGroup,
+}
+
+pub async fn add_upgradeable_loader_account(
+    context: &mut ProgramTestContext,
+    account_address: &Pubkey,
+    account_state: &UpgradeableLoaderState,
+    account_data_len: usize,
+    account_callback: impl Fn(&mut AccountSharedData),
+) {
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let mut account = AccountSharedData::new(
+        rent.minimum_balance(account_data_len),
+        account_data_len,
+        &bpf_loader_upgradeable::id(),
+    );
+    account
+        .set_state(account_state)
+        .expect("state failed to serialize into account data");
+    account_callback(&mut account);
+    context.set_account(account_address, &account);
+}
+
+#[cfg(test)]
+mod tests {
+
+    use solana_sdk::account::{Account, ReadableAccount};
+
+    use super::*;
+
+    /// Try to deploy the same program elf file using the
+    /// `bbf_loader_upgradeable` programm directly, and regiestering the PDAs
+    /// manually.
+    /// The core asserts is to ensure that the account data storage
+    /// is the same, thus ensuring that both operatiosn are somewhat equivelant.
+    #[tokio::test]
+    async fn test_manually_added_bpf_upgradeable_accounts_contain_expected_state() {
+        // setup
+        let mut test_fixture = TestFixture::new(ProgramTest::default()).await;
+        // source: https://github.com/solana-labs/solana/blob/master/cli/tests/fixtures/noop.so?plain=1#L1
+        let noop_so = include_bytes!("../noop.so");
+        let upgrade_authority = Keypair::new();
+        let program_keypair = Keypair::new();
+        let program_keypair_2 = Keypair::new();
+
+        // Action
+        #[allow(deprecated)]
+        let programdata_pda = test_fixture
+            .deploy_upgradeable_program(noop_so, &upgrade_authority, &program_keypair)
+            .await;
+        let programdata_pda_2 = test_fixture
+            .register_upgradeable_program(
+                noop_so,
+                &upgrade_authority.pubkey(),
+                &program_keypair_2.pubkey(),
+            )
+            .await;
+
+        // Assert - program_id gets initialised
+        let program_id_account = get_account(&mut test_fixture, program_keypair.pubkey()).await;
+        let program_id_account_2 = get_account(&mut test_fixture, program_keypair_2.pubkey()).await;
+        let loader_state =
+            bincode::deserialize::<UpgradeableLoaderState>(program_id_account.data()).unwrap();
+        let loader_state_2 =
+            bincode::deserialize::<UpgradeableLoaderState>(program_id_account_2.data()).unwrap();
+        assert!(matches!(
+            loader_state,
+            UpgradeableLoaderState::Program {
+                programdata_address: programdata_pda
+            }
+        ));
+        assert!(matches!(
+            loader_state_2,
+            UpgradeableLoaderState::Program {
+                programdata_address: programdata_pda_2
+            }
+        ));
+
+        // Assert - programdata gets initialised
+        let programdata_account = get_account(&mut test_fixture, programdata_pda).await;
+        let programdata_account_2 = get_account(&mut test_fixture, programdata_pda_2).await;
+        let loader_state = bincode::deserialize::<UpgradeableLoaderState>(
+            &programdata_account.data()[0..UpgradeableLoaderState::size_of_programdata_metadata()],
+        )
+        .unwrap();
+        let loader_state_2 = bincode::deserialize::<UpgradeableLoaderState>(
+            &programdata_account_2.data()
+                [0..UpgradeableLoaderState::size_of_programdata_metadata()],
+        )
+        .unwrap();
+        let upgrade_authhority_address = upgrade_authority.pubkey();
+        assert!(matches!(
+            loader_state,
+            UpgradeableLoaderState::ProgramData {
+                slot: _,
+                upgrade_authority_address
+            }
+        ));
+        assert!(matches!(
+            loader_state_2,
+            UpgradeableLoaderState::ProgramData {
+                slot: _,
+                upgrade_authority_address
+            }
+        ));
+        assert_eq!(
+            programdata_account_2.data().len(),
+            UpgradeableLoaderState::size_of_programdata_metadata() + noop_so.len()
+        );
+        assert_eq!(
+            programdata_account.data().len(),
+            programdata_account_2.data().len()
+        );
+    }
+
+    async fn get_account(test_fixture: &mut TestFixture, address: Pubkey) -> Account {
+        test_fixture
+            .banks_client
+            .get_account(address)
+            .await
+            .unwrap()
+            .unwrap()
+    }
 }

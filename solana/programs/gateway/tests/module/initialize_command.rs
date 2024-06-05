@@ -22,7 +22,10 @@ async fn succesfully_initialize_validate_message_command() {
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_execute_data_pubkey, execute_data, _) = fixture
@@ -74,7 +77,10 @@ async fn succesfully_initialize_rotate_signers_message() {
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let (_execute_data_pubkey, execute_data, _) = fixture
         .init_execute_data(
@@ -127,7 +133,10 @@ async fn succesfully_initialize_rotate_signers_message_together_with_call_contra
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_execute_data_pubkey, execute_data, _) = fixture
@@ -240,7 +249,10 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_execute_data_pubkey_1, _execute_data_1, _) = fixture
@@ -297,7 +309,10 @@ async fn fail_when_validate_message_already_initialized() {
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let destination_program_id = DestinationProgramId(Pubkey::new_unique());
     let (_execute_data_pubkey, execute_data, _) = fixture
@@ -341,7 +356,10 @@ async fn fail_when_rotate_signers_is_already_initialized() {
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let new_signer_set = example_signer_set(42, 43);
     let (_execute_data_pubkey, execute_data, _) = fixture
@@ -393,7 +411,10 @@ async fn fail_when_rotate_signers_has_unchanged_block_height() {
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let initial_created_at = 180;
     let new_created_at = 360;

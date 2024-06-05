@@ -19,6 +19,7 @@ mod initialize_command;
 mod initialize_config;
 mod initialize_execute_data;
 mod rotate_signers;
+mod transfer_operatorship;
 mod validate_message;
 
 /// Program state handler.
@@ -72,6 +73,10 @@ impl Processor {
             GatewayInstruction::ValidateMessage(command) => {
                 msg!("Instruction: Validate Message");
                 Self::process_validate_message(program_id, accounts, command)
+            }
+            GatewayInstruction::TransferOperatorship => {
+                msg!("Instruction: Transfer Operatorship");
+                Self::process_transfer_operatorship(program_id, accounts)
             }
         }
     }

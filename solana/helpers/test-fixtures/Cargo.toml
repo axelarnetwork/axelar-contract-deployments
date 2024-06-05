@@ -34,3 +34,6 @@ gas-service = { workspace = true, features = ["no-entrypoint"] }
 gateway = { workspace = true, features = ["no-entrypoint"] }
 account-group = { workspace = true, features = ["no-entrypoint"] }
 interchain-address-tracker = { workspace = true, features = ["no-entrypoint"] }
+
+[dev-dependencies]
+bincode.workspace = true

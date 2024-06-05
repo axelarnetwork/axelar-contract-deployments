@@ -51,29 +51,18 @@ pub async fn init_gmp_gateway(
     let (gateway_config_pda, bump) = GatewayConfig::pda();
 
     // Read toml file data
-    let auth_weighted_file_content = read_to_string(auth_weighted)?;
-    let auth_weighted_data: AuthWeightedData = toml::from_str(&auth_weighted_file_content)?;
-    let mut signers_and_weights: Vec<(Address, U256)> = Vec::new();
-
-    for (addr, weight) in auth_weighted_data
-        .signers
-        .iter()
-        .zip(auth_weighted_data.weights)
-    {
-        signers_and_weights.push((
-            Address::try_from(addr.as_str())?,
-            U256::from(weight as u128),
-        ))
-    }
+    let gateway_config_file_content = read_to_string(auth_weighted)?;
+    let gateway_config_data = toml::from_str::<GatewayConfigData>(&gateway_config_file_content)?;
 
     let auth_weighted = AxelarAuthWeighted::new(
-        signers_and_weights
+        gateway_config_data
+            .signers
             .iter()
-            .map(|(addr, weight)| (addr, *weight)),
-        calc_threshold_from(&signers_and_weights),
+            .map(|signer| (&signer.address, U256::from(signer.weight as u128))),
+        gateway_config_data.calc_signer_thershold(),
     );
 
-    let gateway_config = GatewayConfig::new(bump, auth_weighted);
+    let gateway_config = GatewayConfig::new(bump, auth_weighted, gateway_config_data.operator);
 
     let ix = gmp_gateway::instructions::initialize_config(
         payer_kp.pubkey(),
@@ -99,16 +88,48 @@ pub async fn init_gmp_gateway(
 
 /// An intermediate struct for parsing
 /// values from a TOML file.
-#[derive(Deserialize)]
-struct AuthWeightedData {
-    signers: Vec<String>,
-    weights: Vec<u64>,
+#[derive(Deserialize, Debug)]
+struct GatewayConfigData {
+    signers: Vec<GatewaySigner>,
+    #[serde(deserialize_with = "serde_utils::deserialize_pubkey")]
+    operator: Pubkey,
 }
 
-fn calc_threshold_from(signers_and_weights: &[(Address, U256)]) -> U256 {
-    signers_and_weights
-        .iter()
-        .fold(U256::ZERO, |a, b| a.checked_add(b.1).unwrap())
+impl GatewayConfigData {
+    fn calc_signer_thershold(&self) -> U256 {
+        self.signers.iter().fold(U256::ZERO, |a, b| {
+            a.checked_add(U256::from(b.weight as u128)).unwrap()
+        })
+    }
+}
+
+#[derive(Deserialize, Debug)]
+struct GatewaySigner {
+    #[serde(deserialize_with = "serde_utils::deserialize_address")]
+    address: Address,
+    weight: u64,
+}
+
+mod serde_utils {
+    use serde::Deserializer;
+
+    use super::*;
+
+    pub fn deserialize_address<'de, D>(deserializer: D) -> Result<Address, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let raw_string = String::deserialize(deserializer)?;
+        Address::try_from(raw_string.as_str()).map_err(serde::de::Error::custom)
+    }
+
+    pub fn deserialize_pubkey<'de, D>(deserializer: D) -> Result<Pubkey, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let raw_string = String::deserialize(deserializer)?;
+        Pubkey::from_str(&raw_string).map_err(serde::de::Error::custom)
+    }
 }
 
 pub async fn build_contract(contract: &Contract) -> anyhow::Result<PathBuf> {
@@ -329,23 +350,26 @@ mod tests {
 
     #[test]
     fn calc_threshold_from_works() {
-        let signers_and_weights = vec![
-            (
-                Address::try_from(
-                    "07453457a565724079d7dfab633d026d49cac3f6d69bce20bc79adedfccdf69ab2",
-                )
-                .unwrap(),
-                U256::from(1u128),
-            ),
-            (
-                Address::try_from(
-                    "6b322380108ca6c6313667657aab424ad0ea014cf3fb107bb124e8822bc9d0befb",
-                )
-                .unwrap(),
-                U256::from(2u128),
-            ),
-        ];
+        let config = GatewayConfigData {
+            signers: vec![
+                GatewaySigner {
+                    address: Address::try_from(
+                        "07453457a565724079d7dfab633d026d49cac3f6d69bce20bc79adedfccdf69ab2",
+                    )
+                    .unwrap(),
+                    weight: 1,
+                },
+                GatewaySigner {
+                    address: Address::try_from(
+                        "6b322380108ca6c6313667657aab424ad0ea014cf3fb107bb124e8822bc9d0befb",
+                    )
+                    .unwrap(),
+                    weight: 2,
+                },
+            ],
+            operator: Pubkey::new_unique(),
+        };
 
-        assert_eq!(U256::from(3u128), calc_threshold_from(&signers_and_weights))
+        assert_eq!(U256::from(3u128), config.calc_signer_thershold())
     }
 }

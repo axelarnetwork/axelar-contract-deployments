@@ -3,6 +3,7 @@ mod initialize_command;
 mod initialize_config;
 mod initialize_execute_data;
 mod rotate_signers;
+mod transfer_operatorship;
 
 use axelar_message_primitives::{DataPayload, EncodingScheme};
 use cosmwasm_std::Uint256;
@@ -10,9 +11,11 @@ use gmp_gateway::events::GatewayEvent;
 use gmp_gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
 use itertools::Either;
 use multisig::worker_set::WorkerSet;
+use solana_program_test::tokio::fs;
 use solana_program_test::{processor, ProgramTest};
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use test_fixtures::axelar_message::new_signer_set;
 use test_fixtures::execute_data::{
@@ -28,23 +31,55 @@ pub fn program_test() -> ProgramTest {
     )
 }
 
+/// Contains metadata information about the initialised Gateway config
+pub struct InitialisedGatewayMetadata {
+    pub fixture: TestFixture,
+    pub quorum: u128,
+    pub signers: Vec<TestSigner>,
+    pub gateway_root_pda: Pubkey,
+    pub operator: Keypair,
+    pub upgrade_authority: Keypair,
+}
+
 pub async fn setup_initialised_gateway(
     initial_signer_weights: &[u128],
     custom_quorum: Option<u128>,
-) -> (TestFixture, u128, Vec<TestSigner>, Pubkey) {
-    let mut fixture = TestFixture::new(program_test()).await;
+) -> InitialisedGatewayMetadata {
+    // Create a new ProgramTest instance
+    let mut fixture = TestFixture::new(ProgramTest::default()).await;
+    // Generate a new keypair for the upgrade authority
+    let upgrade_authority = Keypair::new();
+    let gateway_program_bytecode = fs::read("../../target/deploy/gmp_gateway.so")
+        .await
+        .unwrap();
+    fixture
+        .register_upgradeable_program(
+            &gateway_program_bytecode,
+            &upgrade_authority.pubkey(),
+            &gmp_gateway::id(),
+        )
+        .await;
     let quorum = custom_quorum.unwrap_or_else(|| initial_signer_weights.iter().sum());
     let signers = initial_signer_weights
         .iter()
         .map(|weight| create_signer_with_weight(*weight).unwrap())
         .collect::<Vec<_>>();
+    let operator = Keypair::new();
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
             fixture.init_auth_weighted_module_custom_threshold(&signers, quorum.into()),
+            operator.pubkey(),
         )
         .await;
 
-    (fixture, quorum, signers, gateway_root_pda)
+    InitialisedGatewayMetadata {
+        upgrade_authority,
+        fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        operator,
+    }
 }
 
 pub fn example_payload() -> DataPayload<'static> {

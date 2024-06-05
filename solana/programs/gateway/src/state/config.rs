@@ -19,6 +19,8 @@ pub struct GatewayConfig {
     pub bump: u8,
     /// The current set of registered signer set hashes and their epochs.
     pub auth_weighted: AxelarAuthWeighted,
+    /// The gateway operator.
+    pub operator: Pubkey,
 }
 
 impl Deref for GatewayConfig {
@@ -37,9 +39,10 @@ impl DerefMut for GatewayConfig {
 
 impl GatewayConfig {
     /// Creates a new `GatewayConfig` value.
-    pub fn new(bump: u8, auth_weighted: AxelarAuthWeighted) -> Self {
+    pub fn new(bump: u8, auth_weighted: AxelarAuthWeighted, operator: Pubkey) -> Self {
         Self {
             bump,
+            operator,
             auth_weighted,
         }
     }
@@ -53,7 +56,8 @@ impl GatewayConfig {
 impl Sealed for GatewayConfig {}
 
 impl Pack for GatewayConfig {
-    const LEN: usize = { size_of::<u8>() + AxelarAuthWeighted::SIZE_WHEN_SERIALIZED };
+    const LEN: usize =
+        { size_of::<u8>() + size_of::<Pubkey>() + AxelarAuthWeighted::SIZE_WHEN_SERIALIZED };
 
     fn pack_into_slice(&self, mut dst: &mut [u8]) {
         self.serialize(&mut dst).unwrap();

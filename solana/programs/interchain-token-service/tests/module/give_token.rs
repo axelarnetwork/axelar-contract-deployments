@@ -3,6 +3,7 @@ use interchain_token_service::get_interchain_token_service_associated_token_acco
 use solana_program::program_option::COption;
 use solana_program::program_pack::Pack;
 use solana_program_test::tokio;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
 use spl_token::state::Account;
@@ -24,7 +25,10 @@ async fn give_token_lock_unlock_success() -> Result<()> {
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&gateway_operators))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&gateway_operators),
+            Pubkey::new_unique(),
+        )
         .await;
     let gas_service_root_pda = fixture.init_gas_service().await;
     let interchain_token_service_root_pda = fixture
@@ -117,7 +121,10 @@ async fn give_token_mint_burn_success() -> Result<()> {
     let gas_service_root_pda = fixture.init_gas_service().await;
     let amount_to_mint = 100;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&[]),
+            Pubkey::new_unique(),
+        )
         .await;
     let interchain_token_service_root_pda = fixture
         .init_its_root_pda(&gateway_root_pda, &gas_service_root_pda)

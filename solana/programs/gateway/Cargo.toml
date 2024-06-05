@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [lints.rust]
-unused_imports = "deny"
+unused_imports = "warn"
 rust_2018_idioms = "deny"
 missing_docs = "warn"
 unreachable_pub = "warn"
@@ -23,6 +23,7 @@ test-sbf = []
 base64.workspace = true
 bimap = { version = "0.6.3", default-features = false }
 borsh.workspace = true
+bincode.workspace = true
 itertools.workspace = true
 num-derive.workspace = true
 num-traits.workspace = true
@@ -40,3 +41,4 @@ multisig.workspace = true
 cosmwasm-std.workspace = true
 connection-router.workspace = true
 hex.workspace = true
+serde_json.workspace = true 

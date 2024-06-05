@@ -33,6 +33,7 @@ impl Processor {
         let gateway_root_pda = next_account_info(&mut accounts_iter)?;
         let gateway_approve_messages_execute_data_pda = next_account_info(&mut accounts_iter)?;
         let message_account = next_account_info(&mut accounts_iter)?;
+        let operator = next_account_info(&mut accounts_iter);
 
         // Check: Config account uses the canonical bump.
         // Unpack Gateway configuration data.
@@ -45,14 +46,22 @@ impl Processor {
             &gateway_approve_messages_execute_data_pda.data.borrow(),
         )?;
 
-        let [decoded_command @ DecodedCommand::RotateSigners(rotate_signers)] =
+        let [decoded_command @ DecodedCommand::RotateSigners(rotate_signers_command)] =
             execute_data.command_batch.commands.as_slice()
         else {
             msg!("expected exactly one `RotateSigners` command");
             return Err(ProgramError::InvalidArgument);
         };
 
-        // todo: check if we need to enforce rotation delay
+        // we always enforce the delay unless unless the operator has been provided and
+        // its also the Gateway opreator
+        // refence: https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/c290c7337fd447ecbb7426e52ac381175e33f602/contracts/gateway/AxelarAmplifierGateway.sol#L98-L101
+        let enforce_rotation_delay = operator.map_or(true, |operator| {
+            let operator_matches = *operator.key == gateway_config.operator;
+            let operator_is_sigener = operator.is_signer;
+            // if the operator matches and is also the signer - disable rotation delay
+            !(operator_matches && operator_is_sigener)
+        });
 
         let mut approved_command_account = message_account
             .as_ref()
@@ -72,10 +81,10 @@ impl Processor {
             })?;
 
         // Check: proof is signed by latest signers
-        let SignerSetMetadata::Latest = signer_data else {
+        if enforce_rotation_delay && !matches!(signer_data, SignerSetMetadata::Latest) {
             msg!("Proof is not signed by the latest signer set");
             return Err(ProgramError::InvalidArgument);
-        };
+        }
 
         // Set command state as executed
         approved_command_account.set_signers_rotated_executed()?;
@@ -86,13 +95,14 @@ impl Processor {
 
         // Try to set the new signer set - but if we fail, it's not an error because we
         // still need to persist the command execution state.
-        if let Err(err) = gateway_config.rotate_signers(rotate_signers) {
+        // If rotate_signers_command is a repeat signer set, this will revert
+        if let Err(err) = gateway_config.rotate_signers(rotate_signers_command) {
             msg!("Failed to rotate signers {:?}", err);
             return Ok(());
         };
 
         // Emit event if the signers were rotated
-        GatewayEvent::SignersRotated(Cow::Borrowed(rotate_signers)).emit()?;
+        GatewayEvent::SignersRotated(Cow::Borrowed(rotate_signers_command)).emit()?;
 
         // Store the gateway data back to the account.
         let mut data = gateway_root_pda.try_borrow_mut_data()?;

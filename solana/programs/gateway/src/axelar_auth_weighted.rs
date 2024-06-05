@@ -77,6 +77,7 @@ pub struct AxelarAuthWeighted {
 }
 
 /// Derived metadata information about the signer set.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SignerSetMetadata {
     /// Indicates theat the signer set is the most recent-known one.
     Latest,
@@ -309,6 +310,8 @@ impl BorshDeserialize for AxelarAuthWeighted {
 
 #[cfg(test)]
 mod tests {
+    use solana_sdk::pubkey::Pubkey;
+
     use super::*;
     use crate::state::GatewayConfig;
 
@@ -381,7 +384,7 @@ mod tests {
         aw.update_latest_signer_set([1u8; 32]).unwrap();
         aw.update_latest_signer_set([2u8; 32]).unwrap();
         aw.update_latest_signer_set([3u8; 32]).unwrap();
-        let config = GatewayConfig::new(bump, aw);
+        let config = GatewayConfig::new(bump, aw, Pubkey::new_unique());
         let serialized = borsh::to_vec(&config).unwrap();
         let deserialized: GatewayConfig = borsh::from_slice(&serialized).unwrap();
         assert_eq!(config, deserialized);
@@ -418,7 +421,7 @@ mod tests {
             let signer_set_hash = [i; 32];
             aw.update_latest_signer_set(signer_set_hash).unwrap();
         }
-        let config = GatewayConfig::new(bump, aw);
+        let config = GatewayConfig::new(bump, aw, Pubkey::new_unique());
         let serialized = borsh::to_vec(&config).unwrap();
         let deserialized: GatewayConfig = borsh::from_slice(&serialized).unwrap();
         assert_eq!(config, deserialized);

@@ -232,6 +232,7 @@ impl Worker {
                     execute_data_account,
                     self.gateway_config_address,
                     command_account,
+                    None,
                 )
                 .map_err(IncluderError::RotateSignersInstruction)?
             }

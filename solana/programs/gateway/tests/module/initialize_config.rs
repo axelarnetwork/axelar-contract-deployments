@@ -21,7 +21,7 @@ async fn test_successfylly_initialize_config() {
     let new_signer_set = new_signer_set(&initial_signers, 0, Uint256::from_u128(14));
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
-    let gateway_config = GatewayConfig::new(bump, auth_weighted);
+    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -56,7 +56,7 @@ async fn test_successfylly_initialize_config_without_signers() {
     let initial_signers = vec![];
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
-    let gateway_config = GatewayConfig::new(bump, auth_weighted);
+    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -88,7 +88,7 @@ async fn test_successfylly_initialize_config_with_50_signers() {
         .collect::<Vec<_>>();
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
-    let gateway_config = GatewayConfig::new(bump, auth_weighted);
+    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -122,7 +122,7 @@ async fn test_successfylly_initialize_config_with_50_signers_custom_small_thresh
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted =
         fixture.init_auth_weighted_module_custom_threshold(&initial_signers, threshold.into());
-    let gateway_config = GatewayConfig::new(bump, auth_weighted);
+    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -156,7 +156,7 @@ async fn test_successfylly_initialize_config_with_50_signers_custom_large_thresh
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted =
         fixture.init_auth_weighted_module_custom_threshold(&initial_signers, threshold.into());
-    let gateway_config = GatewayConfig::new(bump, auth_weighted);
+    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -190,7 +190,7 @@ async fn test_reverts_on_invalid_gateway_bump() {
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let invalid_bump = bump + 1;
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
-    let gateway_config = GatewayConfig::new(invalid_bump, auth_weighted);
+    let gateway_config = GatewayConfig::new(invalid_bump, auth_weighted, Pubkey::new_unique());
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -223,7 +223,7 @@ async fn test_reverts_on_invalid_gateway_pda_pubkey() {
     ];
     let (_gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
-    let gateway_config = GatewayConfig::new(bump, auth_weighted);
+    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -256,10 +256,10 @@ async fn test_reverts_on_already_initialized_gateway_pda() {
     ];
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
     let gateway_config_pda = fixture
-        .initialize_gateway_config_account(auth_weighted.clone())
+        .initialize_gateway_config_account(auth_weighted.clone(), Pubkey::new_unique())
         .await;
     let (_, bump) = GatewayConfig::pda();
-    let gateway_config = GatewayConfig::new(bump, auth_weighted);
+    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
     fixture.recent_blockhash = fixture
         .banks_client
         .get_new_latest_blockhash(&fixture.recent_blockhash)

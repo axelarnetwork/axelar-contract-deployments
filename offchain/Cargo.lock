@@ -2338,6 +2338,7 @@ dependencies = [
  "axelar-message-primitives",
  "base64 0.21.7",
  "bimap",
+ "bincode",
  "borsh 1.4.0",
  "itertools 0.12.1",
  "num-derive 0.4.2",

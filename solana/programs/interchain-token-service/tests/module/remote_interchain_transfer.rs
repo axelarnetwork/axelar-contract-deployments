@@ -11,6 +11,7 @@ use interchain_token_transfer_gmp::{Bytes32, InterchainTransfer};
 use solana_program::keccak::hash;
 use solana_program::program_pack::Pack;
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::sysvar::clock::Clock;
 use solana_sdk::transaction::Transaction;
@@ -38,7 +39,10 @@ async fn test_remote_interchain_transfer_mint_burn() -> Result<()> {
     let gas_service_root_pda = fixture.init_gas_service().await;
     let amount_to_mint_preparations = 100;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&[]))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&[]),
+            Pubkey::new_unique(),
+        )
         .await;
     let interchain_token_service_root_pda = fixture
         .init_its_root_pda(&gateway_root_pda, &gas_service_root_pda)
@@ -268,7 +272,10 @@ async fn test_remote_interchain_transfer_lock_unlock() -> Result<()> {
     let destination = Keypair::new();
     let gas_service_root_pda = fixture.init_gas_service().await;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&gateway_operators))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&gateway_operators),
+            Pubkey::new_unique(),
+        )
         .await;
 
     let interchain_token_service_root_pda = fixture

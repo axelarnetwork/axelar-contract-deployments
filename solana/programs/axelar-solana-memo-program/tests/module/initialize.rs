@@ -1,6 +1,7 @@
 use axelar_solana_memo_program::get_counter_pda;
 use axelar_solana_memo_program::state::Counter;
 use solana_program_test::tokio;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use test_fixtures::execute_data::create_signer_with_weight;
 use test_fixtures::test_setup::TestFixture;
@@ -17,7 +18,10 @@ async fn test_initialize() {
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
 
     // Action

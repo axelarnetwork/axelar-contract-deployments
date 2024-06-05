@@ -2,6 +2,7 @@
 
 use axelar_message_primitives::command::{ApproveMessagesCommand, DecodedCommand};
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
+use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -24,10 +25,11 @@ pub enum GatewayInstruction {
     /// Rotate signers for the Gateway Root Config PDA account.
     ///
     /// Accounts expected by this instruction:
-    /// 0. [] Gateway Root Config PDA account
-    /// 1. [WRITE] Gateway ExecuteData PDA account
-    /// 2. [WRITE] Gateway ApprovedCommand PDA accounts. The command needs to be
+    /// 0. [WRITE] Gateway Root Config PDA account
+    /// 1. [] Gateway ExecuteData PDA account
+    /// 2. [WRITE] Gateway ApprovedCommand PDA account. The command needs to be
     ///    `RotateSigners`.
+    /// 3. Opional: [SIGNER] `Operator` that's stored in the gateway confi PDA.
     RotateSigners,
 
     /// Represents the `CallContract` Axelar event.
@@ -101,10 +103,24 @@ pub enum GatewayInstruction {
     /// 3. [SIGNER] PDA signer account (caller). Dervied from the destination
     ///    program id.
     ValidateMessage(ApproveMessagesCommand),
+
+    /// Transfers operatorship of the Gateway Root Config PDA account.
+    ///
+    /// Only the current operator OR Gateway program owner can transfer
+    /// operatorship to a new operator.
+    ///
+    /// Accounts expected by this instruction:
+    /// 1. [WRITE] Config PDA account
+    /// 2. [SIGNER] Current operator OR the upgrade authority of the Gateway
+    ///    programdata account
+    /// 3. [] Gateway programdata account (owned by `bpf_loader_upgradeable`)
+    /// 4. [] New operator
+    TransferOperatorship,
 }
 
 /// Creates a [`GatewayInstruction::ApproveMessages`] instruction.
 pub fn approve_messages(
+    // todo: we don't need to expose the program id
     program_id: Pubkey,
     execute_data_account: Pubkey,
     gateway_root_pda: Pubkey,
@@ -112,33 +128,53 @@ pub fn approve_messages(
 ) -> Result<Instruction, ProgramError> {
     crate::check_program_account(program_id)?;
     let data = to_vec(&GatewayInstruction::ApproveMessages)?;
-    #[allow(deprecated)]
-    handle_execute_data(
-        gateway_root_pda,
-        execute_data_account,
-        command_accounts,
+
+    let mut accounts = vec![
+        AccountMeta::new(gateway_root_pda, false),
+        AccountMeta::new(execute_data_account, false),
+    ];
+
+    // Message accounts needs to be writable so we can set them as processed.
+    accounts.extend(
+        command_accounts
+            .iter()
+            .map(|key| AccountMeta::new(*key, false)),
+    );
+
+    Ok(Instruction {
         program_id,
+        accounts,
         data,
-    )
+    })
 }
 
 /// Creates a [`GatewayInstruction::RotateSigners`] instruction.
 pub fn rotate_signers(
+    // todo: we don't need to expose the program id here
     program_id: Pubkey,
     execute_data_account: Pubkey,
     gateway_root_pda: Pubkey,
     command_account: Pubkey,
+    operator: Option<Pubkey>,
 ) -> Result<Instruction, ProgramError> {
     crate::check_program_account(program_id)?;
     let data = to_vec(&GatewayInstruction::RotateSigners)?;
-    #[allow(deprecated)]
-    handle_execute_data(
-        gateway_root_pda,
-        execute_data_account,
-        &[command_account],
+
+    let mut accounts = vec![
+        AccountMeta::new(gateway_root_pda, false),
+        AccountMeta::new(execute_data_account, false),
+        AccountMeta::new(command_account, false),
+    ];
+
+    if let Some(operator) = operator {
+        accounts.push(AccountMeta::new(operator, true));
+    }
+
+    Ok(Instruction {
         program_id,
+        accounts,
         data,
-    )
+    })
 }
 
 /// Helper to create an instruction with the given ExecuteData and accounts.
@@ -147,6 +183,7 @@ pub fn handle_execute_data(
     gateway_root_pda: Pubkey,
     execute_data_account: Pubkey,
     command_accounts: &[Pubkey],
+    // todo: we don't need to expose the program id here
     program_id: Pubkey,
     data: Vec<u8>,
 ) -> Result<Instruction, ProgramError> {
@@ -286,6 +323,31 @@ pub fn validate_message(
     ];
 
     let data = borsh::to_vec(&GatewayInstruction::ValidateMessage(message))?;
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Creates a [`GatewayInstruction::TransferOperatorship`] instruction.
+pub fn transfer_operatorship(
+    gateway_root_pda: Pubkey,
+    current_operator_or_gateway_program_owner: Pubkey,
+    new_operator: Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let (programdata_pubkey, _) =
+        Pubkey::try_find_program_address(&[crate::id().as_ref()], &bpf_loader_upgradeable::id())
+            .ok_or(ProgramError::IncorrectProgramId)?;
+    let accounts = vec![
+        AccountMeta::new(gateway_root_pda, false),
+        AccountMeta::new_readonly(current_operator_or_gateway_program_owner, true),
+        AccountMeta::new_readonly(programdata_pubkey, false),
+        AccountMeta::new_readonly(new_operator, false),
+    ];
+
+    let data = borsh::to_vec(&GatewayInstruction::TransferOperatorship)?;
 
     Ok(Instruction {
         program_id: crate::id(),

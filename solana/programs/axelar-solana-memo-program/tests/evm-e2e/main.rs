@@ -39,7 +39,10 @@ async fn axelar_solana_setup() -> (
         create_signer_with_weight(4_u128).unwrap(),
     ];
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(fixture.init_auth_weighted_module(&signers))
+        .initialize_gateway_config_account(
+            fixture.init_auth_weighted_module(&signers),
+            Pubkey::new_unique(),
+        )
         .await;
     let (counter_pda, counter_bump) =
         axelar_solana_memo_program::get_counter_pda(&gateway_root_pda);
