@@ -1230,7 +1230,7 @@ async function relayTransaction(options, chain, contract, method, params, native
             }
         })(),
 
-        chain.timeout || 60000,
+        chain.txTimeout || 60000,
         new Error(`Timeout updating gas info for ${chain.name}`),
     );
 }
