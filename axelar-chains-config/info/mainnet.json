@@ -867,6 +867,10 @@
         "api": "https://api.arbiscan.io/api"
       },
       "gasOptions": {},
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 3
+      },
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 2000000000
@@ -1364,17 +1368,18 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1,
+        "l1FeeScalar": 1368
+      },
       "confirmations": 3,
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 10000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25,
-      "onchainGasEstimate": {
-        "l1ChainName": "ethereum",
-        "gasEstimationType": 1
-      }
+      "approxFinalityWaitTime": 25
     },
     "linea": {
       "name": "Linea",
@@ -1622,12 +1627,13 @@
         "gasLimit": 3000000,
         "gasPrice": 10000000000
       },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 30,
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
-      }
+        "gasEstimationType": 1,
+        "l1FeeScalar": 1101
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 30
     },
     "mantle": {
       "name": "Mantle",
@@ -1740,6 +1746,11 @@
         }
       },
       "confirmations": 2,
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 10000
+      },
       "explorer": {
         "name": "Mantle Explorer",
         "url": "https://mantlescan.xyz",
@@ -1865,6 +1876,11 @@
       "confirmations": 2,
       "gasOptions": {
         "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 4,
+        "l1FeeScalar": 1050000000
       },
       "staticGasOptions": {
         "gasLimit": 3000000,
@@ -2076,6 +2092,11 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 50000
+      },
       "explorer": {
         "name": "Fraxscan",
         "url": "https://fraxscan.com",
@@ -2283,6 +2304,11 @@
       },
       "gasOptions": {
         "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 684000
       },
       "confirmations": 2,
       "explorer": {
