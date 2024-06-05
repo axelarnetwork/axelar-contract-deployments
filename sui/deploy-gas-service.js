@@ -16,8 +16,6 @@ async function processCommand(config, chain, options) {
         chain.contracts.axelar_gas_service = {};
     }
 
-    const contractConfig = chain.contracts.axelar_gas_service;
-
     const published = await publishPackage(packageName, client, keypair);
     const packageId = published.packageId;
 
@@ -26,6 +24,8 @@ async function processCommand(config, chain, options) {
     const gasService = published.publishTxn.objectChanges.find(
         (change) => change.objectType === `${packageId}::${packageName}::GasService`,
     );
+
+    const contractConfig = chain.contracts.axelar_gas_service;
     contractConfig.address = packageId;
     contractConfig.objects = {
         gasService: gasService.objectId,
