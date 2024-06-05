@@ -1664,7 +1664,7 @@
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
         "gasEstimationType": 2,
-        "l1FeeScalar": 684000
+        "l1FeeScalar": 7600
       },
       "confirmations": 2,
       "explorer": {
