@@ -56,7 +56,8 @@ function getWallet(chain, options) {
         }
     }
 
-    const client = new SuiClient({ url: getFullnodeUrl(chain.networkType) });
+    const url = chain.rpc || getFullnodeUrl(chain.networkType);
+    const client = new SuiClient({ url });
 
     return [keypair, client];
 }
