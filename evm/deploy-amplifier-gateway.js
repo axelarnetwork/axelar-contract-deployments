@@ -240,6 +240,7 @@ async function deploy(config, chain, options) {
         printInfo('Proxy deployment args', `${implementation.address}, ${params}`);
 
         contractConfig.operator = operator;
+        contractConfig.setupParams = params;
 
         const gatewayProxy = await deployContract(
             options.deployMethod,
