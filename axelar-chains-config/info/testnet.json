@@ -902,7 +902,7 @@
       "eip1559": true,
       "finality": "120",
       "approxFinalityWaitTime": 60,
-      "timeout": 180000
+      "txTimeout": 180000
     },
     "scroll": {
       "name": "Scroll",
@@ -1664,7 +1664,7 @@
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
         "gasEstimationType": 2,
-        "l1FeeScalar": 684000
+        "l1FeeScalar": 7600
       },
       "confirmations": 2,
       "explorer": {
@@ -2042,6 +2042,7 @@
   "axelar": {
     "id": "Axelarnet",
     "axelarId": "Axelarnet",
+    "chainId": "axelar-testnet-lisbon-3",
     "rpc": "https://rpc-axelar-testnet.imperator.co:443",
     "lcd": "https://lcd-axelar-testnet.imperator.co:443",
     "grpc": "grpc-axelar-testnet.imperator.co:2062",
