@@ -61,7 +61,7 @@ Use `--help` flag to see other setup params that can be overridden.
 - For testing convenience, you can use the secp256k1 wallet as the signer set for the gateway.
 
 ```bash
-node sui/deploy-gateway.js --signers wallet
+node sui/deploy-gateway.js --signers wallet --nonce test
 ```
 
 - You can also provide a JSON object with a full signer set:
@@ -75,6 +75,22 @@ node sui/deploy-gateway.js -e testnet --signers '{"signers": [{"pubkey": "0x0201
 ```bash
 node sui/deploy-test.js
 ```
+
+4. To rotate the gateway signers:
+
+If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
+
+```bash
+node sui/rotate-signers.js --proof wallet
+```
+
+If you want to rotate to the wallet again but with a new nonce, do
+
+```bash
+node sui/rotate-signers.js --signers wallet --proof wallet --currentNonce test --newNonce test2
+```
+
+Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
 
 ## Troubleshooting
 
