@@ -1292,7 +1292,7 @@
   "axelar": {
     "id": "Axelarnet",
     "axelarId": "Axelarnet",
-    "rpc": "",
+    "rpc": "http://k8s-stagenet-axelarco-739f028d85-5da97ddbefdc3c4f.elb.us-east-2.amazonaws.com:26657/",
     "lcd": "http://k8s-stagenet-axelarco-739f028d85-5da97ddbefdc3c4f.elb.us-east-2.amazonaws.com:1317/",
     "grpc": "",
     "tokenSymbol": "AXL",
