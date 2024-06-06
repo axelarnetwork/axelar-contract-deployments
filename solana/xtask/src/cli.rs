@@ -1,52 +1,15 @@
-use std::fmt::Display;
 use std::path::PathBuf;
 
-use anyhow::Ok;
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand};
+use cmd::solana::SolanaContract;
+use report::Report;
 use url::Url;
 
-use self::cmd::{build_contract, deploy, init_gmp_gateway};
-use self::report::Report;
-
 mod cmd;
-mod path;
-pub mod report;
+pub(crate) mod report;
 
 #[cfg(test)]
 mod test_helpers;
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-pub enum Contract {
-    GmpGateway,
-}
-
-impl Contract {
-    /// Provides the predictable output artifact that will be
-    /// generated when each contract it's built. This is a helper
-    /// method that is normally join'ed() with other base directories.
-    fn file(&self) -> PathBuf {
-        match self {
-            Contract::GmpGateway => PathBuf::from("gmp_gateway.so"),
-        }
-    }
-    /// Provides the local folder name at "solana/programs" each
-    /// contract belongs to.
-    /// This is a helper method that is normally when it's needed to
-    /// i.e "cd" into the contract folder for building it with `cargo-sbf`.
-    fn dir(&self) -> PathBuf {
-        match self {
-            Contract::GmpGateway => PathBuf::from("gateway"),
-        }
-    }
-}
-
-impl Display for Contract {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Contract::GmpGateway => write!(f, "gmp-gateway"),
-        }
-    }
-}
 
 /// Xtask is the Axelar Solana workspace CLI that helps
 /// both actors, humans and CI to achieve mundane tasks
@@ -54,19 +17,27 @@ impl Display for Contract {
 /// programs.
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
-pub enum Cli {
+pub(crate) enum Cli {
+    Solana {
+        #[command(subcommand)]
+        solana_command: Solana,
+    },
+}
+
+#[derive(Subcommand)]
+pub(crate) enum Solana {
     /// Build's a contract that is listed in the programs
     /// workspace directory.
     Build {
         /// It accepts the name of the contract folder as argument.
         #[arg(value_enum)]
-        contract: Contract,
+        contract: SolanaContract,
     },
     /// Deploys the given contract name
     Deploy {
         /// It accepts the name of the contract folder as argument.
         #[arg(value_enum)]
-        contract: Contract,
+        contract: SolanaContract,
         /// They keypair used to deploy the contract and sign transactions.
         /// If not provided, it will fallback into Solana CLI defaults.
         #[arg(short, long)]
@@ -83,17 +54,17 @@ pub enum Cli {
     },
     Init {
         #[command(subcommand)]
-        contract: InitSubcommand,
+        contract: SolanaInitSubcommand,
     },
 }
 
 /// Initialize contracts by providing their specific init parameters.
 #[derive(Subcommand)]
-pub enum InitSubcommand {
+pub(crate) enum SolanaInitSubcommand {
     /// Initialize an already deployed gateway contract.
     GmpGateway {
         /// A path that points to a toml file that contains the signers and
-        /// their respective weights data. See tests/auth_weighted.toml file
+        /// their respective weights data. See `tests/auth_weighted.toml` file
         /// for an example.
         #[arg(short, long)]
         auth_weighted_file: PathBuf,
@@ -103,7 +74,7 @@ pub enum InitSubcommand {
         #[arg(short, long)]
         rpc_url: Option<Url>,
         /// The payer keypair file. This is a file containing the byte slice
-        /// serialization of a solana_sdk::signer::keypair::Keypair .
+        /// serialization of a `solana_sdk::signer::keypair::Keypair` .
         /// If not provided, this will fallback in solana CLI current
         /// configuration.
         #[arg(short, long)]
@@ -112,21 +83,28 @@ pub enum InitSubcommand {
 }
 
 impl Cli {
-    pub async fn run(&self) -> anyhow::Result<Report> {
+    pub(crate) async fn run(&self) -> anyhow::Result<Report> {
         match self {
-            Cli::Build { contract } => Ok(Report::Build(build_contract(contract).await?)),
-            Cli::Deploy {
-                contract,
-                keypair_path,
-                url,
-                ws_url,
-            } => deploy(contract, keypair_path, url, ws_url).await,
-            Cli::Init { contract } => match contract {
-                InitSubcommand::GmpGateway {
-                    rpc_url,
-                    payer_kp_path,
-                    auth_weighted_file: auth_weighted,
-                } => init_gmp_gateway(auth_weighted, rpc_url, payer_kp_path).await,
+            Cli::Solana { solana_command } => match solana_command {
+                Solana::Build { contract } => {
+                    cmd::solana::build_contract(*contract).map(Report::Build)
+                }
+                Solana::Deploy {
+                    contract,
+                    keypair_path,
+                    url,
+                    ws_url,
+                } => cmd::solana::deploy(*contract, keypair_path, url, ws_url),
+                Solana::Init { contract } => match &contract {
+                    SolanaInitSubcommand::GmpGateway {
+                        auth_weighted_file,
+                        rpc_url,
+                        payer_kp_path,
+                    } => {
+                        cmd::solana::init_gmp_gateway(auth_weighted_file, rpc_url, payer_kp_path)
+                            .await
+                    }
+                },
             },
         }
     }
@@ -148,7 +126,6 @@ mod tests {
     use serial_test::serial;
     use solana_test_validator::{TestValidatorGenesis, UpgradeableProgramInfo};
     use tempfile::NamedTempFile;
-    use tests::path::contracts_artifact_dir;
     use tests::test_helpers::build_gateway_contract;
 
     use super::*;
@@ -156,23 +133,25 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn build_actually_works() {
-        let args = vec!["xtask", "build", "gmp-gateway"];
-
+        // setup
+        let args = vec!["xtask", "solana", "build", "gmp-gateway"];
         let cli: Cli = Cli::try_parse_from(args).unwrap();
 
+        // action
         let result = cli.run().await.unwrap();
 
+        // assert
         let contract_path = match result {
             Report::Build(report) => report,
             _ => panic!("result not expected."),
         };
-
-        assert!(contract_path.exists())
+        assert!(contract_path.exists());
     }
 
     #[tokio::test]
     #[serial]
     async fn deploy_actually_works() {
+        // setup
         solana_logger::setup_with_default("solana_program_runtime=warn");
         let validator = TestValidatorGenesis::default();
         let (validator, keypair) = validator.start_async().await;
@@ -184,8 +163,11 @@ mod tests {
         let file_path = file.path().to_string_lossy();
         let rpc_url = validator.rpc_url();
         let rpc_pubsub_url = validator.rpc_pubsub_url();
+
+        // action
         let args = vec![
             "xtask",
+            "solana",
             "deploy",
             "-k",
             &file_path,
@@ -197,17 +179,18 @@ mod tests {
         ];
         let cli: Cli = Cli::try_parse_from(args).unwrap();
         let result = cli.run().await.unwrap();
-        let validator_rpc_client = validator.get_async_rpc_client();
         let contract_id = match result {
             Report::Deploy(report) => report,
             _ => panic!("result not expected."),
         };
 
+        // assert
+        let validator_rpc_client = validator.get_async_rpc_client();
         let account_info = validator_rpc_client
             .get_account(&contract_id)
             .await
             .unwrap();
-        assert!(account_info.executable)
+        assert!(account_info.executable);
     }
 
     #[tokio::test]
@@ -223,9 +206,8 @@ mod tests {
             program_id,
             loader: solana_sdk::bpf_loader_upgradeable::id(),
             upgrade_authority: program_id,
-            program_path: contracts_artifact_dir()
-                .unwrap()
-                .join(Contract::GmpGateway.file()),
+            program_path: cmd::solana::path::contracts_artifact_dir()
+                .join(SolanaContract::GmpGateway.file()),
         }]);
         let (validator, keypair) = seed_validator.start_async().await;
         // Save private keypair to temp file for the test
@@ -236,6 +218,7 @@ mod tests {
         let payer_kp = file.path().to_string_lossy();
         let args = vec![
             "xtask",
+            "solana",
             "init",
             "gmp-gateway",
             "--rpc-url",

@@ -5,7 +5,7 @@ use std::process::{self, Termination};
 use solana_program::pubkey::Pubkey;
 
 #[derive(Debug, PartialEq)]
-pub enum Report {
+pub(crate) enum Report {
     Build(PathBuf),
     Deploy(Pubkey),
     Init(String),
@@ -37,7 +37,7 @@ impl Display for Report {
 
 impl Termination for Report {
     fn report(self) -> std::process::ExitCode {
-        println!("Report: {}", self);
+        println!("Report: {self}");
         process::ExitCode::SUCCESS
     }
 }
@@ -60,6 +60,6 @@ mod tests {
         let expected = indoc! {"
             Following contract was deployed: HgVNmBRqGuhu9qfQCs6mEykDWfMG4hHfRZ3r9kPbQT1t
         "};
-        assert_eq!(expected, format!("{}", result))
+        assert_eq!(expected, format!("{result}"));
     }
 }
