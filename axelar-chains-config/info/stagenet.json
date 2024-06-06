@@ -628,6 +628,124 @@
       },
       "finality": "1",
       "approxFinalityWaitTime": 1
+    },
+    "mantle-sepolia": {
+      "name": "Mantle-Sepolia",
+      "id": "mantle-sepolia",
+      "axelarId": "mantle-sepolia",
+      "chainId": 5003,
+      "rpc": "https://rpc.sepolia.mantle.xyz",
+      "tokenSymbol": "MNT",
+      "confirmations": 2,
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 10000
+      },
+      "explorer": {
+        "name": "Mantle Explorer",
+        "url": "https://explorer.sepolia.mantle.xyz",
+        "api": "https://explorer.sepolia.mantle.xyz/api"
+      },
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0xd9c649BE907ED6Bd89C3DD588d4ec4a004588485",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0xF1464EEd434991E7d31A43936d867FaFE4211e2B",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        }
+      }
+    },
+    "blast-sepolia": {
+      "name": "Blast",
+      "id": "blast",
+      "axelarId": "blast",
+      "chainId": 168587773,
+      "rpc": "https://sepolia.blast.io/",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 684000
+      },
+      "confirmations": 2,
+      "explorer": {
+        "name": "Blastscan",
+        "url": "https://testnet.blastscan.io",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/168587773/etherscan"
+      }
+    },
+    "optimism-sepolia": {
+      "name": "Optimism-Sepolia",
+      "id": "optimism-sepolia",
+      "axelarId": "optimism-sepolia",
+      "chainId": 11155420,
+      "rpc": "https://sepolia.optimism.io",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1,
+        "l1FeeScalar": 7600
+      },
+      "confirmations": 3,
+      "explorer": {
+        "name": "Opscan",
+        "url": "https://sepolia-optimistic.etherscan.io",
+        "api": "https://api-sepolia-optimistic.etherscan.io/api"
+      }
+    },
+    "base-sepolia": {
+      "name": "Base-Sepolia",
+      "id": "base-sepolia",
+      "axelarId": "base-sepolia",
+      "chainId": 84532,
+      "rpc": "https://sepolia.base.org",
+      "tokenSymbol": "ETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1,
+        "l1FeeScalar": 1101
+      },
+      "confirmations": 2,
+      "explorer": {
+        "name": "Basescan",
+        "url": "https://sepolia-explorer.base.org",
+        "api": "https://api-sepolia.basescan.org/api"
+      }
+    },
+    "fraxtal-sepolia": {
+      "name": "Fraxtal",
+      "id": "fraxtal",
+      "axelarId": "fraxtal",
+      "chainId": 2522,
+      "rpc": "https://rpc.testnet.frax.com",
+      "tokenSymbol": "frxETH",
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 50000
+      }
     }
   },
   "axelar": {
@@ -635,7 +753,7 @@
     "axelarId": "Axelarnet",
     "chainId": "axelar-stagenet-1",
     "rpc": "",
-    "lcd": "",
+    "lcd": "http://k8s-stagenet-axelarco-739f028d85-5da97ddbefdc3c4f.elb.us-east-2.amazonaws.com:1317/",
     "grpc": "",
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://testnet.api.axelarscan.io"
