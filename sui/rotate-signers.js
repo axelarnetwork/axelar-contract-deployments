@@ -4,7 +4,7 @@ const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexlify, keccak256 },
+    utils: { arrayify, hexlify, keccak256, toUtf8Bytes },
     constants: { HashZero },
 } = ethers;
 
@@ -35,7 +35,7 @@ function getProofSigners(keypair, options) {
         return {
             signers: [{ pubkey: keypair.getPublicKey().toRawBytes(), weight: 1 }],
             threshold: 1,
-            nonce: HashZero,
+            nonce: options.currentNonce ? keccak256(toUtf8Bytes(options.currentNonce)) : HashZero,
         };
     } else if (options.proof) {
         printInfo('Using provided proof', options.proof);
@@ -97,10 +97,11 @@ async function processCommand(config, chain, options) {
         threshold: bcs.u128(),
         nonce: bytes32Struct,
     });
+    const newNonce = options.newNonce ? keccak256(toUtf8Bytes(options.newNonce)) : signers.nonce;
     const encodedSigners = signersStruct
         .serialize({
             ...signers,
-            nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
+            nonce: bytes32Struct.serialize(newNonce).toBytes(),
         })
         .toBytes();
 
@@ -177,6 +178,8 @@ if (require.main === module) {
 
     program.addOption(new Option('--signers <signers>', 'JSON with the initial signer set').makeOptionMandatory(true).env('SIGNERS'));
     program.addOption(new Option('--proof <proof>', 'JSON of the proof').env('PROOF'));
+    program.addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'));
+    program.addOption(new Option('--newNonce <newNonce>', 'nonce of the new signers (useful for test rotations)'));
 
     program.action((options) => {
         mainProcessor(options, processCommand);

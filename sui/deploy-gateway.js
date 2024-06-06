@@ -5,7 +5,7 @@ const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexlify },
+    utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
     constants: { HashZero },
 } = ethers;
 
@@ -25,7 +25,7 @@ async function getSigners(keypair, config, chain, options) {
         return {
             signers: [{ pubkey, weight: 1 }],
             threshold: 1,
-            nonce: HashZero,
+            nonce: options.nonce ? keccak256(toUtf8Bytes(options.nonce)) : HashZero,
         };
     } else if (options.signers) {
         printInfo('Using provided signers', options.signers);
@@ -153,6 +153,7 @@ if (require.main === module) {
     program.addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'));
     program.addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(0));
     program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
+    program.addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'));
 
     program.action((options) => {
         mainProcessor(options, processCommand);
