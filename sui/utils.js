@@ -8,6 +8,8 @@ const {
 } = ethers;
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
+const SUI_COIN_ID = '0x2::sui::SUI';
+
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
     const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'get_worker_set');
@@ -45,6 +47,7 @@ const loadSuiConfig = (env) => {
 };
 
 module.exports = {
+    SUI_COIN_ID,
     getAmplifierSigners,
     loadSuiConfig,
 };

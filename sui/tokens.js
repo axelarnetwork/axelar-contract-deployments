@@ -5,9 +5,7 @@ const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 const { printInfo, printError, validateParameters } = require('../evm/utils');
 const chalk = require('chalk');
-const { loadSuiConfig } = require('./utils');
-
-const SUI_COIN_ID = '0x2::sui::SUI';
+const { loadSuiConfig, SUI_COIN_ID } = require('./utils');
 
 class CoinManager {
     static async getAllCoins(client, account) {
@@ -183,15 +181,6 @@ class CoinManager {
 
     static isGasToken(coin) {
         return coin.coinType === '0x2::sui::SUI';
-    }
-
-    static checkSplitAmount(options) {
-        try {
-            parseInt(options.split);
-        } catch (e) {
-            printError('Error: Please specify a valid split amount');
-            process.exit(0);
-        }
     }
 }
 
