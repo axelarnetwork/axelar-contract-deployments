@@ -240,13 +240,15 @@ async function deploy(config, chain, options) {
         printInfo('Proxy deployment args', `${implementation.address}, ${params}`);
 
         contractConfig.operator = operator;
-        contractConfig.setupParams = params;
+
+        const proxyDeploymentArgs = [implementation.address, owner, params];
+        contractConfig.proxyDeploymentArgs = proxyDeploymentArgs;
 
         const gatewayProxy = await deployContract(
             options.deployMethod,
             wallet,
             AxelarAmplifierGatewayProxy,
-            [implementation.address, owner, params],
+            proxyDeploymentArgs,
             { salt, deployerContract },
             gasOptions,
             {},
