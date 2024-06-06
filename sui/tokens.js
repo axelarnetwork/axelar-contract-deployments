@@ -5,6 +5,9 @@ const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 const { printInfo, printError, validateParameters } = require('../evm/utils');
 const chalk = require('chalk');
+const {
+    utils: { parseUnits },
+} = require('ethers');
 const { loadSuiConfig, SUI_COIN_ID } = require('./utils');
 
 class CoinManager {
@@ -40,14 +43,9 @@ class CoinManager {
     }
 
     static async splitCoins(tx, coinTypeToCoins, options) {
-        validateParameters({
-            isValidNumber: { split: options.split },
-        });
-
-        const splitAmount = BigInt(options.split);
-
         printInfo('\n==== Splitting Coins ====');
 
+        const splitAmount = BigInt(options.split);
         const coinType = options.coinType || SUI_COIN_ID;
 
         const coins = coinTypeToCoins[coinType];
@@ -116,7 +114,27 @@ class CoinManager {
         if (options.merge) {
             await CoinManager.mergeCoin(tx, coinTypeToCoins, options);
         } else if (options.split) {
-            await CoinManager.splitCoins(tx, coinTypeToCoins, options);
+            validateParameters({
+                isValidNumber: { split: options.split },
+            });
+
+            const coinType = options.coinType || SUI_COIN_ID;
+            const metadata = await client.getCoinMetadata({
+                coinType,
+            });
+
+            if (!metadata) {
+                printError(`No metadata found for coin type ${coinType}`);
+                process.exit(0);
+            }
+
+            const splitAmount = parseUnits(options.split, metadata.decimals);
+
+            await CoinManager.splitCoins(tx, coinTypeToCoins, {
+                ...options,
+                split: splitAmount.toString(),
+                coinType,
+            });
         }
 
         const requireBroadcast = options.merge || options.split;
@@ -174,7 +192,7 @@ if (require.main === module) {
 
     program
         .option('--merge', 'Merge all coins')
-        .option('--split <amount>', 'Split coins')
+        .option('--split <amount>', 'Split coins. The amount is expected to be in the full coin unit (e.g. 1.5 for 1_500_000_000 coins)')
         .option('--coin-type <coinType>', 'Coin type to merge/split')
         .option('--transfer <recipientAddress>', 'Used with --split to transfer the split coins to the recipient address')
         .action((options) => {
