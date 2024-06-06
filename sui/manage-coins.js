@@ -202,7 +202,8 @@ async function mainProcessor(options, processor) {
 
 if (require.main === module) {
     const program = new Command();
-    program.name('manage-coins').description('Merge or split coins for an account');
+
+    program.name('tokens').description('Token management tool (e.g. show balance, merge, split etc.)');
 
     addBaseOptions(program);
 
