@@ -1,0 +1,12 @@
+[package]
+name = "axelar-encoding"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rkyv.workspace = true
+sha3.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+rand = "0.8.5"
