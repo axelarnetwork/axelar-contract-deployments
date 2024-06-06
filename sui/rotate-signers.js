@@ -27,6 +27,7 @@ function hashMessage(data) {
 function getProofSigners(keypair, options) {
     if (options.proof === 'wallet') {
         console.log('Using wallet to provide proof');
+
         if (keypair.getKeyScheme() !== 'Secp256k1') {
             throw new Error('Only Secp256k1 pubkeys are supported by the gateway');
         }
@@ -47,9 +48,10 @@ function getProofSigners(keypair, options) {
             threshold: proof.signers.threshold,
             nonce: arrayify(proof.signers.nonce) || HashZero,
         };
-    } else {
-        throw new Error('Proof not found');
     }
+ 
+        throw new Error('Proof not found');
+    
 }
 
 function getSignatures(keypair, options, messageToSign) {
@@ -62,12 +64,12 @@ function getSignatures(keypair, options, messageToSign) {
 
         return [new Uint8Array([...signature, recid])];
     } else if (options.proof) {
-
         const proof = JSON.parse(options.proof);
         return proof.signatures.map((signatrue) => arrayify(signatrue));
-    } else {
-        throw new Error('Proof not found');
     }
+ 
+        throw new Error('Proof not found');
+    
 }
 
 async function processCommand(config, chain, options) {
@@ -103,7 +105,7 @@ async function processCommand(config, chain, options) {
             nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
         })
         .toBytes();
-    
+
     const proofSigners = getProofSigners(keypair, options);
 
     const hashed = arrayify(hashMessage(encodedSigners));
@@ -114,11 +116,13 @@ async function processCommand(config, chain, options) {
         data_hash: bytes32Struct,
     });
 
-    const message = messageToSignStruct.serialize({
-        domain_separator: contractConfig.domainSeparator,
-        signers_hash: keccak256(signersStruct.serialize(proofSigners).toBytes()),
-        data_hash: hashed,
-    }).toBytes();
+    const message = messageToSignStruct
+        .serialize({
+            domain_separator: contractConfig.domainSeparator,
+            signers_hash: keccak256(signersStruct.serialize(proofSigners).toBytes()),
+            data_hash: hashed,
+        })
+        .toBytes();
 
     const signatures = getSignatures(keypair, options, message);
 

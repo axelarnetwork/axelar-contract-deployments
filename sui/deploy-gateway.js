@@ -151,11 +151,7 @@ if (require.main === module) {
 
     program.addOption(new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'));
     program.addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'));
-    program.addOption(
-        new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(
-            0,
-        ),
-    );
+    program.addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(0));
     program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
 
     program.action((options) => {
