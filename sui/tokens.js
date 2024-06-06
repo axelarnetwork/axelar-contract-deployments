@@ -3,7 +3,7 @@ const { saveConfig } = require('../evm/utils');
 const { Command } = require('commander');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
-const { printInfo, printError } = require('../evm/utils');
+const { printInfo, printError, validateParameters } = require('../evm/utils');
 const chalk = require('chalk');
 const { loadSuiConfig } = require('./utils');
 
@@ -43,6 +43,11 @@ class CoinManager {
 
     static async splitCoins(tx, coinTypeToCoins, options) {
         CoinManager.checkSplitAmount(options);
+
+        validateParameters({
+          isValidNumber: { split: options.split },
+        });
+
         const splitAmount = BigInt(options.split);
 
         printInfo('\n==== Splitting Coins ====');
