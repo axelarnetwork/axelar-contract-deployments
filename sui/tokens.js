@@ -3,7 +3,7 @@ const { saveConfig } = require('../evm/utils');
 const { Command } = require('commander');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
-const { printInfo } = require('../evm/utils');
+const { printInfo, printError } = require('../evm/utils');
 const chalk = require('chalk');
 const { loadSuiConfig } = require('./utils');
 
@@ -92,20 +92,17 @@ class CoinManager {
     }
 
     static async mergeCoin(tx, coinTypeToCoins, options) {
-        const coinType = options.coinType;
+        const coinTypes = options.coinType ? [options.coinType] : Object.keys(coinTypeToCoins);
         printInfo('\n==== Merging Coins ====');
 
-        // Throw an error if the coin type is specified but no coins are found
-        CoinManager.checkCoinType(coinType, coinTypeToCoins);
-
-        if (coinType) {
+        for (const coinType of coinTypes) {
             const coins = coinTypeToCoins[coinType];
-            await CoinManager.doMergeCoin(tx, coins);
-        } else {
-            for (const coinType in coinTypeToCoins) {
-                const coins = coinTypeToCoins[coinType];
-                await CoinManager.doMergeCoin(tx, coins);
+
+            if(!coins) {
+              throw new Error(`No coins found for coin type ${coinType}`);
             }
+
+            await CoinManager.doMergeCoin(tx, coins);
         }
     }
 
@@ -174,7 +171,7 @@ class CoinManager {
 
     static checkCoinType(coinType, coinTypeToCoins) {
         if (coinType && !coinTypeToCoins[coinType]) {
-            console.error(`No coins found for coin type ${coinType}`);
+            printError(`No coins found for coin type ${coinType}`);
             process.exit(0);
         }
     }
@@ -187,7 +184,7 @@ class CoinManager {
         try {
             parseInt(options.split);
         } catch (e) {
-            console.error('\nError: Please specify a valid split amount');
+            printError('Error: Please specify a valid split amount');
             process.exit(0);
         }
     }
