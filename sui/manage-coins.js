@@ -10,7 +10,6 @@ const { loadSuiConfig } = require('./utils');
 const SUI_COIN_ID = '0x2::sui::SUI';
 
 class CoinManager {
-
     static async getAllCoins(client, account) {
         let cursor;
         const coinTypeToCoins = {};
@@ -46,7 +45,7 @@ class CoinManager {
         CoinManager.checkSplitAmount(options);
         const splitAmount = BigInt(options.split);
 
-        console.log('\n==== Splitting Coins ====');
+        printInfo('\n==== Splitting Coins ====');
 
         // Set coin type to given coin type or the first coin type if there's only one if it's a SUI token.
         const hasOnlyGasToken = Object.keys(coinTypeToCoins).length === 1 && coinTypeToCoins[SUI_COIN_ID];
@@ -74,7 +73,7 @@ class CoinManager {
         }
 
         if (options.transfer) {
-            console.log(`\nTransfer ${splitAmount} coins for every split coin to ${chalk.green(options.transfer)}`);
+            printInfo(`\nTransfer ${splitAmount} coins for every split coin to ${chalk.green(options.transfer)}`);
         }
 
         // The transaction will fail if the gas budget is not set for splitting coins transaction
@@ -94,7 +93,7 @@ class CoinManager {
 
     static async mergeCoin(tx, coinTypeToCoins, options) {
         const coinType = options.coinType;
-        console.log('\n==== Merging Coins ====');
+        printInfo('\n==== Merging Coins ====');
 
         // Throw an error if the coin type is specified but no coins are found
         CoinManager.checkCoinType(coinType, coinTypeToCoins);
@@ -167,9 +166,9 @@ class CoinManager {
 
         for (const coinType in coinTypeToCoins) {
             const coins = coinTypeToCoins[coinType];
-            console.log(`Coin Type: ${chalk.green(coinType)}`);
-            console.log(`Total Balance: ${chalk.green(coins.totalBalance)}`);
-            console.log(`Total Objects: ${chalk.green(coins.data.length)}`);
+            printInfo(`Coin Type`, coinType);
+            printInfo(`Total Balance`, coins.totalBalance);
+            printInfo(`Total Objects`, coins.data.length);
         }
     }
 
