@@ -6,7 +6,6 @@ const { ethers } = require('hardhat');
 const {
     utils: { arrayify, hexlify, keccak256 },
     constants: { HashZero },
-    Wallet
 } = ethers;
 
 const { addBaseOptions } = require('./cli-utils');
@@ -26,26 +25,24 @@ function hashMessage(data) {
 }
 
 function getProof(keypair, options, encodedSigners) {
-    if(options.signers === 'wallet' && !options.proof && encodedSigners) {
+    if (options.signers === 'wallet' && !options.proof && encodedSigners) {
         if (keypair.getKeyScheme() !== 'Secp256k1') {
             throw new Error('Only Secp256k1 pubkeys are supported by the gateway');
         }
 
         const hashed = arrayify(hashMessage(encodedSigners));
 
-        const { signature, recid } = secp256k1.ecdsaSign(hashed, Buffer.from(options.privateKey, 'hex'), );
-        
+        const { signature, recid } = secp256k1.ecdsaSign(hashed, Buffer.from(options.privateKey, 'hex'));
+
         return {
             signers: {
                 signers: [{ pubkey: keypair.getPublicKey().toRawBytes(), weight: 1 }],
                 threshold: 1,
                 nonce: HashZero,
             },
-            signatures: [
-                new Uint8Array([...signature, recid]),
-            ],
+            signatures: [new Uint8Array([...signature, recid])],
         };
-    } else if (options.proof){
+    } else if (options.proof) {
         printInfo('Using provided proof', options.proof);
 
         const proof = JSON.parse(options.proof);
@@ -57,7 +54,7 @@ function getProof(keypair, options, encodedSigners) {
                 threshold: proof.signers.threshold,
                 nonce: arrayify(proof.signers.nonce) || HashZero,
             },
-            signatures: proof.signatures.map(signatrue => arrayify(signatrue)),
+            signatures: proof.signatures.map((signatrue) => arrayify(signatrue)),
         };
     } else {
         throw new Error('Proof not found');
@@ -76,7 +73,7 @@ async function processCommand(config, chain, options) {
     const contractConfig = chain.contracts.axelar_gateway;
     const packageId = contractConfig.address;
     const signers = await getSigners(keypair, config, chain, options);
-    
+
     const signerStruct = bcs.struct('WeightedSigner', {
         pubkey: bcs.vector(bcs.u8()),
         weight: bcs.u128(),
@@ -98,7 +95,7 @@ async function processCommand(config, chain, options) {
             nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
         })
         .toBytes();
-    
+
     const proofStruct = bcs.struct('Proof', {
         signers: signersStruct,
         signatures: bcs.vector(bcs.vector(bcs.u8())),
@@ -106,12 +103,14 @@ async function processCommand(config, chain, options) {
 
     const hashed = arrayify(hashMessage(encodedSigners));
 
-    const proof = await getProof(keypair, options, encodedSigners);
+    const proof = getProof(keypair, options, encodedSigners);
 
-    const encodedProof = proofStruct.serialize({
-        signers: proof.signers,
-        signatures: proof.signatures.map(arrayify),
-    }).toBytes()
+    const encodedProof = proofStruct
+        .serialize({
+            signers: proof.signers,
+            signatures: proof.signatures.map(arrayify),
+        })
+        .toBytes();
 
     const tx = new TransactionBlock();
 
@@ -147,13 +146,13 @@ async function mainProcessor(options, processor) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('deploy-gateway').description('Deploys/publishes the Sui gateway');
+    program.name('rotate-signers').description('Rotates signers on the gateway contract.');
 
     addBaseOptions(program);
 
     program.addOption(new Option('--signers <signers>', 'JSON with the initial signer set').makeOptionMandatory(true).env('SIGNERS'));
     program.addOption(new Option('--proof <proof>', 'JSON of the proof').env('PROOF'));
-    
+
     program.action((options) => {
         mainProcessor(options, processCommand);
     });

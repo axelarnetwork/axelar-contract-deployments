@@ -167,4 +167,4 @@ if (require.main === module) {
 
 module.exports = {
     getSigners,
-}
+};
