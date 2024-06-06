@@ -83,8 +83,13 @@ async function generateKeypair(options) {
     }
 }
 
+function getRawPrivateKey(keypair) {
+    return decodeSuiPrivateKey(keypair.getSecretKey()).secretKey;
+}
+
 module.exports = {
     getWallet,
     printWalletInfo,
     generateKeypair,
+    getRawPrivateKey,
 };

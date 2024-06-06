@@ -9,7 +9,7 @@ const {
 } = ethers;
 
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet, printWalletInfo } = require('./sign-utils');
+const { getWallet, printWalletInfo, getRawPrivateKey } = require('./sign-utils');
 const { loadSuiConfig } = require('./utils');
 const { getSigners } = require('./deploy-gateway');
 const secp256k1 = require('secp256k1');
@@ -32,7 +32,7 @@ function getProof(keypair, options, encodedSigners) {
 
         const hashed = arrayify(hashMessage(encodedSigners));
 
-        const { signature, recid } = secp256k1.ecdsaSign(hashed, Buffer.from(options.privateKey, 'hex'));
+        const { signature, recid } = secp256k1.ecdsaSign(hashed, getRawPrivateKey(keypair));
 
         return {
             signers: {
