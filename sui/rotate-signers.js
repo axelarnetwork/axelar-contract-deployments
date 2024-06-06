@@ -5,7 +5,7 @@ const { bcs } = require('@mysten/sui.js/bcs');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, hexlify, keccak256 },
-    constants: { HashZero, MaxUint256 },
+    constants: { HashZero },
 } = ethers;
 
 const { addBaseOptions } = require('./cli-utils');
@@ -14,7 +14,7 @@ const { loadSuiConfig } = require('./utils');
 const { getSigners } = require('./deploy-gateway');
 const secp256k1 = require('secp256k1');
 
-const COMMAND_TYPE_ROTATE_SIGNERS = 0;
+const COMMAND_TYPE_ROTATE_SIGNERS = 1;
 
 function hashMessage(data) {
     const toHash = new Uint8Array(data.length + 1);
@@ -24,38 +24,47 @@ function hashMessage(data) {
     return keccak256(toHash);
 }
 
-function getProof(keypair, options, encodedSigners) {
-    if (options.signers === 'wallet' && !options.proof && encodedSigners) {
+function getProofSigners(keypair, options) {
+    if (options.proof === 'wallet') {
+        console.log('Using wallet to provide proof');
         if (keypair.getKeyScheme() !== 'Secp256k1') {
             throw new Error('Only Secp256k1 pubkeys are supported by the gateway');
         }
 
-        const hashed = arrayify(hashMessage(encodedSigners));
-
-        const { signature, recid } = secp256k1.ecdsaSign(hashed, getRawPrivateKey(keypair));
-
         return {
-            signers: {
-                signers: [{ pubkey: keypair.getPublicKey().toRawBytes(), weight: 1 }],
-                threshold: 1,
-                nonce: HashZero,
-            },
-            signatures: [new Uint8Array([...signature, recid])],
+            signers: [{ pubkey: keypair.getPublicKey().toRawBytes(), weight: 1 }],
+            threshold: 1,
+            nonce: HashZero,
         };
     } else if (options.proof) {
         printInfo('Using provided proof', options.proof);
 
         const proof = JSON.parse(options.proof);
         return {
-            signers: {
-                signers: proof.signers.signers.map(({ pubkey, weight }) => {
-                    return { pubkey: arrayify(pubkey), weight };
-                }),
-                threshold: proof.signers.threshold,
-                nonce: arrayify(proof.signers.nonce) || HashZero,
-            },
-            signatures: proof.signatures.map((signatrue) => arrayify(signatrue)),
+            signers: proof.signers.signers.map(({ pubkey, weight }) => {
+                return { pubkey: arrayify(pubkey), weight };
+            }),
+            threshold: proof.signers.threshold,
+            nonce: arrayify(proof.signers.nonce) || HashZero,
         };
+    } else {
+        throw new Error('Proof not found');
+    }
+}
+
+function getSignatures(keypair, options, messageToSign) {
+    if (options.proof === 'wallet') {
+        if (keypair.getKeyScheme() !== 'Secp256k1') {
+            throw new Error('Only Secp256k1 pubkeys are supported by the gateway');
+        }
+
+        const { signature, recid } = secp256k1.ecdsaSign(arrayify(keccak256(messageToSign)), getRawPrivateKey(keypair));
+
+        return [new Uint8Array([...signature, recid])];
+    } else if (options.proof) {
+
+        const proof = JSON.parse(options.proof);
+        return proof.signatures.map((signatrue) => arrayify(signatrue));
     } else {
         throw new Error('Proof not found');
     }
@@ -88,25 +97,40 @@ async function processCommand(config, chain, options) {
         threshold: bcs.u128(),
         nonce: bytes32Struct,
     });
-
     const encodedSigners = signersStruct
         .serialize({
             ...signers,
-            nonce: bytes32Struct.serialize(options.nonce).toBytes(),
+            nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
         })
         .toBytes();
+    
+    const proofSigners = getProofSigners(keypair, options);
+
+    const hashed = arrayify(hashMessage(encodedSigners));
+
+    const messageToSignStruct = bcs.struct('MessageToSign', {
+        domain_separator: bytes32Struct,
+        signers_hash: bytes32Struct,
+        data_hash: bytes32Struct,
+    });
+
+    const message = messageToSignStruct.serialize({
+        domain_separator: contractConfig.domainSeparator,
+        signers_hash: keccak256(signersStruct.serialize(proofSigners).toBytes()),
+        data_hash: hashed,
+    }).toBytes();
+
+    const signatures = getSignatures(keypair, options, message);
 
     const proofStruct = bcs.struct('Proof', {
         signers: signersStruct,
         signatures: bcs.vector(bcs.vector(bcs.u8())),
     });
 
-    const proof = getProof(keypair, options, encodedSigners);
-
     const encodedProof = proofStruct
         .serialize({
-            signers: proof.signers,
-            signatures: proof.signatures.map(arrayify),
+            signers: proofSigners,
+            signatures,
         })
         .toBytes();
 
@@ -121,6 +145,7 @@ async function processCommand(config, chain, options) {
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedProof).toBytes()),
         ],
     });
+
     await client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
         signer: keypair,
@@ -150,7 +175,6 @@ if (require.main === module) {
 
     program.addOption(new Option('--signers <signers>', 'JSON with the initial signer set').makeOptionMandatory(true).env('SIGNERS'));
     program.addOption(new Option('--proof <proof>', 'JSON of the proof').env('PROOF'));
-    program.addOption(new Option('--nonce <nonce>', 'new signer nonce').default(MaxUint256));
 
     program.action((options) => {
         mainProcessor(options, processCommand);
