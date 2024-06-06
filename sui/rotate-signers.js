@@ -5,7 +5,7 @@ const { bcs } = require('@mysten/sui.js/bcs');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, hexlify, keccak256 },
-    constants: { HashZero },
+    constants: { HashZero, MaxUint256 },
 } = ethers;
 
 const { addBaseOptions } = require('./cli-utils');
@@ -38,7 +38,7 @@ function getProof(keypair, options, encodedSigners) {
             signers: {
                 signers: [{ pubkey: keypair.getPublicKey().toRawBytes(), weight: 1 }],
                 threshold: 1,
-                nonce: MaxUint256,
+                nonce: HashZero,
             },
             signatures: [new Uint8Array([...signature, recid])],
         };
@@ -92,7 +92,7 @@ async function processCommand(config, chain, options) {
     const encodedSigners = signersStruct
         .serialize({
             ...signers,
-            nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
+            nonce: bytes32Struct.serialize(options.nonce).toBytes(),
         })
         .toBytes();
 
@@ -100,8 +100,6 @@ async function processCommand(config, chain, options) {
         signers: signersStruct,
         signatures: bcs.vector(bcs.vector(bcs.u8())),
     });
-
-    const hashed = arrayify(hashMessage(encodedSigners));
 
     const proof = getProof(keypair, options, encodedSigners);
 
@@ -123,7 +121,7 @@ async function processCommand(config, chain, options) {
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedProof).toBytes()),
         ],
     });
-    const result = await client.signAndExecuteTransactionBlock({
+    await client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
         signer: keypair,
         options: {
@@ -152,6 +150,7 @@ if (require.main === module) {
 
     program.addOption(new Option('--signers <signers>', 'JSON with the initial signer set').makeOptionMandatory(true).env('SIGNERS'));
     program.addOption(new Option('--proof <proof>', 'JSON of the proof').env('PROOF'));
+    program.addOption(new Option('--nonce <nonce>', 'new signer nonce').default(MaxUint256));
 
     program.action((options) => {
         mainProcessor(options, processCommand);

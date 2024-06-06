@@ -153,9 +153,9 @@ if (require.main === module) {
     program.addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'));
     program.addOption(
         new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(
-            24 * 60 * 60 * 1000,
+            0,
         ),
-    ); // 1 day (in ms)
+    );
     program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
 
     program.action((options) => {
