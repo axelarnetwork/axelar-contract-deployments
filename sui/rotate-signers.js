@@ -38,7 +38,7 @@ function getProof(keypair, options, encodedSigners) {
             signers: {
                 signers: [{ pubkey: keypair.getPublicKey().toRawBytes(), weight: 1 }],
                 threshold: 1,
-                nonce: HashZero,
+                nonce: MaxUint256,
             },
             signatures: [new Uint8Array([...signature, recid])],
         };
