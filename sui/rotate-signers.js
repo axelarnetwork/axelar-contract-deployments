@@ -49,9 +49,8 @@ function getProofSigners(keypair, options) {
             nonce: arrayify(proof.signers.nonce) || HashZero,
         };
     }
- 
-        throw new Error('Proof not found');
-    
+
+    throw new Error('Proof not found');
 }
 
 function getSignatures(keypair, options, messageToSign) {
@@ -67,9 +66,8 @@ function getSignatures(keypair, options, messageToSign) {
         const proof = JSON.parse(options.proof);
         return proof.signatures.map((signatrue) => arrayify(signatrue));
     }
- 
-        throw new Error('Proof not found');
-    
+
+    throw new Error('Proof not found');
 }
 
 async function processCommand(config, chain, options) {
