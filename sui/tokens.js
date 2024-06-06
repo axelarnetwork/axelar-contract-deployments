@@ -40,51 +40,26 @@ class CoinManager {
     }
 
     static async splitCoins(tx, coinTypeToCoins, options) {
-        CoinManager.checkSplitAmount(options);
-
         validateParameters({
-          isValidNumber: { split: options.split },
+            isValidNumber: { split: options.split },
         });
 
         const splitAmount = BigInt(options.split);
 
         printInfo('\n==== Splitting Coins ====');
 
-        // Set coin type to given coin type or the first coin type if there's only one if it's a SUI token.
-        const hasOnlyGasToken = Object.keys(coinTypeToCoins).length === 1 && coinTypeToCoins[SUI_COIN_ID];
-        const coinType = options.coinType ? options.coinType : hasOnlyGasToken ? SUI_COIN_ID : undefined;
+        const coinType = options.coinType || SUI_COIN_ID;
 
-        if (coinType) {
-            // Throw an error if the coin type is specified but no coins are found
-            CoinManager.checkCoinType(coinType, coinTypeToCoins);
-            const coins = coinTypeToCoins[coinType];
-            const [coin] = CoinManager.doSplitCoins(tx, coins, splitAmount);
-
-            if (options.transfer) {
-                CoinManager.doTransfer(tx, coin, options.transfer);
-            }
-        } else {
-            for (const coinType in coinTypeToCoins) {
-                const coins = coinTypeToCoins[coinType];
-                if (this.isGasToken(coins.data[0])) continue;
-                const [coin] = CoinManager.doSplitCoins(tx, coins, splitAmount);
-
-                if (options.transfer) {
-                    CoinManager.doTransfer(tx, coin, options.transfer);
-                }
-            }
-        }
+        const coins = coinTypeToCoins[coinType];
+        const [coin] = CoinManager.doSplitCoins(tx, coins, splitAmount);
 
         if (options.transfer) {
+            tx.transferObjects([coin], options.transfer);
             printInfo(`\nTransfer ${splitAmount} coins for every split coin to ${chalk.green(options.transfer)}`);
         }
 
         // The transaction will fail if the gas budget is not set for splitting coins transaction
         tx.setGasBudget(1e8);
-    }
-
-    static doTransfer(tx, coin, recipient) {
-        tx.transferObjects([coin], recipient);
     }
 
     static doSplitCoins(tx, coins, splitAmount) {
@@ -101,8 +76,8 @@ class CoinManager {
         for (const coinType of coinTypes) {
             const coins = coinTypeToCoins[coinType];
 
-            if(!coins) {
-              throw new Error(`No coins found for coin type ${coinType}`);
+            if (!coins) {
+                throw new Error(`No coins found for coin type ${coinType}`);
             }
 
             await CoinManager.doMergeCoin(tx, coins);
