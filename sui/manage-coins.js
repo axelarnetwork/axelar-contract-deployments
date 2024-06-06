@@ -50,7 +50,7 @@ class CoinManager {
 
         // Set coin type to given coin type or the first coin type if there's only one if it's a SUI token.
         const hasOnlyGasToken = Object.keys(coinTypeToCoins).length === 1 && coinTypeToCoins[SUI_COIN_ID];
-        const coinType = options.coinType || hasOnlyGasToken ? SUI_COIN_ID : undefined;
+        const coinType = options.coinType ? options.coinType : hasOnlyGasToken ? SUI_COIN_ID : undefined;
 
         if (coinType) {
             // Throw an error if the coin type is specified but no coins are found
