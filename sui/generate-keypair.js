@@ -1,7 +1,7 @@
 'use strict';
 
 const { addBaseOptions } = require('./cli-utils');
-const { generateKeypair } = require('./sign-utils');
+const { generateKeypair, getRawPrivateKey } = require('./sign-utils');
 const { Command, Option } = require('commander');
 const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
@@ -12,9 +12,10 @@ async function processCommand(config, chain, options) {
     const keypair = await generateKeypair(options);
 
     printInfo('Keypair generated');
+    printInfo('Private key', keypair.getSecretKey());
+    printInfo('Private key hex', hexlify(getRawPrivateKey(keypair)));
     printInfo('Public key', hexlify(keypair.getPublicKey().toRawBytes()));
     printInfo('Address', keypair.toSuiAddress());
-    printInfo('Private key', keypair.getSecretKey());
 }
 
 async function mainProcessor(options, processor) {
@@ -26,7 +27,7 @@ async function mainProcessor(options, processor) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('generate-key').description('Generate keypair.');
+    program.name('generate-keypair').description('Generate keypair.');
 
     addBaseOptions(program, { ignorePrivateKey: true });
 
