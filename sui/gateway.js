@@ -4,12 +4,13 @@ const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexlify, keccak256, toUtf8Bytes },
+    utils: { arrayify, keccak256, toUtf8Bytes },
     constants: { HashZero },
 } = ethers;
 
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet, printWalletInfo, getRawPrivateKey } = require('./sign-utils');
+const { getWallet, printWalletInfo, getRawPrivateKey, broadcast } = require('./sign-utils');
+const { bytes32Struct, signersStruct, messageToSignStruct, proofStruct } = require('./types-utils');
 const { loadSuiConfig } = require('./utils');
 const { getSigners } = require('./deploy-gateway');
 const secp256k1 = require('secp256k1');
@@ -70,11 +71,51 @@ function getSignatures(keypair, options, messageToSign) {
     throw new Error('Proof not found');
 }
 
-async function processCommand(config, chain, options) {
-    const [keypair, client] = getWallet(chain, options);
+async function callContract(keypair, client, config, chain, args, options) {
+    if (!chain.contracts.axelar_gateway) {
+        throw new Error('Axelar Gateway package not found.');
+    }
 
-    await printWalletInfo(keypair, client, chain, options);
+    const contractConfig = chain.contracts.axelar_gateway;
+    const packageId = contractConfig.address;
 
+    const [destinationChain, destinationAddress, payload] = args;
+
+    let channel = options.channel;
+
+    const tx = new TransactionBlock();
+
+    // Create a temporary channel if one wasn't provided
+    if (!options.channel) {
+        [channel] = tx.moveCall({
+            target: `${packageId}::channel::new`,
+            arguments: [],
+        });
+    }
+
+    tx.moveCall({
+        target: `${packageId}::gateway::call_contract`,
+        arguments: [
+            channel,
+            tx.pure(bcs.string().serialize(destinationChain).toBytes()),
+            tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
+            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
+        ],
+    });
+
+    if (!options.channel) {
+        tx.moveCall({
+            target: `${packageId}::channel::destroy`,
+            arguments: [channel],
+        });
+    }
+
+    await broadcast(client, keypair, tx);
+
+    printInfo('Contract called');
+}
+
+async function rotateSigners(keypair, client, config, chain, args, options) {
     if (!chain.contracts.axelar_gateway) {
         throw new Error('Axelar Gateway package not found.');
     }
@@ -83,20 +124,6 @@ async function processCommand(config, chain, options) {
     const packageId = contractConfig.address;
     const signers = await getSigners(keypair, config, chain, options);
 
-    const signerStruct = bcs.struct('WeightedSigner', {
-        pubkey: bcs.vector(bcs.u8()),
-        weight: bcs.u128(),
-    });
-    const bytes32Struct = bcs.fixedArray(32, bcs.u8()).transform({
-        input: (id) => arrayify(id),
-        output: (id) => hexlify(id),
-    });
-
-    const signersStruct = bcs.struct('WeightedSigners', {
-        signers: bcs.vector(signerStruct),
-        threshold: bcs.u128(),
-        nonce: bytes32Struct,
-    });
     const newNonce = options.newNonce ? keccak256(toUtf8Bytes(options.newNonce)) : signers.nonce;
     const encodedSigners = signersStruct
         .serialize({
@@ -109,12 +136,6 @@ async function processCommand(config, chain, options) {
 
     const hashed = arrayify(hashMessage(encodedSigners));
 
-    const messageToSignStruct = bcs.struct('MessageToSign', {
-        domain_separator: bytes32Struct,
-        signers_hash: bytes32Struct,
-        data_hash: bytes32Struct,
-    });
-
     const message = messageToSignStruct
         .serialize({
             domain_separator: contractConfig.domainSeparator,
@@ -124,11 +145,6 @@ async function processCommand(config, chain, options) {
         .toBytes();
 
     const signatures = getSignatures(keypair, options, message);
-
-    const proofStruct = bcs.struct('Proof', {
-        signers: signersStruct,
-        signatures: bcs.vector(bcs.vector(bcs.u8())),
-    });
 
     const encodedProof = proofStruct
         .serialize({
@@ -149,41 +165,49 @@ async function processCommand(config, chain, options) {
         ],
     });
 
-    await client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
-        signer: keypair,
-        options: {
-            showEffects: true,
-            showObjectChanges: true,
-            showContent: true,
-        },
-    });
+    await broadcast(client, keypair, tx);
 
     printInfo('Signers rotated succesfully');
 }
 
-async function mainProcessor(options, processor) {
+async function mainProcessor(processor, args, options) {
     const config = loadSuiConfig(options.env);
 
-    await processor(config, config.sui, options);
+    const [keypair, client] = getWallet(config.sui, options);
+    await printWalletInfo(keypair, client, config.sui, options);
+
+    await processor(keypair, client, config, config.sui, args, options);
+
     saveConfig(config, options.env);
 }
 
 if (require.main === module) {
     const program = new Command();
 
-    program.name('rotate-signers').description('Rotates signers on the gateway contract.');
+    program.name('gateway').description('Gateway contract operations.');
+
+    const rotateSignersCmd = program
+        .command('rotate')
+        .description('Rotate signers of the gateway contract')
+        .addOption(new Option('--signers <signers>', 'JSON with the initial signer set'))
+        .addOption(new Option('--proof <proof>', 'JSON of the proof'))
+        .addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'))
+        .addOption(new Option('--newNonce <newNonce>', 'nonce of the new signers (useful for test rotations)'))
+        .action((options) => {
+            mainProcessor(rotateSigners, [], options);
+        });
+
+    const callContractCmd = program
+        .command('call-contract <destinationChain> <destinationAddress> <payload>')
+        .description('Initiate sending a cross-chain message via the gateway')
+        .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
+        .action((destinationChain, destinationAddress, payload, options) => {
+            mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
+        });
 
     addBaseOptions(program);
-
-    program.addOption(new Option('--signers <signers>', 'JSON with the initial signer set').makeOptionMandatory(true).env('SIGNERS'));
-    program.addOption(new Option('--proof <proof>', 'JSON of the proof').env('PROOF'));
-    program.addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'));
-    program.addOption(new Option('--newNonce <newNonce>', 'nonce of the new signers (useful for test rotations)'));
-
-    program.action((options) => {
-        mainProcessor(options, processCommand);
-    });
+    addBaseOptions(rotateSignersCmd);
+    addBaseOptions(callContractCmd);
 
     program.parse();
 }

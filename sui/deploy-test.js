@@ -9,7 +9,7 @@ const {
 const { loadSuiConfig } = require('./utils');
 
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet, printWalletInfo } = require('./sign-utils');
+const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 
 async function processCommand(config, chain, options) {
     const [keypair, client] = getWallet(chain, options);
@@ -42,15 +42,7 @@ async function processCommand(config, chain, options) {
         arguments: [tx.object(relayerDiscovery), tx.object(singleton.objectId)],
     });
 
-    await client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
-        signer: keypair,
-        options: {
-            showEffects: true,
-            showObjectChanges: true,
-            showContent: true,
-        },
-    });
+    await broadcast(client, keypair, tx);
 
     chain.contracts.test.address = published.packageId;
     chain.contracts.test.objects = { singleton: singleton.objectId };
