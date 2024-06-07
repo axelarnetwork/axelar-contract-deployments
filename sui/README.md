@@ -42,13 +42,13 @@ Use the `-e local` (or `ENV=local` in the `.env` config) flag with scripts to ru
 
 ## Scripts
 
-1. Faucet: To get test SUI coins to your address.
+To get test SUI coins to your address via a faucet.
 
 ```bash
 node sui/faucet.js
 ```
 
-2. Deploy the gateway package:
+Deploy the gateway package:
 
 - By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
@@ -70,24 +70,30 @@ node sui/deploy-gateway.js --signers wallet --nonce test
 node sui/deploy-gateway.js -e testnet --signers '{"signers": [{"pubkey": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
 ```
 
-3. Deploy the test GMP package:
+Deploy the test GMP package:
 
 ```bash
 node sui/deploy-test.js
 ```
 
-4. To rotate the gateway signers:
+Call Contract:
+
+```bash
+node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+```
+
+Rotate gateway signers:
 
 If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
 
 ```bash
-node sui/rotate-signers.js --proof wallet
+node sui/gateway.js rotate --proof wallet
 ```
 
 If you want to rotate to the wallet again but with a new nonce, do
 
 ```bash
-node sui/rotate-signers.js --signers wallet --proof wallet --currentNonce test --newNonce test2
+node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test --newNonce test2
 ```
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
