@@ -7,7 +7,7 @@ const { printInfo, printError, validateParameters } = require('../evm/utils');
 const {
     utils: { parseUnits },
 } = require('ethers');
-const { loadSuiConfig, SUI_COIN_ID } = require('./utils');
+const { loadSuiConfig, SUI_COIN_ID, isGasToken } = require('./utils');
 
 class CoinManager {
     static async getAllCoins(client, account) {
@@ -52,15 +52,26 @@ class CoinManager {
         }
     }
 
-    static async splitCoins(tx, coinTypeToCoins, options) {
-        const splitAmount = BigInt(options.split);
-        const coinType = options.coinType;
+    static async splitCoins(tx, client, coinTypeToCoins, options) {
+        const coinType = options.coinType || SUI_COIN_ID;
+
+        const metadata = await client.getCoinMetadata({
+            coinType,
+        });
+
+        if (!metadata) {
+            printError('No metadata found for', coinType);
+            process.exit(0);
+        }
+
+        const splitAmount = parseUnits(options.split, metadata.decimals).toBigInt();
 
         const coins = coinTypeToCoins[coinType];
-        const firstObjectId = this.isGasToken(coins.data[0]) ? tx.gas : coins.data[0].coinObjectId;
+        const firstObjectId = isGasToken(coinType) ? tx.gas : coins.data[0].coinObjectId;
         const [coin] = tx.splitCoins(firstObjectId, [splitAmount]);
-        printInfo('Split Coins', coins.data[0].coinType);
-        printInfo('Split Amount', splitAmount.toString());
+
+        printInfo('Split Coins', coinType);
+        printInfo('Split Amount', splitAmount);
 
         if (options.transfer) {
             tx.transferObjects([coin], options.transfer);
@@ -86,7 +97,7 @@ class CoinManager {
             const coinObjectIds = coins.data.map((coin) => coin.coinObjectId);
 
             // If the first coin is a gas token, remove it from the list. Otherwise, the merge will fail.
-            if (CoinManager.isGasToken(coins.data[0])) {
+            if (isGasToken(coins.data[0].coinType)) {
                 coinObjectIds.shift();
             }
 
@@ -128,24 +139,8 @@ class CoinManager {
                 isValidNumber: { split: options.split },
             });
 
-            const coinType = options.coinType || SUI_COIN_ID;
-            const metadata = await client.getCoinMetadata({
-                coinType,
-            });
-
-            if (!metadata) {
-                printError('No metadata found for', coinType);
-                process.exit(0);
-            }
-
-            const splitAmount = parseUnits(options.split, metadata.decimals);
-
             printInfo('Action', 'Split Coins');
-            await CoinManager.splitCoins(tx, coinTypeToCoins, {
-                ...options,
-                split: splitAmount.toString(),
-                coinType,
-            });
+            await CoinManager.splitCoins(tx, client, coinTypeToCoins, options);
         }
 
         const requireBroadcast = options.merge || options.split;
@@ -160,13 +155,7 @@ class CoinManager {
                     showContent: true,
                 },
             });
-
-            printInfo('Done');
         }
-    }
-
-    static isGasToken(coin) {
-        return coin.coinType === '0x2::sui::SUI';
     }
 }
 
