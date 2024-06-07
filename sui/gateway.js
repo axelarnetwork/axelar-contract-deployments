@@ -10,16 +10,17 @@ const {
 
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo, getRawPrivateKey, broadcast } = require('./sign-utils');
-const { bytes32Struct, signersStruct, messageToSignStruct, proofStruct } = require('./types-utils');
+const { bytes32Struct, signersStruct, messageToSignStruct, messageStruct, proofStruct } = require('./types-utils');
 const { loadSuiConfig } = require('./utils');
 const { getSigners } = require('./deploy-gateway');
 const secp256k1 = require('secp256k1');
 
+const COMMAND_TYPE_APPROVE_MESSAGES = 0;
 const COMMAND_TYPE_ROTATE_SIGNERS = 1;
 
-function hashMessage(data) {
+function hashMessage(commandType, data) {
     const toHash = new Uint8Array(data.length + 1);
-    toHash[0] = COMMAND_TYPE_ROTATE_SIGNERS;
+    toHash[0] = commandType;
     toHash.set(data, 1);
 
     return keccak256(toHash);
@@ -27,7 +28,7 @@ function hashMessage(data) {
 
 function getProofSigners(keypair, options) {
     if (options.proof === 'wallet') {
-        console.log('Using wallet to provide proof');
+        printInfo('Using wallet to provide proof');
 
         if (keypair.getKeyScheme() !== 'Secp256k1') {
             throw new Error('Only Secp256k1 pubkeys are supported by the gateway');
@@ -54,7 +55,7 @@ function getProofSigners(keypair, options) {
     throw new Error('Proof not found');
 }
 
-function getSignatures(keypair, options, messageToSign) {
+function getSignatures(keypair, messageToSign, options) {
     if (options.proof === 'wallet') {
         if (keypair.getKeyScheme() !== 'Secp256k1') {
             throw new Error('Only Secp256k1 pubkeys are supported by the gateway');
@@ -65,10 +66,35 @@ function getSignatures(keypair, options, messageToSign) {
         return [new Uint8Array([...signature, recid])];
     } else if (options.proof) {
         const proof = JSON.parse(options.proof);
-        return proof.signatures.map((signatrue) => arrayify(signatrue));
+        return proof.signatures.map((signature) => arrayify(signature));
     }
 
     throw new Error('Proof not found');
+}
+
+function getProof(keypair, commandType, data, contractConfig, options) {
+    const signers = getProofSigners(keypair, options);
+
+    const dataHash = arrayify(hashMessage(commandType, data));
+
+    const message = messageToSignStruct
+        .serialize({
+            domain_separator: contractConfig.domainSeparator,
+            signers_hash: keccak256(signersStruct.serialize(signers).toBytes()),
+            data_hash: dataHash,
+        })
+        .toBytes();
+
+    const signatures = getSignatures(keypair, message, options);
+
+    const encodedProof = proofStruct
+        .serialize({
+            signers,
+            signatures,
+        })
+        .toBytes();
+
+    return encodedProof;
 }
 
 async function callContract(keypair, client, config, chain, args, options) {
@@ -115,6 +141,46 @@ async function callContract(keypair, client, config, chain, args, options) {
     printInfo('Contract called');
 }
 
+async function approveMessages(keypair, client, config, chain, args, options) {
+    if (!chain.contracts.axelar_gateway) {
+        throw new Error('Axelar Gateway package not found.');
+    }
+
+    const contractConfig = chain.contracts.axelar_gateway;
+    const packageId = contractConfig.address;
+    const [sourceChain, messageId, sourceAddress, destinationId, payloadHash] = args;
+
+    const encodedMessages = bcs
+        .vector(messageStruct)
+        .serialize([
+            {
+                source_chain: sourceChain,
+                message_id: messageId,
+                source_address: sourceAddress,
+                destination_id: destinationId,
+                payload_hash: bytes32Struct.serialize(arrayify(payloadHash)).toBytes(),
+            },
+        ])
+        .toBytes();
+
+    const encodedProof = getProof(keypair, COMMAND_TYPE_APPROVE_MESSAGES, encodedMessages, contractConfig, options);
+
+    const tx = new TransactionBlock();
+
+    tx.moveCall({
+        target: `${packageId}::gateway::approve_messages`,
+        arguments: [
+            tx.object(contractConfig.objects.gateway),
+            tx.pure(bcs.vector(bcs.u8()).serialize(encodedMessages).toBytes()),
+            tx.pure(bcs.vector(bcs.u8()).serialize(encodedProof).toBytes()),
+        ],
+    });
+
+    await broadcast(client, keypair, tx);
+
+    printInfo('Approved messages');
+}
+
 async function rotateSigners(keypair, client, config, chain, args, options) {
     if (!chain.contracts.axelar_gateway) {
         throw new Error('Axelar Gateway package not found.');
@@ -132,26 +198,7 @@ async function rotateSigners(keypair, client, config, chain, args, options) {
         })
         .toBytes();
 
-    const proofSigners = getProofSigners(keypair, options);
-
-    const hashed = arrayify(hashMessage(encodedSigners));
-
-    const message = messageToSignStruct
-        .serialize({
-            domain_separator: contractConfig.domainSeparator,
-            signers_hash: keccak256(signersStruct.serialize(proofSigners).toBytes()),
-            data_hash: hashed,
-        })
-        .toBytes();
-
-    const signatures = getSignatures(keypair, options, message);
-
-    const encodedProof = proofStruct
-        .serialize({
-            signers: proofSigners,
-            signatures,
-        })
-        .toBytes();
+    const encodedProof = getProof(keypair, COMMAND_TYPE_ROTATE_SIGNERS, encodedSigners, contractConfig, options);
 
     const tx = new TransactionBlock();
 
@@ -197,6 +244,15 @@ if (require.main === module) {
             mainProcessor(rotateSigners, [], options);
         });
 
+    const approveMessagesCmd = program
+        .command('approve <sourceChain> <messageId> <sourceAddress> <destinationId> <payloadHash>')
+        .description('Approve messages at the gateway contract')
+        .addOption(new Option('--proof <proof>', 'JSON of the proof'))
+        .addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'))
+        .action((sourceChain, messageId, sourceAddress, destinationId, payloadHash, options) => {
+            mainProcessor(approveMessages, [sourceChain, messageId, sourceAddress, destinationId, payloadHash], options);
+        });
+
     const callContractCmd = program
         .command('call-contract <destinationChain> <destinationAddress> <payload>')
         .description('Initiate sending a cross-chain message via the gateway')
@@ -208,6 +264,7 @@ if (require.main === module) {
     addBaseOptions(program);
     addBaseOptions(rotateSignersCmd);
     addBaseOptions(callContractCmd);
+    addBaseOptions(approveMessagesCmd);
 
     program.parse();
 }
