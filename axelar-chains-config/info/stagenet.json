@@ -1190,19 +1190,34 @@
       },
       "contracts": {
         "ConstAddressDeployer": {
-          "address": "0xd9c649BE907ED6Bd89C3DD588d4ec4a004588485",
+          "address": "0xEA7a09f49B924C60a910C05FC6bD7541fB8aFd76",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create",
           "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
           "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
         },
         "Create3Deployer": {
-          "address": "0xF1464EEd434991E7d31A43936d867FaFE4211e2B",
+          "address": "0x9E64c1B52Bfb031c7A7f69589B77975be943085d",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
           "salt": "Create3Deployer"
+        },
+        "AxelarGateway": {
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "startingKeyIDs": [
+            "evm-mantle-sepolia-genesis"
+          ]
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0xF7EBd961CEd8f851CDf6501840c8f9C6a6947D0F",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
         }
       }
     },
@@ -1292,8 +1307,8 @@
   "axelar": {
     "id": "Axelarnet",
     "axelarId": "Axelarnet",
-    "rpc": "http://k8s-stagenet-axelarco-739f028d85-5da97ddbefdc3c4f.elb.us-east-2.amazonaws.com:26657/",
-    "lcd": "http://k8s-stagenet-axelarco-739f028d85-5da97ddbefdc3c4f.elb.us-east-2.amazonaws.com:1317/",
+    "rpc": "http://k8s-stagenet-axelarco-739f028d85-5da97ddbefdc3c4f.elb.us-east-2.amazonaws.com:26657",
+    "lcd": "http://k8s-stagenet-axelarco-739f028d85-5da97ddbefdc3c4f.elb.us-east-2.amazonaws.com:1317",
     "grpc": "",
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://testnet.api.axelarscan.io"
