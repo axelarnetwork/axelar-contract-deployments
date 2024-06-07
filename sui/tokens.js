@@ -47,23 +47,18 @@ class CoinManager {
         const coinType = options.coinType || SUI_COIN_ID;
 
         const coins = coinTypeToCoins[coinType];
-        const [coin] = CoinManager.doSplitCoins(tx, coins, splitAmount);
+        const firstObjectId = this.isGasToken(coins.data[0]) ? tx.gas : coins.data[0].coinObjectId;
+        const [coin] = tx.splitCoins(firstObjectId, [splitAmount]);
+        printInfo('Split Coins', coins.data[0].coinType);
+        printInfo('Split Amount', splitAmount.toString());
 
         if (options.transfer) {
             tx.transferObjects([coin], options.transfer);
-            printInfo(`Transfer ${splitAmount} coins for every split coin to ${chalk.green(options.transfer)}`);
+            printInfo('Transfer Coins to', options.transfer);
         }
 
         // The transaction will fail if the gas budget is not set for splitting coins transaction
         tx.setGasBudget(1e8);
-    }
-
-    static doSplitCoins(tx, coins, splitAmount) {
-        const firstObjectId = this.isGasToken(coins.data[0]) ? tx.gas : coins.data[0].coinObjectId;
-        const response = tx.splitCoins(firstObjectId, [splitAmount]);
-        printInfo('Split Coins', coins.data[0].coinType);
-        printInfo('Split Amount', splitAmount.toString());
-        return response;
     }
 
     static async mergeCoin(tx, coinTypeToCoins, options) {
@@ -133,7 +128,7 @@ class CoinManager {
             });
 
             if (!metadata) {
-                printError(`No metadata found for coin type ${coinType}`);
+                printError('No metadata found for', coinType);
                 process.exit(0);
             }
 
