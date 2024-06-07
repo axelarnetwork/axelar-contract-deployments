@@ -188,7 +188,7 @@ async function rotateSigners(keypair, client, config, chain, args, options) {
 
     const contractConfig = chain.contracts.axelar_gateway;
     const packageId = contractConfig.address;
-    const signers = await getSigners(keypair, config, chain, options);
+    const signers = await getSigners(keypair, config, chain.axelarId, options);
 
     const newNonce = options.newNonce ? keccak256(toUtf8Bytes(options.newNonce)) : signers.nonce;
     const encodedSigners = signersStruct
