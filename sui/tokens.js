@@ -43,7 +43,7 @@ class CoinManager {
     }
 
     static async splitCoins(tx, coinTypeToCoins, options) {
-        printInfo('\n==== Splitting Coins ====');
+        printInfo('==== Splitting Coins ====');
 
         const splitAmount = BigInt(options.split);
         const coinType = options.coinType || SUI_COIN_ID;
@@ -53,7 +53,7 @@ class CoinManager {
 
         if (options.transfer) {
             tx.transferObjects([coin], options.transfer);
-            printInfo(`\nTransfer ${splitAmount} coins for every split coin to ${chalk.green(options.transfer)}`);
+            printInfo(`Transfer ${splitAmount} coins for every split coin to ${chalk.green(options.transfer)}`);
         }
 
         // The transaction will fail if the gas budget is not set for splitting coins transaction
@@ -69,7 +69,7 @@ class CoinManager {
 
     static async mergeCoin(tx, coinTypeToCoins, options) {
         const coinTypes = options.coinType ? [options.coinType] : Object.keys(coinTypeToCoins);
-        printInfo('\n==== Merging Coins ====');
+        printInfo('==== Merging Coins ====');
 
         for (const coinType of coinTypes) {
             const coins = coinTypeToCoins[coinType];
@@ -150,12 +150,12 @@ class CoinManager {
                 },
             });
 
-            console.log(`\nDone`);
+            printInfo(`Done`);
         }
     }
 
     static printAllCoins(coinTypeToCoins) {
-        console.log('==== Coins Info ====');
+        printInfo('==== Coins Info ====');
 
         for (const coinType in coinTypeToCoins) {
             const coins = coinTypeToCoins[coinType];
