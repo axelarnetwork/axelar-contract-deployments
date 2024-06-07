@@ -4,7 +4,6 @@ const { Command } = require('commander');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 const { printInfo, printError, validateParameters } = require('../evm/utils');
-const chalk = require('chalk');
 const {
     utils: { parseUnits },
 } = require('ethers');
@@ -44,7 +43,7 @@ class CoinManager {
 
     static async splitCoins(tx, coinTypeToCoins, options) {
         const splitAmount = BigInt(options.split);
-        const coinType = options.coinType || SUI_COIN_ID;
+        const coinType = options.coinType;
 
         const coins = coinTypeToCoins[coinType];
         const firstObjectId = this.isGasToken(coins.data[0]) ? tx.gas : coins.data[0].coinObjectId;
@@ -73,32 +72,28 @@ class CoinManager {
                 throw new Error(`No coins found for coin type ${coinType}`);
             }
 
-            const hasMergedCoins = await CoinManager.doMergeCoin(tx, coins);
-            merged = merged || hasMergedCoins;
+            const coinObjectIds = coins.data.map((coin) => coin.coinObjectId);
+
+            // If the first coin is a gas token, remove it from the list. Otherwise, the merge will fail.
+            if (CoinManager.isGasToken(coins.data[0])) {
+                coinObjectIds.shift();
+            }
+
+            if (coinObjectIds.length < 2) {
+                // Need at least 2 coins to merge
+                continue;
+            }
+
+            const firstCoin = coinObjectIds.shift();
+            const remainingCoins = coinObjectIds.map((id) => tx.object(id));
+
+            tx.mergeCoins(firstCoin, remainingCoins);
+            merged = true;
+
+            printInfo('Merge Coins', coins.data[0].coinType);
         }
 
         return merged;
-    }
-
-    static async doMergeCoin(tx, coins) {
-        const coinObjectIds = coins.data.map((coin) => coin.coinObjectId);
-
-        // If the first coin is a gas token, remove it from the list. Otherwise, the merge will fail.
-        if (CoinManager.isGasToken(coins.data[0])) {
-            coinObjectIds.shift();
-        }
-
-        if (coinObjectIds.length < 2) {
-            // Need at least 2 coins to merge
-            return false;
-        }
-
-        const firstCoin = coinObjectIds.shift();
-        const remainingCoins = coinObjectIds.map((id) => tx.object(id));
-
-        tx.mergeCoins(firstCoin, remainingCoins);
-        printInfo('Merge Coins', coins.data[0].coinType);
-        return true;
     }
 
     static async processCommand(config, chain, options) {
