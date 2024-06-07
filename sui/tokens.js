@@ -43,8 +43,6 @@ class CoinManager {
     }
 
     static async splitCoins(tx, coinTypeToCoins, options) {
-        printInfo('==== Splitting Coins ====');
-
         const splitAmount = BigInt(options.split);
         const coinType = options.coinType || SUI_COIN_ID;
 
@@ -63,13 +61,13 @@ class CoinManager {
     static doSplitCoins(tx, coins, splitAmount) {
         const firstObjectId = this.isGasToken(coins.data[0]) ? tx.gas : coins.data[0].coinObjectId;
         const response = tx.splitCoins(firstObjectId, [splitAmount]);
-        console.log(`Split coins of type '${chalk.green(coins.data[0].coinType)}' with amount ${splitAmount}`);
+        printInfo('Split Coins', coins.data[0].coinType);
+        printInfo('Split Amount', splitAmount.toString());
         return response;
     }
 
     static async mergeCoin(tx, coinTypeToCoins, options) {
         const coinTypes = options.coinType ? [options.coinType] : Object.keys(coinTypeToCoins);
-        printInfo('==== Merging Coins ====');
 
         for (const coinType of coinTypes) {
             const coins = coinTypeToCoins[coinType];
@@ -92,14 +90,14 @@ class CoinManager {
 
         if (coinObjectIds.length < 2) {
             // Need at least 2 coins to merge
-            return;
+            return false;
         }
 
         const firstCoin = coinObjectIds.shift();
         const remainingCoins = coinObjectIds.map((id) => tx.object(id));
 
         tx.mergeCoins(firstCoin, remainingCoins);
-        console.log(`Merge ${coins.data.length} coins of type '${chalk.green(coins.data[0].coinType)}'`);
+        printInfo('Merge Coins', coins.data[0].coinType);
     }
 
     static async processCommand(config, chain, options) {
@@ -112,6 +110,7 @@ class CoinManager {
         const tx = new TransactionBlock();
 
         if (options.merge) {
+            printInfo('Action', 'Merge Coins');
             await CoinManager.mergeCoin(tx, coinTypeToCoins, options);
         } else if (options.split) {
             validateParameters({
@@ -130,6 +129,7 @@ class CoinManager {
 
             const splitAmount = parseUnits(options.split, metadata.decimals);
 
+            printInfo('Action', 'Split Coins');
             await CoinManager.splitCoins(tx, coinTypeToCoins, {
                 ...options,
                 split: splitAmount.toString(),
@@ -155,7 +155,7 @@ class CoinManager {
     }
 
     static printAllCoins(coinTypeToCoins) {
-        printInfo('==== Coins Info ====');
+        printInfo('Action', 'List all coins and balances');
 
         for (const coinType in coinTypeToCoins) {
             const coins = coinTypeToCoins[coinType];
