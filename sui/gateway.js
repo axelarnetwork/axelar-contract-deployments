@@ -4,7 +4,7 @@ const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexlify, keccak256, toUtf8Bytes },
+    utils: { arrayify, keccak256, toUtf8Bytes },
     constants: { HashZero },
 } = ethers;
 
@@ -16,7 +16,6 @@ const { getSigners } = require('./deploy-gateway');
 const secp256k1 = require('secp256k1');
 
 const COMMAND_TYPE_ROTATE_SIGNERS = 1;
-
 
 function hashMessage(data) {
     const toHash = new Uint8Array(data.length + 1);
