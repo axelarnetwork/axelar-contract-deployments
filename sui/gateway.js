@@ -83,20 +83,6 @@ async function processCommand(config, chain, options) {
     const packageId = contractConfig.address;
     const signers = await getSigners(keypair, config, chain, options);
 
-    const signerStruct = bcs.struct('WeightedSigner', {
-        pubkey: bcs.vector(bcs.u8()),
-        weight: bcs.u128(),
-    });
-    const bytes32Struct = bcs.fixedArray(32, bcs.u8()).transform({
-        input: (id) => arrayify(id),
-        output: (id) => hexlify(id),
-    });
-
-    const signersStruct = bcs.struct('WeightedSigners', {
-        signers: bcs.vector(signerStruct),
-        threshold: bcs.u128(),
-        nonce: bytes32Struct,
-    });
     const newNonce = options.newNonce ? keccak256(toUtf8Bytes(options.newNonce)) : signers.nonce;
     const encodedSigners = signersStruct
         .serialize({
@@ -166,6 +152,7 @@ async function mainProcessor(options, processor) {
     const config = loadSuiConfig(options.env);
 
     await processor(config, config.sui, options);
+
     saveConfig(config, options.env);
 }
 
