@@ -28,8 +28,9 @@ const {
     isValidAddress,
     isKeccak256Hash,
     getContractConfig,
+    isString,
 } = require('./utils');
-const { calculateDomainSeparator } = require('../cosmwasm/utils');
+const { calculateDomainSeparator, isValidCosmosAddress } = require('../cosmwasm/utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
@@ -77,13 +78,26 @@ async function getDomainSeparator(config, chain, options) {
     }
 
     const {
-        axelar: { contracts, chainId, axelarId },
+        axelar: { contracts, chainId },
     } = config;
     const {
         Router: { address: routerAddress },
     } = contracts;
-    const domainSeparator = hexlify((await getContractConfig(config, chain.name)).domain_separator);
-    const expectedDomainSeparator = calculateDomainSeparator(axelarId, routerAddress, chainId);
+
+    if (!isString(chain.axelarId)) {
+        throw new Error(`missing or invalid axelar ID for chain ${chain.name}`);
+    }
+
+    if (!isString(routerAddress) || !isValidCosmosAddress(routerAddress)) {
+        throw new Error(`missing or invalid router address`);
+    }
+
+    if (!isString(chainId)) {
+        throw new Error(`missing or invalid chain ID`);
+    }
+
+    const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
+    const expectedDomainSeparator = calculateDomainSeparator(chain.axelarId, routerAddress, chainId);
 
     if (domainSeparator !== expectedDomainSeparator) {
         throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
@@ -184,7 +198,7 @@ async function deploy(config, chain, options) {
     contractConfig.deployer = wallet.address;
     const domainSeparator = await getDomainSeparator(config, chain, options);
     const minimumRotationDelay = Number(options.minimumRotationDelay);
-    const salt = options.salt || '';
+    const salt = options.salt || 'AxelarAmplifierGateway';
 
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${options.previousSignersRetention}, ${domainSeparator}, ${minimumRotationDelay}`);
