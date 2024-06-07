@@ -69,6 +69,8 @@ class CoinManager {
     static async mergeCoin(tx, coinTypeToCoins, options) {
         const coinTypes = options.coinType ? [options.coinType] : Object.keys(coinTypeToCoins);
 
+        let merged = false;
+
         for (const coinType of coinTypes) {
             const coins = coinTypeToCoins[coinType];
 
@@ -76,8 +78,11 @@ class CoinManager {
                 throw new Error(`No coins found for coin type ${coinType}`);
             }
 
-            await CoinManager.doMergeCoin(tx, coins);
+            const hasMergedCoins = await CoinManager.doMergeCoin(tx, coins);
+            merged = merged || hasMergedCoins;
         }
+
+        return merged;
     }
 
     static async doMergeCoin(tx, coins) {
@@ -98,6 +103,7 @@ class CoinManager {
 
         tx.mergeCoins(firstCoin, remainingCoins);
         printInfo('Merge Coins', coins.data[0].coinType);
+        return true;
     }
 
     static async processCommand(config, chain, options) {
@@ -111,7 +117,11 @@ class CoinManager {
 
         if (options.merge) {
             printInfo('Action', 'Merge Coins');
-            await CoinManager.mergeCoin(tx, coinTypeToCoins, options);
+            const hasMerged = await CoinManager.mergeCoin(tx, coinTypeToCoins, options);
+
+            if (!hasMerged) {
+                printInfo('No coins to merge');
+            }
         } else if (options.split) {
             validateParameters({
                 isValidNumber: { split: options.split },
