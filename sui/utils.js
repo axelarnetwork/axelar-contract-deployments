@@ -46,8 +46,13 @@ const loadSuiConfig = (env) => {
     return config;
 };
 
+const isGasToken = (coinType) => {
+    return coinType === SUI_COIN_ID;
+};
+
 module.exports = {
     SUI_COIN_ID,
     getAmplifierSigners,
+    isGasToken,
     loadSuiConfig,
 };
