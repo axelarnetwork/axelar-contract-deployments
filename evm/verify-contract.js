@@ -10,9 +10,19 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, getContractJSON, validateParameters } = require('./utils');
+const {
+    verifyContract,
+    getEVMAddresses,
+    printInfo,
+    printError,
+    mainProcessor,
+    getContractJSON,
+    validateParameters,
+    getWeightedSigners,
+} = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getTrustedChainsAndAddresses } = require('./its');
+const { WEIGHTED_SIGNERS_TYPE } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 
 async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
@@ -316,6 +326,46 @@ async function processCommand(config, chain, options) {
                     contractPath: 'contracts/proxies/TokenManagerProxy.sol:TokenManagerProxy',
                 },
             );
+
+            break;
+        }
+
+        case 'AxelarAmplifierGateway': {
+            let args = options.args;
+
+            if (args) {
+                args = JSON.parse(args);
+                options = { ...options, ...args };
+            }
+
+            const AxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json');
+            const amplifierGatewayFactory = await getContractFactoryFromArtifact(AxelarAmplifierGateway, wallet);
+            const amplifierGateway = amplifierGatewayFactory.attach(options.address || chain.contracts.AxelarGateway.address);
+
+            const implementation = await amplifierGateway.implementation();
+            const previousSignersRetention = (await amplifierGateway.previousSignersRetention()).toNumber();
+            const domainSeparator = await amplifierGateway.domainSeparator();
+            const minimumRotationDelay = (await amplifierGateway.minimumRotationDelay()).toNumber();
+
+            options.keyID =
+                chain.contracts.AxelarGateway.startingKeyIDs[0] || options.keyID || `evm-${chain.axelarId.toLowerCase()}-genesis`;
+            const signerSets = await getWeightedSigners(config, chain, options);
+            const operator = options.operator || chain.contracts.AxelarGateway.operator || wallet.address;
+            const owner = options.owner || chain.contracts.InterchainGovernance?.address || wallet.address;
+
+            const setupParams = defaultAbiCoder.encode([`address`, `${WEIGHTED_SIGNERS_TYPE}[]`], [operator, signerSets]);
+
+            verifyOptions.contractPath = 'contracts/gateway/AxelarAmplifierGateway.sol:AxelarAmplifierGateway';
+            await verifyContract(
+                env,
+                chain.name,
+                implementation,
+                [previousSignersRetention, domainSeparator, minimumRotationDelay],
+                verifyOptions,
+            );
+
+            verifyOptions.contractPath = 'contracts/gateway/AxelarAmplifierGatewayProxy.sol:AxelarAmplifierGatewayProxy';
+            await verifyContract(env, chain.name, amplifierGateway.address, [implementation, owner, setupParams], verifyOptions);
 
             break;
         }
