@@ -164,20 +164,17 @@ async function mainProcessor(options, processor, args = {}) {
 }
 
 if (require.main === module) {
+    // Main program
     const program = new Command('tokens').description('Merge, split, and list coins.');
 
+    // Sub-programs
     const mergeProgram = new Command('merge').description('Merge all coins into a single object');
     const splitProgram = new Command('split').description(
         'Split coins into a new object. If no coin type is specified, SUI coins will be used by default.',
     );
     const listProgram = new Command('list').description('List all coins and balances');
 
-    program.addCommand(mergeProgram);
-    program.addCommand(splitProgram);
-    program.addCommand(listProgram);
-
-    program.commands.forEach((cmd) => addBaseOptions(cmd));
-
+    // Define options, arguments, and actions for each sub-program
     mergeProgram.option('--coin-type <coinType>', 'Coin type to merge').action((options) => {
         mainProcessor(options, processMergeCommand);
     });
@@ -194,6 +191,14 @@ if (require.main === module) {
     listProgram.action((options) => {
         mainProcessor(options, processListCommand);
     });
+
+    // Add sub-programs to the main program
+    program.addCommand(mergeProgram);
+    program.addCommand(splitProgram);
+    program.addCommand(listProgram);
+
+    // Add base options to all sub-programs
+    program.commands.forEach((cmd) => addBaseOptions(cmd));
 
     program.parse();
 }
