@@ -29,6 +29,18 @@ const getAmplifierSigners = async (config, chain) => {
     };
 };
 
+const signAndBroadcast = (client, keypair, tx) => {
+    return client.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        signer: keypair,
+        options: {
+            showEffects: true,
+            showObjectChanges: true,
+            showContent: true,
+        },
+    });
+};
+
 const loadSuiConfig = (env) => {
     const config = loadConfig(env);
     const suiEnv = env === 'local' ? 'localnet' : env;
@@ -55,4 +67,5 @@ module.exports = {
     getAmplifierSigners,
     isGasToken,
     loadSuiConfig,
+    signAndBroadcast,
 };

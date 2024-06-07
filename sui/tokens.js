@@ -7,7 +7,7 @@ const { printInfo, printError, validateParameters } = require('../evm/utils');
 const {
     utils: { parseUnits },
 } = require('ethers');
-const { loadSuiConfig, SUI_COIN_ID, isGasToken } = require('./utils');
+const { loadSuiConfig, SUI_COIN_ID, isGasToken, signAndBroadcast } = require('./utils');
 
 class CoinManager {
     static async getAllCoins(client, account) {
@@ -42,8 +42,6 @@ class CoinManager {
     }
 
     static printCoins(coinTypeToCoins) {
-        printInfo('Action', 'List all coins and balances');
-
         for (const coinType in coinTypeToCoins) {
             const coins = coinTypeToCoins[coinType];
             printInfo('Coin Type', coinType);
@@ -52,7 +50,7 @@ class CoinManager {
         }
     }
 
-    static async splitCoins(tx, client, coinTypeToCoins, options) {
+    static async splitCoins(tx, client, coinTypeToCoins, args, options) {
         const coinType = options.coinType || SUI_COIN_ID;
 
         const metadata = await client.getCoinMetadata({
@@ -64,7 +62,7 @@ class CoinManager {
             process.exit(0);
         }
 
-        const splitAmount = parseUnits(options.split, metadata.decimals).toBigInt();
+        const splitAmount = parseUnits(args.splitAmount, metadata.decimals).toBigInt();
 
         const coins = coinTypeToCoins[coinType];
         const firstObjectId = isGasToken(coinType) ? tx.gas : coins.data[0].coinObjectId;
@@ -117,68 +115,85 @@ class CoinManager {
 
         return merged;
     }
-
-    static async processCommand(config, chain, options) {
-        const [keypair, client] = getWallet(chain, options);
-        printInfo('Wallet Address', keypair.toSuiAddress());
-
-        const coinTypeToCoins = await CoinManager.getAllCoins(client, keypair.toSuiAddress());
-        CoinManager.printCoins(coinTypeToCoins);
-
-        const tx = new TransactionBlock();
-
-        if (options.merge) {
-            printInfo('Action', 'Merge Coins');
-            const hasMerged = await CoinManager.mergeCoins(tx, coinTypeToCoins, options);
-
-            if (!hasMerged) {
-                printInfo('No coins to merge');
-            }
-        } else if (options.split) {
-            validateParameters({
-                isValidNumber: { split: options.split },
-            });
-
-            printInfo('Action', 'Split Coins');
-            await CoinManager.splitCoins(tx, client, coinTypeToCoins, options);
-        }
-
-        const requireBroadcast = options.merge || options.split;
-
-        if (requireBroadcast) {
-            await client.signAndExecuteTransactionBlock({
-                transactionBlock: tx,
-                signer: keypair,
-                options: {
-                    showEffects: true,
-                    showObjectChanges: true,
-                    showContent: true,
-                },
-            });
-        }
-    }
 }
 
-async function mainProcessor(options, processor) {
+async function processSplitCommand(chain, args, options) {
+    printInfo('Action', 'Split Coins');
+    const [keypair, client] = getWallet(chain, options);
+
+    const coinTypeToCoins = await CoinManager.getAllCoins(client, keypair.toSuiAddress());
+
+    const tx = new TransactionBlock();
+    validateParameters({
+        isValidNumber: { splitAmount: args.splitAmount },
+    });
+
+    await CoinManager.splitCoins(tx, client, coinTypeToCoins, args, options);
+
+    await signAndBroadcast(client, keypair, tx);
+}
+
+async function processMergeCommand(chain, args, options) {
+    printInfo('Action', 'Merge Coins');
+    const [keypair, client] = getWallet(chain, options);
+    const coinTypeToCoins = await CoinManager.getAllCoins(client, keypair.toSuiAddress());
+
+    const tx = new TransactionBlock();
+    const hasMerged = await CoinManager.mergeCoins(tx, coinTypeToCoins, options);
+
+    if (!hasMerged) {
+        printInfo('No coins to merge');
+    }
+
+    await signAndBroadcast(client, keypair, tx);
+}
+
+async function processListCommand(chain, args, options) {
+    printInfo('Action', 'List Coins');
+    const [keypair, client] = getWallet(chain, options);
+    printInfo('Wallet Address', keypair.toSuiAddress());
+
+    const coinTypeToCoins = await CoinManager.getAllCoins(client, keypair.toSuiAddress());
+    CoinManager.printCoins(coinTypeToCoins);
+}
+
+async function mainProcessor(options, processor, args = {}) {
     const config = loadSuiConfig(options.env);
-    await processor(config, config.sui, options);
+    await processor(config.sui, args, options);
     saveConfig(config, options.env);
 }
 
 if (require.main === module) {
-    const program = new Command();
+    const program = new Command('tokens').description('Merge, split, and list coins.');
 
-    program.name('tokens').description('Token management tool (e.g. show balance, merge, split etc.)');
+    const mergeProgram = new Command('merge').description('Merge all coins into a single object');
+    const splitProgram = new Command('split').description(
+        'Split coins into a new object. If no coin type is specified, SUI coins will be used by default.',
+    );
+    const listProgram = new Command('list').description('List all coins and balances');
 
-    addBaseOptions(program);
+    program.addCommand(mergeProgram);
+    program.addCommand(splitProgram);
+    program.addCommand(listProgram);
 
-    program
-        .option('--merge', 'Merge all coins')
-        .option('--split <amount>', 'Split coins. The amount is expected to be in the full coin unit (e.g. 1.5 for 1_500_000_000 coins)')
-        .option('--coin-type <coinType>', 'Coin type to merge/split')
-        .option('--transfer <recipientAddress>', 'Used with --split to transfer the split coins to the recipient address')
-        .action((options) => {
-            mainProcessor(options, CoinManager.processCommand);
-        })
-        .parse();
+    program.commands.forEach((cmd) => addBaseOptions(cmd));
+
+    mergeProgram.option('--coin-type <coinType>', 'Coin type to merge').action((options) => {
+        mainProcessor(options, processMergeCommand);
+    });
+
+    splitProgram
+        .argument('<amount>', 'Amount should be in the full coin unit (e.g. 1.5 for 1_500_000_000 coins)')
+        .option('--transfer <recipientAddress>', 'Used with split command to transfer the split coins to the recipient address')
+        .option('--coin-type <coinType>', 'Coin type to split')
+        .action((splitAmount, options) => {
+            const args = { splitAmount };
+            mainProcessor(options, processSplitCommand, args);
+        });
+
+    listProgram.action((options) => {
+        mainProcessor(options, processListCommand);
+    });
+
+    program.parse();
 }
