@@ -82,6 +82,12 @@ Call Contract:
 node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
+Approve messages:
+
+```bash
+node sui/gateway.js approve ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad --proof wallet
+```
+
 Rotate gateway signers:
 
 If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
