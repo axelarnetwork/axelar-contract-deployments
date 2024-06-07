@@ -182,7 +182,6 @@ async function approveMessages(keypair, client, config, chain, args, options) {
 }
 
 async function rotateSigners(keypair, client, config, chain, args, options) {
-    console.log(chain);
     if (!chain.contracts.axelar_gateway) {
         throw new Error('Axelar Gateway package not found.');
     }
