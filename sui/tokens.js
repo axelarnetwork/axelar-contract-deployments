@@ -41,6 +41,17 @@ class CoinManager {
         return coinTypeToCoins;
     }
 
+    static printCoins(coinTypeToCoins) {
+        printInfo('Action', 'List all coins and balances');
+
+        for (const coinType in coinTypeToCoins) {
+            const coins = coinTypeToCoins[coinType];
+            printInfo('Coin Type', coinType);
+            printInfo('Total Balance', coins.totalBalance);
+            printInfo('Total Objects', coins.data.length);
+        }
+    }
+
     static async splitCoins(tx, coinTypeToCoins, options) {
         const splitAmount = BigInt(options.split);
         const coinType = options.coinType;
@@ -60,7 +71,7 @@ class CoinManager {
         tx.setGasBudget(1e8);
     }
 
-    static async mergeCoin(tx, coinTypeToCoins, options) {
+    static async mergeCoins(tx, coinTypeToCoins, options) {
         const coinTypes = options.coinType ? [options.coinType] : Object.keys(coinTypeToCoins);
 
         let merged = false;
@@ -101,13 +112,13 @@ class CoinManager {
         printInfo('Wallet Address', keypair.toSuiAddress());
 
         const coinTypeToCoins = await CoinManager.getAllCoins(client, keypair.toSuiAddress());
-        CoinManager.printAllCoins(coinTypeToCoins);
+        CoinManager.printCoins(coinTypeToCoins);
 
         const tx = new TransactionBlock();
 
         if (options.merge) {
             printInfo('Action', 'Merge Coins');
-            const hasMerged = await CoinManager.mergeCoin(tx, coinTypeToCoins, options);
+            const hasMerged = await CoinManager.mergeCoins(tx, coinTypeToCoins, options);
 
             if (!hasMerged) {
                 printInfo('No coins to merge');
@@ -150,25 +161,7 @@ class CoinManager {
                 },
             });
 
-            printInfo(`Done`);
-        }
-    }
-
-    static printAllCoins(coinTypeToCoins) {
-        printInfo('Action', 'List all coins and balances');
-
-        for (const coinType in coinTypeToCoins) {
-            const coins = coinTypeToCoins[coinType];
-            printInfo(`Coin Type`, coinType);
-            printInfo(`Total Balance`, coins.totalBalance);
-            printInfo(`Total Objects`, coins.data.length);
-        }
-    }
-
-    static checkCoinType(coinType, coinTypeToCoins) {
-        if (coinType && !coinTypeToCoins[coinType]) {
-            printError(`No coins found for coin type ${coinType}`);
-            process.exit(0);
+            printInfo('Done');
         }
     }
 
