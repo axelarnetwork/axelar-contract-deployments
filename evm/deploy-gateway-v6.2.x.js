@@ -281,7 +281,7 @@ async function deploy(config, chain, options) {
 
     if (!(reuseProxy && (reuseHelpers || reuseAuth))) {
         printInfo('Transferring auth ownership');
-        await auth.transferOwnership(gateway.address, { gasLimit: 5e6, ...gasOptions }).then((tx) => tx.wait(chain.confirmations));
+        await auth.transferOwnership(gateway.address, gasOptions).then((tx) => tx.wait(chain.confirmations));
         printInfo('Transferred auth ownership. All done!');
     }
 
