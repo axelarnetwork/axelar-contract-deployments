@@ -88,9 +88,22 @@ function getRawPrivateKey(keypair) {
     return decodeSuiPrivateKey(keypair.getSecretKey()).secretKey;
 }
 
+async function broadcast(client, keypair, tx) {
+    return await client.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        signer: keypair,
+        options: {
+            showEffects: true,
+            showObjectChanges: true,
+            showContent: true,
+        },
+    });
+}
+
 module.exports = {
     getWallet,
     printWalletInfo,
     generateKeypair,
     getRawPrivateKey,
+    broadcast,
 };
