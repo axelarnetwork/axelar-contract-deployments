@@ -9,6 +9,7 @@ use ethers::contract::Abigen;
 /// This is preffered to using the `abigen!` macro because it does not act on
 /// `*.json` file changes and cannot be used in a `build.rs` script.
 fn main() {
+    build_contract();
     let output_dir = std::env::var("OUT_DIR").unwrap();
     let output_dir = PathBuf::from(output_dir);
 
@@ -44,4 +45,25 @@ fn main() {
     }
 
     println!("cargo:rerun-if-changed=build.rs");
+}
+
+fn build_contract() {
+    let root_dir = workspace_root_dir();
+    let contract_dir = root_dir
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("evm-contracts");
+    let sh = xshell::Shell::new().unwrap();
+    sh.change_dir(contract_dir);
+    xshell::cmd!(sh, "forge build")
+        .run()
+        .expect("do you have `foundry` installed?");
+}
+
+fn workspace_root_dir() -> PathBuf {
+    let dir = std::env::var("CARGO_MANIFEST_DIR")
+        .unwrap_or_else(|_| env!("CARGO_MANIFEST_DIR").to_owned());
+    PathBuf::from(dir).parent().unwrap().to_owned()
 }

@@ -16,8 +16,6 @@ use tracing::info;
 use url::Url;
 use xshell::{cmd, Shell};
 
-use crate::cli::report::Report;
-
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
 pub(crate) enum SolanaContract {
     GmpGateway,
@@ -53,27 +51,28 @@ impl Display for SolanaContract {
 
 pub(crate) fn deploy(
     contract: SolanaContract,
+    program_id: &Path,
     keypair_path: &Option<PathBuf>,
     url: &Option<Url>,
     ws_url: &Option<Url>,
-) -> anyhow::Result<Report> {
-    path::ensure_optional_path_exists(keypair_path.as_ref(), "keypair")?;
+) -> anyhow::Result<()> {
+    crate::cli::cmd::path::ensure_optional_path_exists(keypair_path.as_ref(), "keypair")?;
 
     info!("Starting compiling {}", contract);
     build_contract(contract)?;
     info!("Compiled {}", contract);
 
     info!("Starting deploying {}", contract);
-    let pub_key = deploy_contract(contract, keypair_path, url, ws_url)?;
-    info!("Deployed {}", contract);
-    Ok(Report::Deploy(pub_key))
+    let pub_key = deploy_contract(contract, program_id, keypair_path, url, ws_url)?;
+    info!("Deployed {contract} at {pub_key:?}");
+    Ok(())
 }
 
 pub(crate) async fn init_gmp_gateway(
     auth_weighted: &PathBuf,
     rpc_url: &Option<Url>,
     payer_kp_path: &Option<PathBuf>,
-) -> anyhow::Result<Report> {
+) -> anyhow::Result<()> {
     let payer_kp = defaults::payer_kp_with_fallback_in_sol_cli_config(payer_kp_path)?;
 
     let (gateway_config_pda, bump) = GatewayConfig::pda();
@@ -108,11 +107,11 @@ pub(crate) async fn init_gmp_gateway(
         recent_hash,
     );
 
-    let signature = rpc_client
+    let _signature = rpc_client
         .send_and_confirm_transaction_with_spinner(&tx)
         .await?;
 
-    Ok(Report::Init(signature.to_string()))
+    Ok(())
 }
 
 /// An intermediate struct for parsing
@@ -171,6 +170,7 @@ pub(crate) fn build_contract(contract: SolanaContract) -> anyhow::Result<PathBuf
 
 fn deploy_contract(
     contract: SolanaContract,
+    program_id: &Path,
     keypair_path: &Option<PathBuf>,
     url: &Option<Url>,
     ws_url: &Option<Url>,
@@ -178,6 +178,7 @@ fn deploy_contract(
     let contract_compiled_binary = path::contracts_artifact_dir().join(contract.file());
     let sh = Shell::new()?;
     let deploy_cmd_args = calculate_deploy_cmd_args(
+        program_id,
         keypair_path.as_ref(),
         url.as_ref(),
         ws_url.as_ref(),
@@ -198,12 +199,16 @@ fn parse_program_id(output: &str) -> anyhow::Result<Pubkey> {
 }
 
 fn calculate_deploy_cmd_args(
+    program_id: &Path,
     keypair_path: Option<&PathBuf>,
     url: Option<&Url>,
     ws_url: Option<&Url>,
     contract_compiled_binary_path: &Path,
 ) -> Vec<String> {
-    let mut cmd = Vec::new();
+    let mut cmd = vec![
+        "--program-id".to_string(),
+        program_id.to_string_lossy().to_string(),
+    ];
 
     if let Some(kp) = keypair_path {
         cmd.push("-k".to_string());
@@ -225,14 +230,9 @@ fn calculate_deploy_cmd_args(
 }
 
 pub(crate) mod path {
-    use std::env;
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
-    pub(crate) fn workspace_root_dir() -> PathBuf {
-        let dir = env::var("CARGO_MANIFEST_DIR")
-            .unwrap_or_else(|_| env!("CARGO_MANIFEST_DIR").to_owned());
-        PathBuf::from(dir).parent().unwrap().to_owned()
-    }
+    use crate::cli::cmd::path::workspace_root_dir;
 
     pub(crate) fn contracts_dir() -> PathBuf {
         workspace_root_dir().join("programs")
@@ -240,58 +240,6 @@ pub(crate) mod path {
 
     pub(crate) fn contracts_artifact_dir() -> PathBuf {
         workspace_root_dir().join("target").join("deploy")
-    }
-
-    pub(crate) fn ensure_optional_path_exists(
-        path: Option<&PathBuf>,
-        subject: &str,
-    ) -> anyhow::Result<()> {
-        match path {
-            Some(path) => ensure_path_exists(path, subject),
-            None => Ok(()),
-        }
-    }
-
-    pub(crate) fn ensure_path_exists(path: &Path, subject: &str) -> anyhow::Result<()> {
-        path.exists().then(|| Ok(())).unwrap_or_else(|| {
-            Err(anyhow::anyhow!(
-                "File {} do not exists or it's not readable at: {}",
-                subject.to_lowercase(),
-                path.to_string_lossy()
-            ))
-        })
-    }
-
-    #[cfg(test)]
-    mod tests {
-
-        use tempfile::NamedTempFile;
-
-        use super::*;
-
-        #[test]
-        fn ensure_optional_path_makes_a_positive() {
-            let tempfile = NamedTempFile::new().unwrap();
-            ensure_optional_path_exists(
-                Some(&tempfile.path().to_path_buf()),
-                "A required file on fs",
-            )
-            .unwrap();
-        }
-
-        #[test]
-        fn ensure_optional_path_makes_a_negative() {
-            let temp_file = NamedTempFile::new().unwrap();
-            let path = &temp_file.path().to_path_buf();
-            drop(temp_file);
-            let result = ensure_optional_path_exists(Some(path), "A required file on fs");
-            assert!(result.is_err());
-        }
-
-        #[test]
-        fn ensure_optional_path_makes_a_positive_when_none() {
-            ensure_optional_path_exists(None, "A non required file").unwrap();
-        }
     }
 }
 
@@ -305,8 +253,6 @@ mod defaults {
     use solana_sdk::signer::EncodableKey;
     use url::Url;
 
-    use super::path::ensure_path_exists;
-
     /// If provided, it parses the Keypair from the provided
     /// path. If not provided, it calculates and uses default Solana CLI
     /// keypair path. Finally, it tries to read the file.
@@ -317,7 +263,7 @@ mod defaults {
             Some(kp_path) => kp_path.clone(),
             None => PathBuf::from(Config::default().keypair_path),
         };
-        ensure_path_exists(&calculated_payer_kp_path, "payer keypair")?;
+        crate::cli::cmd::path::ensure_path_exists(&calculated_payer_kp_path, "payer keypair")?;
         Keypair::read_from_file(&calculated_payer_kp_path)
             .map_err(|_| anyhow::Error::msg("Could not read payer key pair"))
     }
@@ -399,18 +345,24 @@ mod tests {
         let kp = None;
         let url = None;
         let ws_url = None;
+        let program_id = PathBuf::from_str("~/path/program-id-keypair.json").unwrap();
 
         let result = calculate_deploy_cmd_args(
+            &program_id,
             kp,
             url,
             ws_url,
             &PathBuf::from_str("/contracts/contract.so").unwrap(),
         );
 
-        let expected: Vec<String> = vec!["/contracts/contract.so"]
-            .into_iter()
-            .map(str::to_string)
-            .collect();
+        let expected: Vec<String> = vec![
+            "--program-id",
+            program_id.to_string_lossy().to_string().as_str(),
+            "/contracts/contract.so",
+        ]
+        .into_iter()
+        .map(str::to_string)
+        .collect();
         assert_eq!(expected, result);
     }
 
@@ -419,18 +371,26 @@ mod tests {
         let kp = Some(PathBuf::from_str("/path/keypair.txt").unwrap());
         let url = None;
         let ws_url = None;
+        let program_id = PathBuf::from_str("~/path/program-id-keypair.json").unwrap();
 
         let result = calculate_deploy_cmd_args(
+            &program_id,
             kp.as_ref(),
             url,
             ws_url,
             &PathBuf::from_str("/contracts/contract.so").unwrap(),
         );
 
-        let expected: Vec<String> = vec!["-k", "/path/keypair.txt", "/contracts/contract.so"]
-            .into_iter()
-            .map(str::to_string)
-            .collect();
+        let expected: Vec<String> = vec![
+            "--program-id",
+            program_id.to_string_lossy().to_string().as_str(),
+            "-k",
+            "/path/keypair.txt",
+            "/contracts/contract.so",
+        ]
+        .into_iter()
+        .map(str::to_string)
+        .collect();
         assert_eq!(expected, result);
     }
 
@@ -439,18 +399,26 @@ mod tests {
         let kp = None;
         let url = Some(Url::from_str("http://127.0.0.1:3333/").unwrap());
         let ws_url = None;
+        let program_id = PathBuf::from_str("~/path/program-id-keypair.json").unwrap();
 
         let result = calculate_deploy_cmd_args(
+            &program_id,
             kp,
             url.as_ref(),
             ws_url,
             &PathBuf::from_str("/contracts/contract.so").unwrap(),
         );
 
-        let expected: Vec<String> = vec!["-u", "http://127.0.0.1:3333/", "/contracts/contract.so"]
-            .into_iter()
-            .map(str::to_string)
-            .collect();
+        let expected: Vec<String> = vec![
+            "--program-id",
+            program_id.to_string_lossy().to_string().as_str(),
+            "-u",
+            "http://127.0.0.1:3333/",
+            "/contracts/contract.so",
+        ]
+        .into_iter()
+        .map(str::to_string)
+        .collect();
         assert_eq!(expected, result);
     }
 
@@ -459,19 +427,26 @@ mod tests {
         let kp = None;
         let url = None;
         let ws_url = Some(Url::from_str("http://127.0.0.1:3333/").unwrap());
+        let program_id = PathBuf::from_str("~/path/program-id-keypair.json").unwrap();
 
         let result = calculate_deploy_cmd_args(
+            &program_id,
             kp,
             url,
             ws_url.as_ref(),
             &PathBuf::from_str("/contracts/contract.so").unwrap(),
         );
 
-        let expected: Vec<String> =
-            vec!["--ws", "http://127.0.0.1:3333/", "/contracts/contract.so"]
-                .into_iter()
-                .map(str::to_string)
-                .collect();
+        let expected: Vec<String> = vec![
+            "--program-id",
+            program_id.to_string_lossy().to_string().as_str(),
+            "--ws",
+            "http://127.0.0.1:3333/",
+            "/contracts/contract.so",
+        ]
+        .into_iter()
+        .map(str::to_string)
+        .collect();
         assert_eq!(expected, result);
     }
 
@@ -480,8 +455,10 @@ mod tests {
         let kp = Some(PathBuf::from_str("/path/keypair.txt").unwrap());
         let url = Some(Url::from_str("http://127.0.0.1:2222").unwrap());
         let ws_url = Some(Url::from_str("http://127.0.0.1:3333").unwrap());
+        let program_id = PathBuf::from_str("~/path/program-id-keypair.json").unwrap();
 
         let result = calculate_deploy_cmd_args(
+            &program_id,
             kp.as_ref(),
             url.as_ref(),
             ws_url.as_ref(),
@@ -489,6 +466,8 @@ mod tests {
         );
 
         let expected: Vec<String> = vec![
+            "--program-id",
+            program_id.to_string_lossy().to_string().as_str(),
             "-k",
             "/path/keypair.txt",
             "-u",

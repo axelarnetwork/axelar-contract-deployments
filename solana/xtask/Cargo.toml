@@ -23,8 +23,7 @@ clap = { version = "4.5.4", features = ["derive"] }
 tokio.workspace = true
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
-xshell = "0.2.6"
-solana-program.workspace = true
+xshell.workspace = true
 solana-sdk.workspace = true
 gmp-gateway = { path = "./../programs/gateway" }
 axelar-message-primitives = { path = "./../helpers/axelar-message-primitives" }
@@ -32,10 +31,13 @@ solana-client = "1.18.13"
 url = "2.5.0"
 toml = "0.8.13"
 serde.workspace = true
+ethers.workspace = true
+evm-contracts-test-suite.workspace = true
+axelar-solana-memo-program.workspace = true
 solana-cli-config = "1.18.14"
 
 [dev-dependencies]
-indoc = "2.0.5"
+solana-program.workspace = true
 solana-sdk.workspace = true
 hex.workspace = true
 solana-streamer = "1.18.12"
@@ -44,3 +46,4 @@ tempfile = "3.10.1"
 serial_test = "3.1.1"
 solana-logger = "1.18.12"
 borsh.workspace = true
+test-log.workspace = true

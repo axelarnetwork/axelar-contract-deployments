@@ -76,8 +76,8 @@ async fn axelar_evm_setup() -> (
     let evm_gateway = alice
         .deploy_axelar_amplifier_gateway(
             &[operators1, operators2.clone()],
-            alice.walelt.address(),
-            alice.walelt.address(),
+            alice.wallet.address(),
+            alice.wallet.address(),
         )
         .await
         .unwrap();

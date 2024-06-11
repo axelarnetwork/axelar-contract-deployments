@@ -74,7 +74,7 @@ impl TestBlockchain {
 
         crate::EvmSigner {
             signer: client,
-            walelt: wallet,
+            wallet,
         }
     }
 }

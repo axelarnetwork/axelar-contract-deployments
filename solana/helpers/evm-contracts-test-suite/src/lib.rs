@@ -27,7 +27,7 @@ pub struct EvmSigner {
     /// The local wallet
     /// Sometimes can come in handy because the signer middleware does not
     /// expose the wallet.
-    pub walelt: LocalWallet,
+    pub wallet: LocalWallet,
 }
 
 /// Utility type for the contract middleware.
@@ -75,7 +75,7 @@ pub mod evm_weighted_signers {
         let mut operators = range
             .map(|x| chain.construct_provider_with_signer(x))
             .map(|x| crate::evm_weighted_signers::WeightedSigner {
-                wallet: x.walelt,
+                wallet: x.wallet,
                 weight: 2.into(),
             })
             .collect::<Vec<_>>();

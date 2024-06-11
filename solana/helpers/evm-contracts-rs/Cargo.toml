@@ -8,3 +8,4 @@ ethers.workspace = true
 
 [build-dependencies]
 ethers.workspace = true
+xshell.workspace = true
