@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256 },
+    utils: { hexZeroPad, toUtf8Bytes, keccak256, defaultAbiCoder },
     BigNumber,
     constants: { AddressZero },
     Contract,
@@ -33,10 +33,11 @@ const IOwnable = getContractJSON('IOwnable');
 const { addExtendedOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const tokenManagerImplementations = {
-    MINT_BURN: 0,
+    INTERCHAIN_TOKEN: 0,
     MINT_BURN_FROM: 1,
     LOCK_UNLOCK: 2,
     LOCK_UNLOCK_FEE: 3,
+    MINT_BURN: 4,
 };
 
 function getDeploymentSalt(options) {
@@ -115,6 +116,11 @@ async function processCommand(config, chain, options) {
     const contractName = 'InterchainTokenService';
 
     const interchainTokenServiceAddress = address || contracts.InterchainTokenService?.address;
+
+    if (!interchainTokenServiceAddress) {
+        printWarn(`No InterchainTokenService address found for chain ${chain.name}`);
+        return;
+    }
 
     validateParameters({ isValidAddress: { interchainTokenServiceAddress } });
 
@@ -237,22 +243,26 @@ async function processCommand(config, chain, options) {
         }
 
         case 'deployTokenManager': {
-            const { destinationChain, type, params, gasValue } = options;
+            const { destinationChain, type, operator, tokenAddress, gasValue } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
+            const tokenManagerType = tokenManagerImplementations[type];
 
             validateParameters({
                 isString: { destinationChain },
-                isValidCalldata: { params },
-                isValidNumber: { gasValue },
+                isValidAddress: { tokenAddress },
+                isValidCalldata: { operator },
+                isValidNumber: { gasValue, tokenManagerType },
             });
 
             isValidDestinationChain(config, destinationChain);
 
+            const params = defaultAbiCoder.encode(['bytes', 'address'], [operator, tokenAddress]);
+
             const tx = await interchainTokenService.deployTokenManager(
                 deploymentSalt,
                 destinationChain,
-                tokenManagerImplementations[type],
+                tokenManagerType,
                 params,
                 gasValue,
                 gasOptions,
@@ -457,9 +467,7 @@ async function processCommand(config, chain, options) {
                 throw new Error(`${action} can only be performed by contract owner: ${owner}`);
             }
 
-            const { trustedAddress } = options;
-
-            validateParameters({ isNonEmptyString: { trustedChain: options.trustedChain, trustedAddress } });
+            validateParameters({ isNonEmptyString: { trustedChain: options.trustedChain } });
 
             let trustedChains, trustedAddresses;
 
@@ -469,16 +477,20 @@ async function processCommand(config, chain, options) {
                 trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address);
             } else {
                 const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.axelarId;
+                const trustedAddress =
+                    options.trustedAddress || config.chains[options.trustedChain.toLowerCase()]?.contracts?.InterchainTokenService?.address;
 
-                if (trustedChain === undefined) {
-                    throw new Error(`Invalid chain: ${options.trustedChain}`);
+                if (trustedChain === undefined || trustedAddress === undefined) {
+                    throw new Error(`Invalid chain/address: ${options.trustedChain}`);
                 }
 
                 trustedChains = [trustedChain];
                 trustedAddresses = [trustedAddress];
             }
 
-            printInfo(`Setting trusted address for chain ${trustedChains} to ${trustedAddresses}`);
+            if (prompt(`Proceed with setting trusted address for chain ${trustedChains} to ${trustedAddresses}?`, options.yes)) {
+                return;
+            }
 
             for (const [trustedChain, trustedAddress] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
                 const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
@@ -690,6 +702,8 @@ if (require.main === module) {
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
     program.addOption(new Option('--params <params>', 'params for TokenManager deployment'));
+    program.addOption(new Option('--tokenAddress <tokenAddress>', 'token address to use for token manager deployment'));
+    program.addOption(new Option('--operator <operator>', 'operator address to use for token manager'));
     program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
     program.addOption(new Option('--name <name>', 'token name'));
     program.addOption(new Option('--symbol <symbol>', 'token symbol'));

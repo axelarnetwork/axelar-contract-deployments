@@ -13,19 +13,22 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 ```
   "axelar": {
     "contracts": {
+      "Coordinator": {
+        "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
+      },
       "ServiceRegistry": {
         "governanceAccount": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
       },
-      "ConnectionRouter": {
+      "Router": {
         "adminAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
-        "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz"
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
       },
       "Multisig": {
-        "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 10
       },
       "Rewards": {
-        "governanceAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "rewardsDenom": "uamplifier",
         "params": {
           "epoch_duration": "10",
@@ -41,6 +44,7 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
       },
       "VotingVerifier": {
         "ethereum-2": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "votingThreshold": [
@@ -51,6 +55,7 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
           "confirmationHeight": 1
         },
         "Avalanche": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "votingThreshold": [
@@ -69,6 +74,7 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
       },
       "MultisigProver": {
         "ethereum-2": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1gtm0wr3gpkzwgpjujzlyxvgj7a5ltcku99fdcz",
           "destinationChainID": "0",
           "signingThreshold": [
@@ -108,16 +114,17 @@ Deploy each contract. Chain name should match the key of an object in the `chain
     `node deploy-contract.js -m [mnemonic] -a [path to contract artifacts] -c [contract name] -e [environment] -n <chain name>` 
 
 Some of the contracts depend on each other and need to be deployed in a specific order. Note the connection router and nexus gateway each need to know the other's address, so you need to pass `--instantiate2`, and upload each contract before instatiating (by passing `-u`).
- 1.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "ConnectionRouter" --instantiate2 -e devnet -u`
+ 1.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "Router" --instantiate2 -e devnet -u`
  2.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "NexusGateway" --instantiate2 -e devnet -u`
  3.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "NexusGateway" --instantiate2 -e devnet -r`
- 4.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "ConnectionRouter" --instantiate2 -e devnet -r`
+ 4.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "Router" --instantiate2 -e devnet -r`
  5.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "ServiceRegistry" -e devnet`
  6.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "Rewards" -e devnet`
- 7.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "Multisig" -e devnet`
- 8.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "VotingVerifier" -e devnet -n "ethereum,avalanche"`
- 9.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "Gateway" -e devnet -n "ethereum,avalanche"`
- 10. `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "MultisigProver" -e devnet -n "ethereum,avalanche"`
+ 7.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "Coordinator" -e devnet`
+ 8.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "Multisig" -e devnet`
+ 9.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "VotingVerifier" -e devnet -n "ethereum,avalanche"`
+ 10.  `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "Gateway" -e devnet -n "ethereum,avalanche"`
+ 11. `node deploy-contract.js -m [mnemonic] -a [path to artifacts] -c "MultisigProver" -e devnet -n "ethereum,avalanche"`
 
 
 ### Constant Address Deployment

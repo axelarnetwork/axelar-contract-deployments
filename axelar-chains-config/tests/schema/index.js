@@ -5,7 +5,8 @@ const axelarSchema = {
         id: { type: 'string' },
         axelarId: { type: 'string' },
         rpc: { type: 'string' },
-        lcd: { type: 'string' },
+        // Matches for "" "http://example.com:443" "https://example.com:443" "https://example.com" "http://example.com"
+        lcd: { type: 'string', pattern: '^$|^(https?:\\/\\/[^\\/\\:]+(:\\d+)?)$' },
         grpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
     },
@@ -25,7 +26,7 @@ export const contractSchema = {
     id: '/info.chains.contracts',
     type: 'object',
     patternProperties: {
-        // PascalName e.g. 'AxelarGasService', 'AxelarGateway', 'InterchainGovernanceExecutor', etc.
+        // PascalName e.g. 'AxelarGasService', 'AxelarGateway' etc.
         '\b[A-Z][a-z]*([A-Z][a-z]*)*\b': {
             $ref: contractValueSchema.id,
         },
@@ -35,7 +36,7 @@ export const contractSchema = {
             type: 'boolean',
         },
     },
-    required: ['AxelarGateway', 'AxelarGasService'],
+    required: ['AxelarGateway'],
 };
 
 export const explorerSchema = {
@@ -74,6 +75,8 @@ export const chainValueSchema = {
         explorer: { $ref: explorerSchema.id },
         gasOptions: { $ref: gasOptionSchema.id },
         confirmations: { type: 'number' },
+        finality: { type: 'string' },
+        approxFinalityWaitTime: { type: 'number' },
     },
     required: ['name', 'id', 'axelarId', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
 };

@@ -7,12 +7,14 @@ const { Option } = require('commander');
 const addBaseOptions = (program, options = {}) => {
     program.addOption(
         new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
+            .choices(['local', 'devnet', 'devnet-amplifier', 'devnet-verifiers', 'stagenet', 'testnet', 'mainnet'])
             .default('testnet')
             .makeOptionMandatory(true)
             .env('ENV'),
     );
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    program.addOption(new Option('--parallel', 'run script parallely wrt chains'));
+    program.addOption(new Option('--saveChainSeparately', 'save chain info separately'));
     program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
 
     if (!options.ignoreChainNames) {
@@ -50,6 +52,14 @@ const addExtendedOptions = (program, options = {}) => {
 
     if (options.contractName) {
         program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+    }
+
+    if (options.deployMethod) {
+        program.addOption(
+            new Option('-m, --deployMethod <deployMethod>', 'deployment method')
+                .choices(['create', 'create2', 'create3'])
+                .default(options.deployMethod),
+        );
     }
 
     if (options.salt) {

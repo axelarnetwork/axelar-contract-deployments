@@ -136,6 +136,7 @@ async function deployAll(config, wallet, chain, options) {
     const deployments = {
         tokenManagerDeployer: {
             name: 'Token Manager Deployer',
+            contractName: 'TokenManagerDeployer',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -151,6 +152,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         interchainToken: {
             name: 'Interchain Token',
+            contractName: 'InterchainToken',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -166,6 +168,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         interchainTokenDeployer: {
             name: 'Interchain Token Deployer',
+            contractName: 'InterchainTokenDeployer',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -181,6 +184,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         tokenManager: {
             name: 'Token Manager',
+            contractName: 'TokenManager',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -196,6 +200,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         tokenHandler: {
             name: 'Token Handler',
+            contractName: 'TokenHandler',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -211,6 +216,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         implementation: {
             name: 'Interchain Token Service Implementation',
+            contractName: 'InterchainTokenService',
             async deploy() {
                 const args = [
                     contractConfig.tokenManagerDeployer,
@@ -239,6 +245,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         address: {
             name: 'Interchain Token Service Proxy',
+            contractName: 'InterchainProxy',
             async deploy() {
                 const operatorAddress = options.operatorAddress || wallet.address;
 
@@ -265,6 +272,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         interchainTokenFactoryImplementation: {
             name: 'Interchain Token Factory Implementation',
+            contractName: 'InterchainTokenFactory',
             async deploy() {
                 return await deployContract(
                     deployMethod,
@@ -280,6 +288,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         interchainTokenFactory: {
             name: 'Interchain Token Factory Proxy',
+            contractName: 'InterchainProxy',
             async deploy() {
                 const args = [itsFactoryContractConfig.implementation, wallet.address, '0x'];
                 printInfo('ITS Factory Proxy args', args);
@@ -303,13 +312,9 @@ async function deployAll(config, wallet, chain, options) {
 
         const deployment = deployments[key];
 
-        if (key === 'address' && options.reuseProxy) {
-            printInfo(`Reusing ${deployment.name} deployment at ${contractConfig.address}`);
-            continue;
-        }
-
-        if (key === 'interchainTokenFactory' && options.reuseProxy) {
-            printInfo(`Reusing ${deployment.name} deployment at ${itsFactoryContractConfig.address}`);
+        // When upgrading/reusing proxy, avoid re-deploying the proxy and the interchain token contract
+        if (options.reuseProxy && ['InterchainToken', 'InterchainProxy'].includes(deployment.contractName)) {
+            printInfo(`Reusing ${deployment.name} deployment for contract ${deployment.contractName} at ${contractConfig[key]}`);
             continue;
         }
 
@@ -330,7 +335,7 @@ async function deployAll(config, wallet, chain, options) {
         saveConfig(config, options.env);
 
         if (chain.chainId !== 31337) {
-            await sleep(2000);
+            await sleep(5000);
         }
 
         if (!(await isContract(contract.address, provider))) {
@@ -473,7 +478,7 @@ if (require.main === module) {
             .default('create3'),
     );
 
-    addExtendedOptions(program, { skipExisting: true, upgrade: true, predictOnly: true });
+    addExtendedOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments'));
     program.addOption(new Option('--contractName <contractName>', 'contract name').default('InterchainTokenService')); // added for consistency

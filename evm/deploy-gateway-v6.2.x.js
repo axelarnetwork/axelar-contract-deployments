@@ -81,7 +81,7 @@ function getProxyParams(governance, mintLimiter) {
 }
 
 async function deploy(config, chain, options) {
-    const { privateKey, reuseProxy, reuseHelpers, verify, yes, predictOnly } = options;
+    const { privateKey, reuseProxy, reuseHelpers, reuseAuth, verify, yes, predictOnly } = options;
 
     const contractName = 'AxelarGateway';
 
@@ -176,7 +176,7 @@ async function deploy(config, chain, options) {
 
     if (options.skipExisting && contractConfig.authModule) {
         auth = authFactory.attach(contractConfig.authModule);
-    } else if (reuseProxy && reuseHelpers) {
+    } else if (reuseProxy && (reuseHelpers || reuseAuth)) {
         auth = authFactory.attach(await gateway.authModule());
     } else {
         printInfo(`Deploying auth contract`);
@@ -279,7 +279,7 @@ async function deploy(config, chain, options) {
         });
     }
 
-    if (!(reuseProxy && reuseHelpers)) {
+    if (!(reuseProxy && (reuseHelpers || reuseAuth))) {
         printInfo('Transferring auth ownership');
         await auth.transferOwnership(gateway.address, { gasLimit: 5e6, ...gasOptions }).then((tx) => tx.wait(chain.confirmations));
         printInfo('Transferred auth ownership. All done!');
@@ -459,7 +459,6 @@ async function upgrade(_, chain, options) {
         setupParams = getProxyParams(governance, mintLimiter);
     }
 
-    printInfo('Chain', chain.name);
     printInfo('Gateway Proxy', gateway.address);
 
     if (!offline) {
@@ -525,25 +524,22 @@ async function programHandler() {
 
     program.name('deploy-gateway-v6.2.x').description('Deploy gateway v6.2.x');
 
-    addExtendedOptions(program, { salt: true, skipExisting: true, upgrade: true, predictOnly: true });
+    addExtendedOptions(program, { salt: true, deployMethod: 'create', skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
-    program.addOption(
-        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
-    );
-    program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
+    program.addOption(new Option('--reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
     program.addOption(
         new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment'),
     );
+    program.addOption(new Option('--reuseAuth', 'reuse auth module contract for new implementation deployment'));
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('--governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('--mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
-    program.addOption(new Option('-k, --keyID <keyID>', 'key ID').env('KEY_ID'));
+    program.addOption(new Option('--keyID <keyID>', 'key ID').env('KEY_ID'));
     program.addOption(new Option('-a, --amplifier', 'deploy amplifier gateway').env('AMPLIFIER'));
     program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
-    program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain'));
 
     program.action((options) => {
         main(options);
@@ -557,5 +553,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-    deployGatewayv5: deploy,
+    deployGatewayv6: deploy,
 };
