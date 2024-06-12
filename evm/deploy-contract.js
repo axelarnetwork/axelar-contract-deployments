@@ -28,9 +28,10 @@ const {
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
-async function getConstructorArgs(contractName, chain, wallet) {
-    const config = chain.contracts;
+async function getConstructorArgs(contractName, config, wallet, options) {
+    const args = options.args ? JSON.parse(options.args) : {};
     const contractConfig = config[contractName];
+    Object.assign(contractConfig, args);
 
     switch (contractName) {
         case 'AxelarServiceGovernance': {
@@ -60,19 +61,13 @@ async function getConstructorArgs(contractName, chain, wallet) {
                 throw new Error(`Missing AxelarServiceGovernance.minimumTimeDelay in the chain info.`);
             }
 
-            const cosigners = contractConfig.cosigners;
+            const multisig = contractConfig.multisig;
 
-            if (!isAddressArray(cosigners)) {
-                throw new Error(`Missing AxelarServiceGovernance.cosigners in the chain info.`);
+            if (!isAddress(multisig)) {
+                throw new Error(`Missing AxelarServiceGovernance.multisig address in the chain info.`);
             }
 
-            const threshold = contractConfig.threshold;
-
-            if (!isNumber(threshold)) {
-                throw new Error(`Missing AxelarServiceGovernance.threshold in the chain info.`);
-            }
-
-            return [gateway, governanceChain, governanceAddress, minimumTimeDelay, cosigners, threshold];
+            return [gateway, governanceChain, governanceAddress, minimumTimeDelay, multisig];
         }
 
         case 'InterchainProposalSender': {
@@ -112,7 +107,6 @@ async function getConstructorArgs(contractName, chain, wallet) {
             }
 
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
-            contractConfig.minimumTimeDelay = minimumTimeDelay;
 
             if (!isNumber(minimumTimeDelay)) {
                 throw new Error(`Missing InterchainGovernance.minimumTimeDelay in the chain info.`);
@@ -250,7 +244,7 @@ async function processCommand(config, chain, options) {
     const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
 
-    const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
+    const constructorArgs = await getConstructorArgs(contractName, contracts, wallet, options);
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
@@ -358,6 +352,7 @@ if (require.main === module) {
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
     );
     program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
+    program.addOption(new Option('--args <args>', 'custom deployment args'));
 
     program.action((options) => {
         main(options);

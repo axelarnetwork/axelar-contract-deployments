@@ -2,7 +2,6 @@
 
 const { ethers } = require('hardhat');
 const {
-    Wallet,
     getDefaultProvider,
     utils: { isAddress, Interface },
     Contract,
@@ -20,15 +19,29 @@ const {
     prompt,
     getGasOptions,
     mainProcessor,
+    validateParameters,
+    getContractJSON,
+    printWarn,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const IAxelarGasService = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGasService.json');
-const IOperators = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IOperators.json');
+const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTransaction } = require('./gas-service');
+const { getWallet } = require('./sign-utils');
 
-async function processCommand(_, chain, options) {
-    const { contractName, address, action, privateKey, args, yes } = options;
+async function processCommand(config, chain, options) {
+    const {
+        env,
+        contractName,
+        address,
+        action,
+        privateKey,
+        args,
 
-    const argsArray = parseArgs(args);
+        chains,
+
+        yes,
+    } = options;
+
+    const argsArray = args ? parseArgs(args) : [];
 
     const contracts = chain.contracts;
     const contractConfig = contracts[contractName];
@@ -48,12 +61,12 @@ async function processCommand(_, chain, options) {
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    const wallet = new Wallet(privateKey, provider);
-    await printWalletInfo(wallet);
+    const wallet = await getWallet(privateKey, provider, options);
+    await printWalletInfo(wallet, options);
 
     printInfo('Contract name', contractName);
 
-    const operatorsContract = new Contract(operatorsAddress, IOperators.abi, wallet);
+    const operatorsContract = new Contract(operatorsAddress, getContractJSON('IOperators').abi, wallet);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
@@ -166,7 +179,7 @@ async function processCommand(_, chain, options) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = new Interface(IAxelarGasService.abi);
+            const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
             const collectFeesCalldata = gasServiceInterface.encodeFunctionData('collectFees', [receiver, tokens, amounts]);
 
             try {
@@ -217,12 +230,57 @@ async function processCommand(_, chain, options) {
                 throw new Error(`Missing AxelarGasService address in the chain info.`);
             }
 
-            const gasServiceInterface = new Interface(IAxelarGasService.abi);
+            const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
             const refundCalldata = gasServiceInterface.encodeFunctionData('refund', [txHash, logIndex, receiver, token, amount]);
 
             try {
                 await operatorsContract.executeContract(target, refundCalldata, 0, gasOptions).then((tx) => tx.wait());
             } catch (error) {
+                printError(error);
+            }
+
+            break;
+        }
+
+        case 'updateGasInfo': {
+            const target = chain.contracts.AxelarGasService?.address;
+
+            validateParameters({
+                isNonEmptyStringArray: { chains },
+                isAddress: { target },
+            });
+
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
+
+            if (chainsToUpdate.length === 0) {
+                printWarn('No gas info updates found.');
+                return;
+            }
+
+            printInfo('Collected gas info for the following chain names', chainsToUpdate.join(', '));
+
+            if (prompt(`Submit gas update transaction?`, yes)) {
+                return;
+            }
+
+            const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
+            const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
+
+            try {
+                await relayTransaction(
+                    options,
+                    chain,
+                    operatorsContract,
+                    'executeContract',
+                    [target, updateGasInfoCalldata, 0],
+                    0,
+                    gasOptions,
+                );
+            } catch (error) {
+                for (let i = 0; i < chainsToUpdate.length; i++) {
+                    addFailedChainUpdate(chain.name, chainsToUpdate[i]);
+                }
+
                 printError(error);
             }
 
@@ -237,6 +295,8 @@ async function processCommand(_, chain, options) {
 
 async function main(options) {
     await mainProcessor(options, processCommand);
+
+    printFailedChainUpdates();
 }
 
 if (require.main === module) {
@@ -246,7 +306,7 @@ if (require.main === module) {
 
     addBaseOptions(program, { address: true });
 
-    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators').makeOptionMandatory(false));
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Operators'));
     program.addOption(
         new Option('--action <action>', 'operator action').choices([
             'isOperator',
@@ -254,9 +314,16 @@ if (require.main === module) {
             'removeOperator',
             'collectFees',
             'refund',
+            'updateGasInfo',
         ]),
     );
-    program.addOption(new Option('--args <args>', 'operator action arguments').makeOptionMandatory(true));
+    program.addOption(new Option('--offline', 'run script in offline mode'));
+    program.addOption(new Option('--args <args>', 'operator action arguments'));
+
+    // options for updateGasInfo
+    program.addOption(new Option('--chains <chains...>', 'Chain names'));
+    program.addOption(new Option('--relayerAPI <relayerAPI>', 'Relay the tx through an external relayer API').env('RELAYER_API'));
+    program.addOption(new Option('--ignoreError', 'Ignore errors and proceed to next chain'));
 
     program.action((options) => {
         main(options);

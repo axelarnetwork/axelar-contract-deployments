@@ -9,12 +9,12 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, printWalletInfo, loadConfig, saveConfig, prompt, getGasOptions } = require('./utils');
+const { printInfo, printWalletInfo, mainProcessor, prompt, getGasOptions } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 
-async function processCommand(options, chain) {
+async function processCommand(_, chain, options) {
     const { contractName, address, action, privateKey, newOwner, yes } = options;
 
     const contracts = chain.contracts;
@@ -35,7 +35,6 @@ async function processCommand(options, chain) {
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    printInfo('Chain', chain.name);
     printInfo('Contract name', contractName);
 
     const wallet = new Wallet(privateKey, provider);
@@ -166,24 +165,7 @@ async function processCommand(options, chain) {
 }
 
 async function main(options) {
-    const config = loadConfig(options.env);
-
-    let chains = options.chainNames.split(',').map((str) => str.trim());
-
-    if (options.chainNames === 'all') {
-        chains = Object.keys(config.chains);
-    }
-
-    for (const chain of chains) {
-        if (config.chains[chain.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chain} is not defined in the info file`);
-        }
-    }
-
-    for (const chain of chains) {
-        await processCommand(options, config.chains[chain.toLowerCase()]);
-        saveConfig(config, options.env);
-    }
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

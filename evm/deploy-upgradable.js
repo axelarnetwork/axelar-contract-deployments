@@ -20,14 +20,19 @@ function getProxy(wallet, proxyAddress) {
 }
 
 async function getImplementationArgs(contractName, config, options) {
+    let args;
+
+    try {
+        args = options.args ? JSON.parse(options.args) : {};
+    } catch (error) {
+        console.error('Error parsing args:\n', error.message);
+    }
+
     const contractConfig = config[contractName];
+    Object.assign(contractConfig, args);
 
     switch (contractName) {
         case 'AxelarGasService': {
-            if (options.args) {
-                contractConfig.collector = options.args;
-            }
-
             const collector = contractConfig.collector;
 
             if (!isAddress(collector)) {
@@ -172,6 +177,7 @@ async function processCommand(_, chain, options) {
             gasOptions,
             verifyOptions,
             chain.name,
+            options,
         );
 
         contractConfig.implementation = await contract.implementation();
