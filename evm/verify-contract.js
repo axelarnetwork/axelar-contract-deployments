@@ -10,19 +10,9 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const {
-    verifyContract,
-    getEVMAddresses,
-    printInfo,
-    printError,
-    mainProcessor,
-    getContractJSON,
-    validateParameters,
-    getWeightedSigners,
-} = require('./utils');
+const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, getContractJSON, validateParameters } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getTrustedChainsAndAddresses } = require('./its');
-const { WEIGHTED_SIGNERS_TYPE } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 
 async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
@@ -46,7 +36,7 @@ async function processCommand(config, chain, options) {
 
     switch (contractName) {
         case 'Create3Deployer': {
-            const Create3Deployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json');
+            const Create3Deployer = getContractJSON('Create3Deployer');
 
             const contractFactory = await getContractAt(Create3Deployer.abi, wallet);
 
@@ -57,7 +47,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'InterchainGovernance': {
-            const InterchainGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/governance/InterchainGovernance.sol/InterchainGovernance.json');
+            const InterchainGovernance = getContractJSON('InterchainGovernance');
 
             const contractFactory = await getContractAt(InterchainGovernance.abi, wallet);
 
@@ -79,7 +69,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'Multisig': {
-            const Multisig = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/governance/Multisig.sol/Multisig.json');
+            const Multisig = getContractJSON('Multisig');
 
             const contractFactory = await getContractAt(Multisig.abi, wallet);
 
@@ -101,7 +91,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'ConstAddressDeployer': {
-            const ConstAddressDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json');
+            const ConstAddressDeployer = getContractJSON('ConstAddressDeployer');
 
             const contractFactory = await getContractAt(ConstAddressDeployer.abi, wallet);
 
@@ -123,7 +113,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'Operators': {
-            const Operators = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/utils/Operators.sol/Operators.json');
+            const Operators = getContractJSON('Operators');
 
             const contractFactory = await getContractAt(Operators.abi, wallet);
 
@@ -134,7 +124,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'AxelarGateway': {
-            const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
+            const AxelarGateway = getContractJSON('AxelarGateway');
             const gatewayFactory = await getContractFactoryFromArtifact(AxelarGateway, wallet);
             const gateway = gatewayFactory.attach(options.address || chain.contracts.AxelarGateway.address);
 
@@ -161,7 +151,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'AxelarGasService': {
-            const AxelarGasService = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json');
+            const AxelarGasService = getContractJSON('AxelarGasService');
             const gasServiceFactory = await getContractFactoryFromArtifact(AxelarGasService, wallet);
             const contractConfig = chain.contracts[contractName];
             const gasService = gasServiceFactory.attach(options.address || contractConfig.address);
@@ -173,7 +163,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'AxelarDepositService': {
-            const AxelarDepositService = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/deposit-service/AxelarDepositService.sol/AxelarDepositService.json');
+            const AxelarDepositService = getContractJSON('AxelarDepositService');
             const depositServiceFactory = await getContractFactoryFromArtifact(AxelarDepositService, wallet);
             const contractConfig = chain.contracts[contractName];
             const gasService = depositServiceFactory.attach(options.address || contractConfig.address);
@@ -189,13 +179,13 @@ async function processCommand(config, chain, options) {
         }
 
         case 'BurnableMintableCappedERC20': {
-            const BurnableMintableCappedERC20 = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
+            const BurnableMintableCappedERC20 = getContractJSON('BurnableMintableCappedERC20');
             const token = await getContractFactoryFromArtifact(BurnableMintableCappedERC20, wallet);
             const symbol = options.args;
 
             console.log(`Verifying ${symbol}...`);
 
-            const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
+            const AxelarGateway = getContractJSON('AxelarGateway');
             const gatewayFactory = await getContractFactoryFromArtifact(AxelarGateway, wallet);
             const gateway = gatewayFactory.attach(chain.contracts.AxelarGateway.address);
 
@@ -331,29 +321,15 @@ async function processCommand(config, chain, options) {
         }
 
         case 'AxelarAmplifierGateway': {
-            let args = options.args;
-
-            if (args) {
-                args = JSON.parse(args);
-                options = { ...options, ...args };
-            }
-
-            const AxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json');
+            const AxelarAmplifierGateway = getContractJSON('AxelarAmplifierGateway');
             const amplifierGatewayFactory = await getContractFactoryFromArtifact(AxelarAmplifierGateway, wallet);
-            const amplifierGateway = amplifierGatewayFactory.attach(options.address || chain.contracts.AxelarGateway.address);
+            const contractConfig = chain.contracts.AxelarGateway;
+            const amplifierGateway = amplifierGatewayFactory.attach(options.address || contractConfig.address);
 
             const implementation = await amplifierGateway.implementation();
             const previousSignersRetention = (await amplifierGateway.previousSignersRetention()).toNumber();
             const domainSeparator = await amplifierGateway.domainSeparator();
             const minimumRotationDelay = (await amplifierGateway.minimumRotationDelay()).toNumber();
-
-            options.keyID =
-                chain.contracts.AxelarGateway.startingKeyIDs[0] || options.keyID || `evm-${chain.axelarId.toLowerCase()}-genesis`;
-            const signerSets = await getWeightedSigners(config, chain, options);
-            const operator = options.operator || chain.contracts.AxelarGateway.operator || wallet.address;
-            const owner = options.owner || chain.contracts.InterchainGovernance?.address || wallet.address;
-
-            const setupParams = defaultAbiCoder.encode([`address`, `${WEIGHTED_SIGNERS_TYPE}[]`], [operator, signerSets]);
 
             verifyOptions.contractPath = 'contracts/gateway/AxelarAmplifierGateway.sol:AxelarAmplifierGateway';
             await verifyContract(
@@ -365,7 +341,7 @@ async function processCommand(config, chain, options) {
             );
 
             verifyOptions.contractPath = 'contracts/gateway/AxelarAmplifierGatewayProxy.sol:AxelarAmplifierGatewayProxy';
-            await verifyContract(env, chain.name, amplifierGateway.address, [implementation, owner, setupParams], verifyOptions);
+            await verifyContract(env, chain.name, amplifierGateway.address, contractConfig.proxyDeploymentArgs, verifyOptions);
 
             break;
         }
