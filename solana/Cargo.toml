@@ -35,6 +35,8 @@ test-log = { version = "0.2", features = ["trace"], default-features = false }
 thiserror = "1"
 tokio = { version = "1", features = ["full"] }
 bincode = "1"
+reqwest = { version = "0.12", features = ["json", "stream"] }
+futures = "0.3"
 
 # solana programs
 gateway = { path = "programs/gateway", package = "gmp-gateway" }

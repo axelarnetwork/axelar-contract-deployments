@@ -1,9 +1,11 @@
+pub(crate) mod cosmwasm;
 pub(crate) mod evm;
 pub(crate) mod solana;
 
 pub(crate) mod path {
     use std::path::{Path, PathBuf};
 
+    /// Return the [`PathBuf`] that points to the `[repo]/solana` folder
     pub(crate) fn workspace_root_dir() -> PathBuf {
         let dir = std::env::var("CARGO_MANIFEST_DIR")
             .unwrap_or_else(|_| env!("CARGO_MANIFEST_DIR").to_owned());

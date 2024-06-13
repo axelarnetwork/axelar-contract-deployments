@@ -17,10 +17,12 @@ pub(crate) mod cmd;
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 pub(crate) enum Cli {
+    /// Build, deploy, instantiate and interact with our Solana programs
     Solana {
         #[command(subcommand)]
         command: Solana,
     },
+    /// Delpoy, instantiate and operate with evm chains and our demo contracts
     Evm {
         /// The URL of the node to connect to
         #[arg(short, long)]
@@ -32,8 +34,18 @@ pub(crate) enum Cli {
         #[command(subcommand)]
         command: Evm,
     },
+    /// Work with cosmwasm contracts and the axelar chain
+    CosmWasm {
+        #[command(subcommand)]
+        command: Cosmwasm,
+    },
 }
 
+#[derive(Subcommand)]
+pub(crate) enum Cosmwasm {
+    /// Build all cosmwasm contracts so that they would be ready for deployment
+    Build,
+}
 /// The contracts are pre-built as ensured by the `evm-contracts-rs` crate in
 /// our workspace. On EVM we don't differentiate deployment fron initialization
 /// as we do on Solana.
@@ -182,6 +194,11 @@ impl Cli {
                     }
                 }
             }
+            Cli::CosmWasm { command } => match command {
+                Cosmwasm::Build => {
+                    cmd::cosmwasm::build().await?;
+                }
+            },
         };
         Ok(())
     }

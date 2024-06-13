@@ -16,7 +16,6 @@ unreachable_pub = "warn"
 unused_crate_dependencies = "warn"
 unused_must_use = "deny"
 
-
 [dependencies]
 anyhow.workspace = true
 clap = { version = "4.5.4", features = ["derive"] }
@@ -35,6 +34,11 @@ ethers.workspace = true
 evm-contracts-test-suite.workspace = true
 axelar-solana-memo-program.workspace = true
 solana-cli-config = "1.18.14"
+reqwest.workspace = true
+futures.workspace = true
+flate2 = "1.0"
+tar = "0.4"
+const_format = { version = "0.2", features = ["fmt"] }
 
 [dev-dependencies]
 solana-program.workspace = true
