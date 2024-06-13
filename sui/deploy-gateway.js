@@ -10,7 +10,8 @@ const {
 } = ethers;
 
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet, printWalletInfo } = require('./sign-utils');
+const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
+const { bytes32Struct, signersStruct } = require('./types-utils');
 const { getAmplifierSigners, loadSuiConfig } = require('./utils');
 
 async function getSigners(keypair, config, chain, options) {
@@ -71,21 +72,6 @@ async function processCommand(config, chain, options) {
         (change) => change.objectType === `${packageId}::discovery::RelayerDiscovery`,
     );
 
-    const signerStruct = bcs.struct('WeightedSigner', {
-        pubkey: bcs.vector(bcs.u8()),
-        weight: bcs.u128(),
-    });
-    const bytes32Struct = bcs.fixedArray(32, bcs.u8()).transform({
-        input: (id) => arrayify(id),
-        output: (id) => hexlify(id),
-    });
-
-    const signersStruct = bcs.struct('WeightedSigners', {
-        signers: bcs.vector(signerStruct),
-        threshold: bcs.u128(),
-        nonce: bytes32Struct,
-    });
-
     const encodedSigners = signersStruct
         .serialize({
             ...signers,
@@ -111,15 +97,7 @@ async function processCommand(config, chain, options) {
             tx.object('0x6'),
         ],
     });
-    const result = await client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
-        signer: keypair,
-        options: {
-            showEffects: true,
-            showObjectChanges: true,
-            showContent: true,
-        },
-    });
+    const result = await broadcast(client, keypair, tx);
 
     const gateway = result.objectChanges.find((change) => change.objectType === `${packageId}::gateway::Gateway`);
 
