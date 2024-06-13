@@ -1,5 +1,6 @@
 'use strict';
 
+const { verifyTransactionBlock } = require('@mysten/sui.js/verify');
 const { decodeSuiPrivateKey } = require('@mysten/sui.js/cryptography');
 const { Ed25519Keypair } = require('@mysten/sui.js/keypairs/ed25519');
 const { Secp256k1Keypair } = require('@mysten/sui.js/keypairs/secp256k1');
@@ -100,10 +101,42 @@ async function broadcast(client, keypair, tx) {
     });
 }
 
+async function signTransaction(chain, message, options) {
+    const [keypair, client] = getWallet(chain, options);
+    const serializedSignature = (await keypair.signTransactionBlock(message)).signature;
+    let publicKey;
+
+    try {
+        publicKey = await verifyTransactionBlock(message, serializedSignature);
+    } catch {
+        throw new Error(`Cannot verify message`);
+    }
+
+    if (publicKey.toSuiAddress() !== keypair.toSuiAddress()) {
+        throw new Error(`Verification failed for address ${keypair.toSuiAddress()}`);
+    }
+
+    if (!options.offline) {
+        const res = await client.executeTransactionBlock({
+            transactionBlock: message,
+            signature: serializedSignature,
+        });
+
+        printInfo('Transaction result', res);
+    }
+
+    return {
+        signature: serializedSignature,
+        message,
+        publicKey,
+    };
+}
+
 module.exports = {
     getWallet,
     printWalletInfo,
     generateKeypair,
     getRawPrivateKey,
     broadcast,
+    signTransaction,
 };
