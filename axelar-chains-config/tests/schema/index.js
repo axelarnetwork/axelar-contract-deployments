@@ -5,7 +5,8 @@ const axelarSchema = {
         id: { type: 'string' },
         axelarId: { type: 'string' },
         rpc: { type: 'string' },
-        lcd: { type: 'string' },
+        // Matches for "" "http://example.com:443" "https://example.com:443" "https://example.com" "http://example.com"
+        lcd: { type: 'string', pattern: '^$|^(https?:\\/\\/[^\\/\\:]+(:\\d+)?)$' },
         grpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
     },

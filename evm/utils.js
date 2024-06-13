@@ -661,17 +661,26 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     return { addresses, weights, threshold, keyID: evmAddresses.key_id };
 };
 
+const getContractConfig = async (config, chain) => {
+    const key = Buffer.from('config');
+    const client = await CosmWasmClient.connect(config.axelar.rpc);
+    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
+    return JSON.parse(Buffer.from(value).toString('ascii'));
+};
+
 const getAmplifierKeyAddresses = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'get_worker_set');
-    const signers = Object.values(workerSet.signers);
+    const verifierSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'get_verifier_set');
+    const signers = Object.values(verifierSet.signers);
 
-    const weightedAddresses = signers.map((signer) => ({
-        address: computeAddress(`0x${signer.pub_key.ecdsa}`),
-        weight: signer.weight,
-    }));
+    const weightedAddresses = signers
+        .map((signer) => ({
+            address: computeAddress(`0x${signer.pub_key.ecdsa}`),
+            weight: signer.weight,
+        }))
+        .sort((a, b) => a.address.localeCompare(b.address));
 
-    return { addresses: weightedAddresses, threshold: workerSet.threshold, created_at: workerSet.created_at };
+    return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at };
 };
 
 function sleep(ms) {
@@ -1187,6 +1196,45 @@ function timeout(prom, time, exception) {
     );
 }
 
+async function relayTransaction(options, chain, contract, method, params, nativeValue = 0, gasOptions = {}, expectedEvent = null) {
+    if (options.relayerAPI) {
+        const result = await httpPost(options.relayerAPI, {
+            chain: chain.axelarId,
+            to: contract.address,
+            calldata: contract.interface.encodeFunctionData(method, params),
+            value: nativeValue.toString(),
+        });
+
+        if (!result.error) {
+            printInfo('Relay ID', result.relayId);
+        } else {
+            throw new Error(`Relay Error: ${result.error}`);
+        }
+
+        return;
+    }
+
+    await timeout(
+        (async () => {
+            const tx = await contract[method](...params, gasOptions);
+            printInfo('Tx hash', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            if (expectedEvent) {
+                const eventEmitted = wasEventEmitted(receipt, contract, expectedEvent);
+
+                if (!eventEmitted) {
+                    printWarn('Event not emitted in receipt.');
+                }
+            }
+        })(),
+
+        chain.txTimeout || 60000,
+        new Error(`Timeout updating gas info for ${chain.name}`),
+    );
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -1247,4 +1295,7 @@ module.exports = {
     isValidChain,
     toBigNumberString,
     timeout,
+    getAmplifierKeyAddresses,
+    getContractConfig,
+    relayTransaction,
 };

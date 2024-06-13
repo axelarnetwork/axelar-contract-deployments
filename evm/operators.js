@@ -2,7 +2,6 @@
 
 const { ethers } = require('hardhat');
 const {
-    Wallet,
     getDefaultProvider,
     utils: { isAddress, Interface },
     Contract,
@@ -21,10 +20,10 @@ const {
     validateParameters,
     getContractJSON,
     printWarn,
-    timeout,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate } = require('./gas-service');
+const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTransaction } = require('./gas-service');
+const { getWallet } = require('./sign-utils');
 
 async function processCommand(config, chain, options) {
     const {
@@ -60,8 +59,8 @@ async function processCommand(config, chain, options) {
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    const wallet = new Wallet(privateKey, provider);
-    await printWalletInfo(wallet);
+    const wallet = await getWallet(privateKey, provider, options);
+    await printWalletInfo(wallet, options);
 
     printInfo('Contract name', contractName);
 
@@ -244,17 +243,14 @@ async function processCommand(config, chain, options) {
             const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
 
             try {
-                const tx = await timeout(
-                    operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions),
-                    chain.timeout || 60000,
-                    new Error(`Timeout updating gas info for ${chain.name}`),
-                );
-                printInfo('TX', tx.hash);
-
-                await timeout(
-                    tx.wait(chain.confirmations),
-                    chain.timeout || 60000,
-                    new Error(`Timeout updating gas info for ${chain.name}`),
+                await relayTransaction(
+                    options,
+                    chain,
+                    operatorsContract,
+                    'executeContract',
+                    [target, updateGasInfoCalldata, 0],
+                    0,
+                    gasOptions,
                 );
             } catch (error) {
                 for (let i = 0; i < chainsToUpdate.length; i++) {
@@ -297,10 +293,13 @@ if (require.main === module) {
             'updateGasInfo',
         ]),
     );
+    program.addOption(new Option('--offline', 'run script in offline mode'));
     program.addOption(new Option('--args <args>', 'operator action arguments'));
 
     // options for updateGasInfo
     program.addOption(new Option('--chains <chains...>', 'Chain names'));
+    program.addOption(new Option('--relayerAPI <relayerAPI>', 'Relay the tx through an external relayer API').env('RELAYER_API'));
+    program.addOption(new Option('--ignoreError', 'Ignore errors and proceed to next chain'));
 
     program.action((options) => {
         main(options);

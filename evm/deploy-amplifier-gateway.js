@@ -8,7 +8,7 @@ const {
     Contract,
     Wallet,
     BigNumber,
-    utils: { defaultAbiCoder, getContractAddress, keccak256 },
+    utils: { defaultAbiCoder, getContractAddress, keccak256, hexlify },
     constants: { HashZero },
     getDefaultProvider,
 } = ethers;
@@ -26,7 +26,11 @@ const {
     deployContract,
     getGasOptions,
     isValidAddress,
+    isKeccak256Hash,
+    getContractConfig,
+    isString,
 } = require('./utils');
+const { calculateDomainSeparator, isValidCosmosAddress } = require('../cosmwasm/utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
@@ -52,17 +56,54 @@ async function getWeightedSigners(config, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = getAmplifierKeyAddresses(config, chain.axelarId);
+        const addresses = await getAmplifierKeyAddresses(config, chain.axelarId);
         const nonce = ethers.utils.hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {
-            signers: addresses.addresses.map(({ address, weight }) => ({ signer: address, weight })),
+            signers: addresses.addresses.map(({ address, weight }) => ({ signer: address, weight: Number(weight) })),
             threshold: Number(addresses.threshold),
             nonce,
         };
     }
 
     return [signers];
+}
+
+async function getDomainSeparator(config, chain, options) {
+    printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
+
+    if (isKeccak256Hash(options.domainSeparator)) {
+        // return the domainSeparator for debug deployments
+        return options.domainSeparator;
+    }
+
+    const {
+        axelar: { contracts, chainId },
+    } = config;
+    const {
+        Router: { address: routerAddress },
+    } = contracts;
+
+    if (!isString(chain.axelarId)) {
+        throw new Error(`missing or invalid axelar ID for chain ${chain.name}`);
+    }
+
+    if (!isString(routerAddress) || !isValidCosmosAddress(routerAddress)) {
+        throw new Error(`missing or invalid router address`);
+    }
+
+    if (!isString(chainId)) {
+        throw new Error(`missing or invalid chain ID`);
+    }
+
+    const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
+    const expectedDomainSeparator = calculateDomainSeparator(chain.axelarId, routerAddress, chainId);
+
+    if (domainSeparator !== expectedDomainSeparator) {
+        throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
+    }
+
+    return domainSeparator;
 }
 
 async function getSetupParams(config, chain, operator, options) {
@@ -155,9 +196,9 @@ async function deploy(config, chain, options) {
     }
 
     contractConfig.deployer = wallet.address;
-    const domainSeparator = options.domainSeparator; // TODO: retrieve domain separator from amplifier / calculate the same way
-    const minimumRotationDelay = options.minimumRotationDelay;
-    const salt = options.salt || '';
+    const domainSeparator = await getDomainSeparator(config, chain, options);
+    const minimumRotationDelay = Number(options.minimumRotationDelay);
+    const salt = options.salt || 'AxelarAmplifierGateway';
 
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${options.previousSignersRetention}, ${domainSeparator}, ${minimumRotationDelay}`);
@@ -200,11 +241,14 @@ async function deploy(config, chain, options) {
 
         contractConfig.operator = operator;
 
+        const proxyDeploymentArgs = [implementation.address, owner, params];
+        contractConfig.proxyDeploymentArgs = proxyDeploymentArgs;
+
         const gatewayProxy = await deployContract(
             options.deployMethod,
             wallet,
             AxelarAmplifierGatewayProxy,
-            [implementation.address, owner, params],
+            proxyDeploymentArgs,
             { salt, deployerContract },
             gasOptions,
             {},
@@ -239,7 +283,7 @@ async function deploy(config, chain, options) {
         error = true;
     }
 
-    if (options.previousSignersRetention !== (await gateway.previousSignersRetention()).toNumber()) {
+    if (Number(options.previousSignersRetention) !== (await gateway.previousSignersRetention()).toNumber()) {
         printError('ERROR: Previous signer retention mismatch');
         error = true;
     }
@@ -422,7 +466,7 @@ async function programHandler() {
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('--previousSignersRetention <previousSignersRetention>', 'previous signer retention').default(15));
-    program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
+    program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator'));
     program.addOption(
         new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations').default(24 * 60 * 60),
     ); // 1 day
