@@ -5,12 +5,13 @@ const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexlify },
+    utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
     constants: { HashZero },
 } = ethers;
 
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet, printWalletInfo } = require('./sign-utils');
+const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
+const { bytes32Struct, signersStruct } = require('./types-utils');
 const { getAmplifierSigners, loadSuiConfig } = require('./utils');
 
 async function getSigners(keypair, config, chain, options) {
@@ -25,7 +26,7 @@ async function getSigners(keypair, config, chain, options) {
         return {
             signers: [{ pubkey, weight: 1 }],
             threshold: 1,
-            nonce: HashZero,
+            nonce: options.nonce ? keccak256(toUtf8Bytes(options.nonce)) : HashZero,
         };
     } else if (options.signers) {
         printInfo('Using provided signers', options.signers);
@@ -71,21 +72,6 @@ async function processCommand(config, chain, options) {
         (change) => change.objectType === `${packageId}::discovery::RelayerDiscovery`,
     );
 
-    const signerStruct = bcs.struct('WeightedSigner', {
-        pubkey: bcs.vector(bcs.u8()),
-        weight: bcs.u128(),
-    });
-    const bytes32Struct = bcs.fixedArray(32, bcs.u8()).transform({
-        input: (id) => arrayify(id),
-        output: (id) => hexlify(id),
-    });
-
-    const signersStruct = bcs.struct('WeightedSigners', {
-        signers: bcs.vector(signerStruct),
-        threshold: bcs.u128(),
-        nonce: bytes32Struct,
-    });
-
     const encodedSigners = signersStruct
         .serialize({
             ...signers,
@@ -111,15 +97,7 @@ async function processCommand(config, chain, options) {
             tx.object('0x6'),
         ],
     });
-    const result = await client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
-        signer: keypair,
-        options: {
-            showEffects: true,
-            showObjectChanges: true,
-            showContent: true,
-        },
-    });
+    const result = await broadcast(client, keypair, tx);
 
     const gateway = result.objectChanges.find((change) => change.objectType === `${packageId}::gateway::Gateway`);
 
@@ -151,12 +129,9 @@ if (require.main === module) {
 
     program.addOption(new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'));
     program.addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'));
-    program.addOption(
-        new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(
-            24 * 60 * 60 * 1000,
-        ),
-    ); // 1 day (in ms)
+    program.addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(0));
     program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
+    program.addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'));
 
     program.action((options) => {
         mainProcessor(options, processCommand);
@@ -164,3 +139,7 @@ if (require.main === module) {
 
     program.parse();
 }
+
+module.exports = {
+    getSigners,
+};

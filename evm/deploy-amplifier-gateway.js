@@ -241,11 +241,14 @@ async function deploy(config, chain, options) {
 
         contractConfig.operator = operator;
 
+        const proxyDeploymentArgs = [implementation.address, owner, params];
+        contractConfig.proxyDeploymentArgs = proxyDeploymentArgs;
+
         const gatewayProxy = await deployContract(
             options.deployMethod,
             wallet,
             AxelarAmplifierGatewayProxy,
-            [implementation.address, owner, params],
+            proxyDeploymentArgs,
             { salt, deployerContract },
             gasOptions,
             {},
