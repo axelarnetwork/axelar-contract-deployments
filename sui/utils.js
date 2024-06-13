@@ -7,7 +7,6 @@ const {
     utils: { arrayify, hexlify },
 } = ethers;
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-require('dotenv').config();
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
