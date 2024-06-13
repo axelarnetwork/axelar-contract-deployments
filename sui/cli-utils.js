@@ -41,6 +41,17 @@ const addBaseOptions = (program, options = {}) => {
     return program;
 };
 
+const addExtendedOptions = (program, options = {}) => {
+    addBaseOptions(program, options);
+
+    if (options.contractName) {
+        program.addOption(new Option('-c, --contractName <contractName>', 'contract name'));
+    }
+
+    return program;
+};
+
 module.exports = {
     addBaseOptions,
+    addExtendedOptions,
 };

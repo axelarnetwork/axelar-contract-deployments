@@ -1,16 +1,60 @@
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { Command, Option } = require('commander');
-const { loadConfig, printInfo, isKeccak256Hash, isString } = require('../evm/utils');
-const { addBaseOptions } = require('./cli-utils');
-const { getWallet } = require('./sign-utils');
+const { printInfo, validateParameters } = require('../evm/utils');
+const { addExtendedOptions } = require('./cli-utils');
+const { getWallet, printWalletInfo } = require('./sign-utils');
 const { loadSuiConfig } = require('./utils');
 
-async function transferCap(options) {
-    const config = loadSuiConfig(options.env);
-    const [keypair, client] = getWallet(config.sui, options);
-    const tx = new TransactionBlock();
+async function processCommand(chain, options) {
+    const [keypair, client] = getWallet(chain, options);
+    await printWalletInfo(keypair, client, chain, options);
+    const recipient = options.recipient;
+    validateParameters({
+        isKeccak256Hash: { recipient },
+    });
 
-    tx.transferObjects([`${options.objectId}`], tx.pure(options.recipient));
+    let objectId;
+
+    if (options.objectId) {
+        objectId = options.objectId;
+        validateParameters({
+            isKeccak256Hash: { objectId },
+        });
+    } else if (options.contractName && options.objectName) {
+        const { contractName, objectName } = options;
+
+        validateParameters({
+            isString: { contractName, objectName },
+        });
+        const contractsData = chain.contracts;
+
+        if (!contractsData) {
+            throw new Error(`contract data not found`);
+        }
+
+        const contractObject = contractsData[`${contractName}`];
+
+        if (!contractObject) {
+            throw new Error(`contract name [${contractName}] not found`);
+        }
+
+        const objectsData = contractObject.objects;
+
+        if (!objectsData) {
+            throw new Error(`contract objects not found`);
+        }
+
+        objectId = objectsData[`${objectName}`];
+
+        if (!objectId) {
+            throw new Error(`object name [${objectName}] not found`);
+        }
+    } else {
+        throw new Error('provide object id or contract name with object name');
+    }
+
+    const tx = new TransactionBlock();
+    tx.transferObjects([`${objectId}`], tx.pure(recipient));
 
     const result = await client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
@@ -21,39 +65,13 @@ async function transferCap(options) {
             showEvents: true,
         },
     });
+
     printInfo('Transaction result', JSON.stringify(result));
 }
 
-async function getConfigAndTransferObject(options) {
-    const objectId = loadConfig(options.env).sui.contracts[`${options.contractName}`].objects[`${options.objectName}`];
-    options.objectId = objectId;
-    await transferCap(options);
-}
-
-async function main(options) {
-    if (!isKeccak256Hash(options.recipient)) {
-        throw new Error(`Invalid recipient [${options.recipient}]`);
-    }
-
-    if (options.objectId) {
-        if (!isKeccak256Hash(options.objectId)) {
-            throw new Error(`Invalid object Id [${options.objectId}]`);
-        }
-
-        await transferCap(options);
-    } else if (options.contractName && options.objectName) {
-        if (!isString(options.contractName)) {
-            throw new Error(`Invalid contract name [${options.contractName}]`);
-        }
-
-        if (!isString(options.objectName)) {
-            throw new Error(`Invalid object name [${options.objectName}]`);
-        }
-
-        await getConfigAndTransferObject(options);
-    } else {
-        throw new Error('provide object id or contract name with object name');
-    }
+async function mainProcessor(options, processor) {
+    const config = loadSuiConfig(options.env);
+    await processor(config.sui, options);
 }
 
 if (require.main === module) {
@@ -61,16 +79,14 @@ if (require.main === module) {
 
     program.name('transfer-object').description('Transfer object to recipient address');
 
-    addBaseOptions(program);
-    program.addOption(new Option('--objectId <objectId>', 'object id to be transferred').env('SUI_OBJECT_ID'));
-    program.addOption(new Option('--contractName <contractName>', 'contract name').env('CONTRACT_NAME'));
-    program.addOption(new Option('--objectName <objectName>', 'object name to be transferred').env('SUI_OBJECT_NAME'));
-    program.addOption(
-        new Option('--recipient <recipientAddress>', 'recipient to transfer object to').makeOptionMandatory(true).env('RECIEPENT_ADDRESS'),
-    );
+    addExtendedOptions(program, { contractName: true });
+
+    program.addOption(new Option('--objectId <objectId>', 'object id to be transferred'));
+    program.addOption(new Option('--objectName <objectName>', 'object name to be transferred'));
+    program.addOption(new Option('--recipient <recipient>', 'recipient to transfer object to').makeOptionMandatory(true));
 
     program.action(async (options) => {
-        await main(options);
+        mainProcessor(options, processCommand);
     });
 
     program.parse();
