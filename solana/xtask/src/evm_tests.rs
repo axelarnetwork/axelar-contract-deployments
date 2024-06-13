@@ -4,7 +4,6 @@ use ethers::signers::Signer;
 use ethers::types::{Address, U256};
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo;
 use evm_contracts_test_suite::ContractMiddleware;
-use serial_test::serial;
 
 use crate::cli::Cli;
 

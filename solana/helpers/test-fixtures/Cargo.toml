@@ -27,13 +27,9 @@ axelar-message-primitives.workspace = true
 solana-program-test = { workspace = true }
 interchain-token-transfer-gmp = { workspace = true }
 
-token-manager = { workspace = true, features = ["no-entrypoint"] }
 spl-token = { workspace = true, features = ["no-entrypoint"] }
-interchain-token-service = { workspace = true, features = ["no-entrypoint"] }
 gas-service = { workspace = true, features = ["no-entrypoint"] }
 gateway = { workspace = true, features = ["no-entrypoint"] }
-account-group = { workspace = true, features = ["no-entrypoint"] }
-interchain-address-tracker = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
 bincode.workspace = true

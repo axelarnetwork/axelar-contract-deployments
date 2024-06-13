@@ -13,21 +13,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "account-group"
-version = "0.1.0"
-dependencies = [
- "borsh 1.5.1",
- "num-derive 0.4.2",
- "num-traits",
- "program-utils",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "test-fixtures",
- "thiserror",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3715,48 +3700,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0242819d153cba4b4b05a5a8f2a7e9bbf97b6055b2a002b395c96b5ff3c0222"
 dependencies = [
  "cfg-if 1.0.0",
-]
-
-[[package]]
-name = "interchain-address-tracker"
-version = "0.1.0"
-dependencies = [
- "borsh 1.5.1",
- "num-derive 0.4.2",
- "num-traits",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "thiserror",
-]
-
-[[package]]
-name = "interchain-token-service"
-version = "0.1.0"
-dependencies = [
- "account-group",
- "anyhow",
- "axelar-executable",
- "axelar-message-primitives",
- "base64 0.21.7",
- "borsh 1.5.1",
- "cosmwasm-std",
- "ethers-core",
- "gas-service",
- "gmp-gateway",
- "interchain-address-tracker",
- "interchain-token-transfer-gmp",
- "num-derive 0.4.2",
- "num-traits",
- "program-utils",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "spl-associated-token-account",
- "spl-token",
- "test-fixtures",
- "thiserror",
- "token-manager",
 ]
 
 [[package]]
@@ -9117,7 +9060,6 @@ dependencies = [
 name = "test-fixtures"
 version = "0.1.0"
 dependencies = [
- "account-group",
  "anyhow",
  "axelar-executable",
  "axelar-message-primitives",
@@ -9131,8 +9073,6 @@ dependencies = [
  "gas-service",
  "gmp-gateway",
  "hex",
- "interchain-address-tracker",
- "interchain-token-service",
  "interchain-token-transfer-gmp",
  "itertools 0.12.1",
  "libsecp256k1 0.7.1",
@@ -9144,7 +9084,6 @@ dependencies = [
  "solana-program-test",
  "solana-sdk",
  "spl-token",
- "token-manager",
  "tokio",
 ]
 
@@ -9287,25 +9226,6 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
-
-[[package]]
-name = "token-manager"
-version = "0.1.0"
-dependencies = [
- "account-group",
- "borsh 1.5.1",
- "gmp-gateway",
- "num-derive 0.4.2",
- "num-traits",
- "program-utils",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "spl-associated-token-account",
- "spl-token",
- "test-fixtures",
- "thiserror",
-]
 
 [[package]]
 name = "tokio"

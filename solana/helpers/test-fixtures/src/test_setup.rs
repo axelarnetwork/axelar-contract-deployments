@@ -1,23 +1,13 @@
 use std::ops::Add;
 
-use account_group::instruction::GroupId;
-use account_group::{get_permission_account, get_permission_group_account};
 use axelar_message_primitives::command::{DecodedCommand, U256 as GatewayU256};
-use axelar_message_primitives::{Address, DataPayload, EncodingScheme};
+use axelar_message_primitives::{Address, DataPayload};
 use borsh::BorshDeserialize;
 use gateway::axelar_auth_weighted::AxelarAuthWeighted;
 use gateway::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
-use interchain_address_tracker::{get_associated_chain_address, get_associated_trusted_address};
-use interchain_token_service::{
-    get_flow_limiters_permission_group_id, get_interchain_token_service_root_pda,
-    get_operators_permission_group_id,
-};
 use interchain_token_transfer_gmp::ethers_core::types::U256 as EthersU256;
-use interchain_token_transfer_gmp::ethers_core::utils::keccak256;
-use interchain_token_transfer_gmp::{Bytes32, DeployTokenManager};
 use itertools::{Either, Itertools};
 use multisig::worker_set::WorkerSet;
-use solana_program::clock::Clock;
 use solana_program::hash::Hash;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
@@ -36,12 +26,9 @@ use solana_sdk::signer::Signer;
 use solana_sdk::signers::Signers;
 use solana_sdk::transaction::Transaction;
 use spl_token::state::Mint;
-use token_manager::state::TokenManagerRootAccount;
-use token_manager::{get_token_manager_account, CalculatedEpoch, TokenManagerType};
 pub use {connection_router, interchain_token_transfer_gmp};
 
 use crate::account::CheckValidPDAInTests;
-use crate::axelar_message::custom_message;
 use crate::execute_data::{create_command_batch, sign_batch, TestSigner};
 
 pub struct TestFixture {
@@ -338,58 +325,6 @@ impl TestFixture {
         gateway_config_pda
     }
 
-    pub async fn init_its_root_pda(
-        &mut self,
-        gateway_root_pda: &Pubkey,
-        gas_service_root_pda: &Pubkey,
-    ) -> Pubkey {
-        let interchain_token_service_root_pda =
-            get_interchain_token_service_root_pda(gateway_root_pda, gas_service_root_pda);
-        let ix = interchain_token_service::instruction::build_initialize_instruction(
-            &self.payer.pubkey(),
-            &interchain_token_service_root_pda,
-            gateway_root_pda,
-            gas_service_root_pda,
-        )
-        .unwrap();
-        self.send_tx(&[ix]).await;
-        interchain_token_service_root_pda
-    }
-
-    pub async fn derive_token_manager_permission_groups(
-        &self,
-        token_id: &Bytes32,
-        interchain_token_service_root_pda: &Pubkey,
-        // In most cases this will be the same as `interchain_token_service_root_pda`
-        init_flow_limiter: &Pubkey,
-        init_operator: &Pubkey,
-    ) -> ITSTokenHandlerGroups {
-        let operator_group_id =
-            get_operators_permission_group_id(token_id, interchain_token_service_root_pda);
-        let operator_group_pda = get_permission_group_account(&operator_group_id);
-        let init_operator_pda_acc = get_permission_account(&operator_group_pda, init_operator);
-
-        let flow_group_id =
-            get_flow_limiters_permission_group_id(token_id, interchain_token_service_root_pda);
-        let flow_group_pda = get_permission_group_account(&flow_group_id);
-        let init_flow_pda_acc = get_permission_account(&flow_group_pda, init_flow_limiter);
-
-        ITSTokenHandlerGroups {
-            operator_group: PermissionGroup {
-                id: operator_group_id,
-                group_pda: operator_group_pda,
-                group_pda_user: init_operator_pda_acc,
-                group_pda_user_owner: *init_operator,
-            },
-            flow_limiter_group: PermissionGroup {
-                id: flow_group_id,
-                group_pda: flow_group_pda,
-                group_pda_user: init_flow_pda_acc,
-                group_pda_user_owner: *init_flow_limiter,
-            },
-        }
-    }
-
     pub async fn init_new_mint(&mut self, mint_authority: Pubkey) -> Pubkey {
         let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
         let mint_account = Keypair::new();
@@ -452,152 +387,6 @@ impl TestFixture {
             .process_transaction(transaction)
             .await
             .unwrap();
-    }
-
-    pub async fn init_new_token_manager(
-        &mut self,
-        interchain_token_service_root_pda: Pubkey,
-        gas_service_root_pda: Pubkey,
-        token_mint: Pubkey,
-        gateway_root_pda: Pubkey,
-        token_manager_type: TokenManagerType,
-        signers: Vec<TestSigner>,
-    ) -> (Pubkey, TokenManagerRootAccount, ITSTokenHandlerGroups) {
-        let token_id = Bytes32(keccak256("random-token-id"));
-        let init_operator = Pubkey::from([0; 32]);
-        let init_flow_limiter = Pubkey::from([0; 32]);
-
-        let its_token_manager_permission_groups = self
-            .derive_token_manager_permission_groups(
-                &token_id,
-                &interchain_token_service_root_pda,
-                &init_flow_limiter,
-                &init_operator,
-            )
-            .await;
-        let token_manager_root_pda_pubkey = get_token_manager_account(
-            &its_token_manager_permission_groups.operator_group.group_pda,
-            &its_token_manager_permission_groups
-                .flow_limiter_group
-                .group_pda,
-            &interchain_token_service_root_pda,
-        );
-        let message_payload = interchain_token_service::instruction::from_external_chains::build_deploy_token_manager_from_gmp_instruction(
-            &interchain_token_service_root_pda,
-            &gas_service_root_pda,
-            &self.payer.pubkey(),
-            &token_manager_root_pda_pubkey,
-                &its_token_manager_permission_groups.operator_group.group_pda,
-                &its_token_manager_permission_groups
-                    .operator_group
-                    .group_pda_user_owner,
-                &its_token_manager_permission_groups
-                    .flow_limiter_group
-                    .group_pda,
-                &its_token_manager_permission_groups
-                    .flow_limiter_group
-                    .group_pda_user_owner,
-            &token_mint,
-                DeployTokenManager {
-                    token_id: Bytes32(keccak256("random-token-id")),
-                    token_manager_type: EthersU256::from(token_manager_type as u8),
-                    params: vec![],
-                },
-                EncodingScheme::Borsh,
-            );
-        let message_to_execute =
-            custom_message(interchain_token_service::id(), message_payload.clone()).unwrap();
-        let (gateway_approved_message_pda, execute_data, _execute_data_pda) = self
-            .fully_approve_messages(
-                &gateway_root_pda,
-                &[message_to_execute.clone()],
-                signers.as_slice(),
-            )
-            .await;
-        let DecodedCommand::ApproveMessages(approved_command) =
-            execute_data.command_batch.commands[0].clone()
-        else {
-            panic!("no approved command")
-        };
-        let ix = axelar_executable::construct_axelar_executable_ix(
-            approved_command,
-            message_payload.encode().unwrap(),
-            gateway_approved_message_pda[0],
-            gateway_root_pda,
-        )
-        .unwrap();
-        self.send_tx(&[ix]).await;
-        let token_manager_data = self
-            .banks_client
-            .get_account(token_manager_root_pda_pubkey)
-            .await
-            .expect("get_account")
-            .expect("account not none");
-        let data = token_manager_data
-            .check_initialized_pda::<token_manager::state::TokenManagerRootAccount>(
-                &token_manager::ID,
-            )
-            .unwrap();
-        (
-            token_manager_root_pda_pubkey,
-            data,
-            its_token_manager_permission_groups,
-        )
-    }
-
-    /// Returns token manager root pda
-    pub async fn setup_token_manager(
-        &mut self,
-        token_manager_type: TokenManagerType,
-        groups: ITSTokenHandlerGroups,
-        flow_limit: u64,
-        gateway_root_config_pda: Pubkey,
-        token_mint: Pubkey,
-        its_pda: Pubkey,
-    ) -> Pubkey {
-        let token_manager_pda = token_manager::get_token_manager_account(
-            &groups.operator_group.group_pda,
-            &groups.flow_limiter_group.group_pda,
-            &its_pda,
-        );
-        let clock = self.banks_client.get_sysvar::<Clock>().await.unwrap();
-        let block_timestamp = clock.unix_timestamp;
-
-        let _token_flow_pda = token_manager::get_token_flow_account(
-            &token_manager_pda,
-            CalculatedEpoch::new_with_timestamp(block_timestamp as u64),
-        );
-
-        let ix = token_manager::instruction::build_setup_instruction(
-            &self.payer.pubkey(),
-            &token_manager_pda,
-            &groups.operator_group.group_pda,
-            &groups.operator_group.group_pda_user_owner,
-            &groups.flow_limiter_group.group_pda,
-            &groups.flow_limiter_group.group_pda_user_owner,
-            &its_pda,
-            &token_mint,
-            &gateway_root_config_pda,
-            token_manager::instruction::Setup {
-                flow_limit,
-                token_manager_type,
-            },
-        )
-        .unwrap();
-        self.send_tx(&[ix]).await;
-        token_manager_pda
-    }
-
-    pub async fn setup_permission_group(&mut self, group: &PermissionGroup) {
-        let ix = account_group::instruction::build_setup_permission_group_instruction(
-            &self.payer.pubkey(),
-            &group.group_pda,
-            &group.group_pda_user,
-            &group.group_pda_user_owner,
-            group.id.clone(),
-        )
-        .unwrap();
-        self.send_tx(&[ix]).await;
     }
 
     pub async fn init_execute_data(
@@ -722,80 +511,6 @@ impl TestFixture {
         .unwrap();
         let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(400_000u32);
         self.send_tx_with_metadata(&[bump_budget, ix]).await
-    }
-
-    pub async fn prepare_trusted_address_iatracker(
-        &mut self,
-        owner: Keypair,
-        trusted_chain_name: String,
-        trusted_chain_addr: String,
-    ) -> (Pubkey, String) {
-        let associated_chain_address = get_associated_chain_address(&owner.pubkey());
-
-        let recent_blockhash = self.refresh_blockhash().await;
-        let ix =
-            interchain_address_tracker::instruction::build_create_registered_chain_instruction(
-                &self.payer.pubkey(),
-                &associated_chain_address,
-                &owner.pubkey(),
-                trusted_chain_name.clone(),
-            )
-            .unwrap();
-        let transaction = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&self.payer.pubkey()),
-            &[&self.payer, &owner],
-            recent_blockhash,
-        );
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
-
-        let associated_trusted_address =
-            get_associated_trusted_address(&associated_chain_address, &trusted_chain_name);
-
-        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
-        let ix = interchain_address_tracker::instruction::build_set_trusted_address_instruction(
-            &self.payer.pubkey(),
-            &associated_chain_address,
-            &associated_trusted_address,
-            &owner.pubkey(),
-            trusted_chain_name,
-            trusted_chain_addr.clone(),
-        )
-        .unwrap();
-        let transaction = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&self.payer.pubkey()),
-            &[&self.payer, &owner],
-            recent_blockhash,
-        );
-
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
-
-        // Associated account now exists
-        let associated_account = self
-            .banks_client
-            .get_account(associated_trusted_address)
-            .await
-            .expect("get_account")
-            .expect("associated_account not none");
-        let account_info =
-            interchain_address_tracker::state::RegisteredTrustedAddressAccount::unpack_from_slice(
-                associated_account.data.as_slice(),
-            )
-            .unwrap();
-        assert_eq!(account_info.address, trusted_chain_addr);
-        associated_account.check_initialized_pda::<interchain_address_tracker::state::RegisteredTrustedAddressAccount>(
-            &interchain_address_tracker::id(),
-        )
-        .unwrap();
-
-        (associated_trusted_address, account_info.address)
     }
 
     /// Create a new execute data PDA, command PDAs, and call
@@ -976,20 +691,6 @@ pub fn prepare_execute_data(
         crate::execute_data::encode(&command_batch, signers.to_vec(), signatures, quorum).unwrap();
     let execute_data = GatewayExecuteData::new(encoded_message.as_ref(), gateway_root_pda).unwrap();
     (execute_data, encoded_message)
-}
-
-#[derive(Debug, Clone)]
-pub struct PermissionGroup {
-    pub id: GroupId,
-    pub group_pda: Pubkey,
-    pub group_pda_user: Pubkey,
-    pub group_pda_user_owner: Pubkey,
-}
-
-#[derive(Debug, Clone)]
-pub struct ITSTokenHandlerGroups {
-    pub operator_group: PermissionGroup,
-    pub flow_limiter_group: PermissionGroup,
 }
 
 pub async fn add_upgradeable_loader_account(

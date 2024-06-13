@@ -37,13 +37,8 @@ tokio = { version = "1", features = ["full"] }
 bincode = "1"
 
 # solana programs
-auth-weighted = { path = "programs/auth-weighted" }
-account-group = { path = "programs/account-group" }
 gateway = { path = "programs/gateway", package = "gmp-gateway" }
 gas-service = { path = "programs/gas-service" }
-token-manager = { path = "programs/token-manager" }
-interchain-token-service = { path = "programs/interchain-token-service" }
-interchain-address-tracker = { path = "programs/interchain-address-tracker" }
 axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program" }
 
 # helper crates
