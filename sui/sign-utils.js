@@ -117,12 +117,12 @@ async function signTransaction(chain, message, options) {
     }
 
     if (!options.offline) {
-        const res = await client.executeTransactionBlock({
+        const tx = await client.executeTransactionBlock({
             transactionBlock: message,
             signature: serializedSignature,
         });
 
-        printInfo('Transaction result', res);
+        printInfo('Transaction result', tx);
     }
 
     return {
