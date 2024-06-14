@@ -101,15 +101,22 @@ async function broadcast(client, keypair, tx) {
     });
 }
 
-async function signTransaction(chain, message, options) {
+async function signTransactionBlock(chain, txBlock, options, buildOptions = {}) {
     const [keypair, client] = getWallet(chain, options);
-    const serializedSignature = (await keypair.signTransactionBlock(message)).signature;
+    txBlock.setSenderIfNotSet(keypair.toSuiAddress());
+
+    if (!buildOptions.client) {
+        buildOptions.client = client;
+    }
+
+    const txBytes = await txBlock.build(buildOptions);
+    const serializedSignature = (await keypair.signTransactionBlock(txBytes)).signature;
     let publicKey;
 
     try {
-        publicKey = await verifyTransactionBlock(message, serializedSignature);
+        publicKey = await verifyTransactionBlock(txBytes, serializedSignature);
     } catch {
-        throw new Error(`Cannot verify message`);
+        throw new Error(`Cannot verify tx signature`);
     }
 
     if (publicKey.toSuiAddress() !== keypair.toSuiAddress()) {
@@ -117,17 +124,17 @@ async function signTransaction(chain, message, options) {
     }
 
     if (!options.offline) {
-        const tx = await client.executeTransactionBlock({
-            transactionBlock: message,
+        const txResult = await client.executeTransactionBlock({
+            transactionBlock: txBytes,
             signature: serializedSignature,
         });
 
-        printInfo('Transaction result', tx);
+        printInfo('Transaction result', JSON.stringify(txResult));
     }
 
     return {
         signature: serializedSignature,
-        message,
+        txBlock,
         publicKey,
     };
 }
