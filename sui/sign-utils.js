@@ -101,7 +101,9 @@ async function broadcast(client, keypair, tx) {
     });
 }
 
-async function signTransactionBlock(chain, txBlock, options, buildOptions = {}) {
+async function signTransactionBlock(chain, txDetails, options) {
+    const { txBlock, buildOptions = {} } = txDetails;
+
     const [keypair, client] = getWallet(chain, options);
     txBlock.setSenderIfNotSet(keypair.toSuiAddress());
     const txBytes = await txBlock.build(buildOptions);
