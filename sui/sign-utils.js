@@ -145,5 +145,5 @@ module.exports = {
     generateKeypair,
     getRawPrivateKey,
     broadcast,
-    signTransaction,
+    signTransactionBlock,
 };
