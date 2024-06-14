@@ -104,11 +104,6 @@ async function broadcast(client, keypair, tx) {
 async function signTransactionBlock(chain, txBlock, options, buildOptions = {}) {
     const [keypair, client] = getWallet(chain, options);
     txBlock.setSenderIfNotSet(keypair.toSuiAddress());
-
-    if (!buildOptions.client) {
-        buildOptions.client = client;
-    }
-
     const txBytes = await txBlock.build(buildOptions);
     const serializedSignature = (await keypair.signTransactionBlock(txBytes)).signature;
     let publicKey;
