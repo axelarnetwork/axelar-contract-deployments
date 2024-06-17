@@ -30,7 +30,8 @@
     "@cosmjs/cosmwasm-stargate": "^0.32.1",
     "@ledgerhq/hw-app-eth": "6.32.2",
     "@stellar/stellar-sdk": "^11.3.0",
-    "axios": "^1.6.2",
+    "axios": "^1.7.2",
+    "csv-parser": "^3.0.0",
     "path": "^0.12.7"
   },
   "devDependencies": {

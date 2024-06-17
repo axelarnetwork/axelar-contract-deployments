@@ -206,6 +206,12 @@ Verify TokenManagerProxy contract for ITS. `--tokenId` must be specified and `--
 node evm/verify-contract.js -e [env] -n [chain] -c TokenManagerProxy --dir /path/to/interchain-token-service --tokenId [tokenId]
 ```
 
+## Verify Token Ownership requests
+
+Download the pending requests spreadsheet into a csv format.
+
+`node evm/check-ownership-requests.js -f sheet_path.csv`
+
 #### Help
 
 To get details of options provided in the command run:
