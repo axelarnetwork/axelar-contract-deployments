@@ -11,10 +11,6 @@ const { uploadContract, instantiateContract, isValidCosmosAddress, calculateDoma
 
 const { Command, Option } = require('commander');
 
-const { ethers } = require('hardhat');
-const {
-    utils: { arrayify },
-} = ethers;
 
 const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
