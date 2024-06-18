@@ -10,7 +10,7 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'get_verifier_set');
+    const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'current_verifier_set');
     const signers = Object.values(workerSet.signers);
 
     const weightedSigners = signers
