@@ -11,7 +11,6 @@ const { uploadContract, instantiateContract, isValidCosmosAddress, calculateDoma
 
 const { Command, Option } = require('commander');
 
-
 const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
