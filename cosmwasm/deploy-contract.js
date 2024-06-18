@@ -272,7 +272,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,
         voting_verifier_address: verifierAddress,
-        domain_separator: separator.replace('0x',''),
+        domain_separator: separator.replace('0x', ''),
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainId,
