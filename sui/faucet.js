@@ -8,12 +8,11 @@ const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
 async function processCommand(config, chain, options) {
     const [keypair, client] = getWallet(chain, options);
-    const host = chain.rpc || getFaucetHost(chain.networkType);
 
     await printWalletInfo(keypair, client, chain, options);
 
     await requestSuiFromFaucetV0({
-        host,
+        host: getFaucetHost(chain.networkType),
         recipient: keypair.toSuiAddress(),
     });
 

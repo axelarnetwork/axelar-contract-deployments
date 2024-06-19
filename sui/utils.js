@@ -4,7 +4,7 @@ const { ethers } = require('hardhat');
 const { loadConfig } = require('../evm/utils');
 const {
     BigNumber,
-    utils: { arrayify },
+    utils: { arrayify, hexlify },
 } = ethers;
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
@@ -12,7 +12,7 @@ const SUI_COIN_ID = '0x2::sui::SUI';
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'get_worker_set');
+    const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'current_verifier_set');
     const signers = Object.values(workerSet.signers);
 
     const weightedSigners = signers
@@ -20,7 +20,7 @@ const getAmplifierSigners = async (config, chain) => {
             pubkey: arrayify(`0x${signer.pub_key.ecdsa}`),
             weight: Number(signer.weight),
         }))
-        .sort((a, b) => a.pubkey.localeCompare(b.pubkey));
+        .sort((a, b) => hexlify(a.pubkey).localeCompare(hexlify(b.pubkey)));
 
     return {
         signers: weightedSigners,
