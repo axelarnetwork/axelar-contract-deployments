@@ -1,0 +1,16 @@
+[package]
+name = "axelar-rkyv-encoding"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bnum.workspace = true
+ed25519-dalek.workspace = true
+k256.workspace = true
+rkyv.workspace = true
+sha3.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+rand = "0.8.5"
+ed25519-dalek = { workspace = true, features = ["rand_core", "digest"] }

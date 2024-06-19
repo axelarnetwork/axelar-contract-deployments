@@ -1,5 +1,7 @@
-use hasher::PayloadHasher;
-use types::{EncodingError, Payload, WeightedSignature, WorkerSet};
+use hasher::Hasher;
+use rkyv::ser::serializers::AllocSerializer;
+use rkyv::Fallible;
+use types::{Payload, VerifierSet, WeightedSignature};
 use visitor::Visitor;
 
 use crate::types::{ExecuteData, Proof};
@@ -12,12 +14,12 @@ mod visitor;
 /// Encodes the execute_data components using N bytes as scratch space allocated
 /// on the heap.
 pub fn encode<const N: usize>(
-    worker_set: &WorkerSet,
+    verifier_set: &VerifierSet,
     signatures: Vec<WeightedSignature>,
     payload: Payload,
 ) -> Result<Vec<u8>, EncodingError<N>> {
-    let threshold = worker_set.threshold;
-    let nonce = worker_set.created_at;
+    let threshold = verifier_set.threshold;
+    let nonce = verifier_set.created_at;
     let proof = Proof::new(signatures, threshold, nonce);
     let execute_data = ExecuteData::new(payload, proof);
     let archived = rkyv::to_bytes::<_, N>(&execute_data).map_err(EncodingError::Serialize)?;
@@ -26,12 +28,18 @@ pub fn encode<const N: usize>(
 
 pub fn hash_payload(
     domain_separator: &[u8; 32],
-    signer: &WorkerSet,
+    signer: &VerifierSet,
     payload: &Payload,
 ) -> [u8; 32] {
-    let mut hasher = PayloadHasher::default();
+    let mut hasher = Hasher::default();
     hasher.visit_bytes(domain_separator);
-    hasher.visit_worker_set(signer);
+    hasher.visit_verifier_set(signer);
     hasher.visit_payload(payload);
     hasher.finalize()
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum EncodingError<const N: usize> {
+    #[error("Serialization error")]
+    Serialize(#[source] <AllocSerializer<N> as Fallible>::Error),
 }

@@ -1,5 +1,5 @@
 [workspace]
-members = ["programs/*", "helpers/*", "xtask", "crates/axelar-encoding"]
+members = ["programs/*", "helpers/*", "xtask", "crates/*"]
 resolver = "2"
 
 [workspace.dependencies]
@@ -15,6 +15,7 @@ ethers = "2"
 ethers-core = "2"
 hex = "0.4"
 itertools = "0.12.0"
+ed25519-dalek = "2"
 k256 = { version = "0.13.3", features = ["ecdsa"] }
 libsecp256k1 = "0.7.0"
 num-derive = "0.4"
@@ -51,6 +52,7 @@ axelar-executable = { path = "helpers/axelar-executable" }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
 evm-contracts-rs = { path = "helpers/evm-contracts-rs" }
 evm-contracts-test-suite = { path = "helpers/evm-contracts-test-suite" }
+axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding" }
 
 
 [workspace.dependencies.multisig]
