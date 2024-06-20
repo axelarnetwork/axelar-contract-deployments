@@ -206,6 +206,12 @@ Verify TokenManagerProxy contract for ITS. `--tokenId` must be specified and `--
 node evm/verify-contract.js -e [env] -n [chain] -c TokenManagerProxy --dir /path/to/interchain-token-service --tokenId [tokenId]
 ```
 
+Verify AxelarAmplifierGateway contract. `--address` can be optionally specified (otherwise will default to the value from config).
+
+```bash
+node evm/verify-contract.js -e [env] -n [chain] -c AxelarAmplifierGateway --dir /path/to/axelar-gmp-sdk-solidity
+```
+
 #### Help
 
 To get details of options provided in the command run:

@@ -33,26 +33,22 @@ async function processCommand(config, chain, options) {
     printInfo('Contract address', options.address || chain.contracts[contractName]?.address);
 
     const contractConfig = chain.contracts[contractName];
+    const contractJson = getContractJSON(contractName);
+    let contract;
+    const contractFactory = await getContractFactoryFromArtifact(contractJson, wallet);
+    const excludedContracts = ['InterchainProposalSender', 'BurnableMintableCappedERC20', 'TokenManagerProxy', 'AxelarAmplifierGateway'];
+
+    if (!excludedContracts.includes(contractName)) {
+        contract = contractFactory.attach(options.address || contractConfig.address);
+    }
 
     switch (contractName) {
         case 'Create3Deployer': {
-            const Create3Deployer = getContractJSON('Create3Deployer');
-
-            const contractFactory = await getContractAt(Create3Deployer.abi, wallet);
-
-            const contract = contractFactory.attach(options.address || chain.contracts.Create3Deployer.address);
-
             await verifyContract(env, chain.name, contract.address, [], verifyOptions);
             break;
         }
 
         case 'InterchainGovernance': {
-            const InterchainGovernance = getContractJSON('InterchainGovernance');
-
-            const contractFactory = await getContractAt(InterchainGovernance.abi, wallet);
-
-            const contract = contractFactory.attach(options.address || chain.contracts.InterchainGovernance.address);
-
             await verifyContract(
                 env,
                 chain.name,
@@ -69,12 +65,6 @@ async function processCommand(config, chain, options) {
         }
 
         case 'Multisig': {
-            const Multisig = getContractJSON('Multisig');
-
-            const contractFactory = await getContractAt(Multisig.abi, wallet);
-
-            const contract = contractFactory.attach(options.address || chain.contracts.Multisig.address);
-
             await verifyContract(env, chain.name, contract.address, [contractConfig.signers, contractConfig.threshold], verifyOptions);
             break;
         }
@@ -91,12 +81,6 @@ async function processCommand(config, chain, options) {
         }
 
         case 'ConstAddressDeployer': {
-            const ConstAddressDeployer = getContractJSON('ConstAddressDeployer');
-
-            const contractFactory = await getContractAt(ConstAddressDeployer.abi, wallet);
-
-            const contract = contractFactory.attach(options.address || chain.contracts.ConstAddressDeployer.address);
-
             await verifyContract(env, chain.name, contract.address, [], verifyOptions);
             break;
         }
@@ -106,32 +90,21 @@ async function processCommand(config, chain, options) {
 
             const contractFactory = await getContractAt(CreateDeployer.abi, wallet);
 
-            const contract = contractFactory.attach(options.address || chain.contracts.CreateDeployer.address);
+            const contract = contractFactory.attach(options.address || contractConfig.address);
 
             await verifyContract(env, chain.name, contract.address, [], verifyOptions);
             break;
         }
 
         case 'Operators': {
-            const Operators = getContractJSON('Operators');
-
-            const contractFactory = await getContractAt(Operators.abi, wallet);
-
-            const contract = contractFactory.attach(options.address || chain.contracts.Operators.address);
-
-            await verifyContract(env, chain.name, contract.address, [chain.contracts.Operators.owner], verifyOptions);
+            await verifyContract(env, chain.name, contract.address, [contractConfig.owner], verifyOptions);
             break;
         }
 
         case 'AxelarGateway': {
-            const AxelarGateway = getContractJSON('AxelarGateway');
-            const gatewayFactory = await getContractFactoryFromArtifact(AxelarGateway, wallet);
-            const gateway = gatewayFactory.attach(options.address || chain.contracts.AxelarGateway.address);
-
-            const implementation = await gateway.implementation();
-
-            const auth = await gateway.authModule();
-            const tokenDeployer = await gateway.tokenDeployer();
+            const implementation = await contract.implementation();
+            const auth = await contract.authModule();
+            const tokenDeployer = await contract.tokenDeployer();
 
             const { addresses, weights, threshold } = await getEVMAddresses(config, chain.axelarId, {
                 keyID: chain.contracts.AxelarGateway.startingKeyIDs[0] || options.args || `evm-${chain.axelarId.toLowerCase()}-genesis`,
@@ -145,82 +118,65 @@ async function processCommand(config, chain, options) {
             await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
             await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
             await verifyContract(env, chain.name, implementation, [auth, tokenDeployer], verifyOptions);
-            await verifyContract(env, chain.name, gateway.address, [implementation, setupParams], verifyOptions);
+            await verifyContract(env, chain.name, contract.address, [implementation, setupParams], verifyOptions);
 
             break;
         }
 
         case 'AxelarGasService': {
-            const AxelarGasService = getContractJSON('AxelarGasService');
-            const gasServiceFactory = await getContractFactoryFromArtifact(AxelarGasService, wallet);
-            const contractConfig = chain.contracts[contractName];
-            const gasService = gasServiceFactory.attach(options.address || contractConfig.address);
+            const implementation = await contract.implementation();
 
-            const implementation = await gasService.implementation();
             await verifyContract(env, chain.name, implementation, [contractConfig.collector], verifyOptions);
-            await verifyContract(env, chain.name, gasService.address, [], verifyOptions);
+            await verifyContract(env, chain.name, contract.address, [], verifyOptions);
             break;
         }
 
         case 'AxelarDepositService': {
-            const AxelarDepositService = getContractJSON('AxelarDepositService');
-            const depositServiceFactory = await getContractFactoryFromArtifact(AxelarDepositService, wallet);
-            const contractConfig = chain.contracts[contractName];
-            const gasService = depositServiceFactory.attach(options.address || contractConfig.address);
+            const implementation = await contract.implementation();
 
-            const implementation = await gasService.implementation();
             await verifyContract(env, chain.name, implementation, [
                 chain.contracts.AxelarGateway.address,
                 contractConfig.wrappedSymbol,
                 contractConfig.refundIssuer,
             ]);
-            await verifyContract(env, chain.name, gasService.address, [], verifyOptions);
+            await verifyContract(env, chain.name, contract.address, [], verifyOptions);
             break;
         }
 
         case 'BurnableMintableCappedERC20': {
-            const BurnableMintableCappedERC20 = getContractJSON('BurnableMintableCappedERC20');
-            const token = await getContractFactoryFromArtifact(BurnableMintableCappedERC20, wallet);
             const symbol = options.args;
 
-            console.log(`Verifying ${symbol}...`);
+            printInfo(`Verifying ${symbol}...`);
 
             const AxelarGateway = getContractJSON('AxelarGateway');
             const gatewayFactory = await getContractFactoryFromArtifact(AxelarGateway, wallet);
             const gateway = gatewayFactory.attach(chain.contracts.AxelarGateway.address);
 
             const tokenAddress = await gateway.tokenAddresses(symbol);
-            const tokenContract = token.attach(options.address || tokenAddress);
+            const tokenContract = contractFactory.attach(options.address || tokenAddress);
             const name = await tokenContract.name();
             const decimals = await tokenContract.decimals();
             const cap = await tokenContract.cap();
 
-            console.log(defaultAbiCoder.encode(['string', 'string', 'uint8', 'uint256'], [name, symbol, decimals, cap]));
+            printInfo(defaultAbiCoder.encode(['string', 'string', 'uint8', 'uint256'], [name, symbol, decimals, cap]));
 
-            console.log(`Verifying ${name} (${symbol}) decimals ${decimals} on ${chain.name}...`);
+            printInfo(`Verifying ${name} (${symbol}) decimals ${decimals} on ${chain.name}...`);
 
             await verifyContract(env, chain.name, tokenContract.address, [name, symbol, decimals, cap], verifyOptions);
             break;
         }
 
         case 'InterchainTokenService': {
-            const InterchainTokenService = getContractJSON('InterchainTokenService');
-            const interchainTokenServiceFactory = await getContractFactoryFromArtifact(InterchainTokenService, wallet);
-            const interchainTokenService = interchainTokenServiceFactory.attach(
-                options.address || chain.contracts.InterchainTokenService.address,
-            );
-            const contractConfig = chain.contracts[contractName];
-
-            const implementation = await interchainTokenService.implementation();
-            const tokenManagerDeployer = await interchainTokenService.tokenManagerDeployer();
-            const interchainTokenDeployer = await interchainTokenService.interchainTokenDeployer();
+            const implementation = await contract.implementation();
+            const tokenManagerDeployer = await contract.tokenManagerDeployer();
+            const interchainTokenDeployer = await contract.interchainTokenDeployer();
             const interchainTokenDeployerContract = new Contract(
                 interchainTokenDeployer,
                 getContractJSON('InterchainTokenDeployer').abi,
                 wallet,
             );
             const interchainToken = await interchainTokenDeployerContract.implementationAddress();
-            const interchainTokenFactory = await interchainTokenService.interchainTokenFactory();
+            const interchainTokenFactory = await contract.interchainTokenFactory();
             const interchainTokenFactoryContract = new Contract(
                 interchainTokenFactory,
                 getContractJSON('InterchainTokenFactory').abi,
@@ -228,10 +184,10 @@ async function processCommand(config, chain, options) {
             );
             const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
 
-            const tokenManager = await interchainTokenService.tokenManager();
-            const tokenHandler = await interchainTokenService.tokenHandler();
+            const tokenManager = await contract.tokenManager();
+            const tokenHandler = await contract.tokenHandler();
 
-            const [trustedChains, trustedAddresses] = await getTrustedChainsAndAddresses(config, interchainTokenService);
+            const [trustedChains, trustedAddresses] = await getTrustedChainsAndAddresses(config, contract);
 
             const setupParams = defaultAbiCoder.encode(
                 ['address', 'string', 'string[]', 'string[]'],
@@ -239,9 +195,9 @@ async function processCommand(config, chain, options) {
             );
 
             await verifyContract(env, chain.name, tokenManagerDeployer, [], verifyOptions);
-            await verifyContract(env, chain.name, interchainToken, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, interchainToken, [contract.address], verifyOptions);
             await verifyContract(env, chain.name, interchainTokenDeployer, [interchainToken], verifyOptions);
-            await verifyContract(env, chain.name, tokenManager, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, tokenManager, [contract.address], verifyOptions);
             await verifyContract(env, chain.name, tokenHandler, [], verifyOptions);
             await verifyContract(
                 env,
@@ -259,11 +215,11 @@ async function processCommand(config, chain, options) {
                 ],
                 verifyOptions,
             );
-            await verifyContract(env, chain.name, interchainTokenFactoryImplementation, [interchainTokenService.address], verifyOptions);
+            await verifyContract(env, chain.name, interchainTokenFactoryImplementation, [contract.address], verifyOptions);
             await verifyContract(
                 env,
                 chain.name,
-                interchainTokenService.address,
+                contract.address,
                 [implementation, chain.contracts.InterchainTokenService.deployer, setupParams],
                 {
                     ...verifyOptions,
@@ -298,10 +254,7 @@ async function processCommand(config, chain, options) {
             );
 
             const tokenManagerAddress = await interchainTokenService.tokenManagerAddress(tokenId);
-
-            const TokenManagerProxy = getContractJSON('TokenManagerProxy');
-            const tokenManagerProxyFactory = await getContractFactoryFromArtifact(TokenManagerProxy, wallet);
-            const tokenManagerProxy = tokenManagerProxyFactory.attach(tokenManagerAddress);
+            const tokenManagerProxy = contractFactory.attach(tokenManagerAddress);
 
             const [implementationType, tokenAddress] = await tokenManagerProxy.getImplementationTypeAndTokenAddress();
             const params = defaultAbiCoder.encode(['bytes', 'address'], [minter, tokenAddress]);
@@ -321,17 +274,14 @@ async function processCommand(config, chain, options) {
         }
 
         case 'AxelarAmplifierGateway': {
-            const AxelarAmplifierGateway = getContractJSON('AxelarAmplifierGateway');
-            const amplifierGatewayFactory = await getContractFactoryFromArtifact(AxelarAmplifierGateway, wallet);
             const contractConfig = chain.contracts.AxelarGateway;
-            const amplifierGateway = amplifierGatewayFactory.attach(options.address || contractConfig.address);
+            const amplifierGateway = contractFactory.attach(options.address || contractConfig.address);
 
             const implementation = await amplifierGateway.implementation();
             const previousSignersRetention = (await amplifierGateway.previousSignersRetention()).toNumber();
             const domainSeparator = await amplifierGateway.domainSeparator();
             const minimumRotationDelay = (await amplifierGateway.minimumRotationDelay()).toNumber();
 
-            verifyOptions.contractPath = 'contracts/gateway/AxelarAmplifierGateway.sol:AxelarAmplifierGateway';
             await verifyContract(
                 env,
                 chain.name,
@@ -340,7 +290,6 @@ async function processCommand(config, chain, options) {
                 verifyOptions,
             );
 
-            verifyOptions.contractPath = 'contracts/gateway/AxelarAmplifierGatewayProxy.sol:AxelarAmplifierGatewayProxy';
             await verifyContract(env, chain.name, amplifierGateway.address, contractConfig.proxyDeploymentArgs, verifyOptions);
 
             break;

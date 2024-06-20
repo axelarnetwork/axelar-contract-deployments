@@ -1240,8 +1240,6 @@ async function relayTransaction(options, chain, contract, method, params, native
 }
 
 async function getWeightedSigners(config, chain, options) {
-    printInfo(`Retrieving verifier addresses for ${chain.name} from Axelar network`);
-
     let signers;
 
     if (isValidAddress(options.keyID)) {
