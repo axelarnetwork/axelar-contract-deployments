@@ -42,6 +42,7 @@ async function getWeightedSigners(config, chain, options) {
     printInfo(`Retrieving verifier addresses for ${chain.name} from Axelar network`);
 
     let signers;
+    let verifierSetId;
 
     if (isValidAddress(options.keyID)) {
         // set the keyID as the signer for debug deployments
@@ -64,9 +65,11 @@ async function getWeightedSigners(config, chain, options) {
             threshold: Number(addresses.threshold),
             nonce,
         };
+
+        verifierSetId = addresses.verifierSetId;
     }
 
-    return [signers];
+    return { signers: [signers], verifierSetId };
 }
 
 async function getDomainSeparator(config, chain, options) {
@@ -107,9 +110,9 @@ async function getDomainSeparator(config, chain, options) {
 }
 
 async function getSetupParams(config, chain, operator, options) {
-    const signerSets = await getWeightedSigners(config, chain, options);
+    const { signers: signerSets, verifierSetId } = await getWeightedSigners(config, chain, options);
     printInfo('Setup params', JSON.stringify([operator, signerSets], null, 2));
-    return defaultAbiCoder.encode([`address`, `${WEIGHTED_SIGNERS_TYPE}[]`], [operator, signerSets]);
+    return { params: defaultAbiCoder.encode([`address`, `${WEIGHTED_SIGNERS_TYPE}[]`], [operator, signerSets]), verifierSetId };
 }
 
 async function deploy(config, chain, options) {
@@ -234,7 +237,7 @@ async function deploy(config, chain, options) {
         gateway = gatewayFactory.attach(proxyAddress);
     } else if (!reuseProxy) {
         const operator = options.operator || contractConfig.operator || wallet.address;
-        const params = await getSetupParams(config, chain, operator, options);
+        const { params, verifierSetId } = await getSetupParams(config, chain, operator, options);
 
         printInfo('Deploying gateway proxy contract');
         printInfo('Proxy deployment args', `${implementation.address}, ${params}`);
@@ -243,6 +246,7 @@ async function deploy(config, chain, options) {
 
         const proxyDeploymentArgs = [implementation.address, owner, params];
         contractConfig.proxyDeploymentArgs = proxyDeploymentArgs;
+        contractConfig.initialVerifierSetId = verifierSetId;
 
         const gatewayProxy = await deployContract(
             options.deployMethod,
@@ -304,7 +308,7 @@ async function deploy(config, chain, options) {
     }
 
     if (!reuseProxy) {
-        const signerSets = await getWeightedSigners(config, chain, options);
+        const { signers: signerSets } = await getWeightedSigners(config, chain, options);
 
         for (let i = 0; i < signerSets.length; i++) {
             const signerHash = keccak256(encodeWeightedSigners(signerSets[i]));
