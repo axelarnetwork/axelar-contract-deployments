@@ -107,9 +107,9 @@ async function broadcast(client, keypair, tx) {
     });
 }
 
-async function broadcastSignature(client, bytes, signature) {
+async function broadcastSignature(client, txBytes, signature) {
     return await client.executeTransactionBlock({
-        transactionBlock: bytes,
+        transactionBlock: txBytes,
         signature,
         options: {
             showEffects: true,
@@ -135,16 +135,14 @@ async function signTransactionBlockBytes(keypair, client, txBytes, options) {
 
     if (!options.offline) {
         const txResult = await broadcastSignature(client, txBytes, serializedSignature);
-
         printInfo('Transaction result', JSON.stringify(txResult));
+    } else {
+        const hexPublicKey = hexlify(publicKey.toRawBytes());
+        return {
+            signature: serializedSignature,
+            publicKey: hexPublicKey,
+        };
     }
-
-    const hexPublicKey = hexlify(publicKey.toRawBytes());
-
-    return {
-        signature: serializedSignature,
-        publicKey: hexPublicKey,
-    };
 }
 
 async function signTransactionBlock(chain, txDetails, options) {
@@ -161,34 +159,26 @@ async function signTransactionBlock(chain, txDetails, options) {
 }
 
 async function getWrappedPublicKey(hexPublicKey, schemeType) {
-    let publicKey;
-
     switch (schemeType) {
         case 'ed25519': {
-            publicKey = new Ed25519PublicKey(fromHEX(hexPublicKey));
-            break;
+            return new Ed25519PublicKey(fromHEX(hexPublicKey));
         }
 
         case 'secp256k1': {
-            publicKey = new Secp256k1PublicKey(fromHEX(hexPublicKey));
-            break;
+            return new Secp256k1PublicKey(fromHEX(hexPublicKey));
         }
 
         case 'secp256r1': {
-            publicKey = new Secp256r1PublicKey(fromHEX(hexPublicKey));
-            break;
+            return new Secp256r1PublicKey(fromHEX(hexPublicKey));
         }
 
         default: {
             throw new Error(`Unsupported signature scheme: ${schemeType}`);
         }
     }
-
-    return publicKey;
 }
 
 async function getMultisig(config, multisigKey) {
-    const publicKeys = [];
     let multiSigPublicKey;
 
     if (multisigKey) {
@@ -200,13 +190,19 @@ async function getMultisig(config, multisigKey) {
             throw new Error('Signers not provided in configuration');
         }
 
+        const publicKeys = [];
+
         for (const signer of signers) {
             if (!signer?.publicKey) {
                 throw new Error('PublicKey not found');
             }
 
             if (!signer?.schemeType) {
-                throw new Error('schemeType not found');
+                throw new Error('SchemeType not found');
+            }
+
+            if (!signer?.weight) {
+                throw new Error('Weight not found');
             }
 
             publicKeys.push({
