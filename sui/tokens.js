@@ -72,9 +72,16 @@ class CoinManager {
 
         const splitAmount = parseUnits(args.splitAmount, metadata.decimals).toBigInt();
 
-        const coins = coinTypeToCoins[coinType];
-        const firstObjectId = isGasToken(coinType) ? tx.gas : coins.data[0].coinObjectId;
-        const [coin] = tx.splitCoins(firstObjectId, [splitAmount]);
+        const objectToSplit = isGasToken(coinType)
+            ? tx.gas
+            : coinTypeToCoins[coinType].data.find((coinObject) => BigInt(coinObject.balance) >= splitAmount)?.coinObjectId;
+
+        if (!objectToSplit) {
+            printError('No coin object found with enough balance to split');
+            process.exit(0);
+        }
+
+        const [coin] = tx.splitCoins(objectToSplit, [splitAmount]);
 
         printInfo('Split Coins', coinType);
         printInfo('Split Amount', `${splitAmount} (${formatUnits(splitAmount, metadata.decimals).toString()})`);
