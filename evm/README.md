@@ -208,6 +208,11 @@ node evm/verify-contract.js -e [env] -n [chain] -c TokenManagerProxy --dir /path
 
 Verify AxelarAmplifierGateway contract. `--address` can be optionally specified (otherwise will default to the value from config).
 
+1. First clone the `axelar-gmp-sdk-solidity` repo: `git clone git@github.com:axelarnetwork/axelar-gmp-sdk-solidity.git`
+2. Checkout the branch or commit from where the contract was deployed: `git checkout <branch_name>`
+3. Run `npm ci && npm run build`
+4. Create a keys.json file in root of the folder and add in it: `{"chains": {"<chain_name>>": {"api": "API_KEY"}}}`
+
 ```bash
 node evm/verify-contract.js -e [env] -n [chain] -c AxelarAmplifierGateway --dir /path/to/axelar-gmp-sdk-solidity
 ```
