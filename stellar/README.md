@@ -65,8 +65,10 @@ node stellar/deploy-contract.js --contractName axelar_gateway --wasmPath ../axel
 
 Initialize the auth contract. TODO: run initialize during the first step itself once initialize works correctly.
 ```bash
-node stellar/deploy-contract.js --contractName axelar_auth_verifiers --wasmPath ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_auth_verifier.optimized.wasm --initialize --address [auth contract address]
+node stellar/deploy-contract.js --contractName axelar_auth_verifiers --wasmPath ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_auth_verifier.optimized.wasm --initialize --address [auth contract address] --estimateCost
 ```
+
+`-estimateCost` will show the gas costs for the initialize transaction.
 
 ### Operators
 
