@@ -74,6 +74,14 @@ node stellar/deploy-contract.js --contractName axelar_auth_verifiers --wasmPath 
 node stellar/deploy-contract.js --contractName axelar_operators --wasmPath ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm --initialize
 ```
 
+## Generate bindings
+
+Generate TypeScript bindings for the contract
+
+```bash
+node stellar/generate-bindings.js --wasmPath /path/to/optimized.wasm --contractId [contract address] --outputDir ./stellar/bindings/[contract name]
+```
+
 ## Contract Interaction
 
 Soroban contracts can be interacted directly via the CLI as well. See the help text for individual contract cmds as follows.
