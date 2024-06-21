@@ -55,7 +55,7 @@ pub(crate) fn deploy(
     keypair_path: &Option<PathBuf>,
     url: &Option<Url>,
     ws_url: &Option<Url>,
-) -> anyhow::Result<()> {
+) -> eyre::Result<()> {
     crate::cli::cmd::path::ensure_optional_path_exists(keypair_path.as_ref(), "keypair")?;
 
     info!("Starting compiling {}", contract);
@@ -72,7 +72,7 @@ pub(crate) async fn init_gmp_gateway(
     auth_weighted: &PathBuf,
     rpc_url: &Option<Url>,
     payer_kp_path: &Option<PathBuf>,
-) -> anyhow::Result<()> {
+) -> eyre::Result<()> {
     let payer_kp = defaults::payer_kp_with_fallback_in_sol_cli_config(payer_kp_path)?;
 
     let (gateway_config_pda, bump) = GatewayConfig::pda();
@@ -160,7 +160,7 @@ mod serde_utils {
     }
 }
 
-pub(crate) fn build_contract(contract: SolanaContract) -> anyhow::Result<PathBuf> {
+pub(crate) fn build_contract(contract: SolanaContract) -> eyre::Result<PathBuf> {
     let contract_dir = path::contracts_dir().join(contract.dir());
     let sh = Shell::new()?;
     sh.change_dir(contract_dir);
@@ -174,7 +174,7 @@ fn deploy_contract(
     keypair_path: &Option<PathBuf>,
     url: &Option<Url>,
     ws_url: &Option<Url>,
-) -> anyhow::Result<Pubkey> {
+) -> eyre::Result<Pubkey> {
     let contract_compiled_binary = path::contracts_artifact_dir().join(contract.file());
     let sh = Shell::new()?;
     let deploy_cmd_args = calculate_deploy_cmd_args(
@@ -190,9 +190,9 @@ fn deploy_contract(
     parse_program_id(&program_id_output)
 }
 
-fn parse_program_id(output: &str) -> anyhow::Result<Pubkey> {
+fn parse_program_id(output: &str) -> eyre::Result<Pubkey> {
     let parts: Vec<&str> = output.split(':').collect();
-    let id_part: &&str = parts.get(1).ok_or(anyhow::anyhow!(
+    let id_part: &&str = parts.get(1).ok_or(eyre::eyre!(
         "Cannot parse programId from parts. Expected second index not found."
     ))?;
     Ok(Pubkey::from_str(id_part.trim())?)
@@ -258,14 +258,14 @@ mod defaults {
     /// keypair path. Finally, it tries to read the file.
     pub(crate) fn payer_kp_with_fallback_in_sol_cli_config(
         payer_kp_path: &Option<PathBuf>,
-    ) -> anyhow::Result<Keypair> {
+    ) -> eyre::Result<Keypair> {
         let calculated_payer_kp_path = match payer_kp_path {
             Some(kp_path) => kp_path.clone(),
             None => PathBuf::from(Config::default().keypair_path),
         };
         crate::cli::cmd::path::ensure_path_exists(&calculated_payer_kp_path, "payer keypair")?;
         Keypair::read_from_file(&calculated_payer_kp_path)
-            .map_err(|_| anyhow::Error::msg("Could not read payer key pair"))
+            .map_err(|_| eyre::Error::msg("Could not read payer key pair"))
     }
 
     /// If provided, it parses the provided RPC URL. If not provided,
@@ -273,7 +273,7 @@ mod defaults {
     /// rpc URL.
     pub(crate) fn rpc_url_with_fallback_in_sol_cli_config(
         rpc_url: &Option<Url>,
-    ) -> anyhow::Result<Url> {
+    ) -> eyre::Result<Url> {
         let calculated_rpc_url = match rpc_url {
             Some(kp_path) => kp_path.clone(),
             None => {
@@ -281,13 +281,13 @@ mod defaults {
                 // We are not explicitly supporting windows, plus home_dir() is what solana is using
                 // under the hood.
                 let mut sol_config_path =
-                    std::env::home_dir().ok_or(anyhow::anyhow!("Home dir not found !"))?;
+                    std::env::home_dir().ok_or(eyre::eyre!("Home dir not found !"))?;
                 sol_config_path.extend([".config", "solana", "cli", "config.yml"]);
 
                 let sol_cli_config = Config::load(
                     sol_config_path
                         .to_str()
-                        .ok_or(anyhow::anyhow!("Config path not valid unicode !"))?,
+                        .ok_or(eyre::eyre!("Config path not valid unicode !"))?,
                 )?;
                 Url::from_str(&sol_cli_config.json_rpc_url)?
             }
@@ -300,7 +300,7 @@ mod defaults {
 #[cfg(test)]
 mod tests {
 
-    use anyhow::Ok;
+    use eyre::Ok;
 
     use super::*;
 

@@ -1,10 +1,15 @@
+pub(crate) use contract::build_contracts;
+pub(crate) use download::download_wasm_opt;
+pub(crate) use toolchain::setup_toolchain;
+pub(crate) use unpack::unpack_tar_gz;
+
 pub(crate) mod contract {
     use std::path::Path;
 
-    use anyhow::Result;
+    use eyre::Result;
     use xshell::{cmd, Shell};
 
-    use crate::cli::cmd::cosmwasm::path::axelar_amplifier_dir;
+    use crate::cli::cmd::cosmwasm::path::{axelar_amplifier_dir, optimised_wasm_output};
     use crate::cli::cmd::cosmwasm::WasmContracts;
 
     pub(crate) async fn build_contracts(
@@ -31,11 +36,7 @@ pub(crate) mod contract {
                 .join("wasm32-unknown-unknown")
                 .join("release")
                 .join(format!("{}.wasm", contract.wasm_artifact_name));
-            let wasm_artifact_optimised = amplifer_dir
-                .join("target")
-                .join("wasm32-unknown-unknown")
-                .join("release")
-                .join(format!("{}.optimised.wasm", contract.wasm_artifact_name));
+            let wasm_artifact_optimised = optimised_wasm_output(contract.wasm_artifact_name);
 
             drop(in_contract_dir);
             tracing::info!("applying optimiser");
@@ -51,7 +52,7 @@ pub(crate) mod contract {
 }
 
 pub(crate) mod toolchain {
-    use anyhow::Result;
+    use eyre::Result;
     use xshell::{cmd, PushEnv, Shell};
 
     use crate::cli::cmd::cosmwasm::path::axelar_amplifier_dir;
@@ -81,7 +82,7 @@ pub(crate) mod unpack {
     use std::fs::create_dir_all;
     use std::path::Path;
 
-    use anyhow::Result;
+    use eyre::Result;
     use flate2::read::GzDecoder;
     use tar::Archive;
 
@@ -102,7 +103,7 @@ pub(crate) mod download {
     use std::io::Write;
     use std::path::Path;
 
-    use anyhow::Result;
+    use eyre::Result;
     use futures::StreamExt;
 
     pub(crate) async fn download_wasm_opt(file_path: &Path) -> Result<()> {
@@ -111,7 +112,7 @@ pub(crate) mod download {
         let response = client.get(url).send().await?;
         if !response.status().is_success() {
             tracing::error!(status = ?response.status(), "Failed to download file");
-            anyhow::bail!("failed");
+            eyre::bail!("failed");
         }
 
         let mut file = std::fs::File::create(file_path)?;

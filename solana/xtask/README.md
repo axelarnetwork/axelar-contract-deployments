@@ -33,3 +33,6 @@ $ cargo test
 ### Cosmwasm contracts
 
 - Cosmwasm contracts are built from a git submodule that points to the `axelar-amplifier` repo. Building the contracts requires setting up the appropriate Rust toolchain, installing wasm target, building the contracts and applying `wasm-opt` optimiser. This is handled by the `xtask` - it will also downolad the optimiser and run it over the compiled wasm contract code.
+- generate a new private key using `xtask`
+- For ways to fund your wallet please refer to to [the Axelar docs](https://docs.axelar.dev/dev/amplifier/chain-integration/integrate-a-chain#make-sure-you-have-a-funded-wallet). At the time of writing, you need to join their Discord and communicate with the faucet bot.
+- After the wallet is funded, you can deploy the contracts using the `xtask` CLI. Deploying a contract will generate a `code_id` that represents a unique identifier for the contract on the chain. This `code_id` is used to instantiate the contract.

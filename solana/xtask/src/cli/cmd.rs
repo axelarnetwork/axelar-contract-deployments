@@ -15,16 +15,16 @@ pub(crate) mod path {
     pub(crate) fn ensure_optional_path_exists(
         path: Option<&PathBuf>,
         subject: &str,
-    ) -> anyhow::Result<()> {
+    ) -> eyre::Result<()> {
         match path {
             Some(path) => ensure_path_exists(path, subject),
             None => Ok(()),
         }
     }
 
-    pub(crate) fn ensure_path_exists(path: &Path, subject: &str) -> anyhow::Result<()> {
+    pub(crate) fn ensure_path_exists(path: &Path, subject: &str) -> eyre::Result<()> {
         path.exists().then(|| Ok(())).unwrap_or_else(|| {
-            Err(anyhow::anyhow!(
+            Err(eyre::eyre!(
                 "File {} do not exists or it's not readable at: {}",
                 subject.to_lowercase(),
                 path.to_string_lossy()

@@ -6,6 +6,7 @@ use cmd::solana::SolanaContract;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
 use ethers::signers::LocalWallet;
+use eyre::Context;
 use url::Url;
 
 pub(crate) mod cmd;
@@ -35,7 +36,7 @@ pub(crate) enum Cli {
         command: Evm,
     },
     /// Work with cosmwasm contracts and the axelar chain
-    CosmWasm {
+    Cosmwasm {
         #[command(subcommand)]
         command: Cosmwasm,
     },
@@ -45,6 +46,14 @@ pub(crate) enum Cli {
 pub(crate) enum Cosmwasm {
     /// Build all cosmwasm contracts so that they would be ready for deployment
     Build,
+    /// Deploy
+    Deploy {
+        #[arg(short, long)]
+        private_key_hex: String,
+    },
+    /// Generate a new Axelar wallet, outputs the Axelar bech32 key and the hex
+    /// private key
+    GenerateWallet,
 }
 /// The contracts are pre-built as ensured by the `evm-contracts-rs` crate in
 /// our workspace. On EVM we don't differentiate deployment fron initialization
@@ -130,7 +139,7 @@ pub(crate) enum SolanaInitSubcommand {
 }
 
 impl Cli {
-    pub(crate) async fn run(self) -> anyhow::Result<()> {
+    pub(crate) async fn run(self) -> eyre::Result<()> {
         match self {
             Cli::Solana { command } => match command {
                 Solana::Build { contract } => {
@@ -194,10 +203,17 @@ impl Cli {
                     }
                 }
             }
-            Cli::CosmWasm { command } => match command {
+            Cli::Cosmwasm { command } => match command {
                 Cosmwasm::Build => {
                     cmd::cosmwasm::build().await?;
                 }
+                Cosmwasm::Deploy { private_key_hex } => {
+                    let key_bytes = hex::decode(private_key_hex)?;
+                    let signing_key = cosmrs::crypto::secp256k1::SigningKey::from_slice(&key_bytes)
+                        .context("invalid secp256k1 private key")?;
+                    cmd::cosmwasm::deploy(signing_key).await?;
+                }
+                Cosmwasm::GenerateWallet => cmd::cosmwasm::generate_wallet()?,
             },
         };
         Ok(())

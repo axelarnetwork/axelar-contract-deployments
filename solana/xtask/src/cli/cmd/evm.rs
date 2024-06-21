@@ -4,13 +4,16 @@ use evm_contracts_test_suite::evm_contracts_rs::contracts::{
 };
 use evm_contracts_test_suite::{ContractMiddleware, EvmSigner};
 
-pub(crate) async fn deploy_axelar_memo(signer: EvmSigner, gateway: Address) -> anyhow::Result<()> {
+pub(crate) async fn deploy_axelar_memo(signer: EvmSigner, gateway: Address) -> eyre::Result<()> {
     tracing::info!("about to deploy AxelarMemo program");
     let gateway = axelar_amplifier_gateway::AxelarAmplifierGateway::<ContractMiddleware>::new(
         gateway,
         signer.signer.clone(),
     );
-    let contract = signer.deploy_axelar_memo(gateway).await?;
+    let contract = signer
+        .deploy_axelar_memo(gateway)
+        .await
+        .map_err(|err| eyre::eyre!(err))?;
     tracing::info!(memo_program =? contract.address(), "EVM Axelar Memo deployed");
 
     Ok(())
@@ -21,7 +24,7 @@ pub(crate) async fn send_memo_to_solana(
     memo_contract: Address,
     memo_to_send: String,
     solana_chain_id: String,
-) -> anyhow::Result<()> {
+) -> eyre::Result<()> {
     let memo_contract =
         axelar_memo::AxelarMemo::<ContractMiddleware>::new(memo_contract, signer.signer.clone());
     let gateway_root_pda = gmp_gateway::get_gateway_root_config_pda().0;
