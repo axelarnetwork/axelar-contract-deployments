@@ -12,31 +12,41 @@ function getInitializeArgs(chain, contractName, wallet, options) {
 
     switch (contractName) {
         case 'axelar_gateway': {
+            console.log({ chain });
             const authAddress = chain.contracts?.axelar_auth_verifiers?.address;
 
             if (!authAddress) {
                 throw new Error('Missing axelar_auth_verifiers contract address');
             }
 
-            return [Address.fromString(authAddress), address];
+            return [nativeToScVal(Address.fromString(authAddress)), nativeToScVal(address)];
         }
 
         case 'axelar_auth_verifiers': {
-            const previousSignersRetention = new ScInt(15, { type: 'u64' });
-            const domainSeparator = Buffer.alloc(32);
-            const miniumumRotationDelay = new ScInt(0, { type: 'u64' });
-            const initialSigners = nativeToScVal({
-                signers: [
-                    {
-                        signer: Address.fromString(wallet.publicKey()).toBuffer(),
-                        weight: new ScInt(1, { type: 'u256' }),
-                    },
-                ],
-                threshold: new ScInt(1, { type: 'u256' }),
-                nonce: Buffer.alloc(32),
-            });
+            const previousSignersRetention = nativeToScVal(15); //new ScInt(15, { type: 'u64' });
+            const domainSeparator = nativeToScVal(Buffer.alloc(32));
+            const miniumumRotationDelay = nativeToScVal(0); //new ScInt(0, { type: 'u64' });
+            const initialSigners = nativeToScVal([]);
+            // const initialSigners = nativeToScVal([
+            //     {
+            //         signers: [
+            //             {
+            //                 signer: Address.fromString(wallet.publicKey()).toBuffer(),
+            //                 weight: nativeToScVal(1, { type: 'u256' }), //new ScInt(1, { type: 'u256' }),
+            //             },
+            //         ],
+            //         threshold: nativeToScVal(1, { type: 'u256' }), //new ScInt(1, { type: 'u256' }),
+            //         nonce: Buffer.alloc(32),
+            //     },
+            // ]);
 
-            return [address, previousSignersRetention, domainSeparator, miniumumRotationDelay, initialSigners];
+            return [
+                nativeToScVal(address, { type: 'address' }),
+                previousSignersRetention,
+                domainSeparator,
+                miniumumRotationDelay,
+                initialSigners,
+            ];
         }
 
         case 'axelar_operators':
@@ -50,9 +60,10 @@ async function processCommand(options, config, chain) {
     const { wasmPath, contractName } = options;
 
     const { rpc, networkType } = chain;
+    console.log('111');
     const networkPassphrase = getNetworkPassphrase(networkType);
+    console.log('222');
     const [wallet, server] = await getWallet(chain, options);
-
     const cmd = `soroban contract deploy --wasm ${wasmPath} --source ${options.privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
     printInfo('Deploying contract', contractName);
 
@@ -75,10 +86,12 @@ async function processCommand(options, config, chain) {
     }
 
     const initializeArgs = getInitializeArgs(chain, contractName, wallet, options);
+    console.log({ initializeArgs });
     chain.contracts[contractName].initializeArgs = initializeArgs.map((arg) => arg.toString());
 
     const contract = new Contract(contractAddress);
-    const operation = contract.call('initialize', ...initializeArgs.map((arg) => arg.toScVal()));
+    const operation = contract.call('initialize', ...initializeArgs);
+    // const operation = contract.call('initialize', ...initializeArgs.map((arg) => arg.toScVal()));
 
     printInfo(
         'Initializing contract with args',
