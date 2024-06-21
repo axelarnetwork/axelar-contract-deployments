@@ -58,7 +58,7 @@ class CoinManager {
         }
     }
 
-    static async splitCoins(tx, client, coinTypeToCoins, args, options) {
+    static async splitCoins(tx, client, coinTypeToCoins, walletAddress, args, options) {
         const coinType = options.coinType || SUI_COIN_ID;
 
         const metadata = await client.getCoinMetadata({
@@ -77,11 +77,13 @@ class CoinManager {
         const [coin] = tx.splitCoins(firstObjectId, [splitAmount]);
 
         printInfo('Split Coins', coinType);
-        printInfo('Split Amount', splitAmount);
+        printInfo('Split Amount', `${splitAmount} (${formatUnits(splitAmount, metadata.decimals).toString()})`);
 
         if (options.transfer) {
             tx.transferObjects([coin], options.transfer);
             printInfo('Transfer Coins to', options.transfer);
+        } else {
+            tx.transferObjects([coin], walletAddress);
         }
 
         // The transaction will fail if the gas budget is not set for splitting coins transaction
@@ -136,7 +138,7 @@ async function processSplitCommand(chain, args, options) {
         isValidNumber: { splitAmount: args.splitAmount },
     });
 
-    await CoinManager.splitCoins(tx, client, coinTypeToCoins, args, options);
+    await CoinManager.splitCoins(tx, client, coinTypeToCoins, keypair.toSuiAddress(), args, options);
 
     await signAndBroadcast(client, keypair, tx);
 }
