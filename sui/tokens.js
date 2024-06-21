@@ -5,47 +5,55 @@ const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 const { printInfo, printError, validateParameters } = require('../evm/utils');
 const {
-    utils: { parseUnits },
+    utils: { parseUnits, formatUnits },
 } = require('ethers');
-const { loadSuiConfig, SUI_COIN_ID, isGasToken, signAndBroadcast } = require('./utils');
+const { loadSuiConfig, SUI_COIN_ID, isGasToken, signAndBroadcast, paginateAll } = require('./utils');
 
 class CoinManager {
     static async getAllCoins(client, account) {
-        let cursor;
         const coinTypeToCoins = {};
 
-        do {
-            const coinsAtCursor = await client.getAllCoins({
-                owner: account,
-                limit: 100,
-                cursor,
-            });
+        try {
+            // Fetch all coins using pagination
+            const coins = await paginateAll(client, 'getAllCoins', { owner: account });
 
-            for (const coin of coinsAtCursor.data) {
-                if (!coinTypeToCoins[coin.coinType]) {
-                    coinTypeToCoins[coin.coinType] = {
-                        data: [],
-                        totalBalance: 0n,
-                    };
-                }
+            // Iterate over each coin and organize them by coin type
+            for (const coin of coins) {
+                const coinsByType = coinTypeToCoins[coin.coinType] || {
+                    data: [],
+                    totalBalance: 0n,
+                };
 
-                coinTypeToCoins[coin.coinType].data.push(coin);
-                coinTypeToCoins[coin.coinType].totalBalance += BigInt(coin.balance);
+                coinsByType.data.push(coin);
+                coinsByType.totalBalance += BigInt(coin.balance);
+
+                coinTypeToCoins[coin.coinType] = coinsByType;
             }
-
-            if (coinsAtCursor.hasNextPage) {
-                cursor = coinsAtCursor.nextCursor;
-            }
-        } while (cursor);
+        } catch (e) {
+            printError('Failed to fetch coins', e.message);
+        }
 
         return coinTypeToCoins;
     }
 
-    static printCoins(coinTypeToCoins) {
+    static async printCoins(client, coinTypeToCoins) {
         for (const coinType in coinTypeToCoins) {
             const coins = coinTypeToCoins[coinType];
+
+            const metadata = await client.getCoinMetadata({
+                coinType,
+            });
+
+            if (!metadata) {
+                printError('No metadata found for', coinType);
+                process.exit(0);
+            }
+
             printInfo('Coin Type', coinType);
-            printInfo('Total Balance', coins.totalBalance);
+            printInfo(
+                'Total Balance',
+                `${coins.totalBalance} (${formatUnits(coins.totalBalance.toString(), metadata.decimals).toString()})`,
+            );
             printInfo('Total Objects', coins.data.length);
         }
     }
@@ -154,7 +162,7 @@ async function processListCommand(chain, args, options) {
     printInfo('Wallet Address', keypair.toSuiAddress());
 
     const coinTypeToCoins = await CoinManager.getAllCoins(client, keypair.toSuiAddress());
-    CoinManager.printCoins(coinTypeToCoins);
+    await CoinManager.printCoins(client, coinTypeToCoins);
 }
 
 async function mainProcessor(options, processor, args = {}) {

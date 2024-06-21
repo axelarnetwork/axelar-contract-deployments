@@ -62,10 +62,32 @@ const isGasToken = (coinType) => {
     return coinType === SUI_COIN_ID;
 };
 
+const paginateAll = async (client, paginatedFn, params, pageLimit = 100) => {
+    let cursor;
+    let response = await client[paginatedFn]({
+        ...params,
+        cursor,
+        limit: pageLimit,
+    });
+    const items = response.data;
+
+    while (response.hasNextPage) {
+        response = await client[paginatedFn]({
+            ...params,
+            cursor: response.nextCursor,
+            limit: pageLimit,
+        });
+        items.push(...response.data);
+    }
+
+    return items;
+};
+
 module.exports = {
     SUI_COIN_ID,
     getAmplifierSigners,
     isGasToken,
+    paginateAll,
     loadSuiConfig,
     signAndBroadcast,
 };
