@@ -11,11 +11,6 @@ const { uploadContract, instantiateContract, isValidCosmosAddress, calculateDoma
 
 const { Command, Option } = require('commander');
 
-const { ethers } = require('hardhat');
-const {
-    utils: { arrayify },
-} = ethers;
-
 const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
@@ -276,7 +271,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,
         voting_verifier_address: verifierAddress,
-        domain_separator: [...arrayify(separator)],
+        domain_separator: separator.replace('0x', ''),
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainId,

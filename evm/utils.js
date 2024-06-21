@@ -670,7 +670,10 @@ const getContractConfig = async (config, chain) => {
 
 const getAmplifierKeyAddresses = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const verifierSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'get_verifier_set');
+    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
+        config.axelar.contracts.MultisigProver[chain].address,
+        'current_verifier_set',
+    );
     const signers = Object.values(verifierSet.signers);
 
     const weightedAddresses = signers
@@ -680,7 +683,7 @@ const getAmplifierKeyAddresses = async (config, chain) => {
         }))
         .sort((a, b) => a.address.localeCompare(b.address));
 
-    return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at };
+    return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
 };
 
 function sleep(ms) {
