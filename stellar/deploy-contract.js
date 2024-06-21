@@ -26,11 +26,13 @@ function getInitializeArgs(chain, contractName, wallet, options) {
             const domainSeparator = Buffer.alloc(32);
             const miniumumRotationDelay = new ScInt(0, { type: 'u64' });
             const initialSigners = nativeToScVal({
-                signers: [{
-                    signer: Address.fromString(wallet.publicKey()).toBuffer(),
-                    weight: (new ScInt(1, { type: 'u256' })),
-                }],
-                threshold: (new ScInt(1, { type: 'u256' })),
+                signers: [
+                    {
+                        signer: Address.fromString(wallet.publicKey()).toBuffer(),
+                        weight: new ScInt(1, { type: 'u256' }),
+                    },
+                ],
+                threshold: new ScInt(1, { type: 'u256' }),
                 nonce: Buffer.alloc(32),
             });
 
