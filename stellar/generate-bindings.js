@@ -7,12 +7,11 @@ const path = require('path');
 const { getNetworkPassphrase } = require('./utils');
 require('./cli-utils');
 
-function processCommand(options, config) {
+function processCommand(options, _, chain) {
     const { wasmPath, contractId, outputDir } = options;
-    const network = 'stellar';
     const overwrite = true;
 
-    const { rpc, networkType } = config[network];
+    const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
 
     const cmd = `soroban contract bindings typescript --wasm ${wasmPath} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}" --contract-id ${contractId} --output-dir ${outputDir} ${
@@ -43,7 +42,7 @@ function main() {
 
     program.action((options) => {
         const config = loadConfig(options.env);
-        processCommand(options, config);
+        processCommand(options, config, config.stellar);
     });
 
     program.parse();
