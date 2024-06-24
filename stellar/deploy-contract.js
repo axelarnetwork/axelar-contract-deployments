@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, Address, ScInt, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, Address, nativeToScVal, scValToNative } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
@@ -18,25 +18,20 @@ function getInitializeArgs(chain, contractName, wallet, options) {
                 throw new Error('Missing axelar_auth_verifiers contract address');
             }
 
-            return [Address.fromString(authAddress), address];
+            return [nativeToScVal(authAddress, {type: 'address'}), nativeToScVal(address, {type: 'address'})];
         }
 
         case 'axelar_auth_verifiers': {
-            const previousSignersRetention = new ScInt(15, { type: 'u64' });
-            const domainSeparator = Buffer.alloc(32);
-            const miniumumRotationDelay = new ScInt(0, { type: 'u64' });
-            const initialSigners = nativeToScVal({
-                signers: [
-                    {
-                        signer: Address.fromString(wallet.publicKey()).toBuffer(),
-                        weight: new ScInt(1, { type: 'u256' }),
-                    },
-                ],
-                threshold: new ScInt(1, { type: 'u256' }),
-                nonce: Buffer.alloc(32),
-            });
+            const address_val = nativeToScVal(address, {type: 'address'});
+            const previousSignersRetention = nativeToScVal(15, { type: 'u64' });
+            const domainSeparator = nativeToScVal(Buffer.alloc(32));
+            const miniumumRotationDelay = nativeToScVal(0, { type: 'u64' });
+            const singers = nativeToScVal([nativeToScVal(Address.fromString(wallet.publicKey()).toBuffer())]);
+            const weights = nativeToScVal([nativeToScVal(1, { type: 'u256' })]);
+            const threshold = nativeToScVal(1, { type: 'u256' });
+            const nonce = nativeToScVal(Buffer.alloc(32));
 
-            return [address, previousSignersRetention, domainSeparator, miniumumRotationDelay, initialSigners];
+            return [address_val, previousSignersRetention, domainSeparator, miniumumRotationDelay, singers, weights, threshold, nonce];
         }
 
         case 'axelar_operators':
@@ -56,7 +51,7 @@ async function processCommand(options, config, chain) {
     const cmd = `soroban contract deploy --wasm ${wasmPath} --source ${options.privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
     printInfo('Deploying contract', contractName);
 
-    let contractAddress = options.address;
+    let contractAddress = options.address; // || chain.contracts?.axelar_auth_verifiers?.address;
 
     if (!contractAddress) {
         contractAddress = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
@@ -74,15 +69,35 @@ async function processCommand(options, config, chain) {
         return;
     }
 
+    function serializeValue(value) {
+        if (value instanceof Uint8Array) {
+            return Buffer.from(value).toString('hex');
+        }
+        if (Array.isArray(value)) {
+            return value.map(serializeValue);
+        }
+        if (typeof value === 'bigint') {
+            return value.toString();
+        }
+        return value;
+    }
+
+    function printValue(value) {
+        if (Array.isArray(value)) {
+            return JSON.stringify(value.map(printValue));
+        }
+        return value.toString();
+    }
+
     const initializeArgs = getInitializeArgs(chain, contractName, wallet, options);
-    chain.contracts[contractName].initializeArgs = initializeArgs.map((arg) => arg.toString());
+    chain.contracts[contractName].initializeArgs = initializeArgs.map(scValToNative).map(serializeValue);
 
     const contract = new Contract(contractAddress);
-    const operation = contract.call('initialize', ...initializeArgs.map((arg) => arg.toScVal()));
+    const operation = contract.call('initialize', ...initializeArgs);  // ...initializeArgs.map((arg) => arg.toScVal()));
 
     printInfo(
         'Initializing contract with args',
-        initializeArgs.map((arg) => arg.toString()),
+        initializeArgs.map(scValToNative).map(serializeValue).map(printValue),
     );
 
     if (options.estimateCost) {

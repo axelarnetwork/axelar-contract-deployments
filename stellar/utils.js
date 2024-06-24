@@ -152,6 +152,10 @@ async function estimateCost(tx, server) {
         return e.toXDR().length;
     });
 
+    if (response.error) {
+        throw new Error(response.error);
+    }
+
     const eventsAndReturnValueSize =
         events.reduce((accumulator, currentValue) => accumulator + currentValue, 0) + // events
         Buffer.from(response.results[0].xdr, 'base64').length; // return value size
