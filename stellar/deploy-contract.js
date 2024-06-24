@@ -18,11 +18,11 @@ function getInitializeArgs(chain, contractName, wallet, options) {
                 throw new Error('Missing axelar_auth_verifiers contract address');
             }
 
-            return [nativeToScVal(authAddress, {type: 'address'}), nativeToScVal(address, {type: 'address'})];
+            return [nativeToScVal(authAddress, { type: 'address' }), nativeToScVal(address, { type: 'address' })];
         }
 
         case 'axelar_auth_verifiers': {
-            const address_val = nativeToScVal(address, {type: 'address'});
+            const addressVal = nativeToScVal(address, { type: 'address' });
             const previousSignersRetention = nativeToScVal(15, { type: 'u64' });
             const domainSeparator = nativeToScVal(Buffer.alloc(32));
             const miniumumRotationDelay = nativeToScVal(0, { type: 'u64' });
@@ -31,7 +31,7 @@ function getInitializeArgs(chain, contractName, wallet, options) {
             const threshold = nativeToScVal(1, { type: 'u256' });
             const nonce = nativeToScVal(Buffer.alloc(32));
 
-            return [address_val, previousSignersRetention, domainSeparator, miniumumRotationDelay, singers, weights, threshold, nonce];
+            return [addressVal, previousSignersRetention, domainSeparator, miniumumRotationDelay, singers, weights, threshold, nonce];
         }
 
         case 'axelar_operators':
@@ -73,12 +73,15 @@ async function processCommand(options, config, chain) {
         if (value instanceof Uint8Array) {
             return Buffer.from(value).toString('hex');
         }
+
         if (Array.isArray(value)) {
             return value.map(serializeValue);
         }
+
         if (typeof value === 'bigint') {
             return value.toString();
         }
+
         return value;
     }
 
@@ -86,6 +89,7 @@ async function processCommand(options, config, chain) {
         if (Array.isArray(value)) {
             return JSON.stringify(value.map(printValue));
         }
+
         return value.toString();
     }
 
@@ -93,12 +97,9 @@ async function processCommand(options, config, chain) {
     chain.contracts[contractName].initializeArgs = initializeArgs.map(scValToNative).map(serializeValue);
 
     const contract = new Contract(contractAddress);
-    const operation = contract.call('initialize', ...initializeArgs);  // ...initializeArgs.map((arg) => arg.toScVal()));
+    const operation = contract.call('initialize', ...initializeArgs); // ...initializeArgs.map((arg) => arg.toScVal()));
 
-    printInfo(
-        'Initializing contract with args',
-        initializeArgs.map(scValToNative).map(serializeValue).map(printValue),
-    );
+    printInfo('Initializing contract with args', initializeArgs.map(scValToNative).map(serializeValue).map(printValue));
 
     if (options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
