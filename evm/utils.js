@@ -4,9 +4,10 @@ const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString },
-    constants: { AddressZero },
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString, hexZeroPad },
+    constants: { AddressZero, HashZero },
     getDefaultProvider,
+    BigNumber,
 } = ethers;
 const https = require('https');
 const http = require('http');
@@ -1238,6 +1239,38 @@ async function relayTransaction(options, chain, contract, method, params, native
     );
 }
 
+async function getWeightedSigners(config, chain, options) {
+    let signers;
+    let verifierSetId;
+
+    if (isValidAddress(options.keyID)) {
+        // set the keyID as the signer for debug deployments
+        signers = {
+            signers: [
+                {
+                    signer: options.keyID,
+                    weight: 1,
+                },
+            ],
+            threshold: 1,
+            nonce: HashZero,
+        };
+    } else {
+        const addresses = await getAmplifierKeyAddresses(config, chain.axelarId);
+        const nonce = hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
+
+        signers = {
+            signers: addresses.addresses.map(({ address, weight }) => ({ signer: address, weight: Number(weight) })),
+            threshold: Number(addresses.threshold),
+            nonce,
+        };
+
+        verifierSetId = addresses.verifierSetId;
+    }
+
+    return { signers: [signers], verifierSetId };
+}
+
 module.exports = {
     deployCreate,
     deployCreate2,
@@ -1301,4 +1334,5 @@ module.exports = {
     getAmplifierKeyAddresses,
     getContractConfig,
     relayTransaction,
+    getWeightedSigners,
 };

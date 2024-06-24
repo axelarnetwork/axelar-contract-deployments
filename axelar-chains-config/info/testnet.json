@@ -1879,7 +1879,7 @@
       "id": "polygon-sepolia",
       "axelarId": "polygon-sepolia",
       "chainId": 80002,
-      "rpc": "https://rpc-amoy.polygon.technology/",
+      "rpc": "https://polygon-amoy.blockpi.network/v1/rpc/public",
       "tokenSymbol": "MATIC",
       "confirmations": 2,
       "contracts": {

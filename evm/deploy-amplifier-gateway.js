@@ -7,9 +7,7 @@ const {
     ContractFactory,
     Contract,
     Wallet,
-    BigNumber,
     utils: { defaultAbiCoder, getContractAddress, keccak256, hexlify },
-    constants: { HashZero },
     getDefaultProvider,
 } = ethers;
 
@@ -17,7 +15,6 @@ const {
     saveConfig,
     getBytecodeHash,
     printInfo,
-    getAmplifierKeyAddresses,
     printError,
     printWalletInfo,
     printWarn,
@@ -25,10 +22,10 @@ const {
     mainProcessor,
     deployContract,
     getGasOptions,
-    isValidAddress,
     isKeccak256Hash,
     getContractConfig,
     isString,
+    getWeightedSigners,
 } = require('./utils');
 const { calculateDomainSeparator, isValidCosmosAddress } = require('../cosmwasm/utils');
 const { addExtendedOptions } = require('./cli-utils');
@@ -37,40 +34,6 @@ const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js')
 const { WEIGHTED_SIGNERS_TYPE, encodeWeightedSigners } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const AxelarAmplifierGatewayProxy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGatewayProxy.sol/AxelarAmplifierGatewayProxy.json');
 const AxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json');
-
-async function getWeightedSigners(config, chain, options) {
-    printInfo(`Retrieving verifier addresses for ${chain.name} from Axelar network`);
-
-    let signers;
-    let verifierSetId;
-
-    if (isValidAddress(options.keyID)) {
-        // set the keyID as the signer for debug deployments
-        signers = {
-            signers: [
-                {
-                    signer: options.keyID,
-                    weight: 1,
-                },
-            ],
-            threshold: 1,
-            nonce: HashZero,
-        };
-    } else {
-        const addresses = await getAmplifierKeyAddresses(config, chain.axelarId);
-        const nonce = ethers.utils.hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
-
-        signers = {
-            signers: addresses.addresses.map(({ address, weight }) => ({ signer: address, weight: Number(weight) })),
-            threshold: Number(addresses.threshold),
-            nonce,
-        };
-
-        verifierSetId = addresses.verifierSetId;
-    }
-
-    return { signers: [signers], verifierSetId };
-}
 
 async function getDomainSeparator(config, chain, options) {
     printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
