@@ -1,7 +1,5 @@
 const { saveConfig, prompt, printInfo } = require('../evm/utils');
 const { Command, Option } = require('commander');
-const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { ethers } = require('hardhat');
 const {
     constants: { HashZero },
@@ -10,6 +8,9 @@ const { loadSuiConfig } = require('./utils');
 
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo } = require('./sign-utils');
+const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { deployPackage } = require('./deploy-package');
+
 
 async function processCommand(config, chain, options) {
     const [keypair, client] = getWallet(chain, options);
@@ -30,27 +31,17 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const published = await publishPackage('test', client, keypair);
-    updateMoveToml('test', published.packageId);
-
+    const published = await deployPackage(chain, options, 'test');
     const singleton = published.publishTxn.objectChanges.find((change) => change.objectType === `${published.packageId}::test::Singleton`);
 
-    const tx = new TransactionBlock();
+    const builder = new TxBuilder(client);
 
-    tx.moveCall({
+    await builder.moveCall({
         target: `${published.packageId}::test::register_transaction`,
-        arguments: [tx.object(relayerDiscovery), tx.object(singleton.objectId)],
+        arguments: [relayerDiscovery, singleton.objectId],
     });
 
-    await client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
-        signer: keypair,
-        options: {
-            showEffects: true,
-            showObjectChanges: true,
-            showContent: true,
-        },
-    });
+    await builder.signAndExecute(keypair);
 
     chain.contracts.test.address = published.packageId;
     chain.contracts.test.objects = { singleton: singleton.objectId };

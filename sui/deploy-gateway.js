@@ -1,8 +1,5 @@
 const { saveConfig, prompt, printInfo } = require('../evm/utils');
 const { Command, Option } = require('commander');
-const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
-const { bcs } = require('@mysten/sui.js/bcs');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, hexlify },
@@ -12,6 +9,8 @@ const {
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo } = require('./sign-utils');
 const { getAmplifierSigners, loadSuiConfig } = require('./utils');
+const { bcsStructs: { axelarStructs }, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { deployPackage } = require('./deploy-package');
 
 async function getSigners(keypair, config, chain, options) {
     if (options.signers === 'wallet') {
@@ -61,65 +60,36 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const published = await publishPackage('axelar_gateway', client, keypair);
+    const published = await deployPackage(chain, options, 'axelar_gateway');
     const packageId = published.packageId;
-
-    updateMoveToml('axelar_gateway', packageId);
-
+    
     const creatorCap = published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::gateway::CreatorCap`);
     const relayerDiscovery = published.publishTxn.objectChanges.find(
         (change) => change.objectType === `${packageId}::discovery::RelayerDiscovery`,
     );
-
-    const signerStruct = bcs.struct('WeightedSigner', {
-        pubkey: bcs.vector(bcs.u8()),
-        weight: bcs.u128(),
-    });
-    const bytes32Struct = bcs.fixedArray(32, bcs.u8()).transform({
-        input: (id) => arrayify(id),
-        output: (id) => hexlify(id),
-    });
-
-    const signersStruct = bcs.struct('WeightedSigners', {
-        signers: bcs.vector(signerStruct),
-        threshold: bcs.u128(),
-        nonce: bytes32Struct,
-    });
-
-    const encodedSigners = signersStruct
-        .serialize({
-            ...signers,
-            nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
-        })
+    const encodedSigners = axelarStructs.WeightedSigners
+        .serialize(signers)
         .toBytes();
 
-    const tx = new TransactionBlock();
+    const builder = new TxBuilder(client);
 
-    const separator = tx.moveCall({
+    const separator = await builder.moveCall({
         target: `${packageId}::bytes32::new`,
-        arguments: [tx.pure(arrayify(domainSeparator))],
+        arguments: [domainSeparator],
     });
 
-    tx.moveCall({
+    await builder.moveCall({
         target: `${packageId}::gateway::setup`,
         arguments: [
-            tx.object(creatorCap.objectId),
-            tx.pure.address(operator),
+            creatorCap.objectId,
+            operator,
             separator,
-            tx.pure(minimumRotationDelay),
-            tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
-            tx.object('0x6'),
+            minimumRotationDelay,
+            encodedSigners,
+            '0x6',
         ],
     });
-    const result = await client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
-        signer: keypair,
-        options: {
-            showEffects: true,
-            showObjectChanges: true,
-            showContent: true,
-        },
-    });
+    const result = await builder.signAndExecute(keypair);
 
     const gateway = result.objectChanges.find((change) => change.objectType === `${packageId}::gateway::Gateway`);
 

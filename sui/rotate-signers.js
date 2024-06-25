@@ -1,10 +1,8 @@
 const { saveConfig, printInfo } = require('../evm/utils');
 const { Command, Option } = require('commander');
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
-const { bcs } = require('@mysten/sui.js/bcs');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexlify, keccak256 },
+    utils: { arrayify, keccak256 },
     constants: { HashZero },
 } = ethers;
 
@@ -13,6 +11,8 @@ const { getWallet, printWalletInfo, getRawPrivateKey } = require('./sign-utils')
 const { loadSuiConfig } = require('./utils');
 const { getSigners } = require('./deploy-gateway');
 const secp256k1 = require('secp256k1');
+const { TxBuilder } = require('@axelar-network/axelar-cgp-sui/scripts/tx-builder');
+const { axelarStructs } = require('@axelar-network/axelar-cgp-sui/scripts/bcs');
 
 const COMMAND_TYPE_ROTATE_SIGNERS = 1;
 
@@ -20,7 +20,7 @@ function hashMessage(data) {
     const toHash = new Uint8Array(data.length + 1);
     toHash[0] = COMMAND_TYPE_ROTATE_SIGNERS;
     toHash.set(data, 1);
-
+``
     return keccak256(toHash);
 }
 
@@ -43,10 +43,10 @@ function getProofSigners(keypair, options) {
         const proof = JSON.parse(options.proof);
         return {
             signers: proof.signers.signers.map(({ pubkey, weight }) => {
-                return { pubkey: arrayify(pubkey), weight };
+                return { pubkey, weight };
             }),
             threshold: proof.signers.threshold,
-            nonce: arrayify(proof.signers.nonce) || HashZero,
+            nonce: proof.signers.nonce || HashZero,
         };
     }
 
@@ -64,7 +64,7 @@ function getSignatures(keypair, options, messageToSign) {
         return [new Uint8Array([...signature, recid])];
     } else if (options.proof) {
         const proof = JSON.parse(options.proof);
-        return proof.signatures.map((signatrue) => arrayify(signatrue));
+        return proof.signatures;
     }
 
     throw new Error('Proof not found');
@@ -83,80 +83,44 @@ async function processCommand(config, chain, options) {
     const packageId = contractConfig.address;
     const signers = await getSigners(keypair, config, chain, options);
 
-    const signerStruct = bcs.struct('WeightedSigner', {
-        pubkey: bcs.vector(bcs.u8()),
-        weight: bcs.u128(),
-    });
-    const bytes32Struct = bcs.fixedArray(32, bcs.u8()).transform({
-        input: (id) => arrayify(id),
-        output: (id) => hexlify(id),
-    });
-
-    const signersStruct = bcs.struct('WeightedSigners', {
-        signers: bcs.vector(signerStruct),
-        threshold: bcs.u128(),
-        nonce: bytes32Struct,
-    });
-    const encodedSigners = signersStruct
-        .serialize({
-            ...signers,
-            nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
-        })
+    const encodedSigners = axelarStructs.WeightedSigners
+        .serialize(signers)
         .toBytes();
 
     const proofSigners = getProofSigners(keypair, options);
 
-    const hashed = arrayify(hashMessage(encodedSigners));
+    const hashed = hashMessage(encodedSigners);
 
-    const messageToSignStruct = bcs.struct('MessageToSign', {
-        domain_separator: bytes32Struct,
-        signers_hash: bytes32Struct,
-        data_hash: bytes32Struct,
-    });
-
-    const message = messageToSignStruct
+    const message = axelarStructs.MessageToSign
         .serialize({
             domain_separator: contractConfig.domainSeparator,
-            signers_hash: keccak256(signersStruct.serialize(proofSigners).toBytes()),
+            signers_hash: keccak256(axelarStructs.WeightedSigners.serialize(proofSigners).toBytes()),
             data_hash: hashed,
         })
         .toBytes();
 
     const signatures = getSignatures(keypair, options, message);
-
-    const proofStruct = bcs.struct('Proof', {
-        signers: signersStruct,
-        signatures: bcs.vector(bcs.vector(bcs.u8())),
-    });
-
-    const encodedProof = proofStruct
+        console.log(proofSigners);
+    const encodedProof = axelarStructs.Proof
         .serialize({
             signers: proofSigners,
             signatures,
         })
         .toBytes();
 
-    const tx = new TransactionBlock();
+    const builder = new TxBuilder(client);
 
-    tx.moveCall({
+    await builder.moveCall({
         target: `${packageId}::gateway::rotate_signers`,
         arguments: [
-            tx.object(contractConfig.objects.gateway),
-            tx.object('0x6'),
-            tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
-            tx.pure(bcs.vector(bcs.u8()).serialize(encodedProof).toBytes()),
+            contractConfig.objects.gateway,
+            '0x6',
+            encodedSigners,
+            encodedProof,
         ],
     });
 
-    await client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
-        signer: keypair,
-        options: {
-            showEffects: true,
-            showObjectChanges: true,
-            showContent: true,
-        },
-    });
+    await builder.signAndExecute(keypair);
 
     printInfo('Signers rotated succesfully');
 }
