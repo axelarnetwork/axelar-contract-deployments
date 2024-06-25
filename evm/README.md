@@ -208,9 +208,21 @@ node evm/verify-contract.js -e [env] -n [chain] -c TokenManagerProxy --dir /path
 
 ## Verify Token Ownership requests
 
-Download the pending requests spreadsheet into a csv format.
+Download the pending requests [spreadsheet](https://docs.google.com/spreadsheets/d/1zKH1DINTiz83iXbbZRNRurxxZTaU0r5JS4A1c8b9-9A/edit?resourcekey=&gid=1705825087#gid=1705825087) into a csv format.
 
 `node evm/check-ownership-requests.js -f sheet_path.csv`
+
+## Verify AxelarAmplifierGateway contract. 
+`--address` can be optionally specified (otherwise will default to the value from config).
+
+1. First clone the `axelar-gmp-sdk-solidity` repo: `git clone git@github.com:axelarnetwork/axelar-gmp-sdk-solidity.git`
+2. Checkout the branch or commit from where the contract was deployed: `git checkout <branch_name>`
+3. Run `npm ci && npm run build`
+4. Create a keys.json file in root of the folder and add in it: `{"chains": {"<chain_name>>": {"api": "API_KEY"}}}`
+
+```bash
+node evm/verify-contract.js -e [env] -n [chain] -c AxelarAmplifierGateway --dir /path/to/axelar-gmp-sdk-solidity
+```
 
 #### Help
 
