@@ -104,6 +104,52 @@ node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test -
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
 
+
+### Multisig
+
+Sign transaction block for multisig:
+
+```bash
+node sui/multisig.js -p <private key> --signatureScheme <signer scheme type> --file <file path where unsigned tx block data is stored> --txFile <file path where signed signature will be stored> --action sign --offline <true/false: to store signature or execute transaction>
+```
+example file:
+```
+{
+    "bytes": "AAADAQFQT+fE+oFTHe629c2CKmmnBk6F8FJ/q0IcsJHXGKg3Uv1rtAIAAAAAAQAIGAAAAAAAAAAAIAv8A6qCEJTg18khmS29w7e6lW6MM3iP4elh2nWghSoqAQCDSROiLpOQ9qB5p9Z5yb4iaSHeu9+FedwD7BmZ8nAXVwZteWNvaW4EbWludAADAQAAAQEAAQIAhBIyNmelLibtcBkL+mbrAtKsFpOXYdhWU6dha9IfnHkBqw18qBGpceHqCT2ZlhjFEfovQoT3Y39LvgOk6fwj0ncJbLQCAAAAACC9XSxZW+G2Q1wVrkKlVQfOVJLTnQXj5Ckl+CBqghszS4QSMjZnpS4m7XAZC/pm6wLSrBaTl2HYVlOnYWvSH5x56AMAAAAAAADwf0IAAAAAAAA="
+}
+```
+
+Combine signature files:
+
+```bash
+node sui/multisig.js -p <private key> --signatureScheme <signer scheme type> --file <file path where unsigned tx block data is stored> --txFile <file path where sign signature will be stored> --action combine --offline <true/false: to store signature or execute transaction> --signatures <path to files containing signed tx data>
+```
+example signature:
+```
+{
+  "signature": "AMATYcqvEwn1uHLaXkTSpL/yoTC3esxnmf81JSSe3OGB17TaWlWMJRS0fAyWp8RGhIeTpq/afCmOnQGrby7QBghxAMFV+C3YAVScXJlpEn13dBKtHsBZULxX8eIVyr6FHw==",
+  "publicKey": "0x7100c155f82dd801549c5c9969127d777412ad1ec05950bc57f1e215cabe851f",
+  "message": "AAADAQFQT+fE+oFTHe629c2CKmmnBk6F8FJ/q0IcsJHXGKg3Uv1rtAIAAAAAAQAIGAAAAAAAAAAAIAv8A6qCEJTg18khmS29w7e6lW6MM3iP4elh2nWghSoqAQCDSROiLpOQ9qB5p9Z5yb4iaSHeu9+FedwD7BmZ8nAXVwZteWNvaW4EbWludAADAQAAAQEAAQIAhBIyNmelLibtcBkL+mbrAtKsFpOXYdhWU6dha9IfnHkBqw18qBGpceHqCT2ZlhjFEfovQoT3Y39LvgOk6fwj0ncJbLQCAAAAACC9XSxZW+G2Q1wVrkKlVQfOVJLTnQXj5Ckl+CBqghszS4QSMjZnpS4m7XAZC/pm6wLSrBaTl2HYVlOnYWvSH5x56AMAAAAAAADwf0IAAAAAAAA="
+}
+```
+
+Execute combined signature:
+
+```bash
+node sui/multisig.js -p <private key> --signatureScheme <signer scheme type> --file <file path where unsigned tx block data is stored> --txFile <file path where signed signature will be stored> --action execute --offline <true/false: to store signature or execute transaction> --multisigTxFile <file path where combine signature of tx data is stored of multisig>
+```
+
+example combined signature:
+```
+{
+  "signature": "AwIAwBNhyq8TCfW4ctpeRNKkv/KhMLd6zGeZ/zUlJJ7c4YHXtNpaVYwlFLR8DJanxEaEh5Omr9p8KY6dAatvLtAGCABAwaSKOLq7ozJ/HNtrK/YNHcJ4op1DaKnNKqplwK9nfPiSKO+j26zs/Hm784p38PWBqvooTFa42FDZV4raXCgHAwACAHEAwVX4LdgBVJxcmWkSfXd0Eq0ewFlQvFfx4hXKvoUfAQC2FlZWh/1t33DD+4nNxx1SekhnK/M4n1kiRO1fxPuDzgECAA==",
+  "status": "PENDING",
+  "message": "AAADAQFQT+fE+oFTHe629c2CKmmnBk6F8FJ/q0IcsJHXGKg3Uv1rtAIAAAAAAQAIGAAAAAAAAAAAIAv8A6qCEJTg18khmS29w7e6lW6MM3iP4elh2nWghSoqAQCDSROiLpOQ9qB5p9Z5yb4iaSHeu9+FedwD7BmZ8nAXVwZteWNvaW4EbWludAADAQAAAQEAAQIAhBIyNmelLibtcBkL+mbrAtKsFpOXYdhWU6dha9IfnHkBqw18qBGpceHqCT2ZlhjFEfovQoT3Y39LvgOk6fwj0ncJbLQCAAAAACC9XSxZW+G2Q1wVrkKlVQfOVJLTnQXj5Ckl+CBqghszS4QSMjZnpS4m7XAZC/pm6wLSrBaTl2HYVlOnYWvSH5x56AMAAAAAAADwf0IAAAAAAAA="
+}
+```
+
+use --multisigKey `multisigKey` to override existing multisig info in chains config.
+
 ## Troubleshooting
 
 1. Move build error during the deployment step
