@@ -1,13 +1,17 @@
 use std::io::Write;
 use std::str::FromStr;
 
-use cosmrs::cosmwasm::MsgStoreCode;
+use axelar_wasm_std::MajorityThreshold;
+use cosmrs::cosmwasm::{MsgInstantiateContract, MsgStoreCode};
 use cosmrs::crypto::secp256k1::SigningKey;
 use cosmrs::tx::Msg;
 use cosmrs::Denom;
 use eyre::OptionExt;
 use k256::elliptic_curve::rand_core::OsRng;
+use multisig::key::KeyType;
 use rust_decimal_macros::dec;
+use serde::{Deserialize, Serialize};
+use solana_sdk::keccak::hashv;
 use xshell::Shell;
 
 mod build;
@@ -48,6 +52,18 @@ const AXELAR_DEVNET: Network = Network {
 
 const AXELAR_ACCOUNT_PREFIX: &str = "axelar";
 const AXELAR_BASE_DENOM: &str = "uamplifier";
+const ROUTER_ADDRESS: &str = "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y";
+const GOVERNANCE_ADDRESS: &str = "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9";
+const MULTISIG_ADDRESS: &str = "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r";
+const COORDINATOR_ADDRESS: &str =
+    "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g";
+const SERVICE_REGISTRY_ADDRESS: &str =
+    "axelar1c9fkszt5lq34vvvlat3fxj6yv7ejtqapz04e97vtc9m5z9cwnamq8zjlhz";
+const BLOCK_EXPIRY: u64 = 10;
+const CONFIRMATION_HEIGHT: u64 = 1;
+const REWARDS_ADDRESS: &str = "axelar1vaj9sfzc3z0gpel90wu4ljutncutv0wuhvvwfsh30rqxq422z89qnd989l";
+const SERVICE_NAME: &str = "validators";
+const VERIFIER_SET_DIFF_THRESHOLD: u32 = 1;
 
 pub(crate) async fn build() -> eyre::Result<()> {
     let sh = Shell::new()?;
@@ -68,9 +84,8 @@ pub(crate) async fn build() -> eyre::Result<()> {
 }
 
 pub(crate) async fn deploy(signing_key: SigningKey) -> eyre::Result<()> {
-    let network = AXELAR_DEVNET.clone();
     let client = SigningClient {
-        network: network.clone(),
+        network: AXELAR_DEVNET.clone(),
         account_prefix: AXELAR_ACCOUNT_PREFIX.to_owned(),
         signing_key,
     };
@@ -108,6 +123,176 @@ pub(crate) async fn deploy(signing_key: SigningKey) -> eyre::Result<()> {
     Ok(())
 }
 
+pub(crate) async fn init_voting_verifier(
+    code_id: u64,
+    signing_key: SigningKey,
+    source_chain: String,
+) -> eyre::Result<()> {
+    use voting_verifier::msg::InstantiateMsg;
+    let client = SigningClient {
+        network: AXELAR_DEVNET.clone(),
+        account_prefix: AXELAR_ACCOUNT_PREFIX.to_owned(),
+        signing_key,
+    };
+
+    let instantiate = MsgInstantiateContract {
+        sender: client.signer_account_id()?,
+        admin: Some(client.signer_account_id()?),
+        code_id,
+        label: Some("voting-verifier".to_string()),
+        msg: serde_json::to_vec(&InstantiateMsg {
+            service_registry_address: SERVICE_REGISTRY_ADDRESS.to_string().try_into().unwrap(),
+            service_name: SERVICE_NAME.to_string().try_into().unwrap(),
+            source_gateway_address: gmp_gateway::id().to_string().try_into().unwrap(),
+            voting_threshold: majority_threshold(),
+            block_expiry: BLOCK_EXPIRY,
+            confirmation_height: CONFIRMATION_HEIGHT,
+            source_chain: source_chain.to_string().try_into().unwrap(),
+            rewards_address: REWARDS_ADDRESS.to_string(),
+            governance_address: GOVERNANCE_ADDRESS.to_string().try_into().unwrap(),
+            msg_id_format: axelar_wasm_std::msg_id::MessageIdFormat::Base58TxDigestAndEventIndex,
+        })?,
+        funds: vec![],
+    };
+    let response = client
+        .sign_and_broadcast(vec![instantiate.into_any()?], &default_gas())
+        .await?;
+    tracing::debug!(tx_result = ?response, "raw respones reult");
+    let contract_address = response.extract("instantiate", "_contract_address")?;
+    tracing::info!(contract_address, "Voting verifier contract address");
+
+    Ok(())
+}
+
+fn majority_threshold() -> axelar_wasm_std::MajorityThreshold {
+    axelar_wasm_std::Threshold::try_from((1u64, 1u64))
+        .unwrap()
+        .try_into()
+        .unwrap()
+}
+
+pub(crate) async fn init_gateway(
+    code_id: u64,
+    signing_key: SigningKey,
+    voting_verifier_address: String,
+) -> eyre::Result<()> {
+    use gateway::msg::InstantiateMsg;
+    let client = SigningClient {
+        network: AXELAR_DEVNET.clone(),
+        account_prefix: AXELAR_ACCOUNT_PREFIX.to_owned(),
+        signing_key,
+    };
+
+    let instantiate = MsgInstantiateContract {
+        sender: client.signer_account_id()?,
+        admin: Some(client.signer_account_id()?),
+        code_id,
+        label: Some("init-gateway".to_string()),
+        msg: serde_json::to_vec(&InstantiateMsg {
+            verifier_address: voting_verifier_address,
+            router_address: ROUTER_ADDRESS.to_string(),
+        })?,
+        funds: vec![],
+    };
+    let response = client
+        .sign_and_broadcast(vec![instantiate.into_any()?], &default_gas())
+        .await?;
+    tracing::debug!(tx_result = ?response, "raw respones reult");
+    let contract_address = response.extract("instantiate", "_contract_address")?;
+    tracing::info!(contract_address, "gateway contract address");
+
+    Ok(())
+}
+
+fn default_gas() -> Gas {
+    Gas {
+        gas_price: cosmos_client::gas::GasPrice {
+            amount: dec!(0.007),
+            denom: Denom::from_str(AXELAR_BASE_DENOM).expect("base denom is always valid"),
+        },
+        gas_adjustment: dec!(1.5),
+    }
+}
+
+pub(crate) async fn init_multisig_prover(
+    code_id: u64,
+    signing_key: SigningKey,
+    chain_id: u64,
+    gateway_address: String,
+    voting_verifier_address: String,
+    chain_name: String,
+) -> eyre::Result<()> {
+    // NOTE: there are issues with using `multisig-prover` as a dependency (bulid
+    // breaks)
+    #[derive(Serialize, Deserialize)]
+    pub(crate) struct InstantiateMsg {
+        admin_address: String,
+        governance_address: String,
+        gateway_address: String,
+        multisig_address: String,
+        coordinator_address: String,
+        service_registry_address: String,
+        voting_verifier_address: String,
+        signing_threshold: MajorityThreshold,
+        service_name: String,
+        chain_name: String,
+        verifier_set_diff_threshold: u32,
+        encoder: String,
+        key_type: KeyType,
+        domain_separator: String,
+    }
+    let client = SigningClient {
+        network: AXELAR_DEVNET.clone(),
+        account_prefix: AXELAR_ACCOUNT_PREFIX.to_owned(),
+        signing_key,
+    };
+
+    let domain_separator = domain_separator(&chain_name, chain_id);
+    let instantiate = MsgInstantiateContract {
+        sender: client.signer_account_id()?,
+        admin: Some(client.signer_account_id()?),
+        code_id,
+        label: Some("init-multisig-prover".to_string()),
+        msg: serde_json::to_vec(&InstantiateMsg {
+            admin_address: client.signer_account_id()?.to_string(),
+            governance_address: GOVERNANCE_ADDRESS.to_string(),
+            gateway_address,
+            multisig_address: MULTISIG_ADDRESS.to_string(),
+            coordinator_address: COORDINATOR_ADDRESS.to_string(),
+            service_registry_address: SERVICE_REGISTRY_ADDRESS.to_string(),
+            voting_verifier_address,
+            signing_threshold: majority_threshold(),
+            service_name: SERVICE_NAME.to_string(),
+            chain_name: chain_name.clone(),
+            verifier_set_diff_threshold: VERIFIER_SET_DIFF_THRESHOLD,
+            // todo change to rkyv encoding scheme once the multisig-prover supports it
+            encoder: "abi".to_string(),
+            key_type: KeyType::Ecdsa,
+            domain_separator,
+        })?,
+        funds: vec![],
+    };
+    let response = client
+        .sign_and_broadcast(vec![instantiate.into_any()?], &default_gas())
+        .await?;
+    tracing::debug!(tx_result = ?response, "raw respones reult");
+
+    let contract_address = response.extract("instantiate", "_contract_address")?;
+    tracing::info!(contract_address, "Multisig prover contract address");
+
+    Ok(())
+}
+
+fn domain_separator(chain_name: &str, chain_id: u64) -> String {
+    let domain_separator = hashv(&[
+        chain_name.as_bytes(),
+        ROUTER_ADDRESS.as_bytes(),
+        &chain_id.to_le_bytes(),
+    ])
+    .to_bytes();
+    hex::encode(domain_separator)
+}
+
 pub(crate) fn generate_wallet() -> eyre::Result<()> {
     let key = k256::ecdsa::SigningKey::random(&mut OsRng);
     let key_bytes = key.to_bytes();
@@ -139,7 +324,8 @@ pub(crate) mod path {
     use crate::cli::cmd::path::workspace_root_dir;
 
     pub(crate) fn axelar_amplifier_dir() -> PathBuf {
-        let root_dir = workspace_root_dir();
+        let workspace_root = workspace_root_dir();
+        let root_dir = workspace_root.parent().unwrap();
         root_dir.join("axelar-amplifier")
     }
 
@@ -151,11 +337,11 @@ pub(crate) mod path {
     }
 
     pub(crate) fn binaryen_tar_file() -> PathBuf {
-        PathBuf::from_iter(["target", "binaryen.tar.gz"])
+        workspace_root_dir().join("target").join("binaryen.tar.gz")
     }
 
     pub(crate) fn binaryen_unpacked() -> PathBuf {
-        PathBuf::from_iter(["target", "binaryen"])
+        workspace_root_dir().join("target").join("binaryen")
     }
 
     pub(crate) fn optimised_wasm_output(contract_name: &str) -> PathBuf {

@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: true        
 
       - name: Setup repo
         uses: ./.github/actions/setup-solana-repo
@@ -40,6 +42,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: true        
 
       - name: Setup repo
         uses: ./.github/actions/setup-solana-repo
@@ -53,6 +57,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: true        
 
       - name: Setup repo
         uses: ./.github/actions/setup-solana-repo
@@ -70,6 +76,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: true        
 
       - name: Setup repo
         uses: ./.github/actions/setup-solana-repo

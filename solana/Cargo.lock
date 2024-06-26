@@ -90,8 +90,8 @@ name = "aggregate-verifier"
 version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
- "axelar-wasm-std",
- "axelar-wasm-std-derive",
+ "axelar-wasm-std 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "axelar-wasm-std-derive 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "connection-router",
  "cosmwasm-schema 1.5.5",
  "cosmwasm-std",
@@ -99,12 +99,12 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "error-stack",
- "report",
+ "report 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "schemars",
  "serde",
  "serde_json",
  "thiserror",
- "voting-verifier",
+ "voting-verifier 0.1.0",
 ]
 
 [[package]]
@@ -586,7 +586,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
- "bnum 0.10.0",
+ "bnum",
  "borsh 1.5.1",
  "bytemuck",
  "connection-router",
@@ -610,7 +610,7 @@ dependencies = [
 name = "axelar-rkyv-encoding"
 version = "0.1.0"
 dependencies = [
- "bnum 0.10.0",
+ "bnum",
  "ed25519-dalek 2.1.1",
  "k256",
  "rand 0.8.5",
@@ -640,6 +640,29 @@ dependencies = [
 [[package]]
 name = "axelar-wasm-std"
 version = "0.1.0"
+dependencies = [
+ "bs58 0.5.1",
+ "cosmwasm-schema 1.5.5",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "error-stack",
+ "flagset",
+ "lazy_static",
+ "num-traits",
+ "regex",
+ "report 0.1.0",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sha3 0.10.8",
+ "strum 0.25.0",
+ "thiserror",
+ "valuable",
+]
+
+[[package]]
+name = "axelar-wasm-std"
+version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
  "cosmwasm-schema 1.5.5",
@@ -649,7 +672,7 @@ dependencies = [
  "error-stack",
  "flagset",
  "num-traits",
- "report",
+ "report 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "schemars",
  "serde",
  "serde_json",
@@ -662,12 +685,24 @@ dependencies = [
 [[package]]
 name = "axelar-wasm-std-derive"
 version = "0.1.0"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
- "axelar-wasm-std",
+ "axelar-wasm-std 0.1.0",
  "error-stack",
  "quote",
- "report",
+ "report 0.1.0",
+ "syn 2.0.67",
+ "thiserror",
+]
+
+[[package]]
+name = "axelar-wasm-std-derive"
+version = "0.1.0"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
+dependencies = [
+ "axelar-wasm-std 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "error-stack",
+ "quote",
+ "report 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "syn 2.0.67",
  "thiserror",
 ]
@@ -939,12 +974,6 @@ name = "block-padding"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
-
-[[package]]
-name = "bnum"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab9008b6bb9fc80b5277f2fe481c09e828743d9151203e804583eb4c9e15b31d"
 
 [[package]]
 name = "bnum"
@@ -1432,6 +1461,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4b82cf0babdbd58558212896d1a4272303a57bdb245c2bf1147185fb45640e70"
 
 [[package]]
+name = "client"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "error-stack",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "coins-bip32"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1543,8 +1582,8 @@ name = "connection-router"
 version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
- "axelar-wasm-std",
- "axelar-wasm-std-derive",
+ "axelar-wasm-std 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "axelar-wasm-std-derive 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "cosmwasm-schema 1.5.5",
  "cosmwasm-std",
  "cosmwasm-storage",
@@ -1553,7 +1592,7 @@ dependencies = [
  "flagset",
  "itertools 0.11.0",
  "mockall",
- "report",
+ "report 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "schemars",
  "serde",
  "serde_json",
@@ -1660,6 +1699,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 
 [[package]]
+name = "coordinator"
+version = "0.1.2"
+dependencies = [
+ "axelar-wasm-std 0.1.0",
+ "axelar-wasm-std-derive 0.1.0",
+ "cosmwasm-schema 1.5.5",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw2",
+ "error-stack",
+ "multisig 0.3.0",
+ "report 0.1.0",
+ "router-api",
+ "thiserror",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1722,9 +1778,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "1.5.2"
+version = "1.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ed6aa9f904de106fa16443ad14ec2abe75e94ba003bb61c681c0e43d4c58d2a"
+checksum = "dd50718a2b6830ce9eb5d465de5a018a12e71729d66b70807ce97e6dd14f931d"
 dependencies = [
  "digest 0.10.7",
  "ecdsa",
@@ -1793,13 +1849,13 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.5.2"
+version = "1.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad011ae7447188e26e4a7dbca2fcd0fc186aa21ae5c86df0503ea44c78f9e469"
+checksum = "78c1556156fdf892a55cced6115968b961eaaadd6f724a2c2cb7d1e168e32dd3"
 dependencies = [
  "base64 0.21.7",
  "bech32",
- "bnum 0.8.1",
+ "bnum",
  "cosmwasm-crypto",
  "cosmwasm-derive",
  "derivative",
@@ -3254,8 +3310,8 @@ version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
  "aggregate-verifier",
- "axelar-wasm-std",
- "axelar-wasm-std-derive",
+ "axelar-wasm-std 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "axelar-wasm-std-derive 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "connection-router",
  "cosmwasm-schema 1.5.5",
  "cosmwasm-std",
@@ -3264,11 +3320,41 @@ dependencies = [
  "error-stack",
  "itertools 0.11.0",
  "mockall",
- "report",
+ "report 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "schemars",
  "serde",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "gateway"
+version = "0.2.2"
+dependencies = [
+ "axelar-wasm-std 0.1.0",
+ "axelar-wasm-std-derive 0.1.0",
+ "client",
+ "cosmwasm-schema 1.5.5",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw2",
+ "error-stack",
+ "gateway-api",
+ "itertools 0.11.0",
+ "report 0.1.0",
+ "router-api",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "voting-verifier 0.4.0",
+]
+
+[[package]]
+name = "gateway-api"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema 1.5.5",
+ "router-api",
 ]
 
 [[package]]
@@ -3370,7 +3456,7 @@ dependencies = [
  "cosmwasm-std",
  "hex",
  "itertools 0.12.1",
- "multisig",
+ "multisig 0.1.0",
  "num-derive 0.4.2",
  "num-traits",
  "program-utils",
@@ -4218,9 +4304,9 @@ dependencies = [
 
 [[package]]
 name = "k256"
-version = "0.13.3"
+version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "956ff9b67e26e1a6a866cb758f12c6f8746208489e3e4a4b5580802f2f0a587b"
+checksum = "cadb76004ed8e97623117f3df85b17aaa6626ab0b0831e6573f104df16cd1bcc"
 dependencies = [
  "cfg-if 1.0.0",
  "ecdsa",
@@ -4706,8 +4792,8 @@ name = "multisig"
 version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
- "axelar-wasm-std",
- "axelar-wasm-std-derive",
+ "axelar-wasm-std 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "axelar-wasm-std-derive 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "connection-router",
  "cosmwasm-crypto",
  "cosmwasm-schema 1.5.5",
@@ -4718,8 +4804,8 @@ dependencies = [
  "error-stack",
  "getrandom 0.2.15",
  "k256",
- "report",
- "rewards",
+ "report 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "rewards 0.1.0",
  "schemars",
  "serde",
  "serde_json",
@@ -4728,12 +4814,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "multisig"
+version = "0.3.0"
+dependencies = [
+ "axelar-wasm-std 0.1.0",
+ "axelar-wasm-std-derive 0.1.0",
+ "cosmwasm-crypto",
+ "cosmwasm-schema 1.5.5",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "ed25519-dalek 2.1.1",
+ "enum-display-derive",
+ "error-stack",
+ "getrandom 0.2.15",
+ "itertools 0.11.0",
+ "k256",
+ "report 0.1.0",
+ "rewards 0.3.0",
+ "router-api",
+ "serde",
+ "serde_json",
+ "sha3 0.10.8",
+ "signature-verifier-api",
+ "thiserror",
+]
+
+[[package]]
 name = "multisig-prover"
 version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
- "axelar-wasm-std",
- "axelar-wasm-std-derive",
+ "axelar-wasm-std 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "axelar-wasm-std-derive 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "bcs",
  "connection-router",
  "cosmwasm-schema 1.5.5",
@@ -4744,19 +4858,19 @@ dependencies = [
  "either",
  "error-stack",
  "ethabi",
- "gateway",
+ "gateway 0.1.0",
  "hex",
  "itertools 0.11.0",
  "k256",
- "multisig",
- "report",
+ "multisig 0.1.0",
+ "report 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "schemars",
  "serde",
  "serde_json",
- "service-registry",
+ "service-registry 0.1.0",
  "sha3 0.10.8",
  "thiserror",
- "voting-verifier",
+ "voting-verifier 0.1.0",
 ]
 
 [[package]]
@@ -6184,6 +6298,17 @@ dependencies = [
 [[package]]
 name = "report"
 version = "0.1.0"
+dependencies = [
+ "error-stack",
+ "eyre",
+ "itertools 0.11.0",
+ "thiserror",
+ "valuable",
+]
+
+[[package]]
+name = "report"
+version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
  "error-stack",
@@ -6289,16 +6414,33 @@ name = "rewards"
 version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
- "axelar-wasm-std",
- "axelar-wasm-std-derive",
+ "axelar-wasm-std 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "axelar-wasm-std-derive 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "cosmwasm-schema 1.5.5",
  "cosmwasm-std",
  "cw-storage-plus",
  "error-stack",
  "itertools 0.11.0",
  "mockall",
- "report",
+ "report 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "rewards"
+version = "0.3.0"
+dependencies = [
+ "axelar-wasm-std 0.1.0",
+ "axelar-wasm-std-derive 0.1.0",
+ "cosmwasm-schema 1.5.5",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw2",
+ "error-stack",
+ "itertools 0.11.0",
+ "report 0.1.0",
+ "router-api",
  "thiserror",
 ]
 
@@ -6419,6 +6561,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8395b4f860856b740f20a296ea2cd4d823e81a2658cf05ef61be22916026a906"
 dependencies = [
  "chrono",
+]
+
+[[package]]
+name = "router-api"
+version = "0.1.0"
+dependencies = [
+ "axelar-wasm-std 0.1.0",
+ "axelar-wasm-std-derive 0.1.0",
+ "cosmwasm-schema 1.5.5",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "error-stack",
+ "flagset",
+ "report 0.1.0",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sha3 0.10.8",
+ "thiserror",
+ "valuable",
 ]
 
 [[package]]
@@ -6994,15 +7156,34 @@ name = "service-registry"
 version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
- "axelar-wasm-std",
- "axelar-wasm-std-derive",
+ "axelar-wasm-std 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "axelar-wasm-std-derive 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "connection-router",
  "cosmwasm-schema 1.5.5",
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-storage-plus",
  "error-stack",
- "report",
+ "report 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "service-registry"
+version = "0.3.0"
+dependencies = [
+ "axelar-wasm-std 0.1.0",
+ "axelar-wasm-std-derive 0.1.0",
+ "coordinator",
+ "cosmwasm-schema 1.5.5",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw2",
+ "error-stack",
+ "report 0.1.0",
+ "router-api",
  "schemars",
  "serde",
  "thiserror",
@@ -7122,6 +7303,16 @@ checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
 dependencies = [
  "digest 0.10.7",
  "rand_core 0.6.4",
+]
+
+[[package]]
+name = "signature-verifier-api"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema 1.5.5",
+ "cosmwasm-std",
+ "error-stack",
+ "thiserror",
 ]
 
 [[package]]
@@ -9668,7 +9859,7 @@ dependencies = [
  "anyhow",
  "axelar-executable",
  "axelar-message-primitives",
- "axelar-wasm-std",
+ "axelar-wasm-std 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "bcs",
  "bincode",
  "borsh 1.5.1",
@@ -9681,7 +9872,7 @@ dependencies = [
  "interchain-token-transfer-gmp",
  "itertools 0.12.1",
  "libsecp256k1 0.7.1",
- "multisig",
+ "multisig 0.1.0",
  "multisig-prover",
  "rand_core 0.6.4",
  "signature 2.2.0",
@@ -10477,8 +10668,8 @@ name = "voting-verifier"
 version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f#c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 dependencies = [
- "axelar-wasm-std",
- "axelar-wasm-std-derive",
+ "axelar-wasm-std 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "axelar-wasm-std-derive 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
  "connection-router",
  "cosmwasm-schema 1.5.5",
  "cosmwasm-std",
@@ -10486,13 +10677,34 @@ dependencies = [
  "cw-storage-plus",
  "either",
  "error-stack",
- "report",
- "rewards",
+ "report 0.1.0 (git+https://github.com/axelarnetwork/axelar-amplifier?rev=c0904e1c72c99a174a93b5f6c18b30f52d20b71f)",
+ "rewards 0.1.0",
  "schemars",
  "serde",
  "serde_json",
- "service-registry",
+ "service-registry 0.1.0",
  "sha3 0.10.8",
+ "thiserror",
+]
+
+[[package]]
+name = "voting-verifier"
+version = "0.4.0"
+dependencies = [
+ "axelar-wasm-std 0.1.0",
+ "axelar-wasm-std-derive 0.1.0",
+ "client",
+ "cosmwasm-schema 1.5.5",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw2",
+ "error-stack",
+ "multisig 0.3.0",
+ "report 0.1.0",
+ "rewards 0.3.0",
+ "router-api",
+ "serde_json",
+ "service-registry 0.3.0",
  "thiserror",
 ]
 
@@ -10950,6 +11162,7 @@ version = "0.1.0"
 dependencies = [
  "axelar-message-primitives",
  "axelar-solana-memo-program",
+ "axelar-wasm-std 0.1.0",
  "base64 0.21.7",
  "borsh 1.5.1",
  "clap 4.5.7",
@@ -10961,13 +11174,16 @@ dependencies = [
  "eyre",
  "flate2",
  "futures 0.3.30",
+ "gateway 0.2.2",
  "gmp-gateway",
  "hex",
  "k256",
+ "multisig 0.3.0",
  "reqwest 0.12.4",
  "rust_decimal",
  "rust_decimal_macros",
  "serde",
+ "serde_json",
  "serial_test",
  "solana-cli-config",
  "solana-client",
@@ -10984,6 +11200,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "url 2.5.2",
+ "voting-verifier 0.4.0",
  "xshell",
 ]
 

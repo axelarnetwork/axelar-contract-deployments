@@ -19,6 +19,8 @@ mod evm_tests;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    let cli = cli::Cli::try_parse()?;
+
     color_eyre::install()?;
 
     tracing_subscriber::registry()
@@ -29,6 +31,5 @@ async fn main() -> eyre::Result<()> {
                 .from_env_lossy(),
         )
         .init();
-    let cli = cli::Cli::try_parse()?;
     cli.run().await
 }

@@ -51,9 +51,43 @@ pub(crate) enum Cosmwasm {
         #[arg(short, long)]
         private_key_hex: String,
     },
+    Init {
+        #[arg(short, long)]
+        code_id: u64,
+        #[arg(short, long)]
+        private_key_hex: String,
+        #[command(subcommand)]
+        command: CosmwasmInit,
+    },
     /// Generate a new Axelar wallet, outputs the Axelar bech32 key and the hex
     /// private key
     GenerateWallet,
+}
+
+/// Initialize contracts by providing their specific init parameters.
+#[derive(Subcommand)]
+pub(crate) enum CosmwasmInit {
+    /// Initialize an already deployed voting verifier contract.
+    VotingVerifier {
+        #[arg(long)]
+        chain_name: String,
+    },
+    /// Initialize an already deployed gateway contract
+    Gateway {
+        #[arg(short, long)]
+        voting_verifier_address: String,
+    },
+    // Initialize an already deployed multisig prover contract.
+    MultisigProver {
+        #[arg(long)]
+        chain_id: u64,
+        #[arg(long)]
+        gateway_address: String,
+        #[arg(long)]
+        voting_verifier_address: String,
+        #[arg(long)]
+        chain_name: String,
+    },
 }
 /// The contracts are pre-built as ensured by the `evm-contracts-rs` crate in
 /// our workspace. On EVM we don't differentiate deployment fron initialization
@@ -141,83 +175,127 @@ pub(crate) enum SolanaInitSubcommand {
 impl Cli {
     pub(crate) async fn run(self) -> eyre::Result<()> {
         match self {
-            Cli::Solana { command } => match command {
-                Solana::Build { contract } => {
-                    cmd::solana::build_contract(contract)?;
-                }
-                Solana::Deploy {
-                    contract,
-                    keypair_path,
-                    url,
-                    ws_url,
-                    program_id,
-                } => {
-                    cmd::solana::deploy(
-                        contract,
-                        program_id.as_path(),
-                        &keypair_path,
-                        &url,
-                        &ws_url,
-                    )?;
-                }
-                Solana::Init { contract } => match &contract {
-                    SolanaInitSubcommand::GmpGateway {
-                        auth_weighted_file,
-                        rpc_url,
-                        payer_kp_path,
-                    } => {
-                        cmd::solana::init_gmp_gateway(auth_weighted_file, rpc_url, payer_kp_path)
-                            .await?;
-                    }
-                },
-            },
+            Cli::Solana { command } => handle_solana(command).await?,
             Cli::Evm {
                 node_rpc,
                 admin_private_key,
                 command,
-            } => {
-                let signer = init_evm_signer(&node_rpc, admin_private_key.clone()).await;
-                let signer = evm_contracts_test_suite::EvmSigner {
-                    wallet: admin_private_key.clone(),
-                    signer,
-                };
-
-                match command {
-                    Evm::DeployAxelarMemo {
-                        gateway_contract_address,
-                    } => {
-                        cmd::evm::deploy_axelar_memo(signer, gateway_contract_address).await?;
-                    }
-                    Evm::SendMemoToSolana {
-                        evm_memo_contract_address,
-                        memo_to_send,
-                        solana_chain_id,
-                    } => {
-                        cmd::evm::send_memo_to_solana(
-                            signer,
-                            evm_memo_contract_address,
-                            memo_to_send,
-                            solana_chain_id,
-                        )
-                        .await?;
-                    }
-                }
-            }
-            Cli::Cosmwasm { command } => match command {
-                Cosmwasm::Build => {
-                    cmd::cosmwasm::build().await?;
-                }
-                Cosmwasm::Deploy { private_key_hex } => {
-                    let key_bytes = hex::decode(private_key_hex)?;
-                    let signing_key = cosmrs::crypto::secp256k1::SigningKey::from_slice(&key_bytes)
-                        .context("invalid secp256k1 private key")?;
-                    cmd::cosmwasm::deploy(signing_key).await?;
-                }
-                Cosmwasm::GenerateWallet => cmd::cosmwasm::generate_wallet()?,
-            },
+            } => handle_evm(node_rpc, admin_private_key, command).await?,
+            Cli::Cosmwasm { command } => handle_cosmwasm(command).await?,
         };
         Ok(())
     }
+}
+
+async fn handle_solana(command: Solana) -> Result<(), eyre::Error> {
+    match command {
+        Solana::Build { contract } => {
+            cmd::solana::build_contract(contract)?;
+        }
+        Solana::Deploy {
+            contract,
+            keypair_path,
+            url,
+            ws_url,
+            program_id,
+        } => {
+            cmd::solana::deploy(contract, program_id.as_path(), &keypair_path, &url, &ws_url)?;
+        }
+        Solana::Init { contract } => match &contract {
+            SolanaInitSubcommand::GmpGateway {
+                auth_weighted_file,
+                rpc_url,
+                payer_kp_path,
+            } => {
+                cmd::solana::init_gmp_gateway(auth_weighted_file, rpc_url, payer_kp_path).await?;
+            }
+        },
+    };
+    Ok(())
+}
+
+async fn handle_evm(
+    node_rpc: Url,
+    admin_private_key: LocalWallet,
+    command: Evm,
+) -> Result<(), eyre::Error> {
+    let signer = init_evm_signer(&node_rpc, admin_private_key.clone()).await;
+    let signer = evm_contracts_test_suite::EvmSigner {
+        wallet: admin_private_key.clone(),
+        signer,
+    };
+    match command {
+        Evm::DeployAxelarMemo {
+            gateway_contract_address,
+        } => {
+            cmd::evm::deploy_axelar_memo(signer, gateway_contract_address).await?;
+        }
+        Evm::SendMemoToSolana {
+            evm_memo_contract_address,
+            memo_to_send,
+            solana_chain_id,
+        } => {
+            cmd::evm::send_memo_to_solana(
+                signer,
+                evm_memo_contract_address,
+                memo_to_send,
+                solana_chain_id,
+            )
+            .await?;
+        }
+    };
+    Ok(())
+}
+async fn handle_cosmwasm(command: Cosmwasm) -> Result<(), eyre::Error> {
+    match command {
+        Cosmwasm::Build => {
+            cmd::cosmwasm::build().await?;
+        }
+        Cosmwasm::Deploy { private_key_hex } => {
+            let key_bytes = hex::decode(private_key_hex)?;
+            let signing_key = cosmrs::crypto::secp256k1::SigningKey::from_slice(&key_bytes)
+                .context("invalid secp256k1 private key")?;
+            cmd::cosmwasm::deploy(signing_key).await?;
+        }
+        Cosmwasm::GenerateWallet => cmd::cosmwasm::generate_wallet()?,
+        Cosmwasm::Init {
+            code_id,
+            command,
+            private_key_hex,
+        } => {
+            let key_bytes = hex::decode(private_key_hex)?;
+            let signing_key = cosmrs::crypto::secp256k1::SigningKey::from_slice(&key_bytes)
+                .context("invalid secp256k1 private key")?;
+            match command {
+                CosmwasmInit::VotingVerifier { chain_name } => {
+                    cmd::cosmwasm::init_voting_verifier(code_id, signing_key, chain_name).await?;
+                }
+                CosmwasmInit::Gateway {
+                    voting_verifier_address,
+                } => {
+                    cmd::cosmwasm::init_gateway(code_id, signing_key, voting_verifier_address)
+                        .await?;
+                }
+                CosmwasmInit::MultisigProver {
+                    chain_id,
+                    gateway_address,
+                    voting_verifier_address,
+                    chain_name,
+                } => {
+                    cmd::cosmwasm::init_multisig_prover(
+                        code_id,
+                        signing_key,
+                        chain_id,
+                        gateway_address,
+                        voting_verifier_address,
+                        chain_name,
+                    )
+                    .await?;
+                }
+            }
+        }
+    };
+    Ok(())
 }
 
 async fn init_evm_signer(

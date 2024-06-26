@@ -9,6 +9,7 @@
 [submodule "evm-contracts/lib/axelar-gmp-sdk-solidity"]
 	path = evm-contracts/lib/axelar-gmp-sdk-solidity
 	url = https://github.com/axelarnetwork/axelar-gmp-sdk-solidity
-[submodule "solana/axelar-amplifier"]
-	path = solana/axelar-amplifier
-	url = https://github.com/eigerco/axelar-amplifier.git
+[submodule "axelar-amplifier"]
+	path = axelar-amplifier
+	url = git@github.com:eigerco/axelar-amplifier.git
+	branch = solana

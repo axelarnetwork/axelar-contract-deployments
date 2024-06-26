@@ -9,7 +9,27 @@ dependencies = ["check", "test", "unused-deps"]
 [tasks.fmt]
 workspace = false
 command = "cargo"
-args = ["fmt", "--all", "--", "--emit=files"]
+args = [
+  "fmt",
+  "--package",
+  "axelar-executable",
+  "--package",
+  "axelar-message-primitives",
+  "--package",
+  "evm-contracts-rs",
+  "--package",
+  "evm-contracts-test-suite",
+  "--package",
+  "interchain-token-transfer-gmp",
+  "--package",
+  "program-utils",
+  "--package",
+  "test-fixtures",
+  "--package",
+  "xtask",
+  "--",
+  "--emit=files",
+]
 dependencies = ["fmt-clippy"]
 
 [tasks.fmt-clippy]
@@ -30,7 +50,26 @@ dependencies = ["fmt-check", "clippy-check"]
 [tasks.fmt-check]
 workspace = false
 command = "cargo"
-args = ["fmt", "--all", "--check"]
+args = [
+  "fmt",
+  "--package",
+  "axelar-executable",
+  "--package",
+  "axelar-message-primitives",
+  "--package",
+  "evm-contracts-rs",
+  "--package",
+  "evm-contracts-test-suite",
+  "--package",
+  "interchain-token-transfer-gmp",
+  "--package",
+  "program-utils",
+  "--package",
+  "test-fixtures",
+  "--package",
+  "xtask",
+  "--check",
+]
 
 [tasks.clippy-check]
 workspace = false
@@ -48,8 +87,8 @@ cargo test-sbf --package gmp-gateway
 cargo test-sbf --package axelar-solana-memo-program
 """
 dependencies = [
-    # normal tests that don't get picked up by test-sbf
-    "test-non-sbf",
+  # normal tests that don't get picked up by test-sbf
+  "test-non-sbf",
 ]
 
 [tasks.build-sbf]
@@ -61,23 +100,23 @@ args = ["build-sbf"]
 workspace = false
 command = "cargo"
 args = [
-    "test",
-    "--package",
-    "axelar-executable",
-    "--package",
-    "axelar-message-primitives",
-    "--package",
-    "evm-contracts-rs",
-    "--package",
-    "evm-contracts-test-suite",
-    "--package",
-    "interchain-token-transfer-gmp",
-    "--package",
-    "program-utils",
-    "--package",
-    "test-fixtures",
-    "--package",
-    "xtask",
+  "test",
+  "--package",
+  "axelar-executable",
+  "--package",
+  "axelar-message-primitives",
+  "--package",
+  "evm-contracts-rs",
+  "--package",
+  "evm-contracts-test-suite",
+  "--package",
+  "interchain-token-transfer-gmp",
+  "--package",
+  "program-utils",
+  "--package",
+  "test-fixtures",
+  "--package",
+  "xtask",
 ]
 
 [tasks.audit]
