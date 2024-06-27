@@ -10,7 +10,7 @@ async function signTx(keypair, client, encodedTx, options) {
     return await signTransactionBlockBytes(keypair, client, encodedTx, options);
 }
 
-async function executeCombinedSingature(client, txBlockBytes, options) {
+async function executeCombinedSignature(client, txBlockBytes, options) {
     const { multisigTxFile, txData } = options;
 
     if (!multisigTxFile) {
@@ -33,7 +33,7 @@ async function executeCombinedSingature(client, txBlockBytes, options) {
     printInfo('Transaction result', JSON.stringify(txResult));
 }
 
-async function combineSingature(client, chain, txBlockBytes, options) {
+async function combineSignature(client, chain, txBlockBytes, options) {
     const { signatures, txData } = options;
 
     if (!signatures || signatures.length === 0) {
@@ -93,12 +93,12 @@ async function processCommand(chain, options) {
         }
 
         case 'combine': {
-            fileData = await combineSingature(client, chain, txBlockBytes, options);
+            fileData = await combineSignature(client, chain, txBlockBytes, options);
             break;
         }
 
         case 'execute': {
-            await executeCombinedSingature(client, txBlockBytes, options);
+            await executeCombinedSignature(client, txBlockBytes, options);
             break;
         }
 
@@ -134,7 +134,7 @@ if (require.main === module) {
 
     program.addOption(new Option('--file <file>', 'path to file with tx data to be signed').env('FILE'));
     program.addOption(new Option('--action <action>', 'action').choices(['sign', 'combine', 'execute']).makeOptionMandatory(true));
-    program.addOption(new Option('--multisigKey <multisigKey>', 'multisig key to combine singature').env('MULTISIG_KEY'));
+    program.addOption(new Option('--multisigKey <multisigKey>', 'multisig key to combine signature').env('MULTISIG_KEY'));
     program.addOption(new Option('--signatures [files...]', 'array of signed transaction files'));
     program.addOption(new Option('--offline', 'run in offline mode'));
     program.addOption(new Option('--multisigTxFile <file>', 'file path to the combined signature'));
