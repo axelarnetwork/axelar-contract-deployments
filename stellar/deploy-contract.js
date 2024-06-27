@@ -22,16 +22,41 @@ function getInitializeArgs(chain, contractName, wallet, options) {
         }
 
         case 'axelar_auth_verifiers': {
-            const addressVal = nativeToScVal(address, { type: 'address' });
+            const owner = nativeToScVal(address, { type: 'address' });
             const previousSignersRetention = nativeToScVal(15, { type: 'u64' });
             const domainSeparator = nativeToScVal(Buffer.alloc(32));
-            const miniumumRotationDelay = nativeToScVal(0, { type: 'u64' });
-            const singers = nativeToScVal([nativeToScVal(Address.fromString(wallet.publicKey()).toBuffer())]);
-            const weights = nativeToScVal([nativeToScVal(1, { type: 'u256' })]);
-            const threshold = nativeToScVal(1, { type: 'u256' });
-            const nonce = nativeToScVal(Buffer.alloc(32));
+            const minimumRotationDelay = nativeToScVal(0, { type: 'u64' });
 
-            return [addressVal, previousSignersRetention, domainSeparator, miniumumRotationDelay, singers, weights, threshold, nonce];
+            // Create a vector of WeightedSigners
+            const initialSigners = nativeToScVal(
+                [
+                    {
+                        nonce: Buffer.alloc(32),
+                        signers: [
+                            {
+                                signer: Address.fromString(wallet.publicKey()).toBuffer(),
+                                weight: 1,
+                            },
+                        ],
+                        threshold: 1,
+                    },
+                ],
+                {
+                    type: {
+                        signers: [
+                            'symbol',
+                            {
+                                signer: ['symbol', 'bytes'],
+                                weight: ['symbol', 'u256'],
+                            },
+                        ],
+                        nonce: ['symbol', 'bytes'],
+                        threshold: ['symbol', 'u256'],
+                    },
+                },
+            );
+
+            return [owner, previousSignersRetention, domainSeparator, minimumRotationDelay, initialSigners];
         }
 
         case 'axelar_operators':
@@ -80,6 +105,13 @@ async function processCommand(options, config, chain) {
 
         if (typeof value === 'bigint') {
             return value.toString();
+        }
+
+        if (typeof value === 'object') {
+            return Object.entries(value).reduce((acc, [key, val]) => {
+                acc[key] = serializeValue(val);
+                return acc;
+            }, {});
         }
 
         return value;
