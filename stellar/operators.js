@@ -1,44 +1,54 @@
 const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
-const { getWallet, prepareTransaction, buildTransaction, sendTransaction, estimateCost } = require('./utils');
+const { getWallet, prepareTransaction, buildTransaction, sendTransaction, estimateCost, getNetworkPassphrase } = require('./utils');
 const { loadConfig, printInfo, parseArgs, validateParameters } = require('../evm/utils');
 require('./cli-utils');
 
+const { signTransaction } = require('@stellar/freighter-api');
+
 async function processCommand(options, _, chain) {
     const [wallet, server] = await getWallet(chain, options);
+    const { Client } = await import('axelar-operators');
 
     const contract = new Contract(options.address || chain.contracts?.axelar_operators?.address);
 
     let operation;
 
+    const address = Address.fromString(options.args || wallet.publicKey());
+    const client = new Client({
+        publicKey: wallet.publicKey(),
+        networkPassphrase: getNetworkPassphrase(chain.networkType),
+        rpcUrl: chain.rpc,
+        contractId: options.address || chain.contracts?.axelar_operators?.address,
+    });
+
     switch (options.action) {
         case 'is_operator': {
-            if (!options.args) {
-                throw new Error(`Missing --args operatorAddress the params.`);
-            }
+            const result = await client.is_operator({ account: address });
+            printInfo('Result', result.result);
+            return;
 
-            const operator = Address.fromString(options.args).toScVal();
-            operation = contract.call('is_operator', operator);
-            break;
+            // operation = contract.call('is_operator', address.toScVal());
+            // break;
         }
 
         case 'add_operator': {
-            if (!options.args) {
-                throw new Error(`Missing --args operatorAddress the params.`);
-            }
-
-            const operator = Address.fromString(options.args).toScVal();
-            operation = contract.call('add_operator', operator);
+            operation = contract.call('add_operator', address.toScVal());
             break;
+
+            // const tx = await client.add_operator({ account: address });
+            // console.log(
+            //     await tx.signAndSend({
+            //         signTransaction(tx) {
+            //             return wallet.sign(tx);
+            //         },
+            //     }),
+            // );
+            // return;
         }
 
         case 'remove_operator': {
-            if (!options.args) {
-                throw new Error(`Missing --args operatorAddress the params.`);
-            }
-
-            const operator = Address.fromString(options.args).toScVal();
-            operation = contract.call('remove_operator', operator);
+            operation = contract.call('remove_operator', address.toScVal());
             break;
         }
 
