@@ -17,41 +17,36 @@ async function processCommand(chain, options) {
 
     if (options.objectId) {
         objectId = options.objectId;
-        validateParameters({
-            isKeccak256Hash: { objectId },
-        });
     } else if (options.contractName && options.objectName) {
         const { contractName, objectName } = options;
 
         validateParameters({
             isString: { contractName, objectName },
         });
-        const contractsData = chain.contracts;
+
+        const contractsData = chain?.contracts;
 
         if (!contractsData) {
-            throw new Error(`contract data not found`);
+            throw new Error(`Contract data not found`);
         }
 
-        const contractObject = contractsData[`${contractName}`];
+        const contractObject = contractsData[contractName];
 
-        if (!contractObject) {
-            throw new Error(`contract name [${contractName}] not found`);
-        }
-
-        const objectsData = contractObject.objects;
+        const objectsData = contractObject?.objects;
 
         if (!objectsData) {
-            throw new Error(`contract objects not found`);
+            throw new Error(`Contract objects not found`);
         }
 
-        objectId = objectsData[`${objectName}`];
-
-        if (!objectId) {
-            throw new Error(`object name [${objectName}] not found`);
-        }
+        objectId = objectsData[objectName];
     } else {
-        throw new Error('provide object id or contract name with object name');
+        throw new Error('Provide object id or contract name with object name');
     }
+
+    validateParameters({
+        isNonEmptyString: { objectId },
+        isKeccak256Hash: { objectId },
+    });
 
     const tx = new TransactionBlock();
     tx.transferObjects([`${objectId}`], tx.pure(recipient));
