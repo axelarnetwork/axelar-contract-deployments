@@ -1,181 +1,179 @@
-'use strict';
-
 require('dotenv').config();
 
 const axios = require('axios');
 const { Command, Option } = require('commander');
+const csv = require('csv-parser');
+const { writeFile, createReadStream } = require('fs');
 const { ethers } = require('hardhat');
 const { Contract, getDefaultProvider } = ethers;
+
+const { readJSON } = require(`${__dirname}/../axelar-chains-config`);
+const keys = readJSON(`${__dirname}/../keys.json`);
 const {
-    loadConfig,
     validateParameters,
-    printError,
     getContractJSON,
-    printInfo,
+    loadConfig,
+    copyObject,
     printWarn,
-    printObj,
-    isValidAddress,
-    isStringArray,
+    printError,
+    getDeploymentTx,
+    printInfo,
 } = require('./utils');
 
-const interchainTokenFactoryABI = getContractJSON('InterchainTokenFactory').abi;
 const interchainTokenABI = getContractJSON('InterchainToken').abi;
-const interchainTokenServiceABI = getContractJSON('InterchainTokenService').abi;
-const erc20ABI = getContractJSON('IERC20Named').abi;
 
 async function processCommand(config, options) {
-    try {
-        const { deployer, address, its, rpc, api } = options;
-        let { source, destination } = options;
+    const { file, startingIndex } = options;
 
-        validateParameters({ isValidAddress: { address }, isNonEmptyString: { source, destination } });
+    if (startingIndex) {
+        validateParameters({ isValidNumber: { startingIndex } });
+    }
 
-        const sourceChain = config.chains[source.toLowerCase()];
+    const data = await loadCsvFile(file, startingIndex);
+    const finalData = copyObject(data);
+    let totalRowsRemoved = 0;
 
-        if (!sourceChain) {
-            throw new Error(`Chain ${source} is not defined in the info file`);
+    for (let i = 0; i < data.length; ++i) {
+        const row = data[i];
+        const tokenAddress = row[0];
+        const destinationChainsRaw = row[2].split(',');
+        const destinationChains = destinationChainsRaw.map((chain) => chain.trim().toLowerCase()).filter((chain) => chain);
+        const dustTx = row[4];
+
+        validateParameters({ isValidAddress: { tokenAddress } });
+
+        const invalidDestinationChains = await verifyChains(config, tokenAddress, destinationChains);
+        const validDestinationChains = destinationChains.filter((chain) => !invalidDestinationChains.includes(chain));
+
+        if (validDestinationChains.length > 0) {
+            finalData[i - totalRowsRemoved][2] =
+                validDestinationChains.length === 1 ? `${validDestinationChains[0]}` : `"${validDestinationChains.join(', ')}"`;
+        } else {
+            finalData.splice(i - totalRowsRemoved, 1);
+            ++totalRowsRemoved;
+            continue;
         }
+
+        const chain = validDestinationChains[0];
+        const apiUrl = config.chains[chain].explorer.api;
+        const apiKey = keys.chains[chain].api;
+        let deploymentTx, isValidDustx;
 
         try {
-            destination = JSON.parse(destination);
-        } catch (error) {
-            throw new Error(`Unable to parse destination chains: ${error}`);
+            deploymentTx = await getDeploymentTx(apiUrl, apiKey, tokenAddress);
+            isValidDustx = await verifyDustTx(deploymentTx, dustTx, config.chains);
+        } catch {}
+
+        if (!isValidDustx) {
+            finalData.splice(i - totalRowsRemoved, 1);
+            ++totalRowsRemoved;
         }
+    }
 
-        if (!isStringArray(destination)) {
-            throw new Error(`Invalid destination chains type, expected string`);
-        }
+    await createCsvFile('pending_ownership_requests.csv', finalData);
+}
 
-        const invalidDestinations = destination.filter((chain) => !config.chains[chain.toLowerCase()]);
+async function verifyDustTx(deploymentTx, dustTx, chains) {
+    const senderDeploymentTx = await getSenderDeploymentTx(deploymentTx);
+    const senderDustTx = await getSenderDustTx(dustTx, chains);
 
-        if (invalidDestinations.length > 0) {
-            throw new Error(`Chains ${invalidDestinations.join(', ')} are not defined in the info file`);
-        }
+    return senderDeploymentTx === senderDustTx;
+}
 
-        const provider = getDefaultProvider(rpc || sourceChain.rpc);
-        let itsAddress;
+async function getSenderDeploymentTx(deploymentTx) {
+    try {
+        const response = await axios.get('https://api.axelarscan.io/gmp/searchGMP', {
+            params: { txHash: deploymentTx },
+            headers: { 'Content-Type': 'application/json' },
+        });
 
-        if (its) {
-            if (isValidAddress(its)) {
-                itsAddress = its;
-            } else {
-                throw new Error(`Invalid ITS address: ${its}`);
-            }
-        } else {
-            itsAddress = sourceChain.contracts.InterchainTokenService?.address;
-        }
-
-        if (deployer === 'gateway') {
-            const gatewayTokens = await fetchGatewayTokens(address, sourceChain.name.toLowerCase(), destination, provider, api);
-            printInfo(`Gateway Tokens on destination chains`);
-            printObj(gatewayTokens);
-            return;
-        }
-
-        if (await isTokenCanonical(address, itsAddress, provider)) {
-            printInfo(`Provided address ${address} is a canonical token`);
-            return;
-        }
-
-        const interchainToken = new Contract(address, interchainTokenABI, provider);
-        const tokenId = await isNativeInterchainToken(interchainToken);
-        const interchainTokens = await fetchNativeInterchainTokens(address, config, tokenId, destination, its);
-        printInfo(`Native Interchain Tokens on destination chains`);
-        printObj(interchainTokens);
+        const data = response.data.data[0];
+        return data.call.receipt.from.toLowerCase();
     } catch (error) {
-        printError('Error', error.message);
+        throw new Error('Error fetching sender from deploymentTx: ', error);
     }
 }
 
-async function isTokenCanonical(address, itsAddress, provider) {
-    let isCanonicalToken;
-    const its = new Contract(itsAddress, interchainTokenServiceABI, provider);
-    const itsFactory = new Contract(await its.interchainTokenFactory(), interchainTokenFactoryABI, provider);
-    const canonicalTokenId = await itsFactory.canonicalInterchainTokenId(address);
+async function getSenderDustTx(dustTx, chains) {
+    if (!dustTx.startsWith('https') && !dustTx.startsWith('0x')) {
+        throw new Error('Invalid dustTx format. It must start with "https" or "0x".');
+    }
 
-    try {
-        const validCanonicalAddress = await its.validTokenAddress(canonicalTokenId);
-        isCanonicalToken = address.toLowerCase() === validCanonicalAddress.toLowerCase();
-    } catch {}
+    const txHash = dustTx.startsWith('https') ? dustTx.split('/').pop() : dustTx;
 
-    return isCanonicalToken;
+    for (const chainName in chains) {
+        const chain = chains[chainName];
+
+        if (chain.id.toLowerCase().includes('axelar')) continue;
+
+        try {
+            const provider = getDefaultProvider(chain.rpc);
+            const tx = await provider.getTransaction(txHash);
+            if (tx) return tx.from.toLowerCase();
+        } catch {}
+    }
+
+    throw new Error(`Transaction ${dustTx} not found on any chain`);
 }
 
-async function fetchNativeInterchainTokens(address, config, tokenId, destination, itsAddress) {
-    const interchainTokens = [];
+async function verifyChains(config, tokenAddress, destinationChains) {
+    const invalidDestinationChains = [];
 
-    try {
-        for (const chain of destination) {
+    for (const chain of destinationChains) {
+        try {
             const chainConfig = config.chains[chain];
-            itsAddress = itsAddress || chainConfig.contracts.InterchainTokenService?.address;
             const provider = getDefaultProvider(chainConfig.rpc);
-            const its = new Contract(itsAddress, interchainTokenServiceABI, provider);
+            const token = new Contract(tokenAddress, interchainTokenABI, provider);
+            const tokenId = await token.interchainTokenId();
 
-            if ((await its.validTokenAddress(tokenId)).toLowerCase() === address.toLowerCase()) {
-                interchainTokens.push({ [chain]: address });
-            } else {
-                printWarn(`No native Interchain token found for tokenId ${tokenId} on chain ${chain}`);
-            }
+            validateParameters({ isValidTokenId: { tokenId } });
+        } catch {
+            // printWarn(`No Interchain token found for address ${tokenAddress} on chain ${chain}`);
+            invalidDestinationChains.push(chain);
+        }
+    }
+
+    return invalidDestinationChains;
+}
+
+async function loadCsvFile(filePath, startingIndex = 0) {
+    const results = [];
+
+    try {
+        const stream = createReadStream(filePath).pipe(csv());
+
+        for await (const row of stream) {
+            results.push(Object.values(row));
         }
 
-        if (destination.length !== interchainTokens.length) {
-            printError('Native Interchain tokens not found on all destination chains');
-        }
-
-        return interchainTokens;
+        return results.slice(startingIndex);
     } catch (error) {
-        throw new Error('Unable to fetch native interchain tokens on destination chains');
+        throw new Error(`Error loading CSV file: ${error}`);
     }
 }
 
-async function isNativeInterchainToken(token) {
-    try {
-        return await token.interchainTokenId();
-    } catch {
-        throw new Error(`The token at address ${await token.address} is not a Interchain Token`);
+async function createCsvFile(filePath, data) {
+    if (!data.length) {
+        printWarn('Input data is empty. No CSV file created.');
+        return;
     }
-}
 
-async function isGatewayToken(apiUrl, address) {
-    try {
-        const { data: sourceData } = await axios.get(apiUrl);
+    const columnNames = ['Token Address', 'Chains to claim token ownership on', 'Telegram Contact details'];
+    const selectedColumns = [0, 2, 3]; // Indexes of required columns
 
-        if (!(sourceData.confirmed && !sourceData.is_external)) {
-            throw new Error();
+    const filteredData = data.map((row) => {
+        return selectedColumns.map((index) => row[index]);
+    });
+
+    const csvContent = [columnNames, ...filteredData].map((row) => row.join(',')).join('\n');
+
+    writeFile(filePath, csvContent, { encoding: 'utf8' }, (error) => {
+        if (error) {
+            printError('Error writing CSV file:', error);
+        } else {
+            printInfo('Created CSV file at', filePath);
         }
-    } catch {
-        throw new Error(`The token at address ${address} is not deployed through Axelar Gateway.`);
-    }
-}
-
-async function fetchGatewayTokens(address, source, destination, provider, api) {
-    const gatewayTokens = [];
-    const apiUrl = api || 'https://lcd-axelar.imperator.co/axelar/evm/v1beta1/token_info/';
-
-    await isGatewayToken(`${apiUrl}${source}?address=${address}`, address);
-
-    try {
-        const token = new Contract(address, erc20ABI, provider);
-        const symbol = await token.symbol();
-
-        for (const chain of destination) {
-            const { data: chainData } = await axios.get(`${apiUrl}${chain}?symbol=${symbol}`);
-
-            if (!(chainData.confirmed && !chainData.is_external && chainData.address)) {
-                printWarn(`No Gateway token found for token symbol ${symbol} on chain ${chain}`);
-            } else {
-                gatewayTokens.push({ [chain]: chainData.address });
-            }
-        }
-
-        if (destination.length !== gatewayTokens.length) {
-            printError('Gateway tokens not found on all destination chains');
-        }
-
-        return gatewayTokens;
-    } catch (error) {
-        throw new Error('Unable to fetch gateway tokens on destination chains');
-    }
+    });
 }
 
 async function main(options) {
@@ -188,36 +186,21 @@ async function main(options) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('check-ownership-request').description('Script to check token ownership claim request');
-
-    program.addOption(
-        new Option('--deployer <deployer>', 'deployed through which axelar product')
-            .choices(['gateway', 'its'])
-            .makeOptionMandatory(true)
-            .env('DEPLOYER'),
-    );
-    program.addOption(
-        new Option('-s, --source <sourceChain>', 'source chain on which provided contract address is deployed')
-            .makeOptionMandatory(true)
-            .env('SOURCE'),
-    );
-    program.addOption(
-        new Option('-d, --destination <destinationChains>', 'destination chains on which other tokens are deployed')
-            .makeOptionMandatory(true)
-            .env('DESTINATION'),
-    );
-    program.addOption(
-        new Option('-a, --address <token address>', 'deployed token address on source chain').makeOptionMandatory(true).env('ADDRESS'),
-    );
-    program.addOption(
-        new Option('-r, --rpc <rpc>', 'The rpc url for creating a provider on source chain to fetch token information').env('RPC'),
-    );
-    program.addOption(new Option('-i, --its <its>', 'Interchain token service override address'));
-    program.addOption(new Option('--api <apiUrl>', 'api url to check token deployed through gateway and the token details'));
-
-    program.action((options) => {
-        main(options);
-    });
+    program
+        .name('check-ownership-requests')
+        .description('Script to check token ownership claim requests')
+        .addOption(
+            new Option('-f, --file <file>', 'The csv file path containing details about pending token ownership requests')
+                .makeOptionMandatory(true)
+                .env('FILE'),
+        )
+        .addOption(
+            new Option(
+                '-s, --startingIndex <startingIndex>',
+                'The starting index from which data will be read. if not provided then whole file will be read',
+            ),
+        )
+        .action(main);
 
     program.parse();
 }
