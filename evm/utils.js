@@ -1255,6 +1255,7 @@ async function getDeploymentTx(apiUrl, apiKey, tokenAddress) {
 
 async function getWeightedSigners(config, chain, options) {
     let signers;
+    let verifierSetId;
 
     if (isValidAddress(options.keyID)) {
         // set the keyID as the signer for debug deployments
@@ -1277,9 +1278,11 @@ async function getWeightedSigners(config, chain, options) {
             threshold: Number(addresses.threshold),
             nonce,
         };
+
+        verifierSetId = addresses.verifierSetId;
     }
 
-    return [signers];
+    return { signers: [signers], verifierSetId };
 }
 
 module.exports = {
