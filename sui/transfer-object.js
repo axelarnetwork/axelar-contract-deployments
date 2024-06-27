@@ -25,20 +25,9 @@ async function processCommand(chain, options) {
         });
 
         const contractsData = chain?.contracts;
-
-        if (!contractsData) {
-            throw new Error(`Contract data not found`);
-        }
-
-        const contractObject = contractsData[contractName];
-
+        const contractObject = contractsData?.[contractName];
         const objectsData = contractObject?.objects;
-
-        if (!objectsData) {
-            throw new Error(`Contract objects not found`);
-        }
-
-        objectId = objectsData[objectName];
+        objectId = objectsData?.[objectName];
     } else {
         throw new Error('Provide object id or contract name with object name');
     }
