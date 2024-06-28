@@ -4,7 +4,7 @@ const { getWallet, prepareTransaction, buildTransaction, sendTransaction, estima
 const { loadConfig, printInfo, parseArgs, validateParameters } = require('../evm/utils');
 require('./cli-utils');
 
-const { signTransaction } = require('@stellar/freighter-api');
+// const { signTransaction } = require('@stellar/freighter-api');
 
 async function processCommand(options, _, chain) {
     const [wallet, server] = await getWallet(chain, options);
