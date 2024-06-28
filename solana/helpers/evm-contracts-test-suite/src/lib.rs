@@ -14,13 +14,14 @@ use std::sync::Arc;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::{Http, Provider};
-use ethers::signers::{LocalWallet, Wallet};
+use ethers::signers::{LocalWallet, Signer, Wallet};
 pub use {ethers, evm_contracts_rs};
 pub mod chain;
 mod deployments;
 pub use deployments::get_domain_separator;
 
 /// A wrapper around the `SignerMiddleware` that provides some extra helpers
+#[derive(Clone)]
 pub struct EvmSigner {
     /// The signer middleware
     pub signer: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
@@ -30,6 +31,13 @@ pub struct EvmSigner {
     pub wallet: LocalWallet,
 }
 
+impl std::fmt::Debug for EvmSigner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EvmSigner")
+            .field("address", &self.wallet.address())
+            .finish()
+    }
+}
 /// Utility type for the contract middleware.
 /// This type is used for when we instantiate new contract instances
 pub type ContractMiddleware = SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>;

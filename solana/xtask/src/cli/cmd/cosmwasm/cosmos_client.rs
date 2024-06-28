@@ -18,7 +18,7 @@ pub(crate) mod network {
     impl Network {
         pub(crate) async fn rpc(&self) -> eyre::Result<cosmrs::rpc::HttpClient> {
             use cosmrs::rpc::Client;
-            tracing::info!("attempting to create a http client");
+            tracing::debug!("attempting to create a http client");
             let rpc_client = cosmrs::rpc::HttpClient::new(self.rpc_endpoint)?;
 
             rpc_client
@@ -26,7 +26,7 @@ pub(crate) mod network {
                 .await
                 .expect("error waiting for RPC to return healthy responses");
 
-            tracing::info!("cosmos rpc client created");
+            tracing::debug!("cosmos rpc client created");
 
             Ok(rpc_client)
         }
@@ -116,7 +116,7 @@ pub(crate) mod signer {
                 tx_body,
             )?;
             let gas_info = &self.network.simulate(tx_raw.to_bytes()?).await?;
-            tracing::info!(?gas_info, "simulated gas");
+            tracing::debug!(?gas_info, "simulated gas");
             Ok(gas.fee_from_gas_simulation(gas_info))
         }
 
@@ -156,13 +156,39 @@ pub(crate) mod signer {
             let fee = self.estimate_fee(gas.clone(), &acc, &tx_body).await?;
 
             let tx_raw = self.sign_tx(&acc, fee, &tx_body)?;
-            tracing::info!("tx signed");
+            tracing::debug!("tx signed");
 
             let rpc_client = self.network.rpc().await?;
             let tx_commit_response = tx_raw.broadcast_commit(&rpc_client).await?;
-            tracing::info!("tx broadcasted");
+            tracing::debug!("tx broadcasted");
 
+            tracing::info!(hash = ?tx_commit_response.hash, tx_result = ?tx_commit_response.tx_result.log, "raw respones log");
             Ok(tx_commit_response)
+        }
+
+        pub(crate) async fn query<T: serde::de::DeserializeOwned>(
+            &self,
+            address: AccountId,
+            query_data: Vec<u8>,
+        ) -> eyre::Result<T> {
+            use cosmrs::proto::cosmwasm::wasm::v1::query_client;
+
+            let mut c = query_client::QueryClient::connect(self.network.grpc_endpoint).await?;
+
+            let res = c
+                .smart_contract_state(
+                    cosmrs::proto::cosmwasm::wasm::v1::QuerySmartContractStateRequest {
+                        address: address.to_string(),
+                        query_data,
+                    },
+                )
+                .await?
+                .into_inner()
+                .data;
+
+            let result = serde_json::from_slice::<T>(res.as_ref())?;
+
+            Ok(result)
         }
     }
 }

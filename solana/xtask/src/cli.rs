@@ -1,13 +1,20 @@
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 
 use clap::{Parser, Subcommand};
 use cmd::solana::SolanaContract;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
-use ethers::signers::LocalWallet;
+use ethers::signers::coins_bip39::English;
+use ethers::signers::{LocalWallet, MnemonicBuilder, Signer};
+use ethers::types::Address;
 use eyre::Context;
+use k256::SecretKey;
 use url::Url;
+
+use self::cmd::cosmwasm::cosmos_client::signer::SigningClient;
+use self::cmd::cosmwasm::{AXELAR_ACCOUNT_PREFIX, AXELAR_DEVNET};
 
 pub(crate) mod cmd;
 
@@ -25,12 +32,11 @@ pub(crate) enum Cli {
     },
     /// Delpoy, instantiate and operate with evm chains and our demo contracts
     Evm {
-        /// The URL of the node to connect to
         #[arg(short, long)]
-        node_rpc: Url,
+        source_evm_chain: String,
         /// The private key of the account that will send the tx
         #[arg(short, long)]
-        admin_private_key: LocalWallet,
+        admin_private_key: String,
         /// The command to execute
         #[command(subcommand)]
         command: Evm,
@@ -39,6 +45,33 @@ pub(crate) enum Cli {
     Cosmwasm {
         #[command(subcommand)]
         command: Cosmwasm,
+    },
+    Testnet {
+        #[command(subcommand)]
+        command: TestnetFlowDirection,
+    },
+    GenerateEvm,
+}
+
+#[derive(Subcommand)]
+pub(crate) enum TestnetFlowDirection {
+    EvmToEvm {
+        #[arg(long)]
+        source_evm_private_key_hex: String,
+        #[arg(long)]
+        axelar_private_key_hex: String,
+        #[arg(long)]
+        source_memo_contract: Option<Address>,
+        #[arg(long)]
+        destination_memo_contract: Option<Address>,
+        #[arg(long)]
+        destination_evm_private_key_hex: String,
+        #[arg(long)]
+        source_evm_chain: String,
+        #[arg(long)]
+        destination_evm_chain: String,
+        #[arg(long)]
+        memo_to_send: String,
     },
 }
 
@@ -94,10 +127,7 @@ pub(crate) enum CosmwasmInit {
 /// as we do on Solana.
 #[derive(Subcommand)]
 pub(crate) enum Evm {
-    DeployAxelarMemo {
-        #[arg(short, long)]
-        gateway_contract_address: ethers::types::Address,
-    },
+    DeployAxelarMemo {},
     SendMemoToSolana {
         #[arg(short, long)]
         evm_memo_contract_address: ethers::types::Address,
@@ -177,17 +207,85 @@ impl Cli {
         match self {
             Cli::Solana { command } => handle_solana(command).await?,
             Cli::Evm {
-                node_rpc,
+                source_evm_chain,
                 admin_private_key,
                 command,
-            } => handle_evm(node_rpc, admin_private_key, command).await?,
+            } => handle_evm(source_evm_chain, admin_private_key, command).await?,
             Cli::Cosmwasm { command } => handle_cosmwasm(command).await?,
+            Cli::Testnet { command } => handle_testnet(command).await?,
+            Cli::GenerateEvm => handle_generating_evm_wallet()?,
         };
         Ok(())
     }
 }
 
-async fn handle_solana(command: Solana) -> Result<(), eyre::Error> {
+async fn handle_testnet(command: TestnetFlowDirection) -> eyre::Result<()> {
+    match command {
+        TestnetFlowDirection::EvmToEvm {
+            source_evm_private_key_hex: source_evm_private_key,
+            axelar_private_key_hex,
+            destination_evm_private_key_hex: destination_evm_private_key,
+            source_evm_chain,
+            destination_evm_chain,
+            memo_to_send,
+            source_memo_contract,
+            destination_memo_contract,
+        } => {
+            let source_chain = get_evm_chain(source_evm_chain.as_str())?;
+            let destination_chain = get_evm_chain(destination_evm_chain.as_str())?;
+
+            let source_evm_signer = create_evm_signer(&source_chain, source_evm_private_key).await;
+            let destination_evm_signer =
+                create_evm_signer(&source_chain, destination_evm_private_key).await;
+
+            let cosmwasm_signer = create_axelar_cosmsos_signer(axelar_private_key_hex)?;
+            let source_memo_contract =
+                get_or_deploy_evm_contract(source_memo_contract, &source_evm_signer, &source_chain)
+                    .await?;
+            let destination_memo_contract = get_or_deploy_evm_contract(
+                destination_memo_contract,
+                &destination_evm_signer,
+                &destination_chain,
+            )
+            .await?;
+
+            cmd::testnet::evm_to_evm(
+                &source_chain,
+                &destination_chain,
+                source_memo_contract,
+                destination_memo_contract,
+                source_evm_signer,
+                destination_evm_signer,
+                memo_to_send,
+                cosmwasm_signer,
+            )
+            .await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn get_or_deploy_evm_contract(
+    memo_contract: Option<ethers::types::H160>,
+    evm_signer: &evm_contracts_test_suite::EvmSigner,
+    chain: &cmd::testnet::devnet_amplifier::EvmChain,
+) -> Result<ethers::types::H160, eyre::Error> {
+    let destination_memo_contract = if let Some(addr) = memo_contract {
+        addr
+    } else {
+        tracing::info!(chain = ?chain.id, "memo contract not present, deploying");
+        let res =
+            cmd::evm::deploy_axelar_memo(evm_signer.clone(), chain.axelar_gateway.parse().unwrap())
+                .await?;
+        tracing::info!("sleeping for 10 seconds for the change to propagate");
+        tokio::time::sleep(Duration::from_secs(10)).await;
+        res
+    };
+    Ok(destination_memo_contract)
+}
+
+async fn handle_solana(command: Solana) -> eyre::Result<()> {
     match command {
         Solana::Build { contract } => {
             cmd::solana::build_contract(contract)?;
@@ -214,21 +312,12 @@ async fn handle_solana(command: Solana) -> Result<(), eyre::Error> {
     Ok(())
 }
 
-async fn handle_evm(
-    node_rpc: Url,
-    admin_private_key: LocalWallet,
-    command: Evm,
-) -> Result<(), eyre::Error> {
-    let signer = init_evm_signer(&node_rpc, admin_private_key.clone()).await;
-    let signer = evm_contracts_test_suite::EvmSigner {
-        wallet: admin_private_key.clone(),
-        signer,
-    };
+async fn handle_evm(chain: String, admin_private_key: String, command: Evm) -> eyre::Result<()> {
+    let chain = get_evm_chain(chain.as_str())?;
+    let signer = create_evm_signer(&chain, admin_private_key).await;
     match command {
-        Evm::DeployAxelarMemo {
-            gateway_contract_address,
-        } => {
-            cmd::evm::deploy_axelar_memo(signer, gateway_contract_address).await?;
+        Evm::DeployAxelarMemo {} => {
+            get_or_deploy_evm_contract(None, &signer, &chain).await?;
         }
         Evm::SendMemoToSolana {
             evm_memo_contract_address,
@@ -246,16 +335,14 @@ async fn handle_evm(
     };
     Ok(())
 }
-async fn handle_cosmwasm(command: Cosmwasm) -> Result<(), eyre::Error> {
+async fn handle_cosmwasm(command: Cosmwasm) -> eyre::Result<()> {
     match command {
         Cosmwasm::Build => {
             cmd::cosmwasm::build().await?;
         }
         Cosmwasm::Deploy { private_key_hex } => {
-            let key_bytes = hex::decode(private_key_hex)?;
-            let signing_key = cosmrs::crypto::secp256k1::SigningKey::from_slice(&key_bytes)
-                .context("invalid secp256k1 private key")?;
-            cmd::cosmwasm::deploy(signing_key).await?;
+            let cosmwasm_signer = create_axelar_cosmsos_signer(private_key_hex)?;
+            cmd::cosmwasm::deploy(cosmwasm_signer).await?;
         }
         Cosmwasm::GenerateWallet => cmd::cosmwasm::generate_wallet()?,
         Cosmwasm::Init {
@@ -263,18 +350,15 @@ async fn handle_cosmwasm(command: Cosmwasm) -> Result<(), eyre::Error> {
             command,
             private_key_hex,
         } => {
-            let key_bytes = hex::decode(private_key_hex)?;
-            let signing_key = cosmrs::crypto::secp256k1::SigningKey::from_slice(&key_bytes)
-                .context("invalid secp256k1 private key")?;
+            let client = create_axelar_cosmsos_signer(private_key_hex)?;
             match command {
                 CosmwasmInit::VotingVerifier { chain_name } => {
-                    cmd::cosmwasm::init_voting_verifier(code_id, signing_key, chain_name).await?;
+                    cmd::cosmwasm::init_voting_verifier(code_id, client, chain_name).await?;
                 }
                 CosmwasmInit::Gateway {
                     voting_verifier_address,
                 } => {
-                    cmd::cosmwasm::init_gateway(code_id, signing_key, voting_verifier_address)
-                        .await?;
+                    cmd::cosmwasm::init_gateway(code_id, client, voting_verifier_address).await?;
                 }
                 CosmwasmInit::MultisigProver {
                     chain_id,
@@ -284,7 +368,7 @@ async fn handle_cosmwasm(command: Cosmwasm) -> Result<(), eyre::Error> {
                 } => {
                     cmd::cosmwasm::init_multisig_prover(
                         code_id,
-                        signing_key,
+                        client,
                         chain_id,
                         gateway_address,
                         voting_verifier_address,
@@ -298,6 +382,29 @@ async fn handle_cosmwasm(command: Cosmwasm) -> Result<(), eyre::Error> {
     Ok(())
 }
 
+fn handle_generating_evm_wallet() -> eyre::Result<()> {
+    let mnemonic = bip39::Mnemonic::generate(24)?;
+    let words = mnemonic.word_iter().collect::<Vec<_>>().join(" ");
+    let mnemonic = MnemonicBuilder::<English>::default()
+        .phrase(ethers::types::PathOrString::String(words.clone()));
+    println!("mnemonic: {words}");
+
+    // Derive the first 3 private and public keys from the seed
+    for i in 0_u32..3_u32 {
+        let pk = mnemonic.clone().index(i).unwrap().build().unwrap();
+        let addr = pk.address();
+        let private_key = pk.signer().to_bytes();
+
+        println!("Key {i}: ");
+        println!("  Private Key: 0x{}", hex::encode(private_key));
+        println!("  Address: 0x{}", hex::encode(addr.to_fixed_bytes()));
+    }
+
+    let chains = cmd::testnet::devnet_amplifier::get_chains();
+    let allowed_chains = chains.keys().collect::<Vec<_>>();
+    println!("supported chains for axelar testnet operations: {allowed_chains:?}");
+    Ok(())
+}
 async fn init_evm_signer(
     node_rpc: &Url,
     wallet: LocalWallet,
@@ -317,4 +424,47 @@ async fn init_evm_signer(
         .unwrap();
 
     Arc::new(client)
+}
+
+async fn create_evm_signer(
+    chain: &cmd::testnet::devnet_amplifier::EvmChain,
+    private_key_hex: String,
+) -> evm_contracts_test_suite::EvmSigner {
+    let private_key =
+        SecretKey::from_slice(hex::decode(private_key_hex).unwrap().as_ref()).unwrap();
+    let wallet = LocalWallet::from_bytes(private_key.to_bytes().as_ref()).unwrap();
+    let source_signer = init_evm_signer(&chain.rpc, wallet.clone()).await;
+
+    evm_contracts_test_suite::EvmSigner {
+        wallet: wallet.clone(),
+        signer: source_signer,
+    }
+}
+
+fn create_axelar_cosmsos_signer(
+    axelar_private_key_hex: String,
+) -> Result<SigningClient, eyre::Error> {
+    let key_bytes = hex::decode(axelar_private_key_hex)?;
+    let signing_key = cosmrs::crypto::secp256k1::SigningKey::from_slice(&key_bytes)
+        .context("invalid secp256k1 private key")?;
+    let cosmwasm_signer = SigningClient {
+        network: AXELAR_DEVNET.clone(),
+        account_prefix: AXELAR_ACCOUNT_PREFIX.to_owned(),
+        signing_key,
+    };
+    Ok(cosmwasm_signer)
+}
+
+fn get_evm_chain(evm_chain: &str) -> eyre::Result<cmd::testnet::devnet_amplifier::EvmChain> {
+    let chains = cmd::testnet::devnet_amplifier::get_chains();
+    let chain = chains
+        .get(evm_chain)
+        .ok_or_else(|| {
+            let allowed_chains = chains.keys().collect::<Vec<_>>();
+            eyre::eyre!("allowed chain values are {allowed_chains:?}")
+        })?
+        .clone();
+
+    tracing::info!(?chain, "resolved evm chain");
+    Ok(chain.clone())
 }

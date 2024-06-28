@@ -1,10 +1,14 @@
-use ethers::types::Address;
+use ethers::types::{Address, TransactionReceipt};
 use evm_contracts_test_suite::evm_contracts_rs::contracts::{
     axelar_amplifier_gateway, axelar_memo,
 };
 use evm_contracts_test_suite::{ContractMiddleware, EvmSigner};
 
-pub(crate) async fn deploy_axelar_memo(signer: EvmSigner, gateway: Address) -> eyre::Result<()> {
+#[tracing::instrument]
+pub(crate) async fn deploy_axelar_memo(
+    signer: EvmSigner,
+    gateway: Address,
+) -> eyre::Result<Address> {
     tracing::info!("about to deploy AxelarMemo program");
     let gateway = axelar_amplifier_gateway::AxelarAmplifierGateway::<ContractMiddleware>::new(
         gateway,
@@ -16,15 +20,17 @@ pub(crate) async fn deploy_axelar_memo(signer: EvmSigner, gateway: Address) -> e
         .map_err(|err| eyre::eyre!(err))?;
     tracing::info!(memo_program =? contract.address(), "EVM Axelar Memo deployed");
 
-    Ok(())
+    Ok(contract.address())
 }
 
+#[tracing::instrument]
 pub(crate) async fn send_memo_to_solana(
     signer: EvmSigner,
     memo_contract: Address,
     memo_to_send: String,
     solana_chain_id: String,
-) -> eyre::Result<()> {
+) -> eyre::Result<TransactionReceipt> {
+    tracing::info!(addr = ?signer.signer.address(), "sending memo");
     let memo_contract =
         axelar_memo::AxelarMemo::<ContractMiddleware>::new(memo_contract, signer.signer.clone());
     let gateway_root_pda = gmp_gateway::get_gateway_root_config_pda().0;
@@ -51,5 +57,34 @@ pub(crate) async fn send_memo_to_solana(
 
     tracing::info!(tx_hash =? receipt.transaction_hash, "memo sent to the EVM Gateway");
 
-    Ok(())
+    Ok(receipt)
+}
+
+#[tracing::instrument]
+pub(crate) async fn send_memo_to_evm(
+    signer: EvmSigner,
+    memo_contract: Address,
+    memo_to_send: String,
+    chain_id: String,
+    destination_contract: String,
+) -> eyre::Result<TransactionReceipt> {
+    tracing::info!(addr = ?signer.signer.address(), "sending memo");
+    let memo_contract =
+        axelar_memo::AxelarMemo::<ContractMiddleware>::new(memo_contract, signer.signer.clone());
+    let receipt = memo_contract
+        .send_to_evm(
+            destination_contract,
+            chain_id.as_bytes().to_vec().into(),
+            ethers::types::Bytes::from_iter(memo_to_send.as_bytes()),
+        )
+        .send()
+        .await
+        .unwrap()
+        .await
+        .unwrap()
+        .unwrap();
+
+    tracing::info!(tx_hash =? receipt.transaction_hash, "memo sent to the EVM Gateway");
+
+    Ok(receipt)
 }

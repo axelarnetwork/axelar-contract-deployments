@@ -3,7 +3,6 @@ use std::str::FromStr;
 
 use axelar_wasm_std::MajorityThreshold;
 use cosmrs::cosmwasm::{MsgInstantiateContract, MsgStoreCode};
-use cosmrs::crypto::secp256k1::SigningKey;
 use cosmrs::tx::Msg;
 use cosmrs::Denom;
 use eyre::OptionExt;
@@ -15,7 +14,7 @@ use solana_sdk::keccak::hashv;
 use xshell::Shell;
 
 mod build;
-mod cosmos_client;
+pub(crate) mod cosmos_client;
 
 use build::{build_contracts, download_wasm_opt, setup_toolchain, unpack_tar_gz};
 
@@ -44,13 +43,14 @@ const CONTRACTS: [WasmContracts; 3] = [
     },
 ];
 
-const AXELAR_DEVNET: Network = Network {
+pub(crate) const AXELAR_DEVNET: Network = Network {
     chain_id: "devnet-amplifier",
     grpc_endpoint: "http://devnet-amplifier.axelar.dev:9090",
     rpc_endpoint: "http://devnet-amplifier.axelar.dev:26657",
 };
 
-const AXELAR_ACCOUNT_PREFIX: &str = "axelar";
+pub(crate) const AXELAR_ACCOUNT_PREFIX: &str = "axelar";
+
 const AXELAR_BASE_DENOM: &str = "uamplifier";
 const ROUTER_ADDRESS: &str = "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y";
 const GOVERNANCE_ADDRESS: &str = "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9";
@@ -83,13 +83,7 @@ pub(crate) async fn build() -> eyre::Result<()> {
     Ok(())
 }
 
-pub(crate) async fn deploy(signing_key: SigningKey) -> eyre::Result<()> {
-    let client = SigningClient {
-        network: AXELAR_DEVNET.clone(),
-        account_prefix: AXELAR_ACCOUNT_PREFIX.to_owned(),
-        signing_key,
-    };
-
+pub(crate) async fn deploy(client: SigningClient) -> eyre::Result<()> {
     // deploy each contract - do not instantiate
     for contract in CONTRACTS {
         tracing::info!(contract = ?contract.wasm_artifact_name, "about to deploy contract");
@@ -125,15 +119,10 @@ pub(crate) async fn deploy(signing_key: SigningKey) -> eyre::Result<()> {
 
 pub(crate) async fn init_voting_verifier(
     code_id: u64,
-    signing_key: SigningKey,
+    client: SigningClient,
     source_chain: String,
 ) -> eyre::Result<()> {
     use voting_verifier::msg::InstantiateMsg;
-    let client = SigningClient {
-        network: AXELAR_DEVNET.clone(),
-        account_prefix: AXELAR_ACCOUNT_PREFIX.to_owned(),
-        signing_key,
-    };
 
     let instantiate = MsgInstantiateContract {
         sender: client.signer_account_id()?,
@@ -173,15 +162,10 @@ fn majority_threshold() -> axelar_wasm_std::MajorityThreshold {
 
 pub(crate) async fn init_gateway(
     code_id: u64,
-    signing_key: SigningKey,
+    client: SigningClient,
     voting_verifier_address: String,
 ) -> eyre::Result<()> {
     use gateway::msg::InstantiateMsg;
-    let client = SigningClient {
-        network: AXELAR_DEVNET.clone(),
-        account_prefix: AXELAR_ACCOUNT_PREFIX.to_owned(),
-        signing_key,
-    };
 
     let instantiate = MsgInstantiateContract {
         sender: client.signer_account_id()?,
@@ -204,7 +188,7 @@ pub(crate) async fn init_gateway(
     Ok(())
 }
 
-fn default_gas() -> Gas {
+pub(crate) fn default_gas() -> Gas {
     Gas {
         gas_price: cosmos_client::gas::GasPrice {
             amount: dec!(0.007),
@@ -216,7 +200,7 @@ fn default_gas() -> Gas {
 
 pub(crate) async fn init_multisig_prover(
     code_id: u64,
-    signing_key: SigningKey,
+    client: SigningClient,
     chain_id: u64,
     gateway_address: String,
     voting_verifier_address: String,
@@ -241,11 +225,6 @@ pub(crate) async fn init_multisig_prover(
         key_type: KeyType,
         domain_separator: String,
     }
-    let client = SigningClient {
-        network: AXELAR_DEVNET.clone(),
-        account_prefix: AXELAR_ACCOUNT_PREFIX.to_owned(),
-        signing_key,
-    };
 
     let domain_separator = domain_separator(&chain_name, chain_id);
     let instantiate = MsgInstantiateContract {
@@ -353,7 +332,7 @@ pub(crate) mod path {
     }
 }
 
-trait ResponseEventExtract {
+pub(crate) trait ResponseEventExtract {
     fn extract(&self, event: &str, attribute: &str) -> eyre::Result<String>;
 }
 

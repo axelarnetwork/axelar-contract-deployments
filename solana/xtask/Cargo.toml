@@ -47,10 +47,14 @@ base64.workspace = true
 rust_decimal = "1.34"
 rust_decimal_macros = "1.34"
 serde_json.workspace = true
+cosmwasm-schema.workspace = true
+bip39 = { version = "2", features = ["rand"] }
 voting-verifier = { path = "../../axelar-amplifier/contracts/voting-verifier", features = ["library"] }
 gateway = { path = "../../axelar-amplifier/contracts/gateway", features = ["library"] }
 multisig = { path = "../../axelar-amplifier/contracts/multisig", features = ["library"] }
 axelar-wasm-std = { path = "../../axelar-amplifier/packages/axelar-wasm-std", features = ["library"] }
+gateway-api = { path = "../../axelar-amplifier/packages/gateway-api" }
+router-api = { path = "../../axelar-amplifier/packages/router-api" }
 
 [dev-dependencies]
 solana-program.workspace = true
@@ -63,3 +67,8 @@ serial_test = "3"
 solana-logger = "1.18.13"
 borsh.workspace = true
 test-log.workspace = true
+
+[build-dependencies]
+serde_json.workspace = true
+quote = "1"
+proc-macro2 = "1"

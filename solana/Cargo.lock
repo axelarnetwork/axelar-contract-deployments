@@ -886,6 +886,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "bip39"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93f2635620bf0b9d4576eb7bb9a38a55df78bd1205d26fa994b25911a69f212f"
+dependencies = [
+ "bitcoin_hashes",
+ "rand 0.7.3",
+ "rand_core 0.5.1",
+ "serde",
+ "unicode-normalization",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -899,6 +912,12 @@ name = "bit-vec"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
+
+[[package]]
+name = "bitcoin_hashes"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90064b8dee6815a6470d60bad07bbbaee885c0e12d04177138fa3291a01b7bc4"
 
 [[package]]
 name = "bitflags"
@@ -10503,9 +10522,9 @@ checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 
 [[package]]
 name = "unicode-normalization"
-version = "0.1.23"
+version = "0.1.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a56d1686db2308d901306f92a263857ef59ea39678a5458e7cb17f01415101f5"
+checksum = "5c5713f0fc4b5db668a2ac63cdb7bb4469d8c9fed047b1d0292cc7b0ce2ba921"
 dependencies = [
  "tinyvec",
 ]
@@ -11164,22 +11183,28 @@ dependencies = [
  "axelar-solana-memo-program",
  "axelar-wasm-std 0.1.0",
  "base64 0.21.7",
+ "bip39",
  "borsh 1.5.1",
  "clap 4.5.7",
  "color-eyre",
  "const_format",
  "cosmrs",
+ "cosmwasm-schema 2.0.4",
  "ethers",
  "evm-contracts-test-suite",
  "eyre",
  "flate2",
  "futures 0.3.30",
  "gateway 0.2.2",
+ "gateway-api",
  "gmp-gateway",
  "hex",
  "k256",
  "multisig 0.3.0",
+ "proc-macro2",
+ "quote",
  "reqwest 0.12.4",
+ "router-api",
  "rust_decimal",
  "rust_decimal_macros",
  "serde",

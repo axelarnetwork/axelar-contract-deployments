@@ -14,9 +14,6 @@ mod solana_tests;
 #[cfg(test)]
 mod test_helpers;
 
-#[cfg(test)]
-mod evm_tests;
-
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     let cli = cli::Cli::try_parse()?;

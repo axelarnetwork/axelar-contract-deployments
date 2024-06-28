@@ -42,6 +42,14 @@ contract AxelarMemo {
         bytes memory encodedPayload = payload.encode();
         gateway.callContract(string(solanaChain), solanaDestinationProgram, encodedPayload);
     }
+    
+    function sendToEvm(
+        string calldata destinationContract,
+        bytes calldata otherEvmChain,
+        bytes calldata memoMessage
+    ) external {
+        gateway.callContract(string(otherEvmChain), destinationContract, memoMessage);
+    }
 
     /// @dev Receives a memo message from Solana
     function execute(

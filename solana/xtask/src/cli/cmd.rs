@@ -1,6 +1,7 @@
 pub(crate) mod cosmwasm;
 pub(crate) mod evm;
 pub(crate) mod solana;
+pub(crate) mod testnet;
 
 pub(crate) mod path {
     use std::path::{Path, PathBuf};
