@@ -11,26 +11,33 @@ async function signTx(keypair, client, encodedTx, options) {
 }
 
 async function executeCombinedSignature(client, txBlockBytes, options) {
-    const { multisigTxFile, txData } = options;
+    const { combinedSignPath, txData } = options;
 
-    if (!multisigTxFile) {
+    if (options.offline) {
+        throw new Error('Cannot execute in offline mode');
+    }
+
+    if (!combinedSignPath) {
         throw new Error('Invalid filePath provided');
     }
 
-    const fileData = getSignedTx(multisigTxFile);
+    const fileData = getSignedTx(combinedSignPath);
 
     if (fileData.message !== txData) {
-        throw new Error(`Message mismatch with file [${multisigTxFile}]`);
+        throw new Error(`Message mismatch with file [${combinedSignPath}]`);
     }
 
     const combinedSignatureBytes = fileData.signature;
 
     if (!combinedSignatureBytes) {
-        throw new Error(`No signature specified in [${multisigTxFile}]`);
+        throw new Error(`No signature specified in [${combinedSignPath}]`);
     }
 
     const txResult = await broadcastSignature(client, txBlockBytes, combinedSignatureBytes);
     printInfo('Transaction result', JSON.stringify(txResult));
+
+    fileData.status = 'EXECUTED';
+    storeSignedTx(combinedSignPath, fileData);
 }
 
 async function combineSignature(client, chain, txBlockBytes, options) {
@@ -76,7 +83,7 @@ async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
     printInfo('Wallet Address', keypair.toSuiAddress());
 
-    const txfileData = getSignedTx(options.file);
+    const txfileData = getSignedTx(options.txBlockPath);
     const txData = txfileData?.bytes;
 
     validateParameters({ isNonEmptyString: { txData } });
@@ -107,15 +114,15 @@ async function processCommand(chain, options) {
         }
     }
 
-    if (options.offline && options.action !== 'execute') {
-        const { txFile } = options;
+    if (options.offline) {
+        const { signatureFilePath } = options;
 
-        if (!txFile) {
+        if (!signatureFilePath) {
             throw new Error('No filePath provided');
         }
 
         fileData.message = txData;
-        storeSignedTx(txFile, fileData);
+        storeSignedTx(signatureFilePath, fileData);
         printInfo(`The signed signature is`, fileData.signature);
     }
 }
@@ -132,13 +139,13 @@ if (require.main === module) {
 
     addBaseOptions(program);
 
-    program.addOption(new Option('--file <file>', 'path to file with tx data to be signed').env('FILE'));
+    program.addOption(new Option('--txBlockPath <file>', 'path to unsigned tx block').env('TX_FILE'));
     program.addOption(new Option('--action <action>', 'action').choices(['sign', 'combine', 'execute']).makeOptionMandatory(true));
-    program.addOption(new Option('--multisigKey <multisigKey>', 'multisig key to combine signature').env('MULTISIG_KEY'));
+    program.addOption(new Option('--multisigKey <multisigKey>', 'multisig key').env('MULTISIG_KEY'));
     program.addOption(new Option('--signatures [files...]', 'array of signed transaction files'));
     program.addOption(new Option('--offline', 'run in offline mode'));
-    program.addOption(new Option('--multisigTxFile <file>', 'file path to the combined signature'));
-    program.addOption(new Option('--txFile <file>', 'file where the signed signature will be stored'));
+    program.addOption(new Option('--combinedSignPath <file>', 'combined signature file path'));
+    program.addOption(new Option('--signatureFilePath <file>', 'signed signature will be stored'));
 
     program.action((options) => {
         mainProcessor(options, processCommand);
