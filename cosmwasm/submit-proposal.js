@@ -3,14 +3,23 @@
 require('dotenv').config();
 
 const { prepareWallet, prepareClient, submitStoreCodeProposal } = require('./utils');
-const { loadConfig } = require('../evm/utils');
+const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
 const { Command, Option } = require('commander');
 
 const storeCode = (client, wallet, config, options) => {
-    submitStoreCodeProposal(client, wallet, config, options);
+    const { contractName } = options;
+    const {
+        axelar: {
+            contracts: { [contractName]: contractConfig },
+        },
+    } = config;
 
-    return Promise.resolve({ wallet, client });
+    submitStoreCodeProposal(client, wallet, config, options).then((proposalId) => {
+        printInfo('Proposal submitted', proposalId);
+
+        contractConfig.storeCodeProposalId = proposalId;
+    });
 };
 
 const main = async (options) => {
@@ -19,7 +28,8 @@ const main = async (options) => {
 
     await prepareWallet(options)
         .then((wallet) => prepareClient(config, wallet))
-        .then(({ wallet, client }) => storeCode(client, wallet, config, options));
+        .then(({ wallet, client }) => storeCode(client, wallet, config, options))
+        .then(() => saveConfig(config, env));
 };
 
 const programHandler = () => {
@@ -43,6 +53,8 @@ const programHandler = () => {
 
     program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
     program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
+    program.addOption(new Option('--deposit <deposit>', 'the proposal deposit').makeOptionMandatory(true));
+
     program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message').makeOptionMandatory(true));
 
     program.addOption(new Option('--source <source>', "a valid HTTPS URI to the contract's source code"));

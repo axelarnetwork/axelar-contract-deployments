@@ -122,39 +122,44 @@ const encodeStoreCodeProposal = (options) => {
     };
 };
 
-const encodeSubmitProposal = (content, denom, proposer) => {
+const encodeSubmitProposal = (content, config, options, proposer) => {
+    const {
+        axelar: { tokenSymbol },
+    } = config;
+    const { deposit } = options;
+
     return {
         typeUrl: '/cosmos.gov.v1beta1.MsgSubmitProposal',
         value: MsgSubmitProposal.fromPartial({
             content,
-            initialDeposit: [{ denom, amount: '200000000' }],
+            initialDeposit: [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }],
             proposer,
         }),
     };
 };
 
-const submitProposal = (client, wallet, config, content) => {
-    wallet
+const submitProposal = (client, wallet, config, options, content) => {
+    return wallet
         .getAccounts()
         .then(([account]) => {
             const {
-                axelar: { gasPrice, gasLimit, tokenSymbol },
+                axelar: { gasPrice, gasLimit },
             } = config;
 
-            const submitProposalMsg = encodeSubmitProposal(content, `u${tokenSymbol.toLowerCase()}`, account.address);
+            const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
 
             const storeFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
             return client.signAndBroadcast(account.address, [submitProposalMsg], storeFee, '');
         })
-        .then((result) => {
-            console.log('RESULT: ', result);
-        });
+        .then(
+            ({ events }) => events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value,
+        );
 };
 
 const submitStoreCodeProposal = (client, wallet, config, options) => {
     const content = encodeStoreCodeProposal(options);
 
-    submitProposal(client, wallet, config, content);
+    return submitProposal(client, wallet, config, options, content);
 };
 
 module.exports = {
