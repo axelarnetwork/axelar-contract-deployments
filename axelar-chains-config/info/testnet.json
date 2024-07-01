@@ -1879,7 +1879,7 @@
       "id": "polygon-sepolia",
       "axelarId": "polygon-sepolia",
       "chainId": 80002,
-      "rpc": "https://rpc-amoy.polygon.technology/",
+      "rpc": "https://polygon-amoy.blockpi.network/v1/rpc/public",
       "tokenSymbol": "MATIC",
       "confirmations": 2,
       "contracts": {
@@ -2017,7 +2017,7 @@
   },
   "stellar": {
     "id": "stellar",
-    "rpc": "https://soroban-testnet.stellar.org:443",
+    "rpc": "https://soroban-testnet.stellar.org",
     "horizonRpc": "https://horizon-testnet.stellar.org",
     "networkType": "testnet",
     "explorer": {

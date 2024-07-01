@@ -1,5 +1,6 @@
 'use strict';
 
+const { verifyTransactionBlock } = require('@mysten/sui.js/verify');
 const { decodeSuiPrivateKey } = require('@mysten/sui.js/cryptography');
 const { Ed25519Keypair } = require('@mysten/sui.js/keypairs/ed25519');
 const { Secp256k1Keypair } = require('@mysten/sui.js/keypairs/secp256k1');
@@ -84,8 +85,62 @@ async function generateKeypair(options) {
     }
 }
 
+function getRawPrivateKey(keypair) {
+    return decodeSuiPrivateKey(keypair.getSecretKey()).secretKey;
+}
+
+async function broadcast(client, keypair, tx) {
+    return await client.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        signer: keypair,
+        options: {
+            showEffects: true,
+            showObjectChanges: true,
+            showContent: true,
+        },
+    });
+}
+
+async function signTransactionBlock(chain, txDetails, options) {
+    const { txBlock, buildOptions = {} } = txDetails;
+
+    const [keypair, client] = getWallet(chain, options);
+    txBlock.setSenderIfNotSet(keypair.toSuiAddress());
+    const txBytes = await txBlock.build(buildOptions);
+    const serializedSignature = (await keypair.signTransactionBlock(txBytes)).signature;
+    let publicKey;
+
+    try {
+        publicKey = await verifyTransactionBlock(txBytes, serializedSignature);
+    } catch {
+        throw new Error(`Cannot verify tx signature`);
+    }
+
+    if (publicKey.toSuiAddress() !== keypair.toSuiAddress()) {
+        throw new Error(`Verification failed for address ${keypair.toSuiAddress()}`);
+    }
+
+    if (!options.offline) {
+        const txResult = await client.executeTransactionBlock({
+            transactionBlock: txBytes,
+            signature: serializedSignature,
+        });
+
+        printInfo('Transaction result', JSON.stringify(txResult));
+    }
+
+    return {
+        signature: serializedSignature,
+        txBlock,
+        publicKey,
+    };
+}
+
 module.exports = {
     getWallet,
     printWalletInfo,
     generateKeypair,
+    getRawPrivateKey,
+    broadcast,
+    signTransactionBlock,
 };
