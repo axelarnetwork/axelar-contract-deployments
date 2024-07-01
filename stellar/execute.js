@@ -6,6 +6,7 @@ require('./cli-utils');
 
 function parseArgTypes(argTypesString) {
     if (!argTypesString) return null;
+
     try {
         return JSON.parse(argTypesString);
     } catch (error) {
@@ -41,8 +42,10 @@ async function processCommand(options, _, chain) {
     const [wallet, server] = await getWallet(chain, options);
 
     let contractAddress;
+
     if (options.contractName) {
         contractAddress = chain.contracts?.[options.contractName]?.address;
+
         if (!contractAddress) {
             throw new Error(`Contract ${options.contractName} not found in chain configuration`);
         }
@@ -65,13 +68,9 @@ async function processCommand(options, _, chain) {
         throw new Error('Number of arguments does not match the number of argument types');
     }
 
-    const convertedArgs = argTypes
-        ? args.map((arg, index) => convertArg(arg, argTypes[index]))
-        : args;
+    const convertedArgs = argTypes ? args.map((arg, index) => convertArg(arg, argTypes[index])) : args;
 
-    const scvArgs = convertedArgs.map((arg, index) =>
-        nativeToScVal(arg, argTypes ? argTypes[index] : undefined)
-    );
+    const scvArgs = convertedArgs.map((arg, index) => nativeToScVal(arg, argTypes ? argTypes[index] : undefined));
 
     const operation = contract.call(options.method, ...scvArgs);
 
@@ -100,7 +99,7 @@ if (require.main === module) {
             .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
             .default('testnet')
             .makeOptionMandatory(true)
-            .env('ENV')
+            .env('ENV'),
     );
 
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
