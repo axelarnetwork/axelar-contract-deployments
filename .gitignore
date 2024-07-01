@@ -112,3 +112,5 @@ local.json
 keys.json
 
 temp-arguments.js
+
+signatures/
