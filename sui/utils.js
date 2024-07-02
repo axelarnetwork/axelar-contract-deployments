@@ -8,6 +8,8 @@ const {
 } = ethers;
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
+const SUI_COIN_ID = '0x2::sui::SUI';
+
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
     const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'current_verifier_set');
@@ -44,7 +46,35 @@ const loadSuiConfig = (env) => {
     return config;
 };
 
+const isGasToken = (coinType) => {
+    return coinType === SUI_COIN_ID;
+};
+
+const paginateAll = async (client, paginatedFn, params, pageLimit = 100) => {
+    let cursor;
+    let response = await client[paginatedFn]({
+        ...params,
+        cursor,
+        limit: pageLimit,
+    });
+    const items = response.data;
+
+    while (response.hasNextPage) {
+        response = await client[paginatedFn]({
+            ...params,
+            cursor: response.nextCursor,
+            limit: pageLimit,
+        });
+        items.push(...response.data);
+    }
+
+    return items;
+};
+
 module.exports = {
+    SUI_COIN_ID,
     getAmplifierSigners,
+    isGasToken,
+    paginateAll,
     loadSuiConfig,
 };
