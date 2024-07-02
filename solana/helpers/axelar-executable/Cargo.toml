@@ -9,6 +9,7 @@ crate-type = ["cdylib", "lib"]
 
 
 [dependencies]
+axelar-rkyv-encoding.workspace = true
 solana-program.workspace = true
 borsh.workspace = true
 axelar-message-primitives.workspace = true

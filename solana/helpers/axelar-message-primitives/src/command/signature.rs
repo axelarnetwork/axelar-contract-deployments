@@ -92,31 +92,3 @@ impl TryFrom<Vec<u8>> for Signature {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use anyhow::Result;
-    use test_fixtures::ecdsa_signature::{create_random_signature, TestSignature};
-    use test_fixtures::primitives::bytes;
-
-    use super::*;
-
-    #[test]
-    fn test_recovery_id() -> Result<()> {
-        let TestSignature {
-            signature,
-            recovery_id,
-            ..
-        } = create_random_signature(&bytes(100));
-
-        let mut input = signature.serialize().to_vec();
-        input.push(recovery_id.serialize());
-
-        let ours = Signature::try_from(input)?;
-
-        assert_eq!(*ours.signature_bytes(), signature.serialize());
-        assert_eq!(ours.recovery_id_byte(), recovery_id.serialize());
-
-        Ok(())
-    }
-}

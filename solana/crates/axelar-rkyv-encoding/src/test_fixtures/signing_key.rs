@@ -1,15 +1,16 @@
-use rand::rngs::ThreadRng;
+use rand::rngs::OsRng;
 use rand::Rng;
 
 use crate::types::{PublicKey, Signature};
 
-pub(crate) enum TestSigningKey {
+#[derive(Clone)]
+pub enum TestSigningKey {
     Ecdsa(k256::ecdsa::SigningKey),
     Ed25519(ed25519_dalek::SigningKey),
 }
 
 impl TestSigningKey {
-    pub(crate) fn sign(&self, message: &[u8]) -> Signature {
+    pub fn sign(&self, message: &[u8]) -> Signature {
         match self {
             TestSigningKey::Ecdsa(signing_key) => {
                 let (signature, recovery_id) = signing_key.sign_recoverable(message).unwrap();
@@ -26,9 +27,9 @@ impl TestSigningKey {
     }
 }
 
-pub(crate) fn random_keypair(rng: &mut ThreadRng) -> (TestSigningKey, PublicKey) {
-    if rng.gen_bool(0.5) {
-        let signing_key = k256::ecdsa::SigningKey::random(rng);
+pub fn random_keypair() -> (TestSigningKey, PublicKey) {
+    if OsRng.gen_bool(0.5) {
+        let signing_key = k256::ecdsa::SigningKey::random(&mut OsRng);
         let verifying_key_bytes: Box<[u8; 33]> = signing_key
             .verifying_key()
             .to_sec1_bytes()
@@ -39,7 +40,7 @@ pub(crate) fn random_keypair(rng: &mut ThreadRng) -> (TestSigningKey, PublicKey)
             PublicKey::Ecdsa(*verifying_key_bytes),
         )
     } else {
-        let signing_key = ed25519_dalek::SigningKey::generate(rng);
+        let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
         let verifying_key_bytes = signing_key.verifying_key().to_bytes();
         (
             TestSigningKey::Ed25519(signing_key),

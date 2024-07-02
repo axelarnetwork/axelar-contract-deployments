@@ -5,12 +5,19 @@ edition = "2021"
 
 [dependencies]
 bnum.workspace = true
-ed25519-dalek.workspace = true
 k256.workspace = true
-rkyv.workspace = true
+rkyv = { workspace = true, features = ["validation"] }
 sha3.workspace = true
 thiserror.workspace = true
+rand = { workspace = true,  optional = true }
+ed25519-dalek = { workspace = true }
+hex.workspace = true
+bs58.workspace = true
 
 [dev-dependencies]
-rand = "0.8.5"
 ed25519-dalek = { workspace = true, features = ["rand_core", "digest"] }
+rand.workspace = true
+
+[features]
+default = []
+test-fixtures = ["dep:rand", "rand/getrandom", "ed25519-dalek/rand_core", "ed25519-dalek/digest"]

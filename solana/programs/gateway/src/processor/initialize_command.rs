@@ -1,4 +1,3 @@
-use axelar_message_primitives::command::DecodedCommand;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::program_error::ProgramError;
@@ -6,6 +5,7 @@ use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
 
 use super::Processor;
+use crate::commands::Command;
 use crate::error::GatewayError;
 use crate::state::{GatewayApprovedCommand, GatewayConfig};
 
@@ -14,7 +14,7 @@ impl Processor {
     pub fn process_initialize_command(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        command: DecodedCommand,
+        command: impl Command,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
         let payer = next_account_info(accounts_iter)?;

@@ -11,7 +11,6 @@ crate-type = ["cdylib", "lib"]
 [dependencies]
 solana-program.workspace = true
 borsh.workspace = true
-connection-router.workspace = true
 hex.workspace = true
 anyhow.workspace = true
 itertools.workspace = true
@@ -28,7 +27,6 @@ ethers-core.workspace = true
 evm-contracts-rs.workspace = true
 evm-contracts-test-suite.workspace = true
 tokio.workspace = true
-test-fixtures.workspace = true
 hex.workspace = true
 rstest.workspace = true
 test-log.workspace = true

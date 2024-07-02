@@ -160,17 +160,19 @@ pub enum GatewayError {
     #[error("The `caller` is not a signer, which is required verify that he wants to execute the message.")]
     MismatchedAllowedCallers,
 
-    // 36
     /// Auth weighted error
     #[error("Auth weighted error")]
     AxelarAuthWeightedError,
 
-    // 37
     /// The GatewayCommandStatusMessage is not pending
     #[error(
         "The instruction expected the GatewayCommandStatusMessage to be pending, but it was not."
     )]
     GatewayCommandStatusNotPending,
+
+    /// Failed to parse string as a valid public key
+    #[error("Failed to parse string as a valid public key")]
+    PublicKeyParseError,
 }
 
 impl From<GatewayError> for ProgramError {

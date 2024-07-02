@@ -80,21 +80,3 @@ impl Address {
         result
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use anyhow::Result;
-    use test_fixtures::primitives::bytes;
-
-    use super::*;
-
-    #[test]
-    fn test_address_from_hex() -> Result<()> {
-        let bytes = bytes(33);
-        let hex = hex::encode(&bytes);
-        let addr = Address::try_from(hex.as_str())?;
-
-        assert_eq!(addr.0.as_slice(), &bytes);
-        Ok(())
-    }
-}

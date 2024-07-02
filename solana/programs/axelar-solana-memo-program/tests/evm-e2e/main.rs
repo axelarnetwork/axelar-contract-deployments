@@ -5,8 +5,8 @@ use evm_contracts_test_suite::{get_domain_separator, ContractMiddleware};
 use solana_program_test::{processor, ProgramTest};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
-use test_fixtures::execute_data::{create_signer_with_weight, TestSigner};
 use test_fixtures::test_setup::TestFixture;
+use test_fixtures::test_signer::{create_signer_with_weight, TestSigner};
 
 mod from_evm_to_solana;
 mod from_solana_to_evm;
@@ -35,8 +35,8 @@ async fn axelar_solana_setup() -> (
 ) {
     let mut fixture = TestFixture::new(program_test()).await;
     let signers = vec![
-        create_signer_with_weight(10_u128).unwrap(),
-        create_signer_with_weight(4_u128).unwrap(),
+        create_signer_with_weight(10_u128),
+        create_signer_with_weight(4_u128),
     ];
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(

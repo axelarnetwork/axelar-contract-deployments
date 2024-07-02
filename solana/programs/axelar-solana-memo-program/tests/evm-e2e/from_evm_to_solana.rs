@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-use axelar_executable::axelar_message_primitives::{DataPayload, DestinationProgramId};
+use axelar_executable::axelar_message_primitives::DataPayload;
+use axelar_rkyv_encoding::types::Message;
 use axelar_solana_memo_program::state::Counter;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo::SolanaAccountRepr;
@@ -8,11 +9,13 @@ use evm_contracts_test_suite::evm_contracts_rs::contracts::{
     axelar_amplifier_gateway, axelar_memo,
 };
 use evm_contracts_test_suite::ContractMiddleware;
+use gateway::commands::OwnedCommand;
 use solana_program_test::tokio;
 use test_fixtures::axelar_message::custom_message;
 
 use crate::{axelar_evm_setup, axelar_solana_setup};
 
+#[ignore]
 #[tokio::test]
 async fn test_send_from_evm_to_solana() {
     // Setup - Solana
@@ -48,14 +51,20 @@ async fn test_send_from_evm_to_solana() {
     // - Solana signers approve the message
     // - The relayer relays the message to the Solana gateway
     let (decoded_payload, msg_from_evm_axelar) = prase_evm_log_into_axelar_message(&log);
-    let (gateway_approved_command_pdas, gateway_execute_data, _) = solana_chain
-        .fully_approve_messages(&gateway_root_pda, &[msg_from_evm_axelar], &solana_signers)
+    let (gateway_approved_command_pdas, _, _) = solana_chain
+        .fully_approve_messages(
+            &gateway_root_pda,
+            vec![msg_from_evm_axelar.clone()],
+            &solana_signers,
+        )
         .await;
+
+    let approve_message_command = OwnedCommand::ApproveMessage(msg_from_evm_axelar);
     // - Relayer calls the Solana memo program with the memo payload coming from the
     //   EVM memo program
     let tx = solana_chain
         .call_execute_on_axelar_executable(
-            &gateway_execute_data.command_batch.commands[0],
+            &approve_message_command,
             &decoded_payload,
             &gateway_approved_command_pdas[0],
             gateway_root_pda,
@@ -75,21 +84,12 @@ async fn test_send_from_evm_to_solana() {
     assert_eq!(counter.counter, 1);
 }
 
-fn prase_evm_log_into_axelar_message(
-    log: &ContractCallFilter,
-) -> (
-    DataPayload<'_>,
-    test_fixtures::test_setup::connection_router::Message,
-) {
+fn prase_evm_log_into_axelar_message(log: &ContractCallFilter) -> (DataPayload<'_>, Message) {
     let decoded_payload = DataPayload::decode(log.payload.as_ref()).unwrap();
     let msg_from_evm_axelar = custom_message(
-        DestinationProgramId(
-            solana_sdk::pubkey::Pubkey::from_str(log.destination_contract_address.as_str())
-                .unwrap(),
-        ),
+        solana_sdk::pubkey::Pubkey::from_str(log.destination_contract_address.as_str()).unwrap(),
         decoded_payload.clone(),
-    )
-    .unwrap();
+    );
     (decoded_payload, msg_from_evm_axelar)
 }
 

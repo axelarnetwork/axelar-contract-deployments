@@ -1,3 +1,7 @@
+// We allow this so `cargo check --tests` doesn't emit warnings for unused crate
+// dependencies in test binaries.
+#![allow(unused_crate_dependencies)]
+
 mod approve_messages;
 mod initialize_command;
 mod initialize_config;
@@ -5,23 +9,26 @@ mod initialize_execute_data;
 mod rotate_signers;
 mod transfer_operatorship;
 
+use std::collections::BTreeMap;
+
 use axelar_message_primitives::{DataPayload, EncodingScheme};
-use cosmwasm_std::Uint256;
+use axelar_rkyv_encoding::hash_payload;
+use axelar_rkyv_encoding::types::{
+    ExecuteData, Message, Payload, Proof, VerifierSet, WeightedSignature,
+};
+use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::events::GatewayEvent;
-use gmp_gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
-use itertools::Either;
-use multisig::worker_set::WorkerSet;
+use gmp_gateway::state::GatewayApprovedCommand;
 use solana_program_test::tokio::fs;
 use solana_program_test::{processor, ProgramTest};
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use test_fixtures::axelar_message::new_signer_set;
-use test_fixtures::execute_data::{
-    create_command_batch, create_signer_with_weight, sign_batch, TestSigner,
-};
+use test_fixtures::axelar_message::{custom_message, new_signer_set};
+use test_fixtures::execute_data::TestSigner;
 use test_fixtures::test_setup::TestFixture;
+use test_fixtures::test_signer::create_signer_with_weight;
 
 pub fn program_test() -> ProgramTest {
     ProgramTest::new(
@@ -62,7 +69,7 @@ pub async fn setup_initialised_gateway(
     let quorum = custom_quorum.unwrap_or_else(|| initial_signer_weights.iter().sum());
     let signers = initial_signer_weights
         .iter()
-        .map(|weight| create_signer_with_weight(*weight).unwrap())
+        .map(|weight| create_signer_with_weight(*weight))
         .collect::<Vec<_>>();
     let operator = Keypair::new();
     let gateway_root_pda = fixture
@@ -95,23 +102,17 @@ pub fn example_payload() -> DataPayload<'static> {
     payload
 }
 
-pub fn example_signer_set(new_weight: u128, created_at_block: u64) -> WorkerSet {
-    let new_signers = vec![create_signer_with_weight(new_weight).unwrap()];
-    new_signer_set(
-        &new_signers,
-        created_at_block,
-        Uint256::from_u128(new_weight),
-    )
+pub fn example_signer_set(threshold: u128, created_at_block: u64) -> VerifierSet {
+    let new_signers = vec![create_signer_with_weight(threshold)];
+    new_signer_set(&new_signers, created_at_block, threshold)
 }
 
 pub fn gateway_approved_command_ixs(
-    execute_data: GatewayExecuteData,
+    commands: &[OwnedCommand],
     gateway_root_pda: Pubkey,
     fixture: &TestFixture,
 ) -> Vec<(Pubkey, solana_sdk::instruction::Instruction)> {
-    let ixs = execute_data
-        .command_batch
-        .commands
+    let ixs = commands
         .iter()
         .map(|command| {
             let (gateway_approved_message_pda, _bump, _seeds) =
@@ -128,14 +129,13 @@ pub fn gateway_approved_command_ixs(
     ixs
 }
 
-fn get_gateway_events_from_execute_data(
-    commands: &[axelar_message_primitives::command::DecodedCommand],
-) -> Vec<GatewayEvent<'static>> {
+fn get_gateway_events_from_execute_data(commands: &[OwnedCommand]) -> Vec<GatewayEvent<'static>> {
     commands
         .iter()
         .cloned()
-        .map(gmp_gateway::events::GatewayEvent::from)
-        .collect::<Vec<_>>()
+        .map(gmp_gateway::events::GatewayEvent::try_from)
+        .collect::<Result<Vec<_>, _>>()
+        .expect("failed to parse events from execute_data")
 }
 
 fn get_gateway_events(
@@ -162,42 +162,121 @@ pub async fn get_approved_command(
         .await
 }
 
-pub fn create_signer_set(
-    weights: &[impl Into<Uint256> + Copy],
-    threshold: impl Into<Uint256>,
-) -> (multisig::worker_set::WorkerSet, Vec<TestSigner>) {
+pub fn create_signer_set(weights: &[u128], threshold: u128) -> (VerifierSet, Vec<TestSigner>) {
     let new_signers = weights
         .iter()
-        .map(|weight| {
-            create_signer_with_weight({
-                let weight: Uint256 = (*weight).into();
-                weight
-            })
-            .unwrap()
-        })
+        .copied()
+        .map(create_signer_with_weight)
         .collect::<Vec<_>>();
-    let new_signer_set = new_signer_set(&new_signers, 0, threshold.into());
+    let created_at = unix_seconds();
+    let new_signer_set = new_signer_set(&new_signers, created_at, threshold);
     (new_signer_set, new_signers)
 }
 
+/// FIXME: I'm not sure if the old code did the same, but it turns out that the
+/// 'signers_for_submission' field is never used.
+#[allow(unused_variables)]
 pub fn prepare_questionable_execute_data(
-    messages_for_signing: &[Either<connection_router::Message, WorkerSet>],
-    messages_for_execute_data: &[Either<connection_router::Message, WorkerSet>],
-    signers_for_signatures: &[TestSigner],
-    signers_in_the_execute_data: &[TestSigner],
-    quorum: u128,
-    gateway_root_pda: &Pubkey,
-) -> (GatewayExecuteData, Vec<u8>) {
-    let command_batch_for_signing = create_command_batch(messages_for_signing).unwrap();
-    let command_batch_for_execute_data = create_command_batch(messages_for_execute_data).unwrap();
-    let signatures = sign_batch(&command_batch_for_signing, signers_for_signatures).unwrap();
-    let encoded_message = test_fixtures::execute_data::encode(
-        &command_batch_for_execute_data,
-        signers_in_the_execute_data.to_vec(),
-        signatures,
-        quorum,
-    )
-    .unwrap();
-    let execute_data = GatewayExecuteData::new(encoded_message.as_ref(), gateway_root_pda).unwrap();
-    (execute_data, encoded_message)
+    payload_for_signing: &Payload,
+    payload_for_submission: &Payload,
+    signers_for_signing: &[TestSigner],
+    signers_for_submission: &[TestSigner],
+    threshold: u128,
+    domain_separator: &[u8; 32],
+) -> Vec<u8> {
+    let other_execute_data = create_execute_data(
+        payload_for_signing,
+        signers_for_signing,
+        threshold,
+        domain_separator,
+    );
+    let other_proof = other_execute_data.proof().clone();
+
+    let execute_data_for_submission = ExecuteData::new(payload_for_submission.clone(), other_proof);
+
+    execute_data_for_submission
+        .to_bytes::<0>()
+        .expect("failed to serialize 'ExecuteData' struct")
+}
+
+fn create_execute_data(
+    payload: &Payload,
+    signers: &[TestSigner],
+    threshold: u128,
+    domain_separator: &[u8; 32],
+) -> ExecuteData {
+    let nonce = unix_seconds();
+    let verifier_set: VerifierSet = create_verifier_set_with_nonce(signers, nonce, threshold);
+
+    let payload_hash = hash_payload(domain_separator, &verifier_set, payload);
+
+    let signing_keys: BTreeMap<_, _> = signers
+        .iter()
+        .map(|signer| (signer.public_key, &signer.secret_key))
+        .collect();
+
+    let weighted_signatures: Vec<_> = verifier_set
+        .signers()
+        .iter()
+        .map(|(pubkey, weight)| {
+            let signing_key = signing_keys.get(pubkey).unwrap();
+            let signature = signing_key.sign(&payload_hash);
+            WeightedSignature::new(*pubkey, signature, *weight)
+        })
+        .collect();
+    let proof = Proof::new(weighted_signatures, *verifier_set.threshold(), nonce);
+
+    ExecuteData::new(payload.clone(), proof)
+}
+
+pub fn create_verifier_set_with_nonce(
+    signers: &[TestSigner],
+    nonce: u64,
+    threshold: u128,
+) -> VerifierSet {
+    let signers: BTreeMap<_, _> = signers
+        .iter()
+        .map(|signer| (signer.public_key, signer.weight))
+        .collect();
+    VerifierSet::new(nonce, signers, threshold.into())
+}
+
+/// Works as a PRNG for filling in nonces
+fn unix_seconds() -> u64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+}
+
+pub fn make_message() -> Message {
+    custom_message(Pubkey::new_unique(), example_payload())
+}
+
+pub fn make_messages(num_messages: usize) -> Vec<Message> {
+    (0..num_messages).map(|_| make_message()).collect()
+}
+
+pub fn payload_and_commands(messages: &[Message]) -> (Payload, Vec<OwnedCommand>) {
+    let payload = Payload::Messages(messages.to_vec());
+    let commands = messages
+        .iter()
+        .cloned()
+        .map(OwnedCommand::ApproveMessage)
+        .collect();
+    (payload, commands)
+}
+
+pub fn make_payload_and_commands(num_messages: usize) -> (Payload, Vec<OwnedCommand>) {
+    let messages = make_messages(num_messages);
+    payload_and_commands(&messages)
+}
+
+pub fn make_signers(weights: &[u128]) -> Vec<TestSigner> {
+    weights
+        .iter()
+        .copied()
+        .map(create_signer_with_weight)
+        .collect::<Vec<_>>()
 }

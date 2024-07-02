@@ -1,7 +1,6 @@
 use crate::types::{
-    ArchivedCrossChainId, ArchivedMessage, ArchivedPayload, ArchivedPublicKey, ArchivedSigner,
-    ArchivedU256, ArchivedVerifierSet, CrossChainId, Message, Payload, PublicKey, Signer,
-    VerifierSet, U256,
+    ArchivedCrossChainId, ArchivedMessage, ArchivedPayload, ArchivedPublicKey, ArchivedU256,
+    ArchivedVerifierSet, CrossChainId, Message, Payload, PublicKey, VerifierSet, U256,
 };
 #[cfg(test)]
 use crate::types::{
@@ -94,8 +93,9 @@ pub(super) trait Visitor {
 
     fn visit_verifier_set(&mut self, verifier_set: &VerifierSet) {
         self.prefix_length(verifier_set.signers.len());
-        for signer in verifier_set.signers.values() {
-            self.visit_signer(signer);
+        for (public_key, weight) in &verifier_set.signers {
+            self.visit_public_key(public_key);
+            self.visit_u256(weight);
         }
         self.visit_u256(&verifier_set.threshold);
         self.visit_u64(&verifier_set.created_at)
@@ -112,12 +112,6 @@ pub(super) trait Visitor {
                 self.visit_bytes(pubkey_bytes.as_slice())
             }
         }
-    }
-
-    fn visit_signer(&mut self, signer: &Signer) {
-        self.visit_string(&signer.address);
-        self.visit_u256(&signer.weight);
-        self.visit_public_key(&signer.public_key)
     }
 
     fn visit_string(&mut self, string: &str) {
@@ -222,8 +216,9 @@ pub(super) trait ArchivedVisitor {
 
     fn visit_verifier_set(&mut self, verifier_set: &ArchivedVerifierSet) {
         self.prefix_length(verifier_set.signers.len());
-        for signer in verifier_set.signers.values() {
-            self.visit_signer(signer);
+        for (public_key, weight) in &verifier_set.signers {
+            self.visit_public_key(public_key);
+            self.visit_u256(weight);
         }
         self.visit_u256(&verifier_set.threshold);
         self.visit_u64(&verifier_set.created_at)
@@ -240,12 +235,6 @@ pub(super) trait ArchivedVisitor {
                 self.visit_bytes(pubkey_bytes.as_slice())
             }
         }
-    }
-
-    fn visit_signer(&mut self, signer: &ArchivedSigner) {
-        self.visit_string(&signer.address);
-        self.visit_u256(&signer.weight);
-        self.visit_public_key(&signer.public_key)
     }
 
     fn visit_string(&mut self, string: &str) {

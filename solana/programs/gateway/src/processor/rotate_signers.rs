@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 
-use axelar_message_primitives::command::DecodedCommand;
+use axelar_message_primitives::command::RotateSignersCommand;
+use axelar_message_primitives::Address;
+use axelar_rkyv_encoding::types::ArchivedVerifierSet;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -11,6 +13,7 @@ use solana_program::pubkey::Pubkey;
 
 use super::Processor;
 use crate::axelar_auth_weighted::SignerSetMetadata;
+use crate::commands::ArchivedCommand;
 use crate::events::GatewayEvent;
 use crate::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
 
@@ -40,19 +43,6 @@ impl Processor {
         let mut gateway_config =
             gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
 
-        gateway_approve_messages_execute_data_pda
-            .check_initialized_pda_without_deserialization(program_id)?;
-        let execute_data = borsh::from_slice::<GatewayExecuteData>(
-            &gateway_approve_messages_execute_data_pda.data.borrow(),
-        )?;
-
-        let [decoded_command @ DecodedCommand::RotateSigners(rotate_signers_command)] =
-            execute_data.command_batch.commands.as_slice()
-        else {
-            msg!("expected exactly one `RotateSigners` command");
-            return Err(ProgramError::InvalidArgument);
-        };
-
         // we always enforce the delay unless unless the operator has been provided and
         // its also the Gateway opreator
         // refence: https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/c290c7337fd447ecbb7426e52ac381175e33f602/contracts/gateway/AxelarAmplifierGateway.sol#L98-L101
@@ -63,10 +53,22 @@ impl Processor {
             !(operator_matches && operator_is_sigener)
         });
 
+        gateway_approve_messages_execute_data_pda
+            .check_initialized_pda_without_deserialization(program_id)?;
+
+        let borrowed_account_data = gateway_approve_messages_execute_data_pda.data.borrow();
+        let execute_data = GatewayExecuteData::new(*borrowed_account_data, gateway_root_pda.key)?;
+
+        let Some(new_verifier_set) = execute_data.verifier_set() else {
+            msg!("Invalid command provided. 'rotate-signers' expected.");
+            return Err(ProgramError::InvalidArgument);
+        };
+        let command = ArchivedCommand::from(new_verifier_set);
+
         let mut approved_command_account = message_account
             .as_ref()
             .check_initialized_pda::<GatewayApprovedCommand>(program_id)?
-            .command_valid_and_pending(gateway_root_pda.key, decoded_command, message_account)?
+            .command_valid_and_pending(gateway_root_pda.key, &command, message_account)?
             .ok_or_else(|| {
                 msg!("Command already executed");
                 ProgramError::InvalidArgument
@@ -74,7 +76,7 @@ impl Processor {
 
         // Check: proof signer set is known.
         let signer_data = gateway_config
-            .validate_proof(execute_data.command_batch_hash, &execute_data.proof)
+            .validate_proof(execute_data.hash, execute_data.proof())
             .map_err(|err| {
                 msg!("Proof validation failed: {:?}", err);
                 ProgramError::InvalidArgument
@@ -96,13 +98,13 @@ impl Processor {
         // Try to set the new signer set - but if we fail, it's not an error because we
         // still need to persist the command execution state.
         // If rotate_signers_command is a repeat signer set, this will revert
-        if let Err(err) = gateway_config.rotate_signers(rotate_signers_command) {
+        if let Err(err) = gateway_config.rotate_signers(new_verifier_set) {
             msg!("Failed to rotate signers {:?}", err);
             return Ok(());
         };
 
         // Emit event if the signers were rotated
-        GatewayEvent::SignersRotated(Cow::Borrowed(rotate_signers_command)).emit()?;
+        emit_signers_rotated_event(new_verifier_set)?;
 
         // Store the gateway data back to the account.
         let mut data = gateway_root_pda.try_borrow_mut_data()?;
@@ -110,4 +112,44 @@ impl Processor {
 
         Ok(())
     }
+}
+
+/// FIXME: Temporary workaround to emit a 'SignersRotated' event without
+/// breaking the public API (currently used by AMPD and the Relayer). Once we
+/// use 'axelar-rkyv-encoding' types across all APIs this can be revisited and
+/// adjusted.
+fn emit_signers_rotated_event(verifier_set: &ArchivedVerifierSet) -> Result<(), ProgramError> {
+    let size = verifier_set.size();
+
+    let mut signer_set = Vec::with_capacity(size);
+    let mut weights = Vec::with_capacity(size);
+
+    for (pubkey, weight) in verifier_set.signers() {
+        let pubkey = pubkey.to_bytes();
+        let Some(weight) = weight.maybe_u128() else {
+            msg!("Invalid signer weight: greater than u128::MAX");
+            return Err(ProgramError::InvalidArgument);
+        };
+        let Ok(address) = Address::try_from(pubkey.as_slice()) else {
+            msg!("Invalid public key length: {}", pubkey.len());
+            return Err(ProgramError::InvalidArgument);
+        };
+        signer_set.push(address);
+        weights.push(weight);
+    }
+
+    let Some(quorum) = verifier_set.threshold().maybe_u128() else {
+        msg!("Invalid threshold: greater than u128::MAX");
+        return Err(ProgramError::InvalidArgument);
+    };
+
+    let rotate_signers_command = RotateSignersCommand {
+        command_id: verifier_set.hash(),
+        destination_chain: 0, // XXX: the chain ID is not relevant for rotating signers.
+        signer_set,
+        weights,
+        quorum,
+    };
+
+    GatewayEvent::SignersRotated(Cow::Owned(rotate_signers_command)).emit()
 }

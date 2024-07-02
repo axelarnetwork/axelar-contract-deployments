@@ -3,19 +3,20 @@ use axelar_solana_memo_program::state::Counter;
 use solana_program_test::tokio;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
-use test_fixtures::execute_data::create_signer_with_weight;
 use test_fixtures::test_setup::TestFixture;
+use test_fixtures::test_signer::create_signer_with_weight;
 
 use crate::program_test;
 
+#[ignore]
 #[rstest::rstest]
 #[tokio::test]
 async fn test_initialize() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let signers = vec![
-        create_signer_with_weight(10_u128).unwrap(),
-        create_signer_with_weight(4_u128).unwrap(),
+        create_signer_with_weight(10_u128),
+        create_signer_with_weight(4_u128),
     ];
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(

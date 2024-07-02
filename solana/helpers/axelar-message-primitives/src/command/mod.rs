@@ -15,6 +15,8 @@ pub use u256::*;
 use crate::Address;
 
 /// Hashes the inputs for a new operator set.
+// TODO: This function should work for all the types in axelar-rkyv-encoding
+// crate. Ideally, it should also take the NONCE into account.
 pub fn hash_new_signer_set<'a, I, K>(signer_set_and_weights: I, threshold: U256) -> [u8; 32]
 where
     I: Iterator<Item = (&'a Address, K)>,

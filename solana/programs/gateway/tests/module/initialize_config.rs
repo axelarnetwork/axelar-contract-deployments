@@ -1,27 +1,27 @@
 use axelar_message_primitives::command::U256;
-use cosmwasm_std::Uint256;
 use gmp_gateway::state::GatewayConfig;
 use solana_program_test::{tokio, ProgramTestBanksClientExt};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
-use test_fixtures::axelar_message::{new_signer_set, WorkerSetExt};
-use test_fixtures::execute_data::create_signer_with_weight;
+use test_fixtures::axelar_message::new_signer_set;
 use test_fixtures::test_setup::TestFixture;
 
-use crate::program_test;
+use crate::{create_signer_with_weight, make_signers, program_test};
 
 #[tokio::test]
 async fn test_successfylly_initialize_config() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let initial_signers = vec![
-        create_signer_with_weight(10_u128).unwrap(),
-        create_signer_with_weight(4_u128).unwrap(),
-    ];
-    let new_signer_set = new_signer_set(&initial_signers, 0, Uint256::from_u128(14));
+    let initial_signers = make_signers(&[10, 4]);
+    let new_signer_set = new_signer_set(&initial_signers, 0, 14);
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
-    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
+    let gateway_config = GatewayConfig::new(
+        bump,
+        auth_weighted,
+        Pubkey::new_unique(),
+        fixture.domain_separator,
+    );
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -45,7 +45,7 @@ async fn test_successfylly_initialize_config() {
             .auth_weighted
             .signer_set_hash_for_epoch(&current_epoch)
             .unwrap(),
-        &new_signer_set.hash_solana_way(),
+        &new_signer_set.hash(),
     );
 }
 
@@ -56,7 +56,12 @@ async fn test_successfylly_initialize_config_without_signers() {
     let initial_signers = vec![];
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
-    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
+    let gateway_config = GatewayConfig::new(
+        bump,
+        auth_weighted,
+        Pubkey::new_unique(),
+        fixture.domain_separator,
+    );
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -84,11 +89,16 @@ async fn test_successfylly_initialize_config_with_50_signers() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let initial_signers = (0..50)
-        .map(|_| create_signer_with_weight(10_u128).unwrap())
+        .map(|_| create_signer_with_weight(10_u128))
         .collect::<Vec<_>>();
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
-    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
+    let gateway_config = GatewayConfig::new(
+        bump,
+        auth_weighted,
+        Pubkey::new_unique(),
+        fixture.domain_separator,
+    );
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -117,12 +127,17 @@ async fn test_successfylly_initialize_config_with_50_signers_custom_small_thresh
     let mut fixture = TestFixture::new(program_test()).await;
     let threshold = 1_u128;
     let initial_signers = (0..50)
-        .map(|_| create_signer_with_weight(10_u128).unwrap())
+        .map(|_| create_signer_with_weight(10_u128))
         .collect::<Vec<_>>();
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted =
         fixture.init_auth_weighted_module_custom_threshold(&initial_signers, threshold.into());
-    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
+    let gateway_config = GatewayConfig::new(
+        bump,
+        auth_weighted,
+        Pubkey::new_unique(),
+        fixture.domain_separator,
+    );
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -151,12 +166,17 @@ async fn test_successfylly_initialize_config_with_50_signers_custom_large_thresh
     let mut fixture = TestFixture::new(program_test()).await;
     let threshold = u128::MAX;
     let initial_signers = (0..50)
-        .map(|_| create_signer_with_weight(10_u128).unwrap())
+        .map(|_| create_signer_with_weight(10_u128))
         .collect::<Vec<_>>();
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted =
         fixture.init_auth_weighted_module_custom_threshold(&initial_signers, threshold.into());
-    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
+    let gateway_config = GatewayConfig::new(
+        bump,
+        auth_weighted,
+        Pubkey::new_unique(),
+        fixture.domain_separator,
+    );
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -184,13 +204,18 @@ async fn test_reverts_on_invalid_gateway_bump() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let initial_signers = vec![
-        create_signer_with_weight(10_u128).unwrap(),
-        create_signer_with_weight(4_u128).unwrap(),
+        create_signer_with_weight(10_u128),
+        create_signer_with_weight(4_u128),
     ];
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let invalid_bump = bump + 1;
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
-    let gateway_config = GatewayConfig::new(invalid_bump, auth_weighted, Pubkey::new_unique());
+    let gateway_config = GatewayConfig::new(
+        invalid_bump,
+        auth_weighted,
+        Pubkey::new_unique(),
+        fixture.domain_separator,
+    );
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -218,12 +243,17 @@ async fn test_reverts_on_invalid_gateway_pda_pubkey() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let initial_signers = vec![
-        create_signer_with_weight(10_u128).unwrap(),
-        create_signer_with_weight(4_u128).unwrap(),
+        create_signer_with_weight(10_u128),
+        create_signer_with_weight(4_u128),
     ];
     let (_gateway_config_pda, bump) = GatewayConfig::pda();
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
-    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
+    let gateway_config = GatewayConfig::new(
+        bump,
+        auth_weighted,
+        Pubkey::new_unique(),
+        fixture.domain_separator,
+    );
 
     // Action
     let ix = gmp_gateway::instructions::initialize_config(
@@ -251,15 +281,20 @@ async fn test_reverts_on_already_initialized_gateway_pda() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let initial_signers = vec![
-        create_signer_with_weight(10_u128).unwrap(),
-        create_signer_with_weight(4_u128).unwrap(),
+        create_signer_with_weight(10_u128),
+        create_signer_with_weight(4_u128),
     ];
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
     let gateway_config_pda = fixture
         .initialize_gateway_config_account(auth_weighted.clone(), Pubkey::new_unique())
         .await;
     let (_, bump) = GatewayConfig::pda();
-    let gateway_config = GatewayConfig::new(bump, auth_weighted, Pubkey::new_unique());
+    let gateway_config = GatewayConfig::new(
+        bump,
+        auth_weighted,
+        Pubkey::new_unique(),
+        fixture.domain_separator,
+    );
     fixture.recent_blockhash = fixture
         .banks_client
         .get_new_latest_blockhash(&fixture.recent_blockhash)

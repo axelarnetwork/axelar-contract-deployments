@@ -1,17 +1,18 @@
 //! Instruction types
 
-use axelar_message_primitives::command::{ApproveMessagesCommand, DecodedCommand};
+use axelar_rkyv_encoding::types::Message;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+use crate::commands::{MessageWrapper, OwnedCommand};
 use crate::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
 
 /// Instructions supported by the gateway program.
 #[repr(u8)]
-#[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub enum GatewayInstruction {
     /// Processes incoming batch of ApproveMessage commands from Axelar
     ///
@@ -55,7 +56,7 @@ pub enum GatewayInstruction {
     InitializeConfig {
         /// Initial state of the root PDA `Config`.
         config: GatewayConfig,
-    },
+    }, // XXX
 
     /// Initializes an Execute Data PDA account.
     /// The Execute Data is a batch of commands that will be executed by the
@@ -76,7 +77,7 @@ pub enum GatewayInstruction {
         /// We decode it on-chain so we can verify the data is correct and
         /// generate the proper hash.
         execute_data: Vec<u8>,
-    },
+    }, // XXX
 
     /// Initializes a pending command.
     /// This instruction is used to initialize a command that will trackt he
@@ -87,7 +88,7 @@ pub enum GatewayInstruction {
     /// 1. [WRITE] Gateway ApprovedCommand PDA account
     /// 2. [] Gateway Root Config PDA account
     /// 3. [] System Program account
-    InitializePendingCommand(DecodedCommand),
+    InitializePendingCommand(OwnedCommand), // XXX
 
     /// Validates message.
     /// It is the responsibility of the destination program (contract) that
@@ -102,7 +103,7 @@ pub enum GatewayInstruction {
     /// 2. [] Gateway Root Config PDA account
     /// 3. [SIGNER] PDA signer account (caller). Dervied from the destination
     ///    program id.
-    ValidateMessage(ApproveMessagesCommand),
+    ValidateMessage(MessageWrapper), // XXX
 
     /// Transfers operatorship of the Gateway Root Config PDA account.
     ///
@@ -236,13 +237,12 @@ pub fn call_contract(
 pub fn initialize_pending_command(
     gateway_root_pda: &Pubkey,
     payer: &Pubkey,
-    message: impl Into<DecodedCommand>,
+    command: OwnedCommand,
 ) -> Result<Instruction, ProgramError> {
-    let message = message.into();
     let (approved_message_pda, _bump, _seed) =
-        GatewayApprovedCommand::pda(gateway_root_pda, &message);
+        GatewayApprovedCommand::pda(gateway_root_pda, &command);
 
-    let data = to_vec(&GatewayInstruction::InitializePendingCommand(message))?;
+    let data = to_vec(&GatewayInstruction::InitializePendingCommand(command))?;
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -263,14 +263,16 @@ pub fn initialize_execute_data(
     payer: Pubkey,
     gateway_root_pda: Pubkey,
     // The encoded data that will be decoded on-chain.
-    raw_execute_data: Vec<u8>,
-) -> Result<(Instruction, GatewayExecuteData), ProgramError> {
+    raw_execute_data: &[u8],
+) -> Result<(Instruction, GatewayExecuteData<'_>), ProgramError> {
     // We decode the data off-chain so we can find its PDA.
-    let decoded_execute_data = GatewayExecuteData::new(&raw_execute_data, &gateway_root_pda)?;
+    let decoded_execute_data = GatewayExecuteData::new(raw_execute_data, &gateway_root_pda)?;
     let (execute_data_pda, _, _) = decoded_execute_data.pda(&gateway_root_pda);
+    // We store the raw data so we can verify it on-chain.
     let data = to_vec(&GatewayInstruction::InitializeExecuteData {
-        // We store the raw data so we can verify it on-chain.
-        execute_data: raw_execute_data,
+        // TODO: Try to avoid allocating the data twice here, as both `borsh::to_vec`
+        // and `std::slice::to_vec` copy the execute_data bytes into new vectors.
+        execute_data: raw_execute_data.to_vec(),
     })?;
 
     let accounts = vec![
@@ -314,7 +316,7 @@ pub fn validate_message(
     approved_message_pda: &Pubkey,
     gateway_root_pda: &Pubkey,
     caller: &Pubkey,
-    message: ApproveMessagesCommand,
+    message: Message,
 ) -> Result<Instruction, ProgramError> {
     let accounts = vec![
         AccountMeta::new(*approved_message_pda, false),
@@ -322,7 +324,8 @@ pub fn validate_message(
         AccountMeta::new_readonly(*caller, true),
     ];
 
-    let data = borsh::to_vec(&GatewayInstruction::ValidateMessage(message))?;
+    let message_wrapper = message.try_into()?;
+    let data = borsh::to_vec(&GatewayInstruction::ValidateMessage(message_wrapper))?;
 
     Ok(Instruction {
         program_id: crate::id(),
@@ -362,7 +365,6 @@ pub mod tests {
     use borsh::from_slice;
     use solana_sdk::signature::Keypair;
     use solana_sdk::signer::Signer;
-    use test_fixtures::primitives::bytes;
 
     use super::*;
 
@@ -399,12 +401,12 @@ pub mod tests {
         let destination_chain = "ethereum".as_bytes().to_vec();
         let destination_contract_address =
             hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
-        let payload = bytes(100);
+        let payload = vec![5; 100];
 
         let instruction = GatewayInstruction::CallContract {
             destination_chain: destination_chain.to_owned(),
             destination_contract_address,
-            payload: payload.to_vec(),
+            payload,
         };
 
         let serialized = to_vec(&instruction).expect("call contract to be serialized");
@@ -419,7 +421,7 @@ pub mod tests {
         let destination_chain = "ethereum".as_bytes().to_vec();
         let destination_contract_address =
             hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
-        let payload = bytes(100);
+        let payload = vec![5; 100];
 
         let instruction = call_contract(
             crate::id(),

@@ -1,3 +1,4 @@
+use rkyv::bytecheck::{self, CheckBytes};
 use rkyv::{Archive, Deserialize, Serialize};
 
 use crate::types::{
@@ -5,9 +6,9 @@ use crate::types::{
     Ed25519Signature, PublicKey, Signature, U256,
 };
 
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq)]
+#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq))]
+#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct WeightedSignature {
     pub(crate) pubkey: PublicKey,
     pub(crate) signature: Signature,
@@ -74,6 +75,7 @@ impl ArchivedWeightedSignature {
             .verify(message, &signature)
             .map_err(SignatureVerificationError::EcdsaVerificationFailed)
     }
+
     fn verify_ed25519(
         signature_bytes: &Ed25519Signature,
         public_key_bytes: &Ed25519Pubkey,
@@ -117,13 +119,12 @@ pub enum SignatureVerificationError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::fixtures::{random_bytes, random_valid_weighted_signature};
+    use crate::test_fixtures::{random_bytes, random_valid_weighted_signature};
 
     #[test]
     fn valid_weighted_signature() {
-        let mut rng = rand::thread_rng();
-        let message = random_bytes::<32>(&mut rng);
-        let weighted_signature = random_valid_weighted_signature(&mut rng, &message);
+        let message = random_bytes::<32>();
+        let weighted_signature = random_valid_weighted_signature(&message);
         let serialized = rkyv::to_bytes::<_, 1024>(&weighted_signature).unwrap();
         let weighted_signature = unsafe { rkyv::archived_root::<WeightedSignature>(&serialized) };
 
@@ -134,17 +135,16 @@ mod tests {
     fn invalid_weighted_signature() {
         use SignatureVerificationError::*;
 
-        let mut rng = rand::thread_rng();
-        let message = random_bytes::<32>(&mut rng);
-        let weighted_signature = random_valid_weighted_signature(&mut rng, &message);
+        let message = random_bytes::<32>();
+        let weighted_signature = random_valid_weighted_signature(&message);
         let serialized = rkyv::to_bytes::<_, 1024>(&weighted_signature).unwrap();
         let weighted_signature = unsafe { rkyv::archived_root::<WeightedSignature>(&serialized) };
 
         // Use another message for verification
-        let other_message = random_bytes::<32>(&mut rng);
+        let other_message = random_bytes::<32>();
 
         assert!(matches!(
-            dbg!(weighted_signature.verify(&other_message).unwrap_err()),
+            weighted_signature.verify(&other_message).unwrap_err(),
             EcdsaVerificationFailed(_)
                 | Ed25519VerificationFailed(_)
                 | PublicKeyRecoveryMismatch { .. }

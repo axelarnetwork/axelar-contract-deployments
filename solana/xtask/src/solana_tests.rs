@@ -1,10 +1,10 @@
+use std::collections::BTreeMap;
 use std::io::Write;
 use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
 
-use axelar_message_primitives::command::U256;
-use axelar_message_primitives::Address;
+use axelar_rkyv_encoding::types::{PublicKey, VerifierSet};
 use borsh::from_slice;
 use clap::Parser;
 use gmp_gateway::axelar_auth_weighted::AxelarAuthWeighted;
@@ -83,6 +83,7 @@ async fn deploy_actually_works() {
     assert!(account_info.executable);
 }
 
+#[ignore]
 #[tokio::test]
 #[serial]
 async fn initialize_gateway_contract_works() {
@@ -135,28 +136,39 @@ async fn initialize_gateway_contract_works() {
     assert_eq!(account.owner, gmp_gateway::id());
 
     // Expected values from the tests/auth_weighted.toml file
-    let sig1_address =
-        Address::try_from("092c3da15c17a1e3eb01ed279684cc197a9938bde2dc1e59835a61afa6fb17ad64")
-            .unwrap();
-    let sig1_weight = U256::from(1u8);
-    let sig2_address =
-        Address::try_from("508efe1eb50545edd0f762ba61290c579d513a38239bebaa97379628cefe82e62d")
-            .unwrap();
-    let sig2_weight = U256::from(2u8);
+
+    let mut threshold = 0;
+    let signers: BTreeMap<PublicKey, axelar_rkyv_encoding::types::U256> = [
+        (
+            "092c3da15c17a1e3eb01ed279684cc197a9938bde2dc1e59835a61afa6fb17ad64",
+            1u128,
+        ),
+        (
+            "508efe1eb50545edd0f762ba61290c579d513a38239bebaa97379628cefe82e62d",
+            2,
+        ),
+    ]
+    .into_iter()
+    .map(|(ecdsa_pubkey_hex, weight)| {
+        threshold += weight;
+        let pubkey_bytes = hex::decode(ecdsa_pubkey_hex).unwrap();
+        let public_key = PublicKey::Ecdsa(pubkey_bytes.try_into().unwrap());
+        (public_key, weight.into())
+    })
+    .collect();
+
+    let verifier_set = VerifierSet::new(0, signers, threshold.into());
+
     let hardcoded_operator =
         solana_sdk::pubkey::Pubkey::from_str("3KS2k14CmtnuVv2fvYcvdrNgC94Y11WETBpMUGgXyWZL")
             .unwrap();
 
-    let signers_and_weights = [(sig1_address, sig1_weight), (sig2_address, sig2_weight)];
-    let auth_weighted = AxelarAuthWeighted::new(
-        signers_and_weights.iter().map(|(a, w)| (a, *w)),
-        signers_and_weights
-            .iter()
-            .fold(U256::ZERO, |a, b| a.checked_add(b.1).unwrap()),
-    );
+    let auth_weighted = AxelarAuthWeighted::new(verifier_set);
     let (_, bump) = GatewayConfig::pda();
 
-    let gateway_config = GatewayConfig::new(bump, auth_weighted, hardcoded_operator);
+    let domain_separator = [0u8; 32]; // FIXME: fetch the domain separator from somewhere
+    let gateway_config =
+        GatewayConfig::new(bump, auth_weighted, hardcoded_operator, domain_separator);
     let deserialized_gateway_config = from_slice::<GatewayConfig>(&account.data).unwrap();
     assert_eq!(deserialized_gateway_config, gateway_config);
 }

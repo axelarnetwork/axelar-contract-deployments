@@ -1,10 +1,11 @@
+use rkyv::bytecheck::{self, CheckBytes};
 use rkyv::{Archive, Deserialize, Serialize};
 
 use crate::types::{Message, VerifierSet};
 
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq)]
+#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq))]
+#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub enum Payload {
     Messages(Vec<Message>),
     VerifierSet(VerifierSet),

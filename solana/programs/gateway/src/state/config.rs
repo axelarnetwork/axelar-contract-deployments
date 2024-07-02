@@ -21,6 +21,8 @@ pub struct GatewayConfig {
     pub auth_weighted: AxelarAuthWeighted,
     /// The gateway operator.
     pub operator: Pubkey,
+    /// The domain separator, used as an input for hashing payloads.
+    pub domain_separator: [u8; 32],
 }
 
 impl Deref for GatewayConfig {
@@ -39,11 +41,17 @@ impl DerefMut for GatewayConfig {
 
 impl GatewayConfig {
     /// Creates a new `GatewayConfig` value.
-    pub fn new(bump: u8, auth_weighted: AxelarAuthWeighted, operator: Pubkey) -> Self {
+    pub fn new(
+        bump: u8,
+        auth_weighted: AxelarAuthWeighted,
+        operator: Pubkey,
+        domain_separator: [u8; 32],
+    ) -> Self {
         Self {
             bump,
             operator,
             auth_weighted,
+            domain_separator,
         }
     }
 
@@ -56,8 +64,12 @@ impl GatewayConfig {
 impl Sealed for GatewayConfig {}
 
 impl Pack for GatewayConfig {
-    const LEN: usize =
-        { size_of::<u8>() + size_of::<Pubkey>() + AxelarAuthWeighted::SIZE_WHEN_SERIALIZED };
+    const LEN: usize = {
+        size_of::<u8>()
+            + size_of::<Pubkey>()
+            + AxelarAuthWeighted::SIZE_WHEN_SERIALIZED
+            + size_of::<[u8; 32]>()
+    };
 
     fn pack_into_slice(&self, mut dst: &mut [u8]) {
         self.serialize(&mut dst).unwrap();

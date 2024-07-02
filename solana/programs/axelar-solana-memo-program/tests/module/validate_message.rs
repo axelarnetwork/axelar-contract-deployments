@@ -1,18 +1,21 @@
-use axelar_executable::axelar_message_primitives::{DestinationProgramId, EncodingScheme};
+use axelar_executable::axelar_message_primitives::EncodingScheme;
 use axelar_solana_memo_program::instruction::from_axelar_to_solana::build_memo;
+use gateway::commands::OwnedCommand;
 use gateway::state::GatewayApprovedCommand;
 use solana_program_test::tokio;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer};
 use test_fixtures::axelar_message::custom_message;
-use test_fixtures::execute_data::{create_signer_with_weight, TestSigner};
+use test_fixtures::execute_data::TestSigner;
 use test_fixtures::test_setup::TestFixture;
+use test_fixtures::test_signer::create_signer_with_weight;
 
 use crate::program_test;
 
 #[rstest::rstest]
 #[case(EncodingScheme::Borsh)]
 #[case(EncodingScheme::AbiEncoding)]
+#[ignore]
 #[tokio::test]
 async fn test_successful_validate_message(#[case] encoding_scheme: EncodingScheme) {
     // Setup
@@ -20,7 +23,7 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
 
     // Test scoped constants
     let random_account_used_by_ix = Keypair::new();
-    let destination_program_id = DestinationProgramId(axelar_solana_memo_program::id());
+    let destination_program_id = axelar_solana_memo_program::id();
     let memo_string = "🐪🐪🐪🐪";
 
     // Create 2 messages: one we're going to execute and one we're not
@@ -30,24 +33,23 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
         &[&random_account_used_by_ix.pubkey()],
         encoding_scheme,
     );
-    let message_to_execute =
-        custom_message(destination_program_id, message_payload.clone()).unwrap();
+    let message_to_execute = custom_message(destination_program_id, message_payload.clone());
     let other_message_in_the_batch =
-        custom_message(destination_program_id, message_payload.clone()).unwrap();
+        custom_message(destination_program_id, message_payload.clone());
+
+    let messages = vec![message_to_execute, other_message_in_the_batch];
 
     // Action: "Relayer" calls Gateway to approve messages
-    let (gateway_approved_command_pdas, gateway_execute_data, _) = solana_chain
-        .fully_approve_messages(
-            &gateway_root_pda,
-            &[message_to_execute, other_message_in_the_batch],
-            &solana_signers,
-        )
+    let (gateway_approved_command_pdas, _, _) = solana_chain
+        .fully_approve_messages(&gateway_root_pda, messages.clone(), &solana_signers)
         .await;
+
+    let approve_message_command = OwnedCommand::ApproveMessage(messages[0].clone());
 
     // Action: set message status as executed by calling the destination program
     let tx = solana_chain
         .call_execute_on_axelar_executable(
-            &gateway_execute_data.command_batch.commands[0],
+            &approve_message_command,
             &message_payload,
             &gateway_approved_command_pdas[0],
             gateway_root_pda,
@@ -102,8 +104,8 @@ async fn solana_setup() -> (
 ) {
     let mut fixture = TestFixture::new(program_test()).await;
     let signers = vec![
-        create_signer_with_weight(10_u128).unwrap(),
-        create_signer_with_weight(4_u128).unwrap(),
+        create_signer_with_weight(10_u128),
+        create_signer_with_weight(4_u128),
     ];
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(

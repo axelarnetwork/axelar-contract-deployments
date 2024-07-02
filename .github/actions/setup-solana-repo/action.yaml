@@ -37,3 +37,8 @@ runs:
         forge --version
         forge build --sizes
       id: build
+
+    - name: Install needed tooling
+      shell: bash
+      run: |
+        sudo apt-get install protobuf-compiler

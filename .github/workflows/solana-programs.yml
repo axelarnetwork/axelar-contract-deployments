@@ -28,7 +28,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: true        
+          submodules: true
 
       - name: Setup repo
         uses: ./.github/actions/setup-solana-repo
@@ -43,7 +43,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: true        
+          submodules: true
 
       - name: Setup repo
         uses: ./.github/actions/setup-solana-repo
@@ -58,14 +58,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: true        
+          submodules: true
 
       - name: Setup repo
         uses: ./.github/actions/setup-solana-repo
-
-      - name: Install needed tooling
-        run: |
-          sudo apt-get install protobuf-compiler
 
       - name: Unused deps
         run: cargo make unused-deps
@@ -77,14 +73,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: true        
+          submodules: true
 
       - name: Setup repo
         uses: ./.github/actions/setup-solana-repo
-      
-      - name: Install needed tooling
-        run: |
-          sudo apt-get install protobuf-compiler
 
       - name: Cache Solana
         uses: actions/cache@v3

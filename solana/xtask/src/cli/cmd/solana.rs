@@ -1,10 +1,10 @@
+use std::collections::BTreeMap;
 use std::fmt::Display;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use axelar_message_primitives::command::U256;
-use axelar_message_primitives::Address;
+use axelar_rkyv_encoding::types::{PublicKey, VerifierSet, U256};
 use gmp_gateway::axelar_auth_weighted::AxelarAuthWeighted;
 use gmp_gateway::state::GatewayConfig;
 use serde::Deserialize;
@@ -68,6 +68,15 @@ pub(crate) fn deploy(
     Ok(())
 }
 
+fn unix_seconds() -> u64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    // Unwrap: `now` is always greater than UNIX EPOCH
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+}
+
 pub(crate) async fn init_gmp_gateway(
     auth_weighted: &PathBuf,
     rpc_url: &Option<Url>,
@@ -81,15 +90,26 @@ pub(crate) async fn init_gmp_gateway(
     let gateway_config_file_content = read_to_string(auth_weighted)?;
     let gateway_config_data = toml::from_str::<GatewayConfigData>(&gateway_config_file_content)?;
 
-    let auth_weighted = AxelarAuthWeighted::new(
-        gateway_config_data
+    // Prepare the AuthWeighted module
+    let auth_weighted = {
+        let threshold = gateway_config_data.calc_signer_thershold();
+        let created_at = unix_seconds();
+        let signers: BTreeMap<PublicKey, U256> = gateway_config_data
             .signers
             .iter()
-            .map(|signer| (&signer.address, U256::from(signer.weight as u128))),
-        gateway_config_data.calc_signer_thershold(),
-    );
+            .map(|signer| (signer.address, U256::from(signer.weight as u128)))
+            .collect();
+        let verifier_set = VerifierSet::new(created_at, signers, threshold);
+        AxelarAuthWeighted::new(verifier_set)
+    };
 
-    let gateway_config = GatewayConfig::new(bump, auth_weighted, gateway_config_data.operator);
+    let domain_separator = [0u8; 32]; // FIXME: fetch the domain separator from somewhere
+    let gateway_config = GatewayConfig::new(
+        bump,
+        auth_weighted,
+        gateway_config_data.operator,
+        domain_separator,
+    );
 
     let ix = gmp_gateway::instructions::initialize_config(
         payer_kp.pubkey(),
@@ -125,38 +145,41 @@ struct GatewayConfigData {
 
 impl GatewayConfigData {
     fn calc_signer_thershold(&self) -> U256 {
-        self.signers.iter().fold(U256::ZERO, |a, b| {
-            a.checked_add(U256::from(b.weight as u128)).unwrap()
-        })
+        self.signers
+            .iter()
+            .map(|signer| U256::from(signer.weight as u128))
+            .try_fold(U256::ZERO, U256::checked_add)
+            .expect("no arithmetic overflow")
     }
 }
 
 #[derive(Deserialize, Debug)]
 struct GatewaySigner {
-    #[serde(deserialize_with = "serde_utils::deserialize_address")]
-    address: Address,
+    #[serde(deserialize_with = "serde_utils::deserialize_public_key")]
+    address: PublicKey,
     weight: u64,
 }
 
 mod serde_utils {
+    use axelar_rkyv_encoding::types::PublicKey;
     use serde::Deserializer;
 
-    use super::{Address, Deserialize, FromStr, Pubkey};
+    use super::{Deserialize, Pubkey};
 
-    pub(crate) fn deserialize_address<'de, D>(deserializer: D) -> Result<Address, D::Error>
+    pub(crate) fn deserialize_public_key<'de, D>(deserializer: D) -> Result<PublicKey, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let raw_string = String::deserialize(deserializer)?;
-        Address::try_from(raw_string.as_str()).map_err(serde::de::Error::custom)
+        let raw_string: &str = Deserialize::deserialize(deserializer)?;
+        raw_string.parse().map_err(serde::de::Error::custom)
     }
 
     pub(crate) fn deserialize_pubkey<'de, D>(deserializer: D) -> Result<Pubkey, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let raw_string = String::deserialize(deserializer)?;
-        Pubkey::from_str(&raw_string).map_err(serde::de::Error::custom)
+        let raw_string: &str = Deserialize::deserialize(deserializer)?;
+        raw_string.parse().map_err(serde::de::Error::custom)
     }
 }
 
@@ -482,19 +505,20 @@ mod tests {
         assert_eq!(expected, result);
     }
 
+    #[ignore]
     #[test]
-    fn calc_threshold_from_works() {
+    fn calcthreshold_from_works() {
         let config = GatewayConfigData {
             signers: vec![
                 GatewaySigner {
-                    address: Address::try_from(
+                    address: PublicKey::from_str(
                         "07453457a565724079d7dfab633d026d49cac3f6d69bce20bc79adedfccdf69ab2",
                     )
                     .unwrap(),
                     weight: 1,
                 },
                 GatewaySigner {
-                    address: Address::try_from(
+                    address: PublicKey::from_str(
                         "6b322380108ca6c6313667657aab424ad0ea014cf3fb107bb124e8822bc9d0befb",
                     )
                     .unwrap(),

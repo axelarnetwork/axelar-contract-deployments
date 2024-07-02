@@ -13,7 +13,6 @@ unused_imports = "warn"
 rust_2018_idioms = "deny"
 missing_docs = "warn"
 unreachable_pub = "warn"
-unused_crate_dependencies = "warn"
 unused_must_use = "deny"
 
 [dependencies]
@@ -27,14 +26,14 @@ xshell.workspace = true
 solana-sdk.workspace = true
 gmp-gateway = { path = "./../programs/gateway" }
 axelar-message-primitives = { path = "./../helpers/axelar-message-primitives" }
-solana-client = "1.18.13"
+solana-client = "2.0.1"
 url = "2"
 toml = "0.8"
 serde.workspace = true
 ethers.workspace = true
 evm-contracts-test-suite.workspace = true
 axelar-solana-memo-program.workspace = true
-solana-cli-config = "1.18.13"
+solana-cli-config = "2.0.1"
 reqwest.workspace = true
 futures.workspace = true
 flate2 = "1.0"
@@ -55,16 +54,17 @@ multisig = { path = "../../axelar-amplifier/contracts/multisig", features = ["li
 axelar-wasm-std = { path = "../../axelar-amplifier/packages/axelar-wasm-std", features = ["library"] }
 gateway-api = { path = "../../axelar-amplifier/packages/gateway-api" }
 router-api = { path = "../../axelar-amplifier/packages/router-api" }
+axelar-rkyv-encoding.workspace = true
 
 [dev-dependencies]
 solana-program.workspace = true
 solana-sdk.workspace = true
 hex.workspace = true
-solana-streamer = "1.18.13"
-solana-test-validator = "1.18.13"
+solana-streamer = "2.0.1"
+solana-test-validator = "2.0.1"
 tempfile = "3"
 serial_test = "3"
-solana-logger = "1.18.13"
+solana-logger = "2.0.1"
 borsh.workspace = true
 test-log.workspace = true
 

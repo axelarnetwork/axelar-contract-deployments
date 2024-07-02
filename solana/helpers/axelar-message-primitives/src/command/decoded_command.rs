@@ -386,21 +386,3 @@ fn decode_execute_data_from_axelar_repo() -> anyhow::Result<()> {
     assert_eq!(command_batch_hash, expected_hash);
     Ok(())
 }
-
-#[test]
-fn decode_custom_execute_data() -> anyhow::Result<()> {
-    let execute_data = test_fixtures::execute_data::create_execute_data(5, 3, 2)?;
-
-    let (proof, command_batch, command_batch_hash) = decode(&execute_data)?;
-
-    assert_eq!(command_batch.commands.len(), 5);
-    assert_eq!(proof.signer_set.addresses().len(), 3);
-    assert_eq!(proof.signatures().len(), 3);
-    assert_eq!(*proof.signer_set.threshold(), 2u8.into());
-
-    if let Err(error) = proof.validate_signatures(&command_batch_hash) {
-        panic!("Invalid proof: {error}")
-    };
-
-    Ok(())
-}

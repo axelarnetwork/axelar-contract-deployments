@@ -7,9 +7,14 @@ use visitor::Visitor;
 use crate::types::{ExecuteData, Proof};
 
 mod hasher;
-mod tests;
 pub mod types;
 mod visitor;
+
+#[cfg(test)]
+mod tests;
+
+#[cfg(any(test, feature = "test-fixtures"))]
+pub mod test_fixtures;
 
 /// Encodes the execute_data components using N bytes as scratch space allocated
 /// on the heap.

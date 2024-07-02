@@ -1,16 +1,19 @@
 //! Types used for logging messages.
-
 use std::borrow::Cow;
 
 use axelar_message_primitives::command::{
     ApproveMessagesCommand, DecodedCommand, RotateSignersCommand,
 };
+use axelar_rkyv_encoding::types::{ArchivedMessage, Message};
 use base64::engine::general_purpose;
 use base64::Engine as _;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+
+use crate::commands::OwnedCommand;
+use crate::error::GatewayError;
 
 #[derive(Debug, Clone, PartialEq, BorshDeserialize, BorshSerialize)]
 /// Logged when the Gateway receives an outbound message.
@@ -32,7 +35,7 @@ pub struct CallContract {
 /// batch.
 pub struct MessageApproved {
     /// The Message ID
-    pub message_id: [u8; 32],
+    pub message_id: Vec<u8>,
     /// Source chain.
     pub source_chain: Vec<u8>,
     /// Source address.
@@ -85,6 +88,7 @@ impl<'a> BorshDeserialize for GatewayEvent<'a> {
     }
 }
 
+/// Will be deprecated soon
 impl From<DecodedCommand> for GatewayEvent<'_> {
     fn from(command: DecodedCommand) -> Self {
         match command {
@@ -98,15 +102,77 @@ impl From<DecodedCommand> for GatewayEvent<'_> {
     }
 }
 
+impl TryFrom<OwnedCommand> for GatewayEvent<'_> {
+    type Error = GatewayError;
+
+    fn try_from(command: OwnedCommand) -> Result<Self, Self::Error> {
+        let event = match command {
+            OwnedCommand::ApproveMessage(message) => {
+                GatewayEvent::MessageApproved(Cow::Owned(message.try_into()?))
+            }
+            OwnedCommand::RotateSigners(_verifier_set) => {
+                // TODO: Replace 'RotateSignersCommand' for something more up to date with
+                // Axelar specification.
+                unimplemented!("We should not implement anything on top of 'RotateSignersCommand' because it is deprecated")
+            }
+        };
+        Ok(event)
+    }
+}
+
 impl From<ApproveMessagesCommand> for MessageApproved {
     fn from(command: ApproveMessagesCommand) -> Self {
         MessageApproved {
-            message_id: command.command_id,
+            message_id: command.command_id.to_vec(),
             source_chain: command.source_chain,
             source_address: command.source_address,
             destination_address: command.destination_program.0.to_bytes(),
             payload_hash: command.payload_hash,
         }
+    }
+}
+
+impl TryFrom<Message> for MessageApproved {
+    type Error = GatewayError;
+
+    fn try_from(message: Message) -> Result<Self, Self::Error> {
+        let cc_id = message.cc_id();
+
+        let destination_address: [u8; 32] = message
+            .destination_address()
+            .parse::<Pubkey>()
+            .map(|pubkey| pubkey.to_bytes())
+            .map_err(|_| GatewayError::PublicKeyParseError)?;
+
+        Ok(MessageApproved {
+            message_id: cc_id.id().into(),
+            source_chain: cc_id.chain().into(),
+            source_address: message.source_address().into(),
+            destination_address,
+            payload_hash: message.payload_hash().to_owned(),
+        })
+    }
+}
+
+impl TryFrom<&ArchivedMessage> for MessageApproved {
+    type Error = GatewayError;
+
+    fn try_from(message: &ArchivedMessage) -> Result<Self, Self::Error> {
+        let cc_id = message.cc_id();
+
+        let destination_address: [u8; 32] = message
+            .destination_address()
+            .parse::<Pubkey>()
+            .map(|pubkey| pubkey.to_bytes())
+            .map_err(|_| GatewayError::PublicKeyParseError)?;
+
+        Ok(MessageApproved {
+            message_id: cc_id.id().into(),
+            source_chain: cc_id.chain().into(),
+            source_address: message.source_address().into(),
+            destination_address,
+            payload_hash: message.payload_hash().to_owned(),
+        })
     }
 }
 
@@ -158,7 +224,7 @@ mod tests {
             quorum: 42,
         };
         let message_approved = MessageApproved {
-            message_id: [2; 32],
+            message_id: vec![2; 32],
             source_chain: b"solana".to_vec(),
             source_address: b"SourceAddress".to_vec(),
             destination_address: [3; 32],

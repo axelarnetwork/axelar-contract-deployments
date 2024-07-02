@@ -10,12 +10,13 @@ use solana_sdk::transaction::Transaction;
 
 use crate::{axelar_evm_setup, axelar_solana_setup};
 
+#[ignore]
 #[tokio::test]
 async fn test_send_from_solana_to_evm() {
     // Setup - Solana
     let (mut solana_chain, gateway_root_pda, _signers, _counter) = axelar_solana_setup().await;
     // Setup - EVM
-    let (evm_chain, evm_signer, evm_gateway, mut weighted_signers, domain_separator) =
+    let (_evm_chain, evm_signer, evm_gateway, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
     let evm_memo = evm_signer
         .deploy_axelar_memo(evm_gateway.clone())

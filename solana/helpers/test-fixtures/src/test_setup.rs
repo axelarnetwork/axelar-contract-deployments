@@ -1,13 +1,13 @@
-use std::ops::Add;
+use std::collections::BTreeMap;
 
-use axelar_message_primitives::command::{DecodedCommand, U256 as GatewayU256};
-use axelar_message_primitives::{Address, DataPayload};
+use axelar_message_primitives::DataPayload;
+use axelar_rkyv_encoding::types::u256::U256;
+use axelar_rkyv_encoding::types::{Message, Payload, VerifierSet};
 use borsh::BorshDeserialize;
 use gateway::axelar_auth_weighted::AxelarAuthWeighted;
+use gateway::commands::OwnedCommand;
 use gateway::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
 use interchain_token_transfer_gmp::ethers_core::types::U256 as EthersU256;
-use itertools::{Either, Itertools};
-use multisig::worker_set::WorkerSet;
 use solana_program::hash::Hash;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
@@ -29,13 +29,17 @@ use spl_token::state::Mint;
 pub use {connection_router, interchain_token_transfer_gmp};
 
 use crate::account::CheckValidPDAInTests;
-use crate::execute_data::{create_command_batch, sign_batch, TestSigner};
+use crate::execute_data::prepare_execute_data;
+use crate::test_signer::TestSigner;
+
+const DOMAIN_SEPARATOR: [u8; 32] = [0u8; 32];
 
 pub struct TestFixture {
     pub context: ProgramTestContext,
     pub banks_client: BanksClient,
     pub payer: Keypair,
     pub recent_blockhash: Hash,
+    pub domain_separator: [u8; 32],
 }
 
 impl TestFixture {
@@ -46,6 +50,7 @@ impl TestFixture {
             payer: context.payer.insecure_clone(),
             recent_blockhash: context.last_blockhash,
             context,
+            domain_separator: DOMAIN_SEPARATOR,
         }
     }
 
@@ -265,35 +270,23 @@ impl TestFixture {
     }
 
     pub fn init_auth_weighted_module(&self, signers: &[TestSigner]) -> AxelarAuthWeighted {
-        let total_weights = signers
+        let threshold = signers
             .iter()
             .map(|s| s.weight)
-            .fold(GatewayU256::ZERO, |a, b| {
-                let b = GatewayU256::from_le_bytes(b.to_le_bytes());
-                a.checked_add(b).unwrap()
-            });
+            .try_fold(U256::ZERO, U256::checked_add)
+            .expect("no arithmetic overflow");
 
-        self.init_auth_weighted_module_custom_threshold(signers, total_weights)
+        self.init_auth_weighted_module_custom_threshold(signers, threshold)
     }
 
     pub fn init_auth_weighted_module_custom_threshold(
         &self,
         signers: &[TestSigner],
-        threshold: GatewayU256,
+        threshold: U256,
     ) -> AxelarAuthWeighted {
-        let addresses = signers
-            .iter()
-            .map(|s| {
-                let address: cosmwasm_std::HexBinary = s.public_key.clone().into();
-                let address = Address::try_from(address.as_slice()).unwrap();
-                address
-            })
-            .collect_vec();
-        let weights = signers
-            .iter()
-            .map(|s| GatewayU256::from_le_bytes(s.weight.to_le_bytes()));
-
-        AxelarAuthWeighted::new(addresses.iter().zip(weights), threshold)
+        let signers: BTreeMap<_, _> = signers.iter().map(|s| (s.public_key, s.weight)).collect();
+        let verifier_set = VerifierSet::new(0u64, signers, threshold);
+        AxelarAuthWeighted::new(verifier_set)
     }
 
     pub async fn initialize_gateway_config_account(
@@ -302,7 +295,8 @@ impl TestFixture {
         init_operator: Pubkey,
     ) -> Pubkey {
         let (gateway_config_pda, bump) = GatewayConfig::pda();
-        let gateway_config = GatewayConfig::new(bump, auth_weighted, init_operator);
+        let gateway_config =
+            GatewayConfig::new(bump, auth_weighted, init_operator, self.domain_separator);
         let ix = gateway::instructions::initialize_config(
             self.payer.pubkey(),
             gateway_config.clone(),
@@ -392,32 +386,33 @@ impl TestFixture {
     pub async fn init_execute_data(
         &mut self,
         gateway_root_pda: &Pubkey,
-        messages: &[Either<connection_router::Message, WorkerSet>],
+        payload: Payload,
         signers: &[TestSigner],
         quorum: u128,
-    ) -> (Pubkey, GatewayExecuteData, Vec<u8>) {
-        let (execute_data, raw_data) =
-            prepare_execute_data(messages, signers, quorum, gateway_root_pda);
+        domain_separator: &[u8; 32],
+    ) -> (Pubkey, Vec<u8>) {
+        let (raw_data, _) = prepare_execute_data(payload, signers, quorum, domain_separator);
 
         let execute_data_pda = self
-            .init_execute_data_with_custom_data(gateway_root_pda, &raw_data, &execute_data)
+            .init_execute_data_with_custom_data(gateway_root_pda, &raw_data)
             .await;
 
-        (execute_data_pda, execute_data, raw_data)
+        (execute_data_pda, raw_data)
     }
 
-    pub async fn init_execute_data_with_custom_data(
+    pub async fn init_execute_data_with_custom_data<'a>(
         &mut self,
         gateway_root_pda: &Pubkey,
-        raw_data: &[u8],
-        execute_data: &GatewayExecuteData,
+        raw_data: &'a [u8],
     ) -> Pubkey {
+        let execute_data = GatewayExecuteData::new(raw_data, gateway_root_pda)
+            .expect("valid execute_data raw bytes");
         let (execute_data_pda, _, _) = execute_data.pda(gateway_root_pda);
 
         let (ix, _) = gateway::instructions::initialize_execute_data(
             self.payer.pubkey(),
             *gateway_root_pda,
-            raw_data.to_vec(),
+            raw_data,
         )
         .unwrap();
 
@@ -435,7 +430,7 @@ impl TestFixture {
         gateway_root_pda: &Pubkey,
         // message and the allowed executer for the message (supposed to be a PDA owned by
         // message.destination_address)
-        commands: &[DecodedCommand],
+        commands: &[OwnedCommand],
     ) -> Vec<Pubkey> {
         let ixs = commands
             .iter()
@@ -525,9 +520,9 @@ impl TestFixture {
     pub async fn fully_approve_messages(
         &mut self,
         gateway_root_pda: &Pubkey,
-        messages: &[connection_router::Message],
+        messages: Vec<Message>,
         signers: &[TestSigner],
-    ) -> (Vec<Pubkey>, GatewayExecuteData, Pubkey) {
+    ) -> (Vec<Pubkey>, Vec<u8>, Pubkey) {
         let (command_pdas, execute_data, execute_data_pda, tx) = self
             .fully_approve_messages_with_execute_metadata(gateway_root_pda, messages, signers)
             .await;
@@ -538,34 +533,35 @@ impl TestFixture {
     pub async fn fully_approve_messages_with_execute_metadata(
         &mut self,
         gateway_root_pda: &Pubkey,
-        messages: &[connection_router::Message],
+        messages: Vec<Message>,
         signers: &[TestSigner],
     ) -> (
         Vec<Pubkey>,
-        GatewayExecuteData,
+        Vec<u8>,
         Pubkey,
         BanksTransactionResultWithMetadata,
     ) {
         let weight_of_quorum = signers
             .iter()
-            .fold(cosmwasm_std::Uint256::zero(), |acc, i| acc.add(i.weight));
-        let weight_of_quorum = EthersU256::from_big_endian(&weight_of_quorum.to_be_bytes());
-        let (execute_data_pda, execute_data, _) = self
+            .try_fold(U256::ZERO, |acc, i| acc.checked_add(i.weight))
+            .expect("no overflow");
+        let weight_of_quorum = EthersU256::from_little_endian(&weight_of_quorum.to_le());
+        let (execute_data_pda, execute_data) = self
             .init_execute_data(
                 gateway_root_pda,
-                &messages
-                    .iter()
-                    .map(|x| Either::Left(x.clone()))
-                    .collect_vec(),
+                Payload::Messages(messages.clone()),
                 signers,
                 weight_of_quorum.as_u128(),
+                &DOMAIN_SEPARATOR,
             )
             .await;
+
+        let commands: Vec<_> = messages
+            .into_iter()
+            .map(OwnedCommand::ApproveMessage)
+            .collect();
         let gateway_approved_command_pdas = self
-            .init_pending_gateway_commands(
-                gateway_root_pda,
-                execute_data.command_batch.commands.as_ref(),
-            )
+            .init_pending_gateway_commands(gateway_root_pda, &commands)
             .await;
         let tx = self
             .approve_pending_gateway_messages_with_metadata(
@@ -593,9 +589,9 @@ impl TestFixture {
     pub async fn fully_rotate_signers(
         &mut self,
         gateway_root_pda: &Pubkey,
-        signer_set: WorkerSet,
+        signer_set: VerifierSet,
         signers: &[TestSigner],
-    ) -> (Pubkey, GatewayExecuteData, Pubkey) {
+    ) -> (Pubkey, Vec<u8>, Pubkey) {
         let (command_pdas, execute_data, execute_data_pda, tx) = self
             .fully_rotate_signers_with_execute_metadata(gateway_root_pda, signer_set, signers)
             .await;
@@ -606,31 +602,27 @@ impl TestFixture {
     pub async fn fully_rotate_signers_with_execute_metadata(
         &mut self,
         gateway_root_pda: &Pubkey,
-        signer_set: WorkerSet,
+        signer_set: VerifierSet,
         signers: &[TestSigner],
-    ) -> (
-        Pubkey,
-        GatewayExecuteData,
-        Pubkey,
-        BanksTransactionResultWithMetadata,
-    ) {
+    ) -> (Pubkey, Vec<u8>, Pubkey, BanksTransactionResultWithMetadata) {
         let weight_of_quorum = signers
             .iter()
-            .fold(cosmwasm_std::Uint256::zero(), |acc, i| acc.add(i.weight));
-        let weight_of_quorum = EthersU256::from_big_endian(&weight_of_quorum.to_be_bytes());
-        let (execute_data_pda, execute_data, _) = self
+            .try_fold(U256::ZERO, |acc, i| acc.checked_add(i.weight))
+            .expect("no overflow");
+        let weight_of_quorum = EthersU256::from_little_endian(&weight_of_quorum.to_le());
+        let (execute_data_pda, execute_data) = self
             .init_execute_data(
                 gateway_root_pda,
-                &[Either::Right(signer_set)],
+                Payload::VerifierSet(signer_set.clone()),
                 signers,
                 weight_of_quorum.as_u128(),
+                &DOMAIN_SEPARATOR,
             )
             .await;
+
+        let command = OwnedCommand::RotateSigners(signer_set);
         let gateway_command_pda = self
-            .init_pending_gateway_commands(
-                gateway_root_pda,
-                execute_data.command_batch.commands.as_ref(),
-            )
+            .init_pending_gateway_commands(gateway_root_pda, &[command])
             .await
             .pop()
             .unwrap();
@@ -657,13 +649,12 @@ impl TestFixture {
 
     pub async fn call_execute_on_axelar_executable<'a>(
         &mut self,
-        gateway_decoded_command: &DecodedCommand,
+        gateway_decoded_command: &OwnedCommand,
         decoded_payload: &DataPayload<'a>,
         gateway_approved_command_pda: &solana_sdk::pubkey::Pubkey,
         gateway_root_pda: solana_sdk::pubkey::Pubkey,
     ) -> solana_program_test::BanksTransactionResultWithMetadata {
-        let DecodedCommand::ApproveMessages(approved_message) = gateway_decoded_command.clone()
-        else {
+        let OwnedCommand::ApproveMessage(approved_message) = gateway_decoded_command.clone() else {
             panic!("expected ApproveMessages command")
         };
         let ix = axelar_executable::construct_axelar_executable_ix(
@@ -677,20 +668,6 @@ impl TestFixture {
         assert!(tx.result.is_ok(), "transaction failed");
         tx
     }
-}
-
-pub fn prepare_execute_data(
-    messages: &[Either<connection_router::Message, WorkerSet>],
-    signers: &[TestSigner],
-    quorum: u128,
-    gateway_root_pda: &Pubkey,
-) -> (GatewayExecuteData, Vec<u8>) {
-    let command_batch = create_command_batch(messages).unwrap();
-    let signatures = sign_batch(&command_batch, signers).unwrap();
-    let encoded_message =
-        crate::execute_data::encode(&command_batch, signers.to_vec(), signatures, quorum).unwrap();
-    let execute_data = GatewayExecuteData::new(encoded_message.as_ref(), gateway_root_pda).unwrap();
-    (execute_data, encoded_message)
 }
 
 pub async fn add_upgradeable_loader_account(
@@ -758,14 +735,15 @@ mod tests {
         assert!(matches!(
             loader_state,
             UpgradeableLoaderState::Program {
-                programdata_address: programdata_pda
+                programdata_address
             }
+            if programdata_address == programdata_pda
         ));
         assert!(matches!(
             loader_state_2,
             UpgradeableLoaderState::Program {
-                programdata_address: programdata_pda_2
-            }
+                programdata_address
+            } if programdata_address == programdata_pda_2
         ));
 
         // Assert - programdata gets initialised
@@ -780,20 +758,20 @@ mod tests {
                 [0..UpgradeableLoaderState::size_of_programdata_metadata()],
         )
         .unwrap();
-        let upgrade_authhority_address = upgrade_authority.pubkey();
+        let expected_upgrade_authority_address = upgrade_authority.pubkey();
         assert!(matches!(
             loader_state,
             UpgradeableLoaderState::ProgramData {
                 slot: _,
                 upgrade_authority_address
-            }
+            } if upgrade_authority_address == Some(expected_upgrade_authority_address)
         ));
         assert!(matches!(
             loader_state_2,
             UpgradeableLoaderState::ProgramData {
                 slot: _,
                 upgrade_authority_address
-            }
+            } if upgrade_authority_address == Some(expected_upgrade_authority_address)
         ));
         assert_eq!(
             programdata_account_2.data().len(),

@@ -17,16 +17,17 @@ pub struct AxelarExecutablePayload {
     ///
     /// The Axelar Message CCID, truncated to 32 bytes during proof
     /// generation.
-    pub command_id: [u8; 32],
+    pub command_id: CrossChainId,
+
     /// The payload *without* the prefixed accounts
     ///
     /// This needs to be done by the relayer before calling the destination
     /// program
     pub payload_without_accounts: Vec<u8>,
     /// The source chain of the command
-    pub source_chain: Vec<u8>,
+    pub source_chain: String,
     /// The source address of the command
-    pub source_address: Vec<u8>,
+    pub source_address: String,
     /// Encoding scheme of the payload
     pub encoding_scheme: EncodingScheme,
 }
@@ -40,4 +41,10 @@ pub enum AxelarCallableInstruction<T> {
     AxelarExecute(AxelarExecutablePayload),
     /// The payload is coming from the user
     Native(T),
+}
+
+#[derive(Debug, PartialEq, Clone, borsh::BorshSerialize, borsh::BorshDeserialize)]
+pub struct CrossChainId {
+    pub chain: String,
+    pub id: String,
 }

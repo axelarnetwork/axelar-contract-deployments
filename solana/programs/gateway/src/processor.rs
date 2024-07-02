@@ -1,6 +1,9 @@
 //! Program state processor.
 
-use borsh::BorshDeserialize;
+use std::borrow::Cow;
+
+use axelar_rkyv_encoding::types::ArchivedMessage;
+use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
@@ -11,6 +14,8 @@ use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_instruction, system_program};
 
 use crate::check_program_account;
+use crate::commands::ArchivedCommand;
+use crate::error::GatewayError;
 use crate::instructions::GatewayInstruction;
 
 mod approve_messages;
@@ -70,9 +75,14 @@ impl Processor {
                 msg!("Instruction: Initialize Pending Command");
                 Self::process_initialize_command(program_id, accounts, command)
             }
-            GatewayInstruction::ValidateMessage(command) => {
+            GatewayInstruction::ValidateMessage(wrapper) => {
                 msg!("Instruction: Validate Message");
-                Self::process_validate_message(program_id, accounts, command)
+                let message: &ArchivedMessage = (&wrapper).into();
+                Self::process_validate_message(
+                    program_id,
+                    accounts,
+                    ArchivedCommand::ApproveMessage(message),
+                )
             }
             GatewayInstruction::TransferOperatorship => {
                 msg!("Instruction: Transfer Operatorship");
@@ -83,13 +93,13 @@ impl Processor {
 }
 
 /// Initialize a Gateway PDA
-fn init_pda_with_dynamic_size<'a, 'b, T: borsh::BorshSerialize>(
+fn init_pda_with_dynamic_size<'a, 'b, T: ToBytes>(
     payer: &'a AccountInfo<'b>,
     new_account_pda: &'a AccountInfo<'b>,
     seeds: &[&[u8]],
     data: &T,
 ) -> Result<(), ProgramError> {
-    let serialized_data = borsh::to_vec(data)?;
+    let serialized_data = data.to_bytes()?;
     let space = serialized_data.len();
     let rent_sysvar = Rent::get()?;
     let rent = rent_sysvar.minimum_balance(space);
@@ -118,4 +128,24 @@ fn init_pda_with_dynamic_size<'a, 'b, T: borsh::BorshSerialize>(
     let mut account_data = new_account_pda.try_borrow_mut_data()?;
     account_data[..space].copy_from_slice(&serialized_data);
     Ok(())
+}
+
+/// Trait for types that can representing themselves as a slice of bytes.
+///
+/// This trait allows for more flexible bounds on `init_pda_with_dynamic_size`,
+/// reducing its dependency on `borsh`.
+pub trait ToBytes {
+    /// Tries to serialize `self` into a slice of bytes.
+    fn to_bytes(&self) -> Result<Cow<'_, [u8]>, GatewayError>;
+}
+
+impl<T> ToBytes for T
+where
+    T: BorshSerialize,
+{
+    fn to_bytes(&self) -> Result<Cow<'_, [u8]>, GatewayError> {
+        borsh::to_vec(self)
+            .map_err(|_| GatewayError::ByteSerializationError)
+            .map(Cow::Owned)
+    }
 }

@@ -2,16 +2,15 @@
 
 use std::mem::size_of;
 
-use axelar_message_primitives::command::DecodedCommand;
 use axelar_message_primitives::DestinationProgramId;
 use borsh::{BorshDeserialize, BorshSerialize};
-use num_traits::ToBytes;
 use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
 
+use crate::commands::{AxelarMessage, Command, CommandKind};
 use crate::error::GatewayError;
 
 /// Gateway Approved Command type.
@@ -60,13 +59,13 @@ pub enum RotateSignersStatus {
 
 impl GatewayApprovedCommand {
     /// Returns an pending command.
-    pub fn pending(bump: u8, command: &DecodedCommand) -> Self {
+    pub fn pending(bump: u8, command: &impl Command) -> Self {
         let status = {
-            match command {
-                DecodedCommand::ApproveMessages(_command) => {
+            match command.kind() {
+                CommandKind::ApproveMessage => {
                     GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
                 }
-                DecodedCommand::RotateSigners(_command) => {
+                CommandKind::RotateSigner => {
                     GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
                 }
             }
@@ -79,7 +78,7 @@ impl GatewayApprovedCommand {
     pub fn command_valid_and_pending(
         self,
         gateway_root_pda: &Pubkey,
-        command: &DecodedCommand,
+        command: &impl Command,
         message_account: &AccountInfo<'_>,
     ) -> Result<Option<Self>, ProgramError> {
         // Check: Current message account represents the current approved command.
@@ -145,7 +144,7 @@ impl GatewayApprovedCommand {
         Ok(())
     }
 
-    /// Returns `true` if this command was executed by the gateway.
+    /// returns `true` if this command was executed by the gateway.
     pub fn is_command_pending(&self) -> bool {
         matches!(
             self.status,
@@ -190,62 +189,37 @@ impl GatewayApprovedCommand {
 
     /// Finds a PDA for this account by hashing the parameters. Returns its
     /// Pubkey and bump.
-    pub fn pda(
-        gateway_root_pda: &Pubkey,
-        command_params: &DecodedCommand,
-    ) -> (Pubkey, u8, [u8; 32]) {
-        let seeds_hash = Self::calculate_seed_hash(gateway_root_pda, command_params);
+    pub fn pda(gateway_root_pda: &Pubkey, command: &impl Command) -> (Pubkey, u8, [u8; 32]) {
+        let seeds_hash = Self::calculate_seed_hash(gateway_root_pda, command);
 
         let (pubkey, bump) = Pubkey::find_program_address(&[seeds_hash.as_ref()], &crate::ID);
         (pubkey, bump, seeds_hash)
     }
 
     /// Calculates the seed hash for the PDA of this account.
-    pub fn calculate_seed_hash(
-        gateway_root_pda: &Pubkey,
-        command_params: &DecodedCommand,
-    ) -> [u8; 32] {
+    pub fn calculate_seed_hash(gateway_root_pda: &Pubkey, command: &impl Command) -> [u8; 32] {
         use solana_program::keccak::hashv;
+        let mut signing_pda_buffer = [0u8; 33]; // 32 bytes for the public key + 1 for the bump
+        let command_hash = command.hash();
 
-        match command_params {
-            DecodedCommand::ApproveMessages(command_params) => {
-                let (signing_pda_for_destination_pubkey, signing_pda_bump) = command_params
-                    .destination_program
-                    .signing_pda(&command_params.command_id);
-
-                let seeds = &[
-                    gateway_root_pda.as_ref(),
-                    command_params.command_id.as_ref(),
-                    command_params.source_chain.as_ref(),
-                    command_params.source_address.as_ref(),
-                    command_params.payload_hash.as_ref(),
-                    signing_pda_for_destination_pubkey.as_ref(),
-                    &[signing_pda_bump],
-                ];
-
-                // Hashing is necessary because otherwise the seeds would be too long
-                hashv(seeds).to_bytes()
-            }
-            DecodedCommand::RotateSigners(command_params) => {
-                let res = command_params
-                    .signer_set
-                    .iter()
-                    .map(|signer| signer.omit_prefix())
-                    .chain(command_params.weights.iter().map(|x| {
-                        let mut bytes = [0; 32];
-                        bytes[0..16].copy_from_slice(&x.to_be_bytes());
-                        bytes
-                    }))
-                    .collect::<Vec<_>>();
-                let mut seeds = res.iter().map(|x| x.as_ref()).collect::<Vec<_>>();
-                seeds.push(gateway_root_pda.as_ref());
-                let quorum = command_params.quorum.to_le_bytes();
-                seeds.push(quorum.as_ref());
-
-                // Hashing is necessary because otherwise the seeds would be too long
-                hashv(seeds.as_ref()).to_bytes()
-            }
+        // TODO: Bubble this error up in the call tree
+        if let Some(axelar_message) = command.axelar_message() {
+            let (signing_pda_for_destination_program, signing_pda_bump) = axelar_message
+                .destination_program()
+                .expect("failed to infer signing PDA for the destination program")
+                .signing_pda(&command_hash);
+            signing_pda_buffer.copy_from_slice(signing_pda_for_destination_program.as_ref());
+            signing_pda_buffer[32] = signing_pda_bump;
         }
+
+        let seeds = vec![
+            gateway_root_pda.as_ref(),
+            command_hash.as_slice(),
+            &signing_pda_buffer,
+        ];
+
+        // Hashing is necessary because otherwise the seeds would be too long
+        hashv(&seeds).to_bytes()
     }
 
     /// Asserts that the PDA for this account is valid.

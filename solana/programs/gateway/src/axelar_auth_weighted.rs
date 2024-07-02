@@ -2,10 +2,10 @@
 
 use std::mem::size_of;
 
-use axelar_message_primitives::command::{
-    hash_new_signer_set, sorted_and_unique, Proof, ProofError, RotateSignersCommand, U256,
+use axelar_message_primitives::command::{ProofError, U256};
+use axelar_rkyv_encoding::types::{
+    ArchivedProof, ArchivedVerifierSet, MessageValidationError, VerifierSet,
 };
-use axelar_message_primitives::Address;
 use bimap::BiBTreeMap;
 use borsh::io::Error;
 use borsh::io::ErrorKind::{Interrupted, InvalidData};
@@ -17,7 +17,7 @@ type SignerSetHash = [u8; 32];
 type Epoch = U256;
 
 /// Errors that might happen when updating the signers and epochs set.
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum AxelarAuthWeightedError {
     /// Error indicating an attempt to update the current signer set with data
     /// that already exists.
@@ -66,6 +66,11 @@ pub enum AxelarAuthWeightedError {
     /// `axelar_message_primitives::command` module.
     #[error(transparent)]
     ProofError(#[from] ProofError),
+
+    /// Error wrapping a `MessageValidationError` from the
+    /// `axelar_rkyv_encoding` crate.
+    #[error(transparent)]
+    MessageValidationError(#[from] MessageValidationError),
 }
 
 /// Biject map that associates the hash of an signer set with an epoch.
@@ -99,21 +104,17 @@ impl AxelarAuthWeighted {
     };
 
     /// Creates a new `AxelarAuthWeighted` value.
-    pub fn new<'a>(
-        signer_set_and_weights: impl Iterator<Item = (&'a Address, U256)>,
-        threshold: U256,
-    ) -> Self {
+    pub fn new(verifier_set: VerifierSet) -> Self {
         let mut instance = Self {
             map: BiBTreeMap::new(),
             current_epoch: U256::ZERO,
         };
 
-        // TODO this does not mach AxelarAuthWeighted contrsuctor from Solidity!
-
-        let hash = hash_new_signer_set(signer_set_and_weights, threshold);
         // safe to unwrap as we are creating a new
         // instance and there are no duplicate entries to error on
-        instance.update_latest_signer_set(hash).unwrap();
+        instance
+            .update_latest_signer_set(verifier_set.hash())
+            .unwrap();
 
         instance
     }
@@ -122,7 +123,7 @@ impl AxelarAuthWeighted {
     pub fn validate_proof(
         &self,
         message_hash: [u8; 32],
-        proof: &Proof,
+        proof: &ArchivedProof,
     ) -> Result<SignerSetMetadata, AxelarAuthWeightedError> {
         let signer_set_hash = proof.signer_set_hash();
         let signer_set_epoch = self
@@ -137,7 +138,7 @@ impl AxelarAuthWeighted {
             return Err(AxelarAuthWeightedError::InvalidSignerSet);
         }
 
-        proof.validate_signatures(&message_hash)?;
+        proof.validate_for_message(&message_hash)?;
 
         if epoch == *signer_set_epoch {
             Ok(SignerSetMetadata::Latest)
@@ -149,41 +150,25 @@ impl AxelarAuthWeighted {
     /// Ported code from [here](https://github.com/axelarnetwork/cgp-spec/blob/c3010b9187ad9022dbba398525cf4ec35b75e7ae/solidity/contracts/auth/AxelarAuthWeighted.sol#L61)
     pub fn rotate_signers(
         &mut self,
-        new_command: &RotateSignersCommand,
+        new_verifier_set: &ArchivedVerifierSet,
     ) -> Result<(), AxelarAuthWeightedError> {
         // signers must be sorted binary or alphabetically in lower case
-        if new_command.signer_set.is_empty() || !sorted_and_unique(new_command.signer_set.iter()) {
+        if new_verifier_set.is_empty() {
             return Err(AxelarAuthWeightedError::InvalidSignerSet);
         }
 
-        if new_command.weights.len() != new_command.signer_set.len() {
-            return Err(AxelarAuthWeightedError::InvalidWeightLength);
-        }
-
-        let total_weight: U256 = new_command
-            .weights
-            .iter()
-            .try_fold(U256::ZERO, |a, &b| a.checked_add(b.into()))
-            .ok_or(AxelarAuthWeightedError::WeightCalculationOverflow)?;
-
-        if total_weight == U256::ZERO || total_weight < new_command.quorum.into() {
+        if !matches!(new_verifier_set.sufficient_weight(), Some(true)) {
             return Err(AxelarAuthWeightedError::InvalidWeightThreshold);
         }
 
-        let new_signer_set_hash = hash_new_signer_set(
-            new_command
-                .signer_set
-                .iter()
-                .zip(new_command.weights.iter()),
-            new_command.quorum.into(),
-        );
+        let new_verifier_set_hash = new_verifier_set.hash();
         if self
-            .epoch_for_signer_set_hash(&new_signer_set_hash)
+            .epoch_for_signer_set_hash(&new_verifier_set_hash)
             .is_some()
         {
             return Err(AxelarAuthWeightedError::DuplicateSignerSet);
         }
-        self.update_latest_signer_set(new_signer_set_hash)?;
+        self.update_latest_signer_set(new_verifier_set_hash)?;
         Ok(())
     }
 
@@ -310,20 +295,27 @@ impl BorshDeserialize for AxelarAuthWeighted {
 
 #[cfg(test)]
 mod tests {
+    use axelar_rkyv_encoding::test_fixtures::random_valid_verifier_set;
     use solana_sdk::pubkey::Pubkey;
 
     use super::*;
     use crate::state::GatewayConfig;
 
+    const DOMAIN_SEPARATOR: [u8; 32] = [0u8; 32];
+
+    fn random_verifier_set() -> VerifierSet {
+        random_valid_verifier_set()
+    }
+
     #[test]
     fn test_initial_signer_set_count_as_first_epoch() {
-        let aw = AxelarAuthWeighted::new([].into_iter(), U256::ZERO);
+        let aw = AxelarAuthWeighted::new(random_verifier_set());
         assert_eq!(aw.current_epoch(), U256::ONE);
     }
 
     #[test]
     fn test_adding_new_signer_set() {
-        let mut aw = AxelarAuthWeighted::new([].into_iter(), U256::ZERO);
+        let mut aw = AxelarAuthWeighted::new(random_verifier_set());
         let signer_set_hash = [0u8; 32];
         assert!(aw.update_latest_signer_set(signer_set_hash).is_ok());
         assert_eq!(aw.current_epoch(), U256::from(2_u8));
@@ -331,18 +323,18 @@ mod tests {
 
     #[test]
     fn test_adding_duplicate_signer_set() {
-        let mut aw = AxelarAuthWeighted::new([].into_iter(), U256::ZERO);
+        let mut aw = AxelarAuthWeighted::new(random_verifier_set());
         let signer_set_hash = [0u8; 32];
         aw.update_latest_signer_set(signer_set_hash).unwrap();
-        assert_eq!(
-            aw.update_latest_signer_set(signer_set_hash),
-            Err(AxelarAuthWeightedError::DuplicateSignerSet)
-        );
+        assert!(matches!(
+            aw.update_latest_signer_set(signer_set_hash).unwrap_err(),
+            AxelarAuthWeightedError::DuplicateSignerSet
+        ));
     }
 
     #[test]
     fn test_epoch_for_existing_signer_set_hash() {
-        let mut aw = AxelarAuthWeighted::new([].into_iter(), U256::ZERO);
+        let mut aw = AxelarAuthWeighted::new(random_verifier_set());
         let signer_set_hash = [0u8; 32];
         aw.update_latest_signer_set(signer_set_hash).unwrap();
         assert_eq!(
@@ -354,7 +346,7 @@ mod tests {
 
     #[test]
     fn test_epoch_for_nonexistent_signer_set_hash() {
-        let aw = AxelarAuthWeighted::new([].into_iter(), U256::ZERO);
+        let aw = AxelarAuthWeighted::new(random_verifier_set());
         let signer_sets_hash = [0u8; 32];
         assert!(aw.epoch_for_signer_set_hash(&signer_sets_hash).is_none());
     }
@@ -380,11 +372,11 @@ mod tests {
     #[test]
     fn serialization_roundtrip() {
         let bump = 255;
-        let mut aw = AxelarAuthWeighted::new([].into_iter(), U256::ZERO);
+        let mut aw = AxelarAuthWeighted::new(random_verifier_set());
         aw.update_latest_signer_set([1u8; 32]).unwrap();
         aw.update_latest_signer_set([2u8; 32]).unwrap();
         aw.update_latest_signer_set([3u8; 32]).unwrap();
-        let config = GatewayConfig::new(bump, aw, Pubkey::new_unique());
+        let config = GatewayConfig::new(bump, aw, Pubkey::new_unique(), DOMAIN_SEPARATOR);
         let serialized = borsh::to_vec(&config).unwrap();
         let deserialized: GatewayConfig = borsh::from_slice(&serialized).unwrap();
         assert_eq!(config, deserialized);
@@ -392,7 +384,7 @@ mod tests {
 
     #[test]
     fn only_keeping_the_last_16_entries() {
-        let mut aw = AxelarAuthWeighted::new([].into_iter(), U256::ZERO);
+        let mut aw = AxelarAuthWeighted::new(random_verifier_set());
         let signer_set_to_insert = AxelarAuthWeighted::OLD_KEY_RETENTION * 2;
         for i in 0..signer_set_to_insert {
             let signer_set_hash = [i; 32];
@@ -415,13 +407,13 @@ mod tests {
     #[test]
     fn serialization_roundtrip_max_signer_set_gateway() {
         let bump = 255;
-        let mut aw = AxelarAuthWeighted::new([].into_iter(), U256::ZERO);
+        let mut aw = AxelarAuthWeighted::new(random_verifier_set());
         let signer_set_to_insert = AxelarAuthWeighted::OLD_KEY_RETENTION * 2;
         for i in 0..signer_set_to_insert {
             let signer_set_hash = [i; 32];
             aw.update_latest_signer_set(signer_set_hash).unwrap();
         }
-        let config = GatewayConfig::new(bump, aw, Pubkey::new_unique());
+        let config = GatewayConfig::new(bump, aw, Pubkey::new_unique(), DOMAIN_SEPARATOR);
         let serialized = borsh::to_vec(&config).unwrap();
         let deserialized: GatewayConfig = borsh::from_slice(&serialized).unwrap();
         assert_eq!(config, deserialized);
@@ -429,7 +421,7 @@ mod tests {
 
     #[test]
     fn serialization_max_signer_set_auth_weighted_matches_expected_len() {
-        let mut aw = AxelarAuthWeighted::new([].into_iter(), U256::ZERO);
+        let mut aw = AxelarAuthWeighted::new(random_verifier_set());
         let signer_set_to_insert = AxelarAuthWeighted::OLD_KEY_RETENTION * 2;
         for i in 0..signer_set_to_insert {
             let signer_set_hash = [i; 32];
@@ -441,7 +433,7 @@ mod tests {
 
     #[test]
     fn serialization_min_signer_set_auth_weighted_matches_expected_len() {
-        let aw = AxelarAuthWeighted::new([].into_iter(), U256::ZERO);
+        let aw = AxelarAuthWeighted::new(random_verifier_set());
         let serialized = borsh::to_vec(&aw).unwrap();
         assert_eq!(serialized.len(), AxelarAuthWeighted::SIZE_WHEN_SERIALIZED);
     }

@@ -8,7 +8,6 @@ unused_imports = "warn"
 rust_2018_idioms = "deny"
 missing_docs = "warn"
 unreachable_pub = "warn"
-unused_crate_dependencies = "warn"
 unused_must_use = "deny"
 
 
@@ -31,14 +30,10 @@ solana-program.workspace = true
 thiserror.workspace = true
 program-utils.workspace = true
 axelar-message-primitives.workspace = true
+axelar-rkyv-encoding.workspace = true
 
 [dev-dependencies]
-anyhow.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
 test-fixtures.workspace = true
-multisig.workspace = true
-cosmwasm-std.workspace = true
-connection-router.workspace = true
 hex.workspace = true
-serde_json.workspace = true 

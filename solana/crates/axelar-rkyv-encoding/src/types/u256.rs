@@ -1,23 +1,45 @@
+use rkyv::bytecheck::{self, CheckBytes};
 use rkyv::{Archive, Deserialize, Serialize};
 
-#[derive(Clone, Copy, Archive, Deserialize, Serialize, Debug, Eq, PartialEq)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq))]
+#[derive(Clone, Copy, Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[archive(compare(PartialEq, PartialOrd))]
+#[archive_attr(derive(Debug, PartialEq, Eq, Ord, PartialOrd, CheckBytes))]
 pub struct U256([u8; 32]);
 
 impl U256 {
+    pub const ZERO: U256 = U256([0u8; 32]);
+
     pub fn from_le(bytes: [u8; 32]) -> Self {
         Self(bytes)
     }
 
-    pub(crate) fn to_le(self) -> [u8; 32] {
+    pub fn to_le(self) -> [u8; 32] {
         self.0
+    }
+
+    pub fn checked_add(self, other: Self) -> Option<Self> {
+        let a: bnum::types::U256 = self.into();
+        a.checked_add(other.into()).map(|res| res.into())
     }
 }
 
 impl ArchivedU256 {
     pub(crate) fn to_le(&self) -> &[u8; 32] {
         &self.0
+    }
+
+    pub fn maybe_u128(&self) -> Option<u128> {
+        let num: bnum::types::U256 = self.into();
+        num.try_into().ok()
+    }
+}
+
+impl From<u128> for U256 {
+    fn from(value: u128) -> Self {
+        const SIZE: usize = u128::BITS as usize >> 3;
+        let mut result = [0u8; 32];
+        result[..SIZE].copy_from_slice(&value.to_le_bytes());
+        Self(result)
     }
 }
 
@@ -48,23 +70,20 @@ impl From<&ArchivedU256> for bnum::types::U256 {
 #[cfg(test)]
 mod tests {
     use bnum::types::U256 as BnumU256;
-    use rand::thread_rng;
 
     use super::*;
-    use crate::tests::fixtures::random_bytes;
+    use crate::test_fixtures::random_bytes;
 
     #[test]
     fn test_endiannes() {
-        let mut rng = thread_rng();
-        let bytes = random_bytes::<32>(&mut rng);
+        let bytes = random_bytes::<32>();
         let u256 = U256::from_le(bytes);
         assert_eq!(u256.to_le(), bytes);
     }
 
     #[test]
     fn bnum_round_trip() {
-        let mut rng = thread_rng();
-        let bytes = random_bytes::<32>(&mut rng);
+        let bytes = random_bytes::<32>();
 
         let u256 = U256::from_le(bytes);
         let bnum = BnumU256::from_le_slice(&bytes).unwrap();
@@ -74,5 +93,32 @@ mod tests {
 
         assert_eq!(u256, u256_converted);
         assert_eq!(bnum, bnum_converted);
+    }
+
+    #[test]
+    fn test_u256_from_u128() {
+        const SIZE: usize = u128::BITS as usize >> 3;
+
+        // Min
+        let min = U256::from(u128::MIN);
+        assert_eq!(min, U256::ZERO);
+
+        // Max
+        let max: u128 = u128::MAX;
+        let expected_max = {
+            let mut buffer = [0u8; 32];
+            buffer[..SIZE].copy_from_slice(&max.to_le_bytes());
+            buffer
+        };
+        assert_eq!(U256::from(max).0, expected_max);
+
+        // Mid
+        let mid = max >> 1;
+        let expected_intermediate = {
+            let mut buffer = [0u8; 32];
+            buffer[..SIZE].copy_from_slice(&mid.to_le_bytes());
+            buffer
+        };
+        assert_eq!(U256::from(mid).0, expected_intermediate);
     }
 }

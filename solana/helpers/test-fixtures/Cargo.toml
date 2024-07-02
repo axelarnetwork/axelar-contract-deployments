@@ -9,13 +9,10 @@ axelar-wasm-std.workspace = true
 bcs.workspace = true
 connection-router.workspace = true
 cosmwasm-std.workspace = true
-fastrand = "2"
 hex.workspace = true
 itertools.workspace = true
 libsecp256k1.workspace = true
-multisig-prover.workspace = true
-multisig.workspace = true
-rand_core = { version = "0.6.4", features = ["getrandom"] }
+rand.workspace = true
 signature.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
@@ -24,6 +21,7 @@ tokio.workspace = true
 
 axelar-executable.workspace = true
 axelar-message-primitives.workspace = true
+axelar-rkyv-encoding = {workspace = true, features = ["test-fixtures"]}
 solana-program-test = { workspace = true }
 interchain-token-transfer-gmp = { workspace = true }
 

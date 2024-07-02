@@ -165,9 +165,6 @@ async fn fail_if_operator_or_owner_is_not_signer() {
         gateway_root_pda,
         ..
     } = setup_initialised_gateway(&[11, 42, 33], None).await;
-    let original_config = fixture
-        .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
 
     // Action - random wallet signs message to change operator
     let stranger_danger = Keypair::new();
