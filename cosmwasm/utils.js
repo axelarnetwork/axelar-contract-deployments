@@ -4,14 +4,26 @@ const { ethers } = require('hardhat');
 const {
     utils: { keccak256 },
 } = ethers;
+const { createHash } = require('crypto');
 
 const { readFileSync } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
-const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
+const { instantiate2Address, SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
+const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
+const { StoreCodeProposal } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const { getSaltFromKey } = require('../evm/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+
+const prepareWallet = ({ mnemonic }) => DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+
+const prepareClient = ({ axelar: { rpc, gasPrice } }, wallet) =>
+    SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice }).then((client) => {
+        return { wallet, client };
+    });
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
@@ -83,10 +95,93 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
         .then(({ contractAddress }) => contractAddress);
 };
 
+const getInstantiatePermission = (accessType, addresses) => {
+    return {
+        permission: accessType,
+        addresses: addresses.split(',').map((address) => address.trim()),
+    };
+};
+
+const encodeStoreCodeProposal = (options) => {
+    const { artifactPath, contractName, aarch64, title, description, runAs, source, builder, instantiateAddresses } = options;
+
+    const wasm = readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
+
+    let codeHash;
+
+    // source, builder and codeHash are optional, but mandatory if one is provided
+    if (source && builder) {
+        codeHash = createHash('sha256').update(wasm).digest();
+    }
+
+    const instantiatePermission = instantiateAddresses
+        ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+        : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, '');
+
+    const proposal = StoreCodeProposal.fromPartial({
+        title,
+        description,
+        runAs,
+        wasmByteCode: wasm,
+        source,
+        builder,
+        codeHash,
+        instantiatePermission,
+    });
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
+        value: Uint8Array.from(StoreCodeProposal.encode(proposal).finish()),
+    };
+};
+
+const encodeSubmitProposal = (content, config, options, proposer) => {
+    const {
+        axelar: { tokenSymbol },
+    } = config;
+    const { deposit } = options;
+
+    return {
+        typeUrl: '/cosmos.gov.v1beta1.MsgSubmitProposal',
+        value: MsgSubmitProposal.fromPartial({
+            content,
+            initialDeposit: [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }],
+            proposer,
+        }),
+    };
+};
+
+const submitProposal = (client, wallet, config, options, content) => {
+    return wallet
+        .getAccounts()
+        .then(([account]) => {
+            const {
+                axelar: { gasPrice, gasLimit },
+            } = config;
+
+            const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
+
+            const storeFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+            return client.signAndBroadcast(account.address, [submitProposalMsg], storeFee, '');
+        })
+        .then(
+            ({ events }) => events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value,
+        );
+};
+
+const submitStoreCodeProposal = (client, wallet, config, options) => {
+    const content = encodeStoreCodeProposal(options);
+
+    return submitProposal(client, wallet, config, options, content);
+};
+
 module.exports = {
     governanceAddress,
+    prepareWallet,
+    prepareClient,
     calculateDomainSeparator,
     uploadContract,
     instantiateContract,
+    submitStoreCodeProposal,
     isValidCosmosAddress,
 };
