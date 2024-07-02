@@ -2,12 +2,12 @@ const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { saveConfig } = require('../evm/utils');
 const { Command } = require('commander');
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet } = require('./sign-utils');
+const { broadcast, getWallet } = require('./sign-utils');
 const { printInfo, printError, validateParameters } = require('../evm/utils');
 const {
     utils: { parseUnits, formatUnits },
 } = require('ethers');
-const { loadSuiConfig, SUI_COIN_ID, isGasToken, signAndBroadcast, paginateAll } = require('./utils');
+const { loadSuiConfig, SUI_COIN_ID, isGasToken, paginateAll } = require('./utils');
 
 class CoinManager {
     static async getAllCoins(client, account) {
@@ -147,7 +147,7 @@ async function processSplitCommand(chain, args, options) {
 
     await CoinManager.splitCoins(tx, client, coinTypeToCoins, keypair.toSuiAddress(), args, options);
 
-    await signAndBroadcast(client, keypair, tx);
+    await broadcast(client, keypair, tx);
 }
 
 async function processMergeCommand(chain, args, options) {
@@ -162,7 +162,7 @@ async function processMergeCommand(chain, args, options) {
         printInfo('No coins to merge');
     }
 
-    await signAndBroadcast(client, keypair, tx);
+    await broadcast(client, keypair, tx);
 }
 
 async function processListCommand(chain, args, options) {
