@@ -52,6 +52,7 @@ voting-verifier = { path = "../../axelar-amplifier/contracts/voting-verifier", f
 gateway = { path = "../../axelar-amplifier/contracts/gateway", features = ["library"] }
 multisig = { path = "../../axelar-amplifier/contracts/multisig", features = ["library"] }
 axelar-wasm-std = { path = "../../axelar-amplifier/packages/axelar-wasm-std", features = ["library"] }
+inquire = "0.7.5"
 gateway-api = { path = "../../axelar-amplifier/packages/gateway-api" }
 router-api = { path = "../../axelar-amplifier/packages/router-api" }
 axelar-rkyv-encoding.workspace = true

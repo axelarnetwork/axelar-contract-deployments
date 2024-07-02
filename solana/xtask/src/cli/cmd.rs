@@ -4,6 +4,7 @@ pub(crate) mod solana;
 pub(crate) mod testnet;
 
 pub(crate) mod path {
+    use std::env;
     use std::path::{Path, PathBuf};
 
     /// Return the [`PathBuf`] that points to the `[repo]/solana` folder
@@ -11,6 +12,19 @@ pub(crate) mod path {
         let dir = std::env::var("CARGO_MANIFEST_DIR")
             .unwrap_or_else(|_| env!("CARGO_MANIFEST_DIR").to_owned());
         PathBuf::from(dir).parent().unwrap().to_owned()
+    }
+
+    /// Return the [`PathBuf`] that points to the `[repo]/solana/xtask` folder
+    pub(crate) fn xtask_crate_root_dir() -> PathBuf {
+        self::workspace_root_dir().join("xtask")
+    }
+
+    /// Wrapper function for acquiring the home dir.
+    #[allow(deprecated)]
+    pub(crate) fn home_dir() -> PathBuf {
+        // Todo, we could use a crate as the std docs recommend, but windows
+        // is not a supported target down the road of this CLI.
+        env::home_dir().unwrap()
     }
 
     pub(crate) fn ensure_optional_path_exists(
@@ -31,6 +45,33 @@ pub(crate) mod path {
                 path.to_string_lossy()
             ))
         })
+    }
+
+    pub(crate) mod download {
+        use std::io::Write;
+        use std::path::Path;
+
+        use futures::StreamExt;
+
+        pub(crate) async fn download_file(file_path: &Path, url: &str) -> eyre::Result<()> {
+            // Todo, this function could be tested.
+            let client = reqwest::Client::new();
+            let response = client.get(url).send().await?;
+            if !response.status().is_success() {
+                tracing::error!(url, status = ?response.status(), "Failed to download file");
+                eyre::bail!("failed");
+            }
+
+            let mut file = std::fs::File::create(file_path)?;
+            let mut stream = response.bytes_stream();
+            while let Some(chunk) = stream.next().await {
+                let chunk = chunk?;
+                file.write_all(&chunk)?;
+            }
+
+            tracing::info!(file_path = ?file_path, "Downloaded successfully to");
+            Ok(())
+        }
     }
 
     #[cfg(test)]

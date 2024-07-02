@@ -100,30 +100,15 @@ pub(crate) mod unpack {
 }
 
 pub(crate) mod download {
-    use std::io::Write;
     use std::path::Path;
 
     use eyre::Result;
-    use futures::StreamExt;
+
+    use crate::cli::cmd::path::download::download_file;
 
     pub(crate) async fn download_wasm_opt(file_path: &Path) -> Result<()> {
         let url = determine_download_url();
-        let client = reqwest::Client::new();
-        let response = client.get(url).send().await?;
-        if !response.status().is_success() {
-            tracing::error!(status = ?response.status(), "Failed to download file");
-            eyre::bail!("failed");
-        }
-
-        let mut file = std::fs::File::create(file_path)?;
-        let mut stream = response.bytes_stream();
-        while let Some(chunk) = stream.next().await {
-            let chunk = chunk?;
-            file.write_all(&chunk)?;
-        }
-
-        tracing::info!(file_path = ?file_path, "Downloaded successfully to");
-        Ok(())
+        download_file(file_path, url).await
     }
 
     pub(crate) fn determine_download_url() -> &'static str {

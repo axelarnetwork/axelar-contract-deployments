@@ -95,6 +95,9 @@ pub(crate) enum Cosmwasm {
     /// Generate a new Axelar wallet, outputs the Axelar bech32 key and the hex
     /// private key
     GenerateWallet,
+    /// Bond an ampd verifier in an interactive process that follows [the official guide](https://docs.axelar.dev/validator/amplifier/verifier-onboarding)
+    /// The chain `devnet-amplifier` is assumed.
+    AmpdSetup,
 }
 
 /// Initialize contracts by providing their specific init parameters.
@@ -378,6 +381,7 @@ async fn handle_cosmwasm(command: Cosmwasm) -> eyre::Result<()> {
                 }
             }
         }
+        Cosmwasm::AmpdSetup => cmd::cosmwasm::ampd::setup_ampd().await?,
     };
     Ok(())
 }

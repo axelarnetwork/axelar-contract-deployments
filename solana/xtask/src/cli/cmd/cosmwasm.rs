@@ -297,10 +297,118 @@ fn read_wasm_for_delpoyment(wasm_artifact_name: &str) -> eyre::Result<Vec<u8>> {
     Ok(output)
 }
 
+pub(crate) mod ampd {
+
+    use inquire::Confirm;
+    use tracing::info;
+
+    use super::path::axelar_amplifier_dir;
+    use crate::cli::cmd::cosmwasm::path::ampd_home_dir;
+    use crate::cli::cmd::path::xtask_crate_root_dir;
+
+    pub(crate) async fn setup_ampd() -> eyre::Result<()> {
+        if !Confirm::new("Welcome to ampd-setup ! This will perform/guide you through the verifier onboarding process described here https://docs.axelar.dev/validator/amplifier/verifier-onboarding (devnet-amplifier chain). 
+        
+        It will overwrite your $HOME/.ampd/config.toml if it exist.
+        
+        Do you want to continue  ?").prompt()? {
+            return Ok(println!("Cannot continue without user confirmation."))
+        }
+
+        // Compile the ampd binary (with solana implementation)
+        let sh = xshell::Shell::new()?;
+        sh.change_dir(axelar_amplifier_dir());
+        sh.cmd("git").args(vec!["checkout", "solana"]).run()?;
+        sh.cmd("git").args(vec!["pull"]).run()?;
+
+        info!("Compiling ampd ...");
+
+        sh.cmd("cargo")
+            .args(vec!["build", "-p", "ampd"]) // todo. add "--release" when serious.
+            .run()?;
+
+        let ampd_built_path = axelar_amplifier_dir()
+            .join("target")
+            .join("release")
+            .join("ampd");
+
+        info!("Copying Solana ampd configuration template to $HOME/.ampd/config.toml");
+        tokio::fs::create_dir_all(ampd_home_dir()).await?;
+        tokio::fs::copy(
+            xtask_crate_root_dir().join("ampd-config.toml"),
+            ampd_home_dir().join("config.toml"),
+        )
+        .await?;
+
+        if !Confirm::new("Now we need to bring up tofnd service. Is it already running ?").with_help_message("You can easily run it by executing:
+        docker run -p 50051:50051 --env MNEMONIC_CMD=auto --env NOPASSWORD=true -v ./tofnd:/.tofnd haiyizxx/tofnd:latest
+        
+        MAKE SURE TO PLACE YOUR SEED AT ./tofnd/import BEFORE EXECUTING AND CHECK PERMISSIONS if you have one").prompt()? {
+            return Ok(println!("Cannot continue without a running instance of tofnd."))
+        }
+
+        let verifier_address = String::from_utf8(
+            sh.cmd(&ampd_built_path)
+                .args(vec!["verifier-address"])
+                .output()?
+                .stdout,
+        )?;
+
+        let verifier_address = verifier_address.split("address: ").collect::<Vec<&str>>();
+
+        let verifier_address = verifier_address
+            .get(1)
+            .expect("We should be able to parse an address from this output");
+
+        if !Confirm::new("Is the ampd verifier address funded ?")
+            .with_help_message(&format!(
+                "It can be easily funded it by requesting tokens in the faucet discord channel:
+        https://discord.com/channels/770814806105128977/1002423218772136056/1217885883152334918
+
+        Just write there:
+
+        !faucet devnet-amplifier {verifier_address}
+
+        ",
+            ))
+            .prompt()?
+        {
+            return Ok(println!("Cannot continue without a funded ampd address."));
+        }
+
+        info!("Bonding ampd verifier ...");
+        sh.cmd(&ampd_built_path)
+            .args(vec!["bond-verifier", "validators", "100", "uamplifier"])
+            .run()?;
+
+        info!("Registering ampd public key ...");
+        sh.cmd(&ampd_built_path)
+            .args(vec!["register-public-key"])
+            .run()?;
+
+        info!("Registering support for Solana blockchain ...");
+        sh.cmd(&ampd_built_path)
+            .args(vec!["register-chain-support", "validators", "solana"])
+            .run()?;
+
+        if !Confirm::new("Is the new ampd validator already authorized ?").with_help_message("You can do it by filling this form:
+            https://docs.google.com/forms/d/e/1FAIpQLSfQQhk292yT9j8sJF5ARRIE8PpI3LjuFc8rr7xZW7posSLtJA/viewform").prompt()? {
+                return Ok(println!("Cannot continue without a running instance of tofnd."))
+            }
+
+        println!(
+            "We are ready to go ! just execute ampd by: {}",
+            &ampd_built_path.to_string_lossy()
+        );
+
+        Ok(())
+    }
+}
+
 pub(crate) mod path {
     use std::path::PathBuf;
 
-    use crate::cli::cmd::path::workspace_root_dir;
+    use crate::cli::cmd::path::{home_dir, workspace_root_dir};
 
     pub(crate) fn axelar_amplifier_dir() -> PathBuf {
         let workspace_root = workspace_root_dir();
@@ -313,6 +421,10 @@ pub(crate) mod path {
             .join("binaryen-version_117")
             .join("bin")
             .join("wasm-opt")
+    }
+
+    pub(crate) fn ampd_home_dir() -> PathBuf {
+        home_dir().join(".ampd")
     }
 
     pub(crate) fn binaryen_tar_file() -> PathBuf {
