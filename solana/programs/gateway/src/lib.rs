@@ -17,8 +17,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-
-solana_program::declare_id!("4hz16cS4d82cPKzvaQNzMCadyKSqzZR8bqzw8FfzYH8a");
+solana_program::declare_id!("gtwunAsmpgKrHUWYYT6Ckr2W5KeJWnSLsP41Nmmom6B");
 
 /// Checks that the supplied program ID is the correct one
 #[inline]
