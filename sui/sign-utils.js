@@ -7,7 +7,7 @@ const { MultiSigPublicKey } = require('@mysten/sui.js/multisig');
 const { Secp256k1Keypair, Secp256k1PublicKey } = require('@mysten/sui.js/keypairs/secp256k1');
 const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui.js/keypairs/secp256r1');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
-const { fromHEX } = require('@mysten/bcs');
+const { fromB64, fromHEX } = require('@mysten/bcs');
 const { printInfo } = require('../evm/utils');
 const { ethers } = require('hardhat');
 const {
@@ -158,18 +158,20 @@ async function signTransactionBlock(chain, txDetails, options) {
     return result;
 }
 
-async function getWrappedPublicKey(hexPublicKey, schemeType) {
+async function getWrappedPublicKey(bech64PublicKey, schemeType) {
+    const uint8PubKey = fromB64(bech64PublicKey).slice(1);
+
     switch (schemeType) {
         case 'ed25519': {
-            return new Ed25519PublicKey(fromHEX(hexPublicKey));
+            return new Ed25519PublicKey(uint8PubKey);
         }
 
         case 'secp256k1': {
-            return new Secp256k1PublicKey(fromHEX(hexPublicKey));
+            return new Secp256k1PublicKey(uint8PubKey);
         }
 
         case 'secp256r1': {
-            return new Secp256r1PublicKey(fromHEX(hexPublicKey));
+            return new Secp256r1PublicKey(uint8PubKey);
         }
 
         default: {
