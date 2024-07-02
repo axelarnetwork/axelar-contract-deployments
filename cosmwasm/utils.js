@@ -12,6 +12,7 @@ const { instantiate2Address, SigningCosmWasmClient } = require('@cosmjs/cosmwasm
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const { StoreCodeProposal } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const { getSaltFromKey } = require('../evm/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
@@ -94,8 +95,15 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
         .then(({ contractAddress }) => contractAddress);
 };
 
+const getInstantiatePermission = (accessType, addresses) => {
+    return {
+        permission: accessType,
+        addresses: addresses.split(',').map((address) => address.trim()),
+    };
+};
+
 const encodeStoreCodeProposal = (options) => {
-    const { artifactPath, contractName, aarch64, title, description, runAs, source, builder } = options;
+    const { artifactPath, contractName, aarch64, title, description, runAs, source, builder, instantiateAddresses } = options;
 
     const wasm = readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
 
@@ -106,6 +114,10 @@ const encodeStoreCodeProposal = (options) => {
         codeHash = createHash('sha256').update(wasm).digest();
     }
 
+    const instantiatePermission = instantiateAddresses
+        ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+        : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, '');
+
     const proposal = StoreCodeProposal.fromPartial({
         title,
         description,
@@ -114,6 +126,7 @@ const encodeStoreCodeProposal = (options) => {
         source,
         builder,
         codeHash,
+        instantiatePermission,
     });
 
     return {
