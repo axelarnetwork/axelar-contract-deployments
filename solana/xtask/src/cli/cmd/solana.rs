@@ -16,6 +16,8 @@ use tracing::info;
 use url::Url;
 use xshell::{cmd, Shell};
 
+use super::testnet::solana_domain_separator;
+
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
 pub(crate) enum SolanaContract {
     GmpGateway,
@@ -103,12 +105,11 @@ pub(crate) async fn init_gmp_gateway(
         AxelarAuthWeighted::new(verifier_set)
     };
 
-    let domain_separator = [0u8; 32]; // FIXME: fetch the domain separator from somewhere
     let gateway_config = GatewayConfig::new(
         bump,
         auth_weighted,
         gateway_config_data.operator,
-        domain_separator,
+        solana_domain_separator(),
     );
 
     let ix = gmp_gateway::instructions::initialize_config(
@@ -266,7 +267,7 @@ pub(crate) mod path {
     }
 }
 
-mod defaults {
+pub(crate) mod defaults {
 
     use std::path::PathBuf;
     use std::str::FromStr;

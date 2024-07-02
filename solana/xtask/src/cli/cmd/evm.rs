@@ -27,8 +27,8 @@ pub(crate) async fn deploy_axelar_memo(
 pub(crate) async fn send_memo_to_solana(
     signer: EvmSigner,
     memo_contract: Address,
-    memo_to_send: String,
-    solana_chain_id: String,
+    memo_to_send: &str,
+    solana_chain_id: &str,
 ) -> eyre::Result<TransactionReceipt> {
     tracing::info!(addr = ?signer.signer.address(), "sending memo");
     let memo_contract =
@@ -61,7 +61,7 @@ pub(crate) async fn send_memo_to_solana(
 }
 
 #[tracing::instrument]
-pub(crate) async fn send_memo_to_evm(
+pub(crate) async fn send_memo_from_evm_to_evm(
     signer: EvmSigner,
     memo_contract: Address,
     memo_to_send: String,

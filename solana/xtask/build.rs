@@ -4,6 +4,7 @@
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::process::Command;
 
 use quote::quote;
 use serde_json::Value;
@@ -30,9 +31,14 @@ fn main() {
         #axelar_tokens
     };
 
-    let mut file = File::create(output_file).expect("Could not create output file");
+    let mut file = File::create(output_file.clone()).expect("Could not create output file");
     file.write_all(tokens.to_string().as_bytes())
         .expect("couldn't write parsed amplifier data");
+    let mut fmt = Command::new("rustfmt")
+        .arg(output_file.into_os_string())
+        .spawn()
+        .unwrap();
+    fmt.wait().unwrap();
 
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=xtask/devnet-amplifier.json");

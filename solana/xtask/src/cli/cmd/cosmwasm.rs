@@ -1,7 +1,6 @@
 use std::io::Write;
 use std::str::FromStr;
 
-use axelar_wasm_std::MajorityThreshold;
 use cosmrs::cosmwasm::{MsgInstantiateContract, MsgStoreCode};
 use cosmrs::tx::Msg;
 use cosmrs::Denom;
@@ -9,7 +8,6 @@ use eyre::OptionExt;
 use k256::elliptic_curve::rand_core::OsRng;
 use multisig::key::KeyType;
 use rust_decimal_macros::dec;
-use serde::{Deserialize, Serialize};
 use solana_sdk::keccak::hashv;
 use xshell::Shell;
 
@@ -22,6 +20,7 @@ use self::cosmos_client::network::Network;
 use self::path::{binaryen_tar_file, binaryen_unpacked, wasm_opt_binary};
 use crate::cli::cmd::cosmwasm::cosmos_client::gas::Gas;
 use crate::cli::cmd::cosmwasm::cosmos_client::signer::SigningClient;
+use crate::cli::cmd::testnet::{solana_domain_separator, SOLANA_CHAIN_NAME};
 
 struct WasmContracts {
     wasm_artifact_name: &'static str,
@@ -198,35 +197,14 @@ pub(crate) fn default_gas() -> Gas {
     }
 }
 
-pub(crate) async fn init_multisig_prover(
+pub(crate) async fn init_solana_multisig_prover(
     code_id: u64,
     client: SigningClient,
-    chain_id: u64,
     gateway_address: String,
     voting_verifier_address: String,
-    chain_name: String,
 ) -> eyre::Result<()> {
-    // NOTE: there are issues with using `multisig-prover` as a dependency (bulid
-    // breaks)
-    #[derive(Serialize, Deserialize)]
-    pub(crate) struct InstantiateMsg {
-        admin_address: String,
-        governance_address: String,
-        gateway_address: String,
-        multisig_address: String,
-        coordinator_address: String,
-        service_registry_address: String,
-        voting_verifier_address: String,
-        signing_threshold: MajorityThreshold,
-        service_name: String,
-        chain_name: String,
-        verifier_set_diff_threshold: u32,
-        encoder: String,
-        key_type: KeyType,
-        domain_separator: String,
-    }
+    use crate::cli::cmd::testnet::multisig_prover_api::InstantiateMsg;
 
-    let domain_separator = domain_separator(&chain_name, chain_id);
     let instantiate = MsgInstantiateContract {
         sender: client.signer_account_id()?,
         admin: Some(client.signer_account_id()?),
@@ -242,12 +220,11 @@ pub(crate) async fn init_multisig_prover(
             voting_verifier_address,
             signing_threshold: majority_threshold(),
             service_name: SERVICE_NAME.to_string(),
-            chain_name: chain_name.clone(),
+            chain_name: SOLANA_CHAIN_NAME.to_string(),
             verifier_set_diff_threshold: VERIFIER_SET_DIFF_THRESHOLD,
-            // todo change to rkyv encoding scheme once the multisig-prover supports it
-            encoder: "abi".to_string(),
+            encoder: "rkyv".to_string(),
             key_type: KeyType::Ecdsa,
-            domain_separator,
+            domain_separator: hex::encode(solana_domain_separator()),
         })?,
         funds: vec![],
     };
@@ -262,14 +239,13 @@ pub(crate) async fn init_multisig_prover(
     Ok(())
 }
 
-fn domain_separator(chain_name: &str, chain_id: u64) -> String {
-    let domain_separator = hashv(&[
+pub(crate) fn domain_separator(chain_name: &str, chain_id: u64) -> [u8; 32] {
+    hashv(&[
         chain_name.as_bytes(),
         ROUTER_ADDRESS.as_bytes(),
         &chain_id.to_le_bytes(),
     ])
-    .to_bytes();
-    hex::encode(domain_separator)
+    .to_bytes()
 }
 
 pub(crate) fn generate_wallet() -> eyre::Result<()> {

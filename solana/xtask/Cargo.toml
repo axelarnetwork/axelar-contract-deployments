@@ -34,6 +34,8 @@ ethers.workspace = true
 evm-contracts-test-suite.workspace = true
 axelar-solana-memo-program.workspace = true
 solana-cli-config = "2.0.1"
+solana-rpc-client-api = "2.0.1"
+solana-transaction-status = "2.0.1"
 reqwest.workspace = true
 futures.workspace = true
 flate2 = "1.0"
@@ -56,6 +58,7 @@ inquire = "0.7.5"
 gateway-api = { path = "../../axelar-amplifier/packages/gateway-api" }
 router-api = { path = "../../axelar-amplifier/packages/router-api" }
 axelar-rkyv-encoding.workspace = true
+axelar-executable.workspace = true
 
 [dev-dependencies]
 solana-program.workspace = true
