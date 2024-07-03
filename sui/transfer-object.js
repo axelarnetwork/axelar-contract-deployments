@@ -9,6 +9,7 @@ async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
     await printWalletInfo(keypair, client, chain, options);
     const recipient = options.recipient;
+
     validateParameters({
         isKeccak256Hash: { recipient },
     });
