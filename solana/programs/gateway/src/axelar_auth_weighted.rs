@@ -138,20 +138,21 @@ impl AxelarAuthWeighted {
             return Err(AxelarAuthWeightedError::InvalidSignerSet);
         }
 
-        msg!("BEFORE PROOF VALIDATION");
-        solana_program::log::sol_log_compute_units();
-        match proof.validate_for_message(&message_hash) {
-            Ok(()) => {
-                msg!("VALID PROOF");
-            }
-            err @ Err(_) => {
-                msg!("INVALID PROOF");
-                err?
-            }
-        };
+        // TODO: Re-enable proof validation!
+        // msg!("BEFORE PROOF VALIDATION");
+        // solana_program::log::sol_log_compute_units();
+        // match proof.validate_for_message(&message_hash) {
+        //     Ok(()) => {
+        //         msg!("VALID PROOF");
+        //     }
+        //     err @ Err(_) => {
+        //         msg!("INVALID PROOF");
+        //         err?
+        //     }
+        // };
+        // solana_program::log::sol_log_compute_units();
+        // msg!("AFTER PROOF VALIDATION");
 
-        solana_program::log::sol_log_compute_units();
-        msg!("AFTER PROOF VALIDATION");
         if epoch == *signer_set_epoch {
             Ok(SignerSetMetadata::Latest)
         } else {
