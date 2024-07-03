@@ -116,30 +116,31 @@ pub(crate) async fn deploy(client: SigningClient) -> eyre::Result<()> {
     Ok(())
 }
 
-pub(crate) async fn init_voting_verifier(
+pub(crate) async fn init_solana_voting_verifier(
     code_id: u64,
     client: SigningClient,
-    source_chain: String,
 ) -> eyre::Result<()> {
     use voting_verifier::msg::InstantiateMsg;
 
+    let instantiate_msg = InstantiateMsg {
+        service_registry_address: SERVICE_REGISTRY_ADDRESS.to_string().try_into().unwrap(),
+        service_name: SERVICE_NAME.to_string().try_into().unwrap(),
+        source_gateway_address: gmp_gateway::id().to_string().try_into().unwrap(),
+        voting_threshold: majority_threshold(),
+        block_expiry: BLOCK_EXPIRY,
+        confirmation_height: CONFIRMATION_HEIGHT,
+        source_chain: SOLANA_CHAIN_NAME.to_string().try_into().unwrap(),
+        rewards_address: REWARDS_ADDRESS.to_string(),
+        governance_address: GOVERNANCE_ADDRESS.to_string().try_into().unwrap(),
+        msg_id_format: axelar_wasm_std::msg_id::MessageIdFormat::Base58TxDigestAndEventIndex,
+    };
+    tracing::info!(?instantiate_msg, "instantiate msg");
     let instantiate = MsgInstantiateContract {
         sender: client.signer_account_id()?,
         admin: Some(client.signer_account_id()?),
         code_id,
         label: Some("voting-verifier".to_string()),
-        msg: serde_json::to_vec(&InstantiateMsg {
-            service_registry_address: SERVICE_REGISTRY_ADDRESS.to_string().try_into().unwrap(),
-            service_name: SERVICE_NAME.to_string().try_into().unwrap(),
-            source_gateway_address: gmp_gateway::id().to_string().try_into().unwrap(),
-            voting_threshold: majority_threshold(),
-            block_expiry: BLOCK_EXPIRY,
-            confirmation_height: CONFIRMATION_HEIGHT,
-            source_chain: source_chain.to_string().try_into().unwrap(),
-            rewards_address: REWARDS_ADDRESS.to_string(),
-            governance_address: GOVERNANCE_ADDRESS.to_string().try_into().unwrap(),
-            msg_id_format: axelar_wasm_std::msg_id::MessageIdFormat::Base58TxDigestAndEventIndex,
-        })?,
+        msg: serde_json::to_vec(&instantiate_msg)?,
         funds: vec![],
     };
     let response = client
@@ -205,27 +206,30 @@ pub(crate) async fn init_solana_multisig_prover(
 ) -> eyre::Result<()> {
     use crate::cli::cmd::testnet::multisig_prover_api::InstantiateMsg;
 
+    let msg = InstantiateMsg {
+        admin_address: client.signer_account_id()?.to_string(),
+        governance_address: GOVERNANCE_ADDRESS.to_string(),
+        gateway_address,
+        multisig_address: MULTISIG_ADDRESS.to_string(),
+        coordinator_address: COORDINATOR_ADDRESS.to_string(),
+        service_registry_address: SERVICE_REGISTRY_ADDRESS.to_string(),
+        voting_verifier_address,
+        signing_threshold: majority_threshold(),
+        service_name: SERVICE_NAME.to_string(),
+        chain_name: SOLANA_CHAIN_NAME.to_string(),
+        verifier_set_diff_threshold: VERIFIER_SET_DIFF_THRESHOLD,
+        encoder: "rkyv".to_string(),
+        key_type: KeyType::Ecdsa,
+        domain_separator: hex::encode(solana_domain_separator()),
+    };
+    tracing::info!(?msg, "init msg");
+
     let instantiate = MsgInstantiateContract {
         sender: client.signer_account_id()?,
         admin: Some(client.signer_account_id()?),
         code_id,
         label: Some("init-multisig-prover".to_string()),
-        msg: serde_json::to_vec(&InstantiateMsg {
-            admin_address: client.signer_account_id()?.to_string(),
-            governance_address: GOVERNANCE_ADDRESS.to_string(),
-            gateway_address,
-            multisig_address: MULTISIG_ADDRESS.to_string(),
-            coordinator_address: COORDINATOR_ADDRESS.to_string(),
-            service_registry_address: SERVICE_REGISTRY_ADDRESS.to_string(),
-            voting_verifier_address,
-            signing_threshold: majority_threshold(),
-            service_name: SERVICE_NAME.to_string(),
-            chain_name: SOLANA_CHAIN_NAME.to_string(),
-            verifier_set_diff_threshold: VERIFIER_SET_DIFF_THRESHOLD,
-            encoder: "rkyv".to_string(),
-            key_type: KeyType::Ecdsa,
-            domain_separator: hex::encode(solana_domain_separator()),
-        })?,
+        msg: serde_json::to_vec(&msg)?,
         funds: vec![],
     };
     let response = client
@@ -275,12 +279,15 @@ fn read_wasm_for_delpoyment(wasm_artifact_name: &str) -> eyre::Result<Vec<u8>> {
 
 pub(crate) mod ampd {
 
+    use std::thread;
+
     use inquire::Confirm;
     use tracing::info;
+    use xshell::Shell;
 
     use super::path::axelar_amplifier_dir;
-    use crate::cli::cmd::cosmwasm::path::ampd_home_dir;
-    use crate::cli::cmd::path::xtask_crate_root_dir;
+    use crate::cli::cmd::cosmwasm::path::{self, ampd_home_dir};
+    use crate::cli::cmd::path::{workspace_root_dir, xtask_crate_root_dir};
 
     pub(crate) async fn setup_ampd() -> eyre::Result<()> {
         if !Confirm::new("Welcome to ampd-setup ! This will perform/guide you through the verifier onboarding process described here https://docs.axelar.dev/validator/amplifier/verifier-onboarding (devnet-amplifier chain). 
@@ -291,22 +298,10 @@ pub(crate) mod ampd {
             return Ok(println!("Cannot continue without user confirmation."))
         }
 
-        // Compile the ampd binary (with solana implementation)
+        build_ampd()?;
         let sh = xshell::Shell::new()?;
-        sh.change_dir(axelar_amplifier_dir());
-        sh.cmd("git").args(vec!["checkout", "solana"]).run()?;
-        sh.cmd("git").args(vec!["pull"]).run()?;
-
-        info!("Compiling ampd ...");
-
-        sh.cmd("cargo")
-            .args(vec!["build", "-p", "ampd"]) // todo. add "--release" when serious.
-            .run()?;
-
-        let ampd_built_path = axelar_amplifier_dir()
-            .join("target")
-            .join("release")
-            .join("ampd");
+        let _dir = sh.push_dir(axelar_amplifier_dir());
+        let ampd_build_path = path::ampd_bin();
 
         info!("Copying Solana ampd configuration template to $HOME/.ampd/config.toml");
         tokio::fs::create_dir_all(ampd_home_dir()).await?;
@@ -324,7 +319,7 @@ pub(crate) mod ampd {
         }
 
         let verifier_address = String::from_utf8(
-            sh.cmd(&ampd_built_path)
+            sh.cmd(&ampd_build_path)
                 .args(vec!["verifier-address"])
                 .output()?
                 .stdout,
@@ -353,17 +348,17 @@ pub(crate) mod ampd {
         }
 
         info!("Bonding ampd verifier ...");
-        sh.cmd(&ampd_built_path)
+        sh.cmd(&ampd_build_path)
             .args(vec!["bond-verifier", "validators", "100", "uamplifier"])
             .run()?;
 
         info!("Registering ampd public key ...");
-        sh.cmd(&ampd_built_path)
+        sh.cmd(&ampd_build_path)
             .args(vec!["register-public-key"])
             .run()?;
 
         info!("Registering support for Solana blockchain ...");
-        sh.cmd(&ampd_built_path)
+        sh.cmd(&ampd_build_path)
             .args(vec!["register-chain-support", "validators", "solana"])
             .run()?;
 
@@ -374,8 +369,55 @@ pub(crate) mod ampd {
 
         println!(
             "We are ready to go ! just execute ampd by: {}",
-            &ampd_built_path.to_string_lossy()
+            &ampd_build_path.to_string_lossy()
         );
+
+        Ok(())
+    }
+
+    fn build_ampd() -> eyre::Result<()> {
+        let sh = Shell::new()?;
+        let _dir = sh.push_dir(axelar_amplifier_dir());
+        sh.cmd("git").args(vec!["checkout", "solana"]).run()?;
+        sh.cmd("git").args(vec!["pull"]).run()?;
+        info!("Compiling ampd ...");
+        sh.cmd("cargo").args(vec!["build", "-p", "ampd"]).run()?;
+        Ok(())
+    }
+
+    pub(crate) async fn start_with_tofnd() -> eyre::Result<()> {
+        build_ampd()?;
+
+        tracing::info!("starting tofnd");
+        let tofnd_process = thread::spawn(move || {
+            let sh = Shell::new()?;
+            let _ws = sh.push_dir(workspace_root_dir());
+            let tofnd = sh.cmd("docker").args([
+                "run",
+                "-p",
+                "50051:50051",
+                "--env",
+                "MNEMONIC_CMD=auto",
+                "--env",
+                "NOPASSWORD=true",
+                "-v",
+                "./tofnd:/.tofnd",
+                "haiyizxx/tofnd:latest",
+            ]);
+            tofnd.run()?;
+            Ok::<_, eyre::Error>(())
+        });
+
+        // sleep for 5 secs to allow tofnd to spawn
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+        if tofnd_process.is_finished() {
+            eyre::bail!("issue with spawning tofnd");
+        }
+
+        // spawn ampd
+        tracing::info!("spawning ampd");
+        let sh = Shell::new()?;
+        sh.cmd(path::ampd_bin()).run()?;
 
         Ok(())
     }
@@ -417,6 +459,12 @@ pub(crate) mod path {
             .join("wasm32-unknown-unknown")
             .join("release")
             .join(format!("{contract_name}.optimised.wasm"))
+    }
+    pub(crate) fn ampd_bin() -> PathBuf {
+        axelar_amplifier_dir()
+            .join("target")
+            .join("debug")
+            .join("ampd")
     }
 }
 

@@ -22,32 +22,33 @@ pub(crate) fn solana_domain_separator() -> [u8; 32] {
     domain_separator(SOLANA_CHAIN_NAME, SOLANA_CHAIN_ID)
 }
 
-#[allow(warnings)]
 fn solana_axelar_gateway() -> devnet_amplifier::Contract {
-    devnet_amplifier::Contract { address: todo!() }
+    // code stored code_id="429" contract="gateway"
+    devnet_amplifier::Contract {
+        address: "axelar185qqu0ll77jer3e7akuej9d27d39s7ecvjjh5wp89kexwq578fcqenu96n".to_string(),
+    }
 }
 
 fn solana_axelar_multisig_prover() -> devnet_amplifier::MultisigProver {
-    // todo update the values
+    // code stored code_id="433" contract="multisig_prover"
     devnet_amplifier::MultisigProver {
         governance_address: "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9".to_string(),
-        destination_chain_id: SOLANA_CHAIN_ID.to_string(),
+        destination_chain_id: SOLANA_CHAIN_NAME.to_string(),
         service_name: "validators".to_string(),
         encoder: "rkyv".to_string(),
-        address: "axelar1g6520uhs8u37el40wqngf60z06mjgk6z7nezytd2mxrmh7yesnmsyc0zjw".to_string(),
-        domain_separator: "0x598ba04d225cec385d1ce3cf3c9a076af803aa5c614bc0e0d176f04ac8d28f55"
-            .to_string(),
+        address: "axelar1gzxd8eqe6vlg8zmpkzhvxl6kvcgcsu74gv5wfvn6axvzfg0pnu4s5alh59".to_string(),
+        domain_separator: hex::encode(solana_domain_separator()),
         key_type: "ecdsa".to_string(),
     }
 }
 
-#[allow(warnings)]
 fn solana_axelar_voting_verifier() -> devnet_amplifier::VotingVerifier {
+    // code stored code_id="428" contract="voting_verifier"
     devnet_amplifier::VotingVerifier {
-        governance_address: todo!(),
-        source_gateway_address: todo!(),
-        address: todo!(),
-        msg_id_format: todo!(),
+        governance_address: "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9".to_string(),
+        source_gateway_address: "gtwunAsmpgKrHUWYYT6Ckr2W5KeJWnSLsP41Nmmom6B".to_string(),
+        address: "axelar1agcnmkhl3nu4xdxuh699fmkr9vzgwgzl8zee2meqqgpmud0kh6eq04n3lk".to_string(),
+        msg_id_format: "base58".to_string(),
     }
 }
 

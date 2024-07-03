@@ -28,12 +28,12 @@ type = "MultisigSigner"
 [[handlers]]
 chain_name = "solana"
 chain_rpc_url = "https://api.devnet.solana.com"
-cosmwasm_contract = "axelar1ty7mx0cllgz8xuvhn2j7e3qy8999ssgmjtktyqetl335em0g88lq6rjhl2"
+cosmwasm_contract = "axelar1agcnmkhl3nu4xdxuh699fmkr9vzgwgzl8zee2meqqgpmud0kh6eq04n3lk"
 type = "SolanaMsgVerifier"
 max_tx_cache_entries = 6
 
 [[handlers]]
 chain_name = "solana"
 chain_rpc_url = "https://api.devnet.solana.com"
-cosmwasm_contract = "axelar1ty7mx0cllgz8xuvhn2j7e3qy8999ssgmjtktyqetl335em0g88lq6rjhl2"
+cosmwasm_contract = "axelar1agcnmkhl3nu4xdxuh699fmkr9vzgwgzl8zee2meqqgpmud0kh6eq04n3lk"
 type = "SolanaVerifierSetVerifier"

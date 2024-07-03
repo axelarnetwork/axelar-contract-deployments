@@ -141,16 +141,15 @@ pub(crate) enum Cosmwasm {
     /// Bond an ampd verifier in an interactive process that follows [the official guide](https://docs.axelar.dev/validator/amplifier/verifier-onboarding)
     /// The chain `devnet-amplifier` is assumed.
     AmpdSetup,
+    /// Start ampd and tofnd at the same time
+    AmpdAndTofndRun,
 }
 
 /// Initialize contracts by providing their specific init parameters.
 #[derive(Subcommand)]
 pub(crate) enum CosmwasmInit {
     /// Initialize an already deployed voting verifier contract.
-    VotingVerifier {
-        #[arg(long)]
-        chain_name: String,
-    },
+    SolanaVotingVerifier,
     /// Initialize an already deployed gateway contract
     Gateway {
         #[arg(short, long)]
@@ -464,8 +463,8 @@ async fn handle_cosmwasm(command: Cosmwasm) -> eyre::Result<()> {
         } => {
             let client = create_axelar_cosmsos_signer(private_key_hex)?;
             match command {
-                CosmwasmInit::VotingVerifier { chain_name } => {
-                    cmd::cosmwasm::init_voting_verifier(code_id, client, chain_name).await?;
+                CosmwasmInit::SolanaVotingVerifier => {
+                    cmd::cosmwasm::init_solana_voting_verifier(code_id, client).await?;
                 }
                 CosmwasmInit::Gateway {
                     voting_verifier_address,
@@ -487,6 +486,7 @@ async fn handle_cosmwasm(command: Cosmwasm) -> eyre::Result<()> {
             }
         }
         Cosmwasm::AmpdSetup => cmd::cosmwasm::ampd::setup_ampd().await?,
+        Cosmwasm::AmpdAndTofndRun => cmd::cosmwasm::ampd::start_with_tofnd().await?,
     };
     Ok(())
 }
