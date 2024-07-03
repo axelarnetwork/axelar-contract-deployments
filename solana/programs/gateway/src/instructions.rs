@@ -1,6 +1,5 @@
 //! Instruction types
 
-use axelar_rkyv_encoding::types::Message;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
@@ -316,7 +315,7 @@ pub fn validate_message(
     approved_message_pda: &Pubkey,
     gateway_root_pda: &Pubkey,
     caller: &Pubkey,
-    message: Message,
+    message_wrapper: MessageWrapper,
 ) -> Result<Instruction, ProgramError> {
     let accounts = vec![
         AccountMeta::new(*approved_message_pda, false),
@@ -324,7 +323,6 @@ pub fn validate_message(
         AccountMeta::new_readonly(*caller, true),
     ];
 
-    let message_wrapper = message.try_into()?;
     let data = borsh::to_vec(&GatewayInstruction::ValidateMessage(message_wrapper))?;
 
     Ok(Instruction {

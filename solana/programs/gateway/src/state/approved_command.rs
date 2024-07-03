@@ -208,7 +208,7 @@ impl GatewayApprovedCommand {
                 .destination_program()
                 .expect("failed to infer signing PDA for the destination program")
                 .signing_pda(&command_hash);
-            signing_pda_buffer.copy_from_slice(signing_pda_for_destination_program.as_ref());
+            signing_pda_buffer[..32].copy_from_slice(signing_pda_for_destination_program.as_ref());
             signing_pda_buffer[32] = signing_pda_bump;
         }
 

@@ -25,11 +25,14 @@ pub struct GatewayExecuteData<'a> {
 
     /// The bump seed for the PDA account.
     pub bump: u8,
+
+    /// The original bytes that form `Self.inner`
+    original_execute_data: &'a [u8],
 }
 
 impl ToBytes for GatewayExecuteData<'_> {
     fn to_bytes(&self) -> Result<Cow<'_, [u8]>, GatewayError> {
-        Ok(Cow::Borrowed(self.inner.as_bytes()))
+        Ok(Cow::Borrowed(self.original_execute_data))
     }
 }
 
@@ -48,6 +51,7 @@ impl<'a> GatewayExecuteData<'a> {
             inner: execute_data,
             hash: execute_data.proof().signer_set_hash(),
             bump: 0, // bump will be set after we derive the PDA
+            original_execute_data: data,
         };
         let (_pubkey, bump, _seeds) = gateway_execute_data.pda(gateway_root_pda);
         gateway_execute_data.bump = bump;
@@ -74,12 +78,10 @@ impl<'a> GatewayExecuteData<'a> {
     }
 
     /// Asserts that the PDA for this account is valid.
-    pub fn assert_valid_pda(&self, gateway_root_pda: &Pubkey, exppected_pubkey: &Pubkey) {
-        let seeds = self.seeds(gateway_root_pda);
-        let derived_pubkey = Pubkey::create_program_address(&[&seeds, &[self.bump]], &crate::ID)
-            .expect("invalid bump for the root pda");
+    pub fn assert_valid_pda(&self, gateway_root_pda: &Pubkey, expected_pubkey: &Pubkey) {
+        let (derived_pubkey, _bump, _seeds) = self.pda(gateway_root_pda);
         assert_eq!(
-            &derived_pubkey, exppected_pubkey,
+            &derived_pubkey, expected_pubkey,
             "invalid pda for the gateway execute data account"
         );
     }
@@ -89,18 +91,35 @@ impl<'a> GatewayExecuteData<'a> {
         self.inner.proof()
     }
 
-    /// Returns the archived message array for the internal execute_data value, if it has one.
+    /// Returns the archived message array for the internal execute_data value,
+    /// if it has one.
     pub fn messages(&self) -> Option<&[ArchivedMessage]> {
         self.inner.messages()
     }
 
-    /// Returns the proposed verifier set for the internal execute_data value, if it has one.
+    /// Returns the proposed verifier set for the internal execute_data value,
+    /// if it has one.
     pub fn verifier_set(&self) -> Option<&ArchivedVerifierSet> {
         self.inner.verifier_set()
     }
 
-    /// Hashes this execute_data payload in the same way it was done over the `multisig-prover` contract.
+    /// Hashes this execute_data payload in the same way it was done over the
+    /// `multisig-prover` contract.
     pub fn payload_hash(&self, domain_separator: &[u8; 32]) -> [u8; 32] {
         self.inner.internal_payload_hash(domain_separator)
     }
+}
+
+#[test]
+fn test_gateway_execute_data_roundtrip() {
+    use axelar_rkyv_encoding::test_fixtures::random_valid_execute_data_and_verifier_set;
+    let domain_separator = [5; 32];
+    let gateway_root_pda = Pubkey::new_unique();
+    let (execute_data, _) = random_valid_execute_data_and_verifier_set(&domain_separator);
+    let raw_data = execute_data.to_bytes::<0>().unwrap();
+
+    let gateway_execute_data = GatewayExecuteData::new(&raw_data, &gateway_root_pda).unwrap();
+    let serialized_gateway_execute_data = ToBytes::to_bytes(&gateway_execute_data).unwrap();
+
+    assert_eq!(*serialized_gateway_execute_data, *raw_data);
 }

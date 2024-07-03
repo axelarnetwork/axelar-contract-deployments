@@ -51,27 +51,10 @@ impl ArchivedWeightedSignature {
         // Unwrap: we use the right slice size so this never panics.
         let signature = k256::ecdsa::Signature::from_slice(&signature_bytes[0..64]).unwrap();
 
-        // Recover the public key
-        let recovery_id = {
-            let recovery_id_byte = signature_bytes[64];
-            ecdsa::RecoveryId::from_byte(recovery_id_byte).ok_or(
-                SignatureVerificationError::InvalidRecoveryId(recovery_id_byte),
-            )?
-        };
-        let recovered_public_key =
-            ecdsa::VerifyingKey::recover_from_msg(message, &signature, recovery_id)
-                .map_err(SignatureVerificationError::PublicKeyRecovery)?;
-
-        // Double check: recovered public key is equivalent to the provided public key.
         let provided_public_key = ecdsa::VerifyingKey::from_sec1_bytes(public_key_bytes)
             .map_err(SignatureVerificationError::InvalidEcdsaPublicKeyBytes)?;
-        if provided_public_key != recovered_public_key {
-            return Err(SignatureVerificationError::PublicKeyRecoveryMismatch {
-                recovered: Box::new(recovered_public_key),
-                provided: Box::new(provided_public_key),
-            });
-        }
-        recovered_public_key
+
+        provided_public_key
             .verify(message, &signature)
             .map_err(SignatureVerificationError::EcdsaVerificationFailed)
     }

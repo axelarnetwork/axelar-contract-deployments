@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use axelar_message_primitives::DataPayload;
 use axelar_rkyv_encoding::types::u256::U256;
-use axelar_rkyv_encoding::types::{Message, Payload, VerifierSet};
+use axelar_rkyv_encoding::types::{ArchivedExecuteData, Message, Payload, VerifierSet};
 use borsh::BorshDeserialize;
 use gateway::axelar_auth_weighted::AxelarAuthWeighted;
 use gateway::commands::OwnedCommand;
@@ -16,7 +16,7 @@ use solana_program_test::{
     BanksClient, BanksTransactionResultWithMetadata, ProgramTest, ProgramTestBanksClientExt,
     ProgramTestContext,
 };
-use solana_sdk::account::{AccountSharedData, WritableAccount};
+use solana_sdk::account::{AccountSharedData, ReadableAccount, WritableAccount};
 use solana_sdk::account_utils::StateMut;
 use solana_sdk::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
@@ -422,7 +422,33 @@ impl TestFixture {
         ])
         .await;
 
+        // Confidence check: the ExecuteData account bytes contain the exact
+        // execute_data raw bytes
+        self.validate_recently_inscribed_execute_data(execute_data_pda, raw_data)
+            .await;
+
         execute_data_pda
+    }
+
+    async fn validate_recently_inscribed_execute_data(
+        &mut self,
+        execute_data_pda: Pubkey,
+        raw_data: &[u8],
+    ) {
+        // Confidence check: execute_data can be deserialized
+        assert!(ArchivedExecuteData::from_bytes(raw_data).is_some());
+
+        let account = self
+            .banks_client
+            .get_account(execute_data_pda)
+            .await
+            .expect("test rpc works")
+            .expect("execute_data account exists (it was just initialized)");
+        assert_eq!(
+            raw_data,
+            account.data(),
+            "inscribed execute_data bytes should match"
+        );
     }
 
     pub async fn init_pending_gateway_commands(
@@ -485,7 +511,7 @@ impl TestFixture {
             approved_command_pdas,
         )
         .unwrap();
-        let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(400_000u32);
+        let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(u32::MAX);
         self.send_tx_with_metadata(&[bump_budget, ix]).await
     }
 
@@ -543,15 +569,17 @@ impl TestFixture {
     ) {
         let weight_of_quorum = signers
             .iter()
-            .try_fold(U256::ZERO, |acc, i| acc.checked_add(i.weight))
-            .expect("no overflow");
-        let weight_of_quorum = EthersU256::from_little_endian(&weight_of_quorum.to_le());
+            .map(|signer| signer.weight)
+            .try_fold(U256::ZERO, U256::checked_add)
+            .and_then(|x| x.maybe_u128())
+            .expect("no arithmetic overflow");
+
         let (execute_data_pda, execute_data) = self
             .init_execute_data(
                 gateway_root_pda,
                 Payload::Messages(messages.clone()),
                 signers,
-                weight_of_quorum.as_u128(),
+                weight_of_quorum,
                 &DOMAIN_SEPARATOR,
             )
             .await;
@@ -560,9 +588,11 @@ impl TestFixture {
             .into_iter()
             .map(OwnedCommand::ApproveMessage)
             .collect();
+
         let gateway_approved_command_pdas = self
             .init_pending_gateway_commands(gateway_root_pda, &commands)
             .await;
+
         let tx = self
             .approve_pending_gateway_messages_with_metadata(
                 gateway_root_pda,
@@ -693,7 +723,7 @@ pub async fn add_upgradeable_loader_account(
 #[cfg(test)]
 mod tests {
 
-    use solana_sdk::account::{Account, ReadableAccount};
+    use solana_sdk::account::Account;
 
     use super::*;
 

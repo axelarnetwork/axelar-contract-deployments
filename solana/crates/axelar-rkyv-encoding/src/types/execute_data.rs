@@ -82,19 +82,12 @@ impl ArchivedExecuteData {
     pub fn from_bytes(bytes: &[u8]) -> Option<&Self> {
         rkyv::check_archived_root::<ExecuteData>(bytes).ok()
     }
-
-    pub fn as_bytes(&self) -> &[u8] {
-        use std::slice;
-        let size = std::mem::size_of::<Self>();
-        let ptr = self as *const Self as *const u8;
-        unsafe { slice::from_raw_parts(ptr, size) }
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_fixtures::{random_bytes, random_execute_data};
+    use crate::test_fixtures::random_execute_data;
 
     #[test]
     fn test_serialize_deserialize_execute_data() {
@@ -120,32 +113,5 @@ mod tests {
         ArchivedVisitor::visit_execute_data(&mut archived_hasher, archived);
 
         assert_eq!(archived_hasher.finalize(), unarchived_hasher.finalize());
-    }
-
-    #[test]
-    fn archived_bytes_can_be_cast_as_slices() {
-        // Setup: Produce an &ArchivedExecuteData
-
-        let execute_data = random_execute_data();
-        let serialized = rkyv::to_bytes::<_, 1024>(&execute_data).unwrap().to_vec();
-        let archived = unsafe { rkyv::archived_root::<ExecuteData>(&serialized) };
-
-        // Cast the &ArchivedExecuteData as a byte slice
-        let archived_bytes = archived.as_bytes();
-
-        // Cast the bytes again as an &ArchivedExecuteData and deserialize it
-        let recasted = unsafe { rkyv::archived_root::<ExecuteData>(archived_bytes) };
-        let deserialized: ExecuteData = recasted.deserialize(&mut rkyv::Infallible).expect("OOPS");
-
-        // Compare
-        assert_eq!(archived, recasted);
-        assert_eq!(execute_data, deserialized);
-
-        // Confidence check: Internal hash is also equivalent
-        let domain_separator = random_bytes::<32>();
-        assert_eq!(
-            archived.internal_payload_hash(&domain_separator),
-            recasted.internal_payload_hash(&domain_separator)
-        );
     }
 }

@@ -21,8 +21,12 @@ impl U256 {
         let a: bnum::types::U256 = self.into();
         a.checked_add(other.into()).map(|res| res.into())
     }
-}
 
+    pub fn maybe_u128(&self) -> Option<u128> {
+        let num: bnum::types::U256 = (*self).into();
+        num.try_into().ok()
+    }
+}
 impl ArchivedU256 {
     pub(crate) fn to_le(&self) -> &[u8; 32] {
         &self.0

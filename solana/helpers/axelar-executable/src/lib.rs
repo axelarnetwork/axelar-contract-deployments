@@ -5,10 +5,9 @@
 use std::str::FromStr;
 
 pub use axelar_message_primitives;
-use axelar_message_primitives::{
-    AxelarCallableInstruction, AxelarExecutablePayload, DataPayload, DestinationProgramId,
-};
-use axelar_rkyv_encoding::types::{CrossChainId, Message};
+use axelar_message_primitives::{DataPayload, DestinationProgramId, EncodingScheme};
+use axelar_rkyv_encoding::types::{ArchivedMessage, Message};
+use gateway::commands::MessageWrapper;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::instruction::{AccountMeta, Instruction};
@@ -33,8 +32,6 @@ pub fn validate_message(
     data: &AxelarExecutablePayload,
 ) -> ProgramResult {
     msg!("Validating contract call");
-    let command_id = &data.command_id;
-    let source_address = data.source_address.clone();
 
     let (relayer_prepended_accs, origin_chain_provided_accs) = accounts.split_at(4);
     let account_info_iter = &mut relayer_prepended_accs.iter();
@@ -48,23 +45,24 @@ pub fn validate_message(
         origin_chain_provided_accs,
         data.encoding_scheme,
     );
-    let payload_hash = *axelar_payload.hash()?.0;
 
     // Build the actual Message we are going to use
-    let cc_id = CrossChainId::new(command_id.chain.clone(), command_id.id.clone());
-    let message = Message::new(
-        cc_id,
-        source_address,
-        "solana".into(), // FIXME: Check if this is the correct value for the destination chain
-        program_id.to_string(),
-        payload_hash,
-    );
-    let command_id_slice = message.hash();
+    let message: &ArchivedMessage = (&data.message).try_into()?;
+    let message_hash = message.hash();
+
+    // Check: Original message's payload_hash is equivalent to provided payload's
+    // hash
+    let provided_payload_hash = *axelar_payload.hash()?.0;
+    if *message.payload_hash() != provided_payload_hash {
+        msg!("Invalid payload hash");
+        return Err(ProgramError::InvalidInstructionData);
+    }
 
     let destination_program = DestinationProgramId(*program_id);
     let (signing_pda_derived, signing_pda_derived_bump) =
-        destination_program.signing_pda(&command_id_slice);
+        destination_program.signing_pda(&message_hash);
     if signing_pda.key != &signing_pda_derived {
+        msg!("Invalid signing PDA");
         return Err(ProgramError::InvalidAccountData);
     }
 
@@ -73,14 +71,14 @@ pub fn validate_message(
             gateway_approved_message_pda.key,
             gateway_root_pda.key,
             signing_pda.key,
-            message,
+            data.message.clone(),
         )?,
         &[
             gateway_approved_message_pda.clone(),
             gateway_root_pda.clone(),
             signing_pda.clone(),
         ],
-        &[&[&command_id_slice, &[signing_pda_derived_bump]]],
+        &[&[&message_hash, &[signing_pda_derived_bump]]],
     )?;
 
     Ok(())
@@ -109,11 +107,12 @@ pub fn construct_axelar_executable_ix(
     gateway_root_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let payload = DataPayload::decode(axelar_message_payload.as_slice())?;
-    if payload.hash()?.0.as_ref() != incoming_message.payload_hash() {
+
+    // Check: decoded payload_hash and message.payload_hash are the same
+    let decoded_payload_hash = payload.hash()?.0;
+    if *decoded_payload_hash != *incoming_message.payload_hash() {
         return Err(ProgramError::InvalidInstructionData);
     }
-
-    let command_id = incoming_message.hash();
 
     let passed_in_accounts = payload.account_meta();
     let payload_without_accounts = payload.payload_without_accounts().to_vec();
@@ -122,21 +121,14 @@ pub fn construct_axelar_executable_ix(
             .map_err(|_| ProgramError::InvalidAccountData)?;
     let destination_program = DestinationProgramId(incoming_message_destination_program_pubkey);
 
-    let (gateway_approved_message_signing_pda, _) = destination_program.signing_pda(&command_id);
+    let (gateway_approved_message_signing_pda, _) =
+        destination_program.signing_pda(&incoming_message.hash());
 
-    let incoming_message_ccid = incoming_message.cc_id();
-    let cross_chain_id = axelar_message_primitives::CrossChainId {
-        chain: incoming_message_ccid.chain().to_string(),
-        id: incoming_message_ccid.id().to_string(),
-    };
-    let payload = AxelarExecutablePayload {
-        command_id: cross_chain_id,
+    let payload = AxelarCallableInstruction::<()>::AxelarExecute(AxelarExecutablePayload {
         payload_without_accounts,
-        source_chain: incoming_message_ccid.chain().into(),
-        source_address: incoming_message.source_address().to_string(),
+        message: incoming_message.clone().try_into()?,
         encoding_scheme: payload.encoding_scheme(),
-    };
-    let payload = AxelarCallableInstruction::<()>::AxelarExecute(payload);
+    });
 
     let mut accounts = vec![
         // The expected accounts for the `ValidateMessage` ix
@@ -152,4 +144,32 @@ pub fn construct_axelar_executable_ix(
         accounts,
         data: borsh::to_vec(&payload)?,
     })
+}
+
+/// This is the payload that the `execute` processor on the destinatoin program
+/// must expect
+#[derive(Debug, PartialEq, borsh::BorshSerialize, borsh::BorshDeserialize)]
+#[repr(C)]
+pub struct AxelarExecutablePayload {
+    /// The payload *without* the prefixed accounts
+    ///
+    /// This needs to be done by the relayer before calling the destination
+    /// program
+    pub payload_without_accounts: Vec<u8>,
+
+    /// The bytes for an `axelar-rkyv-encoding::Message` value.
+    pub message: MessageWrapper,
+
+    /// The encoding scheme used to encode this payload.
+    pub encoding_scheme: EncodingScheme,
+}
+
+/// This is the wrapper instruction that the destination program should expect
+/// as the incoming &[u8]
+#[derive(Debug, PartialEq, borsh::BorshSerialize, borsh::BorshDeserialize)]
+pub enum AxelarCallableInstruction<T> {
+    /// The payload is coming from the Axelar Gateway (submitted by the relayer)
+    AxelarExecute(AxelarExecutablePayload),
+    /// The payload is coming from the user
+    Native(T),
 }

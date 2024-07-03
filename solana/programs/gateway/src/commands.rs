@@ -172,7 +172,7 @@ impl BorshDeserialize for OwnedCommand {
 /// FIXME: This is a workaround to wrap the serialized Message from the
 /// `axelar-rkyv-encoding` crate. It shoud not be needed once we fully migrate
 /// types from that crate.
-#[derive(BorshDeserialize, BorshSerialize, PartialEq, Eq, Debug)]
+#[derive(BorshDeserialize, BorshSerialize, PartialEq, Eq, Debug, Clone)]
 pub struct MessageWrapper {
     serialized_message: Vec<u8>,
 }
@@ -188,9 +188,29 @@ impl TryFrom<Message> for MessageWrapper {
     }
 }
 
-impl<'a> From<&'a MessageWrapper> for &'a ArchivedMessage {
-    fn from(wrapper: &'a MessageWrapper) -> &'a ArchivedMessage {
+impl<'a> TryFrom<&'a MessageWrapper> for &'a ArchivedMessage {
+    type Error = ProgramError;
+
+    fn try_from(wrapper: &'a MessageWrapper) -> Result<Self, Self::Error> {
         let MessageWrapper { serialized_message } = wrapper;
         ArchivedMessage::from_archived_bytes(serialized_message)
+            .ok_or_else(|| ProgramError::BorshIoError("failed to serialize Message".into()))
     }
+}
+
+#[test]
+fn message_wrapper_roundtrip() {
+    use axelar_rkyv_encoding::test_fixtures::random_message;
+    let original = random_message();
+
+    let wrapped: MessageWrapper = original.clone().try_into().unwrap();
+
+    let unwrapped = Message::from_bytes(&wrapped.serialized_message).unwrap();
+    let archived: &ArchivedMessage = (&wrapped).try_into().unwrap();
+
+    assert_eq!(original, unwrapped);
+    assert_eq!(original.hash(), unwrapped.hash());
+
+    assert_eq!(&original, archived);
+    assert_eq!(original.hash(), archived.hash());
 }

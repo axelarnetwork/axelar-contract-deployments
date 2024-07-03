@@ -15,8 +15,8 @@ use crate::program_test;
 #[rstest::rstest]
 #[case(EncodingScheme::Borsh)]
 #[case(EncodingScheme::AbiEncoding)]
-#[ignore]
 #[tokio::test]
+#[ignore = "broken"]
 async fn test_successful_validate_message(#[case] encoding_scheme: EncodingScheme) {
     // Setup
     let (mut solana_chain, gateway_root_pda, solana_signers, counter_pda) = solana_setup().await;
@@ -37,15 +37,20 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
     let other_message_in_the_batch =
         custom_message(destination_program_id, message_payload.clone());
 
-    let messages = vec![message_to_execute, other_message_in_the_batch];
+    // Confidence check: `message_to_execute` and `message_payload` have the same
+    // hash.
+    assert_eq!(
+        *message_to_execute.payload_hash(),
+        *(message_payload.hash().unwrap().0)
+    );
 
+    let messages = vec![message_to_execute.clone(), other_message_in_the_batch];
     // Action: "Relayer" calls Gateway to approve messages
     let (gateway_approved_command_pdas, _, _) = solana_chain
         .fully_approve_messages(&gateway_root_pda, messages.clone(), &solana_signers)
         .await;
 
-    let approve_message_command = OwnedCommand::ApproveMessage(messages[0].clone());
-
+    let approve_message_command = OwnedCommand::ApproveMessage(message_to_execute);
     // Action: set message status as executed by calling the destination program
     let tx = solana_chain
         .call_execute_on_axelar_executable(
@@ -55,8 +60,8 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
             gateway_root_pda,
         )
         .await;
-    assert!(tx.result.is_ok(), "transaction failed");
 
+    assert!(tx.result.is_ok(), "transaction failed");
     // Assert
     // First message should be executed
     let gateway_approved_message = solana_chain

@@ -77,7 +77,7 @@ impl Processor {
             }
             GatewayInstruction::ValidateMessage(wrapper) => {
                 msg!("Instruction: Validate Message");
-                let message: &ArchivedMessage = (&wrapper).into();
+                let message: &ArchivedMessage = (&wrapper).try_into()?;
                 Self::process_validate_message(
                     program_id,
                     accounts,

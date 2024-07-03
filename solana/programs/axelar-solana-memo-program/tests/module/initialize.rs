@@ -8,7 +8,6 @@ use test_fixtures::test_signer::create_signer_with_weight;
 
 use crate::program_test;
 
-#[ignore]
 #[rstest::rstest]
 #[tokio::test]
 async fn test_initialize() {

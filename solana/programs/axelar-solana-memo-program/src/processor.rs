@@ -2,10 +2,7 @@
 
 use std::str::from_utf8;
 
-use axelar_executable::axelar_message_primitives::{
-    AxelarCallableInstruction, AxelarExecutablePayload,
-};
-use axelar_executable::validate_message;
+use axelar_executable::{validate_message, AxelarCallableInstruction, AxelarExecutablePayload};
 use borsh::BorshDeserialize;
 use program_utils::{check_program_account, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};

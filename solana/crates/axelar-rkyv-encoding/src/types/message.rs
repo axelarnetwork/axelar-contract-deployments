@@ -133,8 +133,8 @@ impl ArchivedMessage {
         &self.payload_hash
     }
 
-    pub fn from_archived_bytes(bytes: &[u8]) -> &Self {
-        unsafe { rkyv::archived_root::<Message>(bytes) }
+    pub fn from_archived_bytes(bytes: &[u8]) -> Option<&Self> {
+        rkyv::check_archived_root::<Message>(bytes).ok()
     }
 }
 
@@ -151,5 +151,16 @@ mod tests {
         let deserialized = Message::from_bytes(&bytes).unwrap();
 
         assert_eq!(message, deserialized);
+        assert_eq!(message.hash(), deserialized.hash());
+    }
+
+    #[test]
+    fn consistent_hash_across_archival() {
+        let message = random_message();
+
+        let bytes = message.to_bytes().unwrap();
+        let archived = ArchivedMessage::from_archived_bytes(&bytes).unwrap();
+
+        assert_eq!(message.hash(), archived.hash());
     }
 }

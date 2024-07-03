@@ -49,18 +49,23 @@ impl ArchivedProof {
     pub fn validate_for_message(&self, message: &[u8; 32]) -> Result<(), MessageValidationError> {
         let threshold: bnum::types::U256 = (&self.threshold).into();
         let mut total_weight = bnum::types::U256::ZERO;
-
+        dbg!(self.signatures.len());
         for signature in self.signatures.iter() {
+            eprintln!("DEBUG: >> Verifying signature");
             signature.verify(message)?;
+            eprintln!("DEBUG: >> Signature is valid");
             let signer_weight = &signature.weight;
             total_weight = total_weight
                 .checked_add(signer_weight.into())
                 .ok_or(MessageValidationError::ArithmeticOverflow)?;
+            eprintln!("DEBUG: >> Accumulating weight");
 
             if total_weight >= threshold {
+                eprintln!("DEBUG: >> Signer accumulated weight is sufficient. The proof is valid");
                 return Ok(());
             }
         }
+        eprintln!("DEBUG: >> Insufficient weight. Proof is invalid.");
         Err(MessageValidationError::InsufficientWeight)
     }
 

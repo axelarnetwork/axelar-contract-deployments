@@ -1,6 +1,7 @@
 //! Instruction module for the Axelar Memo program.
 
-use axelar_executable::axelar_message_primitives::{AxelarCallableInstruction, DataPayload};
+use axelar_executable::axelar_message_primitives::DataPayload;
+use axelar_executable::AxelarCallableInstruction;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 pub use solana_program;
 use solana_program::instruction::{AccountMeta, Instruction};

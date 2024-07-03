@@ -48,5 +48,8 @@ pub fn prepare_execute_data(
     // Confidence check: ExecuteData can be deserialized
     ExecuteData::from_bytes(&execute_data_bytes).expect("valid deserialization");
 
+    // Confidence check: ExecuteData can be cast to its archive
+    ArchivedExecuteData::from_bytes(&execute_data_bytes).expect("valid archival");
+
     (execute_data_bytes, verifier_set)
 }
