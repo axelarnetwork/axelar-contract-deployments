@@ -6,12 +6,20 @@ const { getSignedTx, storeSignedTx } = require('../evm/sign-utils');
 const { loadSuiConfig } = require('./utils');
 const { printInfo, validateParameters } = require('../evm/utils');
 
-async function signTx(keypair, client, encodedTx, options) {
-    return await signTransactionBlockBytes(keypair, client, encodedTx, options);
+async function signTx(keypair, client, options) {
+    const txFileData = getSignedTx(options.txBlockPath);
+    const txData = txFileData?.bytes;
+
+    validateParameters({ isNonEmptyString: { txData } });
+
+    const encodedTxBytes = fromB64(txData);
+
+    const { signature, publicKey } = await signTransactionBlockBytes(keypair, client, encodedTxBytes, options);
+    return { signature, publicKey, txBytes: txData };
 }
 
-async function executeCombinedSignature(client, txBlockBytes, options) {
-    const { combinedSignPath, txData } = options;
+async function executeCombinedSignature(client, options) {
+    const { combinedSignPath } = options;
 
     if (options.offline) {
         throw new Error('Cannot execute in offline mode');
@@ -22,26 +30,26 @@ async function executeCombinedSignature(client, txBlockBytes, options) {
     }
 
     const fileData = getSignedTx(combinedSignPath);
+    const txData = fileData.txBytes;
 
-    if (fileData.message !== txData) {
-        throw new Error(`Message mismatch with file [${combinedSignPath}]`);
-    }
+    validateParameters({ isNonEmptyString: { txData } });
 
+    const encodedTxBytes = fromB64(txData);
     const combinedSignatureBytes = fileData.signature;
 
     if (!combinedSignatureBytes) {
         throw new Error(`No signature specified in [${combinedSignPath}]`);
     }
 
-    const txResult = await broadcastSignature(client, txBlockBytes, combinedSignatureBytes);
+    const txResult = await broadcastSignature(client, encodedTxBytes, combinedSignatureBytes);
     printInfo('Transaction result', JSON.stringify(txResult));
 
     fileData.status = 'EXECUTED';
     storeSignedTx(combinedSignPath, fileData);
 }
 
-async function combineSignature(client, chain, txBlockBytes, options) {
-    const { signatures, txData } = options;
+async function combineSignature(client, chain, options) {
+    const { signatures } = options;
 
     if (!signatures || signatures.length === 0) {
         throw new Error('FilePath is not provided in user info');
@@ -50,21 +58,26 @@ async function combineSignature(client, chain, txBlockBytes, options) {
     const multiSigPublicKey = await getMultisig(chain, options.multisigKey);
     const signatureArray = [];
 
+    const firstSignData = getSignedTx(signatures[0]);
+    const txBytes = firstSignData.txBytes;
+
     for (const file of signatures) {
         const fileData = getSignedTx(file);
 
-        if (fileData.message !== txData) {
-            throw new Error(`Message mismatch with file [${file}]`);
+        if (fileData.txBytes !== txBytes) {
+            throw new Error(`Transaction bytes mismatch with file [${file}]`);
         }
 
         signatureArray.push(fileData.signature);
     }
 
+    const txBlockBytes = fromB64(txBytes);
+
     const combinedSignature = multiSigPublicKey.combinePartialSignatures(signatureArray);
     const isValid = await multiSigPublicKey.verifyTransactionBlock(txBlockBytes, combinedSignature);
 
     if (!isValid) {
-        throw new Error(`Verification failed for message [${txData}]`);
+        throw new Error(`Verification failed for message [${txBytes}]`);
     }
 
     if (!options.offline) {
@@ -74,6 +87,7 @@ async function combineSignature(client, chain, txBlockBytes, options) {
         const data = {
             signature: combinedSignature,
             status: 'PENDING',
+            txBytes,
         };
         return data;
     }
@@ -83,29 +97,21 @@ async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
     printInfo('Wallet Address', keypair.toSuiAddress());
 
-    const txfileData = getSignedTx(options.txBlockPath);
-    const txData = txfileData?.bytes;
-
-    validateParameters({ isNonEmptyString: { txData } });
-
-    options.txData = txData;
-    const txBlockBytes = fromB64(txData);
-
     let fileData;
 
     switch (options.action) {
         case 'sign': {
-            fileData = await signTx(keypair, client, txBlockBytes, options);
+            fileData = await signTx(keypair, client, options);
             break;
         }
 
         case 'combine': {
-            fileData = await combineSignature(client, chain, txBlockBytes, options);
+            fileData = await combineSignature(client, chain, options);
             break;
         }
 
         case 'execute': {
-            await executeCombinedSignature(client, txBlockBytes, options);
+            await executeCombinedSignature(client, options);
             break;
         }
 
@@ -121,7 +127,6 @@ async function processCommand(chain, options) {
             throw new Error('No filePath provided');
         }
 
-        fileData.message = txData;
         storeSignedTx(signatureFilePath, fileData);
         printInfo(`The signed signature is`, fileData.signature);
     }
@@ -139,7 +144,7 @@ if (require.main === module) {
 
     addBaseOptions(program);
 
-    program.addOption(new Option('--txBlockPath <file>', 'path to unsigned tx block').env('TX_FILE'));
+    program.addOption(new Option('--txBlockPath <file>', 'path to unsigned tx block'));
     program.addOption(new Option('--action <action>', 'action').choices(['sign', 'combine', 'execute']).makeOptionMandatory(true));
     program.addOption(new Option('--multisigKey <multisigKey>', 'multisig key').env('MULTISIG_KEY'));
     program.addOption(new Option('--signatures [files...]', 'array of signed transaction files'));
