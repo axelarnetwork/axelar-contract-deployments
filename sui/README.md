@@ -104,6 +104,24 @@ node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test -
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
 
+### Deploy/Upgrade ITS
+
+Set required dependencies for ITS in contract config file.
+Provide --txFilePath with --offline to generate tx data file for offline signing.
+
+Deploy the ITS package:
+
+```bash
+node sui/deploy-its.js
+```
+
+Upgrade the ITS package:
+
+```bash
+node sui/deploy-its.js --upgrade --policy <policy>
+```
+use --digest to override digest generate from module build
+
 ## Troubleshooting
 
 1. Move build error during the deployment step
