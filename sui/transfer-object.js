@@ -34,7 +34,6 @@ async function processCommand(chain, options) {
     }
 
     validateParameters({
-        isNonEmptyString: { objectId },
         isKeccak256Hash: { objectId },
     });
 
