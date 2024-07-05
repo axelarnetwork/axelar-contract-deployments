@@ -57,7 +57,11 @@ impl Processor {
             .check_initialized_pda_without_deserialization(program_id)?;
 
         let borrowed_account_data = gateway_approve_messages_execute_data_pda.data.borrow();
-        let execute_data = GatewayExecuteData::new(*borrowed_account_data, gateway_root_pda.key)?;
+        let execute_data = GatewayExecuteData::new(
+            *borrowed_account_data,
+            gateway_root_pda.key,
+            &gateway_config.domain_separator,
+        )?;
 
         let Some(new_verifier_set) = execute_data.verifier_set() else {
             msg!("Invalid command provided. 'rotate-signers' expected.");
@@ -76,7 +80,7 @@ impl Processor {
 
         // Check: proof signer set is known.
         let signer_data = gateway_config
-            .validate_proof(execute_data.hash, execute_data.proof())
+            .validate_proof(execute_data.payload_hash, execute_data.proof())
             .map_err(|err| {
                 msg!("Proof validation failed: {:?}", err);
                 ProgramError::InvalidArgument

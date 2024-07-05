@@ -15,7 +15,6 @@ use test_fixtures::axelar_message::custom_message;
 
 use crate::{axelar_evm_setup, axelar_solana_setup};
 
-#[ignore]
 #[tokio::test]
 async fn test_send_from_evm_to_solana() {
     // Setup - Solana

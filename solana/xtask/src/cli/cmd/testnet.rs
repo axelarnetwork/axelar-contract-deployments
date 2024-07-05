@@ -15,40 +15,37 @@ use super::cosmwasm::cosmos_client::signer::SigningClient;
 use super::cosmwasm::domain_separator;
 use crate::cli::cmd::evm::{send_memo_from_evm_to_evm, send_memo_to_solana};
 
-pub(crate) const SOLANA_CHAIN_NAME: &str = "soalana";
+pub(crate) const SOLANA_CHAIN_NAME: &str = "solana";
 pub(crate) const SOLANA_CHAIN_ID: u64 = 43113;
 
 pub(crate) fn solana_domain_separator() -> [u8; 32] {
     domain_separator(SOLANA_CHAIN_NAME, SOLANA_CHAIN_ID)
 }
 
+fn solana_axelar_voting_verifier() -> devnet_amplifier::VotingVerifier {
+    devnet_amplifier::VotingVerifier {
+        governance_address: "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9".to_string(),
+        source_gateway_address: "gtwrtxmhBP2TCXV1SgDQ6FijJkuuXyWoP2aFqaPcwhj".to_string(),
+        address: "axelar1q7fct2kgpjxyxj7vvt9468aycr30cw7je9ugjgqwskc40pkfu0ns5vfew3".to_string(),
+        msg_id_format: "base58".to_string(),
+    }
+}
+
 fn solana_axelar_gateway() -> devnet_amplifier::Contract {
-    // code stored code_id="429" contract="gateway"
     devnet_amplifier::Contract {
-        address: "axelar185qqu0ll77jer3e7akuej9d27d39s7ecvjjh5wp89kexwq578fcqenu96n".to_string(),
+        address: "axelar169g73a9n59lmqrx72hmzt5txa4v9e58qfd8h22fc58dhhdfaqltsh8tjx5".to_string(),
     }
 }
 
 fn solana_axelar_multisig_prover() -> devnet_amplifier::MultisigProver {
-    // code stored code_id="433" contract="multisig_prover"
     devnet_amplifier::MultisigProver {
         governance_address: "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9".to_string(),
         destination_chain_id: SOLANA_CHAIN_NAME.to_string(),
         service_name: "validators".to_string(),
         encoder: "rkyv".to_string(),
-        address: "axelar1gzxd8eqe6vlg8zmpkzhvxl6kvcgcsu74gv5wfvn6axvzfg0pnu4s5alh59".to_string(),
+        address: "axelar1zwps4z7at8d6kn7jgsafqcp0wws50dv7l93h7pw4pvnrmh90cspsdar9rd".to_string(),
         domain_separator: hex::encode(solana_domain_separator()),
         key_type: "ecdsa".to_string(),
-    }
-}
-
-fn solana_axelar_voting_verifier() -> devnet_amplifier::VotingVerifier {
-    // code stored code_id="428" contract="voting_verifier"
-    devnet_amplifier::VotingVerifier {
-        governance_address: "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9".to_string(),
-        source_gateway_address: "gtwunAsmpgKrHUWYYT6Ckr2W5KeJWnSLsP41Nmmom6B".to_string(),
-        address: "axelar1agcnmkhl3nu4xdxuh699fmkr9vzgwgzl8zee2meqqgpmud0kh6eq04n3lk".to_string(),
-        msg_id_format: "base58".to_string(),
     }
 }
 
@@ -76,7 +73,13 @@ pub(crate) async fn evm_to_solana(
         .voting_verifier
         .get(source_chain.id.as_str())
         .unwrap();
-    let destination_multisig_prover = solana_axelar_multisig_prover();
+    let _destination_multisig_prover = solana_axelar_multisig_prover();
+
+    let root_pda = gmp_gateway::get_gateway_root_config_pda().0;
+    let root_pda = solana_rpc_client.get_account(&root_pda).unwrap();
+    let account_data =
+        borsh::from_slice::<gmp_gateway::state::GatewayConfig>(&root_pda.data).unwrap();
+    tracing::info!(?account_data, "solana gateway root pda config");
 
     let tx = send_memo_to_solana(
         source_evm_signer,
@@ -96,18 +99,18 @@ pub(crate) async fn evm_to_solana(
     let (payload, message) = evm_interaction::create_axelar_message_from_evm_log(&tx, source_chain);
     let decoded_payload = DataPayload::decode(payload.0.as_ref()).unwrap();
 
-    let execute_data = cosmwasm_interactions::wire_cosmwasm_contracts(
-        source_chain.id.as_str(),
-        destination_chain_name,
-        memo_to_send,
-        &message,
-        cosmwasm_signer,
-        source_axelar_gateway,
-        source_axelar_voting_verifier,
-        &destination_multisig_prover,
-    )
-    .await?;
-    let execute_data = hex::decode(execute_data)?;
+    let execute_data =
+        cosmwasm_interactions::wire_cosmwasm_contracts_without_destination_msig_prover(
+            source_chain.id.as_str(),
+            destination_chain_name,
+            memo_to_send,
+            &message,
+            cosmwasm_signer,
+            source_axelar_gateway,
+            source_axelar_voting_verifier,
+            // &destination_multisig_prover,
+        )
+        .await?;
     let gateway_root_pda = gmp_gateway::get_gateway_root_config_pda().0;
 
     // solana: initialize pending command pdas
@@ -159,7 +162,11 @@ pub(crate) async fn solana_to_evm(
 ) -> eyre::Result<()> {
     let source_chain_name = SOLANA_CHAIN_NAME;
     let source_axelar_gateway = solana_axelar_gateway();
-    let destination_multisig_prover = solana_axelar_multisig_prover();
+    let axelar_cosmwasm = devnet_amplifier::get_axelar();
+    let destination_multisig_prover = axelar_cosmwasm
+        .multisig_prover
+        .get(destination_chain.id.as_str())
+        .unwrap();
     let source_axelar_voting_verifier = solana_axelar_voting_verifier();
 
     let gateway_root_pda = gmp_gateway::get_gateway_root_config_pda().0;
@@ -180,7 +187,7 @@ pub(crate) async fn solana_to_evm(
         cosmwasm_signer,
         &source_axelar_gateway,
         &source_axelar_voting_verifier,
-        &destination_multisig_prover,
+        destination_multisig_prover,
     )
     .await?;
 

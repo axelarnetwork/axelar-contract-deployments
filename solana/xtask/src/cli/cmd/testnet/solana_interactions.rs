@@ -2,6 +2,8 @@ use std::borrow::Cow;
 use std::str::FromStr;
 
 use axelar_message_primitives::DataPayload;
+use axelar_wasm_std::nonempty;
+use ethers::utils::keccak256;
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::state::GatewayApprovedCommand;
 use router_api::{Address, ChainName, CrossChainId};
@@ -12,6 +14,7 @@ use solana_sdk::signer::Signer;
 use solana_transaction_status::UiTransactionEncoding;
 
 use super::devnet_amplifier::EvmChain;
+use crate::cli::cmd::testnet::solana_domain_separator;
 
 pub(crate) fn send_memo_from_solana(
     solana_rpc_client: &solana_client::rpc_client::RpcClient,
@@ -30,7 +33,7 @@ pub(crate) fn send_memo_from_solana(
                 &solana_keypair.pubkey(),
                 memo.to_string(),
                 destination_chain.id.clone().into_bytes(),
-                destination_memo_contract.as_bytes().to_vec(),
+                format!("0x{}", hex::encode(destination_memo_contract.as_bytes())).into_bytes(),
             )
             .unwrap(),
         ],
@@ -57,7 +60,7 @@ pub(crate) fn send_memo_from_solana(
     for log in &log_msgs {
         tracing::info!(?log, "solana tx log");
     }
-    let (event_idx, gateway_event) = log_msgs
+    let (_event_idx, gateway_event) = log_msgs
         .iter()
         .enumerate()
         .find_map(|(idx, log)| gmp_gateway::events::GatewayEvent::parse_log(log).map(|x| (idx, x)))
@@ -71,7 +74,15 @@ pub(crate) fn send_memo_from_solana(
     let message = router_api::Message {
         cc_id: CrossChainId {
             chain: ChainName::from_str(solana_chain_id).unwrap(),
-            id: format!("{signature}-{event_idx}").parse().unwrap(),
+            // id: "3Gwj2GFJGeaVPMnRFLChBmwtYrxP5xqhCTD3DMmpVyfD-0"
+            //     .to_string()
+            //     .parse()
+            //     .unwrap(),
+            id: nonempty::String::from_str(&format!(
+                "0x{}-42",
+                hex::encode(keccak256(signature.as_bytes()))
+            ))
+            .unwrap(),
         },
         source_address: Address::from_str(call_contract.sender.to_string().as_str()).unwrap(),
         destination_chain: ChainName::from_str(
@@ -88,6 +99,7 @@ pub(crate) fn send_memo_from_solana(
     (payload, message)
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn solana_call_executable(
     message: axelar_rkyv_encoding::types::Message,
     decoded_payload: &DataPayload<'_>,
@@ -96,6 +108,8 @@ pub(crate) fn solana_call_executable(
     solana_rpc_client: &solana_client::rpc_client::RpcClient,
     solana_keypair: &Keypair,
 ) {
+    tracing::info!(payload = ?decoded_payload,"call the destination program");
+
     let ix = axelar_executable::construct_axelar_executable_ix(
         message,
         decoded_payload.encode().unwrap(),
@@ -103,33 +117,37 @@ pub(crate) fn solana_call_executable(
         gateway_root_pda,
     )
     .unwrap();
+
     send_solana_tx(solana_rpc_client, &[ix], solana_keypair);
+    let acc = solana_rpc_client
+        .get_account(&gateway_approved_message_pda)
+        .unwrap();
+    let acc = borsh::from_slice::<gmp_gateway::state::GatewayApprovedCommand>(&acc.data).unwrap();
+    tracing::info!(?acc, "approved command status");
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn solana_init_execute_data(
     solana_keypair: &Keypair,
     gateway_root_pda: solana_sdk::pubkey::Pubkey,
     execute_data: &[u8],
     solana_rpc_client: &solana_client::rpc_client::RpcClient,
 ) -> solana_sdk::pubkey::Pubkey {
+    tracing::info!("solana gateway.initialize_execute_data()");
     let (ix, execute_data) = gmp_gateway::instructions::initialize_execute_data(
         solana_keypair.pubkey(),
         gateway_root_pda,
+        &solana_domain_separator(),
         execute_data,
     )
     .unwrap();
     let (execute_data_pda, ..) = execute_data.pda(&gateway_root_pda);
-    send_solana_tx(
-        solana_rpc_client,
-        &[
-            ComputeBudgetInstruction::set_compute_unit_limit(1_399_850_u32),
-            ix,
-        ],
-        solana_keypair,
-    );
+    tracing::info!(?execute_data_pda, "execute data pda");
+    send_solana_tx(solana_rpc_client, &[ix], solana_keypair);
     execute_data_pda
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn solana_approve_commands(
     execute_data_pda: solana_sdk::pubkey::Pubkey,
     gateway_root_pda: solana_sdk::pubkey::Pubkey,
@@ -137,6 +155,7 @@ pub(crate) fn solana_approve_commands(
     solana_rpc_client: &solana_client::rpc_client::RpcClient,
     solana_keypair: &Keypair,
 ) {
+    tracing::info!("solana gateway.approve_messages()");
     let ix = gmp_gateway::instructions::approve_messages(
         gmp_gateway::id(),
         execute_data_pda,
@@ -153,8 +172,14 @@ pub(crate) fn solana_approve_commands(
         ],
         solana_keypair,
     );
+    let acc = solana_rpc_client
+        .get_account(&gateway_approved_message_pda)
+        .unwrap();
+    let acc = borsh::from_slice::<gmp_gateway::state::GatewayApprovedCommand>(&acc.data).unwrap();
+    tracing::info!(?acc, "approved command");
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn solana_init_approved_command(
     gateway_root_pda: &solana_sdk::pubkey::Pubkey,
     message: &router_api::Message,
@@ -164,6 +189,7 @@ pub(crate) fn solana_init_approved_command(
     solana_sdk::pubkey::Pubkey,
     axelar_rkyv_encoding::types::Message,
 ) {
+    tracing::info!("solana gateway.initialize_commands()");
     let message = axelar_rkyv_encoding::types::Message::new(
         axelar_rkyv_encoding::types::CrossChainId::new(
             message.cc_id.chain.to_string(),
@@ -184,6 +210,11 @@ pub(crate) fn solana_init_approved_command(
     )
     .unwrap();
     send_solana_tx(solana_rpc_client, &[ix], solana_keypair);
+    let acc = solana_rpc_client
+        .get_account(&gateway_approved_message_pda)
+        .unwrap();
+    let acc = borsh::from_slice::<gmp_gateway::state::GatewayApprovedCommand>(&acc.data).unwrap();
+    tracing::info!(?acc, "approved command status");
     (gateway_approved_message_pda, message)
 }
 

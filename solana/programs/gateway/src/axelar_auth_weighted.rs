@@ -122,7 +122,7 @@ impl AxelarAuthWeighted {
     /// Ported code from [here](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/10b89fb19a44fe9e51989b618811ddd0e1a595f6/contracts/auth/AxelarAuthWeighted.sol#L30)
     pub fn validate_proof(
         &self,
-        message_hash: [u8; 32],
+        _message_hash: [u8; 32],
         proof: &ArchivedProof,
     ) -> Result<SignerSetMetadata, AxelarAuthWeightedError> {
         let signer_set_hash = proof.signer_set_hash();

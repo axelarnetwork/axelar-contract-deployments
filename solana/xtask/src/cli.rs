@@ -135,6 +135,10 @@ pub(crate) enum Cosmwasm {
         #[command(subcommand)]
         command: CosmwasmInit,
     },
+    RedeployAndInitAll {
+        #[arg(short, long)]
+        private_key_hex: String,
+    },
     /// Generate a new Axelar wallet, outputs the Axelar bech32 key and the hex
     /// private key
     GenerateWallet,
@@ -181,11 +185,7 @@ pub(crate) enum Evm {
 pub(crate) enum Solana {
     /// Build's a contract that is listed in the programs
     /// workspace directory.
-    Build {
-        /// It accepts the name of the contract folder as argument.
-        #[arg(value_enum)]
-        contract: SolanaContract,
-    },
+    Build,
     /// Deploys the given contract name
     Deploy {
         /// It accepts the name of the contract folder as argument.
@@ -207,7 +207,7 @@ pub(crate) enum Solana {
         /// The file path to the solana program that's associated with the
         /// hardcoded program id
         #[arg(short, long)]
-        program_id: PathBuf,
+        program_id_keypair_path: PathBuf,
         // ---
         // TODO: expose "upgrate_authority"
     },
@@ -226,7 +226,20 @@ pub(crate) enum SolanaInitSubcommand {
         /// their respective weights data. See `tests/auth_weighted.toml` file
         /// for an example.
         #[arg(short, long)]
-        auth_weighted_file: PathBuf,
+        init_signers: PathBuf,
+        /// The RPC URL of the target validator.
+        /// If not provided, this will fallback in solana CLI current
+        /// configuration.
+        #[arg(short, long)]
+        rpc_url: Option<Url>,
+        /// The payer keypair file. This is a file containing the byte slice
+        /// serialization of a `solana_sdk::signer::keypair::Keypair` .
+        /// If not provided, this will fallback in solana CLI current
+        /// configuration.
+        #[arg(short, long)]
+        payer_kp_path: Option<PathBuf>,
+    },
+    AxelarSolanaMemoProgram {
         /// The RPC URL of the target validator.
         /// If not provided, this will fallback in solana CLI current
         /// configuration.
@@ -244,7 +257,7 @@ pub(crate) enum SolanaInitSubcommand {
 impl Cli {
     pub(crate) async fn run(self) -> eyre::Result<()> {
         match self {
-            Cli::Solana { command } => handle_solana(command).await?,
+            Cli::Solana { command } => handle_solana(command)?,
             Cli::Evm {
                 source_evm_chain,
                 admin_private_key,
@@ -321,11 +334,14 @@ async fn handle_testnet(command: TestnetFlowDirection) -> eyre::Result<()> {
             )
             .await?;
             let solana_rpc_client = solana_client::rpc_client::RpcClient::new(
-                cmd::solana::defaults::rpc_url_with_fallback_in_sol_cli_config(&solana_rpc_url)?
-                    .to_string(),
+                cmd::solana::defaults::rpc_url_with_fallback_in_sol_cli_config(
+                    solana_rpc_url.as_ref(),
+                )?
+                .to_string(),
             );
-            let solana_keypair =
-                cmd::solana::defaults::payer_kp_with_fallback_in_sol_cli_config(&keypair_path)?;
+            let solana_keypair = cmd::solana::defaults::payer_kp_with_fallback_in_sol_cli_config(
+                keypair_path.as_ref(),
+            )?;
             cmd::testnet::evm_to_solana(
                 &source_chain,
                 source_evm_signer,
@@ -357,11 +373,14 @@ async fn handle_testnet(command: TestnetFlowDirection) -> eyre::Result<()> {
             )
             .await?;
             let solana_rpc_client = solana_client::rpc_client::RpcClient::new(
-                cmd::solana::defaults::rpc_url_with_fallback_in_sol_cli_config(&solana_rpc_url)?
-                    .to_string(),
+                cmd::solana::defaults::rpc_url_with_fallback_in_sol_cli_config(
+                    solana_rpc_url.as_ref(),
+                )?
+                .to_string(),
             );
-            let solana_keypair =
-                cmd::solana::defaults::payer_kp_with_fallback_in_sol_cli_config(&keypair_path)?;
+            let solana_keypair = cmd::solana::defaults::payer_kp_with_fallback_in_sol_cli_config(
+                keypair_path.as_ref(),
+            )?;
             cmd::testnet::solana_to_evm(
                 &destination_chain,
                 destination_evm_signer,
@@ -397,27 +416,43 @@ async fn get_or_deploy_evm_contract(
     Ok(destination_memo_contract)
 }
 
-async fn handle_solana(command: Solana) -> eyre::Result<()> {
+fn handle_solana(command: Solana) -> eyre::Result<()> {
     match command {
-        Solana::Build { contract } => {
-            cmd::solana::build_contract(contract)?;
+        Solana::Build => {
+            cmd::solana::build_contracts()?;
         }
         Solana::Deploy {
             contract,
             keypair_path,
             url,
             ws_url,
-            program_id,
+            program_id_keypair_path: program_id,
         } => {
-            cmd::solana::deploy(contract, program_id.as_path(), &keypair_path, &url, &ws_url)?;
+            cmd::solana::deploy(
+                contract,
+                program_id.as_path(),
+                keypair_path.as_ref(),
+                url.as_ref(),
+                ws_url.as_ref(),
+            )?;
         }
-        Solana::Init { contract } => match &contract {
+        Solana::Init { contract } => match contract {
             SolanaInitSubcommand::GmpGateway {
-                auth_weighted_file,
+                init_signers: auth_weighted_file,
                 rpc_url,
                 payer_kp_path,
             } => {
-                cmd::solana::init_gmp_gateway(auth_weighted_file, rpc_url, payer_kp_path).await?;
+                cmd::solana::init_gmp_gateway(
+                    &auth_weighted_file,
+                    rpc_url.as_ref(),
+                    payer_kp_path.as_ref(),
+                )?;
+            }
+            SolanaInitSubcommand::AxelarSolanaMemoProgram {
+                rpc_url,
+                payer_kp_path,
+            } => {
+                cmd::solana::init_memo_program(rpc_url.as_ref(), payer_kp_path.as_ref())?;
             }
         },
     };
@@ -453,7 +488,7 @@ async fn handle_cosmwasm(command: Cosmwasm) -> eyre::Result<()> {
         }
         Cosmwasm::Deploy { private_key_hex } => {
             let cosmwasm_signer = create_axelar_cosmsos_signer(private_key_hex)?;
-            cmd::cosmwasm::deploy(cosmwasm_signer).await?;
+            cmd::cosmwasm::deploy(&cosmwasm_signer).await?;
         }
         Cosmwasm::GenerateWallet => cmd::cosmwasm::generate_wallet()?,
         Cosmwasm::Init {
@@ -464,12 +499,12 @@ async fn handle_cosmwasm(command: Cosmwasm) -> eyre::Result<()> {
             let client = create_axelar_cosmsos_signer(private_key_hex)?;
             match command {
                 CosmwasmInit::SolanaVotingVerifier => {
-                    cmd::cosmwasm::init_solana_voting_verifier(code_id, client).await?;
+                    cmd::cosmwasm::init_solana_voting_verifier(code_id, &client).await?;
                 }
                 CosmwasmInit::Gateway {
                     voting_verifier_address,
                 } => {
-                    cmd::cosmwasm::init_gateway(code_id, client, voting_verifier_address).await?;
+                    cmd::cosmwasm::init_gateway(code_id, &client, voting_verifier_address).await?;
                 }
                 CosmwasmInit::SolanaMultisigProver {
                     gateway_address,
@@ -477,7 +512,7 @@ async fn handle_cosmwasm(command: Cosmwasm) -> eyre::Result<()> {
                 } => {
                     cmd::cosmwasm::init_solana_multisig_prover(
                         code_id,
-                        client,
+                        &client,
                         gateway_address,
                         voting_verifier_address,
                     )
@@ -487,6 +522,21 @@ async fn handle_cosmwasm(command: Cosmwasm) -> eyre::Result<()> {
         }
         Cosmwasm::AmpdSetup => cmd::cosmwasm::ampd::setup_ampd().await?,
         Cosmwasm::AmpdAndTofndRun => cmd::cosmwasm::ampd::start_with_tofnd().await?,
+        Cosmwasm::RedeployAndInitAll { private_key_hex } => {
+            let client = create_axelar_cosmsos_signer(private_key_hex)?;
+            let [vv_code_id, gtw_code_id, msg_prover_code_id] =
+                cmd::cosmwasm::deploy(&client).await?;
+            let vv_addr = cmd::cosmwasm::init_solana_voting_verifier(vv_code_id, &client).await?;
+            let gtw_addr =
+                cmd::cosmwasm::init_gateway(gtw_code_id, &client, vv_addr.clone()).await?;
+            let _multisig_addr = cmd::cosmwasm::init_solana_multisig_prover(
+                msg_prover_code_id,
+                &client,
+                gtw_addr,
+                vv_addr,
+            )
+            .await?;
+        }
     };
     Ok(())
 }

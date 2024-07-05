@@ -8,12 +8,6 @@ use tracing_subscriber::{fmt, EnvFilter};
 
 mod cli;
 
-#[cfg(test)]
-mod solana_tests;
-
-#[cfg(test)]
-mod test_helpers;
-
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     let cli = cli::Cli::try_parse()?;

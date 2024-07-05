@@ -8,7 +8,7 @@ use axelar_rkyv_encoding::types::{PublicKey, VerifierSet, U256};
 use gmp_gateway::axelar_auth_weighted::AxelarAuthWeighted;
 use gmp_gateway::state::GatewayConfig;
 use serde::Deserialize;
-use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
@@ -17,10 +17,12 @@ use url::Url;
 use xshell::{cmd, Shell};
 
 use super::testnet::solana_domain_separator;
+use super::testnet::solana_interactions::send_solana_tx;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
 pub(crate) enum SolanaContract {
     GmpGateway,
+    AxelarSolanaMemo,
 }
 
 impl SolanaContract {
@@ -30,15 +32,7 @@ impl SolanaContract {
     pub(crate) fn file(self) -> PathBuf {
         match self {
             SolanaContract::GmpGateway => PathBuf::from("gmp_gateway.so"),
-        }
-    }
-    /// Provides the local folder name at "solana/programs" each
-    /// contract belongs to.
-    /// This is a helper method that is normally when it's needed to
-    /// i.e "cd" into the contract folder for building it with `cargo-sbf`.
-    pub(crate) fn dir(self) -> PathBuf {
-        match self {
-            SolanaContract::GmpGateway => PathBuf::from("gateway"),
+            SolanaContract::AxelarSolanaMemo => PathBuf::from("axelar_solana_memo_program.so"),
         }
     }
 }
@@ -47,6 +41,7 @@ impl Display for SolanaContract {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             SolanaContract::GmpGateway => write!(f, "gmp-gateway"),
+            SolanaContract::AxelarSolanaMemo => write!(f, "axelar-solana-memo-program"),
         }
     }
 }
@@ -54,14 +49,14 @@ impl Display for SolanaContract {
 pub(crate) fn deploy(
     contract: SolanaContract,
     program_id: &Path,
-    keypair_path: &Option<PathBuf>,
-    url: &Option<Url>,
-    ws_url: &Option<Url>,
+    keypair_path: Option<&PathBuf>,
+    url: Option<&Url>,
+    ws_url: Option<&Url>,
 ) -> eyre::Result<()> {
-    crate::cli::cmd::path::ensure_optional_path_exists(keypair_path.as_ref(), "keypair")?;
+    crate::cli::cmd::path::ensure_optional_path_exists(keypair_path, "keypair")?;
 
     info!("Starting compiling {}", contract);
-    build_contract(contract)?;
+    build_contracts()?;
     info!("Compiled {}", contract);
 
     info!("Starting deploying {}", contract);
@@ -70,19 +65,10 @@ pub(crate) fn deploy(
     Ok(())
 }
 
-fn unix_seconds() -> u64 {
-    use std::time::{SystemTime, UNIX_EPOCH};
-    // Unwrap: `now` is always greater than UNIX EPOCH
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs()
-}
-
-pub(crate) async fn init_gmp_gateway(
+pub(crate) fn init_gmp_gateway(
     auth_weighted: &PathBuf,
-    rpc_url: &Option<Url>,
-    payer_kp_path: &Option<PathBuf>,
+    rpc_url: Option<&Url>,
+    payer_kp_path: Option<&PathBuf>,
 ) -> eyre::Result<()> {
     let payer_kp = defaults::payer_kp_with_fallback_in_sol_cli_config(payer_kp_path)?;
 
@@ -95,7 +81,8 @@ pub(crate) async fn init_gmp_gateway(
     // Prepare the AuthWeighted module
     let auth_weighted = {
         let threshold = gateway_config_data.calc_signer_thershold();
-        let created_at = unix_seconds();
+        let created_at = 1; // todo - how do we sync with the cosmwasm chain? We probably want to read
+                            // directly from the state of the multisig prover
         let signers: BTreeMap<PublicKey, U256> = gateway_config_data
             .signers
             .iter()
@@ -104,6 +91,7 @@ pub(crate) async fn init_gmp_gateway(
         let verifier_set = VerifierSet::new(created_at, signers, threshold);
         AxelarAuthWeighted::new(verifier_set)
     };
+    tracing::info!(?auth_weighted, "initting auth weighted");
 
     let gateway_config = GatewayConfig::new(
         bump,
@@ -120,7 +108,7 @@ pub(crate) async fn init_gmp_gateway(
 
     let rpc_client =
         RpcClient::new(defaults::rpc_url_with_fallback_in_sol_cli_config(rpc_url)?.to_string());
-    let recent_hash = rpc_client.get_latest_blockhash().await?;
+    let recent_hash = rpc_client.get_latest_blockhash()?;
     let tx = Transaction::new_signed_with_payer(
         &[ix],
         Some(&payer_kp.pubkey()),
@@ -128,10 +116,28 @@ pub(crate) async fn init_gmp_gateway(
         recent_hash,
     );
 
-    let _signature = rpc_client
-        .send_and_confirm_transaction_with_spinner(&tx)
-        .await?;
+    let _signature = rpc_client.send_and_confirm_transaction_with_spinner(&tx)?;
 
+    Ok(())
+}
+
+pub(crate) fn init_memo_program(
+    // todo change all instances of &Opion<X> to Option<&X>
+    rpc_url: Option<&Url>,
+    payer_kp_path: Option<&PathBuf>,
+) -> eyre::Result<()> {
+    let payer_kp = defaults::payer_kp_with_fallback_in_sol_cli_config(payer_kp_path)?;
+    let rpc_client =
+        RpcClient::new(defaults::rpc_url_with_fallback_in_sol_cli_config(rpc_url)?.to_string());
+
+    let gateway_root_pda = gmp_gateway::get_gateway_root_config_pda().0;
+    let counter = axelar_solana_memo_program::get_counter_pda(&gateway_root_pda);
+    let ix = axelar_solana_memo_program::instruction::initialize(
+        &payer_kp.pubkey(),
+        &gateway_root_pda,
+        &counter,
+    )?;
+    send_solana_tx(&rpc_client, &[ix], &payer_kp);
     Ok(())
 }
 
@@ -171,7 +177,7 @@ mod serde_utils {
     where
         D: Deserializer<'de>,
     {
-        let raw_string: &str = Deserialize::deserialize(deserializer)?;
+        let raw_string: String = Deserialize::deserialize(deserializer)?;
         raw_string.parse().map_err(serde::de::Error::custom)
     }
 
@@ -179,33 +185,31 @@ mod serde_utils {
     where
         D: Deserializer<'de>,
     {
-        let raw_string: &str = Deserialize::deserialize(deserializer)?;
+        let raw_string: String = Deserialize::deserialize(deserializer)?;
         raw_string.parse().map_err(serde::de::Error::custom)
     }
 }
 
-pub(crate) fn build_contract(contract: SolanaContract) -> eyre::Result<PathBuf> {
-    let contract_dir = path::contracts_dir().join(contract.dir());
+pub(crate) fn build_contracts() -> eyre::Result<()> {
     let sh = Shell::new()?;
-    sh.change_dir(contract_dir);
-    cmd!(sh, "cargo build-bpf").run()?;
-    Ok(path::contracts_artifact_dir().join(contract.file()))
+    cmd!(sh, "cargo build-sbf").run()?;
+    Ok(())
 }
 
 fn deploy_contract(
     contract: SolanaContract,
     program_id: &Path,
-    keypair_path: &Option<PathBuf>,
-    url: &Option<Url>,
-    ws_url: &Option<Url>,
+    keypair_path: Option<&PathBuf>,
+    url: Option<&Url>,
+    ws_url: Option<&Url>,
 ) -> eyre::Result<Pubkey> {
     let contract_compiled_binary = path::contracts_artifact_dir().join(contract.file());
     let sh = Shell::new()?;
     let deploy_cmd_args = calculate_deploy_cmd_args(
         program_id,
-        keypair_path.as_ref(),
-        url.as_ref(),
-        ws_url.as_ref(),
+        keypair_path,
+        url,
+        ws_url,
         &contract_compiled_binary,
     );
 
@@ -258,10 +262,6 @@ pub(crate) mod path {
 
     use crate::cli::cmd::path::workspace_root_dir;
 
-    pub(crate) fn contracts_dir() -> PathBuf {
-        workspace_root_dir().join("programs")
-    }
-
     pub(crate) fn contracts_artifact_dir() -> PathBuf {
         workspace_root_dir().join("target").join("deploy")
     }
@@ -281,7 +281,7 @@ pub(crate) mod defaults {
     /// path. If not provided, it calculates and uses default Solana CLI
     /// keypair path. Finally, it tries to read the file.
     pub(crate) fn payer_kp_with_fallback_in_sol_cli_config(
-        payer_kp_path: &Option<PathBuf>,
+        payer_kp_path: Option<&PathBuf>,
     ) -> eyre::Result<Keypair> {
         let calculated_payer_kp_path = match payer_kp_path {
             Some(kp_path) => kp_path.clone(),
@@ -296,25 +296,24 @@ pub(crate) mod defaults {
     /// it calculates and uses default Solana CLI
     /// rpc URL.
     pub(crate) fn rpc_url_with_fallback_in_sol_cli_config(
-        rpc_url: &Option<Url>,
+        rpc_url: Option<&Url>,
     ) -> eyre::Result<Url> {
-        let calculated_rpc_url = match rpc_url {
-            Some(kp_path) => kp_path.clone(),
-            None => {
-                #[allow(deprecated)]
-                // We are not explicitly supporting windows, plus home_dir() is what solana is using
-                // under the hood.
-                let mut sol_config_path =
-                    std::env::home_dir().ok_or(eyre::eyre!("Home dir not found !"))?;
-                sol_config_path.extend([".config", "solana", "cli", "config.yml"]);
+        let calculated_rpc_url = if let Some(kp_path) = rpc_url {
+            kp_path.clone()
+        } else {
+            #[allow(deprecated)]
+            // We are not explicitly supporting windows, plus home_dir() is what solana is using
+            // under the hood.
+            let mut sol_config_path =
+                std::env::home_dir().ok_or(eyre::eyre!("Home dir not found !"))?;
+            sol_config_path.extend([".config", "solana", "cli", "config.yml"]);
 
-                let sol_cli_config = Config::load(
-                    sol_config_path
-                        .to_str()
-                        .ok_or(eyre::eyre!("Config path not valid unicode !"))?,
-                )?;
-                Url::from_str(&sol_cli_config.json_rpc_url)?
-            }
+            let sol_cli_config = Config::load(
+                sol_config_path
+                    .to_str()
+                    .ok_or(eyre::eyre!("Config path not valid unicode !"))?,
+            )?;
+            Url::from_str(&sol_cli_config.json_rpc_url)?
         };
 
         Ok(calculated_rpc_url)

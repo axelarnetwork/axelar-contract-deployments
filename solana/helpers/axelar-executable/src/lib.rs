@@ -151,14 +151,14 @@ pub fn construct_axelar_executable_ix(
 #[derive(Debug, PartialEq, borsh::BorshSerialize, borsh::BorshDeserialize)]
 #[repr(C)]
 pub struct AxelarExecutablePayload {
+    /// The bytes for an `axelar-rkyv-encoding::Message` value.
+    pub message: MessageWrapper,
+
     /// The payload *without* the prefixed accounts
     ///
     /// This needs to be done by the relayer before calling the destination
     /// program
     pub payload_without_accounts: Vec<u8>,
-
-    /// The bytes for an `axelar-rkyv-encoding::Message` value.
-    pub message: MessageWrapper,
 
     /// The encoding scheme used to encode this payload.
     pub encoding_scheme: EncodingScheme,

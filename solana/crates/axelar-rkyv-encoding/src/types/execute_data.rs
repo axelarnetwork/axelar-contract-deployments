@@ -1,6 +1,7 @@
 use std::error::Error;
 
-use rkyv::bytecheck::{self, CheckBytes};
+use rkyv::bytecheck::{self, CheckBytes, StructCheckError};
+use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{AlignedVec, Archive, Deserialize, Serialize};
 
 use crate::hasher::Hasher;
@@ -58,6 +59,12 @@ impl ArchivedExecuteData {
         }
     }
 
+    pub fn hash(&self) -> [u8; 32] {
+        let mut hasher = Hasher::default();
+        ArchivedVisitor::visit_execute_data(&mut hasher, self);
+        hasher.finalize()
+    }
+
     pub fn hash_payload_for_verifier_set(
         &self,
         domain_separator: &[u8; 32],
@@ -79,8 +86,11 @@ impl ArchivedExecuteData {
         hasher.finalize()
     }
 
-    pub fn from_bytes(bytes: &[u8]) -> Option<&Self> {
-        rkyv::check_archived_root::<ExecuteData>(bytes).ok()
+    pub fn from_bytes(
+        bytes: &[u8],
+    ) -> Result<&Self, rkyv::validation::CheckArchiveError<StructCheckError, DefaultValidatorError>>
+    {
+        rkyv::check_archived_root::<ExecuteData>(bytes)
     }
 }
 

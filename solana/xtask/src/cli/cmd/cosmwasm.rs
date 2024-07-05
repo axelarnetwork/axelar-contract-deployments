@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::str::FromStr;
 
-use cosmrs::cosmwasm::{MsgInstantiateContract, MsgStoreCode};
+use cosmrs::cosmwasm::{MsgExecuteContract, MsgInstantiateContract, MsgStoreCode};
 use cosmrs::tx::Msg;
 use cosmrs::Denom;
 use eyre::OptionExt;
@@ -20,7 +20,7 @@ use self::cosmos_client::network::Network;
 use self::path::{binaryen_tar_file, binaryen_unpacked, wasm_opt_binary};
 use crate::cli::cmd::cosmwasm::cosmos_client::gas::Gas;
 use crate::cli::cmd::cosmwasm::cosmos_client::signer::SigningClient;
-use crate::cli::cmd::testnet::{solana_domain_separator, SOLANA_CHAIN_NAME};
+use crate::cli::cmd::testnet::{multisig_prover_api, solana_domain_separator, SOLANA_CHAIN_NAME};
 
 struct WasmContracts {
     wasm_artifact_name: &'static str,
@@ -82,9 +82,10 @@ pub(crate) async fn build() -> eyre::Result<()> {
     Ok(())
 }
 
-pub(crate) async fn deploy(client: SigningClient) -> eyre::Result<()> {
+pub(crate) async fn deploy(client: &SigningClient) -> eyre::Result<[u64; 3]> {
     // deploy each contract - do not instantiate
-    for contract in CONTRACTS {
+    let mut code_ids = [0_u64; 3];
+    for (contract, code_id_storage) in CONTRACTS.into_iter().zip(code_ids.iter_mut()) {
         tracing::info!(contract = ?contract.wasm_artifact_name, "about to deploy contract");
 
         let wasm_byte_code = read_wasm_for_delpoyment(contract.wasm_artifact_name)?;
@@ -112,14 +113,16 @@ pub(crate) async fn deploy(client: SigningClient) -> eyre::Result<()> {
 
         let code_id = response.extract("store_code", "code_id")?;
         tracing::info!(code_id, contract = ?contract.wasm_artifact_name, "code stored");
+        let code_id = code_id.parse()?;
+        *code_id_storage = code_id;
     }
-    Ok(())
+    Ok(code_ids)
 }
 
 pub(crate) async fn init_solana_voting_verifier(
     code_id: u64,
-    client: SigningClient,
-) -> eyre::Result<()> {
+    client: &SigningClient,
+) -> eyre::Result<String> {
     use voting_verifier::msg::InstantiateMsg;
 
     let instantiate_msg = InstantiateMsg {
@@ -132,7 +135,7 @@ pub(crate) async fn init_solana_voting_verifier(
         source_chain: SOLANA_CHAIN_NAME.to_string().try_into().unwrap(),
         rewards_address: REWARDS_ADDRESS.to_string(),
         governance_address: GOVERNANCE_ADDRESS.to_string().try_into().unwrap(),
-        msg_id_format: axelar_wasm_std::msg_id::MessageIdFormat::Base58TxDigestAndEventIndex,
+        msg_id_format: axelar_wasm_std::msg_id::MessageIdFormat::HexTxHashAndEventIndex,
     };
     tracing::info!(?instantiate_msg, "instantiate msg");
     let instantiate = MsgInstantiateContract {
@@ -150,7 +153,7 @@ pub(crate) async fn init_solana_voting_verifier(
     let contract_address = response.extract("instantiate", "_contract_address")?;
     tracing::info!(contract_address, "Voting verifier contract address");
 
-    Ok(())
+    Ok(contract_address)
 }
 
 fn majority_threshold() -> axelar_wasm_std::MajorityThreshold {
@@ -162,9 +165,9 @@ fn majority_threshold() -> axelar_wasm_std::MajorityThreshold {
 
 pub(crate) async fn init_gateway(
     code_id: u64,
-    client: SigningClient,
+    client: &SigningClient,
     voting_verifier_address: String,
-) -> eyre::Result<()> {
+) -> eyre::Result<String> {
     use gateway::msg::InstantiateMsg;
 
     let instantiate = MsgInstantiateContract {
@@ -185,7 +188,7 @@ pub(crate) async fn init_gateway(
     let contract_address = response.extract("instantiate", "_contract_address")?;
     tracing::info!(contract_address, "gateway contract address");
 
-    Ok(())
+    Ok(contract_address)
 }
 
 pub(crate) fn default_gas() -> Gas {
@@ -200,10 +203,10 @@ pub(crate) fn default_gas() -> Gas {
 
 pub(crate) async fn init_solana_multisig_prover(
     code_id: u64,
-    client: SigningClient,
+    client: &SigningClient,
     gateway_address: String,
     voting_verifier_address: String,
-) -> eyre::Result<()> {
+) -> eyre::Result<String> {
     use crate::cli::cmd::testnet::multisig_prover_api::InstantiateMsg;
 
     let msg = InstantiateMsg {
@@ -240,6 +243,26 @@ pub(crate) async fn init_solana_multisig_prover(
     let contract_address = response.extract("instantiate", "_contract_address")?;
     tracing::info!(contract_address, "Multisig prover contract address");
 
+    update_verifier_set_multisig_prover(contract_address.as_str(), client).await?;
+    Ok(contract_address)
+}
+
+pub(crate) async fn update_verifier_set_multisig_prover(
+    contract_address: &str,
+    client: &SigningClient,
+) -> eyre::Result<()> {
+    let msg = multisig_prover_api::MultisigProverExecuteMsg::UpdateVerifierSet {};
+    let destination_multisig_prover = cosmrs::AccountId::from_str(contract_address).unwrap();
+    let execute = MsgExecuteContract {
+        sender: client.signer_account_id()?,
+        msg: serde_json::to_vec(&msg)?,
+        funds: vec![],
+        contract: destination_multisig_prover.clone(),
+    };
+    let response = client
+        .sign_and_broadcast(vec![execute.into_any()?], &default_gas())
+        .await?;
+    tracing::info!(tx_result = ?response, "raw multisig update verifier set result");
     Ok(())
 }
 

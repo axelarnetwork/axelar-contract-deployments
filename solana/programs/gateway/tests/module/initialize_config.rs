@@ -208,7 +208,7 @@ async fn test_reverts_on_invalid_gateway_bump() {
         create_signer_with_weight(4_u128),
     ];
     let (gateway_config_pda, bump) = GatewayConfig::pda();
-    let invalid_bump = bump + 1;
+    let invalid_bump = bump.overflowing_add(1).0;
     let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
     let gateway_config = GatewayConfig::new(
         invalid_bump,

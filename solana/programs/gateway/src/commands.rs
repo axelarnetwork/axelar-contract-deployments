@@ -174,7 +174,7 @@ impl BorshDeserialize for OwnedCommand {
 /// types from that crate.
 #[derive(BorshDeserialize, BorshSerialize, PartialEq, Eq, Debug, Clone)]
 pub struct MessageWrapper {
-    serialized_message: Vec<u8>,
+    pub serialized_message: Vec<u8>,
 }
 
 impl TryFrom<Message> for MessageWrapper {
@@ -193,8 +193,10 @@ impl<'a> TryFrom<&'a MessageWrapper> for &'a ArchivedMessage {
 
     fn try_from(wrapper: &'a MessageWrapper) -> Result<Self, Self::Error> {
         let MessageWrapper { serialized_message } = wrapper;
-        ArchivedMessage::from_archived_bytes(serialized_message)
-            .ok_or_else(|| ProgramError::BorshIoError("failed to serialize Message".into()))
+        ArchivedMessage::from_archived_bytes(serialized_message).map_err(|err| {
+            solana_program::msg!("decode err {:?}", err);
+            ProgramError::BorshIoError("failed to serialize Message".into())
+        })
     }
 }
 

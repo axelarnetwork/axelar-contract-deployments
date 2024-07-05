@@ -1,6 +1,7 @@
 use std::error::Error;
 
-use rkyv::bytecheck::{self, CheckBytes};
+use rkyv::bytecheck::{self, CheckBytes, StructCheckError};
+use rkyv::validation::validators::{DefaultValidatorError};
 use rkyv::{Archive, Deserialize, Serialize};
 
 use crate::hasher::Hasher;
@@ -133,8 +134,11 @@ impl ArchivedMessage {
         &self.payload_hash
     }
 
-    pub fn from_archived_bytes(bytes: &[u8]) -> Option<&Self> {
-        rkyv::check_archived_root::<Message>(bytes).ok()
+    pub fn from_archived_bytes(
+        bytes: &[u8],
+    ) -> Result<&Self, rkyv::validation::CheckArchiveError<StructCheckError, DefaultValidatorError>>
+    {
+        rkyv::check_archived_root::<Message>(bytes)
     }
 }
 

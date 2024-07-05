@@ -1,12 +1,10 @@
 use crate::types::{
-    ArchivedCrossChainId, ArchivedMessage, ArchivedPayload, ArchivedPublicKey, ArchivedU256,
-    ArchivedVerifierSet, CrossChainId, Message, Payload, PublicKey, VerifierSet, U256,
+    ArchivedCrossChainId, ArchivedExecuteData, ArchivedMessage, ArchivedPayload, ArchivedProof,
+    ArchivedPublicKey, ArchivedSignature, ArchivedU256, ArchivedVerifierSet,
+    ArchivedWeightedSignature, CrossChainId, Message, Payload, PublicKey, VerifierSet, U256,
 };
 #[cfg(test)]
-use crate::types::{
-    ArchivedExecuteData, ArchivedProof, ArchivedSignature, ArchivedWeightedSignature, ExecuteData,
-    Proof, Signature, WeightedSignature,
-};
+use crate::types::{ExecuteData, Proof, Signature, WeightedSignature};
 
 const CHAIN_NAME_DELIMITER: &[u8] = b"-";
 
@@ -137,14 +135,12 @@ pub(super) trait Visitor {
 }
 
 pub(super) trait ArchivedVisitor {
-    #[cfg(test)]
     fn visit_execute_data(&mut self, execute_data: &ArchivedExecuteData) {
         let ArchivedExecuteData { payload, proof } = execute_data;
         self.visit_payload(payload);
         self.visit_proof(proof);
     }
 
-    #[cfg(test)]
     fn visit_proof(&mut self, proof: &ArchivedProof) {
         let ArchivedProof {
             signatures,
@@ -158,7 +154,7 @@ pub(super) trait ArchivedVisitor {
         self.visit_u256(threshold);
         self.visit_u64(nonce);
     }
-    #[cfg(test)]
+
     fn visit_weighted_signature(&mut self, signature: &ArchivedWeightedSignature) {
         let ArchivedWeightedSignature {
             pubkey,
@@ -169,7 +165,7 @@ pub(super) trait ArchivedVisitor {
         self.visit_signature(signature);
         self.visit_u256(weight);
     }
-    #[cfg(test)]
+
     fn visit_signature(&mut self, signature: &ArchivedSignature) {
         match signature {
             ArchivedSignature::EcdsaRecoverable(signature) => {

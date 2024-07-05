@@ -9,6 +9,7 @@ use router_api::{CrossChainId, Message};
 #[cw_serde]
 pub(crate) enum MultisigProverExecuteMsg {
     ConstructProof { message_ids: Vec<CrossChainId> },
+    UpdateVerifierSet,
 }
 
 #[cw_serde]

@@ -20,8 +20,8 @@ pub struct GatewayExecuteData<'a> {
     /// `multisig-prover` contract.
     pub inner: &'a ArchivedExecuteData,
 
-    /// The Keccak256 hash of `Self.inner`.
-    pub hash: [u8; 32],
+    /// Pre-computed message payload hash
+    pub payload_hash: [u8; 32],
 
     /// The bump seed for the PDA account.
     pub bump: u8,
@@ -41,15 +41,20 @@ impl<'a> GatewayExecuteData<'a> {
     pub fn new(
         data: &'a [u8],
         gateway_root_pda: &Pubkey,
+        domain_separator: &[u8; 32],
     ) -> Result<GatewayExecuteData<'a>, GatewayError> {
-        let Some(execute_data) = ArchivedExecuteData::from_bytes(data) else {
-            solana_program::msg!("Failed to deserialize execute_data bytes");
-            return Err(GatewayError::MalformedProof);
+        let execute_data = match ArchivedExecuteData::from_bytes(data) {
+            Ok(execute_data) => execute_data,
+            Err(err) => {
+                solana_program::msg!("Failed to deserialize execute_data bytes {:?}", err);
+                return Err(GatewayError::MalformedProof);
+            }
         };
 
+        let payload_hash = execute_data.internal_payload_hash(domain_separator);
         let mut gateway_execute_data = Self {
             inner: execute_data,
-            hash: execute_data.proof().signer_set_hash(),
+            payload_hash,
             bump: 0, // bump will be set after we derive the PDA
             original_execute_data: data,
         };
@@ -63,7 +68,7 @@ impl<'a> GatewayExecuteData<'a> {
     pub fn seeds(&self, gateway_root_pda: &Pubkey) -> [u8; 32] {
         hashv(&[
             gateway_root_pda.as_ref(),
-            self.hash.as_slice(),
+            self.inner.hash().as_slice(),
             &[self.bump],
         ])
         .to_bytes()
@@ -102,12 +107,6 @@ impl<'a> GatewayExecuteData<'a> {
     pub fn verifier_set(&self) -> Option<&ArchivedVerifierSet> {
         self.inner.verifier_set()
     }
-
-    /// Hashes this execute_data payload in the same way it was done over the
-    /// `multisig-prover` contract.
-    pub fn payload_hash(&self, domain_separator: &[u8; 32]) -> [u8; 32] {
-        self.inner.internal_payload_hash(domain_separator)
-    }
 }
 
 #[test]
@@ -118,7 +117,8 @@ fn test_gateway_execute_data_roundtrip() {
     let (execute_data, _) = random_valid_execute_data_and_verifier_set(&domain_separator);
     let raw_data = execute_data.to_bytes::<0>().unwrap();
 
-    let gateway_execute_data = GatewayExecuteData::new(&raw_data, &gateway_root_pda).unwrap();
+    let gateway_execute_data =
+        GatewayExecuteData::new(&raw_data, &gateway_root_pda, &domain_separator).unwrap();
     let serialized_gateway_execute_data = ToBytes::to_bytes(&gateway_execute_data).unwrap();
 
     assert_eq!(*serialized_gateway_execute_data, *raw_data);

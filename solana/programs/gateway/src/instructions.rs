@@ -258,14 +258,16 @@ pub fn initialize_pending_command(
 }
 
 /// Creates a [`GatewayInstruction::InitializeExecuteData`] instruction.
-pub fn initialize_execute_data(
+pub fn initialize_execute_data<'b>(
     payer: Pubkey,
     gateway_root_pda: Pubkey,
+    domain_separator: &[u8; 32],
     // The encoded data that will be decoded on-chain.
-    raw_execute_data: &[u8],
-) -> Result<(Instruction, GatewayExecuteData<'_>), ProgramError> {
+    raw_execute_data: &'b [u8],
+) -> Result<(Instruction, GatewayExecuteData<'b>), ProgramError> {
     // We decode the data off-chain so we can find its PDA.
-    let decoded_execute_data = GatewayExecuteData::new(raw_execute_data, &gateway_root_pda)?;
+    let decoded_execute_data =
+        GatewayExecuteData::new(raw_execute_data, &gateway_root_pda, domain_separator)?;
     let (execute_data_pda, _, _) = decoded_execute_data.pda(&gateway_root_pda);
     // We store the raw data so we can verify it on-chain.
     let data = to_vec(&GatewayInstruction::InitializeExecuteData {

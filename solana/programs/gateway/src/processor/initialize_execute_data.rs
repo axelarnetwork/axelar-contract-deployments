@@ -26,10 +26,14 @@ impl Processor {
             return Err(GatewayError::InvalidSystemAccount.into());
         }
 
-        let execute_data = GatewayExecuteData::new(&execute_data, gateway_root_pda.key)?;
-
         // Check: Gateway Root PDA is initialized.
-        gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
+        let domain_separator = gateway_root_pda
+            .check_initialized_pda::<GatewayConfig>(program_id)?
+            .domain_separator;
+
+        let execute_data =
+            GatewayExecuteData::new(&execute_data, gateway_root_pda.key, &domain_separator)?;
+
         // Check: Execute Data account is not initialized.
         execute_data_account.check_uninitialized_pda()?;
         // Check: Execute Data PDA is correctly derived

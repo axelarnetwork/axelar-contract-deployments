@@ -405,13 +405,15 @@ impl TestFixture {
         gateway_root_pda: &Pubkey,
         raw_data: &'a [u8],
     ) -> Pubkey {
-        let execute_data = GatewayExecuteData::new(raw_data, gateway_root_pda)
-            .expect("valid execute_data raw bytes");
+        let execute_data =
+            GatewayExecuteData::new(raw_data, gateway_root_pda, &self.domain_separator)
+                .expect("valid execute_data raw bytes");
         let (execute_data_pda, _, _) = execute_data.pda(gateway_root_pda);
 
         let (ix, _) = gateway::instructions::initialize_execute_data(
             self.payer.pubkey(),
             *gateway_root_pda,
+            &self.domain_separator,
             raw_data,
         )
         .unwrap();
@@ -436,7 +438,7 @@ impl TestFixture {
         raw_data: &[u8],
     ) {
         // Confidence check: execute_data can be deserialized
-        assert!(ArchivedExecuteData::from_bytes(raw_data).is_some());
+        assert!(ArchivedExecuteData::from_bytes(raw_data).is_ok());
 
         let account = self
             .banks_client

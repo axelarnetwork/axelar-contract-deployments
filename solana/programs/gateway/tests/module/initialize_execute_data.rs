@@ -14,7 +14,6 @@ use crate::{
     create_signer_with_weight, make_messages, make_payload_and_commands, make_signers, program_test,
 };
 
-#[ignore]
 #[tokio::test]
 async fn test_successfylly_initialize_execute_data() {
     // Setup
@@ -30,20 +29,28 @@ async fn test_successfylly_initialize_execute_data() {
     let payload = Payload::Messages(make_messages(1));
     let (raw_execute_data, _) =
         prepare_execute_data(payload, &signers, threshold, &fixture.domain_separator);
-    let gateway_execute_data = GatewayExecuteData::new(&raw_execute_data, &gateway_root_pda)
-        .expect("valid GatewayExecuteData");
+    let gateway_execute_data = GatewayExecuteData::new(
+        &raw_execute_data,
+        &gateway_root_pda,
+        &fixture.domain_separator,
+    )
+    .expect("valid GatewayExecuteData");
 
     let (execute_data_pda, _, _) = gateway_execute_data.pda(&gateway_root_pda);
 
     // Action
     fixture
-        .send_tx(&[gmp_gateway::instructions::initialize_execute_data(
-            fixture.payer.pubkey(),
-            gateway_root_pda,
-            &raw_execute_data,
-        )
-        .unwrap()
-        .0])
+        .send_tx(&[
+            ComputeBudgetInstruction::set_compute_unit_limit(1_399_850_u32),
+            gmp_gateway::instructions::initialize_execute_data(
+                fixture.payer.pubkey(),
+                gateway_root_pda,
+                &fixture.domain_separator,
+                &raw_execute_data,
+            )
+            .unwrap()
+            .0,
+        ])
         .await;
 
     // Assert
@@ -54,13 +61,15 @@ async fn test_successfylly_initialize_execute_data() {
         .unwrap()
         .expect("metadata");
     assert_eq!(account.owner, gmp_gateway::id());
-    let deserialized_gateway_execute_data =
-        GatewayExecuteData::new(account.data.as_slice(), &gateway_root_pda)
-            .expect("GatewayExecuteData can be deserialized");
+    let deserialized_gateway_execute_data = GatewayExecuteData::new(
+        account.data.as_slice(),
+        &gateway_root_pda,
+        &fixture.domain_separator,
+    )
+    .expect("GatewayExecuteData can be deserialized");
     assert_eq!(deserialized_gateway_execute_data, gateway_execute_data);
 }
 
-#[ignore]
 #[tokio::test]
 async fn test_succesfully_initialize_rotate_signers() {
     // Setup
@@ -79,19 +88,29 @@ async fn test_succesfully_initialize_rotate_signers() {
 
     let (raw_execute_data, _) =
         prepare_execute_data(payload, &signers, threshold, &fixture.domain_separator);
-    let gateway_execute_data = GatewayExecuteData::new(&raw_execute_data, &gateway_root_pda)
-        .expect("valid GatewayExecuteData");
+    let gateway_execute_data = GatewayExecuteData::new(
+        &raw_execute_data,
+        &gateway_root_pda,
+        &fixture.domain_separator,
+    )
+    .expect("valid GatewayExecuteData");
     let (execute_data_pda, _, _) = gateway_execute_data.pda(&gateway_root_pda);
 
     // Action
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
         fixture.payer.pubkey(),
         gateway_root_pda,
+        &fixture.domain_separator,
         &raw_execute_data,
     )
     .expect("failed to create initialize_execute_data instruction");
 
-    fixture.send_tx(&[ix]).await;
+    fixture
+        .send_tx(&[
+            ComputeBudgetInstruction::set_compute_unit_limit(1_399_850_u32),
+            ix,
+        ])
+        .await;
 
     // Assert
     let account = fixture
@@ -101,9 +120,12 @@ async fn test_succesfully_initialize_rotate_signers() {
         .unwrap()
         .expect("metadata");
     assert_eq!(account.owner, gmp_gateway::id());
-    let deserialized_gateway_execute_data =
-        GatewayExecuteData::new(account.data.as_slice(), &gateway_root_pda)
-            .expect("GatewayExecuteData can be deserialized");
+    let deserialized_gateway_execute_data = GatewayExecuteData::new(
+        account.data.as_slice(),
+        &gateway_root_pda,
+        &fixture.domain_separator,
+    )
+    .expect("GatewayExecuteData can be deserialized");
     assert_eq!(deserialized_gateway_execute_data, gateway_execute_data);
 }
 
@@ -139,6 +161,7 @@ async fn test_fail_on_invalid_root_pda() {
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
         fixture.payer.pubkey(),
         fake_gateway_root_pda,
+        &fixture.domain_separator,
         &raw_execute_data,
     )
     .expect("failed to create initialize_execute_data instruction");
@@ -188,6 +211,7 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
         fixture.payer.pubkey(),
         fake_gateway_root_pda,
+        &fixture.domain_separator,
         &raw_execute_data,
     )
     .expect("failed to create initialize_execute_data instruction");
@@ -219,6 +243,7 @@ async fn test_fail_on_uninitialized_root_pda() {
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
         fixture.payer.pubkey(),
         uninitialized_gateway_config_pda,
+        &fixture.domain_separator,
         &raw_execute_data,
     )
     .expect("failed to create initialize_execute_data instruction");
@@ -269,6 +294,7 @@ async fn test_fail_on_already_initialized_execute_data_account() {
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
         fixture.payer.pubkey(),
         gateway_root_pda,
+        &fixture.domain_separator,
         &raw_execute_data,
     )
     .expect("failed to create initialize_execute_data instruction");
@@ -294,7 +320,6 @@ async fn test_fail_on_already_initialized_execute_data_account() {
 ///
 /// 1399850 - this is the maximum amount of compute units that we can use, if we
 /// try setting a larger value, it just gets rounded to this one.
-#[ignore]
 #[tokio::test]
 async fn test_size_limits_for_different_signers() {
     // Setup
@@ -318,6 +343,7 @@ async fn test_size_limits_for_different_signers() {
         let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
             fixture.payer.pubkey(),
             gateway_root_pda,
+            &fixture.domain_separator,
             &raw_execute_data,
         )
         .expect("failed to create initialize_execute_data instruction");
@@ -343,7 +369,6 @@ async fn test_size_limits_for_different_signers() {
 ///
 /// 1399850 - this is the maximum amount of compute units that we can use, if we
 /// try setting a larger value, it just gets rounded to this one.
-#[ignore]
 #[tokio::test]
 async fn test_message_limits_with_different_amounts() {
     // Setup
@@ -372,6 +397,7 @@ async fn test_message_limits_with_different_amounts() {
         let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
             fixture.payer.pubkey(),
             gateway_root_pda,
+            &fixture.domain_separator,
             &raw_execute_data,
         )
         .expect("failed to create initialize_execute_data instruction");
