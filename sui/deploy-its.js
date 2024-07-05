@@ -67,6 +67,10 @@ async function processCommand(chain, options) {
         });
 
         if (!offline) {
+            if (prompt(`Proceed with ITS upgrade on ${chain.name}?`, options.yes)) {
+                return;
+            }
+
             const result = await broadcast(client, keypair, tx);
 
             const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
