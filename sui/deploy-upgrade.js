@@ -10,63 +10,64 @@ const { loadSuiConfig } = require('./utils');
 
 async function upgradePackage(client, keypair, packageName, packageConfig, options) {
     const { modules, dependencies, digest } = await getContractBuild(packageName);
-        const { policy, offline, txFilePath, sender } = options;
+    const { policy, offline, txFilePath, sender } = options;
 
-        const upgradeCap = packageConfig.objects?.UpgradeCap;
-        let digestHash;
+    const upgradeCap = packageConfig.objects?.UpgradeCap;
+    let digestHash;
 
-        if (options.digest) {
-            digestHash = fromB64(options.digest);
+    if (options.digest) {
+        digestHash = fromB64(options.digest);
+    } else {
+        digestHash = digest;
+    }
+
+    validateParameters({ isNonEmptyString: { upgradeCap, policy }, isNonEmptyStringArray: { modules, dependencies } });
+
+    const tx = new TransactionBlock();
+    const cap = tx.object(upgradeCap);
+
+    const ticket = tx.moveCall({
+        target: `0x2::package::authorize_upgrade`,
+        arguments: [cap, tx.pure(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
+    });
+
+    const receipt = tx.upgrade({
+        modules,
+        dependencies,
+        packageId: packageConfig.address,
+        ticket,
+    });
+
+    tx.moveCall({
+        target: `0x2::package::commit_upgrade`,
+        arguments: [cap, receipt],
+    });
+
+    if (!offline) {
+        const result = await broadcast(client, keypair, tx);
+
+        const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
+        packageConfig.address = packageId;
+        printInfo('Transaction result', JSON.stringify(result, null, 2));
+        printInfo(`${packageName} upgraded`, packageId);
+    } else {
+        validateParameters({ isNonEmptyString: { txFilePath } });
+
+        if (!sender) {
+            tx.setSender(keypair.toSuiAddress());
         } else {
-            digestHash = digest;
+            tx.setSender(sender);
         }
 
-        validateParameters({ isNonEmptyString: { upgradeCap, policy }, isNonEmptyStringArray: { modules, dependencies } });
-
-        const tx = new TransactionBlock();
-        const cap = tx.object(upgradeCap);
-
-        const ticket = tx.moveCall({
-            target: `0x2::package::authorize_upgrade`,
-            arguments: [cap, tx.pure(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
-        });
-
-        const receipt = tx.upgrade({
-            modules,
-            dependencies,
-            packageId: packageConfig.address,
-            ticket,
-        });
-
-        tx.moveCall({
-            target: `0x2::package::commit_upgrade`,
-            arguments: [cap, receipt],
-        });
-
-        if (!offline) {
-            const result = await broadcast(client, keypair, tx);
-
-            const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
-            packageConfig.address = packageId;
-            printInfo('Transaction result', JSON.stringify(result, null, 2));
-            printInfo(`${packageName} upgraded`, packageId);
-        } else {
-            validateParameters({ isNonEmptyString: { txFilePath } });
-
-            if (!sender) {
-                tx.setSender(keypair.toSuiAddress());
-            } else {
-                tx.setSender(sender);
-            }
-
-            const txBytes = await tx.build({ client });
-            writeJSON({ status: 'UPGRADE PENDING', bytes: toB64(txBytes) }, txFilePath);
-            printInfo(`The unsigned transaction is`, toB64(txBytes));
-        }
+        const txBytes = await tx.build({ client });
+        writeJSON({ status: 'UPGRADE PENDING', bytes: toB64(txBytes) }, txFilePath);
+        printInfo(`The unsigned transaction is`, toB64(txBytes));
+    }
 }
 
 async function deployPackage(chain, client, keypair, packageName, packageConfig, options) {
     const { offline, txFilePath } = options;
+
     if (!offline) {
         if (prompt(`Proceed with deployment on ${chain.name}?`, options.yes)) {
             return;
@@ -75,14 +76,16 @@ async function deployPackage(chain, client, keypair, packageName, packageConfig,
         const published = await publishPackage(packageName, client, keypair);
         const packageId = published.packageId;
         packageConfig.address = packageId;
-        const objectChanges = published.publishTxn.objectChanges.filter((object) => object.type == 'created');
-        packageConfig.objects = {}
+        const objectChanges = published.publishTxn.objectChanges.filter((object) => object.type === 'created');
+        packageConfig.objects = {};
+
         for (const object of objectChanges) {
-            let firstIndex = object.objectType.indexOf('::');
-            let typeIndex = object.objectType.indexOf('::', firstIndex + 1);
-            let objectName = object.objectType.slice(typeIndex + 2);
+            const firstIndex = object.objectType.indexOf('::');
+            const typeIndex = object.objectType.indexOf('::', firstIndex + 1);
+            const objectName = object.objectType.slice(typeIndex + 2);
+
             if (objectName) {
-                packageConfig.objects[objectName] = object.objectId
+                packageConfig.objects[objectName] = object.objectId;
             }
         }
 
@@ -107,11 +110,11 @@ async function processCommand(chain, options) {
     }
 
     const contractsConfig = chain.contracts;
-    const packageConfig = contractsConfig?.[packageName]; 
-    
+    const packageConfig = contractsConfig?.[packageName];
+
     validateParameters({ isNonEmptyString: { packageName } });
-    
-    if(packageDependencies) {
+
+    if (packageDependencies) {
         for (const dependencies of packageDependencies) {
             const packageId = contractsConfig[dependencies]?.address;
             updateMoveToml(dependencies, packageId);
