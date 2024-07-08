@@ -104,6 +104,18 @@ node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test -
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
 
+Deploy/Upgrade package:
+
+If a package requires dependencies, then the dependencies should be stored in the contract configuration.
+
+provide `--offline` with `--txFilePath` to store tx data in file for offline signing
+
+```bash
+node sui/deploy-upgrade.js --packageName its --packageDepencies axelar_gateway abi governance
+```
+
+provide `--upgrade` with `--policy <policy>` to upgrade package
+
 ## Troubleshooting
 
 1. Move build error during the deployment step
