@@ -10,7 +10,7 @@ const { loadSuiConfig } = require('./utils');
 
 async function upgradePackage(client, keypair, packageName, packageConfig, options) {
     const { modules, dependencies, digest } = await getContractBuild(packageName);
-        const { policy, offline } = options;
+        const { policy, offline, txFilePath, sender } = options;
 
         const upgradeCap = packageConfig.objects?.UpgradeCap;
         let digestHash;
@@ -66,7 +66,7 @@ async function upgradePackage(client, keypair, packageName, packageConfig, optio
 }
 
 async function deployPackage(chain, client, keypair, packageName, packageConfig, options) {
-    const { offline } = options;
+    const { offline, txFilePath } = options;
     if (!offline) {
         if (prompt(`Proceed with deployment on ${chain.name}?`, options.yes)) {
             return;
