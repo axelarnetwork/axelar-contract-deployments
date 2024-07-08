@@ -5,7 +5,7 @@ const { bcs } = require('@mysten/sui.js/bcs');
 const { fromB64, toB64 } = require('@mysten/bcs');
 const { saveConfig, printInfo, validateParameters, prompt, writeJSON } = require('../evm/utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
+const { getWallet, broadcast } = require('./sign-utils');
 const { loadSuiConfig } = require('./utils');
 
 async function upgradePackage(client, keypair, packageName, packageConfig, options) {
@@ -100,7 +100,7 @@ async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
     const { upgrade, packageName, packageDependencies } = options;
 
-    await printWalletInfo(keypair, client, chain, options);
+    printInfo('Wallet address', keypair.toSuiAddress());
 
     if (!chain.contracts[packageName]) {
         chain.contracts[packageName] = {};
