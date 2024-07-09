@@ -53,7 +53,12 @@ const makeMultisigInstantiateMsg = ({ governanceAddress, adminAddress, blockExpi
         throw new Error(`Missing or invalid Multisig.blockExpiry in axelar info`);
     }
 
-    return { governance_address: governanceAddress, admin_address: adminAddress, rewards_address: rewardsAddress, block_expiry: blockExpiry };
+    return {
+        governance_address: governanceAddress,
+        admin_address: adminAddress,
+        rewards_address: rewardsAddress,
+        block_expiry: blockExpiry,
+    };
 };
 
 const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) => {
