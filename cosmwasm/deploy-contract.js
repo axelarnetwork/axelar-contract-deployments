@@ -57,7 +57,7 @@ const makeMultisigInstantiateMsg = ({ governanceAddress, adminAddress, blockExpi
         governance_address: governanceAddress,
         admin_address: adminAddress,
         rewards_address: rewardsAddress,
-        block_expiry: blockExpiry,
+        block_expiry: blockExpiry.toString(),
     };
 };
 
