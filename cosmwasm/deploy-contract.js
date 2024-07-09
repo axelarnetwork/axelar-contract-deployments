@@ -3,11 +3,16 @@
 require('dotenv').config();
 const { isNil } = require('lodash');
 
-const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
-
 const { printInfo, loadConfig, saveConfig, isString, isStringArray, isKeccak256Hash, isNumber, prompt } = require('../evm/utils');
-const { uploadContract, instantiateContract, isValidCosmosAddress, calculateDomainSeparator, governanceAddress } = require('./utils');
+const {
+    prepareWallet,
+    prepareClient,
+    uploadContract,
+    instantiateContract,
+    isValidCosmosAddress,
+    calculateDomainSeparator,
+    governanceAddress,
+} = require('./utils');
 
 const { Command, Option } = require('commander');
 
@@ -371,13 +376,6 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
     throw new Error(`${contractName} is not supported.`);
 };
-
-const prepareWallet = ({ mnemonic }) => DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
-
-const prepareClient = ({ axelar: { rpc, gasPrice } }, wallet) =>
-    SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice }).then((client) => {
-        return { wallet, client };
-    });
 
 const upload = (client, wallet, chainName, config, options) => {
     const { reuseCodeId, contractName } = options;
