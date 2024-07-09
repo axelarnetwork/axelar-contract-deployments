@@ -36,9 +36,13 @@ const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
     return { governance_account: governanceAccount };
 };
 
-const makeMultisigInstantiateMsg = ({ governanceAddress, blockExpiry }, { Rewards: { address: rewardsAddress } }) => {
+const makeMultisigInstantiateMsg = ({ governanceAddress, adminAddress, blockExpiry }, { Rewards: { address: rewardsAddress } }) => {
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Multisig.governanceAddress in axelar info');
+    }
+
+    if (!validateAddress(adminAddress)) {
+        throw new Error('Missing or invalid Multisig.adminAddress in axelar info');
     }
 
     if (!validateAddress(rewardsAddress)) {
@@ -49,7 +53,7 @@ const makeMultisigInstantiateMsg = ({ governanceAddress, blockExpiry }, { Reward
         throw new Error(`Missing or invalid Multisig.blockExpiry in axelar info`);
     }
 
-    return { governance_address: governanceAddress, rewards_address: rewardsAddress, block_expiry: blockExpiry };
+    return { governance_address: governanceAddress, admin_address: adminAddress, rewards_address: rewardsAddress, block_expiry: blockExpiry };
 };
 
 const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) => {
