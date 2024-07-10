@@ -3,11 +3,26 @@
 require('dotenv').config();
 const { isNil } = require('lodash');
 
-const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
-
-const { printInfo, loadConfig, saveConfig, isString, isStringArray, isKeccak256Hash, isNumber, prompt } = require('../evm/utils');
-const { uploadContract, instantiateContract, isValidCosmosAddress, calculateDomainSeparator, governanceAddress } = require('./utils');
+const {
+    printInfo,
+    loadConfig,
+    saveConfig,
+    isString,
+    isStringArray,
+    isKeccak256Hash,
+    isNumber,
+    prompt,
+    toBigNumberString,
+} = require('../evm/utils');
+const {
+    prepareWallet,
+    prepareClient,
+    uploadContract,
+    instantiateContract,
+    isValidCosmosAddress,
+    calculateDomainSeparator,
+    governanceAddress,
+} = require('./utils');
 
 const { Command, Option } = require('commander');
 
@@ -31,7 +46,11 @@ const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
     return { governance_account: governanceAccount };
 };
 
-const makeMultisigInstantiateMsg = ({ governanceAddress, blockExpiry }, { Rewards: { address: rewardsAddress } }) => {
+const makeMultisigInstantiateMsg = ({ adminAddress, governanceAddress, blockExpiry }, { Rewards: { address: rewardsAddress } }) => {
+    if (!validateAddress(adminAddress)) {
+        throw new Error('Missing or invalid Multisig.adminAddress in axelar info');
+    }
+
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Multisig.governanceAddress in axelar info');
     }
@@ -44,7 +63,12 @@ const makeMultisigInstantiateMsg = ({ governanceAddress, blockExpiry }, { Reward
         throw new Error(`Missing or invalid Multisig.blockExpiry in axelar info`);
     }
 
-    return { governance_address: governanceAddress, rewards_address: rewardsAddress, block_expiry: blockExpiry };
+    return {
+        admin_address: adminAddress,
+        governance_address: governanceAddress,
+        rewards_address: rewardsAddress,
+        block_expiry: toBigNumberString(blockExpiry),
+    };
 };
 
 const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) => {
@@ -371,13 +395,6 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
     throw new Error(`${contractName} is not supported.`);
 };
-
-const prepareWallet = ({ mnemonic }) => DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
-
-const prepareClient = ({ axelar: { rpc, gasPrice } }, wallet) =>
-    SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice }).then((client) => {
-        return { wallet, client };
-    });
 
 const upload = (client, wallet, chainName, config, options) => {
     const { reuseCodeId, contractName } = options;
