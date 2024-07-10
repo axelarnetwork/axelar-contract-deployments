@@ -3,7 +3,17 @@
 require('dotenv').config();
 const { isNil } = require('lodash');
 
-const { printInfo, loadConfig, saveConfig, isString, isStringArray, isKeccak256Hash, isNumber, prompt, toBigNumberString } = require('../evm/utils');
+const {
+    printInfo,
+    loadConfig,
+    saveConfig,
+    isString,
+    isStringArray,
+    isKeccak256Hash,
+    isNumber,
+    prompt,
+    toBigNumberString,
+} = require('../evm/utils');
 const {
     prepareWallet,
     prepareClient,
@@ -53,7 +63,12 @@ const makeMultisigInstantiateMsg = ({ adminAddress, governanceAddress, blockExpi
         throw new Error(`Missing or invalid Multisig.blockExpiry in axelar info`);
     }
 
-    return { admin_address: adminAddress, governance_address: governanceAddress, rewards_address: rewardsAddress, block_expiry: toBigNumberString(blockExpiry) };
+    return {
+        admin_address: adminAddress,
+        governance_address: governanceAddress,
+        rewards_address: rewardsAddress,
+        block_expiry: toBigNumberString(blockExpiry),
+    };
 };
 
 const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) => {
