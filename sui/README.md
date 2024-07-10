@@ -84,8 +84,10 @@ node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A
 
 Approve messages:
 
+If the gateway was deployed using the wallet, you can submit a message approval with it
+
 ```bash
-node sui/gateway.js approve ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad --proof wallet
+node sui/gateway.js approve --proof wallet --currentNonce test ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
 ```
 
 Rotate gateway signers:
@@ -93,7 +95,7 @@ Rotate gateway signers:
 If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
 
 ```bash
-node sui/gateway.js rotate --proof wallet
+node sui/gateway.js rotate --proof wallet --currentNonce test
 ```
 
 If you want to rotate to the wallet again but with a new nonce, do
@@ -109,3 +111,13 @@ Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gate
 1. Move build error during the deployment step
 
 Delete the `node_modules` folder and `package-lock.json` file and then run `npm install` again.
+
+## Transfer object
+
+Please note shared objects cannot be transferred via this script.
+
+```bash
+node sui/transfer-object.js --objectId <object id to be transferred> --recipient <recipient address>
+
+node sui/transfer-object.js --contractName <Can be checked from config> --objectName <picked from config> --recipient <recipient address>
+```
