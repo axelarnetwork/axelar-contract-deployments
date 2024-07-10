@@ -49,7 +49,7 @@ const makeMultisigInstantiateMsg = ({ governanceAddress, adminAddress, blockExpi
         throw new Error('Missing or invalid Rewards.address in axelar info');
     }
 
-    if (!isNumber(blockExpiry)) {
+    if (!isString(blockExpiry)) {
         throw new Error(`Missing or invalid Multisig.blockExpiry in axelar info`);
     }
 
@@ -57,7 +57,7 @@ const makeMultisigInstantiateMsg = ({ governanceAddress, adminAddress, blockExpi
         governance_address: governanceAddress,
         admin_address: adminAddress,
         rewards_address: rewardsAddress,
-        block_expiry: blockExpiry.toString(),
+        block_expiry: blockExpiry,
     };
 };
 
