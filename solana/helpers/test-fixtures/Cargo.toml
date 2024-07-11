@@ -21,7 +21,7 @@ tokio.workspace = true
 
 axelar-executable.workspace = true
 axelar-message-primitives.workspace = true
-axelar-rkyv-encoding = {workspace = true, features = ["test-fixtures"]}
+axelar-rkyv-encoding = { workspace = true, features = ["test-fixtures"] }
 solana-program-test = { workspace = true }
 interchain-token-transfer-gmp = { workspace = true }
 

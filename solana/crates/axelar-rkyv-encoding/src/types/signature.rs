@@ -24,3 +24,21 @@ impl Signature {
         Self::Ed25519(bytes)
     }
 }
+
+impl AsRef<[u8]> for Signature {
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            Signature::EcdsaRecoverable(bytes) => bytes,
+            Signature::Ed25519(bytes) => bytes,
+        }
+    }
+}
+
+impl AsMut<[u8]> for Signature {
+    fn as_mut(&mut self) -> &mut [u8] {
+        match self {
+            Signature::EcdsaRecoverable(bytes) => bytes,
+            Signature::Ed25519(bytes) => bytes,
+        }
+    }
+}

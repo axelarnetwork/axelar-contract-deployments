@@ -269,23 +269,28 @@ impl TestFixture {
         root_pda_address
     }
 
-    pub fn init_auth_weighted_module(&self, signers: &[TestSigner]) -> AxelarAuthWeighted {
+    pub fn init_auth_weighted_module(
+        &self,
+        signers: &[TestSigner],
+        nonce: u64,
+    ) -> AxelarAuthWeighted {
         let threshold = signers
             .iter()
             .map(|s| s.weight)
             .try_fold(U256::ZERO, U256::checked_add)
             .expect("no arithmetic overflow");
 
-        self.init_auth_weighted_module_custom_threshold(signers, threshold)
+        self.init_auth_weighted_module_custom_threshold(signers, threshold, nonce)
     }
 
     pub fn init_auth_weighted_module_custom_threshold(
         &self,
         signers: &[TestSigner],
         threshold: U256,
+        nonce: u64,
     ) -> AxelarAuthWeighted {
         let signers: BTreeMap<_, _> = signers.iter().map(|s| (s.public_key, s.weight)).collect();
-        let verifier_set = VerifierSet::new(0u64, signers, threshold);
+        let verifier_set = VerifierSet::new(nonce, signers, threshold);
         AxelarAuthWeighted::new(verifier_set)
     }
 
@@ -389,9 +394,10 @@ impl TestFixture {
         payload: Payload,
         signers: &[TestSigner],
         quorum: u128,
+        nonce: u64,
         domain_separator: &[u8; 32],
     ) -> (Pubkey, Vec<u8>) {
-        let (raw_data, _) = prepare_execute_data(payload, signers, quorum, domain_separator);
+        let (raw_data, _) = prepare_execute_data(payload, signers, quorum, nonce, domain_separator);
 
         let execute_data_pda = self
             .init_execute_data_with_custom_data(gateway_root_pda, &raw_data)
@@ -550,9 +556,15 @@ impl TestFixture {
         gateway_root_pda: &Pubkey,
         messages: Vec<Message>,
         signers: &[TestSigner],
+        nonce: u64,
     ) -> (Vec<Pubkey>, Vec<u8>, Pubkey) {
         let (command_pdas, execute_data, execute_data_pda, tx) = self
-            .fully_approve_messages_with_execute_metadata(gateway_root_pda, messages, signers)
+            .fully_approve_messages_with_execute_metadata(
+                gateway_root_pda,
+                messages,
+                signers,
+                nonce,
+            )
             .await;
         assert!(tx.result.is_ok());
         (command_pdas, execute_data, execute_data_pda)
@@ -563,6 +575,7 @@ impl TestFixture {
         gateway_root_pda: &Pubkey,
         messages: Vec<Message>,
         signers: &[TestSigner],
+        nonce: u64,
     ) -> (
         Vec<Pubkey>,
         Vec<u8>,
@@ -582,6 +595,7 @@ impl TestFixture {
                 Payload::Messages(messages.clone()),
                 signers,
                 weight_of_quorum,
+                nonce,
                 &DOMAIN_SEPARATOR,
             )
             .await;
@@ -623,9 +637,15 @@ impl TestFixture {
         gateway_root_pda: &Pubkey,
         signer_set: VerifierSet,
         signers: &[TestSigner],
+        nonce: u64,
     ) -> (Pubkey, Vec<u8>, Pubkey) {
         let (command_pdas, execute_data, execute_data_pda, tx) = self
-            .fully_rotate_signers_with_execute_metadata(gateway_root_pda, signer_set, signers)
+            .fully_rotate_signers_with_execute_metadata(
+                gateway_root_pda,
+                signer_set,
+                signers,
+                nonce,
+            )
             .await;
         assert!(tx.result.is_ok());
         (command_pdas, execute_data, execute_data_pda)
@@ -636,6 +656,7 @@ impl TestFixture {
         gateway_root_pda: &Pubkey,
         signer_set: VerifierSet,
         signers: &[TestSigner],
+        nonce: u64,
     ) -> (Pubkey, Vec<u8>, Pubkey, BanksTransactionResultWithMetadata) {
         let weight_of_quorum = signers
             .iter()
@@ -648,6 +669,7 @@ impl TestFixture {
                 Payload::VerifierSet(signer_set.clone()),
                 signers,
                 weight_of_quorum.as_u128(),
+                nonce,
                 &DOMAIN_SEPARATOR,
             )
             .await;

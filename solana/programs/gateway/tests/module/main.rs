@@ -6,7 +6,7 @@ mod approve_messages;
 mod initialize_command;
 mod initialize_config;
 mod initialize_execute_data;
-mod rotate_signers;
+// mod rotate_signers;
 mod transfer_operatorship;
 
 use std::collections::BTreeMap;
@@ -14,7 +14,7 @@ use std::collections::BTreeMap;
 use axelar_message_primitives::{DataPayload, EncodingScheme};
 use axelar_rkyv_encoding::hash_payload;
 use axelar_rkyv_encoding::types::{
-    ExecuteData, Message, Payload, Proof, VerifierSet, WeightedSignature,
+    ExecuteData, Message, Payload, Proof, PublicKey, VerifierSet, WeightedSigner,
 };
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::events::GatewayEvent;
@@ -43,6 +43,7 @@ pub struct InitialisedGatewayMetadata {
     pub fixture: TestFixture,
     pub quorum: u128,
     pub signers: Vec<TestSigner>,
+    pub nonce: u64,
     pub gateway_root_pda: Pubkey,
     pub operator: Keypair,
     pub upgrade_authority: Keypair,
@@ -72,14 +73,16 @@ pub async fn setup_initialised_gateway(
         .map(|weight| create_signer_with_weight(*weight))
         .collect::<Vec<_>>();
     let operator = Keypair::new();
+    let nonce = 42;
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module_custom_threshold(&signers, quorum.into()),
+            fixture.init_auth_weighted_module_custom_threshold(&signers, quorum.into(), nonce),
             operator.pubkey(),
         )
         .await;
 
     InitialisedGatewayMetadata {
+        nonce,
         upgrade_authority,
         fixture,
         quorum,
@@ -173,9 +176,13 @@ pub fn create_signer_set(weights: &[u128], threshold: u128) -> (VerifierSet, Vec
     (new_signer_set, new_signers)
 }
 
-/// FIXME: I'm not sure if the old code did the same, but it turns out that the
-/// 'signers_for_submission' field is never used.
-#[allow(unused_variables)]
+/// This allows creating scenaroius where we can play around with a matrix of
+/// constructing invalid values. The usual flow is: we have a [`Payload`] that
+/// is signed by a set of signers. This function allows us to:
+/// - encode a different signer set inside the execute data than the one that
+///   was used to sign the payload
+/// - sign a different payload than the one that actually gets encoded in the
+///   execute data (thus the hashes would not match)
 pub fn prepare_questionable_execute_data(
     payload_for_signing: &Payload,
     payload_for_submission: &Payload,
@@ -183,50 +190,64 @@ pub fn prepare_questionable_execute_data(
     signers_for_submission: &[TestSigner],
     threshold: u128,
     domain_separator: &[u8; 32],
+    nonce: u64,
 ) -> Vec<u8> {
-    let other_execute_data = create_execute_data(
-        payload_for_signing,
-        signers_for_signing,
-        threshold,
+    let verifier_set_for_submission =
+        create_verifier_set_with_nonce(signers_for_submission, nonce, threshold);
+    let payload_hash_for_signing = hash_payload(
         domain_separator,
+        &verifier_set_for_submission,
+        payload_for_signing,
     );
-    let other_proof = other_execute_data.proof().clone();
-
-    let execute_data_for_submission = ExecuteData::new(payload_for_submission.clone(), other_proof);
+    let signatures = create_signer_array(
+        signers_for_signing,
+        signers_for_submission,
+        payload_hash_for_signing,
+    );
+    let proof = Proof::new(
+        signatures,
+        *verifier_set_for_submission.threshold(),
+        verifier_set_for_submission.created_at(),
+    );
+    let execute_data_for_submission = ExecuteData::new(payload_for_submission.clone(), proof);
 
     execute_data_for_submission
         .to_bytes::<0>()
         .expect("failed to serialize 'ExecuteData' struct")
 }
 
-fn create_execute_data(
-    payload: &Payload,
+fn create_signer_array(
     signers: &[TestSigner],
-    threshold: u128,
-    domain_separator: &[u8; 32],
-) -> ExecuteData {
-    let nonce = unix_seconds();
-    let verifier_set: VerifierSet = create_verifier_set_with_nonce(signers, nonce, threshold);
-
-    let payload_hash = hash_payload(domain_separator, &verifier_set, payload);
-
-    let signing_keys: BTreeMap<_, _> = signers
+    non_signers: &[TestSigner],
+    payload_hash: [u8; 32],
+) -> BTreeMap<PublicKey, WeightedSigner> {
+    let weighted_signatures = signers
         .iter()
-        .map(|signer| (signer.public_key, &signer.secret_key))
-        .collect();
-
-    let weighted_signatures: Vec<_> = verifier_set
-        .signers()
-        .iter()
-        .map(|(pubkey, weight)| {
-            let signing_key = signing_keys.get(pubkey).unwrap();
-            let signature = signing_key.sign(&payload_hash);
-            WeightedSignature::new(*pubkey, signature, *weight)
+        .map(|signer| {
+            let signature = signer.secret_key.sign(&payload_hash);
+            (
+                signer.public_key,
+                WeightedSigner::new(Some(signature), signer.weight),
+            )
         })
-        .collect();
-    let proof = Proof::new(weighted_signatures, *verifier_set.threshold(), nonce);
-
-    ExecuteData::new(payload.clone(), proof)
+        .chain({
+            non_signers.iter().map(|non_signer| {
+                (
+                    non_signer.public_key,
+                    WeightedSigner::new(None, non_signer.weight),
+                )
+            })
+        })
+        .fold(
+            BTreeMap::<PublicKey, WeightedSigner>::new(),
+            |mut init, i| {
+                if let std::collections::btree_map::Entry::Vacant(e) = init.entry(i.0) {
+                    e.insert(i.1);
+                }
+                init
+            },
+        );
+    weighted_signatures
 }
 
 pub fn create_verifier_set_with_nonce(

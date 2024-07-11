@@ -18,7 +18,7 @@ hex = "0.4"
 itertools = "0.12"
 ed25519-dalek = "2"
 k256 = { version = "0.13", features = ["ecdsa"] }
-libsecp256k1 = "0.7"
+libsecp256k1 = { version = "0.6", default-features = false }
 num-derive = "0.4"
 xshell = "0.2"
 num-traits = "0.2"
@@ -39,7 +39,7 @@ tokio = { version = "1", features = ["full"] }
 bincode = "1"
 reqwest = { version = "0.12", features = ["json", "stream"] }
 futures = "0.3"
-rand = "0"
+rand = "0.8"
 
 # solana programs
 gateway = { path = "programs/gateway", package = "gmp-gateway" }

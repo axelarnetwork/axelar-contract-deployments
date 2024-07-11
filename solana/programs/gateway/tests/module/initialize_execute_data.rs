@@ -11,24 +11,24 @@ use test_fixtures::execute_data::prepare_execute_data;
 use test_fixtures::test_setup::TestFixture;
 
 use crate::{
-    create_signer_with_weight, make_messages, make_payload_and_commands, make_signers, program_test,
+    create_signer_with_weight, make_messages, make_payload_and_commands, make_signers,
+    program_test, setup_initialised_gateway, InitialisedGatewayMetadata,
 };
 
 #[tokio::test]
 async fn test_successfylly_initialize_execute_data() {
     // Setup
-    let mut fixture = TestFixture::new(program_test()).await;
-    let signers = make_signers(&[10, 4]);
-    let threshold = 14;
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
-            Pubkey::new_unique(),
-        )
-        .await;
+    let InitialisedGatewayMetadata {
+        nonce,
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[10, 4], None).await;
     let payload = Payload::Messages(make_messages(1));
     let (raw_execute_data, _) =
-        prepare_execute_data(payload, &signers, threshold, &fixture.domain_separator);
+        prepare_execute_data(payload, &signers, quorum, nonce, &fixture.domain_separator);
     let gateway_execute_data = GatewayExecuteData::new(
         &raw_execute_data,
         &gateway_root_pda,
@@ -73,21 +73,20 @@ async fn test_successfylly_initialize_execute_data() {
 #[tokio::test]
 async fn test_succesfully_initialize_rotate_signers() {
     // Setup
-    let mut fixture = TestFixture::new(program_test()).await;
-    let signers = make_signers(&[10, 14]);
+    let InitialisedGatewayMetadata {
+        nonce,
+        mut fixture,
+        quorum,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[10, 4], None).await;
     let new_signers = make_signers(&[33, 150]);
-    let threshold = 14;
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
-            Pubkey::new_unique(),
-        )
-        .await;
 
-    let payload = Payload::VerifierSet(new_signer_set(&new_signers, 0, threshold));
+    let payload = Payload::VerifierSet(new_signer_set(&new_signers, 0, quorum));
 
     let (raw_execute_data, _) =
-        prepare_execute_data(payload, &signers, threshold, &fixture.domain_separator);
+        prepare_execute_data(payload, &signers, quorum, nonce, &fixture.domain_separator);
     let gateway_execute_data = GatewayExecuteData::new(
         &raw_execute_data,
         &gateway_root_pda,
@@ -147,15 +146,21 @@ async fn test_fail_on_invalid_root_pda() {
     let mut fixture = TestFixture::new(program_test).await;
     let signers = make_signers(&[10, 4]);
     let threshold = 14;
+    let nonce = 123;
     fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
+            fixture.init_auth_weighted_module(&signers, nonce),
             Pubkey::new_unique(),
         )
         .await;
     let (payload, _) = make_payload_and_commands(1);
-    let (raw_execute_data, _) =
-        prepare_execute_data(payload, &signers, threshold, &fixture.domain_separator);
+    let (raw_execute_data, _) = prepare_execute_data(
+        payload,
+        &signers,
+        threshold,
+        nonce,
+        &fixture.domain_separator,
+    );
 
     // Action
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
@@ -197,26 +202,37 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
     let mut fixture = TestFixture::new(program_test).await;
     let signers = make_signers(&[10, 4]);
     let threshold = 14;
+    let nonce = 123321;
     fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
+            fixture.init_auth_weighted_module(&signers, nonce),
             Pubkey::new_unique(),
         )
         .await;
     let (payload, _) = make_payload_and_commands(1);
-    let (raw_execute_data, _) =
-        prepare_execute_data(payload, &signers, threshold, &fixture.domain_separator);
+    let (raw_execute_data, _) = prepare_execute_data(
+        payload,
+        &signers,
+        threshold,
+        nonce,
+        &fixture.domain_separator,
+    );
 
     // Action
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
         fixture.payer.pubkey(),
         fake_gateway_root_pda,
+        // gateway_root_pda,
         &fixture.domain_separator,
         &raw_execute_data,
     )
     .expect("failed to create initialize_execute_data instruction");
-    let BanksTransactionResultWithMetadata { metadata, result } =
-        fixture.send_tx_with_metadata(&[ix]).await;
+    let BanksTransactionResultWithMetadata { metadata, result } = fixture
+        .send_tx_with_metadata(&[
+            ComputeBudgetInstruction::set_compute_unit_limit(1555555),
+            ix,
+        ])
+        .await;
 
     // Assert
     assert!(result.is_err(), "Transaction should have failed");
@@ -234,10 +250,16 @@ async fn test_fail_on_uninitialized_root_pda() {
     let mut fixture = TestFixture::new(program_test()).await;
     let signers = make_signers(&[10, 14]);
     let threshold = 14;
+    let nonce = 312;
     let (uninitialized_gateway_config_pda, _) = GatewayConfig::pda();
     let (payload, _) = make_payload_and_commands(1);
-    let (raw_execute_data, _) =
-        prepare_execute_data(payload, &signers, threshold, &fixture.domain_separator);
+    let (raw_execute_data, _) = prepare_execute_data(
+        payload,
+        &signers,
+        threshold,
+        nonce,
+        &fixture.domain_separator,
+    );
 
     // Action
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
@@ -261,19 +283,17 @@ async fn test_fail_on_uninitialized_root_pda() {
         .any(|x| x.contains("insufficient funds for instruction")),);
 }
 
-#[ignore]
 #[tokio::test]
 async fn test_fail_on_already_initialized_execute_data_account() {
     // Setup
-    let mut fixture = TestFixture::new(program_test()).await;
-    let signers = make_signers(&[10, 14]);
-    let threshold = 14;
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
-            Pubkey::new_unique(),
-        )
-        .await;
+    let InitialisedGatewayMetadata {
+        nonce,
+        mut fixture,
+        quorum: threshold,
+        signers,
+        gateway_root_pda,
+        ..
+    } = setup_initialised_gateway(&[10, 4], None).await;
 
     // Action
     let domain_separator = fixture.domain_separator;
@@ -286,6 +306,7 @@ async fn test_fail_on_already_initialized_execute_data_account() {
             payload,
             &signers,
             threshold,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -323,6 +344,7 @@ async fn test_fail_on_already_initialized_execute_data_account() {
 #[tokio::test]
 async fn test_size_limits_for_different_signers() {
     // Setup
+    let nonce = 4444;
     for amount_of_signers in [2, 4, 8, 16, 17, 18, 19] {
         dbg!(amount_of_signers);
         let signers = (0..amount_of_signers)
@@ -332,14 +354,19 @@ async fn test_size_limits_for_different_signers() {
         let mut fixture = TestFixture::new(program_test()).await;
         let gateway_root_pda = fixture
             .initialize_gateway_config_account(
-                fixture.init_auth_weighted_module(&signers),
+                fixture.init_auth_weighted_module(&signers, nonce),
                 Pubkey::new_unique(),
             )
             .await;
 
         let (payload, _) = make_payload_and_commands(1);
-        let (raw_execute_data, _) =
-            prepare_execute_data(payload, &signers, threshold, &fixture.domain_separator);
+        let (raw_execute_data, _) = prepare_execute_data(
+            payload,
+            &signers,
+            threshold,
+            nonce,
+            &fixture.domain_separator,
+        );
         let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
             fixture.payer.pubkey(),
             gateway_root_pda,
@@ -372,6 +399,7 @@ async fn test_size_limits_for_different_signers() {
 #[tokio::test]
 async fn test_message_limits_with_different_amounts() {
     // Setup
+    let nonce = 123321;
     for amount_of_messages in [1, 2, 4, 8, 16] {
         dbg!(amount_of_messages);
         let signers = vec![create_signer_with_weight(4_u128)];
@@ -379,7 +407,7 @@ async fn test_message_limits_with_different_amounts() {
         let mut fixture = TestFixture::new(program_test()).await;
         let gateway_root_pda = fixture
             .initialize_gateway_config_account(
-                fixture.init_auth_weighted_module(&signers),
+                fixture.init_auth_weighted_module(&signers, nonce),
                 Pubkey::new_unique(),
             )
             .await;
@@ -387,8 +415,13 @@ async fn test_message_limits_with_different_amounts() {
         let messages = make_messages(amount_of_messages);
         let payload = Payload::Messages(messages);
 
-        let (raw_execute_data, _) =
-            prepare_execute_data(payload, &signers, threshold, &fixture.domain_separator);
+        let (raw_execute_data, _) = prepare_execute_data(
+            payload,
+            &signers,
+            threshold,
+            nonce,
+            &fixture.domain_separator,
+        );
         fixture.recent_blockhash = fixture
             .banks_client
             .get_new_latest_blockhash(&fixture.recent_blockhash)

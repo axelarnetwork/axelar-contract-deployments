@@ -1,11 +1,10 @@
 use rand::rngs::OsRng;
-use rand::Rng;
 
 use crate::types::{PublicKey, Signature};
 
 #[derive(Clone)]
 pub enum TestSigningKey {
-    Ecdsa(k256::ecdsa::SigningKey),
+    Ecdsa(libsecp256k1::SecretKey),
     Ed25519(ed25519_dalek::SigningKey),
 }
 
@@ -13,9 +12,10 @@ impl TestSigningKey {
     pub fn sign(&self, message: &[u8]) -> Signature {
         match self {
             TestSigningKey::Ecdsa(signing_key) => {
-                let (signature, recovery_id) = signing_key.sign_recoverable(message).unwrap();
-                let mut signature_bytes = signature.to_vec();
-                signature_bytes.push(recovery_id.to_byte());
+                let message = libsecp256k1::Message::parse(message.try_into().unwrap());
+                let (signature, recovery_id) = libsecp256k1::sign(&message, signing_key);
+                let mut signature_bytes = signature.serialize().to_vec();
+                signature_bytes.push(recovery_id.serialize());
                 Signature::EcdsaRecoverable(signature_bytes.try_into().unwrap())
             }
             TestSigningKey::Ed25519(signing_key) => {
@@ -28,23 +28,29 @@ impl TestSigningKey {
 }
 
 pub fn random_keypair() -> (TestSigningKey, PublicKey) {
-    if OsRng.gen_bool(0.5) {
-        let signing_key = k256::ecdsa::SigningKey::random(&mut OsRng);
-        let verifying_key_bytes: Box<[u8; 33]> = signing_key
-            .verifying_key()
-            .to_sec1_bytes()
-            .try_into()
-            .unwrap();
-        (
-            TestSigningKey::Ecdsa(signing_key),
-            PublicKey::Ecdsa(*verifying_key_bytes),
-        )
-    } else {
-        let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
-        let verifying_key_bytes = signing_key.verifying_key().to_bytes();
-        (
-            TestSigningKey::Ed25519(signing_key),
-            PublicKey::Ed25519(verifying_key_bytes),
-        )
-    }
+    // todo: try out mixed keypairs after we add support for them on the gateway
+    random_ecdsa_keypair()
+    // if OsRng.gen_bool(0.5) {
+    //     random_ecdsa_keypair()
+    // } else {
+    //     random_ed25519_keypair()
+    // }
+}
+
+pub fn random_ed25519_keypair() -> (TestSigningKey, PublicKey) {
+    let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
+    let verifying_key_bytes = signing_key.verifying_key().to_bytes();
+    (
+        TestSigningKey::Ed25519(signing_key),
+        PublicKey::Ed25519(verifying_key_bytes),
+    )
+}
+
+pub fn random_ecdsa_keypair() -> (TestSigningKey, PublicKey) {
+    let signing_key = libsecp256k1::SecretKey::random(&mut libsecp_rand::rngs::OsRng);
+    let public_key = libsecp256k1::PublicKey::from_secret_key(&signing_key);
+    (
+        TestSigningKey::Ecdsa(signing_key),
+        PublicKey::Secp256k1(public_key.serialize_compressed()),
+    )
 }

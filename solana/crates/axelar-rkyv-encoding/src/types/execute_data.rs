@@ -15,8 +15,8 @@ use crate::visitor::{ArchivedVisitor, Visitor};
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct ExecuteData {
-    pub(crate) payload: Payload,
-    pub(crate) proof: Proof,
+    pub payload: Payload,
+    pub proof: Proof,
 }
 
 impl ExecuteData {
@@ -33,10 +33,6 @@ impl ExecuteData {
         rkyv::to_bytes::<_, SCRATCH>(self)
             .map(AlignedVec::into_vec)
             .map_err(|error| Box::new(error) as Box<dyn Error + Send + Sync>)
-    }
-
-    pub fn proof(&self) -> &Proof {
-        &self.proof
     }
 }
 

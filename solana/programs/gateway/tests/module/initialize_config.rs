@@ -8,14 +8,16 @@ use test_fixtures::test_setup::TestFixture;
 
 use crate::{create_signer_with_weight, make_signers, program_test};
 
+const NONCE: u64 = 44;
+
 #[tokio::test]
 async fn test_successfylly_initialize_config() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let initial_signers = make_signers(&[10, 4]);
-    let new_signer_set = new_signer_set(&initial_signers, 0, 14);
+    let new_signer_set = new_signer_set(&initial_signers, NONCE, 14);
     let (gateway_config_pda, bump) = GatewayConfig::pda();
-    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
+    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers, NONCE);
     let gateway_config = GatewayConfig::new(
         bump,
         auth_weighted,
@@ -55,7 +57,7 @@ async fn test_successfylly_initialize_config_without_signers() {
     let mut fixture = TestFixture::new(program_test()).await;
     let initial_signers = vec![];
     let (gateway_config_pda, bump) = GatewayConfig::pda();
-    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
+    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers, NONCE);
     let gateway_config = GatewayConfig::new(
         bump,
         auth_weighted,
@@ -92,7 +94,7 @@ async fn test_successfylly_initialize_config_with_50_signers() {
         .map(|_| create_signer_with_weight(10_u128))
         .collect::<Vec<_>>();
     let (gateway_config_pda, bump) = GatewayConfig::pda();
-    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
+    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers, NONCE);
     let gateway_config = GatewayConfig::new(
         bump,
         auth_weighted,
@@ -130,8 +132,11 @@ async fn test_successfylly_initialize_config_with_50_signers_custom_small_thresh
         .map(|_| create_signer_with_weight(10_u128))
         .collect::<Vec<_>>();
     let (gateway_config_pda, bump) = GatewayConfig::pda();
-    let auth_weighted =
-        fixture.init_auth_weighted_module_custom_threshold(&initial_signers, threshold.into());
+    let auth_weighted = fixture.init_auth_weighted_module_custom_threshold(
+        &initial_signers,
+        threshold.into(),
+        NONCE,
+    );
     let gateway_config = GatewayConfig::new(
         bump,
         auth_weighted,
@@ -169,8 +174,11 @@ async fn test_successfylly_initialize_config_with_50_signers_custom_large_thresh
         .map(|_| create_signer_with_weight(10_u128))
         .collect::<Vec<_>>();
     let (gateway_config_pda, bump) = GatewayConfig::pda();
-    let auth_weighted =
-        fixture.init_auth_weighted_module_custom_threshold(&initial_signers, threshold.into());
+    let auth_weighted = fixture.init_auth_weighted_module_custom_threshold(
+        &initial_signers,
+        threshold.into(),
+        NONCE,
+    );
     let gateway_config = GatewayConfig::new(
         bump,
         auth_weighted,
@@ -209,7 +217,7 @@ async fn test_reverts_on_invalid_gateway_bump() {
     ];
     let (gateway_config_pda, bump) = GatewayConfig::pda();
     let invalid_bump = bump.overflowing_add(1).0;
-    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
+    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers, NONCE);
     let gateway_config = GatewayConfig::new(
         invalid_bump,
         auth_weighted,
@@ -247,7 +255,7 @@ async fn test_reverts_on_invalid_gateway_pda_pubkey() {
         create_signer_with_weight(4_u128),
     ];
     let (_gateway_config_pda, bump) = GatewayConfig::pda();
-    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
+    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers, NONCE);
     let gateway_config = GatewayConfig::new(
         bump,
         auth_weighted,
@@ -284,7 +292,7 @@ async fn test_reverts_on_already_initialized_gateway_pda() {
         create_signer_with_weight(10_u128),
         create_signer_with_weight(4_u128),
     ];
-    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers);
+    let auth_weighted = fixture.init_auth_weighted_module(&initial_signers, NONCE);
     let gateway_config_pda = fixture
         .initialize_gateway_config_account(auth_weighted.clone(), Pubkey::new_unique())
         .await;

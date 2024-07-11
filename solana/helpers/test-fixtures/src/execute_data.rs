@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use axelar_rkyv_encoding::types::{
-    ArchivedExecuteData, ExecuteData, Payload, VerifierSet, WeightedSignature,
+    ArchivedExecuteData, ExecuteData, Payload, VerifierSet, WeightedSigner,
 };
 use axelar_rkyv_encoding::{encode, hash_payload};
 
@@ -11,6 +11,7 @@ pub fn prepare_execute_data(
     payload: Payload,
     test_signers: &[TestSigner],
     threshold: u128,
+    nonce: u64,
     domain_separator: &[u8; 32],
 ) -> (Vec<u8>, VerifierSet) {
     // Setup
@@ -21,7 +22,7 @@ pub fn prepare_execute_data(
         signing_keys.insert(signer.public_key, &signer.secret_key);
     }
 
-    let verifier_set = VerifierSet::new(0u64, signers, threshold.into());
+    let verifier_set = VerifierSet::new(nonce, signers, threshold.into());
 
     let payload_hash = hash_payload(domain_separator, &verifier_set, &payload);
 
@@ -31,19 +32,18 @@ pub fn prepare_execute_data(
         .map(|(pubkey, signing_key)| {
             let signature = signing_key.sign(&payload_hash);
             let weight = verifier_set.signers().get(pubkey).unwrap();
-            WeightedSignature::new(*pubkey, signature, *weight)
+            (*pubkey, WeightedSigner::new(Some(signature), *weight))
         })
         .collect();
 
     // Do as the 'multisig_prover' contract would
-    let execute_data_bytes = encode::<0>(&verifier_set, weighted_signatures, payload).unwrap();
-
-    // Confidence check: Proof is valid
-    let archived_execute_data = ArchivedExecuteData::from_bytes(&execute_data_bytes).unwrap();
-    archived_execute_data
-        .proof()
-        .validate_for_message(&payload_hash)
-        .expect("valid proof");
+    let execute_data_bytes = encode::<0>(
+        verifier_set.created_at(),
+        *verifier_set.threshold(),
+        weighted_signatures,
+        payload,
+    )
+    .unwrap();
 
     // Confidence check: ExecuteData can be deserialized
     ExecuteData::from_bytes(&execute_data_bytes).expect("valid deserialization");

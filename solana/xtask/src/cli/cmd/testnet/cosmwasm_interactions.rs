@@ -87,7 +87,8 @@ pub(crate) async fn wire_cosmwasm_contracts_without_destination_msig_prover(
         message.payload_hash,
     );
     let execute_data = axelar_rkyv_encoding::encode::<0>(
-        &verifier_set,
+        verifier_set.created_at(),
+        *verifier_set.threshold(),
         signatures,
         axelar_rkyv_encoding::types::Payload::new_messages(vec![message.clone()]),
     )?;

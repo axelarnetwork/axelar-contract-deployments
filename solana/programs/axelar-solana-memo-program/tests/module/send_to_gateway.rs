@@ -15,6 +15,7 @@ use crate::program_test;
 #[tokio::test]
 async fn test_succesfully_send_to_gateway() {
     // Setup
+    let nonce = 42;
     let mut fixture = TestFixture::new(program_test()).await;
     let signers = vec![
         create_signer_with_weight(10_u128),
@@ -22,7 +23,7 @@ async fn test_succesfully_send_to_gateway() {
     ];
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
+            fixture.init_auth_weighted_module(&signers, nonce),
             Pubkey::new_unique(),
         )
         .await;

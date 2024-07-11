@@ -1,11 +1,10 @@
 use axelar_message_primitives::command::U256;
-use axelar_rkyv_encoding::types::{ArchivedExecuteData, Payload, VerifierSet};
+use axelar_rkyv_encoding::types::{ArchivedExecuteData, ExecuteData, Payload};
 use gmp_gateway::state::GatewayApprovedCommand;
 use itertools::Itertools;
 use solana_program_test::tokio;
 use solana_sdk::pubkey::Pubkey;
 use test_fixtures::axelar_message::new_signer_set;
-use test_fixtures::test_signer::TestSigner;
 
 use crate::{
     create_signer_set, get_approved_command, get_gateway_events,
@@ -14,11 +13,11 @@ use crate::{
     setup_initialised_gateway, InitialisedGatewayMetadata,
 };
 
-#[ignore]
 #[tokio::test]
-async fn successfully_process_execute_when_there_are_no_commands() {
+async fn successfully_approves_commands_when_there_are_no_commands() {
     // Setup
     let InitialisedGatewayMetadata {
+        nonce,
         mut fixture,
         quorum,
         signers,
@@ -33,6 +32,7 @@ async fn successfully_process_execute_when_there_are_no_commands() {
             messages,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -54,28 +54,41 @@ async fn successfully_process_execute_when_there_are_no_commands() {
     assert!(tx.result.is_ok())
 }
 
-/// successfully process execute when there are 3 validate message
+/// successfully approves messages when there are 3 validate message
 /// commands - emits message approved events
-#[ignore]
 #[tokio::test]
-async fn successfully_process_execute_when_there_are_3_validate_message_commands() {
+async fn successfully_approves_commands_when_there_are_3_validate_message_commands() {
     // Setup
     let InitialisedGatewayMetadata {
         mut fixture,
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 42, 33], None).await;
 
     let (payload, commands) = make_payload_and_commands(3);
     let domain_separator = fixture.domain_separator;
+    // let gateway_execute_data_raw = prepare_questionable_execute_data(
+    //     &payload,
+    //     &payload,
+    //     &signers,
+    //     &signers,
+    //     quorum,
+    //     &fixture.domain_separator,
+    //     nonce,
+    // );
+    // let execute_data_pda = fixture
+    //     .init_execute_data_with_custom_data(&gateway_root_pda,
+    // &gateway_execute_data_raw)     .await;
     let (execute_data_pda, _) = fixture
         .init_execute_data(
             &gateway_root_pda,
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -115,7 +128,6 @@ async fn successfully_process_execute_when_there_are_3_validate_message_commands
 
 /// calling the same execute flow multiple times with the same execute data will
 /// not "approve" the command twice.
-#[ignore]
 #[tokio::test]
 async fn successfully_consumes_repeating_commands_idempotency_same_batch() {
     // Setup
@@ -124,6 +136,7 @@ async fn successfully_consumes_repeating_commands_idempotency_same_batch() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 42, 33], None).await;
     let (payload, commands) = make_payload_and_commands(1);
@@ -134,6 +147,7 @@ async fn successfully_consumes_repeating_commands_idempotency_same_batch() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -168,7 +182,6 @@ async fn successfully_consumes_repeating_commands_idempotency_same_batch() {
 
 /// if a given command is a part of another batch and it's been executed, it
 /// should be ignored in subsequent batches if its present in those.
-#[ignore]
 #[tokio::test]
 async fn successfully_consumes_repeating_commands_idempotency_unique_batches() {
     // Setup
@@ -177,6 +190,7 @@ async fn successfully_consumes_repeating_commands_idempotency_unique_batches() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 42, 33], None).await;
     let domain_separator = fixture.domain_separator;
@@ -188,6 +202,7 @@ async fn successfully_consumes_repeating_commands_idempotency_unique_batches() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -216,6 +231,7 @@ async fn successfully_consumes_repeating_commands_idempotency_unique_batches() {
             new_payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -245,7 +261,6 @@ async fn successfully_consumes_repeating_commands_idempotency_unique_batches() {
 }
 
 /// fail if if root config has no signers
-#[ignore]
 #[tokio::test]
 async fn fail_if_gateway_config_has_no_signers_signed_by_unknown_signer_set() {
     // Setup
@@ -253,6 +268,7 @@ async fn fail_if_gateway_config_has_no_signers_signed_by_unknown_signer_set() {
         mut fixture,
         quorum,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[], None).await;
     let (payload, commands) = make_payload_and_commands(1);
@@ -266,6 +282,7 @@ async fn fail_if_gateway_config_has_no_signers_signed_by_unknown_signer_set() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -294,7 +311,6 @@ async fn fail_if_gateway_config_has_no_signers_signed_by_unknown_signer_set() {
 
 /// fail if if root config has no signers and there are no signatures in the
 /// execute data
-#[ignore]
 #[tokio::test]
 async fn fail_if_gateway_config_has_no_signers_signed_by_empty_set() {
     // Setup
@@ -303,6 +319,7 @@ async fn fail_if_gateway_config_has_no_signers_signed_by_empty_set() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[], None).await;
     let (payload, commands) = make_payload_and_commands(1);
@@ -313,12 +330,16 @@ async fn fail_if_gateway_config_has_no_signers_signed_by_empty_set() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
 
     let archived_execute_data = ArchivedExecuteData::from_bytes(&raw_execute_data).unwrap();
-    assert!(archived_execute_data.proof().signatures().is_empty());
+    assert!(archived_execute_data
+        .proof()
+        .signers_with_signatures()
+        .is_empty());
 
     let gateway_approved_command_pdas = fixture
         .init_pending_gateway_commands(&gateway_root_pda, &commands)
@@ -340,11 +361,10 @@ async fn fail_if_gateway_config_has_no_signers_signed_by_empty_set() {
         .unwrap()
         .log_messages
         .into_iter()
-        .any(|msg| { msg.contains("ProofError(LowSignaturesWeight)") }));
+        .any(|msg| { msg.contains("MessageValidationError(InsufficientWeight)") }));
 }
 
 /// fail if root config not initialised
-#[ignore]
 #[tokio::test]
 async fn fail_if_root_config_not_initialised() {
     // Setup
@@ -353,6 +373,7 @@ async fn fail_if_root_config_not_initialised() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 22], None).await;
     let (payload, commands) = make_payload_and_commands(0);
@@ -363,6 +384,7 @@ async fn fail_if_root_config_not_initialised() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -391,7 +413,6 @@ async fn fail_if_root_config_not_initialised() {
 }
 
 /// fail if execute data not initialized
-#[ignore]
 #[tokio::test]
 async fn fail_if_execute_data_not_initialised() {
     // Setup
@@ -400,6 +421,7 @@ async fn fail_if_execute_data_not_initialised() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 22], None).await;
     let (payload, commands) = make_payload_and_commands(0);
@@ -410,6 +432,7 @@ async fn fail_if_execute_data_not_initialised() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -438,7 +461,6 @@ async fn fail_if_execute_data_not_initialised() {
 }
 
 /// fail if invalid account for gateway passed (e.g. initialized command)
-#[ignore]
 #[tokio::test]
 async fn fail_if_invalid_account_for_gateway() {
     // Setup
@@ -447,6 +469,7 @@ async fn fail_if_invalid_account_for_gateway() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 22], None).await;
     let (payload, commands) = make_payload_and_commands(3);
@@ -457,6 +480,7 @@ async fn fail_if_invalid_account_for_gateway() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -484,7 +508,6 @@ async fn fail_if_invalid_account_for_gateway() {
 }
 
 /// fail if invalid account for execute data passed (e.g. initialized command)
-#[ignore]
 #[tokio::test]
 async fn fail_if_invalid_account_for_execute_data() {
     // Setup
@@ -493,6 +516,7 @@ async fn fail_if_invalid_account_for_execute_data() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 22], None).await;
     let (payload, commands) = make_payload_and_commands(1);
@@ -503,6 +527,7 @@ async fn fail_if_invalid_account_for_execute_data() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -526,11 +551,10 @@ async fn fail_if_invalid_account_for_execute_data() {
         .unwrap()
         .log_messages
         .into_iter()
-        .any(|msg| { msg.contains("Failed to serialize or deserialize account data") }));
+        .any(|msg| { msg.contains("Failed to deserialize execute_data bytes") }));
 }
 
 /// fail if epoch for signers was not found (inside `validate_proof`)
-#[ignore]
 #[tokio::test]
 async fn fail_if_epoch_for_signers_was_not_found() {
     // Setup
@@ -540,6 +564,7 @@ async fn fail_if_epoch_for_signers_was_not_found() {
         mut fixture,
         quorum,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 22], None).await;
     let (payload, commands) = make_payload_and_commands(1);
@@ -550,6 +575,7 @@ async fn fail_if_epoch_for_signers_was_not_found() {
             payload,
             &unregistered_signer_set_signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -578,19 +604,21 @@ async fn fail_if_epoch_for_signers_was_not_found() {
 
 /// fail if signer set epoch is older than 16 epochs away (inside
 /// `validate_proof`)
-#[ignore]
 #[tokio::test]
+#[ignore = "rotate signers not yet supported"]
 async fn fail_if_signer_set_epoch_is_older_than_16() {
     // Setup
     let InitialisedGatewayMetadata {
         mut fixture,
         signers: initial_signers,
         gateway_root_pda,
+        nonce,
+        quorum,
         ..
     } = setup_initialised_gateway(&[11, 22], None).await;
 
-    let initial_signer_set: [(VerifierSet, Vec<TestSigner>); 1] = [(
-        new_signer_set(&initial_signers, 0, 33),
+    let initial_signer_set = [(
+        new_signer_set(&initial_signers, nonce, quorum),
         initial_signers.clone(),
     )];
 
@@ -603,11 +631,13 @@ async fn fail_if_signer_set_epoch_is_older_than_16() {
     // to register the next latest signer set. We iterate over all signer sets,
     // calling "rotate signer" with the last known signer set to register
     // the next latest signer set.
-    for (idx, ((_, current_signer_set_signers), (new_signer_set, _))) in
+    dbg!("rotating singers");
+    for (idx, ((current_verifier_set, current_signer_set_signers), (new_signer_set, _))) in
         (initial_signer_set.iter().chain(new_signer_sets.iter()))
             .tuple_windows::<(_, _)>()
             .enumerate()
     {
+        dbg!(&idx);
         let new_epoch = U256::from((idx + 1) as u128);
         let root_pda_data = fixture
             .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
@@ -619,9 +649,11 @@ async fn fail_if_signer_set_epoch_is_older_than_16() {
                 &gateway_root_pda,
                 new_signer_set.clone(),
                 current_signer_set_signers,
+                current_verifier_set.created_at(),
             )
             .await;
     }
+    dbg!("signers rotated");
 
     // Now we have registered 5 sets in total (1 initial signer set + 4 that we
     // generated). The "epoch" is an incremental counter. But the data structure
@@ -638,7 +670,7 @@ async fn fail_if_signer_set_epoch_is_older_than_16() {
     // Axelar->Solana direction.
     for (_, signer_set) in &new_signer_sets {
         fixture
-            .fully_approve_messages(&gateway_root_pda, make_messages(1), signer_set)
+            .fully_approve_messages(&gateway_root_pda, make_messages(1), signer_set, nonce)
             .await;
     }
 
@@ -648,6 +680,7 @@ async fn fail_if_signer_set_epoch_is_older_than_16() {
             &gateway_root_pda,
             make_messages(1),
             &initial_signers,
+            nonce,
         )
         .await;
 
@@ -663,7 +696,6 @@ async fn fail_if_signer_set_epoch_is_older_than_16() {
 
 /// fail if signatures cannot be recovered (inside `validate_signatures`
 /// ProofError::Secp256k1RecoverError)
-#[ignore]
 #[tokio::test]
 async fn fail_if_invalid_signatures() {
     // Setup
@@ -672,30 +704,51 @@ async fn fail_if_invalid_signatures() {
         quorum: threshold,
         gateway_root_pda,
         signers: registered_signers,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 22], None).await;
-
-    let unregistered_signers = make_signers(&[11, 22]);
-
     let (payload, commands) = make_payload_and_commands(1);
 
+    // Action
+    // -----
+    // We generate a new *valid* execute data bytes, then we malform a single
+    // signature to become unrecoverable
     let execute_data_raw_bytes = prepare_questionable_execute_data(
         &payload,
         &payload,
-        &unregistered_signers,
+        &registered_signers,
         &registered_signers,
         threshold,
         &fixture.domain_separator,
+        nonce,
     );
+    let mut ex = ExecuteData::from_bytes(&execute_data_raw_bytes).unwrap();
+    if let Some(x) = ex
+        .proof
+        .signers_with_signatures
+        .iter_mut()
+        .next()
+        .unwrap()
+        .1
+        .signature
+        .as_mut()
+    {
+        // flip all bits of every byte
+        for byte in x.as_mut() {
+            *byte = !*byte;
+        }
+    }
+    let execute_data_raw_bytes = ex
+        .to_bytes::<0>()
+        .expect("failed to serialize 'ExecuteData' struct");
+    // Signature malformation finished
+    // ------
     let execute_data_pda = fixture
         .init_execute_data_with_custom_data(&gateway_root_pda, &execute_data_raw_bytes)
         .await;
-
     let gateway_approved_command_pdas = fixture
         .init_pending_gateway_commands(&gateway_root_pda, &commands)
         .await;
-
-    // Action
     let tx = fixture
         .approve_pending_gateway_messages_with_metadata(
             &gateway_root_pda,
@@ -711,12 +764,10 @@ async fn fail_if_invalid_signatures() {
         .unwrap()
         .log_messages
         .into_iter()
-        .any(|msg| { msg.contains("ProofError(Secp256k1RecoverError(InvalidSignature))") }));
+        .any(|msg| { msg.contains("Failed to recover ECDSA signature") }));
 }
 
-/// fail if invalid signer set signed the command batch (inside
-/// `validate_signatures` ProofError::LowSignatureWeight)
-#[ignore]
+/// fail if invalid signer set signed the command batch
 #[tokio::test]
 async fn fail_if_invalid_signer_set_signed_command_batch() {
     // Setup
@@ -725,6 +776,7 @@ async fn fail_if_invalid_signer_set_signed_command_batch() {
         quorum,
         signers: registered_signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11], None).await;
 
@@ -738,6 +790,7 @@ async fn fail_if_invalid_signer_set_signed_command_batch() {
         &registered_signers,
         quorum,
         &fixture.domain_separator,
+        nonce,
     );
     let execute_data_pda = fixture
         .init_execute_data_with_custom_data(&gateway_root_pda, &gateway_execute_data_raw)
@@ -763,12 +816,11 @@ async fn fail_if_invalid_signer_set_signed_command_batch() {
         .unwrap()
         .log_messages
         .into_iter()
-        .any(|msg| { msg.contains("ProofError(LowSignaturesWeight)") }));
+        .any(|msg| { msg.contains("EpochNotFound") }));
 }
 
 /// fail if small subset signers signed the command batch (inside
 /// `validate_signatures` ProofError::LowSignatureWeight)
-#[ignore]
 #[tokio::test]
 async fn fail_if_subset_without_expected_weight_signed_batch() {
     // Setup
@@ -777,6 +829,7 @@ async fn fail_if_subset_without_expected_weight_signed_batch() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 22, 150], None).await;
 
@@ -791,6 +844,7 @@ async fn fail_if_subset_without_expected_weight_signed_batch() {
         &signers,
         quorum,
         &fixture.domain_separator,
+        nonce,
     );
     let execute_data_pda = fixture
         .init_execute_data_with_custom_data(&gateway_root_pda, &gateway_execute_data_raw)
@@ -815,12 +869,11 @@ async fn fail_if_subset_without_expected_weight_signed_batch() {
         .unwrap()
         .log_messages
         .into_iter()
-        .any(|msg| { msg.contains("ProofError(LowSignaturesWeight)") }));
+        .any(|msg| { msg.contains("MessageValidationError(InsufficientWeight)") }));
 }
 
 /// succeed if the larger (by weight) subset of signer set signed the command
 /// batch
-#[ignore]
 #[tokio::test]
 async fn succeed_if_majority_of_subset_without_expected_weight_signed_batch() {
     // Setup
@@ -829,6 +882,7 @@ async fn succeed_if_majority_of_subset_without_expected_weight_signed_batch() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 22, 150], Some(150)).await;
     let (payload, commands) = make_payload_and_commands(1);
@@ -840,6 +894,7 @@ async fn succeed_if_majority_of_subset_without_expected_weight_signed_batch() {
         &signers,
         quorum,
         &fixture.domain_separator,
+        nonce,
     );
     let execute_data_pda = fixture
         .init_execute_data_with_custom_data(&gateway_root_pda, &gateway_execute_data_raw)
@@ -860,7 +915,7 @@ async fn succeed_if_majority_of_subset_without_expected_weight_signed_batch() {
     // Assert
     assert!(tx.result.is_ok());
 }
-#[ignore]
+
 #[tokio::test]
 async fn fail_if_signed_commands_differ_from_the_execute_ones() {
     // Setup
@@ -869,18 +924,22 @@ async fn fail_if_signed_commands_differ_from_the_execute_ones() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 22, 150], None).await;
 
-    let messages = vec![make_message()];
+    let different_messages = vec![make_message()];
     let (payload, commands) = make_payload_and_commands(1);
     let gateway_execute_data_raw = prepare_questionable_execute_data(
-        &Payload::Messages(messages),
+        // messages that get included in the hash that gets signed are different from the messages
+        // that will be included in the execute data
+        &Payload::Messages(different_messages),
         &payload,
         &signers,
         &signers,
         quorum,
         &fixture.domain_separator,
+        nonce,
     );
     let execute_data_pda = fixture
         .init_execute_data_with_custom_data(&gateway_root_pda, &gateway_execute_data_raw)
@@ -905,10 +964,9 @@ async fn fail_if_signed_commands_differ_from_the_execute_ones() {
         .unwrap()
         .log_messages
         .into_iter()
-        .any(|msg| { msg.contains("ProofError(LowSignaturesWeight)") }));
+        .any(|msg| { msg.contains("MessageValidationError(InvalidSignature)") }));
 }
 
-#[ignore]
 #[tokio::test]
 async fn fail_if_quorum_differs_between_registered_and_signed() {
     // Setup
@@ -916,6 +974,7 @@ async fn fail_if_quorum_differs_between_registered_and_signed() {
         mut fixture,
         quorum,
         signers,
+        nonce,
         gateway_root_pda,
         ..
     } = setup_initialised_gateway(&[11, 22, 150], None).await;
@@ -928,6 +987,7 @@ async fn fail_if_quorum_differs_between_registered_and_signed() {
         &signers,
         quorum + 1, // quorum is different
         &fixture.domain_separator,
+        nonce,
     );
     let execute_data_pda = fixture
         .init_execute_data_with_custom_data(&gateway_root_pda, &gateway_execute_data_raw)
@@ -956,7 +1016,6 @@ async fn fail_if_quorum_differs_between_registered_and_signed() {
 }
 
 /// fail if command len does not match provided account iter len[
-#[ignore]
 #[tokio::test]
 async fn fail_if_command_len_does_not_match_provided_account_iter_len() {
     // Setup
@@ -965,6 +1024,7 @@ async fn fail_if_command_len_does_not_match_provided_account_iter_len() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 22, 150], None).await;
     let (payload, commands) = make_payload_and_commands(3);
@@ -975,6 +1035,7 @@ async fn fail_if_command_len_does_not_match_provided_account_iter_len() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -1000,7 +1061,6 @@ async fn fail_if_command_len_does_not_match_provided_account_iter_len() {
 }
 
 /// fail if command was not initialized
-#[ignore]
 #[tokio::test]
 async fn fail_if_command_was_not_initialised() {
     // Setup
@@ -1009,6 +1069,7 @@ async fn fail_if_command_was_not_initialised() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
     } = setup_initialised_gateway(&[11, 22, 150], None).await;
     let (payload, commands) = make_payload_and_commands(3);
@@ -1020,6 +1081,7 @@ async fn fail_if_command_was_not_initialised() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;

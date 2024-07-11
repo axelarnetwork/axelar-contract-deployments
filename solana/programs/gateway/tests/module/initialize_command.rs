@@ -15,6 +15,8 @@ use crate::{
     make_payload_and_commands, make_signers, program_test,
 };
 
+const NONCE: u64 = 44;
+
 #[ignore]
 #[tokio::test]
 async fn succesfully_initialize_validate_message_command() {
@@ -27,7 +29,7 @@ async fn succesfully_initialize_validate_message_command() {
     let quorum = 14;
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
+            fixture.init_auth_weighted_module(&signers, NONCE),
             Pubkey::new_unique(),
         )
         .await;
@@ -40,6 +42,7 @@ async fn succesfully_initialize_validate_message_command() {
             payload,
             &signers,
             quorum,
+            NONCE,
             &domain_separator,
         )
         .await;
@@ -83,7 +86,7 @@ async fn succesfully_initialize_rotate_signers_message() {
     let quorum = 14;
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
+            fixture.init_auth_weighted_module(&signers, NONCE),
             Pubkey::new_unique(),
         )
         .await;
@@ -101,6 +104,7 @@ async fn succesfully_initialize_rotate_signers_message() {
             payload,
             &signers,
             quorum,
+            NONCE,
             &domain_separator,
         )
         .await;
@@ -169,7 +173,7 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
     let quorum = 14;
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
+            fixture.init_auth_weighted_module(&signers, NONCE),
             Pubkey::new_unique(),
         )
         .await;
@@ -181,11 +185,12 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
             payload_1,
             &signers,
             quorum,
+            NONCE,
             &domain_separator,
         )
         .await;
     let (payload_2, commands_2) = make_payload_and_commands(1);
-    prepare_execute_data(payload_2, &signers, quorum, &domain_separator);
+    prepare_execute_data(payload_2, &signers, quorum, NONCE, &domain_separator); // todo remove this?
 
     // Action
     let (pdas, ixs): (Vec<_>, Vec<_>) =
@@ -226,7 +231,7 @@ async fn fail_when_validate_message_already_initialized() {
     let quorum = 14;
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
+            fixture.init_auth_weighted_module(&signers, NONCE),
             Pubkey::new_unique(),
         )
         .await;
@@ -238,6 +243,7 @@ async fn fail_when_validate_message_already_initialized() {
             payload,
             &signers,
             quorum,
+            NONCE,
             &domain_separator,
         )
         .await;
@@ -276,7 +282,7 @@ async fn fail_when_rotate_signers_is_already_initialized() {
     let quorum = 14;
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
+            fixture.init_auth_weighted_module(&signers, NONCE),
             Pubkey::new_unique(),
         )
         .await;
@@ -290,6 +296,7 @@ async fn fail_when_rotate_signers_is_already_initialized() {
             payload,
             &signers,
             quorum,
+            NONCE,
             &domain_separator,
         )
         .await;
@@ -335,7 +342,7 @@ async fn fail_when_rotate_signers_has_unchanged_block_height() {
     let quorum = 14;
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
+            fixture.init_auth_weighted_module(&signers, NONCE),
             Pubkey::new_unique(),
         )
         .await;
@@ -360,6 +367,7 @@ async fn fail_when_rotate_signers_has_unchanged_block_height() {
             payload_a,
             &signers,
             quorum,
+            NONCE,
             &domain_separator,
         )
         .await;
@@ -369,6 +377,7 @@ async fn fail_when_rotate_signers_has_unchanged_block_height() {
             payload_b,
             &signers,
             quorum,
+            NONCE,
             &domain_separator,
         )
         .await;

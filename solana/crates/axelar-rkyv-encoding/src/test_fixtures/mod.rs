@@ -6,7 +6,10 @@ use bnum::types::U256 as BnumU256;
 use rand::distributions::Alphanumeric;
 use rand::rngs::OsRng;
 use rand::Rng;
-use signing_key::{random_keypair, TestSigningKey};
+pub use signing_key::{
+    random_ecdsa_keypair, random_ed25519_keypair, random_keypair, TestSigningKey,
+};
+pub use {ed25519_dalek, libsecp256k1};
 
 use crate::hash_payload;
 use crate::types::*;
@@ -93,15 +96,15 @@ pub fn random_valid_proof_and_verifier_set(message: &[u8]) -> (Proof, VerifierSe
     let mut threshold = BnumU256::ZERO;
     let mut signatures_by_signer = BTreeMap::new();
     for _ in 0..num_signatures {
-        let weighted_signature = random_valid_weighted_signature(message);
+        let (pubkey, weighted_signature) = random_valid_weighted_signature(message);
         threshold = threshold
             .checked_add(weighted_signature.weight.into())
             .expect("no overflow");
-        signatures_by_signer.insert(weighted_signature.pubkey, weighted_signature);
+        signatures_by_signer.insert(pubkey, weighted_signature);
     }
 
     // Build internal signatures/signer values, ordered by public key
-    let signatures = signatures_by_signer.values().cloned().collect();
+    let signatures = signatures_by_signer.clone();
     let verifier_set_signers = signatures_by_signer
         .iter()
         .map(|(pubkey, weighted_signature)| (*pubkey, weighted_signature.weight))
@@ -112,14 +115,17 @@ pub fn random_valid_proof_and_verifier_set(message: &[u8]) -> (Proof, VerifierSe
 
     // Confidence checks
     assert_eq!(verifier_set.threshold, proof.threshold);
-    assert_eq!(verifier_set.signers.len(), proof.signatures.len());
+    assert_eq!(
+        verifier_set.signers.len(),
+        proof.signers_with_signatures.len()
+    );
     assert_eq!(verifier_set.created_at, proof.nonce);
 
-    let proof_pubkeys = proof.signatures.iter().map(|s| s.pubkey);
+    let proof_pubkeys = proof.signers_with_signatures.keys();
     let verifier_set_pubkeys = verifier_set.signers.keys();
     proof_pubkeys
         .zip(verifier_set_pubkeys)
-        .for_each(|(a, &b)| assert_eq!(a, b));
+        .for_each(|(a, b)| assert_eq!(a, b));
 
     (proof, verifier_set)
 }
@@ -131,11 +137,11 @@ pub fn random_valid_proof_message_and_verifier_set<const MESSAGE_LENGTH: usize>(
     (proof, message, verifier_set)
 }
 
-pub fn random_valid_weighted_signature(message: &[u8]) -> WeightedSignature {
+pub fn random_valid_weighted_signature(message: &[u8]) -> (PublicKey, WeightedSigner) {
     let weight = random_weight();
     let (signing_key, pubkey) = signing_key::random_keypair();
     let signature = signing_key.sign(message);
-    WeightedSignature::new(pubkey, signature, weight)
+    (pubkey, WeightedSigner::new(Some(signature), weight))
 }
 
 /// Generates a weight between 0 and 255.
@@ -190,12 +196,15 @@ pub fn random_valid_execute_data_and_verifier_set_for_payload(
     let (verifier_set, signing_keys) = random_verifier_set_and_signing_keys();
     let original_payload_hash = hash_payload(domain_separator, &verifier_set, &payload);
 
-    let weighted_signatures: Vec<_> = signing_keys
+    let weighted_signatures = signing_keys
         .iter()
         .map(|(pubkey, signing_key)| {
             let signature = signing_key.sign(&original_payload_hash);
             let weight = verifier_set.signers.get(pubkey).unwrap();
-            WeightedSignature::new(*pubkey, signature, *weight)
+            (
+                *pubkey,
+                WeightedSigner::new(Some(signature), *weight),
+            )
         })
         .collect();
 
@@ -225,9 +234,17 @@ pub fn random_execute_data_and_verifier_set_for_payload_with_invalid_signatures(
         random_valid_execute_data_and_verifier_set_for_payload(domain_separator, payload);
 
     // Flip a bit in the first byte of the signature
-    let signature_bytes: &mut [u8] = match &mut execute_data.proof.signatures[0].signature {
-        Signature::EcdsaRecoverable(bytes) => bytes.as_mut_slice(),
-        Signature::Ed25519(bytes) => bytes.as_mut_slice(),
+    let signature_bytes: &mut [u8] = match &mut execute_data
+        .proof
+        .signers_with_signatures
+        .values_mut()
+        .next()
+        .unwrap()
+        .signature
+    {
+        Some(Signature::EcdsaRecoverable(bytes)) => bytes.as_mut_slice(),
+        Some(Signature::Ed25519(bytes)) => bytes.as_mut_slice(),
+        _ => unimplemented!("signature not attaced"),
     };
     signature_bytes[0] ^= 1;
 

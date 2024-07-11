@@ -1,23 +1,32 @@
+use std::collections::BTreeMap;
+
 use rkyv::bytecheck::{self, CheckBytes};
+use rkyv::collections::ArchivedBTreeMap;
 use rkyv::{Archive, Deserialize, Serialize};
 
-use super::ArchivedWeightedSignature;
+use super::{ArchivedPublicKey, Ed25519Pubkey, PublicKey, Secp256k1Pubkey};
 use crate::hasher::Hasher;
-use crate::types::{SignatureVerificationError, WeightedSignature, U256};
+use crate::types::{
+    ArchivedWeightedSigner, EcdsaRecoverableSignature, Ed25519Signature, WeightedSigner, U256,
+};
 
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct Proof {
-    pub(crate) signatures: Vec<WeightedSignature>,
-    pub(crate) threshold: U256,
-    pub(crate) nonce: u64,
+    pub signers_with_signatures: BTreeMap<PublicKey, WeightedSigner>,
+    pub threshold: U256,
+    pub nonce: u64,
 }
 
 impl Proof {
-    pub fn new(signatures: Vec<WeightedSignature>, threshold: U256, nonce: u64) -> Self {
+    pub fn new(
+        signers_with_signatures: BTreeMap<PublicKey, WeightedSigner>,
+        threshold: U256,
+        nonce: u64,
+    ) -> Self {
         Self {
-            signatures,
+            signers_with_signatures,
             threshold,
             nonce,
         }
@@ -37,9 +46,9 @@ impl ArchivedProof {
         visitor: &mut impl crate::visitor::ArchivedVisitor,
     ) {
         // Follow `ArchivedVisitor::visit_verifier_set` exact steps
-        visitor.prefix_length(self.signatures.len());
-        for weighted_signature in self.signatures.iter() {
-            visitor.visit_public_key(&weighted_signature.pubkey);
+        visitor.prefix_length(self.signers_with_signatures.len());
+        for (pubkey, weighted_signature) in self.signers_with_signatures.iter() {
+            visitor.visit_public_key(pubkey);
             visitor.visit_u256(&weighted_signature.weight);
         }
         visitor.visit_u256(&self.threshold);
@@ -47,37 +56,80 @@ impl ArchivedProof {
     }
 
     pub fn validate_for_message(&self, message: &[u8; 32]) -> Result<(), MessageValidationError> {
+        fn verify_ecdsa(
+            pubkey: &Secp256k1Pubkey,
+            signature: &EcdsaRecoverableSignature,
+            message: &[u8; 32],
+        ) -> bool {
+            ArchivedWeightedSigner::verify_ecdsa(signature, pubkey, message).is_ok()
+        }
+
+        fn verify_eddsa(
+            pubkey: &Ed25519Pubkey,
+            signature: &Ed25519Signature,
+            message: &[u8; 32],
+        ) -> bool {
+            ArchivedWeightedSigner::verify_ed25519(signature, pubkey, message).is_ok()
+        }
+        Self::validate_for_message_custom(self, message, verify_ecdsa, verify_eddsa)
+    }
+
+    pub fn validate_for_message_custom<F, G>(
+        &self,
+        message: &[u8; 32],
+        verify_ecdsa_signature: F,
+        verify_eddsa_signature: G,
+    ) -> Result<(), MessageValidationError>
+    where
+        F: Fn(&Secp256k1Pubkey, &EcdsaRecoverableSignature, &[u8; 32]) -> bool,
+        G: Fn(&Ed25519Pubkey, &Ed25519Signature, &[u8; 32]) -> bool,
+    {
+        use crate::types::ArchivedSignature;
         let threshold: bnum::types::U256 = (&self.threshold).into();
         let mut total_weight = bnum::types::U256::ZERO;
-        dbg!(self.signatures.len());
-        for signature in self.signatures.iter() {
-            eprintln!("DEBUG: >> Verifying signature");
-            signature.verify(message)?;
-            eprintln!("DEBUG: >> Signature is valid");
-            let signer_weight = &signature.weight;
+        for (pubkey, signer) in self.signers_with_signatures.iter() {
+            // Signature validation is deferred to the caller.
+            let valid_signature: bool = match (&signer.signature.as_ref(), &pubkey) {
+                (
+                    Some(ArchivedSignature::EcdsaRecoverable(sig)),
+                    ArchivedPublicKey::Secp256k1(pubkey),
+                ) => verify_ecdsa_signature(pubkey, sig, message),
+                (Some(ArchivedSignature::Ed25519(sig)), ArchivedPublicKey::Ed25519(pubkey)) => {
+                    verify_eddsa_signature(pubkey, sig, message)
+                }
+                // if the signature is not present the we just skip it
+                (None, _) => continue,
+                // Provided ed25519 + ecdsa combo, which is invalid state
+                _ => unreachable!(),
+            };
+            if !valid_signature {
+                return Err(MessageValidationError::InvalidSignature);
+            }
+
+            // Accumulate signer weight.
+            let signer_weight = &signer.weight;
             total_weight = total_weight
                 .checked_add(signer_weight.into())
                 .ok_or(MessageValidationError::ArithmeticOverflow)?;
-            eprintln!("DEBUG: >> Accumulating weight");
-
+            // Return as soon as threshold is hit.
             if total_weight >= threshold {
-                eprintln!("DEBUG: >> Signer accumulated weight is sufficient. The proof is valid");
                 return Ok(());
             }
         }
-        eprintln!("DEBUG: >> Insufficient weight. Proof is invalid.");
         Err(MessageValidationError::InsufficientWeight)
     }
 
-    pub fn signatures(&self) -> &[ArchivedWeightedSignature] {
-        &self.signatures
+    pub fn signers_with_signatures(
+        &self,
+    ) -> &ArchivedBTreeMap<ArchivedPublicKey, ArchivedWeightedSigner> {
+        &self.signers_with_signatures
     }
 }
 
 #[derive(thiserror::Error, Debug)]
 pub enum MessageValidationError {
-    #[error(transparent)]
-    InvalidSignature(#[from] SignatureVerificationError),
+    #[error("Signature verification failed")]
+    InvalidSignature,
     #[error("Arithmetic overflow when summing weights")]
     ArithmeticOverflow,
     #[error("Insufficient signer weight")]
@@ -91,12 +143,31 @@ mod tests {
         random_valid_proof_and_message, random_valid_proof_message_and_verifier_set,
     };
 
+    fn verify_ecdsa(
+        pubkey: &Secp256k1Pubkey,
+        signature: &EcdsaRecoverableSignature,
+        message: &[u8; 32],
+    ) -> bool {
+        ArchivedWeightedSigner::verify_ecdsa(signature, pubkey, message).is_ok()
+    }
+
+    fn verify_eddsa(
+        pubkey: &Ed25519Pubkey,
+        signature: &Ed25519Signature,
+        message: &[u8; 32],
+    ) -> bool {
+        ArchivedWeightedSigner::verify_ed25519(signature, pubkey, message).is_ok()
+    }
+
     #[test]
     fn valid_proof() {
         let (proof, message) = random_valid_proof_and_message::<32>();
         let serialized = rkyv::to_bytes::<_, 1024>(&proof).unwrap();
         let proof = unsafe { rkyv::archived_root::<Proof>(&serialized) };
-        assert!(proof.validate_for_message(&message).is_ok())
+
+        assert!(proof
+            .validate_for_message_custom(&message, verify_ecdsa, verify_eddsa)
+            .is_ok())
     }
 
     #[test]
@@ -114,7 +185,9 @@ mod tests {
         let proof = unsafe { rkyv::archived_root::<Proof>(&serialized) };
 
         assert!(matches!(
-            proof.validate_for_message(&message).unwrap_err(),
+            proof
+                .validate_for_message_custom(&message, verify_ecdsa, verify_eddsa)
+                .unwrap_err(),
             MessageValidationError::InsufficientWeight
         ))
     }
@@ -129,8 +202,10 @@ mod tests {
         message[0] ^= 1;
 
         assert!(matches!(
-            proof.validate_for_message(&message).unwrap_err(),
-            MessageValidationError::InvalidSignature(_)
+            proof
+                .validate_for_message_custom(&message, verify_ecdsa, verify_eddsa)
+                .unwrap_err(),
+            MessageValidationError::InvalidSignature
         ))
     }
 
@@ -141,7 +216,9 @@ mod tests {
         let serialized = rkyv::to_bytes::<_, 1024>(&proof).unwrap();
         let proof = unsafe { rkyv::archived_root::<Proof>(&serialized) };
 
-        assert!(proof.validate_for_message(&message).is_ok()); // Confidence check
+        assert!(proof
+            .validate_for_message_custom(&message, verify_ecdsa, verify_eddsa)
+            .is_ok()); // Confidence check
         assert_eq!(proof.signer_set_hash(), verifier_set.hash());
     }
 }

@@ -16,10 +16,10 @@ use crate::program_test;
 #[case(EncodingScheme::Borsh)]
 #[case(EncodingScheme::AbiEncoding)]
 #[tokio::test]
-#[ignore = "broken"]
 async fn test_successful_validate_message(#[case] encoding_scheme: EncodingScheme) {
     // Setup
-    let (mut solana_chain, gateway_root_pda, solana_signers, counter_pda) = solana_setup().await;
+    let (mut solana_chain, gateway_root_pda, solana_signers, counter_pda, nonce) =
+        solana_setup().await;
 
     // Test scoped constants
     let random_account_used_by_ix = Keypair::new();
@@ -47,7 +47,7 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
     let messages = vec![message_to_execute.clone(), other_message_in_the_batch];
     // Action: "Relayer" calls Gateway to approve messages
     let (gateway_approved_command_pdas, _, _) = solana_chain
-        .fully_approve_messages(&gateway_root_pda, messages.clone(), &solana_signers)
+        .fully_approve_messages(&gateway_root_pda, messages.clone(), &solana_signers, nonce)
         .await;
 
     let approve_message_command = OwnedCommand::ApproveMessage(message_to_execute);
@@ -106,7 +106,9 @@ async fn solana_setup() -> (
     solana_sdk::pubkey::Pubkey,
     Vec<TestSigner>,
     solana_sdk::pubkey::Pubkey,
+    u64,
 ) {
+    let nonce = 42;
     let mut fixture = TestFixture::new(program_test()).await;
     let signers = vec![
         create_signer_with_weight(10_u128),
@@ -114,7 +116,7 @@ async fn solana_setup() -> (
     ];
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
+            fixture.init_auth_weighted_module(&signers, nonce),
             Pubkey::new_unique(),
         )
         .await;
@@ -129,5 +131,5 @@ async fn solana_setup() -> (
         .unwrap()])
         .await;
 
-    (fixture, gateway_root_pda, signers, counter_pda)
+    (fixture, gateway_root_pda, signers, counter_pda, nonce)
 }

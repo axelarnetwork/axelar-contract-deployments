@@ -1,10 +1,10 @@
 use crate::types::{
     ArchivedCrossChainId, ArchivedExecuteData, ArchivedMessage, ArchivedPayload, ArchivedProof,
     ArchivedPublicKey, ArchivedSignature, ArchivedU256, ArchivedVerifierSet,
-    ArchivedWeightedSignature, CrossChainId, Message, Payload, PublicKey, VerifierSet, U256,
+    ArchivedWeightedSigner, CrossChainId, Message, Payload, PublicKey, VerifierSet, U256,
 };
 #[cfg(test)]
-use crate::types::{ExecuteData, Proof, Signature, WeightedSignature};
+use crate::types::{ExecuteData, Proof, Signature, WeightedSigner};
 
 const CHAIN_NAME_DELIMITER: &[u8] = b"-";
 
@@ -19,28 +19,26 @@ pub(super) trait Visitor {
     #[cfg(test)]
     fn visit_proof(&mut self, proof: &Proof) {
         let Proof {
-            signatures,
+            signers_with_signatures,
             threshold,
             nonce,
         } = proof;
 
-        self.prefix_length(signatures.len());
-        for signature in signatures {
-            self.visit_weighted_signature(signature);
+        self.prefix_length(signers_with_signatures.len());
+        for signature in signers_with_signatures {
+            self.visit_weighted_signature(signature.0, signature.1);
         }
         self.visit_u256(threshold);
         self.visit_u64(nonce);
     }
 
     #[cfg(test)]
-    fn visit_weighted_signature(&mut self, signature: &WeightedSignature) {
-        let WeightedSignature {
-            pubkey,
-            signature,
-            weight,
-        } = signature;
+    fn visit_weighted_signature(&mut self, pubkey: &PublicKey, signature: &WeightedSigner) {
+        let WeightedSigner { signature, weight } = signature;
         self.visit_public_key(pubkey);
-        self.visit_signature(signature);
+        if let Some(signature) = signature {
+            self.visit_signature(signature);
+        }
         self.visit_u256(weight);
     }
 
@@ -101,8 +99,8 @@ pub(super) trait Visitor {
 
     fn visit_public_key(&mut self, public_key: &PublicKey) {
         match public_key {
-            PublicKey::Ecdsa(pubkey_bytes) => {
-                self.tag(b"ecdsa");
+            PublicKey::Secp256k1(pubkey_bytes) => {
+                self.tag(b"secp256k1");
                 self.visit_bytes(pubkey_bytes.as_slice())
             }
             PublicKey::Ed25519(pubkey_bytes) => {
@@ -143,26 +141,29 @@ pub(super) trait ArchivedVisitor {
 
     fn visit_proof(&mut self, proof: &ArchivedProof) {
         let ArchivedProof {
-            signatures,
+            signers_with_signatures,
             threshold,
             nonce,
         } = proof;
-        self.prefix_length(signatures.len());
-        for signature in signatures.iter() {
-            self.visit_weighted_signature(signature);
+        self.prefix_length(signers_with_signatures.len());
+        for (pubkey, signature) in signers_with_signatures.iter() {
+            self.visit_weighted_signature(pubkey, signature);
         }
         self.visit_u256(threshold);
         self.visit_u64(nonce);
     }
 
-    fn visit_weighted_signature(&mut self, signature: &ArchivedWeightedSignature) {
-        let ArchivedWeightedSignature {
-            pubkey,
-            signature,
-            weight,
-        } = signature;
-        self.visit_public_key(pubkey);
-        self.visit_signature(signature);
+    fn visit_weighted_signature(
+        &mut self,
+        public_key: &ArchivedPublicKey,
+        signature: &ArchivedWeightedSigner,
+    ) {
+        let ArchivedWeightedSigner { signature, weight } = signature;
+        self.visit_public_key(public_key);
+
+        if let Some(signature) = signature.as_ref() {
+            self.visit_signature(signature);
+        }
         self.visit_u256(weight);
     }
 
@@ -222,8 +223,8 @@ pub(super) trait ArchivedVisitor {
 
     fn visit_public_key(&mut self, public_key: &ArchivedPublicKey) {
         match public_key {
-            ArchivedPublicKey::Ecdsa(pubkey_bytes) => {
-                self.tag(b"ecdsa");
+            ArchivedPublicKey::Secp256k1(pubkey_bytes) => {
+                self.tag(b"secp256k1");
                 self.visit_bytes(pubkey_bytes.as_slice())
             }
             ArchivedPublicKey::Ed25519(pubkey_bytes) => {

@@ -112,9 +112,8 @@ impl AxelarAuthWeighted {
 
         // safe to unwrap as we are creating a new
         // instance and there are no duplicate entries to error on
-        instance
-            .update_latest_signer_set(verifier_set.hash())
-            .unwrap();
+        let signer_set_hash = verifier_set.hash();
+        instance.update_latest_signer_set(signer_set_hash).unwrap();
 
         instance
     }
@@ -122,7 +121,7 @@ impl AxelarAuthWeighted {
     /// Ported code from [here](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/10b89fb19a44fe9e51989b618811ddd0e1a595f6/contracts/auth/AxelarAuthWeighted.sol#L30)
     pub fn validate_proof(
         &self,
-        _message_hash: [u8; 32],
+        message_hash: [u8; 32],
         proof: &ArchivedProof,
     ) -> Result<SignerSetMetadata, AxelarAuthWeightedError> {
         let signer_set_hash = proof.signer_set_hash();
@@ -138,20 +137,7 @@ impl AxelarAuthWeighted {
             return Err(AxelarAuthWeightedError::InvalidSignerSet);
         }
 
-        // TODO: Re-enable proof validation!
-        // msg!("BEFORE PROOF VALIDATION");
-        // solana_program::log::sol_log_compute_units();
-        // match proof.validate_for_message(&message_hash) {
-        //     Ok(()) => {
-        //         msg!("VALID PROOF");
-        //     }
-        //     err @ Err(_) => {
-        //         msg!("INVALID PROOF");
-        //         err?
-        //     }
-        // };
-        // solana_program::log::sol_log_compute_units();
-        // msg!("AFTER PROOF VALIDATION");
+        validate_proof_for_message(proof, &message_hash)?;
 
         if epoch == *signer_set_epoch {
             Ok(SignerSetMetadata::Latest)
@@ -237,11 +223,63 @@ impl AxelarAuthWeighted {
     }
 }
 
+fn validate_proof_for_message(
+    proof: &ArchivedProof,
+    message_hash: &[u8; 32],
+) -> Result<(), AxelarAuthWeightedError> {
+    Ok(proof.validate_for_message_custom(
+        message_hash,
+        verify_ecdsa_signature,
+        verify_eddsa_signature,
+    )?)
+}
+
+fn verify_ecdsa_signature(
+    pubkey: &axelar_rkyv_encoding::types::Secp256k1Pubkey,
+    signature: &axelar_rkyv_encoding::types::EcdsaRecoverableSignature,
+    message: &[u8; 32],
+) -> bool {
+    // The recovery bit in the signature's bytes is placed at the end, as per the
+    // 'multisig-prover' contract by Axelar. Unwrap: we know the 'signature'
+    // slice exact size, and it isn't empty.
+    let (signature, recovery_id) = match signature {
+        [first_64 @ .., recovery_id] => (first_64, recovery_id),
+    };
+
+    // This is results in a Solana syscall.
+    let Ok(recovered_uncompressed_pubkey) =
+        solana_program::secp256k1_recover::secp256k1_recover(message, *recovery_id, signature)
+    else {
+        msg!("Failed to recover ECDSA signature");
+        return false;
+    };
+
+    // unwrap: provided pukey is guaranteed to be secp256k1 key
+    let pubkey = libsecp256k1::PublicKey::parse_compressed(pubkey)
+        .unwrap()
+        .serialize();
+
+    // we drop the const prefix byte that indicates that this is an uncompressed
+    // pubkey
+    let full_pubkey = match pubkey {
+        [_tag, pubkey @ ..] => pubkey,
+    };
+    recovered_uncompressed_pubkey.to_bytes() == full_pubkey
+}
+
+fn verify_eddsa_signature(
+    _pubkey: &axelar_rkyv_encoding::types::Ed25519Pubkey,
+    _signature: &axelar_rkyv_encoding::types::Ed25519Signature,
+    _message: &[u8; 32],
+) -> bool {
+    unimplemented!("eddsa signature verification is unimplemented")
+}
+
 impl BorshSerialize for AxelarAuthWeighted {
     /// The serialization format is as follows:
     /// [u8: map length]
     /// [u256: current epoch]
-    /// [[epoch: hash], ..n times Self::OLD_KEY_RETENTION  ] -- empty data
+    /// [[epoch: hash], ..n times Self::OLD_KEY_RETENTION  ] -- empty dat
     /// filled with 0s
     #[inline]
     fn serialize<W: std::io::prelude::Write>(&self, writer: &mut W) -> borsh::io::Result<()> {

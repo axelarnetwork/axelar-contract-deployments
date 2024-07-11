@@ -32,15 +32,17 @@ async fn axelar_solana_setup() -> (
     solana_sdk::pubkey::Pubkey,
     Vec<TestSigner>,
     Pubkey,
+    u64,
 ) {
     let mut fixture = TestFixture::new(program_test()).await;
+    let nonce = 443;
     let signers = vec![
         create_signer_with_weight(10_u128),
         create_signer_with_weight(4_u128),
     ];
     let gateway_root_pda = fixture
         .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers),
+            fixture.init_auth_weighted_module(&signers, nonce),
             Pubkey::new_unique(),
         )
         .await;
@@ -55,7 +57,7 @@ async fn axelar_solana_setup() -> (
         .unwrap()])
         .await;
 
-    (fixture, gateway_root_pda, signers, counter_pda)
+    (fixture, gateway_root_pda, signers, counter_pda, nonce)
 }
 
 async fn axelar_evm_setup() -> (

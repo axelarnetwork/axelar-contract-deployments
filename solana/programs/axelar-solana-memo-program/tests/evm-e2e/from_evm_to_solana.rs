@@ -18,7 +18,7 @@ use crate::{axelar_evm_setup, axelar_solana_setup};
 #[tokio::test]
 async fn test_send_from_evm_to_solana() {
     // Setup - Solana
-    let (mut solana_chain, gateway_root_pda, solana_signers, counter_pda) =
+    let (mut solana_chain, gateway_root_pda, solana_signers, counter_pda, nonce) =
         axelar_solana_setup().await;
     // Setup - EVM
     let (_evm_chain, evm_signer, evm_gateway, _weighted_signers, _domain_separator) =
@@ -55,6 +55,7 @@ async fn test_send_from_evm_to_solana() {
             &gateway_root_pda,
             vec![msg_from_evm_axelar.clone()],
             &solana_signers,
+            nonce,
         )
         .await;
 

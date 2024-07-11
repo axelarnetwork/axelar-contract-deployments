@@ -40,12 +40,12 @@ impl Processor {
         )?;
 
         // Check: proof operators are known.
-        // gateway_config
-        //     .validate_proof(execute_data.payload_hash, execute_data.proof())
-        //     .map_err(|err| {
-        //         msg!("Proof validation failed: {:?}", err);
-        //         ProgramError::InvalidArgument
-        //     })?;
+        gateway_config
+            .validate_proof(execute_data.payload_hash, execute_data.proof())
+            .map_err(|err| {
+                msg!("Proof validation failed: {:?}", err);
+                ProgramError::InvalidArgument
+            })?;
 
         approve_messages(accounts_iter, execute_data, program_id, gateway_root_pda)?;
         Ok(())
