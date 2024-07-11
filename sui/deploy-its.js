@@ -113,7 +113,7 @@ async function processCommand(chain, options) {
     const contractsConfig = chain.contracts;
     const itsContractConfig = contractsConfig.its;
 
-    for (const dependencies of ['axelar_gateway','abi','governance']) {
+    for (const dependencies of ['axelar_gateway', 'abi', 'governance']) {
         const packageId = contractsConfig[dependencies]?.address;
         updateMoveToml(dependencies, packageId);
     }
