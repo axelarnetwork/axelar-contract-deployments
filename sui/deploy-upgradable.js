@@ -1,29 +1,22 @@
 const { Command, Option } = require('commander');
-const { publishPackage, updateMoveToml, getContractBuild } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
+const { TxBuilder, updateMoveToml } = require('@axelar-network/axelar-cgp-sui');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { fromB64, toB64 } = require('@mysten/bcs');
 const { saveConfig, printInfo, validateParameters, prompt, writeJSON } = require('../evm/utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet, broadcast } = require('./sign-utils');
+const { getWallet } = require('./sign-utils');
 const { loadSuiConfig } = require('./utils');
 
-async function upgradePackage(client, keypair, packageName, packageConfig, options) {
-    const { modules, dependencies, digest } = await getContractBuild(packageName);
+async function upgradePackage(client, keypair, packageName, packageConfig, builder, options) {
+    const { modules, dependencies, digest } = await builder.getContractBuild(packageName);
     const { policy, offline, txFilePath, sender } = options;
 
     const upgradeCap = packageConfig.objects?.UpgradeCap;
-    let digestHash;
-
-    if (options.digest) {
-        digestHash = fromB64(options.digest);
-    } else {
-        digestHash = digest;
-    }
+    const digestHash = options.digest ? fromB64(options.digest) : digest;
 
     validateParameters({ isNonEmptyString: { upgradeCap, policy }, isNonEmptyStringArray: { modules, dependencies } });
 
-    const tx = new TransactionBlock();
+    const tx = builder.tx;
     const cap = tx.object(upgradeCap);
 
     const ticket = tx.moveCall({
@@ -43,46 +36,64 @@ async function upgradePackage(client, keypair, packageName, packageConfig, optio
         arguments: [cap, receipt],
     });
 
-    if (!offline) {
-        const result = await broadcast(client, keypair, tx);
+    sender ? tx.setSender(sender) : tx.setSender(keypair.toSuiAddress());
+    const txBytes = await tx.build({ client });
+
+    if (offline) {
+        options.txBytes = txBytes;
+    } else {
+        const signature = (await keypair.signTransactionBlock(txBytes)).signature;
+        const result = await client.executeTransactionBlock({
+            transactionBlock: txBytes,
+            signature,
+            options: {
+                showEffects: true,
+                showObjectChanges: true,
+                showEvents: true,
+            },
+        });
 
         const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
         packageConfig.address = packageId;
         printInfo('Transaction result', JSON.stringify(result, null, 2));
         printInfo(`${packageName} upgraded`, packageId);
-    } else {
-        validateParameters({ isNonEmptyString: { txFilePath } });
-
-        if (!sender) {
-            tx.setSender(keypair.toSuiAddress());
-        } else {
-            tx.setSender(sender);
-        }
-
-        const txBytes = await tx.build({ client });
-        writeJSON({ status: 'UPGRADE PENDING', bytes: toB64(txBytes) }, txFilePath);
-        printInfo(`The unsigned transaction is`, toB64(txBytes));
     }
 }
 
-async function deployPackage(chain, client, keypair, packageName, packageConfig, options) {
-    const { offline, txFilePath } = options;
+async function deployPackage(chain, client, keypair, packageName, packageConfig, builder, options) {
+    const { offline, txFilePath, sender } = options;
 
-    if (!offline) {
+    const address = sender || keypair.toSuiAddress();
+    await builder.publishPackageAndTransferCap(packageName, address);
+    const tx = builder.tx;
+    tx.setSender(address);
+    const txBytes = await tx.build({ client });
+
+    if (offline) {
+        options.txBytes = txBytes;
+    } else {
         if (prompt(`Proceed with deployment on ${chain.name}?`, options.yes)) {
             return;
         }
 
-        const published = await publishPackage(packageName, client, keypair);
-        const packageId = published.packageId;
-        packageConfig.address = packageId;
-        const objectChanges = published.publishTxn.objectChanges.filter((object) => object.type === 'created');
+        const signature = (await keypair.signTransactionBlock(txBytes)).signature;
+        const publishTxn = await client.executeTransactionBlock({
+            transactionBlock: txBytes,
+            signature,
+            options: {
+                showEffects: true,
+                showObjectChanges: true,
+                showEvents: true,
+            },
+        });
+
+        packageConfig.address = (publishTxn.objectChanges?.find((a) => a.type === 'published') ?? []).packageId;
+        const objectChanges = publishTxn.objectChanges.filter((object) => object.type === 'created');
         packageConfig.objects = {};
 
         for (const object of objectChanges) {
-            const firstIndex = object.objectType.indexOf('::');
-            const typeIndex = object.objectType.indexOf('::', firstIndex + 1);
-            const objectName = object.objectType.slice(typeIndex + 2);
+            const array = object.objectType.split('::');
+            const objectName = array[array.length - 1];
 
             if (objectName) {
                 packageConfig.objects[objectName] = object.objectId;
@@ -90,18 +101,12 @@ async function deployPackage(chain, client, keypair, packageName, packageConfig,
         }
 
         printInfo(`${packageName} deployed`, JSON.stringify(packageConfig, null, 2));
-    } else {
-        validateParameters({ isNonEmptyString: { txFilePath } });
-
-        const txBytes = await publishPackage(packageName, client, keypair, options);
-        writeJSON({ status: 'DEPLOY PENDING', bytes: txBytes }, txFilePath);
-        printInfo(`The unsigned transaction is`, txBytes);
     }
 }
 
 async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
-    const { upgrade, packageName, packageDependencies } = options;
+    const { upgrade, packageName, packageDependencies, offline, txFilePath } = options;
 
     printInfo('Wallet address', keypair.toSuiAddress());
 
@@ -121,10 +126,21 @@ async function processCommand(chain, options) {
         }
     }
 
+    const builder = new TxBuilder(client);
+
     if (upgrade) {
-        await upgradePackage(client, keypair, packageName, packageConfig, options);
+        await upgradePackage(client, keypair, packageName, packageConfig, builder, options);
     } else {
-        await deployPackage(chain, client, keypair, packageName, packageConfig, options);
+        await deployPackage(chain, client, keypair, packageName, packageConfig, builder, options);
+    }
+
+    if (offline) {
+        validateParameters({ isNonEmptyString: { txFilePath } });
+
+        const txB64Bytes = toB64(options.txBytes);
+
+        writeJSON({ status: 'PENDING', bytes: txB64Bytes }, txFilePath);
+        printInfo(`The unsigned transaction is`, txB64Bytes);
     }
 }
 
