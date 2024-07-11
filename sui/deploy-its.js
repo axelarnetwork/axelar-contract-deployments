@@ -1,119 +1,138 @@
 const { Command, Option } = require('commander');
-const { publishPackage, updateMoveToml, getContractBuild } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
+const { TxBuilder, updateMoveToml } = require('@axelar-network/axelar-cgp-sui');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { fromB64, toB64 } = require('@mysten/bcs');
 const { saveConfig, printInfo, validateParameters, prompt, writeJSON } = require('../evm/utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
+const { getWallet } = require('./sign-utils');
 const { loadSuiConfig } = require('./utils');
+
+async function upgradePackage(client, keypair, packageConfig, builder, options) {
+    const { modules, dependencies, digest } = await builder.getContractBuild('its');
+    const { policy, offline, sender } = options;
+
+    const upgradeCap = packageConfig.objects?.UpgradeCap;
+    const digestHash = options.digest ? fromB64(options.digest) : digest;
+
+    validateParameters({ isNonEmptyString: { upgradeCap, policy }, isNonEmptyStringArray: { modules, dependencies } });
+
+    const tx = builder.tx;
+    const cap = tx.object(upgradeCap);
+
+    const ticket = tx.moveCall({
+        target: `0x2::package::authorize_upgrade`,
+        arguments: [cap, tx.pure(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
+    });
+
+    const receipt = tx.upgrade({
+        modules,
+        dependencies,
+        packageId: packageConfig.address,
+        ticket,
+    });
+
+    tx.moveCall({
+        target: `0x2::package::commit_upgrade`,
+        arguments: [cap, receipt],
+    });
+
+    sender ? tx.setSender(sender) : tx.setSender(keypair.toSuiAddress());
+    const txBytes = await tx.build({ client });
+
+    if (offline) {
+        options.txBytes = txBytes;
+    } else {
+        const signature = (await keypair.signTransactionBlock(txBytes)).signature;
+        const result = await client.executeTransactionBlock({
+            transactionBlock: txBytes,
+            signature,
+            options: {
+                showEffects: true,
+                showObjectChanges: true,
+                showEvents: true,
+            },
+        });
+
+        const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
+        packageConfig.address = packageId;
+        printInfo('Transaction result', JSON.stringify(result, null, 2));
+        printInfo(`ITS upgraded`, packageId);
+    }
+}
+
+async function deployPackage(chain, client, keypair, itsContractConfig, builder, options) {
+    const { offline, sender } = options;
+
+    const address = sender || keypair.toSuiAddress();
+    await builder.publishPackageAndTransferCap('its', address);
+    const tx = builder.tx;
+    tx.setSender(address);
+    const txBytes = await tx.build({ client });
+
+    if (offline) {
+        options.txBytes = txBytes;
+    } else {
+        if (prompt(`Proceed with deployment on ${chain.name}?`, options.yes)) {
+            return;
+        }
+
+        const signature = (await keypair.signTransactionBlock(txBytes)).signature;
+        const publishTxn = await client.executeTransactionBlock({
+            transactionBlock: txBytes,
+            signature,
+            options: {
+                showEffects: true,
+                showObjectChanges: true,
+                showEvents: true,
+            },
+        });
+
+        const packageId = (publishTxn.objectChanges?.find((a) => a.type === 'published') ?? []).packageId;
+        itsContractConfig.address = packageId;
+        const ITS = publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::its::ITS`);
+        const upgradeCap = publishTxn.objectChanges.find((change) => change.objectType === `0x2::package::UpgradeCap`);
+        itsContractConfig.objects = {
+            ITS: ITS.objectId,
+            UpgradeCap: upgradeCap.objectId,
+        };
+
+        printInfo(`ITS deployed`, JSON.stringify(itsContractConfig, null, 2));
+    }
+}
 
 async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
-    const { offline, upgrade, sender, txFilePath } = options;
+    const { upgrade, offline, txFilePath } = options;
 
-    await printWalletInfo(keypair, client, chain, options);
+    printInfo('Wallet address', keypair.toSuiAddress());
 
     if (!chain.contracts.its) {
         chain.contracts.its = {};
     }
 
-    const contractConfig = chain.contracts;
-    const itsContractConfig = contractConfig?.its;
+    const contractsConfig = chain.contracts;
+    const itsContractConfig = contractsConfig.its;
 
-    const abiPackageId = contractConfig.abi?.address;
-    const gatewayPackageId = contractConfig.axelar_gateway?.address;
-    const governancePackageId = contractConfig.governance?.address;
+    for (const dependencies of ['axelar_gateway','abi','governance']) {
+        const packageId = contractsConfig[dependencies]?.address;
+        updateMoveToml(dependencies, packageId);
+    }
 
-    validateParameters({ isKeccak256Hash: { abiPackageId, gatewayPackageId, governancePackageId } });
-
-    updateMoveToml('abi', abiPackageId);
-    updateMoveToml('axelar_gateway', gatewayPackageId);
-    updateMoveToml('governance', governancePackageId);
+    const builder = new TxBuilder(client);
 
     if (upgrade) {
-        const { modules, dependencies, digest } = await getContractBuild('its');
-        const { policy } = options;
-
-        const upgradeCap = itsContractConfig.objects?.upgradeCap;
-        let digestHash;
-
-        if (options.digest) {
-            digestHash = fromB64(options.digest);
-        } else {
-            digestHash = digest;
-        }
-
-        validateParameters({ isNonEmptyString: { upgradeCap, policy }, isNonEmptyStringArray: { modules, dependencies } });
-
-        const tx = new TransactionBlock();
-        const cap = tx.object(upgradeCap);
-
-        const ticket = tx.moveCall({
-            target: `0x2::package::authorize_upgrade`,
-            arguments: [cap, tx.pure(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
-        });
-
-        const receipt = tx.upgrade({
-            modules,
-            dependencies,
-            packageId: itsContractConfig.address,
-            ticket,
-        });
-
-        tx.moveCall({
-            target: `0x2::package::commit_upgrade`,
-            arguments: [cap, receipt],
-        });
-
-        if (!offline) {
-            if (prompt(`Proceed with ITS upgrade on ${chain.name}?`, options.yes)) {
-                return;
-            }
-
-            const result = await broadcast(client, keypair, tx);
-
-            const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
-            itsContractConfig.address = packageId;
-            printInfo('Transaction result', JSON.stringify(result, null, 2));
-            printInfo('ITS upgraded', packageId);
-        } else {
-            validateParameters({ isNonEmptyString: { txFilePath } });
-
-            if (!sender) {
-                tx.setSender(keypair.toSuiAddress());
-            } else {
-                tx.setSender(sender);
-            }
-
-            const txBytes = await tx.build({ client });
-            writeJSON({ status: 'UPGRADE PENDING', bytes: toB64(txBytes) }, txFilePath);
-            printInfo(`The unsigned transaction is`, toB64(txBytes));
-        }
+        await upgradePackage(client, keypair, itsContractConfig, builder, options);
     } else {
-        if (!offline) {
-            if (prompt(`Proceed with deployment on ${chain.name}?`, options.yes)) {
-                return;
-            }
+        await deployPackage(chain, client, keypair, itsContractConfig, builder, options);
+    }
 
-            const published = await publishPackage('its', client, keypair);
-            const packageId = published.packageId;
-            itsContractConfig.address = packageId;
-            const ITS = published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::its::ITS`);
-            const upgradeCap = published.publishTxn.objectChanges.find((change) => change.objectType === `0x2::package::UpgradeCap`);
-            itsContractConfig.objects = {
-                its: ITS.objectId,
-                upgradeCap: upgradeCap.objectId,
-            };
+    if (offline) {
+        validateParameters({ isNonEmptyString: { txFilePath } });
 
-            printInfo('ITS deployed', JSON.stringify(itsContractConfig, null, 2));
-        } else {
-            validateParameters({ isNonEmptyString: { txFilePath } });
+        const txB64Bytes = toB64(options.txBytes);
 
-            const txBytes = await publishPackage('its', client, keypair, options);
-            writeJSON({ status: 'DEPLOY PENDING', bytes: txBytes }, txFilePath);
-            printInfo(`The unsigned transaction is`, txBytes);
-        }
+        writeJSON({ status: 'PENDING', bytes: txB64Bytes }, txFilePath);
+        printInfo(`The unsigned transaction is`, txB64Bytes);
     }
 }
 
