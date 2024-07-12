@@ -9,7 +9,7 @@ const { loadSuiConfig } = require('./utils');
 
 async function upgradePackage(client, keypair, packageName, packageConfig, builder, options) {
     const { modules, dependencies, digest } = await builder.getContractBuild(packageName);
-    const { policy, offline, txFilePath, sender } = options;
+    const { policy, offline, sender } = options;
 
     const upgradeCap = packageConfig.objects?.UpgradeCap;
     const digestHash = options.digest ? fromB64(options.digest) : digest;
@@ -61,7 +61,7 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
 }
 
 async function deployPackage(chain, client, keypair, packageName, packageConfig, builder, options) {
-    const { offline, txFilePath, sender } = options;
+    const { offline, sender } = options;
 
     const address = sender || keypair.toSuiAddress();
     await builder.publishPackageAndTransferCap(packageName, address);
