@@ -31,7 +31,7 @@ async function processCommand(config, chain, options) {
         gasService: gasService.objectId,
     };
 
-    printInfo('\nGas Service deployed', JSON.stringify(contractConfig, null, 2));
+    printInfo('Gas Service deployed', JSON.stringify(contractConfig, null, 2));
 }
 
 async function mainProcessor(options, processor) {
