@@ -1,5 +1,5 @@
 const { saveConfig, printInfo } = require('../evm/utils');
-const { Command, Option } = require('commander');
+const { Command } = require('commander');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { loadSuiConfig } = require('./utils');
