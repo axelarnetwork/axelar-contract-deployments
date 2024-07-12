@@ -1,5 +1,5 @@
 const { saveConfig, printInfo } = require('../evm/utils');
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { loadSuiConfig } = require('./utils');
@@ -18,9 +18,14 @@ async function payGas(config, chain, args, options) {
     const gasServiceConfig = chain.contracts.axelar_gas_service;
     const gasServicePackageId = gasServiceConfig.address;
 
+    const channel = options.channel;
+
+    const refundAddress = options.refund_address || walletAddress;
+    const params = options.params || '0x';
+
     const tx = new TransactionBlock();
 
-    const [senderAddress, amount, destinationChain, destinationAddress, payload] = args;
+    const [amount, destinationChain, destinationAddress, payload] = args;
 
     const atomicAmount = ethers.utils.parseUnits(amount, 6).toString();
 
@@ -31,18 +36,52 @@ async function payGas(config, chain, args, options) {
         arguments: [
             tx.object(gasServiceConfig.objects.gas_service),
             coin, // Coin<SUI>
-            tx.pure.address(senderAddress), // Channel address
+            tx.pure.address(channel), // Channel address
             tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
             tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
-            tx.pure.address(walletAddress), // Refund address
-            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify('0x')).toBytes()), // Params
+            tx.pure.address(refundAddress), // Refund address
+            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
         ],
     });
 
     const receipt = await broadcast(client, keypair, tx);
 
     printInfo('Gas paid', receipt.digest);
+}
+
+async function addGas(config, chain, args, options) {
+    const [keypair, client] = getWallet(chain, options);
+    const walletAddress = keypair.toSuiAddress();
+
+    const gasServiceConfig = chain.contracts.axelar_gas_service;
+    const gasServicePackageId = gasServiceConfig.address;
+
+    const refundAddress = options.refund_address || walletAddress;
+    const params = options.params || '0x';
+
+    const tx = new TransactionBlock();
+
+    const [messageId, amount] = args;
+
+    const atomicAmount = ethers.utils.parseUnits(amount, 6).toString();
+
+    const [coin] = tx.splitCoins(tx.gas, [atomicAmount]);
+
+    tx.moveCall({
+        target: `${gasServicePackageId}::gas_service::add_gas`,
+        arguments: [
+            tx.object(gasServiceConfig.objects.gas_service),
+            coin, // Coin<SUI>
+            tx.pure(bcs.string().serialize(messageId).toBytes()), // Message ID for the contract call
+            tx.pure.address(refundAddress), // Refund address
+            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
+        ],
+    });
+
+    const receipt = await broadcast(client, keypair, tx);
+
+    printInfo('Gas added', receipt.digest);
 }
 
 async function processCommand(command, config, chain, args, options) {
@@ -56,7 +95,12 @@ async function processCommand(command, config, chain, args, options) {
 
     switch (command) {
         case 'pay_gas':
+            printInfo('Action', 'Pay gas');
             await payGas(config, chain, args, options);
+            break;
+        case 'add_gas':
+            printInfo('Action', 'Add gas');
+            await addGas(config, chain, args, options);
             break;
     }
 }
@@ -72,16 +116,30 @@ if (require.main === module) {
 
     program.name('gas-service').description('Interact with the gas service contract.');
 
-    const payGasProgram = program.command('pay_gas <sender_address> <amount> <destination_chain> <destination_address> <payload>');
-    payGasProgram.description('Pay gas to the destination chain.');
-    payGasProgram.action((senderAddress, amount, destinationChain, destinationAddress, payload, options) => {
-        mainProcessor('pay_gas', options, [senderAddress, amount, destinationChain, destinationAddress, payload], processCommand);
-    });
+    const payGasProgram = program
+        .command('pay_gas <amount> <destination_chain> <destination_address> <payload>')
+        .description('Pay gas for the contract call.')
+        .requiredOption('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over')
+        .option('--refund_address <refundAddress>', 'Refund address. Default is the sender address.')
+        .option('--params <params>', 'Params. Default is empty.')
+        .action((amount, destinationChain, destinationAddress, payload, options) => {
+            mainProcessor('pay_gas', options, [amount, destinationChain, destinationAddress, payload], processCommand);
+        });
 
+    const addGasProgram = program
+        .command('add_gas <message_id> <amount>')
+        .description('Add gas for the contract call.')
+        .option('--refund_address <refundAddress>', 'Refund address.')
+        .option('--params <params>', 'Params. Default is empty.')
+        .action((messageId, amount, options) => {
+            mainProcessor('add_gas', options, [messageId, amount], processCommand);
+        });
 
     program.addCommand(payGasProgram);
+    program.addCommand(addGasProgram);
 
     addBaseOptions(payGasProgram);
+    addBaseOptions(addGasProgram);
 
     program.parse();
 }
