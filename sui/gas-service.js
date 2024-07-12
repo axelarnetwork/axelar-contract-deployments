@@ -1,12 +1,11 @@
-const { saveConfig, prompt, printInfo } = require('../evm/utils');
-const { Command, Option } = require('commander');
+const { saveConfig, printInfo } = require('../evm/utils');
+const { Command } = require('commander');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { loadSuiConfig } = require('./utils');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, keccak256, toUtf8Bytes },
-    constants: { HashZero },
+    utils: { arrayify },
 } = ethers;
 
 const { addBaseOptions } = require('./cli-utils');
@@ -19,37 +18,31 @@ async function payGas(config, chain, args, options) {
     const gasServiceConfig = chain.contracts.axelar_gas_service;
     const gasServicePackageId = gasServiceConfig.address;
 
-    const gatewayConfig = chain.contracts.axelar_gateway;
-    const gatewayPackageId = gatewayConfig.address;
-
     const tx = new TransactionBlock();
 
-    const [coin] = tx.splitCoins(tx.gas, [100]);
+    const [senderAddress, amount, destinationChain, destinationAddress, payload] = args;
 
-    const [destinationChain, destinationAddress, payload] = args;
+    const atomicAmount = ethers.utils.parseUnits(amount, 6).toString();
 
-    let channel = options.channel;
-
-    if (!options.channel) {
-        [channel] = tx.moveCall({
-            target: `${gatewayPackageId}::channel::new`,
-            arguments: [],
-        });
-    }
+    const [coin] = tx.splitCoins(tx.gas, [atomicAmount]);
 
     tx.moveCall({
         target: `${gasServicePackageId}::gas_service::pay_gas`,
         arguments: [
-            gasServicePackageId, // Gas service package ID
+            tx.object(gasServiceConfig.objects.gas_service),
             coin, // Coin<SUI>
-            channel, // Channel address
+            tx.pure.address(senderAddress), // Channel address
             tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
             tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
-            walletAddress, // Refund address
-            bcs.vector(), // Params
+            tx.pure.address(walletAddress), // Refund address
+            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify('0x')).toBytes()), // Params
         ],
     });
+
+    const receipt = await broadcast(client, keypair, tx);
+
+    printInfo('Gas paid', receipt.digest);
 }
 
 async function processCommand(command, config, chain, args, options) {
@@ -70,7 +63,6 @@ async function processCommand(command, config, chain, args, options) {
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadSuiConfig(options.env);
-
     await processor(command, config, config.sui, args, options);
     saveConfig(config, options.env);
 }
@@ -80,15 +72,16 @@ if (require.main === module) {
 
     program.name('gas-service').description('Interact with the gas service contract.');
 
-    const payGasProgram = program.command('pay_gas <destination_chain> <destination_address> <payload>');
+    const payGasProgram = program.command('pay_gas <sender_address> <amount> <destination_chain> <destination_address> <payload>');
     payGasProgram.description('Pay gas to the destination chain.');
-    payGasProgram.action((destinationChain, destinationAddress, payload, options) => {
-        mainProcessor('pay_gas', options, [destinationChain, destinationAddress, payload], processCommand);
+    payGasProgram.action((senderAddress, amount, destinationChain, destinationAddress, payload, options) => {
+        mainProcessor('pay_gas', options, [senderAddress, amount, destinationChain, destinationAddress, payload], processCommand);
     });
+
 
     program.addCommand(payGasProgram);
 
-    addBaseOptions(program);
+    addBaseOptions(payGasProgram);
 
     program.parse();
 }
