@@ -35,12 +35,21 @@ async function processCommand(contractName, config, chain, options) {
     const contractObject = published.publishTxn.objectChanges.find(
         (change) => change.objectType === `${packageId}::${contract.packageName}::${contract.contractName}`,
     );
+    const gasCollectorCapObject = published.publishTxn.objectChanges.find(
+        (change) => change.objectType === `${packageId}::${contract.packageName}::GasCollectorCap`,
+    );
 
     const contractConfig = chain.contracts[contract.chainConfigKey];
     contractConfig.address = packageId;
     contractConfig.objects = {
         [contractName]: contractObject.objectId,
     };
+
+    switch (contractName) {
+        case contractMap.gas_service.packageName:
+            contractConfig.objects.gas_collector_cap = gasCollectorCapObject.objectId;
+            break;
+    }
 
     printInfo(`${contract.displayName} deployed`, JSON.stringify(contractConfig, null, 2));
 }
