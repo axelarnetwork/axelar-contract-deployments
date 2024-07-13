@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+const { ethers } = require('ethers');
 
 // Convert formatted amount to atomic units (e.g. 1000000000). Default decimals is 9 for SUI
 function getAtomicAmount(amount, decimals = 9) {

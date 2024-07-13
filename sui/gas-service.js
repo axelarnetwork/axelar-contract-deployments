@@ -4,6 +4,7 @@ const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { loadSuiConfig } = require('./utils');
 const { ethers } = require('hardhat');
+const { getAtomicAmount } = require('./amount-utils');
 const {
     utils: { arrayify },
 } = ethers;
@@ -27,7 +28,7 @@ async function payGas(config, chain, args, options) {
 
     const [amount, destinationChain, destinationAddress, payload] = args;
 
-    const atomicAmount = ethers.utils.parseUnits(amount, 6).toString();
+    const atomicAmount = getAtomicAmount(amount);
 
     const [coin] = tx.splitCoins(tx.gas, [atomicAmount]);
 
@@ -64,7 +65,7 @@ async function addGas(config, chain, args, options) {
 
     const [messageId, amount] = args;
 
-    const atomicAmount = ethers.utils.parseUnits(amount, 6).toString();
+    const atomicAmount = getAtomicAmount(amount);
 
     const [coin] = tx.splitCoins(tx.gas, [atomicAmount]);
 
@@ -96,14 +97,15 @@ async function collectGas(config, chain, args, options) {
     const [amount] = args;
     const receiver = options.receiver || walletAddress;
 
-    const atomicAmount = ethers.utils.parseUnits(amount, 6).toString();
+    const atomicAmount = getAtomicAmount(amount);
 
     tx.moveCall({
         target: `${gasServicePackageId}::gas_service::collect_gas`,
         arguments: [
             tx.object(gasServiceConfig.objects.gas_service),
+            tx.object(gasServiceConfig.objects.gas_collector_cap),
             tx.pure.address(receiver), // Receiver address
-            atomicAmount, // Amount
+            tx.pure.u64(atomicAmount), // Amount
         ],
     });
 
@@ -168,9 +170,9 @@ if (require.main === module) {
         });
 
     const collectGasProgram = program
-        .command('collect_gas <receiver> <amount>')
+        .command('collect_gas <amount>')
         .description('Collect gas from the gas service contract.')
-        .option("--receiver <receiver>", "Receiver address. Default is the sender address.")
+        .option('--receiver <receiver>', 'Receiver address. Default is the sender address.')
         .action((amount, options) => {
             mainProcessor('collect_gas', options, [amount], processCommand);
         });
