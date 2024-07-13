@@ -133,3 +133,38 @@ To deploy with a constant address using instantiate2, pass the `--instantiate2` 
 To upload the contract and compute the expected address without instantiating, pass `--instantiate2` and `-u`. This will write the contract address and the code id to the config file.
 A salt can be passed with `-s`. If no salt is passed but a salt is needed for constant address deployment, the contract name will be used as a salt.
 Pass `-r` to skip the upload step, and reuse the previous code id (specified in the config).
+
+### Deploying through governance proposals
+
+On networks where only governance is allowed to upload bytecode or instantiate, the script `submit-proposal` can be used to submit a governance proposal.
+
+```
+node submit-proposal.js -m [mnemonic] -a [path to contract artifacts] -c [contract name] -e [environment] -n [chain name] --proposalType [store|instantiate] -t [proposal title] -d [proposal description] -r [run as account] --deposit [deposit]
+```
+
+### Uploading bytecode through governance
+
+Example usage:
+
+```
+node cosmwasm/submit-proposal.js --proposalType store -c ServiceRegistry -t "Proposal title" -d "Proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
+```
+
+By default, only governance will be able to instantiate the bytecode. To allow other addresses to instantiate the bytecode, pass `--instantiateAddresses [address1],[address2],[addressN]`.
+
+For transparency and security, it's strongly recommended to include the `--source` and `--builder` options in your proposal:
+
+-   `--source`: Code Source URL is a valid absolute HTTPS URI to the contract's source code.
+-   `--builder`: Builder is a valid docker image name with tag, such as "cosmwasm/workspace-optimizer-arm64:0.16.0"
+
+These options enable voters to independently verify that the proposed bytecode matches the public source code. For example: `--source "https://github.com/axelarnetwork/axelar-amplifier/tree/service-registry-v0.4.1/contracts/service-registry" --builder "cosmwasm/workspace-optimizer-arm64:0.16.0"`
+
+### Instantiating through governance
+
+Example usage:
+
+```
+node cosmwasm/submit-proposal.js --proposalType instantiate -c ServiceRegistry -t "Proposal title" -d "Proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
+```
+
+Note: The rules for chain name specification and the use of `--instantiate2` as described in the "Deploy the contracts" and "Constant Address Deployment" sections above also apply when instantiating through governance. Refer to those sections for details on omitting chain names for certain contracts and using `--instantiate2` for address prediction.
