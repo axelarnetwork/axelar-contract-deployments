@@ -84,6 +84,34 @@ async function addGas(config, chain, args, options) {
     printInfo('Gas added', receipt.digest);
 }
 
+async function collectGas(config, chain, args, options) {
+    const [keypair, client] = getWallet(chain, options);
+    const walletAddress = keypair.toSuiAddress();
+
+    const gasServiceConfig = chain.contracts.axelar_gas_service;
+    const gasServicePackageId = gasServiceConfig.address;
+
+    const tx = new TransactionBlock();
+
+    const [amount] = args;
+    const receiver = options.receiver || walletAddress;
+
+    const atomicAmount = ethers.utils.parseUnits(amount, 6).toString();
+
+    tx.moveCall({
+        target: `${gasServicePackageId}::gas_service::collect_gas`,
+        arguments: [
+            tx.object(gasServiceConfig.objects.gas_service),
+            tx.pure.address(receiver), // Receiver address
+            atomicAmount, // Amount
+        ],
+    });
+
+    const receipt = await broadcast(client, keypair, tx);
+
+    printInfo('Gas collected', receipt.digest);
+}
+
 async function processCommand(command, config, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -101,6 +129,10 @@ async function processCommand(command, config, chain, args, options) {
         case 'add_gas':
             printInfo('Action', 'Add gas');
             await addGas(config, chain, args, options);
+            break;
+        case 'collect_gas':
+            printInfo('Action', 'Collect gas');
+            await collectGas(config, chain, args, options);
             break;
     }
 }
@@ -135,11 +167,21 @@ if (require.main === module) {
             mainProcessor('add_gas', options, [messageId, amount], processCommand);
         });
 
+    const collectGasProgram = program
+        .command('collect_gas <receiver> <amount>')
+        .description('Collect gas from the gas service contract.')
+        .option("--receiver <receiver>", "Receiver address. Default is the sender address.")
+        .action((amount, options) => {
+            mainProcessor('collect_gas', options, [amount], processCommand);
+        });
+
     program.addCommand(payGasProgram);
     program.addCommand(addGasProgram);
+    program.addCommand(collectGasProgram);
 
     addBaseOptions(payGasProgram);
     addBaseOptions(addGasProgram);
+    addBaseOptions(collectGasProgram);
 
     program.parse();
 }
