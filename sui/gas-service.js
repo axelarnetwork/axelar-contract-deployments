@@ -181,11 +181,15 @@ async function mainProcessor(command, options, args, processor) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('gas-service').description('Interact with the gas service contract.');
+    program
+        .name('gas-service')
+        .description(
+            'Interact with the gas service contract.',
+        );
 
-    const payGasProgram = program
+    const payGasProgram = new Command()
         .command('pay_gas <amount> <destination_chain> <destination_address> <payload>')
-        .description('Pay gas for the contract call.')
+        .description('Pay gas for the new contract call.')
         .requiredOption('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over')
         .option('--refund_address <refundAddress>', 'Refund address. Default is the sender address.')
         .option('--params <params>', 'Params. Default is empty.')
@@ -193,16 +197,16 @@ if (require.main === module) {
             mainProcessor('pay_gas', options, [amount, destinationChain, destinationAddress, payload], processCommand);
         });
 
-    const addGasProgram = program
+    const addGasProgram = new Command()
         .command('add_gas <message_id> <amount>')
-        .description('Add gas for the contract call.')
+        .description('Add gas for the existing contract call.')
         .option('--refund_address <refundAddress>', 'Refund address.')
         .option('--params <params>', 'Params. Default is empty.')
         .action((messageId, amount, options) => {
             mainProcessor('add_gas', options, [messageId, amount], processCommand);
         });
 
-    const collectGasProgram = program
+    const collectGasProgram = new Command()
         .command('collect_gas <amount>')
         .description('Collect gas from the gas service contract.')
         .option('--receiver <receiver>', 'Receiver address. Default is the sender address.')
@@ -210,7 +214,7 @@ if (require.main === module) {
             mainProcessor('collect_gas', options, [amount], processCommand);
         });
 
-    const refundProgram = program
+    const refundProgram = new Command()
         .command('refund <messageId> <amount>')
         .description('Refund gas from the gas service contract.')
         .option('--receiver <receiver>', 'Receiver address. Default is the sender address.')
