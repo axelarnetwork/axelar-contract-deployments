@@ -114,6 +114,35 @@ async function collectGas(config, chain, args, options) {
     printInfo('Gas collected', receipt.digest);
 }
 
+async function refund(config, chain, args, options) {
+    const [keypair, client] = getWallet(chain, options);
+    const walletAddress = keypair.toSuiAddress();
+
+    const gasServiceConfig = chain.contracts.axelar_gas_service;
+    const gasServicePackageId = gasServiceConfig.address;
+
+    const tx = new TransactionBlock();
+
+    const [messageId, amount] = args;
+
+    const atomicAmount = getAtomicAmount(amount);
+
+    tx.moveCall({
+        target: `${gasServicePackageId}::gas_service::refund`,
+        arguments: [
+            tx.object(gasServiceConfig.objects.gas_service),
+            tx.object(gasServiceConfig.objects.gas_collector_cap),
+            tx.pure(bcs.string().serialize(messageId).toBytes()), // Message ID for the contract call
+            tx.pure.address(walletAddress), // Refund address
+            tx.pure.u64(atomicAmount), // Amount
+        ],
+    });
+
+    const receipt = await broadcast(client, keypair, tx);
+
+    printInfo('Gas refunded', receipt.digest);
+}
+
 async function processCommand(command, config, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -135,6 +164,10 @@ async function processCommand(command, config, chain, args, options) {
         case 'collect_gas':
             printInfo('Action', 'Collect gas');
             await collectGas(config, chain, args, options);
+            break;
+        case 'refund':
+            printInfo('Action', 'Refund gas');
+            await refund(config, chain, args, options);
             break;
     }
 }
@@ -177,13 +210,23 @@ if (require.main === module) {
             mainProcessor('collect_gas', options, [amount], processCommand);
         });
 
+    const refundProgram = program
+        .command('refund <messageId> <amount>')
+        .description('Refund gas from the gas service contract.')
+        .option('--receiver <receiver>', 'Receiver address. Default is the sender address.')
+        .action((messageId, amount, options) => {
+            mainProcessor('refund', options, [messageId, amount], processCommand);
+        });
+
     program.addCommand(payGasProgram);
     program.addCommand(addGasProgram);
     program.addCommand(collectGasProgram);
+    program.addCommand(refundProgram);
 
     addBaseOptions(payGasProgram);
     addBaseOptions(addGasProgram);
     addBaseOptions(collectGasProgram);
+    addBaseOptions(refundProgram);
 
     program.parse();
 }
