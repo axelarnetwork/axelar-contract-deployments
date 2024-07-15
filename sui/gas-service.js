@@ -25,12 +25,11 @@ async function payGas(config, chain, args, options) {
     const refundAddress = options.refund_address || walletAddress;
     const params = options.params || '0x';
 
-    const tx = new TransactionBlock();
-
     const [amount, destinationChain, destinationAddress, payload] = args;
 
     const atomicAmount = getAtomicAmount(amount);
 
+    const tx = new TransactionBlock();
     const [coin] = tx.splitCoins(tx.gas, [atomicAmount]);
 
     tx.moveCall({
@@ -62,12 +61,11 @@ async function addGas(config, chain, args, options) {
     const refundAddress = options.refund_address || walletAddress;
     const params = options.params || '0x';
 
-    const tx = new TransactionBlock();
-
     const [messageId, amount] = args;
 
     const atomicAmount = getAtomicAmount(amount);
 
+    const tx = new TransactionBlock();
     const [coin] = tx.splitCoins(tx.gas, [atomicAmount]);
 
     tx.moveCall({
@@ -131,20 +129,30 @@ async function refund(config, chain, args, options) {
 
     const gasServiceConfig = chain.contracts.axelar_gas_service;
     const gasServicePackageId = gasServiceConfig.address;
-
-    const tx = new TransactionBlock();
+    const gasServiceObjectId = gasServiceConfig.objects.gas_service;
 
     const [messageId, amount] = args;
+    const receiver = options.receiver || walletAddress;
 
     const atomicAmount = getAtomicAmount(amount);
 
+    const bytes = await getBcsBytesByObjectId(client, gasServiceObjectId);
+    const { balance: gasServiceBalance } = gasServiceStruct.parse(bytes);
+
+    // Check if the gas service balance is sufficient
+    if (gasServiceBalance < atomicAmount) {
+        printError('Insufficient gas service balance', `${getFormattedAmount(gasServiceBalance)} < ${getFormattedAmount(atomicAmount)}`);
+        return;
+    }
+
+    const tx = new TransactionBlock();
     tx.moveCall({
         target: `${gasServicePackageId}::gas_service::refund`,
         arguments: [
             tx.object(gasServiceConfig.objects.gas_service),
             tx.object(gasServiceConfig.objects.gas_collector_cap),
             tx.pure(bcs.string().serialize(messageId).toBytes()), // Message ID for the contract call
-            tx.pure.address(walletAddress), // Refund address
+            tx.pure.address(receiver), // Refund address
             tx.pure.u64(atomicAmount), // Amount
         ],
     });
