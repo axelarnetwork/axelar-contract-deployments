@@ -22,6 +22,11 @@ const bytes32Struct = bcs.fixedArray(32, bcs.u8()).transform({
     output: (id) => hexlify(id),
 });
 
+const UID = bcs.fixedArray(32, bcs.u8()).transform({
+    input: (id) => fromHEX(id),
+    output: (id) => toHEX(Uint8Array.from(id)),
+});
+
 const signersStruct = bcs.struct('WeightedSigners', {
     signers: bcs.vector(signerStruct),
     threshold: bcs.u128(),
@@ -45,11 +50,6 @@ const messageStruct = bcs.struct('Message', {
 const proofStruct = bcs.struct('Proof', {
     signers: signersStruct,
     signatures: bcs.vector(bcs.vector(bcs.u8())),
-});
-
-const UID = bcs.fixedArray(32, bcs.u8()).transform({
-    input: (id) => fromHEX(id),
-    output: (id) => toHEX(Uint8Array.from(id)),
 });
 
 const gasServiceStruct = bcs.struct('GasService', {
