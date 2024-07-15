@@ -1,10 +1,11 @@
-const { saveConfig, printInfo } = require('../evm/utils');
+const { saveConfig, printInfo, printError } = require('../evm/utils');
 const { Command } = require('commander');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
-const { loadSuiConfig } = require('./utils');
+const { gasServiceStruct } = require('./types-utils');
+const { loadSuiConfig, getBcsBytesByObjectId } = require('./utils');
 const { ethers } = require('hardhat');
-const { getAtomicAmount } = require('./amount-utils');
+const { getAtomicAmount, getFormattedAmount } = require('./amount-utils');
 const {
     utils: { arrayify },
 } = ethers;
@@ -91,13 +92,23 @@ async function collectGas(config, chain, args, options) {
 
     const gasServiceConfig = chain.contracts.axelar_gas_service;
     const gasServicePackageId = gasServiceConfig.address;
-
-    const tx = new TransactionBlock();
+    const gasServiceObjectId = gasServiceConfig.objects.gas_service;
 
     const [amount] = args;
     const receiver = options.receiver || walletAddress;
 
     const atomicAmount = getAtomicAmount(amount);
+
+    const bytes = await getBcsBytesByObjectId(client, gasServiceObjectId);
+    const { balance: gasServiceBalance } = gasServiceStruct.parse(bytes);
+
+    // Check if the gas service balance is sufficient
+    if (gasServiceBalance < atomicAmount) {
+        printError('Insufficient gas service balance', `${getFormattedAmount(gasServiceBalance)} < ${getFormattedAmount(atomicAmount)}`);
+        return;
+    }
+
+    const tx = new TransactionBlock();
 
     tx.moveCall({
         target: `${gasServicePackageId}::gas_service::collect_gas`,
@@ -181,11 +192,7 @@ async function mainProcessor(command, options, args, processor) {
 if (require.main === module) {
     const program = new Command();
 
-    program
-        .name('gas-service')
-        .description(
-            'Interact with the gas service contract.',
-        );
+    program.name('gas-service').description('Interact with the gas service contract.');
 
     const payGasProgram = new Command()
         .command('pay_gas <amount> <destination_chain> <destination_address> <payload>')

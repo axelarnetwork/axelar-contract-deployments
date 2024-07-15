@@ -1,6 +1,7 @@
 'use strict';
 
 const { bcs } = require('@mysten/sui.js/bcs');
+const { fromHEX, toHEX } = require('@mysten/bcs');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, hexlify },
@@ -46,6 +47,16 @@ const proofStruct = bcs.struct('Proof', {
     signatures: bcs.vector(bcs.vector(bcs.u8())),
 });
 
+const UID = bcs.fixedArray(32, bcs.u8()).transform({
+  input: (id) => fromHEX(id),
+  output: (id) => toHEX(Uint8Array.from(id)),
+});
+
+const gasServiceStruct = bcs.struct("GasService", {
+  id: UID,
+  balance: bcs.u64(),
+});
+
 module.exports = {
     addressStruct,
     signerStruct,
@@ -54,4 +65,5 @@ module.exports = {
     messageToSignStruct,
     messageStruct,
     proofStruct,
+    gasServiceStruct,
 };
