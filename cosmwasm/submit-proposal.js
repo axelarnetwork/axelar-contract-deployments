@@ -5,14 +5,27 @@ require('dotenv').config();
 const {
     prepareWallet,
     prepareClient,
+    getChains,
     submitStoreCodeProposal,
     submitInstantiateProposal,
     makeInstantiateMsg,
+    instantiate2AddressForProposal,
     governanceAddress,
 } = require('./utils');
 const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
 const { Command, Option } = require('commander');
+
+const updateConfig = (contractConfig, chainConfig, key, value) => {
+    if (chainConfig) {
+        contractConfig[chainConfig.axelarId] = {
+            ...contractConfig[chainConfig.axelarId],
+            [key]: value,
+        };
+    } else {
+        contractConfig[key] = value;
+    }
+};
 
 const storeCode = (client, wallet, config, options) => {
     const { contractName } = options;
@@ -22,7 +35,7 @@ const storeCode = (client, wallet, config, options) => {
         },
     } = config;
 
-    submitStoreCodeProposal(client, wallet, config, options).then((proposalId) => {
+    return submitStoreCodeProposal(client, wallet, config, options).then((proposalId) => {
         printInfo('Proposal submitted', proposalId);
 
         contractConfig.storeCodeProposalId = proposalId;
@@ -30,7 +43,7 @@ const storeCode = (client, wallet, config, options) => {
 };
 
 const instantiate = (client, wallet, config, options, chainName) => {
-    const { contractName } = options;
+    const { contractName, instantiate2 } = options;
     const {
         axelar: {
             contracts: { [contractName]: contractConfig },
@@ -39,25 +52,20 @@ const instantiate = (client, wallet, config, options, chainName) => {
     } = config;
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
-    submitInstantiateProposal(client, wallet, config, options, initMsg).then(({ proposalId, contractAddress }) => {
+    return submitInstantiateProposal(client, wallet, config, options, initMsg).then((proposalId) => {
         printInfo('Proposal submitted', proposalId);
 
-        contractConfig.instantiateProposalId = proposalId;
+        updateConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
 
-        if (contractAddress) {
-            if (chainConfig) {
-                contractConfig[chainConfig.axelarId] = {
-                    ...contractConfig[chainConfig.axelarId],
-                    address: contractAddress,
-                };
-            } else {
-                contractConfig.address = contractAddress;
-            }
+        if (instantiate2) {
+            return instantiate2AddressForProposal(client, config, options).then((contractAddress) => {
+                updateConfig(contractConfig, chainConfig, 'address', contractAddress);
 
-            printInfo(
-                `Predicted address for ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`,
-                contractAddress,
-            );
+                printInfo(
+                    `Predicted address for ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`,
+                    contractAddress,
+                );
+            });
         }
     });
 };
@@ -72,8 +80,15 @@ const main = async (options) => {
             switch (proposalType) {
                 case 'store':
                     return storeCode(client, wallet, config, options);
-                case 'instantiate':
-                    return instantiate(client, wallet, config, options);
+
+                case 'instantiate': {
+                    const chains = getChains(config, options);
+
+                    return chains.reduce((promise, chain) => {
+                        return promise.then(() => instantiate(client, wallet, config, options, chain.toLowerCase()));
+                    }, Promise.resolve());
+                }
+
                 default:
                     throw new Error('Invalid proposal type');
             }
@@ -96,6 +111,7 @@ const programHandler = () => {
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
 
     program.addOption(new Option('-s, --salt <salt>', 'salt for instantiate2. defaults to contract name').env('SALT'));
     program.addOption(

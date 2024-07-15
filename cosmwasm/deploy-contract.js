@@ -4,7 +4,15 @@ require('dotenv').config();
 const { isNil } = require('lodash');
 
 const { printInfo, loadConfig, saveConfig, prompt } = require('../evm/utils');
-const { prepareWallet, prepareClient, uploadContract, instantiateContract, makeInstantiateMsg, governanceAddress } = require('./utils');
+const {
+    prepareWallet,
+    prepareClient,
+    getChains,
+    uploadContract,
+    instantiateContract,
+    makeInstantiateMsg,
+    governanceAddress,
+} = require('./utils');
 
 const { Command, Option } = require('commander');
 
@@ -72,24 +80,10 @@ const instantiate = (client, wallet, chainName, config, options) => {
 };
 
 const main = async (options) => {
-    const { env, chainNames, uploadOnly, yes, instantiate2 } = options;
+    const { env, uploadOnly, yes } = options;
     const config = loadConfig(env);
 
-    let chains = chainNames.split(',').map((str) => str.trim());
-
-    if (chainNames === 'all') {
-        chains = Object.keys(config.chains);
-    }
-
-    if (chains.length !== 1 && instantiate2) {
-        throw new Error('Cannot pass --instantiate2 with more than one chain');
-    }
-
-    const undefinedChain = chains.find((chain) => !config.chains[chain.toLowerCase()] && chain !== 'none');
-
-    if (undefinedChain) {
-        throw new Error(`Chain ${undefinedChain} is not defined in the info file`);
-    }
+    const chains = getChains(config, options);
 
     await prepareWallet(options)
         .then((wallet) => prepareClient(config, wallet))

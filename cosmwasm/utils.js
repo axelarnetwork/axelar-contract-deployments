@@ -41,6 +41,28 @@ const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'
 
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
+const getSalt = (salt, contractName, chainNames) => fromHex(getSaltFromKey(salt || contractName.concat(chainNames)));
+
+const getChains = (config, { chainNames, instantiate2 }) => {
+    let chains = chainNames.split(',').map((str) => str.trim());
+
+    if (chainNames === 'all') {
+        chains = Object.keys(config.chains);
+    }
+
+    if (chains.length !== 1 && instantiate2) {
+        throw new Error('Cannot pass --instantiate2 with more than one chain');
+    }
+
+    const undefinedChain = chains.find((chain) => !config.chains[chain.toLowerCase()] && chain !== 'none');
+
+    if (undefinedChain) {
+        throw new Error(`Chain ${undefinedChain} is not defined in the info file`);
+    }
+
+    return chains;
+};
+
 const uploadContract = async (client, wallet, config, options) => {
     const { artifactPath, contractName, instantiate2, salt, aarch64, chainNames } = options;
     return wallet
@@ -55,12 +77,7 @@ const uploadContract = async (client, wallet, config, options) => {
         })
         .then(({ account, checksum, codeId }) => {
             const address = instantiate2
-                ? instantiate2Address(
-                      fromHex(checksum),
-                      account.address,
-                      fromHex(getSaltFromKey(salt || contractName.concat(chainNames))),
-                      'axelar',
-                  )
+                ? instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainNames), 'axelar')
                 : null;
 
             return { codeId, address };
@@ -82,7 +99,7 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
                 ? client.instantiate2(
                       account.address,
                       contractConfig.codeId,
-                      fromHex(getSaltFromKey(salt || contractName.concat(chainNames))),
+                      getSalt(salt, contractName, chainNames),
                       initMsg,
                       contractName,
                       initFee,
@@ -465,6 +482,12 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     throw new Error(`${contractName} is not supported.`);
 };
 
+const instantiate2AddressForProposal = (client, config, { contractName, salt, chainNames, runAs }) => {
+    return client
+        .getCodeDetails(config.axelar.contracts[contractName].codeId)
+        .then(({ checksum }) => instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar'));
+};
+
 const getInstantiatePermission = (accessType, addresses) => {
     return {
         permission: accessType,
@@ -527,7 +550,7 @@ const getInstantiateContract2Params = (config, options, msg) => {
 
     return {
         ...getInstantiateContractParams(config, options, msg),
-        salt: fromHex(getSaltFromKey(salt || contractName.concat(chainNames))),
+        salt: getSalt(salt, contractName, chainNames),
     };
 };
 
@@ -551,7 +574,7 @@ const encodeInstantiateProposal = (config, options, msg) => {
 
 const encodeInstantiate2Proposal = (config, options, msg) => {
     const proposal = InstantiateContract2Proposal.fromPartial(getInstantiateContract2Params(config, options, msg));
-    console.log(proposal);
+
     return {
         typeUrl: '/cosmwasm.wasm.v1.InstantiateContract2Proposal',
         value: Uint8Array.from(InstantiateContract2Proposal.encode(proposal).finish()),
@@ -600,6 +623,7 @@ const submitStoreCodeProposal = (client, wallet, config, options) => {
 
 const submitInstantiateProposal = (client, wallet, config, options, msg) => {
     const { instantiate2 } = options;
+
     const content = instantiate2 ? encodeInstantiate2Proposal(config, options, msg) : encodeInstantiateProposal(config, options, msg);
 
     return submitProposal(client, wallet, config, options, content);
@@ -610,9 +634,11 @@ module.exports = {
     prepareWallet,
     prepareClient,
     calculateDomainSeparator,
+    getChains,
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
+    instantiate2AddressForProposal,
     submitStoreCodeProposal,
     submitInstantiateProposal,
     isValidCosmosAddress,
