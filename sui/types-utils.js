@@ -47,6 +47,14 @@ const messageStruct = bcs.struct('Message', {
     payload_hash: bytes32Struct,
 });
 
+const approvedMessageStruct = bcs.struct('ApprovedMessage', {
+    source_chain: bcs.string(),
+    message_id: bcs.string(),
+    source_address: bcs.string(),
+    destination_id: addressStruct,
+    payload: bcs.vector(bcs.u8()),
+});
+
 const proofStruct = bcs.struct('Proof', {
     signers: signersStruct,
     signatures: bcs.vector(bcs.vector(bcs.u8())),
@@ -64,6 +72,7 @@ module.exports = {
     signersStruct,
     messageToSignStruct,
     messageStruct,
+    approvedMessageStruct,
     proofStruct,
     gasServiceStruct,
 };
