@@ -48,13 +48,13 @@ const proofStruct = bcs.struct('Proof', {
 });
 
 const UID = bcs.fixedArray(32, bcs.u8()).transform({
-  input: (id) => fromHEX(id),
-  output: (id) => toHEX(Uint8Array.from(id)),
+    input: (id) => fromHEX(id),
+    output: (id) => toHEX(Uint8Array.from(id)),
 });
 
-const gasServiceStruct = bcs.struct("GasService", {
-  id: UID,
-  balance: bcs.u64(),
+const gasServiceStruct = bcs.struct('GasService', {
+    id: UID,
+    balance: bcs.u64(),
 });
 
 module.exports = {
