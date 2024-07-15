@@ -148,6 +148,11 @@ pub(crate) async fn evm_to_solana(
         &solana_keypair,
     );
 
+    let (counter_pda, _counter_bump) =
+        axelar_solana_memo_program::get_counter_pda(&gateway_root_pda);
+    let acc = solana_rpc_client.get_account(&counter_pda).unwrap();
+    let acc = borsh::from_slice::<axelar_solana_memo_program::state::Counter>(&acc.data).unwrap();
+    tracing::info!(counter_pda =? acc, "counter PDA");
     Ok(())
 }
 
@@ -234,15 +239,14 @@ pub(crate) async fn evm_to_evm(
         .get(destination_chain.id.as_str())
         .unwrap();
 
+    // let destination_memo_contract =
+    // ethers::utils::to_checksum(&destination_memo_contract, None);
     let tx = send_memo_from_evm_to_evm(
         source_evm_signer,
         source_memo_contract,
         memo_to_send.clone(),
         destination_chain.id.clone(),
-        format!(
-            "0x{}",
-            hex::encode(destination_memo_contract.to_fixed_bytes())
-        ),
+        ethers::utils::to_checksum(&destination_memo_contract, None),
     )
     .await?;
     tracing::info!(

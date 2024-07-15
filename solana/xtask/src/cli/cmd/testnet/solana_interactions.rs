@@ -33,7 +33,7 @@ pub(crate) fn send_memo_from_solana(
                 &solana_keypair.pubkey(),
                 memo.to_string(),
                 destination_chain.id.clone().into_bytes(),
-                format!("0x{}", hex::encode(destination_memo_contract.as_bytes())).into_bytes(),
+                ethers::utils::to_checksum(&destination_memo_contract, None).into_bytes(),
             )
             .unwrap(),
         ],
@@ -231,5 +231,6 @@ pub(crate) fn send_solana_tx(
         hash,
     );
     let signature = solana_rpc_client.send_and_confirm_transaction(&tx).unwrap();
-    tracing::info!(?signature, "solana tx sent");
+    let devnet_url = format!("https://explorer.solana.com/tx/{signature:?}?cluster=devnet",);
+    tracing::info!(?signature, devnet_url, "solana tx sent");
 }

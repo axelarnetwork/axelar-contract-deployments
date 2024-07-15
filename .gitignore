@@ -20,3 +20,4 @@ node_modules
 
 xtask-end-poll/target
 **/target
+rustc-ice-*

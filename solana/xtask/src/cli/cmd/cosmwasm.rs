@@ -413,10 +413,34 @@ pub(crate) mod ampd {
 
         tracing::info!("starting tofnd");
         let tofnd_process = thread::spawn(move || {
+            // Run the docker ps command with filtering by the container name
+            let container_name = "tofnd-solana";
             let sh = Shell::new()?;
+            let output = sh
+                .cmd("docker")
+                .args([
+                    "ps",
+                    "--filter",
+                    format!("name={container_name}").as_str(),
+                    "--format",
+                    "{{.Names}}",
+                ])
+                .read()
+                .expect("Failed to execute command");
+            tracing::info!(output, "docker tofnd check output");
+
+            // Check if the output contains the container name
+            if output.contains(container_name) {
+                println!("Container {container_name} is running");
+                return Ok(());
+            }
             let _ws = sh.push_dir(workspace_root_dir());
+
             let tofnd = sh.cmd("docker").args([
                 "run",
+                "-d",
+                "--name",
+                container_name,
                 "-p",
                 "50051:50051",
                 "--env",
@@ -433,9 +457,7 @@ pub(crate) mod ampd {
 
         // sleep for 5 secs to allow tofnd to spawn
         tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-        if tofnd_process.is_finished() {
-            eyre::bail!("issue with spawning tofnd");
-        }
+        tofnd_process.join().unwrap()?;
 
         // spawn ampd
         tracing::info!("spawning ampd");
