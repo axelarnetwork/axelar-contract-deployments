@@ -1,5 +1,6 @@
 'use strict';
 
+const zlib = require('zlib');
 const { ethers } = require('hardhat');
 const {
     utils: { keccak256 },
@@ -523,7 +524,7 @@ const getStoreCodeParams = (options) => {
 
     return {
         ...getSubmitProposalParams(options),
-        wasmByteCode: wasm,
+        wasmByteCode: zlib.gzipSync(wasm),
         source,
         builder,
         codeHash,
