@@ -161,6 +161,8 @@ These options enable voters to independently verify that the proposed bytecode m
 
 ### Instantiating through governance
 
+Prerequisites: Submit a proposal to upload the bytecode as described in the previous section and update `codeId` in the json config manually. TODO: create a script to automate this process.
+
 Example usage:
 
 ```

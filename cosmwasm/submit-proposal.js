@@ -16,7 +16,7 @@ const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
 const { Command, Option } = require('commander');
 
-const updateConfig = (contractConfig, chainConfig, key, value) => {
+const updateContractChainConfig = (contractConfig, chainConfig, key, value) => {
     if (chainConfig) {
         contractConfig[chainConfig.axelarId] = {
             ...contractConfig[chainConfig.axelarId],
@@ -36,9 +36,11 @@ const storeCode = (client, wallet, config, options) => {
     } = config;
 
     return submitStoreCodeProposal(client, wallet, config, options).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+        if (proposalId) {
+            printInfo('Proposal submitted', proposalId);
 
-        contractConfig.storeCodeProposalId = proposalId;
+            contractConfig.storeCodeProposalId = proposalId;
+        }
     });
 };
 
@@ -53,13 +55,15 @@ const instantiate = (client, wallet, config, options, chainName) => {
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
     return submitInstantiateProposal(client, wallet, config, options, initMsg).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+        if (proposalId) {
+            printInfo('Proposal submitted', proposalId);
 
-        updateConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
+            updateContractChainConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
+        }
 
         if (instantiate2) {
             return instantiate2AddressForProposal(client, config, options).then((contractAddress) => {
-                updateConfig(contractConfig, chainConfig, 'address', contractAddress);
+                updateContractChainConfig(contractConfig, chainConfig, 'address', contractAddress);
 
                 printInfo(
                     `Predicted address for ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`,
@@ -129,6 +133,12 @@ const programHandler = () => {
     program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message').makeOptionMandatory(true));
     program.addOption(
         new Option('--proposalType <proposalType>', 'proposal type').choices(['store', 'instantiate']).makeOptionMandatory(true),
+    );
+    program.addOption(
+        new Option(
+            '--dryRun',
+            'performs a dry run of the proposal. Saves any config changes including instantiate2 predicted address, but does not broadcast the transaction',
+        ).default(false),
     );
 
     program.addOption(new Option('--source <source>', "a valid HTTPS URI to the contract's source code"));
