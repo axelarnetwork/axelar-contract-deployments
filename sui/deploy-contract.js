@@ -1,4 +1,4 @@
-const { saveConfig, printInfo } = require('../evm/utils');
+const { saveConfig, printInfo, printWarn } = require('../evm/utils');
 const { Command, Argument } = require('commander');
 const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 
@@ -44,6 +44,8 @@ async function processCommand(contractName, config, chain, options) {
     switch (contractName) {
         case contractMap.gas_service.packageName:
             contractConfig.objects.gas_collector_cap = gasCollectorCapObject.objectId;
+            break;
+        default:
             break;
     }
 
