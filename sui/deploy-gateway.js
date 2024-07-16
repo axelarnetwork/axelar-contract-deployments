@@ -1,6 +1,5 @@
 const { saveConfig, prompt, printInfo } = require('../evm/utils');
 const { Command, Option } = require('commander');
-const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { ethers } = require('hardhat');
@@ -12,7 +11,7 @@ const {
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { bytes32Struct, signersStruct } = require('./types-utils');
-const { getAmplifierSigners, loadSuiConfig } = require('./utils');
+const { getAmplifierSigners, loadSuiConfig, deployPackage } = require('./utils');
 
 async function getSigners(keypair, config, chain, options) {
     if (options.signers === 'wallet') {
@@ -62,13 +61,10 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const published = await publishPackage('axelar_gateway', client, keypair);
-    const packageId = published.packageId;
+    const {packageId, publishTxn} = await deployPackage('axelar_gateway', client, keypair);
 
-    updateMoveToml('axelar_gateway', packageId);
-
-    const creatorCap = published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::gateway::CreatorCap`);
-    const relayerDiscovery = published.publishTxn.objectChanges.find(
+    const creatorCap = publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::gateway::CreatorCap`);
+    const relayerDiscovery = publishTxn.objectChanges.find(
         (change) => change.objectType === `${packageId}::discovery::RelayerDiscovery`,
     );
 
