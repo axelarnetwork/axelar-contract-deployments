@@ -1,9 +1,9 @@
 const { saveConfig, printInfo } = require('../evm/utils');
 const { Command } = require('commander');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
-const { approvedMessageStruct } = require('./types-utils');
+const { approvedMessageStruct, singletonStruct } = require('./types-utils');
 const { bcs } = require('@mysten/sui.js/bcs');
-const { loadSuiConfig } = require('./utils');
+const { loadSuiConfig, getBcsBytesByObjectId } = require('./utils');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify },
@@ -43,20 +43,29 @@ async function execute(chain, args, options) {
 
     await printWalletInfo(keypair, client, chain, options);
 
-    const [sourceChain, messageId, sourceAddress, destinationId, payload] = args;
+    const singletonObjectId = chain.contracts.test.objects.singleton;
+
+    const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
+
+    const data = singletonStruct.parse(bcsBytes);
+
+    const channelId = '0x' + data.channel.id;
+
+    printInfo('Channel ID', channelId);
+
+    const [sourceChain, messageId, sourceAddress, payload] = args;
 
     const encodedMessage = approvedMessageStruct
         .serialize({
             source_chain: sourceChain,
             message_id: messageId,
             source_address: sourceAddress,
-            destination_id: destinationId,
-            payload,
+            destination_id: channelId,
+            payload: arrayify(payload),
         })
         .toBytes();
 
-    const testConfig = chain.contracts.test;
-    const singletonObjectId = testConfig.objects.singleton;
+    console.log('Encoded message', encodedMessage);
 
     const tx = new TransactionBlock();
     tx.moveCall({
@@ -100,7 +109,7 @@ if (require.main === module) {
     const executeCommand = new Command()
         .name('execute')
         .description('Execute gmp contract call')
-        .command('execute <sourceChain> <messageId> <sourceAddress> <destinationId> <payload>');
+        .command('execute <sourceChain> <messageId> <sourceAddress> <payload>');
 
     addBaseOptions(sendCallProgram);
     addBaseOptions(executeCommand);
@@ -109,8 +118,8 @@ if (require.main === module) {
         mainProcessor('send-call', options, [destChain, destContractAddress, payload], processCommand);
     });
 
-    executeCommand.action((sourceChain, messageId, sourceAddress, destinationId, payload, options) => {
-        mainProcessor('execute', options, [sourceChain, messageId, sourceAddress, destinationId, payload], processCommand);
+    executeCommand.action((sourceChain, messageId, sourceAddress, payload, options) => {
+        mainProcessor('execute', options, [sourceChain, messageId, sourceAddress, payload], processCommand);
     });
 
     program.addCommand(sendCallProgram);

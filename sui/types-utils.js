@@ -65,6 +65,15 @@ const gasServiceStruct = bcs.struct('GasService', {
     balance: bcs.u64(),
 });
 
+const channelStruct = bcs.struct('Channel', {
+    id: UID,
+});
+
+const singletonStruct = bcs.struct('Singleton', {
+    id: UID,
+    channel: channelStruct,
+});
+
 module.exports = {
     addressStruct,
     signerStruct,
@@ -75,4 +84,6 @@ module.exports = {
     approvedMessageStruct,
     proofStruct,
     gasServiceStruct,
+    channelStruct,
+    singletonStruct,
 };
