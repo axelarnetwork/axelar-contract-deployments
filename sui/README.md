@@ -74,7 +74,7 @@ node sui/deploy-gateway.js -e testnet --signers '{"signers": [{"pubkey": "0x0201
 Deploy the Gas Service package:
 
 ```bash
-node sui/deploy-contract.js gas_service
+node sui/deploy-contract.js gasService
 ```
 
 Deploy the test GMP package:
