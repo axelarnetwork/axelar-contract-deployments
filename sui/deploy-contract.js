@@ -4,7 +4,7 @@ const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-s
 
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo } = require('./sign-utils');
-const { loadSuiConfig } = require('./utils');
+const { loadSuiConfig, findPublishedObject } = require('./utils');
 
 // Add more contracts here to support more modules deployment
 const contractMap = {
@@ -32,12 +32,8 @@ async function processCommand(contractName, config, chain, options) {
 
     updateMoveToml(contract.packageName, packageId);
 
-    const contractObject = published.publishTxn.objectChanges.find(
-        (change) => change.objectType === `${packageId}::${contract.packageName}::${contract.contractName}`,
-    );
-    const gasCollectorCapObject = published.publishTxn.objectChanges.find(
-        (change) => change.objectType === `${packageId}::${contract.packageName}::GasCollectorCap`,
-    );
+    const contractObject = findPublishedObject(published, contract.packageName, contract.contractName);
+    const gasCollectorCapObject = findPublishedObject(published, contract.packageName, 'GasCollectorCap');
 
     const contractConfig = chain.contracts[contract.chainConfigKey];
     contractConfig.address = packageId;
