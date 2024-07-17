@@ -159,6 +159,8 @@ For transparency and security, it's strongly recommended to include the `--sourc
 
 These options enable voters to independently verify that the proposed bytecode matches the public source code. For example: `--source "https://github.com/axelarnetwork/axelar-amplifier/tree/service-registry-v0.4.1/contracts/service-registry" --builder "cosmwasm/workspace-optimizer-arm64:0.16.0"`
 
+After a store code proposal is accepted, the code id can be retrieved using the command `axelard q wasm list-code`
+
 ### Instantiating through governance
 
 Prerequisites: Submit a proposal to upload the bytecode as described in the previous section and update `codeId` in the json config manually. TODO: create a script to automate this process.
@@ -170,3 +172,16 @@ node cosmwasm/submit-proposal.js --proposalType instantiate -c ServiceRegistry -
 ```
 
 Note: The rules for chain name specification and the use of `--instantiate2` as described in the "Deploy the contracts" and "Constant Address Deployment" sections above also apply when instantiating through governance. Refer to those sections for details on omitting chain names for certain contracts and using `--instantiate2` for address prediction.
+
+Order of execution to satisfy dependencies:
+1.  `node cosmwasm/submit-proposal.js --proposalType instantiate -c Router -t "Router roposal title" -d "Router proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 --predictOnly`
+2.  `node cosmwasm/submit-proposal.js --proposalType instantiate -c NexusGateway -t "NexusGateway roposal title" -d "NexusGateway proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 --predictOnly`
+3.  `node cosmwasm/submit-proposal.js --proposalType instantiate -c NexusGateway -t "NexusGateway roposal title" -d "NexusGateway proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 -y`
+4.  `node cosmwasm/submit-proposal.js --proposalType instantiate -c Router -t "Router roposal title" -d "Router proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 -y`
+5.  `node cosmwasm/submit-proposal.js --proposalType instantiate -c ServiceRegistry -t "ServiceRegistry roposal title" -d "ServiceRegistry proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 -y`
+6.  `node cosmwasm/submit-proposal.js --proposalType instantiate -c Rewards -t "Rewards roposal title" -d "Rewards proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 -y`
+7.  `node cosmwasm/submit-proposal.js --proposalType instantiate -c Coordinator -t "Coordinator roposal title" -d "Coordinator proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 -y`
+8.  `node cosmwasm/submit-proposal.js --proposalType instantiate -c Multisig -t "Multisig roposal title" -d "Multisig proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 -y`
+9.  `node cosmwasm/submit-proposal.js --proposalType instantiate -c VotingVerifier -t "VotingVerifier roposal title" -d "VotingVerifier proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 -y -n "avalanche"`
+10. `node cosmwasm/submit-proposal.js --proposalType instantiate -c Gateway -t "Gateway roposal title" -d "Gateway proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 -y -n "avalanche"`
+11. `node cosmwasm/submit-proposal.js --proposalType instantiate -c MultisigProver -t "MultisigProver roposal title" -d "MultisigProver proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 -y -n "avalanche"`
