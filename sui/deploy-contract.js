@@ -1,5 +1,5 @@
 const { saveConfig, printInfo } = require('../evm/utils');
-const { Command, Argument } = require('commander');
+const { Command, Argument, Option } = require('commander');
 const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 
 const { addBaseOptions } = require('./cli-utils');
@@ -10,46 +10,44 @@ const { loadSuiConfig, findPublishedObject } = require('./utils');
 const contractMap = {
     GasService: {
         packageName: 'gas_service',
-        contractName: 'GasService',
-        displayName: 'Gas Service',
-        chainConfigKey: 'axelar_gas_service',
     },
 };
 
 async function processCommand(contractName, config, chain, options) {
     const contract = contractMap[contractName];
+    const packageName = options.packageName || contract.packageName;
 
     const [keypair, client] = getWallet(chain, options);
 
     await printWalletInfo(keypair, client, chain, options);
 
-    if (!chain.contracts[contract.chainConfigKey]) {
-        chain.contracts[contract.chainConfigKey] = {};
+    if (!chain.contracts[contractName]) {
+        chain.contracts[contractName] = {};
     }
 
-    const published = await publishPackage(contract.packageName, client, keypair);
+    const published = await publishPackage(packageName, client, keypair);
     const packageId = published.packageId;
 
-    updateMoveToml(contract.packageName, packageId);
+    updateMoveToml(packageName, packageId);
 
-    const contractObject = findPublishedObject(published, contract.packageName, contract.contractName);
-    const gasCollectorCapObject = findPublishedObject(published, contract.packageName, 'GasCollectorCap');
+    const contractObject = findPublishedObject(published, packageName, contractName);
+    const gasCollectorCapObject = findPublishedObject(published, packageName, 'GasCollectorCap');
 
-    const contractConfig = chain.contracts[contract.chainConfigKey];
+    const contractConfig = chain.contracts[contractName];
     contractConfig.address = packageId;
     contractConfig.objects = {
         [contractName]: contractObject.objectId,
     };
 
     switch (contractName) {
-        case 'gasService':
-            contractConfig.objects.gasCollectorCap = gasCollectorCapObject.objectId;
+        case 'GasService':
+            contractConfig.objects.GasCollectorCap = gasCollectorCapObject.objectId;
             break;
         default:
             break;
     }
 
-    printInfo(`${contract.displayName} deployed`, JSON.stringify(contractConfig, null, 2));
+    printInfo(`${contractName} deployed`, JSON.stringify(contractConfig, null, 2));
 }
 
 async function mainProcessor(contractName, options, processor) {
@@ -63,6 +61,7 @@ if (require.main === module) {
 
     program
         .name('deploy-contract')
+        .addOption(new Option('--packageName <packageName>', 'Package name to deploy'))
         .addArgument(new Argument('<contractName>', 'Contract name to deploy').choices(Object.keys(contractMap)))
         .description('Deploy SUI modules');
 
