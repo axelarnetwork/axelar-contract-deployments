@@ -51,16 +51,20 @@ const addExtendedOptions = (program, options = {}) => {
     return program;
 };
 
-const addBaseOptionsToCommands = (program, options = {}) => {
+// `optionMethod` is a method such as `addBaseOptions`
+// `options` is an option object for optionMethod
+const addOptionsToCommands = (program, optionMethod, options) => {
     if (program.commands.length > 0) {
         program.commands.forEach((command) => {
-            addBaseOptions(command, options);
+            optionMethod(command, options);
         });
     }
+
+    optionMethod(program, options);
 };
 
 module.exports = {
     addBaseOptions,
     addExtendedOptions,
-    addBaseOptionsToCommands,
+    addOptionsToCommands,
 };
