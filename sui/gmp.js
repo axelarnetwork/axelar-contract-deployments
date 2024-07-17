@@ -9,7 +9,8 @@ const {
     utils: { arrayify },
 } = ethers;
 
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
+const { getUnitAmount } = require('./amount-utils.js');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 
 async function sendCommand(chain, args, options) {
@@ -17,9 +18,12 @@ async function sendCommand(chain, args, options) {
 
     await printWalletInfo(keypair, client, chain, options);
 
-    const [destinationChain, destinationAddress, payload] = args;
+    const [destinationChain, destinationAddress, feeAmount, payload] = args;
+    const params = options.params;
 
     const testConfig = chain.contracts.test;
+    const gasServiceConfig = chain.contracts.GasService;
+    const gasServicePackageId = gasServiceConfig.address;
     const singletonObjectId = testConfig.objects.singleton;
 
     const tx = new TransactionBlock();
@@ -30,6 +34,29 @@ async function sendCommand(chain, args, options) {
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
             tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
+        ],
+    });
+
+    const unitAmount = getUnitAmount(feeAmount);
+    const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
+
+    const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
+    const data = singletonStruct.parse(bcsBytes);
+    const channelId = '0x' + data.channel.id;
+    const walletAddress = keypair.toSuiAddress();
+    const refundAddress = options.refundAddress || walletAddress;
+
+    tx.moveCall({
+        target: `${gasServicePackageId}::gas_service::pay_gas`,
+        arguments: [
+            tx.object(gasServiceConfig.objects.GasService),
+            coin, // Coin<SUI>
+            tx.pure.address(channelId), // Channel address
+            tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
+            tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
+            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
+            tx.pure.address(refundAddress), // Refund address
+            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
         ],
     });
 
@@ -79,16 +106,7 @@ async function execute(chain, args, options) {
 }
 
 async function processCommand(command, chain, args, options) {
-    switch (command) {
-        case 'send-call':
-            printInfo('Action', 'Send Call');
-            return sendCommand(chain, args, options);
-        case 'execute':
-            printInfo('Action', 'Execute');
-            return execute(chain, args, options);
-        default:
-            throw new Error(`Unknown command: ${command}`);
-    }
+    await command(chain, args, options);
 }
 
 async function mainProcessor(command, options, args, processor) {
@@ -102,27 +120,26 @@ if (require.main === module) {
     program.name('gmp').description('Example of SUI gmp commands');
 
     const sendCallProgram = new Command()
-        .name('send-call')
+        .name('sendCall')
         .description('Send gmp contract call')
-        .command('send-call <destChain> <destContractAddress> <payload>');
+        .command('sendCall <destChain> <destContractAddress> <feeAmount> <payload>')
+        .option('--params <params>', 'GMP call params. Default is empty.', '0x')
+        .action((destChain, destContractAddress, feeAmount, payload, options) => {
+            mainProcessor(sendCommand, options, [destChain, destContractAddress, feeAmount, payload], processCommand);
+        });
 
     const executeCommand = new Command()
         .name('execute')
         .description('Execute gmp contract call')
-        .command('execute <sourceChain> <messageId> <sourceAddress> <payload>');
-
-    addBaseOptions(sendCallProgram);
-    addBaseOptions(executeCommand);
-
-    sendCallProgram.action((destChain, destContractAddress, payload, options) => {
-        mainProcessor('send-call', options, [destChain, destContractAddress, payload], processCommand);
-    });
-
-    executeCommand.action((sourceChain, messageId, sourceAddress, payload, options) => {
-        mainProcessor('execute', options, [sourceChain, messageId, sourceAddress, payload], processCommand);
-    });
+        .command('execute <sourceChain> <messageId> <sourceAddress> <payload>')
+        .action((sourceChain, messageId, sourceAddress, payload, options) => {
+            mainProcessor(execute, options, [sourceChain, messageId, sourceAddress, payload], processCommand);
+        });
 
     program.addCommand(sendCallProgram);
     program.addCommand(executeCommand);
+
+    addOptionsToCommands(program, addBaseOptions);
+
     program.parse();
 }
