@@ -51,7 +51,7 @@ node sui/faucet.js
 
 Deploy the gateway package:
 
-- By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
+-   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
 ```bash
 node sui/deploy-gateway.js
@@ -59,13 +59,13 @@ node sui/deploy-gateway.js
 
 Use `--help` flag to see other setup params that can be overridden.
 
-- For testing convenience, you can use the secp256k1 wallet as the signer set for the gateway.
+-   For testing convenience, you can use the secp256k1 wallet as the signer set for the gateway.
 
 ```bash
 node sui/deploy-gateway.js --signers wallet --nonce test
 ```
 
-- You can also provide a JSON object with a full signer set:
+-   You can also provide a JSON object with a full signer set:
 
 ```bash
 node sui/deploy-gateway.js -e testnet --signers '{"signers": [{"pubkey": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
@@ -87,6 +87,14 @@ Call Contract:
 
 ```bash
 node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+```
+
+Pay for gas:
+
+The syntax is `node sui/gas-service.js payGas <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
+
+```bash
+node sui/gas-service.js payGas 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
 Approve messages:
