@@ -84,8 +84,10 @@ node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A
 
 Approve messages:
 
+If the gateway was deployed using the wallet, you can submit a message approval with it
+
 ```bash
-node sui/gateway.js approve ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad --proof wallet
+node sui/gateway.js approve --proof wallet --currentNonce test ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
 ```
 
 Rotate gateway signers:
@@ -93,7 +95,7 @@ Rotate gateway signers:
 If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
 
 ```bash
-node sui/gateway.js rotate --proof wallet
+node sui/gateway.js rotate --proof wallet --currentNonce test
 ```
 
 If you want to rotate to the wallet again but with a new nonce, do
@@ -104,17 +106,91 @@ node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test -
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
 
-Deploy/Upgrade package:
 
-If a package requires dependencies, then the dependencies should be stored in the contract configuration.
+### Multisig
 
-provide `--offline` with `--txFilePath` to store tx data in file for offline signing
+To create a Multisig, follow the documentation [here](https://docs.sui.io/guides/developer/cryptography/multisig).
 
+Get test SUI coins to your multisig address via a faucet:
 ```bash
-node sui/deploy-upgrade.js --packageName its --packageDepencies axelar_gateway abi governance
+sui client faucet --address <multisig address>
 ```
 
-provide `--upgrade` with `--policy <policy>` to upgrade package
+Get public keys for all wallets:
+```bash
+sui keytool list
+```
+
+Get private key of wallet using wallet alias or address:
+```bash
+sui keytool export --key-identity <alias/wallet address>
+```
+
+Get tx data for testing:
+```bash
+sui client transfer-sui --to <recipient address> --amount 1 --sui-coin-object-id <sui coin object id> --serialize-unsigned-transaction --gas-budget 77047880
+```
+
+To get sui coin object id
+```bash
+sui client gas <multisig address>
+```
+
+Sign transaction block for multisig:
+
+```bash
+node sui/multisig.js --txBlockPath <path to unsigned tx block> --signatureFilePath <path to store signature> --action sign --offline
+```
+
+example txBlock file:
+```
+{
+    "bytes": "AAACACBC5cSnnYJrDEn9nSW1BDzPLLAbUJbYOeJnUgYl/b90..."
+}
+```
+
+Combine signature files:
+
+```bash
+node sui/multisig.js --txBlockPath <path to unsigned tx block> --signatureFilePath <path to store combined signature> --action combine --offline --signatures <paths to files containing signatures>
+```
+
+Execute combined signature:
+
+This command will broadcast the signature to the network
+
+```bash
+node sui/multisig.js --txBlockPath <path to unsigned tx block> --action execute --combinedSignPath <path to combined signature>
+```
+
+use --multisigKey `multisigKey` to override existing multisig info in chains config
+
+example for adding multisig info to chains config:
+```
+{
+    "sui": {
+        "name": "Sui",
+        "axelarId": "sui",
+        "networkType": "testnet",
+        "tokenSymbol": "SUI",
+        "rpc": "https://fullnode.testnet.sui.io:443",
+        "contracts": {},
+        "multisig": {
+            "threshold": 2,
+            "signers": [
+                {
+                    "publicKey": "AIqrCb324p6Qd4srkqCzn9NJHS7W17tA7r3t7Ur6aYN",
+                    "weight": 1,
+                    "schemeType": "ed25519"
+                }, 
+                .
+                .
+                .
+            ]
+        }
+    }
+}
+```
 
 ## Troubleshooting
 

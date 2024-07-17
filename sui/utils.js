@@ -11,8 +11,11 @@ const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const workerSet = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'current_verifier_set');
-    const signers = Object.values(workerSet.signers);
+    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
+        config.axelar.contracts.MultisigProver[chain].address,
+        'current_verifier_set',
+    );
+    const signers = Object.values(verifierSet.signers);
 
     const weightedSigners = signers
         .map((signer) => ({
@@ -23,8 +26,9 @@ const getAmplifierSigners = async (config, chain) => {
 
     return {
         signers: weightedSigners,
-        threshold: Number(workerSet.threshold),
-        nonce: ethers.utils.hexZeroPad(BigNumber.from(workerSet.created_at).toHexString(), 32),
+        threshold: Number(verifierSet.threshold),
+        nonce: ethers.utils.hexZeroPad(BigNumber.from(verifierSet.created_at).toHexString(), 32),
+        verifierSetId,
     };
 };
 
