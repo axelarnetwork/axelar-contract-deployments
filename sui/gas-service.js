@@ -10,7 +10,7 @@ const {
     utils: { arrayify },
 } = ethers;
 
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptionsToCommands } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 
 async function payGas(config, chain, args, options) {
@@ -202,7 +202,7 @@ if (require.main === module) {
 
     program.name('gas-service').description('Interact with the gas service contract.');
 
-    const payGasProgram = new Command()
+    const payGasCmd = new Command()
         .command('pay_gas <amount> <destination_chain> <destination_address> <payload>')
         .description('Pay gas for the new contract call.')
         .requiredOption('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over')
@@ -212,7 +212,7 @@ if (require.main === module) {
             mainProcessor('pay_gas', options, [amount, destinationChain, destinationAddress, payload], processCommand);
         });
 
-    const addGasProgram = new Command()
+    const addGasCmd = new Command()
         .command('add_gas <message_id> <amount>')
         .description('Add gas for the existing contract call.')
         .option('--refund_address <refundAddress>', 'Refund address.')
@@ -221,7 +221,7 @@ if (require.main === module) {
             mainProcessor('add_gas', options, [messageId, amount], processCommand);
         });
 
-    const collectGasProgram = new Command()
+    const collectGasCmd = new Command()
         .command('collect_gas <amount>')
         .description('Collect gas from the gas service contract.')
         .option('--receiver <receiver>', 'Receiver address. Default is the sender address.')
@@ -229,7 +229,7 @@ if (require.main === module) {
             mainProcessor('collect_gas', options, [amount], processCommand);
         });
 
-    const refundProgram = new Command()
+    const refundCmd = new Command()
         .command('refund <messageId> <amount>')
         .description('Refund gas from the gas service contract.')
         .option('--receiver <receiver>', 'Receiver address. Default is the sender address.')
@@ -237,15 +237,12 @@ if (require.main === module) {
             mainProcessor('refund', options, [messageId, amount], processCommand);
         });
 
-    program.addCommand(payGasProgram);
-    program.addCommand(addGasProgram);
-    program.addCommand(collectGasProgram);
-    program.addCommand(refundProgram);
+    program.addCommand(payGasCmd);
+    program.addCommand(addGasCmd);
+    program.addCommand(collectGasCmd);
+    program.addCommand(refundCmd);
 
-    addBaseOptions(payGasProgram);
-    addBaseOptions(addGasProgram);
-    addBaseOptions(collectGasProgram);
-    addBaseOptions(refundProgram);
+    addBaseOptionsToCommands(program);
 
     program.parse();
 }

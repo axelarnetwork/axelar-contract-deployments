@@ -51,7 +51,16 @@ const addExtendedOptions = (program, options = {}) => {
     return program;
 };
 
+const addBaseOptionsToCommands = (program, options = {}) => {
+  if (program.commands.length > 0) {
+      program.commands.forEach((command) => {
+        addBaseOptions(command, options);
+      });
+  }
+};
+
 module.exports = {
     addBaseOptions,
     addExtendedOptions,
+    addBaseOptionsToCommands,
 };
