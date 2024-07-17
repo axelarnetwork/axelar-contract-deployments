@@ -8,7 +8,7 @@ const { loadSuiConfig, findPublishedObject } = require('./utils');
 
 // Add more contracts here to support more modules deployment
 const contractMap = {
-    gasService: {
+    GasService: {
         packageName: 'gas_service',
         contractName: 'GasService',
         displayName: 'Gas Service',
