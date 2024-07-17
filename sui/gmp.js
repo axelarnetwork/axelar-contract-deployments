@@ -13,22 +13,32 @@ const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
 const { getUnitAmount } = require('./amount-utils.js');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 
-async function sendCommand(chain, args, options) {
-    const [keypair, client] = getWallet(chain, options);
+// Parse bcs bytes from singleton object to get channel id
+async function getChannelId(client, singletonObjectId) {
+    const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
+    const data = singletonStruct.parse(bcsBytes);
+    return '0x' + data.channel.id;
+}
 
-    await printWalletInfo(keypair, client, chain, options);
-
+async function sendCommand(keypair, client, contracts, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
     const params = options.params;
 
-    const testConfig = chain.contracts.test;
-    const gasServiceConfig = chain.contracts.GasService;
+    const [testConfig, gasServiceConfig] = contracts;
     const gasServicePackageId = gasServiceConfig.address;
     const singletonObjectId = testConfig.objects.singleton;
 
+    const unitAmount = getUnitAmount(feeAmount);
+    const walletAddress = keypair.toSuiAddress();
+    const refundAddress = options.refundAddress || walletAddress;
+
+    const channelId = await getChannelId(client, singletonObjectId);
+
     const tx = new TransactionBlock();
+    const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
+
     tx.moveCall({
-        target: `${chain.contracts.test.address}::test::send_call`,
+        target: `${testConfig.address}::test::send_call`,
         arguments: [
             tx.object(singletonObjectId),
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
@@ -36,15 +46,6 @@ async function sendCommand(chain, args, options) {
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
         ],
     });
-
-    const unitAmount = getUnitAmount(feeAmount);
-    const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
-
-    const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
-    const data = singletonStruct.parse(bcsBytes);
-    const channelId = '0x' + data.channel.id;
-    const walletAddress = keypair.toSuiAddress();
-    const refundAddress = options.refundAddress || walletAddress;
 
     tx.moveCall({
         target: `${gasServicePackageId}::gas_service::pay_gas`,
@@ -65,20 +66,13 @@ async function sendCommand(chain, args, options) {
     printInfo('Call sent', receipt.digest);
 }
 
-async function execute(chain, args, options) {
-    const [keypair, client] = getWallet(chain, options);
-
-    await printWalletInfo(keypair, client, chain, options);
-
-    const singletonObjectId = chain.contracts.test.objects.singleton;
-
-    const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
-
-    const data = singletonStruct.parse(bcsBytes);
-
-    const channelId = '0x' + data.channel.id;
+async function execute(keypair, client, contracts, args, options) {
+    const [testConfig] = contracts;
 
     const [sourceChain, messageId, sourceAddress, payload] = args;
+
+    const singletonObjectId = testConfig.objects.singleton;
+    const channelId = await getChannelId(client, singletonObjectId);
 
     const encodedMessage = approvedMessageStruct
         .serialize({
@@ -90,10 +84,9 @@ async function execute(chain, args, options) {
         })
         .toBytes();
 
-
     const tx = new TransactionBlock();
     tx.moveCall({
-        target: `${chain.contracts.test.address}::test::execute`,
+        target: `${testConfig.address}::test::execute`,
         arguments: [tx.pure(bcs.vector(bcs.u8()).serialize(encodedMessage).toBytes()), tx.object(singletonObjectId)],
     });
 
@@ -103,7 +96,13 @@ async function execute(chain, args, options) {
 }
 
 async function processCommand(command, chain, args, options) {
-    await command(chain, args, options);
+    const [keypair, client] = getWallet(chain, options);
+
+    await printWalletInfo(keypair, client, chain, options);
+
+    const contracts = [chain.contracts.test, chain.contracts.GasService];
+
+    await command(keypair, client, contracts, args, options);
 }
 
 async function mainProcessor(command, options, args, processor) {
