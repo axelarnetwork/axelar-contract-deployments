@@ -78,8 +78,6 @@ async function execute(chain, args, options) {
 
     const channelId = '0x' + data.channel.id;
 
-    printInfo('Channel ID', channelId);
-
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
     const encodedMessage = approvedMessageStruct
@@ -92,7 +90,6 @@ async function execute(chain, args, options) {
         })
         .toBytes();
 
-    console.log('Encoded message', encodedMessage);
 
     const tx = new TransactionBlock();
     tx.moveCall({
