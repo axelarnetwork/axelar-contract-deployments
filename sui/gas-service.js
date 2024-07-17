@@ -5,12 +5,12 @@ const { bcs } = require('@mysten/sui.js/bcs');
 const { gasServiceStruct } = require('./types-utils');
 const { loadSuiConfig, getBcsBytesByObjectId } = require('./utils');
 const { ethers } = require('hardhat');
-const { getAtomicAmount, getFormattedAmount } = require('./amount-utils');
+const { getUnitAmount, getFormattedAmount } = require('./amount-utils');
 const {
     utils: { arrayify },
 } = ethers;
 
-const { addBaseOptionsToCommands } = require('./cli-utils');
+const { addOptionsToCommands, addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 
 async function payGas(keypair, client, gasServiceConfig, args, options) {
@@ -23,10 +23,10 @@ async function payGas(keypair, client, gasServiceConfig, args, options) {
 
     const [amount, destinationChain, destinationAddress, channelId, payload] = args;
 
-    const atomicAmount = getAtomicAmount(amount);
+    const unitAmount = getUnitAmount(amount);
 
     const tx = new TransactionBlock();
-    const [coin] = tx.splitCoins(tx.gas, [atomicAmount]);
+    const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
 
     tx.moveCall({
         target: `${gasServicePackageId}::gas_service::pay_gas`,
@@ -57,10 +57,10 @@ async function addGas(keypair, client, gasServiceConfig, args, options) {
 
     const [messageId, amount] = args;
 
-    const atomicAmount = getAtomicAmount(amount);
+    const unitAmount = getUnitAmount(amount);
 
     const tx = new TransactionBlock();
-    const [coin] = tx.splitCoins(tx.gas, [atomicAmount]);
+    const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
 
     tx.moveCall({
         target: `${gasServicePackageId}::gas_service::add_gas`,
@@ -87,14 +87,14 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
     const [amount] = args;
     const receiver = options.receiver || walletAddress;
 
-    const atomicAmount = getAtomicAmount(amount);
+    const unitAmount = getUnitAmount(amount);
 
     const bytes = await getBcsBytesByObjectId(client, gasServiceObjectId);
     const { balance: gasServiceBalance } = gasServiceStruct.parse(bytes);
 
     // Check if the gas service balance is sufficient
-    if (gasServiceBalance < atomicAmount) {
-        printError('Insufficient gas service balance', `${getFormattedAmount(gasServiceBalance)} < ${getFormattedAmount(atomicAmount)}`);
+    if (gasServiceBalance < unitAmount) {
+        printError('Insufficient gas service balance', `${getFormattedAmount(gasServiceBalance)} < ${getFormattedAmount(unitAmount)}`);
         return;
     }
 
@@ -106,7 +106,7 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
             tx.object(gasServiceConfig.objects.GasService),
             tx.object(gasServiceConfig.objects.GasCollectorCap),
             tx.pure.address(receiver), // Receiver address
-            tx.pure.u64(atomicAmount), // Amount
+            tx.pure.u64(unitAmount), // Amount
         ],
     });
 
@@ -124,14 +124,14 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
     const [messageId, amount] = args;
     const receiver = options.receiver || walletAddress;
 
-    const atomicAmount = getAtomicAmount(amount);
+    const unitAmount = getUnitAmount(amount);
 
     const bytes = await getBcsBytesByObjectId(client, gasServiceObjectId);
     const { balance: gasServiceBalance } = gasServiceStruct.parse(bytes);
 
     // Check if the gas service balance is sufficient
-    if (gasServiceBalance < atomicAmount) {
-        printError('Insufficient gas service balance', `${getFormattedAmount(gasServiceBalance)} < ${getFormattedAmount(atomicAmount)}`);
+    if (gasServiceBalance < unitAmount) {
+        printError('Insufficient gas service balance', `${getFormattedAmount(gasServiceBalance)} < ${getFormattedAmount(unitAmount)}`);
         return;
     }
 
@@ -143,7 +143,7 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
             tx.object(gasServiceConfig.objects.GasCollectorCap),
             tx.pure(bcs.string().serialize(messageId).toBytes()), // Message ID for the contract call
             tx.pure.address(receiver), // Refund address
-            tx.pure.u64(atomicAmount), // Amount
+            tx.pure.u64(unitAmount), // Amount
         ],
     });
 
@@ -214,7 +214,7 @@ if (require.main === module) {
     program.addCommand(collectGasCmd);
     program.addCommand(refundCmd);
 
-    addBaseOptionsToCommands(program);
+    addOptionsToCommands(program, addBaseOptions);
 
     program.parse();
 }
