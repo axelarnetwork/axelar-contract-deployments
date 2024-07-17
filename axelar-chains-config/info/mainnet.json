@@ -112,6 +112,12 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+        },
+        "AxelarTransceiver": {
+          "salt": "Transceiver 1.1.0",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "implementation": "0x87fc4b27385bb4e69a40027931229d74ef4d1943",
+          "address": "0xb3F5D02240d12Fc85435cf585CAB659250A24A10"
         }
       },
       "explorer": {
@@ -733,7 +739,14 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+        },
+        "AxelarTransceiver": {
+          "salt": "Transceiver 1.1.0",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "implementation": "0xa1ebb6a4b856df8bf6c3aca88a9115a9ab3b2e02",
+          "address": "0xb3F5D02240d12Fc85435cf585CAB659250A24A10"
         }
+        
       },
       "explorer": {
         "name": "Bscscan",
