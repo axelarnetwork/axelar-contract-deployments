@@ -52,11 +52,11 @@ const addExtendedOptions = (program, options = {}) => {
 };
 
 const addBaseOptionsToCommands = (program, options = {}) => {
-  if (program.commands.length > 0) {
-      program.commands.forEach((command) => {
-        addBaseOptions(command, options);
-      });
-  }
+    if (program.commands.length > 0) {
+        program.commands.forEach((command) => {
+            addBaseOptions(command, options);
+        });
+    }
 };
 
 module.exports = {
