@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint --fix '**/*.js'",
-    "prettier": "prettier --write '**/*.js' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'"
+    "prettier": "prettier --write '**/*.js' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml' && find axelar-chains-config/info evm -name \"*.json\" -type f -print0 | xargs -0 -I {} sh -c 'echo \"\" >> \"{}\"'"
   },
   "repository": {
     "type": "git",
@@ -47,7 +47,7 @@
     "fs-extra": "^11.1.1",
     "hardhat": "~2.19.5",
     "mocha": "^10.2.0",
-    "prettier": "^2.8.7",
+    "prettier": "^3.3.2",
     "readline-sync": "^1.4.10"
   },
   "engines": {

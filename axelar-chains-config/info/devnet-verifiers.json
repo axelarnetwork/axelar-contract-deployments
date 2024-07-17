@@ -490,7 +490,7 @@
           "domainSeparator": "0x333e4afab949ca00f9b5daa5a021f942b614c91cb5ced70ded38cd89da2b55ef",
           "address": "axelar1qt0gkcrvcpv765k8ec4tl2svvg6hd3e3td8pvg2fsncrt3dzjefswsq3w2"
         },
-        "codeId": 42,
+        "codeId": 48,
         "fantom": {
           "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
           "adminAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
@@ -549,3 +549,4 @@
     "gasLimit": "auto"
   }
 }
+
