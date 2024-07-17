@@ -14,7 +14,16 @@ const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const { StoreCodeProposal, InstantiateContractProposal, InstantiateContract2Proposal } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
-const { getSaltFromKey, isString, isStringArray, isKeccak256Hash, isNumber, toBigNumberString, printInfo } = require('../evm/utils');
+const {
+    getSaltFromKey,
+    isString,
+    isStringArray,
+    isKeccak256Hash,
+    isNumber,
+    toBigNumberString,
+    printInfo,
+    prompt,
+} = require('../evm/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
@@ -616,9 +625,7 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
 };
 
 const submitProposal = (client, wallet, config, options, content) => {
-    if (options.dryRun) {
-        printInfo('Dry run enabled. Skipping proposal submission');
-
+    if (prompt(`Proceed with proposal submission?`, options.yes)) {
         return Promise.resolve();
     }
 

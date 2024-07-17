@@ -27,6 +27,15 @@ const updateContractChainConfig = (contractConfig, chainConfig, key, value) => {
     }
 };
 
+const predictAndUpdateAddress = (client, config, options, contractConfig, chainConfig, contractName, chainName) => {
+    return instantiate2AddressForProposal(client, config, options).then((contractAddress) => {
+        updateContractChainConfig(contractConfig, chainConfig, 'address', contractAddress);
+
+        printInfo(`Predicted address for ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
+        return contractAddress;
+    });
+};
+
 const storeCode = (client, wallet, config, options) => {
     const { contractName } = options;
     const {
@@ -45,13 +54,17 @@ const storeCode = (client, wallet, config, options) => {
 };
 
 const instantiate = (client, wallet, config, options, chainName) => {
-    const { contractName, instantiate2 } = options;
+    const { contractName, instantiate2, predictOnly } = options;
     const {
         axelar: {
             contracts: { [contractName]: contractConfig },
         },
         chains: { [chainName]: chainConfig },
     } = config;
+
+    if (predictOnly) {
+        return predictAndUpdateAddress(client, config, options, contractConfig, chainConfig, contractName, chainName);
+    }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
     return submitInstantiateProposal(client, wallet, config, options, initMsg).then((proposalId) => {
@@ -62,14 +75,7 @@ const instantiate = (client, wallet, config, options, chainName) => {
         }
 
         if (instantiate2) {
-            return instantiate2AddressForProposal(client, config, options).then((contractAddress) => {
-                updateContractChainConfig(contractConfig, chainConfig, 'address', contractAddress);
-
-                printInfo(
-                    `Predicted address for ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`,
-                    contractAddress,
-                );
-            });
+            return predictAndUpdateAddress(client, config, options, contractConfig, chainConfig, contractName, chainName);
         }
     });
 };
@@ -134,12 +140,7 @@ const programHandler = () => {
     program.addOption(
         new Option('--proposalType <proposalType>', 'proposal type').choices(['store', 'instantiate']).makeOptionMandatory(true),
     );
-    program.addOption(
-        new Option(
-            '--dryRun',
-            'performs a dry run of the proposal. Saves any config changes including instantiate2 predicted address, but does not broadcast the transaction',
-        ).default(false),
-    );
+    program.addOption(new Option('--predictOnly', 'output the predicted changes only').env('PREDICT_ONLY'));
 
     program.addOption(new Option('--source <source>', "a valid HTTPS URI to the contract's source code"));
     program.addOption(
