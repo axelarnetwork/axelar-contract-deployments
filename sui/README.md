@@ -124,6 +124,91 @@ node sui/deploy-its.js --upgrade --policy <policy>
 ```
 use --digest to override digest generate from module build
 
+### Multisig
+
+To create a Multisig, follow the documentation [here](https://docs.sui.io/guides/developer/cryptography/multisig).
+
+Get test SUI coins to your multisig address via a faucet:
+```bash
+sui client faucet --address <multisig address>
+```
+
+Get public keys for all wallets:
+```bash
+sui keytool list
+```
+
+Get private key of wallet using wallet alias or address:
+```bash
+sui keytool export --key-identity <alias/wallet address>
+```
+
+Get tx data for testing:
+```bash
+sui client transfer-sui --to <recipient address> --amount 1 --sui-coin-object-id <sui coin object id> --serialize-unsigned-transaction --gas-budget 77047880
+```
+
+To get sui coin object id
+```bash
+sui client gas <multisig address>
+```
+
+Sign transaction block for multisig:
+
+```bash
+node sui/multisig.js --txBlockPath <path to unsigned tx block> --signatureFilePath <path to store signature> --action sign --offline
+```
+
+example txBlock file:
+```
+{
+    "bytes": "AAACACBC5cSnnYJrDEn9nSW1BDzPLLAbUJbYOeJnUgYl/b90..."
+}
+```
+
+Combine signature files:
+
+```bash
+node sui/multisig.js --txBlockPath <path to unsigned tx block> --signatureFilePath <path to store combined signature> --action combine --offline --signatures <paths to files containing signatures>
+```
+
+Execute combined signature:
+
+This command will broadcast the signature to the network
+
+```bash
+node sui/multisig.js --txBlockPath <path to unsigned tx block> --action execute --combinedSignPath <path to combined signature>
+```
+
+use --multisigKey `multisigKey` to override existing multisig info in chains config
+
+example for adding multisig info to chains config:
+```
+{
+    "sui": {
+        "name": "Sui",
+        "axelarId": "sui",
+        "networkType": "testnet",
+        "tokenSymbol": "SUI",
+        "rpc": "https://fullnode.testnet.sui.io:443",
+        "contracts": {},
+        "multisig": {
+            "threshold": 2,
+            "signers": [
+                {
+                    "publicKey": "AIqrCb324p6Qd4srkqCzn9NJHS7W17tA7r3t7Ur6aYN",
+                    "weight": 1,
+                    "schemeType": "ed25519"
+                }, 
+                .
+                .
+                .
+            ]
+        }
+    }
+}
+```
+
 ## Troubleshooting
 
 1. Move build error during the deployment step
