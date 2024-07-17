@@ -44,7 +44,7 @@ async function processCommand(contractName, config, chain, options) {
             contractConfig.objects.GasCollectorCap = gasCollectorCapObject.objectId;
             break;
         default:
-            break;
+            throw new Error(`${contractName} is not supported.`);
     }
 
     printInfo(`${contractName} deployed`, JSON.stringify(contractConfig, null, 2));
