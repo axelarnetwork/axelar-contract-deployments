@@ -20,10 +20,10 @@ const getAmplifierSigners = async (config, chain) => {
 
     const weightedSigners = signers
         .map((signer) => ({
-            pubkey: arrayify(`0x${signer.pub_key.ecdsa}`),
+            pub_key: arrayify(`0x${signer.pub_key.ecdsa}`),
             weight: Number(signer.weight),
         }))
-        .sort((a, b) => hexlify(a.pubkey).localeCompare(hexlify(b.pubkey)));
+        .sort((a, b) => hexlify(a.pub_key).localeCompare(hexlify(b.pub_key)));
 
     return {
         signers: weightedSigners,
