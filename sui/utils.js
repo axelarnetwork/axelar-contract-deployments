@@ -48,7 +48,13 @@ const loadSuiConfig = (env) => {
     return config;
 };
 
+const findPublishedObject = (published, packageName, contractName) => {
+    const packageId = published.packageId;
+    return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageName}::${contractName}`);
+};
+
 module.exports = {
     getAmplifierSigners,
     loadSuiConfig,
+    findPublishedObject,
 };

@@ -33,6 +33,7 @@ If you want to run against a local Sui network, then create a `axelar-chains-con
         "networkType": "localnet",
         "tokenSymbol": "SUI",
         "rpc": "http://127.0.0.1:9000",
+        "faucetUrl": "http://127.0.0.1:9123",
         "contracts": {}
     }
 }
@@ -68,6 +69,12 @@ node sui/deploy-gateway.js --signers wallet --nonce test
 
 ```bash
 node sui/deploy-gateway.js -e testnet --signers '{"signers": [{"pubkey": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
+```
+
+Deploy the Gas Service package:
+
+```bash
+node sui/deploy-contract.js GasService
 ```
 
 Deploy the test GMP package:
