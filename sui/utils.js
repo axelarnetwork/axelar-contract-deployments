@@ -60,7 +60,7 @@ const deployPackage = async (packageName, client, keypair) => {
 
     updateMoveToml(packageName, packageId, compileDir);
     return { packageId, publishTxn };
-}
+};
 
 module.exports = {
     getAmplifierSigners,

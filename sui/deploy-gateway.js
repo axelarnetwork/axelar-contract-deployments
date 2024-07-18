@@ -61,12 +61,10 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const {packageId, publishTxn} = await deployPackage('axelar_gateway', client, keypair);
+    const { packageId, publishTxn } = await deployPackage('axelar_gateway', client, keypair);
 
     const creatorCap = publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::gateway::CreatorCap`);
-    const relayerDiscovery = publishTxn.objectChanges.find(
-        (change) => change.objectType === `${packageId}::discovery::RelayerDiscovery`,
-    );
+    const relayerDiscovery = publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::discovery::RelayerDiscovery`);
 
     const encodedSigners = signersStruct
         .serialize({
