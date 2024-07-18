@@ -44,8 +44,8 @@ function getProofSigners(keypair, options) {
 
         const proof = JSON.parse(options.proof);
         return {
-            signers: proof.signers.signers.map(({ pub_key, weight }) => {
-                return { pub_key: arrayify(pub_key), weight };
+            signers: proof.signers.signers.map(({ pub_key: pubKey, weight }) => {
+                return { pub_key: arrayify(pubKey), weight };
             }),
             threshold: proof.signers.threshold,
             nonce: arrayify(proof.signers.nonce) || HashZero,

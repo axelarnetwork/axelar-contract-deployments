@@ -32,8 +32,8 @@ async function getSigners(keypair, config, chain, options) {
 
         const signers = JSON.parse(options.signers);
         return {
-            signers: signers.signers.map(({ pub_key, weight }) => {
-                return { pub_key: arrayify(pub_key), weight };
+            signers: signers.signers.map(({ pub_key: pubKey, weight }) => {
+                return { pub_key: arrayify(pubKey), weight };
             }),
             threshold: signers.threshold,
             nonce: arrayify(signers.nonce) || HashZero,
