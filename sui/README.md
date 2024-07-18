@@ -121,6 +121,15 @@ node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test -
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
 
+Upgrading Gateway:
+
+To update the gateway run the following command:
+
+```bash
+node sui/upgrade-gateway.js --upgradeCap 0x9a7ca3b1e1ed75d821f1c5e34fed451d5a5dc17d4faaea692860530871c46456  --policy 0
+```
+
+Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
 ### Multisig
 
