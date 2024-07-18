@@ -62,8 +62,8 @@ async function processCommand(chain, options) {
 
         const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
         gatewayConfig.address = packageId;
-        printInfo('Transaction result', JSON.stringify(result, null, 2));
-        printInfo(`Gateway upgraded`, packageId);
+        printInfo('Transaction digest', result.digest);
+        printInfo(`Gateway upgraded to`, packageId);
     }
 }
 
