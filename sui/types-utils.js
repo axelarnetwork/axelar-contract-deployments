@@ -13,7 +13,7 @@ const addressStruct = bcs.bytes(32).transform({
 });
 
 const signerStruct = bcs.struct('WeightedSigner', {
-    pubkey: bcs.vector(bcs.u8()),
+    pub_key: bcs.vector(bcs.u8()),
     weight: bcs.u128(),
 });
 

@@ -35,7 +35,7 @@ function getProofSigners(keypair, options) {
         }
 
         return {
-            signers: [{ pubkey: keypair.getPublicKey().toRawBytes(), weight: 1 }],
+            signers: [{ pub_key: keypair.getPublicKey().toRawBytes(), weight: 1 }],
             threshold: 1,
             nonce: options.currentNonce ? keccak256(toUtf8Bytes(options.currentNonce)) : HashZero,
         };
@@ -44,8 +44,8 @@ function getProofSigners(keypair, options) {
 
         const proof = JSON.parse(options.proof);
         return {
-            signers: proof.signers.signers.map(({ pubkey, weight }) => {
-                return { pubkey: arrayify(pubkey), weight };
+            signers: proof.signers.signers.map(({ pub_key: pubKey, weight }) => {
+                return { pub_key: arrayify(pubKey), weight };
             }),
             threshold: proof.signers.threshold,
             nonce: arrayify(proof.signers.nonce) || HashZero,
