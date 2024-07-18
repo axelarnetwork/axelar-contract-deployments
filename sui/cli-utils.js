@@ -3,6 +3,7 @@
 require('dotenv').config();
 
 const { Option } = require('commander');
+const { getUnitAmount } = require('./amount-utils');
 
 const addBaseOptions = (program, options = {}) => {
     program.addOption(
@@ -63,8 +64,16 @@ const addOptionsToCommands = (program, optionMethod, options) => {
     optionMethod(program, options);
 };
 
+// Custom option processing for amount. https://github.com/tj/commander.js?tab=readme-ov-file#custom-option-processing
+// The user is expected to pass a full amount (e.g. 1.0), and this option parser will convert it to smallest units (e.g. 1000000000).
+// Note that this function will use decimals of 9 for SUI. So, other tokens with different decimals will not work.
+const parseSuiUnitAmount = (value, previous) => {
+    return getUnitAmount(value);
+};
+
 module.exports = {
     addBaseOptions,
     addExtendedOptions,
     addOptionsToCommands,
+    parseSuiUnitAmount,
 };

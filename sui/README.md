@@ -91,10 +91,10 @@ node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A
 
 Pay for gas:
 
-The syntax is `node sui/gas-service.js payGas <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
+The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
 
 ```bash
-node sui/gas-service.js payGas 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
 Approve messages:
@@ -197,7 +197,7 @@ example for adding multisig info to chains config:
                     "publicKey": "AIqrCb324p6Qd4srkqCzn9NJHS7W17tA7r3t7Ur6aYN",
                     "weight": 1,
                     "schemeType": "ed25519"
-                }, 
+                },
                 .
                 .
                 .
