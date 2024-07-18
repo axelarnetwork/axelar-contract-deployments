@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 
-const { Option } = require('commander');
+const { Option, InvalidArgumentError } = require('commander');
 const { getUnitAmount } = require('./amount-utils');
 
 const addBaseOptions = (program, options = {}) => {
@@ -68,7 +68,11 @@ const addOptionsToCommands = (program, optionMethod, options) => {
 // The user is expected to pass a full amount (e.g. 1.0), and this option parser will convert it to smallest units (e.g. 1000000000).
 // Note that this function will use decimals of 9 for SUI. So, other tokens with different decimals will not work.
 const parseSuiUnitAmount = (value, previous) => {
-    return getUnitAmount(value);
+    try {
+        return getUnitAmount(value);
+    } catch (error) {
+        throw new InvalidArgumentError('Please use the correct format (e.g. 1.0)');
+    }
 };
 
 module.exports = {
