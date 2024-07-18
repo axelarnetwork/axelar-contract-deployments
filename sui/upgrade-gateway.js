@@ -2,50 +2,47 @@ const { Command, Option } = require('commander');
 const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { fromB64, toB64 } = require('@mysten/bcs');
-const { saveConfig, printInfo, validateParameters, writeJSON } = require('../evm/utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, broadcast } = require('./sign-utils');
 const { loadSuiConfig } = require('./utils');
+const { saveConfig, printInfo, validateParameters, writeJSON } = require('../evm/utils');
 
 async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
     printInfo('Wallet address', keypair.toSuiAddress());
 
     const { offline, policy, sender, txFilePath } = options;
-
-    if (!chain.contracts.axelar_gateway) {
-        chain.contracts.axelar_gateway = {};
-    }
-
-    const contractsConfig = chain.contracts;
-    const gatewayConfig = contractsConfig.axelar_gateway;
+    const gatewayConfig = chain.contracts.axelar_gateway ?? {};
 
     const builder = new TxBuilder(client);
-
     const { modules, dependencies, digest } = await builder.getContractBuild('axelar_gateway');
-
     const upgradeCap = options.upgradeCap || gatewayConfig.objects?.UpgradeCap;
     const digestHash = options.digest ? fromB64(options.digest) : digest;
+    const packageId = gatewayConfig.address;
 
-    validateParameters({ isNonEmptyString: { upgradeCap, policy }, isNonEmptyStringArray: { modules, dependencies } });
+    validateParameters({
+        isNonEmptyString: { policy },
+        isNonEmptyStringArray: { modules, dependencies },
+        isKeccak256Has: { upgradeCap, packageId },
+    });
 
     const tx = builder.tx;
     const cap = tx.object(upgradeCap);
 
     const ticket = tx.moveCall({
-        target: `0x2::package::authorize_upgrade`,
+        target: '0x2::package::authorize_upgrade',
         arguments: [cap, tx.pure(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
     });
 
     const receipt = tx.upgrade({
         modules,
         dependencies,
-        packageId: gatewayConfig.address,
+        packageId,
         ticket,
     });
 
     tx.moveCall({
-        target: `0x2::package::commit_upgrade`,
+        target: '0x2::package::commit_upgrade',
         arguments: [cap, receipt],
     });
 
@@ -56,14 +53,14 @@ async function processCommand(chain, options) {
         const txB64Bytes = toB64(txBytes);
 
         writeJSON({ status: 'PENDING', bytes: txB64Bytes }, txFilePath);
-        printInfo(`The unsigned transaction is`, txB64Bytes);
+        printInfo('The unsigned transaction is', txB64Bytes);
     } else {
         const result = await broadcast(client, keypair, tx);
 
         const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
         gatewayConfig.address = packageId;
         printInfo('Transaction digest', result.digest);
-        printInfo(`Gateway upgraded to`, packageId);
+        printInfo('Gateway upgraded to', packageId);
     }
 }
 
