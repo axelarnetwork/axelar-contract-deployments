@@ -62,18 +62,20 @@ const loadSuiConfig = (env) => {
     return config;
 };
 
-const deployPackage = async (packageName, client, keypair) => {
+const deployPackage = async (packageName, client, keypair, options = {}) => {
     const compileDir = `${__dirname}/move`;
+
     copyMovePackage(packageName, null, compileDir);
+
     const builder = new TxBuilder(client);
-    await builder.publishPackageAndTransferCap(packageName, keypair.toSuiAddress(), compileDir);
+    await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), compileDir);
     const publishTxn = await builder.signAndExecute(keypair);
 
     const packageId = (publishTxn.objectChanges?.find((a) => a.type === 'published') ?? []).packageId;
 
     updateMoveToml(packageName, packageId, compileDir);
     return { packageId, publishTxn };
-}
+};
 
 const findPublishedObject = (published, packageName, contractName) => {
     const packageId = published.packageId;

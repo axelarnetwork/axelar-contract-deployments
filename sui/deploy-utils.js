@@ -9,7 +9,9 @@ const { loadSuiConfig } = require('./utils');
 
 async function upgradePackage(client, keypair, packageName, packageConfig, builder, options) {
     const { modules, dependencies, digest } = await builder.getContractBuild(packageName);
-    const { policy, offline, sender } = options;
+    const { policy, offline } = options;
+    const sender = options.sender || keypair.toSuiAddress();
+    const suiPackageId = '0x2';
 
     const upgradeCap = packageConfig.objects?.UpgradeCap;
     const digestHash = options.digest ? fromB64(options.digest) : digest;
@@ -20,7 +22,7 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
     const cap = tx.object(upgradeCap);
 
     const ticket = tx.moveCall({
-        target: `0x2::package::authorize_upgrade`,
+        target: `${suiPackageId}::package::authorize_upgrade`,
         arguments: [cap, tx.pure(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
     });
 
@@ -32,11 +34,11 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
     });
 
     tx.moveCall({
-        target: `0x2::package::commit_upgrade`,
+        target: `${suiPackageId}::package::commit_upgrade`,
         arguments: [cap, receipt],
     });
 
-    sender ? tx.setSender(sender) : tx.setSender(keypair.toSuiAddress());
+    tx.setSender(sender);
     const txBytes = await tx.build({ client });
 
     if (offline) {
