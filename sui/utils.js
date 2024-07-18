@@ -6,6 +6,7 @@ const {
     BigNumber,
     utils: { arrayify, hexlify },
 } = ethers;
+const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 
@@ -30,6 +31,18 @@ const getAmplifierSigners = async (config, chain) => {
         nonce: ethers.utils.hexZeroPad(BigNumber.from(verifierSet.created_at).toHexString(), 32),
         verifierSetId,
     };
+};
+
+// Given sui client and object id, return the base64-decoded object bcs bytes
+const getBcsBytesByObjectId = async (client, objectId) => {
+    const response = await client.getObject({
+        id: objectId,
+        options: {
+            showBcs: true,
+        },
+    });
+
+    return fromB64(response.data.bcs.bcsBytes);
 };
 
 const loadSuiConfig = (env) => {
@@ -60,10 +73,15 @@ const deployPackage = async (packageName, client, keypair) => {
 
     updateMoveToml(packageName, packageId, compileDir);
     return { packageId, publishTxn };
+const findPublishedObject = (published, packageName, contractName) => {
+    const packageId = published.packageId;
+    return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageName}::${contractName}`);
 };
 
 module.exports = {
     getAmplifierSigners,
+    getBcsBytesByObjectId,
     loadSuiConfig,
     deployPackage,
+    findPublishedObject,
 };
