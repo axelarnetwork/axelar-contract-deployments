@@ -6,6 +6,7 @@ const {
     BigNumber,
     utils: { arrayify, hexlify },
 } = ethers;
+const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 const getAmplifierSigners = async (config, chain) => {
@@ -31,6 +32,18 @@ const getAmplifierSigners = async (config, chain) => {
     };
 };
 
+// Given sui client and object id, return the base64-decoded object bcs bytes
+const getBcsBytesByObjectId = async (client, objectId) => {
+    const response = await client.getObject({
+        id: objectId,
+        options: {
+            showBcs: true,
+        },
+    });
+
+    return fromB64(response.data.bcs.bcsBytes);
+};
+
 const loadSuiConfig = (env) => {
     const config = loadConfig(env);
     const suiEnv = env === 'local' ? 'localnet' : env;
@@ -48,7 +61,14 @@ const loadSuiConfig = (env) => {
     return config;
 };
 
+const findPublishedObject = (published, packageName, contractName) => {
+    const packageId = published.packageId;
+    return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageName}::${contractName}`);
+};
+
 module.exports = {
     getAmplifierSigners,
+    getBcsBytesByObjectId,
     loadSuiConfig,
+    findPublishedObject,
 };
