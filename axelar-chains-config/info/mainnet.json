@@ -121,7 +121,7 @@
           "TransceiverStructs": "0xa12bc993d8144404a8c8c812816048275a066ced",
           "wstETH token": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
           "NttManager": "0xb948a93827d68a82F6513Ad178964Da487fe2BD9",
-          "wormholeChainId": 2 
+          "wormholeChainId": 2
         }
       },
       "explorer": {
@@ -752,9 +752,8 @@
           "TransceiverStructs": "0x27a3daf3b243104e9b0afae6b56026a416b852c9",
           "wstETH token": "0x26c5e01524d2E6280A48F2c50fF6De7e52E9611C",
           "NttManager": "0x6981F5621691CBfE3DdD524dE71076b79F0A0278",
-          "wormholeChainId": 4 
+          "wormholeChainId": 4
         }
-        
       },
       "explorer": {
         "name": "Bscscan",
