@@ -67,27 +67,41 @@ async function sendCommand(keypair, client, contracts, args, options) {
 }
 
 async function execute(keypair, client, contracts, args, options) {
-    const [testConfig] = contracts;
+    const [testConfig, , axelarGatewayConfig] = contracts;
 
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
     const singletonObjectId = testConfig.objects.singleton;
+    const gatewayObjectId = axelarGatewayConfig.objects.gateway;
     const channelId = await getChannelId(client, singletonObjectId);
 
-    const encodedMessage = approvedMessageStruct
-        .serialize({
-            source_chain: sourceChain,
-            message_id: messageId,
-            source_address: sourceAddress,
-            destination_id: channelId,
-            payload: arrayify(payload),
-        })
-        .toBytes();
+    // const encodedMessage = approvedMessageStruct
+    //     .serialize({
+    //         source_chain: sourceChain,
+    //         message_id: messageId,
+    //         source_address: sourceAddress,
+    //         destination_id: channelId,
+    //         payload: arrayify(payload),
+    //     })
+    //     .toBytes();
 
     const tx = new TransactionBlock();
+
+    const approvedMessage = tx.moveCall({
+        target: `${axelarGatewayConfig.address}::gateway::take_approved_message`,
+        arguments: [
+            tx.object(gatewayObjectId),
+            tx.pure(bcs.string().serialize(sourceChain).toBytes()),
+            tx.pure(bcs.string().serialize(messageId).toBytes()),
+            tx.pure(bcs.string().serialize(sourceAddress).toBytes()),
+            tx.pure.address(channelId),
+            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
+        ],
+    });
+
     tx.moveCall({
         target: `${testConfig.address}::test::execute`,
-        arguments: [tx.pure(bcs.vector(bcs.u8()).serialize(encodedMessage).toBytes()), tx.object(singletonObjectId)],
+        arguments: [approvedMessage, tx.object(singletonObjectId)],
     });
 
     const receipt = await broadcast(client, keypair, tx);
@@ -100,7 +114,7 @@ async function processCommand(command, chain, args, options) {
 
     await printWalletInfo(keypair, client, chain, options);
 
-    const contracts = [chain.contracts.test, chain.contracts.GasService];
+    const contracts = [chain.contracts.test, chain.contracts.GasService, chain.contracts.axelar_gateway];
 
     await command(keypair, client, contracts, args, options);
 }
