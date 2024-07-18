@@ -6,7 +6,9 @@ const {
     BigNumber,
     utils: { arrayify, hexlify },
 } = ethers;
+const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -31,6 +33,18 @@ const getAmplifierSigners = async (config, chain) => {
     };
 };
 
+// Given sui client and object id, return the base64-decoded object bcs bytes
+const getBcsBytesByObjectId = async (client, objectId) => {
+    const response = await client.getObject({
+        id: objectId,
+        options: {
+            showBcs: true,
+        },
+    });
+
+    return fromB64(response.data.bcs.bcsBytes);
+};
+
 const loadSuiConfig = (env) => {
     const config = loadConfig(env);
     const suiEnv = env === 'local' ? 'localnet' : env;
@@ -48,6 +62,21 @@ const loadSuiConfig = (env) => {
     return config;
 };
 
+const deployPackage = async (packageName, client, keypair, options = {}) => {
+    const compileDir = `${__dirname}/move`;
+
+    copyMovePackage(packageName, null, compileDir);
+
+    const builder = new TxBuilder(client);
+    await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), compileDir);
+    const publishTxn = await builder.signAndExecute(keypair);
+
+    const packageId = (publishTxn.objectChanges?.find((a) => a.type === 'published') ?? []).packageId;
+
+    updateMoveToml(packageName, packageId, compileDir);
+    return { packageId, publishTxn };
+};
+
 const findPublishedObject = (published, packageName, contractName) => {
     const packageId = published.packageId;
     return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageName}::${contractName}`);
@@ -55,6 +84,8 @@ const findPublishedObject = (published, packageName, contractName) => {
 
 module.exports = {
     getAmplifierSigners,
+    getBcsBytesByObjectId,
     loadSuiConfig,
+    deployPackage,
     findPublishedObject,
 };
