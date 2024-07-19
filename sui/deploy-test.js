@@ -9,9 +9,9 @@ const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 
 // Parse bcs bytes from singleton object to get channel id
 async function getChannelId(client, singletonObjectId) {
-  const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
-  const data = singletonStruct.parse(bcsBytes);
-  return '0x' + data.channel.id;
+    const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
+    const data = singletonStruct.parse(bcsBytes);
+    return '0x' + data.channel.id;
 }
 
 async function processCommand(config, chain, options) {
