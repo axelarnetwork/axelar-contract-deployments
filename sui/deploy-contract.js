@@ -1,10 +1,9 @@
 const { saveConfig, printInfo } = require('../evm/utils');
 const { Command, Argument, Option } = require('commander');
-const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo } = require('./sign-utils');
-const { loadSuiConfig, findPublishedObject } = require('./utils');
+const { loadSuiConfig, findPublishedObject, deployPackage } = require('./utils');
 
 // Add more contracts here to support more modules deployment
 const contractMap = {
@@ -25,10 +24,8 @@ async function processCommand(contractName, config, chain, options) {
         chain.contracts[contractName] = {};
     }
 
-    const published = await publishPackage(packageName, client, keypair);
+    const published = await deployPackage(packageName, client, keypair);
     const packageId = published.packageId;
-
-    updateMoveToml(packageName, packageId);
 
     const contractObject = findPublishedObject(published, packageName, contractName);
     const gasCollectorCapObject = findPublishedObject(published, packageName, 'GasCollectorCap');
