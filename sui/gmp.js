@@ -1,7 +1,7 @@
 const { saveConfig, printInfo } = require('../evm/utils');
 const { Command } = require('commander');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
-const { approvedMessageStruct, singletonStruct } = require('./types-utils');
+const { singletonStruct } = require('./types-utils');
 const { bcs } = require('@mysten/sui.js/bcs');
 const { loadSuiConfig, getBcsBytesByObjectId } = require('./utils');
 const { ethers } = require('hardhat');
@@ -74,16 +74,6 @@ async function execute(keypair, client, contracts, args, options) {
     const singletonObjectId = testConfig.objects.singleton;
     const gatewayObjectId = axelarGatewayConfig.objects.gateway;
     const channelId = await getChannelId(client, singletonObjectId);
-
-    // const encodedMessage = approvedMessageStruct
-    //     .serialize({
-    //         source_chain: sourceChain,
-    //         message_id: messageId,
-    //         source_address: sourceAddress,
-    //         destination_id: channelId,
-    //         payload: arrayify(payload),
-    //     })
-    //     .toBytes();
 
     const tx = new TransactionBlock();
 
