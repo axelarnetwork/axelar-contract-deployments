@@ -187,3 +187,14 @@ Order of execution to satisfy dependencies:
 9.  `node cosmwasm/submit-proposal.js --proposalType instantiate -c VotingVerifier -t "VotingVerifier roposal title" -d "VotingVerifier proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
 10. `node cosmwasm/submit-proposal.js --proposalType instantiate -c Gateway -t "Gateway roposal title" -d "Gateway proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
 11. `node cosmwasm/submit-proposal.js --proposalType instantiate -c MultisigProver -t "MultisigProver roposal title" -d "MultisigProver proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
+
+
+### Execute a contract through governance proposal
+
+To submit a governance proposal to execute a contract, use the `submit-proposal` script with the `--proposalType execute` option. The `--msg` option should be used to pass the execute message.
+
+Example usage:
+
+```
+node cosmwasm/submit-proposal.js --proposalType execute -c Router -t "Proposal title" -d "Proposal description" --deposit 100000000 --msg '{"register_chain":{"chain":"avalanche","gateway_address":"axelar17cnq5hujmkf2lr2c5hatqmhzlvwm365rqc5ugryphxeftavjef9q89zxvp","msg_id_format":"hex_tx_hash_and_event_index"}}'
+```

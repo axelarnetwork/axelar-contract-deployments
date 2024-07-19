@@ -13,13 +13,19 @@ const {
     encodeStoreCodeProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
+    encodeExecuteContractProposal,
     submitProposal,
     makeInstantiateMsg,
     instantiate2AddressForProposal,
     governanceAddress,
 } = require('./utils');
 const { saveConfig, loadConfig, printInfo, prompt } = require('../evm/utils');
-const { StoreCodeProposal, InstantiateContractProposal, InstantiateContract2Proposal } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const {
+    StoreCodeProposal,
+    InstantiateContractProposal,
+    InstantiateContract2Proposal,
+    ExecuteContractProposal,
+} = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 
 const { Command, Option } = require('commander');
 
@@ -136,6 +142,30 @@ const instantiate = async (client, wallet, config, options, chainName) => {
     });
 };
 
+const execute = (client, wallet, config, options, chainName) => {
+    const { contractName } = options;
+    const {
+        axelar: {
+            contracts: { [contractName]: contractConfig },
+        },
+        chains: { [chainName]: chainConfig },
+    } = config;
+
+    const proposal = encodeExecuteContractProposal(config, options, chainName);
+
+    printProposal(proposal, ExecuteContractProposal);
+
+    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+        return Promise.resolve();
+    }
+
+    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
+        printInfo('Proposal submitted', proposalId);
+
+        updateContractConfig(contractConfig, chainConfig, 'executeProposalId', proposalId);
+    });
+};
+
 const main = async (options) => {
     const { env, proposalType, contractName } = options;
     const config = loadConfig(env);
@@ -163,6 +193,14 @@ const main = async (options) => {
                                 }
                             }),
                         );
+                    }, Promise.resolve());
+                }
+
+                case 'execute': {
+                    const chains = getChains(config, options);
+
+                    return chains.reduce((promise, chain) => {
+                        return promise.then(() => execute(client, wallet, config, options, chain.toLowerCase()));
                     }, Promise.resolve());
                 }
 
@@ -203,9 +241,13 @@ const programHandler = () => {
     program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
     program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
     program.addOption(new Option('--deposit <deposit>', 'the proposal deposit').makeOptionMandatory(true));
-    program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message').makeOptionMandatory(true));
     program.addOption(
-        new Option('--proposalType <proposalType>', 'proposal type').choices(['store', 'instantiate']).makeOptionMandatory(true),
+        new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address').default(
+            governanceAddress,
+        ),
+    );
+    program.addOption(
+        new Option('--proposalType <proposalType>', 'proposal type').choices(['store', 'instantiate', 'execute']).makeOptionMandatory(true),
     );
     program.addOption(new Option('--predictOnly', 'output the predicted changes only').env('PREDICT_ONLY'));
 
@@ -218,6 +260,8 @@ const programHandler = () => {
     );
 
     program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
+
+    program.addOption(new Option('--msg <msg>', 'json encoded message to submit with an execute contract proposal'));
 
     program.action((options) => {
         main(options);
