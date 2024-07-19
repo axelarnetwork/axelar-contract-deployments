@@ -1,7 +1,8 @@
-const { saveConfig, prompt, printInfo } = require('../evm/utils');
+const { saveConfig, prompt, printInfo, validateParameters, writeJSON } = require('../evm/utils');
 const { Command, Option } = require('commander');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { bcs } = require('@mysten/sui.js/bcs');
+const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
@@ -12,6 +13,8 @@ const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { bytes32Struct, signersStruct } = require('./types-utils');
 const { getAmplifierSigners, loadSuiConfig, deployPackage } = require('./utils');
+const { upgradePackage } = require('./deploy-utils');
+const { toB64 } = require('@mysten/sui.js/utils');
 
 async function getSigners(keypair, config, chain, options) {
     if (options.signers === 'wallet') {
@@ -43,15 +46,7 @@ async function getSigners(keypair, config, chain, options) {
     return getAmplifierSigners(config, chain);
 }
 
-async function processCommand(config, chain, options) {
-    const [keypair, client] = getWallet(chain, options);
-
-    await printWalletInfo(keypair, client, chain, options);
-
-    if (!chain.contracts.axelar_gateway) {
-        chain.contracts.axelar_gateway = {};
-    }
-
+async function deployGateway(config, chain, options, keypair, client) {
     const contractConfig = chain.contracts.axelar_gateway;
     const { minimumRotationDelay, domainSeparator } = options;
     const signers = await getSigners(keypair, config, chain, options);
@@ -87,6 +82,7 @@ async function processCommand(config, chain, options) {
             tx.pure.address(operator),
             separator,
             tx.pure(minimumRotationDelay),
+            tx.pure(options.previousSigners),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
             tx.object('0x6'),
         ],
@@ -107,6 +103,38 @@ async function processCommand(config, chain, options) {
     printInfo('Gateway deployed', JSON.stringify(contractConfig, null, 2));
 }
 
+async function upgradeGateway(chain, options, keypair, client) {
+    const contractsConfig = chain.contracts;
+    const packageName = 'axelar_gateway';
+    const builder = new TxBuilder(client);
+    contractsConfig[packageName].objects.UpgradeCap = options.upgradeCap;
+
+    await upgradePackage(client, keypair, packageName, contractsConfig[packageName], builder, options);
+}
+
+async function processCommand(config, chain, options) {
+    const [keypair, client] = getWallet(chain, options);
+    await printWalletInfo(keypair, client, chain, options);
+
+    chain.contracts.axelar_gateway = chain.contracts.axelar_gateway ?? {};
+
+    if (!options.upgrade) {
+        await deployGateway(config, chain, options, keypair, client);
+    } else {
+        await upgradeGateway(chain, options, keypair, client);
+    }
+
+    if (options.offline) {
+        const { txFilePath } = options;
+        validateParameters({ isNonEmptyString: { txFilePath } });
+
+        const txB64Bytes = toB64(options.txBytes);
+
+        writeJSON({ status: 'PENDING', bytes: txB64Bytes }, txFilePath);
+        printInfo(`The unsigned transaction is`, txB64Bytes);
+    }
+}
+
 async function mainProcessor(options, processor) {
     const config = loadSuiConfig(options.env);
 
@@ -117,7 +145,7 @@ async function mainProcessor(options, processor) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('deploy-gateway').description('Deploys/publishes the Sui gateway');
+    program.name('deploy-gateway').description('Deploys/Upgrades the Sui gateway');
 
     addBaseOptions(program);
 
@@ -126,6 +154,14 @@ if (require.main === module) {
     program.addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(0));
     program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
     program.addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'));
+    program.addOption(new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default(0));
+    program.addOption(new Option('--upgradeCap <upgradeCap>', 'gateway UpgradeCap id'));
+    program.addOption(new Option('--upgrade', 'upgrade a deployed contract'));
+    program.addOption(new Option('--policy <policy>', 'new policy to upgrade'));
+    program.addOption(new Option('--sender <sender>', 'transaction sender'));
+    program.addOption(new Option('--digest <digest>', 'digest hash for upgrade'));
+    program.addOption(new Option('--offline', 'store tx block for sign'));
+    program.addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'));
 
     program.action((options) => {
         mainProcessor(options, processCommand);
