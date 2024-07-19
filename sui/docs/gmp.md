@@ -10,8 +10,6 @@ This document provides a step-by-step guide to execute GMP flow on the SUI netwo
 
 ## Usage
 
-Before executing the gmp command, ensure the following three contracts are deployed: `gateway`, `gas_service`, and `test` by following the instruction [here](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/sui#scripts).
-
 ### Send Command (Outgoing)
 
 Send a messsage from SUI to the destination chain.
