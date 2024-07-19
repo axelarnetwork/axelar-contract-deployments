@@ -1,12 +1,11 @@
 const { saveConfig, prompt, printInfo } = require('../evm/utils');
 const { Command, Option } = require('commander');
-const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
 const { ethers } = require('hardhat');
 const {
     constants: { HashZero },
 } = ethers;
-const { loadSuiConfig } = require('./utils');
+const { loadSuiConfig, deployPackage } = require('./utils');
 
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
@@ -30,8 +29,7 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const published = await publishPackage('test', client, keypair);
-    updateMoveToml('test', published.packageId);
+    const published = await deployPackage('test', client, keypair);
 
     const singleton = published.publishTxn.objectChanges.find((change) => change.objectType === `${published.packageId}::test::Singleton`);
 

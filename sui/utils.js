@@ -8,6 +8,7 @@ const {
 } = ethers;
 const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -19,10 +20,10 @@ const getAmplifierSigners = async (config, chain) => {
 
     const weightedSigners = signers
         .map((signer) => ({
-            pubkey: arrayify(`0x${signer.pub_key.ecdsa}`),
+            pub_key: arrayify(`0x${signer.pub_key.ecdsa}`),
             weight: Number(signer.weight),
         }))
-        .sort((a, b) => hexlify(a.pubkey).localeCompare(hexlify(b.pubkey)));
+        .sort((a, b) => hexlify(a.pub_key).localeCompare(hexlify(b.pub_key)));
 
     return {
         signers: weightedSigners,
@@ -61,6 +62,21 @@ const loadSuiConfig = (env) => {
     return config;
 };
 
+const deployPackage = async (packageName, client, keypair, options = {}) => {
+    const compileDir = `${__dirname}/move`;
+
+    copyMovePackage(packageName, null, compileDir);
+
+    const builder = new TxBuilder(client);
+    await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), compileDir);
+    const publishTxn = await builder.signAndExecute(keypair);
+
+    const packageId = (publishTxn.objectChanges?.find((a) => a.type === 'published') ?? []).packageId;
+
+    updateMoveToml(packageName, packageId, compileDir);
+    return { packageId, publishTxn };
+};
+
 const findPublishedObject = (published, packageName, contractName) => {
     const packageId = published.packageId;
     return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageName}::${contractName}`);
@@ -70,5 +86,6 @@ module.exports = {
     getAmplifierSigners,
     getBcsBytesByObjectId,
     loadSuiConfig,
+    deployPackage,
     findPublishedObject,
 };
