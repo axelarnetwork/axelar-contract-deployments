@@ -112,6 +112,16 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+        },
+        "AxelarTransceiver": {
+          "salt": "AXELAR_TRANSCEIVER v1.1.0",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "implementation": "0x87fc4b27385bb4e69a40027931229d74ef4d1943",
+          "address": "0x723AEAD29acee7E9281C32D11eA4ed0070c41B13",
+          "TransceiverStructs": "0xa12bc993d8144404a8c8c812816048275a066ced",
+          "wstETH token": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+          "NttManager": "0xb948a93827d68a82F6513Ad178964Da487fe2BD9",
+          "wormholeChainId": 2
         }
       },
       "explorer": {
@@ -733,6 +743,16 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+        },
+        "AxelarTransceiver": {
+          "salt": "AXELAR_TRANSCEIVER v1.1.0",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "implementation": "0xa1ebb6a4b856df8bf6c3aca88a9115a9ab3b2e02",
+          "address": "0x723AEAD29acee7E9281C32D11eA4ed0070c41B13",
+          "TransceiverStructs": "0x27a3daf3b243104e9b0afae6b56026a416b852c9",
+          "wstETH token": "0x26c5e01524d2E6280A48F2c50fF6De7e52E9611C",
+          "NttManager": "0x6981F5621691CBfE3DdD524dE71076b79F0A0278",
+          "wormholeChainId": 4
         }
       },
       "explorer": {
