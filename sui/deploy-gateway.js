@@ -51,6 +51,9 @@ async function deployGateway(config, chain, options, keypair, client) {
     const { minimumRotationDelay, domainSeparator } = options;
     const signers = await getSigners(keypair, config, chain, options);
     const operator = options.operator || keypair.toSuiAddress();
+    const { previousSigners } = options;
+
+    validateParameters({ isNonEmptyString: { previousSigners } });
 
     if (prompt(`Proceed with deployment on ${chain.name}?`, options.yes)) {
         return;
