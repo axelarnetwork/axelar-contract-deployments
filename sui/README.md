@@ -126,7 +126,7 @@ Upgrading Gateway:
 To update the gateway run the following command:
 
 ```bash
-node sui/upgrade-gateway.js --upgradeCap <UPGRADE_CAP_OBJECT_ID>  --policy 0
+node sui/deploy-gateway.js --upgradeCap <UPGRADE_CAP_OBJECT_ID>  --policy <POLICY_NUMBER> --upgrade
 ```
 
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
