@@ -2,9 +2,12 @@
 
 require('dotenv').config();
 
+const { createHash } = require('crypto');
+
 const {
     prepareWallet,
     prepareClient,
+    readWasmFile,
     getChains,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
@@ -66,10 +69,34 @@ const storeCode = (client, wallet, config, options) => {
         printInfo('Proposal submitted', proposalId);
 
         contractConfig.storeCodeProposalId = proposalId;
+        contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
     });
 };
 
-const instantiate = (client, wallet, config, options, chainName) => {
+const fetchCodeId = async (client, contractConfig, { fetchCodeId }) => {
+    if (!fetchCodeId) {
+        return Promise.resolve();
+    }
+
+    const codes = await client.getCodes();
+    let codeId;
+
+    // most likely to be near the end, so we iterate backwards
+    for (let i = codes.length - 1; i >= 0; i--) {
+        if (codes[i].checksum.toUpperCase() === contractConfig.storeCodeProposalCodeHash.toUpperCase()) {
+            codeId = codes[i].id;
+            break;
+        }
+    }
+
+    if (!codeId) {
+        throw new Error('codeId not found on network for the given codeHash');
+    }
+
+    contractConfig.codeId = codeId;
+};
+
+const instantiate = async (client, wallet, config, options, chainName) => {
     const { contractName, instantiate2, predictOnly } = options;
     const {
         axelar: {
@@ -82,6 +109,7 @@ const instantiate = (client, wallet, config, options, chainName) => {
         return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
     }
 
+    await fetchCodeId(client, contractConfig, options);
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
 
     let proposal;
@@ -189,6 +217,8 @@ const programHandler = () => {
     program.addOption(
         new Option('-i, --instantiateAddresses <instantiateAddresses>', 'comma separated list of addresses allowed to instantiate'),
     );
+
+    program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
 
     program.action((options) => {
         main(options);
