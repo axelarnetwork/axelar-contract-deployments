@@ -135,7 +135,8 @@ pub(crate) async fn init_solana_voting_verifier(
         source_chain: SOLANA_CHAIN_NAME.to_string().try_into().unwrap(),
         rewards_address: REWARDS_ADDRESS.to_string(),
         governance_address: GOVERNANCE_ADDRESS.to_string().try_into().unwrap(),
-        msg_id_format: axelar_wasm_std::msg_id::MessageIdFormat::HexTxHashAndEventIndex,
+        msg_id_format:
+            axelar_wasm_std::msg_id::MessageIdFormat::Base58SolanaTxSignatureAndEventIndex,
     };
     tracing::info!(?instantiate_msg, "instantiate msg");
     let instantiate = MsgInstantiateContract {
@@ -251,6 +252,7 @@ pub(crate) async fn update_verifier_set_multisig_prover(
     contract_address: &str,
     client: &SigningClient,
 ) -> eyre::Result<()> {
+    tracing::info!("calling multisig_prover_api::MultisigProverExecuteMsg::UpdateVerifierSet");
     let msg = multisig_prover_api::MultisigProverExecuteMsg::UpdateVerifierSet {};
     let destination_multisig_prover = cosmrs::AccountId::from_str(contract_address).unwrap();
     let execute = MsgExecuteContract {
@@ -311,12 +313,13 @@ pub(crate) mod ampd {
     use super::path::axelar_amplifier_dir;
     use crate::cli::cmd::cosmwasm::path::{self, ampd_home_dir};
     use crate::cli::cmd::path::{workspace_root_dir, xtask_crate_root_dir};
+    use crate::cli::cmd::testnet::SOLANA_CHAIN_NAME;
 
     pub(crate) async fn setup_ampd() -> eyre::Result<()> {
-        if !Confirm::new("Welcome to ampd-setup ! This will perform/guide you through the verifier onboarding process described here https://docs.axelar.dev/validator/amplifier/verifier-onboarding (devnet-amplifier chain). 
-        
+        if !Confirm::new("Welcome to ampd-setup ! This will perform/guide you through the verifier onboarding process described here https://docs.axelar.dev/validator/amplifier/verifier-onboarding (devnet-amplifier chain).
+
         It will overwrite your $HOME/.ampd/config.toml if it exist.
-        
+
         Do you want to continue  ?").prompt()? {
             return Ok(println!("Cannot continue without user confirmation."))
         }
@@ -336,7 +339,7 @@ pub(crate) mod ampd {
 
         if !Confirm::new("Now we need to bring up tofnd service. Is it already running ?").with_help_message("You can easily run it by executing:
         docker run -p 50051:50051 --env MNEMONIC_CMD=auto --env NOPASSWORD=true -v ./tofnd:/.tofnd haiyizxx/tofnd:latest
-        
+
         MAKE SURE TO PLACE YOUR SEED AT ./tofnd/import BEFORE EXECUTING AND CHECK PERMISSIONS if you have one").prompt()? {
             return Ok(println!("Cannot continue without a running instance of tofnd."))
         }
@@ -377,12 +380,16 @@ pub(crate) mod ampd {
 
         info!("Registering ampd public key ...");
         sh.cmd(&ampd_build_path)
-            .args(vec!["register-public-key"])
+            .args(vec!["register-public-key", "ecdsa"])
             .run()?;
 
         info!("Registering support for Solana blockchain ...");
         sh.cmd(&ampd_build_path)
-            .args(vec!["register-chain-support", "validators", "solana"])
+            .args(vec![
+                "register-chain-support",
+                "validators",
+                SOLANA_CHAIN_NAME,
+            ])
             .run()?;
 
         if !Confirm::new("Is the new ampd validator already authorized ?").with_help_message("You can do it by filling this form:
@@ -401,8 +408,6 @@ pub(crate) mod ampd {
     fn build_ampd() -> eyre::Result<()> {
         let sh = Shell::new()?;
         let _dir = sh.push_dir(axelar_amplifier_dir());
-        sh.cmd("git").args(vec!["checkout", "solana"]).run()?;
-        sh.cmd("git").args(vec!["pull"]).run()?;
         info!("Compiling ampd ...");
         sh.cmd("cargo").args(vec!["build", "-p", "ampd"]).run()?;
         Ok(())

@@ -246,10 +246,18 @@ fn verify_ecdsa_signature(
         [first_64 @ .., recovery_id] => (first_64, recovery_id),
     };
 
+    // Transform from Ethereum recovery_id (27, 28) to a range accepted by
+    // secp256k1_recover (0, 1, 2, 3)
+    let recovery_id = if *recovery_id >= 27 {
+        recovery_id - 27
+    } else {
+        *recovery_id
+    };
+
     // This is results in a Solana syscall.
-    let Ok(recovered_uncompressed_pubkey) =
-        solana_program::secp256k1_recover::secp256k1_recover(message, *recovery_id, signature)
-    else {
+    let secp256k1_recover =
+        solana_program::secp256k1_recover::secp256k1_recover(message, recovery_id, signature);
+    let Ok(recovered_uncompressed_pubkey) = secp256k1_recover else {
         msg!("Failed to recover ECDSA signature");
         return false;
     };
@@ -347,6 +355,10 @@ impl BorshDeserialize for AxelarAuthWeighted {
 #[cfg(test)]
 mod tests {
     use axelar_rkyv_encoding::test_fixtures::random_valid_verifier_set;
+    use axelar_rkyv_encoding::types::{
+        PublicKey, Signature,
+    };
+    
     use solana_sdk::pubkey::Pubkey;
 
     use super::*;
@@ -487,5 +499,39 @@ mod tests {
         let aw = AxelarAuthWeighted::new(random_verifier_set());
         let serialized = borsh::to_vec(&aw).unwrap();
         assert_eq!(serialized.len(), AxelarAuthWeighted::SIZE_WHEN_SERIALIZED);
+    }
+
+    #[test]
+    fn can_verify_signatures_with_ecrecover_recovery_id() {
+        let (keypair, pubkey) = axelar_rkyv_encoding::test_fixtures::random_ecdsa_keypair();
+        let message_hash = [42; 32];
+        let signature = keypair.sign(&message_hash);
+        let Signature::EcdsaRecoverable(mut signature) = signature else {
+            panic!("unexpected signature type");
+        };
+        signature[64] += 27;
+        let PublicKey::Secp256k1(pubkey) = pubkey else {
+            panic!("unexpected pubkey type");
+        };
+
+        let is_valid = verify_ecdsa_signature(&pubkey, &signature, &message_hash);
+        assert!(is_valid);
+    }
+
+    #[test]
+    fn can_verify_signatures_with_standard_recovery_id() {
+        let (keypair, pubkey) = axelar_rkyv_encoding::test_fixtures::random_ecdsa_keypair();
+        let message_hash = [42; 32];
+        let signature = keypair.sign(&message_hash);
+        let Signature::EcdsaRecoverable(signature) = signature else {
+            panic!("unexpected signature type");
+        };
+        assert!((0_u8..=3_u8).contains(&signature[64]));
+        let PublicKey::Secp256k1(pubkey) = pubkey else {
+            panic!("unexpected pubkey type");
+        };
+
+        let is_valid = verify_ecdsa_signature(&pubkey, &signature, &message_hash);
+        assert!(is_valid);
     }
 }

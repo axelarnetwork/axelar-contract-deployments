@@ -222,11 +222,10 @@ pub(crate) enum Solana {
 pub(crate) enum SolanaInitSubcommand {
     /// Initialize an already deployed gateway contract.
     GmpGateway {
-        /// A path that points to a toml file that contains the signers and
-        /// their respective weights data. See `tests/auth_weighted.toml` file
-        /// for an example.
         #[arg(short, long)]
-        init_signers: PathBuf,
+        cosmwasm_multisig_prover: String,
+        #[arg(short, long)]
+        axelar_private_key_hex: String,
         /// The RPC URL of the target validator.
         /// If not provided, this will fallback in solana CLI current
         /// configuration.
@@ -257,7 +256,7 @@ pub(crate) enum SolanaInitSubcommand {
 impl Cli {
     pub(crate) async fn run(self) -> eyre::Result<()> {
         match self {
-            Cli::Solana { command } => handle_solana(command)?,
+            Cli::Solana { command } => handle_solana(command).await?,
             Cli::Evm {
                 source_evm_chain,
                 admin_private_key,
@@ -416,7 +415,7 @@ async fn get_or_deploy_evm_contract(
     Ok(destination_memo_contract)
 }
 
-fn handle_solana(command: Solana) -> eyre::Result<()> {
+async fn handle_solana(command: Solana) -> eyre::Result<()> {
     match command {
         Solana::Build => {
             cmd::solana::build_contracts()?;
@@ -438,15 +437,19 @@ fn handle_solana(command: Solana) -> eyre::Result<()> {
         }
         Solana::Init { contract } => match contract {
             SolanaInitSubcommand::GmpGateway {
-                init_signers: auth_weighted_file,
                 rpc_url,
                 payer_kp_path,
+                axelar_private_key_hex,
+                cosmwasm_multisig_prover,
             } => {
+                let cosmwasm_signer = create_axelar_cosmsos_signer(axelar_private_key_hex)?;
                 cmd::solana::init_gmp_gateway(
-                    &auth_weighted_file,
                     rpc_url.as_ref(),
                     payer_kp_path.as_ref(),
-                )?;
+                    cosmwasm_multisig_prover.as_str(),
+                    cosmwasm_signer,
+                )
+                .await?;
             }
             SolanaInitSubcommand::AxelarSolanaMemoProgram {
                 rpc_url,

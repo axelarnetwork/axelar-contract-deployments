@@ -15,6 +15,7 @@ pub(crate) enum MultisigProverExecuteMsg {
 #[cw_serde]
 pub(crate) enum QueryMsg {
     GetProof { multisig_session_id: Uint64 },
+    CurrentVerifierSet,
 }
 
 #[cw_serde]
@@ -23,6 +24,12 @@ pub(crate) struct GetProofResponse {
     pub(crate) message_ids: Vec<CrossChainId>,
     pub(crate) payload: Payload,
     pub(crate) status: ProofStatus,
+}
+
+#[cw_serde]
+pub(crate) struct VerifierSetResponse {
+    pub(crate) id: String,
+    pub(crate) verifier_set: multisig::verifier_set::VerifierSet,
 }
 
 #[cw_serde]

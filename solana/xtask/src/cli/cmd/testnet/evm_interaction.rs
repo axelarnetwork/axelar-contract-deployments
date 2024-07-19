@@ -72,7 +72,7 @@ pub(crate) async fn call_execute_on_destination_evm_contract(
 
 pub(crate) async fn approve_messages_on_evm_gateway(
     destination_chain: &EvmChain,
-    execute_data: String,
+    execute_data: Vec<u8>,
     destination_evm_signer: &EvmSigner,
 ) -> eyre::Result<()> {
     let destination_evm_gateway = EvmAddress::from_slice(
@@ -82,7 +82,7 @@ pub(crate) async fn approve_messages_on_evm_gateway(
     );
     let tx = TransactionRequest::new()
         .to(destination_evm_gateway)
-        .data(hex::decode(execute_data).unwrap());
+        .data(execute_data);
     tracing::info!("sending `approve_messages` tx to the destination gateway");
     let gateway_approve_msgs = destination_evm_signer
         .signer

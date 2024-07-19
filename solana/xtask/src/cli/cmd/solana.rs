@@ -1,13 +1,11 @@
 use std::collections::BTreeMap;
 use std::fmt::Display;
-use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use axelar_rkyv_encoding::types::{PublicKey, VerifierSet, U256};
 use gmp_gateway::axelar_auth_weighted::AxelarAuthWeighted;
 use gmp_gateway::state::GatewayConfig;
-use serde::Deserialize;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
@@ -16,8 +14,10 @@ use tracing::info;
 use url::Url;
 use xshell::{cmd, Shell};
 
+use super::cosmwasm::cosmos_client::signer::SigningClient;
 use super::testnet::solana_domain_separator;
 use super::testnet::solana_interactions::send_solana_tx;
+use crate::cli::cmd::testnet::multisig_prover_api;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
 pub(crate) enum SolanaContract {
@@ -65,38 +65,51 @@ pub(crate) fn deploy(
     Ok(())
 }
 
-pub(crate) fn init_gmp_gateway(
-    auth_weighted: &PathBuf,
+pub(crate) async fn init_gmp_gateway(
     rpc_url: Option<&Url>,
     payer_kp_path: Option<&PathBuf>,
+    destination_multisig_prover: &str,
+    cosmwasm_signer: SigningClient,
 ) -> eyre::Result<()> {
     let payer_kp = defaults::payer_kp_with_fallback_in_sol_cli_config(payer_kp_path)?;
 
     let (gateway_config_pda, bump) = GatewayConfig::pda();
 
-    // Read toml file data
-    let gateway_config_file_content = read_to_string(auth_weighted)?;
-    let gateway_config_data = toml::from_str::<GatewayConfigData>(&gateway_config_file_content)?;
+    // Query the cosmwasm multisig prover to get the latest verifier set
+    let destination_multisig_prover = cosmrs::AccountId::from_str(destination_multisig_prover)?;
+    let res = cosmwasm_signer
+        .query::<multisig_prover_api::VerifierSetResponse>(
+            destination_multisig_prover.clone(),
+            serde_json::to_vec(&multisig_prover_api::QueryMsg::CurrentVerifierSet {})?,
+        )
+        .await?;
 
-    // Prepare the AuthWeighted module
-    let auth_weighted = {
-        let threshold = gateway_config_data.calc_signer_thershold();
-        let created_at = 1; // todo - how do we sync with the cosmwasm chain? We probably want to read
-                            // directly from the state of the multisig prover
-        let signers: BTreeMap<PublicKey, U256> = gateway_config_data
-            .signers
-            .iter()
-            .map(|signer| (signer.address, U256::from(signer.weight as u128)))
-            .collect();
-        let verifier_set = VerifierSet::new(created_at, signers, threshold);
-        AxelarAuthWeighted::new(verifier_set)
-    };
+    let mut signers = BTreeMap::new();
+    for signer in res.verifier_set.signers.values() {
+        let pubkey = PublicKey::new_ecdsa(signer.pub_key.as_ref().try_into()?);
+        let weight = U256::from(signer.weight.u128());
+        signers.insert(pubkey, weight);
+    }
+    let verifier_set = VerifierSet::new(
+        res.verifier_set.created_at,
+        signers,
+        U256::from(res.verifier_set.threshold.u128()),
+    );
+    tracing::info!(
+        returned = ?res.verifier_set,
+        "returned verifier set"
+    );
+    tracing::info!(
+        reconstructed = ?verifier_set,
+        "reconstructed verifier set"
+    );
+    let auth_weighted = AxelarAuthWeighted::new(verifier_set);
     tracing::info!(?auth_weighted, "initting auth weighted");
 
     let gateway_config = GatewayConfig::new(
         bump,
         auth_weighted,
-        gateway_config_data.operator,
+        payer_kp.pubkey(),
         solana_domain_separator(),
     );
 
@@ -139,55 +152,6 @@ pub(crate) fn init_memo_program(
     )?;
     send_solana_tx(&rpc_client, &[ix], &payer_kp);
     Ok(())
-}
-
-/// An intermediate struct for parsing
-/// values from a TOML file.
-#[derive(Deserialize, Debug)]
-struct GatewayConfigData {
-    signers: Vec<GatewaySigner>,
-    #[serde(deserialize_with = "serde_utils::deserialize_pubkey")]
-    operator: Pubkey,
-}
-
-impl GatewayConfigData {
-    fn calc_signer_thershold(&self) -> U256 {
-        self.signers
-            .iter()
-            .map(|signer| U256::from(signer.weight as u128))
-            .try_fold(U256::ZERO, U256::checked_add)
-            .expect("no arithmetic overflow")
-    }
-}
-
-#[derive(Deserialize, Debug)]
-struct GatewaySigner {
-    #[serde(deserialize_with = "serde_utils::deserialize_public_key")]
-    address: PublicKey,
-    weight: u64,
-}
-
-mod serde_utils {
-    use axelar_rkyv_encoding::types::PublicKey;
-    use serde::Deserializer;
-
-    use super::{Deserialize, Pubkey};
-
-    pub(crate) fn deserialize_public_key<'de, D>(deserializer: D) -> Result<PublicKey, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let raw_string: String = Deserialize::deserialize(deserializer)?;
-        raw_string.parse().map_err(serde::de::Error::custom)
-    }
-
-    pub(crate) fn deserialize_pubkey<'de, D>(deserializer: D) -> Result<Pubkey, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let raw_string: String = Deserialize::deserialize(deserializer)?;
-        raw_string.parse().map_err(serde::de::Error::custom)
-    }
 }
 
 pub(crate) fn build_contracts() -> eyre::Result<()> {
@@ -503,31 +467,5 @@ mod tests {
         .map(str::to_string)
         .collect();
         assert_eq!(expected, result);
-    }
-
-    #[ignore]
-    #[test]
-    fn calcthreshold_from_works() {
-        let config = GatewayConfigData {
-            signers: vec![
-                GatewaySigner {
-                    address: PublicKey::from_str(
-                        "07453457a565724079d7dfab633d026d49cac3f6d69bce20bc79adedfccdf69ab2",
-                    )
-                    .unwrap(),
-                    weight: 1,
-                },
-                GatewaySigner {
-                    address: PublicKey::from_str(
-                        "6b322380108ca6c6313667657aab424ad0ea014cf3fb107bb124e8822bc9d0befb",
-                    )
-                    .unwrap(),
-                    weight: 2,
-                },
-            ],
-            operator: Pubkey::new_unique(),
-        };
-
-        assert_eq!(U256::from(3u128), config.calc_signer_thershold());
     }
 }

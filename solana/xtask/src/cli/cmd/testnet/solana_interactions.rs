@@ -3,7 +3,6 @@ use std::str::FromStr;
 
 use axelar_message_primitives::DataPayload;
 use axelar_wasm_std::nonempty;
-use ethers::utils::keccak256;
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::state::GatewayApprovedCommand;
 use router_api::{Address, ChainName, CrossChainId};
@@ -60,7 +59,7 @@ pub(crate) fn send_memo_from_solana(
     for log in &log_msgs {
         tracing::info!(?log, "solana tx log");
     }
-    let (_event_idx, gateway_event) = log_msgs
+    let (event_idx, gateway_event) = log_msgs
         .iter()
         .enumerate()
         .find_map(|(idx, log)| gmp_gateway::events::GatewayEvent::parse_log(log).map(|x| (idx, x)))
@@ -74,15 +73,7 @@ pub(crate) fn send_memo_from_solana(
     let message = router_api::Message {
         cc_id: CrossChainId {
             chain: ChainName::from_str(solana_chain_id).unwrap(),
-            // id: "3Gwj2GFJGeaVPMnRFLChBmwtYrxP5xqhCTD3DMmpVyfD-0"
-            //     .to_string()
-            //     .parse()
-            //     .unwrap(),
-            id: nonempty::String::from_str(&format!(
-                "0x{}-42",
-                hex::encode(keccak256(signature.as_bytes()))
-            ))
-            .unwrap(),
+            id: nonempty::String::from_str(&format!("{signature}-{event_idx}")).unwrap(),
         },
         source_address: Address::from_str(call_contract.sender.to_string().as_str()).unwrap(),
         destination_chain: ChainName::from_str(
@@ -108,7 +99,7 @@ pub(crate) fn solana_call_executable(
     solana_rpc_client: &solana_client::rpc_client::RpcClient,
     solana_keypair: &Keypair,
 ) {
-    tracing::info!(payload = ?decoded_payload,"call the destination program");
+    tracing::info!(payload = ?decoded_payload, "call the destination program");
 
     let ix = axelar_executable::construct_axelar_executable_ix(
         message,
@@ -118,7 +109,14 @@ pub(crate) fn solana_call_executable(
     )
     .unwrap();
 
-    send_solana_tx(solana_rpc_client, &[ix], solana_keypair);
+    send_solana_tx(
+        solana_rpc_client,
+        &[
+            ComputeBudgetInstruction::set_compute_unit_limit(1_399_850_u32),
+            ix,
+        ],
+        solana_keypair,
+    );
     let acc = solana_rpc_client
         .get_account(&gateway_approved_message_pda)
         .unwrap();
@@ -143,12 +141,19 @@ pub(crate) fn solana_init_execute_data(
     .unwrap();
     let (execute_data_pda, ..) = execute_data.pda(&gateway_root_pda);
     tracing::info!(?execute_data_pda, "execute data pda");
-    send_solana_tx(solana_rpc_client, &[ix], solana_keypair);
+    send_solana_tx(
+        solana_rpc_client,
+        &[
+            ComputeBudgetInstruction::set_compute_unit_limit(1_399_850_u32),
+            ix,
+        ],
+        solana_keypair,
+    );
     execute_data_pda
 }
 
 #[tracing::instrument(skip_all)]
-pub(crate) fn solana_approve_commands(
+pub(crate) fn solana_approve_messages(
     execute_data_pda: solana_sdk::pubkey::Pubkey,
     gateway_root_pda: solana_sdk::pubkey::Pubkey,
     gateway_approved_message_pda: solana_sdk::pubkey::Pubkey,

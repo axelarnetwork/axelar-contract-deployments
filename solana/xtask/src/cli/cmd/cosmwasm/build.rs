@@ -69,8 +69,8 @@ pub(crate) mod toolchain {
     pub(crate) fn setup_toolchain(sh: &Shell) -> Result<PushEnv<'_>> {
         let amplifer_dir = axelar_amplifier_dir();
         let in_ampl_dir = sh.push_dir(amplifer_dir.clone());
-        cmd!(sh, "rustup install nightly-2024-02-01").run()?;
-        let env_toolchain = sh.push_env("RUSTUP_TOOLCHAIN", "nightly-2024-02-01");
+        cmd!(sh, "rustup install nightly-2024-07-16").run()?;
+        let env_toolchain = sh.push_env("RUSTUP_TOOLCHAIN", "nightly-2024-07-16");
         cmd!(sh, "rustup target add wasm32-unknown-unknown").run()?;
         drop(in_ampl_dir);
 

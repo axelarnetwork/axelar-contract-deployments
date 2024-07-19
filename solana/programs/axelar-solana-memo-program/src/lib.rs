@@ -15,7 +15,7 @@ pub use solana_program;
 use solana_program::pubkey::Pubkey;
 use state::Counter;
 
-solana_program::declare_id!("memszVuXpohvTnTpQdkAWZ64WGK1Nq5adXstT6Us3rK");
+solana_program::declare_id!("meme9s3tVXUYLLmPomrk36sEDodjKu4zjUuKn12tSic");
 
 /// Derives interchain token service root PDA
 pub(crate) fn get_counter_pda_internal(

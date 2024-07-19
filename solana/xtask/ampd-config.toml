@@ -22,18 +22,19 @@ party_uid = "ampd"
 url = "http://127.0.0.1:50051"
 
 [[handlers]]
-cosmwasm_contract = "axelar1zwps4z7at8d6kn7jgsafqcp0wws50dv7l93h7pw4pvnrmh90cspsdar9rd"
+# this is the Multisig contract address, deployed and maintained by Axelar
+cosmwasm_contract = "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r"
 type = "MultisigSigner"
 
 [[handlers]]
-chain_name = "solana"
+chain_name = "solana-devnet"
 chain_rpc_url = "https://api.devnet.solana.com"
-cosmwasm_contract = "axelar1q7fct2kgpjxyxj7vvt9468aycr30cw7je9ugjgqwskc40pkfu0ns5vfew3"
+cosmwasm_contract = "axelar1qsvct6yu0dmx73axhsrjkrd9606jhkh35wfj8ernkdde6864yecszv8s6p"
 type = "SolanaMsgVerifier"
 max_tx_cache_entries = 6
 
 [[handlers]]
-chain_name = "solana"
+chain_name = "solana-devnet"
 chain_rpc_url = "https://api.devnet.solana.com"
-cosmwasm_contract = "axelar1q7fct2kgpjxyxj7vvt9468aycr30cw7je9ugjgqwskc40pkfu0ns5vfew3"
+cosmwasm_contract = "axelar1qsvct6yu0dmx73axhsrjkrd9606jhkh35wfj8ernkdde6864yecszv8s6p"
 type = "SolanaVerifierSetVerifier"
