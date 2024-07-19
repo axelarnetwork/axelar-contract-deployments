@@ -58,18 +58,9 @@ async function mainProcessor(options, processor) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('deploy-gateway').description('Deploys/publishes the Sui gateway');
+    program.name('deploy-test').description('Deploys/publishes the test module');
 
     addBaseOptions(program);
-
-    program.addOption(new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'));
-    program.addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)'));
-    program.addOption(
-        new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(
-            24 * 60 * 60 * 1000,
-        ),
-    ); // 1 day (in ms)
-    program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
 
     program.action((options) => {
         mainProcessor(options, processCommand);
