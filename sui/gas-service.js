@@ -18,8 +18,8 @@ async function payGas(keypair, client, gasServiceConfig, args, options) {
 
     const gasServicePackageId = gasServiceConfig.address;
 
+    const { params } = options;
     const refundAddress = options.refundAddress || walletAddress;
-    const params = options.params || '0x';
 
     const [destinationChain, destinationAddress, channelId, payload] = args;
     const unitAmount = options.amount;
@@ -51,8 +51,8 @@ async function addGas(keypair, client, gasServiceConfig, args, options) {
 
     const gasServicePackageId = gasServiceConfig.address;
 
+    const { params } = options;
     const refundAddress = options.refundAddress || walletAddress;
-    const params = options.params || '0x';
 
     const [messageId] = args;
     const unitAmount = options.amount;
