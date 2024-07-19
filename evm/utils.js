@@ -540,6 +540,19 @@ const getDeployOptions = (deployMethod, salt, chain) => {
     };
 };
 
+const getDeployerContract = (deployMethod, chainConfig) => {
+    switch (deployMethod) {
+        case 'create':
+            return null;
+        case 'create2':
+            return chainConfig.contracts.ConstAddressDeployer?.address || chainConfig.contracts.Create2Deployer?.address;
+        case 'create3':
+            return chainConfig.contracts.Create3Deployer?.address;
+        default:
+            throw new Error(`Invalid deployment method: ${deployMethod}`);
+    }
+}
+
 /**
  * Get the predicted address of a contract deployment using one of create/create2/create3 deployment method.
  * @param {string} deployer - Sender address that's triggering the contract deployment
@@ -1335,4 +1348,5 @@ module.exports = {
     getContractConfig,
     relayTransaction,
     getWeightedSigners,
+    getDeployerContract,
 };

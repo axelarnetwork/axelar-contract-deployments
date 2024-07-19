@@ -25,6 +25,7 @@ const {
     mainProcessor,
     isContract,
     getContractJSON,
+    getDeployerContract,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
@@ -250,11 +251,7 @@ async function processCommand(config, chain, options) {
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
 
     const salt = options.salt || contractName;
-    let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
-
-    if (deployMethod === 'create') {
-        deployerContract = null;
-    }
+    const deployerContract = getDeployerContract(deployMethod, chain);
 
     const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
         salt,
