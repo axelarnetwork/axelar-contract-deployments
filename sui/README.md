@@ -33,6 +33,7 @@ If you want to run against a local Sui network, then create a `axelar-chains-con
         "networkType": "localnet",
         "tokenSymbol": "SUI",
         "rpc": "http://127.0.0.1:9000",
+        "faucetUrl": "http://127.0.0.1:9123",
         "contracts": {}
     }
 }
@@ -50,7 +51,7 @@ node sui/faucet.js
 
 Deploy the gateway package:
 
-- By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
+-   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
 ```bash
 node sui/deploy-gateway.js
@@ -58,16 +59,22 @@ node sui/deploy-gateway.js
 
 Use `--help` flag to see other setup params that can be overridden.
 
-- For testing convenience, you can use the secp256k1 wallet as the signer set for the gateway.
+-   For testing convenience, you can use the secp256k1 wallet as the signer set for the gateway.
 
 ```bash
 node sui/deploy-gateway.js --signers wallet --nonce test
 ```
 
-- You can also provide a JSON object with a full signer set:
+-   You can also provide a JSON object with a full signer set:
 
 ```bash
-node sui/deploy-gateway.js -e testnet --signers '{"signers": [{"pubkey": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
+node sui/deploy-gateway.js -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
+```
+
+Deploy the Gas Service package:
+
+```bash
+node sui/deploy-contract.js GasService
 ```
 
 Deploy the test GMP package:
@@ -80,6 +87,14 @@ Call Contract:
 
 ```bash
 node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+```
+
+Pay for gas:
+
+The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
+
+```bash
+node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
 Approve messages:
@@ -182,7 +197,7 @@ example for adding multisig info to chains config:
                     "publicKey": "AIqrCb324p6Qd4srkqCzn9NJHS7W17tA7r3t7Ur6aYN",
                     "weight": 1,
                     "schemeType": "ed25519"
-                }, 
+                },
                 .
                 .
                 .
