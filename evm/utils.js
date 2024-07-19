@@ -551,7 +551,7 @@ const getDeployerContract = (deployMethod, chainConfig) => {
         default:
             throw new Error(`Invalid deployment method: ${deployMethod}`);
     }
-}
+};
 
 /**
  * Get the predicted address of a contract deployment using one of create/create2/create3 deployment method.
