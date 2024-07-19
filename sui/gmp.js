@@ -1,9 +1,8 @@
 const { saveConfig, printInfo } = require('../evm/utils');
 const { Command } = require('commander');
 const { TransactionBlock } = require('@mysten/sui.js/transactions');
-const { singletonStruct } = require('./types-utils');
 const { bcs } = require('@mysten/sui.js/bcs');
-const { loadSuiConfig, getBcsBytesByObjectId } = require('./utils');
+const { loadSuiConfig } = require('./utils');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify },
@@ -13,13 +12,6 @@ const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
 const { getUnitAmount } = require('./amount-utils.js');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 
-// Parse bcs bytes from singleton object to get channel id
-async function getChannelId(client, singletonObjectId) {
-    const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
-    const data = singletonStruct.parse(bcsBytes);
-    return '0x' + data.channel.id;
-}
-
 async function sendCommand(keypair, client, contracts, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
     const params = options.params;
@@ -27,12 +19,11 @@ async function sendCommand(keypair, client, contracts, args, options) {
     const [testConfig, gasServiceConfig] = contracts;
     const gasServicePackageId = gasServiceConfig.address;
     const singletonObjectId = testConfig.objects.singleton;
+    const channelId = testConfig.objects.channelId;
 
     const unitAmount = getUnitAmount(feeAmount);
     const walletAddress = keypair.toSuiAddress();
     const refundAddress = options.refundAddress || walletAddress;
-
-    const channelId = await getChannelId(client, singletonObjectId);
 
     const tx = new TransactionBlock();
     const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
@@ -73,7 +64,7 @@ async function execute(keypair, client, contracts, args, options) {
 
     const singletonObjectId = testConfig.objects.singleton;
     const gatewayObjectId = axelarGatewayConfig.objects.gateway;
-    const channelId = await getChannelId(client, singletonObjectId);
+    const channelId = testConfig.objects.channelId;
 
     const tx = new TransactionBlock();
 
