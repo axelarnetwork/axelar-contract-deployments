@@ -8,7 +8,19 @@
       "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
       "contracts": {
-        "AxelarGateway": {},
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-avalanche-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
         "AxelarGasService": {},
         "AxelarDepositService": {},
         "ConstAddressDeployer": {
@@ -23,8 +35,12 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "Operators": {},
-        "InterchainGovernance": {},
-        "Multisig": {}
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Multisig": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        }
       },
       "explorer": {
         "url": "https://testnet.snowtrace.io",
@@ -41,7 +57,19 @@
       "rpc": "https://rpc.testnet.fantom.network",
       "tokenSymbol": "FTM",
       "contracts": {
-        "AxelarGateway": {},
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-fantom-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
         "AxelarGasService": {},
         "AxelarDepositService": {},
         "ConstAddressDeployer": {
@@ -56,8 +84,12 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "Operators": {},
-        "InterchainGovernance": {},
-        "Multisig": {}
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Multisig": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        }
       },
       "explorer": {
         "url": "https://testnet.ftmscan.com",
@@ -74,7 +106,19 @@
       "rpc": "https://moonbeam-alpha.api.onfinality.io/public",
       "tokenSymbol": "DEV",
       "contracts": {
-        "AxelarGateway": {},
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-moonbeam-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
         "AxelarGasService": {},
         "AxelarDepositService": {},
         "ConstAddressDeployer": {
@@ -89,8 +133,12 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "Operators": {},
-        "InterchainGovernance": {},
-        "Multisig": {}
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Multisig": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        }
       },
       "explorer": {
         "url": "https://moonbase.moonscan.io",
@@ -140,7 +188,19 @@
       "rpc": "https://evm.testnet.kava.io",
       "tokenSymbol": "KAVA",
       "contracts": {
-        "AxelarGateway": {},
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-kava-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
         "AxelarGasService": {},
         "AxelarDepositService": {},
         "ConstAddressDeployer": {
@@ -155,8 +215,12 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "Operators": {},
-        "InterchainGovernance": {},
-        "Multisig": {}
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Multisig": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        }
       },
       "explorer": {
         "url": "https://explorer.evm-alpha.kava.io",
@@ -186,12 +250,23 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-ethereum-sepolia-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
         },
         "InterchainGovernance": {
-          "address": "0x943AAd94e45bad24A3da01a3ba815C03fCAC53FC"
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "Multisig": {
-          "address": "0x943AAd94e45bad24A3da01a3ba815C03fCAC53FC"
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "Operators": {},
         "AxelarGasService": {}
@@ -220,7 +295,19 @@
       "tokenSymbol": "ETH",
       "confirmations": 2,
       "contracts": {
-        "AxelarGateway": {},
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-arbitrum-sepolia-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
@@ -232,8 +319,12 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "InterchainGovernance": {},
-        "Multisig": {},
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Multisig": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
         "Operators": {},
         "AxelarGasService": {}
       },
@@ -285,7 +376,19 @@
       "rpc": "https://rpc.sepolia.linea.build",
       "tokenSymbol": "ETH",
       "contracts": {
-        "AxelarGateway": {},
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-linea-sepolia-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
@@ -297,8 +400,12 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "InterchainGovernance": {},
-        "Multisig": {},
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Multisig": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
         "Operators": {},
         "AxelarGasService": {},
         "InterchainTokenService": {},
@@ -388,9 +495,25 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "AxelarGateway": {},
-        "InterchainGovernance": {},
-        "Multisig": {},
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-base-sepolia-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Multisig": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
         "Operators": {},
         "AxelarGasService": {},
         "InterchainTokenService": {},
@@ -432,9 +555,25 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "AxelarGateway": {},
-        "InterchainGovernance": {},
-        "Multisig": {},
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-blast-sepolia-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Multisig": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
         "Operators": {},
         "AxelarGasService": {},
         "InterchainTokenService": {},
@@ -459,8 +598,12 @@
         "l1FeeScalar": 50000
       },
       "contracts": {
-        "InterchainGovernance": {},
-        "Multisig": {},
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Multisig": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
@@ -472,7 +615,19 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "AxelarGateway": {},
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-fraxtal-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
         "AxelarGasService": {},
         "Operators": {},
         "InterchainTokenService": {},
@@ -560,9 +715,25 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "AxelarGateway": {},
-        "InterchainGovernance": {},
-        "Multisig": {},
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-optimism-sepolia-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Multisig": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
         "Operators": {},
         "AxelarGasService": {},
         "InterchainTokenService": {},
