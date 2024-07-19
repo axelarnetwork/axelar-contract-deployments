@@ -24,7 +24,7 @@
   "dependencies": {
     "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v1.0.0",
     "@axelar-network/axelar-cgp-solidity": "6.3.1",
-    "@axelar-network/axelar-cgp-sui": "https://github.com/axelarnetwork/axelar-cgp-sui.git",
+    "@axelar-network/axelar-cgp-sui": "^0.2.0",
     "@axelar-network/axelar-gmp-sdk-solidity": "5.9.0",
     "@axelar-network/interchain-token-service": "1.2.4",
     "@cosmjs/cosmwasm-stargate": "^0.32.1",
