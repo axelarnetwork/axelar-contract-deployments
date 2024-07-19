@@ -110,7 +110,9 @@ async function upgradeGateway(chain, options, keypair, client) {
     const contractsConfig = chain.contracts;
     const packageName = 'axelar_gateway';
     const builder = new TxBuilder(client);
-    contractsConfig[packageName].objects.UpgradeCap = options.upgradeCap;
+    const chainConfig = contractsConfig[packageName];
+    chainConfig.objects = chainConfig.objects || {};
+    chainConfig.objects.upgradeCap = options.upgradeCap || chainConfig.objects.UpgradeCap;
 
     await upgradePackage(client, keypair, packageName, contractsConfig[packageName], builder, options);
 }

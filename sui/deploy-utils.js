@@ -13,7 +13,7 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
     const sender = options.sender || keypair.toSuiAddress();
     const suiPackageId = '0x2';
 
-    const upgradeCap = packageConfig.objects?.UpgradeCap;
+    const upgradeCap = packageConfig.objects?.upgradeCap;
     const digestHash = options.digest ? fromB64(options.digest) : digest;
 
     validateParameters({ isNonEmptyString: { upgradeCap, policy }, isNonEmptyStringArray: { modules, dependencies } });
