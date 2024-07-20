@@ -544,7 +544,19 @@
       "tokenSymbol": "MATIC",
       "confirmations": 2,
       "contracts": {
-        "AxelarGateway": {},
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "startingKeyIDs": [
+            "evm-polygon-sepolia-genesis"
+          ],
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
+          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
+          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
+          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
+          "deploymentMethod": "create3",
+          "salt": "AxelarGateway v6.2"
+        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
@@ -556,11 +568,27 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
-        "InterchainGovernance": {},
-        "Multisig": {},
-        "Operators": {},
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Multisig": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Operators": {
+          "owner": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "address": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
         "AxelarGasService": {
-          "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392"
+          "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
+          "salt": "AxelarGasService",
+          "address": "0xeE1d04E4F9F9AdEB7be7d6996f4A726773460A87",
+          "implementation": "0x1F002cd258e2e818eC5ecCD46DD6cb938c5Cf7f8",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "InterchainTokenService": {},
         "InterchainTokenFactory": {}
