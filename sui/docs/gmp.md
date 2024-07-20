@@ -46,5 +46,5 @@ node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847a
 ```
 
 Note:
-- `source`, `sourceAddress` and `messageId` needed to be matched with the `source` in the approve command.
+- `source`, `sourceAddress` and `messageId` needed to be matched with the approve command.
 - `payload` must be associated with the `payloadHash` in the approve command.
