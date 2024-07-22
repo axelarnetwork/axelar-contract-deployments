@@ -27,8 +27,8 @@ const updateContractConfig = (contractConfig, chainConfig, key, value) => {
     }
 };
 
-const predictAndUpdateAddress = (client, config, options, contractConfig, chainConfig, contractName, chainName) => {
-    return instantiate2AddressForProposal(client, config, options).then((contractAddress) => {
+const predictAndUpdateAddress = (client, contractConfig, chainConfig, options, contractName, chainName) => {
+    return instantiate2AddressForProposal(client, contractConfig, options).then((contractAddress) => {
         updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
 
         printInfo(`Predicted address for ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
@@ -63,7 +63,7 @@ const instantiate = (client, wallet, config, options, chainName) => {
     } = config;
 
     if (predictOnly) {
-        return predictAndUpdateAddress(client, config, options, contractConfig, chainConfig, contractName, chainName);
+        return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
@@ -75,7 +75,7 @@ const instantiate = (client, wallet, config, options, chainName) => {
         }
 
         if (instantiate2) {
-            return predictAndUpdateAddress(client, config, options, contractConfig, chainConfig, contractName, chainName);
+            return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
         }
     });
 };

@@ -492,9 +492,9 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     throw new Error(`${contractName} is not supported.`);
 };
 
-const instantiate2AddressForProposal = (client, config, { contractName, salt, chainNames, runAs }) => {
+const instantiate2AddressForProposal = (client, contractConfig, { contractName, salt, chainNames, runAs }) => {
     return client
-        .getCodeDetails(config.axelar.contracts[contractName].codeId)
+        .getCodeDetails(contractConfig.codeId)
         .then(({ checksum }) => instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar'));
 };
 
