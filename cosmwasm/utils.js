@@ -625,10 +625,6 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
 };
 
 const submitProposal = (client, wallet, config, options, content) => {
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
-    }
-
     return wallet
         .getAccounts()
         .then(([account]) => {
@@ -646,20 +642,6 @@ const submitProposal = (client, wallet, config, options, content) => {
         );
 };
 
-const submitStoreCodeProposal = (client, wallet, config, options) => {
-    const content = encodeStoreCodeProposal(options);
-
-    return submitProposal(client, wallet, config, options, content);
-};
-
-const submitInstantiateProposal = (client, wallet, config, options, msg) => {
-    const { instantiate2 } = options;
-
-    const content = instantiate2 ? encodeInstantiate2Proposal(config, options, msg) : encodeInstantiateProposal(config, options, msg);
-
-    return submitProposal(client, wallet, config, options, content);
-};
-
 module.exports = {
     governanceAddress,
     prepareWallet,
@@ -670,7 +652,9 @@ module.exports = {
     instantiateContract,
     makeInstantiateMsg,
     instantiate2AddressForProposal,
-    submitStoreCodeProposal,
-    submitInstantiateProposal,
+    encodeStoreCodeProposal,
+    encodeInstantiateProposal,
+    encodeInstantiate2Proposal,
+    submitProposal,
     isValidCosmosAddress,
 };

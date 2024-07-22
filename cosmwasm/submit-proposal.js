@@ -6,13 +6,15 @@ const {
     prepareWallet,
     prepareClient,
     getChains,
-    submitStoreCodeProposal,
-    submitInstantiateProposal,
+    encodeStoreCodeProposal,
+    encodeInstantiateProposal,
+    encodeInstantiate2Proposal,
+    submitProposal,
     makeInstantiateMsg,
     instantiate2AddressForProposal,
     governanceAddress,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
+const { saveConfig, loadConfig, printInfo, prompt } = require('../evm/utils');
 
 const { Command, Option } = require('commander');
 
@@ -44,12 +46,16 @@ const storeCode = (client, wallet, config, options) => {
         },
     } = config;
 
-    return submitStoreCodeProposal(client, wallet, config, options).then((proposalId) => {
-        if (proposalId) {
-            printInfo('Proposal submitted', proposalId);
+    const proposal = encodeStoreCodeProposal(options);
 
-            contractConfig.storeCodeProposalId = proposalId;
-        }
+    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+        return Promise.resolve();
+    }
+
+    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
+        printInfo('Proposal submitted', proposalId);
+
+        contractConfig.storeCodeProposalId = proposalId;
     });
 };
 
@@ -67,12 +73,18 @@ const instantiate = (client, wallet, config, options, chainName) => {
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
-    return submitInstantiateProposal(client, wallet, config, options, initMsg).then((proposalId) => {
-        if (proposalId) {
-            printInfo('Proposal submitted', proposalId);
+    const proposal = instantiate2
+        ? encodeInstantiate2Proposal(config, options, initMsg)
+        : encodeInstantiateProposal(config, options, initMsg);
 
-            updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
-        }
+    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+        return Promise.resolve();
+    }
+
+    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
+        printInfo('Proposal submitted', proposalId);
+
+        updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
 
         if (instantiate2) {
             return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
