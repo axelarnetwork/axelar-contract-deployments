@@ -27,12 +27,6 @@ node evm/deploy-contract.js -c Create2Deployer -m create
 node evm/deploy-contract.js -c Create3Deployer -m create2
 ```
 
-## AxelarGateway
-
-Deploy the gateway contract.
-
-`node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
-
 ## Axelar Amplifier Gateway
 
 Deploy the Axelar Amplifier Gateway contract. This is the required gateway contract for EVM chains connecting via Axelar's Amplifier protocol.
@@ -40,6 +34,12 @@ Deploy the Axelar Amplifier Gateway contract. This is the required gateway contr
 `node evm/deploy-amplifier-gateway.js -e testnet -n ethereum`
 
 For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. It'll default to the deployer and can be transferred to governance later.
+
+## Axelar Gateway (consensus connection)
+
+Deploy the original Axelar gateway contract for consensus connection. Set the governance and mint limiter via the `--governance` and `--mintLimiter` flags.
+
+`node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
 
 ## Gateway Upgrade
 
