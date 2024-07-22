@@ -29,10 +29,10 @@ function getInitializeArgs(chain, contractName, wallet, options) {
                 signers: [
                     {
                         signer: Address.fromString(wallet.publicKey()).toBuffer(),
-                        weight: new ScInt(1, { type: 'u256' }),
+                        weight: new ScInt(1, { type: 'u128' }),
                     },
                 ],
-                threshold: new ScInt(1, { type: 'u256' }),
+                threshold: new ScInt(1, { type: 'u128' }),
                 nonce: Buffer.alloc(32),
             });
 
