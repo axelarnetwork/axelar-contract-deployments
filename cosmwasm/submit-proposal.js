@@ -16,7 +16,7 @@ const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
 
 const { Command, Option } = require('commander');
 
-const updateContractChainConfig = (contractConfig, chainConfig, key, value) => {
+const updateContractConfig = (contractConfig, chainConfig, key, value) => {
     if (chainConfig) {
         contractConfig[chainConfig.axelarId] = {
             ...contractConfig[chainConfig.axelarId],
@@ -29,7 +29,7 @@ const updateContractChainConfig = (contractConfig, chainConfig, key, value) => {
 
 const predictAndUpdateAddress = (client, config, options, contractConfig, chainConfig, contractName, chainName) => {
     return instantiate2AddressForProposal(client, config, options).then((contractAddress) => {
-        updateContractChainConfig(contractConfig, chainConfig, 'address', contractAddress);
+        updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
 
         printInfo(`Predicted address for ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
         return contractAddress;
@@ -71,7 +71,7 @@ const instantiate = (client, wallet, config, options, chainName) => {
         if (proposalId) {
             printInfo('Proposal submitted', proposalId);
 
-            updateContractChainConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
+            updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
         }
 
         if (instantiate2) {
