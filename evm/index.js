@@ -2,10 +2,8 @@
 
 const { printObj, readJSON, writeJSON, importNetworks, verifyContract, getBytecodeHash } = require('./utils');
 const { deployITS } = require('./deploy-its');
-const { deployConstAddressDeployer } = require('./deploy-const-address-deployer');
-const { deployCreate3Deployer } = require('./deploy-create3-deployer');
-const { deployGatewayv4 } = require('./deploy-gateway-v4.3.x');
-const { deployGatewayv5 } = require('./deploy-gateway-v5.0.x');
+const { deployAmplifierGateway } = require('./deploy-amplifier-gateway');
+const { deployLegacyGateway } = require('./deploy-gateway-v6.2.x');
 
 module.exports = {
     printObj,
@@ -14,9 +12,7 @@ module.exports = {
     importNetworks,
     verifyContract,
     getBytecodeHash,
-    deployConstAddressDeployer,
-    deployCreate3Deployer,
     deployITS,
-    deployGatewayv4,
-    deployGatewayv5,
+    deployAmplifierGateway,
+    deployLegacyGateway,
 };
