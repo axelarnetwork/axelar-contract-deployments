@@ -120,7 +120,7 @@ async function deploy(config, chain, options) {
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     const gatewayFactory = new ContractFactory(AxelarAmplifierGateway.abi, AxelarAmplifierGateway.bytecode, wallet);
-    const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || 'AxelarAmplifierGateway', chain);
+    const { deployerContract, salt } = getDeployOptions(options.deployMethod, options.salt || 'AxelarAmplifierGateway', chain);
 
     let gateway;
     let proxyAddress;

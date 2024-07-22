@@ -135,7 +135,7 @@ async function deploy(config, chain, options) {
     const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
     const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
     const gatewayProxyFactory = new ContractFactory(AxelarGatewayProxy.abi, AxelarGatewayProxy.bytecode, wallet);
-    const { deployerContract } = getDeployOptions(deployMethod, options.salt || 'AxelarGateway v6.2', chain);
+    const { deployerContract } = getDeployOptions(options.deployMethod, options.salt || 'AxelarGateway v6.2', chain);
 
     let gateway;
     let auth;
