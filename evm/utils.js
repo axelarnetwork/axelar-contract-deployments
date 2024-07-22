@@ -521,7 +521,7 @@ const getDeployOptions = (deployMethod, salt, chain) => {
     }
 
     if (deployMethod === 'create2') {
-        deployer = chain.contracts.ConstAddressDeployer?.address;
+        deployer = chain.contracts.ConstAddressDeployer?.address || chain.contracts.Create2Deployer?.address;
     } else {
         deployer = chain.contracts.Create3Deployer?.address;
     }
