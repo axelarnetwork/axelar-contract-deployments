@@ -27,6 +27,7 @@ const {
     isContract,
     deployContract,
     getGasOptions,
+    getDeployerContract,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
@@ -134,9 +135,7 @@ async function deploy(config, chain, options) {
     const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
     const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
     const gatewayProxyFactory = new ContractFactory(AxelarGatewayProxy.abi, AxelarGatewayProxy.bytecode, wallet);
-
-    const deployerContract =
-        options.deployMethod === 'create3' ? chain.contracts.Create3Deployer?.address : chain.contracts.ConstAddressDeployer?.address;
+    const { deployerContract } = getDeployOptions(deployMethod, options.salt || 'AxelarGateway v6.2', chain);
 
     let gateway;
     let auth;
@@ -553,5 +552,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-    deployGatewayv6: deploy,
+    deployGateway: deploy,
 };

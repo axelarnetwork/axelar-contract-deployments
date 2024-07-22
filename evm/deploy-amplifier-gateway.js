@@ -28,6 +28,8 @@ const {
     getWeightedSigners,
     getContractJSON,
     getDeployedAddress,
+    getDeployerContract,
+    getDeployOptions,
 } = require('./utils');
 const { calculateDomainSeparator, isValidCosmosAddress } = require('../cosmwasm/utils');
 const { addExtendedOptions } = require('./cli-utils');
@@ -119,10 +121,7 @@ async function deploy(config, chain, options) {
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     const gatewayFactory = new ContractFactory(AxelarAmplifierGateway.abi, AxelarAmplifierGateway.bytecode, wallet);
-
-    const deployerContract =
-        options.deployMethod === 'create3' ? chain.contracts.Create3Deployer?.address : chain.contracts.ConstAddressDeployer?.address;
-    const salt = options.salt || 'AxelarAmplifierGateway';
+    const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || 'AxelarAmplifierGateway', chain);
 
     let gateway;
     let proxyAddress;

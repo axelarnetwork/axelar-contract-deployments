@@ -521,7 +521,7 @@ const getDeployOptions = (deployMethod, salt, chain) => {
     }
 
     if (deployMethod === 'create2') {
-        deployer = chain.contracts.ConstAddressDeployer?.address;
+        deployer = chain.contracts.ConstAddressDeployer?.address || chain.contracts.Create2Deployer?.address;
     } else {
         deployer = chain.contracts.Create3Deployer?.address;
     }
@@ -538,19 +538,6 @@ const getDeployOptions = (deployMethod, salt, chain) => {
         salt,
         deployerContract: deployer,
     };
-};
-
-const getDeployerContract = (deployMethod, chainConfig) => {
-    switch (deployMethod) {
-        case 'create':
-            return null;
-        case 'create2':
-            return chainConfig.contracts.ConstAddressDeployer?.address || chainConfig.contracts.Create2Deployer?.address;
-        case 'create3':
-            return chainConfig.contracts.Create3Deployer?.address;
-        default:
-            throw new Error(`Invalid deployment method: ${deployMethod}`);
-    }
 };
 
 /**
@@ -1348,5 +1335,4 @@ module.exports = {
     getContractConfig,
     relayTransaction,
     getWeightedSigners,
-    getDeployerContract,
 };
