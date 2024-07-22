@@ -27,7 +27,7 @@ const {
     isContract,
     deployContract,
     getGasOptions,
-    getDeployerContract,
+    getDeployOptions,
 } = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');

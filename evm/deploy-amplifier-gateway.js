@@ -28,7 +28,6 @@ const {
     getWeightedSigners,
     getContractJSON,
     getDeployedAddress,
-    getDeployerContract,
     getDeployOptions,
 } = require('./utils');
 const { calculateDomainSeparator, isValidCosmosAddress } = require('../cosmwasm/utils');
