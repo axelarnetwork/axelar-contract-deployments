@@ -73,15 +73,11 @@ const storeCode = (client, wallet, config, options) => {
     });
 };
 
-const fetchCodeId = async (client, contractConfig, { fetchCodeId }) => {
-    if (!fetchCodeId) {
-        return Promise.resolve();
-    }
-
-    const codes = await client.getCodes();
+const fetchAndUpdateCodeId = async (client, contractConfig) => {
+    const codes = await client.getCodes(); // TODO: create custom function to retrieve codes more efficiently and with pagination
     let codeId;
 
-    // most likely to be near the end, so we iterate backwards
+    // most likely to be near the end, so we iterate backwards. We also get the latest if there are multiple
     for (let i = codes.length - 1; i >= 0; i--) {
         if (codes[i].checksum.toUpperCase() === contractConfig.storeCodeProposalCodeHash.toUpperCase()) {
             codeId = codes[i].id;
@@ -97,7 +93,7 @@ const fetchCodeId = async (client, contractConfig, { fetchCodeId }) => {
 };
 
 const instantiate = async (client, wallet, config, options, chainName) => {
-    const { contractName, instantiate2, predictOnly } = options;
+    const { contractName, instantiate2, predictOnly, fetchCodeId } = options;
     const {
         axelar: {
             contracts: { [contractName]: contractConfig },
@@ -109,7 +105,10 @@ const instantiate = async (client, wallet, config, options, chainName) => {
         return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
     }
 
-    await fetchCodeId(client, contractConfig, options);
+    if (fetchCodeId) {
+        await fetchAndUpdateCodeId(client, contractConfig);
+    }
+
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
 
     let proposal;
