@@ -552,5 +552,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-    deployGateway: deploy,
+    deployLegacyGateway: deploy,
 };

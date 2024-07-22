@@ -35,9 +35,9 @@ Deploy the Axelar Amplifier Gateway contract. This is the required gateway contr
 
 For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. It'll default to the deployer and can be transferred to governance later.
 
-## Axelar Gateway (consensus connection)
+## Axelar Gateway (legacy connection)
 
-Deploy the original Axelar gateway contract for consensus connection. Set the governance and mint limiter via the `--governance` and `--mintLimiter` flags.
+Deploy the original Axelar gateway contract for legacy consensus-based connection. Set the governance and mint limiter via the `--governance` and `--mintLimiter` flags.
 
 `node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
 
