@@ -127,7 +127,9 @@ if (require.main === module) {
     program.addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'));
     program.addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(0));
     program.addOption(
-        new Option('--previousSignerRetention <previousSignerRetention>', 'number of previous signers to retain in the gateway').default(15),
+        new Option('--previousSignerRetention <previousSignerRetention>', 'number of previous signers to retain in the gateway').default(
+          15,
+        ),
     );
     program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
     program.addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'));
