@@ -35,7 +35,6 @@ const predictAndUpdateAddress = (client, contractConfig, chainConfig, options, c
     return instantiate2AddressForProposal(client, contractConfig, options).then((contractAddress) => {
         updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
 
-        printInfo(`Predicted address for ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
         return contractAddress;
     });
 };
@@ -111,7 +110,7 @@ const instantiate = (client, wallet, config, options, chainName) => {
 };
 
 const main = async (options) => {
-    const { env, proposalType } = options;
+    const { env, proposalType, contractName } = options;
     const config = loadConfig(env);
 
     await prepareWallet(options)
@@ -125,7 +124,18 @@ const main = async (options) => {
                     const chains = getChains(config, options);
 
                     return chains.reduce((promise, chain) => {
-                        return promise.then(() => instantiate(client, wallet, config, options, chain.toLowerCase()));
+                        return promise.then(() =>
+                            instantiate(client, wallet, config, options, chain.toLowerCase()).then((contractAddress) => {
+                                if (contractAddress) {
+                                    printInfo(
+                                        `Predicted address for ${
+                                            chain.toLowerCase() === 'none' ? '' : chain.toLowerCase().concat(' ')
+                                        }${contractName}. Address`,
+                                        contractAddress,
+                                    );
+                                }
+                            }),
+                        );
                     }, Promise.resolve());
                 }
 
