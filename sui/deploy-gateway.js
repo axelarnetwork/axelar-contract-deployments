@@ -128,7 +128,7 @@ if (require.main === module) {
     program.addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(0));
     program.addOption(
         new Option('--previousSignerRetention <previousSignerRetention>', 'number of previous signers to retain in the gateway').default(
-          15,
+            15,
         ),
     );
     program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
