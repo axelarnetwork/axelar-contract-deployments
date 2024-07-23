@@ -11,6 +11,7 @@ const {
     getChains,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
+    encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
@@ -19,9 +20,10 @@ const {
     instantiate2AddressForProposal,
     governanceAddress,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo, prompt } = require('../evm/utils');
+const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../evm/utils');
 const {
     StoreCodeProposal,
+    StoreAndInstantiateContractProposal,
     InstantiateContractProposal,
     InstantiateContract2Proposal,
     ExecuteContractProposal,
@@ -79,7 +81,41 @@ const storeCode = (client, wallet, config, options) => {
     });
 };
 
+const storeInstantiate = (client, wallet, config, options, chainName) => {
+    const { contractName, instantiate2 } = options;
+    const {
+        axelar: {
+            contracts: { [contractName]: contractConfig },
+        },
+        chains: { [chainName]: chainConfig },
+    } = config;
+
+    if (instantiate2) {
+        throw new Error('instantiate2 not supported for storeInstantiate');
+    }
+
+    const initMsg = makeInstantiateMsg(contractName, chainName, config);
+
+    const proposal = encodeStoreInstantiateProposal(config, options, initMsg);
+    printProposal(proposal, StoreAndInstantiateContractProposal);
+
+    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+        return Promise.resolve();
+    }
+
+    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
+        printInfo('Proposal submitted', proposalId);
+
+        updateContractConfig(contractConfig, chainConfig, 'storeInstantiateProposalId', proposalId);
+        contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
+    });
+};
+
 const fetchAndUpdateCodeId = async (client, contractConfig) => {
+    if (!contractConfig.storeCodeProposalCodeHash) {
+        throw new Error('storeCodeProposalCodeHash not found in contract config');
+    }
+
     const codes = await client.getCodes(); // TODO: create custom function to retrieve codes more efficiently and with pagination
     let codeId;
 
@@ -113,6 +149,8 @@ const instantiate = async (client, wallet, config, options, chainName) => {
 
     if (fetchCodeId) {
         await fetchAndUpdateCodeId(client, contractConfig);
+    } else if (!isNumber(contractConfig.codeId)) {
+        throw new Error('Code Id is not defined');
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
@@ -170,12 +208,28 @@ const main = async (options) => {
     const { env, proposalType, contractName } = options;
     const config = loadConfig(env);
 
+    if (config.axelar.contracts === undefined) {
+        config.axelar.contracts = {};
+    }
+
+    if (config.axelar.contracts[contractName] === undefined) {
+        config.axelar.contracts[contractName] = {};
+    }
+
     await prepareWallet(options)
         .then((wallet) => prepareClient(config, wallet))
         .then(({ wallet, client }) => {
             switch (proposalType) {
                 case 'store':
                     return storeCode(client, wallet, config, options);
+
+                case 'storeInstantiate': {
+                    const chains = getChains(config, options);
+
+                    return chains.reduce((promise, chain) => {
+                        return promise.then(() => storeInstantiate(client, wallet, config, options, chain.toLowerCase()));
+                    }, Promise.resolve());
+                }
 
                 case 'instantiate': {
                     const chains = getChains(config, options);
@@ -247,7 +301,9 @@ const programHandler = () => {
         ),
     );
     program.addOption(
-        new Option('--proposalType <proposalType>', 'proposal type').choices(['store', 'instantiate', 'execute']).makeOptionMandatory(true),
+        new Option('--proposalType <proposalType>', 'proposal type')
+            .choices(['store', 'storeInstantiate', 'instantiate', 'execute'])
+            .makeOptionMandatory(true),
     );
     program.addOption(new Option('--predictOnly', 'output the predicted changes only').env('PREDICT_ONLY'));
 
