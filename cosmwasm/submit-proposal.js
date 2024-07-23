@@ -110,6 +110,10 @@ const storeInstantiate = (client, wallet, config, options, chainName) => {
 };
 
 const fetchAndUpdateCodeId = async (client, contractConfig) => {
+    if (!contractConfig.storeCodeProposalCodeHash) {
+        throw new Error('storeCodeProposalCodeHash not found in contract config');
+    }
+
     const codes = await client.getCodes(); // TODO: create custom function to retrieve codes more efficiently and with pagination
     let codeId;
 
@@ -177,6 +181,14 @@ const instantiate = async (client, wallet, config, options, chainName) => {
 const main = async (options) => {
     const { env, proposalType, contractName } = options;
     const config = loadConfig(env);
+
+    if (config.axelar.contracts === undefined) {
+        config.axelar.contracts = {};
+    }
+
+    if (config.axelar.contracts[contractName] === undefined) {
+        config.axelar.contracts[contractName] = {};
+    }
 
     await prepareWallet(options)
         .then((wallet) => prepareClient(config, wallet))
