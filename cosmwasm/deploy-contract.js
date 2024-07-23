@@ -8,6 +8,7 @@ const {
     prepareWallet,
     prepareClient,
     getChains,
+    fetchCodeIdFromCodeHash,
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
@@ -17,7 +18,7 @@ const {
 const { Command, Option } = require('commander');
 
 const upload = (client, wallet, chainName, config, options) => {
-    const { reuseCodeId, contractName } = options;
+    const { reuseCodeId, contractName, fetchCodeId } = options;
     const {
         axelar: {
             contracts: { [contractName]: contractConfig },
@@ -25,7 +26,7 @@ const upload = (client, wallet, chainName, config, options) => {
         chains: { [chainName]: chainConfig },
     } = config;
 
-    if (!reuseCodeId || isNil(contractConfig.codeId)) {
+    if (!fetchCodeId && (!reuseCodeId || isNil(contractConfig.codeId))) {
         printInfo('Uploading contract binary');
 
         return uploadContract(client, wallet, config, options)
@@ -55,8 +56,8 @@ const upload = (client, wallet, chainName, config, options) => {
     return Promise.resolve({ wallet, client });
 };
 
-const instantiate = (client, wallet, chainName, config, options) => {
-    const { contractName } = options;
+const instantiate = async (client, wallet, chainName, config, options) => {
+    const { contractName, fetchCodeId } = options;
     const {
         axelar: {
             contracts: { [contractName]: contractConfig },
@@ -64,7 +65,9 @@ const instantiate = (client, wallet, chainName, config, options) => {
         chains: { [chainName]: chainConfig },
     } = config;
 
-    if (!isNumber(contractConfig.codeId)) {
+    if (fetchCodeId) {
+        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
+    } else if (!isNumber(contractConfig.codeId)) {
         throw new Error('Code Id is not defined');
     }
 
@@ -136,6 +139,8 @@ const programHandler = () => {
     program.addOption(new Option('--instantiate2', 'use instantiate2 for constant address deployment'));
     program.addOption(new Option('--aarch64', 'aarch64').env('AARCH64').default(false));
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+
+    program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
 
     program.action((options) => {
         main(options);
