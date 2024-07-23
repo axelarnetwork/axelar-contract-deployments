@@ -14,6 +14,7 @@ const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const {
     StoreCodeProposal,
+    StoreAndInstantiateContractProposal,
     InstantiateContractProposal,
     InstantiateContract2Proposal,
     ExecuteContractProposal,
@@ -408,12 +409,6 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
     const { [contractName]: contractConfig } = contracts;
 
-    const { codeId } = contractConfig;
-
-    if (!isNumber(codeId)) {
-        throw new Error('Code Id is not defined');
-    }
-
     switch (contractName) {
         case 'Coordinator': {
             if (chainConfig) {
@@ -540,6 +535,17 @@ const getStoreCodeParams = (options) => {
     };
 };
 
+const getStoreInstantiateParams = (config, options, msg) => {
+    const { contractName, admin } = options;
+
+    return {
+        ...getStoreCodeParams(options),
+        admin,
+        label: contractName,
+        msg: Buffer.from(JSON.stringify(msg)),
+    };
+};
+
 const getInstantiateContractParams = (config, options, msg) => {
     const { contractName, admin } = options;
 
@@ -585,6 +591,15 @@ const encodeStoreCodeProposal = (options) => {
     return {
         typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
         value: Uint8Array.from(StoreCodeProposal.encode(proposal).finish()),
+    };
+};
+
+const encodeStoreInstantiateProposal = (config, options, msg) => {
+    const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
+        value: Uint8Array.from(StoreAndInstantiateContractProposal.encode(proposal).finish()),
     };
 };
 
@@ -670,6 +685,7 @@ module.exports = {
     instantiate2AddressForProposal,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
+    encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
