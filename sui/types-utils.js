@@ -1,6 +1,6 @@
 'use strict';
 
-const { bcs } = require('@mysten/sui.js/bcs');
+const { bcs } = require('@mysten/sui/bcs');
 const { fromHEX, toHEX } = require('@mysten/bcs');
 const { ethers } = require('hardhat');
 const {

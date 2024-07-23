@@ -1,6 +1,6 @@
 const { Command, Option } = require('commander');
 const { TxBuilder, updateMoveToml } = require('@axelar-network/axelar-cgp-sui');
-const { bcs } = require('@mysten/sui.js/bcs');
+const { bcs } = require('@mysten/sui/bcs');
 const { fromB64, toB64 } = require('@mysten/bcs');
 const { saveConfig, printInfo, validateParameters, prompt, writeJSON } = require('../evm/utils');
 const { addBaseOptions } = require('./cli-utils');
@@ -44,7 +44,7 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
     if (offline) {
         options.txBytes = txBytes;
     } else {
-        const signature = (await keypair.signTransactionBlock(txBytes)).signature;
+        const signature = (await keypair.signTransaction(txBytes)).signature;
         const result = await client.executeTransactionBlock({
             transactionBlock: txBytes,
             signature,
@@ -78,7 +78,7 @@ async function deployPackage(chain, client, keypair, packageName, packageConfig,
             return;
         }
 
-        const signature = (await keypair.signTransactionBlock(txBytes)).signature;
+        const signature = (await keypair.signTransaction(txBytes)).signature;
         const publishTxn = await client.executeTransactionBlock({
             transactionBlock: txBytes,
             signature,
