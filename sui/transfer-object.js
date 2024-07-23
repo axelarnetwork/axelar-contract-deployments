@@ -1,4 +1,4 @@
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
+const { Transaction } = require('@mysten/sui/transactions');
 const { Command, Option } = require('commander');
 const { printInfo, validateParameters } = require('../evm/utils');
 const { addExtendedOptions } = require('./cli-utils');
@@ -37,10 +37,10 @@ async function processCommand(chain, options) {
         isKeccak256Hash: { objectId },
     });
 
-    const tx = new TransactionBlock();
-    tx.transferObjects([`${objectId}`], tx.pure(recipient));
+    const tx = new Transaction();
+    tx.transferObjects([`${objectId}`], tx.pure.address(recipient));
 
-    const result = await client.signAndExecuteTransactionBlock({
+    const result = await client.signAndExecuteTransaction({
         transactionBlock: tx,
         signer: keypair,
         options: {
