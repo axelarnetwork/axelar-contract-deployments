@@ -1,6 +1,6 @@
 const { saveConfig, prompt, printInfo } = require('../evm/utils');
 const { Command, Option } = require('commander');
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
+const { Transaction } = require('@mysten/sui/transactions');
 const { ethers } = require('hardhat');
 const {
     constants: { HashZero },
@@ -33,7 +33,7 @@ async function processCommand(config, chain, options) {
 
     const singleton = published.publishTxn.objectChanges.find((change) => change.objectType === `${published.packageId}::test::Singleton`);
 
-    const tx = new TransactionBlock();
+    const tx = new Transaction();
 
     tx.moveCall({
         target: `${published.packageId}::test::register_transaction`,

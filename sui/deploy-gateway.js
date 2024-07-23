@@ -1,7 +1,7 @@
 const { saveConfig, prompt, printInfo } = require('../evm/utils');
 const { Command, Option } = require('commander');
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
-const { bcs } = require('@mysten/sui.js/bcs');
+const { Transaction } = require('@mysten/sui/transactions');
+const { bcs } = require('@mysten/sui/bcs');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
@@ -53,7 +53,7 @@ async function processCommand(config, chain, options) {
     }
 
     const contractConfig = chain.contracts.axelar_gateway;
-    const { minimumRotationDelay, domainSeparator } = options;
+    const { minimumRotationDelay, previousSignerRetention, domainSeparator } = options;
     const signers = await getSigners(keypair, config, chain, options);
     const operator = options.operator || keypair.toSuiAddress();
 
@@ -73,7 +73,7 @@ async function processCommand(config, chain, options) {
         })
         .toBytes();
 
-    const tx = new TransactionBlock();
+    const tx = new Transaction();
 
     const separator = tx.moveCall({
         target: `${packageId}::bytes32::new`,
@@ -86,7 +86,8 @@ async function processCommand(config, chain, options) {
             tx.object(creatorCap.objectId),
             tx.pure.address(operator),
             separator,
-            tx.pure(minimumRotationDelay),
+            tx.pure.u64(minimumRotationDelay),
+            tx.pure.u64(previousSignerRetention),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
             tx.object('0x6'),
         ],
@@ -103,6 +104,7 @@ async function processCommand(config, chain, options) {
     contractConfig.domainSeparator = domainSeparator;
     contractConfig.operator = operator;
     contractConfig.minimumRotationDelay = minimumRotationDelay;
+    contractConfig.previousSignerRetention = previousSignerRetention;
 
     printInfo('Gateway deployed', JSON.stringify(contractConfig, null, 2));
 }
@@ -124,6 +126,7 @@ if (require.main === module) {
     program.addOption(new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'));
     program.addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'));
     program.addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(0));
+    program.addOption(new Option('--previousSignerRetention <previousSignerRetention>', 'minium delay for signer retention (in ms)').default(0));
     program.addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero));
     program.addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'));
 
