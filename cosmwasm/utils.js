@@ -44,6 +44,9 @@ const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.fr
 
 const getSalt = (salt, contractName, chainNames) => fromHex(getSaltFromKey(salt || contractName.concat(chainNames)));
 
+const readWasmFile = ({ artifactPath, contractName, aarch64 }) =>
+    readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
+
 const getChains = (config, { chainNames, instantiate2 }) => {
     let chains = chainNames.split(',').map((str) => str.trim());
 
@@ -65,11 +68,11 @@ const getChains = (config, { chainNames, instantiate2 }) => {
 };
 
 const uploadContract = async (client, wallet, config, options) => {
-    const { artifactPath, contractName, instantiate2, salt, aarch64, chainNames } = options;
+    const { contractName, instantiate2, salt, chainNames } = options;
     return wallet
         .getAccounts()
         .then(([account]) => {
-            const wasm = readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
+            const wasm = readWasmFile(options);
             const {
                 axelar: { gasPrice, gasLimit },
             } = config;
@@ -507,9 +510,9 @@ const getSubmitProposalParams = (options) => {
 };
 
 const getStoreCodeParams = (options) => {
-    const { artifactPath, contractName, aarch64, source, builder, instantiateAddresses } = options;
+    const { source, builder, instantiateAddresses } = options;
 
-    const wasm = readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
+    const wasm = readWasmFile(options);
 
     let codeHash;
 
@@ -540,7 +543,7 @@ const getInstantiateContractParams = (config, options, msg) => {
     return {
         ...getSubmitProposalParams(options),
         admin,
-        codeId: contractConfig.codeId, // TODO: get codeId from previous proposal
+        codeId: contractConfig.codeId,
         label: contractName,
         msg: Buffer.from(JSON.stringify(msg)),
     };
@@ -629,6 +632,7 @@ module.exports = {
     prepareWallet,
     prepareClient,
     calculateDomainSeparator,
+    readWasmFile,
     getChains,
     uploadContract,
     instantiateContract,
