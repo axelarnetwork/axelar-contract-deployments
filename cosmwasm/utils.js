@@ -17,6 +17,7 @@ const {
     StoreAndInstantiateContractProposal,
     InstantiateContractProposal,
     InstantiateContract2Proposal,
+    ExecuteContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const { getSaltFromKey, isString, isStringArray, isKeccak256Hash, isNumber, toBigNumberString } = require('../evm/utils');
@@ -568,6 +569,22 @@ const getInstantiateContract2Params = (config, options, msg) => {
     };
 };
 
+const getExecuteContractParams = (config, options, chainName) => {
+    const { contractName, msg } = options;
+    const {
+        axelar: {
+            contracts: { [contractName]: contractConfig },
+        },
+        chains: { [chainName]: chainConfig },
+    } = config;
+
+    return {
+        ...getSubmitProposalParams(options),
+        contract: chainConfig ? contractConfig[chainConfig.axelarId].address : contractConfig.address,
+        msg: Buffer.from(msg),
+    };
+};
+
 const encodeStoreCodeProposal = (options) => {
     const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
 
@@ -609,6 +626,15 @@ const encodeInstantiate2Proposal = (config, options, msg) => {
     return {
         typeUrl: '/cosmwasm.wasm.v1.InstantiateContract2Proposal',
         value: Uint8Array.from(InstantiateContract2Proposal.encode(proposal).finish()),
+    };
+};
+
+const encodeExecuteContractProposal = (config, options, chainName) => {
+    const proposal = ExecuteContractProposal.fromPartial(getExecuteContractParams(config, options, chainName));
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.ExecuteContractProposal',
+        value: Uint8Array.from(ExecuteContractProposal.encode(proposal).finish()),
     };
 };
 
@@ -662,6 +688,7 @@ module.exports = {
     encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
+    encodeExecuteContractProposal,
     submitProposal,
     isValidCosmosAddress,
 };
