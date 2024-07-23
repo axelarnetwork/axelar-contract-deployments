@@ -3,7 +3,7 @@
 require('dotenv').config();
 const { isNil } = require('lodash');
 
-const { printInfo, loadConfig, saveConfig, prompt } = require('../evm/utils');
+const { isNumber, printInfo, loadConfig, saveConfig, prompt } = require('../evm/utils');
 const {
     prepareWallet,
     prepareClient,
@@ -63,6 +63,10 @@ const instantiate = (client, wallet, chainName, config, options) => {
         },
         chains: { [chainName]: chainConfig },
     } = config;
+
+    if (!isNumber(contractConfig.codeId)) {
+        throw new Error('Code Id is not defined');
+    }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
     return instantiateContract(client, wallet, initMsg, config, options).then((contractAddress) => {

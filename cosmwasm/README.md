@@ -187,3 +187,17 @@ Order of execution to satisfy dependencies:
 9.  `node cosmwasm/submit-proposal.js --proposalType instantiate -c VotingVerifier -t "VotingVerifier roposal title" -d "VotingVerifier proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
 10. `node cosmwasm/submit-proposal.js --proposalType instantiate -c Gateway -t "Gateway roposal title" -d "Gateway proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
 11. `node cosmwasm/submit-proposal.js --proposalType instantiate -c MultisigProver -t "MultisigProver roposal title" -d "MultisigProver proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
+
+### Uploading and instantiating in one step
+
+The proposal type `storeInstantiate` allows uploading and instantiating in one step. However, there are a couple of caveats to be aware of:
+
+1. There is no support for `instantiate2` in this proposal type. This means that the contract address will not be known until the proposal is executed.
+
+2. Since governance proposals are executed asynchronously, both the codeId and contract address are not immediately available. Querying the network for the correct values could be tricky if multiple proposals are executed together.
+
+Example usage:
+
+```
+node cosmwasm/submit-proposal.js --proposalType storeInstantiate -c ServiceRegistry -t "ServiceRegistry proposal title" -d "ServiceRegistry proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
+```

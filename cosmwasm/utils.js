@@ -12,7 +12,12 @@ const { calculateFee, GasPrice } = require('@cosmjs/stargate');
 const { instantiate2Address, SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
-const { StoreCodeProposal, InstantiateContractProposal, InstantiateContract2Proposal } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const {
+    StoreCodeProposal,
+    StoreAndInstantiateContractProposal,
+    InstantiateContractProposal,
+    InstantiateContract2Proposal,
+} = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const { getSaltFromKey, isString, isStringArray, isKeccak256Hash, isNumber, toBigNumberString } = require('../evm/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
@@ -403,12 +408,6 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
     const { [contractName]: contractConfig } = contracts;
 
-    const { codeId } = contractConfig;
-
-    if (!isNumber(codeId)) {
-        throw new Error('Code Id is not defined');
-    }
-
     switch (contractName) {
         case 'Coordinator': {
             if (chainConfig) {
@@ -535,6 +534,17 @@ const getStoreCodeParams = (options) => {
     };
 };
 
+const getStoreInstantiateParams = (config, options, msg) => {
+    const { contractName, admin } = options;
+
+    return {
+        ...getStoreCodeParams(options),
+        admin,
+        label: contractName,
+        msg: Buffer.from(JSON.stringify(msg)),
+    };
+};
+
 const getInstantiateContractParams = (config, options, msg) => {
     const { contractName, admin } = options;
 
@@ -564,6 +574,15 @@ const encodeStoreCodeProposal = (options) => {
     return {
         typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
         value: Uint8Array.from(StoreCodeProposal.encode(proposal).finish()),
+    };
+};
+
+const encodeStoreInstantiateProposal = (config, options, msg) => {
+    const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
+        value: Uint8Array.from(StoreAndInstantiateContractProposal.encode(proposal).finish()),
     };
 };
 
@@ -640,6 +659,7 @@ module.exports = {
     instantiate2AddressForProposal,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
+    encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
     submitProposal,

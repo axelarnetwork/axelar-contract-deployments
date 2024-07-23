@@ -11,6 +11,7 @@ const {
     getChains,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
+    encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
     submitProposal,
@@ -18,8 +19,13 @@ const {
     instantiate2AddressForProposal,
     governanceAddress,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo, prompt } = require('../evm/utils');
-const { StoreCodeProposal, InstantiateContractProposal, InstantiateContract2Proposal } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../evm/utils');
+const {
+    StoreCodeProposal,
+    StoreAndInstantiateContractProposal,
+    InstantiateContractProposal,
+    InstantiateContract2Proposal,
+} = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 
 const { Command, Option } = require('commander');
 
@@ -73,6 +79,36 @@ const storeCode = (client, wallet, config, options) => {
     });
 };
 
+const storeInstantiate = (client, wallet, config, options, chainName) => {
+    const { contractName, instantiate2 } = options;
+    const {
+        axelar: {
+            contracts: { [contractName]: contractConfig },
+        },
+        chains: { [chainName]: chainConfig },
+    } = config;
+
+    if (instantiate2) {
+        throw new Error('instantiate2 not supported for storeInstantiate');
+    }
+
+    const initMsg = makeInstantiateMsg(contractName, chainName, config);
+
+    const proposal = encodeStoreInstantiateProposal(config, options, initMsg);
+    printProposal(proposal, StoreAndInstantiateContractProposal);
+
+    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+        return Promise.resolve();
+    }
+
+    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
+        printInfo('Proposal submitted', proposalId);
+
+        updateContractConfig(contractConfig, chainConfig, 'storeInstantiateProposalId', proposalId);
+        contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
+    });
+};
+
 const fetchAndUpdateCodeId = async (client, contractConfig) => {
     const codes = await client.getCodes(); // TODO: create custom function to retrieve codes more efficiently and with pagination
     let codeId;
@@ -107,6 +143,8 @@ const instantiate = async (client, wallet, config, options, chainName) => {
 
     if (fetchCodeId) {
         await fetchAndUpdateCodeId(client, contractConfig);
+    } else if (!isNumber(contractConfig.codeId)) {
+        throw new Error('Code Id is not defined');
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
@@ -146,6 +184,14 @@ const main = async (options) => {
             switch (proposalType) {
                 case 'store':
                     return storeCode(client, wallet, config, options);
+
+                case 'storeInstantiate': {
+                    const chains = getChains(config, options);
+
+                    return chains.reduce((promise, chain) => {
+                        return promise.then(() => storeInstantiate(client, wallet, config, options, chain.toLowerCase()));
+                    }, Promise.resolve());
+                }
 
                 case 'instantiate': {
                     const chains = getChains(config, options);
@@ -205,7 +251,9 @@ const programHandler = () => {
     program.addOption(new Option('--deposit <deposit>', 'the proposal deposit').makeOptionMandatory(true));
     program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message').makeOptionMandatory(true));
     program.addOption(
-        new Option('--proposalType <proposalType>', 'proposal type').choices(['store', 'instantiate']).makeOptionMandatory(true),
+        new Option('--proposalType <proposalType>', 'proposal type')
+            .choices(['store', 'storeInstantiate', 'instantiate'])
+            .makeOptionMandatory(true),
     );
     program.addOption(new Option('--predictOnly', 'output the predicted changes only').env('PREDICT_ONLY'));
 
