@@ -14,7 +14,7 @@ const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const { StoreCodeProposal, InstantiateContractProposal, InstantiateContract2Proposal } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
-const { getSaltFromKey, isString, isStringArray, isKeccak256Hash, isNumber, toBigNumberString, printInfo } = require('../evm/utils');
+const { getSaltFromKey, isString, isStringArray, isKeccak256Hash, isNumber, toBigNumberString } = require('../evm/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
@@ -558,26 +558,22 @@ const getInstantiateContract2Params = (config, options, msg) => {
 const encodeStoreCodeProposal = (options) => {
     const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
 
-    printInfo('Encoded StoreCodeProposal', JSON.stringify(StoreCodeProposal.toJSON(proposal), null, 2));
-
     return {
         typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
         value: Uint8Array.from(StoreCodeProposal.encode(proposal).finish()),
     };
 };
 
-const decodeInstantiationMessage = (proposalJson) => {
-    proposalJson.msg = JSON.parse(atob(proposalJson.msg));
+const decodeProposalAttributes = (proposalJson) => {
+    if (proposalJson.msg) {
+        proposalJson.msg = JSON.parse(atob(proposalJson.msg));
+    }
+
     return proposalJson;
 };
 
 const encodeInstantiateProposal = (config, options, msg) => {
     const proposal = InstantiateContractProposal.fromPartial(getInstantiateContractParams(config, options, msg));
-
-    printInfo(
-        'Encoded InstantiateContractProposal',
-        JSON.stringify(decodeInstantiationMessage(InstantiateContractProposal.toJSON(proposal)), null, 2),
-    );
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.InstantiateContractProposal',
@@ -587,11 +583,6 @@ const encodeInstantiateProposal = (config, options, msg) => {
 
 const encodeInstantiate2Proposal = (config, options, msg) => {
     const proposal = InstantiateContract2Proposal.fromPartial(getInstantiateContract2Params(config, options, msg));
-
-    printInfo(
-        'Encoded InstantiateContract2Proposal',
-        JSON.stringify(decodeInstantiationMessage(InstantiateContract2Proposal.toJSON(proposal)), null, 2),
-    );
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.InstantiateContract2Proposal',
@@ -643,6 +634,7 @@ module.exports = {
     instantiateContract,
     makeInstantiateMsg,
     instantiate2AddressForProposal,
+    decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,

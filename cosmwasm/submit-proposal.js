@@ -6,6 +6,7 @@ const {
     prepareWallet,
     prepareClient,
     getChains,
+    decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
@@ -15,6 +16,7 @@ const {
     governanceAddress,
 } = require('./utils');
 const { saveConfig, loadConfig, printInfo, prompt } = require('../evm/utils');
+const { StoreCodeProposal, InstantiateContractProposal, InstantiateContract2Proposal } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 
 const { Command, Option } = require('commander');
 
@@ -38,6 +40,13 @@ const predictAndUpdateAddress = (client, contractConfig, chainConfig, options, c
     });
 };
 
+const printProposal = (proposal, proposalType) => {
+    printInfo(
+        `Encoded ${proposal.typeUrl}`,
+        JSON.stringify(decodeProposalAttributes(proposalType.toJSON(proposalType.decode(proposal.value))), null, 2),
+    );
+};
+
 const storeCode = (client, wallet, config, options) => {
     const { contractName } = options;
     const {
@@ -47,6 +56,8 @@ const storeCode = (client, wallet, config, options) => {
     } = config;
 
     const proposal = encodeStoreCodeProposal(options);
+
+    printProposal(proposal, StoreCodeProposal);
 
     if (prompt(`Proceed with proposal submission?`, options.yes)) {
         return Promise.resolve();
@@ -73,9 +84,16 @@ const instantiate = (client, wallet, config, options, chainName) => {
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
-    const proposal = instantiate2
-        ? encodeInstantiate2Proposal(config, options, initMsg)
-        : encodeInstantiateProposal(config, options, initMsg);
+
+    let proposal;
+
+    if (instantiate2) {
+        proposal = encodeInstantiate2Proposal(config, options, initMsg);
+        printProposal(proposal, InstantiateContract2Proposal);
+    } else {
+        proposal = encodeInstantiateProposal(config, options, initMsg);
+        printProposal(proposal, InstantiateContractProposal);
+    }
 
     if (prompt(`Proceed with proposal submission?`, options.yes)) {
         return Promise.resolve();
