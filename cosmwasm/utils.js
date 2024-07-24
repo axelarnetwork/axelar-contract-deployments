@@ -12,7 +12,13 @@ const { calculateFee, GasPrice } = require('@cosmjs/stargate');
 const { instantiate2Address, SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
-const { StoreCodeProposal, InstantiateContractProposal, InstantiateContract2Proposal } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const {
+    StoreCodeProposal,
+    StoreAndInstantiateContractProposal,
+    InstantiateContractProposal,
+    InstantiateContract2Proposal,
+    ExecuteContractProposal,
+} = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const { getSaltFromKey, isString, isStringArray, isKeccak256Hash, isNumber, toBigNumberString } = require('../evm/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
@@ -44,6 +50,9 @@ const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.fr
 
 const getSalt = (salt, contractName, chainNames) => fromHex(getSaltFromKey(salt || contractName.concat(chainNames)));
 
+const readWasmFile = ({ artifactPath, contractName, aarch64 }) =>
+    readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
+
 const getChains = (config, { chainNames, instantiate2 }) => {
     let chains = chainNames.split(',').map((str) => str.trim());
 
@@ -65,11 +74,11 @@ const getChains = (config, { chainNames, instantiate2 }) => {
 };
 
 const uploadContract = async (client, wallet, config, options) => {
-    const { artifactPath, contractName, instantiate2, salt, aarch64, chainNames } = options;
+    const { contractName, instantiate2, salt, chainNames } = options;
     return wallet
         .getAccounts()
         .then(([account]) => {
-            const wasm = readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
+            const wasm = readWasmFile(options);
             const {
                 axelar: { gasPrice, gasLimit },
             } = config;
@@ -400,12 +409,6 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
     const { [contractName]: contractConfig } = contracts;
 
-    const { codeId } = contractConfig;
-
-    if (!isNumber(codeId)) {
-        throw new Error('Code Id is not defined');
-    }
-
     switch (contractName) {
         case 'Coordinator': {
             if (chainConfig) {
@@ -507,9 +510,9 @@ const getSubmitProposalParams = (options) => {
 };
 
 const getStoreCodeParams = (options) => {
-    const { artifactPath, contractName, aarch64, source, builder, instantiateAddresses } = options;
+    const { source, builder, instantiateAddresses } = options;
 
-    const wasm = readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
+    const wasm = readWasmFile(options);
 
     let codeHash;
 
@@ -532,6 +535,17 @@ const getStoreCodeParams = (options) => {
     };
 };
 
+const getStoreInstantiateParams = (config, options, msg) => {
+    const { contractName, admin } = options;
+
+    return {
+        ...getStoreCodeParams(options),
+        admin,
+        label: contractName,
+        msg: Buffer.from(JSON.stringify(msg)),
+    };
+};
+
 const getInstantiateContractParams = (config, options, msg) => {
     const { contractName, admin } = options;
 
@@ -540,7 +554,7 @@ const getInstantiateContractParams = (config, options, msg) => {
     return {
         ...getSubmitProposalParams(options),
         admin,
-        codeId: contractConfig.codeId, // TODO: get codeId from previous proposal
+        codeId: contractConfig.codeId,
         label: contractName,
         msg: Buffer.from(JSON.stringify(msg)),
     };
@@ -555,12 +569,37 @@ const getInstantiateContract2Params = (config, options, msg) => {
     };
 };
 
+const getExecuteContractParams = (config, options, chainName) => {
+    const { contractName, msg } = options;
+    const {
+        axelar: {
+            contracts: { [contractName]: contractConfig },
+        },
+        chains: { [chainName]: chainConfig },
+    } = config;
+
+    return {
+        ...getSubmitProposalParams(options),
+        contract: chainConfig ? contractConfig[chainConfig.axelarId].address : contractConfig.address,
+        msg: Buffer.from(msg),
+    };
+};
+
 const encodeStoreCodeProposal = (options) => {
     const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
         value: Uint8Array.from(StoreCodeProposal.encode(proposal).finish()),
+    };
+};
+
+const encodeStoreInstantiateProposal = (config, options, msg) => {
+    const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
+        value: Uint8Array.from(StoreAndInstantiateContractProposal.encode(proposal).finish()),
     };
 };
 
@@ -587,6 +626,15 @@ const encodeInstantiate2Proposal = (config, options, msg) => {
     return {
         typeUrl: '/cosmwasm.wasm.v1.InstantiateContract2Proposal',
         value: Uint8Array.from(InstantiateContract2Proposal.encode(proposal).finish()),
+    };
+};
+
+const encodeExecuteContractProposal = (config, options, chainName) => {
+    const proposal = ExecuteContractProposal.fromPartial(getExecuteContractParams(config, options, chainName));
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.ExecuteContractProposal',
+        value: Uint8Array.from(ExecuteContractProposal.encode(proposal).finish()),
     };
 };
 
@@ -629,6 +677,7 @@ module.exports = {
     prepareWallet,
     prepareClient,
     calculateDomainSeparator,
+    readWasmFile,
     getChains,
     uploadContract,
     instantiateContract,
@@ -636,8 +685,10 @@ module.exports = {
     instantiate2AddressForProposal,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
+    encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
+    encodeExecuteContractProposal,
     submitProposal,
     isValidCosmosAddress,
 };
