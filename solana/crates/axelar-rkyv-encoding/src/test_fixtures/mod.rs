@@ -12,7 +12,12 @@ pub use signing_key::{
 pub use {ed25519_dalek, libsecp256k1};
 
 use crate::hash_payload;
+use crate::hasher::solana::{self, SolanaKeccak256Hasher};
 use crate::types::*;
+
+pub fn test_hasher_impl<'a>() -> solana::SolanaKeccak256Hasher<'a> {
+    SolanaKeccak256Hasher::default()
+}
 
 pub fn random_bytes<const N: usize>() -> [u8; N] {
     let mut bytes = [0u8; N];
@@ -167,7 +172,12 @@ pub fn random_execute_data() -> ExecuteData {
     let payload = random_payload();
     let verifier_set = random_valid_verifier_set();
     let domain_separator = random_bytes::<32>();
-    let payload_hash = crate::hash_payload(&domain_separator, &verifier_set, &payload);
+    let payload_hash = crate::hash_payload(
+        &domain_separator,
+        &verifier_set,
+        &payload,
+        test_hasher_impl(),
+    );
     let proof = random_proof(&payload_hash);
     ExecuteData::new(payload, proof)
 }
@@ -194,17 +204,19 @@ pub fn random_valid_execute_data_and_verifier_set_for_payload(
     payload: Payload,
 ) -> (ExecuteData, VerifierSet) {
     let (verifier_set, signing_keys) = random_verifier_set_and_signing_keys();
-    let original_payload_hash = hash_payload(domain_separator, &verifier_set, &payload);
+    let original_payload_hash = hash_payload(
+        domain_separator,
+        &verifier_set,
+        &payload,
+        test_hasher_impl(),
+    );
 
     let weighted_signatures = signing_keys
         .iter()
         .map(|(pubkey, signing_key)| {
             let signature = signing_key.sign(&original_payload_hash);
-            let weight = verifier_set.signers.get(pubkey).unwrap();
-            (
-                *pubkey,
-                WeightedSigner::new(Some(signature), *weight),
-            )
+            let weight = verifier_set.signers.inner_map().get(pubkey).unwrap();
+            (*pubkey, WeightedSigner::new(Some(signature), *weight))
         })
         .collect();
 
@@ -237,6 +249,7 @@ pub fn random_execute_data_and_verifier_set_for_payload_with_invalid_signatures(
     let signature_bytes: &mut [u8] = match &mut execute_data
         .proof
         .signers_with_signatures
+        .mut_inner_map()
         .values_mut()
         .next()
         .unwrap()

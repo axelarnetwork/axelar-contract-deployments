@@ -15,6 +15,7 @@ use super::Processor;
 use crate::axelar_auth_weighted::SignerSetMetadata;
 use crate::commands::ArchivedCommand;
 use crate::events::GatewayEvent;
+use crate::hasher_impl;
 use crate::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
 
 impl Processor {
@@ -148,7 +149,7 @@ fn emit_signers_rotated_event(verifier_set: &ArchivedVerifierSet) -> Result<(), 
     };
 
     let rotate_signers_command = RotateSignersCommand {
-        command_id: verifier_set.hash(),
+        command_id: verifier_set.hash(hasher_impl()),
         destination_chain: 0, // XXX: the chain ID is not relevant for rotating signers.
         signer_set,
         weights,

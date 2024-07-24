@@ -1,5 +1,5 @@
 use axelar_message_primitives::command::U256;
-use gmp_gateway::state::GatewayConfig;
+use gmp_gateway::{hasher_impl, state::GatewayConfig};
 use solana_program_test::{tokio, ProgramTestBanksClientExt};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
@@ -47,7 +47,7 @@ async fn test_successfylly_initialize_config() {
             .auth_weighted
             .signer_set_hash_for_epoch(&current_epoch)
             .unwrap(),
-        &new_signer_set.hash(),
+        &new_signer_set.hash(hasher_impl()),
     );
 }
 

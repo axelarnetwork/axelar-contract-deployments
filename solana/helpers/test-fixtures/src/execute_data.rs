@@ -4,6 +4,7 @@ use axelar_rkyv_encoding::types::{
     ArchivedExecuteData, ExecuteData, Payload, VerifierSet, WeightedSigner,
 };
 use axelar_rkyv_encoding::{encode, hash_payload};
+use gateway::hasher_impl;
 
 pub use crate::test_signer::TestSigner;
 
@@ -24,7 +25,7 @@ pub fn prepare_execute_data(
 
     let verifier_set = VerifierSet::new(nonce, signers, threshold.into());
 
-    let payload_hash = hash_payload(domain_separator, &verifier_set, &payload);
+    let payload_hash = hash_payload(domain_separator, &verifier_set, &payload, hasher_impl());
 
     // Iterating over a btree results in a sorted vector
     let weighted_signatures: Vec<_> = signing_keys

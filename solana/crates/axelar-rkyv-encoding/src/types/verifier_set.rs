@@ -4,7 +4,8 @@ use std::error::Error;
 use rkyv::bytecheck::{self, CheckBytes};
 use rkyv::{Archive, Deserialize, Serialize};
 
-use crate::hasher::Hasher;
+use super::HasheableSignersBTreeMap;
+use crate::hasher::AxelarRkyv256Hasher;
 use crate::types::{ArchivedPublicKey, ArchivedU256, PublicKey, U256};
 use crate::visitor::{ArchivedVisitor, Visitor};
 
@@ -15,7 +16,8 @@ type Signers = BTreeMap<PublicKey, U256>;
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct VerifierSet {
     pub(crate) created_at: u64,
-    pub(crate) signers: Signers,
+    created_at_be_bytes: [u8; 8],
+    pub(crate) signers: HasheableSignersBTreeMap,
     pub(crate) threshold: U256,
 }
 
@@ -23,15 +25,15 @@ impl VerifierSet {
     pub fn new(created_at: u64, signers: Signers, threshold: U256) -> Self {
         Self {
             created_at,
-            signers,
+            created_at_be_bytes: created_at.to_be_bytes(),
+            signers: HasheableSignersBTreeMap::new(signers),
             threshold,
         }
     }
 
-    pub fn hash(&self) -> [u8; 32] {
-        let mut hasher = Hasher::default();
-        Visitor::visit_verifier_set(&mut hasher, self);
-        hasher.finalize()
+    pub fn hash<'a>(&'a self, mut hasher_impl: impl AxelarRkyv256Hasher<'a>) -> [u8; 32] {
+        Visitor::visit_verifier_set(&mut hasher_impl, self);
+        hasher_impl.result().into()
     }
 
     pub fn to_bytes(&self) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>> {
@@ -46,7 +48,7 @@ impl VerifierSet {
     }
 
     pub fn signers(&self) -> &Signers {
-        &self.signers
+        self.signers.inner_map()
     }
 
     pub fn threshold(&self) -> &U256 {
@@ -56,13 +58,16 @@ impl VerifierSet {
     pub fn created_at(&self) -> u64 {
         self.created_at
     }
+
+    pub fn created_at_be_bytes(&self) -> &[u8; 8] {
+        &self.created_at_be_bytes
+    }
 }
 
 impl ArchivedVerifierSet {
-    pub fn hash(&self) -> [u8; 32] {
-        let mut hasher = Hasher::default();
-        ArchivedVisitor::visit_verifier_set(&mut hasher, self);
-        hasher.finalize()
+    pub fn hash<'a>(&'a self, mut hasher_impl: impl AxelarRkyv256Hasher<'a>) -> [u8; 32] {
+        ArchivedVisitor::visit_verifier_set(&mut hasher_impl, self);
+        hasher_impl.result().into()
     }
 
     pub fn signers(&self) -> impl Iterator<Item = (&ArchivedPublicKey, &ArchivedU256)> {
@@ -89,12 +94,16 @@ impl ArchivedVerifierSet {
             .try_fold(BnumU256::ZERO, |acc, weight| acc.checked_add(weight.into()))
             .map(|total_weight| (total_weight) >= ((&self.threshold).into()))
     }
+
+    pub fn created_at_be_bytes(&self) -> &[u8; 8] {
+        &self.created_at_be_bytes
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_fixtures::random_valid_verifier_set;
+    use crate::test_fixtures::{random_valid_verifier_set, test_hasher_impl};
 
     #[test]
     fn archived_and_unarchived_values_have_the_same_hash() {
@@ -103,7 +112,10 @@ mod tests {
         let serialized = rkyv::to_bytes::<_, 1024>(&verifier_set).unwrap().to_vec();
         let archived = unsafe { rkyv::archived_root::<VerifierSet>(&serialized) };
 
-        assert_eq!(archived.hash(), verifier_set.hash());
+        assert_eq!(
+            archived.hash(test_hasher_impl()),
+            verifier_set.hash(test_hasher_impl())
+        );
     }
 
     #[test]

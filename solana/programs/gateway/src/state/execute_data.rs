@@ -9,6 +9,7 @@ use solana_program::hash::hashv;
 use solana_program::pubkey::Pubkey;
 
 use crate::error::GatewayError;
+use crate::hasher_impl;
 use crate::processor::ToBytes;
 
 /// Gateway Execute Data type.
@@ -51,7 +52,7 @@ impl<'a> GatewayExecuteData<'a> {
             }
         };
 
-        let payload_hash = execute_data.internal_payload_hash(domain_separator);
+        let payload_hash = execute_data.internal_payload_hash(domain_separator, hasher_impl());
         let mut gateway_execute_data = Self {
             inner: execute_data,
             payload_hash,
@@ -68,7 +69,7 @@ impl<'a> GatewayExecuteData<'a> {
     pub fn seeds(&self, gateway_root_pda: &Pubkey) -> [u8; 32] {
         hashv(&[
             gateway_root_pda.as_ref(),
-            self.inner.hash().as_slice(),
+            self.inner.hash(hasher_impl()).as_slice(),
             &[self.bump],
         ])
         .to_bytes()

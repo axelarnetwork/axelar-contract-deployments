@@ -13,8 +13,8 @@ impl U256 {
         Self(bytes)
     }
 
-    pub fn to_le(self) -> [u8; 32] {
-        self.0
+    pub fn to_le(&self) -> &[u8; 32] {
+        &self.0
     }
 
     pub fn checked_add(self, other: Self) -> Option<Self> {
@@ -27,6 +27,7 @@ impl U256 {
         num.try_into().ok()
     }
 }
+
 impl ArchivedU256 {
     pub(crate) fn to_le(&self) -> &[u8; 32] {
         &self.0
@@ -59,7 +60,7 @@ impl From<bnum::types::U256> for U256 {
 impl From<U256> for bnum::types::U256 {
     fn from(val: U256) -> Self {
         // Unwrap: Our U256 type has the expected number of bytes, so this never panics.
-        bnum::types::U256::from_le_slice(&val.to_le()).unwrap()
+        bnum::types::U256::from_le_slice(val.to_le()).unwrap()
     }
 }
 
@@ -82,7 +83,7 @@ mod tests {
     fn test_endiannes() {
         let bytes = random_bytes::<32>();
         let u256 = U256::from_le(bytes);
-        assert_eq!(u256.to_le(), bytes);
+        assert_eq!(*u256.to_le(), bytes);
     }
 
     #[test]

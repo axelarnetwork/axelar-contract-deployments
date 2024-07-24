@@ -592,7 +592,7 @@ impl TestFixture {
         let (execute_data_pda, execute_data) = self
             .init_execute_data(
                 gateway_root_pda,
-                Payload::Messages(messages.clone()),
+                Payload::new_messages(messages.clone()),
                 signers,
                 weight_of_quorum,
                 nonce,
@@ -662,7 +662,7 @@ impl TestFixture {
             .iter()
             .try_fold(U256::ZERO, |acc, i| acc.checked_add(i.weight))
             .expect("no overflow");
-        let weight_of_quorum = EthersU256::from_little_endian(&weight_of_quorum.to_le());
+        let weight_of_quorum = EthersU256::from_little_endian(weight_of_quorum.to_le());
         let (execute_data_pda, execute_data) = self
             .init_execute_data(
                 gateway_root_pda,

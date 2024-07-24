@@ -9,6 +9,7 @@ pub mod instructions;
 pub mod processor;
 pub mod state;
 
+use axelar_rkyv_encoding::hasher::solana::SolanaKeccak256Hasher;
 use error::GatewayError;
 // Export current sdk types for downstream users building with a different sdk
 // version.
@@ -56,4 +57,9 @@ pub fn assert_valid_gateway_root_pda(bump: u8, expected_pubkey: &Pubkey) {
         .expect("invalid bump for the root pda");
 
     assert_eq!(&derived_pubkey, expected_pubkey, "invalid gateway root pda");
+}
+
+/// Provides abstraction for the hashing mechanism.
+pub fn hasher_impl<'a>() -> SolanaKeccak256Hasher<'a> {
+    SolanaKeccak256Hasher::default()
 }

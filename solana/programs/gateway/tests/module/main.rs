@@ -18,6 +18,7 @@ use axelar_rkyv_encoding::types::{
 };
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::events::GatewayEvent;
+use gmp_gateway::hasher_impl;
 use gmp_gateway::state::GatewayApprovedCommand;
 use solana_program_test::tokio::fs;
 use solana_program_test::{processor, ProgramTest};
@@ -198,6 +199,7 @@ pub fn prepare_questionable_execute_data(
         domain_separator,
         &verifier_set_for_submission,
         payload_for_signing,
+        hasher_impl(),
     );
     let signatures = create_signer_array(
         signers_for_signing,
@@ -280,7 +282,7 @@ pub fn make_messages(num_messages: usize) -> Vec<Message> {
 }
 
 pub fn payload_and_commands(messages: &[Message]) -> (Payload, Vec<OwnedCommand>) {
-    let payload = Payload::Messages(messages.to_vec());
+    let payload = Payload::new_messages(messages.to_vec());
     let commands = messages
         .iter()
         .cloned()

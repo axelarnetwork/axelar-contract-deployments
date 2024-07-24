@@ -10,6 +10,7 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use crate::error::GatewayError;
+use crate::hasher_impl;
 
 pub enum CommandKind {
     ApproveMessage,
@@ -42,8 +43,8 @@ impl Command for OwnedCommand {
     #[inline]
     fn hash(&self) -> [u8; 32] {
         match self {
-            OwnedCommand::ApproveMessage(message) => message.hash(),
-            OwnedCommand::RotateSigners(verifier_set) => verifier_set.hash(),
+            OwnedCommand::ApproveMessage(message) => message.hash(hasher_impl()),
+            OwnedCommand::RotateSigners(verifier_set) => verifier_set.hash(hasher_impl()),
         }
     }
 }
@@ -66,7 +67,7 @@ impl Command for ArchivedCommand<'_> {
     fn hash(&self) -> [u8; 32] {
         match self {
             ArchivedCommand::ApproveMessage(message) => message.hash(),
-            ArchivedCommand::RotateSigners(verifier_set) => verifier_set.hash(),
+            ArchivedCommand::RotateSigners(verifier_set) => verifier_set.hash(hasher_impl()),
         }
     }
 }
@@ -79,7 +80,7 @@ pub trait AxelarMessage {
 
 impl AxelarMessage for &ArchivedMessage {
     fn hash(&self) -> [u8; 32] {
-        ArchivedMessage::hash(self)
+        ArchivedMessage::hash(self, hasher_impl())
     }
 
     fn destination_program(&self) -> Result<DestinationProgramId, GatewayError> {
@@ -93,7 +94,7 @@ impl AxelarMessage for &ArchivedMessage {
 
 impl AxelarMessage for Message {
     fn hash(&self) -> [u8; 32] {
-        Message::hash(self)
+        Message::hash(self, hasher_impl())
     }
 
     fn destination_program(&self) -> Result<DestinationProgramId, GatewayError> {
@@ -211,8 +212,8 @@ fn message_wrapper_roundtrip() {
     let archived: &ArchivedMessage = (&wrapped).try_into().unwrap();
 
     assert_eq!(original, unwrapped);
-    assert_eq!(original.hash(), unwrapped.hash());
+    assert_eq!(original.hash(hasher_impl()), unwrapped.hash(hasher_impl()));
 
     assert_eq!(&original, archived);
-    assert_eq!(original.hash(), archived.hash());
+    assert_eq!(original.hash(hasher_impl()), archived.hash(hasher_impl()));
 }

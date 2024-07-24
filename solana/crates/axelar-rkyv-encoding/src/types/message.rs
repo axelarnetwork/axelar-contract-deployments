@@ -1,10 +1,10 @@
 use std::error::Error;
 
 use rkyv::bytecheck::{self, CheckBytes, StructCheckError};
-use rkyv::validation::validators::{DefaultValidatorError};
+use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{Archive, Deserialize, Serialize};
 
-use crate::hasher::Hasher;
+use crate::hasher::AxelarRkyv256Hasher;
 use crate::visitor::{ArchivedVisitor, Visitor};
 
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
@@ -19,10 +19,9 @@ impl CrossChainId {
     pub fn new(chain: String, id: String) -> Self {
         Self { chain, id }
     }
-    pub fn hash(&self) -> [u8; 32] {
-        let mut hasher = Hasher::default();
-        Visitor::visit_cc_id(&mut hasher, self);
-        hasher.finalize()
+    pub fn hash<'a>(&'a self, mut hasher_impl: impl AxelarRkyv256Hasher<'a>) -> [u8; 32] {
+        Visitor::visit_cc_id(&mut hasher_impl, self);
+        hasher_impl.result().into()
     }
 
     pub fn chain(&self) -> &str {
@@ -35,10 +34,9 @@ impl CrossChainId {
 }
 
 impl ArchivedCrossChainId {
-    pub fn hash(&self) -> [u8; 32] {
-        let mut hasher = Hasher::default();
-        ArchivedVisitor::visit_cc_id(&mut hasher, self);
-        hasher.finalize()
+    pub fn hash<'a>(&'a self, mut hasher_impl: impl AxelarRkyv256Hasher<'a>) -> [u8; 32] {
+        ArchivedVisitor::visit_cc_id(&mut hasher_impl, self);
+        hasher_impl.result().into()
     }
 
     pub fn chain(&self) -> &str {
@@ -78,10 +76,9 @@ impl Message {
         }
     }
 
-    pub fn hash(&self) -> [u8; 32] {
-        let mut hasher = Hasher::default();
-        Visitor::visit_message(&mut hasher, self);
-        hasher.finalize()
+    pub fn hash<'a>(&'a self, mut hasher_impl: impl AxelarRkyv256Hasher<'a>) -> [u8; 32] {
+        Visitor::visit_message(&mut hasher_impl, self);
+        hasher_impl.result().into()
     }
 
     pub fn cc_id(&self) -> &CrossChainId {
@@ -112,10 +109,9 @@ impl Message {
 }
 
 impl ArchivedMessage {
-    pub fn hash(&self) -> [u8; 32] {
-        let mut hasher = Hasher::default();
-        ArchivedVisitor::visit_message(&mut hasher, self);
-        hasher.finalize()
+    pub fn hash<'a>(&'a self, mut hasher_impl: impl AxelarRkyv256Hasher<'a>) -> [u8; 32] {
+        ArchivedVisitor::visit_message(&mut hasher_impl, self);
+        hasher_impl.result().into()
     }
 
     pub fn cc_id(&self) -> &ArchivedCrossChainId {
@@ -145,7 +141,7 @@ impl ArchivedMessage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_fixtures::random_message;
+    use crate::test_fixtures::{random_message, test_hasher_impl};
 
     #[test]
     fn unarchived_roundtrip() {
@@ -155,7 +151,10 @@ mod tests {
         let deserialized = Message::from_bytes(&bytes).unwrap();
 
         assert_eq!(message, deserialized);
-        assert_eq!(message.hash(), deserialized.hash());
+        assert_eq!(
+            message.hash(test_hasher_impl()),
+            deserialized.hash(test_hasher_impl())
+        );
     }
 
     #[test]
@@ -165,6 +164,9 @@ mod tests {
         let bytes = message.to_bytes().unwrap();
         let archived = ArchivedMessage::from_archived_bytes(&bytes).unwrap();
 
-        assert_eq!(message.hash(), archived.hash());
+        assert_eq!(
+            message.hash(test_hasher_impl()),
+            archived.hash(test_hasher_impl())
+        );
     }
 }

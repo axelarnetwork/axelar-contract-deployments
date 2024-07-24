@@ -4,8 +4,11 @@ use rkyv::bytecheck::{self, CheckBytes};
 use rkyv::collections::ArchivedBTreeMap;
 use rkyv::{Archive, Deserialize, Serialize};
 
-use super::{ArchivedPublicKey, Ed25519Pubkey, PublicKey, Secp256k1Pubkey};
-use crate::hasher::Hasher;
+use super::{
+    ArchivedPublicKey, Ed25519Pubkey, HasheableSignersWithSignaturesBTreeMap, PublicKey,
+    Secp256k1Pubkey,
+};
+use crate::hasher::AxelarRkyv256Hasher;
 use crate::types::{
     ArchivedWeightedSigner, EcdsaRecoverableSignature, Ed25519Signature, WeightedSigner, U256,
 };
@@ -14,9 +17,10 @@ use crate::types::{
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct Proof {
-    pub signers_with_signatures: BTreeMap<PublicKey, WeightedSigner>,
+    pub signers_with_signatures: HasheableSignersWithSignaturesBTreeMap,
     pub threshold: U256,
     pub nonce: u64,
+    nonce_be_bytes: [u8; 8],
 }
 
 impl Proof {
@@ -26,33 +30,39 @@ impl Proof {
         nonce: u64,
     ) -> Self {
         Self {
-            signers_with_signatures,
+            signers_with_signatures: HasheableSignersWithSignaturesBTreeMap::new(
+                signers_with_signatures,
+            ),
             threshold,
             nonce,
+            nonce_be_bytes: nonce.to_be_bytes(),
         }
+    }
+
+    pub fn nonce_be_bytes(&self) -> &[u8; 8] {
+        &self.nonce_be_bytes
     }
 }
 
 impl ArchivedProof {
     /// Returns the same hash of an equivalent `VerifierSet`.
-    pub fn signer_set_hash(&self) -> [u8; 32] {
-        let mut hasher = Hasher::default();
-        self.drive_visitor_for_signer_set_hash(&mut hasher);
-        hasher.finalize()
+    pub fn signer_set_hash<'a>(&'a self, mut hasher_impl: impl AxelarRkyv256Hasher<'a>) -> [u8; 32] {
+        self.drive_visitor_for_signer_set_hash(&mut hasher_impl);
+        hasher_impl.result().into()
     }
 
-    pub(crate) fn drive_visitor_for_signer_set_hash(
-        &self,
-        visitor: &mut impl crate::visitor::ArchivedVisitor,
+    pub(crate) fn drive_visitor_for_signer_set_hash<'a>(
+        &'a self,
+        visitor: &mut impl crate::visitor::ArchivedVisitor<'a>,
     ) {
         // Follow `ArchivedVisitor::visit_verifier_set` exact steps
-        visitor.prefix_length(self.signers_with_signatures.len());
+        visitor.prefix_length(self.signers_with_signatures.len_be_bytes());
         for (pubkey, weighted_signature) in self.signers_with_signatures.iter() {
             visitor.visit_public_key(pubkey);
             visitor.visit_u256(&weighted_signature.weight);
         }
         visitor.visit_u256(&self.threshold);
-        visitor.visit_u64(&self.nonce);
+        visitor.visit_u64(self.nonce_be_bytes());
     }
 
     pub fn validate_for_message(&self, message: &[u8; 32]) -> Result<(), MessageValidationError> {
@@ -122,7 +132,11 @@ impl ArchivedProof {
     pub fn signers_with_signatures(
         &self,
     ) -> &ArchivedBTreeMap<ArchivedPublicKey, ArchivedWeightedSigner> {
-        &self.signers_with_signatures
+        self.signers_with_signatures.inner_map()
+    }
+
+    pub fn nonce_be_bytes(&self) -> &[u8; 8] {
+        &self.nonce_be_bytes
     }
 }
 
@@ -141,6 +155,7 @@ mod tests {
     use super::*;
     use crate::test_fixtures::{
         random_valid_proof_and_message, random_valid_proof_message_and_verifier_set,
+        test_hasher_impl,
     };
 
     fn verify_ecdsa(
@@ -219,6 +234,9 @@ mod tests {
         assert!(proof
             .validate_for_message_custom(&message, verify_ecdsa, verify_eddsa)
             .is_ok()); // Confidence check
-        assert_eq!(proof.signer_set_hash(), verifier_set.hash());
+        assert_eq!(
+            proof.signer_set_hash(test_hasher_impl()),
+            verifier_set.hash(test_hasher_impl())
+        );
     }
 }

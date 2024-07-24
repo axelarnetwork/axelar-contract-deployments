@@ -8,6 +8,7 @@ pub use axelar_message_primitives;
 use axelar_message_primitives::{DataPayload, DestinationProgramId, EncodingScheme};
 use axelar_rkyv_encoding::types::{ArchivedMessage, Message};
 use gateway::commands::MessageWrapper;
+use gateway::hasher_impl;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::instruction::{AccountMeta, Instruction};
@@ -48,7 +49,7 @@ pub fn validate_message(
 
     // Build the actual Message we are going to use
     let message: &ArchivedMessage = (&data.message).try_into()?;
-    let message_hash = message.hash();
+    let message_hash = message.hash(hasher_impl());
 
     // Check: Original message's payload_hash is equivalent to provided payload's
     // hash
@@ -122,7 +123,7 @@ pub fn construct_axelar_executable_ix(
     let destination_program = DestinationProgramId(incoming_message_destination_program_pubkey);
 
     let (gateway_approved_message_signing_pda, _) =
-        destination_program.signing_pda(&incoming_message.hash());
+        destination_program.signing_pda(&incoming_message.hash(hasher_impl()));
 
     let payload = AxelarCallableInstruction::<()>::AxelarExecute(AxelarExecutablePayload {
         payload_without_accounts,

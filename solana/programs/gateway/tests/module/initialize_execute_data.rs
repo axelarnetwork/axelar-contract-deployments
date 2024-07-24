@@ -26,7 +26,7 @@ async fn test_successfylly_initialize_execute_data() {
         gateway_root_pda,
         ..
     } = setup_initialised_gateway(&[10, 4], None).await;
-    let payload = Payload::Messages(make_messages(1));
+    let payload = Payload::new_messages(make_messages(1));
     let (raw_execute_data, _) =
         prepare_execute_data(payload, &signers, quorum, nonce, &fixture.domain_separator);
     let gateway_execute_data = GatewayExecuteData::new(
@@ -413,7 +413,7 @@ async fn test_message_limits_with_different_amounts() {
             .await;
 
         let messages = make_messages(amount_of_messages);
-        let payload = Payload::Messages(messages);
+        let payload = Payload::new_messages(messages);
 
         let (raw_execute_data, _) = prepare_execute_data(
             payload,

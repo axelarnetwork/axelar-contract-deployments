@@ -24,7 +24,7 @@ async fn successfully_approves_commands_when_there_are_no_commands() {
         gateway_root_pda,
         ..
     } = setup_initialised_gateway(&[11, 42, 33], None).await;
-    let messages = Payload::Messages(vec![]);
+    let messages = Payload::new_messages(vec![]);
     let domain_separator = fixture.domain_separator;
     let (execute_data_pda, _) = fixture
         .init_execute_data(
@@ -726,6 +726,7 @@ async fn fail_if_invalid_signatures() {
     if let Some(x) = ex
         .proof
         .signers_with_signatures
+        .mut_inner_map()
         .iter_mut()
         .next()
         .unwrap()
@@ -933,7 +934,7 @@ async fn fail_if_signed_commands_differ_from_the_execute_ones() {
     let gateway_execute_data_raw = prepare_questionable_execute_data(
         // messages that get included in the hash that gets signed are different from the messages
         // that will be included in the execute data
-        &Payload::Messages(different_messages),
+        &Payload::new_messages(different_messages),
         &payload,
         &signers,
         &signers,

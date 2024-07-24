@@ -1,4 +1,4 @@
-use hasher::Hasher;
+use hasher::AxelarRkyv256Hasher;
 use rkyv::ser::serializers::AllocSerializer;
 use rkyv::Fallible;
 use types::{Payload, PublicKey, VerifierSet, WeightedSigner, U256};
@@ -6,9 +6,9 @@ use visitor::Visitor;
 
 use crate::types::{ExecuteData, Proof};
 
-mod hasher;
+pub mod hasher;
 pub mod types;
-mod visitor;
+pub mod visitor;
 
 #[cfg(test)]
 mod tests;
@@ -31,16 +31,16 @@ pub fn encode<const N: usize>(
     Ok(archived.into_vec())
 }
 
-pub fn hash_payload(
-    domain_separator: &[u8; 32],
-    signer: &VerifierSet,
-    payload: &Payload,
+pub fn hash_payload<'a>(
+    domain_separator: &'a [u8; 32],
+    signer: &'a VerifierSet,
+    payload: &'a Payload,
+    mut hasher_impl: impl AxelarRkyv256Hasher<'a>,
 ) -> [u8; 32] {
-    let mut hasher = Hasher::default();
-    hasher.visit_bytes(domain_separator);
-    hasher.visit_verifier_set(signer);
-    hasher.visit_payload(payload);
-    hasher.finalize()
+    Visitor::visit_bytes(&mut hasher_impl, domain_separator);
+    Visitor::visit_verifier_set(&mut hasher_impl, signer);
+    Visitor::visit_payload(&mut hasher_impl, payload);
+    hasher_impl.result().into()
 }
 
 #[derive(Debug, thiserror::Error)]

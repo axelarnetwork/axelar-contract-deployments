@@ -13,6 +13,8 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::msg;
 use thiserror::Error;
 
+use crate::hasher_impl;
+
 type SignerSetHash = [u8; 32];
 type Epoch = U256;
 
@@ -112,7 +114,7 @@ impl AxelarAuthWeighted {
 
         // safe to unwrap as we are creating a new
         // instance and there are no duplicate entries to error on
-        let signer_set_hash = verifier_set.hash();
+        let signer_set_hash = verifier_set.hash(hasher_impl());
         instance.update_latest_signer_set(signer_set_hash).unwrap();
 
         instance
@@ -124,7 +126,7 @@ impl AxelarAuthWeighted {
         message_hash: [u8; 32],
         proof: &ArchivedProof,
     ) -> Result<SignerSetMetadata, AxelarAuthWeightedError> {
-        let signer_set_hash = proof.signer_set_hash();
+        let signer_set_hash = proof.signer_set_hash(hasher_impl());
         let signer_set_epoch = self
             .epoch_for_signer_set_hash(&signer_set_hash)
             .ok_or(AxelarAuthWeightedError::EpochNotFound)?;
@@ -160,7 +162,7 @@ impl AxelarAuthWeighted {
             return Err(AxelarAuthWeightedError::InvalidWeightThreshold);
         }
 
-        let new_verifier_set_hash = new_verifier_set.hash();
+        let new_verifier_set_hash = new_verifier_set.hash(hasher_impl());
         if self
             .epoch_for_signer_set_hash(&new_verifier_set_hash)
             .is_some()
@@ -355,10 +357,7 @@ impl BorshDeserialize for AxelarAuthWeighted {
 #[cfg(test)]
 mod tests {
     use axelar_rkyv_encoding::test_fixtures::random_valid_verifier_set;
-    use axelar_rkyv_encoding::types::{
-        PublicKey, Signature,
-    };
-    
+    use axelar_rkyv_encoding::types::{PublicKey, Signature};
     use solana_sdk::pubkey::Pubkey;
 
     use super::*;

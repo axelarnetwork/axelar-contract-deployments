@@ -54,7 +54,7 @@ axelar-executable = { path = "helpers/axelar-executable" }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
 evm-contracts-rs = { path = "helpers/evm-contracts-rs" }
 evm-contracts-test-suite = { path = "helpers/evm-contracts-test-suite" }
-axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding" }
+axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = ["solana"]}
 
 [workspace.dependencies.multisig]
 git = "https://github.com/axelarnetwork/axelar-amplifier"

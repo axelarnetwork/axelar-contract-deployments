@@ -4,7 +4,7 @@ use rkyv::bytecheck::{self, CheckBytes, StructCheckError};
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{AlignedVec, Archive, Deserialize, Serialize};
 
-use crate::hasher::Hasher;
+use crate::hasher::AxelarRkyv256Hasher;
 use crate::types::{
     ArchivedMessage, ArchivedPayload, ArchivedProof, ArchivedVerifierSet, Payload, Proof,
     VerifierSet,
@@ -43,7 +43,7 @@ impl ArchivedExecuteData {
 
     pub fn messages(&self) -> Option<&[ArchivedMessage]> {
         match &self.payload {
-            ArchivedPayload::Messages(messages) => Some(messages.as_slice()),
+            ArchivedPayload::Messages(messages) => Some(messages.inner_vec().as_slice()),
             _ => None,
         }
     }
@@ -55,31 +55,34 @@ impl ArchivedExecuteData {
         }
     }
 
-    pub fn hash(&self) -> [u8; 32] {
-        let mut hasher = Hasher::default();
-        ArchivedVisitor::visit_execute_data(&mut hasher, self);
-        hasher.finalize()
+    pub fn hash<'a>(&'a self, mut hasher_impl: impl AxelarRkyv256Hasher<'a>) -> [u8; 32] {
+        ArchivedVisitor::visit_execute_data(&mut hasher_impl, self);
+        hasher_impl.result().into()
     }
 
-    pub fn hash_payload_for_verifier_set(
-        &self,
-        domain_separator: &[u8; 32],
-        verifier_set: &VerifierSet,
+    pub fn hash_payload_for_verifier_set<'a>(
+        &'a self,
+        domain_separator: &'a [u8; 32],
+        verifier_set: &'a VerifierSet,
+        mut hasher_impl: impl AxelarRkyv256Hasher<'a>,
     ) -> [u8; 32] {
-        let mut hasher = Hasher::default();
-        Visitor::visit_bytes(&mut hasher, domain_separator);
-        Visitor::visit_verifier_set(&mut hasher, verifier_set);
-        ArchivedVisitor::visit_payload(&mut hasher, &self.payload);
-        hasher.finalize()
+        Visitor::visit_bytes(&mut hasher_impl, domain_separator);
+        Visitor::visit_verifier_set(&mut hasher_impl, verifier_set);
+        ArchivedVisitor::visit_payload(&mut hasher_impl, &self.payload);
+        hasher_impl.result().into()
     }
 
     /// Produces the same hash as [`crate::hash_payload`].
-    pub fn internal_payload_hash(&self, domain_separator: &[u8; 32]) -> [u8; 32] {
-        let mut hasher = Hasher::default();
-        Visitor::visit_bytes(&mut hasher, domain_separator);
-        self.proof.drive_visitor_for_signer_set_hash(&mut hasher);
-        ArchivedVisitor::visit_payload(&mut hasher, &self.payload);
-        hasher.finalize()
+    pub fn internal_payload_hash<'a>(
+        &'a self,
+        domain_separator: &'a [u8; 32],
+        mut hasher_impl: impl AxelarRkyv256Hasher<'a>,
+    ) -> [u8; 32] {
+        Visitor::visit_bytes(&mut hasher_impl, domain_separator);
+        self.proof
+            .drive_visitor_for_signer_set_hash(&mut hasher_impl);
+        ArchivedVisitor::visit_payload(&mut hasher_impl, &self.payload);
+        hasher_impl.result().into()
     }
 
     pub fn from_bytes(
@@ -93,7 +96,7 @@ impl ArchivedExecuteData {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_fixtures::random_execute_data;
+    use crate::test_fixtures::{random_execute_data, test_hasher_impl};
 
     #[test]
     fn test_serialize_deserialize_execute_data() {
@@ -112,12 +115,12 @@ mod tests {
         let serialized = rkyv::to_bytes::<_, 1024>(&execute_data).unwrap().to_vec();
         let archived = unsafe { rkyv::archived_root::<ExecuteData>(&serialized) };
 
-        let mut archived_hasher = Hasher::default();
-        let mut unarchived_hasher = Hasher::default();
+        let mut archived_hasher = test_hasher_impl();
+        let mut unarchived_hasher = test_hasher_impl();
 
         Visitor::visit_execute_data(&mut unarchived_hasher, &execute_data);
         ArchivedVisitor::visit_execute_data(&mut archived_hasher, archived);
 
-        assert_eq!(archived_hasher.finalize(), unarchived_hasher.finalize());
+        assert_eq!(archived_hasher.result(), unarchived_hasher.result());
     }
 }
