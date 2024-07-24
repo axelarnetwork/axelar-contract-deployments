@@ -38,19 +38,21 @@ async function sendCommand(keypair, client, contracts, args, options) {
         ],
     });
 
-    tx.moveCall({
-        target: `${gasServicePackageId}::gas_service::pay_gas`,
-        arguments: [
-            tx.object(gasServiceConfig.objects.GasService),
-            coin, // Coin<SUI>
-            tx.pure.address(channelId), // Channel address
-            tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
-            tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
-            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
-            tx.pure.address(refundAddress), // Refund address
-            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
-        ],
-    });
+    if (gasServiceConfig) {
+        tx.moveCall({
+            target: `${gasServicePackageId}::gas_service::pay_gas`,
+            arguments: [
+                tx.object(gasServiceConfig.objects.GasService),
+                coin, // Coin<SUI>
+                tx.pure.address(channelId), // Channel address
+                tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
+                tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
+                tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
+                tx.pure.address(refundAddress), // Refund address
+                tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
+            ],
+        });
+    }
 
     const receipt = await broadcast(client, keypair, tx);
 
