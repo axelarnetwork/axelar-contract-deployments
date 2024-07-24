@@ -1,6 +1,5 @@
 const { saveConfig, printInfo } = require('../evm/utils');
 const { Command, Argument, Option } = require('commander');
-
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo } = require('./sign-utils');
 const { loadSuiConfig, findPublishedObject, deployPackage } = require('./utils');

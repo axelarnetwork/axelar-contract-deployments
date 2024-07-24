@@ -12,7 +12,16 @@ const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const { Command, Option } = require('commander');
 
 const { deployUpgradable, deployCreate2Upgradable, deployCreate3Upgradable, upgradeUpgradable } = require('./upgradable');
-const { printInfo, printError, printWalletInfo, getDeployedAddress, prompt, getGasOptions, mainProcessor } = require('./utils');
+const {
+    printInfo,
+    printError,
+    printWalletInfo,
+    getDeployedAddress,
+    prompt,
+    getGasOptions,
+    getDeployOptions,
+    mainProcessor,
+} = require('./utils');
 const { addExtendedOptions } = require('./cli-utils');
 
 function getProxy(wallet, proxyAddress) {
@@ -135,12 +144,7 @@ async function processCommand(_, chain, options) {
     const implArgs = await getImplementationArgs(contractName, contracts, options);
     const gasOptions = await getGasOptions(chain, options, contractName);
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
-    const salt = options.salt || contractName;
-    let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
-
-    if (deployMethod === 'create') {
-        deployerContract = null;
-    }
+    const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
 
     if (upgrade) {
         if (!contractConfig.address) {

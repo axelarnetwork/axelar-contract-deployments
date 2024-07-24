@@ -1,7 +1,7 @@
 const { saveConfig, printInfo, printError } = require('../evm/utils');
 const { Command } = require('commander');
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
-const { bcs } = require('@mysten/sui.js/bcs');
+const { Transaction } = require('@mysten/sui/transactions');
+const { bcs } = require('@mysten/sui/bcs');
 const { gasServiceStruct } = require('./types-utils');
 const { loadSuiConfig, getBcsBytesByObjectId } = require('./utils');
 const { ethers } = require('hardhat');
@@ -24,7 +24,7 @@ async function payGas(keypair, client, gasServiceConfig, args, options) {
     const [destinationChain, destinationAddress, channelId, payload] = args;
     const unitAmount = options.amount;
 
-    const tx = new TransactionBlock();
+    const tx = new Transaction();
     const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
 
     tx.moveCall({
@@ -57,7 +57,7 @@ async function addGas(keypair, client, gasServiceConfig, args, options) {
     const [messageId] = args;
     const unitAmount = options.amount;
 
-    const tx = new TransactionBlock();
+    const tx = new Transaction();
     const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
 
     tx.moveCall({
@@ -94,7 +94,7 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
         return;
     }
 
-    const tx = new TransactionBlock();
+    const tx = new Transaction();
 
     tx.moveCall({
         target: `${gasServicePackageId}::gas_service::collect_gas`,
@@ -130,7 +130,7 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
         return;
     }
 
-    const tx = new TransactionBlock();
+    const tx = new Transaction();
     tx.moveCall({
         target: `${gasServicePackageId}::gas_service::refund`,
         arguments: [
