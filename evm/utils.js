@@ -496,9 +496,7 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
     }
 
     if (chain.toLowerCase() === 'polygon-zkevm') {
-        throw new Error(
-            "polygon-zkevm uses a custom bytecode hash derivation and is not supported",
-        );
+        throw new Error('polygon-zkevm uses a custom bytecode hash derivation and is not supported');
     }
 
     return keccak256(bytecode);
