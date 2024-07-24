@@ -14,7 +14,6 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { outputJsonSync } = require('fs-extra');
-const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const readlineSync = require('readline-sync');
 const chalk = require('chalk');
 const {
@@ -497,8 +496,9 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
     }
 
     if (chain.toLowerCase() === 'polygon-zkevm') {
-        const codehash = zkevm.smtUtils.hashContractBytecode(bytecode);
-        return codehash;
+        throw new Error(
+            "polygon-zkevm uses a custom bytecode hash derivation and is not supported",
+        );
     }
 
     return keccak256(bytecode);
