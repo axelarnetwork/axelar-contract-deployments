@@ -707,7 +707,7 @@ function saveParallelExecutionConfig(config, env, chain) {
     writeJSON(config, `${__dirname}/../chains-info/${env}-${chain}.json`);
 }
 
-async function printWalletInfo(wallet, options = {}) {
+async function printWalletInfo(wallet, options = {}, chain = {}) {
     let balance = 0;
     const address = await wallet.getAddress();
     printInfo('Wallet address', address);
@@ -718,7 +718,7 @@ async function printWalletInfo(wallet, options = {}) {
         if (balance.isZero()) {
             printError('Wallet balance', '0');
         } else {
-            printInfo('Wallet balance', `${balance / 1e18}`);
+            printInfo('Wallet balance', `${balance / 1e18} ${chain.tokenSymbol || ''}`);
         }
 
         printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(address)).toString());
