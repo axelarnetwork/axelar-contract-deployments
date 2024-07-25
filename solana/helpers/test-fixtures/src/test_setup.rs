@@ -414,7 +414,7 @@ impl TestFixture {
         let execute_data =
             GatewayExecuteData::new(raw_data, gateway_root_pda, &self.domain_separator)
                 .expect("valid execute_data raw bytes");
-        let (execute_data_pda, _, _) = execute_data.pda(gateway_root_pda);
+        let (execute_data_pda, _) = execute_data.pda(gateway_root_pda);
 
         let (ix, _) = gateway::instructions::initialize_execute_data(
             self.payer.pubkey(),

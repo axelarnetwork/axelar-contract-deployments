@@ -60,6 +60,6 @@ pub fn assert_valid_gateway_root_pda(bump: u8, expected_pubkey: &Pubkey) {
 }
 
 /// Provides abstraction for the hashing mechanism.
-pub fn hasher_impl<'a>() -> SolanaKeccak256Hasher<'a> {
+pub fn hasher_impl() -> SolanaKeccak256Hasher<'static> {
     SolanaKeccak256Hasher::default()
 }

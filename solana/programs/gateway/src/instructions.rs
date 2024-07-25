@@ -268,7 +268,7 @@ pub fn initialize_execute_data<'b>(
     // We decode the data off-chain so we can find its PDA.
     let decoded_execute_data =
         GatewayExecuteData::new(raw_execute_data, &gateway_root_pda, domain_separator)?;
-    let (execute_data_pda, _, _) = decoded_execute_data.pda(&gateway_root_pda);
+    let (execute_data_pda, _) = decoded_execute_data.pda(&gateway_root_pda);
     // We store the raw data so we can verify it on-chain.
     let data = to_vec(&GatewayInstruction::InitializeExecuteData {
         // TODO: Try to avoid allocating the data twice here, as both `borsh::to_vec`

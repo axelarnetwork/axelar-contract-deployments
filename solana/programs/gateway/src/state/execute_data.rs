@@ -5,7 +5,6 @@ use std::borrow::Cow;
 use axelar_rkyv_encoding::types::{
     ArchivedExecuteData, ArchivedMessage, ArchivedProof, ArchivedVerifierSet,
 };
-use solana_program::hash::hashv;
 use solana_program::pubkey::Pubkey;
 
 use crate::error::GatewayError;
@@ -59,33 +58,28 @@ impl<'a> GatewayExecuteData<'a> {
             bump: 0, // bump will be set after we derive the PDA
             original_execute_data: data,
         };
-        let (_pubkey, bump, _seeds) = gateway_execute_data.pda(gateway_root_pda);
+        let (_pubkey, bump) = gateway_execute_data.pda(gateway_root_pda);
         gateway_execute_data.bump = bump;
 
         Ok(gateway_execute_data)
     }
 
-    /// Returns the seeds for this account PDA.
-    pub fn seeds(&self, gateway_root_pda: &Pubkey) -> [u8; 32] {
-        hashv(&[
-            gateway_root_pda.as_ref(),
-            self.inner.hash(hasher_impl()).as_slice(),
-            &[self.bump],
-        ])
-        .to_bytes()
-    }
-
     /// Finds a PDA for this account. Returns its Pubkey, the canonical bump and
     /// the seeds used to derive them.
-    pub fn pda(&self, gateway_root_pda: &Pubkey) -> (Pubkey, u8, [u8; 32]) {
-        let seeds = self.seeds(gateway_root_pda);
-        let (pubkey, bump) = Pubkey::find_program_address(&[seeds.as_slice()], &crate::ID);
-        (pubkey, bump, seeds)
+    pub fn pda(&self, gateway_root_pda: &Pubkey) -> (Pubkey, u8) {
+        let (pubkey, bump) = Pubkey::find_program_address(
+            &[
+                gateway_root_pda.as_ref(),
+                self.inner.hash(hasher_impl()).as_slice(),
+            ],
+            &crate::ID,
+        );
+        (pubkey, bump)
     }
 
     /// Asserts that the PDA for this account is valid.
     pub fn assert_valid_pda(&self, gateway_root_pda: &Pubkey, expected_pubkey: &Pubkey) {
-        let (derived_pubkey, _bump, _seeds) = self.pda(gateway_root_pda);
+        let (derived_pubkey, _bump) = self.pda(gateway_root_pda);
         assert_eq!(
             &derived_pubkey, expected_pubkey,
             "invalid pda for the gateway execute data account"

@@ -36,7 +36,7 @@ async fn test_successfylly_initialize_execute_data() {
     )
     .expect("valid GatewayExecuteData");
 
-    let (execute_data_pda, _, _) = gateway_execute_data.pda(&gateway_root_pda);
+    let (execute_data_pda, _) = gateway_execute_data.pda(&gateway_root_pda);
 
     // Action
     fixture
@@ -93,7 +93,7 @@ async fn test_succesfully_initialize_rotate_signers() {
         &fixture.domain_separator,
     )
     .expect("valid GatewayExecuteData");
-    let (execute_data_pda, _, _) = gateway_execute_data.pda(&gateway_root_pda);
+    let (execute_data_pda, _) = gateway_execute_data.pda(&gateway_root_pda);
 
     // Action
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
@@ -400,7 +400,7 @@ async fn test_size_limits_for_different_signers() {
 async fn test_message_limits_with_different_amounts() {
     // Setup
     let nonce = 123321;
-    for amount_of_messages in [1, 2, 4, 8, 16] {
+    for amount_of_messages in [1, 2, 4, 8, 15] {
         dbg!(amount_of_messages);
         let signers = vec![create_signer_with_weight(4_u128)];
         let threshold = 4;

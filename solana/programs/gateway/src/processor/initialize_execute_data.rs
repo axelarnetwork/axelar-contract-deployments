@@ -6,6 +6,7 @@ use solana_program::system_program;
 
 use super::Processor;
 use crate::error::GatewayError;
+use crate::hasher_impl;
 use crate::state::{GatewayConfig, GatewayExecuteData};
 
 impl Processor {
@@ -40,14 +41,18 @@ impl Processor {
         execute_data.assert_valid_pda(gateway_root_pda.key, execute_data_account.key);
 
         // Check: Execute Data account uses the canonical bump.
-        let (canonical_pda, bump, seeds) = execute_data.pda(gateway_root_pda.key);
+        let (canonical_pda, bump) = execute_data.pda(gateway_root_pda.key);
         if *execute_data_account.key != canonical_pda {
             return Err(GatewayError::InvalidExecuteDataAccount.into());
         }
         super::init_pda_with_dynamic_size(
             payer,
             execute_data_account,
-            &[seeds.as_ref(), &[bump]],
+            &[
+                gateway_root_pda.key.as_ref(),
+                execute_data.inner.hash(hasher_impl()).as_slice(),
+                &[bump],
+            ],
             &execute_data,
         )
     }
