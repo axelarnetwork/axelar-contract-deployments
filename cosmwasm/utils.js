@@ -259,7 +259,7 @@ const makeVotingVerifierInstantiateMsg = (
         service_name: serviceName,
         source_gateway_address: sourceGatewayAddress,
         voting_threshold: votingThreshold,
-        block_expiry: blockExpiry,
+        block_expiry: toBigNumberString(blockExpiry),
         confirmation_height: confirmationHeight,
         source_chain: chainId,
         msg_id_format: msgIdFormat,
