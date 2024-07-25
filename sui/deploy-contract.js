@@ -1,19 +1,19 @@
-const { saveConfig, printInfo, validateParameters, writeJSON } = require('../evm/utils');
 const { Command, Option } = require('commander');
 const { updateMoveToml, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { ethers } = require('hardhat');
+const { toB64 } = require('@mysten/sui/utils');
+const { bcs } = require('@mysten/sui/bcs');
+const { Transaction } = require('@mysten/sui/transactions');
 const {
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
     constants: { HashZero },
 } = ethers;
+const { saveConfig, printInfo, validateParameters, writeJSON } = require('../evm/utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { loadSuiConfig, getAmplifierSigners, deployPackage } = require('./utils');
 const { bytes32Struct, signersStruct } = require('./types-utils');
-const { bcs } = require('@mysten/sui/bcs');
-const { Transaction } = require('@mysten/sui/transactions');
 const { upgradePackage } = require('./deploy-utils');
-const { toB64 } = require('@mysten/sui/utils');
 
 // Add more contracts here to support more modules deployment
 const contractMap = {
@@ -177,8 +177,8 @@ async function upgrade(contractName, policy, config, chain, options) {
 
     printInfo('Wallet address', keypair.toSuiAddress());
 
-    if (!chain.contracts[packageName]) {
-        chain.contracts[packageName] = {};
+    if (!chain.contracts[contractName]) {
+        throw new Error(`Cannot found specified contract: ${contractName}`);
     }
 
     const contractsConfig = chain.contracts;
