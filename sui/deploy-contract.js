@@ -212,7 +212,7 @@ if (require.main === module) {
         .addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(0))
         .addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero))
         .addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'))
-        .addOption(new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default(15))
+        .addOption(new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'))
         .action((contractName, options) => {
             mainProcessor([contractName], options, deploy);
         });
