@@ -1,6 +1,6 @@
 const { Command, Option } = require('commander');
 const { TxBuilder, updateMoveToml } = require('@axelar-network/axelar-cgp-sui');
-const { bcs } = require('@mysten/sui.js/bcs');
+const { bcs } = require('@mysten/bcs');
 const { fromB64, toB64 } = require('@mysten/bcs');
 const { saveConfig, printInfo, validateParameters, prompt, writeJSON } = require('../evm/utils');
 const { addBaseOptions } = require('./cli-utils');
@@ -13,6 +13,10 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
     const sender = options.sender || keypair.toSuiAddress();
     const suiPackageId = '0x2';
 
+    if (!['0', '128', '192'].includes(policy)) {
+        throw new Error(`Unknown upgrade policy: ${policy}`);
+    }
+
     const upgradeCap = packageConfig.objects?.upgradeCap;
     const digestHash = options.digest ? fromB64(options.digest) : digest;
 
@@ -20,16 +24,15 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
 
     const tx = builder.tx;
     const cap = tx.object(upgradeCap);
-
     const ticket = tx.moveCall({
         target: `${suiPackageId}::package::authorize_upgrade`,
-        arguments: [cap, tx.pure(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
+        arguments: [cap, tx.pure.u8(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
     });
 
     const receipt = tx.upgrade({
         modules,
         dependencies,
-        packageId: packageConfig.address,
+        package: packageConfig.address,
         ticket,
     });
 
@@ -43,8 +46,9 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
 
     if (offline) {
         options.txBytes = txBytes;
+        options.offlineMessage = `Transaction to upgrade ${packageName}`;
     } else {
-        const signature = (await keypair.signTransactionBlock(txBytes)).signature;
+        const signature = (await keypair.signTransaction(txBytes)).signature;
         const result = await client.executeTransactionBlock({
             transactionBlock: txBytes,
             signature,
@@ -57,6 +61,9 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
 
         const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
         packageConfig.address = packageId;
+        const upgradeCap = result.objectChanges.find((change) => change.objectType === '0x2::package::UpgradeCap').objectId;
+        packageConfig.objects.upgradeCap = upgradeCap;
+
         printInfo('Transaction result', JSON.stringify(result, null, 2));
         printInfo(`${packageName} upgraded`, packageId);
     }

@@ -8,14 +8,19 @@ const { printInfo, validateParameters } = require('../evm/utils');
 
 async function signTx(keypair, client, options) {
     const txFileData = getSignedTx(options.txBlockPath);
-    const txData = txFileData?.bytes;
+    const txData = txFileData?.unsignedTx;
 
     validateParameters({ isNonEmptyString: { txData } });
 
     const encodedTxBytes = fromB64(txData);
 
-    const { signature, publicKey } = await signTransactionBlockBytes(keypair, client, encodedTxBytes, options);
-    return { signature, publicKey, txBytes: txData };
+    if (options.offline) {
+        const { signature, publicKey } = await signTransactionBlockBytes(keypair, client, encodedTxBytes, options);
+        return { ...txFileData, signedTx: signature, publicKey };
+    }
+
+    await signTransactionBlockBytes(keypair, client, encodedTxBytes, options);
+    return {};
 }
 
 async function executeCombinedSignature(client, options) {
@@ -30,7 +35,7 @@ async function executeCombinedSignature(client, options) {
     }
 
     const fileData = getSignedTx(combinedSignPath);
-    const txData = fileData.txBytes;
+    const txData = fileData.unsignedTx;
 
     validateParameters({ isNonEmptyString: { txData } });
 
@@ -59,16 +64,16 @@ async function combineSignature(client, chain, options) {
     const signatureArray = [];
 
     const firstSignData = getSignedTx(signatures[0]);
-    const txBytes = firstSignData.txBytes;
+    const txBytes = firstSignData.unsignedTx;
 
     for (const file of signatures) {
         const fileData = getSignedTx(file);
 
-        if (fileData.txBytes !== txBytes) {
+        if (fileData.unsignedTx !== txBytes) {
             throw new Error(`Transaction bytes mismatch with file [${file}]`);
         }
 
-        signatureArray.push(fileData.signature);
+        signatureArray.push(fileData.signedTx);
     }
 
     const txBlockBytes = fromB64(txBytes);
@@ -85,9 +90,10 @@ async function combineSignature(client, chain, options) {
         printInfo('Transaction result', JSON.stringify(txResult));
     } else {
         const data = {
-            signature: combinedSignature,
+            message: firstSignData.message,
+            signedTx: combinedSignature,
             status: 'PENDING',
-            txBytes,
+            unsignedTx: txBytes,
         };
         return data;
     }
@@ -121,14 +127,18 @@ async function processCommand(chain, options) {
     }
 
     if (options.offline) {
-        const { signatureFilePath } = options;
+        let { signatureFilePath } = options;
+
+        if (options.action === 'combine') {
+            signatureFilePath = options.txBlockPath;
+        }
 
         if (!signatureFilePath) {
             throw new Error('No filePath provided');
         }
 
         storeSignedTx(signatureFilePath, fileData);
-        printInfo(`The signed signature is`, fileData.signature);
+        printInfo(`The signed signature is`, fileData.signedTx);
     }
 }
 

@@ -1,12 +1,12 @@
 'use strict';
 
-const { verifyTransactionBlock } = require('@mysten/sui.js/verify');
-const { decodeSuiPrivateKey } = require('@mysten/sui.js/cryptography');
-const { Ed25519Keypair, Ed25519PublicKey } = require('@mysten/sui.js/keypairs/ed25519');
-const { MultiSigPublicKey } = require('@mysten/sui.js/multisig');
-const { Secp256k1Keypair, Secp256k1PublicKey } = require('@mysten/sui.js/keypairs/secp256k1');
-const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui.js/keypairs/secp256r1');
-const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
+const { verifyTransactionSignature } = require('@mysten/sui/verify');
+const { decodeSuiPrivateKey } = require('@mysten/sui/cryptography');
+const { Ed25519Keypair, Ed25519PublicKey } = require('@mysten/sui/keypairs/ed25519');
+const { MultiSigPublicKey } = require('@mysten/sui/multisig');
+const { Secp256k1Keypair, Secp256k1PublicKey } = require('@mysten/sui/keypairs/secp256k1');
+const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui/keypairs/secp256r1');
+const { SuiClient, getFullnodeUrl } = require('@mysten/sui/client');
 const { fromB64, fromHEX } = require('@mysten/bcs');
 const { printInfo } = require('../evm/utils');
 const { ethers } = require('hardhat');
@@ -96,8 +96,8 @@ function getRawPrivateKey(keypair) {
 }
 
 async function broadcast(client, keypair, tx) {
-    return await client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
+    return await client.signAndExecuteTransaction({
+        transaction: tx,
         signer: keypair,
         options: {
             showEffects: true,
@@ -120,11 +120,11 @@ async function broadcastSignature(client, txBytes, signature) {
 }
 
 async function signTransactionBlockBytes(keypair, client, txBytes, options) {
-    const serializedSignature = (await keypair.signTransactionBlock(txBytes)).signature;
+    const serializedSignature = (await keypair.signTransaction(txBytes)).signature;
     let publicKey;
 
     try {
-        publicKey = await verifyTransactionBlock(txBytes, serializedSignature);
+        publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
     } catch {
         throw new Error(`Cannot verify tx signature`);
     }
