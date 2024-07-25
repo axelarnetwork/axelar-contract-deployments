@@ -134,7 +134,7 @@ async function deploy(contractName, config, chain, options) {
 
                 if (policy === '128') {
                     upgradeType = 'only_additive_upgrades';
-                } else if (policy === '192') {
+                } else {
                     upgradeType = 'only_dep_upgrades';
                 }
 
