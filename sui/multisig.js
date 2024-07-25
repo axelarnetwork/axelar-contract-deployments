@@ -40,7 +40,7 @@ async function executeCombinedSignature(client, options) {
     validateParameters({ isNonEmptyString: { txData } });
 
     const encodedTxBytes = fromB64(txData);
-    const combinedSignatureBytes = fileData.signature;
+    const combinedSignatureBytes = fileData.signedTx;
 
     if (!combinedSignatureBytes) {
         throw new Error(`No signature specified in [${combinedSignPath}]`);
