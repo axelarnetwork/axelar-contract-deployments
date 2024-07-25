@@ -79,7 +79,7 @@ async function combineSignature(client, chain, options) {
     const txBlockBytes = fromB64(txBytes);
 
     const combinedSignature = multiSigPublicKey.combinePartialSignatures(signatureArray);
-    const isValid = await multiSigPublicKey.verifyTransactionBlock(txBlockBytes, combinedSignature);
+    const isValid = await multiSigPublicKey.verifyTransaction(txBlockBytes, combinedSignature);
 
     if (!isValid) {
         throw new Error(`Verification failed for message [${txBytes}]`);

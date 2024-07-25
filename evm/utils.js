@@ -14,7 +14,6 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { outputJsonSync } = require('fs-extra');
-const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
 const readlineSync = require('readline-sync');
 const chalk = require('chalk');
 const {
@@ -497,8 +496,7 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
     }
 
     if (chain.toLowerCase() === 'polygon-zkevm') {
-        const codehash = zkevm.smtUtils.hashContractBytecode(bytecode);
-        return codehash;
+        throw new Error('polygon-zkevm uses a custom bytecode hash derivation and is not supported');
     }
 
     return keccak256(bytecode);
@@ -521,7 +519,7 @@ const getDeployOptions = (deployMethod, salt, chain) => {
     }
 
     if (deployMethod === 'create2') {
-        deployer = chain.contracts.ConstAddressDeployer?.address;
+        deployer = chain.contracts.ConstAddressDeployer?.address || chain.contracts.Create2Deployer?.address;
     } else {
         deployer = chain.contracts.Create3Deployer?.address;
     }
@@ -707,7 +705,7 @@ function saveParallelExecutionConfig(config, env, chain) {
     writeJSON(config, `${__dirname}/../chains-info/${env}-${chain}.json`);
 }
 
-async function printWalletInfo(wallet, options = {}) {
+async function printWalletInfo(wallet, options = {}, chain = {}) {
     let balance = 0;
     const address = await wallet.getAddress();
     printInfo('Wallet address', address);
@@ -718,7 +716,7 @@ async function printWalletInfo(wallet, options = {}) {
         if (balance.isZero()) {
             printError('Wallet balance', '0');
         } else {
-            printInfo('Wallet balance', `${balance / 1e18}`);
+            printInfo('Wallet balance', `${balance / 1e18} ${chain.tokenSymbol || ''}`);
         }
 
         printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(address)).toString());

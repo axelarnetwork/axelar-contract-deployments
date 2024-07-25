@@ -85,7 +85,7 @@ async function deployPackage(chain, client, keypair, packageName, packageConfig,
             return;
         }
 
-        const signature = (await keypair.signTransactionBlock(txBytes)).signature;
+        const signature = (await keypair.signTransaction(txBytes)).signature;
         const publishTxn = await client.executeTransactionBlock({
             transactionBlock: txBytes,
             signature,

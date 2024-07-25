@@ -145,7 +145,7 @@ async function signTransactionBlockBytes(keypair, client, txBytes, options) {
     }
 }
 
-async function signTransactionBlock(chain, txDetails, options) {
+async function signTransaction(chain, txDetails, options) {
     const { txBlock, buildOptions = {} } = txDetails;
 
     const [keypair, client] = getWallet(chain, options);
@@ -231,7 +231,7 @@ module.exports = {
     getRawPrivateKey,
     broadcast,
     broadcastSignature,
-    signTransactionBlock,
+    signTransaction,
     getMultisig,
     getWrappedPublicKey,
     signTransactionBlockBytes,
