@@ -74,6 +74,15 @@ const singletonStruct = bcs.struct('Singleton', {
     channel: channelStruct,
 });
 
+const discoveryTable = bcs.struct('DiscoveryTable', {
+    id: UID,
+});
+
+const discoveryStruct = bcs.struct('Discovery', {
+    id: UID,
+    fields: discoveryTable,
+});
+
 module.exports = {
     addressStruct,
     signerStruct,
@@ -86,4 +95,5 @@ module.exports = {
     gasServiceStruct,
     channelStruct,
     singletonStruct,
+    discoveryStruct,
 };
