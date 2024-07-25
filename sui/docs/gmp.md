@@ -30,7 +30,7 @@ Execute a message from the source chain at SUI application module.
 1. Approve the incoming message
 
 ```bash
-#### sui/gateway.js approve --proof ...... <source> <messageId> <sourceAddress> <destinationId> <payloadHash>
+# node sui/gateway.js approve --proof ...... <source> <messageId> <sourceAddress> <destinationId> <payloadHash>
 node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
 ```
 
@@ -40,10 +40,23 @@ Note:
 
 2. Execute the incoming message
 
+This command will execute the message to the deployed test contract.
 ```bash
-#### sui/gmp.js execute <source> <messageId> <sourceAddress> <payload>
+# node sui/gmp.js execute <source> <messageId> <sourceAddress> <payload>
+
+# Example
 node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 ```
+
+This command will execute the message to the contract that associated with the given `channelId`
+
+```bash
+# node sui/gmp.js execute <source> <messageId> <sourceAddress> <payload> --channelId <channelId>
+
+# Example
+node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234 --channelId 0xcd5d203ea2cf1139af83939e3f74114a31fe682cc90f73a0d2647956bc3e5acf
+```
+
 
 Note:
 - `source`, `sourceAddress` and `messageId` needed to be matched with the approve command.
