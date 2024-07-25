@@ -87,7 +87,7 @@ async function deploy(contractName, config, chain, options) {
         }
 
         case 'AxelarGateway': {
-            const { minimumRotationDelay, domainSeparator } = options;
+            const { minimumRotationDelay, domainSeparator, policy } = options;
             const signers = await getSigners(keypair, config, chain, options);
             const operator = options.operator || keypair.toSuiAddress();
             const { previousSigners } = options;
@@ -128,6 +128,22 @@ async function deploy(contractName, config, chain, options) {
                     tx.object('0x6'),
                 ],
             });
+
+            if (policy !== '0') {
+                let upgradeType;
+
+                if (policy === '128') {
+                    upgradeType = 'only_additive_upgrades';
+                } else if (policy === '192') {
+                    upgradeType = 'only_dep_upgrades';
+                }
+
+                tx.moveCall({
+                    target: `0x2::package::${upgradeType}`,
+                    arguments: [tx.object(upgradeCap)],
+                });
+            }
+
             const result = await broadcast(client, keypair, tx);
 
             const gateway = result.objectChanges.find((change) => change.objectType === `${packageId}::gateway::Gateway`);
@@ -213,6 +229,13 @@ if (require.main === module) {
         .addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero))
         .addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'))
         .addOption(new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'))
+        .addOption(
+            new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "0" to allow all types of upgrades').choices([
+                '0',
+                '128',
+                '192',
+            ]),
+        )
         .action((contractName, options) => {
             mainProcessor([contractName], options, deploy);
         });
