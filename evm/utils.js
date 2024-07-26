@@ -32,6 +32,7 @@ const {
     httpPost,
     sleep,
     findProjectRoot,
+    timeout,
 } = require('../common');
 const {
     create3DeployContract,
@@ -947,16 +948,6 @@ function isValidChain(config, chainName) {
     }
 }
 
-function timeout(prom, time, exception) {
-    let timer;
-
-    // Racing the promise with a timer
-    // If the timer resolves first, the promise is rejected with the exception
-    return Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]).finally(() =>
-        clearTimeout(timer),
-    );
-}
-
 async function relayTransaction(options, chain, contract, method, params, nativeValue = 0, gasOptions = {}, expectedEvent = null) {
     if (options.relayerAPI) {
         const result = await httpPost(options.relayerAPI, {
@@ -1047,7 +1038,6 @@ module.exports = {
     getEVMBatch,
     getEVMAddresses,
     getConfigByChainId,
-    sleep,
     printWalletInfo,
     wasEventEmitted,
     isContract,
@@ -1063,7 +1053,6 @@ module.exports = {
     getSaltFromKey,
     getDeployOptions,
     isValidChain,
-    timeout,
     getAmplifierKeyAddresses,
     getContractConfig,
     relayTransaction,

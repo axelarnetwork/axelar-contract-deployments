@@ -188,6 +188,16 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function timeout(prom, time, exception) {
+  let timer;
+
+  // Racing the promise with a timer
+  // If the timer resolves first, the promise is rejected with the exception
+  return Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]).finally(() =>
+      clearTimeout(timer),
+  );
+}
+
 /**
  * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
  *
@@ -300,4 +310,5 @@ module.exports = {
     prompt,
     findProjectRoot,
     toBigNumberString,
+    timeout,
 };
