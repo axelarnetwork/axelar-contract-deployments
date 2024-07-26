@@ -63,7 +63,7 @@
           "salt": "Multisig v5.5"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -191,7 +191,7 @@
           "salt": "InterchainProposalSender v1.2"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -307,7 +307,7 @@
           "salt": "InterchainProposalSender v1.2"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -404,7 +404,7 @@
           "salt": "InterchainProposalSender v1.2"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -520,7 +520,7 @@
           "salt": "InterchainProposalSender v1.2"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -658,7 +658,7 @@
           "salt": "InterchainProposalSender v1.2"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -753,7 +753,7 @@
           "salt": "InterchainProposalSender v1.2"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -861,7 +861,7 @@
           "salt": "InterchainProposalSender v1.2"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -962,7 +962,7 @@
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -1102,7 +1102,7 @@
           "salt": "Multisig v5.5"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -1117,7 +1117,23 @@
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "InterchainTokenService": {
-          "skip": true
+          "salt": "ITS v1.2.4",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "proxySalt": "ITS v1.0.0",
+          "tokenManagerDeployer": "0x44dDBDD2c6CC9c5e0F4555620c06b1411F99Dc03",
+          "interchainToken": "0x2f8102DeA2caaee1Ec5Fe67754F828353C4c180F",
+          "interchainTokenDeployer": "0xCE014b2DCB26d77d4e8206A7EF5e33985E442d38",
+          "tokenManager": "0x81a0545091864617E7037171FdfcBbdCFE3aeb23",
+          "tokenHandler": "0x07715674F74c560200c7C95430673180812fCE73",
+          "implementation": "0x6d59D9360BDAe406614b7E61c53F43a03198A4ef",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS Factory v1.0.0",
+          "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       },
       "gasOptions": {
@@ -1196,7 +1212,7 @@
           "salt": "Multisig v5.5"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -1305,7 +1321,7 @@
           "salt": "Multisig v5.5"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -1409,7 +1425,7 @@
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -1521,7 +1537,7 @@
           "salt": "Multisig v5.5"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -1634,7 +1650,7 @@
           "salt": "Multisig v5.5"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -1747,7 +1763,7 @@
           "salt": "Multisig v5.5"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -1857,7 +1873,7 @@
           "salt": "AxelarGateway v6.2"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -1899,7 +1915,7 @@
       "id": "polygon-sepolia",
       "axelarId": "polygon-sepolia",
       "chainId": 80002,
-      "rpc": "https://polygon-amoy.blockpi.network/v1/rpc/public",
+      "rpc": "https://rpc-amoy.polygon.technology",
       "tokenSymbol": "MATIC",
       "confirmations": 2,
       "contracts": {
@@ -1957,7 +1973,7 @@
           "salt": "Multisig v5.5"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -1997,7 +2013,8 @@
         "api": "https://api-amoy.polygonscan.com/api"
       },
       "gasOptions": {
-        "gasLimit": 6000000
+        "gasLimit": 6000000,
+        "gasPriceAdjustment": 1.5
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 1
@@ -2064,7 +2081,7 @@
           "salt": "Multisig v5.5"
         },
         "Operators": {
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "deploymentMethod": "create2",
@@ -2104,7 +2121,8 @@
         "api": "https://api-sepolia.lineascan.build/api"
       },
       "gasOptions": {
-        "gasLimit": 7000000
+        "gasLimit": 7000000,
+        "gasPriceAdjustment": 1.4
       },
       "confirmations": 1,
       "finality": "400",
@@ -2146,4 +2164,3 @@
     "axelarscanApi": "https://testnet.api.axelarscan.io"
   }
 }
-
