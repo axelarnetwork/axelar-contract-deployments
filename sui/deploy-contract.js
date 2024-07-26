@@ -87,19 +87,16 @@ async function deploy(contractName, config, chain, options) {
         }
 
         case 'AxelarGateway': {
-            const { minimumRotationDelay, domainSeparator, policy } = options;
-            const signers = await getSigners(keypair, config, chain, options);
+            const { minimumRotationDelay, domainSeparator, policy, previousSigners } = options;
             const operator = options.operator || keypair.toSuiAddress();
-            const { previousSigners } = options;
+            const signers = await getSigners(keypair, config, chain, options);
 
             validateParameters({ isNonEmptyString: { previousSigners } });
 
             const creatorCap = publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::gateway::CreatorCap`);
-
             const relayerDiscovery = publishTxn.objectChanges.find(
                 (change) => change.objectType === `${packageId}::discovery::RelayerDiscovery`,
             );
-
             const upgradeCap = publishTxn.objectChanges.find((change) => change.objectType === '0x2::package::UpgradeCap').objectId;
 
             const encodedSigners = signersStruct
@@ -130,13 +127,7 @@ async function deploy(contractName, config, chain, options) {
             });
 
             if (policy !== '0') {
-                let upgradeType;
-
-                if (policy === '128') {
-                    upgradeType = 'only_additive_upgrades';
-                } else {
-                    upgradeType = 'only_dep_upgrades';
-                }
+                const upgradeType = policy === '128' ? 'only_additive_upgrades' : 'only_dep_upgrades';
 
                 tx.moveCall({
                     target: `0x2::package::${upgradeType}`,
@@ -145,7 +136,6 @@ async function deploy(contractName, config, chain, options) {
             }
 
             const result = await broadcast(client, keypair, tx);
-
             const gateway = result.objectChanges.find((change) => change.objectType === `${packageId}::gateway::Gateway`);
 
             contractConfig.address = packageId;
@@ -230,11 +220,9 @@ if (require.main === module) {
         .addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'))
         .addOption(new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'))
         .addOption(
-            new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "0" to allow all types of upgrades').choices([
-                '0',
-                '128',
-                '192',
-            ]),
+            new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "0" to allow all types of upgrades')
+                .choices(['0', '128', '192'])
+                .default('0'),
         )
         .action((contractName, options) => {
             mainProcessor([contractName], options, deploy);
