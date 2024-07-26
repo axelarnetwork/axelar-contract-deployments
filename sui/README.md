@@ -54,7 +54,7 @@ Deploy the gateway package:
 -   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
 ```bash
-node sui/deploy-contract.js deploy AxelarGateway
+node sui/deploy-contract.js deploy axelar_gateway
 ```
 
 Use `--help` flag to see other setup params that can be overridden.
@@ -62,19 +62,19 @@ Use `--help` flag to see other setup params that can be overridden.
 -   For testing convenience, you can use the secp256k1 wallet as the signer set for the gateway.
 
 ```bash
-node sui/deploy-contract.js deploy AxelarGateway --signers wallet --nonce test
+node sui/deploy-contract.js deploy axelar_gateway --signers wallet --nonce test
 ```
 
 -   You can also provide a JSON object with a full signer set:
 
 ```bash
-node sui/deploy-contract.js deploy AxelarGateway -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
+node sui/deploy-contract.js deploy axelar_gateway -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
 ```
 
 Deploy the Gas Service package:
 
 ```bash
-node sui/deploy-contract.js deploy GasService
+node sui/deploy-contract.js deploy gas_service
 ```
 
 Deploy the test GMP package:
@@ -126,7 +126,7 @@ Upgrading Gateway:
 To update the gateway run the following command:
 
 ```bash
-node sui/deploy-contract.js  upgrade AxelarGateway <policy>
+node sui/deploy-contract.js  upgrade axelar_gateway <policy>
 ```
 policy should be one of 0, 128, or 192.
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
