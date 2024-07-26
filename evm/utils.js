@@ -13,10 +13,23 @@ const https = require('https');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { outputJsonSync } = require('fs-extra');
 const readlineSync = require('readline-sync');
 const chalk = require('chalk');
-const { loadConfig, saveConfig } = require('../common');
+const {
+    loadConfig,
+    saveConfig,
+    isNonEmptyString,
+    isNonEmptyStringArray,
+    isNumber,
+    isNumberArray,
+    isString,
+    isValidNumber,
+    printInfo,
+    isValidDecimal,
+    printError,
+    printWarn,
+    writeJSON,
+} = require('../common');
 const {
     create3DeployContract,
     deployContractConstant,
@@ -123,41 +136,6 @@ const deployCreate3 = async (
     return contract;
 };
 
-const printInfo = (msg, info = '', colour = chalk.green) => {
-    if (info) {
-        console.log(`${msg}: ${colour(info)}\n`);
-    } else {
-        console.log(`${msg}\n`);
-    }
-};
-
-const printWarn = (msg, info = '') => {
-    if (info) {
-        msg = `${msg}: ${info}`;
-    }
-
-    console.log(`${chalk.italic.yellow(msg)}\n`);
-};
-
-const printError = (msg, info = '') => {
-    if (info) {
-        msg = `${msg}: ${info}`;
-    }
-
-    console.log(`${chalk.bold.red(msg)}\n`);
-};
-
-function printLog(log) {
-    console.log(JSON.stringify({ log }, null, 2));
-}
-
-const writeJSON = (data, name) => {
-    outputJsonSync(name, data, {
-        spaces: 2,
-        EOL: '\n',
-    });
-};
-
 const httpGet = (url) => {
     return new Promise((resolve, reject) => {
         (url.startsWith('https://') ? https : http).get(url, (res) => {
@@ -203,56 +181,6 @@ const httpPost = async (url, data) => {
         body: JSON.stringify(data),
     });
     return response.json();
-};
-
-const isNonEmptyString = (arg) => {
-    return typeof arg === 'string' && arg !== '';
-};
-
-const isString = (arg) => {
-    return typeof arg === 'string';
-};
-
-const isStringArray = (arr) => Array.isArray(arr) && arr.every(isString);
-
-const isNumber = (arg) => {
-    return Number.isInteger(arg);
-};
-
-const isValidNumber = (arg) => {
-    return !isNaN(parseInt(arg)) && isFinite(arg);
-};
-
-const isValidDecimal = (arg) => {
-    return !isNaN(parseFloat(arg)) && isFinite(arg);
-};
-
-const isNumberArray = (arr) => {
-    if (!Array.isArray(arr)) {
-        return false;
-    }
-
-    for (const item of arr) {
-        if (!isNumber(item)) {
-            return false;
-        }
-    }
-
-    return true;
-};
-
-const isNonEmptyStringArray = (arr) => {
-    if (!Array.isArray(arr)) {
-        return false;
-    }
-
-    for (const item of arr) {
-        if (typeof item !== 'string') {
-            return false;
-        }
-    }
-
-    return true;
 };
 
 const isAddressArray = (arr) => {
@@ -1268,7 +1196,6 @@ module.exports = {
     deployCreate2,
     deployCreate3,
     deployContract,
-    writeJSON,
     copyObject,
     httpGet,
     httpPost,
@@ -1276,14 +1203,6 @@ module.exports = {
     getBytecodeHash,
     predictAddressCreate,
     getDeployedAddress,
-    isString,
-    isNonEmptyString,
-    isStringArray,
-    isNumber,
-    isValidNumber,
-    isValidDecimal,
-    isNumberArray,
-    isNonEmptyStringArray,
     isAddressArray,
     isKeccak256Hash,
     isValidCalldata,

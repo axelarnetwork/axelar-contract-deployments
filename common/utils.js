@@ -46,6 +46,56 @@ function printLog(log) {
     console.log(JSON.stringify({ log }, null, 2));
 }
 
+const isNonEmptyString = (arg) => {
+    return typeof arg === 'string' && arg !== '';
+};
+
+const isString = (arg) => {
+    return typeof arg === 'string';
+};
+
+const isStringArray = (arr) => Array.isArray(arr) && arr.every(isString);
+
+const isNumber = (arg) => {
+    return Number.isInteger(arg);
+};
+
+const isValidNumber = (arg) => {
+    return !isNaN(parseInt(arg)) && isFinite(arg);
+};
+
+const isValidDecimal = (arg) => {
+    return !isNaN(parseFloat(arg)) && isFinite(arg);
+};
+
+const isNumberArray = (arr) => {
+    if (!Array.isArray(arr)) {
+        return false;
+    }
+
+    for (const item of arr) {
+        if (!isNumber(item)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+const isNonEmptyStringArray = (arr) => {
+    if (!Array.isArray(arr)) {
+        return false;
+    }
+
+    for (const item of arr) {
+        if (typeof item !== 'string') {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -54,4 +104,12 @@ module.exports = {
     printWarn,
     printError,
     printLog,
+    isNonEmptyString,
+    isString,
+    isStringArray,
+    isNumber,
+    isValidNumber,
+    isValidDecimal,
+    isNumberArray,
+    isNonEmptyStringArray,
 };
