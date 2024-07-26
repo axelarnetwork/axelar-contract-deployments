@@ -16,6 +16,7 @@ const path = require('path');
 const { outputJsonSync } = require('fs-extra');
 const readlineSync = require('readline-sync');
 const chalk = require('chalk');
+const {loadConfig, saveConfig} = require('../common');
 const {
     create3DeployContract,
     deployContractConstant,
@@ -689,16 +690,8 @@ function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function loadConfig(env) {
-    return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
-}
-
 function loadParallelExecutionConfig(env, chain) {
     return require(`${__dirname}/../chains-info/${env}-${chain}.json`);
-}
-
-function saveConfig(config, env) {
-    writeJSON(config, `${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
 function saveParallelExecutionConfig(config, env, chain) {

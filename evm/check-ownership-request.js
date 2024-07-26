@@ -5,9 +5,9 @@ require('dotenv').config();
 const axios = require('axios');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
+const {loadConfig} = require('../common');
 const { Contract, getDefaultProvider } = ethers;
 const {
-    loadConfig,
     validateParameters,
     printError,
     getContractJSON,

@@ -7,7 +7,8 @@ const {
     providers: { getDefaultProvider },
 } = ethers;
 
-const { printError, printInfo, printWarn, getConfigByChainId, prompt, loadConfig } = require('./utils');
+const { printError, printInfo, printWarn, getConfigByChainId, prompt } = require('./utils');
+const { loadConfig } = require('../common');
 const { addBaseOptions } = require('../common');
 const { sendTransaction, getSignedTx, storeSignedTx } = require('./sign-utils');
 
