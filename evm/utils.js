@@ -9,8 +9,6 @@ const {
     getDefaultProvider,
     BigNumber,
 } = ethers;
-const https = require('https');
-const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const readlineSync = require('readline-sync');
@@ -26,9 +24,12 @@ const {
     isValidNumber,
     printInfo,
     isValidDecimal,
+    copyObject,
     printError,
     printWarn,
     writeJSON,
+    httpGet,
+    httpPost,
 } = require('../common');
 const {
     create3DeployContract,
@@ -134,53 +135,6 @@ const deployCreate3 = async (
     }
 
     return contract;
-};
-
-const httpGet = (url) => {
-    return new Promise((resolve, reject) => {
-        (url.startsWith('https://') ? https : http).get(url, (res) => {
-            const { statusCode } = res;
-            const contentType = res.headers['content-type'];
-            let error;
-
-            if (statusCode !== 200 && statusCode !== 301) {
-                error = new Error('Request Failed.\n' + `Request: ${url}\nStatus Code: ${statusCode}`);
-            } else if (!/^application\/json/.test(contentType)) {
-                error = new Error('Invalid content-type.\n' + `Expected application/json but received ${contentType}`);
-            }
-
-            if (error) {
-                res.resume();
-                reject(error);
-                return;
-            }
-
-            res.setEncoding('utf8');
-            let rawData = '';
-            res.on('data', (chunk) => {
-                rawData += chunk;
-            });
-            res.on('end', () => {
-                try {
-                    const parsedData = JSON.parse(rawData);
-                    resolve(parsedData);
-                } catch (e) {
-                    reject(e);
-                }
-            });
-        });
-    });
-};
-
-const httpPost = async (url, data) => {
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    });
-    return response.json();
 };
 
 const isAddressArray = (arr) => {
@@ -765,9 +719,7 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
-function copyObject(obj) {
-    return JSON.parse(JSON.stringify(obj));
-}
+
 
 const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
     if (!options.env) {
@@ -1196,9 +1148,6 @@ module.exports = {
     deployCreate2,
     deployCreate3,
     deployContract,
-    copyObject,
-    httpGet,
-    httpPost,
     printObj,
     getBytecodeHash,
     predictAddressCreate,
