@@ -16,7 +16,7 @@ const path = require('path');
 const { outputJsonSync } = require('fs-extra');
 const readlineSync = require('readline-sync');
 const chalk = require('chalk');
-const {loadConfig, saveConfig} = require('../common');
+const { loadConfig, saveConfig } = require('../common');
 const {
     create3DeployContract,
     deployContractConstant,
@@ -1272,10 +1272,6 @@ module.exports = {
     httpGet,
     httpPost,
     printObj,
-    printLog,
-    printInfo,
-    printWarn,
-    printError,
     getBytecodeHash,
     predictAddressCreate,
     getDeployedAddress,
@@ -1298,8 +1294,6 @@ module.exports = {
     getEVMAddresses,
     getConfigByChainId,
     sleep,
-    loadConfig,
-    saveConfig,
     printWalletInfo,
     isValidTimeFormat,
     dateToEta,

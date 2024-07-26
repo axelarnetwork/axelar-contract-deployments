@@ -5,8 +5,8 @@ const {
     providers: { JsonRpcProvider },
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, mainProcessor, sleep } = require('./utils');
-const { addBaseOptions } = require('../common');
+const { mainProcessor, sleep } = require('./utils');
+const { printInfo, addBaseOptions } = require('../common');
 
 function updateFinality(finality, chain, update) {
     if (update) {

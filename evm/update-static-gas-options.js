@@ -9,8 +9,8 @@ const {
     BigNumber,
 } = ethers;
 
-const { printInfo, mainProcessor, prompt } = require('./utils');
-const { addBaseOptions } = require('../common');
+const { mainProcessor, prompt } = require('./utils');
+const { printInfo, addBaseOptions } = require('../common');
 
 const defaultGasLimit = 3e6;
 const gasPriceMultiplier = 5;

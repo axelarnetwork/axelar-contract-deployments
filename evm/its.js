@@ -9,11 +9,9 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
+const { printInfo, printWarn, printError } = require('../common');
 const {
-    printInfo,
     prompt,
-    printWarn,
-    printError,
     printWalletInfo,
     wasEventEmitted,
     mainProcessor,

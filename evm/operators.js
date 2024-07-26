@@ -8,8 +8,6 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const {
-    printInfo,
-    printError,
     printWalletInfo,
     isAddressArray,
     isNumberArray,
@@ -19,9 +17,8 @@ const {
     mainProcessor,
     validateParameters,
     getContractJSON,
-    printWarn,
 } = require('./utils');
-const { addBaseOptions } = require('../common');
+const { addBaseOptions, printInfo, printError, printWarn } = require('../common');
 const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTransaction } = require('./gas-service');
 const { getWallet } = require('./sign-utils');
 

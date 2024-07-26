@@ -10,21 +10,18 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const {
-    printInfo,
     prompt,
-    printWarn,
     printWalletInfo,
     getEVMBatch,
     getEVMAddresses,
     isValidAddress,
     wasEventEmitted,
     mainProcessor,
-    printError,
     getGasOptions,
     httpGet,
     getContractJSON,
 } = require('./utils');
-const { addBaseOptions } = require('../common');
+const { printInfo, printWarn, printError, addBaseOptions } = require('../common');
 const { getWallet } = require('./sign-utils');
 
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');

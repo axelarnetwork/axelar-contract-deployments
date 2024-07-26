@@ -5,18 +5,9 @@ require('dotenv').config();
 const axios = require('axios');
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
-const {loadConfig} = require('../common');
+const { loadConfig, printError, printInfo, printWarn } = require('../common');
 const { Contract, getDefaultProvider } = ethers;
-const {
-    validateParameters,
-    printError,
-    getContractJSON,
-    printInfo,
-    printWarn,
-    printObj,
-    isValidAddress,
-    isStringArray,
-} = require('./utils');
+const { validateParameters, getContractJSON, printObj, isValidAddress, isStringArray } = require('./utils');
 
 const interchainTokenFactoryABI = getContractJSON('InterchainTokenFactory').abi;
 const interchainTokenABI = getContractJSON('InterchainToken').abi;

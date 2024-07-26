@@ -9,11 +9,9 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const {
-    printInfo,
     printWalletInfo,
     isNumber,
     isValidCalldata,
-    printWarn,
     isNonEmptyStringArray,
     isNumberArray,
     isValidAddress,
@@ -23,7 +21,7 @@ const {
     isBytes32Array,
     getGasOptions,
 } = require('./utils');
-const { addBaseOptions } = require('../common');
+const { addBaseOptions, printInfo, printWarn } = require('../common');
 const IMultisig = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IMultisig.json');
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');

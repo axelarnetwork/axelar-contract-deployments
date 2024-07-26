@@ -1,8 +1,8 @@
 'use strict';
 
 const { Command, Option } = require('commander');
-const { addBaseOptions } = require('../');
-const { mainProcessor, printInfo, isValidNumber, isValidAddress } = require('./utils');
+const { addBaseOptions, printInfo } = require('../common');
+const { mainProcessor, isValidNumber, isValidAddress } = require('./utils');
 
 const values = [];
 

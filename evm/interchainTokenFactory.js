@@ -7,8 +7,8 @@ const {
     constants: { AddressZero },
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
-const { addExtendedOptions } = require('../common');
+const { prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
+const { addExtendedOptions, printInfo } = require('../common');
 const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');

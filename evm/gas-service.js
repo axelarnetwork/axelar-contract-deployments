@@ -8,10 +8,7 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const {
-    printInfo,
     printWalletInfo,
-    printWarn,
-    printError,
     mainProcessor,
     prompt,
     getContractJSON,
@@ -23,7 +20,7 @@ const {
     timeout,
     relayTransaction,
 } = require('./utils');
-const { addBaseOptions } = require('../common');
+const { addBaseOptions, printInfo, printWarn, printError } = require('../common');
 const { getWallet } = require('./sign-utils');
 
 let failedChainUpdates = [];
