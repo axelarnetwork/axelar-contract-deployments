@@ -47,6 +47,14 @@ const messageStruct = bcs.struct('Message', {
     payload_hash: bytes32Struct,
 });
 
+const approvedMessageStruct = bcs.struct('ApprovedMessage', {
+    source_chain: bcs.string(),
+    message_id: bcs.string(),
+    source_address: bcs.string(),
+    destination_id: addressStruct,
+    payload: bcs.vector(bcs.u8()),
+});
+
 const proofStruct = bcs.struct('Proof', {
     signers: signersStruct,
     signatures: bcs.vector(bcs.vector(bcs.u8())),
@@ -57,6 +65,24 @@ const gasServiceStruct = bcs.struct('GasService', {
     balance: bcs.u64(),
 });
 
+const channelStruct = bcs.struct('Channel', {
+    id: UID,
+});
+
+const singletonStruct = bcs.struct('Singleton', {
+    id: UID,
+    channel: channelStruct,
+});
+
+const discoveryTable = bcs.struct('DiscoveryTable', {
+    id: UID,
+});
+
+const discoveryStruct = bcs.struct('Discovery', {
+    id: UID,
+    fields: discoveryTable,
+});
+
 module.exports = {
     addressStruct,
     signerStruct,
@@ -64,6 +90,10 @@ module.exports = {
     signersStruct,
     messageToSignStruct,
     messageStruct,
+    approvedMessageStruct,
     proofStruct,
     gasServiceStruct,
+    channelStruct,
+    singletonStruct,
+    discoveryStruct,
 };
