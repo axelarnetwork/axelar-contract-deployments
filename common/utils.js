@@ -201,6 +201,36 @@ function isValidTimeFormat(timeString) {
     return regex.test(timeString);
 }
 
+const dateToEta = (utcTimeString) => {
+    if (utcTimeString === '0') {
+        return 0;
+    }
+
+    const date = new Date(utcTimeString + 'Z');
+
+    if (isNaN(date.getTime())) {
+        throw new Error(`Invalid date format provided: ${utcTimeString}`);
+    }
+
+    return Math.floor(date.getTime() / 1000);
+};
+
+const etaToDate = (timestamp) => {
+    const date = new Date(timestamp * 1000);
+
+    if (isNaN(date.getTime())) {
+        throw new Error(`Invalid timestamp provided: ${timestamp}`);
+    }
+
+    return date.toISOString().slice(0, 19);
+};
+
+const getCurrentTimeInSeconds = () => {
+    const now = new Date();
+    const currentTimeInSecs = Math.floor(now.getTime() / 1000);
+    return currentTimeInSecs;
+};
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -223,4 +253,7 @@ module.exports = {
     httpPost,
     parseArgs,
     sleep,
+    dateToEta,
+    etaToDate,
+    getCurrentTimeInSeconds,
 };

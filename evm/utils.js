@@ -165,11 +165,7 @@ const isBytes32Array = (arr) => {
     return true;
 };
 
-const getCurrentTimeInSeconds = () => {
-    const now = new Date();
-    const currentTimeInSecs = Math.floor(now.getTime() / 1000);
-    return currentTimeInSecs;
-};
+
 
 /**
  * Determines if a given input is a valid keccak256 hash.
@@ -631,30 +627,6 @@ const deployContract = async (
     }
 };
 
-const dateToEta = (utcTimeString) => {
-    if (utcTimeString === '0') {
-        return 0;
-    }
-
-    const date = new Date(utcTimeString + 'Z');
-
-    if (isNaN(date.getTime())) {
-        throw new Error(`Invalid date format provided: ${utcTimeString}`);
-    }
-
-    return Math.floor(date.getTime() / 1000);
-};
-
-const etaToDate = (timestamp) => {
-    const date = new Date(timestamp * 1000);
-
-    if (isNaN(date.getTime())) {
-        throw new Error(`Invalid timestamp provided: ${timestamp}`);
-    }
-
-    return date.toISOString().slice(0, 19);
-};
-
 /**
  * Check if a specific event was emitted in a transaction receipt.
  *
@@ -1113,9 +1085,6 @@ module.exports = {
     getConfigByChainId,
     sleep,
     printWalletInfo,
-    dateToEta,
-    etaToDate,
-    getCurrentTimeInSeconds,
     wasEventEmitted,
     isContract,
     isValidAddress,
