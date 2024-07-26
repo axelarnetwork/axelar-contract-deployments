@@ -60,7 +60,6 @@ async function postDeployTest(published, config, chain, options) {
 
     const channelId = await getChannelId(client, singleton.objectId);
 
-    chain.contracts.Test.address = published.packageId;
     chain.contracts.Test.objects = { singleton: singleton.objectId, channelId };
 }
 
