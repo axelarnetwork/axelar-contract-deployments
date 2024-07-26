@@ -57,6 +57,11 @@ async function postDeployTest(published, config, chain, options) {
     const registerTx = await broadcast(client, keypair, tx);
 
     printInfo('Register transaction', registerTx.digest);
+
+    const channelId = await getChannelId(client, singleton.objectId);
+
+    chain.contracts.Test.address = published.packageId;
+    chain.contracts.Test.objects = { singleton: singleton.objectId, channelId };
 }
 
 async function processCommand(contractName, config, chain, options) {
@@ -77,10 +82,10 @@ async function processCommand(contractName, config, chain, options) {
     const contractConfig = chain.contracts[contractName];
     contractConfig.address = packageId;
 
-    printInfo(`${contractName} deployed`, JSON.stringify(contractConfig, null, 2));
-
     // Submitting additional setup transaction or saving additional objects to the chain config here
     await postDeploy[contractName]?.(published, config, chain, options);
+
+    printInfo(`${contractName} deployed`, JSON.stringify(contractConfig, null, 2));
 }
 
 async function mainProcessor(contractName, options, processor) {
