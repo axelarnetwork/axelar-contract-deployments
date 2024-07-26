@@ -102,55 +102,55 @@ const isNonEmptyStringArray = (arr) => {
 };
 
 function copyObject(obj) {
-  return JSON.parse(JSON.stringify(obj));
+    return JSON.parse(JSON.stringify(obj));
 }
 
 const httpGet = (url) => {
-  return new Promise((resolve, reject) => {
-      (url.startsWith('https://') ? https : http).get(url, (res) => {
-          const { statusCode } = res;
-          const contentType = res.headers['content-type'];
-          let error;
+    return new Promise((resolve, reject) => {
+        (url.startsWith('https://') ? https : http).get(url, (res) => {
+            const { statusCode } = res;
+            const contentType = res.headers['content-type'];
+            let error;
 
-          if (statusCode !== 200 && statusCode !== 301) {
-              error = new Error('Request Failed.\n' + `Request: ${url}\nStatus Code: ${statusCode}`);
-          } else if (!/^application\/json/.test(contentType)) {
-              error = new Error('Invalid content-type.\n' + `Expected application/json but received ${contentType}`);
-          }
+            if (statusCode !== 200 && statusCode !== 301) {
+                error = new Error('Request Failed.\n' + `Request: ${url}\nStatus Code: ${statusCode}`);
+            } else if (!/^application\/json/.test(contentType)) {
+                error = new Error('Invalid content-type.\n' + `Expected application/json but received ${contentType}`);
+            }
 
-          if (error) {
-              res.resume();
-              reject(error);
-              return;
-          }
+            if (error) {
+                res.resume();
+                reject(error);
+                return;
+            }
 
-          res.setEncoding('utf8');
-          let rawData = '';
-          res.on('data', (chunk) => {
-              rawData += chunk;
-          });
-          res.on('end', () => {
-              try {
-                  const parsedData = JSON.parse(rawData);
-                  resolve(parsedData);
-              } catch (e) {
-                  reject(e);
-              }
-          });
-      });
-  });
+            res.setEncoding('utf8');
+            let rawData = '';
+            res.on('data', (chunk) => {
+                rawData += chunk;
+            });
+            res.on('end', () => {
+                try {
+                    const parsedData = JSON.parse(rawData);
+                    resolve(parsedData);
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        });
+    });
 };
 
 const httpPost = async (url, data) => {
-  const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-  });
-  return response.json();
-}
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+    return response.json();
+};
 
 /**
  * Parses the input string into an array of arguments, recognizing and converting
@@ -166,36 +166,36 @@ const httpPost = async (url, data) => {
  * console.log(output); // Outputs: [ 'hello', true, 123, [ 1, 2, 3] ]
  */
 const parseArgs = (args) => {
-  return args
-      .split(/\s+/)
-      .filter((item) => item !== '')
-      .map((arg) => {
-          if (arg.startsWith('[') && arg.endsWith(']')) {
-              return JSON.parse(arg);
-          } else if (arg === 'true') {
-              return true;
-          } else if (arg === 'false') {
-              return false;
-          } else if (!isNaN(arg) && !arg.startsWith('0x')) {
-              return Number(arg);
-          }
+    return args
+        .split(/\s+/)
+        .filter((item) => item !== '')
+        .map((arg) => {
+            if (arg.startsWith('[') && arg.endsWith(']')) {
+                return JSON.parse(arg);
+            } else if (arg === 'true') {
+                return true;
+            } else if (arg === 'false') {
+                return false;
+            } else if (!isNaN(arg) && !arg.startsWith('0x')) {
+                return Number(arg);
+            }
 
-          return arg;
-      });
+            return arg;
+        });
 };
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function timeout(prom, time, exception) {
-  let timer;
+    let timer;
 
-  // Racing the promise with a timer
-  // If the timer resolves first, the promise is rejected with the exception
-  return Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]).finally(() =>
-      clearTimeout(timer),
-  );
+    // Racing the promise with a timer
+    // If the timer resolves first, the promise is rejected with the exception
+    return Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]).finally(() =>
+        clearTimeout(timer),
+    );
 }
 
 /**
@@ -251,35 +251,35 @@ const getCurrentTimeInSeconds = () => {
  * @returns {boolean} Returns true if the prompt was skipped, false otherwise
  */
 const prompt = (question, yes = false) => {
-  // skip the prompt if yes was passed
-  if (yes) {
-      return false;
-  }
+    // skip the prompt if yes was passed
+    if (yes) {
+        return false;
+    }
 
-  const answer = readlineSync.question(`${question} ${chalk.green('(y/n)')} `);
-  console.log();
+    const answer = readlineSync.question(`${question} ${chalk.green('(y/n)')} `);
+    console.log();
 
-  return answer !== 'y';
+    return answer !== 'y';
 };
 
 function findProjectRoot(startDir) {
-  let currentDir = startDir;
+    let currentDir = startDir;
 
-  while (currentDir !== path.parse(currentDir).root) {
-      const potentialPackageJson = path.join(currentDir, 'package.json');
+    while (currentDir !== path.parse(currentDir).root) {
+        const potentialPackageJson = path.join(currentDir, 'package.json');
 
-      if (fs.existsSync(potentialPackageJson)) {
-          return currentDir;
-      }
+        if (fs.existsSync(potentialPackageJson)) {
+            return currentDir;
+        }
 
-      currentDir = path.resolve(currentDir, '..');
-  }
+        currentDir = path.resolve(currentDir, '..');
+    }
 
-  throw new Error('Unable to find project root');
+    throw new Error('Unable to find project root');
 }
 
 function toBigNumberString(number) {
-  return Math.ceil(number).toLocaleString('en', { useGrouping: false });
+    return Math.ceil(number).toLocaleString('en', { useGrouping: false });
 }
 
 module.exports = {

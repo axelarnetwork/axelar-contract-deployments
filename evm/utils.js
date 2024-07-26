@@ -166,8 +166,6 @@ const isBytes32Array = (arr) => {
     return true;
 };
 
-
-
 /**
  * Determines if a given input is a valid keccak256 hash.
  *
@@ -642,8 +640,6 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
-
-
 const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
     if (!options.env) {
         throw new Error('Environment was not provided');
@@ -782,8 +778,6 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         }
     }
 };
-
-
 
 function getConfigByChainId(chainId, config) {
     for (const chain of Object.values(config.chains)) {
