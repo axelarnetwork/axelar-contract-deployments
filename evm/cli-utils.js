@@ -1,3 +1,3 @@
 module.exports = {
-  ...require("../common/cli-utils"),
-}
+    ...require('../common/cli-utils'),
+};
