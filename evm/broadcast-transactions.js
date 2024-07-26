@@ -8,7 +8,7 @@ const {
 } = ethers;
 
 const { printError, printInfo, printWarn, getConfigByChainId, prompt, loadConfig } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 const { sendTransaction, getSignedTx, storeSignedTx } = require('./sign-utils');
 
 async function processCommand(config, _, options, file) {

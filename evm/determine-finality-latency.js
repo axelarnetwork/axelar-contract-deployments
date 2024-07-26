@@ -6,7 +6,7 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, mainProcessor, sleep } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 
 function updateFinality(finality, chain, update) {
     if (update) {

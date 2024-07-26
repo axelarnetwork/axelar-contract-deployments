@@ -10,7 +10,7 @@ const {
 } = ethers;
 
 const { printInfo, mainProcessor, prompt } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 
 const defaultGasLimit = 3e6;
 const gasPriceMultiplier = 5;

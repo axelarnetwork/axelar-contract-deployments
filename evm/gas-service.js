@@ -23,7 +23,7 @@ const {
     timeout,
     relayTransaction,
 } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 const { getWallet } = require('./sign-utils');
 
 let failedChainUpdates = [];

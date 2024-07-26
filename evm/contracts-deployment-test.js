@@ -9,7 +9,7 @@ const {
 const { Command, Option } = require('commander');
 
 const { mainProcessor } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 
 async function processCommand(config, chain, options) {
     const wallet = new Wallet(options.privateKey, new JsonRpcProvider(chain.rpc));

@@ -29,7 +29,7 @@ const {
     getGasOptions,
     getDeployOptions,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addExtendedOptions } = require('../common');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');

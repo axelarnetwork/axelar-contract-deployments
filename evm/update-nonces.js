@@ -6,7 +6,7 @@ const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
 
 const { mainProcessor, printInfo, prompt } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 const { getNonceFromProvider, getNonceFileData, updateNonceFileData } = require('./sign-utils');
 
 async function processCommand(_, chain, options) {

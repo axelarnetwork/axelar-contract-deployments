@@ -22,7 +22,7 @@ const {
     getDeployOptions,
     mainProcessor,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addExtendedOptions } = require('../common');
 
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);

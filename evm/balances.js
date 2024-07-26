@@ -4,7 +4,7 @@ const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
 const { Command } = require('commander');
 const { mainProcessor, printWalletInfo } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 const { getWallet } = require('./sign-utils');
 
 async function processCommand(_, chain, options) {

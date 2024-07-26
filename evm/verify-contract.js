@@ -10,7 +10,7 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, getContractJSON, validateParameters } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 const { getTrustedChainsAndAddresses } = require('./its');
 
 async function processCommand(config, chain, options) {

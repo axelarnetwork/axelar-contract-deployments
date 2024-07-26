@@ -1,7 +1,7 @@
 'use strict';
 
 const { Command, Option } = require('commander');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../');
 const { mainProcessor, printInfo, isValidNumber, isValidAddress } = require('./utils');
 
 const values = [];

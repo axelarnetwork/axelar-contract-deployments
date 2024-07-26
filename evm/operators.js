@@ -21,7 +21,7 @@ const {
     getContractJSON,
     printWarn,
 } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTransaction } = require('./gas-service');
 const { getWallet } = require('./sign-utils');
 

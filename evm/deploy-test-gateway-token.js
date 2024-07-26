@@ -11,7 +11,7 @@ const {
 const { Command, Option } = require('commander');
 
 const { mainProcessor, getContractJSON, printInfo } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 
 async function getCommandId(gateway) {
     return hexlify(randomBytes(32));

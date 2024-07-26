@@ -10,7 +10,7 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, printWalletInfo, mainProcessor, prompt, getGasOptions } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 

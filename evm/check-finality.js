@@ -6,7 +6,7 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, mainProcessor, isKeccak256Hash, sleep } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 
 async function processCommand(_config, chain, options) {
     const txHash = options.txHash;

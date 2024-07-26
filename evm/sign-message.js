@@ -7,7 +7,7 @@ const {
 const { Command, Option } = require('commander');
 const { getWallet } = require('./sign-utils');
 const { printInfo, validateParameters } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions } = require('../common');
 
 async function processCommand(options) {
     const { message, privateKey } = options;

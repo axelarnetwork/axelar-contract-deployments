@@ -25,7 +25,7 @@ const {
     getDeployedAddress,
     wasEventEmitted,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addExtendedOptions } = require('../common');
 const { Command, Option } = require('commander');
 
 /**

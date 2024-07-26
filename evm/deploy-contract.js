@@ -27,7 +27,7 @@ const {
     getContractJSON,
     getDeployOptions,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addExtendedOptions } = require('../common');
 
 async function getConstructorArgs(contractName, config, wallet, options) {
     const args = options.args ? JSON.parse(options.args) : {};
