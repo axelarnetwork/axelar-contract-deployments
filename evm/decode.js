@@ -6,8 +6,7 @@ const {
     utils: { Interface },
 } = ethers;
 const { Command, Option } = require('commander');
-const { validateParameters, getContractJSON } = require('./utils');
-const { printInfo, printError } = require('../common');
+const { printInfo, printError, validateParameters, getContractJSON } = require('./utils');
 
 const decode = (calldata, iface) => {
     try {

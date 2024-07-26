@@ -10,6 +10,7 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const {
+    printInfo,
     getGasOptions,
     printWalletInfo,
     isValidTimeFormat,
@@ -17,6 +18,7 @@ const {
     etaToDate,
     getCurrentTimeInSeconds,
     wasEventEmitted,
+    printWarn,
     getBytecodeHash,
     isValidAddress,
     mainProcessor,
@@ -26,7 +28,6 @@ const {
     writeJSON,
     isKeccak256Hash,
 } = require('./utils.js');
-const { printInfo, printWarn } = require('../common.js');
 const { addBaseOptions } = require('./cli-utils.js');
 const { getWallet } = require('./sign-utils.js');
 const IAxelarServiceGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');

@@ -14,7 +14,10 @@ const {
 const {
     saveConfig,
     getBytecodeHash,
+    printInfo,
+    printError,
     printWalletInfo,
+    printWarn,
     prompt,
     mainProcessor,
     deployContract,
@@ -28,7 +31,7 @@ const {
     getDeployOptions,
 } = require('./utils');
 const { calculateDomainSeparator, isValidCosmosAddress } = require('../cosmwasm/utils');
-const { addExtendedOptions, printInfo, printError, printWarn } = require('../common');
+const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
 const { WEIGHTED_SIGNERS_TYPE, encodeWeightedSigners } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');

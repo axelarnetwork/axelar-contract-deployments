@@ -15,10 +15,13 @@ const {
     saveConfig,
     getBytecodeHash,
     verifyContract,
+    printInfo,
     getProxy,
     getEVMAddresses,
     httpGet,
+    printError,
     printWalletInfo,
+    printWarn,
     prompt,
     mainProcessor,
     isContract,
@@ -26,7 +29,7 @@ const {
     getGasOptions,
     getDeployOptions,
 } = require('./utils');
-const { printInfo, printError, printWarn, addExtendedOptions } = require('../common');
+const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');

@@ -1263,7 +1263,7 @@ async function getWeightedSigners(config, chain, options) {
 }
 
 module.exports = {
-    ...require('../common'),
+    ...require('../common/utils'),
     deployCreate,
     deployCreate2,
     deployCreate3,

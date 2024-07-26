@@ -5,8 +5,8 @@ const {
     providers: { JsonRpcProvider },
 } = ethers;
 const { Command, Option } = require('commander');
-const { mainProcessor, isKeccak256Hash, sleep } = require('./utils');
-const { printInfo, addBaseOptions } = require('../common');
+const { printInfo, mainProcessor, isKeccak256Hash, sleep } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(_config, chain, options) {
     const txHash = options.txHash;

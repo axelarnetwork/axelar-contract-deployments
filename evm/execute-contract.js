@@ -10,9 +10,8 @@ const {
 
 const readlineSync = require('readline-sync');
 const { Command, Option } = require('commander');
-const { isNumber, isNonEmptyString, printObj, getContractJSON } = require('./utils');
-const { printLog, printError, loadConfig, saveConfig } = require('../common');
-const { addBaseOptions } = require('../common');
+const { isNumber, isNonEmptyString, loadConfig, saveConfig, printObj, printLog, printError, getContractJSON } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 async function getCallData(action, targetContract, inputRecipient, inputAmount) {
     var recipient, amount;

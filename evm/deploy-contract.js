@@ -9,6 +9,9 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const {
+    printInfo,
+    printWarn,
+    printError,
     getGasOptions,
     isNonEmptyString,
     isNumber,
@@ -24,7 +27,7 @@ const {
     getContractJSON,
     getDeployOptions,
 } = require('./utils');
-const { addExtendedOptions, printInfo, printWarn, printError } = require('../common');
+const { addExtendedOptions } = require('./cli-utils');
 
 async function getConstructorArgs(contractName, config, wallet, options) {
     const args = options.args ? JSON.parse(options.args) : {};

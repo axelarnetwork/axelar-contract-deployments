@@ -10,6 +10,9 @@ const {
     deployContract,
     printWalletInfo,
     saveConfig,
+    printInfo,
+    printWarn,
+    printError,
     getContractJSON,
     mainProcessor,
     prompt,
@@ -22,7 +25,7 @@ const {
     getDeployedAddress,
     wasEventEmitted,
 } = require('./utils');
-const { addExtendedOptions, printInfo, printWarn, printError } = require('../common');
+const { addExtendedOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
 
 /**

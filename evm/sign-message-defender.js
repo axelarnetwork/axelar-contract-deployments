@@ -7,8 +7,7 @@ const {
     utils: { hexlify, joinSignature, toUtf8Bytes },
 } = ethers;
 const { Command, Option } = require('commander');
-const { validateParameters, printError } = require('./utils');
-const { printInfo } = require('../common');
+const { printInfo, validateParameters, printError } = require('./utils');
 
 async function main(options) {
     const { apiKey, secret, message } = options;

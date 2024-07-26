@@ -9,8 +9,8 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printWalletInfo, mainProcessor, prompt, getGasOptions } = require('./utils');
-const { printInfo, addBaseOptions } = require('../common');
+const { printInfo, printWalletInfo, mainProcessor, prompt, getGasOptions } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 

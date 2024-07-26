@@ -9,9 +9,11 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, printWarn, printError } = require('../common');
 const {
+    printInfo,
     prompt,
+    printWarn,
+    printError,
     printWalletInfo,
     wasEventEmitted,
     mainProcessor,
@@ -28,7 +30,7 @@ const InterchainTokenService = getContractJSON('InterchainTokenService');
 const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
 const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
 const IOwnable = getContractJSON('IOwnable');
-const { addExtendedOptions } = require('../common');
+const { addExtendedOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const tokenManagerImplementations = {
     INTERCHAIN_TOKEN: 0,

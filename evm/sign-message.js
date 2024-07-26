@@ -6,8 +6,8 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const { getWallet } = require('./sign-utils');
-const { validateParameters } = require('./utils');
-const { printInfo, addBaseOptions } = require('../common');
+const { printInfo, validateParameters } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(options) {
     const { message, privateKey } = options;

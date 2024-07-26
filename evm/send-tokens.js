@@ -7,8 +7,8 @@ const {
     getDefaultProvider,
     utils: { parseEther, parseUnits },
 } = ethers;
-const { printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt, getGasOptions } = require('./utils');
-const { printInfo, printError, addBaseOptions } = require('../common');
+const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt, getGasOptions } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js');
 
 async function processCommand(_, chain, options) {

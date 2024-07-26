@@ -10,8 +10,7 @@ const {
 const path = require('path');
 const { LedgerSigner } = require('./LedgerSigner');
 
-const { printObj, isValidPrivateKey, isNumber, isValidNumber } = require('./utils');
-const { printInfo, printError } = require('../common');
+const { printError, printInfo, printObj, isValidPrivateKey, isNumber, isValidNumber } = require('./utils');
 
 /**
  * Get a wallet object from a private key or a ledger device
