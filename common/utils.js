@@ -149,6 +149,58 @@ const httpPost = async (url, data) => {
   return response.json();
 }
 
+/**
+ * Parses the input string into an array of arguments, recognizing and converting
+ * to the following types: boolean, number, array, and string.
+ *
+ * @param {string} args - The string of arguments to parse.
+ *
+ * @returns {Array} - An array containing parsed arguments.
+ *
+ * @example
+ * const input = "hello true 123 [1,2,3]";
+ * const output = parseArgs(input);
+ * console.log(output); // Outputs: [ 'hello', true, 123, [ 1, 2, 3] ]
+ */
+const parseArgs = (args) => {
+  return args
+      .split(/\s+/)
+      .filter((item) => item !== '')
+      .map((arg) => {
+          if (arg.startsWith('[') && arg.endsWith(']')) {
+              return JSON.parse(arg);
+          } else if (arg === 'true') {
+              return true;
+          } else if (arg === 'false') {
+              return false;
+          } else if (!isNaN(arg) && !arg.startsWith('0x')) {
+              return Number(arg);
+          }
+
+          return arg;
+      });
+};
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
+ *
+ * @param {string} timeString - The input time string.
+ * @return {boolean} - Returns true if the format matches, false otherwise.
+ */
+function isValidTimeFormat(timeString) {
+    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+
+    if (timeString === '0') {
+        return true;
+    }
+
+    return regex.test(timeString);
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -165,7 +217,10 @@ module.exports = {
     isValidDecimal,
     isNumberArray,
     isNonEmptyStringArray,
+    isValidTimeFormat,
     copyObject,
     httpGet,
     httpPost,
+    parseArgs,
+    sleep,
 };

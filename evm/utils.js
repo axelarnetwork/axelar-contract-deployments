@@ -22,6 +22,7 @@ const {
     isNumberArray,
     isString,
     isValidNumber,
+    isValidTimeFormat,
     printInfo,
     isValidDecimal,
     copyObject,
@@ -30,6 +31,7 @@ const {
     writeJSON,
     httpGet,
     httpPost,
+    sleep,
 } = require('../common');
 const {
     create3DeployContract,
@@ -227,22 +229,6 @@ function isValidAddress(address, allowZeroAddress) {
     return isAddress(address);
 }
 
-/**
- * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
- *
- * @param {string} timeString - The input time string.
- * @return {boolean} - Returns true if the format matches, false otherwise.
- */
-function isValidTimeFormat(timeString) {
-    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
-
-    if (timeString === '0') {
-        return true;
-    }
-
-    return regex.test(timeString);
-}
-
 // Validate if the input privateKey is correct
 function isValidPrivateKey(privateKey) {
     // Check if it's a valid hexadecimal string
@@ -313,38 +299,6 @@ function validateParameters(parameters) {
         }
     }
 }
-
-/**
- * Parses the input string into an array of arguments, recognizing and converting
- * to the following types: boolean, number, array, and string.
- *
- * @param {string} args - The string of arguments to parse.
- *
- * @returns {Array} - An array containing parsed arguments.
- *
- * @example
- * const input = "hello true 123 [1,2,3]";
- * const output = parseArgs(input);
- * console.log(output); // Outputs: [ 'hello', true, 123, [ 1, 2, 3] ]
- */
-const parseArgs = (args) => {
-    return args
-        .split(/\s+/)
-        .filter((item) => item !== '')
-        .map((arg) => {
-            if (arg.startsWith('[') && arg.endsWith(']')) {
-                return JSON.parse(arg);
-            } else if (arg === 'true') {
-                return true;
-            } else if (arg === 'false') {
-                return false;
-            } else if (!isNaN(arg) && !arg.startsWith('0x')) {
-                return Number(arg);
-            }
-
-            return arg;
-        });
-};
 
 /**
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
@@ -567,10 +521,6 @@ const getAmplifierKeyAddresses = async (config, chain) => {
 
     return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
 };
-
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function loadParallelExecutionConfig(env, chain) {
     return require(`${__dirname}/../chains-info/${env}-${chain}.json`);
@@ -1157,14 +1107,12 @@ module.exports = {
     isValidCalldata,
     isValidBytesAddress,
     validateParameters,
-    parseArgs,
     getProxy,
     getEVMBatch,
     getEVMAddresses,
     getConfigByChainId,
     sleep,
     printWalletInfo,
-    isValidTimeFormat,
     dateToEta,
     etaToDate,
     getCurrentTimeInSeconds,
