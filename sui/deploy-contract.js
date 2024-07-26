@@ -1,6 +1,5 @@
 const { saveConfig, printInfo } = require('../evm/utils');
 const { Command, Argument, Option } = require('commander');
-const { updateMoveToml } = require('@axelar-network/axelar-cgp-sui');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo } = require('./sign-utils');
 const { loadSuiConfig, findPublishedObject, deployPackage } = require('./utils');
@@ -26,8 +25,6 @@ async function processCommand(contractName, config, chain, options) {
 
     const published = await deployPackage(packageName, client, keypair);
     const packageId = published.packageId;
-
-    updateMoveToml(packageName, packageId);
 
     const contractObject = findPublishedObject(published, packageName, contractName);
     const gasCollectorCapObject = findPublishedObject(published, packageName, 'GasCollectorCap');

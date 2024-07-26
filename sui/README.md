@@ -121,32 +121,36 @@ node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test -
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
 
-
 ### Multisig
 
 To create a Multisig, follow the documentation [here](https://docs.sui.io/guides/developer/cryptography/multisig).
 
 Get test SUI coins to your multisig address via a faucet:
+
 ```bash
 sui client faucet --address <multisig address>
 ```
 
 Get public keys for all wallets:
+
 ```bash
 sui keytool list
 ```
 
 Get private key of wallet using wallet alias or address:
+
 ```bash
 sui keytool export --key-identity <alias/wallet address>
 ```
 
 Get tx data for testing:
+
 ```bash
 sui client transfer-sui --to <recipient address> --amount 1 --sui-coin-object-id <sui coin object id> --serialize-unsigned-transaction --gas-budget 77047880
 ```
 
 To get sui coin object id
+
 ```bash
 sui client gas <multisig address>
 ```
@@ -158,6 +162,7 @@ node sui/multisig.js --txBlockPath <path to unsigned tx block> --signatureFilePa
 ```
 
 example txBlock file:
+
 ```
 {
     "bytes": "AAACACBC5cSnnYJrDEn9nSW1BDzPLLAbUJbYOeJnUgYl/b90..."
@@ -181,6 +186,7 @@ node sui/multisig.js --txBlockPath <path to unsigned tx block> --action execute 
 use --multisigKey `multisigKey` to override existing multisig info in chains config
 
 example for adding multisig info to chains config:
+
 ```
 {
     "sui": {
@@ -206,6 +212,10 @@ example for adding multisig info to chains config:
     }
 }
 ```
+
+GMP Demo:
+
+Follow the instructions [here](docs/gmp.md)
 
 ## Troubleshooting
 
