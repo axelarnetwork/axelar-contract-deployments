@@ -77,9 +77,14 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
     return { packageId, publishTxn };
 };
 
-const findPublishedObject = (published, packageName, contractName) => {
-    const packageId = published.packageId;
-    return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageName}::${contractName}`);
+const getObjectIdsByObjectTypes = (txn, objectTypes) => {
+    const objectIds = [];
+
+    for (const objectType of objectTypes) {
+        objectIds.push(txn.objectChanges.find((change) => change.objectType === objectType).objectId);
+    }
+
+    return objectIds;
 };
 
 module.exports = {
@@ -87,5 +92,5 @@ module.exports = {
     getBcsBytesByObjectId,
     loadSuiConfig,
     deployPackage,
-    findPublishedObject,
+    getObjectIdsByObjectTypes,
 };

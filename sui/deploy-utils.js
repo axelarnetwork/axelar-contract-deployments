@@ -5,7 +5,7 @@ const { fromB64, toB64 } = require('@mysten/bcs');
 const { saveConfig, printInfo, validateParameters, prompt, writeJSON } = require('../evm/utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
-const { loadSuiConfig } = require('./utils');
+const { loadSuiConfig, getObjectIdsByObjectTypes } = require('./utils');
 
 async function upgradePackage(client, keypair, packageName, packageConfig, builder, options) {
     const { modules, dependencies, digest } = await builder.getContractBuild(packageName);
@@ -61,10 +61,10 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
 
         const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
         packageConfig.address = packageId;
-        const upgradeCap = result.objectChanges.find((change) => change.objectType === '0x2::package::UpgradeCap').objectId;
+        const [upgradeCap] = getObjectIdsByObjectTypes(result, ['0x2::package::UpgradeCap']);
         packageConfig.objects.upgradeCap = upgradeCap;
 
-        printInfo('Transaction result', JSON.stringify(result, null, 2));
+        printInfo('Transaction digest', JSON.stringify(result.digest, null, 2));
         printInfo(`${packageName} upgraded`, packageId);
     }
 }

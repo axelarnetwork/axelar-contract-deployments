@@ -11,19 +11,9 @@ const {
 const { saveConfig, printInfo, validateParameters, writeJSON } = require('../evm/utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
-const { loadSuiConfig, getAmplifierSigners, deployPackage } = require('./utils');
+const { loadSuiConfig, getAmplifierSigners, deployPackage, getObjectIdsByObjectTypes } = require('./utils');
 const { bytes32Struct, signersStruct } = require('./types-utils');
 const { upgradePackage } = require('./deploy-utils');
-
-// Add more contracts here to support more modules deployment
-const contractMap = {
-    GasService: {
-        packageName: 'gas_service',
-    },
-    AxelarGateway: {
-        packageName: 'axelar_gateway',
-    },
-};
 
 async function getSigners(keypair, config, chain, options) {
     if (options.signers === 'wallet') {
@@ -56,9 +46,6 @@ async function getSigners(keypair, config, chain, options) {
 }
 
 async function deploy(contractName, config, chain, options) {
-    const contract = contractMap[contractName];
-    const packageName = options.packageName || contract.packageName;
-
     const [keypair, client] = getWallet(chain, options);
 
     await printWalletInfo(keypair, client, chain, options);
@@ -67,37 +54,36 @@ async function deploy(contractName, config, chain, options) {
         chain.contracts[contractName] = {};
     }
 
-    const { packageId, publishTxn } = await deployPackage(packageName, client, keypair, options);
+    const { packageId, publishTxn } = await deployPackage(contractName, client, keypair, options);
+
+    printInfo('Publish transaction digest: ', publishTxn.digest);
 
     const contractConfig = chain.contracts[contractName];
     contractConfig.address = packageId;
     contractConfig.objects = {};
 
     switch (contractName) {
-        case 'GasService': {
-            const contractObject = publishTxn.objectChanges.find(
-                (change) => change.objectType === `${packageId}::${packageName}::${contractName}`,
-            );
-            contractConfig.objects[contractName] = contractObject.objectId;
-            const gasCollectorCapObject = publishTxn.objectChanges.find(
-                (change) => change.objectType === `${packageId}::${packageName}::GasCollectorCap`,
-            );
-            contractConfig.objects.GasCollectorCap = gasCollectorCapObject.objectId;
+        case 'gas_service': {
+            const [GasService, GasCollectorCap] = getObjectIdsByObjectTypes(publishTxn, [
+                `${packageId}::gas_service::GasService`,
+                `${packageId}::gas_service::GasCollectorCap`,
+            ]);
+            contractConfig.objects = { GasService, GasCollectorCap };
             break;
         }
 
-        case 'AxelarGateway': {
+        case 'axelar_gateway': {
             const { minimumRotationDelay, domainSeparator, policy, previousSigners } = options;
             const operator = options.operator || keypair.toSuiAddress();
             const signers = await getSigners(keypair, config, chain, options);
 
-            validateParameters({ isNonEmptyString: { previousSigners } });
+            validateParameters({ isNonEmptyString: { previousSigners, minimumRotationDelay }, isKeccak256Hash: { domainSeparator } });
 
-            const creatorCap = publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::gateway::CreatorCap`);
-            const relayerDiscovery = publishTxn.objectChanges.find(
-                (change) => change.objectType === `${packageId}::discovery::RelayerDiscovery`,
-            );
-            const upgradeCap = publishTxn.objectChanges.find((change) => change.objectType === '0x2::package::UpgradeCap').objectId;
+            const [creatorCap, relayerDiscovery, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
+                `${packageId}::gateway::CreatorCap`,
+                `${packageId}::discovery::RelayerDiscovery`,
+                '0x2::package::UpgradeCap',
+            ]);
 
             const encodedSigners = signersStruct
                 .serialize({
@@ -116,7 +102,7 @@ async function deploy(contractName, config, chain, options) {
             tx.moveCall({
                 target: `${packageId}::gateway::setup`,
                 arguments: [
-                    tx.object(creatorCap.objectId),
+                    tx.object(creatorCap),
                     tx.pure.address(operator),
                     separator,
                     tx.pure.u64(minimumRotationDelay),
@@ -136,12 +122,14 @@ async function deploy(contractName, config, chain, options) {
             }
 
             const result = await broadcast(client, keypair, tx);
-            const gateway = result.objectChanges.find((change) => change.objectType === `${packageId}::gateway::Gateway`);
 
-            contractConfig.address = packageId;
+            printInfo('Setup transaction digest: ', result.digest);
+
+            const [gateway] = getObjectIdsByObjectTypes(result, [`${packageId}::gateway::Gateway`]);
+
             contractConfig.objects = {
-                gateway: gateway.objectId,
-                relayerDiscovery: relayerDiscovery.objectId,
+                gateway,
+                relayerDiscovery,
                 upgradeCap,
             };
             contractConfig.domainSeparator = domainSeparator;
@@ -161,20 +149,18 @@ async function deploy(contractName, config, chain, options) {
 async function upgrade(contractName, policy, config, chain, options) {
     const [keypair, client] = getWallet(chain, options);
     const { packageDependencies } = options;
-    const contract = contractMap[contractName];
-    const packageName = options.packageName || contract.packageName;
     options.policy = policy;
 
-    printInfo('Wallet address', keypair.toSuiAddress());
+    await printWalletInfo(keypair, client, chain, options);
 
     if (!chain.contracts[contractName]) {
-        throw new Error(`Cannot found specified contract: ${contractName}`);
+        throw new Error(`Cannot find specified contract: ${contractName}`);
     }
 
     const contractsConfig = chain.contracts;
     const packageConfig = contractsConfig?.[contractName];
 
-    validateParameters({ isNonEmptyString: { packageName } });
+    validateParameters({ isNonEmptyString: { contractName } });
 
     if (packageDependencies) {
         for (const dependencies of packageDependencies) {
@@ -184,7 +170,7 @@ async function upgrade(contractName, policy, config, chain, options) {
     }
 
     const builder = new TxBuilder(client);
-    await upgradePackage(client, keypair, packageName, packageConfig, builder, options);
+    await upgradePackage(client, keypair, contractName, packageConfig, builder, options);
 }
 
 async function mainProcessor(args, options, processor) {
@@ -199,7 +185,7 @@ async function mainProcessor(args, options, processor) {
         const txB64Bytes = toB64(options.txBytes);
 
         writeJSON({ message: options.offlineMessage, status: 'PENDING', unsignedTx: txB64Bytes }, txFilePath);
-        printInfo(`The unsigned transaction is`, txB64Bytes);
+        printInfo(`Unsigned transaction`, txFilePath);
     }
 }
 
@@ -212,10 +198,9 @@ if (require.main === module) {
         .name('deploy')
         .description('Deploy SUI modules')
         .command('deploy <contractName>')
-        .addOption(new Option('--packageName <packageName>', 'Package name to deploy'))
         .addOption(new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'))
         .addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'))
-        .addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default(0))
+        .addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default('0'))
         .addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero))
         .addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'))
         .addOption(new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'))
@@ -232,7 +217,6 @@ if (require.main === module) {
         .name('upgrade')
         .description('Upgrade SUI modules')
         .command('upgrade <contractName> <policy>')
-        .addOption(new Option('--packageName <packageName>', 'package name to upgrade'))
         .addOption(new Option('--sender <sender>', 'transaction sender'))
         .addOption(new Option('--digest <digest>', 'digest hash for upgrade'))
         .addOption(new Option('--offline', 'store tx block for sign'))
