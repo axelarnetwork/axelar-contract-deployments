@@ -1,9 +1,12 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const { outputJsonSync } = require('fs-extra');
 const chalk = require('chalk');
 const https = require('https');
 const http = require('http');
+const readlineSync = require('readline-sync');
 
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
@@ -231,6 +234,44 @@ const getCurrentTimeInSeconds = () => {
     return currentTimeInSecs;
 };
 
+/**
+ * Prompt the user for confirmation
+ * @param {string} question Prompt question
+ * @param {boolean} yes If true, skip the prompt
+ * @returns {boolean} Returns true if the prompt was skipped, false otherwise
+ */
+const prompt = (question, yes = false) => {
+  // skip the prompt if yes was passed
+  if (yes) {
+      return false;
+  }
+
+  const answer = readlineSync.question(`${question} ${chalk.green('(y/n)')} `);
+  console.log();
+
+  return answer !== 'y';
+};
+
+function findProjectRoot(startDir) {
+  let currentDir = startDir;
+
+  while (currentDir !== path.parse(currentDir).root) {
+      const potentialPackageJson = path.join(currentDir, 'package.json');
+
+      if (fs.existsSync(potentialPackageJson)) {
+          return currentDir;
+      }
+
+      currentDir = path.resolve(currentDir, '..');
+  }
+
+  throw new Error('Unable to find project root');
+}
+
+function toBigNumberString(number) {
+  return Math.ceil(number).toLocaleString('en', { useGrouping: false });
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -256,4 +297,7 @@ module.exports = {
     dateToEta,
     etaToDate,
     getCurrentTimeInSeconds,
+    prompt,
+    findProjectRoot,
+    toBigNumberString,
 };

@@ -11,7 +11,6 @@ const {
 } = ethers;
 const fs = require('fs');
 const path = require('path');
-const readlineSync = require('readline-sync');
 const chalk = require('chalk');
 const {
     loadConfig,
@@ -32,6 +31,7 @@ const {
     httpGet,
     httpPost,
     sleep,
+    findProjectRoot,
 } = require('../common');
 const {
     create3DeployContract,
@@ -782,23 +782,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     }
 };
 
-/**
- * Prompt the user for confirmation
- * @param {string} question Prompt question
- * @param {boolean} yes If true, skip the prompt
- * @returns {boolean} Returns true if the prompt was skipped, false otherwise
- */
-const prompt = (question, yes = false) => {
-    // skip the prompt if yes was passed
-    if (yes) {
-        return false;
-    }
 
-    const answer = readlineSync.question(`${question} ${chalk.green('(y/n)')} `);
-    console.log();
-
-    return answer !== 'y';
-};
 
 function getConfigByChainId(chainId, config) {
     for (const chain of Object.values(config.chains)) {
@@ -808,22 +792,6 @@ function getConfigByChainId(chainId, config) {
     }
 
     throw new Error(`Chain with chainId ${chainId} not found in the config`);
-}
-
-function findProjectRoot(startDir) {
-    let currentDir = startDir;
-
-    while (currentDir !== path.parse(currentDir).root) {
-        const potentialPackageJson = path.join(currentDir, 'package.json');
-
-        if (fs.existsSync(potentialPackageJson)) {
-            return currentDir;
-        }
-
-        currentDir = path.resolve(currentDir, '..');
-    }
-
-    throw new Error('Unable to find project root');
 }
 
 function findContractPath(dir, contractName) {
@@ -979,10 +947,6 @@ function isValidChain(config, chainName) {
     }
 }
 
-function toBigNumberString(number) {
-    return Math.ceil(number).toLocaleString('en', { useGrouping: false });
-}
-
 function timeout(prom, time, exception) {
     let timer;
 
@@ -1091,7 +1055,6 @@ module.exports = {
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,
-    prompt,
     mainProcessor,
     getContractPath,
     getContractJSON,
@@ -1100,7 +1063,6 @@ module.exports = {
     getSaltFromKey,
     getDeployOptions,
     isValidChain,
-    toBigNumberString,
     timeout,
     getAmplifierKeyAddresses,
     getContractConfig,
