@@ -126,7 +126,7 @@ Upgrading Gateway:
 To update the gateway run the following command:
 
 ```bash
-node sui/deploy-contract.js  upgrade axelar_gateway <policy>
+node sui/deploy-contract.js upgrade axelar_gateway <policy>
 ```
 policy should be one of 0, 128, or 192.
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
