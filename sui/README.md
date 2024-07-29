@@ -79,7 +79,12 @@ To update the gateway run the following command:
 node sui/deploy-contract.js upgrade axelar_gateway <policy>
 ```
 
-policy should be one of 0, 128, or 192.
+policy should be one of the following:
+
+-   `0`: No upgrade policy
+-   `128`: Upgrade policy to just add code. https://docs.sui.io/references/framework/sui-framework/package#function-only_additive_upgrades
+-   `192`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
+
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
 Deploy the Gas Service package:
