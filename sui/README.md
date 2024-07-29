@@ -80,7 +80,7 @@ node sui/deploy-contract.js GasService
 Deploy the test GMP package:
 
 ```bash
-node sui/deploy-test.js
+node sui/deploy-contract.js Test
 ```
 
 Call Contract:
