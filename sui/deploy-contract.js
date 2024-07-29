@@ -124,7 +124,7 @@ async function deploy(contractName, config, chain, options) {
 
             const result = await broadcast(client, keypair, tx);
 
-            printInfo('Setup transaction digest: ', result.digest);
+            printInfo('Setup transaction digest', result.digest);
 
             const [gateway] = getObjectIdsByObjectTypes(result, [`${packageId}::gateway::Gateway`]);
 
