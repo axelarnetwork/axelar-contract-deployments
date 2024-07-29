@@ -71,6 +71,17 @@ node sui/deploy-contract.js deploy axelar_gateway --signers wallet --nonce test
 node sui/deploy-contract.js deploy axelar_gateway -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
 ```
 
+Upgrading Gateway:
+
+To update the gateway run the following command:
+
+```bash
+node sui/deploy-contract.js upgrade axelar_gateway <policy>
+```
+
+policy should be one of 0, 128, or 192.
+Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
+
 Deploy the Gas Service package:
 
 ```bash
@@ -120,16 +131,6 @@ node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test -
 ```
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
-
-Upgrading Gateway:
-
-To update the gateway run the following command:
-
-```bash
-node sui/deploy-contract.js upgrade axelar_gateway <policy>
-```
-policy should be one of 0, 128, or 192.
-Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
 ### Multisig
 
