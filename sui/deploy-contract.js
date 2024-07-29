@@ -1,25 +1,19 @@
 const { saveConfig, printInfo } = require('../evm/utils');
-const { Command, Argument, Option } = require('commander');
+const { Command, Argument } = require('commander');
 const { addBaseOptions } = require('./cli-utils');
 const { Transaction } = require('@mysten/sui/transactions');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { singletonStruct } = require('./types-utils');
-const { loadSuiConfig, findPublishedObject, deployPackage, getBcsBytesByObjectId } = require('./utils');
+const { loadSuiConfig, findPublishedObject, deployPackage, getBcsBytesByObjectId, readMovePackageName } = require('./utils');
 
-// Add more contracts here to support more modules deployment
-const contractMap = {
-    GasService: {
-        packageName: 'gas_service',
-    },
-    Test: {
-        packageName: 'test',
-    },
-};
+// A list of currently supported packages which are the folder names in `node_modules/@axelar-network/axelar-cgp-sui/move`
+const supportedPackageDirs = ['gas_service', 'test'];
 
-const postDeploy = {
-    GasService: postDeployGasService,
-    Test: postDeployTest,
-};
+// Map supported packages to their package names and directories
+const supportedPackages = supportedPackageDirs.map((dir) => ({
+    packageName: readMovePackageName(dir),
+    packageDir: dir,
+}));
 
 // Parse bcs bytes from singleton object to get channel id
 async function getChannelId(client, singletonObjectId) {
@@ -28,25 +22,26 @@ async function getChannelId(client, singletonObjectId) {
     return '0x' + data.channel.id;
 }
 
-async function postDeployGasService(published, config, chain, options) {
-    chain.contracts.GasService.objects.GasCollectorCap = findPublishedObject(
-        published,
-        contractMap.GasService.packageName,
-        'GasCollectorCap',
-    ).objectId;
+/** ######## Post Deployment Functions ######## **/
+// Define the post deployment functions for each supported package here. These functions should be called after the package is deployed.
+// Use cases include:
+// 1. Update the chain config with deployed object ids
+// 2. Submit additional transactions to setup the contracts.
 
-    chain.contracts.GasService.objects.GasService = findPublishedObject(
-        published,
-        contractMap.GasService.packageName,
-        'GasService',
-    ).objectId;
+async function postDeployGasService(published, chain) {
+    chain.contracts.GasService.objects = {
+        GasCollectorCap: findPublishedObject(published, 'gas_service', 'GasCollectorCap').objectId,
+        GasService: findPublishedObject(published, 'gas_service', 'GasService').objectId,
+    };
 }
 
 async function postDeployTest(published, config, chain, options) {
     const [keypair, client] = getWallet(chain, options);
-
-    const singleton = published.publishTxn.objectChanges.find((change) => change.objectType === `${published.packageId}::test::Singleton`);
     const relayerDiscovery = config.sui.contracts.axelar_gateway?.objects?.relayerDiscovery;
+
+    const singleton = findPublishedObject(published, 'test', 'Singleton');
+    const channelId = await getChannelId(client, singleton.objectId);
+    chain.contracts.Test.objects = { singleton: singleton.objectId, channelId };
 
     const tx = new Transaction();
     tx.moveCall({
@@ -57,39 +52,41 @@ async function postDeployTest(published, config, chain, options) {
     const registerTx = await broadcast(client, keypair, tx);
 
     printInfo('Register transaction', registerTx.digest);
-
-    const channelId = await getChannelId(client, singleton.objectId);
-
-    chain.contracts.Test.objects = { singleton: singleton.objectId, channelId };
 }
 
-async function processCommand(contractName, config, chain, options) {
-    const contract = contractMap[contractName];
-    const packageName = options.packageName || contract.packageName;
+/** ######## Main Processor ######## **/
+
+async function processCommand(supportedContract, config, chain, options) {
+    const { packageDir, packageName } = supportedContract;
 
     const [keypair, client] = getWallet(chain, options);
 
     await printWalletInfo(keypair, client, chain, options);
 
-    if (!chain.contracts[contractName]) {
-        chain.contracts[contractName] = {};
+    if (!chain.contracts[packageName]) {
+        chain.contracts[packageName] = {};
     }
 
-    const published = await deployPackage(packageName, client, keypair);
-    const packageId = published.packageId;
-
-    const contractConfig = chain.contracts[contractName];
-    contractConfig.address = packageId;
+    const published = await deployPackage(packageDir, client, keypair);
 
     // Submitting additional setup transaction or saving additional objects to the chain config here
-    await postDeploy[contractName]?.(published, config, chain, options);
+    switch (packageName) {
+        case 'GasService':
+            await postDeployGasService(published, chain);
+            break;
+        case 'Test':
+            await postDeployTest(published, config, chain, options);
+            break;
+        default:
+            throw new Error(`Unsupported package: ${packageName}`);
+    }
 
-    printInfo(`${contractName} deployed`, JSON.stringify(contractConfig, null, 2));
+    printInfo(`${packageName} deployed`, JSON.stringify(chain.contracts[packageName], null, 2));
 }
 
-async function mainProcessor(contractName, options, processor) {
+async function mainProcessor(supportedContract, options, processor) {
     const config = loadSuiConfig(options.env);
-    await processor(contractName, config, config.sui, options);
+    await processor(supportedContract, config, config.sui, options);
     saveConfig(config, options.env);
 }
 
@@ -98,14 +95,17 @@ if (require.main === module) {
 
     program
         .name('deploy-contract')
-        .addOption(new Option('--packageName <packageName>', 'Package name to deploy'))
-        .addArgument(new Argument('<contractName>', 'Contract name to deploy').choices(Object.keys(contractMap)))
+        .addArgument(
+            new Argument('<contractName>', 'Contract name to deploy')
+                .choices(supportedPackages.map((p) => p.packageName))
+                .argParser((packageName) => supportedPackages.find((p) => p.packageName === packageName)),
+        )
         .description('Deploy SUI modules');
 
     addBaseOptions(program);
 
-    program.action((contractName, options) => {
-        mainProcessor(contractName, options, processCommand);
+    program.action((supportedContract, options) => {
+        mainProcessor(supportedContract, options, processCommand);
     });
 
     program.parse();

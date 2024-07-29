@@ -1,11 +1,12 @@
 'use strict';
 
 const { ethers } = require('hardhat');
-const { loadConfig } = require('../evm/utils');
+const { loadConfig, printError } = require('../evm/utils');
 const {
     BigNumber,
     utils: { arrayify, hexlify },
 } = ethers;
+const fs = require('fs');
 const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
@@ -77,9 +78,26 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
     return { packageId, publishTxn };
 };
 
-const findPublishedObject = (published, packageName, contractName) => {
+const findPublishedObject = (published, packageDir, contractName) => {
     const packageId = published.packageId;
-    return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageName}::${contractName}`);
+    return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageDir}::${contractName}`);
+};
+
+const readMovePackageName = (moveDir) => {
+    try {
+        const moveToml = fs.readFileSync(`${__dirname}/../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`, 'utf8');
+
+        const nameMatch = moveToml.match(/^\s*name\s*=\s*"([^"]+)"/m);
+
+        if (nameMatch && nameMatch[1]) {
+            return nameMatch[1];
+        }
+
+        throw new Error('Package name not found in TOML file');
+    } catch (err) {
+        printError('Error reading TOML file');
+        throw err;
+    }
 };
 
 module.exports = {
@@ -88,4 +106,5 @@ module.exports = {
     loadSuiConfig,
     deployPackage,
     findPublishedObject,
+    readMovePackageName,
 };
