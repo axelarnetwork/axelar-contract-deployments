@@ -14,7 +14,7 @@ const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { loadSuiConfig, getAmplifierSigners, deployPackage, getObjectIdsByObjectTypes } = require('./utils');
 const { bytes32Struct, signersStruct } = require('./types-utils');
 const { upgradePackage } = require('./deploy-utils');
-const { suiPackageAddress } = require('./utils');
+const { suiPackageAddress, suiClockAddress } = require('./utils');
 
 async function getSigners(keypair, config, chain, options) {
     if (options.signers === 'wallet') {
@@ -109,7 +109,7 @@ async function deploy(contractName, config, chain, options) {
                     tx.pure.u64(minimumRotationDelay),
                     tx.pure.u64(options.previousSigners),
                     tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
-                    tx.object('0x6'),
+                    tx.object(suiClockAddress),
                 ],
             });
 

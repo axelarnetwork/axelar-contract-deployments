@@ -11,6 +11,7 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 
 const suiPackageAddress = '0x2';
+const suiClockAddress = '0x6';
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -91,6 +92,7 @@ const getObjectIdsByObjectTypes = (txn, objectTypes) => {
 
 module.exports = {
     suiPackageAddress,
+    suiClockAddress,
     getAmplifierSigners,
     getBcsBytesByObjectId,
     loadSuiConfig,
