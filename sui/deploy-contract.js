@@ -220,7 +220,7 @@ if (require.main === module) {
 
     const upgradeCmd = program
         .name('upgrade')
-        .description('Upgrade SUI modules')
+        .description('Upgrade a Sui package')
         .command('upgrade <contractName> <policy>')
         .addOption(new Option('--sender <sender>', 'transaction sender'))
         .addOption(new Option('--digest <digest>', 'digest hash for upgrade'))
