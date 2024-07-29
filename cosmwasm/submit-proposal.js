@@ -9,6 +9,7 @@ const {
     prepareClient,
     readWasmFile,
     getChains,
+    fetchCodeIdFromCodeHash,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeStoreInstantiateProposal,
@@ -111,29 +112,6 @@ const storeInstantiate = (client, wallet, config, options, chainName) => {
     });
 };
 
-const fetchAndUpdateCodeId = async (client, contractConfig) => {
-    if (!contractConfig.storeCodeProposalCodeHash) {
-        throw new Error('storeCodeProposalCodeHash not found in contract config');
-    }
-
-    const codes = await client.getCodes(); // TODO: create custom function to retrieve codes more efficiently and with pagination
-    let codeId;
-
-    // most likely to be near the end, so we iterate backwards. We also get the latest if there are multiple
-    for (let i = codes.length - 1; i >= 0; i--) {
-        if (codes[i].checksum.toUpperCase() === contractConfig.storeCodeProposalCodeHash.toUpperCase()) {
-            codeId = codes[i].id;
-            break;
-        }
-    }
-
-    if (!codeId) {
-        throw new Error('codeId not found on network for the given codeHash');
-    }
-
-    contractConfig.codeId = codeId;
-};
-
 const instantiate = async (client, wallet, config, options, chainName) => {
     const { contractName, instantiate2, predictOnly, fetchCodeId } = options;
     const {
@@ -148,7 +126,7 @@ const instantiate = async (client, wallet, config, options, chainName) => {
     }
 
     if (fetchCodeId) {
-        await fetchAndUpdateCodeId(client, contractConfig);
+        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
     } else if (!isNumber(contractConfig.codeId)) {
         throw new Error('Code Id is not defined');
     }
