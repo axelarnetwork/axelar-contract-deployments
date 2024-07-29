@@ -2,12 +2,12 @@ name: Continuous Integration for Solana Programs
 
 on:
   push:
-    branches: [main, poc]
+    branches: [main, p1-release]
     paths:
       - solana/**
       - .github/workflows/solana-programs.yml
   pull_request:
-    branches: [main, poc]
+    branches: [main, p1-release]
     paths:
       - solana/**
       - .github/workflows/solana-programs.yml

@@ -3,6 +3,7 @@ on:
   pull_request:
     branches:
       - "main"
+      - "p1-release"
     paths:
       - "offchain/components/relayer/**"
 
