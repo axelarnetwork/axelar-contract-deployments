@@ -195,7 +195,7 @@ if (require.main === module) {
 
     program.name('deploy-contract').description('Deploy/Upgrade packages');
 
-    const deployCMD = program
+    const deployCmd = program
         .name('deploy')
         .description('Deploy SUI modules')
         .command('deploy <contractName>')
@@ -214,7 +214,7 @@ if (require.main === module) {
             mainProcessor([contractName], options, deploy);
         });
 
-    const upgradeCMD = program
+    const upgradeCmd = program
         .name('upgrade')
         .description('Upgrade SUI modules')
         .command('upgrade <contractName> <policy>')
@@ -226,8 +226,8 @@ if (require.main === module) {
             mainProcessor([contractName, policy], options, upgrade);
         });
 
-    addBaseOptions(deployCMD);
-    addBaseOptions(upgradeCMD);
+    addBaseOptions(deployCmd);
+    addBaseOptions(upgradeCmd);
 
     program.parse();
 }
