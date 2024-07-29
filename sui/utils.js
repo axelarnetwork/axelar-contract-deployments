@@ -80,15 +80,14 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
     return { packageId, publishTxn };
 };
 
-const getObjectIdsByObjectTypes = (txn, objectTypes) => {
-    const objectIds = [];
+const getObjectIdsByObjectTypes = (txn, objectTypes) =>
+    objectTypes.map((objectType) => {
+        const objectId = txn.objectChanges.find((change) => change.objectType === objectType)?.objectId;
 
-    for (const objectType of objectTypes) {
-        objectIds.push(txn.objectChanges.find((change) => change.objectType === objectType).objectId);
-    }
-
-    return objectIds;
-};
+        if (!objectId) {
+            throw new Error(`No object found for type: ${objectType}`);
+        }
+    });
 
 module.exports = {
     suiPackageAddress,
