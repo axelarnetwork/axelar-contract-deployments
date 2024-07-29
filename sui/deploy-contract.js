@@ -113,8 +113,8 @@ async function deploy(contractName, config, chain, options) {
                 ],
             });
 
-            if (policy !== '0') {
-                const upgradeType = policy === '128' ? 'only_additive_upgrades' : 'only_dep_upgrades';
+            if (policy !== 'any_upgrade') {
+                const upgradeType = policy === 'code_upgrade' ? 'only_additive_upgrades' : 'only_dep_upgrades';
 
                 tx.moveCall({
                     target: `${suiPackageAddress}::package::${upgradeType}`,
@@ -206,9 +206,9 @@ if (require.main === module) {
         .addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'))
         .addOption(new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'))
         .addOption(
-            new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "0" to allow all types of upgrades')
-                .choices(['0', '128', '192'])
-                .default('0'),
+            new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "any_upgrade" to allow all types of upgrades')
+                .choices(['any_upgrade', 'code_upgrade', 'dep_upgrade'])
+                .default('any_upgrade'),
         )
         .action((contractName, options) => {
             mainProcessor([contractName], options, deploy);

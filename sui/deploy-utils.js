@@ -12,8 +12,8 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
     const { policy, offline } = options;
     const sender = options.sender || keypair.toSuiAddress();
 
-    if (!['0', '128', '192'].includes(policy)) {
-        throw new Error(`Unknown upgrade policy: ${policy}`);
+    if (!['any_upgrade', 'code_upgrade', 'dep_upgrade'].includes(policy)) {
+        throw new Error(`Unknown upgrade policy: ${policy}. Supported policies: any_upgrade, code_upgrade, dep_upgrade`);
     }
 
     const upgradeCap = packageConfig.objects?.upgradeCap;

@@ -81,9 +81,9 @@ node sui/deploy-contract.js upgrade axelar_gateway <policy>
 
 policy should be one of the following:
 
--   `0`: Allow any upgrade.
--   `128`: Upgrade policy to just add code. https://docs.sui.io/references/framework/sui-framework/package#function-only_additive_upgrades
--   `192`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
+-   `any_upgrade`: Allow any upgrade.
+-   `code_upgrade`: Upgrade policy to just add code. https://docs.sui.io/references/framework/sui-framework/package#function-only_additive_upgrades
+-   `dep_upgrade`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
 
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
