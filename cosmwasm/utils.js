@@ -213,7 +213,16 @@ const makeVotingVerifierInstantiateMsg = (
     { id: chainId },
 ) => {
     const {
-        [chainId]: { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat, addressFormat },
+        [chainId]: {
+            governanceAddress,
+            serviceName,
+            sourceGatewayAddress,
+            votingThreshold,
+            blockExpiry,
+            confirmationHeight,
+            msgIdFormat,
+            addressFormat,
+        },
     } = contractConfig;
 
     if (!validateAddress(serviceRegistryAddress)) {
