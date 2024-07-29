@@ -486,6 +486,29 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     throw new Error(`${contractName} is not supported.`);
 };
 
+const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
+    if (!contractConfig.storeCodeProposalCodeHash) {
+        throw new Error('storeCodeProposalCodeHash not found in contract config');
+    }
+
+    const codes = await client.getCodes(); // TODO: create custom function to retrieve codes more efficiently and with pagination
+    let codeId;
+
+    // most likely to be near the end, so we iterate backwards. We also get the latest if there are multiple
+    for (let i = codes.length - 1; i >= 0; i--) {
+        if (codes[i].checksum.toUpperCase() === contractConfig.storeCodeProposalCodeHash.toUpperCase()) {
+            codeId = codes[i].id;
+            break;
+        }
+    }
+
+    if (!codeId) {
+        throw new Error('codeId not found on network for the given codeHash');
+    }
+
+    return codeId;
+};
+
 const instantiate2AddressForProposal = (client, contractConfig, { contractName, salt, chainNames, runAs }) => {
     return client
         .getCodeDetails(contractConfig.codeId)
@@ -682,6 +705,7 @@ module.exports = {
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
+    fetchCodeIdFromCodeHash,
     instantiate2AddressForProposal,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
