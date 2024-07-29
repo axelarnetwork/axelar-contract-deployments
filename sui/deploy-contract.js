@@ -46,11 +46,7 @@ async function getSigners(keypair, config, chain, options) {
     return getAmplifierSigners(config, chain);
 }
 
-async function deploy(contractName, config, chain, options) {
-    const [keypair, client] = getWallet(chain, options);
-
-    await printWalletInfo(keypair, client, chain, options);
-
+async function deploy(keypair, client, contractName, config, chain, options) {
     if (!chain.contracts[contractName]) {
         chain.contracts[contractName] = {};
     }
@@ -147,12 +143,9 @@ async function deploy(contractName, config, chain, options) {
     printInfo(`${contractName} deployed`, JSON.stringify(contractConfig, null, 2));
 }
 
-async function upgrade(contractName, policy, config, chain, options) {
-    const [keypair, client] = getWallet(chain, options);
+async function upgrade(keypair, client, contractName, policy, config, chain, options) {
     const { packageDependencies } = options;
     options.policy = policy;
-
-    await printWalletInfo(keypair, client, chain, options);
 
     if (!chain.contracts[contractName]) {
         throw new Error(`Cannot find specified contract: ${contractName}`);
@@ -176,7 +169,9 @@ async function upgrade(contractName, policy, config, chain, options) {
 
 async function mainProcessor(args, options, processor) {
     const config = loadSuiConfig(options.env);
-    await processor(...args, config, config.sui, options);
+    const [keypair, client] = getWallet(config.sui, options);
+    await printWalletInfo(keypair, client, config.sui, options);
+    await processor(keypair, client, ...args, config, config.sui, options);
     saveConfig(config, options.env);
 
     if (options.offline) {
