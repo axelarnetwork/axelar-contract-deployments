@@ -1,40 +1,42 @@
 const { Command, Option } = require('commander');
 const { TxBuilder, updateMoveToml } = require('@axelar-network/axelar-cgp-sui');
-const { bcs } = require('@mysten/sui/bcs');
+const { bcs } = require('@mysten/bcs');
 const { fromB64, toB64 } = require('@mysten/bcs');
 const { saveConfig, printInfo, validateParameters, prompt, writeJSON } = require('../evm/utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
-const { loadSuiConfig } = require('./utils');
+const { loadSuiConfig, getObjectIdsByObjectTypes, suiPackageAddress } = require('./utils');
 
 async function upgradePackage(client, keypair, packageName, packageConfig, builder, options) {
     const { modules, dependencies, digest } = await builder.getContractBuild(packageName);
     const { policy, offline } = options;
     const sender = options.sender || keypair.toSuiAddress();
-    const suiPackageId = '0x2';
 
-    const upgradeCap = packageConfig.objects?.UpgradeCap;
+    if (!['any_upgrade', 'code_upgrade', 'dep_upgrade'].includes(policy)) {
+        throw new Error(`Unknown upgrade policy: ${policy}. Supported policies: any_upgrade, code_upgrade, dep_upgrade`);
+    }
+
+    const upgradeCap = packageConfig.objects?.upgradeCap;
     const digestHash = options.digest ? fromB64(options.digest) : digest;
 
     validateParameters({ isNonEmptyString: { upgradeCap, policy }, isNonEmptyStringArray: { modules, dependencies } });
 
     const tx = builder.tx;
     const cap = tx.object(upgradeCap);
-
     const ticket = tx.moveCall({
-        target: `${suiPackageId}::package::authorize_upgrade`,
-        arguments: [cap, tx.pure(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
+        target: `${suiPackageAddress}::package::authorize_upgrade`,
+        arguments: [cap, tx.pure.u8(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
     });
 
     const receipt = tx.upgrade({
         modules,
         dependencies,
-        packageId: packageConfig.address,
+        package: packageConfig.address,
         ticket,
     });
 
     tx.moveCall({
-        target: `${suiPackageId}::package::commit_upgrade`,
+        target: `${suiPackageAddress}::package::commit_upgrade`,
         arguments: [cap, receipt],
     });
 
@@ -43,6 +45,7 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
 
     if (offline) {
         options.txBytes = txBytes;
+        options.offlineMessage = `Transaction to upgrade ${packageName}`;
     } else {
         const signature = (await keypair.signTransaction(txBytes)).signature;
         const result = await client.executeTransactionBlock({
@@ -57,7 +60,10 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
 
         const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
         packageConfig.address = packageId;
-        printInfo('Transaction result', JSON.stringify(result, null, 2));
+        const [upgradeCap] = getObjectIdsByObjectTypes(result, ['0x2::package::UpgradeCap']);
+        packageConfig.objects.upgradeCap = upgradeCap;
+
+        printInfo('Transaction digest', JSON.stringify(result.digest, null, 2));
         printInfo(`${packageName} upgraded`, packageId);
     }
 }
@@ -175,3 +181,8 @@ if (require.main === module) {
 
     program.parse();
 }
+
+module.exports = {
+    upgradePackage,
+    deployPackage,
+};

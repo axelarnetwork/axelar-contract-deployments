@@ -54,27 +54,45 @@ Deploy the gateway package:
 -   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
 ```bash
-node sui/deploy-gateway.js
+node sui/deploy-contract.js deploy axelar_gateway
 ```
+
+Note: the `minimumRotationDelay` is in `seconds` unit. The default value is `24 * 60 * 60` (1 day).
 
 Use `--help` flag to see other setup params that can be overridden.
 
 -   For testing convenience, you can use the secp256k1 wallet as the signer set for the gateway.
 
 ```bash
-node sui/deploy-gateway.js --signers wallet --nonce test
+node sui/deploy-contract.js deploy axelar_gateway --signers wallet --nonce test
 ```
 
 -   You can also provide a JSON object with a full signer set:
 
 ```bash
-node sui/deploy-gateway.js -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
+node sui/deploy-contract.js deploy axelar_gateway -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
 ```
+
+Upgrading Gateway:
+
+To update the gateway run the following command:
+
+```bash
+node sui/deploy-contract.js upgrade axelar_gateway <policy>
+```
+
+policy should be one of the following:
+
+-   `any_upgrade`: Allow any upgrade.
+-   `code_upgrade`: Upgrade policy to just add code. https://docs.sui.io/references/framework/sui-framework/package#function-only_additive_upgrades
+-   `dep_upgrade`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
+
+Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
 Deploy the Gas Service package:
 
 ```bash
-node sui/deploy-contract.js GasService
+node sui/deploy-contract.js deploy gas_service
 ```
 
 Deploy the test GMP package:
@@ -121,32 +139,36 @@ node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test -
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
 
-
 ### Multisig
 
 To create a Multisig, follow the documentation [here](https://docs.sui.io/guides/developer/cryptography/multisig).
 
 Get test SUI coins to your multisig address via a faucet:
+
 ```bash
 sui client faucet --address <multisig address>
 ```
 
 Get public keys for all wallets:
+
 ```bash
 sui keytool list
 ```
 
 Get private key of wallet using wallet alias or address:
+
 ```bash
 sui keytool export --key-identity <alias/wallet address>
 ```
 
 Get tx data for testing:
+
 ```bash
 sui client transfer-sui --to <recipient address> --amount 1 --sui-coin-object-id <sui coin object id> --serialize-unsigned-transaction --gas-budget 77047880
 ```
 
 To get sui coin object id
+
 ```bash
 sui client gas <multisig address>
 ```
@@ -158,6 +180,7 @@ node sui/multisig.js --txBlockPath <path to unsigned tx block> --signatureFilePa
 ```
 
 example txBlock file:
+
 ```
 {
     "bytes": "AAACACBC5cSnnYJrDEn9nSW1BDzPLLAbUJbYOeJnUgYl/b90..."
@@ -181,6 +204,7 @@ node sui/multisig.js --txBlockPath <path to unsigned tx block> --action execute 
 use --multisigKey `multisigKey` to override existing multisig info in chains config
 
 example for adding multisig info to chains config:
+
 ```
 {
     "sui": {
@@ -206,6 +230,10 @@ example for adding multisig info to chains config:
     }
 }
 ```
+
+GMP Demo:
+
+Follow the instructions [here](docs/gmp.md)
 
 ## Troubleshooting
 
