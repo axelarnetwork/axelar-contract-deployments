@@ -14,6 +14,7 @@ const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { loadSuiConfig, getAmplifierSigners, deployPackage, getObjectIdsByObjectTypes } = require('./utils');
 const { bytes32Struct, signersStruct } = require('./types-utils');
 const { upgradePackage } = require('./deploy-utils');
+const { suiPackageAddress } = require('./utils');
 
 async function getSigners(keypair, config, chain, options) {
     if (options.signers === 'wallet') {
@@ -82,7 +83,7 @@ async function deploy(contractName, config, chain, options) {
             const [creatorCap, relayerDiscovery, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
                 `${packageId}::gateway::CreatorCap`,
                 `${packageId}::discovery::RelayerDiscovery`,
-                '0x2::package::UpgradeCap',
+                `${suiPackageAddress}::package::UpgradeCap`,
             ]);
 
             const encodedSigners = signersStruct
@@ -116,7 +117,7 @@ async function deploy(contractName, config, chain, options) {
                 const upgradeType = policy === '128' ? 'only_additive_upgrades' : 'only_dep_upgrades';
 
                 tx.moveCall({
-                    target: `0x2::package::${upgradeType}`,
+                    target: `${suiPackageAddress}::package::${upgradeType}`,
                     arguments: [tx.object(upgradeCap)],
                 });
             }

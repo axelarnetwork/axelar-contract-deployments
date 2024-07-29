@@ -81,7 +81,7 @@ node sui/deploy-contract.js upgrade axelar_gateway <policy>
 
 policy should be one of the following:
 
--   `0`: No upgrade policy
+-   `0`: Allow any upgrade.
 -   `128`: Upgrade policy to just add code. https://docs.sui.io/references/framework/sui-framework/package#function-only_additive_upgrades
 -   `192`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
 

@@ -5,13 +5,12 @@ const { fromB64, toB64 } = require('@mysten/bcs');
 const { saveConfig, printInfo, validateParameters, prompt, writeJSON } = require('../evm/utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
-const { loadSuiConfig, getObjectIdsByObjectTypes } = require('./utils');
+const { loadSuiConfig, getObjectIdsByObjectTypes, suiPackageAddress } = require('./utils');
 
 async function upgradePackage(client, keypair, packageName, packageConfig, builder, options) {
     const { modules, dependencies, digest } = await builder.getContractBuild(packageName);
     const { policy, offline } = options;
     const sender = options.sender || keypair.toSuiAddress();
-    const suiPackageId = '0x2';
 
     if (!['0', '128', '192'].includes(policy)) {
         throw new Error(`Unknown upgrade policy: ${policy}`);
@@ -25,7 +24,7 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
     const tx = builder.tx;
     const cap = tx.object(upgradeCap);
     const ticket = tx.moveCall({
-        target: `${suiPackageId}::package::authorize_upgrade`,
+        target: `${suiPackageAddress}::package::authorize_upgrade`,
         arguments: [cap, tx.pure.u8(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
     });
 
@@ -37,7 +36,7 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
     });
 
     tx.moveCall({
-        target: `${suiPackageId}::package::commit_upgrade`,
+        target: `${suiPackageAddress}::package::commit_upgrade`,
         arguments: [cap, receipt],
     });
 
