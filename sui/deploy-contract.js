@@ -197,11 +197,15 @@ if (require.main === module) {
 
     const deployCmd = program
         .name('deploy')
-        .description('Deploy SUI modules')
+        .description('Deploy a Sui package')
         .command('deploy <contractName>')
         .addOption(new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'))
         .addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'))
-        .addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default('0'))
+        .addOption(
+            new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in second)')
+                .default(24 * 60 * 60)
+                .parseArg((val) => parseInt(val) * 1000),
+        )
         .addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator'))
         .addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'))
         .addOption(new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'))

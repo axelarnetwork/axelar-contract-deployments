@@ -57,6 +57,8 @@ Deploy the gateway package:
 node sui/deploy-contract.js deploy axelar_gateway
 ```
 
+Note: the `minimumRotationDelay` is in `seconds` unit. The default value is `24 * 60 * 60` (1 day).
+
 Use `--help` flag to see other setup params that can be overridden.
 
 -   For testing convenience, you can use the secp256k1 wallet as the signer set for the gateway.
