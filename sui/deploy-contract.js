@@ -96,9 +96,19 @@ if (require.main === module) {
     program
         .name('deploy-contract')
         .addArgument(
-            new Argument('<contractName>', 'Contract name to deploy')
-                .choices(supportedPackages.map((p) => p.packageName))
-                .argParser((packageName) => supportedPackages.find((p) => p.packageName === packageName)),
+            new Argument('<contractName>', 'Contract name to deploy').argParser((packageName) => {
+                const supportedPackage = supportedPackages.find((p) => p.packageName === packageName);
+
+                if (!supportedPackage) {
+                    throw new Error(
+                        `Unsupported package: ${packageName}. Supported packages: ${supportedPackages
+                            .map((p) => p.packageName)
+                            .join(', ')}`,
+                    );
+                }
+
+                return supportedPackage;
+            }),
         )
         .description('Deploy SUI modules');
 
