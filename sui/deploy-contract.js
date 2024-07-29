@@ -202,7 +202,7 @@ if (require.main === module) {
         .addOption(new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'))
         .addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'))
         .addOption(new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in ms)').default('0'))
-        .addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator').default(HashZero))
+        .addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator'))
         .addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'))
         .addOption(new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'))
         .addOption(
