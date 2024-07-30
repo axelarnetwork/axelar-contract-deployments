@@ -8,13 +8,145 @@ const {
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
     constants: { HashZero },
 } = ethers;
-const { saveConfig, printInfo, validateParameters, writeJSON } = require('../evm/utils');
-const { addBaseOptions } = require('./cli-utils');
+const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator } = require('../common');
+const { addBaseOptions, addDeployOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
-const { loadSuiConfig, getAmplifierSigners, deployPackage, getObjectIdsByObjectTypes } = require('./utils');
-const { bytes32Struct, signersStruct } = require('./types-utils');
+const { bytes32Struct, signersStruct, singletonStruct } = require('./types-utils');
 const { upgradePackage } = require('./deploy-utils');
-const { suiPackageAddress, suiClockAddress } = require('./utils');
+const {
+    loadSuiConfig,
+    getAmplifierSigners,
+    deployPackage,
+    getObjectIdsByObjectTypes,
+    suiPackageAddress,
+    suiClockAddress,
+    readMovePackageName,
+    getBcsBytesByObjectId,
+} = require('./utils');
+
+// A list of currently supported packages which are the folder names in `node_modules/@axelar-network/axelar-cgp-sui/move`
+const supportedPackageDirs = ['gas_service', 'test', 'axelar_gateway'];
+
+// Map supported packages to their package names and directories
+const supportedPackages = supportedPackageDirs.map((dir) => ({
+    packageName: readMovePackageName(dir),
+    packageDir: dir,
+}));
+
+// Parse bcs bytes from singleton object to get channel id
+async function getChannelId(client, singletonObjectId) {
+    const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
+    const data = singletonStruct.parse(bcsBytes);
+    return '0x' + data.channel.id;
+}
+
+/** ######## Post Deployment Functions ######## **/
+// Define the post deployment functions for each supported package here. These functions should be called after the package is deployed.
+// Use cases include:
+// 1. Update the chain config with deployed object ids
+// 2. Submit additional transactions to setup the contracts.
+
+async function postDeployGasService(published, chain) {
+    const [gasCollectorCapObjectId, gasServiceObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+        `${published.packageId}::gas_service::GasCollectorCap`,
+        `${published.packageId}::gas_service::GasService`,
+    ]);
+    chain.contracts.GasService.objects = {
+        GasCollectorCap: gasCollectorCapObjectId,
+        GasService: gasServiceObjectId,
+    };
+}
+
+async function postDeployTest(published, config, chain, options) {
+    const [keypair, client] = getWallet(chain, options);
+    const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
+
+    const [singletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::test::Singleton`]);
+    const channelId = await getChannelId(client, singletonObjectId);
+    chain.contracts.Test.objects = { Singleton: singletonObjectId, ChannelId: channelId };
+
+    const tx = new Transaction();
+    tx.moveCall({
+        target: `${published.packageId}::test::register_transaction`,
+        arguments: [tx.object(relayerDiscovery), tx.object(singletonObjectId)],
+    });
+
+    const registerTx = await broadcast(client, keypair, tx);
+
+    printInfo('Register transaction', registerTx.digest);
+}
+
+async function postDeployAxelarGateway(published, keypair, client, config, chain, options) {
+    const { packageId, publishTxn } = published;
+    const { minimumRotationDelay, policy, previousSigners } = options;
+    const operator = options.operator || keypair.toSuiAddress();
+    const signers = await getSigners(keypair, config, chain, options);
+    const domainSeparator = await getDomainSeparator(config, chain, options);
+
+    validateParameters({
+        isNonEmptyString: { previousSigners },
+        isValidNumber: { minimumRotationDelay },
+    });
+
+    const [creatorCap, relayerDiscovery, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
+        `${packageId}::gateway::CreatorCap`,
+        `${packageId}::discovery::RelayerDiscovery`,
+        `${suiPackageAddress}::package::UpgradeCap`,
+    ]);
+
+    const encodedSigners = signersStruct
+        .serialize({
+            ...signers,
+            nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
+        })
+        .toBytes();
+
+    const tx = new Transaction();
+
+    const separator = tx.moveCall({
+        target: `${packageId}::bytes32::new`,
+        arguments: [tx.pure(arrayify(domainSeparator))],
+    });
+
+    tx.moveCall({
+        target: `${packageId}::gateway::setup`,
+        arguments: [
+            tx.object(creatorCap),
+            tx.pure.address(operator),
+            separator,
+            tx.pure.u64(minimumRotationDelay),
+            tx.pure.u64(options.previousSigners),
+            tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
+            tx.object(suiClockAddress),
+        ],
+    });
+
+    if (policy !== 'any_upgrade') {
+        const upgradeType = policy === 'code_upgrade' ? 'only_additive_upgrades' : 'only_dep_upgrades';
+
+        tx.moveCall({
+            target: `${suiPackageAddress}::package::${upgradeType}`,
+            arguments: [tx.object(upgradeCap)],
+        });
+    }
+
+    const result = await broadcast(client, keypair, tx);
+
+    printInfo('Setup transaction digest', result.digest);
+
+    const [gateway] = getObjectIdsByObjectTypes(result, [`${packageId}::gateway::Gateway`]);
+
+    const contractConfig = chain.contracts.AxelarGateway;
+
+    contractConfig.objects = {
+        Gateway: gateway,
+        RelayerDiscovery: relayerDiscovery,
+        UpgradeCap: upgradeCap,
+    };
+    contractConfig.domainSeparator = domainSeparator;
+    contractConfig.operator = operator;
+    contractConfig.minimumRotationDelay = minimumRotationDelay;
+}
 
 async function getSigners(keypair, config, chain, options) {
     if (options.signers === 'wallet') {
@@ -46,101 +178,36 @@ async function getSigners(keypair, config, chain, options) {
     return getAmplifierSigners(config, chain);
 }
 
-async function deploy(keypair, client, contractName, config, chain, options) {
-    if (!chain.contracts[contractName]) {
-        chain.contracts[contractName] = {};
+async function deploy(keypair, client, supportedContract, config, chain, options) {
+    const { packageDir, packageName } = supportedContract;
+
+    if (!chain.contracts[packageName]) {
+        chain.contracts[packageName] = {};
     }
 
-    const { packageId, publishTxn } = await deployPackage(contractName, client, keypair, options);
+    const published = await deployPackage(packageDir, client, keypair, options);
 
-    printInfo('Publish transaction digest: ', publishTxn.digest);
+    printInfo(`Deployed ${packageName}`, published.publishTxn.digest);
 
-    const contractConfig = chain.contracts[contractName];
-    contractConfig.address = packageId;
-    contractConfig.objects = {};
-
-    switch (contractName) {
-        case 'gas_service': {
-            const [GasService, GasCollectorCap] = getObjectIdsByObjectTypes(publishTxn, [
-                `${packageId}::gas_service::GasService`,
-                `${packageId}::gas_service::GasCollectorCap`,
-            ]);
-            contractConfig.objects = { GasService, GasCollectorCap };
-            break;
-        }
-
-        case 'axelar_gateway': {
-            const { minimumRotationDelay, domainSeparator, policy, previousSigners } = options;
-            const operator = options.operator || keypair.toSuiAddress();
-            const signers = await getSigners(keypair, config, chain, options);
-
-            validateParameters({ isNonEmptyString: { previousSigners, minimumRotationDelay }, isKeccak256Hash: { domainSeparator } });
-
-            const [creatorCap, relayerDiscovery, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
-                `${packageId}::gateway::CreatorCap`,
-                `${packageId}::discovery::RelayerDiscovery`,
-                `${suiPackageAddress}::package::UpgradeCap`,
-            ]);
-
-            const encodedSigners = signersStruct
-                .serialize({
-                    ...signers,
-                    nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
-                })
-                .toBytes();
-
-            const tx = new Transaction();
-
-            const separator = tx.moveCall({
-                target: `${packageId}::bytes32::new`,
-                arguments: [tx.pure(arrayify(domainSeparator))],
-            });
-
-            tx.moveCall({
-                target: `${packageId}::gateway::setup`,
-                arguments: [
-                    tx.object(creatorCap),
-                    tx.pure.address(operator),
-                    separator,
-                    tx.pure.u64(minimumRotationDelay),
-                    tx.pure.u64(options.previousSigners),
-                    tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
-                    tx.object(suiClockAddress),
-                ],
-            });
-
-            if (policy !== 'any_upgrade') {
-                const upgradeType = policy === 'code_upgrade' ? 'only_additive_upgrades' : 'only_dep_upgrades';
-
-                tx.moveCall({
-                    target: `${suiPackageAddress}::package::${upgradeType}`,
-                    arguments: [tx.object(upgradeCap)],
-                });
-            }
-
-            const result = await broadcast(client, keypair, tx);
-
-            printInfo('Setup transaction digest', result.digest);
-
-            const [gateway] = getObjectIdsByObjectTypes(result, [`${packageId}::gateway::Gateway`]);
-
-            contractConfig.objects = {
-                gateway,
-                relayerDiscovery,
-                upgradeCap,
-            };
-            contractConfig.domainSeparator = domainSeparator;
-            contractConfig.operator = operator;
-            contractConfig.minimumRotationDelay = minimumRotationDelay;
-            break;
-        }
-
-        default: {
-            throw new Error(`${contractName} is not supported.`);
-        }
+    if (!chain.contracts[packageName]) {
+        chain.contracts[packageName] = {};
     }
 
-    printInfo(`${contractName} deployed`, JSON.stringify(chain.contracts[contractName], null, 2));
+    switch (packageName) {
+        case 'GasService':
+            await postDeployGasService(published, chain);
+            break;
+        case 'AxelarGateway':
+            await postDeployAxelarGateway(published, keypair, client, config, chain, options);
+            break;
+        case 'Test':
+            await postDeployTest(published, config, chain, options);
+            break;
+        default:
+            throw new Error(`${packageName} is not supported.`);
+    }
+
+    printInfo(`${packageName} deployed`, JSON.stringify(chain.contracts[packageName], null, 2));
 }
 
 async function upgrade(keypair, client, contractName, policy, config, chain, options) {
@@ -186,47 +253,45 @@ async function mainProcessor(args, options, processor) {
 }
 
 if (require.main === module) {
-    const program = new Command();
+    // 1st level command
+    const program = new Command('deploy-contract').description('Deploy/Upgrade packages');
 
-    program.name('deploy-contract').description('Deploy/Upgrade packages');
+    // 2nd level commands
+    const deployCmd = new Command('deploy');
+    const upgradeCmd = new Command('upgrade');
 
-    const deployCmd = program
-        .name('deploy')
-        .description('Deploy a Sui package')
-        .command('deploy <contractName>')
-        .addOption(new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'))
-        .addOption(new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'))
-        .addOption(
-            new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in second)')
-                .default(24 * 60 * 60)
-                .parseArg((val) => parseInt(val) * 1000),
-        )
-        .addOption(new Option('--domainSeparator <domainSeparator>', 'domain separator'))
-        .addOption(new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'))
-        .addOption(new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'))
-        .addOption(
-            new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "any_upgrade" to allow all types of upgrades')
-                .choices(['any_upgrade', 'code_upgrade', 'dep_upgrade'])
-                .default('any_upgrade'),
-        )
-        .action((contractName, options) => {
-            mainProcessor([contractName], options, deploy);
+    // 3rd level commands
+    const deployContractCmds = supportedPackages.map((supportedPackage) => {
+        const { packageName } = supportedPackage;
+        const command = new Command(packageName).description(`Deploy ${packageName} contract`);
+
+        return addDeployOptions(command).action((options) => {
+            mainProcessor([supportedPackage], options, deploy);
         });
+    });
 
-    const upgradeCmd = program
-        .name('upgrade')
+    // Add 3rd level commands to 2nd level command `deploy`
+    deployContractCmds.forEach((cmd) => deployCmd.addCommand(cmd));
+
+    // Add base options to all 2nd and 3rd level commands
+    addOptionsToCommands(deployCmd, addBaseOptions);
+    addBaseOptions(upgradeCmd);
+
+    // Define options for 2nd level command `upgrade`
+    upgradeCmd
         .description('Upgrade a Sui package')
-        .command('upgrade <contractName> <policy>')
+        .command('upgrade <packageName> <policy>')
         .addOption(new Option('--sender <sender>', 'transaction sender'))
         .addOption(new Option('--digest <digest>', 'digest hash for upgrade'))
         .addOption(new Option('--offline', 'store tx block for sign'))
         .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
-        .action((contractName, policy, options) => {
-            mainProcessor([contractName, policy], options, upgrade);
+        .action((packageName, policy, options) => {
+            mainProcessor([packageName, policy], options, upgrade);
         });
 
-    addBaseOptions(deployCmd);
-    addBaseOptions(upgradeCmd);
+    // Add 2nd level commands to 1st level command
+    program.addCommand(deployCmd);
+    program.addCommand(upgradeCmd);
 
     program.parse();
 }
