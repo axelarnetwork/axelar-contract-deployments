@@ -1,7 +1,7 @@
 'use strict';
 
 const { ethers } = require('hardhat');
-const { loadConfig, printError } = require('../evm/utils');
+const { loadConfig, printError } = require('../common/utils');
 const {
     BigNumber,
     utils: { arrayify, hexlify },
@@ -110,6 +110,8 @@ const getObjectIdsByObjectTypes = (txn, objectTypes) =>
         if (!objectId) {
             throw new Error(`No object found for type: ${objectType}`);
         }
+
+        return objectId
     });
 
 module.exports = {
