@@ -4,16 +4,7 @@ const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
-    utils: {
-        computeAddress,
-        getContractAddress,
-        keccak256,
-        isAddress,
-        getCreate2Address,
-        defaultAbiCoder,
-        isHexString,
-        hexZeroPad,
-    },
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString, hexZeroPad },
     constants: { AddressZero, HashZero },
     getDefaultProvider,
     BigNumber,
