@@ -4,7 +4,7 @@ const { addBaseOptions } = require('./cli-utils');
 const { getWallet, getMultisig, signTransactionBlockBytes, broadcastSignature } = require('./sign-utils');
 const { getSignedTx, storeSignedTx } = require('../evm/sign-utils');
 const { loadSuiConfig } = require('./utils');
-const { printInfo, validateParameters } = require('../evm/utils');
+const { printInfo, validateParameters } = require('../common/utils');
 
 async function signTx(keypair, client, options) {
     const txFileData = getSignedTx(options.txBlockPath);

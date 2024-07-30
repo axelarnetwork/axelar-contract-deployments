@@ -1,4 +1,4 @@
-const { saveConfig, prompt, printInfo } = require('../evm/utils');
+const { saveConfig, prompt, printInfo } = require('../common/utils');
 const { Command } = require('commander');
 const { loadSuiConfig, deployPackage, getBcsBytesByObjectId } = require('./utils');
 const { singletonStruct } = require('./types-utils');
