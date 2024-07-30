@@ -1,4 +1,4 @@
-const { saveConfig, printInfo } = require('../evm/utils');
+const { saveConfig, printInfo } = require('../common/utils');
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
