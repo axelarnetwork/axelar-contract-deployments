@@ -7,7 +7,7 @@ const {
     ContractFactory,
     Contract,
     Wallet,
-    utils: { defaultAbiCoder, getContractAddress, keccak256, hexlify },
+    utils: { defaultAbiCoder, keccak256, hexlify },
     getDefaultProvider,
 } = ethers;
 
@@ -26,6 +26,9 @@ const {
     getContractConfig,
     isString,
     getWeightedSigners,
+    getContractJSON,
+    getDeployedAddress,
+    getDeployOptions,
 } = require('./utils');
 const { calculateDomainSeparator, isValidCosmosAddress } = require('../cosmwasm/utils');
 const { addExtendedOptions } = require('./cli-utils');
@@ -107,7 +110,7 @@ async function deploy(config, chain, options) {
 
         if (owner !== wallet.address) {
             printWarn(
-                'Governance address is not set to the wallet address. This is needed for official deployment and is transferred after deployment',
+                'Owner address is not set to the wallet address. This is needed for official deployment and is transferred after deployment',
             );
         }
 
@@ -117,9 +120,7 @@ async function deploy(config, chain, options) {
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     const gatewayFactory = new ContractFactory(AxelarAmplifierGateway.abi, AxelarAmplifierGateway.bytecode, wallet);
-
-    const deployerContract =
-        options.deployMethod === 'create3' ? chain.contracts.Create3Deployer?.address : chain.contracts.ConstAddressDeployer?.address;
+    const { deployerContract, salt } = getDeployOptions(options.deployMethod, options.salt || 'AxelarAmplifierGateway', chain);
 
     let gateway;
     let proxyAddress;
@@ -134,11 +135,20 @@ async function deploy(config, chain, options) {
         printInfo('Reusing Gateway Proxy address', proxyAddress);
         gateway = gatewayFactory.attach(proxyAddress);
     } else {
-        const transactionCount = await wallet.getTransactionCount();
-        proxyAddress = getContractAddress({
-            from: wallet.address,
-            nonce: transactionCount + 1,
+        if (options.deployMethod === 'create2') {
+            // TODO: support create2 prediction
+            printError('create2 prediction is not supported yet');
+        }
+
+        proxyAddress = await getDeployedAddress(wallet.address, options.deployMethod, {
+            salt,
+            deployerContract,
+            contractJson: getContractJSON('AxelarAmplifierGatewayProxy'),
+            constructorArgs: [], // TODO: populate constructor args for create2 prediction to work
+            provider: wallet.provider,
+            nonce: (await wallet.getTransactionCount()) + 1,
         });
+
         printInfo('Predicted gateway proxy address', proxyAddress, chalk.cyan);
     }
 
@@ -155,6 +165,7 @@ async function deploy(config, chain, options) {
     if (existingAddress !== undefined && proxyAddress !== existingAddress) {
         printWarn(`Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} in chain configs.`);
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
+        printWarn('This is NOT required if the deployments are done by different integrators');
     }
 
     if (predictOnly || prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
@@ -164,7 +175,6 @@ async function deploy(config, chain, options) {
     contractConfig.deployer = wallet.address;
     const domainSeparator = await getDomainSeparator(config, chain, options);
     const minimumRotationDelay = Number(options.minimumRotationDelay);
-    const salt = options.salt || 'AxelarAmplifierGateway';
 
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${options.previousSignersRetention}, ${domainSeparator}, ${minimumRotationDelay}`);
@@ -235,7 +245,7 @@ async function deploy(config, chain, options) {
     printInfo(`Existing owner`, ownerAddress);
 
     if (!reuseProxy && owner !== ownerAddress) {
-        printError(`ERROR: Retrieved governance address is different:`);
+        printError(`ERROR: Retrieved owner address is different:`);
         printError(`   Actual:   ${ownerAddress}`);
         printError(`   Expected: ${owner}`);
         error = true;

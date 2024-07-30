@@ -1,6 +1,7 @@
 'use strict';
 
-const { bcs } = require('@mysten/sui.js/bcs');
+const { bcs } = require('@mysten/sui/bcs');
+const { fromHEX, toHEX } = require('@mysten/bcs');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, hexlify },
@@ -12,13 +13,18 @@ const addressStruct = bcs.bytes(32).transform({
 });
 
 const signerStruct = bcs.struct('WeightedSigner', {
-    pubkey: bcs.vector(bcs.u8()),
+    pub_key: bcs.vector(bcs.u8()),
     weight: bcs.u128(),
 });
 
 const bytes32Struct = bcs.fixedArray(32, bcs.u8()).transform({
     input: (id) => arrayify(id),
     output: (id) => hexlify(id),
+});
+
+const UID = bcs.fixedArray(32, bcs.u8()).transform({
+    input: (id) => fromHEX(id),
+    output: (id) => toHEX(Uint8Array.from(id)),
 });
 
 const signersStruct = bcs.struct('WeightedSigners', {
@@ -41,9 +47,40 @@ const messageStruct = bcs.struct('Message', {
     payload_hash: bytes32Struct,
 });
 
+const approvedMessageStruct = bcs.struct('ApprovedMessage', {
+    source_chain: bcs.string(),
+    message_id: bcs.string(),
+    source_address: bcs.string(),
+    destination_id: addressStruct,
+    payload: bcs.vector(bcs.u8()),
+});
+
 const proofStruct = bcs.struct('Proof', {
     signers: signersStruct,
     signatures: bcs.vector(bcs.vector(bcs.u8())),
+});
+
+const gasServiceStruct = bcs.struct('GasService', {
+    id: UID,
+    balance: bcs.u64(),
+});
+
+const channelStruct = bcs.struct('Channel', {
+    id: UID,
+});
+
+const singletonStruct = bcs.struct('Singleton', {
+    id: UID,
+    channel: channelStruct,
+});
+
+const discoveryTable = bcs.struct('DiscoveryTable', {
+    id: UID,
+});
+
+const discoveryStruct = bcs.struct('Discovery', {
+    id: UID,
+    fields: discoveryTable,
 });
 
 module.exports = {
@@ -53,5 +90,10 @@ module.exports = {
     signersStruct,
     messageToSignStruct,
     messageStruct,
+    approvedMessageStruct,
     proofStruct,
+    gasServiceStruct,
+    channelStruct,
+    singletonStruct,
+    discoveryStruct,
 };

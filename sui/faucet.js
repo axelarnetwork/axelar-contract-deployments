@@ -1,7 +1,7 @@
 'use strict';
 
 const { addBaseOptions } = require('./cli-utils');
-const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui.js/faucet');
+const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui/faucet');
 const { getWallet, printWalletInfo } = require('./sign-utils');
 const { Command } = require('commander');
 const { saveConfig, loadConfig, printInfo } = require('../evm/utils');

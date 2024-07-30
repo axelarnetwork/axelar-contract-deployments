@@ -371,7 +371,7 @@
       "Router": {
         "adminAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
         "governanceAddress": "axelar19vvhwq57656hqfczhxw3r874l29jtd3uns4fsu",
-        "codeId": 45,
+        "codeId": 49,
         "address": "axelar1q3g7fdqfpftqfpuakwn7x037k80wv35jj9ged7v5e798pds7hnasgj6azz"
       },
       "Multisig": {
@@ -549,4 +549,3 @@
     "gasLimit": "auto"
   }
 }
-

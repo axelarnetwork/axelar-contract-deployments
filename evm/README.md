@@ -9,11 +9,23 @@ By default the version of contracts specified in `package.json` will be used for
 
 Add the deployer private key in `.env` folder (see `.example.env` for reference).
 
-## AxelarGateway
+## Deployer Factories
 
-Deploy the gateway contract.
+EVM contracts can be deployed using one of 3 supported deployment methods:
 
-`node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
+- `create`: Standard nonce based contract deployment
+- `create2`: Contract deployment using `CREATE2` opcode, the deployed address is deterministic based on the sender address, contract bytecode, and the salt
+- `create3`: Contract deployment using the CREATE3 technique, the deployed address is deterministic based only on the sender address, and the salt. The dependency on the contract bytecode is removed, but as a result, you can't trust that the contract bytecode is the same across chains.
+
+A tutorial can be found [here](https://www.axelar.network/blog/same-address-cross-chain-tutorial).
+
+Factories have already been deployed on Axelar connected EVM chains. You can deploy your own factories via the following:
+
+```bash
+node evm/deploy-contract.js -c Create2Deployer -m create
+
+node evm/deploy-contract.js -c Create3Deployer -m create2
+```
 
 ## Axelar Amplifier Gateway
 
@@ -22,6 +34,12 @@ Deploy the Axelar Amplifier Gateway contract. This is the required gateway contr
 `node evm/deploy-amplifier-gateway.js -e testnet -n ethereum`
 
 For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. It'll default to the deployer and can be transferred to governance later.
+
+## Axelar Gateway (legacy connection)
+
+Deploy the original Axelar gateway contract for legacy consensus-based connection. Set the governance and mint limiter via the `--governance` and `--mintLimiter` flags.
+
+`node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
 
 ## Gateway Upgrade
 
@@ -160,13 +178,13 @@ node evm/contracts-deployment-test.js -e testnet -n fantom -y --deployDepositSer
 
 ### Prerequisites
 
--   Clone the repo containing the contract source code.
+- Clone the repo containing the contract source code.
 
 ```bash
 git clone https://github.com/axelarnetwork/axelar-cgp-solidity.git
 ```
 
--   Checkout to the version of contracts to verify in the directory provided to the command before compiling artifacts used by the command.
+- Checkout to the version of contracts to verify in the directory provided to the command before compiling artifacts used by the command.
 
 ```bash
 git checkout vX.Y.Z
@@ -176,14 +194,14 @@ npm ci
 npm run build
 ```
 
--   Update `.hardhat.config.js` to have `chains` and `keys` to point to the current repo.
+- Update `.hardhat.config.js` to have `chains` and `keys` to point to the current repo.
 
 ```javascript
 const chains = require(`../axelar-contract-deployments/axelar-chains-config/info/${env}.json`);
 const keys = readJSON(`../axelar-contract-deployments/keys.json`);
 ```
 
--   `keys.json` is expected to be in the format described [here](./.example.keys.json).
+- `keys.json` is expected to be in the format described [here](./.example.keys.json).
     You can generate the explorer API key via creating an account on the explorer.
 
 ### Example
