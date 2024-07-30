@@ -205,15 +205,15 @@ function timeout(prom, time, exception) {
  * @returns {boolean} - Returns true if the input is a valid keccak256 hash, false otherwise.
  */
 function isKeccak256Hash(input) {
-  // Ensure it's a string of 66 characters length and starts with '0x'
-  if (typeof input !== 'string' || input.length !== 66 || input.slice(0, 2) !== '0x') {
-      return false;
-  }
+    // Ensure it's a string of 66 characters length and starts with '0x'
+    if (typeof input !== 'string' || input.length !== 66 || input.slice(0, 2) !== '0x') {
+        return false;
+    }
 
-  // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
-  const hexPattern = /^[a-fA-F0-9]{64}$/;
+    // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
+    const hexPattern = /^[a-fA-F0-9]{64}$/;
 
-  return hexPattern.test(input.slice(2));
+    return hexPattern.test(input.slice(2));
 }
 
 /**
@@ -233,34 +233,34 @@ function isValidTimeFormat(timeString) {
 }
 
 const validationFunctions = {
-  isNonEmptyString,
-  isNumber,
-  isValidNumber,
-  isValidDecimal,
-  isNumberArray,
-  isKeccak256Hash,
-  isString,
-  isNonEmptyStringArray,
-  isValidTimeFormat,
+    isNonEmptyString,
+    isNumber,
+    isValidNumber,
+    isValidDecimal,
+    isNumberArray,
+    isKeccak256Hash,
+    isString,
+    isNonEmptyStringArray,
+    isValidTimeFormat,
 };
 
 function validateParameters(parameters) {
-  for (const [validatorFunctionString, paramsObj] of Object.entries(parameters)) {
-      const validatorFunction = validationFunctions[validatorFunctionString];
+    for (const [validatorFunctionString, paramsObj] of Object.entries(parameters)) {
+        const validatorFunction = validationFunctions[validatorFunctionString];
 
-      if (typeof validatorFunction !== 'function') {
-          throw new Error(`Validator function ${validatorFunction} is not defined`);
-      }
+        if (typeof validatorFunction !== 'function') {
+            throw new Error(`Validator function ${validatorFunction} is not defined`);
+        }
 
-      for (const paramKey of Object.keys(paramsObj)) {
-          const paramValue = paramsObj[paramKey];
-          const isValid = validatorFunction(paramValue);
+        for (const paramKey of Object.keys(paramsObj)) {
+            const paramValue = paramsObj[paramKey];
+            const isValid = validatorFunction(paramValue);
 
-          if (!isValid) {
-              throw new Error(`Input validation failed for ${validatorFunctionString} with parameter ${paramKey}: ${paramValue}`);
-          }
-      }
-  }
+            if (!isValid) {
+                throw new Error(`Input validation failed for ${validatorFunctionString} with parameter ${paramKey}: ${paramValue}`);
+            }
+        }
+    }
 }
 
 const dateToEta = (utcTimeString) => {
