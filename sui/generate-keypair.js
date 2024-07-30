@@ -3,7 +3,7 @@
 const { addBaseOptions } = require('./cli-utils');
 const { generateKeypair, getRawPrivateKey } = require('./sign-utils');
 const { Command, Option } = require('commander');
-const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
+const { saveConfig, loadConfig, printInfo } = require('../common/utils');
 
 const { ethers } = require('hardhat');
 const { hexlify } = ethers.utils;
