@@ -11,6 +11,9 @@ const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 
+const suiPackageAddress = '0x2';
+const suiClockAddress = '0x6';
+
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
@@ -100,11 +103,23 @@ const readMovePackageName = (moveDir) => {
     }
 };
 
+const getObjectIdsByObjectTypes = (txn, objectTypes) =>
+    objectTypes.map((objectType) => {
+        const objectId = txn.objectChanges.find((change) => change.objectType === objectType)?.objectId;
+
+        if (!objectId) {
+            throw new Error(`No object found for type: ${objectType}`);
+        }
+    });
+
 module.exports = {
+    suiPackageAddress,
+    suiClockAddress,
     getAmplifierSigners,
     getBcsBytesByObjectId,
     loadSuiConfig,
     deployPackage,
     findPublishedObject,
     readMovePackageName,
+    getObjectIdsByObjectTypes,
 };

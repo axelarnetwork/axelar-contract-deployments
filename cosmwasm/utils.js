@@ -213,7 +213,16 @@ const makeVotingVerifierInstantiateMsg = (
     { id: chainId },
 ) => {
     const {
-        [chainId]: { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat },
+        [chainId]: {
+            governanceAddress,
+            serviceName,
+            sourceGatewayAddress,
+            votingThreshold,
+            blockExpiry,
+            confirmationHeight,
+            msgIdFormat,
+            addressFormat,
+        },
     } = contractConfig;
 
     if (!validateAddress(serviceRegistryAddress)) {
@@ -252,6 +261,10 @@ const makeVotingVerifierInstantiateMsg = (
         throw new Error(`Missing or invalid VotingVerifier[${chainId}].msgIdFormat in axelar info`);
     }
 
+    if (!isString(addressFormat)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainId}].addressFormat in axelar info`);
+    }
+
     return {
         service_registry_address: serviceRegistryAddress,
         rewards_address: rewardsAddress,
@@ -263,6 +276,7 @@ const makeVotingVerifierInstantiateMsg = (
         confirmation_height: confirmationHeight,
         source_chain: chainId,
         msg_id_format: msgIdFormat,
+        address_format: addressFormat,
     };
 };
 
@@ -486,6 +500,29 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     throw new Error(`${contractName} is not supported.`);
 };
 
+const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
+    if (!contractConfig.storeCodeProposalCodeHash) {
+        throw new Error('storeCodeProposalCodeHash not found in contract config');
+    }
+
+    const codes = await client.getCodes(); // TODO: create custom function to retrieve codes more efficiently and with pagination
+    let codeId;
+
+    // most likely to be near the end, so we iterate backwards. We also get the latest if there are multiple
+    for (let i = codes.length - 1; i >= 0; i--) {
+        if (codes[i].checksum.toUpperCase() === contractConfig.storeCodeProposalCodeHash.toUpperCase()) {
+            codeId = codes[i].id;
+            break;
+        }
+    }
+
+    if (!codeId) {
+        throw new Error('codeId not found on network for the given codeHash');
+    }
+
+    return codeId;
+};
+
 const instantiate2AddressForProposal = (client, contractConfig, { contractName, salt, chainNames, runAs }) => {
     return client
         .getCodeDetails(contractConfig.codeId)
@@ -682,6 +719,7 @@ module.exports = {
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
+    fetchCodeIdFromCodeHash,
     instantiate2AddressForProposal,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
