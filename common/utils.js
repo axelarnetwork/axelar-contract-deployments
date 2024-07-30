@@ -7,6 +7,12 @@ const chalk = require('chalk');
 const https = require('https');
 const http = require('http');
 const readlineSync = require('readline-sync');
+const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+const { ethers } = require('hardhat');
+const {
+    utils: { keccak256, hexlify },
+} = ethers;
+const { normalizeBech32 } = require('@cosmjs/encoding');
 
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
@@ -205,15 +211,15 @@ function timeout(prom, time, exception) {
  * @returns {boolean} - Returns true if the input is a valid keccak256 hash, false otherwise.
  */
 function isKeccak256Hash(input) {
-  // Ensure it's a string of 66 characters length and starts with '0x'
-  if (typeof input !== 'string' || input.length !== 66 || input.slice(0, 2) !== '0x') {
-      return false;
-  }
+    // Ensure it's a string of 66 characters length and starts with '0x'
+    if (typeof input !== 'string' || input.length !== 66 || input.slice(0, 2) !== '0x') {
+        return false;
+    }
 
-  // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
-  const hexPattern = /^[a-fA-F0-9]{64}$/;
+    // Ensure all characters after the '0x' prefix are hexadecimal (0-9, a-f, A-F)
+    const hexPattern = /^[a-fA-F0-9]{64}$/;
 
-  return hexPattern.test(input.slice(2));
+    return hexPattern.test(input.slice(2));
 }
 
 /**
@@ -233,34 +239,34 @@ function isValidTimeFormat(timeString) {
 }
 
 const validationFunctions = {
-  isNonEmptyString,
-  isNumber,
-  isValidNumber,
-  isValidDecimal,
-  isNumberArray,
-  isKeccak256Hash,
-  isString,
-  isNonEmptyStringArray,
-  isValidTimeFormat,
+    isNonEmptyString,
+    isNumber,
+    isValidNumber,
+    isValidDecimal,
+    isNumberArray,
+    isKeccak256Hash,
+    isString,
+    isNonEmptyStringArray,
+    isValidTimeFormat,
 };
 
 function validateParameters(parameters) {
-  for (const [validatorFunctionString, paramsObj] of Object.entries(parameters)) {
-      const validatorFunction = validationFunctions[validatorFunctionString];
+    for (const [validatorFunctionString, paramsObj] of Object.entries(parameters)) {
+        const validatorFunction = validationFunctions[validatorFunctionString];
 
-      if (typeof validatorFunction !== 'function') {
-          throw new Error(`Validator function ${validatorFunction} is not defined`);
-      }
+        if (typeof validatorFunction !== 'function') {
+            throw new Error(`Validator function ${validatorFunction} is not defined`);
+        }
 
-      for (const paramKey of Object.keys(paramsObj)) {
-          const paramValue = paramsObj[paramKey];
-          const isValid = validatorFunction(paramValue);
+        for (const paramKey of Object.keys(paramsObj)) {
+            const paramValue = paramsObj[paramKey];
+            const isValid = validatorFunction(paramValue);
 
-          if (!isValid) {
-              throw new Error(`Input validation failed for ${validatorFunctionString} with parameter ${paramKey}: ${paramValue}`);
-          }
-      }
-  }
+            if (!isValid) {
+                throw new Error(`Input validation failed for ${validatorFunctionString} with parameter ${paramKey}: ${paramValue}`);
+            }
+        }
+    }
 }
 
 const dateToEta = (utcTimeString) => {
@@ -331,6 +337,66 @@ function toBigNumberString(number) {
     return Math.ceil(number).toLocaleString('en', { useGrouping: false });
 }
 
+const isValidCosmosAddress = (str) => {
+    try {
+        normalizeBech32(str);
+
+        return true;
+    } catch (error) {
+        return false;
+    }
+};
+
+async function getDomainSeparator(config, chain, options) {
+    // Allow any domain separator for local deployments or `0x` if not provided
+    if (options.env === 'local') {
+        return options.domainSeparator || ethers.constants.HashZero;
+    }
+
+    if (isKeccak256Hash(options.domainSeparator)) {
+        // return the domainSeparator for debug deployments
+        return options.domainSeparator;
+    }
+
+    const {
+        axelar: { contracts, chainId },
+    } = config;
+    const {
+        Router: { address: routerAddress },
+    } = contracts;
+
+    if (!isString(chain.axelarId)) {
+        throw new Error(`missing or invalid axelar ID for chain ${chain.name}`);
+    }
+
+    if (!isString(routerAddress) || !isValidCosmosAddress(routerAddress)) {
+        throw new Error(`missing or invalid router address`);
+    }
+
+    if (!isString(chainId)) {
+        throw new Error(`missing or invalid chain ID`);
+    }
+
+    printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
+    const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
+    const expectedDomainSeparator = calculateDomainSeparator(chain.axelarId, routerAddress, chainId);
+
+    if (domainSeparator !== expectedDomainSeparator) {
+        throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
+    }
+
+    return domainSeparator;
+}
+
+const getContractConfig = async (config, chain) => {
+    const key = Buffer.from('config');
+    const client = await CosmWasmClient.connect(config.axelar.rpc);
+    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
+    return JSON.parse(Buffer.from(value).toString('ascii'));
+};
+
+const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -362,4 +428,5 @@ module.exports = {
     toBigNumberString,
     timeout,
     validateParameters,
+    getDomainSeparator,
 };
