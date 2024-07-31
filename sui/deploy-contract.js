@@ -8,10 +8,10 @@ const {
     utils: { arrayify },
 } = ethers;
 const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator } = require('../common');
-const { addBaseOptions, addDeployOptions, addOptionsToCommands } = require('./cli-utils');
+const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { bytes32Struct, signersStruct } = require('./types-utils');
-const { upgradePackage, UPGRADE_POLICIES } = require('./deploy-utils');
+const { upgradePackage, addDeployOptions, UPGRADE_POLICIES } = require('./deploy-utils');
 const {
     loadSuiConfig,
     getSigners,

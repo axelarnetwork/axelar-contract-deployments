@@ -52,37 +52,6 @@ const addExtendedOptions = (program, options = {}) => {
     return program;
 };
 
-const getDeployGatewayOptions = () => {
-    return [
-        new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'),
-        new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'),
-        new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in second)')
-            .argParser((val) => parseInt(val) * 1000)
-            .default(24 * 60 * 60),
-        new Option('--domainSeparator <domainSeparator>', 'domain separator'),
-        new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'),
-        new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'),
-        new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "any_upgrade" to allow all types of upgrades')
-            .choices(['any_upgrade', 'code_upgrade', 'dep_upgrade'])
-            .default('any_upgrade'),
-    ];
-};
-
-const addDeployOptions = (program) => {
-    switch (program.name()) {
-        case 'AxelarGateway':
-            getDeployGatewayOptions().forEach((option) => program.addOption(option));
-            break;
-        case 'GasService':
-        case 'Test':
-            break;
-        default:
-            throw new Error(`Unsupported package: ${program.name()}. `);
-    }
-
-    return program;
-};
-
 // `optionMethod` is a method such as `addBaseOptions`
 // `options` is an option object for optionMethod
 const addOptionsToCommands = (program, optionMethod, options) => {
@@ -111,5 +80,4 @@ module.exports = {
     addExtendedOptions,
     addOptionsToCommands,
     parseSuiUnitAmount,
-    addDeployOptions,
 };
