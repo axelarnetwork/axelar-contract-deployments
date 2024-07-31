@@ -157,9 +157,9 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 
     printInfo(`Deployed ${packageName}`, published.publishTxn.digest);
 
-    if (!chain.contracts[packageName]) {
-        chain.contracts[packageName] = {};
-    }
+    chain.contracts[packageName] = {
+        address: published.packageId,
+    };
 
     switch (packageName) {
         case 'GasService':
@@ -180,7 +180,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 
 async function upgrade(keypair, client, supportedPackage, policy, config, chain, options) {
     const { packageDependencies } = options;
-    const { packageDir, packageName } = supportedPackage;
+    const { packageName } = supportedPackage;
     options.policy = policy;
 
     if (!chain.contracts[packageName]) {
@@ -188,7 +188,7 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     }
 
     const contractsConfig = chain.contracts;
-    const packageConfig = contractsConfig?.[packageName];
+    const contractConfig = contractsConfig?.[packageName];
 
     validateParameters({ isNonEmptyString: { packageName } });
 
@@ -200,7 +200,7 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     }
 
     const builder = new TxBuilder(client);
-    await upgradePackage(client, keypair, packageDir, packageConfig, builder, options);
+    await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
 }
 
 async function mainProcessor(args, options, processor) {

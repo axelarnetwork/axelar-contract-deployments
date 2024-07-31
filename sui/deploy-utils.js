@@ -20,13 +20,14 @@ function getUpgradePolicyId(policy) {
     }
 }
 
-async function upgradePackage(client, keypair, packageDir, packageConfig, builder, options) {
+async function upgradePackage(client, keypair, packageToUpgrade, contractConfig, builder, options) {
+    const { packageDir, packageName } = packageToUpgrade;
     const { modules, dependencies, digest } = await builder.getContractBuild(packageDir);
     const { offline } = options;
     const sender = options.sender || keypair.toSuiAddress();
-    const policy = getUpgradePolicyId(options.policy);
-    const upgradeCap = packageConfig.objects?.UpgradeCap;
+    const upgradeCap = contractConfig.objects?.UpgradeCap;
     const digestHash = options.digest ? fromB64(options.digest) : digest;
+    const policy = getUpgradePolicyId(options.policy);
 
     validateParameters({ isNonEmptyString: { upgradeCap }, isNonEmptyStringArray: { modules, dependencies } });
 
@@ -40,7 +41,7 @@ async function upgradePackage(client, keypair, packageDir, packageConfig, builde
     const receipt = tx.upgrade({
         modules,
         dependencies,
-        package: packageConfig.address,
+        package: contractConfig.address,
         ticket,
     });
 
@@ -68,12 +69,12 @@ async function upgradePackage(client, keypair, packageDir, packageConfig, builde
         });
 
         const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
-        packageConfig.address = packageId;
+        contractConfig.address = packageId;
         const [upgradeCap] = getObjectIdsByObjectTypes(result, ['0x2::package::UpgradeCap']);
-        packageConfig.objects.UpgradeCap = upgradeCap;
+        contractConfig.objects.UpgradeCap = upgradeCap;
 
-        printInfo('Transaction digest', JSON.stringify(result.digest, null, 2));
-        printInfo(`${packageDir} upgraded`, packageId);
+        printInfo('Transaction Digest', JSON.stringify(result.digest, null, 2));
+        printInfo(`${packageName} Upgraded Address`, packageId);
     }
 }
 
