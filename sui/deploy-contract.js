@@ -5,23 +5,22 @@ const { toB64 } = require('@mysten/sui/utils');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
 const {
-    utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
-    constants: { HashZero },
+    utils: { arrayify },
 } = ethers;
 const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator } = require('../common');
 const { addBaseOptions, addDeployOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
-const { bytes32Struct, signersStruct, singletonStruct } = require('./types-utils');
+const { bytes32Struct, signersStruct } = require('./types-utils');
 const { upgradePackage } = require('./deploy-utils');
 const {
     loadSuiConfig,
-    getAmplifierSigners,
+    getSigners,
     deployPackage,
     getObjectIdsByObjectTypes,
     suiPackageAddress,
     suiClockAddress,
     readMovePackageName,
-    getBcsBytesByObjectId,
+    getChannelId,
 } = require('./utils');
 
 // A list of currently supported packages which are the folder names in `node_modules/@axelar-network/axelar-cgp-sui/move`
@@ -32,13 +31,6 @@ const supportedPackages = supportedPackageDirs.map((dir) => ({
     packageName: readMovePackageName(dir),
     packageDir: dir,
 }));
-
-// Parse bcs bytes from singleton object to get channel id
-async function getChannelId(client, singletonObjectId) {
-    const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
-    const data = singletonStruct.parse(bcsBytes);
-    return '0x' + data.channel.id;
-}
 
 /** ######## Post Deployment Functions ######## **/
 // Define the post deployment functions for each supported package here. These functions should be called after the package is deployed.
@@ -146,36 +138,6 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
     contractConfig.domainSeparator = domainSeparator;
     contractConfig.operator = operator;
     contractConfig.minimumRotationDelay = minimumRotationDelay;
-}
-
-async function getSigners(keypair, config, chain, options) {
-    if (options.signers === 'wallet') {
-        const pubKey = keypair.getPublicKey().toRawBytes();
-        printInfo('Using wallet pubkey as the signer for the gateway', hexlify(pubKey));
-
-        if (keypair.getKeyScheme() !== 'Secp256k1') {
-            throw new Error('Only Secp256k1 pubkeys are supported by the gateway');
-        }
-
-        return {
-            signers: [{ pub_key: pubKey, weight: 1 }],
-            threshold: 1,
-            nonce: options.nonce ? keccak256(toUtf8Bytes(options.nonce)) : HashZero,
-        };
-    } else if (options.signers) {
-        printInfo('Using provided signers', options.signers);
-
-        const signers = JSON.parse(options.signers);
-        return {
-            signers: signers.signers.map(({ pub_key: pubKey, weight }) => {
-                return { pub_key: arrayify(pubKey), weight };
-            }),
-            threshold: signers.threshold,
-            nonce: arrayify(signers.nonce) || HashZero,
-        };
-    }
-
-    return getAmplifierSigners(config, chain);
 }
 
 async function deploy(keypair, client, supportedContract, config, chain, options) {

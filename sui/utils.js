@@ -1,15 +1,17 @@
 'use strict';
 
 const { ethers } = require('hardhat');
-const { loadConfig, printError } = require('../common/utils');
+const { printInfo, loadConfig, printError } = require('../common/utils');
 const {
     BigNumber,
-    utils: { arrayify, hexlify },
+    utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
+    constants: { HashZero },
 } = ethers;
 const fs = require('fs');
 const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { singletonStruct } = require('./types-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
@@ -114,6 +116,43 @@ const getObjectIdsByObjectTypes = (txn, objectTypes) =>
         return objectId;
     });
 
+// Parse bcs bytes from singleton object which is created when the Test contract is deployed
+const getChannelId = async (client, singletonObjectId) => {
+    const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
+    const data = singletonStruct.parse(bcsBytes);
+    return '0x' + data.channel.id;
+};
+
+const getSigners = async (keypair, config, chain, options) => {
+    if (options.signers === 'wallet') {
+        const pubKey = keypair.getPublicKey().toRawBytes();
+        printInfo('Using wallet pubkey as the signer for the gateway', hexlify(pubKey));
+
+        if (keypair.getKeyScheme() !== 'Secp256k1') {
+            throw new Error('Only Secp256k1 pubkeys are supported by the gateway');
+        }
+
+        return {
+            signers: [{ pub_key: pubKey, weight: 1 }],
+            threshold: 1,
+            nonce: options.nonce ? keccak256(toUtf8Bytes(options.nonce)) : HashZero,
+        };
+    } else if (options.signers) {
+        printInfo('Using provided signers', options.signers);
+
+        const signers = JSON.parse(options.signers);
+        return {
+            signers: signers.signers.map(({ pub_key: pubKey, weight }) => {
+                return { pub_key: arrayify(pubKey), weight };
+            }),
+            threshold: signers.threshold,
+            nonce: arrayify(signers.nonce) || HashZero,
+        };
+    }
+
+    return getAmplifierSigners(config, chain);
+};
+
 module.exports = {
     suiPackageAddress,
     suiClockAddress,
@@ -124,4 +163,6 @@ module.exports = {
     findPublishedObject,
     readMovePackageName,
     getObjectIdsByObjectTypes,
+    getChannelId,
+    getSigners,
 };
