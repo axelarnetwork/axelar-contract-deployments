@@ -121,14 +121,14 @@ const instantiate = async (client, wallet, config, options, chainName) => {
         chains: { [chainName]: chainConfig },
     } = config;
 
-    if (predictOnly) {
-        return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
-    }
-
     if (fetchCodeId) {
         contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
     } else if (!isNumber(contractConfig.codeId)) {
         throw new Error('Code Id is not defined');
+    }
+
+    if (predictOnly) {
+        return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
