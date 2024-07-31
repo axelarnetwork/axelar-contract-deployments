@@ -7,19 +7,28 @@ const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 const { loadSuiConfig, getObjectIdsByObjectTypes, suiPackageAddress } = require('./utils');
 
-async function upgradePackage(client, keypair, packageName, packageConfig, builder, options) {
-    const { modules, dependencies, digest } = await builder.getContractBuild(packageName);
-    const { policy, offline } = options;
-    const sender = options.sender || keypair.toSuiAddress();
-
-    if (!['any_upgrade', 'code_upgrade', 'dep_upgrade'].includes(policy)) {
-        throw new Error(`Unknown upgrade policy: ${policy}. Supported policies: any_upgrade, code_upgrade, dep_upgrade`);
+function getUpgradePolicyId(policy) {
+    switch (policy) {
+        case 'any_upgrade':
+            return 0;
+        case 'code_upgrade':
+            return 128;
+        case 'dep_upgrade':
+            return 192;
+        default:
+            throw new Error(`Unknown upgrade policy: ${policy}. Supported policies: any_upgrade, code_upgrade, dep_upgrade`);
     }
+}
 
-    const upgradeCap = packageConfig.objects?.upgradeCap;
+async function upgradePackage(client, keypair, packageDir, packageConfig, builder, options) {
+    const { modules, dependencies, digest } = await builder.getContractBuild(packageDir);
+    const { offline } = options;
+    const sender = options.sender || keypair.toSuiAddress();
+    const policy = getUpgradePolicyId(options.policy);
+    const upgradeCap = packageConfig.objects?.UpgradeCap;
     const digestHash = options.digest ? fromB64(options.digest) : digest;
 
-    validateParameters({ isNonEmptyString: { upgradeCap, policy }, isNonEmptyStringArray: { modules, dependencies } });
+    validateParameters({ isNonEmptyString: { upgradeCap }, isNonEmptyStringArray: { modules, dependencies } });
 
     const tx = builder.tx;
     const cap = tx.object(upgradeCap);
@@ -45,7 +54,7 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
 
     if (offline) {
         options.txBytes = txBytes;
-        options.offlineMessage = `Transaction to upgrade ${packageName}`;
+        options.offlineMessage = `Transaction to upgrade ${packageDir}`;
     } else {
         const signature = (await keypair.signTransaction(txBytes)).signature;
         const result = await client.executeTransactionBlock({
@@ -61,10 +70,10 @@ async function upgradePackage(client, keypair, packageName, packageConfig, build
         const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
         packageConfig.address = packageId;
         const [upgradeCap] = getObjectIdsByObjectTypes(result, ['0x2::package::UpgradeCap']);
-        packageConfig.objects.upgradeCap = upgradeCap;
+        packageConfig.objects.UpgradeCap = upgradeCap;
 
         printInfo('Transaction digest', JSON.stringify(result.digest, null, 2));
-        printInfo(`${packageName} upgraded`, packageId);
+        printInfo(`${packageDir} upgraded`, packageId);
     }
 }
 

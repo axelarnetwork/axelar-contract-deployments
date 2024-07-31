@@ -23,20 +23,26 @@ const {
     getChannelId,
 } = require('./utils');
 
-// A list of currently supported packages which are the folder names in `node_modules/@axelar-network/axelar-cgp-sui/move`
-const supportedPackageDirs = ['gas_service', 'test', 'axelar_gateway'];
+// A list of move package directories which are the folder names in `node_modules/@axelar-network/axelar-cgp-sui/move`
+// To support a new package deployment, add the folder name to this list.
+const PACKAGE_DIRS = ['gas_service', 'test', 'axelar_gateway'];
 
-// Map supported packages to their package names and directories
-const supportedPackages = supportedPackageDirs.map((dir) => ({
+// Read the move package name from the `Move.toml` file from each directory in `PACKAGE_DIRS`.
+const supportedPackages = PACKAGE_DIRS.map((dir) => ({
     packageName: readMovePackageName(dir),
     packageDir: dir,
 }));
 
-/** ######## Post Deployment Functions ######## **/
-// Define the post deployment functions for each supported package here. These functions should be called after the package is deployed.
-// Use cases include:
-// 1. Update the chain config with deployed object ids
-// 2. Submit additional transactions to setup the contracts.
+/**
+ * Post-Deployment Functions
+ *
+ * This section defines functions to be executed after package deployment.
+ * These functions serve purposes such as:
+ * 1. Updating chain configuration with newly deployed object IDs
+ * 2. Submitting additional transactions for contract setup
+ *
+ * Define post-deployment functions for each supported package below.
+ */
 
 async function postDeployGasService(published, chain) {
     const [gasCollectorCapObjectId, gasServiceObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
@@ -172,18 +178,19 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     printInfo(`${packageName} deployed`, JSON.stringify(chain.contracts[packageName], null, 2));
 }
 
-async function upgrade(keypair, client, contractName, policy, config, chain, options) {
+async function upgrade(keypair, client, supportedPackage, policy, config, chain, options) {
     const { packageDependencies } = options;
+    const { packageDir, packageName } = supportedPackage;
     options.policy = policy;
 
-    if (!chain.contracts[contractName]) {
-        throw new Error(`Cannot find specified contract: ${contractName}`);
+    if (!chain.contracts[packageName]) {
+        throw new Error(`Cannot find specified contract: ${packageName}`);
     }
 
     const contractsConfig = chain.contracts;
-    const packageConfig = contractsConfig?.[contractName];
+    const packageConfig = contractsConfig?.[packageName];
 
-    validateParameters({ isNonEmptyString: { contractName } });
+    validateParameters({ isNonEmptyString: { packageName } });
 
     if (packageDependencies) {
         for (const dependencies of packageDependencies) {
@@ -193,7 +200,7 @@ async function upgrade(keypair, client, contractName, policy, config, chain, opt
     }
 
     const builder = new TxBuilder(client);
-    await upgradePackage(client, keypair, contractName, packageConfig, builder, options);
+    await upgradePackage(client, keypair, packageDir, packageConfig, builder, options);
 }
 
 async function mainProcessor(args, options, processor) {
@@ -219,10 +226,10 @@ if (require.main === module) {
     const program = new Command('deploy-contract').description('Deploy/Upgrade packages');
 
     // 2nd level commands
-    const deployCmd = new Command('deploy');
-    const upgradeCmd = new Command('upgrade');
+    const deployCmd = new Command('deploy').description('Deploy a Sui package');
+    const upgradeCmd = new Command('upgrade').description('Upgrade a Sui package');
 
-    // 3rd level commands
+    // 3rd level commands for `deploy`
     const deployContractCmds = supportedPackages.map((supportedPackage) => {
         const { packageName } = supportedPackage;
         const command = new Command(packageName).description(`Deploy ${packageName} contract`);
@@ -235,21 +242,27 @@ if (require.main === module) {
     // Add 3rd level commands to 2nd level command `deploy`
     deployContractCmds.forEach((cmd) => deployCmd.addCommand(cmd));
 
+    // 3rd level commands for `upgrade`
+    const upgradeContractCmds = supportedPackages.map((supportedPackage) => {
+        const { packageName } = supportedPackage;
+        return new Command(packageName)
+            .description(`Deploy ${packageName} contract`)
+            .command(`${packageName} <policy>`)
+            .addOption(new Option('--sender <sender>', 'transaction sender'))
+            .addOption(new Option('--digest <digest>', 'digest hash for upgrade'))
+            .addOption(new Option('--offline', 'store tx block for sign'))
+            .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
+            .action((policy, options) => {
+                mainProcessor([supportedPackage, policy], options, upgrade);
+            });
+    });
+
+    // Add 3rd level commands to 2nd level command `upgrade`
+    upgradeContractCmds.forEach((cmd) => upgradeCmd.addCommand(cmd));
+
     // Add base options to all 2nd and 3rd level commands
     addOptionsToCommands(deployCmd, addBaseOptions);
-    addBaseOptions(upgradeCmd);
-
-    // Define options for 2nd level command `upgrade`
-    upgradeCmd
-        .description('Upgrade a Sui package')
-        .command('upgrade <packageName> <policy>')
-        .addOption(new Option('--sender <sender>', 'transaction sender'))
-        .addOption(new Option('--digest <digest>', 'digest hash for upgrade'))
-        .addOption(new Option('--offline', 'store tx block for sign'))
-        .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
-        .action((packageName, policy, options) => {
-            mainProcessor([packageName, policy], options, upgrade);
-        });
+    addOptionsToCommands(upgradeCmd, addBaseOptions);
 
     // Add 2nd level commands to 1st level command
     program.addCommand(deployCmd);

@@ -65,8 +65,8 @@ async function execute(keypair, client, contracts, args, options) {
 
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
-    const gatewayObjectId = axelarGatewayConfig.objects.gateway;
-    const discoveryObjectId = axelarGatewayConfig.objects.relayerDiscovery;
+    const gatewayObjectId = axelarGatewayConfig.objects.Gateway;
+    const discoveryObjectId = axelarGatewayConfig.objects.RelayerDiscovery;
 
     // Get the channel id from the options or use the channel id from the deployed test contract object.
     const channelId = options.channelId || testConfig.objects.channelId;
