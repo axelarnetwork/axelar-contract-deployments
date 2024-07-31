@@ -101,6 +101,7 @@ const addDeployOptions = (program) => {
             getDeployGatewayOptions().forEach((option) => program.addOption(option));
             break;
         case 'GasService':
+        case 'Operators':
         case 'Test':
             break;
         default:

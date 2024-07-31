@@ -36,7 +36,7 @@ const {
  * 2. Ensure the corresponding folder exists in the specified path
  *
  */
-const PACKAGE_DIRS = ['gas_service', 'test', 'axelar_gateway'];
+const PACKAGE_DIRS = ['gas_service', 'test', 'axelar_gateway', 'operators'];
 
 /**
  * Supported Move Packages
@@ -90,6 +90,17 @@ async function postDeployTest(published, config, chain, options) {
     const registerTx = await broadcast(client, keypair, tx);
 
     printInfo('Register transaction', registerTx.digest);
+}
+
+async function postDeployOperators(published, chain) {
+    const [operatorsObjectId, ownerCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+        `${published.packageId}::operators::Operators`,
+        `${published.packageId}::operators::OwnerCap`,
+    ]);
+    chain.contracts.Operators.objects = {
+      Operators: operatorsObjectId,
+      OwnerCap: ownerCapObjectId,
+    };
 }
 
 async function postDeployAxelarGateway(published, keypair, client, config, chain, options) {
@@ -184,6 +195,9 @@ async function deploy(keypair, client, supportedContract, config, chain, options
             break;
         case 'Test':
             await postDeployTest(published, config, chain, options);
+            break;
+        case 'Operators':
+            await postDeployOperators(published, chain);
             break;
         default:
             throw new Error(`${packageName} is not supported.`);

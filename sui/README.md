@@ -101,6 +101,12 @@ Deploy the test GMP package:
 node sui/deploy-contract.js deploy Test
 ```
 
+Deploy the Operators package:
+
+```bash
+node sui/deploy-contract.js deploy Operators
+```
+
 Call Contract:
 
 ```bash
