@@ -7,6 +7,11 @@ const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 const { loadSuiConfig, getObjectIdsByObjectTypes, suiPackageAddress } = require('./utils');
 
+const UPGRADE_POLICIES = {
+  'code_upgrade': 'only_additive_upgrades',
+  'dependency_upgrade': 'only_dep_upgrades',
+};
+
 function getUpgradePolicyId(policy) {
     switch (policy) {
         case 'any_upgrade':
@@ -193,6 +198,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+    UPGRADE_POLICIES,
     upgradePackage,
     deployPackage,
 };

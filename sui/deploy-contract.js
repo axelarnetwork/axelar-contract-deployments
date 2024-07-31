@@ -11,7 +11,7 @@ const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator
 const { addBaseOptions, addDeployOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { bytes32Struct, signersStruct } = require('./types-utils');
-const { upgradePackage } = require('./deploy-utils');
+const { upgradePackage, UPGRADE_POLICIES } = require('./deploy-utils');
 const {
     loadSuiConfig,
     getSigners,
@@ -23,11 +23,29 @@ const {
     getChannelId,
 } = require('./utils');
 
-// A list of move package directories which are the folder names in `node_modules/@axelar-network/axelar-cgp-sui/move`
-// To support a new package deployment, add the folder name to this list.
+/**
+ * Move Package Directories
+ *
+ * This array contains the names of Move package directories located in:
+ * `node_modules/@axelar-network/axelar-cgp-sui/move`
+ *
+ * Each string in this array corresponds to a folder name within that path.
+ *
+ * To deploy a new package:
+ * 1. Add the new package's folder name to this array
+ * 2. Ensure the corresponding folder exists in the specified path
+ *
+ */
 const PACKAGE_DIRS = ['gas_service', 'test', 'axelar_gateway'];
 
-// Read the move package name from the `Move.toml` file from each directory in `PACKAGE_DIRS`.
+/**
+ * Supported Move Packages
+ *
+ * Maps each directory in PACKAGE_DIRS to an object containing:
+ * - packageName: Read from 'Move.toml' in the directory
+ * - packageDir: The directory name
+ *
+ */
 const supportedPackages = PACKAGE_DIRS.map((dir) => ({
     packageName: readMovePackageName(dir),
     packageDir: dir,
@@ -120,8 +138,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
     });
 
     if (policy !== 'any_upgrade') {
-        const upgradeType = policy === 'code_upgrade' ? 'only_additive_upgrades' : 'only_dep_upgrades';
-
+        const upgradeType = UPGRADE_POLICIES[policy];
         tx.moveCall({
             target: `${suiPackageAddress}::package::${upgradeType}`,
             arguments: [tx.object(upgradeCap)],
@@ -130,28 +147,25 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 
     const result = await broadcast(client, keypair, tx);
 
-    printInfo('Setup transaction digest', result.digest);
+    printInfo('Setup Gateway', result.digest);
 
     const [gateway] = getObjectIdsByObjectTypes(result, [`${packageId}::gateway::Gateway`]);
 
-    const contractConfig = chain.contracts.AxelarGateway;
-
-    contractConfig.objects = {
-        Gateway: gateway,
-        RelayerDiscovery: relayerDiscovery,
-        UpgradeCap: upgradeCap,
+    // Update chain configuration
+    chain.contracts.AxelarGateway = {
+        objects: {
+            Gateway: gateway,
+            RelayerDiscovery: relayerDiscovery,
+            UpgradeCap: upgradeCap,
+        },
+        domainSeparator,
+        operator,
+        minimumRotationDelay,
     };
-    contractConfig.domainSeparator = domainSeparator;
-    contractConfig.operator = operator;
-    contractConfig.minimumRotationDelay = minimumRotationDelay;
 }
 
 async function deploy(keypair, client, supportedContract, config, chain, options) {
     const { packageDir, packageName } = supportedContract;
-
-    if (!chain.contracts[packageName]) {
-        chain.contracts[packageName] = {};
-    }
 
     const published = await deployPackage(packageDir, client, keypair, options);
 
@@ -175,7 +189,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
             throw new Error(`${packageName} is not supported.`);
     }
 
-    printInfo(`${packageName} deployed`, JSON.stringify(chain.contracts[packageName], null, 2));
+    printInfo(`${packageName} Configuration Updated`, JSON.stringify(chain.contracts[packageName], null, 2));
 }
 
 async function upgrade(keypair, client, supportedPackage, policy, config, chain, options) {
