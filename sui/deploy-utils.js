@@ -71,7 +71,7 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
 
         const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
         contractConfig.address = packageId;
-        const [upgradeCap] = getObjectIdsByObjectTypes(result, ['0x2::package::UpgradeCap']);
+        const [upgradeCap] = getObjectIdsByObjectTypes(result, [`${suiPackageAddress}::package::UpgradeCap`]);
         contractConfig.objects.UpgradeCap = upgradeCap;
 
         printInfo('Transaction Digest', JSON.stringify(result.digest, null, 2));
