@@ -15,19 +15,7 @@ const {
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
 function loadConfig(env) {
-    const config = require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
-
-    if (!config.sui) {
-        config.sui = {
-            networkType: env === 'local' ? 'localnet' : env,
-            name: 'Sui',
-            contracts: {
-                AxelarGateway: {},
-            },
-        };
-    }
-
-    return config;
+    return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
 function saveConfig(config, env) {
