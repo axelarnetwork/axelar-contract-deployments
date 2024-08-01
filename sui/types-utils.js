@@ -83,11 +83,23 @@ const discoveryStruct = bcs.struct('Discovery', {
     fields: discoveryTable,
 });
 
+const bagStruct = bcs.struct('Bags', {
+    id: UID,
+    size: bcs.u64(),
+});
+
+const operatorsStruct = bcs.struct('Operators', {
+  id: UID,
+  operators: bcs.vector(addressStruct),
+  caps: bagStruct,
+});
+
 module.exports = {
     addressStruct,
     signerStruct,
     bytes32Struct,
     signersStruct,
+    operatorsStruct,
     messageToSignStruct,
     messageStruct,
     approvedMessageStruct,
