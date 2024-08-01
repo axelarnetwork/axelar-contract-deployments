@@ -38,27 +38,21 @@ const {
 const PACKAGE_DIRS = ['gas_service', 'test', 'axelar_gateway', 'operators'];
 
 /**
- * Post-Deployment Functions Mapping
- *
- * This object maps each package name to a post-deployment function.
+ * Package Mapping Object for Command Options and Post-Deployment Functions
  */
-const POST_DEPLOY_FUNCTIONS = {
-    GasService: postDeployGasService,
-    Test: postDeployTest,
-    Operators: postDeployOperators,
-    AxelarGateway: postDeployAxelarGateway,
-};
-
-/**
- * Command Options Mapping
- *
- * This object maps each package name to a function that returns an array of command options.
- */
-const CMD_OPTIONS = {
-    AxelarGateway: () => [...DEPLOY_CMD_OPTIONS, ...GATEWAY_CMD_OPTIONS],
-    GasService: () => DEPLOY_CMD_OPTIONS,
-    Test: () => DEPLOY_CMD_OPTIONS,
-    Operators: () => DEPLOY_CMD_OPTIONS,
+const PACKAGE_CONFIGS = {
+    cmdOptions: {
+        AxelarGateway: () => GATEWAY_CMD_OPTIONS,
+        GasService: () => [],
+        Test: () => [],
+        Operators: () => [],
+    },
+    postDeployFunctions: {
+        AxelarGateway: postDeployAxelarGateway,
+        GasService: postDeployGasService,
+        Test: postDeployTest,
+        Operators: postDeployOperators,
+    },
 };
 
 /**
@@ -85,8 +79,7 @@ const supportedPackages = PACKAGE_DIRS.map((dir) => ({
  * Define post-deployment functions for each supported package below.
  */
 
-async function postDeployGasService(published, args) {
-    const { chain } = args;
+async function postDeployGasService(published, keypair, client, config, chain, options) {
     const [gasCollectorCapObjectId, gasServiceObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::gas_service::GasCollectorCap`,
         `${published.packageId}::gas_service::GasService`,
@@ -97,9 +90,7 @@ async function postDeployGasService(published, args) {
     };
 }
 
-async function postDeployTest(published, args) {
-    const { chain, config, options } = args;
-    const [keypair, client] = getWallet(chain, options);
+async function postDeployTest(published, keypair, client, config, chain, options) {
     const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
 
     const [singletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::test::Singleton`]);
@@ -117,8 +108,7 @@ async function postDeployTest(published, args) {
     printInfo('Register transaction', registerTx.digest);
 }
 
-async function postDeployOperators(published, args) {
-    const { chain } = args;
+async function postDeployOperators(published, keypair, client, config, chain, options) {
     const [operatorsObjectId, ownerCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::operators::Operators`,
         `${published.packageId}::operators::OwnerCap`,
@@ -129,8 +119,7 @@ async function postDeployOperators(published, args) {
     };
 }
 
-async function postDeployAxelarGateway(published, args) {
-    const { keypair, client, config, chain, options } = args;
+async function postDeployAxelarGateway(published, keypair, client, config, chain, options) {
     const { packageId, publishTxn } = published;
     const { minimumRotationDelay, policy, previousSigners } = options;
     const operator = options.operator || keypair.toSuiAddress();
@@ -216,8 +205,8 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     };
 
     // Execute post-deployment function
-    const executePostDeploymentFn = POST_DEPLOY_FUNCTIONS[packageName];
-    executePostDeploymentFn(published, { keypair, client, config, chain, options });
+    const executePostDeploymentFn = PACKAGE_CONFIGS.postDeployFunctions[packageName];
+    await executePostDeploymentFn(published, keypair, client, config, chain, options);
 
     printInfo(`${packageName} Configuration Updated`, JSON.stringify(chain.contracts[packageName], null, 2));
 }
@@ -295,10 +284,13 @@ const addDeployOptions = (program) => {
     const packageName = program.name();
 
     // Find the corresponding options for the package
-    const options = CMD_OPTIONS[packageName]();
+    const options = PACKAGE_CONFIGS.cmdOptions[packageName]();
 
     // Add the options to the program
     options.forEach((option) => program.addOption(option));
+
+    // Add the base deploy options to the program
+    DEPLOY_CMD_OPTIONS.forEach((option) => program.addOption(option));
 
     return program;
 };
