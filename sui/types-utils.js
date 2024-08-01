@@ -83,6 +83,41 @@ const discoveryStruct = bcs.struct('Discovery', {
     fields: discoveryTable,
 });
 
+const tableStruct = bcs.struct('Table', {
+    id: UID,
+    size: bcs.U64,
+});
+
+const bagStruct = bcs.struct('Bag', {
+    id: UID,
+    size: bcs.U64,
+});
+
+const interchainAddressTrackerStruct = bcs.struct('InterchainAddressTracker', {
+    trusted_addresses: tableStruct,
+});
+
+const itsStruct = bcs.struct('ITS', {
+    id: UID,
+    channel: channelStruct,
+    address_tracker: interchainAddressTrackerStruct,
+    unregistered_coin_types: tableStruct,
+    unregistered_coin_info: bagStruct,
+    registered_coin_types: tableStruct,
+    registered_coins: bagStruct,
+    relayer_discovery_id: UID,
+});
+
+const coinBagStrcut = bcs.struct('CoinBag', {
+    bag: bagStruct,
+});
+
+const squidStruct = bcs.struct('Squid', {
+    id: UID,
+    channel: channelStruct,
+    coin_bag: coinBagStrcut,
+});
+
 module.exports = {
     addressStruct,
     signerStruct,
@@ -96,4 +131,6 @@ module.exports = {
     channelStruct,
     singletonStruct,
     discoveryStruct,
+    itsStruct,
+    squidStruct,
 };
