@@ -79,7 +79,7 @@ const supportedPackages = PACKAGE_DIRS.map((dir) => ({
  * Define post-deployment functions for each supported package below.
  */
 
-async function postDeployGasService(published, keypair, client, config, chain, options ) {
+async function postDeployGasService(published, keypair, client, config, chain, options) {
     const [gasCollectorCapObjectId, gasServiceObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::gas_service::GasCollectorCap`,
         `${published.packageId}::gas_service::GasService`,
@@ -90,7 +90,7 @@ async function postDeployGasService(published, keypair, client, config, chain, o
     };
 }
 
-async function postDeployTest(published, keypair, client, config, chain, options ) {
+async function postDeployTest(published, keypair, client, config, chain, options) {
     const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
 
     const [singletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::test::Singleton`]);
@@ -108,7 +108,7 @@ async function postDeployTest(published, keypair, client, config, chain, options
     printInfo('Register transaction', registerTx.digest);
 }
 
-async function postDeployOperators(published, keypair, client, config, chain, options ) {
+async function postDeployOperators(published, keypair, client, config, chain, options) {
     const [operatorsObjectId, ownerCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::operators::Operators`,
         `${published.packageId}::operators::OwnerCap`,
@@ -119,7 +119,7 @@ async function postDeployOperators(published, keypair, client, config, chain, op
     };
 }
 
-async function postDeployAxelarGateway(published, keypair, client, config, chain, options ) {
+async function postDeployAxelarGateway(published, keypair, client, config, chain, options) {
     const { packageId, publishTxn } = published;
     const { minimumRotationDelay, policy, previousSigners } = options;
     const operator = options.operator || keypair.toSuiAddress();
@@ -206,7 +206,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 
     // Execute post-deployment function
     const executePostDeploymentFn = PACKAGE_MAPPING.POST_DEPLOY_FUNCTIONS[packageName];
-    await executePostDeploymentFn(published, keypair, client, config, chain, options );
+    await executePostDeploymentFn(published, keypair, client, config, chain, options);
 
     printInfo(`${packageName} Configuration Updated`, JSON.stringify(chain.contracts[packageName], null, 2));
 }
