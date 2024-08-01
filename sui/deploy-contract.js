@@ -11,7 +11,7 @@ const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator
 const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { bytes32Struct, signersStruct } = require('./types-utils');
-const { upgradePackage, addDeployOptions, UPGRADE_POLICIES } = require('./deploy-utils');
+const { upgradePackage, UPGRADE_POLICIES } = require('./deploy-utils');
 const {
     loadSuiConfig,
     getSigners,
@@ -98,8 +98,8 @@ async function postDeployOperators(published, chain) {
         `${published.packageId}::operators::OwnerCap`,
     ]);
     chain.contracts.Operators.objects = {
-      Operators: operatorsObjectId,
-      OwnerCap: ownerCapObjectId,
+        Operators: operatorsObjectId,
+        OwnerCap: ownerCapObjectId,
     };
 }
 
@@ -248,6 +248,41 @@ async function mainProcessor(args, options, processor) {
         printInfo(`Unsigned transaction`, txFilePath);
     }
 }
+
+/**
+ * Command Options
+ *
+ * This section defines options for the command that are specific to each package.
+ */
+const GATEWAY_CMD_OPTIONS = [
+    new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'),
+    new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'),
+    new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in second)')
+        .argParser((val) => parseInt(val) * 1000)
+        .default(24 * 60 * 60),
+    new Option('--domainSeparator <domainSeparator>', 'domain separator'),
+    new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'),
+    new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'),
+    new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "any_upgrade" to allow all types of upgrades')
+        .choices(['any_upgrade', 'code_upgrade', 'dep_upgrade'])
+        .default('any_upgrade'),
+];
+
+const addDeployOptions = (program) => {
+    switch (program.name()) {
+        case 'AxelarGateway':
+            GATEWAY_CMD_OPTIONS.forEach((option) => program.addOption(option));
+            break;
+        case 'GasService':
+        case 'Operators':
+        case 'Test':
+            break;
+        default:
+            throw new Error(`Unsupported package: ${program.name()}. `);
+    }
+
+    return program;
+};
 
 if (require.main === module) {
     // 1st level command

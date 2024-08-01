@@ -2,7 +2,6 @@ const { bcs } = require('@mysten/bcs');
 const { fromB64 } = require('@mysten/bcs');
 const { printInfo, validateParameters } = require('../common/utils');
 const { getObjectIdsByObjectTypes, suiPackageAddress } = require('./utils');
-const { Option } = require('commander');
 const UPGRADE_POLICIES = {
     code_upgrade: 'only_additive_upgrades',
     dependency_upgrade: 'only_dep_upgrades',
@@ -79,40 +78,7 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
     }
 }
 
-const getDeployGatewayOptions = () => {
-    return [
-        new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'),
-        new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'),
-        new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in second)')
-            .argParser((val) => parseInt(val) * 1000)
-            .default(24 * 60 * 60),
-        new Option('--domainSeparator <domainSeparator>', 'domain separator'),
-        new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'),
-        new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'),
-        new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "any_upgrade" to allow all types of upgrades')
-            .choices(['any_upgrade', 'code_upgrade', 'dep_upgrade'])
-            .default('any_upgrade'),
-    ];
-};
-
-const addDeployOptions = (program) => {
-    switch (program.name()) {
-        case 'AxelarGateway':
-            getDeployGatewayOptions().forEach((option) => program.addOption(option));
-            break;
-        case 'GasService':
-        case 'Operators':
-        case 'Test':
-            break;
-        default:
-            throw new Error(`Unsupported package: ${program.name()}. `);
-    }
-
-    return program;
-};
-
 module.exports = {
     UPGRADE_POLICIES,
     upgradePackage,
-    addDeployOptions,
 };
