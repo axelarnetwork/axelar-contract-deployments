@@ -1,6 +1,6 @@
 const { saveConfig, prompt, printInfo } = require('../common/utils');
 const { Command } = require('commander');
-const {  deployPackage, getBcsBytesByObjectId } = require('./utils');
+const { deployPackage, getBcsBytesByObjectId } = require('./utils');
 const { singletonStruct } = require('./types-utils');
 const { Transaction } = require('@mysten/sui/transactions');
 const { addBaseOptions } = require('./cli-utils');
