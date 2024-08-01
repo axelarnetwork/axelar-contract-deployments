@@ -38,27 +38,21 @@ const {
 const PACKAGE_DIRS = ['gas_service', 'test', 'axelar_gateway', 'operators'];
 
 /**
- * Post-Deployment Functions Mapping
- *
- * This object maps each package name to a post-deployment function.
+ * Package Mapping Object for Command Options and Post-Deployment Functions
  */
-const POST_DEPLOY_FUNCTIONS = {
-    GasService: postDeployGasService,
-    Test: postDeployTest,
-    Operators: postDeployOperators,
-    AxelarGateway: postDeployAxelarGateway,
-};
-
-/**
- * Command Options Mapping
- *
- * This object maps each package name to a function that returns an array of command options.
- */
-const CMD_OPTIONS = {
-    AxelarGateway: () => [...DEPLOY_CMD_OPTIONS, ...GATEWAY_CMD_OPTIONS],
-    GasService: () => DEPLOY_CMD_OPTIONS,
-    Test: () => DEPLOY_CMD_OPTIONS,
-    Operators: () => DEPLOY_CMD_OPTIONS,
+const PACKAGE_MAPPING = {
+    CMD_OPTIONS: {
+        AxelarGateway: () => [...DEPLOY_CMD_OPTIONS, ...GATEWAY_CMD_OPTIONS],
+        GasService: () => DEPLOY_CMD_OPTIONS,
+        Test: () => DEPLOY_CMD_OPTIONS,
+        Operators: () => DEPLOY_CMD_OPTIONS,
+    },
+    POST_DEPLOY_FUNCTIONS: {
+        AxelarGateway: postDeployAxelarGateway,
+        GasService: postDeployGasService,
+        Test: postDeployTest,
+        Operators: postDeployOperators,
+    },
 };
 
 /**
@@ -216,7 +210,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     };
 
     // Execute post-deployment function
-    const executePostDeploymentFn = POST_DEPLOY_FUNCTIONS[packageName];
+    const executePostDeploymentFn = PACKAGE_MAPPING.POST_DEPLOY_FUNCTIONS[packageName];
     executePostDeploymentFn(published, { keypair, client, config, chain, options });
 
     printInfo(`${packageName} Configuration Updated`, JSON.stringify(chain.contracts[packageName], null, 2));
@@ -295,7 +289,7 @@ const addDeployOptions = (program) => {
     const packageName = program.name();
 
     // Find the corresponding options for the package
-    const options = CMD_OPTIONS[packageName]();
+    const options = PACKAGE_MAPPING.CMD_OPTIONS[packageName]();
 
     // Add the options to the program
     options.forEach((option) => program.addOption(option));
