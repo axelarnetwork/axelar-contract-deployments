@@ -112,6 +112,16 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+        },
+        "AxelarTransceiver": {
+          "salt": "AXELAR_TRANSCEIVER v1.1.0",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "implementation": "0x87fc4b27385bb4e69a40027931229d74ef4d1943",
+          "address": "0x723AEAD29acee7E9281C32D11eA4ed0070c41B13",
+          "TransceiverStructs": "0xa12bc993d8144404a8c8c812816048275a066ced",
+          "wstETH token": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+          "NttManager": "0xb948a93827d68a82F6513Ad178964Da487fe2BD9",
+          "wormholeChainId": 2
         }
       },
       "explorer": {
@@ -629,7 +639,7 @@
       "id": "binance",
       "axelarId": "binance",
       "chainId": 56,
-      "rpc": "https://1rpc.io/bnb",
+      "rpc": "https://bscrpc.com",
       "tokenSymbol": "BNB",
       "wrappedSymbol": "WBNB",
       "contracts": {
@@ -733,6 +743,16 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+        },
+        "AxelarTransceiver": {
+          "salt": "AXELAR_TRANSCEIVER v1.1.0",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "implementation": "0xa1ebb6a4b856df8bf6c3aca88a9115a9ab3b2e02",
+          "address": "0x723AEAD29acee7E9281C32D11eA4ed0070c41B13",
+          "TransceiverStructs": "0x27a3daf3b243104e9b0afae6b56026a416b852c9",
+          "wstETH token": "0x26c5e01524d2E6280A48F2c50fF6De7e52E9611C",
+          "NttManager": "0x6981F5621691CBfE3DdD524dE71076b79F0A0278",
+          "wormholeChainId": 4
         }
       },
       "explorer": {
@@ -2020,9 +2040,6 @@
           "implementation": "0x5aE753f0A558617133bd1ccd98374E222e015763",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
         },
-        "InterchainTokenService": {
-          "skip": true
-        },
         "InterchainGovernance": {
           "address": "0x35dFacdE7B4b80e156e69b1291D12EA51ce123BD",
           "minimumTimeDelay": 604800,
@@ -2071,6 +2088,25 @@
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
           "salt": "Create3Deployer"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v1.2.4",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "proxySalt": "ITS v1.0.0",
+          "tokenManagerDeployer": "0x44dDBDD2c6CC9c5e0F4555620c06b1411F99Dc03",
+          "interchainToken": "0x2f8102DeA2caaee1Ec5Fe67754F828353C4c180F",
+          "interchainTokenDeployer": "0xCE014b2DCB26d77d4e8206A7EF5e33985E442d38",
+          "tokenManager": "0x81a0545091864617E7037171FdfcBbdCFE3aeb23",
+          "tokenHandler": "0x07715674F74c560200c7C95430673180812fCE73",
+          "implementation": "0x6d59D9360BDAe406614b7E61c53F43a03198A4ef",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS Factory v1.0.0",
+          "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       },
       "gasOptions": {

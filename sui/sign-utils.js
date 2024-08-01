@@ -1,12 +1,18 @@
 'use strict';
 
-const { verifyTransactionBlock } = require('@mysten/sui.js/verify');
-const { decodeSuiPrivateKey } = require('@mysten/sui.js/cryptography');
-const { Ed25519Keypair } = require('@mysten/sui.js/keypairs/ed25519');
-const { Secp256k1Keypair } = require('@mysten/sui.js/keypairs/secp256k1');
-const { Secp256r1Keypair } = require('@mysten/sui.js/keypairs/secp256r1');
-const { printInfo } = require('../evm/utils');
-const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
+const { verifyTransactionSignature } = require('@mysten/sui/verify');
+const { decodeSuiPrivateKey } = require('@mysten/sui/cryptography');
+const { Ed25519Keypair, Ed25519PublicKey } = require('@mysten/sui/keypairs/ed25519');
+const { MultiSigPublicKey } = require('@mysten/sui/multisig');
+const { Secp256k1Keypair, Secp256k1PublicKey } = require('@mysten/sui/keypairs/secp256k1');
+const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui/keypairs/secp256r1');
+const { SuiClient, getFullnodeUrl } = require('@mysten/sui/client');
+const { fromB64, fromHEX } = require('@mysten/bcs');
+const { printInfo } = require('../common/utils');
+const { ethers } = require('hardhat');
+const {
+    utils: { hexlify },
+} = ethers;
 
 function getWallet(chain, options) {
     let keypair;
@@ -90,8 +96,8 @@ function getRawPrivateKey(keypair) {
 }
 
 async function broadcast(client, keypair, tx) {
-    return await client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
+    return await client.signAndExecuteTransaction({
+        transaction: tx,
         signer: keypair,
         options: {
             showEffects: true,
@@ -101,17 +107,24 @@ async function broadcast(client, keypair, tx) {
     });
 }
 
-async function signTransactionBlock(chain, txDetails, options) {
-    const { txBlock, buildOptions = {} } = txDetails;
+async function broadcastSignature(client, txBytes, signature) {
+    return await client.executeTransactionBlock({
+        transactionBlock: txBytes,
+        signature,
+        options: {
+            showEffects: true,
+            showObjectChanges: true,
+            showEvents: true,
+        },
+    });
+}
 
-    const [keypair, client] = getWallet(chain, options);
-    txBlock.setSenderIfNotSet(keypair.toSuiAddress());
-    const txBytes = await txBlock.build(buildOptions);
-    const serializedSignature = (await keypair.signTransactionBlock(txBytes)).signature;
+async function signTransactionBlockBytes(keypair, client, txBytes, options) {
+    const serializedSignature = (await keypair.signTransaction(txBytes)).signature;
     let publicKey;
 
     try {
-        publicKey = await verifyTransactionBlock(txBytes, serializedSignature);
+        publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
     } catch {
         throw new Error(`Cannot verify tx signature`);
     }
@@ -121,19 +134,94 @@ async function signTransactionBlock(chain, txDetails, options) {
     }
 
     if (!options.offline) {
-        const txResult = await client.executeTransactionBlock({
-            transactionBlock: txBytes,
-            signature: serializedSignature,
-        });
-
+        const txResult = await broadcastSignature(client, txBytes, serializedSignature);
         printInfo('Transaction result', JSON.stringify(txResult));
+    } else {
+        const hexPublicKey = hexlify(publicKey.toRawBytes());
+        return {
+            signature: serializedSignature,
+            publicKey: hexPublicKey,
+        };
+    }
+}
+
+async function signTransaction(chain, txDetails, options) {
+    const { txBlock, buildOptions = {} } = txDetails;
+
+    const [keypair, client] = getWallet(chain, options);
+    txBlock.setSenderIfNotSet(keypair.toSuiAddress());
+    const txBytes = await txBlock.build(buildOptions);
+
+    const result = await signTransactionBlockBytes(keypair, client, txBytes, options);
+    result.txBytes = txBytes;
+
+    return result;
+}
+
+async function getWrappedPublicKey(bech64PublicKey, schemeType) {
+    const uint8PubKey = fromB64(bech64PublicKey).slice(1);
+
+    switch (schemeType) {
+        case 'ed25519': {
+            return new Ed25519PublicKey(uint8PubKey);
+        }
+
+        case 'secp256k1': {
+            return new Secp256k1PublicKey(uint8PubKey);
+        }
+
+        case 'secp256r1': {
+            return new Secp256r1PublicKey(uint8PubKey);
+        }
+
+        default: {
+            throw new Error(`Unsupported signature scheme: ${schemeType}`);
+        }
+    }
+}
+
+async function getMultisig(config, multisigKey) {
+    let multiSigPublicKey;
+
+    if (multisigKey) {
+        multiSigPublicKey = new MultiSigPublicKey(fromHEX(multisigKey));
+    } else {
+        const signers = config.multisig?.signers;
+
+        if (!signers || signers.length === 0) {
+            throw new Error('Signers not provided in configuration');
+        }
+
+        const publicKeys = [];
+
+        for (const signer of signers) {
+            if (!signer?.publicKey) {
+                throw new Error('PublicKey not found');
+            }
+
+            if (!signer?.schemeType) {
+                throw new Error('SchemeType not found');
+            }
+
+            if (!signer?.weight) {
+                throw new Error('Weight not found');
+            }
+
+            publicKeys.push({
+                publicKey: await getWrappedPublicKey(signer.publicKey, signer.schemeType),
+                weight: signer.weight,
+            });
+        }
+
+        multiSigPublicKey = MultiSigPublicKey.fromPublicKeys({
+            threshold: config.multisig?.threshold,
+            publicKeys,
+        });
     }
 
-    return {
-        signature: serializedSignature,
-        txBlock,
-        publicKey,
-    };
+    printInfo('Multisig Wallet Address', multiSigPublicKey.toSuiAddress());
+
+    return multiSigPublicKey;
 }
 
 module.exports = {
@@ -142,5 +230,9 @@ module.exports = {
     generateKeypair,
     getRawPrivateKey,
     broadcast,
-    signTransactionBlock,
+    broadcastSignature,
+    signTransaction,
+    getMultisig,
+    getWrappedPublicKey,
+    signTransactionBlockBytes,
 };

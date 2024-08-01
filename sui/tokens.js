@@ -7,7 +7,7 @@ const { printInfo, printError, validateParameters } = require('../evm/utils');
 const {
     utils: { parseUnits, formatUnits },
 } = require('ethers');
-const { loadSuiConfig, SUI_COIN_ID, isGasToken, paginateAll } = require('./utils');
+const { loadSuiConfig, suiCoinId, isGasToken, paginateAll } = require('./utils');
 
 class CoinManager {
     static async getAllCoins(client, account) {
@@ -59,7 +59,7 @@ class CoinManager {
     }
 
     static async splitCoins(tx, client, coinTypeToCoins, walletAddress, args, options) {
-        const coinType = options.coinType || SUI_COIN_ID;
+        const coinType = options.coinType || suiCoinId;
 
         const metadata = await client.getCoinMetadata({
             coinType,

@@ -31,7 +31,7 @@ const verifyContract = (env, chain, contract, args, options = {}) => {
         execSync(cmd, { stdio: ['inherit', 'pipe', 'pipe'] });
         console.log('Verified!');
     } catch (error) {
-        if (error.message.includes('Reason: Already Verified')) {
+        if (error.message.toLowerCase().includes('already verified')) {
             console.log(`Contract ${contract} is already verified on ${chain.toLowerCase()}.`);
         } else {
             throw new Error(`An error occurred while trying to verify ${contract} on ${chain.toLowerCase()}:\n${error}`);

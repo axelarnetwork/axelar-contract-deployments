@@ -83,7 +83,7 @@ async function processCommand(config, chain, options) {
             }
 
             const isOperator = await operatorsContract.isOperator(operatorAddress);
-            printInfo(`Is ${operatorAddress} an operator?`, `${isOperator}`);
+            printInfo(`Is ${operatorAddress} an operator on ${chain.name}?`, `${isOperator}`);
 
             break;
         }

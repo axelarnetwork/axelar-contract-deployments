@@ -1,17 +1,17 @@
-const { saveConfig, printInfo } = require('../evm/utils');
+const { saveConfig, printInfo } = require('../common/utils');
 const { Command, Option } = require('commander');
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
-const { bcs } = require('@mysten/sui.js/bcs');
+const { Transaction } = require('@mysten/sui/transactions');
+const { bcs } = require('@mysten/sui/bcs');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, keccak256, toUtf8Bytes },
     constants: { HashZero },
 } = ethers;
 
+const { loadConfig } = require('../common/utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo, getRawPrivateKey, broadcast } = require('./sign-utils');
 const { bytes32Struct, signersStruct, messageToSignStruct, messageStruct, proofStruct } = require('./types-utils');
-const { loadSuiConfig } = require('./utils');
 const { getSigners } = require('./deploy-gateway');
 const secp256k1 = require('secp256k1');
 
@@ -35,7 +35,7 @@ function getProofSigners(keypair, options) {
         }
 
         return {
-            signers: [{ pubkey: keypair.getPublicKey().toRawBytes(), weight: 1 }],
+            signers: [{ pub_key: keypair.getPublicKey().toRawBytes(), weight: 1 }],
             threshold: 1,
             nonce: options.currentNonce ? keccak256(toUtf8Bytes(options.currentNonce)) : HashZero,
         };
@@ -44,8 +44,8 @@ function getProofSigners(keypair, options) {
 
         const proof = JSON.parse(options.proof);
         return {
-            signers: proof.signers.signers.map(({ pubkey, weight }) => {
-                return { pubkey: arrayify(pubkey), weight };
+            signers: proof.signers.signers.map(({ pub_key: pubKey, weight }) => {
+                return { pub_key: arrayify(pubKey), weight };
             }),
             threshold: proof.signers.threshold,
             nonce: arrayify(proof.signers.nonce) || HashZero,
@@ -109,7 +109,7 @@ async function callContract(keypair, client, config, chain, args, options) {
 
     let channel = options.channel;
 
-    const tx = new TransactionBlock();
+    const tx = new Transaction();
 
     // Create a temporary channel if one wasn't provided
     if (!options.channel) {
@@ -165,7 +165,7 @@ async function approveMessages(keypair, client, config, chain, args, options) {
 
     const encodedProof = getProof(keypair, COMMAND_TYPE_APPROVE_MESSAGES, encodedMessages, contractConfig, options);
 
-    const tx = new TransactionBlock();
+    const tx = new Transaction();
 
     tx.moveCall({
         target: `${packageId}::gateway::approve_messages`,
@@ -200,7 +200,7 @@ async function rotateSigners(keypair, client, config, chain, args, options) {
 
     const encodedProof = getProof(keypair, COMMAND_TYPE_ROTATE_SIGNERS, encodedSigners, contractConfig, options);
 
-    const tx = new TransactionBlock();
+    const tx = new Transaction();
 
     tx.moveCall({
         target: `${packageId}::gateway::rotate_signers`,
@@ -218,7 +218,7 @@ async function rotateSigners(keypair, client, config, chain, args, options) {
 }
 
 async function mainProcessor(processor, args, options) {
-    const config = loadSuiConfig(options.env);
+    const config = loadConfig(options.env);
 
     const [keypair, client] = getWallet(config.sui, options);
     await printWalletInfo(keypair, client, config.sui, options);
