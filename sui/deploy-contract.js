@@ -39,6 +39,30 @@ const {
 const PACKAGE_DIRS = ['gas_service', 'test', 'axelar_gateway', 'operators'];
 
 /**
+ * Post-Deployment Functions Mapping
+ *
+ * This object maps each package name to a post-deployment function.
+ */
+const POST_DEPLOY_FUNCTIONS = {
+    GasService: postDeployGasService,
+    Test: postDeployTest,
+    Operators: postDeployOperators,
+    AxelarGateway: postDeployAxelarGateway,
+};
+
+/**
+ * Command Options Mapping
+ *
+ * This object maps each package name to a function that returns an array of command options.
+ */
+const CMD_OPTIONS = {
+    AxelarGateway: () => [...DEPLOY_CMD_OPTIONS, ...GATEWAY_CMD_OPTIONS],
+    GasService: () => DEPLOY_CMD_OPTIONS,
+    Test: () => DEPLOY_CMD_OPTIONS,
+    Operators: () => DEPLOY_CMD_OPTIONS,
+};
+
+/**
  * Supported Move Packages
  *
  * Maps each directory in PACKAGE_DIRS to an object containing:
@@ -62,7 +86,8 @@ const supportedPackages = PACKAGE_DIRS.map((dir) => ({
  * Define post-deployment functions for each supported package below.
  */
 
-async function postDeployGasService(published, chain) {
+async function postDeployGasService(published, args) {
+    const { chain } = args;
     const [gasCollectorCapObjectId, gasServiceObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::gas_service::GasCollectorCap`,
         `${published.packageId}::gas_service::GasService`,
@@ -73,7 +98,8 @@ async function postDeployGasService(published, chain) {
     };
 }
 
-async function postDeployTest(published, config, chain, options) {
+async function postDeployTest(published, args) {
+    const { chain, config, options } = args;
     const [keypair, client] = getWallet(chain, options);
     const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
 
@@ -92,7 +118,8 @@ async function postDeployTest(published, config, chain, options) {
     printInfo('Register transaction', registerTx.digest);
 }
 
-async function postDeployOperators(published, chain) {
+async function postDeployOperators(published, args) {
+    const { chain } = args;
     const [operatorsObjectId, ownerCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::operators::Operators`,
         `${published.packageId}::operators::OwnerCap`,
@@ -103,7 +130,8 @@ async function postDeployOperators(published, chain) {
     };
 }
 
-async function postDeployAxelarGateway(published, keypair, client, config, chain, options) {
+async function postDeployAxelarGateway(published, args) {
+    const { keypair, client, config, chain, options } = args;
     const { packageId, publishTxn } = published;
     const { minimumRotationDelay, policy, previousSigners } = options;
     const operator = options.operator || keypair.toSuiAddress();
@@ -178,30 +206,19 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 async function deploy(keypair, client, supportedContract, config, chain, options) {
     const { packageDir, packageName } = supportedContract;
 
+    // Deploy package
     const published = await deployPackage(packageDir, client, keypair, options);
 
     printInfo(`Deployed ${packageName}`, published.publishTxn.digest);
 
+    // Update chain configuration with deployed contract address
     chain.contracts[packageName] = {
         address: published.packageId,
     };
 
-    switch (packageName) {
-        case 'GasService':
-            await postDeployGasService(published, chain);
-            break;
-        case 'AxelarGateway':
-            await postDeployAxelarGateway(published, keypair, client, config, chain, options);
-            break;
-        case 'Test':
-            await postDeployTest(published, config, chain, options);
-            break;
-        case 'Operators':
-            await postDeployOperators(published, chain);
-            break;
-        default:
-            throw new Error(`${packageName} is not supported.`);
-    }
+    // Execute post-deployment function
+    const executePostDeploymentFn = POST_DEPLOY_FUNCTIONS[packageName];
+    executePostDeploymentFn(published, { keypair, client, config, chain, options });
 
     printInfo(`${packageName} Configuration Updated`, JSON.stringify(chain.contracts[packageName], null, 2));
 }
@@ -254,6 +271,15 @@ async function mainProcessor(args, options, processor) {
  *
  * This section defines options for the command that are specific to each package.
  */
+
+// Common deploy command options for all packages
+const DEPLOY_CMD_OPTIONS = [
+    new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "any_upgrade" to allow all types of upgrades')
+        .choices(['any_upgrade', 'code_upgrade', 'dep_upgrade'])
+        .default('any_upgrade'),
+];
+
+// Gateway deploy command options
 const GATEWAY_CMD_OPTIONS = [
     new Option('--signers <signers>', 'JSON with the initial signer set').env('SIGNERS'),
     new Option('--operator <operator>', 'operator for the gateway (defaults to the deployer address)').env('OPERATOR'),
@@ -263,23 +289,17 @@ const GATEWAY_CMD_OPTIONS = [
     new Option('--domainSeparator <domainSeparator>', 'domain separator'),
     new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'),
     new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'),
-    new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "any_upgrade" to allow all types of upgrades')
-        .choices(['any_upgrade', 'code_upgrade', 'dep_upgrade'])
-        .default('any_upgrade'),
 ];
 
 const addDeployOptions = (program) => {
-    switch (program.name()) {
-        case 'AxelarGateway':
-            GATEWAY_CMD_OPTIONS.forEach((option) => program.addOption(option));
-            break;
-        case 'GasService':
-        case 'Operators':
-        case 'Test':
-            break;
-        default:
-            throw new Error(`Unsupported package: ${program.name()}. `);
-    }
+    // Get the package name from the program name
+    const packageName = program.name();
+
+    // Find the corresponding options for the package
+    const options = CMD_OPTIONS[packageName]();
+
+    // Add the options to the program
+    options.forEach((option) => program.addOption(option));
 
     return program;
 };
