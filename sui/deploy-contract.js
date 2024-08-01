@@ -206,7 +206,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 
     // Execute post-deployment function
     const executePostDeploymentFn = PACKAGE_MAPPING.POST_DEPLOY_FUNCTIONS[packageName];
-    executePostDeploymentFn(published, keypair, client, config, chain, options );
+    await executePostDeploymentFn(published, keypair, client, config, chain, options );
 
     printInfo(`${packageName} Configuration Updated`, JSON.stringify(chain.contracts[packageName], null, 2));
 }
