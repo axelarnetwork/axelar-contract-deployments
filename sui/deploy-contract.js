@@ -328,7 +328,7 @@ if (require.main === module) {
     const upgradeContractCmds = supportedPackages.map((supportedPackage) => {
         const { packageName } = supportedPackage;
         return new Command(packageName)
-            .description(`Deploy ${packageName} contract`)
+            .description(`Upgrade ${packageName} contract`)
             .command(`${packageName} <policy>`)
             .addOption(new Option('--sender <sender>', 'transaction sender'))
             .addOption(new Option('--digest <digest>', 'digest hash for upgrade'))
