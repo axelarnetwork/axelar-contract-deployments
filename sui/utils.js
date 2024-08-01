@@ -61,7 +61,7 @@ const loadSuiConfig = (env) => {
             networkType: suiEnv,
             name: 'Sui',
             contracts: {
-                axelar_gateway: {},
+                AxelarGateway: {},
             },
         };
     }
