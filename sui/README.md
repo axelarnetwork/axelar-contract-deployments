@@ -34,7 +34,9 @@ If you want to run against a local Sui network, then create a `axelar-chains-con
         "tokenSymbol": "SUI",
         "rpc": "http://127.0.0.1:9000",
         "faucetUrl": "http://127.0.0.1:9123",
-        "contracts": {}
+        "contracts": {
+          "AxelarGateway": {}
+        }
     }
 }
 ```
