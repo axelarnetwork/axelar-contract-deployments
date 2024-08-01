@@ -2,7 +2,7 @@
 
 const { ethers } = require('hardhat');
 const toml = require('toml');
-const { printInfo, loadConfig, printError } = require('../common/utils');
+const { printInfo, printError } = require('../common/utils');
 const {
     BigNumber,
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
@@ -50,23 +50,6 @@ const getBcsBytesByObjectId = async (client, objectId) => {
     });
 
     return fromB64(response.data.bcs.bcsBytes);
-};
-
-const loadSuiConfig = (env) => {
-    const config = loadConfig(env);
-    const suiEnv = env === 'local' ? 'localnet' : env;
-
-    if (!config.sui) {
-        config.sui = {
-            networkType: suiEnv,
-            name: 'Sui',
-            contracts: {
-                AxelarGateway: {},
-            },
-        };
-    }
-
-    return config;
 };
 
 const deployPackage = async (packageName, client, keypair, options = {}) => {
@@ -155,7 +138,6 @@ module.exports = {
     suiClockAddress,
     getAmplifierSigners,
     getBcsBytesByObjectId,
-    loadSuiConfig,
     deployPackage,
     findPublishedObject,
     readMovePackageName,

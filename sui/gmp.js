@@ -2,7 +2,8 @@ const { saveConfig, printInfo } = require('../common/utils');
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { loadSuiConfig, getBcsBytesByObjectId } = require('./utils');
+const { getBcsBytesByObjectId } = require('./utils');
+const { loadConfig } = require('../common/utils');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify },
@@ -165,7 +166,7 @@ async function processCommand(command, chain, args, options) {
 }
 
 async function mainProcessor(command, options, args, processor) {
-    const config = loadSuiConfig(options.env);
+    const config = loadConfig(options.env);
     await processor(command, config.sui, args, options);
     saveConfig(config, options.env);
 }

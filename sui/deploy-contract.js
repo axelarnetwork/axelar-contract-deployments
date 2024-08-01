@@ -7,13 +7,12 @@ const { Transaction } = require('@mysten/sui/transactions');
 const {
     utils: { arrayify },
 } = ethers;
-const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator } = require('../common');
+const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator, loadConfig } = require('../common');
 const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { bytes32Struct, signersStruct } = require('./types-utils');
 const { upgradePackage, UPGRADE_POLICIES } = require('./deploy-utils');
 const {
-    loadSuiConfig,
     getSigners,
     deployPackage,
     getObjectIdsByObjectTypes,
@@ -249,7 +248,7 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 }
 
 async function mainProcessor(args, options, processor) {
-    const config = loadSuiConfig(options.env);
+    const config = loadConfig(options.env);
     const [keypair, client] = getWallet(config.sui, options);
     await printWalletInfo(keypair, client, config.sui, options);
     await processor(keypair, client, ...args, config, config.sui, options);

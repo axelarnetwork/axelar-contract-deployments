@@ -3,7 +3,7 @@ const { fromB64 } = require('@mysten/bcs');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, getMultisig, signTransactionBlockBytes, broadcastSignature } = require('./sign-utils');
 const { getSignedTx, storeSignedTx } = require('../evm/sign-utils');
-const { loadSuiConfig } = require('./utils');
+const { loadConfig } = require('../common/utils');
 const { printInfo, validateParameters } = require('../common/utils');
 
 async function signTx(keypair, client, options) {
@@ -143,7 +143,7 @@ async function processCommand(chain, options) {
 }
 
 async function mainProcessor(options, processor) {
-    const config = loadSuiConfig(options.env);
+    const config = loadConfig(options.env);
     await processor(config.sui, options);
 }
 
