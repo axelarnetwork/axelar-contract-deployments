@@ -3,7 +3,7 @@ const { Command, Option } = require('commander');
 const { printInfo, validateParameters } = require('../common/utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo } = require('./sign-utils');
-const { loadSuiConfig } = require('./utils');
+const { loadConfig } = require('../common/utils');
 
 async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
@@ -54,7 +54,7 @@ async function processCommand(chain, options) {
 }
 
 async function mainProcessor(options, processor) {
-    const config = loadSuiConfig(options.env);
+    const config = loadConfig(options.env);
     await processor(config.sui, options);
 }
 
