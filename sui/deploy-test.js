@@ -1,6 +1,6 @@
-const { saveConfig, prompt, printInfo } = require('../common/utils');
+const { loadConfig, saveConfig, prompt, printInfo } = require('../common/utils');
 const { Command } = require('commander');
-const { loadSuiConfig, deployPackage, getBcsBytesByObjectId } = require('./utils');
+const { deployPackage, getBcsBytesByObjectId } = require('./utils');
 const { singletonStruct } = require('./types-utils');
 const { Transaction } = require('@mysten/sui/transactions');
 const { addBaseOptions } = require('./cli-utils');
@@ -54,7 +54,7 @@ async function processCommand(config, chain, options) {
 }
 
 async function mainProcessor(options, processor) {
-    const config = loadSuiConfig(options.env);
+    const config = loadConfig(options.env);
 
     await processor(config, config.sui, options);
     saveConfig(config, options.env);
