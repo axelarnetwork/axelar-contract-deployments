@@ -42,10 +42,10 @@ const PACKAGE_DIRS = ['gas_service', 'test', 'axelar_gateway', 'operators'];
  */
 const PACKAGE_CONFIGS = {
     cmdOptions: {
-        AxelarGateway: () => [...DEPLOY_CMD_OPTIONS, ...GATEWAY_CMD_OPTIONS],
-        GasService: () => DEPLOY_CMD_OPTIONS,
-        Test: () => DEPLOY_CMD_OPTIONS,
-        Operators: () => DEPLOY_CMD_OPTIONS,
+        AxelarGateway: () => GATEWAY_CMD_OPTIONS,
+        GasService: () => [],
+        Test: () => [],
+        Operators: () => [],
     },
     postDeployFunctions: {
         AxelarGateway: postDeployAxelarGateway,
@@ -288,6 +288,9 @@ const addDeployOptions = (program) => {
 
     // Add the options to the program
     options.forEach((option) => program.addOption(option));
+
+    // Add the base deploy options to the program
+    DEPLOY_CMD_OPTIONS.forEach((option) => program.addOption(option));
 
     return program;
 };
