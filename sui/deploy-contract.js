@@ -40,14 +40,14 @@ const PACKAGE_DIRS = ['gas_service', 'test', 'axelar_gateway', 'operators'];
 /**
  * Package Mapping Object for Command Options and Post-Deployment Functions
  */
-const PACKAGE_MAPPING = {
-    CMD_OPTIONS: {
+const PACKAGE_CONFIGS = {
+    cmdOptions: {
         AxelarGateway: () => [...DEPLOY_CMD_OPTIONS, ...GATEWAY_CMD_OPTIONS],
         GasService: () => DEPLOY_CMD_OPTIONS,
         Test: () => DEPLOY_CMD_OPTIONS,
         Operators: () => DEPLOY_CMD_OPTIONS,
     },
-    POST_DEPLOY_FUNCTIONS: {
+    postDeployFunctions: {
         AxelarGateway: postDeployAxelarGateway,
         GasService: postDeployGasService,
         Test: postDeployTest,
@@ -205,7 +205,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     };
 
     // Execute post-deployment function
-    const executePostDeploymentFn = PACKAGE_MAPPING.POST_DEPLOY_FUNCTIONS[packageName];
+    const executePostDeploymentFn = PACKAGE_CONFIGS.postDeployFunctions[packageName];
     await executePostDeploymentFn(published, keypair, client, config, chain, options);
 
     printInfo(`${packageName} Configuration Updated`, JSON.stringify(chain.contracts[packageName], null, 2));
@@ -284,7 +284,7 @@ const addDeployOptions = (program) => {
     const packageName = program.name();
 
     // Find the corresponding options for the package
-    const options = PACKAGE_MAPPING.CMD_OPTIONS[packageName]();
+    const options = PACKAGE_CONFIGS.cmdOptions[packageName]();
 
     // Add the options to the program
     options.forEach((option) => program.addOption(option));
