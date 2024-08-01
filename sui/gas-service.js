@@ -1,9 +1,10 @@
-const { saveConfig, printInfo, printError } = require('../evm/utils');
+const { saveConfig, printInfo, printError } = require('../common/utils');
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
+const { loadConfig } = require('../common/utils');
 const { gasServiceStruct } = require('./types-utils');
-const { loadSuiConfig, getBcsBytesByObjectId } = require('./utils');
+const { getBcsBytesByObjectId } = require('./utils');
 const { ethers } = require('hardhat');
 const { getFormattedAmount } = require('./amount-utils');
 const {
@@ -18,8 +19,8 @@ async function payGas(keypair, client, gasServiceConfig, args, options) {
 
     const gasServicePackageId = gasServiceConfig.address;
 
+    const { params } = options;
     const refundAddress = options.refundAddress || walletAddress;
-    const params = options.params || '0x';
 
     const [destinationChain, destinationAddress, channelId, payload] = args;
     const unitAmount = options.amount;
@@ -51,8 +52,8 @@ async function addGas(keypair, client, gasServiceConfig, args, options) {
 
     const gasServicePackageId = gasServiceConfig.address;
 
+    const { params } = options;
     const refundAddress = options.refundAddress || walletAddress;
-    const params = options.params || '0x';
 
     const [messageId] = args;
     const unitAmount = options.amount;
@@ -160,7 +161,7 @@ async function processCommand(command, chain, args, options) {
 }
 
 async function mainProcessor(options, args, processor, command) {
-    const config = loadSuiConfig(options.env);
+    const config = loadConfig(options.env);
     await processor(command, config.sui, args, options);
     saveConfig(config, options.env);
 }

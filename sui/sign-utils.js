@@ -1,6 +1,6 @@
 'use strict';
 
-const { verifyTransaction } = require('@mysten/sui/verify');
+const { verifyTransactionSignature } = require('@mysten/sui/verify');
 const { decodeSuiPrivateKey } = require('@mysten/sui/cryptography');
 const { Ed25519Keypair, Ed25519PublicKey } = require('@mysten/sui/keypairs/ed25519');
 const { MultiSigPublicKey } = require('@mysten/sui/multisig');
@@ -8,7 +8,7 @@ const { Secp256k1Keypair, Secp256k1PublicKey } = require('@mysten/sui/keypairs/s
 const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui/keypairs/secp256r1');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui/client');
 const { fromB64, fromHEX } = require('@mysten/bcs');
-const { printInfo } = require('../evm/utils');
+const { printInfo } = require('../common/utils');
 const { ethers } = require('hardhat');
 const {
     utils: { hexlify },
@@ -124,7 +124,7 @@ async function signTransactionBlockBytes(keypair, client, txBytes, options) {
     let publicKey;
 
     try {
-        publicKey = await verifyTransaction(txBytes, serializedSignature);
+        publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
     } catch {
         throw new Error(`Cannot verify tx signature`);
     }

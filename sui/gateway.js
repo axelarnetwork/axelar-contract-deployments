@@ -1,4 +1,4 @@
-const { saveConfig, printInfo } = require('../evm/utils');
+const { saveConfig, printInfo } = require('../common/utils');
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
@@ -8,10 +8,10 @@ const {
     constants: { HashZero },
 } = ethers;
 
+const { loadConfig } = require('../common/utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, printWalletInfo, getRawPrivateKey, broadcast } = require('./sign-utils');
 const { bytes32Struct, signersStruct, messageToSignStruct, messageStruct, proofStruct } = require('./types-utils');
-const { loadSuiConfig } = require('./utils');
 const { getSigners } = require('./deploy-gateway');
 const secp256k1 = require('secp256k1');
 
@@ -218,7 +218,7 @@ async function rotateSigners(keypair, client, config, chain, args, options) {
 }
 
 async function mainProcessor(processor, args, options) {
-    const config = loadSuiConfig(options.env);
+    const config = loadConfig(options.env);
 
     const [keypair, client] = getWallet(config.sui, options);
     await printWalletInfo(keypair, client, config.sui, options);

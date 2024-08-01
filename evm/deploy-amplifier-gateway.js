@@ -7,7 +7,7 @@ const {
     ContractFactory,
     Contract,
     Wallet,
-    utils: { defaultAbiCoder, keccak256, hexlify },
+    utils: { defaultAbiCoder, keccak256 },
     getDefaultProvider,
 } = ethers;
 
@@ -22,58 +22,18 @@ const {
     mainProcessor,
     deployContract,
     getGasOptions,
-    isKeccak256Hash,
-    getContractConfig,
-    isString,
     getWeightedSigners,
     getContractJSON,
     getDeployedAddress,
     getDeployOptions,
+    getDomainSeparator,
 } = require('./utils');
-const { calculateDomainSeparator, isValidCosmosAddress } = require('../cosmwasm/utils');
 const { addExtendedOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
 const { WEIGHTED_SIGNERS_TYPE, encodeWeightedSigners } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const AxelarAmplifierGatewayProxy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGatewayProxy.sol/AxelarAmplifierGatewayProxy.json');
 const AxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json');
-
-async function getDomainSeparator(config, chain, options) {
-    printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
-
-    if (isKeccak256Hash(options.domainSeparator)) {
-        // return the domainSeparator for debug deployments
-        return options.domainSeparator;
-    }
-
-    const {
-        axelar: { contracts, chainId },
-    } = config;
-    const {
-        Router: { address: routerAddress },
-    } = contracts;
-
-    if (!isString(chain.axelarId)) {
-        throw new Error(`missing or invalid axelar ID for chain ${chain.name}`);
-    }
-
-    if (!isString(routerAddress) || !isValidCosmosAddress(routerAddress)) {
-        throw new Error(`missing or invalid router address`);
-    }
-
-    if (!isString(chainId)) {
-        throw new Error(`missing or invalid chain ID`);
-    }
-
-    const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
-    const expectedDomainSeparator = calculateDomainSeparator(chain.axelarId, routerAddress, chainId);
-
-    if (domainSeparator !== expectedDomainSeparator) {
-        throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
-    }
-
-    return domainSeparator;
-}
 
 async function getSetupParams(config, chain, operator, options) {
     const { signers: signerSets, verifierSetId } = await getWeightedSigners(config, chain, options);
