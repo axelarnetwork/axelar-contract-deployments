@@ -19,7 +19,9 @@ const {
     suiPackageAddress,
     suiClockAddress,
     readMovePackageName,
-    getChannelId,
+    getSingletonChannelId,
+    getItsChannelId,
+    getSquidChannelId,
 } = require('./utils');
 
 /**
@@ -35,7 +37,7 @@ const {
  * 2. Ensure the corresponding folder exists in the specified path
  *
  */
-const PACKAGE_DIRS = ['gas_service', 'test', 'axelar_gateway', 'operators'];
+const PACKAGE_DIRS = ['gas_service', 'test', 'axelar_gateway', 'operators', 'abi', 'governance', 'its', 'squid'];
 
 /**
  * Package Mapping Object for Command Options and Post-Deployment Functions
@@ -46,12 +48,20 @@ const PACKAGE_CONFIGS = {
         GasService: () => [],
         Test: () => [],
         Operators: () => [],
+        Abi: () => [],
+        Governance: () => [],
+        ITS: () => [],
+        Squid: () => [],
     },
     postDeployFunctions: {
         AxelarGateway: postDeployAxelarGateway,
         GasService: postDeployGasService,
         Test: postDeployTest,
         Operators: postDeployOperators,
+        Abi: () => {},
+        Governance: () => {},
+        ITS: postDeployIts,
+        Squid: postDeploySquid,
     },
 };
 
@@ -94,7 +104,7 @@ async function postDeployTest(published, keypair, client, config, chain, options
     const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
 
     const [singletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::test::Singleton`]);
-    const channelId = await getChannelId(client, singletonObjectId);
+    const channelId = await getSingletonChannelId(client, singletonObjectId);
     chain.contracts.Test.objects = { Singleton: singletonObjectId, ChannelId: channelId };
 
     const tx = new Transaction();
@@ -191,6 +201,42 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
     };
 }
 
+async function postDeployIts(published, keypair, client, config, chain, options) {
+    const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
+
+    const [itsObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::ITS`]);
+    const channelId = await getItsChannelId(client, itsObjectId);
+    chain.contracts.ITS.objects = { ITS: itsObjectId, ChannelId: channelId };
+
+    const tx = new Transaction();
+    tx.moveCall({
+        target: `${published.packageId}::discovery::register_transaction`,
+        arguments: [tx.object(itsObjectId), tx.object(relayerDiscovery)],
+    });
+
+    const registerTx = await broadcast(client, keypair, tx);
+
+    printInfo('Register transaction', registerTx.digest);
+}
+
+async function postDeploySquid(published, keypair, client, config, chain, options) {
+    const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
+
+    const [squidObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::squid::Squid`]);
+    const channelId = await getSquidChannelId(client, squidObjectId);
+    chain.contracts.Squid.objects = { Squid: squidObjectId, ChannelId: channelId };
+
+    const tx = new Transaction();
+    tx.moveCall({
+        target: `${published.packageId}::discovery::register_transaction`,
+        arguments: [tx.object(squidObjectId), tx.object(chain.contracts.ITS.objects.ITS), tx.object(relayerDiscovery)],
+    });
+
+    const registerTx = await broadcast(client, keypair, tx);
+
+    printInfo('Register transaction', registerTx.digest);
+}
+
 async function deploy(keypair, client, supportedContract, config, chain, options) {
     const { packageDir, packageName } = supportedContract;
 
@@ -282,7 +328,6 @@ const GATEWAY_CMD_OPTIONS = [
 const addDeployOptions = (program) => {
     // Get the package name from the program name
     const packageName = program.name();
-
     // Find the corresponding options for the package
     const options = PACKAGE_CONFIGS.cmdOptions[packageName]();
 
