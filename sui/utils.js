@@ -1,6 +1,7 @@
 'use strict';
 
 const { ethers } = require('hardhat');
+const toml = require('toml');
 const { printInfo, loadConfig, printError } = require('../common/utils');
 const {
     BigNumber,
@@ -92,13 +93,9 @@ const readMovePackageName = (moveDir) => {
     try {
         const moveToml = fs.readFileSync(`${__dirname}/../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`, 'utf8');
 
-        const nameMatch = moveToml.match(/^\s*name\s*=\s*"([^"]+)"/m);
+        const { package: movePackage } = toml.parse(moveToml);
 
-        if (nameMatch && nameMatch[1]) {
-            return nameMatch[1];
-        }
-
-        throw new Error('Package name not found in TOML file');
+        return movePackage.name;
     } catch (err) {
         printError('Error reading TOML file');
         throw err;
