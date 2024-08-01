@@ -1,4 +1,4 @@
-const { saveConfig, prompt, printInfo } = require('../common/utils');
+const { loadConfig, saveConfig, prompt, printInfo } = require('../common/utils');
 const { Command } = require('commander');
 const { deployPackage, getBcsBytesByObjectId } = require('./utils');
 const { singletonStruct } = require('./types-utils');
