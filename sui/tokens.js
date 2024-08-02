@@ -1,13 +1,14 @@
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
+const { Transaction } = require('@mysten/sui/transactions');
 const { saveConfig } = require('../evm/utils');
 const { Command } = require('commander');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions, parseSuiUnitAmount } = require('./cli-utils');
 const { broadcast, getWallet } = require('./sign-utils');
-const { printInfo, printError, validateParameters } = require('../evm/utils');
+const { printInfo, printError } = require('../evm/utils');
 const {
-    utils: { parseUnits, formatUnits },
+    utils: { formatUnits },
 } = require('ethers');
-const { loadSuiConfig, suiCoinId, isGasToken, paginateAll } = require('./utils');
+const { loadConfig } = require('../common/');
+const { suiCoinId, isGasToken, paginateAll } = require('./utils');
 
 class CoinManager {
     static async getAllCoins(client, account) {
@@ -52,14 +53,19 @@ class CoinManager {
             printInfo('Coin Type', coinType);
             printInfo(
                 'Total Balance',
-                `${coins.totalBalance} (${formatUnits(coins.totalBalance.toString(), metadata.decimals).toString()})`,
+                `${formatUnits(coins.totalBalance.toString(), metadata.decimals).toString()}`,
             );
             printInfo('Total Objects', coins.data.length);
+
+            for (const coin of coins.data) {
+                printInfo(`- ${formatUnits(coin.balance, metadata.decimals)}`);
+            }
         }
     }
 
     static async splitCoins(tx, client, coinTypeToCoins, walletAddress, args, options) {
         const coinType = options.coinType || suiCoinId;
+        const splitAmount = args.splitAmount;
 
         const metadata = await client.getCoinMetadata({
             coinType,
@@ -69,8 +75,6 @@ class CoinManager {
             printError('No metadata found for', coinType);
             process.exit(0);
         }
-
-        const splitAmount = parseUnits(args.splitAmount, metadata.decimals).toBigInt();
 
         const objectToSplit = isGasToken(coinType)
             ? tx.gas
@@ -84,7 +88,7 @@ class CoinManager {
         const [coin] = tx.splitCoins(objectToSplit, [splitAmount]);
 
         printInfo('Split Coins', coinType);
-        printInfo('Split Amount', `${splitAmount} (${formatUnits(splitAmount, metadata.decimals).toString()})`);
+        printInfo('Split Amount', `${formatUnits(splitAmount, metadata.decimals).toString()}`);
 
         if (options.transfer) {
             tx.transferObjects([coin], options.transfer);
@@ -94,7 +98,7 @@ class CoinManager {
         }
 
         // The transaction will fail if the gas budget is not set for splitting coins transaction
-        tx.setGasBudget(1e8);
+        tx.setGasBudget(1e7);
     }
 
     static async mergeCoins(tx, coinTypeToCoins, options) {
@@ -134,40 +138,39 @@ class CoinManager {
     }
 }
 
-async function processSplitCommand(chain, args, options) {
+async function processSplitCommand(keypair, client, chain, args, options) {
     printInfo('Action', 'Split Coins');
-    const [keypair, client] = getWallet(chain, options);
 
     const coinTypeToCoins = await CoinManager.getAllCoins(client, keypair.toSuiAddress());
 
-    const tx = new TransactionBlock();
-    validateParameters({
-        isValidNumber: { splitAmount: args.splitAmount },
-    });
+    const tx = new Transaction();
 
     await CoinManager.splitCoins(tx, client, coinTypeToCoins, keypair.toSuiAddress(), args, options);
 
-    await broadcast(client, keypair, tx);
+    const receipt = await broadcast(client, keypair, tx);
+
+    printInfo('Splitted Coins', receipt.digest);
 }
 
-async function processMergeCommand(chain, args, options) {
+async function processMergeCommand(keypair, client, chain, args, options) {
     printInfo('Action', 'Merge Coins');
-    const [keypair, client] = getWallet(chain, options);
     const coinTypeToCoins = await CoinManager.getAllCoins(client, keypair.toSuiAddress());
 
-    const tx = new TransactionBlock();
+    const tx = new Transaction();
     const hasMerged = await CoinManager.mergeCoins(tx, coinTypeToCoins, options);
 
     if (!hasMerged) {
         printInfo('No coins to merge');
+        return;
     }
 
-    await broadcast(client, keypair, tx);
+    const receipt = await broadcast(client, keypair, tx);
+
+    printInfo('Merged Coins', receipt.digest);
 }
 
-async function processListCommand(chain, args, options) {
+async function processListCommand(keypair, client, chain, args, options) {
     printInfo('Action', 'List Coins');
-    const [keypair, client] = getWallet(chain, options);
     printInfo('Wallet Address', keypair.toSuiAddress());
 
     const coinTypeToCoins = await CoinManager.getAllCoins(client, keypair.toSuiAddress());
@@ -175,8 +178,9 @@ async function processListCommand(chain, args, options) {
 }
 
 async function mainProcessor(options, processor, args = {}) {
-    const config = loadSuiConfig(options.env);
-    await processor(config.sui, args, options);
+    const config = loadConfig(options.env);
+    const [keypair, client] = getWallet(config.sui, options);
+    await processor(keypair, client, config.sui, args, options);
     saveConfig(config, options.env);
 }
 
@@ -197,12 +201,11 @@ if (require.main === module) {
     });
 
     splitProgram
-        .argument('<amount>', 'Amount should be in the full coin unit (e.g. 1.5 for 1_500_000_000 coins)')
+        .argument('<amount>', 'Amount should be in the full coin unit (e.g. 1.5 for 1_500_000_000 coins)', parseSuiUnitAmount)
         .option('--transfer <recipientAddress>', 'Used with split command to transfer the split coins to the recipient address')
         .option('--coin-type <coinType>', 'Coin type to split')
         .action((splitAmount, options) => {
-            const args = { splitAmount };
-            mainProcessor(options, processSplitCommand, args);
+            mainProcessor(options, processSplitCommand, { splitAmount });
         });
 
     listProgram.action((options) => {
