@@ -1,14 +1,18 @@
 'use strict';
 
 const { ethers } = require('hardhat');
-const { loadConfig } = require('../common/utils');
+const toml = require('toml');
+const { printInfo, printError } = require('../common/utils');
 const {
     BigNumber,
-    utils: { arrayify, hexlify },
+    utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
+    constants: { HashZero },
 } = ethers;
+const fs = require('fs');
 const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { singletonStruct, itsStruct, squidStruct } = require('./types-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
@@ -48,23 +52,6 @@ const getBcsBytesByObjectId = async (client, objectId) => {
     return fromB64(response.data.bcs.bcsBytes);
 };
 
-const loadSuiConfig = (env) => {
-    const config = loadConfig(env);
-    const suiEnv = env === 'local' ? 'localnet' : env;
-
-    if (!config.sui) {
-        config.sui = {
-            networkType: suiEnv,
-            name: 'Sui',
-            contracts: {
-                axelar_gateway: {},
-            },
-        };
-    }
-
-    return config;
-};
-
 const deployPackage = async (packageName, client, keypair, options = {}) => {
     const compileDir = `${__dirname}/move`;
 
@@ -80,6 +67,24 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
     return { packageId, publishTxn };
 };
 
+const findPublishedObject = (published, packageDir, contractName) => {
+    const packageId = published.packageId;
+    return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageDir}::${contractName}`);
+};
+
+const readMovePackageName = (moveDir) => {
+    try {
+        const moveToml = fs.readFileSync(`${__dirname}/../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`, 'utf8');
+
+        const { package: movePackage } = toml.parse(moveToml);
+
+        return movePackage.name;
+    } catch (err) {
+        printError('Error reading TOML file');
+        throw err;
+    }
+};
+
 const getObjectIdsByObjectTypes = (txn, objectTypes) =>
     objectTypes.map((objectType) => {
         const objectId = txn.objectChanges.find((change) => change.objectType === objectType)?.objectId;
@@ -91,12 +96,66 @@ const getObjectIdsByObjectTypes = (txn, objectTypes) =>
         return objectId;
     });
 
+// Parse bcs bytes from singleton object which is created when the Test contract is deployed
+const getSingletonChannelId = async (client, singletonObjectId) => {
+    const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
+    const data = singletonStruct.parse(bcsBytes);
+    return '0x' + data.channel.id;
+};
+
+const getItsChannelId = async (client, itsObjectId) => {
+    const bcsBytes = await getBcsBytesByObjectId(client, itsObjectId);
+    const data = itsStruct.parse(bcsBytes);
+    return '0x' + data.channel.id;
+};
+
+const getSquidChannelId = async (client, squidObjectId) => {
+    const bcsBytes = await getBcsBytesByObjectId(client, squidObjectId);
+    const data = squidStruct.parse(bcsBytes);
+    return '0x' + data.channel.id;
+};
+
+const getSigners = async (keypair, config, chain, options) => {
+    if (options.signers === 'wallet') {
+        const pubKey = keypair.getPublicKey().toRawBytes();
+        printInfo('Using wallet pubkey as the signer for the gateway', hexlify(pubKey));
+
+        if (keypair.getKeyScheme() !== 'Secp256k1') {
+            throw new Error('Only Secp256k1 pubkeys are supported by the gateway');
+        }
+
+        return {
+            signers: [{ pub_key: pubKey, weight: 1 }],
+            threshold: 1,
+            nonce: options.nonce ? keccak256(toUtf8Bytes(options.nonce)) : HashZero,
+        };
+    } else if (options.signers) {
+        printInfo('Using provided signers', options.signers);
+
+        const signers = JSON.parse(options.signers);
+        return {
+            signers: signers.signers.map(({ pub_key: pubKey, weight }) => {
+                return { pub_key: arrayify(pubKey), weight };
+            }),
+            threshold: signers.threshold,
+            nonce: arrayify(signers.nonce) || HashZero,
+        };
+    }
+
+    return getAmplifierSigners(config, chain);
+};
+
 module.exports = {
     suiPackageAddress,
     suiClockAddress,
     getAmplifierSigners,
     getBcsBytesByObjectId,
-    loadSuiConfig,
     deployPackage,
+    findPublishedObject,
+    readMovePackageName,
     getObjectIdsByObjectTypes,
+    getSingletonChannelId,
+    getItsChannelId,
+    getSquidChannelId,
+    getSigners,
 };
