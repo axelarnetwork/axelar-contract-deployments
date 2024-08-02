@@ -1473,7 +1473,7 @@
       "tokenSymbol": "ETH",
       "confirmations": 1,
       "gasOptions": {
-        "gasLimit": 10000000
+        "gasLimit": 5000000
       },
       "contracts": {
         "AxelarGateway": {
@@ -1554,16 +1554,11 @@
           "interchainToken": "0x76e1914d00f34Ab68784c9c874e46ECD403BfB0E",
           "interchainTokenDeployer": "0xb077C7D572BDB90866dEC320435b809AA6795eF0",
           "tokenManager": "0xa2533C01CC3Aad2A6A6E786C2f4421e4e8c68478",
-          "tokenHandler": "0x25AfcfA6B91CFd2370aCE50e68ac63a74F215fBc",
-          "implementation": "0x2a1966E72c2777c7b0E099B474e1Cf6e02132e2e",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0x62037cFDFaD0336962bE0BE5b563e81035eA2BaF"
+          "tokenHandler": "0x25AfcfA6B91CFd2370aCE50e68ac63a74F215fBc"
         },
         "InterchainTokenFactory": {
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "ITS Factory Test v1.2.4",
-          "implementation": "0x517f4cA9ea0507A3249202cd7Fa3ADA093D20077",
-          "address": "0xc9670201E9d4e9D58f92906FA717C7c5Bac6118c"
+          "salt": "ITS Factory Test v1.2.4"
         }
       },
       "explorer": {
@@ -1664,11 +1659,16 @@
           "interchainToken": "0x76e1914d00f34Ab68784c9c874e46ECD403BfB0E",
           "interchainTokenDeployer": "0xb077C7D572BDB90866dEC320435b809AA6795eF0",
           "tokenManager": "0xa2533C01CC3Aad2A6A6E786C2f4421e4e8c68478",
-          "tokenHandler": "0x25AfcfA6B91CFd2370aCE50e68ac63a74F215fBc"
+          "tokenHandler": "0x25AfcfA6B91CFd2370aCE50e68ac63a74F215fBc",
+          "implementation": "0x2a1966E72c2777c7b0E099B474e1Cf6e02132e2e",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0x62037cFDFaD0336962bE0BE5b563e81035eA2BaF"
         },
         "InterchainTokenFactory": {
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "ITS Factory Test v1.2.4"
+          "salt": "ITS Factory Test v1.2.4",
+          "implementation": "0x517f4cA9ea0507A3249202cd7Fa3ADA093D20077",
+          "address": "0xc9670201E9d4e9D58f92906FA717C7c5Bac6118c"
         }
       },
       "explorer": {
