@@ -1,6 +1,6 @@
 const { Transaction } = require('@mysten/sui/transactions');
 const { Command } = require('commander');
-const { addBaseOptions, parseSuiUnitAmount } = require('./cli-utils');
+const { addBaseOptions, parseSuiUnitAmount, addOptionsToCommands } = require('./cli-utils');
 const { loadConfig, saveConfig, printInfo, printError } = require('../common/');
 const { broadcast, getWallet } = require('./sign-utils');
 const { suiCoinId, isGasToken, paginateAll } = require('./utils');
@@ -213,7 +213,7 @@ if (require.main === module) {
     program.addCommand(listProgram);
 
     // Add base options to all sub-programs
-    program.commands.forEach((cmd) => addBaseOptions(cmd));
+    addOptionsToCommands(program, addBaseOptions)
 
     program.parse();
 }
