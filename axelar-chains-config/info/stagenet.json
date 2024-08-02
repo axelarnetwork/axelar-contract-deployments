@@ -1560,14 +1560,27 @@
   "axelar": {
     "contracts": {
       "ServiceRegistry": {
-        "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+        "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "5",
+        "storeCodeProposalCodeHash": "aa762ada72f295c0890c7beca089b13498b95d04f59262cea4bdf64b07d9edc7",
+        "codeId": 3,
+        "address": "axelar15454y4v8x2ennqq6k0t4cu4r0cpqsy3d6m2jw7d0p4tagaafs29qnlhljd",
+        "executeProposalId": "13"
       },
       "Router": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "3",
+        "storeCodeProposalCodeHash": "c89ad7b98afcafea866ff9b9064ade1dc865a0b4a257cbd0a80fae433c916eab",
+        "codeId": 1,
+        "address": "axelar1saq5hcztvd26vvkquv4dzn8e0uu967nuyxtcful3pvv7ajsw4kmq72xft9"
       },
       "NexusGateway": {
-        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r"
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
+        "storeCodeProposalId": "4",
+        "storeCodeProposalCodeHash": "3f0fd354823ec5d85f051a7c54bd020498a2e37866cbf480e0c107aceae1b84d",
+        "codeId": 2,
+        "address": "axelar1aqun445kcqth3aunxlvly8grgyqt4c68q0g0df99nccs72plgh0s0eptw9"
       },
       "Rewards": {
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -1579,15 +1592,27 @@
             "7",
             "10"
           ]
-        }
+        },
+        "storeCodeProposalId": "6",
+        "storeCodeProposalCodeHash": "0e3cd88efc3125537e3c0b3db97b9e7d8fcb51431293077a2be109b384f26ff1",
+        "codeId": 4,
+        "address": "axelar1nyhmtdrzx77ynqgu8cug0u7eqz2kzfk9mctvaa4stqpekg4s9vnsgu54at"
       },
       "Coordinator": {
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "7",
+        "storeCodeProposalCodeHash": "1c058dec7e9c294f4e7401bd9611d2e811e0cf3a41917c4dd22766ea40b95fa2",
+        "codeId": 5,
+        "address": "axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y"
       },
       "Multisig": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "blockExpiry": 10
+        "blockExpiry": 10,
+        "storeCodeProposalId": "8",
+        "storeCodeProposalCodeHash": "a01cfc3c3a6e5fb22ea5818f2de8a453e0f37b9a54380d76eb4d4ea8d8b6de94",
+        "codeId": 6,
+        "address": "axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u"
       },
       "MultisigProver": {
         "test-avalanche": {
@@ -1613,13 +1638,15 @@
           "verifierSetDiffThreshold": 0,
           "encoder": "abi",
           "keyType": "ecdsa"
-        }
+        },
+        "storeCodeProposalId": "11",
+        "storeCodeProposalCodeHash": "6c4d2f520d62bcd7edd4de772257e74b48a8dfba39f853a9c12ff51ca9ea1e83"
       },
       "Gateway": {
-        "test-avalanche": {
-        },
-        "test-sepolia": {
-        }
+        "test-avalanche": {},
+        "test-sepolia": {},
+        "storeCodeProposalId": "10",
+        "storeCodeProposalCodeHash": "eae97caf40ae6b5eea1e145eec27a59e73aa6f9de389fa9ca0cfc9354a3b68ac"
       },
       "VotingVerifier": {
         "test-avalanche": {
@@ -1648,15 +1675,19 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55"
         },
+        "storeCodeProposalId": "9",
+        "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b"
       }
     },
     "id": "Axelarnet",
     "axelarId": "Axelarnet",
     "chainId": "axelar-stagenet-724",
-    "rpc": "",
-    "lcd": "",
-    "grpc": "",
+    "rpc": "http://k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:26657",
+    "lcd": "http://k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:1317",
+    "grpc": "k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:9090",
     "tokenSymbol": "AXL",
-    "axelarscanApi": ""
+    "axelarscanApi": "https://stagenet.api.axelarscan.io",
+    "gasPrice": "0.007uaxl",
+    "gasLimit": "auto"
   }
 }
