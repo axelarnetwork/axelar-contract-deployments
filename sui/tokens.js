@@ -138,7 +138,7 @@ class CoinManager {
     }
 }
 
-async function processSplitCommand(keypair, client, chain, args, options) {
+async function processSplitCommand(keypair, client, args, options) {
     printInfo('Action', 'Split Coins');
 
     const coinTypeToCoins = await CoinManager.getAllCoins(client, keypair.toSuiAddress());
@@ -152,7 +152,7 @@ async function processSplitCommand(keypair, client, chain, args, options) {
     printInfo('Splitted Coins', receipt.digest);
 }
 
-async function processMergeCommand(keypair, client, chain, args, options) {
+async function processMergeCommand(keypair, client, args, options) {
     printInfo('Action', 'Merge Coins');
     const coinTypeToCoins = await CoinManager.getAllCoins(client, keypair.toSuiAddress());
 
@@ -169,7 +169,7 @@ async function processMergeCommand(keypair, client, chain, args, options) {
     printInfo('Merged Coins', receipt.digest);
 }
 
-async function processListCommand(keypair, client, chain, args, options) {
+async function processListCommand(keypair, client, args, options) {
     printInfo('Action', 'List Coins');
     printInfo('Wallet Address', keypair.toSuiAddress());
 
@@ -180,7 +180,7 @@ async function processListCommand(keypair, client, chain, args, options) {
 async function mainProcessor(options, processor, args = {}) {
     const config = loadConfig(options.env);
     const [keypair, client] = getWallet(config.sui, options);
-    await processor(keypair, client, config.sui, args, options);
+    await processor(keypair, client, args, options);
     saveConfig(config, options.env);
 }
 
