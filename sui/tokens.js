@@ -1,14 +1,12 @@
 const { Transaction } = require('@mysten/sui/transactions');
-const { saveConfig } = require('../evm/utils');
 const { Command } = require('commander');
 const { addBaseOptions, parseSuiUnitAmount } = require('./cli-utils');
+const { loadConfig, saveConfig, printInfo, printError } = require('../common/');
 const { broadcast, getWallet } = require('./sign-utils');
-const { printInfo, printError } = require('../evm/utils');
+const { suiCoinId, isGasToken, paginateAll } = require('./utils');
 const {
     utils: { formatUnits },
 } = require('ethers');
-const { loadConfig } = require('../common/');
-const { suiCoinId, isGasToken, paginateAll } = require('./utils');
 
 class CoinManager {
     static async getAllCoins(client, account) {
@@ -51,10 +49,7 @@ class CoinManager {
             }
 
             printInfo('Coin Type', coinType);
-            printInfo(
-                'Total Balance',
-                `${formatUnits(coins.totalBalance.toString(), metadata.decimals).toString()}`,
-            );
+            printInfo('Total Balance', `${formatUnits(coins.totalBalance.toString(), metadata.decimals).toString()}`);
             printInfo('Total Objects', coins.data.length);
 
             for (const coin of coins.data) {
