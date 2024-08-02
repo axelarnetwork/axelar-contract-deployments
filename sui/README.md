@@ -285,13 +285,21 @@ node sui/transfer-object.js --contractName <Can be checked from config> --object
 
 ## Coins Management
 
-To get the balance of the wallet:
+List of coins in the wallet:
 
 ```bash
 node sui/tokens.js list
 ```
 
-To split the coins:
+Merge the coins:
+
+```bash
+node sui/tokens.js merge --coin-type <coin type to merge>
+```
+
+If coin type is not provided, it will merge all the coins.
+
+Split the coins:
 
 ```bash
 node sui/tokens.js split --amount <amount> --coin-type <coin type to split> --transfer <recipient address>
@@ -300,11 +308,3 @@ node sui/tokens.js split --amount <amount> --coin-type <coin type to split> --tr
 Note:
 -   If coin type is not provided, it will split all the coins.
 -   If transfer address is not provided, it will split the coins in the same wallet. Otherwise, it will transfer the splitted coins to the provided address.
-
-To merge the coins:
-
-```bash
-node sui/tokens.js merge --coin-type <coin type to merge>
-```
-
-If coin type is not provided, it will merge all the coins.
