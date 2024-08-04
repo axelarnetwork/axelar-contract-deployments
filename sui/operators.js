@@ -1,6 +1,10 @@
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
-// const { bcs } = require('@mysten/sui.js/bcs');
+const { bcs } = require('@mysten/sui/bcs');
+const { ethers } = require('hardhat');
+const {
+    utils: { arrayify },
+} = ethers;
 
 const { printInfo, loadConfig } = require('../common/utils');
 const { operatorsStruct } = require('./types-utils');
@@ -8,80 +12,64 @@ const { addBaseOptions, addOptionsToCommands, parseSuiUnitAmount } = require('./
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { getBcsBytesByObjectId } = require('./utils');
 
-async function callContract(keypair, client, config, chain, contractId, functionName, functionArgs, options) {
-    if (!config.sui.contracts.Operators) {
+async function collectGas(keypair, client, config, chain, args, options) {
+    const [amount] = args;
+    const receiver = options.receiver || keypair.toSuiAddress();
+    const gasServiceConfig = config.sui.contracts.GasService;
+    const operatorsConfig = config.sui.contracts.Operators;
+
+    if (!gasServiceConfig) {
+        throw new Error('Gas service package not found.');
+    }
+
+    if (!operatorsConfig) {
         throw new Error('Operators package not found.');
     }
 
-    const operatorsConfig = config.sui.contracts.Operators;
-    const walletAddress = keypair.toSuiAddress();
-
+    const operatorCapId = operatorsConfig.objects.Operators;
     const operatorBytes = await getBcsBytesByObjectId(client, operatorsConfig.objects.Operators);
     const parsedOperator = operatorsStruct.parse(operatorBytes);
     const bagId = parsedOperator.caps.id;
-    console.log(parsedOperator);
     const bagResult = await client.getDynamicFields({
         parentId: bagId,
         name: 'caps',
     });
-    console.log(bagResult);
-    return;
+    const gasCollectorBagId = bagResult.data.find(
+        (cap) => cap.objectType === `${gasServiceConfig.address}::gas_service::GasCollectorCap`,
+    )?.objectId;
+
+    const gasCollectorCapObject = await client.getObject({
+        id: gasCollectorBagId,
+        options: {
+            showContent: true,
+        },
+    });
+    const gasCollectorCapId = gasCollectorCapObject.data.content.fields.value.fields.id.id;
+
+    if (!gasCollectorCapId) {
+        throw new Error('GasCollectorCap not found in the operator capabilities bag');
+    }
+
+    console.log('GasCollectorBag:', gasCollectorBagId);
+    console.log('GasCollectorCap:', gasCollectorCapId);
+    console.log('OperatorCap:', operatorCapId);
+    console.log('Operators:', operatorsConfig.objects.Operators);
 
     const tx = new Transaction();
 
-    let borrowedCap = null;
-
-    if (options.capId) {
-        [borrowedCap] = tx.moveCall({
-            target: `${operatorsConfig.address}::operators::borrow_cap`,
-            arguments: [
-                tx.object(operatorsConfig.objects.Operators),
-                tx.object(operatorsConfig.objects.operator_caps[walletAddress]),
-                tx.pure(options.capId),
-            ],
-        });
-    }
-
-    const callArgs = [...functionArgs];
-
-    if (options.capIndex !== undefined && borrowedCap) {
-        callArgs.splice(options.capIndex, 0, borrowedCap);
-    }
-
-    tx.moveCall({
-        target: `${contractId}::${functionName}`,
-        arguments: callArgs,
+    const borrowedCap = tx.moveCall({
+        target: `${operatorsConfig.address}::operators::borrow_cap`,
+        arguments: [tx.object(operatorsConfig.objects.Operators), tx.object(operatorCapId), tx.object(gasCollectorCapId)],
+        typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
 
-    await broadcast(client, keypair, tx);
+    // tx.moveCall({
+    //     target: `${gasServiceConfig.address}::gas_service::collect_gas`,
+    //     arguments: [tx.object(gasServiceConfig.objects.GasService), borrowedCap, tx.pure.address(receiver), tx.pure.u64(amount)],
+    // });
 
-    printInfo('Contract called successfully');
-}
-
-// await processor(keypair, client, config, config.sui.contracts.Operators, args, options);
-async function collectGas(keypair, client, config, chain, args, options) {
-    if (!config.sui.contracts.GasService) {
-        throw new Error('Gas service package not found.');
-    }
-
-    const gasServiceConfig = config.sui.contracts.GasService;
-    const [receiver, amount] = args;
-
-    await callContract(
-        keypair,
-        client,
-        config,
-        chain,
-        gasServiceConfig.address,
-        'GasService::collect_gas',
-        [gasServiceConfig.objects.GasService, receiver, amount],
-        {
-            ...options,
-            capIndex: 0,
-        },
-    );
-
-    printInfo('Gas collected successfully');
+    const receipt = await broadcast(client, keypair, tx);
+    printInfo('Gas collected', receipt.digest);
 }
 
 // async function refundGas(keypair, client, config, chain, args, options) {
@@ -111,19 +99,18 @@ async function collectGas(keypair, client, config, chain, args, options) {
 
 async function storeCap(keypair, client, config, chain, args, options) {
     const [capId] = args;
-    const gasCollectorCapId = capId || config.sui.contracts.GasService.objects.GasCollectorCap;
-
+    const gasCollectorCapConfig = config.sui.contracts.GasService;
+    const gasCollectorCapId = capId || gasCollectorCapConfig.objects.GasCollectorCap;
     const operatorsConfig = config.sui.contracts.Operators;
     const ownerCapId = operatorsConfig.objects.OwnerCap;
     const operatorId = operatorsConfig.objects.Operators;
 
     const tx = new Transaction();
 
-    console.log('storeCap', capId, ownerCapId, operatorId);
-
     tx.moveCall({
         target: `${operatorsConfig.address}::operators::store_cap`,
         arguments: [tx.object(operatorId), tx.object(ownerCapId), tx.object(gasCollectorCapId)],
+        typeArguments: [`${gasCollectorCapConfig.address}::gas_service::GasCollectorCap`],
     });
 
     const receipt = await broadcast(client, keypair, tx);
@@ -185,16 +172,6 @@ if (require.main === module) {
 
     program.description('Operators contract operations.');
 
-    // const callContractCmd = program
-    //     .command('call-contract <contractId> <functionName> [functionArgs...]')
-    //     .description('Call a contract with an optional borrowed capability')
-    //     .addOption(new Option('--capId <capId>', 'ID of the capability to borrow'))
-    //     .addOption(new Option('--capIndex <capIndex>', 'Index of the borrowed capability in the function arguments'))
-    //     .action((contractId, functionName, functionArgs, options) => {
-    //         options.capIndex = options.capIndex ? parseInt(options.capIndex, 10) : undefined;
-    //         mainProcessor(callContract, [contractId, functionName, functionArgs], options);
-    //     });
-
     const addCmd = new Command('add')
         .command('add <newOperatorAddress>')
         .description('Add an operator')
@@ -208,8 +185,9 @@ if (require.main === module) {
         .action((operatorAddress, options) => mainProcessor(removeOperator, [operatorAddress], options));
 
     const collectGasCmd = new Command('collectGas')
-        .command('collectGas <receiver>')
+        .command('collectGas')
         .description('Collect gas from the gas service')
+        .addOption(new Option('--receiver <receiver>', 'Address of the receiver'))
         .requiredOption('--amount <amount>', 'Amount to add gas', parseSuiUnitAmount)
         .addOption(new Option('--capId <capId>', 'ID of the GasCollectorCap to borrow'))
         .action((receiver, options) => mainProcessor(collectGas, [receiver, options.amount], options));
