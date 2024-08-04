@@ -190,7 +190,7 @@ if (require.main === module) {
         .addOption(new Option('--receiver <receiver>', 'Address of the receiver'))
         .requiredOption('--amount <amount>', 'Amount to add gas', parseSuiUnitAmount)
         .addOption(new Option('--capId <capId>', 'ID of the GasCollectorCap to borrow'))
-        .action((receiver, options) => mainProcessor(collectGas, [receiver, options.amount], options));
+        .action((options) => mainProcessor(collectGas, [options.amount], options));
 
     const storeCapCmd = new Command('storeCap')
         .command('storeCap')
