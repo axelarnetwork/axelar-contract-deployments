@@ -109,6 +109,30 @@ Deploy the Operators package:
 node sui/deploy-contract.js deploy Operators
 ```
 
+Deploy the Abi package:
+
+```bash
+node sui/deploy-contract.js deploy Abi
+```
+
+Deploy the Governance package (requires `abi` and `axelar_gateway`):
+
+```bash
+node sui/deploy-contract.js deploy Governance
+```
+
+Deploy the ITS package (requires `abi`, `axelar_gateway` and `goverannce`):
+
+```bash
+node sui/deploy-contract.js deploy ITS
+```
+
+Deploy the Squid package (requires `abi`, `axelar_gateway`, `goverannce` and `its`):
+
+```bash
+node sui/deploy-contract.js deploy Squid
+```
+
 Call Contract:
 
 ```bash

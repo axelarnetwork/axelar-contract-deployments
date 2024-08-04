@@ -12,7 +12,7 @@ const fs = require('fs');
 const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { singletonStruct } = require('./types-utils');
+const { singletonStruct, itsStruct, squidStruct } = require('./types-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
@@ -97,9 +97,21 @@ const getObjectIdsByObjectTypes = (txn, objectTypes) =>
     });
 
 // Parse bcs bytes from singleton object which is created when the Test contract is deployed
-const getChannelId = async (client, singletonObjectId) => {
+const getSingletonChannelId = async (client, singletonObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
     const data = singletonStruct.parse(bcsBytes);
+    return '0x' + data.channel.id;
+};
+
+const getItsChannelId = async (client, itsObjectId) => {
+    const bcsBytes = await getBcsBytesByObjectId(client, itsObjectId);
+    const data = itsStruct.parse(bcsBytes);
+    return '0x' + data.channel.id;
+};
+
+const getSquidChannelId = async (client, squidObjectId) => {
+    const bcsBytes = await getBcsBytesByObjectId(client, squidObjectId);
+    const data = squidStruct.parse(bcsBytes);
     return '0x' + data.channel.id;
 };
 
@@ -142,6 +154,8 @@ module.exports = {
     findPublishedObject,
     readMovePackageName,
     getObjectIdsByObjectTypes,
-    getChannelId,
+    getSingletonChannelId,
+    getItsChannelId,
+    getSquidChannelId,
     getSigners,
 };
