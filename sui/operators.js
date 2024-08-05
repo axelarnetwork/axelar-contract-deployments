@@ -10,7 +10,45 @@ const { printInfo, loadConfig } = require('../common/utils');
 const { operatorsStruct } = require('./types-utils');
 const { addBaseOptions, addOptionsToCommands, parseSuiUnitAmount } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
-const { getBcsBytesByObjectId } = require('./utils');
+const { getBcsBytesByObjectId, findOwnedObjectId } = require('./utils');
+
+async function getGasCollectorCapId(client, gasServiceConfig, operatorsConfig) {
+    const operatorId = operatorsConfig.objects.Operators;
+
+    // Get and parse operator data
+    const operatorBytes = await getBcsBytesByObjectId(client, operatorId);
+    const parsedOperator = operatorsStruct.parse(operatorBytes);
+
+    // Get the capabilities bag ID
+    const bagId = parsedOperator.caps.id;
+
+    // Find the GasCollectorCap bag ID
+    const bagResult = await client.getDynamicFields({
+        parentId: bagId,
+        name: 'caps',
+    });
+    const gasCollectorBagId = bagResult.data.find(
+        (cap) => cap.objectType === `${gasServiceConfig.address}::gas_service::GasCollectorCap`,
+    )?.objectId;
+
+    if (!gasCollectorBagId) {
+        throw new Error('GasCollectorCap not found in the operator capabilities bag');
+    }
+
+    console.log('GasCollectorBagId', gasCollectorBagId);
+
+    // Get the actual cap ID from the bag ID
+    const gasCollectorCapObject = await client.getObject({
+        id: gasCollectorBagId,
+        options: {
+            showContent: true,
+        },
+    });
+
+    // Extract and return the gas collector cap ID
+    const gasCollectorCapId = gasCollectorCapObject.data.content.fields.value.fields.id.id;
+    return gasCollectorCapId;
+}
 
 async function collectGas(keypair, client, config, chain, args, options) {
     const [amount] = args;
@@ -26,40 +64,19 @@ async function collectGas(keypair, client, config, chain, args, options) {
         throw new Error('Operators package not found.');
     }
 
-    const operatorCapId = operatorsConfig.objects.Operators;
-    const operatorBytes = await getBcsBytesByObjectId(client, operatorsConfig.objects.Operators);
-    const parsedOperator = operatorsStruct.parse(operatorBytes);
-    const bagId = parsedOperator.caps.id;
-    const bagResult = await client.getDynamicFields({
-        parentId: bagId,
-        name: 'caps',
-    });
-    const gasCollectorBagId = bagResult.data.find(
-        (cap) => cap.objectType === `${gasServiceConfig.address}::gas_service::GasCollectorCap`,
-    )?.objectId;
+    const operatorId = operatorsConfig.objects.Operators;
+    const gasCollectorCapId = await getGasCollectorCapId(client, gasServiceConfig, operatorsConfig);
+    const operatorCapId = await findOwnedObjectId(client, keypair.toSuiAddress(), `${operatorsConfig.address}::operators::OperatorCap`);
 
-    const gasCollectorCapObject = await client.getObject({
-        id: gasCollectorBagId,
-        options: {
-            showContent: true,
-        },
-    });
-    const gasCollectorCapId = gasCollectorCapObject.data.content.fields.value.fields.id.id;
-
-    if (!gasCollectorCapId) {
-        throw new Error('GasCollectorCap not found in the operator capabilities bag');
-    }
-
-    console.log('GasCollectorBag:', gasCollectorBagId);
-    console.log('GasCollectorCap:', gasCollectorCapId);
-    console.log('OperatorCap:', operatorCapId);
-    console.log('Operators:', operatorsConfig.objects.Operators);
+    printInfo('GasCollectorCap', gasCollectorCapId);
+    printInfo('OperatorCap', operatorCapId);
+    printInfo('Operators', operatorId);
 
     const tx = new Transaction();
 
     const borrowedCap = tx.moveCall({
         target: `${operatorsConfig.address}::operators::borrow_cap`,
-        arguments: [tx.object(operatorsConfig.objects.Operators), tx.object(operatorCapId), tx.object(gasCollectorCapId)],
+        arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.pure(bcs.Address.serialize(gasCollectorCapId).toBytes())],
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
 
