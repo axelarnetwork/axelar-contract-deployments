@@ -84,8 +84,8 @@ const discoveryStruct = bcs.struct('Discovery', {
 });
 
 const bagStruct = bcs.struct('Bag', {
-  id: UID,
-  size: bcs.U64,
+    id: UID,
+    size: bcs.U64,
 });
 
 const operatorsStruct = bcs.struct('Operators', {
