@@ -1,11 +1,6 @@
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { ethers } = require('hardhat');
-const {
-    utils: { arrayify },
-} = ethers;
-
 const { printInfo, loadConfig } = require('../common/utils');
 const { operatorsStruct } = require('./types-utils');
 const { addBaseOptions, addOptionsToCommands, parseSuiUnitAmount } = require('./cli-utils');
@@ -50,6 +45,7 @@ async function getGasCollectorCapId(client, gasServiceConfig, operatorsConfig) {
     return gasCollectorCapId;
 }
 
+// TODO: Fix `InvalidPublicFunctionReturnType { idx: 0 } in command 0` error
 async function collectGas(keypair, client, config, chain, args, options) {
     const [amount] = args;
     const receiver = options.receiver || keypair.toSuiAddress();
@@ -80,39 +76,58 @@ async function collectGas(keypair, client, config, chain, args, options) {
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
 
-    // tx.moveCall({
-    //     target: `${gasServiceConfig.address}::gas_service::collect_gas`,
-    //     arguments: [tx.object(gasServiceConfig.objects.GasService), borrowedCap, tx.pure.address(receiver), tx.pure.u64(amount)],
-    // });
+    tx.moveCall({
+        target: `${gasServiceConfig.address}::gas_service::collect_gas`,
+        arguments: [tx.object(gasServiceConfig.objects.GasService), borrowedCap, tx.pure.address(receiver), tx.pure.u64(amount)],
+    });
 
     const receipt = await broadcast(client, keypair, tx);
     printInfo('Gas collected', receipt.digest);
 }
 
-// async function refundGas(keypair, client, config, chain, args, options) {
-//     if (!chain.contracts.GasService) {
-//         throw new Error('Gas service package not found.');
-//     }
+// TODO: Fix `InvalidPublicFunctionReturnType { idx: 0 } in command 0` error
+async function refund(keypair, client, config, chain, args, options) {
+    const [messageId] = args;
+    const amount = args.amount;
+    const receiver = options.receiver || keypair.toSuiAddress();
 
-//     const gasServiceConfig = chain.contracts.GasService;
-//     const [messageId, receiver, amount] = args;
+    const gasServiceConfig = config.sui.contracts.GasService;
+    const operatorsConfig = config.sui.contracts.Operators;
 
-//     await callContract(
-//         keypair,
-//         client,
-//         config,
-//         chain,
-//         gasServiceConfig.address,
-//         'GasService::refund',
-//         [gasServiceConfig.objects.GasService, bcs.string().serialize(messageId).toBytes(), receiver, amount],
-//         {
-//             ...options,
-//             capIndex: 0,
-//         },
-//     );
+    if (!gasServiceConfig) {
+        throw new Error('Gas service package not found.');
+    }
 
-//     printInfo('Gas refunded successfully');
-// }
+    if (!operatorsConfig) {
+        throw new Error('Operators package not found.');
+    }
+
+    const operatorId = operatorsConfig.objects.Operators;
+    const gasCollectorCapId = await getGasCollectorCapId(client, gasServiceConfig, operatorsConfig);
+    const operatorCapId = await findOwnedObjectId(client, keypair.toSuiAddress(), `${operatorsConfig.address}::operators::OperatorCap`);
+
+    const tx = new Transaction();
+
+    const borrowedCap = tx.moveCall({
+        target: `${operatorsConfig.address}::operators::borrow_cap`,
+        arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.pure(bcs.Address.serialize(gasCollectorCapId).toBytes())],
+        typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
+    });
+
+    tx.moveCall({
+        target: `${gasServiceConfig.address}::gas_service::refund`,
+        arguments: [
+            tx.object(gasServiceConfig.objects.GasService),
+            borrowedCap,
+            tx.pure.string(messageId),
+            tx.pure.address(receiver),
+            tx.pure.u64(amount),
+        ],
+    });
+
+    const receipt = await broadcast(client, keypair, tx);
+    printInfo('Gas refunded', receipt.digest);
+}
 
 async function storeCap(keypair, client, config, chain, args, options) {
     const [capId] = args;
@@ -151,6 +166,31 @@ async function addOperator(keypair, client, config, operatorsConfig, args, optio
     const receipt = await broadcast(client, keypair, tx);
 
     printInfo('Operator Added', receipt.digest);
+}
+
+// TODO: Fix `UnusedValueWithoutDrop` error
+async function removeCap(keypair, client, config, operatorsConfig, args, options) {
+    const [capId] = args;
+
+    const gasServiceAddress = config.sui.contracts.GasService.address;
+    const operatorsObjectId = operatorsConfig.objects.Operators;
+    const ownerCapObjectId = options.ownerCapId || operatorsConfig.objects.OwnerCap;
+
+    const tx = new Transaction();
+
+    tx.moveCall({
+        target: `${operatorsConfig.address}::operators::remove_cap`,
+        arguments: [tx.object(operatorsObjectId), tx.object(ownerCapObjectId), tx.object(capId)],
+        typeArguments: [`${gasServiceAddress}::gas_service::GasCollectorCap`],
+    });
+
+    try {
+        const receipt = await broadcast(client, keypair, tx);
+
+        printInfo('Capability Removed', receipt.digest);
+    } catch (e) {
+        console.log('Error', e.message);
+    }
 }
 
 async function removeOperator(keypair, client, config, operatorsConfig, args, options) {
@@ -206,7 +246,6 @@ if (require.main === module) {
         .description('Collect gas from the gas service')
         .addOption(new Option('--receiver <receiver>', 'Address of the receiver'))
         .requiredOption('--amount <amount>', 'Amount to add gas', parseSuiUnitAmount)
-        .addOption(new Option('--capId <capId>', 'ID of the GasCollectorCap to borrow'))
         .action((options) => mainProcessor(collectGas, [options.amount], options));
 
     const storeCapCmd = new Command('storeCap')
@@ -215,16 +254,25 @@ if (require.main === module) {
         .addOption(new Option('--capId <capId>', 'ID of the capability to store'))
         .action((options) => mainProcessor(storeCap, [], options));
 
-    // const refundGasCmd = program
-    //     .command('refund-gas <messageId> <receiver> <amount>')
-    //     .description('Refund gas from the gas service')
-    //     .addOption(new Option('--capId <capId>', 'ID of the GasCollectorCap to borrow'))
-    //     .action((messageId, receiver, amount, options) => mainProcessor(refundGas, [messageId, receiver, amount], options));
+    const removeCapCmd = new Command('removeCap')
+        .command('removeCap <capId>')
+        .description('Remove a capability')
+        .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
+        .action((capId, options) => mainProcessor(removeCap, [capId], options));
+
+    const refundCmd = new Command('refund')
+        .command('refund <messageId>')
+        .description('Refund gas from the gas service')
+        .addOption(new Option('--receiver <receiver>', 'Address of the receiver'))
+        .requiredOption('--amount <amount>', 'Amount to refund', parseSuiUnitAmount)
+        .action((messageId, options) => mainProcessor(refund, [messageId], options));
 
     program.addCommand(addCmd);
     program.addCommand(removeCmd);
     program.addCommand(collectGasCmd);
     program.addCommand(storeCapCmd);
+    program.addCommand(removeCapCmd);
+    program.addCommand(refundCmd);
 
     addOptionsToCommands(program, addBaseOptions);
 
