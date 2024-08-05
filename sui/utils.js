@@ -145,9 +145,27 @@ const getSigners = async (keypair, config, chain, options) => {
     return getAmplifierSigners(config, chain);
 };
 
+const findOwnedObjectId = async (client, ownerAddress, objectType) => {
+    const ownedObjects = await client.getOwnedObjects({
+        owner: ownerAddress,
+        options: {
+            showContent: true,
+        },
+    });
+
+    const targetObject = ownedObjects.data.find(({ data }) => data.content.type === objectType);
+
+    if (!targetObject) {
+        throw new Error(`No object found for type: ${objectType}`);
+    }
+
+    return targetObject.data.content.fields.id.id;
+};
+
 module.exports = {
     suiPackageAddress,
     suiClockAddress,
+    findOwnedObjectId,
     getAmplifierSigners,
     getBcsBytesByObjectId,
     deployPackage,
