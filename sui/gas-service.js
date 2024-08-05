@@ -176,7 +176,7 @@ if (require.main === module) {
         .description('Pay gas for the new contract call.')
         .option('--refundAddress <refundAddress>', 'Refund address. Default is the sender address.')
         .requiredOption('--amount <amount>', 'Amount to pay gas', parseSuiUnitAmount)
-        .option('--params <params>', 'Params. Default is empty.', "0x")
+        .option('--params <params>', 'Params. Default is empty.', '0x')
         .action((destinationChain, destinationAddress, channelId, payload, options) => {
             mainProcessor(options, [destinationChain, destinationAddress, channelId, payload], processCommand, payGas);
         });
