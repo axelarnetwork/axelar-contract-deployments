@@ -213,7 +213,7 @@ if (require.main === module) {
     program.addCommand(listProgram);
 
     // Add base options to all sub-programs
-    addOptionsToCommands(program, addBaseOptions)
+    addOptionsToCommands(program, addBaseOptions);
 
     program.parse();
 }
