@@ -224,7 +224,14 @@ Verify TokenManagerProxy contract for ITS. `--tokenId` must be specified and `--
 node evm/verify-contract.js -e [env] -n [chain] -c TokenManagerProxy --dir /path/to/interchain-token-service --tokenId [tokenId]
 ```
 
-Verify AxelarAmplifierGateway contract. `--address` can be optionally specified (otherwise will default to the value from config).
+## Verify Token Ownership requests
+
+Download the pending requests [spreadsheet](https://docs.google.com/spreadsheets/d/1zKH1DINTiz83iXbbZRNRurxxZTaU0r5JS4A1c8b9-9A/edit?resourcekey=&gid=1705825087#gid=1705825087) into a csv format.
+
+`node evm/check-ownership-requests.js -f sheet_path.csv`
+
+## Verify AxelarAmplifierGateway contract. 
+`--address` can be optionally specified (otherwise will default to the value from config).
 
 1. First clone the `axelar-gmp-sdk-solidity` repo: `git clone git@github.com:axelarnetwork/axelar-gmp-sdk-solidity.git`
 2. Checkout the branch or commit from where the contract was deployed: `git checkout <branch_name>`
