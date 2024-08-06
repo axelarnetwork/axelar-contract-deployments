@@ -168,21 +168,23 @@ async function addOperator(keypair, client, config, operatorsConfig, args, optio
     printInfo('Operator Added', receipt.digest);
 }
 
-// TODO: Fix `UnusedValueWithoutDrop` error
 async function removeCap(keypair, client, config, operatorsConfig, args, options) {
     const [capId] = args;
 
     const gasServiceAddress = config.sui.contracts.GasService.address;
     const operatorsObjectId = operatorsConfig.objects.Operators;
     const ownerCapObjectId = options.ownerCapId || operatorsConfig.objects.OwnerCap;
+    const capReceiver = options.receiver || keypair.toSuiAddress();
 
     const tx = new Transaction();
 
-    tx.moveCall({
+    const cap = tx.moveCall({
         target: `${operatorsConfig.address}::operators::remove_cap`,
         arguments: [tx.object(operatorsObjectId), tx.object(ownerCapObjectId), tx.object(capId)],
         typeArguments: [`${gasServiceAddress}::gas_service::GasCollectorCap`],
     });
+
+    tx.transferObjects([cap], capReceiver);
 
     try {
         const receipt = await broadcast(client, keypair, tx);
@@ -258,6 +260,7 @@ if (require.main === module) {
         .command('removeCap <capId>')
         .description('Remove a capability')
         .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
+        .addOption(new Option('--receiver <receiver>', 'The removed cap receiver address'))
         .action((capId, options) => mainProcessor(removeCap, [capId], options));
 
     const refundCmd = new Command('refund')
