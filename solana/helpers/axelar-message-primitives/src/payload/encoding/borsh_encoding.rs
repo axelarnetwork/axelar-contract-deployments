@@ -1,6 +1,4 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::instruction::AccountMeta;
-use solana_program::pubkey::Pubkey;
 
 use crate::{DataPayload, PayloadError, SolanaAccountRepr};
 
@@ -28,8 +26,8 @@ impl<'payload> DataPayload<'payload> {
 
 impl BorshSerialize for SolanaAccountRepr {
     fn serialize<W: std::io::prelude::Write>(&self, writer: &mut W) -> std::io::Result<()> {
-        writer.write_all(&self.0.pubkey.to_bytes())?;
-        writer.write_all(&[self.0.is_signer as u8 | (self.0.is_writable as u8) << 1])?;
+        writer.write_all(self.pubkey.as_ref())?;
+        writer.write_all(&[self.is_signer as u8 | (self.is_writable as u8) << 1])?;
         Ok(())
     }
 }
@@ -45,11 +43,11 @@ impl BorshDeserialize for SolanaAccountRepr {
         let is_signer = flags[0] & 1 == 1;
         let is_writable = flags[0] >> 1 == 1;
 
-        Ok(SolanaAccountRepr(AccountMeta {
-            pubkey: Pubkey::from(key),
+        Ok(SolanaAccountRepr {
+            pubkey: key.into(),
             is_signer,
             is_writable,
-        }))
+        })
     }
 }
 

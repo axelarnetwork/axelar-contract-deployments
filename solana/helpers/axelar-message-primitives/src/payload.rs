@@ -4,6 +4,7 @@
 use std::borrow::Cow;
 use std::ops::Deref;
 
+use alloy_sol_types::sol;
 use solana_program::instruction::AccountMeta;
 use solana_program::program_error::ProgramError;
 
@@ -106,11 +107,7 @@ pub enum PayloadError {
     #[error("Borsh deserialize error")]
     BorshDeserializeError,
     #[error(transparent)]
-    AbiError(#[from] ethers_core::abi::Error),
-    #[error("ABI Token not present")]
-    AbiTokenNotPresent,
-    #[error(transparent)]
-    AbiInvalidOutputType(#[from] ethers_core::abi::InvalidOutputType),
+    AbiError(#[from] alloy_sol_types::Error),
 }
 
 impl From<PayloadError> for ProgramError {
@@ -120,16 +117,22 @@ impl From<PayloadError> for ProgramError {
     }
 }
 
-/// Representation of a Solana account in a way that can be easily serialized
-/// for Payload consumption.
-///
-/// This is the expected data type that will be used to represent Solana
-/// accounts in the serilaized payload format.
-///
-/// Utility methods are provided to encode and decode the representation.
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[repr(transparent)]
-pub struct SolanaAccountRepr(pub AccountMeta);
+sol! {
+    /// Representation of a Solana account in a way that can be easily serialized
+    /// for Payload consumption.
+    ///
+    /// This is the expected data type that will be used to represent Solana
+    /// accounts in the serilaized payload format.
+    ///
+    /// Utility methods are provided to encode and decode the representation.
+    #[derive(Debug, PartialEq, Eq)]
+    #[repr(C)]
+    struct SolanaAccountRepr {
+        bytes32 pubkey;
+        bool is_signer;
+        bool is_writable;
+    }
+}
 
 // NOTE: Mostly used by tests
 impl<'a> From<&'a SolanaAccountRepr> for SolanaAccountRepr {
@@ -140,27 +143,41 @@ impl<'a> From<&'a SolanaAccountRepr> for SolanaAccountRepr {
 
 impl<'a, 'b> From<&'b solana_program::account_info::AccountInfo<'a>> for SolanaAccountRepr {
     fn from(account: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        SolanaAccountRepr(AccountMeta {
-            pubkey: *account.key,
+        SolanaAccountRepr {
+            pubkey: account.key.to_bytes().into(),
             is_signer: account.is_signer,
             is_writable: account.is_writable,
-        })
+        }
     }
 }
 
 impl<'a> From<&'a AccountMeta> for SolanaAccountRepr {
     fn from(value: &'a AccountMeta) -> Self {
-        SolanaAccountRepr(value.clone())
+        SolanaAccountRepr {
+            pubkey: value.pubkey.to_bytes().into(),
+            is_signer: value.is_signer,
+            is_writable: value.is_writable,
+        }
     }
 }
 impl From<AccountMeta> for SolanaAccountRepr {
     fn from(value: AccountMeta) -> Self {
-        SolanaAccountRepr(value)
+        SolanaAccountRepr {
+            pubkey: value.pubkey.to_bytes().into(),
+            is_signer: value.is_signer,
+            is_writable: value.is_writable,
+        }
     }
 }
 impl From<SolanaAccountRepr> for AccountMeta {
     fn from(value: SolanaAccountRepr) -> Self {
-        value.0
+        let pubkey_bytes: [u8; 32] = value.pubkey.into();
+
+        AccountMeta {
+            pubkey: pubkey_bytes.into(),
+            is_signer: value.is_signer,
+            is_writable: value.is_writable,
+        }
     }
 }
 
@@ -185,9 +202,13 @@ mod tests {
                 0,
             );
             let repr = SolanaAccountRepr::from(&account);
-            assert_eq!(repr.0.is_signer, *is_singer, "Signer flag is gone!");
-            assert_eq!(repr.0.is_writable, *is_writer, "Writable flag is gone!");
-            assert_eq!(repr.0.pubkey, key, "Pubkey does not match!");
+            assert_eq!(repr.is_signer, *is_singer, "Signer flag is gone!");
+            assert_eq!(repr.is_writable, *is_writer, "Writable flag is gone!");
+            assert_eq!(
+                repr.pubkey.to_vec()[..],
+                key.to_bytes()[..],
+                "Pubkey does not match!"
+            );
         }
     }
 }

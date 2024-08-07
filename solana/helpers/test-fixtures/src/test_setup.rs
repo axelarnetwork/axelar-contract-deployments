@@ -7,7 +7,7 @@ use borsh::BorshDeserialize;
 use gateway::axelar_auth_weighted::AxelarAuthWeighted;
 use gateway::commands::OwnedCommand;
 use gateway::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
-use interchain_token_transfer_gmp::ethers_core::types::U256 as EthersU256;
+use interchain_token_transfer_gmp::alloy_primitives::U256 as AlloyU256;
 use solana_program::hash::Hash;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
@@ -662,13 +662,13 @@ impl TestFixture {
             .iter()
             .try_fold(U256::ZERO, |acc, i| acc.checked_add(i.weight))
             .expect("no overflow");
-        let weight_of_quorum = EthersU256::from_little_endian(weight_of_quorum.to_le());
+        let weight_of_quorum = AlloyU256::from_le_bytes(*weight_of_quorum.to_le());
         let (execute_data_pda, execute_data) = self
             .init_execute_data(
                 gateway_root_pda,
                 Payload::VerifierSet(signer_set.clone()),
                 signers,
-                weight_of_quorum.as_u128(),
+                u128::from_le_bytes(weight_of_quorum.to_le_bytes()),
                 nonce,
                 &DOMAIN_SEPARATOR,
             )

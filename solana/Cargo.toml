@@ -3,6 +3,8 @@ members = ["programs/*", "helpers/*", "xtask", "crates/*"]
 resolver = "2"
 
 [workspace.dependencies]
+alloy-primitives = "0.7"
+alloy-sol-types = "0.7"
 anyhow = "1"
 base64 = "0.21"
 bcs = "0.1.6"

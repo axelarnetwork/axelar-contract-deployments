@@ -9,6 +9,7 @@ crate-type = ["cdylib", "lib"]
 
 
 [dependencies]
+alloy-sol-types.workspace = true
 solana-program.workspace = true
 borsh.workspace = true
 hex.workspace = true
