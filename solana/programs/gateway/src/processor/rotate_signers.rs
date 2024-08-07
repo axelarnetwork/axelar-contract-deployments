@@ -131,10 +131,7 @@ fn emit_signers_rotated_event(verifier_set: &ArchivedVerifierSet) -> Result<(), 
 
     for (pubkey, weight) in verifier_set.signers() {
         let pubkey = pubkey.to_bytes();
-        let Some(weight) = weight.maybe_u128() else {
-            msg!("Invalid signer weight: greater than u128::MAX");
-            return Err(ProgramError::InvalidArgument);
-        };
+        let weight: u128 = weight.into();
         let Ok(address) = Address::try_from(pubkey.as_slice()) else {
             msg!("Invalid public key length: {}", pubkey.len());
             return Err(ProgramError::InvalidArgument);
@@ -143,10 +140,7 @@ fn emit_signers_rotated_event(verifier_set: &ArchivedVerifierSet) -> Result<(), 
         weights.push(weight);
     }
 
-    let Some(quorum) = verifier_set.threshold().maybe_u128() else {
-        msg!("Invalid threshold: greater than u128::MAX");
-        return Err(ProgramError::InvalidArgument);
-    };
+    let quorum: u128 = verifier_set.threshold().into();
 
     let rotate_signers_command = RotateSignersCommand {
         command_id: verifier_set.hash(hasher_impl()),

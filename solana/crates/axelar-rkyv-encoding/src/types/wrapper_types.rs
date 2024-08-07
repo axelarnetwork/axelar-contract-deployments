@@ -16,8 +16,8 @@ use rkyv::vec::ArchivedVec;
 use rkyv::{Archive, Deserialize, Serialize};
 
 use super::{
-    ArchivedMessage, ArchivedPublicKey, ArchivedU256, ArchivedWeightedSigner, Message, PublicKey,
-    WeightedSigner, U256,
+    ArchivedMessage, ArchivedPublicKey, ArchivedU128, ArchivedWeightedSigner, Message, PublicKey,
+    WeightedSigner, U128,
 };
 
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
@@ -87,11 +87,11 @@ impl ArchivedHasheableMessageVec {
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct HasheableSignersBTreeMap {
     len_be_bytes: [u8; 8],
-    inner_map: BTreeMap<PublicKey, U256>,
+    inner_map: BTreeMap<PublicKey, U128>,
 }
 
 impl HasheableSignersBTreeMap {
-    pub fn new(inner_map: BTreeMap<PublicKey, U256>) -> Self {
+    pub fn new(inner_map: BTreeMap<PublicKey, U128>) -> Self {
         Self {
             len_be_bytes: inner_map.len().to_be_bytes(),
             inner_map,
@@ -110,25 +110,25 @@ impl HasheableSignersBTreeMap {
         &self.len_be_bytes
     }
 
-    pub fn keys(&self) -> std::collections::btree_map::Keys<PublicKey, U256> {
+    pub fn keys(&self) -> std::collections::btree_map::Keys<PublicKey, U128> {
         self.inner_map.keys()
     }
 
-    pub fn values(&self) -> std::collections::btree_map::Values<PublicKey, U256> {
+    pub fn values(&self) -> std::collections::btree_map::Values<PublicKey, U128> {
         self.inner_map.values()
     }
 
-    pub(crate) fn inner_map(&self) -> &BTreeMap<PublicKey, U256> {
+    pub(crate) fn inner_map(&self) -> &BTreeMap<PublicKey, U128> {
         &self.inner_map
     }
 
-    pub fn iter(&self) -> std::collections::btree_map::Iter<PublicKey, U256> {
+    pub fn iter(&self) -> std::collections::btree_map::Iter<PublicKey, U128> {
         self.inner_map.iter()
     }
 }
 
 impl ArchivedHasheableSignersBTreeMap {
-    pub fn new(inner_map: ArchivedBTreeMap<ArchivedPublicKey, ArchivedU256>) -> Self {
+    pub fn new(inner_map: ArchivedBTreeMap<ArchivedPublicKey, ArchivedU128>) -> Self {
         Self {
             len_be_bytes: inner_map.len().to_be_bytes(),
             inner_map,
@@ -147,20 +147,20 @@ impl ArchivedHasheableSignersBTreeMap {
         &self.len_be_bytes
     }
 
-    pub fn keys(&self) -> rkyv::collections::btree_map::Keys<ArchivedPublicKey, ArchivedU256> {
+    pub fn keys(&self) -> rkyv::collections::btree_map::Keys<ArchivedPublicKey, ArchivedU128> {
         self.inner_map.keys()
     }
 
-    pub fn values(&self) -> rkyv::collections::btree_map::Values<ArchivedPublicKey, ArchivedU256> {
+    pub fn values(&self) -> rkyv::collections::btree_map::Values<ArchivedPublicKey, ArchivedU128> {
         self.inner_map.values()
     }
 
     #[allow(dead_code)]
-    pub(crate) fn inner_map(&self) -> &ArchivedBTreeMap<ArchivedPublicKey, ArchivedU256> {
+    pub(crate) fn inner_map(&self) -> &ArchivedBTreeMap<ArchivedPublicKey, ArchivedU128> {
         &self.inner_map
     }
 
-    pub fn iter(&self) -> rkyv::collections::btree_map::Iter<'_, ArchivedPublicKey, ArchivedU256> {
+    pub fn iter(&self) -> rkyv::collections::btree_map::Iter<'_, ArchivedPublicKey, ArchivedU128> {
         self.inner_map.iter()
     }
 }

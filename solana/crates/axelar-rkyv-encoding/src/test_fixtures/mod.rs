@@ -2,7 +2,7 @@ pub mod signing_key;
 
 use std::collections::BTreeMap;
 
-use bnum::types::U256 as BnumU256;
+use bnum::types::U128 as BnumU128;
 use rand::distributions::Alphanumeric;
 use rand::rngs::OsRng;
 use rand::Rng;
@@ -33,8 +33,8 @@ pub fn random_string(len: usize) -> String {
         .collect()
 }
 
-pub fn random_u256() -> U256 {
-    U256::from_le(random_bytes())
+pub fn random_u128() -> U128 {
+    U128::from_le(random_bytes())
 }
 
 pub fn random_public_key() -> PublicKey {
@@ -67,13 +67,13 @@ pub fn random_message_with_destination_and_payload(
 
 pub fn random_valid_verifier_set() -> VerifierSet {
     let mut signers = BTreeMap::new();
-    let mut total_weight = BnumU256::ZERO;
+    let mut total_weight = BnumU128::ZERO;
 
     let num_signers = OsRng.gen_range(1..10);
     for _ in 0..num_signers {
         let pubkey = random_public_key();
         let weight = random_weight();
-        total_weight += Into::<BnumU256>::into(weight);
+        total_weight += Into::<BnumU128>::into(weight);
         signers.insert(pubkey, weight);
     }
     VerifierSet::new(OsRng.gen(), signers, total_weight.into())
@@ -84,7 +84,7 @@ pub fn random_proof(message: &[u8]) -> Proof {
     let signatures = (0..num_signatures)
         .map(|_| random_valid_weighted_signature(message))
         .collect();
-    Proof::new(signatures, random_u256(), OsRng.gen())
+    Proof::new(signatures, random_u128(), OsRng.gen())
 }
 
 pub fn random_valid_proof_and_message<const MESSAGE_LENGTH: usize>() -> (Proof, [u8; MESSAGE_LENGTH])
@@ -98,7 +98,7 @@ pub fn random_valid_proof_and_verifier_set(message: &[u8]) -> (Proof, VerifierSe
     let num_signatures = OsRng.gen_range(1..10);
 
     // Generate signatures and calculate the total weight.
-    let mut threshold = BnumU256::ZERO;
+    let mut threshold = BnumU128::ZERO;
     let mut signatures_by_signer = BTreeMap::new();
     for _ in 0..num_signatures {
         let (pubkey, weighted_signature) = random_valid_weighted_signature(message);
@@ -150,10 +150,10 @@ pub fn random_valid_weighted_signature(message: &[u8]) -> (PublicKey, WeightedSi
 }
 
 /// Generates a weight between 0 and 255.
-pub fn random_weight() -> U256 {
-    let mut weight_buffer = [0u8; 32];
+pub fn random_weight() -> U128 {
+    let mut weight_buffer = [0u8; 16];
     weight_buffer[0] = OsRng.gen();
-    U256::from_le(weight_buffer)
+    U128::from_le(weight_buffer)
 }
 
 pub fn random_payload() -> Payload {
@@ -185,13 +185,13 @@ pub fn random_execute_data() -> ExecuteData {
 fn random_verifier_set_and_signing_keys() -> (VerifierSet, BTreeMap<PublicKey, TestSigningKey>) {
     let mut signers = BTreeMap::new();
     let mut signing_keys = BTreeMap::new();
-    let mut total_weight = BnumU256::ZERO;
+    let mut total_weight = BnumU128::ZERO;
 
     let num_signers = OsRng.gen_range(1..10);
     for _ in 0..num_signers {
         let (signing_key, public_key) = random_keypair();
         let weight = random_weight();
-        total_weight += Into::<BnumU256>::into(weight);
+        total_weight += Into::<BnumU128>::into(weight);
         signers.insert(public_key, weight);
         signing_keys.insert(public_key, signing_key);
     }

@@ -1,7 +1,7 @@
 use crate::types::{
     ArchivedCrossChainId, ArchivedExecuteData, ArchivedMessage, ArchivedPayload, ArchivedProof,
-    ArchivedPublicKey, ArchivedSignature, ArchivedU256, ArchivedVerifierSet,
-    ArchivedWeightedSigner, CrossChainId, Message, Payload, PublicKey, VerifierSet, U256,
+    ArchivedPublicKey, ArchivedSignature, ArchivedU128, ArchivedVerifierSet,
+    ArchivedWeightedSigner, CrossChainId, Message, Payload, PublicKey, VerifierSet, U128,
 };
 #[cfg(test)]
 use crate::types::{ExecuteData, Proof, Signature, WeightedSigner};
@@ -28,7 +28,7 @@ pub trait Visitor<'a> {
         for signature in signers_with_signatures.iter() {
             self.visit_weighted_signature(signature.0, signature.1);
         }
-        self.visit_u256(threshold);
+        self.visit_u128(threshold);
         self.visit_u64(proof.nonce_be_bytes());
     }
 
@@ -39,7 +39,7 @@ pub trait Visitor<'a> {
         if let Some(signature) = signature {
             self.visit_signature(signature);
         }
-        self.visit_u256(weight);
+        self.visit_u128(weight);
     }
 
     #[cfg(test)]
@@ -91,9 +91,9 @@ pub trait Visitor<'a> {
         self.prefix_length(verifier_set.signers.len_be_bytes());
         for (public_key, weight) in verifier_set.signers.iter() {
             self.visit_public_key(public_key);
-            self.visit_u256(weight);
+            self.visit_u128(weight);
         }
-        self.visit_u256(&verifier_set.threshold);
+        self.visit_u128(&verifier_set.threshold);
         self.visit_u64(verifier_set.created_at_be_bytes())
     }
 
@@ -118,7 +118,7 @@ pub trait Visitor<'a> {
         self.visit_bytes(number)
     }
 
-    fn visit_u256(&mut self, number: &'a U256) {
+    fn visit_u128(&mut self, number: &'a U128) {
         self.visit_bytes(number.to_le())
     }
 
@@ -149,7 +149,7 @@ pub trait ArchivedVisitor<'a> {
         for (pubkey, signature) in signers_with_signatures.iter() {
             self.visit_weighted_signature(pubkey, signature);
         }
-        self.visit_u256(threshold);
+        self.visit_u128(threshold);
         self.visit_u64(proof.nonce_be_bytes());
     }
 
@@ -164,7 +164,7 @@ pub trait ArchivedVisitor<'a> {
         if let Some(signature) = signature.as_ref() {
             self.visit_signature(signature);
         }
-        self.visit_u256(weight);
+        self.visit_u128(weight);
     }
 
     fn visit_signature(&mut self, signature: &'a ArchivedSignature) {
@@ -215,9 +215,9 @@ pub trait ArchivedVisitor<'a> {
         self.prefix_length(verifier_set.signers.len_be_bytes());
         for (public_key, weight) in verifier_set.signers.iter() {
             self.visit_public_key(public_key);
-            self.visit_u256(weight);
+            self.visit_u128(weight);
         }
-        self.visit_u256(&verifier_set.threshold);
+        self.visit_u128(&verifier_set.threshold);
         self.visit_u64(verifier_set.created_at_be_bytes())
     }
 
@@ -242,7 +242,7 @@ pub trait ArchivedVisitor<'a> {
         self.visit_bytes(number)
     }
 
-    fn visit_u256(&mut self, number: &'a ArchivedU256) {
+    fn visit_u128(&mut self, number: &'a ArchivedU128) {
         self.visit_bytes(number.to_le())
     }
 

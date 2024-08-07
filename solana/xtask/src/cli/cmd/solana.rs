@@ -3,7 +3,7 @@ use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use axelar_rkyv_encoding::types::{PublicKey, VerifierSet, U256};
+use axelar_rkyv_encoding::types::{PublicKey, VerifierSet, U128};
 use gmp_gateway::axelar_auth_weighted::AxelarAuthWeighted;
 use gmp_gateway::state::GatewayConfig;
 use solana_client::rpc_client::RpcClient;
@@ -87,13 +87,13 @@ pub(crate) async fn init_gmp_gateway(
     let mut signers = BTreeMap::new();
     for signer in res.verifier_set.signers.values() {
         let pubkey = PublicKey::new_ecdsa(signer.pub_key.as_ref().try_into()?);
-        let weight = U256::from(signer.weight.u128());
+        let weight = U128::from(signer.weight.u128());
         signers.insert(pubkey, weight);
     }
     let verifier_set = VerifierSet::new(
         res.verifier_set.created_at,
         signers,
-        U256::from(res.verifier_set.threshold.u128()),
+        U128::from(res.verifier_set.threshold.u128()),
     );
     tracing::info!(
         returned = ?res.verifier_set,

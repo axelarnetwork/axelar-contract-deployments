@@ -1,7 +1,7 @@
 use hasher::AxelarRkyv256Hasher;
 use rkyv::ser::serializers::AllocSerializer;
 use rkyv::Fallible;
-use types::{Payload, PublicKey, VerifierSet, WeightedSigner, U256};
+use types::{Payload, PublicKey, VerifierSet, WeightedSigner, U128};
 use visitor::Visitor;
 
 use crate::types::{ExecuteData, Proof};
@@ -20,7 +20,7 @@ pub mod test_fixtures;
 /// on the heap.
 pub fn encode<const N: usize>(
     created_at: u64,
-    threshold: U256,
+    threshold: U128,
     signers_with_signatures: Vec<(PublicKey, WeightedSigner)>,
     payload: Payload,
 ) -> Result<Vec<u8>, EncodingError<N>> {

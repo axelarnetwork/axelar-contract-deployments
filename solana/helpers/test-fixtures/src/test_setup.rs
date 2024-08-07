@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use axelar_message_primitives::DataPayload;
-use axelar_rkyv_encoding::types::u256::U256;
+use axelar_rkyv_encoding::types::u128::U128;
 use axelar_rkyv_encoding::types::{ArchivedExecuteData, Message, Payload, VerifierSet};
 use borsh::BorshDeserialize;
 use gateway::axelar_auth_weighted::AxelarAuthWeighted;
@@ -277,7 +277,7 @@ impl TestFixture {
         let threshold = signers
             .iter()
             .map(|s| s.weight)
-            .try_fold(U256::ZERO, U256::checked_add)
+            .try_fold(U128::ZERO, U128::checked_add)
             .expect("no arithmetic overflow");
 
         self.init_auth_weighted_module_custom_threshold(signers, threshold, nonce)
@@ -286,7 +286,7 @@ impl TestFixture {
     pub fn init_auth_weighted_module_custom_threshold(
         &self,
         signers: &[TestSigner],
-        threshold: U256,
+        threshold: U128,
         nonce: u64,
     ) -> AxelarAuthWeighted {
         let signers: BTreeMap<_, _> = signers.iter().map(|s| (s.public_key, s.weight)).collect();
@@ -582,11 +582,11 @@ impl TestFixture {
         Pubkey,
         BanksTransactionResultWithMetadata,
     ) {
-        let weight_of_quorum = signers
+        let weight_of_quorum: u128 = signers
             .iter()
             .map(|signer| signer.weight)
-            .try_fold(U256::ZERO, U256::checked_add)
-            .and_then(|x| x.maybe_u128())
+            .try_fold(U128::ZERO, U128::checked_add)
+            .and_then(|x| u128::from(x).into())
             .expect("no arithmetic overflow");
 
         let (execute_data_pda, execute_data) = self
@@ -660,7 +660,7 @@ impl TestFixture {
     ) -> (Pubkey, Vec<u8>, Pubkey, BanksTransactionResultWithMetadata) {
         let weight_of_quorum = signers
             .iter()
-            .try_fold(U256::ZERO, |acc, i| acc.checked_add(i.weight))
+            .try_fold(U128::ZERO, |acc, i| acc.checked_add(i.weight))
             .expect("no overflow");
         let weight_of_quorum = AlloyU256::from_le_bytes(*weight_of_quorum.to_le());
         let (execute_data_pda, execute_data) = self

@@ -10,7 +10,7 @@ use super::{
 };
 use crate::hasher::AxelarRkyv256Hasher;
 use crate::types::{
-    ArchivedWeightedSigner, EcdsaRecoverableSignature, Ed25519Signature, WeightedSigner, U256,
+    ArchivedWeightedSigner, EcdsaRecoverableSignature, Ed25519Signature, WeightedSigner, U128,
 };
 
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
@@ -18,7 +18,7 @@ use crate::types::{
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct Proof {
     pub signers_with_signatures: HasheableSignersWithSignaturesBTreeMap,
-    pub threshold: U256,
+    pub threshold: U128,
     pub nonce: u64,
     nonce_be_bytes: [u8; 8],
 }
@@ -26,7 +26,7 @@ pub struct Proof {
 impl Proof {
     pub fn new(
         signers_with_signatures: BTreeMap<PublicKey, WeightedSigner>,
-        threshold: U256,
+        threshold: U128,
         nonce: u64,
     ) -> Self {
         Self {
@@ -46,7 +46,10 @@ impl Proof {
 
 impl ArchivedProof {
     /// Returns the same hash of an equivalent `VerifierSet`.
-    pub fn signer_set_hash<'a>(&'a self, mut hasher_impl: impl AxelarRkyv256Hasher<'a>) -> [u8; 32] {
+    pub fn signer_set_hash<'a>(
+        &'a self,
+        mut hasher_impl: impl AxelarRkyv256Hasher<'a>,
+    ) -> [u8; 32] {
         self.drive_visitor_for_signer_set_hash(&mut hasher_impl);
         hasher_impl.result().into()
     }
@@ -59,9 +62,9 @@ impl ArchivedProof {
         visitor.prefix_length(self.signers_with_signatures.len_be_bytes());
         for (pubkey, weighted_signature) in self.signers_with_signatures.iter() {
             visitor.visit_public_key(pubkey);
-            visitor.visit_u256(&weighted_signature.weight);
+            visitor.visit_u128(&weighted_signature.weight);
         }
-        visitor.visit_u256(&self.threshold);
+        visitor.visit_u128(&self.threshold);
         visitor.visit_u64(self.nonce_be_bytes());
     }
 
@@ -95,8 +98,8 @@ impl ArchivedProof {
         G: Fn(&Ed25519Pubkey, &Ed25519Signature, &[u8; 32]) -> bool,
     {
         use crate::types::ArchivedSignature;
-        let threshold: bnum::types::U256 = (&self.threshold).into();
-        let mut total_weight = bnum::types::U256::ZERO;
+        let threshold: bnum::types::U128 = (&self.threshold).into();
+        let mut total_weight = bnum::types::U128::ZERO;
         for (pubkey, signer) in self.signers_with_signatures.iter() {
             // Signature validation is deferred to the caller.
             let valid_signature: bool = match (&signer.signature.as_ref(), &pubkey) {
@@ -191,7 +194,7 @@ mod tests {
 
         // Fixture Proof threshold values are always equal to the sum of signer weights.
         // Let's bump that.
-        proof.threshold = bnum::types::U256::ONE
+        proof.threshold = bnum::types::U128::ONE
             .checked_add(proof.threshold.into())
             .unwrap()
             .into();

@@ -2,7 +2,7 @@ use rkyv::bytecheck::{self, CheckBytes};
 use rkyv::{Archive, Deserialize, Serialize};
 
 use crate::types::{
-    EcdsaRecoverableSignature, Ed25519Pubkey, Ed25519Signature, Secp256k1Pubkey, Signature, U256,
+    EcdsaRecoverableSignature, Ed25519Pubkey, Ed25519Signature, Secp256k1Pubkey, Signature, U128,
 };
 
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
@@ -10,11 +10,11 @@ use crate::types::{
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct WeightedSigner {
     pub signature: Option<Signature>,
-    pub weight: U256,
+    pub weight: U128,
 }
 
 impl WeightedSigner {
-    pub fn new(signature: Option<Signature>, weight: U256) -> Self {
+    pub fn new(signature: Option<Signature>, weight: U128) -> Self {
         Self { signature, weight }
     }
 }

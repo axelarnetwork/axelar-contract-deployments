@@ -6,10 +6,10 @@ use rkyv::{Archive, Deserialize, Serialize};
 
 use super::HasheableSignersBTreeMap;
 use crate::hasher::AxelarRkyv256Hasher;
-use crate::types::{ArchivedPublicKey, ArchivedU256, PublicKey, U256};
+use crate::types::{ArchivedPublicKey, ArchivedU128, PublicKey, U128};
 use crate::visitor::{ArchivedVisitor, Visitor};
 
-type Signers = BTreeMap<PublicKey, U256>;
+type Signers = BTreeMap<PublicKey, U128>;
 
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
@@ -18,11 +18,11 @@ pub struct VerifierSet {
     pub(crate) created_at: u64,
     created_at_be_bytes: [u8; 8],
     pub(crate) signers: HasheableSignersBTreeMap,
-    pub(crate) threshold: U256,
+    pub(crate) threshold: U128,
 }
 
 impl VerifierSet {
-    pub fn new(created_at: u64, signers: Signers, threshold: U256) -> Self {
+    pub fn new(created_at: u64, signers: Signers, threshold: U128) -> Self {
         Self {
             created_at,
             created_at_be_bytes: created_at.to_be_bytes(),
@@ -51,7 +51,7 @@ impl VerifierSet {
         self.signers.inner_map()
     }
 
-    pub fn threshold(&self) -> &U256 {
+    pub fn threshold(&self) -> &U128 {
         &self.threshold
     }
 
@@ -70,7 +70,7 @@ impl ArchivedVerifierSet {
         hasher_impl.result().into()
     }
 
-    pub fn signers(&self) -> impl Iterator<Item = (&ArchivedPublicKey, &ArchivedU256)> {
+    pub fn signers(&self) -> impl Iterator<Item = (&ArchivedPublicKey, &ArchivedU128)> {
         self.signers.iter()
     }
 
@@ -78,7 +78,7 @@ impl ArchivedVerifierSet {
         self.signers.len()
     }
 
-    pub fn threshold(&self) -> &ArchivedU256 {
+    pub fn threshold(&self) -> &ArchivedU128 {
         &self.threshold
     }
 
@@ -88,10 +88,10 @@ impl ArchivedVerifierSet {
 
     /// Returns `None` on arithmetic overflows
     pub fn sufficient_weight(&self) -> Option<bool> {
-        use bnum::types::U256 as BnumU256;
+        use bnum::types::U128 as BnumU128;
         self.signers
             .values()
-            .try_fold(BnumU256::ZERO, |acc, weight| acc.checked_add(weight.into()))
+            .try_fold(BnumU128::ZERO, |acc, weight| acc.checked_add(weight.into()))
             .map(|total_weight| (total_weight) >= ((&self.threshold).into()))
     }
 
@@ -144,7 +144,7 @@ mod tests {
 
         // Fixture VerifierSet threshold values are always equal to the sum of signer
         // weights. Let's bump that.
-        verifier_set.threshold = bnum::types::U256::ONE
+        verifier_set.threshold = bnum::types::U128::ONE
             .checked_add(verifier_set.threshold.into())
             .unwrap()
             .into();
