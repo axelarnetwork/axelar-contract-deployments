@@ -206,7 +206,23 @@ async function deployAll(config, wallet, chain, options) {
                     deployMethod,
                     wallet,
                     getContractJSON('TokenHandler', artifactPath),
-                    [],
+                    [contracts.AxelarGateway.address],
+                    deployOptions,
+                    gasOptions,
+                    verifyOptions,
+                    chain,
+                );
+            },
+        },
+        gatewayCaller: {
+            name: 'Gateway Caller',
+            contractName: 'GatewayCaller',
+            async deploy() {
+                return await deployContract(
+                    deployMethod,
+                    wallet,
+                    getContractJSON('GatewayCaller', artifactPath),
+                    [contracts.AxelarGateway.address, contracts.AxelarGasService.address],
                     deployOptions,
                     gasOptions,
                     verifyOptions,
@@ -227,6 +243,7 @@ async function deployAll(config, wallet, chain, options) {
                     chain.axelarId,
                     contractConfig.tokenManager,
                     contractConfig.tokenHandler,
+                    contractConfig.gatewayCaller,
                 ];
 
                 printInfo('ITS Implementation args', args);
