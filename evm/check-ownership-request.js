@@ -35,8 +35,8 @@ async function processCommand(config, options) {
 
     for (let i = 0; i < data.length; ++i) {
         const row = data[i];
-        const tokenAddress = row[0];
-        const destinationChainsRaw = row[2].split(',');
+        const tokenAddress = row[1];
+        const destinationChainsRaw = row[3].split(',');
         const destinationChains = destinationChainsRaw.map((chain) => chain.trim().toLowerCase()).filter((chain) => chain);
         const dustTx = row[4];
 
@@ -46,7 +46,7 @@ async function processCommand(config, options) {
         const validDestinationChains = destinationChains.filter((chain) => !invalidDestinationChains.includes(chain));
 
         if (validDestinationChains.length > 0) {
-            finalData[i - totalRowsRemoved][2] =
+            finalData[i - totalRowsRemoved][3] =
                 validDestinationChains.length === 1 ? `${validDestinationChains[0]}` : `"${validDestinationChains.join(', ')}"`;
         } else {
             finalData.splice(i - totalRowsRemoved, 1);
