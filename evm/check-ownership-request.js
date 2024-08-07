@@ -28,7 +28,7 @@ const dustTxRowIndex = 5;
 const commentsRowIndex = 6;
 
 async function processCommand(config, options) {
-    const { file, startingIndex, yes } = options;
+    const { file, startingIndex } = options;
 
     if (startingIndex) {
         validateParameters({ isValidNumber: { startingIndex } });
@@ -38,7 +38,7 @@ async function processCommand(config, options) {
     columnNames.forEach((columnName, index) => {
         columnNames[index] = columnName.replace(/,/g, '');
     });
-    const data = removeDuplicateEntries(file, columnNames, inputData, yes);
+    const data = removeDuplicateEntries(file, columnNames, inputData);
     const finalData = copyObject(data);
     let totalRowsRemoved = 0;
 
@@ -85,7 +85,7 @@ async function processCommand(config, options) {
     await createCsvFile('pending_ownership_requests.csv', finalData);
 }
 
-function removeDuplicateEntries(filePath, columnNames, inputData, skipCommonTokenAddress) {
+function removeDuplicateEntries(filePath, columnNames, inputData) {
     const uniqueArrays = [];
     const manualCheckIndices = [];
     const subarrayMap = new Map();
@@ -126,7 +126,7 @@ function removeDuplicateEntries(filePath, columnNames, inputData, skipCommonToke
         }
     });
 
-    if (!skipCommonTokenAddress && manualCheckIndices.length !== 0) {
+    if (manualCheckIndices.length !== 0) {
         printError('Manually check the following indexes', manualCheckIndices);
     }
 
@@ -287,7 +287,6 @@ if (require.main === module) {
                 'The starting index from which data will be read. if not provided then whole file will be read',
             ),
         )
-        .addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'))
         .action(main);
 
     program.parse();
