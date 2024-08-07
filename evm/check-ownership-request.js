@@ -38,7 +38,7 @@ async function processCommand(config, options) {
     columnNames.forEach((columnName, index) => {
         columnNames[index] = columnName.replace(/,/g, '');
     });
-    const data = cleanInputData(file, columnNames, inputData, yes);
+    const data = removeDuplicateEntries(file, columnNames, inputData, yes);
     const finalData = copyObject(data);
     let totalRowsRemoved = 0;
 
@@ -69,14 +69,14 @@ async function processCommand(config, options) {
         const chain = validDestinationChains[0];
         const apiUrl = config.chains[chain].explorer.api;
         const apiKey = keys.chains[chain].api;
-        let deploymentTx, isValidDustx;
+        let deploymentTx, isValidDustTx;
 
         try {
             deploymentTx = await getDeploymentTx(apiUrl, apiKey, tokenAddress);
-            isValidDustx = await verifyDustTx(deploymentTx, dustTx, config.chains);
+            isValidDustTx = await verifyDustTx(deploymentTx, dustTx, config.chains);
         } catch {}
 
-        if (!isValidDustx) {
+        if (!isValidDustTx) {
             finalData.splice(i - totalRowsRemoved, 1);
             ++totalRowsRemoved;
         }
@@ -85,7 +85,7 @@ async function processCommand(config, options) {
     await createCsvFile('pending_ownership_requests.csv', finalData);
 }
 
-function cleanInputData(filePath, columnNames, inputData, skipCommonTokenAddress) {
+function removeDuplicateEntries(filePath, columnNames, inputData, skipCommonTokenAddress) {
     const uniqueArrays = [];
     const manualCheckIndices = [];
     const subarrayMap = new Map();
@@ -128,7 +128,6 @@ function cleanInputData(filePath, columnNames, inputData, skipCommonTokenAddress
 
     if (!skipCommonTokenAddress && manualCheckIndices.length !== 0) {
         printError('Manually check the following indexes', manualCheckIndices);
-        throw new Error('Input data is not properly cleaned');
     }
 
     const updatedData = copyObject(uniqueArrays);
