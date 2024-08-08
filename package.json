@@ -51,6 +51,9 @@
     "prettier": "^3.3.2",
     "readline-sync": "^1.4.10"
   },
+  "workspaces": [
+    "stellar/bindings/*"
+  ],
   "engines": {
     "node": ">=18"
   }
