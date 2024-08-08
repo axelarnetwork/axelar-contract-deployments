@@ -1,5 +1,110 @@
 {
   "chains": {
+    "test-avalanche": {
+      "name": "test-avalanche",
+      "id": "test-avalanche",
+      "axelarId": "test-avalanche",
+      "chainId": 43113,
+      "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
+      "tokenSymbol": "AVAX",
+      "contracts": {
+        "AxelarGateway": {},
+        "AxelarGasService": {},
+        "AxelarDepositService": {},
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
+        },
+        "Create3Deployer": {
+          "salt": "Create3Deployer",
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
+        },
+        "InterchainTokenService": {},
+        "InterchainTokenFactory": {},
+        "Operators": {},
+        "InterchainGovernance": {},
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x15837c1318AB83d99b19392Fd4811813f520d843",
+            "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
+            "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
+          ],
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.5"
+        }
+      },
+      "explorer": {
+        "name": "Snowtrace",
+        "url": "https://testnet.snowtrace.io",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
+    },
+    "test-sepolia": {
+      "name": "test-Sepolia",
+      "id": "test-sepolia",
+      "axelarId": "test-sepolia",
+      "chainId": 11155111,
+      "rpc": "https://1rpc.io/sepolia",
+      "tokenSymbol": "ETH",
+      "confirmations": 2,
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "AxelarGateway": {},
+        "InterchainGovernance": {},
+        "Multisig": {
+          "threshold": 2,
+          "signers": [
+            "0x15837c1318AB83d99b19392Fd4811813f520d843",
+            "0x64247a441CeF0b7A46614AC34d046c0fdfe35954",
+            "0xEE64c8eb48437DbD2D5B8598dc4A3E8a6c8CEaD9"
+          ],
+          "address": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create3",
+          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
+          "salt": "Multisig v5.5"
+        },
+        "Operators": {},
+        "AxelarGasService": {},
+        "InterchainTokenService": {},
+        "InterchainTokenFactory": {}
+      },
+      "explorer": {
+        "explorer": "Sepoliascan",
+        "url": "https://sepolia.etherscan.io",
+        "api": "https://api-sepolia.etherscan.io/api"
+      },
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
+    },
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
       "id": "ethereum-sepolia",
@@ -2248,7 +2353,7 @@
         "test-avalanche": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
-          "sourceGatewayAddress": "",
+          "sourceGatewayAddress": "0x14213B104d2D897cFeE3767F24277771C8e6B702",
           "votingThreshold": [
             "51",
             "100"
@@ -2261,7 +2366,7 @@
         "test-sepolia": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
-          "sourceGatewayAddress": "",
+          "sourceGatewayAddress": "0x14213B104d2D897cFeE3767F24277771C8e6B702",
           "votingThreshold": [
             "51",
             "100"
