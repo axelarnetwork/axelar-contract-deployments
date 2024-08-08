@@ -2156,18 +2156,33 @@
   "axelar": {
     "contracts": {
       "ServiceRegistry": {
-        "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+        "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "102",
+        "storeCodeProposalCodeHash": "aa762ada72f295c0890c7beca089b13498b95d04f59262cea4bdf64b07d9edc7",
+        "codeId": 7,
+        "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m",
+        "executeProposalId": "111"
       },
       "Router": {
         "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "100",
+        "storeCodeProposalCodeHash": "c89ad7b98afcafea866ff9b9064ade1dc865a0b4a257cbd0a80fae433c916eab",
+        "codeId": 5,
+        "address": "axelar1d9atnamjjhtc46zmzyc202llqs0rhtxnphs6mkjurekath3mkgtq7hsk93"
       },
       "NexusGateway": {
-        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r"
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
+        "storeCodeProposalId": "101",
+        "storeCodeProposalCodeHash": "3f0fd354823ec5d85f051a7c54bd020498a2e37866cbf480e0c107aceae1b84d",
+        "codeId": 6,
+        "address": "axelar14x5fqsezmzame904gkydguycsuqy5f8lp5knkzanccy8g8nz3yus65wveg"
       },
       "Rewards": {
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalCodeHash": "0e3cd88efc3125537e3c0b3db97b9e7d8fcb51431293077a2be109b384f26ff1",
         "rewardsDenom": "uaxl",
+        "storeCodeProposalId": "103",
         "params": {
           "epoch_duration": "14400",
           "rewards_per_epoch": "10000000",
@@ -2175,15 +2190,25 @@
             "7",
             "10"
           ]
-        }
+        },
+        "codeId": 8,
+        "address": "axelar1harq5xe68lzl2kx4e5ch4k8840cgqnry567g0fgw7vt2atcuugrqfa7j5z"
       },
       "Coordinator": {
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "109",
+        "storeCodeProposalCodeHash": "1c058dec7e9c294f4e7401bd9611d2e811e0cf3a41917c4dd22766ea40b95fa2",
+        "codeId": 13,
+        "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx"
       },
       "Multisig": {
         "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "blockExpiry": 10
+        "blockExpiry": 10,
+        "storeCodeProposalId": "104",
+        "storeCodeProposalCodeHash": "a01cfc3c3a6e5fb22ea5818f2de8a453e0f37b9a54380d76eb4d4ea8d8b6de94",
+        "codeId": 9,
+        "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5"
       },
       "MultisigProver": {
         "test-avalanche": {
@@ -2209,13 +2234,15 @@
           "verifierSetDiffThreshold": 0,
           "encoder": "abi",
           "keyType": "ecdsa"
-        }
+        },
+        "storeCodeProposalId": "107",
+        "storeCodeProposalCodeHash": "6c4d2f520d62bcd7edd4de772257e74b48a8dfba39f853a9c12ff51ca9ea1e83"
       },
       "Gateway": {
-        "test-avalanche": {
-        },
-        "test-sepolia": {
-        }
+        "test-avalanche": {},
+        "test-sepolia": {},
+        "storeCodeProposalId": "106",
+        "storeCodeProposalCodeHash": "eae97caf40ae6b5eea1e145eec27a59e73aa6f9de389fa9ca0cfc9354a3b68ac"
       },
       "VotingVerifier": {
         "test-avalanche": {
@@ -2243,16 +2270,20 @@
           "confirmationHeight": 100000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55"
-        }
+        },
+        "storeCodeProposalId": "105",
+        "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b"
       }
     },
     "id": "Axelarnet",
     "axelarId": "Axelarnet",
     "chainId": "axelar-testnet-lisbon-3",
-    "rpc": "https://rpc-axelar-testnet.imperator.co:443",
-    "lcd": "https://lcd-axelar-testnet.imperator.co:443",
-    "grpc": "grpc-axelar-testnet.imperator.co:2062",
+    "rpc": "https://tm.axelar-testnet.lava.build:443",
+    "lcd": "https://rest.axelar-testnet.lava.build",
+    "grpc": "grpc.axelar-testnet.lava.build:443",
     "tokenSymbol": "AXL",
-    "axelarscanApi": "https://testnet.api.axelarscan.io"
+    "axelarscanApi": "https://testnet.api.axelarscan.io",
+    "gasPrice": "0.007uaxl",
+    "gasLimit": "auto"
   }
 }
