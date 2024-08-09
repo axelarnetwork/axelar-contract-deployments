@@ -26,7 +26,13 @@
           "minimumRotationDelay": 3600,
           "salt": "Amplifier Test Temporary"
         },
-        "AxelarGasService": {},
+        "AxelarGasService": {
+          "collector": "0x6D37Ca166d05132e632C78882391031a3B5b6cE8",
+          "salt": "Amplifier Test Temporary",
+          "address": "0xbcfcF78b4a695c9f9569f7EfFD9B759A7a82F25E",
+          "implementation": "0x1384583EFFE9eaDB758D02e7440B9c393B0250c4",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
         "AxelarDepositService": {},
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
@@ -41,7 +47,15 @@
         },
         "InterchainTokenService": {},
         "InterchainTokenFactory": {},
-        "Operators": {},
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x6D37Ca166d05132e632C78882391031a3B5b6cE8",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Amplifier Test Temporary"
+        },
         "InterchainGovernance": {
           "address": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
@@ -127,8 +141,22 @@
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
         },
-        "Operators": {},
-        "AxelarGasService": {},
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x6D37Ca166d05132e632C78882391031a3B5b6cE8",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Amplifier Test Temporary"
+        },
+        "AxelarGasService": {
+          "collector": "0x6D37Ca166d05132e632C78882391031a3B5b6cE8",
+          "salt": "Amplifier Test Temporary",
+          "address": "0xbcfcF78b4a695c9f9569f7EfFD9B759A7a82F25E",
+          "implementation": "0x76e77A2510FABbE4b204028b0583f5864620Fab5",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
         "InterchainTokenService": {},
         "InterchainTokenFactory": {}
       },
