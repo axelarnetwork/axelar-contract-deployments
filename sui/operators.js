@@ -63,13 +63,9 @@ async function collectGas(keypair, client, config, chain, args, options) {
 
     const tx = new Transaction();
 
-    const [cap, borrowedCap] = tx.moveCall({
+    const [cap, loanedCap] = tx.moveCall({
         target: `${operatorsConfig.address}::operators::loan_cap`,
-        arguments: [
-            tx.object(operatorId),
-            tx.object(operatorCapId),
-            tx.pure(bcs.Address.serialize(gasCollectorCapId).toBytes()),
-        ],
+        arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.pure(bcs.Address.serialize(gasCollectorCapId).toBytes())],
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
 
@@ -79,24 +75,29 @@ async function collectGas(keypair, client, config, chain, args, options) {
     });
 
     tx.moveCall({
-      target: `${operatorsConfig.address}::operators::restore_cap`,
-      arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.pure(bcs.Address.serialize(gasCollectorCapId).toBytes()), cap, borrowedCap],
-      typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
-    })
+        target: `${operatorsConfig.address}::operators::restore_cap`,
+        arguments: [
+            tx.object(operatorId),
+            tx.object(operatorCapId),
+            tx.pure(bcs.Address.serialize(gasCollectorCapId).toBytes()),
+            cap,
+            loanedCap,
+        ],
+        typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
+    });
 
     const receipt = await broadcast(client, keypair, tx);
 
     printInfo('Gas collected', receipt.digest);
 }
 
-// TODO: Fix `InvalidPublicFunctionReturnType { idx: 0 } in command 0` error
 async function refund(keypair, client, config, chain, args, options) {
     const [messageId] = args;
-    const amount = args.amount;
+    const amount = options.amount;
     const receiver = options.receiver || keypair.toSuiAddress();
 
     const gasServiceConfig = config.sui.contracts.GasService;
-    const operatorsConfig = config.sui.contracts.Operators;
+    const operatorsConfig = chain;
 
     if (!gasServiceConfig) {
         throw new Error('Gas service package not found.');
@@ -112,8 +113,8 @@ async function refund(keypair, client, config, chain, args, options) {
 
     const tx = new Transaction();
 
-    const borrowedCap = tx.moveCall({
-        target: `${operatorsConfig.address}::operators::borrow_cap`,
+    const [cap, loanedCap] = tx.moveCall({
+        target: `${operatorsConfig.address}::operators::loan_cap`,
         arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.pure(bcs.Address.serialize(gasCollectorCapId).toBytes())],
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
@@ -122,14 +123,27 @@ async function refund(keypair, client, config, chain, args, options) {
         target: `${gasServiceConfig.address}::gas_service::refund`,
         arguments: [
             tx.object(gasServiceConfig.objects.GasService),
-            borrowedCap,
+            cap,
             tx.pure.string(messageId),
             tx.pure.address(receiver),
             tx.pure.u64(amount),
         ],
     });
 
+    tx.moveCall({
+        target: `${operatorsConfig.address}::operators::restore_cap`,
+        arguments: [
+            tx.object(operatorId),
+            tx.object(operatorCapId),
+            tx.pure(bcs.Address.serialize(gasCollectorCapId).toBytes()),
+            cap,
+            loanedCap,
+        ],
+        typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
+    });
+
     const receipt = await broadcast(client, keypair, tx);
+
     printInfo('Gas refunded', receipt.digest);
 }
 
