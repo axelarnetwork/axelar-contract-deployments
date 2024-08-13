@@ -247,51 +247,56 @@ if (require.main === module) {
 
     program.description('Operators contract operations.');
 
-    const addCmd = new Command('add')
-        .command('add <newOperatorAddress>')
-        .description('Add an operator')
-        .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
-        .action((newOperatorAddress, options) => mainProcessor(addOperator, [newOperatorAddress], options));
+    program.addCommand(
+        Command('add')
+            .command('add <newOperatorAddress>')
+            .description('Add an operator')
+            .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
+            .action((newOperatorAddress, options) => mainProcessor(addOperator, [newOperatorAddress], options)),
+    );
 
-    const removeCmd = new Command('remove')
-        .command('remove <operatorAddress>')
-        .description('Remove an operator')
-        .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
-        .action((operatorAddress, options) => mainProcessor(removeOperator, [operatorAddress], options));
+    program.addCommand(
+        new Command('remove')
+            .command('remove <operatorAddress>')
+            .description('Remove an operator')
+            .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
+            .action((operatorAddress, options) => mainProcessor(removeOperator, [operatorAddress], options)),
+    );
 
-    const collectGasCmd = new Command('collectGas')
-        .command('collectGas')
-        .description('Collect gas from the gas service')
-        .addOption(new Option('--receiver <receiver>', 'Address of the receiver'))
-        .requiredOption('--amount <amount>', 'Amount to add gas', parseSuiUnitAmount)
-        .action((options) => mainProcessor(collectGas, [options.amount], options));
+    program.addCommand(
+        new Command('collectGas')
+            .command('collectGas')
+            .description('Collect gas from the gas service')
+            .addOption(new Option('--receiver <receiver>', 'Address of the receiver'))
+            .requiredOption('--amount <amount>', 'Amount to add gas', parseSuiUnitAmount)
+            .action((options) => mainProcessor(collectGas, [options.amount], options)),
+    );
 
-    const storeCapCmd = new Command('storeCap')
-        .command('storeCap')
-        .description('Store a capability')
-        .addOption(new Option('--capId <capId>', 'ID of the capability to store'))
-        .action((options) => mainProcessor(storeCap, [], options));
+    program.addCommand(
+        new Command('storeCap')
+            .command('storeCap')
+            .description('Store a capability')
+            .addOption(new Option('--capId <capId>', 'ID of the capability to store'))
+            .action((options) => mainProcessor(storeCap, [], options)),
+    );
 
-    const removeCapCmd = new Command('removeCap')
-        .command('removeCap <capId>')
-        .description('Remove a capability')
-        .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
-        .addOption(new Option('--receiver <receiver>', 'The removed cap receiver address'))
-        .action((capId, options) => mainProcessor(removeCap, [capId], options));
+    program.addCommand(
+        new Command('removeCap')
+            .command('removeCap <capId>')
+            .description('Remove a capability')
+            .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
+            .addOption(new Option('--receiver <receiver>', 'The removed cap receiver address'))
+            .action((capId, options) => mainProcessor(removeCap, [capId], options)),
+    );
 
-    const refundCmd = new Command('refund')
-        .command('refund <messageId>')
-        .description('Refund gas from the gas service')
-        .addOption(new Option('--receiver <receiver>', 'Address of the receiver'))
-        .requiredOption('--amount <amount>', 'Amount to refund', parseSuiUnitAmount)
-        .action((messageId, options) => mainProcessor(refund, [messageId], options));
-
-    program.addCommand(addCmd);
-    program.addCommand(removeCmd);
-    program.addCommand(collectGasCmd);
-    program.addCommand(storeCapCmd);
-    program.addCommand(removeCapCmd);
-    program.addCommand(refundCmd);
+    program.addCommand(
+        new Command('refund')
+            .command('refund <messageId>')
+            .description('Refund gas from the gas service')
+            .addOption(new Option('--receiver <receiver>', 'Address of the receiver'))
+            .requiredOption('--amount <amount>', 'Amount to refund', parseSuiUnitAmount)
+            .action((messageId, options) => mainProcessor(refund, [messageId], options)),
+    );
 
     addOptionsToCommands(program, addBaseOptions);
 
