@@ -43,19 +43,9 @@ async function getGasCollectorCapId(client, gasServiceConfig, contractConfig) {
     return gasCollectorCapId;
 }
 
-async function collectGas(keypair, client, config, chain, args, options) {
+async function collectGas(keypair, client, gasServiceConfig, contractConfig, args, options) {
     const [amount] = args;
     const receiver = options.receiver || keypair.toSuiAddress();
-    const gasServiceConfig = config.sui.contracts.GasService;
-    const contractConfig = config.sui.contracts.Operators;
-
-    if (!gasServiceConfig) {
-        throw new Error('Gas service package not found.');
-    }
-
-    if (!contractConfig) {
-        throw new Error('Operators package not found.');
-    }
 
     const operatorId = contractConfig.objects.Operators;
     const gasCollectorCapId = await getGasCollectorCapId(client, gasServiceConfig, contractConfig);
@@ -91,12 +81,10 @@ async function collectGas(keypair, client, config, chain, args, options) {
     printInfo('Gas collected', receipt.digest);
 }
 
-async function refund(keypair, client, config, contractConfig, args, options) {
+async function refund(keypair, client, gasServiceConfig, contractConfig, args, options) {
     const [messageId] = args;
     const amount = options.amount;
     const receiver = options.receiver || keypair.toSuiAddress();
-
-    const gasServiceConfig = config.sui.contracts.GasService;
 
     if (!gasServiceConfig) {
         throw new Error('Gas service package not found.');
@@ -146,10 +134,9 @@ async function refund(keypair, client, config, contractConfig, args, options) {
     printInfo('Gas refunded', receipt.digest);
 }
 
-async function storeCap(keypair, client, config, contractConfig, args, options) {
+async function storeCap(keypair, client, gasServiceConfig, contractConfig, args, options) {
     const [capId] = args;
-    const gasCollectorCapConfig = config.sui.contracts.GasService;
-    const gasCollectorCapId = capId || gasCollectorCapConfig.objects.GasCollectorCap;
+    const gasCollectorCapId = capId || gasServiceConfig.objects.GasCollectorCap;
     const ownerCapId = contractConfig.objects.OwnerCap;
     const operatorId = contractConfig.objects.Operators;
 
@@ -158,7 +145,7 @@ async function storeCap(keypair, client, config, contractConfig, args, options) 
     tx.moveCall({
         target: `${contractConfig.address}::operators::store_cap`,
         arguments: [tx.object(operatorId), tx.object(ownerCapId), tx.object(gasCollectorCapId)],
-        typeArguments: [`${gasCollectorCapConfig.address}::gas_service::GasCollectorCap`],
+        typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
 
     const receipt = await broadcast(client, keypair, tx);
@@ -166,7 +153,7 @@ async function storeCap(keypair, client, config, contractConfig, args, options) 
     printInfo('Capability stored', receipt.digest);
 }
 
-async function addOperator(keypair, client, config, contractConfig, args, options) {
+async function addOperator(keypair, client, gasServiceConfig, contractConfig, args, options) {
     const [newOperatorAddress] = args;
 
     const operatorsObjectId = contractConfig.objects.Operators;
@@ -184,10 +171,10 @@ async function addOperator(keypair, client, config, contractConfig, args, option
     printInfo('Operator Added', receipt.digest);
 }
 
-async function removeCap(keypair, client, config, contractConfig, args, options) {
+async function removeCap(keypair, client, gasServiceConfig, contractConfig, args, options) {
     const [capId] = args;
 
-    const gasServiceAddress = config.sui.contracts.GasService.address;
+    const gasServiceAddress = gasServiceConfig.address;
     const operatorsObjectId = contractConfig.objects.Operators;
     const ownerCapObjectId = options.ownerCapId || contractConfig.objects.OwnerCap;
     const capReceiver = options.receiver || keypair.toSuiAddress();
@@ -211,7 +198,7 @@ async function removeCap(keypair, client, config, contractConfig, args, options)
     }
 }
 
-async function removeOperator(keypair, client, config, contractConfig, args, options) {
+async function removeOperator(keypair, client, gasServiceConfig, contractConfig, args, options) {
     const [operatorAddress] = args;
 
     const operatorsObjectId = contractConfig.objects.Operators;
@@ -232,14 +219,20 @@ async function removeOperator(keypair, client, config, contractConfig, args, opt
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
-    if (!config.sui.contracts.Operators) {
+    const contractConfig = config.sui.contracts.Operators;
+    const gasServiceConfig = config.sui.contracts.GasService;
+
+    if (!contractConfig) {
         throw new Error('Operators package not found.');
+    }
+
+    if (!gasServiceConfig) {
+        throw new Error('Gas service package not found.');
     }
 
     const [keypair, client] = getWallet(config.sui, options);
     await printWalletInfo(keypair, client, config.sui, options);
-
-    await processor(keypair, client, config, config.sui.contracts.Operators, args, options);
+    await processor(keypair, client, gasServiceConfig, contractConfig, args, options);
 }
 
 if (require.main === module) {
@@ -248,7 +241,7 @@ if (require.main === module) {
     program.description('Operators contract operations.');
 
     program.addCommand(
-        Command('add')
+        new Command('add')
             .command('add <newOperatorAddress>')
             .description('Add an operator')
             .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
