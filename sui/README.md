@@ -147,6 +147,16 @@ The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChai
 node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
+Collect gas:
+
+Conditions:
+- The `GasCollectorCap` must be stored in the operator contract.
+- The sender must holds the `Operator` object.
+
+```bash
+node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
+```
+
 Approve messages:
 
 If the gateway was deployed using the wallet, you can submit a message approval with it
