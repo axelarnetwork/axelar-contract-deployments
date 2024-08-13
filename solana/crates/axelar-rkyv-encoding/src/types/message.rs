@@ -7,6 +7,8 @@ use rkyv::{Archive, Deserialize, Serialize};
 use crate::hasher::AxelarRkyv256Hasher;
 use crate::visitor::{ArchivedVisitor, Visitor};
 
+const COMMAND_ID_SEPARATOR: &str = "_";
+
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
@@ -31,6 +33,14 @@ impl CrossChainId {
     pub fn id(&self) -> &str {
         &self.id
     }
+
+    pub fn command_id<'a>(&'a self, mut hasher_impl: impl AxelarRkyv256Hasher<'a>) -> [u8; 32] {
+        Visitor::visit_string(&mut hasher_impl, &self.chain);
+        Visitor::visit_string(&mut hasher_impl, COMMAND_ID_SEPARATOR);
+        Visitor::visit_string(&mut hasher_impl, &self.id);
+
+        hasher_impl.result().into()
+    }
 }
 
 impl ArchivedCrossChainId {
@@ -45,6 +55,14 @@ impl ArchivedCrossChainId {
 
     pub fn id(&self) -> &str {
         &self.id
+    }
+
+    pub fn command_id<'a>(&'a self, mut hasher_impl: impl AxelarRkyv256Hasher<'a>) -> [u8; 32] {
+        Visitor::visit_string(&mut hasher_impl, &self.chain);
+        Visitor::visit_string(&mut hasher_impl, COMMAND_ID_SEPARATOR);
+        Visitor::visit_string(&mut hasher_impl, &self.id);
+
+        hasher_impl.result().into()
     }
 }
 

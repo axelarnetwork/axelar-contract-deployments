@@ -43,7 +43,7 @@ impl Command for OwnedCommand {
     #[inline]
     fn hash(&self) -> [u8; 32] {
         match self {
-            OwnedCommand::ApproveMessage(message) => message.hash(hasher_impl()),
+            OwnedCommand::ApproveMessage(message) => message.cc_id().command_id(hasher_impl()),
             OwnedCommand::RotateSigners(verifier_set) => verifier_set.hash(hasher_impl()),
         }
     }
@@ -66,7 +66,7 @@ impl Command for ArchivedCommand<'_> {
 
     fn hash(&self) -> [u8; 32] {
         match self {
-            ArchivedCommand::ApproveMessage(message) => message.hash(),
+            ArchivedCommand::ApproveMessage(message) => message.cc_id().command_id(hasher_impl()),
             ArchivedCommand::RotateSigners(verifier_set) => verifier_set.hash(hasher_impl()),
         }
     }

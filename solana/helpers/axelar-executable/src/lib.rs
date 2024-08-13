@@ -49,7 +49,7 @@ pub fn validate_message(
 
     // Build the actual Message we are going to use
     let message: &ArchivedMessage = (&data.message).try_into()?;
-    let message_hash = message.hash(hasher_impl());
+    let command_id = message.cc_id().command_id(hasher_impl());
 
     // Check: Original message's payload_hash is equivalent to provided payload's
     // hash
@@ -61,7 +61,7 @@ pub fn validate_message(
 
     let destination_program = DestinationProgramId(*program_id);
     let (signing_pda_derived, signing_pda_derived_bump) =
-        destination_program.signing_pda(&message_hash);
+        destination_program.signing_pda(&command_id);
     if signing_pda.key != &signing_pda_derived {
         msg!("Invalid signing PDA");
         return Err(ProgramError::InvalidAccountData);
@@ -79,7 +79,7 @@ pub fn validate_message(
             gateway_root_pda.clone(),
             signing_pda.clone(),
         ],
-        &[&[&message_hash, &[signing_pda_derived_bump]]],
+        &[&[&command_id, &[signing_pda_derived_bump]]],
     )?;
 
     Ok(())
@@ -123,7 +123,7 @@ pub fn construct_axelar_executable_ix(
     let destination_program = DestinationProgramId(incoming_message_destination_program_pubkey);
 
     let (gateway_approved_message_signing_pda, _) =
-        destination_program.signing_pda(&incoming_message.hash(hasher_impl()));
+        destination_program.signing_pda(&incoming_message.cc_id().command_id(hasher_impl()));
 
     let payload = AxelarCallableInstruction::<()>::AxelarExecute(AxelarExecutablePayload {
         payload_without_accounts,

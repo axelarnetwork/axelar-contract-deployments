@@ -1,9 +1,7 @@
 //! Types used for logging messages.
 use std::borrow::Cow;
 
-use axelar_message_primitives::command::{
-    ApproveMessagesCommand, DecodedCommand, RotateSignersCommand,
-};
+use axelar_message_primitives::command::RotateSignersCommand;
 use axelar_rkyv_encoding::types::{ArchivedMessage, Message};
 use base64::engine::general_purpose;
 use base64::Engine as _;
@@ -14,6 +12,7 @@ use solana_program::pubkey::Pubkey;
 
 use crate::commands::OwnedCommand;
 use crate::error::GatewayError;
+use crate::hasher_impl;
 
 #[derive(Debug, Clone, PartialEq, BorshDeserialize, BorshSerialize)]
 /// Logged when the Gateway receives an outbound message.
@@ -34,7 +33,9 @@ pub struct CallContract {
 /// Emitted for every approved message after the Gateway validates a command
 /// batch.
 pub struct MessageApproved {
-    /// The Message ID
+    /// The command ID
+    pub command_id: [u8; 32],
+    /// The message id
     pub message_id: Vec<u8>,
     /// Source chain.
     pub source_chain: Vec<u8>,
@@ -88,20 +89,6 @@ impl<'a> BorshDeserialize for GatewayEvent<'a> {
     }
 }
 
-/// Will be deprecated soon
-impl From<DecodedCommand> for GatewayEvent<'_> {
-    fn from(command: DecodedCommand) -> Self {
-        match command {
-            DecodedCommand::ApproveMessages(approve_call_command) => {
-                GatewayEvent::MessageApproved(Cow::Owned(approve_call_command.into()))
-            }
-            DecodedCommand::RotateSigners(rotate_signer_command) => {
-                GatewayEvent::SignersRotated(Cow::Owned(rotate_signer_command))
-            }
-        }
-    }
-}
-
 impl TryFrom<OwnedCommand> for GatewayEvent<'_> {
     type Error = GatewayError;
 
@@ -120,18 +107,6 @@ impl TryFrom<OwnedCommand> for GatewayEvent<'_> {
     }
 }
 
-impl From<ApproveMessagesCommand> for MessageApproved {
-    fn from(command: ApproveMessagesCommand) -> Self {
-        MessageApproved {
-            message_id: command.command_id.to_vec(),
-            source_chain: command.source_chain,
-            source_address: command.source_address,
-            destination_address: command.destination_program.0.to_bytes(),
-            payload_hash: command.payload_hash,
-        }
-    }
-}
-
 impl TryFrom<Message> for MessageApproved {
     type Error = GatewayError;
 
@@ -145,6 +120,7 @@ impl TryFrom<Message> for MessageApproved {
             .map_err(|_| GatewayError::PublicKeyParseError)?;
 
         Ok(MessageApproved {
+            command_id: cc_id.command_id(hasher_impl()),
             message_id: cc_id.id().into(),
             source_chain: cc_id.chain().into(),
             source_address: message.source_address().into(),
@@ -167,6 +143,7 @@ impl TryFrom<&ArchivedMessage> for MessageApproved {
             .map_err(|_| GatewayError::PublicKeyParseError)?;
 
         Ok(MessageApproved {
+            command_id: cc_id.command_id(hasher_impl()),
             message_id: cc_id.id().into(),
             source_chain: cc_id.chain().into(),
             source_address: message.source_address().into(),
@@ -224,6 +201,7 @@ mod tests {
             quorum: 42,
         };
         let message_approved = MessageApproved {
+            command_id: [2; 32],
             message_id: vec![2; 32],
             source_chain: b"solana".to_vec(),
             source_address: b"SourceAddress".to_vec(),
