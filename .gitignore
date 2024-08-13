@@ -115,3 +115,6 @@ temp-arguments.js
 
 # Sui Move Packages
 sui/move
+
+# VSCode
+.vscode
