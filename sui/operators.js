@@ -30,8 +30,6 @@ async function getGasCollectorCapId(client, gasServiceConfig, operatorsConfig) {
         throw new Error('GasCollectorCap not found in the operator capabilities bag');
     }
 
-    console.log('GasCollectorBagId', gasCollectorBagId);
-
     // Get the actual cap ID from the bag ID
     const gasCollectorCapObject = await client.getObject({
         id: gasCollectorBagId,
@@ -45,7 +43,6 @@ async function getGasCollectorCapId(client, gasServiceConfig, operatorsConfig) {
     return gasCollectorCapId;
 }
 
-// TODO: Fix `InvalidPublicFunctionReturnType { idx: 0 } in command 0` error
 async function collectGas(keypair, client, config, chain, args, options) {
     const [amount] = args;
     const receiver = options.receiver || keypair.toSuiAddress();
@@ -64,24 +61,31 @@ async function collectGas(keypair, client, config, chain, args, options) {
     const gasCollectorCapId = await getGasCollectorCapId(client, gasServiceConfig, operatorsConfig);
     const operatorCapId = await findOwnedObjectId(client, keypair.toSuiAddress(), `${operatorsConfig.address}::operators::OperatorCap`);
 
-    printInfo('GasCollectorCap', gasCollectorCapId);
-    printInfo('OperatorCap', operatorCapId);
-    printInfo('Operators', operatorId);
-
     const tx = new Transaction();
 
-    const borrowedCap = tx.moveCall({
-        target: `${operatorsConfig.address}::operators::borrow_cap`,
-        arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.pure(bcs.Address.serialize(gasCollectorCapId).toBytes())],
+    const [cap, borrowedCap] = tx.moveCall({
+        target: `${operatorsConfig.address}::operators::loan_cap`,
+        arguments: [
+            tx.object(operatorId),
+            tx.object(operatorCapId),
+            tx.pure(bcs.Address.serialize(gasCollectorCapId).toBytes()),
+        ],
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
 
     tx.moveCall({
         target: `${gasServiceConfig.address}::gas_service::collect_gas`,
-        arguments: [tx.object(gasServiceConfig.objects.GasService), borrowedCap, tx.pure.address(receiver), tx.pure.u64(amount)],
+        arguments: [tx.object(gasServiceConfig.objects.GasService), cap, tx.pure.address(receiver), tx.pure.u64(amount)],
     });
 
+    tx.moveCall({
+      target: `${operatorsConfig.address}::operators::restore_cap`,
+      arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.pure(bcs.Address.serialize(gasCollectorCapId).toBytes()), cap, borrowedCap],
+      typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
+    })
+
     const receipt = await broadcast(client, keypair, tx);
+
     printInfo('Gas collected', receipt.digest);
 }
 
