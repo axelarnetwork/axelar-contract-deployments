@@ -1,5 +1,6 @@
 'use strict';
 
+const axios = require('axios');
 const { ethers } = require('hardhat');
 const {
     ContractFactory,
@@ -981,6 +982,19 @@ async function relayTransaction(options, chain, contract, method, params, native
     );
 }
 
+async function getDeploymentTx(apiUrl, apiKey, tokenAddress) {
+    apiUrl = `${apiUrl}?module=contract&action=getcontractcreation&contractaddresses=${tokenAddress}&apikey=${apiKey}`;
+
+    try {
+        const response = await axios.get(apiUrl);
+        return response.data.result[0].txHash;
+    } catch (error) {
+        printWarn(`Error fetching deployment tx for token ${tokenAddress}:`, error);
+    }
+
+    throw new Error('Deployment transaction not found.');
+}
+
 async function getWeightedSigners(config, chain, options) {
     let signers;
     let verifierSetId;
@@ -1050,5 +1064,6 @@ module.exports = {
     getAmplifierKeyAddresses,
     getContractConfig,
     relayTransaction,
+    getDeploymentTx,
     getWeightedSigners,
 };
