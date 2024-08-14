@@ -146,14 +146,23 @@ const getSigners = async (keypair, config, chain, options) => {
 };
 
 const findOwnedObjectId = async (client, ownerAddress, objectType) => {
-    const ownedObjects = await client.getOwnedObjects({
-        owner: ownerAddress,
-        options: {
-            showContent: true,
-        },
-    });
+    var hasNextPage = true;
+    var nextCursor = null;
+    var targetObject = null;
 
-    const targetObject = ownedObjects.data.find(({ data }) => data.content.type === objectType);
+    while (hasNextPage && targetObject == null) {
+        var ownedObjects = await client.getOwnedObjects({
+            owner: ownerAddress,
+            options: {
+                showContent: true,
+            },
+            cursor: nextCursor,
+        });
+
+        targetObject = ownedObjects.data.find(({ data }) => data.content.type === objectType);
+        hasNextPage = ownedObjects.hasNextPage;
+        nextCursor = ownedObjects.nextCursor;
+    }
 
     if (!targetObject) {
         throw new Error(`No object found for type: ${objectType}`);
