@@ -29,7 +29,12 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "AxelarDepositService": {
-          "wrappedSymbol": "WAVAX"
+          "wrappedSymbol": "WAVAX",
+          "refundIssuer": "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817",
+          "salt": "AxelarDepositService",
+          "address": "0x405407133E2783aEb56F2cA9d8e6025465De0B9f",
+          "implementation": "0x523ee715a997bd471BfbE1B66acCF0d47D1fD812",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
@@ -132,7 +137,12 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "AxelarDepositService": {
-          "wrappedSymbol": "WFTM"
+          "wrappedSymbol": "WFTM",
+          "refundIssuer": "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817",
+          "salt": "AxelarDepositService",
+          "address": "0x405407133E2783aEb56F2cA9d8e6025465De0B9f",
+          "implementation": "0x523ee715a997bd471BfbE1B66acCF0d47D1fD812",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
@@ -235,7 +245,12 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "AxelarDepositService": {
-          "wrappedSymbol": "WDEV"
+          "wrappedSymbol": "WDEV",
+          "refundIssuer": "0x2517bA7a3E2cef54c1CD8618e7B0B661A7623817",
+          "salt": "AxelarDepositService",
+          "address": "0x405407133E2783aEb56F2cA9d8e6025465De0B9f",
+          "implementation": "0x20fee12E3d138b783aa9238467BDFDDECA407EF9",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
