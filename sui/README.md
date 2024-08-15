@@ -150,8 +150,8 @@ node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3
 Collect gas:
 
 Conditions:
-- The `GasCollectorCap` must be stored in the operator contract.
-- The sender must holds the `Operator` object.
+- The `GasCollectorCap` must be stored in the gas service object config.
+- The sender must be a whitelisted operator and hold the `OperatorCap` capability.
 
 ```bash
 node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
