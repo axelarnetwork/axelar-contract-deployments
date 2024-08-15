@@ -13,9 +13,18 @@ const addBaseOptions = (program, options = {}) => {
             .env('ENV'),
     );
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    program.addOption(new Option('--parallel', 'run script parallely wrt chains'));
-    program.addOption(new Option('--saveChainSeparately', 'save chain info separately'));
-    program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
+
+    if (!options.ignoreParallel) {
+        program.addOption(new Option('--parallel', 'run script parallely wrt chains'));
+    }
+
+    if (!options.ignoreSaveChainSeparately) {
+        program.addOption(new Option('--saveChainSeparately', 'save chain info separately'));
+    }
+
+    if (!options.ignoreGasOptions) {
+        program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
+    }
 
     if (!options.ignoreChainNames) {
         program.addOption(
@@ -44,7 +53,9 @@ const addBaseOptions = (program, options = {}) => {
 const addExtendedOptions = (program, options = {}) => {
     addBaseOptions(program, options);
 
-    program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+    if (!options.ignoreVerify) {
+        program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
+    }
 
     if (options.artifactPath) {
         program.addOption(new Option('--artifactPath <artifactPath>', 'artifact path'));
