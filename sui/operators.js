@@ -1,7 +1,7 @@
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { printInfo, loadConfig } = require('../common/utils');
+const { printInfo, printError, loadConfig } = require('../common/utils');
 const { operatorsStruct } = require('./types-utils');
 const { addBaseOptions, addOptionsToCommands, parseSuiUnitAmount } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
@@ -194,7 +194,7 @@ async function removeCap(keypair, client, gasServiceConfig, contractConfig, args
 
         printInfo('Capability Removed', receipt.digest);
     } catch (e) {
-        console.log('Error', e.message);
+        printError('RemoveCap Error', e.message);
     }
 }
 
