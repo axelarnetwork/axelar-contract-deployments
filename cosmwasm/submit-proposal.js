@@ -248,6 +248,7 @@ const programHandler = () => {
 
     program.name('submit-proposal').description('Submit governance proposals');
 
+    // TODO: combine deploy-contract and submit-proposal options to remove duplicates
     program.addOption(
         new Option('-e, --env <env>', 'environment')
             .choices(['local', 'devnet', 'devnet-amplifier', 'devnet-verifiers', 'stagenet', 'testnet', 'mainnet'])
@@ -267,6 +268,7 @@ const programHandler = () => {
         ),
     );
     program.addOption(new Option('--instantiate2', 'use instantiate2 for constant address deployment'));
+    program.addOption(new Option('-l, --label <label>', 'contract instance label'));
     program.addOption(new Option('--aarch64', 'aarch64').env('AARCH64').default(false));
     program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
 
