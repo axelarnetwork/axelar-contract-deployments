@@ -1,21 +1,9 @@
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { printInfo, printError, loadConfig } = require('../common/utils');
-const { operatorsStruct } = require('./types-utils');
 const { addBaseOptions, addOptionsToCommands, parseSuiUnitAmount } = require('./cli-utils');
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
-const { getBcsBytesByObjectId, findOwnedObjectId, getBagContentId } = require('./utils');
-
-async function getGasCollectorCapId(client, gasServiceConfig, contractConfig) {
-    // Get and parse operator data
-    const operatorBytes = await getBcsBytesByObjectId(client, contractConfig);
-    const parsedOperator = operatorsStruct.parse(operatorBytes);
-
-    // Get the capabilities bag ID
-    const bagId = parsedOperator.caps.id;
-
-    return getBagContentId(client, `${gasServiceConfig.address}::gas_service::GasCollectorCap`, bagId, 'caps');
-}
+const { findOwnedObjectId } = require('./utils');
 
 function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, moveCall) {
     const operatorId = contractConfig.objects.Operators;
