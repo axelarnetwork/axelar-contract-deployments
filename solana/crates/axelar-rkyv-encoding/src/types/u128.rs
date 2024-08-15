@@ -1,3 +1,4 @@
+use bnum::cast::As;
 use rkyv::bytecheck::{self, CheckBytes};
 use rkyv::{Archive, Deserialize, Serialize};
 
@@ -65,10 +66,10 @@ impl From<u128> for ArchivedU128 {
 
 impl From<bnum::types::U128> for U128 {
     fn from(value: bnum::types::U128) -> Self {
-        let mut bytes = value.to_radix_le(128);
-        bytes.resize(16, 0);
-        // Unwrap: the `bytes` vector always has 16 elements.
-        U128::from_le(bytes.try_into().unwrap())
+        // Using Bnums primitive type trait as conversion as proxy.
+        // https://docs.rs/bnum/latest/bnum/types/type.U128.html#impl-AsPrimitive%3Cu128%3E-for-BUint%3CN%3E
+        let primitive: u128 = value.as_();
+        U128::from_le(primitive.to_le_bytes())
     }
 }
 
