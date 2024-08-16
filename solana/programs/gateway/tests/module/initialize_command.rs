@@ -1,5 +1,6 @@
 use axelar_rkyv_encoding::types::Payload;
 use gmp_gateway::commands::OwnedCommand;
+use gmp_gateway::instructions::InitializeConfig;
 use gmp_gateway::state::{
     ApprovedMessageStatus, GatewayApprovedCommand, GatewayCommandStatus, RotateSignersStatus,
 };
@@ -28,10 +29,10 @@ async fn succesfully_initialize_validate_message_command() {
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers, NONCE),
-            Pubkey::new_unique(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
+            ..fixture.base_initialize_config()
+        })
         .await;
 
     let (payload, commands) = make_payload_and_commands(3);
@@ -85,10 +86,10 @@ async fn succesfully_initialize_rotate_signers_message() {
 
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers, NONCE),
-            Pubkey::new_unique(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
+            ..fixture.base_initialize_config()
+        })
         .await;
 
     // Signer set is slightly different to prevent hash collisions because there's
@@ -172,10 +173,10 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers, NONCE),
-            Pubkey::new_unique(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
+            ..fixture.base_initialize_config()
+        })
         .await;
     let (payload_1, _) = make_payload_and_commands(1);
     let domain_separator = fixture.domain_separator;
@@ -230,10 +231,10 @@ async fn fail_when_validate_message_already_initialized() {
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers, NONCE),
-            Pubkey::new_unique(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
+            ..fixture.base_initialize_config()
+        })
         .await;
     let (payload, commands) = make_payload_and_commands(1);
     let domain_separator = fixture.domain_separator;
@@ -281,10 +282,10 @@ async fn fail_when_rotate_signers_is_already_initialized() {
     ];
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers, NONCE),
-            Pubkey::new_unique(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
+            ..fixture.base_initialize_config()
+        })
         .await;
     let new_signer_set = example_signer_set(42, 43);
     let payload = Payload::VerifierSet(new_signer_set.clone());
@@ -341,10 +342,10 @@ async fn fail_when_rotate_signers_has_unchanged_block_height() {
     let signers = make_signers(&[10_u128, 4_u128]);
     let quorum = 14;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers, NONCE),
-            Pubkey::new_unique(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
+            ..fixture.base_initialize_config()
+        })
         .await;
     let domain_separator = fixture.domain_separator;
 

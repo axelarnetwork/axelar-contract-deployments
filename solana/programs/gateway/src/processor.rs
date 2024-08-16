@@ -16,7 +16,7 @@ use solana_program::{msg, system_instruction, system_program};
 use crate::check_program_account;
 use crate::commands::ArchivedCommand;
 use crate::error::GatewayError;
-use crate::instructions::GatewayInstruction;
+use crate::instructions::{GatewayInstruction};
 
 mod approve_messages;
 mod call_contract;
@@ -63,9 +63,9 @@ impl Processor {
                     payload,
                 )
             }
-            GatewayInstruction::InitializeConfig { config } => {
+            GatewayInstruction::InitializeConfig(init_config) => {
                 msg!("Instruction: Initialize Config");
-                Self::process_initialize_config(program_id, accounts, config)
+                Self::process_initialize_config(program_id, accounts, init_config)
             }
             GatewayInstruction::InitializeExecuteData { execute_data } => {
                 msg!("Instruction: Initialize Execute Data");

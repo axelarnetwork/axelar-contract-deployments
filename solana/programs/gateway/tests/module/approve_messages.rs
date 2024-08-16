@@ -70,18 +70,6 @@ async fn successfully_approves_commands_when_there_are_3_validate_message_comman
 
     let (payload, commands) = make_payload_and_commands(3);
     let domain_separator = fixture.domain_separator;
-    // let gateway_execute_data_raw = prepare_questionable_execute_data(
-    //     &payload,
-    //     &payload,
-    //     &signers,
-    //     &signers,
-    //     quorum,
-    //     &fixture.domain_separator,
-    //     nonce,
-    // );
-    // let execute_data_pda = fixture
-    //     .init_execute_data_with_custom_data(&gateway_root_pda,
-    // &gateway_execute_data_raw)     .await;
     let (execute_data_pda, _) = fixture
         .init_execute_data(
             &gateway_root_pda,

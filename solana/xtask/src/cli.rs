@@ -10,6 +10,7 @@ use ethers::signers::coins_bip39::English;
 use ethers::signers::{LocalWallet, MnemonicBuilder, Signer};
 use ethers::types::Address;
 use eyre::Context;
+use gmp_gateway::axelar_auth_weighted::{RotationDelaySecs, ValidEpochs};
 use k256::SecretKey;
 use url::Url;
 
@@ -237,6 +238,10 @@ pub(crate) enum SolanaInitSubcommand {
         /// configuration.
         #[arg(short, long)]
         payer_kp_path: Option<PathBuf>,
+        #[arg(short, long)]
+        previous_signers_retention: ValidEpochs,
+        #[arg(short, long)]
+        minimum_rotation_delay: RotationDelaySecs,
     },
     AxelarSolanaMemoProgram {
         /// The RPC URL of the target validator.
@@ -441,6 +446,8 @@ async fn handle_solana(command: Solana) -> eyre::Result<()> {
                 payer_kp_path,
                 axelar_private_key_hex,
                 cosmwasm_multisig_prover,
+                previous_signers_retention,
+                minimum_rotation_delay,
             } => {
                 let cosmwasm_signer = create_axelar_cosmsos_signer(axelar_private_key_hex)?;
                 cmd::solana::init_gmp_gateway(
@@ -448,6 +455,8 @@ async fn handle_solana(command: Solana) -> eyre::Result<()> {
                     payer_kp_path.as_ref(),
                     cosmwasm_multisig_prover.as_str(),
                     cosmwasm_signer,
+                    previous_signers_retention,
+                    minimum_rotation_delay,
                 )
                 .await?;
             }

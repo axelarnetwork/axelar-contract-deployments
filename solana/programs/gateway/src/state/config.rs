@@ -66,8 +66,8 @@ impl Sealed for GatewayConfig {}
 impl Pack for GatewayConfig {
     const LEN: usize = {
         size_of::<u8>()
-            + size_of::<Pubkey>()
             + AxelarAuthWeighted::SIZE_WHEN_SERIALIZED
+            + size_of::<Pubkey>()
             + size_of::<[u8; 32]>()
     };
 

@@ -2,6 +2,7 @@ use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway;
 use evm_contracts_test_suite::evm_weighted_signers::WeightedSigners;
 use evm_contracts_test_suite::{get_domain_separator, ContractMiddleware};
+use gateway::instructions::InitializeConfig;
 use solana_program_test::{processor, ProgramTest};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
@@ -41,10 +42,10 @@ async fn axelar_solana_setup() -> (
         create_signer_with_weight(4_u128),
     ];
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers, nonce),
-            Pubkey::new_unique(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
+            ..fixture.base_initialize_config()
+        })
         .await;
     let (counter_pda, counter_bump) =
         axelar_solana_memo_program::get_counter_pda(&gateway_root_pda);

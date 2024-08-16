@@ -3,8 +3,8 @@ use std::borrow::Cow;
 use axelar_solana_memo_program::instruction::call_gateway_with_memo;
 use ethers_core::utils::keccak256;
 use gateway::events::GatewayEvent;
+use gateway::instructions::InitializeConfig;
 use solana_program_test::tokio;
-use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
 use test_fixtures::test_setup::TestFixture;
@@ -22,10 +22,10 @@ async fn test_succesfully_send_to_gateway() {
         create_signer_with_weight(4_u128),
     ];
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers, nonce),
-            Pubkey::new_unique(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
+            ..fixture.base_initialize_config()
+        })
         .await;
     let memo = "🐪🐪🐪🐪";
     let destination_address = ethers_core::types::Address::random().0.to_vec();

@@ -19,6 +19,7 @@ use axelar_rkyv_encoding::types::{
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::events::GatewayEvent;
 use gmp_gateway::hasher_impl;
+use gmp_gateway::instructions::InitializeConfig;
 use gmp_gateway::state::GatewayApprovedCommand;
 use solana_program_test::tokio::fs;
 use solana_program_test::{processor, ProgramTest};
@@ -76,10 +77,15 @@ pub async fn setup_initialised_gateway(
     let operator = Keypair::new();
     let nonce = 42;
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module_custom_threshold(&signers, quorum.into(), nonce),
-            operator.pubkey(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets_with_thershold(&[(
+                &signers,
+                nonce,
+                quorum.into(),
+            )]),
+            operator: operator.pubkey(),
+            ..fixture.base_initialize_config()
+        })
         .await;
 
     InitialisedGatewayMetadata {

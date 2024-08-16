@@ -2,9 +2,9 @@ name: evm-contracts
 
 on:
   push:
-    branches: [main, p1-release]
+    branches: [main]
   pull_request:
-    branches: [main, p1-release]
+    branches: [main]
     paths:
       - "evm-contracts/**"
 

@@ -4,10 +4,11 @@ use axelar_message_primitives::DataPayload;
 use axelar_rkyv_encoding::types::u128::U128;
 use axelar_rkyv_encoding::types::{ArchivedExecuteData, Message, Payload, VerifierSet};
 use borsh::BorshDeserialize;
-use gateway::axelar_auth_weighted::AxelarAuthWeighted;
 use gateway::commands::OwnedCommand;
-use gateway::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
+use gateway::instructions::{InitializeConfig, VerifierSetWraper};
+use gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
 use interchain_token_transfer_gmp::alloy_primitives::U256 as AlloyU256;
+use itertools::Itertools;
 use solana_program::hash::Hash;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
@@ -32,7 +33,7 @@ use crate::account::CheckValidPDAInTests;
 use crate::execute_data::prepare_execute_data;
 use crate::test_signer::TestSigner;
 
-const DOMAIN_SEPARATOR: [u8; 32] = [0u8; 32];
+const DOMAIN_SEPARATOR: [u8; 32] = [42u8; 32];
 
 pub struct TestFixture {
     pub context: ProgramTestContext,
@@ -269,42 +270,64 @@ impl TestFixture {
         root_pda_address
     }
 
-    pub fn init_auth_weighted_module(
-        &self,
-        signers: &[TestSigner],
-        nonce: u64,
-    ) -> AxelarAuthWeighted {
+    pub fn create_verifier_set(&self, signers: &[TestSigner], nonce: u64) -> VerifierSetWraper {
         let threshold = signers
             .iter()
             .map(|s| s.weight)
             .try_fold(U128::ZERO, U128::checked_add)
             .expect("no arithmetic overflow");
 
-        self.init_auth_weighted_module_custom_threshold(signers, threshold, nonce)
+        self.create_verifier_set_with_custom_params(signers, threshold, nonce)
     }
 
-    pub fn init_auth_weighted_module_custom_threshold(
+    pub fn create_verifier_sets(&self, signers: &[(&[TestSigner], u64)]) -> Vec<VerifierSetWraper> {
+        signers
+            .iter()
+            .map(|(signers, nonce)| self.create_verifier_set(signers, *nonce))
+            .collect_vec()
+    }
+
+    pub fn create_verifier_sets_with_thershold(
+        &self,
+        signers: &[(&[TestSigner], u64, U128)],
+    ) -> Vec<VerifierSetWraper> {
+        signers
+            .iter()
+            .map(|(signers, nonce, threshold)| {
+                self.create_verifier_set_with_custom_params(signers, *threshold, *nonce)
+            })
+            .collect_vec()
+    }
+
+    pub fn create_verifier_set_with_custom_params(
         &self,
         signers: &[TestSigner],
         threshold: U128,
         nonce: u64,
-    ) -> AxelarAuthWeighted {
+    ) -> VerifierSetWraper {
         let signers: BTreeMap<_, _> = signers.iter().map(|s| (s.public_key, s.weight)).collect();
         let verifier_set = VerifierSet::new(nonce, signers, threshold);
-        AxelarAuthWeighted::new(verifier_set)
+        VerifierSetWraper::new_from_verifier_set(verifier_set).unwrap()
+    }
+
+    pub fn base_initialize_config(&self) -> InitializeConfig {
+        InitializeConfig {
+            domain_separator: self.domain_separator,
+            initial_signer_sets: vec![],
+            minimum_rotation_delay: 0,
+            operator: Pubkey::new_unique(),
+            previous_signers_retention: 0,
+        }
     }
 
     pub async fn initialize_gateway_config_account(
         &mut self,
-        auth_weighted: AxelarAuthWeighted,
-        init_operator: Pubkey,
+        init_config: InitializeConfig,
     ) -> Pubkey {
-        let (gateway_config_pda, bump) = GatewayConfig::pda();
-        let gateway_config =
-            GatewayConfig::new(bump, auth_weighted, init_operator, self.domain_separator);
+        let (gateway_config_pda, _) = gateway::get_gateway_root_config_pda();
         let ix = gateway::instructions::initialize_config(
             self.payer.pubkey(),
-            gateway_config.clone(),
+            init_config.clone(),
             gateway_config_pda,
         )
         .unwrap();
@@ -318,8 +341,6 @@ impl TestFixture {
             .expect("metadata");
 
         assert_eq!(account.owner, gateway::id());
-        let deserialized_gateway_config: GatewayConfig = borsh::from_slice(&account.data).unwrap();
-        assert_eq!(deserialized_gateway_config, gateway_config);
 
         gateway_config_pda
     }

@@ -4,7 +4,8 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use axelar_rkyv_encoding::types::{PublicKey, VerifierSet, U128};
-use gmp_gateway::axelar_auth_weighted::AxelarAuthWeighted;
+use gmp_gateway::axelar_auth_weighted::{RotationDelaySecs, ValidEpochs};
+use gmp_gateway::instructions::{InitializeConfig, VerifierSetWraper};
 use gmp_gateway::state::GatewayConfig;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
@@ -70,10 +71,12 @@ pub(crate) async fn init_gmp_gateway(
     payer_kp_path: Option<&PathBuf>,
     destination_multisig_prover: &str,
     cosmwasm_signer: SigningClient,
+    previous_signers_retention: ValidEpochs,
+    minimum_rotation_delay: RotationDelaySecs,
 ) -> eyre::Result<()> {
     let payer_kp = defaults::payer_kp_with_fallback_in_sol_cli_config(payer_kp_path)?;
 
-    let (gateway_config_pda, bump) = GatewayConfig::pda();
+    let (gateway_config_pda, _bump) = GatewayConfig::pda();
 
     // Query the cosmwasm multisig prover to get the latest verifier set
     let destination_multisig_prover = cosmrs::AccountId::from_str(destination_multisig_prover)?;
@@ -103,19 +106,19 @@ pub(crate) async fn init_gmp_gateway(
         reconstructed = ?verifier_set,
         "reconstructed verifier set"
     );
-    let auth_weighted = AxelarAuthWeighted::new(verifier_set);
-    tracing::info!(?auth_weighted, "initting auth weighted");
-
-    let gateway_config = GatewayConfig::new(
-        bump,
-        auth_weighted,
-        payer_kp.pubkey(),
-        solana_domain_separator(),
-    );
+    let verifier_set = VerifierSetWraper::new_from_verifier_set(verifier_set).unwrap();
+    let init_config = InitializeConfig {
+        domain_separator: solana_domain_separator(),
+        initial_signer_sets: vec![verifier_set],
+        minimum_rotation_delay,
+        operator: payer_kp.pubkey(),
+        previous_signers_retention,
+    };
+    tracing::info!(?init_config, "initting auth weighted");
 
     let ix = gmp_gateway::instructions::initialize_config(
         payer_kp.pubkey(),
-        gateway_config,
+        init_config,
         gateway_config_pda,
     )?;
 

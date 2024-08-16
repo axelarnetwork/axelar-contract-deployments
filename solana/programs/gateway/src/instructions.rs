@@ -1,13 +1,17 @@
 //! Instruction types
 
+use std::error::Error;
+
+use axelar_rkyv_encoding::types::{ArchivedVerifierSet, VerifierSet};
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+use crate::axelar_auth_weighted::{RotationDelaySecs, ValidEpochs};
 use crate::commands::{MessageWrapper, OwnedCommand};
-use crate::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
+use crate::state::{GatewayApprovedCommand, GatewayExecuteData};
 
 /// Instructions supported by the gateway program.
 #[repr(u8)]
@@ -52,10 +56,7 @@ pub enum GatewayInstruction {
     /// 0. [WRITE, SIGNER] Funding account
     /// 1. [WRITE] Gateway Root Config PDA account
     /// 2. [] System Program account
-    InitializeConfig {
-        /// Initial state of the root PDA `Config`.
-        config: GatewayConfig,
-    }, // XXX
+    InitializeConfig(InitializeConfig),
 
     /// Initializes an Execute Data PDA account.
     /// The Execute Data is a batch of commands that will be executed by the
@@ -76,7 +77,7 @@ pub enum GatewayInstruction {
         /// We decode it on-chain so we can verify the data is correct and
         /// generate the proper hash.
         execute_data: Vec<u8>,
-    }, // XXX
+    },
 
     /// Initializes a pending command.
     /// This instruction is used to initialize a command that will trackt he
@@ -87,7 +88,7 @@ pub enum GatewayInstruction {
     /// 1. [WRITE] Gateway ApprovedCommand PDA account
     /// 2. [] Gateway Root Config PDA account
     /// 3. [] System Program account
-    InitializePendingCommand(OwnedCommand), // XXX
+    InitializePendingCommand(OwnedCommand),
 
     /// Validates message.
     /// It is the responsibility of the destination program (contract) that
@@ -102,7 +103,7 @@ pub enum GatewayInstruction {
     /// 2. [] Gateway Root Config PDA account
     /// 3. [SIGNER] PDA signer account (caller). Dervied from the destination
     ///    program id.
-    ValidateMessage(MessageWrapper), // XXX
+    ValidateMessage(MessageWrapper),
 
     /// Transfers operatorship of the Gateway Root Config PDA account.
     ///
@@ -116,6 +117,54 @@ pub enum GatewayInstruction {
     /// 3. [] Gateway programdata account (owned by `bpf_loader_upgradeable`)
     /// 4. [] New operator
     TransferOperatorship,
+}
+
+/// Configuration parameters for initializing the axelar-solana gateway
+#[derive(Debug, Clone, Default, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+pub struct InitializeConfig {
+    /// The domain separator, used as an input for hashing payloads.
+    pub domain_separator: [u8; 32],
+    /// initial signer sets
+    pub initial_signer_sets: Vec<VerifierSetWraper>,
+    /// the minimum delay required between rotations
+    pub minimum_rotation_delay: RotationDelaySecs,
+    /// The gateway operator.
+    pub operator: Pubkey,
+    /// how many n epochs do we consider valid
+    pub previous_signers_retention: ValidEpochs,
+}
+
+/// Because [`axelar_rkyv_encoding::types::VerifierSet`] does not implement
+/// borsh, we depend on the data to be encoded with rkyv. This is a wrapper that
+/// implements borsh.
+#[derive(Debug, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+pub struct VerifierSetWraper {
+    /// rkyv encoded [`axelar_rkyv_encoding::types::VerifierSet`]
+    verifier_set: Vec<u8>,
+}
+
+impl VerifierSetWraper {
+    /// Encode the verifier set and initialize the wrapper
+    pub fn new_from_verifier_set(
+        verifier_set: VerifierSet,
+    ) -> Result<Self, Box<dyn Error + Send + Sync>> {
+        Ok(Self {
+            verifier_set: verifier_set.to_bytes()?,
+        })
+    }
+
+    /// Decode the encoded verifier set
+    pub fn parse(
+        &self,
+    ) -> Result<
+        &ArchivedVerifierSet,
+        axelar_rkyv_encoding::rkyv::validation::CheckArchiveError<
+            axelar_rkyv_encoding::rkyv::bytecheck::StructCheckError,
+            axelar_rkyv_encoding::rkyv::validation::validators::DefaultValidatorError,
+        >,
+    > {
+        ArchivedVerifierSet::from_archived_bytes(&self.verifier_set)
+    }
 }
 
 /// Creates a [`GatewayInstruction::ApproveMessages`] instruction.
@@ -296,10 +345,10 @@ pub fn initialize_execute_data<'b>(
 /// Creates a [`GatewayInstruction::InitializeConfig`] instruction.
 pub fn initialize_config(
     payer: Pubkey,
-    config: GatewayConfig,
+    config: InitializeConfig,
     gateway_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&GatewayInstruction::InitializeConfig { config })?;
+    let data = to_vec(&GatewayInstruction::InitializeConfig(config))?;
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new(gateway_config_pda, false),
@@ -367,6 +416,7 @@ pub mod tests {
     use solana_sdk::signer::Signer;
 
     use super::*;
+    use crate::state::GatewayConfig;
 
     #[test]
     fn round_trip_queue() {

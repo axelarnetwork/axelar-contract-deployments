@@ -1,4 +1,5 @@
 use axelar_rkyv_encoding::types::Payload;
+use gmp_gateway::instructions::InitializeConfig;
 use gmp_gateway::state::{GatewayConfig, GatewayExecuteData};
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata, ProgramTestBanksClientExt};
 use solana_sdk::account::Account;
@@ -148,10 +149,10 @@ async fn test_fail_on_invalid_root_pda() {
     let threshold = 14;
     let nonce = 123;
     fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers, nonce),
-            Pubkey::new_unique(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
+            ..fixture.base_initialize_config()
+        })
         .await;
     let (payload, _) = make_payload_and_commands(1);
     let (raw_execute_data, _) = prepare_execute_data(
@@ -204,10 +205,10 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
     let threshold = 14;
     let nonce = 123321;
     fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers, nonce),
-            Pubkey::new_unique(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
+            ..fixture.base_initialize_config()
+        })
         .await;
     let (payload, _) = make_payload_and_commands(1);
     let (raw_execute_data, _) = prepare_execute_data(
@@ -353,10 +354,10 @@ async fn test_size_limits_for_different_signers() {
         let threshold = (0..amount_of_signers).sum::<u128>() + amount_of_signers;
         let mut fixture = TestFixture::new(program_test()).await;
         let gateway_root_pda = fixture
-            .initialize_gateway_config_account(
-                fixture.init_auth_weighted_module(&signers, nonce),
-                Pubkey::new_unique(),
-            )
+            .initialize_gateway_config_account(InitializeConfig {
+                initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
+                ..fixture.base_initialize_config()
+            })
             .await;
 
         let (payload, _) = make_payload_and_commands(1);
@@ -406,10 +407,10 @@ async fn test_message_limits_with_different_amounts() {
         let threshold = 4;
         let mut fixture = TestFixture::new(program_test()).await;
         let gateway_root_pda = fixture
-            .initialize_gateway_config_account(
-                fixture.init_auth_weighted_module(&signers, nonce),
-                Pubkey::new_unique(),
-            )
+            .initialize_gateway_config_account(InitializeConfig {
+                initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
+                ..fixture.base_initialize_config()
+            })
             .await;
 
         let messages = make_messages(amount_of_messages);

@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 use std::error::Error;
 
-use rkyv::bytecheck::{self, CheckBytes};
+use rkyv::bytecheck::{self, CheckBytes, StructCheckError};
+use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{Archive, Deserialize, Serialize};
 
 use super::HasheableSignersBTreeMap;
@@ -93,6 +94,13 @@ impl ArchivedVerifierSet {
             .values()
             .try_fold(BnumU128::ZERO, |acc, weight| acc.checked_add(weight.into()))
             .map(|total_weight| (total_weight) >= ((&self.threshold).into()))
+    }
+
+    pub fn from_archived_bytes(
+        bytes: &[u8],
+    ) -> Result<&Self, rkyv::validation::CheckArchiveError<StructCheckError, DefaultValidatorError>>
+    {
+        rkyv::check_archived_root::<VerifierSet>(bytes)
     }
 
     pub fn created_at_be_bytes(&self) -> &[u8; 8] {

@@ -1,4 +1,5 @@
 use hasher::AxelarRkyv256Hasher;
+pub use rkyv;
 use rkyv::ser::serializers::AllocSerializer;
 use rkyv::Fallible;
 use types::{Payload, PublicKey, VerifierSet, WeightedSigner, U128};

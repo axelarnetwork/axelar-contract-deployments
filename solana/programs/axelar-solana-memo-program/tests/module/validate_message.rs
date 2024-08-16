@@ -1,9 +1,9 @@
 use axelar_executable::axelar_message_primitives::EncodingScheme;
 use axelar_solana_memo_program::instruction::from_axelar_to_solana::build_memo;
 use gateway::commands::OwnedCommand;
+use gateway::instructions::InitializeConfig;
 use gateway::state::GatewayApprovedCommand;
 use solana_program_test::tokio;
-use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer};
 use test_fixtures::axelar_message::custom_message;
 use test_fixtures::execute_data::TestSigner;
@@ -115,10 +115,10 @@ async fn solana_setup() -> (
         create_signer_with_weight(4_u128),
     ];
     let gateway_root_pda = fixture
-        .initialize_gateway_config_account(
-            fixture.init_auth_weighted_module(&signers, nonce),
-            Pubkey::new_unique(),
-        )
+        .initialize_gateway_config_account(InitializeConfig {
+            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
+            ..fixture.base_initialize_config()
+        })
         .await;
     let (counter_pda, counter_bump) =
         axelar_solana_memo_program::get_counter_pda(&gateway_root_pda);
