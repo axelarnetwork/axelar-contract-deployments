@@ -5,11 +5,9 @@ const { addBaseOptions, addOptionsToCommands, parseSuiUnitAmount } = require('./
 const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
 const { findOwnedObjectId } = require('./utils');
 
-function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, moveCall) {
+function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, moveCall) {
     const operatorId = contractConfig.objects.Operators;
     const gasCollectorCapId = gasServiceConfig.objects.GasCollectorCap;
-
-    const tx = new Transaction();
 
     const [cap, loanedCap] = tx.moveCall({
         target: `${contractConfig.address}::operators::loan_cap`,
@@ -17,7 +15,7 @@ function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, moveC
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
 
-    moveCall(tx, cap);
+    moveCall(cap);
 
     tx.moveCall({
         target: `${contractConfig.address}::operators::restore_cap`,
@@ -33,8 +31,9 @@ async function collectGas(keypair, client, gasServiceConfig, contractConfig, arg
     const receiver = options.receiver || keypair.toSuiAddress();
 
     const operatorCapId = await findOwnedObjectId(client, keypair.toSuiAddress(), `${contractConfig.address}::operators::OperatorCap`);
+    const tx = new Transaction();
 
-    const tx = operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, (tx, cap) => {
+    operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, (cap) => {
         tx.moveCall({
             target: `${gasServiceConfig.address}::gas_service::collect_gas`,
             arguments: [tx.object(gasServiceConfig.objects.GasService), cap, tx.pure.address(receiver), tx.pure.u64(amount)],
@@ -52,7 +51,9 @@ async function refund(keypair, client, gasServiceConfig, contractConfig, args, o
     const receiver = options.receiver || keypair.toSuiAddress();
     const operatorCapId = await findOwnedObjectId(client, keypair.toSuiAddress(), `${contractConfig.address}::operators::OperatorCap`);
 
-    const tx = operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, (tx, cap) => {
+    const tx = new Transaction();
+
+    operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, (cap) => {
         tx.moveCall({
             target: `${gasServiceConfig.address}::gas_service::refund`,
             arguments: [
