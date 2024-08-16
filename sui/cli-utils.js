@@ -60,8 +60,6 @@ const addOptionsToCommands = (program, optionMethod, options) => {
             optionMethod(command, options);
         });
     }
-
-    optionMethod(program, options);
 };
 
 // Custom option processing for amount. https://github.com/tj/commander.js?tab=readme-ov-file#custom-option-processing

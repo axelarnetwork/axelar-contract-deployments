@@ -145,9 +145,49 @@ const getSigners = async (keypair, config, chain, options) => {
     return getAmplifierSigners(config, chain);
 };
 
+const findOwnedObjectId = async (client, ownerAddress, objectType) => {
+    const ownedObjects = await client.getOwnedObjects({
+        owner: ownerAddress,
+        options: {
+            showContent: true,
+        },
+    });
+
+    const targetObject = ownedObjects.data.find(({ data }) => data.content.type === objectType);
+
+    if (!targetObject) {
+        throw new Error(`No object found for type: ${objectType}`);
+    }
+
+    return targetObject.data.content.fields.id.id;
+};
+
+const getBagContentId = async (client, objectType, bagId, bagName) => {
+    const result = await client.getDynamicFields({
+        parentId: bagId,
+        name: bagName,
+    });
+
+    const objectId = result.data.find((cap) => cap.objectType === objectType)?.objectId;
+
+    if (!objectId) {
+        throw new Error(`${objectType} not found in the capabilities bag`);
+    }
+
+    const objectDetails = await client.getObject({
+        id: objectId,
+        options: {
+            showContent: true,
+        },
+    });
+
+    return objectDetails.data.content.fields.value.fields.id.id;
+};
+
 module.exports = {
     suiPackageAddress,
     suiClockAddress,
+    findOwnedObjectId,
     getAmplifierSigners,
     getBcsBytesByObjectId,
     deployPackage,
@@ -158,4 +198,5 @@ module.exports = {
     getItsChannelId,
     getSquidChannelId,
     getSigners,
+    getBagContentId,
 };
