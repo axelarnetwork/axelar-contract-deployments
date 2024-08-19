@@ -19,7 +19,7 @@ async fn successfully_transfer_operatorship_when_signer_is_operator() {
         gateway_root_pda,
         operator,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None).await;
+    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
     let new_operator = Keypair::new();
     let original_config = fixture
         .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
@@ -70,7 +70,7 @@ async fn successfully_transfer_operatorship_when_signer_is_upgrade_authority() {
         gateway_root_pda,
         upgrade_authority,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None).await;
+    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
     let original_config = fixture
         .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
         .await;
@@ -164,7 +164,7 @@ async fn fail_if_operator_or_owner_is_not_signer() {
         mut fixture,
         gateway_root_pda,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None).await;
+    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
 
     // Action - random wallet signs message to change operator
     let stranger_danger = Keypair::new();
@@ -201,7 +201,7 @@ async fn fail_if_invalid_program_id() {
         gateway_root_pda,
         upgrade_authority,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None).await;
+    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
 
     // Action - we provide an invalid program id that is used for deriving the
     // program upgrade authority
@@ -251,7 +251,7 @@ async fn fail_if_stranger_dose_not_sing_anything() {
         mut fixture,
         gateway_root_pda,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None).await;
+    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
 
     // Action - the stranger does not  actually sign the tx, he just hopes ther's
     // not a check

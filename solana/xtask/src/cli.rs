@@ -10,7 +10,7 @@ use ethers::signers::coins_bip39::English;
 use ethers::signers::{LocalWallet, MnemonicBuilder, Signer};
 use ethers::types::Address;
 use eyre::Context;
-use gmp_gateway::axelar_auth_weighted::{RotationDelaySecs, ValidEpochs};
+use gmp_gateway::axelar_auth_weighted::RotationDelaySecs;
 use k256::SecretKey;
 use url::Url;
 
@@ -239,7 +239,7 @@ pub(crate) enum SolanaInitSubcommand {
         #[arg(short, long)]
         payer_kp_path: Option<PathBuf>,
         #[arg(short, long)]
-        previous_signers_retention: ValidEpochs,
+        previous_signers_retention: u128,
         #[arg(short, long)]
         minimum_rotation_delay: RotationDelaySecs,
     },

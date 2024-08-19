@@ -14,7 +14,6 @@ use thiserror::Error;
 use crate::hasher_impl;
 
 type SignerSetHash = [u8; 32];
-type Epoch = U256;
 
 /// Errors that might happen when updating the signers and epochs set.
 #[derive(Error, Debug)]
@@ -74,20 +73,20 @@ pub enum AxelarAuthWeightedError {
 }
 
 /// Timestamp alias for when the last signer rotation happened
-pub type Timestamp = u128;
+pub type Timestamp = u64;
 /// Seconds that need to pass between signer rotations
-pub type RotationDelaySecs = u128;
-/// How many latest `n` signer sets are considered valid
-pub type ValidEpochs = u128;
+pub type RotationDelaySecs = u64;
+/// Ever-incrementing idx for the signer set
+pub type SignerSetEpoch = U256;
 
 /// Biject map that associates the hash of an signer set with an epoch.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AxelarAuthWeighted {
-    map: bimap::BiBTreeMap<SignerSetHash, Epoch>,
+    map: bimap::BiBTreeMap<SignerSetHash, SignerSetEpoch>,
     /// current epoch points to the latest signer set hash
-    pub current_epoch: Epoch,
+    pub current_epoch: SignerSetEpoch,
     /// how many n epochs do we consider valid
-    pub previous_signers_retention: ValidEpochs,
+    pub previous_signers_retention: SignerSetEpoch,
     /// the minimum delay required between rotations
     pub minimum_rotation_delay: RotationDelaySecs,
     /// timestamp tracking of when the previous rotation happened
@@ -113,8 +112,8 @@ impl AxelarAuthWeighted {
         size_of::<u8>()
             + size_of::<U256>()
             + (size_of::<SignerSetHash>() * Self::OLD_KEY_RETENTION as usize)
-            + (size_of::<Epoch>() * Self::OLD_KEY_RETENTION as usize)
-            + size_of::<ValidEpochs>()
+            + (size_of::<SignerSetEpoch>() * Self::OLD_KEY_RETENTION as usize)
+            + size_of::<SignerSetEpoch>()
             + size_of::<RotationDelaySecs>()
             + size_of::<Timestamp>()
     };
@@ -122,7 +121,7 @@ impl AxelarAuthWeighted {
     /// Creates a new `AxelarAuthWeighted` value.
     pub fn new<'a>(
         verifier_sets: impl Iterator<Item = &'a ArchivedVerifierSet>,
-        previous_signers_retention: ValidEpochs,
+        previous_signers_retention: SignerSetEpoch,
         minimum_rotation_delay: RotationDelaySecs,
     ) -> Self {
         let mut instance = Self {
@@ -243,7 +242,7 @@ impl AxelarAuthWeighted {
     }
 
     /// Get read only access to the underlying signer set map
-    pub fn signer_sets(&self) -> &bimap::BiBTreeMap<SignerSetHash, Epoch> {
+    pub fn signer_sets(&self) -> &bimap::BiBTreeMap<SignerSetHash, SignerSetEpoch> {
         &self.map
     }
 }
@@ -359,7 +358,7 @@ impl BorshDeserialize for AxelarAuthWeighted {
                 if reader.read(&mut epoch_buffer)? == 0 {
                     return Err(Error::new(Interrupted, "Unexpected length of input"));
                 };
-                let epoch = Epoch::from_le_bytes(epoch_buffer);
+                let epoch = SignerSetEpoch::from_le_bytes(epoch_buffer);
                 if reader.read(&mut hash_buffer)? == 0 {
                     return Err(Error::new(Interrupted, "Unexpected length of input"));
                 };
@@ -383,10 +382,10 @@ impl BorshDeserialize for AxelarAuthWeighted {
             bimap
         };
 
-        let current_epoch = U256::deserialize_reader(reader)?;
-        let previous_signers_retention = u128::deserialize_reader(reader)?;
-        let last_rotation_timestamp = u128::deserialize_reader(reader)?;
-        let minimum_rotation_delay = u128::deserialize_reader(reader)?;
+        let current_epoch = SignerSetEpoch::deserialize_reader(reader)?;
+        let previous_signers_retention = SignerSetEpoch::deserialize_reader(reader)?;
+        let last_rotation_timestamp = Timestamp::deserialize_reader(reader)?;
+        let minimum_rotation_delay = RotationDelaySecs::deserialize_reader(reader)?;
 
         Ok(AxelarAuthWeighted {
             map: bimap,
@@ -410,9 +409,9 @@ mod tests {
 
     const DOMAIN_SEPARATOR: [u8; 32] = [0u8; 32];
 
-    const DEFAULT_PREVIOUS_SIGNERS_RETENTION: u128 = 4;
+    const DEFAULT_PREVIOUS_SIGNERS_RETENTION: U256 = U256::from_u64(4);
 
-    const DEFAULT_MINIMUM_ROTATION_DELAY: u128 = 0;
+    const DEFAULT_MINIMUM_ROTATION_DELAY: RotationDelaySecs = 0;
 
     fn random_verifier_set() -> VerifierSetWraper {
         VerifierSetWraper::new_from_verifier_set(random_valid_verifier_set()).unwrap()

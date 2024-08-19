@@ -10,6 +10,7 @@ use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
+use solana_program::sysvar::Sysvar;
 
 use super::Processor;
 use crate::axelar_auth_weighted::SignerSetMetadata;
@@ -93,8 +94,20 @@ impl Processor {
             return Err(ProgramError::InvalidArgument);
         }
 
+        let current_time: u64 = solana_program::clock::Clock::get()?
+            .unix_timestamp
+            .try_into()
+            .expect("received negative timestamp");
+        if enforce_rotation_delay
+            && !Self::enough_time_till_next_rotation(current_time, &gateway_config)?
+        {
+            msg!("Command needs more time before being executed again");
+            return Err(ProgramError::InvalidArgument);
+        }
+
         // Set command state as executed
         approved_command_account.set_signers_rotated_executed()?;
+        gateway_config.auth_weighted.last_rotation_timestamp = current_time;
 
         // Save the updated approved message account
         let mut data = message_account.try_borrow_mut_data()?;
@@ -116,6 +129,16 @@ impl Processor {
         gateway_config.pack_into_slice(&mut data);
 
         Ok(())
+    }
+
+    fn enough_time_till_next_rotation(
+        current_time: u64,
+        config: &GatewayConfig,
+    ) -> Result<bool, ProgramError> {
+        let secs_since_last_rotation = current_time
+            .checked_sub(config.auth_weighted.last_rotation_timestamp)
+            .expect("Current time minus rotate signers last successful operation time should not underflow");
+        Ok(secs_since_last_rotation >= config.auth_weighted.minimum_rotation_delay)
     }
 }
 

@@ -26,7 +26,7 @@ async fn test_successfylly_initialize_execute_data() {
         signers,
         gateway_root_pda,
         ..
-    } = setup_initialised_gateway(&[10, 4], None).await;
+    } = setup_initialised_gateway(&[10, 4], None, 120).await;
     let payload = Payload::new_messages(make_messages(1));
     let (raw_execute_data, _) =
         prepare_execute_data(payload, &signers, quorum, nonce, &fixture.domain_separator);
@@ -81,7 +81,7 @@ async fn test_succesfully_initialize_rotate_signers() {
         signers,
         gateway_root_pda,
         ..
-    } = setup_initialised_gateway(&[10, 4], None).await;
+    } = setup_initialised_gateway(&[10, 4], None, 120).await;
     let new_signers = make_signers(&[33, 150]);
 
     let payload = Payload::VerifierSet(new_signer_set(&new_signers, 0, quorum));
@@ -294,7 +294,7 @@ async fn test_fail_on_already_initialized_execute_data_account() {
         signers,
         gateway_root_pda,
         ..
-    } = setup_initialised_gateway(&[10, 4], None).await;
+    } = setup_initialised_gateway(&[10, 4], None, 120).await;
 
     // Action
     let domain_separator = fixture.domain_separator;

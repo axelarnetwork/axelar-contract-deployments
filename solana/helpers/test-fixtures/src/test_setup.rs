@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use axelar_message_primitives::command::U256;
 use axelar_message_primitives::DataPayload;
 use axelar_rkyv_encoding::types::u128::U128;
 use axelar_rkyv_encoding::types::{ArchivedExecuteData, Message, Payload, VerifierSet};
@@ -7,7 +8,6 @@ use borsh::BorshDeserialize;
 use gateway::commands::OwnedCommand;
 use gateway::instructions::{InitializeConfig, VerifierSetWraper};
 use gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
-use interchain_token_transfer_gmp::alloy_primitives::U256 as AlloyU256;
 use itertools::Itertools;
 use solana_program::hash::Hash;
 use solana_program::program_pack::Pack;
@@ -20,6 +20,7 @@ use solana_program_test::{
 use solana_sdk::account::{AccountSharedData, ReadableAccount, WritableAccount};
 use solana_sdk::account_utils::StateMut;
 use solana_sdk::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
+use solana_sdk::clock::Clock;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::signature::Keypair;
@@ -62,6 +63,18 @@ impl TestFixture {
             .await
             .unwrap();
         self.recent_blockhash
+    }
+
+    pub async fn forward_time(&mut self, add_time: i64) {
+        // get clock sysvar
+        let clock_sysvar: Clock = self.banks_client.get_sysvar().await.unwrap();
+
+        // update clock
+        let mut new_clock = clock_sysvar.clone();
+        new_clock.unix_timestamp += add_time;
+
+        // set clock
+        self.context.set_sysvar(&new_clock)
     }
 
     pub async fn send_tx(&mut self, ixs: &[Instruction]) {
@@ -316,7 +329,7 @@ impl TestFixture {
             initial_signer_sets: vec![],
             minimum_rotation_delay: 0,
             operator: Pubkey::new_unique(),
-            previous_signers_retention: 0,
+            previous_signers_retention: U256::from(0_u128),
         }
     }
 
@@ -559,7 +572,7 @@ impl TestFixture {
             None,
         )
         .unwrap();
-        let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(400_000u32);
+        let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(650_000u32);
         self.send_tx_with_metadata(&[bump_budget, ix]).await
     }
 
@@ -683,13 +696,12 @@ impl TestFixture {
             .iter()
             .try_fold(U128::ZERO, |acc, i| acc.checked_add(i.weight))
             .expect("no overflow");
-        let weight_of_quorum = AlloyU256::from_le_bytes(*weight_of_quorum.to_le());
         let (execute_data_pda, execute_data) = self
             .init_execute_data(
                 gateway_root_pda,
                 Payload::VerifierSet(signer_set.clone()),
                 signers,
-                u128::from_le_bytes(weight_of_quorum.to_le_bytes()),
+                u128::from_le_bytes(*weight_of_quorum.to_le()),
                 nonce,
                 &DOMAIN_SEPARATOR,
             )

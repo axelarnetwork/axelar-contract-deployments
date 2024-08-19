@@ -6,7 +6,7 @@ mod approve_messages;
 mod initialize_command;
 mod initialize_config;
 mod initialize_execute_data;
-// mod rotate_signers;
+mod rotate_signers;
 mod transfer_operatorship;
 
 use std::collections::BTreeMap;
@@ -54,6 +54,7 @@ pub struct InitialisedGatewayMetadata {
 pub async fn setup_initialised_gateway(
     initial_signer_weights: &[u128],
     custom_quorum: Option<u128>,
+    minimum_rotate_signers_delay_seconds: u64,
 ) -> InitialisedGatewayMetadata {
     // Create a new ProgramTest instance
     let mut fixture = TestFixture::new(ProgramTest::default()).await;
@@ -84,6 +85,7 @@ pub async fn setup_initialised_gateway(
                 quorum.into(),
             )]),
             operator: operator.pubkey(),
+            minimum_rotation_delay: minimum_rotate_signers_delay_seconds,
             ..fixture.base_initialize_config()
         })
         .await;

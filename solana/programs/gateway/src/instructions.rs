@@ -9,7 +9,7 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use crate::axelar_auth_weighted::{RotationDelaySecs, ValidEpochs};
+use crate::axelar_auth_weighted::{RotationDelaySecs, SignerSetEpoch};
 use crate::commands::{MessageWrapper, OwnedCommand};
 use crate::state::{GatewayApprovedCommand, GatewayExecuteData};
 
@@ -131,7 +131,7 @@ pub struct InitializeConfig {
     /// The gateway operator.
     pub operator: Pubkey,
     /// how many n epochs do we consider valid
-    pub previous_signers_retention: ValidEpochs,
+    pub previous_signers_retention: SignerSetEpoch,
 }
 
 /// Because [`axelar_rkyv_encoding::types::VerifierSet`] does not implement

@@ -23,7 +23,7 @@ async fn successfully_approves_commands_when_there_are_no_commands() {
         signers,
         gateway_root_pda,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None).await;
+    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
     let messages = Payload::new_messages(vec![]);
     let domain_separator = fixture.domain_separator;
     let (execute_data_pda, _) = fixture
@@ -66,7 +66,7 @@ async fn successfully_approves_commands_when_there_are_3_validate_message_comman
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None).await;
+    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
 
     let (payload, commands) = make_payload_and_commands(3);
     let domain_separator = fixture.domain_separator;
@@ -126,7 +126,7 @@ async fn successfully_consumes_repeating_commands_idempotency_same_batch() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None).await;
+    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
     let (payload, commands) = make_payload_and_commands(1);
     let domain_separator = fixture.domain_separator;
     let (execute_data_pda, _) = fixture
@@ -180,7 +180,7 @@ async fn successfully_consumes_repeating_commands_idempotency_unique_batches() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None).await;
+    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
     let domain_separator = fixture.domain_separator;
     let messages = make_messages(1);
     let (payload, commands) = payload_and_commands(&messages);
@@ -258,7 +258,7 @@ async fn fail_if_gateway_config_has_no_signers_signed_by_unknown_signer_set() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[], None).await;
+    } = setup_initialised_gateway(&[], None, 120).await;
     let (payload, commands) = make_payload_and_commands(1);
 
     let signers = make_signers(&[11, 22]);
@@ -309,7 +309,7 @@ async fn fail_if_gateway_config_has_no_signers_signed_by_empty_set() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[], None).await;
+    } = setup_initialised_gateway(&[], None, 120).await;
     let (payload, commands) = make_payload_and_commands(1);
     let domain_separator = fixture.domain_separator;
     let (execute_data_pda, raw_execute_data) = fixture
@@ -363,7 +363,7 @@ async fn fail_if_root_config_not_initialised() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22], None).await;
+    } = setup_initialised_gateway(&[11, 22], None, 120).await;
     let (payload, commands) = make_payload_and_commands(0);
     let domain_separator = fixture.domain_separator;
     let (execute_data_pda, _) = fixture
@@ -411,7 +411,7 @@ async fn fail_if_execute_data_not_initialised() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22], None).await;
+    } = setup_initialised_gateway(&[11, 22], None, 120).await;
     let (payload, commands) = make_payload_and_commands(0);
     let domain_separator = fixture.domain_separator;
     fixture
@@ -459,7 +459,7 @@ async fn fail_if_invalid_account_for_gateway() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22], None).await;
+    } = setup_initialised_gateway(&[11, 22], None, 120).await;
     let (payload, commands) = make_payload_and_commands(3);
     let domain_separator = fixture.domain_separator;
     let (execute_data_pda, _) = fixture
@@ -506,7 +506,7 @@ async fn fail_if_invalid_account_for_execute_data() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22], None).await;
+    } = setup_initialised_gateway(&[11, 22], None, 120).await;
     let (payload, commands) = make_payload_and_commands(1);
     let domain_separator = fixture.domain_separator;
     fixture
@@ -554,7 +554,7 @@ async fn fail_if_epoch_for_signers_was_not_found() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22], None).await;
+    } = setup_initialised_gateway(&[11, 22], None, 120).await;
     let (payload, commands) = make_payload_and_commands(1);
     let domain_separator = fixture.domain_separator;
     let (execute_data_pda, _) = fixture
@@ -603,7 +603,7 @@ async fn fail_if_signer_set_epoch_is_older_than_16() {
         nonce,
         quorum,
         ..
-    } = setup_initialised_gateway(&[11, 22], None).await;
+    } = setup_initialised_gateway(&[11, 22], None, 120).await;
 
     let initial_signer_set = [(
         new_signer_set(&initial_signers, nonce, quorum),
@@ -694,7 +694,7 @@ async fn fail_if_invalid_signatures() {
         signers: registered_signers,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22], None).await;
+    } = setup_initialised_gateway(&[11, 22], None, 120).await;
     let (payload, commands) = make_payload_and_commands(1);
 
     // Action
@@ -767,7 +767,7 @@ async fn fail_if_invalid_signer_set_signed_command_batch() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11], None).await;
+    } = setup_initialised_gateway(&[11], None, 120).await;
 
     let unregistered_signers = make_signers(&[11]);
 
@@ -820,7 +820,7 @@ async fn fail_if_subset_without_expected_weight_signed_batch() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
 
     let signing_signers = signers.iter().take(2).cloned().collect::<Vec<_>>(); // subset of the signer set
 
@@ -873,7 +873,7 @@ async fn succeed_if_majority_of_subset_without_expected_weight_signed_batch() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], Some(150)).await;
+    } = setup_initialised_gateway(&[11, 22, 150], Some(150), 120).await;
     let (payload, commands) = make_payload_and_commands(1);
     let signing_signers = [signers[2].clone()]; // subset of the signer set
     let gateway_execute_data_raw = prepare_questionable_execute_data(
@@ -915,7 +915,7 @@ async fn fail_if_signed_commands_differ_from_the_execute_ones() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
 
     let different_messages = vec![make_message()];
     let (payload, commands) = make_payload_and_commands(1);
@@ -966,7 +966,7 @@ async fn fail_if_quorum_differs_between_registered_and_signed() {
         nonce,
         gateway_root_pda,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
 
     let (payload, commands) = make_payload_and_commands(1);
     let gateway_execute_data_raw = prepare_questionable_execute_data(
@@ -1015,7 +1015,7 @@ async fn fail_if_command_len_does_not_match_provided_account_iter_len() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
     let (payload, commands) = make_payload_and_commands(3);
     let domain_separator = fixture.domain_separator;
     let (execute_data_pda, _) = fixture
@@ -1060,7 +1060,7 @@ async fn fail_if_command_was_not_initialised() {
         gateway_root_pda,
         nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
     let (payload, commands) = make_payload_and_commands(3);
 
     let domain_separator = fixture.domain_separator;

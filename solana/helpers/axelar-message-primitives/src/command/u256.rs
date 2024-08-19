@@ -6,7 +6,7 @@ use std::ops::Deref;
 use borsh::{BorshDeserialize, BorshSerialize};
 
 /// [U256] represents uint256.
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug, Ord, Eq, Hash)]
+#[derive(Copy, Default, Clone, PartialEq, PartialOrd, Debug, Ord, Eq, Hash)]
 #[repr(transparent)]
 pub struct U256(bnum::types::U256);
 
@@ -28,6 +28,11 @@ impl U256 {
     pub fn from_le_bytes(bytes: [u8; 32]) -> Self {
         let cast: [u64; 4] = bytemuck::cast(bytes);
         U256(bnum::types::U256::from(cast))
+    }
+
+    /// const method for initting u256
+    pub const fn from_u64(i: u64) -> Self {
+        U256(bnum::types::U256::from_digit(i))
     }
 
     /// Return the memory representation of this integer as a byte array in

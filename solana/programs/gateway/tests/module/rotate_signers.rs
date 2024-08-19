@@ -1,3 +1,4 @@
+use axelar_rkyv_encoding::hasher::solana::SolanaKeccak256Hasher;
 use axelar_rkyv_encoding::types::{Payload, VerifierSet};
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::instructions::GatewayInstruction;
@@ -30,8 +31,9 @@ async fn successfully_rotates_signers() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None).await;
+    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
     let (new_signer_set, new_signers) = create_signer_set(&[500, 200], 700);
     let (payload, command) = payload_and_command(&new_signer_set);
 
@@ -42,6 +44,7 @@ async fn successfully_rotates_signers() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -90,16 +93,72 @@ async fn successfully_rotates_signers() {
             .auth_weighted
             .signer_set_hash_for_epoch(&new_epoch.into())
             .unwrap(),
-        &new_signer_set.hash(),
+        &new_signer_set.hash(SolanaKeccak256Hasher::default()),
     );
 
     // - test that both signer sets can sign new messages
     for signer_set in [new_signers, signers] {
         let messages = make_messages(1);
         fixture
-            .fully_approve_messages(&gateway_root_pda, messages, &signer_set)
+            .fully_approve_messages(&gateway_root_pda, messages, &signer_set, nonce)
             .await;
     }
+}
+
+#[tokio::test]
+async fn cannot_invoke_rotate_signers_without_respecting_minimum_delay() {
+    // Setup
+    let minimum_delay_seconds = 3;
+    let InitialisedGatewayMetadata {
+        mut fixture,
+        signers,
+        gateway_root_pda,
+        nonce,
+        ..
+    } = setup_initialised_gateway(&[11, 22, 150], None, minimum_delay_seconds).await;
+
+    // Action - rotate the signer set for the first time.
+    let (new_signer_set, new_signers) = create_signer_set(&[500, 200], 700);
+    fixture
+        .fully_rotate_signers(&gateway_root_pda, new_signer_set.clone(), &signers, nonce)
+        .await;
+
+    // Action - rotate the signer set for the second time. As this action succeeds
+    // without waiting the minimum_delay_seconds, it should fail.
+    let (newer_signer_set, _) = create_signer_set(&[444, 555], 333);
+    let (.., tx) = fixture
+        .fully_rotate_signers_with_execute_metadata(
+            &gateway_root_pda,
+            newer_signer_set.clone(),
+            &new_signers,
+            new_signer_set.created_at(),
+        )
+        .await;
+
+    // Assert we are seeing the correct error message in tx logs.
+    assert!(tx
+        .metadata
+        .unwrap()
+        .log_messages
+        .into_iter()
+        .any(|msg| { msg.contains("Command needs more time before being executed again",) }));
+
+    // Action, forward time
+    fixture.forward_time(minimum_delay_seconds as i64 + 1).await;
+
+    // Action, rotate signers again after waiting the minimum delay.
+    let (newer_signer_set, _) = create_signer_set(&[444, 555], 333);
+    let (.., tx) = fixture
+        .fully_rotate_signers_with_execute_metadata(
+            &gateway_root_pda,
+            newer_signer_set,
+            &new_signers,
+            new_signer_set.created_at(),
+        )
+        .await;
+    // Assert the rotate_signers transaction succeeded after waiting the time bound
+    // checks required delay.
+    assert!(tx.result.is_ok())
 }
 
 /// Ensure that we can use an old signer set to sign messages as long as the
@@ -114,12 +173,13 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
         gateway_root_pda,
         operator,
         quorum,
+        nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
     // -- we set a new signer set to be the "latest" signer set
     let (new_signer_set, _new_signers) = create_signer_set(&[500, 200], 700);
     fixture
-        .fully_rotate_signers(&gateway_root_pda, new_signer_set.clone(), &signers)
+        .fully_rotate_signers(&gateway_root_pda, new_signer_set.clone(), &signers, nonce)
         .await;
 
     let (newer_signer_set, _new_signers) = create_signer_set(&[500, 200], 700);
@@ -132,6 +192,7 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -186,7 +247,7 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
             .auth_weighted
             .signer_set_hash_for_epoch(&new_epoch.into())
             .unwrap(),
-        &newer_signer_set.hash(),
+        &newer_signer_set.hash(SolanaKeccak256Hasher::default()),
     );
 }
 
@@ -201,12 +262,13 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
         signers,
         gateway_root_pda,
         quorum,
+        nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
     // -- we set a new signer set to be the "latest" signer set
     let (new_signer_set, _new_signers) = create_signer_set(&[500, 200], 700);
     fixture
-        .fully_rotate_signers(&gateway_root_pda, new_signer_set.clone(), &signers)
+        .fully_rotate_signers(&gateway_root_pda, new_signer_set.clone(), &signers, nonce)
         .await;
 
     let (newer_signer_set, _new_signers) = create_signer_set(&[500, 200], 700);
@@ -220,6 +282,7 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -267,8 +330,9 @@ async fn fail_if_operator_is_not_using_pre_registered_signer_set() {
         gateway_root_pda,
         quorum,
         operator,
+        nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
     // generate a new random operator set to be used (do not register it)
     let (new_signer_set, new_signers) = create_signer_set(&[500, 200], 700);
     let (payload, command) = payload_and_command(&new_signer_set);
@@ -281,6 +345,7 @@ async fn fail_if_operator_is_not_using_pre_registered_signer_set() {
             payload,
             &new_signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -327,12 +392,13 @@ async fn fail_if_operator_only_passed_but_not_actual_signer() {
         gateway_root_pda,
         operator,
         quorum,
+        nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
     // -- we set a new signer set to be the "latest" signer set
     let (new_signer_set, _new_signers) = create_signer_set(&[500, 200], 700);
     fixture
-        .fully_rotate_signers(&gateway_root_pda, new_signer_set.clone(), &signers)
+        .fully_rotate_signers(&gateway_root_pda, new_signer_set.clone(), &signers, nonce)
         .await;
 
     let (_, _new_signers) = create_signer_set(&[500, 200], 700);
@@ -346,6 +412,7 @@ async fn fail_if_operator_only_passed_but_not_actual_signer() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -393,11 +460,12 @@ async fn fail_if_rotate_signers_signed_by_old_signer_set() {
         mut fixture,
         signers,
         gateway_root_pda,
+        nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
     let (new_signer_set, _new_signers) = create_signer_set(&[500, 200], 700);
     fixture
-        .fully_rotate_signers(&gateway_root_pda, new_signer_set.clone(), &signers)
+        .fully_rotate_signers(&gateway_root_pda, new_signer_set.clone(), &signers, nonce)
         .await;
 
     // Action
@@ -407,6 +475,7 @@ async fn fail_if_rotate_signers_signed_by_old_signer_set() {
             &gateway_root_pda,
             newer_signer_set.clone(),
             &signers,
+            nonce,
         )
         .await;
 
@@ -427,11 +496,11 @@ async fn ignore_rotate_signers_if_total_weight_is_smaller_than_quorum() {
     // Setup
     let InitialisedGatewayMetadata {
         mut fixture,
-
         signers,
         gateway_root_pda,
+        nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
     let (new_signer_set, _signers) = create_signer_set(&[1, 1], 10);
 
     // Action
@@ -440,6 +509,7 @@ async fn ignore_rotate_signers_if_total_weight_is_smaller_than_quorum() {
             &gateway_root_pda,
             new_signer_set.clone(),
             &signers,
+            nonce,
         )
         .await;
 
@@ -455,7 +525,7 @@ async fn ignore_rotate_signers_if_total_weight_is_smaller_than_quorum() {
             .auth_weighted
             .signer_set_hash_for_epoch(&constant_epoch.into())
             .unwrap(),
-        &new_signer_set.hash(),
+        &new_signer_set.hash(SolanaKeccak256Hasher::default()),
     );
 }
 
@@ -468,8 +538,9 @@ async fn fail_if_order_of_commands_is_not_the_same_as_order_of_accounts() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
 
     let (payload, commands) = make_payload_and_commands(3);
     let domain_separator = fixture.domain_separator;
@@ -480,6 +551,7 @@ async fn fail_if_order_of_commands_is_not_the_same_as_order_of_accounts() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -512,8 +584,9 @@ async fn fail_on_rotate_signers_if_new_ops_len_is_zero() {
         quorum,
         signers,
         gateway_root_pda,
+        nonce,
         ..
-    } = setup_initialised_gateway(&[11, 22, 150], None).await;
+    } = setup_initialised_gateway(&[11, 22, 150], None, 120).await;
 
     let new_signer_set = new_signer_set(&[], 1, 3);
     let (payload, command) = payload_and_command(&new_signer_set);
@@ -524,6 +597,7 @@ async fn fail_on_rotate_signers_if_new_ops_len_is_zero() {
             payload,
             &signers,
             quorum,
+            nonce,
             &domain_separator,
         )
         .await;
@@ -554,6 +628,6 @@ async fn fail_on_rotate_signers_if_new_ops_len_is_zero() {
             .auth_weighted
             .signer_set_hash_for_epoch(&constant_epoch.into())
             .unwrap(),
-        &new_signer_set.hash(),
+        &new_signer_set.hash(SolanaKeccak256Hasher::default()),
     );
 }

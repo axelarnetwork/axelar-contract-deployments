@@ -3,8 +3,9 @@ use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+use axelar_message_primitives::command::U256;
 use axelar_rkyv_encoding::types::{PublicKey, VerifierSet, U128};
-use gmp_gateway::axelar_auth_weighted::{RotationDelaySecs, ValidEpochs};
+use gmp_gateway::axelar_auth_weighted::RotationDelaySecs;
 use gmp_gateway::instructions::{InitializeConfig, VerifierSetWraper};
 use gmp_gateway::state::GatewayConfig;
 use solana_client::rpc_client::RpcClient;
@@ -71,7 +72,7 @@ pub(crate) async fn init_gmp_gateway(
     payer_kp_path: Option<&PathBuf>,
     destination_multisig_prover: &str,
     cosmwasm_signer: SigningClient,
-    previous_signers_retention: ValidEpochs,
+    previous_signers_retention: u128,
     minimum_rotation_delay: RotationDelaySecs,
 ) -> eyre::Result<()> {
     let payer_kp = defaults::payer_kp_with_fallback_in_sol_cli_config(payer_kp_path)?;
@@ -112,7 +113,7 @@ pub(crate) async fn init_gmp_gateway(
         initial_signer_sets: vec![verifier_set],
         minimum_rotation_delay,
         operator: payer_kp.pubkey(),
-        previous_signers_retention,
+        previous_signers_retention: U256::from(previous_signers_retention),
     };
     tracing::info!(?init_config, "initting auth weighted");
 
