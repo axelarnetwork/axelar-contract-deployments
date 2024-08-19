@@ -1,10 +1,9 @@
 'use strict';
 
-const { addBaseOptions } = require('./cli-utils');
 const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui/faucet');
-const { getWallet, printWalletInfo } = require('./sign-utils');
-const { Command } = require('commander');
 const { saveConfig, loadConfig, printInfo } = require('../common/utils');
+const { getWallet, printWalletInfo, addBaseOptions } = require('./utils');
+const { Command } = require('commander');
 
 async function processCommand(config, chain, options) {
     const [keypair, client] = getWallet(chain, options);

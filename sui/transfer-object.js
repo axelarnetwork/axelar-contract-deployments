@@ -1,9 +1,7 @@
 const { Transaction } = require('@mysten/sui/transactions');
 const { Command, Option } = require('commander');
-const { printInfo, validateParameters } = require('../common/utils');
-const { addExtendedOptions } = require('./cli-utils');
-const { getWallet, printWalletInfo } = require('./sign-utils');
-const { loadConfig } = require('../common/utils');
+const { loadConfig, printInfo, validateParameters } = require('../common/utils');
+const { getWallet, printWalletInfo, addExtendedOptions } = require('./utils');
 
 async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
