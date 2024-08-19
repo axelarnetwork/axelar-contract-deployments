@@ -24,7 +24,7 @@ runs:
       id: cache-sui
       uses: actions/cache@v4
       with:
-        path: sui-binaries/
+        path: sui-cli/sui-binaries/
         key: sui-${{ inputs.SUI_VERSION }}
 
     - name: Download and Install Sui
