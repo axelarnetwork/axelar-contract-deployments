@@ -17,6 +17,7 @@ const {
     addBaseOptions,
     parseSuiUnitAmount,
 } = require('./utils');
+
 async function payGas(keypair, client, gasServiceConfig, args, options) {
     const walletAddress = keypair.toSuiAddress();
 
