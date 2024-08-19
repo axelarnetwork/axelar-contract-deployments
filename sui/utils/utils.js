@@ -2,7 +2,7 @@
 
 const { ethers } = require('hardhat');
 const toml = require('toml');
-const { printInfo, printError } = require('../common/utils');
+const { printInfo, printError } = require('../../common/utils');
 const {
     BigNumber,
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
@@ -53,7 +53,7 @@ const getBcsBytesByObjectId = async (client, objectId) => {
 };
 
 const deployPackage = async (packageName, client, keypair, options = {}) => {
-    const compileDir = `${__dirname}/move`;
+    const compileDir = `${__dirname}/../move`;
 
     copyMovePackage(packageName, null, compileDir);
 
@@ -74,7 +74,7 @@ const findPublishedObject = (published, packageDir, contractName) => {
 
 const readMovePackageName = (moveDir) => {
     try {
-        const moveToml = fs.readFileSync(`${__dirname}/../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`, 'utf8');
+        const moveToml = fs.readFileSync(`${__dirname}/../../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`, 'utf8');
 
         const { package: movePackage } = toml.parse(moveToml);
 

@@ -1,6 +1,6 @@
 const { bcs } = require('@mysten/bcs');
 const { fromB64 } = require('@mysten/bcs');
-const { printInfo, validateParameters } = require('../common/utils');
+const { printInfo, validateParameters } = require('../../common/utils');
 const { getObjectIdsByObjectTypes, suiPackageAddress } = require('./utils');
 const UPGRADE_POLICIES = {
     code_upgrade: 'only_additive_upgrades',
