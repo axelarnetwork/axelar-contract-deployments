@@ -1,0 +1,99 @@
+name: Test Sui
+
+on: pull_request
+
+env:
+  SUI_VERSION: mainnet-v1.25.3
+
+jobs:
+  test-evm:
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 18.x
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Setup Sui CLI and install dependencies
+        uses: ./.github/actions/setup-sui
+        with:
+          SUI_VERSION: ${{ env.SUI_VERSION }
+
+      - name: Spin up Sui Network
+        run: nohup sh -c "sui-test-validator" > nohup.out 2> nohup.err < /dev/null &
+
+      - name: Sleep for 30 seconds
+        run: sleep 30s
+        shell: bash
+
+      - name: Prepare local.json
+        run: |
+          echo '{
+                "sui": {
+                    "name": "Sui",
+                    "axelarId": "sui",
+                    "networkType": "localnet",
+                    "tokenSymbol": "SUI",
+                    "rpc": "http://127.0.0.1:9000",
+                    "faucetUrl": "http://127.0.0.1:9123",
+                    "contracts": {
+                      "AxelarGateway": {}
+                    }
+                }
+            }' > ./axelar-chains-config/info/local.json
+
+      # Create .env file with default hardhat private key that's prefunded
+      - name: Prepare .env
+        run: |
+          echo 'PRIVATE_KEY=suiprivkey1qyw6c8t5ws65fcvlcw5rhyt2jd8d6ad6e526shgktlm0x3aelq9rx2lp4wq' >> .env
+          echo 'ENV=local' >> .env
+          echo 'SKIP_EXISTING = true' >> .env
+
+      - name: Display local.json
+        run: cat ./axelar-chains-config/info/local.json
+
+      - name: Request SUI from faucet
+        run: node sui/faucet.js
+
+      ###### Command: Deploy Contract ######
+
+      - name: Deploy AxelarGateway
+        run: node sui/deploy-contract deploy AxelarGateway --signers wallet
+
+      - name: Deploy GasService
+        run: node sui/deploy-contract deploy GasService
+
+      - name: Deploy Operators
+        run: node sui/deploy-contract deploy Operators
+
+      - name: Deploy Test
+        run: node sui/deploy-contract deploy Test
+
+      ###### Command: Gas Service ######
+
+      - name: Pay Gas
+        run: node sui/gas-service.js payGas --amount 100 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+
+      - name: Refund Gas
+        run: node sui/gas-service.js refund 0x2 --amount 1
+
+      - name: Collect Gas
+        run: node sui/gas-service.js collectGas --amount 0.1
+
+      ###### Command: GMP ######
+
+      ###### Command: Gateway ######
+
+      ###### Command: Operators ######
+
+      ###### Command: Multisig ######
+
+      ###### Command: Operators ######
