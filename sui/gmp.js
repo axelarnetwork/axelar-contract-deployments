@@ -1,18 +1,22 @@
-const { saveConfig, printInfo } = require('../common/utils');
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { getBcsBytesByObjectId } = require('./utils');
-const { loadConfig } = require('../common/utils');
+const { saveConfig, printInfo } = require('../common/utils');
+const {
+    loadConfig,
+    getBcsBytesByObjectId,
+    addBaseOptions,
+    addOptionsToCommands,
+    getUnitAmount,
+    getWallet,
+    printWalletInfo,
+    discoveryStruct,
+    broadcast,
+} = require('./utils');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify },
 } = ethers;
-
-const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
-const { getUnitAmount } = require('./amount-utils.js');
-const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
-const { discoveryStruct } = require('./types-utils.js');
 
 async function sendCommand(keypair, client, contracts, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;

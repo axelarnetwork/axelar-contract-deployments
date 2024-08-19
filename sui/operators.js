@@ -1,9 +1,15 @@
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { printInfo, printError, loadConfig } = require('../common/utils');
-const { addBaseOptions, addOptionsToCommands, parseSuiUnitAmount } = require('./cli-utils');
-const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
-const { findOwnedObjectId } = require('./utils');
+const {
+    addBaseOptions,
+    addOptionsToCommands,
+    parseSuiUnitAmount,
+    getWallet,
+    printWalletInfo,
+    broadcast,
+    findOwnedObjectId,
+} = require('./utils');
 
 function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, moveCall) {
     const operatorId = contractConfig.objects.Operators;
