@@ -6,7 +6,7 @@ env:
   SUI_VERSION: mainnet-v1.25.3
 
 jobs:
-  test-evm:
+  test-sui:
     runs-on: blacksmith-2vcpu-ubuntu-2204
 
     steps:
@@ -25,7 +25,7 @@ jobs:
       - name: Setup Sui CLI and install dependencies
         uses: ./.github/actions/setup-sui
         with:
-          SUI_VERSION: ${{ env.SUI_VERSION }
+          SUI_VERSION: ${{ env.SUI_VERSION }}
 
       - name: Spin up Sui Network
         run: nohup sh -c "sui-test-validator" > nohup.out 2> nohup.err < /dev/null &
