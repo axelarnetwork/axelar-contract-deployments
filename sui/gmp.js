@@ -3,9 +3,9 @@ const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
 const { saveConfig, printInfo } = require('../common/utils');
 const {
-  loadConfig,
-  getBcsBytesByObjectId,
-  addBaseOptions,
+    loadConfig,
+    getBcsBytesByObjectId,
+    addBaseOptions,
     addOptionsToCommands,
     getUnitAmount,
     getWallet,

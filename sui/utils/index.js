@@ -4,5 +4,5 @@ module.exports = {
     ...require('./types-utils'),
     ...require('./utils'),
     ...require('./upgrade-utils'),
-    ...require("./cli-utils"),
+    ...require('./cli-utils'),
 };

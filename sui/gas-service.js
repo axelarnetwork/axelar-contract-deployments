@@ -3,8 +3,8 @@ const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
 const { ethers } = require('hardhat');
 const {
-  utils: { arrayify },
-} = ethers
+    utils: { arrayify },
+} = ethers;
 const { saveConfig, loadConfig, printInfo, printError } = require('../common/utils');
 const {
     getWallet,
@@ -17,8 +17,6 @@ const {
     addBaseOptions,
     parseSuiUnitAmount,
 } = require('./utils');
-;
-
 async function payGas(keypair, client, gasServiceConfig, args, options) {
     const walletAddress = keypair.toSuiAddress();
 
