@@ -20,6 +20,7 @@ const {
     printWalletInfo,
     getRawPrivateKey,
     broadcast,
+    suiClockAddress,
 } = require('./utils');
 const secp256k1 = require('secp256k1');
 
@@ -106,11 +107,11 @@ function getProof(keypair, commandType, data, contractConfig, options) {
 }
 
 async function callContract(keypair, client, config, chain, args, options) {
-    if (!chain.contracts.axelar_gateway) {
+    if (!chain.contracts.AxelarGateway) {
         throw new Error('Axelar Gateway package not found.');
     }
 
-    const contractConfig = chain.contracts.axelar_gateway;
+    const contractConfig = chain.contracts.AxelarGateway;
     const packageId = contractConfig.address;
 
     const [destinationChain, destinationAddress, payload] = args;
@@ -150,11 +151,11 @@ async function callContract(keypair, client, config, chain, args, options) {
 }
 
 async function approveMessages(keypair, client, config, chain, args, options) {
-    if (!chain.contracts.axelar_gateway) {
+    if (!chain.contracts.AxelarGateway) {
         throw new Error('Axelar Gateway package not found.');
     }
 
-    const contractConfig = chain.contracts.axelar_gateway;
+    const contractConfig = chain.contracts.AxelarGateway;
     const packageId = contractConfig.address;
     const [sourceChain, messageId, sourceAddress, destinationId, payloadHash] = args;
 
@@ -178,7 +179,7 @@ async function approveMessages(keypair, client, config, chain, args, options) {
     tx.moveCall({
         target: `${packageId}::gateway::approve_messages`,
         arguments: [
-            tx.object(contractConfig.objects.gateway),
+            tx.object(contractConfig.objects.Gateway),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedMessages).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedProof).toBytes()),
         ],
@@ -190,11 +191,11 @@ async function approveMessages(keypair, client, config, chain, args, options) {
 }
 
 async function rotateSigners(keypair, client, config, chain, args, options) {
-    if (!chain.contracts.axelar_gateway) {
+    if (!chain.contracts.AxelarGateway) {
         throw new Error('Axelar Gateway package not found.');
     }
 
-    const contractConfig = chain.contracts.axelar_gateway;
+    const contractConfig = chain.contracts.AxelarGateway;
     const packageId = contractConfig.address;
     const signers = await getSigners(keypair, config, chain.axelarId, options);
 
@@ -209,12 +210,13 @@ async function rotateSigners(keypair, client, config, chain, args, options) {
     const encodedProof = getProof(keypair, COMMAND_TYPE_ROTATE_SIGNERS, encodedSigners, contractConfig, options);
 
     const tx = new Transaction();
+    console.log('encodedSigners', encodedSigners);
 
     tx.moveCall({
         target: `${packageId}::gateway::rotate_signers`,
         arguments: [
-            tx.object(contractConfig.objects.gateway),
-            tx.object('0x6'),
+            tx.object(contractConfig.objects.Gateway),
+            tx.object(suiClockAddress),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedProof).toBytes()),
         ],

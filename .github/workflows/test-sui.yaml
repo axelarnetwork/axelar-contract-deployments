@@ -90,13 +90,43 @@ jobs:
 
       ###### Command: GMP ######
 
-      - name: Send Call Contract
-        run: node sui/gmp.js sendCall --contractAddress 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 --method getBalance
+      - name: Execute Outgoing Call Contract
+        run: node sui/gmp.js sendCall ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0.1 0x1234
+
+      # TODO: Fix error in this command
+      - name: Execute Incoming Call Contract
+        run: |
+          node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
+          node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 
       ###### Command: Gateway ######
+      - name: Gateway Approve
+        run: node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
+
+      - name: Gateway Call Contract
+        run: node sui/gateway.js call-contract ethereum 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
+
+        # TODO: Fix error in this command
+      - name: Gateway Rotate Signers
+        run : node sui/gateway.js rotate --signers wallet --proof wallet
 
       ###### Command: Operators ######
+
+      - name: Store Capability Object in Operators
+        run: node sui/operators.js storeCap
+
+      - name: Add Operator
+        run: node sui/operators.js add 0x4e9147724ba2b95242137b8ffe78326d7b35333cb90d42c552b47d0367ef7199
+
+      - name: Collect Gas with Operator
+        run: node sui/gas-service.js collectGas --amount 1
+
+      - name: Refund Gas with Operator
+        run: node sui/gas-service.js refund 0x2 --amount 1
+
+      - name: Remove Operator
+        run: node sui/operators.js remove 0x4e9147724ba2b95242137b8ffe78326d7b35333cb90d42c552b47d0367ef7199
 
       ###### Command: Multisig ######
 
-      ###### Command: Operators ######
+      ###### Command: Transfer Object ######

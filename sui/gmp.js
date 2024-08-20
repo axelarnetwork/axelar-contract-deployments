@@ -52,7 +52,7 @@ async function sendCommand(keypair, client, contracts, args, options) {
 }
 
 async function execute(keypair, client, contracts, args, options) {
-    const [testConfig, , axelarGatewayConfig] = contracts;
+    const [testConfig, ,axelarGatewayConfig] = contracts;
 
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
@@ -60,7 +60,8 @@ async function execute(keypair, client, contracts, args, options) {
     const discoveryObjectId = axelarGatewayConfig.objects.RelayerDiscovery;
 
     // Get the channel id from the options or use the channel id from the deployed test contract object.
-    const channelId = options.channelId || testConfig.objects.channelId;
+    const channelId = options.channelId || testConfig.objects.ChannelId;
+    const singletonObjectId = testConfig.objects.Singleton;
 
     if (!channelId) {
         throw new Error('Please provide either a channel id (--channelId) or deploy the test contract');

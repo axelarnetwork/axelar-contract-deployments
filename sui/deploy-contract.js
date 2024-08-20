@@ -195,6 +195,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 
     // Update chain configuration
     chain.contracts.AxelarGateway = {
+        ...chain.contracts.AxelarGateway,
         objects: {
             Gateway: gateway,
             RelayerDiscovery: relayerDiscovery,
