@@ -1,7 +1,7 @@
 const { Transaction } = require('@mysten/sui/transactions');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, validateParameters } = require('../common/utils');
-const { getWallet, printWalletInfo, addExtendedOptions } = require('./utils');
+const { getWallet, printWalletInfo, addExtendedOptions, broadcast } = require('./utils');
 
 async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
@@ -38,17 +38,9 @@ async function processCommand(chain, options) {
     const tx = new Transaction();
     tx.transferObjects([`${objectId}`], tx.pure.address(recipient));
 
-    const result = await client.signAndExecuteTransaction({
-        transactionBlock: tx,
-        signer: keypair,
-        options: {
-            showObjectChanges: true,
-            showBalanceChanges: true,
-            showEvents: true,
-        },
-    });
+    const result = await broadcast(client, keypair, tx);
 
-    printInfo('Transaction result', JSON.stringify(result));
+    printInfo('Object Transferred', result.digest);
 }
 
 async function mainProcessor(options, processor) {

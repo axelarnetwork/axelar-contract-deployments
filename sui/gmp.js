@@ -61,7 +61,6 @@ async function execute(keypair, client, contracts, args, options) {
 
     // Get the channel id from the options or use the channel id from the deployed test contract object.
     const channelId = options.channelId || testConfig.objects.ChannelId;
-    const singletonObjectId = testConfig.objects.Singleton;
 
     if (!channelId) {
         throw new Error('Please provide either a channel id (--channelId) or deploy the test contract');
