@@ -108,7 +108,7 @@ jobs:
 
         # TODO: Fix error in this command
       - name: Gateway Rotate Signers
-        run : node sui/gateway.js rotate --signers wallet --proof wallet
+        run: node sui/gateway.js rotate --signers wallet --proof wallet
 
       ###### Command: Operators ######
 

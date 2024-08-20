@@ -52,7 +52,7 @@ async function sendCommand(keypair, client, contracts, args, options) {
 }
 
 async function execute(keypair, client, contracts, args, options) {
-    const [testConfig, ,axelarGatewayConfig] = contracts;
+    const [testConfig, , axelarGatewayConfig] = contracts;
 
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
