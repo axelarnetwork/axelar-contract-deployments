@@ -1,9 +1,8 @@
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { saveConfig, printInfo } = require('../common/utils');
+const { loadConfig, saveConfig, printInfo } = require('../common/utils');
 const {
-    loadConfig,
     getBcsBytesByObjectId,
     addBaseOptions,
     addOptionsToCommands,
