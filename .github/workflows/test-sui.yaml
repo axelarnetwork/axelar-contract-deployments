@@ -133,6 +133,7 @@ jobs:
 
       ###### Command: Multisig ######
 
+      # TODO: Add multisig tests
 
       ###### Command: Transfer Object ######
       - name: Transfer Object
