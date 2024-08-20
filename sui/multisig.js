@@ -1,10 +1,8 @@
 const { Command, Option } = require('commander');
 const { fromB64 } = require('@mysten/bcs');
-const { addBaseOptions } = require('./cli-utils');
-const { getWallet, getMultisig, signTransactionBlockBytes, broadcastSignature } = require('./sign-utils');
+const { loadConfig, printInfo, validateParameters } = require('../common/utils');
 const { getSignedTx, storeSignedTx } = require('../evm/sign-utils');
-const { loadConfig } = require('../common/utils');
-const { printInfo, validateParameters } = require('../common/utils');
+const { addBaseOptions, getWallet, getMultisig, signTransactionBlockBytes, broadcastSignature } = require('./utils');
 
 async function signTx(keypair, client, options) {
     const txFileData = getSignedTx(options.txBlockPath);
