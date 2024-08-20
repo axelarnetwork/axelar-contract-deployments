@@ -2,7 +2,7 @@
 
 const { ethers } = require('hardhat');
 const toml = require('toml');
-const { printInfo, printError } = require('../common/utils');
+const { printInfo, printError } = require('../../common/utils');
 const {
     BigNumber,
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
@@ -53,7 +53,7 @@ const getBcsBytesByObjectId = async (client, objectId) => {
 };
 
 const deployPackage = async (packageName, client, keypair, options = {}) => {
-    const compileDir = `${__dirname}/move`;
+    const compileDir = `${__dirname}/../move`;
 
     copyMovePackage(packageName, null, compileDir);
 
@@ -74,7 +74,10 @@ const findPublishedObject = (published, packageDir, contractName) => {
 
 const readMovePackageName = (moveDir) => {
     try {
-        const moveToml = fs.readFileSync(`${__dirname}/../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`, 'utf8');
+        const moveToml = fs.readFileSync(
+            `${__dirname}/../../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`,
+            'utf8',
+        );
 
         const { package: movePackage } = toml.parse(moveToml);
 
@@ -145,9 +148,49 @@ const getSigners = async (keypair, config, chain, options) => {
     return getAmplifierSigners(config, chain);
 };
 
+const findOwnedObjectId = async (client, ownerAddress, objectType) => {
+    const ownedObjects = await client.getOwnedObjects({
+        owner: ownerAddress,
+        options: {
+            showContent: true,
+        },
+    });
+
+    const targetObject = ownedObjects.data.find(({ data }) => data.content.type === objectType);
+
+    if (!targetObject) {
+        throw new Error(`No object found for type: ${objectType}`);
+    }
+
+    return targetObject.data.content.fields.id.id;
+};
+
+const getBagContentId = async (client, objectType, bagId, bagName) => {
+    const result = await client.getDynamicFields({
+        parentId: bagId,
+        name: bagName,
+    });
+
+    const objectId = result.data.find((cap) => cap.objectType === objectType)?.objectId;
+
+    if (!objectId) {
+        throw new Error(`${objectType} not found in the capabilities bag`);
+    }
+
+    const objectDetails = await client.getObject({
+        id: objectId,
+        options: {
+            showContent: true,
+        },
+    });
+
+    return objectDetails.data.content.fields.value.fields.id.id;
+};
+
 module.exports = {
     suiPackageAddress,
     suiClockAddress,
+    findOwnedObjectId,
     getAmplifierSigners,
     getBcsBytesByObjectId,
     deployPackage,
@@ -158,4 +201,5 @@ module.exports = {
     getItsChannelId,
     getSquidChannelId,
     getSigners,
+    getBagContentId,
 };

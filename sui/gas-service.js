@@ -1,18 +1,22 @@
-const { saveConfig, printInfo, printError } = require('../common/utils');
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { loadConfig } = require('../common/utils');
-const { gasServiceStruct } = require('./types-utils');
-const { getBcsBytesByObjectId } = require('./utils');
 const { ethers } = require('hardhat');
-const { getFormattedAmount } = require('./amount-utils');
 const {
     utils: { arrayify },
 } = ethers;
-
-const { addOptionsToCommands, addBaseOptions, parseSuiUnitAmount } = require('./cli-utils');
-const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
+const { saveConfig, loadConfig, printInfo, printError } = require('../common/utils');
+const {
+    getWallet,
+    printWalletInfo,
+    broadcast,
+    gasServiceStruct,
+    getBcsBytesByObjectId,
+    getFormattedAmount,
+    addOptionsToCommands,
+    addBaseOptions,
+    parseSuiUnitAmount,
+} = require('./utils');
 
 async function payGas(keypair, client, gasServiceConfig, args, options) {
     const walletAddress = keypair.toSuiAddress();
@@ -176,7 +180,7 @@ if (require.main === module) {
         .description('Pay gas for the new contract call.')
         .option('--refundAddress <refundAddress>', 'Refund address. Default is the sender address.')
         .requiredOption('--amount <amount>', 'Amount to pay gas', parseSuiUnitAmount)
-        .option('--params <params>', 'Params. Default is empty.')
+        .option('--params <params>', 'Params. Default is empty.', '0x')
         .action((destinationChain, destinationAddress, channelId, payload, options) => {
             mainProcessor(options, [destinationChain, destinationAddress, channelId, payload], processCommand, payGas);
         });
