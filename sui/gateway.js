@@ -210,7 +210,6 @@ async function rotateSigners(keypair, client, config, chain, args, options) {
     const encodedProof = getProof(keypair, COMMAND_TYPE_ROTATE_SIGNERS, encodedSigners, contractConfig, options);
 
     const tx = new Transaction();
-    console.log('encodedSigners', encodedSigners);
 
     tx.moveCall({
         target: `${packageId}::gateway::rotate_signers`,
