@@ -173,7 +173,7 @@ const makeMultisigInstantiateMsg = ({ adminAddress, governanceAddress, blockExpi
     };
 };
 
-const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) => {
+const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom }) => {
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Rewards.governanceAddress in axelar info');
     }
@@ -182,7 +182,7 @@ const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) 
         throw new Error('Missing or invalid Rewards.rewardsDenom in axelar info');
     }
 
-    return { governance_address: governanceAddress, rewards_denom: rewardsDenom, params };
+    return { governance_address: governanceAddress, rewards_denom: rewardsDenom };
 };
 
 const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGateway: { address: nexusGateway } }) => {

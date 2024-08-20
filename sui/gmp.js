@@ -23,9 +23,8 @@ async function sendCommand(keypair, client, contracts, args, options) {
     const params = options.params;
 
     const [testConfig, gasServiceConfig] = contracts;
-    const gasServicePackageId = gasServiceConfig.address;
-    const singletonObjectId = testConfig.objects.singleton;
-    const channelId = testConfig.objects.channelId;
+    const gasServiceObjectId = gasServiceConfig.objects.GasService;
+    const singletonObjectId = testConfig.objects.Singleton;
 
     const unitAmount = getUnitAmount(feeAmount);
     const walletAddress = keypair.toSuiAddress();
@@ -38,27 +37,15 @@ async function sendCommand(keypair, client, contracts, args, options) {
         target: `${testConfig.address}::test::send_call`,
         arguments: [
             tx.object(singletonObjectId),
+            tx.object(gasServiceObjectId),
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
             tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
+            tx.pure.address(refundAddress),
+            coin,
+            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()),
         ],
     });
-
-    if (gasServiceConfig) {
-        tx.moveCall({
-            target: `${gasServicePackageId}::gas_service::pay_gas`,
-            arguments: [
-                tx.object(gasServiceConfig.objects.GasService),
-                coin, // Coin<SUI>
-                tx.pure.address(channelId), // Channel address
-                tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
-                tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
-                tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
-                tx.pure.address(refundAddress), // Refund address
-                tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
-            ],
-        });
-    }
 
     const receipt = await broadcast(client, keypair, tx);
 
@@ -164,7 +151,7 @@ async function processCommand(command, chain, args, options) {
 
     await printWalletInfo(keypair, client, chain, options);
 
-    const contracts = [chain.contracts.test, chain.contracts.GasService, chain.contracts.axelar_gateway];
+    const contracts = [chain.contracts.Test, chain.contracts.GasService, chain.contracts.AxelarGateway];
 
     await command(keypair, client, contracts, args, options);
 }
