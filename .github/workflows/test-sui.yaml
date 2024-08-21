@@ -58,7 +58,7 @@ jobs:
       # Create .env file with default hardhat private key that's prefunded
       - name: Prepare .env
         run: |
-          echo 'PRIVATE_KEY=$SUI_PRIVATE_KEY' >> .env
+          echo "PRIVATE_KEY=$SUI_PRIVATE_KEY" >> .env
           echo 'ENV=local' >> .env
           echo 'SKIP_EXISTING = true' >> .env
 
