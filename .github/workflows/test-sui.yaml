@@ -123,10 +123,10 @@ jobs:
         run: node sui/operators.js add 0x4e9147724ba2b95242137b8ffe78326d7b35333cb90d42c552b47d0367ef7199
 
       - name: Collect Gas with Operator
-        run: node sui/gas-service.js collectGas --amount 1
+        run: node sui/operators.js collectGas --amount 1
 
       - name: Refund Gas with Operator
-        run: node sui/gas-service.js refund 0x2 --amount 1
+        run: node sui/operators.js refund 0x2 --amount 1
 
       - name: Remove Operator
         run: node sui/operators.js remove 0x4e9147724ba2b95242137b8ffe78326d7b35333cb90d42c552b47d0367ef7199
