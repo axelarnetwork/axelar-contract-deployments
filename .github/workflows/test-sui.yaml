@@ -34,6 +34,11 @@ jobs:
         run: sleep 30s
         shell: bash
 
+      - name: Setup Sui Local Network
+        run: |
+          sui client new-env --alias local --rpc http://127.0.0.1:9000
+          sui client switch --env local
+
       - name: Prepare local.json
         run: |
           echo '{

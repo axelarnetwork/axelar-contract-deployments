@@ -55,12 +55,10 @@ runs:
         sudo cp ./sui-cli/sui-binaries/sui-debug /usr/local/bin/sui-debug
         sudo cp ./sui-cli/sui-binaries/sui-test-validator /usr/local/bin/sui-test-validator
 
-    - name: Setup Sui Localnet
+    - name: Setup Sui Wallet
       shell: bash
       run: |
         echo -e "y\n\n1" | sui client envs
-        sui client new-env --alias local --rpc http://127.0.0.1:9000
-        sui client switch --env local
         sui client new-address secp256k1 wallet
         sui client switch --address wallet
         SUI_PRIVATE_KEY=$(sui keytool export --key-identity wallet --json | jq .exportedPrivateKey | sed 's/"//g')
