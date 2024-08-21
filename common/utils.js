@@ -383,16 +383,22 @@ async function getDomainSeparator(config, chain, options) {
 
     if (domainSeparator !== expectedDomainSeparator) {
         throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
+
+const getChainConfig = (config, chainName) => {
+    const chainConfig = config.chains[chainName] || config[chainName];
+
+    if (!chainConfig) {
+        throw new Error(`Chain ${chainName} not found in config`);
     }
 
-    return domainSeparator;
+    return chainConfig;
 }
 
-const getContractConfig = async (config, chain) => {
-    const key = Buffer.from('config');
+const getMultisigProof = async (config, chain, multisigSessionId) => {
+    const query = { proof: { multisig_session_id: `${multisigSessionId}` }};
     const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
-    return JSON.parse(Buffer.from(value).toString('ascii'));
+    const value = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, query);
+    return value;
 };
 
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
@@ -429,4 +435,6 @@ module.exports = {
     timeout,
     validateParameters,
     getDomainSeparator,
+    getChainConfig,
+    getMultisigProof,
 };

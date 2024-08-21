@@ -3,7 +3,7 @@
 require('dotenv').config();
 const { isNil } = require('lodash');
 
-const { isNumber, printInfo, loadConfig, saveConfig, prompt } = require('../evm/utils');
+const { isNumber, printInfo, loadConfig, saveConfig, prompt, getChainConfig } = require('../evm/utils');
 const {
     prepareWallet,
     prepareClient,
@@ -23,8 +23,8 @@ const upload = (client, wallet, chainName, config, options) => {
         axelar: {
             contracts: { [contractName]: contractConfig },
         },
-        chains: { [chainName]: chainConfig },
     } = config;
+    const chainConfig = (chainName === 'none') ? undefined : getChainConfig(config, chainName);
 
     if (!fetchCodeId && (!reuseCodeId || isNil(contractConfig.codeId))) {
         printInfo('Uploading contract binary');
@@ -52,7 +52,7 @@ const upload = (client, wallet, chainName, config, options) => {
             .then(() => ({ wallet, client }));
     }
 
-    printInfo('Skipping upload. Reusing previously uploaded binary');
+    printInfo('Skipping upload. Reusing previously uploaded bytecode');
     return Promise.resolve({ wallet, client });
 };
 

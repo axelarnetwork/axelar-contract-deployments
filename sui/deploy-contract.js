@@ -190,6 +190,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 
     // Update chain configuration
     chain.contracts.AxelarGateway = {
+        address: packageId,
         objects: {
             Gateway: gateway,
             RelayerDiscovery: relayerDiscovery,
@@ -243,7 +244,8 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     // Deploy package
     const published = await deployPackage(packageDir, client, keypair, options);
 
-    printInfo(`Deployed ${packageName}`, published.publishTxn.digest);
+    printInfo(`Deployed ${packageName} Package`, published.packageId);
+    printInfo(`Deployed ${packageName} Tx`, published.publishTxn.digest);
 
     // Update chain configuration with deployed contract address
     chain.contracts[packageName] = {
