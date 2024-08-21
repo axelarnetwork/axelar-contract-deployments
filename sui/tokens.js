@@ -1,9 +1,7 @@
 const { Transaction } = require('@mysten/sui/transactions');
 const { Command } = require('commander');
-const { addBaseOptions, parseSuiUnitAmount, addOptionsToCommands } = require('./cli-utils');
 const { loadConfig, saveConfig, printInfo, printError } = require('../common/');
-const { broadcast, getWallet } = require('./sign-utils');
-const { suiCoinId, isGasToken, paginateAll } = require('./utils');
+const { addBaseOptions, parseSuiUnitAmount, addOptionsToCommands, broadcast, getWallet, suiCoinId, isGasToken, paginateAll } = require('./utils');
 const {
     utils: { formatUnits },
 } = require('ethers');
