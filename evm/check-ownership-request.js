@@ -21,6 +21,11 @@ const {
 } = require('./utils');
 
 const interchainTokenABI = getContractJSON('InterchainToken').abi;
+const tokenAddressRowIndex = 1;
+const destinationChainsRowIndex = 3;
+const contactDetailsRowIndex = 4;
+const dustTxRowIndex = 5;
+const commentsRowIndex = 6;
 
 async function processCommand(config, options) {
     const { file, startingIndex } = options;
@@ -29,16 +34,23 @@ async function processCommand(config, options) {
         validateParameters({ isValidNumber: { startingIndex } });
     }
 
-    const data = await loadCsvFile(file, startingIndex);
+    const { columnNames, inputData } = await loadCsvFile(file, startingIndex);
+    columnNames.forEach((columnName, index) => {
+        columnNames[index] = columnName.replace(/,/g, '');
+    });
+    const data = removeDuplicateEntries(file, columnNames, inputData);
     const finalData = copyObject(data);
     let totalRowsRemoved = 0;
 
     for (let i = 0; i < data.length; ++i) {
         const row = data[i];
-        const tokenAddress = row[0];
-        const destinationChainsRaw = row[2].split(',');
+        const tokenAddress = row[tokenAddressRowIndex];
+
+        printInfo(`Verifying data at index ${i + 2} for Token address`, tokenAddress);
+
+        const destinationChainsRaw = row[destinationChainsRowIndex].split(',');
         const destinationChains = destinationChainsRaw.map((chain) => chain.trim().toLowerCase()).filter((chain) => chain);
-        const dustTx = row[4];
+        const dustTx = row[dustTxRowIndex];
 
         validateParameters({ isValidAddress: { tokenAddress } });
 
@@ -46,7 +58,7 @@ async function processCommand(config, options) {
         const validDestinationChains = destinationChains.filter((chain) => !invalidDestinationChains.includes(chain));
 
         if (validDestinationChains.length > 0) {
-            finalData[i - totalRowsRemoved][2] =
+            finalData[i - totalRowsRemoved][destinationChainsRowIndex] =
                 validDestinationChains.length === 1 ? `${validDestinationChains[0]}` : `"${validDestinationChains.join(', ')}"`;
         } else {
             finalData.splice(i - totalRowsRemoved, 1);
@@ -57,20 +69,78 @@ async function processCommand(config, options) {
         const chain = validDestinationChains[0];
         const apiUrl = config.chains[chain].explorer.api;
         const apiKey = keys.chains[chain].api;
-        let deploymentTx, isValidDustx;
+        let deploymentTx, isValidDustTx;
 
         try {
             deploymentTx = await getDeploymentTx(apiUrl, apiKey, tokenAddress);
-            isValidDustx = await verifyDustTx(deploymentTx, dustTx, config.chains);
+            isValidDustTx = await verifyDustTx(deploymentTx, dustTx, config.chains);
         } catch {}
 
-        if (!isValidDustx) {
+        if (!isValidDustTx) {
             finalData.splice(i - totalRowsRemoved, 1);
             ++totalRowsRemoved;
         }
     }
 
     await createCsvFile('pending_ownership_requests.csv', finalData);
+}
+
+function removeDuplicateEntries(filePath, columnNames, inputData) {
+    const uniqueArrays = [];
+    const manualCheckIndices = [];
+    const subarrayMap = new Map();
+
+    // Identify and remove duplicates based on subarray values
+    inputData.forEach((currentArray, index) => {
+        const subarray = currentArray.slice(1);
+        const subarrayKey = subarray.join(',');
+
+        if (!subarrayMap.has(subarrayKey)) {
+            subarrayMap.set(subarrayKey, index);
+            uniqueArrays.push(currentArray);
+        } else {
+            const existingIndex = subarrayMap.get(subarrayKey);
+
+            if (existingIndex > index) {
+                // Remove from uniqueArrays if previously added
+                uniqueArrays.splice(
+                    uniqueArrays.findIndex((arr) => arr === inputData[existingIndex]),
+                    1,
+                );
+                uniqueArrays.push(currentArray);
+                subarrayMap.set(subarrayKey, index);
+            }
+        }
+    });
+
+    // Check for matching values in column 1 across different internal arrays
+    const seenValues = new Map();
+    uniqueArrays.forEach((arr, index) => {
+        const value = arr[tokenAddressRowIndex]; // Check only TokenAddress row
+        const originalIndex = inputData.indexOf(arr); // Find the original index
+
+        if (seenValues.has(value)) {
+            manualCheckIndices.push([seenValues.get(value), originalIndex]);
+        } else {
+            seenValues.set(value, originalIndex);
+        }
+    });
+
+    if (manualCheckIndices.length !== 0) {
+        printError('Manually check the following indexes', manualCheckIndices);
+    }
+
+    const updatedData = copyObject(uniqueArrays);
+    updatedData.forEach((arr) => {
+        arr[destinationChainsRowIndex] = `"${arr[destinationChainsRowIndex]}"`;
+        arr[commentsRowIndex] = `"${arr[commentsRowIndex]}"`;
+
+        if (!arr[commentsRowIndex]) {
+            arr[commentsRowIndex] = 'No Comments';
+        }
+    });
+    updateCSVFile(filePath, columnNames, updatedData);
+    return uniqueArrays;
 }
 
 async function verifyDustTx(deploymentTx, dustTx, chains) {
@@ -128,7 +198,6 @@ async function verifyChains(config, tokenAddress, destinationChains) {
 
             validateParameters({ isValidTokenId: { tokenId } });
         } catch {
-            // printWarn(`No Interchain token found for address ${tokenAddress} on chain ${chain}`);
             invalidDestinationChains.push(chain);
         }
     }
@@ -136,17 +205,32 @@ async function verifyChains(config, tokenAddress, destinationChains) {
     return invalidDestinationChains;
 }
 
+function updateCSVFile(filePath, columnNames, data) {
+    if (!data.length) {
+        printWarn('Not updating the csv file', filePath);
+        return;
+    }
+
+    const csvContent = [columnNames, ...data].map((row) => row.join(',')).join('\n');
+    writeCSVData(filePath, csvContent);
+}
+
 async function loadCsvFile(filePath, startingIndex = 0) {
     const results = [];
+    let columnNames = [];
 
     try {
         const stream = createReadStream(filePath).pipe(csv());
 
         for await (const row of stream) {
+            if (columnNames.length === 0) {
+                columnNames = Object.keys(row);
+            }
+
             results.push(Object.values(row));
         }
 
-        return results.slice(startingIndex);
+        return { columnNames, inputData: results.slice(startingIndex) };
     } catch (error) {
         throw new Error(`Error loading CSV file: ${error}`);
     }
@@ -159,14 +243,17 @@ async function createCsvFile(filePath, data) {
     }
 
     const columnNames = ['Token Address', 'Chains to claim token ownership on', 'Telegram Contact details'];
-    const selectedColumns = [0, 2, 3]; // Indexes of required columns
+    const selectedColumns = [tokenAddressRowIndex, destinationChainsRowIndex, contactDetailsRowIndex]; // Indexes of required columns
 
     const filteredData = data.map((row) => {
         return selectedColumns.map((index) => row[index]);
     });
 
     const csvContent = [columnNames, ...filteredData].map((row) => row.join(',')).join('\n');
+    writeCSVData(filePath, csvContent);
+}
 
+function writeCSVData(filePath, csvContent) {
     writeFile(filePath, csvContent, { encoding: 'utf8' }, (error) => {
         if (error) {
             printError('Error writing CSV file:', error);
