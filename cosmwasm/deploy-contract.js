@@ -114,7 +114,7 @@ const programHandler = () => {
 
     program.addOption(
         new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
+            .choices(['local', 'devnet', 'stagenet', 'testnet', 'devnet-sui', 'mainnet'])
             .default('testnet')
             .makeOptionMandatory(true)
             .env('ENV'),

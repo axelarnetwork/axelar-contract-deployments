@@ -251,7 +251,7 @@ const programHandler = () => {
     // TODO: combine deploy-contract and submit-proposal options to remove duplicates
     program.addOption(
         new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'devnet-amplifier', 'devnet-verifiers', 'stagenet', 'testnet', 'mainnet'])
+            .choices(['local', 'devnet', 'devnet-amplifier', 'devnet-sui', 'devnet-verifiers', 'stagenet', 'testnet', 'mainnet'])
             .default('devnet-amplifier')
             .makeOptionMandatory(true)
             .env('ENV'),
