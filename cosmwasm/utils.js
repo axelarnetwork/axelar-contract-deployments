@@ -66,7 +66,7 @@ const getChains = (config, { chainNames, instantiate2 }) => {
         throw new Error('Cannot pass --instantiate2 with more than one chain');
     }
 
-    chains.every((chain) => (chain === 'none') || getChainConfig(config, chain));
+    chains.every((chain) => chain === 'none' || getChainConfig(config, chain));
 
     return chains;
 };

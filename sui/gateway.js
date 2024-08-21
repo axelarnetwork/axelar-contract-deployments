@@ -3,7 +3,7 @@ const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, keccak256, toUtf8Bytes, hexlify },
+    utils: { arrayify, keccak256, toUtf8Bytes },
     constants: { HashZero },
 } = ethers;
 
@@ -167,6 +167,7 @@ async function approveMessages(keypair, client, config, chain, args, options) {
     if (!status.completed) {
         throw new Error('Multisig session not completed');
     }
+
     const executeData = executeDataStruct.parse(new Uint8Array(arrayify('0x' + status.completed.execute_data)));
 
     const tx = new Transaction();
@@ -242,6 +243,7 @@ async function rotateSigners(keypair, client, config, chain, args, options) {
     if (!status.completed) {
         throw new Error('Multisig session not completed');
     }
+
     const executeData = executeDataStruct.parse(new Uint8Array(arrayify('0x' + status.completed.execute_data)));
 
     const tx = new Transaction();

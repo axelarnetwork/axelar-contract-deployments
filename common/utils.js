@@ -347,6 +347,13 @@ const isValidCosmosAddress = (str) => {
     }
 };
 
+const getContractConfig = async (config, chain) => {
+    const key = Buffer.from('config');
+    const client = await CosmWasmClient.connect(config.axelar.rpc);
+    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
+    return JSON.parse(Buffer.from(value).toString('ascii'));
+};
+
 async function getDomainSeparator(config, chain, options) {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
@@ -383,6 +390,10 @@ async function getDomainSeparator(config, chain, options) {
 
     if (domainSeparator !== expectedDomainSeparator) {
         throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
+    }
+
+    return domainSeparator;
+}
 
 const getChainConfig = (config, chainName) => {
     const chainConfig = config.chains[chainName] || config[chainName];
@@ -392,10 +403,10 @@ const getChainConfig = (config, chainName) => {
     }
 
     return chainConfig;
-}
+};
 
 const getMultisigProof = async (config, chain, multisigSessionId) => {
-    const query = { proof: { multisig_session_id: `${multisigSessionId}` }};
+    const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
     const client = await CosmWasmClient.connect(config.axelar.rpc);
     const value = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, query);
     return value;
@@ -437,4 +448,5 @@ module.exports = {
     getDomainSeparator,
     getChainConfig,
     getMultisigProof,
+    getContractConfig,
 };

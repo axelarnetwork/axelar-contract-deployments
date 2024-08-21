@@ -24,7 +24,7 @@ const upload = (client, wallet, chainName, config, options) => {
             contracts: { [contractName]: contractConfig },
         },
     } = config;
-    const chainConfig = (chainName === 'none') ? undefined : getChainConfig(config, chainName);
+    const chainConfig = chainName === 'none' ? undefined : getChainConfig(config, chainName);
 
     if (!fetchCodeId && (!reuseCodeId || isNil(contractConfig.codeId))) {
         printInfo('Uploading contract binary');
