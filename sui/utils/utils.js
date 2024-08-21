@@ -172,7 +172,7 @@ const paginateAll = async (client, paginatedFn, params, pageLimit = 100) => {
     }
 
     return items;
-  }
+};
 
 const findOwnedObjectId = async (client, ownerAddress, objectType) => {
     const ownedObjects = await client.getOwnedObjects({
