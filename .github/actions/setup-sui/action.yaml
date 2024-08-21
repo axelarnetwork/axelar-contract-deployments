@@ -58,7 +58,7 @@ runs:
     - name: Setup Sui Localnet
       shell: bash
       run: |
-        echo -e "y\n\n1" | sui client new-env
+        echo -e "y\n\n1" | sui client envs
         sui client new-env --alias local --rpc http://127.0.0.1:9000
         sui client switch --env local
         sui client new-address secp256k1 wallet
