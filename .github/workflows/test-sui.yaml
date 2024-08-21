@@ -145,7 +145,5 @@ jobs:
       ###### Command: Transfer Object ######
       - name: Transfer Object
         run: |
-          #TODO Checking the objects
-          sui client objects --json
           object_id=$(sui client objects --json | jq -r '.[-1].data.objectId')
           node sui/transfer-object.js --objectId $object_id --recipient 0xdd7c964ff032273889eb6029a29314413b461629c45c0442c6f9cf8342450c12
