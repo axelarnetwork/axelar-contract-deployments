@@ -16,6 +16,7 @@ const { singletonStruct, itsStruct, squidStruct } = require('./types-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
+const suiCoinId = '0x2::sui::SUI';
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -148,6 +149,31 @@ const getSigners = async (keypair, config, chain, options) => {
     return getAmplifierSigners(config, chain);
 };
 
+const isGasToken = (coinType) => {
+    return coinType === suiCoinId;
+};
+
+const paginateAll = async (client, paginatedFn, params, pageLimit = 100) => {
+    let cursor;
+    let response = await client[paginatedFn]({
+        ...params,
+        cursor,
+        limit: pageLimit,
+    });
+    const items = response.data;
+
+    while (response.hasNextPage) {
+        response = await client[paginatedFn]({
+            ...params,
+            cursor: response.nextCursor,
+            limit: pageLimit,
+        });
+        items.push(...response.data);
+    }
+
+    return items;
+};
+
 const findOwnedObjectId = async (client, ownerAddress, objectType) => {
     const ownedObjects = await client.getOwnedObjects({
         owner: ownerAddress,
@@ -188,10 +214,13 @@ const getBagContentId = async (client, objectType, bagId, bagName) => {
 };
 
 module.exports = {
+    suiCoinId,
+    getAmplifierSigners,
+    isGasToken,
+    paginateAll,
     suiPackageAddress,
     suiClockAddress,
     findOwnedObjectId,
-    getAmplifierSigners,
     getBcsBytesByObjectId,
     deployPackage,
     findPublishedObject,
