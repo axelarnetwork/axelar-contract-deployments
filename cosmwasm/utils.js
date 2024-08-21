@@ -50,6 +50,8 @@ const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.fr
 
 const getSalt = (salt, contractName, chainNames) => fromHex(getSaltFromKey(salt || contractName.concat(chainNames)));
 
+const getLabel = ({ contractName, label }) => label || contractName;
+
 const readWasmFile = ({ artifactPath, contractName, aarch64 }) =>
     readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
 
@@ -94,7 +96,9 @@ const uploadContract = async (client, wallet, config, options) => {
         });
 };
 
-const instantiateContract = (client, wallet, initMsg, config, { contractName, salt, instantiate2, chainNames, admin }) => {
+const instantiateContract = (client, wallet, initMsg, config, options) => {
+    const { contractName, salt, instantiate2, chainNames, admin } = options;
+
     return wallet
         .getAccounts()
         .then(([account]) => {
@@ -105,17 +109,19 @@ const instantiateContract = (client, wallet, initMsg, config, { contractName, sa
             } = config;
             const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
+            const contractLabel = getLabel(options);
+
             return instantiate2
                 ? client.instantiate2(
                       account.address,
                       contractConfig.codeId,
                       getSalt(salt, contractName, chainNames),
                       initMsg,
-                      contractName,
+                      contractLabel,
                       initFee,
                       { admin },
                   )
-                : client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee, {
+                : client.instantiate(account.address, contractConfig.codeId, initMsg, contractLabel, initFee, {
                       admin,
                   });
         })
@@ -167,7 +173,7 @@ const makeMultisigInstantiateMsg = ({ adminAddress, governanceAddress, blockExpi
     };
 };
 
-const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) => {
+const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom }) => {
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Rewards.governanceAddress in axelar info');
     }
@@ -176,7 +182,7 @@ const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) 
         throw new Error('Missing or invalid Rewards.rewardsDenom in axelar info');
     }
 
-    return { governance_address: governanceAddress, rewards_denom: rewardsDenom, params };
+    return { governance_address: governanceAddress, rewards_denom: rewardsDenom };
 };
 
 const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGateway: { address: nexusGateway } }) => {
@@ -573,12 +579,12 @@ const getStoreCodeParams = (options) => {
 };
 
 const getStoreInstantiateParams = (config, options, msg) => {
-    const { contractName, admin } = options;
+    const { admin } = options;
 
     return {
         ...getStoreCodeParams(options),
         admin,
-        label: contractName,
+        label: getLabel(options),
         msg: Buffer.from(JSON.stringify(msg)),
     };
 };
@@ -592,7 +598,7 @@ const getInstantiateContractParams = (config, options, msg) => {
         ...getSubmitProposalParams(options),
         admin,
         codeId: contractConfig.codeId,
-        label: contractName,
+        label: getLabel(options),
         msg: Buffer.from(JSON.stringify(msg)),
     };
 };

@@ -137,6 +137,7 @@ const programHandler = () => {
         ),
     );
     program.addOption(new Option('--instantiate2', 'use instantiate2 for constant address deployment'));
+    program.addOption(new Option('-l, --label <label>', 'contract instance label'));
     program.addOption(new Option('--aarch64', 'aarch64').env('AARCH64').default(false));
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
 

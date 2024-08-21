@@ -147,6 +147,24 @@ The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChai
 node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
+Collect gas:
+
+Conditions:
+- The `GasCollectorCap` object id is read from the chain config, under gas service objects.
+```bash
+# store GasCollectorCap to the Operators contract
+node sui/operators.js storeCap
+```
+- The sender must be a whitelisted operator and hold the `OperatorCap` capability.
+```bash
+# execute the following command from the owner account
+node sui/operators add <operator address>
+```
+
+```bash
+node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
+```
+
 Approve messages:
 
 If the gateway was deployed using the wallet, you can submit a message approval with it
