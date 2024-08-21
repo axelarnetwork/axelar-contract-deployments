@@ -33,6 +33,8 @@ axelar-message-primitives.workspace = true
 axelar-rkyv-encoding.workspace = true
 
 [dev-dependencies]
+solana-client.workspace = true
+solana-logger.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
 test-fixtures.workspace = true

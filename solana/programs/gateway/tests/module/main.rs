@@ -282,7 +282,7 @@ fn unix_seconds() -> u64 {
 }
 
 pub fn make_message() -> Message {
-    custom_message(Pubkey::new_unique(), example_payload())
+    custom_message(Pubkey::new_unique(), &example_payload())
 }
 
 pub fn make_messages(num_messages: usize) -> Vec<Message> {

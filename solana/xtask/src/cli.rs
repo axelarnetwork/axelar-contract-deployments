@@ -212,6 +212,14 @@ pub(crate) enum Solana {
         // ---
         // TODO: expose "upgrate_authority"
     },
+    /// Iteratively send messages to the Solana Gateway, permuting different
+    /// argument sizes and report the ones that succeed until the message
+    /// limit is reached. The CSV report is written in the `output_dir`
+    /// directory.
+    MessageLimitsReport {
+        /// Where to output the report
+        output_dir: PathBuf,
+    },
     Init {
         #[command(subcommand)]
         contract: SolanaInitSubcommand,
@@ -423,7 +431,7 @@ async fn get_or_deploy_evm_contract(
 async fn handle_solana(command: Solana) -> eyre::Result<()> {
     match command {
         Solana::Build => {
-            cmd::solana::build_contracts()?;
+            cmd::solana::build_contracts(None)?;
         }
         Solana::Deploy {
             contract,
@@ -439,6 +447,9 @@ async fn handle_solana(command: Solana) -> eyre::Result<()> {
                 url.as_ref(),
                 ws_url.as_ref(),
             )?;
+        }
+        Solana::MessageLimitsReport { output_dir } => {
+            cmd::solana::generate_message_limits_report(&output_dir).await?;
         }
         Solana::Init { contract } => match contract {
             SolanaInitSubcommand::GmpGateway {

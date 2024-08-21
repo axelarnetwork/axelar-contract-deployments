@@ -5,7 +5,7 @@ use solana_sdk::pubkey::Pubkey;
 
 use crate::execute_data::TestSigner;
 
-pub fn custom_message(destination_address: Pubkey, payload: DataPayload<'_>) -> Message {
+pub fn custom_message(destination_address: Pubkey, payload: &DataPayload<'_>) -> Message {
     let payload_hash = payload
         .hash()
         .expect("failed to get payload hash from DataPayload")

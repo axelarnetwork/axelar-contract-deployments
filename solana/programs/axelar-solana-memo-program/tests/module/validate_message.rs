@@ -33,9 +33,8 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
         &[&random_account_used_by_ix.pubkey()],
         encoding_scheme,
     );
-    let message_to_execute = custom_message(destination_program_id, message_payload.clone());
-    let other_message_in_the_batch =
-        custom_message(destination_program_id, message_payload.clone());
+    let message_to_execute = custom_message(destination_program_id, &message_payload);
+    let other_message_in_the_batch = custom_message(destination_program_id, &message_payload);
 
     // Confidence check: `message_to_execute` and `message_payload` have the same
     // hash.

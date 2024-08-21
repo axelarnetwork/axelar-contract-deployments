@@ -88,7 +88,7 @@ fn prase_evm_log_into_axelar_message(log: &ContractCallFilter) -> (DataPayload<'
     let decoded_payload = DataPayload::decode(log.payload.as_ref()).unwrap();
     let msg_from_evm_axelar = custom_message(
         solana_sdk::pubkey::Pubkey::from_str(log.destination_contract_address.as_str()).unwrap(),
-        decoded_payload.clone(),
+        &decoded_payload,
     );
     (decoded_payload, msg_from_evm_axelar)
 }

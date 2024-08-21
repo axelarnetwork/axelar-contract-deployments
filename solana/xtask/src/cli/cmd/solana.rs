@@ -1,3 +1,5 @@
+mod message_limits;
+
 use std::collections::BTreeMap;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
@@ -8,6 +10,7 @@ use axelar_rkyv_encoding::types::{PublicKey, VerifierSet, U128};
 use gmp_gateway::axelar_auth_weighted::RotationDelaySecs;
 use gmp_gateway::instructions::{InitializeConfig, VerifierSetWraper};
 use gmp_gateway::state::GatewayConfig;
+pub(crate) use message_limits::generate_message_limits_report;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
@@ -58,7 +61,7 @@ pub(crate) fn deploy(
     crate::cli::cmd::path::ensure_optional_path_exists(keypair_path, "keypair")?;
 
     info!("Starting compiling {}", contract);
-    build_contracts()?;
+    build_contracts(None)?;
     info!("Compiled {}", contract);
 
     info!("Starting deploying {}", contract);
@@ -158,9 +161,16 @@ pub(crate) fn init_memo_program(
     Ok(())
 }
 
-pub(crate) fn build_contracts() -> eyre::Result<()> {
+pub(crate) fn build_contracts(contracts: Option<&[PathBuf]>) -> eyre::Result<()> {
     let sh = Shell::new()?;
-    cmd!(sh, "cargo build-sbf").run()?;
+    if let Some(contracts) = contracts {
+        for contract in contracts {
+            cmd!(sh, "cargo build-sbf --manifest-path {contract}").run()?;
+        }
+    } else {
+        cmd!(sh, "cargo build-sbf").run()?;
+    }
+
     Ok(())
 }
 
@@ -232,6 +242,20 @@ pub(crate) mod path {
 
     pub(crate) fn contracts_artifact_dir() -> PathBuf {
         workspace_root_dir().join("target").join("deploy")
+    }
+
+    pub(crate) fn gateway_manifest() -> PathBuf {
+        workspace_root_dir()
+            .join("programs")
+            .join("gateway")
+            .join("Cargo.toml")
+    }
+
+    pub(crate) fn memo_manifest() -> PathBuf {
+        workspace_root_dir()
+            .join("programs")
+            .join("axelar-solana-memo-program")
+            .join("Cargo.toml")
     }
 }
 

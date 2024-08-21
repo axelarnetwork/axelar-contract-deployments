@@ -26,6 +26,7 @@ xshell.workspace = true
 solana-sdk.workspace = true
 gmp-gateway = { path = "./../programs/gateway" }
 axelar-message-primitives = { path = "./../helpers/axelar-message-primitives" }
+test-fixtures = { path = "./../helpers/test-fixtures" }
 solana-client = "2.0.1"
 url = "2"
 toml = "0.8"
@@ -35,6 +36,7 @@ evm-contracts-test-suite.workspace = true
 axelar-solana-memo-program.workspace = true
 solana-cli-config = "2.0.1"
 solana-rpc-client-api = "2.0.1"
+solana-test-validator = "2.0.5"
 solana-transaction-status = "2.0.1"
 reqwest.workspace = true
 futures.workspace = true
@@ -60,6 +62,7 @@ gateway-api = { path = "../../axelar-amplifier/packages/gateway-api" }
 router-api = { path = "../../axelar-amplifier/packages/router-api" }
 axelar-rkyv-encoding.workspace = true
 axelar-executable.workspace = true
+itertools.workspace = true
 
 [dev-dependencies]
 solana-program.workspace = true
