@@ -54,3 +54,9 @@ runs:
         sudo cp ./sui-cli/sui-binaries/sui /usr/local/bin/sui
         sudo cp ./sui-cli/sui-binaries/sui-debug /usr/local/bin/sui-debug
         sudo cp ./sui-cli/sui-binaries/sui-test-validator /usr/local/bin/sui-test-validator
+
+    - name: Setup Sui Localnet
+      shell: bash
+      run: |
+        sui client new-env --alias local --rpc http://127.0.0.1:9000
+        sui client switch --env local
