@@ -8,7 +8,7 @@ const { Secp256k1Keypair, Secp256k1PublicKey } = require('@mysten/sui/keypairs/s
 const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui/keypairs/secp256r1');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui/client');
 const { fromB64, fromHEX } = require('@mysten/bcs');
-const { printInfo } = require('../common/utils');
+const { printInfo } = require('../../common/utils');
 const { ethers } = require('hardhat');
 const {
     utils: { hexlify },

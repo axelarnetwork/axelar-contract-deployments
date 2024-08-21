@@ -1,4 +1,3 @@
-const { saveConfig, printInfo, getMultisigProof } = require('../common/utils');
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
@@ -8,11 +7,21 @@ const {
     constants: { HashZero },
 } = ethers;
 
-const { loadConfig } = require('../common/utils');
-const { addBaseOptions } = require('./cli-utils');
-const { getWallet, printWalletInfo, getRawPrivateKey, broadcast } = require('./sign-utils');
-const { bytes32Struct, signersStruct, executeDataStruct, messageToSignStruct, messageStruct, proofStruct } = require('./types-utils');
-const { getSigners } = require('./utils');
+const { saveConfig, printInfo, loadConfig, getMultisigProof } = require('../common/utils');
+const {
+    bytes32Struct,
+    signersStruct,
+    messageToSignStruct,
+    messageStruct,
+    executeDataStruct,
+    proofStruct,
+    addBaseOptions,
+    getSigners,
+    getWallet,
+    printWalletInfo,
+    getRawPrivateKey,
+    broadcast,
+} = require('./utils');
 const secp256k1 = require('secp256k1');
 
 const COMMAND_TYPE_APPROVE_MESSAGES = 0;

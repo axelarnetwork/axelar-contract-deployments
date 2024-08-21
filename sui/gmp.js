@@ -1,27 +1,30 @@
-const { saveConfig, printInfo } = require('../common/utils');
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { getBcsBytesByObjectId } = require('./utils');
-const { loadConfig } = require('../common/utils');
+const { saveConfig, printInfo } = require('../common/utils');
+const {
+    loadConfig,
+    getBcsBytesByObjectId,
+    addBaseOptions,
+    addOptionsToCommands,
+    getUnitAmount,
+    getWallet,
+    printWalletInfo,
+    discoveryStruct,
+    broadcast,
+} = require('./utils');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify },
 } = ethers;
-
-const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
-const { getUnitAmount } = require('./amount-utils.js');
-const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
-const { discoveryStruct } = require('./types-utils.js');
 
 async function sendCommand(keypair, client, contracts, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
     const params = options.params;
 
     const [testConfig, gasServiceConfig] = contracts;
-    const gasServicePackageId = gasServiceConfig.address;
+    const gasServiceObjectId = gasServiceConfig.objects.GasService;
     const singletonObjectId = testConfig.objects.Singleton;
-    const channelId = testConfig.objects.ChannelId;
 
     const unitAmount = getUnitAmount(feeAmount);
     const walletAddress = keypair.toSuiAddress();
@@ -34,13 +37,13 @@ async function sendCommand(keypair, client, contracts, args, options) {
         target: `${testConfig.address}::test::send_call`,
         arguments: [
             tx.object(singletonObjectId),
-            tx.object(gasServiceConfig.objects.GasService),
+            tx.object(gasServiceObjectId),
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
             tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
-            tx.pure.address(refundAddress), // Refund address
-            coin, // Coin<SUI>
-            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
+            tx.pure.address(refundAddress),
+            coin,
+            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()),
         ],
     });
 
