@@ -53,7 +53,7 @@ jobs:
       # Create .env file with default hardhat private key that's prefunded
       - name: Prepare .env
         run: |
-          echo 'PRIVATE_KEY=suiprivkey1qyw6c8t5ws65fcvlcw5rhyt2jd8d6ad6e526shgktlm0x3aelq9rx2lp4wq' >> .env
+          echo 'PRIVATE_KEY=$SUI_PRIVATE_KEY' >> .env
           echo 'ENV=local' >> .env
           echo 'SKIP_EXISTING = true' >> .env
 
@@ -118,7 +118,7 @@ jobs:
         run: node sui/operators.js storeCap
 
       - name: Add Operator
-        run: node sui/operators.js add 0x4e9147724ba2b95242137b8ffe78326d7b35333cb90d42c552b47d0367ef7199
+        run: node sui/operators.js add $SUI_ADDRESS
 
       - name: Collect Gas with Operator
         run: node sui/operators.js collectGas --amount 1
@@ -127,7 +127,7 @@ jobs:
         run: node sui/operators.js refund 0x2 --amount 1
 
       - name: Remove Operator
-        run: node sui/operators.js remove 0x4e9147724ba2b95242137b8ffe78326d7b35333cb90d42c552b47d0367ef7199
+        run: node sui/operators.js remove $SUI_ADDRESS
 
       ###### Command: Generate Keypair ######
       - name: Generate Keypair
