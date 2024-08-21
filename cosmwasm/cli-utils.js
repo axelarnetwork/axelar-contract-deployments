@@ -25,7 +25,7 @@ const addCommonAmplifierOptions = (program, options = {}) => {
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
     program.addOption(new Option('--aarch64', 'aarch64').env('AARCH64').default(false));
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
+    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none').env('CHAINS'));
     program.addOption(
         new Option('--admin <address>', 'when instantiating contract, set an admin address. Defaults to governance module account').default(
             governanceAddress,
