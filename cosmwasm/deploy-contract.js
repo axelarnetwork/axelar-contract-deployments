@@ -3,6 +3,7 @@
 require('dotenv').config();
 const { isNil } = require('lodash');
 
+const { CHAIN_ENVIRONMENTS } = require('../common');
 const { isNumber, printInfo, loadConfig, saveConfig, prompt } = require('../evm/utils');
 const {
     prepareWallet,
@@ -114,6 +115,13 @@ const programHandler = () => {
 
     addCommonAmplifierOptions(program);
 
+    program.addOption(
+        new Option('-e, --env <env>', 'environment').choices(CHAIN_ENVIRONMENTS).default('testnet').makeOptionMandatory(true).env('ENV'),
+    );
+    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
+    program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
     program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
     program.addOption(
         new Option(
