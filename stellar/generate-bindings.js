@@ -5,6 +5,7 @@ const { execSync } = require('child_process');
 const { loadConfig } = require('../evm/utils');
 const path = require('path');
 const { getNetworkPassphrase } = require('./utils');
+const { CHAIN_ENVIRONMENTS } = require('../common');
 require('./cli-utils');
 
 function processCommand(options, _, chain) {
@@ -29,7 +30,7 @@ function main() {
 
     program.addOption(
         new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
+            .choices(CHAIN_ENVIRONMENTS)
             .default('testnet')
             .makeOptionMandatory(true)
             .env('ENV'),

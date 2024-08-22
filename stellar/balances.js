@@ -1,6 +1,7 @@
 const { Command, Option } = require('commander');
 const { getWallet } = require('./utils');
 const { loadConfig } = require('../evm/utils');
+const { CHAIN_ENVIRONMENTS } = require('../common');
 require('./cli-utils');
 
 async function processCommand(options, _, chain) {
@@ -14,7 +15,7 @@ if (require.main === module) {
 
     program.addOption(
         new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
+            .choices(CHAIN_ENVIRONMENTS)
             .default('testnet')
             .makeOptionMandatory(true)
             .env('ENV'),

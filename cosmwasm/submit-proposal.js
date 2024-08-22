@@ -22,6 +22,7 @@ const {
     governanceAddress,
 } = require('./utils');
 const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../evm/utils');
+const { CHAIN_ENVIRONMENTS } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -251,7 +252,7 @@ const programHandler = () => {
     // TODO: combine deploy-contract and submit-proposal options to remove duplicates
     program.addOption(
         new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'devnet-amplifier', 'devnet-verifiers', 'stagenet', 'testnet', 'mainnet'])
+            .choices(CHAIN_ENVIRONMENTS)
             .default('devnet-amplifier')
             .makeOptionMandatory(true)
             .env('ENV'),

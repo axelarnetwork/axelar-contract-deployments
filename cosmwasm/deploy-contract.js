@@ -3,6 +3,7 @@
 require('dotenv').config();
 const { isNil } = require('lodash');
 
+const { CHAIN_ENVIRONMENTS } = require('../common');
 const { isNumber, printInfo, loadConfig, saveConfig, prompt } = require('../evm/utils');
 const {
     prepareWallet,
@@ -114,7 +115,7 @@ const programHandler = () => {
 
     program.addOption(
         new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
+            .choices(CHAIN_ENVIRONMENTS)
             .default('testnet')
             .makeOptionMandatory(true)
             .env('ENV'),
