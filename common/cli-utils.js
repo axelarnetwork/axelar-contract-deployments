@@ -3,7 +3,7 @@
 require('dotenv').config();
 
 const fs = require('fs');
-const { Option, Command } = require('commander');
+const { Option } = require('commander');
 
 // A path to the chain configuration files
 const CHAIN_CONFIG_PATH = `${__dirname}/../axelar-chains-config/info`;
@@ -104,13 +104,7 @@ const addExtendedOptions = (program, options = {}) => {
     return program;
 };
 
-if (require.main === module) {
-    addBaseOptions(new Command());
-}
-
 module.exports = {
-    CHAIN_CONFIG_PATH,
-    CHAIN_ENVIRONMENTS,
     addEnvOption,
     addBaseOptions,
     addExtendedOptions,
