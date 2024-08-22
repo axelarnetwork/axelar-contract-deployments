@@ -161,6 +161,44 @@
         "url": "https://sepolia.etherscan.io",
         "api": "https://api-sepolia.etherscan.io/api"
       }
+    },
+    "flow": {
+      "name": "flow",
+      "id": "flow",
+      "axelarId": "flow",
+      "chainId": 545,
+      "rpc": "https://testnet.evm.nodes.onflow.org",
+      "tokenSymbol": "FLOW",
+      "contracts": {
+        "AxelarGateway": {}
+      },
+      "explorer": {
+        "name": "Flowscan",
+        "url": "http://eth.flowscan.io",
+        "api": ""
+      },
+      "gasOptions": {
+        "gasLimit": 10000000
+      },
+      "confirmations": 1
+    },
+    "hedera": {
+      "name": "Hedera",
+      "timeout": 50000,
+      "axelarId": "hedera",
+      "skipRevertTests": true,
+      "chainId": 296,
+      "rpc": "https://testnet.hedera.validationcloud.io/v1/6c6wqC3i87s0MPa9gXMny1szu96fFdMTwnpbBa6bC5w",
+      "tokenSymbol": "HBAR",
+      "confirmations": 0,
+      "explorer": {
+        "name": "HashScan",
+        "url": "",
+        "api": ""
+      },
+      "gasOptions": {
+        "gasLimit": 10000000
+      }
     }
   },
   "axelar": {
@@ -180,7 +218,7 @@
         "storeCodeProposalCodeHash": "b9456a87ffbba0890b30f1313629592e83771c7378c49aec76ff7b1dde73db07",
         "codeId": 1,
         "address": "axelar17ahqgeynfaqdemr7vsempc0nx892gvvf2jucjkljhc90eqknsxwquhlees",
-        "executeProposalId": "16"
+        "executeProposalId": "27"
       },
       "NexusGateway": {
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
@@ -211,7 +249,7 @@
         "storeCodeProposalCodeHash": "f49800d724186d013b16551828d378d7e410b8c54f7320a5b6d2ed06e20f7fa3",
         "codeId": 5,
         "address": "axelar1xa750yqmswl0e0ukk4d0ee9qu8jzycag5u9q5t4zlpvxzpeweevspw80a5",
-        "executeProposalId": "18"
+        "executeProposalId": "30"
       },
       "Multisig": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
@@ -221,7 +259,7 @@
         "storeCodeProposalCodeHash": "4b01a9823e3d09d56b7b451c92ab40e6bdd36e4d55ae423b5e5c979258f00dfa",
         "codeId": 6,
         "address": "axelar104kxgzr9vh6k6a49d9hjf980866eqlu4vhgzpv26ex8xhaf52juq66kd9t",
-        "executeProposalId": "17"
+        "executeProposalId": "29"
       },
       "MultisigProver": {
         "storeCodeProposalId": "9",
@@ -256,6 +294,21 @@
           "domainSeparator": "0x5df0db5c3bc3199b082def1fe0155b10287632fa75a8ac741e4e0e21e3049295",
           "address": "axelar14me068g6zaatrnlxp6hfx0v34e9wlnwut2nz4m3vepfewkqwdmyseu8fpt"
         },
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "destinationChainID": "545",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "verifiers",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "domainSeparator": "0xeeda1e7ea58051e686cd7ae2c5aa42adde1023319689b7feb0284d354eb75fe7",
+          "address": "axelar1shjglhse02gyjym2srlrax84a74gz6hv5zzv4lm7wdgtey50e7lqf23caf"
+        },
         "codeId": 9
       },
       "Gateway": {
@@ -267,6 +320,9 @@
         },
         "test-sepolia": {
           "address": "axelar12dpasytt5d8hyewzkdfkfshx79j9275z7wvlnm8ngtc77yf5fvzqn3x4yt"
+        },
+        "flow": {
+          "address": "axelar1n9ntf2s6t6876dq73kxelmqew78086h8e2fvmzt2hpvwk6qe72wsqqvz6n"
         }
       },
       "VotingVerifier": {
@@ -299,6 +355,20 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "address": "axelar1lyn8ry7ka0278vruxq7xx4fwpvyfkxhxtww8yr3tdg9phe0mtxfswxx9hd"
+        },
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "verifiers",
+          "sourceGatewayAddress": "0xE9A172B8991177e7544e68C64f036A9A98D92826",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "address": "axelar1vj2gum4hvxyut5mgym7nnyslkvfcws49c9han2yqrwsgk2xky0qqdlkan9"
         },
         "codeId": 7
       }
