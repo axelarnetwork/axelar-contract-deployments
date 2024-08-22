@@ -10,7 +10,7 @@ const readlineSync = require('readline-sync');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { keccak256, hexlify },
+    utils: { keccak256 },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
