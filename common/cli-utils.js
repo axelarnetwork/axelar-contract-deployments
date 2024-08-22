@@ -2,15 +2,18 @@
 
 require('dotenv').config();
 
-const { Option } = require('commander');
+const fs = require('fs');
+const { Option, Command } = require('commander');
+
+// A path to the chain configuration files
+const CHAIN_CONFIG_PATH = `${__dirname}/../axelar-chains-config/info`;
+
+// A list of available chain environments which are the names of the files in the CHAIN_CONFIG_PATH
+const CHAIN_ENVIRONMENTS = fs.readdirSync(CHAIN_CONFIG_PATH).map((chainName) => chainName.split('.')[0]);
 
 const addBaseOptions = (program, options = {}) => {
     program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'devnet-amplifier', 'devnet-verifiers', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
+        new Option('-e, --env <env>', 'environment').choices(CHAIN_ENVIRONMENTS).default('testnet').makeOptionMandatory(true).env('ENV'),
     );
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
     program.addOption(new Option('--parallel', 'run script parallely wrt chains'));
@@ -81,7 +84,13 @@ const addExtendedOptions = (program, options = {}) => {
     return program;
 };
 
+if (require.main === module) {
+    addBaseOptions(new Command());
+}
+
 module.exports = {
+    CHAIN_CONFIG_PATH,
+    CHAIN_ENVIRONMENTS,
     addBaseOptions,
     addExtendedOptions,
 };
