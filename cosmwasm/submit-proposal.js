@@ -22,7 +22,7 @@ const {
     governanceAddress,
 } = require('./utils');
 const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../evm/utils');
-const { CHAIN_ENVIRONMENTS } = require('../common');
+const { addEnvOption } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -253,13 +253,7 @@ const programHandler = () => {
     addCommonAmplifierOptions(program, { predictOnly: true });
 
     // TODO: combine deploy-contract and submit-proposal options to remove duplicates
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(CHAIN_ENVIRONMENTS)
-            .default('devnet-amplifier')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
+    addEnvOption(program, 'devnet-amplifier');
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
