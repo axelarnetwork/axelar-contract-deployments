@@ -117,11 +117,7 @@ if (require.main === module) {
     program.name('operators').description('Operators contract management');
 
     program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(CHAIN_ENVIRONMENTS)
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
+        new Option('-e, --env <env>', 'environment').choices(CHAIN_ENVIRONMENTS).default('testnet').makeOptionMandatory(true).env('ENV'),
     );
 
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));

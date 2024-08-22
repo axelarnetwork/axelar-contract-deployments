@@ -29,11 +29,7 @@ function main() {
     program.name('Generate TypeScript Bindings for Soroban contract').description('Generates TypeScript bindings for a Soroban contract.');
 
     program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(CHAIN_ENVIRONMENTS)
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
+        new Option('-e, --env <env>', 'environment').choices(CHAIN_ENVIRONMENTS).default('testnet').makeOptionMandatory(true).env('ENV'),
     );
     program.addOption(new Option('--wasmPath <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
     program.addOption(new Option('--contractId <contractId>', 'contract ID').makeOptionMandatory(true));

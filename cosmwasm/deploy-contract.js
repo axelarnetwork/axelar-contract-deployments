@@ -114,11 +114,7 @@ const programHandler = () => {
     program.name('upload-contract').description('Upload CosmWasm contracts');
 
     program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(CHAIN_ENVIRONMENTS)
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
+        new Option('-e, --env <env>', 'environment').choices(CHAIN_ENVIRONMENTS).default('testnet').makeOptionMandatory(true).env('ENV'),
     );
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
