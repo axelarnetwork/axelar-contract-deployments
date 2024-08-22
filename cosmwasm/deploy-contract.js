@@ -115,7 +115,6 @@ const programHandler = () => {
 
     addCommonAmplifierOptions(program);
 
-    addEnvOption(program);
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
