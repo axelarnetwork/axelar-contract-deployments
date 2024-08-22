@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 
-const { addExtendedOptions } = require('../common');
+const { addExtendedOptions, addEnvOption } = require('../common');
 const { governanceAddress } = require('./utils');
 
 const { Option } = require('commander');
@@ -20,8 +20,8 @@ const addCommonAmplifierOptions = (program, options = {}) => {
         ...options,
     };
 
+    addEnvOption(program);
     addExtendedOptions(program, ops);
-
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
     program.addOption(new Option('--aarch64', 'aarch64').env('AARCH64').default(false));

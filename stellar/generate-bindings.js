@@ -5,6 +5,7 @@ const { execSync } = require('child_process');
 const { loadConfig } = require('../evm/utils');
 const path = require('path');
 const { getNetworkPassphrase } = require('./utils');
+const { addEnvOption } = require('../common');
 require('./cli-utils');
 
 function processCommand(options, _, chain) {
@@ -27,13 +28,7 @@ function main() {
     const program = new Command();
     program.name('Generate TypeScript Bindings for Soroban contract').description('Generates TypeScript bindings for a Soroban contract.');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
+    addEnvOption(program);
     program.addOption(new Option('--wasmPath <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
     program.addOption(new Option('--contractId <contractId>', 'contract ID').makeOptionMandatory(true));
     program.addOption(

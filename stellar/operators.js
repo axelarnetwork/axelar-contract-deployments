@@ -2,6 +2,7 @@ const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { getWallet, prepareTransaction, buildTransaction, sendTransaction, estimateCost } = require('./utils');
 const { loadConfig, printInfo, parseArgs, validateParameters } = require('../evm/utils');
+const { addEnvOption } = require('../common');
 require('./cli-utils');
 
 async function processCommand(options, _, chain) {
@@ -115,14 +116,7 @@ if (require.main === module) {
 
     program.name('operators').description('Operators contract management');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-
+    addEnvOption(program);
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     program.addOption(new Option('-v, --verbose', 'verbose output').default(false));
     program.addOption(
