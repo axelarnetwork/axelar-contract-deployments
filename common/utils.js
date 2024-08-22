@@ -388,6 +388,7 @@ async function getDomainSeparator(config, chain, options) {
     // const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
     const expectedDomainSeparator = calculateDomainSeparator(chain.axelarId, routerAddress, chainId);
 
+    // TODO: add domain separator prediction support to display before amplifier contracts are ready
     // if (domainSeparator !== expectedDomainSeparator) {
     //     throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
     // }
