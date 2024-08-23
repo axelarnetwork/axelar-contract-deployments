@@ -1,3 +1,4 @@
+const { Option } = require('commander');
 const { addBaseOptions, ...exportedCliUtils } = require('../common/cli-utils');
 
 const addExtendedOptions = (program, options = {}) => {
