@@ -79,8 +79,8 @@ jobs:
       - name: Deploy Operators
         run: node sui/deploy-contract deploy Operators
 
-      - name: Deploy Test
-        run: node sui/deploy-contract deploy Test
+      - name: Deploy Example
+        run: node sui/deploy-contract deploy Example
 
       ###### Command: Gas Service ######
 
