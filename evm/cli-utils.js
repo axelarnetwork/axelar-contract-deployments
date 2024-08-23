@@ -1,3 +1,5 @@
+const { addBaseOptions, ...exportedCliUtils } = require('../common/cli-utils');
+
 const addExtendedOptions = (program, options = {}) => {
     addBaseOptions(program, options);
 
@@ -39,6 +41,7 @@ const addExtendedOptions = (program, options = {}) => {
 };
 
 module.exports = {
-    ...require('../common/cli-utils'),
+    ...exportedCliUtils,
+    addBaseOptions,
     addExtendedOptions,
 };
