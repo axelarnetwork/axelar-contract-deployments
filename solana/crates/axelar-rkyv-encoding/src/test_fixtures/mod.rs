@@ -119,7 +119,7 @@ pub fn random_valid_proof_and_verifier_set(message: &[u8]) -> (Proof, VerifierSe
     let proof = Proof::new(signatures, threshold.into(), nonce);
 
     // Confidence checks
-    assert_eq!(verifier_set.threshold, proof.threshold);
+    assert_eq!(verifier_set.quorum, proof.threshold);
     assert_eq!(
         verifier_set.signers.len(),
         proof.signers_with_signatures.len()
@@ -222,7 +222,7 @@ pub fn random_valid_execute_data_and_verifier_set_for_payload(
 
     let proof = Proof::new(
         weighted_signatures,
-        verifier_set.threshold,
+        verifier_set.quorum,
         verifier_set.created_at,
     );
 

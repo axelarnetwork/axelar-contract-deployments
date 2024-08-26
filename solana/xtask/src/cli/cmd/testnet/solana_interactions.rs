@@ -157,15 +157,16 @@ pub(crate) fn solana_approve_messages(
     execute_data_pda: solana_sdk::pubkey::Pubkey,
     gateway_root_pda: solana_sdk::pubkey::Pubkey,
     gateway_approved_message_pda: solana_sdk::pubkey::Pubkey,
+    verifier_set_tracker_pda: solana_sdk::pubkey::Pubkey,
     solana_rpc_client: &solana_client::rpc_client::RpcClient,
     solana_keypair: &Keypair,
 ) {
     tracing::info!("solana gateway.approve_messages()");
     let ix = gmp_gateway::instructions::approve_messages(
-        gmp_gateway::id(),
         execute_data_pda,
         gateway_root_pda,
         &[gateway_approved_message_pda],
+        verifier_set_tracker_pda,
     )
     .unwrap();
 

@@ -2,10 +2,16 @@ use bnum::cast::As;
 use rkyv::bytecheck::{self, CheckBytes};
 use rkyv::{Archive, Deserialize, Serialize};
 
-#[derive(Clone, Copy, Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Archive, Deserialize, Serialize, Eq, PartialEq, Ord, PartialOrd)]
 #[archive(compare(PartialEq, PartialOrd))]
 #[archive_attr(derive(Debug, PartialEq, Eq, Ord, PartialOrd, CheckBytes))]
 pub struct U128([u8; 16]);
+
+impl std::fmt::Debug for U128 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", u128::from(*self))
+    }
+}
 
 impl U128 {
     pub const ZERO: U128 = U128([0u8; 16]);

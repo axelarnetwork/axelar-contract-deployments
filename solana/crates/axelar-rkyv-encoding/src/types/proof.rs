@@ -6,7 +6,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 
 use super::{
     ArchivedPublicKey, Ed25519Pubkey, HasheableSignersWithSignaturesBTreeMap, PublicKey,
-    Secp256k1Pubkey,
+    Secp256k1Pubkey, VerifierSet,
 };
 use crate::hasher::AxelarRkyv256Hasher;
 use crate::types::{
@@ -41,6 +41,15 @@ impl Proof {
 
     pub fn nonce_be_bytes(&self) -> &[u8; 8] {
         &self.nonce_be_bytes
+    }
+
+    pub fn verifier_set(&self) -> VerifierSet {
+        let signers = self
+            .signers_with_signatures
+            .iter()
+            .map(|(pubkey, signer)| (*pubkey, signer.weight))
+            .collect();
+        VerifierSet::new(self.nonce, signers, self.threshold)
     }
 }
 

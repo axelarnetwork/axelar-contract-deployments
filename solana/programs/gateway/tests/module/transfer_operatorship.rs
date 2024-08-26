@@ -7,19 +7,24 @@ use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use test_fixtures::test_setup::TestFixture;
-
-use crate::{setup_initialised_gateway, InitialisedGatewayMetadata};
+use test_fixtures::test_setup::{
+    SolanaAxelarIntegration,
+    SolanaAxelarIntegrationMetadata, TestFixture,
+};
 
 #[tokio::test]
 async fn successfully_transfer_operatorship_when_signer_is_operator() {
     // Setup
-    let InitialisedGatewayMetadata {
+    let SolanaAxelarIntegrationMetadata {
         mut fixture,
         gateway_root_pda,
         operator,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![11, 42, 33])
+        .build()
+        .setup()
+        .await;
     let new_operator = Keypair::new();
     let original_config = fixture
         .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
@@ -65,12 +70,16 @@ async fn successfully_transfer_operatorship_when_signer_is_operator() {
 #[tokio::test]
 async fn successfully_transfer_operatorship_when_signer_is_upgrade_authority() {
     // Setup
-    let InitialisedGatewayMetadata {
+    let SolanaAxelarIntegrationMetadata {
         mut fixture,
         gateway_root_pda,
         upgrade_authority,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![11, 42, 33])
+        .build()
+        .setup()
+        .await;
     let original_config = fixture
         .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
         .await;
@@ -160,11 +169,15 @@ async fn fail_if_gateway_not_initialised() {
 
 #[tokio::test]
 async fn fail_if_operator_or_owner_is_not_signer() {
-    let InitialisedGatewayMetadata {
+    let SolanaAxelarIntegrationMetadata {
         mut fixture,
         gateway_root_pda,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![11, 42, 33])
+        .build()
+        .setup()
+        .await;
 
     // Action - random wallet signs message to change operator
     let stranger_danger = Keypair::new();
@@ -196,12 +209,16 @@ async fn fail_if_operator_or_owner_is_not_signer() {
 // programdata account
 #[tokio::test]
 async fn fail_if_invalid_program_id() {
-    let InitialisedGatewayMetadata {
+    let SolanaAxelarIntegrationMetadata {
         mut fixture,
         gateway_root_pda,
         upgrade_authority,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![11, 42, 33])
+        .build()
+        .setup()
+        .await;
 
     // Action - we provide an invalid program id that is used for deriving the
     // program upgrade authority
@@ -247,11 +264,15 @@ async fn fail_if_invalid_program_id() {
 // the stranger does not actually sign the tx
 #[tokio::test]
 async fn fail_if_stranger_dose_not_sing_anything() {
-    let InitialisedGatewayMetadata {
+    let SolanaAxelarIntegrationMetadata {
         mut fixture,
         gateway_root_pda,
         ..
-    } = setup_initialised_gateway(&[11, 42, 33], None, 120).await;
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![11, 42, 33])
+        .build()
+        .setup()
+        .await;
 
     // Action - the stranger does not  actually sign the tx, he just hopes ther's
     // not a check

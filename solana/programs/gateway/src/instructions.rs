@@ -4,6 +4,7 @@ use std::error::Error;
 
 use axelar_rkyv_encoding::types::{ArchivedVerifierSet, VerifierSet};
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
+use itertools::Itertools;
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
@@ -11,6 +12,7 @@ use solana_program::pubkey::Pubkey;
 
 use crate::axelar_auth_weighted::{RotationDelaySecs, SignerSetEpoch};
 use crate::commands::{MessageWrapper, OwnedCommand};
+use crate::hasher_impl;
 use crate::state::{GatewayApprovedCommand, GatewayExecuteData};
 
 /// Instructions supported by the gateway program.
@@ -22,7 +24,9 @@ pub enum GatewayInstruction {
     /// Accounts expected by this instruction:
     /// 0. [] Gateway Root Config PDA account
     /// 1. [WRITE] Gateway ExecuteData PDA account
-    /// 2..N [WRITE] Gateway ApprovedCommand PDA accounts. All commands needs to
+    /// 2. [] Verifier Setr Tracker PDA account (the one that signed the
+    ///    ExecuteData)
+    /// 3..N [WRITE] Gateway ApprovedCommand PDA accounts. All commands needs to
     ///         be `ApproveMessages`.
     ApproveMessages,
 
@@ -33,7 +37,13 @@ pub enum GatewayInstruction {
     /// 1. [] Gateway ExecuteData PDA account
     /// 2. [WRITE] Gateway ApprovedCommand PDA account. The command needs to be
     ///    `RotateSigners`.
-    /// 3. Opional: [SIGNER] `Operator` that's stored in the gateway confi PDA.
+    /// 3. [] Verifier Setr Tracker PDA account (the one that signed the
+    ///    ExecuteData)
+    /// 4. [WRITE, SIGNER] new uninitialized VerifierSetTracker PDA account (the
+    ///    one that needs to be initialized)
+    /// 5. [WRITE, SIGNER] Funding account for the new VerifierSetTracker PDA
+    /// 6. [] System Program account
+    /// 7. Opional: [SIGNER] `Operator` that's stored in the gateway confi PDA.
     RotateSigners,
 
     /// Represents the `CallContract` Axelar event.
@@ -56,7 +66,8 @@ pub enum GatewayInstruction {
     /// 0. [WRITE, SIGNER] Funding account
     /// 1. [WRITE] Gateway Root Config PDA account
     /// 2. [] System Program account
-    InitializeConfig(InitializeConfig),
+    /// 3..N [WRITE] uninitialized VerifierSetTracker PDA accounts
+    InitializeConfig(InitializeConfig<(VerifierSetWraper, PdaBump)>),
 
     /// Initializes an Execute Data PDA account.
     /// The Execute Data is a batch of commands that will be executed by the
@@ -121,17 +132,68 @@ pub enum GatewayInstruction {
 
 /// Configuration parameters for initializing the axelar-solana gateway
 #[derive(Debug, Clone, Default, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
-pub struct InitializeConfig {
+pub struct InitializeConfig<T> {
     /// The domain separator, used as an input for hashing payloads.
     pub domain_separator: [u8; 32],
     /// initial signer sets
-    pub initial_signer_sets: Vec<VerifierSetWraper>,
+    /// The order is important:
+    /// - first element == oldest entry
+    /// - last element == latest entry
+    pub initial_signer_sets: Vec<T>,
     /// the minimum delay required between rotations
     pub minimum_rotation_delay: RotationDelaySecs,
     /// The gateway operator.
     pub operator: Pubkey,
     /// how many n epochs do we consider valid
     pub previous_signers_retention: SignerSetEpoch,
+}
+
+type PdaBump = u8;
+type InitializeConfigTransformation = (
+    InitializeConfig<(VerifierSetWraper, PdaBump)>,
+    Vec<(Pubkey, PdaBump)>,
+);
+
+impl InitializeConfig<VerifierSetWraper> {
+    /// Convert  [`InitializeConfig`] to a type that can be submitted to the
+    /// gateway by calculating the PDAs for the initial signers.
+    pub fn with_verifier_set_bump(self) -> InitializeConfigTransformation {
+        let (pdas, bumps): (Vec<(Pubkey, PdaBump)>, Vec<PdaBump>) = self
+            .calculate_verifier_set_pdas()
+            .into_iter()
+            .map(|(pda, bump)| ((pda, bump), bump))
+            .unzip();
+        let initial_signer_sets = bumps
+            .into_iter()
+            .zip_eq(self.initial_signer_sets)
+            .map(|(bump, set)| (set, bump))
+            .collect_vec();
+        (
+            InitializeConfig {
+                domain_separator: self.domain_separator,
+                initial_signer_sets,
+                minimum_rotation_delay: self.minimum_rotation_delay,
+                operator: self.operator,
+                previous_signers_retention: self.previous_signers_retention,
+            },
+            pdas,
+        )
+    }
+
+    /// Calculate the PDAs and PDA bumps for the initial verifiers
+    pub fn calculate_verifier_set_pdas(&self) -> Vec<(Pubkey, PdaBump)> {
+        self.initial_signer_sets
+            .iter()
+            .map(|init_verifier_set| {
+                let hash = init_verifier_set
+                    .parse()
+                    .expect("invalid Verifier set provided")
+                    .hash(hasher_impl());
+                let (pda, derived_bump) = crate::get_verifier_set_tracker_pda(&crate::id(), hash);
+                (pda, derived_bump)
+            })
+            .collect_vec()
+    }
 }
 
 /// Because [`axelar_rkyv_encoding::types::VerifierSet`] does not implement
@@ -169,18 +231,17 @@ impl VerifierSetWraper {
 
 /// Creates a [`GatewayInstruction::ApproveMessages`] instruction.
 pub fn approve_messages(
-    // todo: we don't need to expose the program id
-    program_id: Pubkey,
     execute_data_account: Pubkey,
     gateway_root_pda: Pubkey,
     command_accounts: &[Pubkey],
+    verifier_set_tracker_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    crate::check_program_account(program_id)?;
     let data = to_vec(&GatewayInstruction::ApproveMessages)?;
 
     let mut accounts = vec![
-        AccountMeta::new(gateway_root_pda, false),
-        AccountMeta::new(execute_data_account, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(execute_data_account, false),
+        AccountMeta::new_readonly(verifier_set_tracker_pda, false),
     ];
 
     // Message accounts needs to be writable so we can set them as processed.
@@ -191,7 +252,7 @@ pub fn approve_messages(
     );
 
     Ok(Instruction {
-        program_id,
+        program_id: crate::id(),
         accounts,
         data,
     })
@@ -199,20 +260,24 @@ pub fn approve_messages(
 
 /// Creates a [`GatewayInstruction::RotateSigners`] instruction.
 pub fn rotate_signers(
-    // todo: we don't need to expose the program id here
-    program_id: Pubkey,
     execute_data_account: Pubkey,
     gateway_root_pda: Pubkey,
     command_account: Pubkey,
     operator: Option<Pubkey>,
+    current_verifier_set_tracker_pda: Pubkey,
+    new_verifier_set_tracker_pda: Pubkey,
+    payer: Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    crate::check_program_account(program_id)?;
     let data = to_vec(&GatewayInstruction::RotateSigners)?;
 
     let mut accounts = vec![
         AccountMeta::new(gateway_root_pda, false),
-        AccountMeta::new(execute_data_account, false),
+        AccountMeta::new_readonly(execute_data_account, false),
         AccountMeta::new(command_account, false),
+        AccountMeta::new_readonly(current_verifier_set_tracker_pda, false),
+        AccountMeta::new(new_verifier_set_tracker_pda, false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
     if let Some(operator) = operator {
@@ -220,7 +285,7 @@ pub fn rotate_signers(
     }
 
     Ok(Instruction {
-        program_id,
+        program_id: crate::id(),
         accounts,
         data,
     })
@@ -345,15 +410,24 @@ pub fn initialize_execute_data<'b>(
 /// Creates a [`GatewayInstruction::InitializeConfig`] instruction.
 pub fn initialize_config(
     payer: Pubkey,
-    config: InitializeConfig,
+    config: InitializeConfig<VerifierSetWraper>,
     gateway_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&GatewayInstruction::InitializeConfig(config))?;
-    let accounts = vec![
+    let mut accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new(gateway_config_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
+    let (config, with_verifier_set_bump) = config.with_verifier_set_bump();
+    with_verifier_set_bump.into_iter().for_each(|(pda, _)| {
+        accounts.push(AccountMeta {
+            pubkey: pda,
+            is_signer: false,
+            is_writable: true,
+        })
+    });
+
+    let data = to_vec(&GatewayInstruction::InitializeConfig(config))?;
     Ok(Instruction {
         program_id: crate::id(),
         accounts,
@@ -432,11 +506,12 @@ pub mod tests {
         let _payer = Keypair::new().pubkey();
         let (gateway_root_pda, _) = GatewayConfig::pda();
         let approved_message_accounts = vec![Keypair::new().pubkey()];
+        let verifier_set_tracker_pda = Pubkey::new_unique();
         let instruction = approve_messages(
-            crate::id(),
             execute_data_account,
             gateway_root_pda,
             &approved_message_accounts,
+            verifier_set_tracker_pda,
         )
         .expect("valid instruction construction");
         let deserialized = from_slice(&instruction.data).expect("deserialized valid instruction");

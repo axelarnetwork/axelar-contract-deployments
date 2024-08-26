@@ -14,23 +14,18 @@ use std::collections::BTreeMap;
 use axelar_message_primitives::{DataPayload, EncodingScheme};
 use axelar_rkyv_encoding::hash_payload;
 use axelar_rkyv_encoding::types::{
-    ExecuteData, Message, Payload, Proof, PublicKey, VerifierSet, WeightedSigner,
+    ExecuteData, Message, Payload, Proof, PublicKey, WeightedSigner,
 };
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::events::GatewayEvent;
 use gmp_gateway::hasher_impl;
-use gmp_gateway::instructions::InitializeConfig;
 use gmp_gateway::state::GatewayApprovedCommand;
-use solana_program_test::tokio::fs;
 use solana_program_test::{processor, ProgramTest};
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use test_fixtures::axelar_message::{custom_message, new_signer_set};
-use test_fixtures::execute_data::TestSigner;
-use test_fixtures::test_setup::TestFixture;
-use test_fixtures::test_signer::create_signer_with_weight;
+use test_fixtures::axelar_message::custom_message;
+use test_fixtures::test_setup::{SigningVerifierSet, TestFixture};
 
 pub fn program_test() -> ProgramTest {
     ProgramTest::new(
@@ -38,67 +33,6 @@ pub fn program_test() -> ProgramTest {
         gmp_gateway::id(),
         processor!(gmp_gateway::processor::Processor::process_instruction),
     )
-}
-
-/// Contains metadata information about the initialised Gateway config
-pub struct InitialisedGatewayMetadata {
-    pub fixture: TestFixture,
-    pub quorum: u128,
-    pub signers: Vec<TestSigner>,
-    pub nonce: u64,
-    pub gateway_root_pda: Pubkey,
-    pub operator: Keypair,
-    pub upgrade_authority: Keypair,
-}
-
-pub async fn setup_initialised_gateway(
-    initial_signer_weights: &[u128],
-    custom_quorum: Option<u128>,
-    minimum_rotate_signers_delay_seconds: u64,
-) -> InitialisedGatewayMetadata {
-    // Create a new ProgramTest instance
-    let mut fixture = TestFixture::new(ProgramTest::default()).await;
-    // Generate a new keypair for the upgrade authority
-    let upgrade_authority = Keypair::new();
-    let gateway_program_bytecode = fs::read("../../target/deploy/gmp_gateway.so")
-        .await
-        .unwrap();
-    fixture
-        .register_upgradeable_program(
-            &gateway_program_bytecode,
-            &upgrade_authority.pubkey(),
-            &gmp_gateway::id(),
-        )
-        .await;
-    let quorum = custom_quorum.unwrap_or_else(|| initial_signer_weights.iter().sum());
-    let signers = initial_signer_weights
-        .iter()
-        .map(|weight| create_signer_with_weight(*weight))
-        .collect::<Vec<_>>();
-    let operator = Keypair::new();
-    let nonce = 42;
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(InitializeConfig {
-            initial_signer_sets: fixture.create_verifier_sets_with_thershold(&[(
-                &signers,
-                nonce,
-                quorum.into(),
-            )]),
-            operator: operator.pubkey(),
-            minimum_rotation_delay: minimum_rotate_signers_delay_seconds,
-            ..fixture.base_initialize_config()
-        })
-        .await;
-
-    InitialisedGatewayMetadata {
-        nonce,
-        upgrade_authority,
-        fixture,
-        quorum,
-        signers,
-        gateway_root_pda,
-        operator,
-    }
 }
 
 pub fn example_payload() -> DataPayload<'static> {
@@ -112,11 +46,6 @@ pub fn example_payload() -> DataPayload<'static> {
         EncodingScheme::Borsh,
     );
     payload
-}
-
-pub fn example_signer_set(threshold: u128, created_at_block: u64) -> VerifierSet {
-    let new_signers = vec![create_signer_with_weight(threshold)];
-    new_signer_set(&new_signers, created_at_block, threshold)
 }
 
 pub fn gateway_approved_command_ixs(
@@ -174,17 +103,6 @@ pub async fn get_approved_command(
         .await
 }
 
-pub fn create_signer_set(weights: &[u128], threshold: u128) -> (VerifierSet, Vec<TestSigner>) {
-    let new_signers = weights
-        .iter()
-        .copied()
-        .map(create_signer_with_weight)
-        .collect::<Vec<_>>();
-    let created_at = unix_seconds();
-    let new_signer_set = new_signer_set(&new_signers, created_at, threshold);
-    (new_signer_set, new_signers)
-}
-
 /// This allows creating scenaroius where we can play around with a matrix of
 /// constructing invalid values. The usual flow is: we have a [`Payload`] that
 /// is signed by a set of signers. This function allows us to:
@@ -195,17 +113,13 @@ pub fn create_signer_set(weights: &[u128], threshold: u128) -> (VerifierSet, Vec
 pub fn prepare_questionable_execute_data(
     payload_for_signing: &Payload,
     payload_for_submission: &Payload,
-    signers_for_signing: &[TestSigner],
-    signers_for_submission: &[TestSigner],
-    threshold: u128,
+    signers_for_signing: &SigningVerifierSet,
+    signers_for_submission: &SigningVerifierSet,
     domain_separator: &[u8; 32],
-    nonce: u64,
 ) -> Vec<u8> {
-    let verifier_set_for_submission =
-        create_verifier_set_with_nonce(signers_for_submission, nonce, threshold);
     let payload_hash_for_signing = hash_payload(
         domain_separator,
-        &verifier_set_for_submission,
+        &signers_for_submission.verifier_set(),
         payload_for_signing,
         hasher_impl(),
     );
@@ -216,8 +130,8 @@ pub fn prepare_questionable_execute_data(
     );
     let proof = Proof::new(
         signatures,
-        *verifier_set_for_submission.threshold(),
-        verifier_set_for_submission.created_at(),
+        *signers_for_submission.verifier_set().quorum(),
+        signers_for_submission.verifier_set().created_at(),
     );
     let execute_data_for_submission = ExecuteData::new(payload_for_submission.clone(), proof);
 
@@ -227,11 +141,12 @@ pub fn prepare_questionable_execute_data(
 }
 
 fn create_signer_array(
-    signers: &[TestSigner],
-    non_signers: &[TestSigner],
+    signers: &SigningVerifierSet,
+    non_signers: &SigningVerifierSet,
     payload_hash: [u8; 32],
 ) -> BTreeMap<PublicKey, WeightedSigner> {
     let weighted_signatures = signers
+        .signers
         .iter()
         .map(|signer| {
             let signature = signer.secret_key.sign(&payload_hash);
@@ -241,7 +156,7 @@ fn create_signer_array(
             )
         })
         .chain({
-            non_signers.iter().map(|non_signer| {
+            non_signers.signers.iter().map(|non_signer| {
                 (
                     non_signer.public_key,
                     WeightedSigner::new(None, non_signer.weight),
@@ -258,27 +173,6 @@ fn create_signer_array(
             },
         );
     weighted_signatures
-}
-
-pub fn create_verifier_set_with_nonce(
-    signers: &[TestSigner],
-    nonce: u64,
-    threshold: u128,
-) -> VerifierSet {
-    let signers: BTreeMap<_, _> = signers
-        .iter()
-        .map(|signer| (signer.public_key, signer.weight))
-        .collect();
-    VerifierSet::new(nonce, signers, threshold.into())
-}
-
-/// Works as a PRNG for filling in nonces
-fn unix_seconds() -> u64 {
-    use std::time::{SystemTime, UNIX_EPOCH};
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs()
 }
 
 pub fn make_message() -> Message {
@@ -302,12 +196,4 @@ pub fn payload_and_commands(messages: &[Message]) -> (Payload, Vec<OwnedCommand>
 pub fn make_payload_and_commands(num_messages: usize) -> (Payload, Vec<OwnedCommand>) {
     let messages = make_messages(num_messages);
     payload_and_commands(&messages)
-}
-
-pub fn make_signers(weights: &[u128]) -> Vec<TestSigner> {
-    weights
-        .iter()
-        .copied()
-        .map(create_signer_with_weight)
-        .collect::<Vec<_>>()
 }

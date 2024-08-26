@@ -8,6 +8,7 @@ use std::time::Duration;
 use axelar_message_primitives::DataPayload;
 use ethers::types::Address as EvmAddress;
 use evm_contracts_test_suite::EvmSigner;
+use gmp_gateway::hasher_impl;
 use solana_sdk::signature::Keypair;
 
 use self::devnet_amplifier::EvmChain;
@@ -110,6 +111,13 @@ pub(crate) async fn evm_to_solana(
     )
     .await?;
     let gateway_root_pda = gmp_gateway::get_gateway_root_config_pda().0;
+    let decoded_execute_data =
+        axelar_rkyv_encoding::types::ExecuteData::from_bytes(&execute_data).unwrap();
+    let signing_verifier_set = decoded_execute_data.proof.verifier_set();
+    let (signing_verifier_set_pda, _) = gmp_gateway::get_verifier_set_tracker_pda(
+        &gmp_gateway::id(),
+        signing_verifier_set.hash(hasher_impl()),
+    );
 
     // solana: initialize pending command pdas
     let (gateway_approved_message_pda, message) = solana_interactions::solana_init_approved_command(
@@ -132,6 +140,7 @@ pub(crate) async fn evm_to_solana(
         execute_data_pda,
         gateway_root_pda,
         gateway_approved_message_pda,
+        signing_verifier_set_pda,
         &solana_rpc_client,
         &solana_keypair,
     );

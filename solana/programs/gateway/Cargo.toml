@@ -19,7 +19,6 @@ test-sbf = []
 
 [dependencies]
 base64.workspace = true
-bimap = { version = "0.6.3", default-features = false }
 borsh.workspace = true
 bincode.workspace = true
 itertools.workspace = true
@@ -31,6 +30,7 @@ thiserror.workspace = true
 program-utils.workspace = true
 axelar-message-primitives.workspace = true
 axelar-rkyv-encoding.workspace = true
+hex.workspace = true
 
 [dev-dependencies]
 solana-client.workspace = true
@@ -40,3 +40,4 @@ solana-sdk.workspace = true
 test-fixtures.workspace = true
 hex.workspace = true
 sha3.workspace = true
+typed-builder.workspace = true

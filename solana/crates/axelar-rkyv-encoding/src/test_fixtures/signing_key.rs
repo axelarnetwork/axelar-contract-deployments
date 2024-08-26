@@ -54,3 +54,12 @@ pub fn random_ecdsa_keypair() -> (TestSigningKey, PublicKey) {
         PublicKey::Secp256k1(public_key.serialize_compressed()),
     )
 }
+
+impl std::fmt::Debug for TestSigningKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TestSigningKey::Ecdsa(_) => f.write_str("ecdsa<pk>"),
+            TestSigningKey::Ed25519(_) => f.write_str("ed25519<pk>"),
+        }
+    }
+}

@@ -12,6 +12,7 @@ use solana_program::pubkey::Pubkey;
 use super::Processor;
 use crate::commands::ArchivedCommand;
 use crate::events::GatewayEvent;
+use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
 
 impl Processor {
@@ -24,14 +25,25 @@ impl Processor {
         let mut accounts_iter = accounts.iter();
         let gateway_root_pda = next_account_info(&mut accounts_iter)?;
         let gateway_approve_messages_execute_data_pda = next_account_info(&mut accounts_iter)?;
+        let verifier_set_tracker = next_account_info(&mut accounts_iter)?;
 
         // Check: Config account uses the canonical bump.
         // Unpack Gateway configuration data.
         let gateway_config = gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
 
+        // unpack verifier set tracker
+        let verifier_set_tracker =
+            match verifier_set_tracker.check_initialized_pda::<VerifierSetTracker>(program_id) {
+                Ok(set) => set,
+                Err(err) => {
+                    msg!("Invalid VerifierSetTracker PDA");
+                    return Err(err);
+                }
+            };
+
+        // unpack execute data
         gateway_approve_messages_execute_data_pda
             .check_initialized_pda_without_deserialization(program_id)?;
-
         let borrowed_account_data = gateway_approve_messages_execute_data_pda.data.borrow();
         let execute_data = GatewayExecuteData::new(
             *borrowed_account_data,
@@ -41,7 +53,11 @@ impl Processor {
 
         // Check: proof operators are known.
         gateway_config
-            .validate_proof(execute_data.payload_hash, execute_data.proof())
+            .validate_proof(
+                execute_data.payload_hash,
+                execute_data.proof(),
+                &verifier_set_tracker,
+            )
             .map_err(|err| {
                 msg!("Proof validation failed: {:?}", err);
                 ProgramError::InvalidArgument

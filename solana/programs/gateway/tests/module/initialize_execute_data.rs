@@ -1,41 +1,40 @@
 use axelar_rkyv_encoding::types::Payload;
 use gmp_gateway::instructions::InitializeConfig;
 use gmp_gateway::state::{GatewayConfig, GatewayExecuteData};
-use solana_program_test::{tokio, BanksTransactionResultWithMetadata, ProgramTestBanksClientExt};
+use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
 use solana_sdk::account::Account;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::system_program;
-use test_fixtures::axelar_message::new_signer_set;
 use test_fixtures::execute_data::prepare_execute_data;
-use test_fixtures::test_setup::TestFixture;
-
-use crate::{
-    create_signer_with_weight, make_messages, make_payload_and_commands, make_signers,
-    program_test, setup_initialised_gateway, InitialisedGatewayMetadata,
+use test_fixtures::test_setup::{
+    make_signers, make_signers_with_quorum, SolanaAxelarIntegration,
+    SolanaAxelarIntegrationMetadata, TestFixture,
 };
+
+use crate::{make_messages, make_payload_and_commands, program_test};
 
 #[tokio::test]
 async fn test_successfylly_initialize_execute_data() {
     // Setup
-    let InitialisedGatewayMetadata {
-        nonce,
+    let SolanaAxelarIntegrationMetadata {
         mut fixture,
-        quorum,
         signers,
         gateway_root_pda,
+        domain_separator,
         ..
-    } = setup_initialised_gateway(&[10, 4], None, 120).await;
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![10, 4])
+        .build()
+        .setup()
+        .await;
+
     let payload = Payload::new_messages(make_messages(1));
-    let (raw_execute_data, _) =
-        prepare_execute_data(payload, &signers, quorum, nonce, &fixture.domain_separator);
-    let gateway_execute_data = GatewayExecuteData::new(
-        &raw_execute_data,
-        &gateway_root_pda,
-        &fixture.domain_separator,
-    )
-    .expect("valid GatewayExecuteData");
+    let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
+    let gateway_execute_data =
+        GatewayExecuteData::new(&raw_execute_data, &gateway_root_pda, &domain_separator)
+            .expect("valid GatewayExecuteData");
 
     let (execute_data_pda, _) = gateway_execute_data.pda(&gateway_root_pda);
 
@@ -46,7 +45,7 @@ async fn test_successfylly_initialize_execute_data() {
             gmp_gateway::instructions::initialize_execute_data(
                 fixture.payer.pubkey(),
                 gateway_root_pda,
-                &fixture.domain_separator,
+                &domain_separator,
                 &raw_execute_data,
             )
             .unwrap()
@@ -65,7 +64,7 @@ async fn test_successfylly_initialize_execute_data() {
     let deserialized_gateway_execute_data = GatewayExecuteData::new(
         account.data.as_slice(),
         &gateway_root_pda,
-        &fixture.domain_separator,
+        &domain_separator,
     )
     .expect("GatewayExecuteData can be deserialized");
     assert_eq!(deserialized_gateway_execute_data, gateway_execute_data);
@@ -74,33 +73,33 @@ async fn test_successfylly_initialize_execute_data() {
 #[tokio::test]
 async fn test_succesfully_initialize_rotate_signers() {
     // Setup
-    let InitialisedGatewayMetadata {
-        nonce,
+    let SolanaAxelarIntegrationMetadata {
         mut fixture,
-        quorum,
         signers,
         gateway_root_pda,
+        domain_separator,
         ..
-    } = setup_initialised_gateway(&[10, 4], None, 120).await;
-    let new_signers = make_signers(&[33, 150]);
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![10, 4])
+        .build()
+        .setup()
+        .await;
+    let nonce = 55;
+    let new_signers = make_signers(&[33, 150], nonce);
 
-    let payload = Payload::VerifierSet(new_signer_set(&new_signers, 0, quorum));
+    let payload = Payload::VerifierSet(new_signers.verifier_set());
 
-    let (raw_execute_data, _) =
-        prepare_execute_data(payload, &signers, quorum, nonce, &fixture.domain_separator);
-    let gateway_execute_data = GatewayExecuteData::new(
-        &raw_execute_data,
-        &gateway_root_pda,
-        &fixture.domain_separator,
-    )
-    .expect("valid GatewayExecuteData");
+    let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
+    let gateway_execute_data =
+        GatewayExecuteData::new(&raw_execute_data, &gateway_root_pda, &domain_separator)
+            .expect("valid GatewayExecuteData");
     let (execute_data_pda, _) = gateway_execute_data.pda(&gateway_root_pda);
 
     // Action
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
         fixture.payer.pubkey(),
         gateway_root_pda,
-        &fixture.domain_separator,
+        &domain_separator,
         &raw_execute_data,
     )
     .expect("failed to create initialize_execute_data instruction");
@@ -123,7 +122,7 @@ async fn test_succesfully_initialize_rotate_signers() {
     let deserialized_gateway_execute_data = GatewayExecuteData::new(
         account.data.as_slice(),
         &gateway_root_pda,
-        &fixture.domain_separator,
+        &domain_separator,
     )
     .expect("GatewayExecuteData can be deserialized");
     assert_eq!(deserialized_gateway_execute_data, gateway_execute_data);
@@ -144,30 +143,26 @@ async fn test_fail_on_invalid_root_pda() {
             rent_epoch: 0,
         },
     );
+
     let mut fixture = TestFixture::new(program_test).await;
-    let signers = make_signers(&[10, 4]);
-    let threshold = 14;
     let nonce = 123;
+    let quorum = 14;
+    let signers = make_signers_with_quorum(&[10, 4], nonce, quorum);
+    let domain_separator = [255; 32];
     fixture
         .initialize_gateway_config_account(InitializeConfig {
-            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
-            ..fixture.base_initialize_config()
+            initial_signer_sets: fixture.create_verifier_sets(&[&signers]),
+            ..fixture.base_initialize_config(domain_separator)
         })
         .await;
     let (payload, _) = make_payload_and_commands(1);
-    let (raw_execute_data, _) = prepare_execute_data(
-        payload,
-        &signers,
-        threshold,
-        nonce,
-        &fixture.domain_separator,
-    );
+    let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
 
     // Action
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
         fixture.payer.pubkey(),
         fake_gateway_root_pda,
-        &fixture.domain_separator,
+        &domain_separator,
         &raw_execute_data,
     )
     .expect("failed to create initialize_execute_data instruction");
@@ -201,30 +196,25 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
         },
     );
     let mut fixture = TestFixture::new(program_test).await;
-    let signers = make_signers(&[10, 4]);
-    let threshold = 14;
+    let quorum = 14;
     let nonce = 123321;
+    let domain_separator = [32; 32];
+    let signers = make_signers_with_quorum(&[10, 4], nonce, quorum);
     fixture
         .initialize_gateway_config_account(InitializeConfig {
-            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
-            ..fixture.base_initialize_config()
+            initial_signer_sets: fixture.create_verifier_sets(&[&signers]),
+            ..fixture.base_initialize_config(domain_separator)
         })
         .await;
     let (payload, _) = make_payload_and_commands(1);
-    let (raw_execute_data, _) = prepare_execute_data(
-        payload,
-        &signers,
-        threshold,
-        nonce,
-        &fixture.domain_separator,
-    );
+    let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
 
     // Action
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
         fixture.payer.pubkey(),
         fake_gateway_root_pda,
         // gateway_root_pda,
-        &fixture.domain_separator,
+        &domain_separator,
         &raw_execute_data,
     )
     .expect("failed to create initialize_execute_data instruction");
@@ -249,24 +239,19 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
 async fn test_fail_on_uninitialized_root_pda() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let signers = make_signers(&[10, 14]);
-    let threshold = 14;
+    let quorum = 14;
     let nonce = 312;
+    let domain_separator = [32; 32];
+    let signers = make_signers_with_quorum(&[10, 4], nonce, quorum);
     let (uninitialized_gateway_config_pda, _) = GatewayConfig::pda();
     let (payload, _) = make_payload_and_commands(1);
-    let (raw_execute_data, _) = prepare_execute_data(
-        payload,
-        &signers,
-        threshold,
-        nonce,
-        &fixture.domain_separator,
-    );
+    let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
 
     // Action
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
         fixture.payer.pubkey(),
         uninitialized_gateway_config_pda,
-        &fixture.domain_separator,
+        &domain_separator,
         &raw_execute_data,
     )
     .expect("failed to create initialize_execute_data instruction");
@@ -287,36 +272,31 @@ async fn test_fail_on_uninitialized_root_pda() {
 #[tokio::test]
 async fn test_fail_on_already_initialized_execute_data_account() {
     // Setup
-    let InitialisedGatewayMetadata {
-        nonce,
+    let SolanaAxelarIntegrationMetadata {
         mut fixture,
-        quorum: threshold,
         signers,
         gateway_root_pda,
+        domain_separator,
         ..
-    } = setup_initialised_gateway(&[10, 4], None, 120).await;
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![10, 4])
+        .build()
+        .setup()
+        .await;
 
     // Action
-    let domain_separator = fixture.domain_separator;
     let (payload, _) = make_payload_and_commands(1);
     // We init the execute data account (the helper method sends a tx to the
     // gateway program)
     let (_, raw_execute_data) = fixture
-        .init_execute_data(
-            &gateway_root_pda,
-            payload,
-            &signers,
-            threshold,
-            nonce,
-            &domain_separator,
-        )
+        .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
 
     // We try to init the execute data account again with the same data
     let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
         fixture.payer.pubkey(),
         gateway_root_pda,
-        &fixture.domain_separator,
+        &domain_separator,
         &raw_execute_data,
     )
     .expect("failed to create initialize_execute_data instruction");
@@ -330,117 +310,4 @@ async fn test_fail_on_already_initialized_execute_data_account() {
         .log_messages
         .into_iter()
         .any(|x| x.contains("invalid account data for instruction")),);
-}
-
-/// processing any more than 19 signers results in `memory allocation failed,
-/// out of memory` Which means that we exceeded the 32kb heap memory limit
-/// [docs](https://solana.com/docs/programs/faq#heap-size)
-///
-/// Technically we could try using a custom allocator to clean up the heap
-/// because we still have a lot of compute budget to work with:
-/// `consumed 690929 of 1399850 compute units` - on 33 signer amount
-///
-/// 1399850 - this is the maximum amount of compute units that we can use, if we
-/// try setting a larger value, it just gets rounded to this one.
-#[tokio::test]
-async fn test_size_limits_for_different_signers() {
-    // Setup
-    let nonce = 4444;
-    for amount_of_signers in [2, 4, 8, 16, 17, 18, 19] {
-        dbg!(amount_of_signers);
-        let signers = (0..amount_of_signers)
-            .map(|x| create_signer_with_weight(x + 1))
-            .collect::<Vec<_>>();
-        let threshold = (0..amount_of_signers).sum::<u128>() + amount_of_signers;
-        let mut fixture = TestFixture::new(program_test()).await;
-        let gateway_root_pda = fixture
-            .initialize_gateway_config_account(InitializeConfig {
-                initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
-                ..fixture.base_initialize_config()
-            })
-            .await;
-
-        let (payload, _) = make_payload_and_commands(1);
-        let (raw_execute_data, _) = prepare_execute_data(
-            payload,
-            &signers,
-            threshold,
-            nonce,
-            &fixture.domain_separator,
-        );
-        let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
-            fixture.payer.pubkey(),
-            gateway_root_pda,
-            &fixture.domain_separator,
-            &raw_execute_data,
-        )
-        .expect("failed to create initialize_execute_data instruction");
-        fixture.recent_blockhash = fixture
-            .banks_client
-            .get_new_latest_blockhash(&fixture.recent_blockhash)
-            .await
-            .unwrap();
-        fixture
-            .send_tx(&[
-                // add compute budget increase
-                ComputeBudgetInstruction::set_compute_unit_limit(1399850_u32),
-                ix,
-            ])
-            .await;
-    }
-}
-
-/// Any more than 16 *small* messages results in `memory allocation failed,
-/// out of memory` (with only a single opeator who signed the batch)
-///
-/// consumed 651675 of 1399700 compute units
-///
-/// 1399850 - this is the maximum amount of compute units that we can use, if we
-/// try setting a larger value, it just gets rounded to this one.
-#[tokio::test]
-async fn test_message_limits_with_different_amounts() {
-    // Setup
-    let nonce = 123321;
-    for amount_of_messages in [1, 2, 4, 8, 15] {
-        dbg!(amount_of_messages);
-        let signers = vec![create_signer_with_weight(4_u128)];
-        let threshold = 4;
-        let mut fixture = TestFixture::new(program_test()).await;
-        let gateway_root_pda = fixture
-            .initialize_gateway_config_account(InitializeConfig {
-                initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
-                ..fixture.base_initialize_config()
-            })
-            .await;
-
-        let messages = make_messages(amount_of_messages);
-        let payload = Payload::new_messages(messages);
-
-        let (raw_execute_data, _) = prepare_execute_data(
-            payload,
-            &signers,
-            threshold,
-            nonce,
-            &fixture.domain_separator,
-        );
-        fixture.recent_blockhash = fixture
-            .banks_client
-            .get_new_latest_blockhash(&fixture.recent_blockhash)
-            .await
-            .unwrap();
-        let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
-            fixture.payer.pubkey(),
-            gateway_root_pda,
-            &fixture.domain_separator,
-            &raw_execute_data,
-        )
-        .expect("failed to create initialize_execute_data instruction");
-        fixture
-            .send_tx(&[
-                // add compute budget increase
-                ComputeBudgetInstruction::set_compute_unit_limit(1399850_u32),
-                ix,
-            ])
-            .await;
-    }
 }

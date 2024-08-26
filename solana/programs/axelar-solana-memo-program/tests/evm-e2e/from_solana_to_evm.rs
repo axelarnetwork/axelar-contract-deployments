@@ -8,14 +8,14 @@ use solana_program_test::tokio;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
 
-use crate::{axelar_evm_setup, axelar_solana_setup};
+use crate::{axelar_evm_setup, axelar_solana_setup, MemoProgramWrapper};
 
-#[ignore]
 #[tokio::test]
 async fn test_send_from_solana_to_evm() {
     // Setup - Solana
-    let (mut solana_chain, gateway_root_pda, _signers, _counter, _nonce) =
-        axelar_solana_setup().await;
+    let MemoProgramWrapper {
+        mut solana_chain, ..
+    } = axelar_solana_setup().await;
     // Setup - EVM
     let (_evm_chain, evm_signer, evm_gateway, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
@@ -33,8 +33,8 @@ async fn test_send_from_solana_to_evm() {
     // Action:
     // - send message from Solana memo program to Solana gateway
     let call_contract = call_solana_gateway(
-        &gateway_root_pda,
-        &mut solana_chain,
+        &solana_chain.gateway_root_pda,
+        &mut solana_chain.fixture,
         memo,
         destination_chain,
         &destination_address,

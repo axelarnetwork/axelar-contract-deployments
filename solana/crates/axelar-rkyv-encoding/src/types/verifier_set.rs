@@ -19,16 +19,16 @@ pub struct VerifierSet {
     pub(crate) created_at: u64,
     created_at_be_bytes: [u8; 8],
     pub(crate) signers: HasheableSignersBTreeMap,
-    pub(crate) threshold: U128,
+    pub(crate) quorum: U128,
 }
 
 impl VerifierSet {
-    pub fn new(created_at: u64, signers: Signers, threshold: U128) -> Self {
+    pub fn new(created_at: u64, signers: Signers, quorum: U128) -> Self {
         Self {
             created_at,
             created_at_be_bytes: created_at.to_be_bytes(),
             signers: HasheableSignersBTreeMap::new(signers),
-            threshold,
+            quorum,
         }
     }
 
@@ -52,8 +52,8 @@ impl VerifierSet {
         self.signers.inner_map()
     }
 
-    pub fn threshold(&self) -> &U128 {
-        &self.threshold
+    pub fn quorum(&self) -> &U128 {
+        &self.quorum
     }
 
     pub fn created_at(&self) -> u64 {
@@ -79,8 +79,8 @@ impl ArchivedVerifierSet {
         self.signers.len()
     }
 
-    pub fn threshold(&self) -> &ArchivedU128 {
-        &self.threshold
+    pub fn quorum(&self) -> &ArchivedU128 {
+        &self.quorum
     }
 
     pub fn is_empty(&self) -> bool {
@@ -93,7 +93,7 @@ impl ArchivedVerifierSet {
         self.signers
             .values()
             .try_fold(BnumU128::ZERO, |acc, weight| acc.checked_add(weight.into()))
-            .map(|total_weight| (total_weight) >= ((&self.threshold).into()))
+            .map(|total_weight| (total_weight) >= ((&self.quorum).into()))
     }
 
     pub fn from_archived_bytes(
@@ -152,8 +152,8 @@ mod tests {
 
         // Fixture VerifierSet threshold values are always equal to the sum of signer
         // weights. Let's bump that.
-        verifier_set.threshold = bnum::types::U128::ONE
-            .checked_add(verifier_set.threshold.into())
+        verifier_set.quorum = bnum::types::U128::ONE
+            .checked_add(verifier_set.quorum.into())
             .unwrap()
             .into();
 

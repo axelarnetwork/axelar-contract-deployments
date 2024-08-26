@@ -13,13 +13,15 @@ use gateway::commands::OwnedCommand;
 use solana_program_test::tokio;
 use test_fixtures::axelar_message::custom_message;
 
-use crate::{axelar_evm_setup, axelar_solana_setup};
+use crate::{axelar_evm_setup, axelar_solana_setup, MemoProgramWrapper};
 
 #[tokio::test]
 async fn test_send_from_evm_to_solana() {
     // Setup - Solana
-    let (mut solana_chain, gateway_root_pda, solana_signers, counter_pda, nonce) =
-        axelar_solana_setup().await;
+    let MemoProgramWrapper {
+        mut solana_chain,
+        counter_pda,
+    } = axelar_solana_setup().await;
     // Setup - EVM
     let (_evm_chain, evm_signer, evm_gateway, _weighted_signers, _domain_separator) =
         axelar_evm_setup().await;
@@ -51,11 +53,12 @@ async fn test_send_from_evm_to_solana() {
     // - The relayer relays the message to the Solana gateway
     let (decoded_payload, msg_from_evm_axelar) = prase_evm_log_into_axelar_message(&log);
     let (gateway_approved_command_pdas, _, _) = solana_chain
+        .fixture
         .fully_approve_messages(
-            &gateway_root_pda,
+            &solana_chain.gateway_root_pda,
             vec![msg_from_evm_axelar.clone()],
-            &solana_signers,
-            nonce,
+            &solana_chain.signers,
+            &solana_chain.domain_separator,
         )
         .await;
 
@@ -63,11 +66,12 @@ async fn test_send_from_evm_to_solana() {
     // - Relayer calls the Solana memo program with the memo payload coming from the
     //   EVM memo program
     let tx = solana_chain
+        .fixture
         .call_execute_on_axelar_executable(
             &approve_message_command,
             &decoded_payload,
             &gateway_approved_command_pdas[0],
-            gateway_root_pda,
+            &solana_chain.gateway_root_pda,
         )
         .await;
 
@@ -79,6 +83,7 @@ async fn test_send_from_evm_to_solana() {
         "expected memo not found in logs"
     );
     let counter = solana_chain
+        .fixture
         .get_account::<Counter>(&counter_pda, &axelar_solana_memo_program::ID)
         .await;
     assert_eq!(counter.counter, 1);

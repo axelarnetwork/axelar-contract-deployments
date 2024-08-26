@@ -93,7 +93,7 @@ pub trait Visitor<'a> {
             self.visit_public_key(public_key);
             self.visit_u128(weight);
         }
-        self.visit_u128(&verifier_set.threshold);
+        self.visit_u128(&verifier_set.quorum);
         self.visit_u64(verifier_set.created_at_be_bytes())
     }
 
@@ -217,7 +217,7 @@ pub trait ArchivedVisitor<'a> {
             self.visit_public_key(public_key);
             self.visit_u128(weight);
         }
-        self.visit_u128(&verifier_set.threshold);
+        self.visit_u128(&verifier_set.quorum);
         self.visit_u64(verifier_set.created_at_be_bytes())
     }
 

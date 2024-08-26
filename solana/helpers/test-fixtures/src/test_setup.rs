@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::path::PathBuf;
 
 use axelar_message_primitives::command::U256;
 use axelar_message_primitives::DataPayload;
@@ -6,6 +6,7 @@ use axelar_rkyv_encoding::types::u128::U128;
 use axelar_rkyv_encoding::types::{ArchivedExecuteData, Message, Payload, VerifierSet};
 use borsh::BorshDeserialize;
 use gateway::commands::OwnedCommand;
+use gateway::hasher_impl;
 use gateway::instructions::{InitializeConfig, VerifierSetWraper};
 use gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
 use itertools::Itertools;
@@ -32,16 +33,56 @@ pub use {connection_router, interchain_token_transfer_gmp};
 
 use crate::account::CheckValidPDAInTests;
 use crate::execute_data::prepare_execute_data;
-use crate::test_signer::TestSigner;
-
-const DOMAIN_SEPARATOR: [u8; 32] = [42u8; 32];
+use crate::test_signer::{create_signer_with_weight, TestSigner};
 
 pub struct TestFixture {
     pub context: ProgramTestContext,
     pub banks_client: BanksClient,
     pub payer: Keypair,
     pub recent_blockhash: Hash,
-    pub domain_separator: [u8; 32],
+}
+
+#[derive(Clone, Debug)]
+pub struct SigningVerifierSet {
+    pub signers: Vec<TestSigner>,
+    pub nonce: u64,
+    pub quorum: U128,
+}
+
+impl SigningVerifierSet {
+    pub fn new(signers: Vec<TestSigner>, nonce: u64) -> Self {
+        let quorum = signers
+            .iter()
+            .map(|signer| signer.weight)
+            .try_fold(U128::ZERO, U128::checked_add)
+            .expect("no arithmetic overflow");
+        Self::new_with_quorum(signers, nonce, quorum)
+    }
+
+    pub fn new_with_quorum(signers: Vec<TestSigner>, nonce: u64, quorum: U128) -> Self {
+        Self {
+            signers,
+            nonce,
+            quorum,
+        }
+    }
+
+    pub fn verifier_set_tracker(&self) -> Pubkey {
+        gateway::get_verifier_set_tracker_pda(
+            &gateway::id(),
+            self.verifier_set().hash(hasher_impl()),
+        )
+        .0
+    }
+
+    pub fn verifier_set(&self) -> VerifierSet {
+        let signers = self
+            .signers
+            .iter()
+            .map(|x| (x.public_key, x.weight))
+            .collect();
+        VerifierSet::new(self.nonce, signers, self.quorum)
+    }
 }
 
 impl TestFixture {
@@ -52,7 +93,6 @@ impl TestFixture {
             payer: context.payer.insecure_clone(),
             recent_blockhash: context.last_blockhash,
             context,
-            domain_separator: DOMAIN_SEPARATOR,
         }
     }
 
@@ -238,7 +278,7 @@ impl TestFixture {
                 programdata_address: program_data_pda,
             },
             UpgradeableLoaderState::size_of_program(),
-            |_| {},
+            |acc| acc.set_executable(true),
         )
         .await;
         let programdata_data_offset = UpgradeableLoaderState::size_of_programdata_metadata();
@@ -254,7 +294,7 @@ impl TestFixture {
             program_data_len,
             |account| {
                 account.data_as_mut_slice()[programdata_data_offset..]
-                    .copy_from_slice(program_bytecode)
+                    .copy_from_slice(program_bytecode);
             },
         )
         .await;
@@ -283,49 +323,19 @@ impl TestFixture {
         root_pda_address
     }
 
-    pub fn create_verifier_set(&self, signers: &[TestSigner], nonce: u64) -> VerifierSetWraper {
-        let threshold = signers
-            .iter()
-            .map(|s| s.weight)
-            .try_fold(U128::ZERO, U128::checked_add)
-            .expect("no arithmetic overflow");
-
-        self.create_verifier_set_with_custom_params(signers, threshold, nonce)
-    }
-
-    pub fn create_verifier_sets(&self, signers: &[(&[TestSigner], u64)]) -> Vec<VerifierSetWraper> {
+    pub fn create_verifier_sets(&self, signers: &[&SigningVerifierSet]) -> Vec<VerifierSetWraper> {
         signers
             .iter()
-            .map(|(signers, nonce)| self.create_verifier_set(signers, *nonce))
+            .map(|set| VerifierSetWraper::new_from_verifier_set(set.verifier_set()).unwrap())
             .collect_vec()
     }
 
-    pub fn create_verifier_sets_with_thershold(
+    pub fn base_initialize_config(
         &self,
-        signers: &[(&[TestSigner], u64, U128)],
-    ) -> Vec<VerifierSetWraper> {
-        signers
-            .iter()
-            .map(|(signers, nonce, threshold)| {
-                self.create_verifier_set_with_custom_params(signers, *threshold, *nonce)
-            })
-            .collect_vec()
-    }
-
-    pub fn create_verifier_set_with_custom_params(
-        &self,
-        signers: &[TestSigner],
-        threshold: U128,
-        nonce: u64,
-    ) -> VerifierSetWraper {
-        let signers: BTreeMap<_, _> = signers.iter().map(|s| (s.public_key, s.weight)).collect();
-        let verifier_set = VerifierSet::new(nonce, signers, threshold);
-        VerifierSetWraper::new_from_verifier_set(verifier_set).unwrap()
-    }
-
-    pub fn base_initialize_config(&self) -> InitializeConfig {
+        domain_separator: [u8; 32],
+    ) -> InitializeConfig<VerifierSetWraper> {
         InitializeConfig {
-            domain_separator: self.domain_separator,
+            domain_separator,
             initial_signer_sets: vec![],
             minimum_rotation_delay: 0,
             operator: Pubkey::new_unique(),
@@ -335,7 +345,7 @@ impl TestFixture {
 
     pub async fn initialize_gateway_config_account(
         &mut self,
-        init_config: InitializeConfig,
+        init_config: InitializeConfig<VerifierSetWraper>,
     ) -> Pubkey {
         let (gateway_config_pda, _) = gateway::get_gateway_root_config_pda();
         let ix = gateway::instructions::initialize_config(
@@ -426,34 +436,32 @@ impl TestFixture {
         &mut self,
         gateway_root_pda: &Pubkey,
         payload: Payload,
-        signers: &[TestSigner],
-        quorum: u128,
-        nonce: u64,
+        signers: &SigningVerifierSet,
         domain_separator: &[u8; 32],
     ) -> (Pubkey, Vec<u8>) {
-        let (raw_data, _) = prepare_execute_data(payload, signers, quorum, nonce, domain_separator);
+        let (raw_data, _) = prepare_execute_data(payload, signers, domain_separator);
 
         let execute_data_pda = self
-            .init_execute_data_with_custom_data(gateway_root_pda, &raw_data)
+            .init_execute_data_with_custom_data(gateway_root_pda, &raw_data, domain_separator)
             .await;
 
         (execute_data_pda, raw_data)
     }
 
-    pub async fn init_execute_data_with_custom_data<'a>(
+    pub async fn init_execute_data_with_custom_data(
         &mut self,
         gateway_root_pda: &Pubkey,
-        raw_data: &'a [u8],
+        raw_data: &[u8],
+        domain_separator: &[u8; 32],
     ) -> Pubkey {
-        let execute_data =
-            GatewayExecuteData::new(raw_data, gateway_root_pda, &self.domain_separator)
-                .expect("valid execute_data raw bytes");
+        let execute_data = GatewayExecuteData::new(raw_data, gateway_root_pda, domain_separator)
+            .expect("valid execute_data raw bytes");
         let (execute_data_pda, _) = execute_data.pda(gateway_root_pda);
 
         let (ix, _) = gateway::instructions::initialize_execute_data(
             self.payer.pubkey(),
             *gateway_root_pda,
-            &self.domain_separator,
+            domain_separator,
             raw_data,
         )
         .unwrap();
@@ -528,12 +536,14 @@ impl TestFixture {
         gateway_root_pda: &Pubkey,
         execute_data_pda: &Pubkey,
         approved_command_pdas: &[Pubkey],
+        verifier_set_tracker: &Pubkey,
     ) {
         let res = self
             .approve_pending_gateway_messages_with_metadata(
                 gateway_root_pda,
                 execute_data_pda,
                 approved_command_pdas,
+                verifier_set_tracker,
             )
             .await;
         assert!(res.result.is_ok());
@@ -545,12 +555,13 @@ impl TestFixture {
         gateway_root_pda: &Pubkey,
         execute_data_pda: &Pubkey,
         approved_command_pdas: &[Pubkey],
+        verifier_set_tracker: &Pubkey,
     ) -> BanksTransactionResultWithMetadata {
         let ix = gateway::instructions::approve_messages(
-            gateway::id(),
             *execute_data_pda,
             *gateway_root_pda,
             approved_command_pdas,
+            *verifier_set_tracker,
         )
         .unwrap();
         let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(u32::MAX);
@@ -562,17 +573,21 @@ impl TestFixture {
         &mut self,
         gateway_root_pda: &Pubkey,
         execute_data_pda: &Pubkey,
-        rotate_signers_pda: &Pubkey,
+        rotate_signers_command_pda: &Pubkey,
+        current_verifier_set_tracker_pda: &Pubkey,
+        new_verifier_set_tracker_pda: &Pubkey,
     ) -> BanksTransactionResultWithMetadata {
         let ix = gateway::instructions::rotate_signers(
-            gateway::id(),
             *execute_data_pda,
             *gateway_root_pda,
-            *rotate_signers_pda,
+            *rotate_signers_command_pda,
             None,
+            *current_verifier_set_tracker_pda,
+            *new_verifier_set_tracker_pda,
+            self.payer.pubkey(),
         )
         .unwrap();
-        let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(650_000u32);
+        let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(u32::MAX);
         self.send_tx_with_metadata(&[bump_budget, ix]).await
     }
 
@@ -589,15 +604,15 @@ impl TestFixture {
         &mut self,
         gateway_root_pda: &Pubkey,
         messages: Vec<Message>,
-        signers: &[TestSigner],
-        nonce: u64,
+        signers: &SigningVerifierSet,
+        domain_separator: &[u8; 32],
     ) -> (Vec<Pubkey>, Vec<u8>, Pubkey) {
         let (command_pdas, execute_data, execute_data_pda, tx) = self
             .fully_approve_messages_with_execute_metadata(
                 gateway_root_pda,
                 messages,
                 signers,
-                nonce,
+                domain_separator,
             )
             .await;
         assert!(tx.result.is_ok());
@@ -608,29 +623,21 @@ impl TestFixture {
         &mut self,
         gateway_root_pda: &Pubkey,
         messages: Vec<Message>,
-        signers: &[TestSigner],
-        nonce: u64,
+        signers: &SigningVerifierSet,
+        domain_separator: &[u8; 32],
     ) -> (
         Vec<Pubkey>,
         Vec<u8>,
         Pubkey,
         BanksTransactionResultWithMetadata,
     ) {
-        let weight_of_quorum: u128 = signers
-            .iter()
-            .map(|signer| signer.weight)
-            .try_fold(U128::ZERO, U128::checked_add)
-            .and_then(|x| u128::from(x).into())
-            .expect("no arithmetic overflow");
-
+        let verifier_set_tracker = signers.verifier_set_tracker();
         let (execute_data_pda, execute_data) = self
             .init_execute_data(
                 gateway_root_pda,
                 Payload::new_messages(messages.clone()),
                 signers,
-                weight_of_quorum,
-                nonce,
-                &DOMAIN_SEPARATOR,
+                domain_separator,
             )
             .await;
 
@@ -648,6 +655,7 @@ impl TestFixture {
                 gateway_root_pda,
                 &execute_data_pda,
                 &gateway_approved_command_pdas,
+                &verifier_set_tracker,
             )
             .await;
 
@@ -669,16 +677,16 @@ impl TestFixture {
     pub async fn fully_rotate_signers(
         &mut self,
         gateway_root_pda: &Pubkey,
-        signer_set: VerifierSet,
-        signers: &[TestSigner],
-        nonce: u64,
+        new_signer_set: VerifierSet,
+        signers: &SigningVerifierSet,
+        domain_separator: &[u8; 32],
     ) -> (Pubkey, Vec<u8>, Pubkey) {
         let (command_pdas, execute_data, execute_data_pda, tx) = self
             .fully_rotate_signers_with_execute_metadata(
                 gateway_root_pda,
-                signer_set,
+                new_signer_set,
                 signers,
-                nonce,
+                domain_separator,
             )
             .await;
         assert!(tx.result.is_ok());
@@ -688,36 +696,44 @@ impl TestFixture {
     pub async fn fully_rotate_signers_with_execute_metadata(
         &mut self,
         gateway_root_pda: &Pubkey,
-        signer_set: VerifierSet,
-        signers: &[TestSigner],
-        nonce: u64,
+        new_signer_set: VerifierSet,
+        signers: &SigningVerifierSet,
+        domain_separator: &[u8; 32],
     ) -> (Pubkey, Vec<u8>, Pubkey, BanksTransactionResultWithMetadata) {
-        let weight_of_quorum = signers
-            .iter()
-            .try_fold(U128::ZERO, |acc, i| acc.checked_add(i.weight))
-            .expect("no overflow");
+        let current_verifier_set_tracker_pda = signers.verifier_set_tracker();
+        let (new_verifier_set_tracker_pda, _) =
+            gateway::get_verifier_set_tracker_pda(&gateway::ID, new_signer_set.hash(hasher_impl()));
         let (execute_data_pda, execute_data) = self
             .init_execute_data(
                 gateway_root_pda,
-                Payload::VerifierSet(signer_set.clone()),
+                Payload::VerifierSet(new_signer_set.clone()),
                 signers,
-                u128::from_le_bytes(*weight_of_quorum.to_le()),
-                nonce,
-                &DOMAIN_SEPARATOR,
+                domain_separator,
             )
             .await;
 
-        let command = OwnedCommand::RotateSigners(signer_set);
-        let gateway_command_pda = self
+        let command = OwnedCommand::RotateSigners(new_signer_set);
+        let rotate_signers_command_pda = self
             .init_pending_gateway_commands(gateway_root_pda, &[command])
             .await
             .pop()
             .unwrap();
         let tx = self
-            .rotate_signers_with_metadata(gateway_root_pda, &execute_data_pda, &gateway_command_pda)
+            .rotate_signers_with_metadata(
+                gateway_root_pda,
+                &execute_data_pda,
+                &rotate_signers_command_pda,
+                &current_verifier_set_tracker_pda,
+                &new_verifier_set_tracker_pda,
+            )
             .await;
 
-        (gateway_command_pda, execute_data, execute_data_pda, tx)
+        (
+            rotate_signers_command_pda,
+            execute_data,
+            execute_data_pda,
+            tx,
+        )
     }
 
     pub async fn get_account<T: solana_program::program_pack::Pack + BorshDeserialize>(
@@ -739,7 +755,7 @@ impl TestFixture {
         gateway_decoded_command: &OwnedCommand,
         decoded_payload: &DataPayload<'a>,
         gateway_approved_command_pda: &solana_sdk::pubkey::Pubkey,
-        gateway_root_pda: solana_sdk::pubkey::Pubkey,
+        gateway_root_pda: &solana_sdk::pubkey::Pubkey,
     ) -> solana_program_test::BanksTransactionResultWithMetadata {
         let OwnedCommand::ApproveMessage(approved_message) = gateway_decoded_command.clone() else {
             panic!("expected ApproveMessages command")
@@ -748,7 +764,7 @@ impl TestFixture {
             approved_message,
             decoded_payload.encode().unwrap(),
             *gateway_approved_command_pda,
-            gateway_root_pda,
+            *gateway_root_pda,
         )
         .unwrap();
         let tx = self.send_tx_with_metadata(&[ix]).await;
@@ -878,4 +894,134 @@ mod tests {
             .unwrap()
             .unwrap()
     }
+}
+
+/// Contains metadata information about the initialised Gateway config
+pub struct SolanaAxelarIntegrationMetadata {
+    pub fixture: TestFixture,
+    pub signers: SigningVerifierSet,
+    pub gateway_root_pda: Pubkey,
+    pub operator: Keypair,
+    pub upgrade_authority: Keypair,
+    pub domain_separator: [u8; 32],
+}
+
+#[derive(Debug, typed_builder::TypedBuilder)]
+pub struct SolanaAxelarIntegration {
+    #[builder(default)]
+    initial_signer_weights: Vec<u128>,
+    #[builder(default, setter(strip_option))]
+    custom_quorum: Option<u128>,
+    #[builder(default)]
+    minimum_rotate_signers_delay_seconds: u64,
+    #[builder(default = 1)]
+    previous_signers_retention: u64,
+    #[builder(default)]
+    /// Extra programs (besides the Solana gateway) that we need to deploy
+    /// The parameters -- name of the program .so file (with the extensoin) and
+    /// the program id
+    ///
+    /// ```ignore
+    /// vec![("gmp_gatefay.so".into(), gmp_gateway::id())]
+    /// ```
+    programs_to_deploy: Vec<(PathBuf, Pubkey)>,
+}
+
+impl SolanaAxelarIntegration {
+    const NONCE: u64 = 42;
+    const DOMAIN_SEPARATOR: [u8; 32] = [42; 32];
+
+    pub async fn setup(self) -> SolanaAxelarIntegrationMetadata {
+        // Create a new ProgramTest instance
+        let mut fixture = TestFixture::new(ProgramTest::default()).await;
+        // Generate a new keypair for the upgrade authority
+        let upgrade_authority = Keypair::new();
+
+        // deploy non-gateway programs
+        for (program_name, program_id) in self.programs_to_deploy {
+            let program_bytecode_path = workspace_root_dir()
+                .join("target")
+                .join("deploy")
+                .join(program_name);
+            dbg!(&program_bytecode_path);
+            let program_bytecode = tokio::fs::read(&program_bytecode_path).await.unwrap();
+            fixture
+                .register_upgradeable_program(
+                    &program_bytecode,
+                    &upgrade_authority.pubkey(),
+                    &program_id,
+                )
+                .await;
+        }
+
+        // deploy solana gateway
+        let gateway_program_bytecode = tokio::fs::read("../../target/deploy/gmp_gateway.so")
+            .await
+            .unwrap();
+        fixture
+            .register_upgradeable_program(
+                &gateway_program_bytecode,
+                &upgrade_authority.pubkey(),
+                &gateway::id(),
+            )
+            .await;
+
+        // initialize the gateway
+        let initial_signers = make_signers_with_quorum(
+            &self.initial_signer_weights,
+            Self::NONCE,
+            self.custom_quorum
+                .unwrap_or_else(|| self.initial_signer_weights.iter().sum()),
+        );
+        let operator = Keypair::new();
+        let gateway_root_pda = fixture
+            .initialize_gateway_config_account(InitializeConfig {
+                initial_signer_sets: fixture.create_verifier_sets(&[&initial_signers]),
+                operator: operator.pubkey(),
+                previous_signers_retention: U256::from_u64(self.previous_signers_retention),
+                minimum_rotation_delay: self.minimum_rotate_signers_delay_seconds,
+                ..fixture.base_initialize_config(Self::DOMAIN_SEPARATOR)
+            })
+            .await;
+
+        SolanaAxelarIntegrationMetadata {
+            domain_separator: Self::DOMAIN_SEPARATOR,
+            upgrade_authority,
+            fixture,
+            signers: initial_signers,
+            gateway_root_pda,
+            operator,
+        }
+    }
+}
+
+pub fn make_signers(weights: &[u128], nonce: u64) -> SigningVerifierSet {
+    let signers = weights
+        .iter()
+        .copied()
+        .map(create_signer_with_weight)
+        .collect::<Vec<_>>();
+
+    SigningVerifierSet::new(signers, nonce)
+}
+
+pub fn make_signers_with_quorum(weights: &[u128], nonce: u64, quorum: u128) -> SigningVerifierSet {
+    let signers = weights
+        .iter()
+        .copied()
+        .map(create_signer_with_weight)
+        .collect::<Vec<_>>();
+
+    SigningVerifierSet::new_with_quorum(signers, nonce, U128::from(quorum))
+}
+
+pub fn workspace_root_dir() -> PathBuf {
+    let dir = std::env::var("CARGO_MANIFEST_DIR")
+        .unwrap_or_else(|_| env!("CARGO_MANIFEST_DIR").to_owned());
+    PathBuf::from(dir)
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .to_owned()
 }

@@ -24,9 +24,9 @@ use solana_sdk::signature::{Keypair, Signature};
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::Transaction;
 use solana_test_validator::{TestValidator, TestValidatorGenesis, UpgradeableProgramInfo};
-use test_fixtures::axelar_message::{custom_message, new_signer_set};
+use test_fixtures::axelar_message::custom_message;
 use test_fixtures::execute_data::prepare_execute_data;
-use test_fixtures::test_signer::{create_signer_with_weight, TestSigner};
+use test_fixtures::test_setup::{self, SigningVerifierSet};
 use tokio::fs::File;
 use tokio::io::{AsyncWriteExt, BufWriter};
 use tokio::sync::Mutex;
@@ -43,9 +43,8 @@ const LEDGER_PATH: &str = "/tmp/ledger";
 const MAX_CONCURRENT_ITERATIONS: usize = 200;
 const MESSAGES_PER_BATCH_RANGE: std::ops::Range<usize> = 1..usize::MAX;
 const MESSAGE_SIZE_RANGE: std::ops::Range<usize> = 0..usize::MAX;
-const NONCE: u64 = 0;
+const NONCE: u64 = 55;
 const SIGNERS_AMOUNT_RANGE: std::ops::Range<usize> = 1..usize::MAX;
-const THRESHOLD: u128 = 0;
 const MESSAGE_SIZE_EXCEEDED_ERROR: i64 = -32602;
 
 static BREAK_MESSAGE_SIZE: AtomicBool = AtomicBool::new(false);
@@ -79,10 +78,11 @@ pub(crate) async fn generate_message_limits_report(output_dir: &Path) -> eyre::R
 
     'n_signers: for n_signers in SIGNERS_AMOUNT_RANGE {
         let (validator, keypair) = clean_ledger_setup_validator().await;
-        let initial_signers = make_signers(
+        let initial_signers = test_setup::make_signers(
             &(0..n_signers)
                 .map(|_| random_weight().into())
                 .collect::<Vec<_>>(),
+            NONCE,
         );
 
         let keypair = Arc::new(keypair);
@@ -189,14 +189,13 @@ pub(crate) async fn generate_message_limits_report(output_dir: &Path) -> eyre::R
 }
 
 async fn initialize_programs(
-    initial_signers: &[TestSigner],
+    initial_signers: &SigningVerifierSet,
     keypair: Arc<Keypair>,
     validator_rpc_client: Arc<RpcClient>,
 ) -> eyre::Result<(Pubkey, (Pubkey, u8))> {
     let (gateway_config_pda, _) = GatewayConfig::pda();
-    let verifier_set =
-        VerifierSetWraper::new_from_verifier_set(new_signer_set(initial_signers, NONCE, THRESHOLD))
-            .expect("Failed to create verifier set");
+    let verifier_set = VerifierSetWraper::new_from_verifier_set(initial_signers.verifier_set())
+        .expect("Failed to create verifier set");
     let initialize_config = InitializeConfig {
         domain_separator: DOMAIN_SEPARATOR,
         initial_signer_sets: vec![verifier_set],
@@ -230,7 +229,7 @@ async fn try_iteration_with_params(
     n_messages: usize,
     keypair: Arc<Keypair>,
     gateway_config_pda: Arc<Pubkey>,
-    signers: Arc<Vec<TestSigner>>,
+    signers: Arc<SigningVerifierSet>,
     counter_pda: Arc<Pubkey>,
     validator_rpc_client: Arc<RpcClient>,
 ) -> Result<(), RpcClientError> {
@@ -239,13 +238,7 @@ async fn try_iteration_with_params(
         .map(|_| make_message_with_payload_data(&payload_data, *counter_pda))
         .unzip();
     let (payload, commands) = payload_and_commands(&messages);
-    let (raw_execute_data, _) = prepare_execute_data(
-        payload,
-        signers.as_ref(),
-        THRESHOLD,
-        NONCE,
-        &DOMAIN_SEPARATOR,
-    );
+    let (raw_execute_data, _) = prepare_execute_data(payload, signers.as_ref(), &DOMAIN_SEPARATOR);
     let execute_data = GatewayExecuteData::new(
         &raw_execute_data,
         gateway_config_pda.as_ref(),
@@ -281,10 +274,10 @@ async fn try_iteration_with_params(
     submit_transaction(validator_rpc_client.clone(), keypair.clone(), &ixs).await?;
 
     let approve_messages_ix = gmp_gateway::instructions::approve_messages(
-        gmp_gateway::id(),
         execute_data_pda,
         *gateway_config_pda,
         &gateway_approved_command_pdas,
+        signers.verifier_set_tracker(),
     )
     .expect("Failed to create approve messages instruction");
     let bump_budget = ComputeBudgetInstruction::set_compute_unit_limit(u32::MAX);
@@ -366,14 +359,6 @@ async fn setup_validator() -> (TestValidator, Keypair) {
         .ledger_path(LEDGER_PATH)
         .start_async()
         .await
-}
-
-fn make_signers(weights: &[u128]) -> Vec<TestSigner> {
-    weights
-        .iter()
-        .copied()
-        .map(create_signer_with_weight)
-        .collect::<Vec<_>>()
 }
 
 fn make_message_with_payload_data(data: &[u8], counter_pda: Pubkey) -> (Message, DataPayload<'_>) {

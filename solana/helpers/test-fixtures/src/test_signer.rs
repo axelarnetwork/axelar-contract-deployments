@@ -1,7 +1,7 @@
 use axelar_rkyv_encoding::test_fixtures::signing_key::{random_keypair, TestSigningKey};
 use axelar_rkyv_encoding::types::{PublicKey, U128};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TestSigner {
     pub public_key: PublicKey,
     pub secret_key: TestSigningKey,

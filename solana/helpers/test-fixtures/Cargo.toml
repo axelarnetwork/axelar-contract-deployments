@@ -18,6 +18,7 @@ solana-program.workspace = true
 solana-sdk.workspace = true
 borsh.workspace = true
 tokio.workspace = true
+typed-builder.workspace = true
 
 axelar-executable.workspace = true
 axelar-message-primitives.workspace = true

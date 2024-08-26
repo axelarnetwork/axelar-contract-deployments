@@ -2,63 +2,46 @@ use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway;
 use evm_contracts_test_suite::evm_weighted_signers::WeightedSigners;
 use evm_contracts_test_suite::{get_domain_separator, ContractMiddleware};
-use gateway::instructions::InitializeConfig;
-use solana_program_test::{processor, ProgramTest};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
-use test_fixtures::test_setup::TestFixture;
-use test_fixtures::test_signer::{create_signer_with_weight, TestSigner};
+use test_fixtures::test_setup::{
+    SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
+};
 
 mod from_evm_to_solana;
 mod from_solana_to_evm;
 
-pub fn program_test() -> ProgramTest {
-    let mut pt = ProgramTest::new(
-        "gmp_gateway",
-        gateway::id(),
-        processor!(gateway::processor::Processor::process_instruction),
-    );
-
-    pt.add_program(
-        "axelar_solana_memo_program",
-        axelar_solana_memo_program::id(),
-        processor!(axelar_solana_memo_program::processor::process_instruction),
-    );
-
-    pt
+pub struct MemoProgramWrapper {
+    pub solana_chain: SolanaAxelarIntegrationMetadata,
+    pub counter_pda: Pubkey,
 }
 
-async fn axelar_solana_setup() -> (
-    TestFixture,
-    solana_sdk::pubkey::Pubkey,
-    Vec<TestSigner>,
-    Pubkey,
-    u64,
-) {
-    let mut fixture = TestFixture::new(program_test()).await;
-    let nonce = 443;
-    let signers = vec![
-        create_signer_with_weight(10_u128),
-        create_signer_with_weight(4_u128),
-    ];
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(InitializeConfig {
-            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, nonce)]),
-            ..fixture.base_initialize_config()
-        })
+async fn axelar_solana_setup() -> MemoProgramWrapper {
+    let mut solana_chain = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![555, 222])
+        .programs_to_deploy(vec![(
+            "axelar_solana_memo_program.so".into(),
+            axelar_solana_memo_program::id(),
+        )])
+        .build()
+        .setup()
         .await;
     let (counter_pda, counter_bump) =
-        axelar_solana_memo_program::get_counter_pda(&gateway_root_pda);
-    fixture
+        axelar_solana_memo_program::get_counter_pda(&solana_chain.gateway_root_pda);
+    solana_chain
+        .fixture
         .send_tx(&[axelar_solana_memo_program::instruction::initialize(
-            &fixture.payer.pubkey(),
-            &gateway_root_pda,
+            &solana_chain.fixture.payer.pubkey(),
+            &solana_chain.gateway_root_pda,
             &(counter_pda, counter_bump),
         )
         .unwrap()])
         .await;
 
-    (fixture, gateway_root_pda, signers, counter_pda, nonce)
+    MemoProgramWrapper {
+        solana_chain,
+        counter_pda,
+    }
 }
 
 async fn axelar_evm_setup() -> (

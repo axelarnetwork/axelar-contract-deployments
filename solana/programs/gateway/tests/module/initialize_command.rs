@@ -1,51 +1,36 @@
 use axelar_rkyv_encoding::types::Payload;
 use gmp_gateway::commands::OwnedCommand;
-use gmp_gateway::instructions::InitializeConfig;
 use gmp_gateway::state::{
     ApprovedMessageStatus, GatewayApprovedCommand, GatewayCommandStatus, RotateSignersStatus,
 };
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
 use solana_sdk::pubkey::Pubkey;
 use test_fixtures::account::CheckValidPDAInTests;
-use test_fixtures::execute_data::prepare_execute_data;
-use test_fixtures::test_setup::TestFixture;
-use test_fixtures::test_signer::create_signer_with_weight;
-
-use crate::{
-    create_verifier_set_with_nonce, example_signer_set, gateway_approved_command_ixs,
-    make_payload_and_commands, make_signers, program_test,
+use test_fixtures::test_setup::{
+    make_signers, SigningVerifierSet, SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
+    TestFixture,
 };
 
-const NONCE: u64 = 44;
+use crate::{gateway_approved_command_ixs, make_payload_and_commands, program_test};
 
-#[ignore]
 #[tokio::test]
 async fn succesfully_initialize_validate_message_command() {
     // Setup
-    let mut fixture = TestFixture::new(program_test()).await;
-    let signers = vec![
-        create_signer_with_weight(10_u128),
-        create_signer_with_weight(4_u128),
-    ];
-    let quorum = 14;
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(InitializeConfig {
-            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
-            ..fixture.base_initialize_config()
-        })
+    let SolanaAxelarIntegrationMetadata {
+        mut fixture,
+        signers,
+        gateway_root_pda,
+        domain_separator,
+        ..
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![10, 4])
+        .build()
+        .setup()
         .await;
 
     let (payload, commands) = make_payload_and_commands(3);
-    let domain_separator = fixture.domain_separator;
     fixture
-        .init_execute_data(
-            &gateway_root_pda,
-            payload,
-            &signers,
-            quorum,
-            NONCE,
-            &domain_separator,
-        )
+        .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
 
     // Action
@@ -74,40 +59,29 @@ async fn succesfully_initialize_validate_message_command() {
     }
 }
 
-#[ignore]
 #[tokio::test]
 async fn succesfully_initialize_rotate_signers_message() {
     // Setup
-    let mut fixture = TestFixture::new(program_test()).await;
-    let signers = vec![
-        create_signer_with_weight(10_u128),
-        create_signer_with_weight(4_u128),
-    ];
-
-    let quorum = 14;
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(InitializeConfig {
-            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
-            ..fixture.base_initialize_config()
-        })
+    let SolanaAxelarIntegrationMetadata {
+        mut fixture,
+        signers,
+        gateway_root_pda,
+        domain_separator,
+        ..
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![10, 4])
+        .build()
+        .setup()
         .await;
 
     // Signer set is slightly different to prevent hash collisions because there's
     // no random data
-    let verifier_set = example_signer_set(44, 44);
-    let payload = Payload::VerifierSet(verifier_set.clone());
-    let command = OwnedCommand::RotateSigners(verifier_set);
+    let verifier_set = make_signers(&[44], 44);
+    let payload = Payload::VerifierSet(verifier_set.verifier_set().clone());
+    let command = OwnedCommand::RotateSigners(verifier_set.verifier_set());
 
-    let domain_separator = fixture.domain_separator;
     fixture
-        .init_execute_data(
-            &gateway_root_pda,
-            payload,
-            &signers,
-            quorum,
-            NONCE,
-            &domain_separator,
-        )
+        .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
 
     // Action
@@ -136,7 +110,6 @@ async fn succesfully_initialize_rotate_signers_message() {
     }
 }
 
-#[ignore]
 #[tokio::test]
 async fn fail_when_gateway_root_pda_not_initialized() {
     // Setup
@@ -162,36 +135,26 @@ async fn fail_when_gateway_root_pda_not_initialized() {
         .any(|x| x.contains("insufficient funds for instruction")),);
 }
 
-#[ignore]
 #[tokio::test]
 async fn succesfully_initialize_command_which_belongs_to_a_different_execute_data_set() {
     // Setup
-    let mut fixture = TestFixture::new(program_test()).await;
-    let signers = vec![
-        create_signer_with_weight(10_u128),
-        create_signer_with_weight(4_u128),
-    ];
-    let quorum = 14;
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(InitializeConfig {
-            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
-            ..fixture.base_initialize_config()
-        })
+    let SolanaAxelarIntegrationMetadata {
+        mut fixture,
+        signers,
+        gateway_root_pda,
+        domain_separator,
+        ..
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![10, 4])
+        .build()
+        .setup()
         .await;
+
     let (payload_1, _) = make_payload_and_commands(1);
-    let domain_separator = fixture.domain_separator;
     let (_execute_data_pubkey_1, _execute_data_1) = fixture
-        .init_execute_data(
-            &gateway_root_pda,
-            payload_1,
-            &signers,
-            quorum,
-            NONCE,
-            &domain_separator,
-        )
+        .init_execute_data(&gateway_root_pda, payload_1, &signers, &domain_separator)
         .await;
-    let (payload_2, commands_2) = make_payload_and_commands(1);
-    prepare_execute_data(payload_2, &signers, quorum, NONCE, &domain_separator); // todo remove this?
+    let (_payload_2, commands_2) = make_payload_and_commands(1);
 
     // Action
     let (pdas, ixs): (Vec<_>, Vec<_>) =
@@ -220,33 +183,24 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
     }
 }
 
-#[ignore]
 #[tokio::test]
 async fn fail_when_validate_message_already_initialized() {
     // Setup
-    let mut fixture = TestFixture::new(program_test()).await;
-    let signers = vec![
-        create_signer_with_weight(10_u128),
-        create_signer_with_weight(4_u128),
-    ];
-    let quorum = 14;
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(InitializeConfig {
-            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
-            ..fixture.base_initialize_config()
-        })
+    let SolanaAxelarIntegrationMetadata {
+        mut fixture,
+        signers,
+        gateway_root_pda,
+        domain_separator,
+        ..
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![10, 4])
+        .build()
+        .setup()
         .await;
+
     let (payload, commands) = make_payload_and_commands(1);
-    let domain_separator = fixture.domain_separator;
     fixture
-        .init_execute_data(
-            &gateway_root_pda,
-            payload,
-            &signers,
-            quorum,
-            NONCE,
-            &domain_separator,
-        )
+        .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
 
     let ixs = gateway_approved_command_ixs(&commands, gateway_root_pda, &fixture)
@@ -271,35 +225,26 @@ async fn fail_when_validate_message_already_initialized() {
         .any(|x| x.contains("invalid account data for instruction")),);
 }
 
-#[ignore]
 #[tokio::test]
 async fn fail_when_rotate_signers_is_already_initialized() {
     // Setup
-    let mut fixture = TestFixture::new(program_test()).await;
-    let signers = vec![
-        create_signer_with_weight(10_u128),
-        create_signer_with_weight(4_u128),
-    ];
-    let quorum = 14;
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(InitializeConfig {
-            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
-            ..fixture.base_initialize_config()
-        })
+    let SolanaAxelarIntegrationMetadata {
+        mut fixture,
+        signers,
+        gateway_root_pda,
+        domain_separator,
+        ..
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![10, 4])
+        .build()
+        .setup()
         .await;
-    let new_signer_set = example_signer_set(42, 43);
-    let payload = Payload::VerifierSet(new_signer_set.clone());
-    let command = OwnedCommand::RotateSigners(new_signer_set);
-    let domain_separator = fixture.domain_separator;
+
+    let new_signer_set = make_signers(&[44], 44);
+    let payload = Payload::VerifierSet(new_signer_set.verifier_set().clone());
+    let command = OwnedCommand::RotateSigners(new_signer_set.verifier_set());
     fixture
-        .init_execute_data(
-            &gateway_root_pda,
-            payload,
-            &signers,
-            quorum,
-            NONCE,
-            &domain_separator,
-        )
+        .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
 
     let ixs: Vec<_> = gateway_approved_command_ixs(&[command], gateway_root_pda, &fixture)
@@ -324,63 +269,41 @@ async fn fail_when_rotate_signers_is_already_initialized() {
         .any(|x| x.contains("invalid account data for instruction")),);
 }
 
-/// The [WorkerSet data structure](https://github.com/axelarnetwork/axelar-amplifier/blob/a68eb5b3c28d9f6c0bd665ba012cbec13970f3a8/contracts/multisig/src/worker_set.rs#L10-L20) has this comment written for the `created_at` field:
-/// ```rust
-/// // for hash uniqueness. The same exact worker set could be in use at two different times,
-/// // and we need to be able to distinguish between the two
-/// pub created_at: u64,
-/// ```
-/// But realistically this field gets dropped when it's encoded via bcs or abi
-/// into the `Operators` structure. [link to abi encoding](https://github.com/axelarnetwork/axelar-amplifier/blob/a68eb5b3c28d9f6c0bd665ba012cbec13970f3a8/contracts/multisig-prover/src/encoding/abi.rs#L133-L146)
-/// This means that if we change the `created_at` field, the hash of the
-/// `WorkerSet` WILL NOT change.
-#[ignore]
 #[tokio::test]
-async fn fail_when_rotate_signers_has_unchanged_block_height() {
+async fn succed_when_same_signers_with_diffrent_nonce_get_initialized() {
     // Setup
-    let mut fixture = TestFixture::new(program_test()).await;
-    let signers = make_signers(&[10_u128, 4_u128]);
-    let quorum = 14;
-    let gateway_root_pda = fixture
-        .initialize_gateway_config_account(InitializeConfig {
-            initial_signer_sets: fixture.create_verifier_sets(&[(&signers, NONCE)]),
-            ..fixture.base_initialize_config()
-        })
+    let SolanaAxelarIntegrationMetadata {
+        mut fixture,
+        signers,
+        gateway_root_pda,
+        domain_separator,
+        ..
+    } = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![10, 4])
+        .build()
+        .setup()
         .await;
-    let domain_separator = fixture.domain_separator;
 
     // Signer set B is equal to A but with a different nonce.
-    let new_signers = make_signers(&[10u128, 4]);
-    let signer_set_a = create_verifier_set_with_nonce(&new_signers, 180, 111);
-    let signer_set_b = create_verifier_set_with_nonce(&new_signers, 360, 111);
+    let signer_set_a = make_signers(&[10u128, 4], 10);
+    let signer_set_b = SigningVerifierSet {
+        nonce: 55,
+        ..signer_set_a.clone()
+    };
 
     // Payloads
-    let payload_a = Payload::VerifierSet(signer_set_a.clone());
-    let payload_b = Payload::VerifierSet(signer_set_b.clone());
+    let payload_a = Payload::VerifierSet(signer_set_a.clone().verifier_set());
+    let payload_b = Payload::VerifierSet(signer_set_b.clone().verifier_set());
 
     // Commands
-    let command_a = OwnedCommand::RotateSigners(signer_set_a);
-    let command_b = OwnedCommand::RotateSigners(signer_set_b);
+    let command_a = OwnedCommand::RotateSigners(signer_set_a.verifier_set());
+    let command_b = OwnedCommand::RotateSigners(signer_set_b.verifier_set());
 
     fixture
-        .init_execute_data(
-            &gateway_root_pda,
-            payload_a,
-            &signers,
-            quorum,
-            NONCE,
-            &domain_separator,
-        )
+        .init_execute_data(&gateway_root_pda, payload_a, &signers, &domain_separator)
         .await;
     fixture
-        .init_execute_data(
-            &gateway_root_pda,
-            payload_b,
-            &signers,
-            quorum,
-            NONCE,
-            &domain_separator,
-        )
+        .init_execute_data(&gateway_root_pda, payload_b, &signers, &domain_separator)
         .await;
     let ixs_a = gateway_approved_command_ixs(&[command_a], gateway_root_pda, &fixture)
         .into_iter()
@@ -388,22 +311,16 @@ async fn fail_when_rotate_signers_has_unchanged_block_height() {
         .collect::<Vec<_>>();
     fixture.send_tx(&ixs_a).await;
 
-    // Action -- will fail because the `created_at` field gets dropped when encoded
-    // resulting in the same hash for the command
+    // Action
     let ixs_b = gateway_approved_command_ixs(&[command_b], gateway_root_pda, &fixture)
         .into_iter()
         .map(|(_, ix)| ix)
         .collect::<Vec<_>>();
-    let BanksTransactionResultWithMetadata { metadata, result } =
-        fixture.send_tx_with_metadata(&ixs_b).await;
+    let BanksTransactionResultWithMetadata {
+        metadata: _,
+        result,
+    } = fixture.send_tx_with_metadata(&ixs_b).await;
 
     // Assert
-    assert!(result.is_err(), "Transaction should have failed");
-    assert!(metadata
-        .unwrap()
-        .log_messages
-        .into_iter()
-        // this means that the account was already initialized
-        // TODO: improve error message
-        .any(|x| x.contains("invalid account data for instruction")),);
+    assert!(result.is_ok(), "Transaction should not have failed");
 }

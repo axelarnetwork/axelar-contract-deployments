@@ -16,8 +16,9 @@ use super::Processor;
 use crate::axelar_auth_weighted::SignerSetMetadata;
 use crate::commands::ArchivedCommand;
 use crate::events::GatewayEvent;
-use crate::hasher_impl;
+use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
+use crate::{assert_valid_verifier_set_tracker_pda, hasher_impl, seed_prefixes};
 
 impl Processor {
     /// Rotate the weighted signers, signed off by the latest Axelar signers.
@@ -38,12 +39,27 @@ impl Processor {
         let gateway_root_pda = next_account_info(&mut accounts_iter)?;
         let gateway_approve_messages_execute_data_pda = next_account_info(&mut accounts_iter)?;
         let message_account = next_account_info(&mut accounts_iter)?;
+        let signer_verifier_set = next_account_info(&mut accounts_iter)?;
+        let new_empty_verifier_set = next_account_info(&mut accounts_iter)?;
+        let payer = next_account_info(&mut accounts_iter)?;
+        let system_account = next_account_info(&mut accounts_iter)?;
         let operator = next_account_info(&mut accounts_iter);
 
         // Check: Config account uses the canonical bump.
         // Unpack Gateway configuration data.
         let mut gateway_config =
             gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
+
+        // Validate teh PDAs of the verifier sets
+        let signer_verifier_set =
+            match signer_verifier_set.check_initialized_pda::<VerifierSetTracker>(program_id) {
+                Ok(set) => set,
+                Err(err) => {
+                    msg!("Invalid VerifierSetTracker PDA");
+                    return Err(err);
+                }
+            };
+        new_empty_verifier_set.check_uninitialized_pda()?;
 
         // we always enforce the delay unless unless the operator has been provided and
         // its also the Gateway opreator
@@ -82,7 +98,11 @@ impl Processor {
 
         // Check: proof signer set is known.
         let signer_data = gateway_config
-            .validate_proof(execute_data.payload_hash, execute_data.proof())
+            .validate_proof(
+                execute_data.payload_hash,
+                execute_data.proof(),
+                &signer_verifier_set,
+            )
             .map_err(|err| {
                 msg!("Proof validation failed: {:?}", err);
                 ProgramError::InvalidArgument
@@ -113,13 +133,30 @@ impl Processor {
         let mut data = message_account.try_borrow_mut_data()?;
         approved_command_account.pack_into_slice(&mut data);
 
-        // Try to set the new signer set - but if we fail, it's not an error because we
-        // still need to persist the command execution state.
-        // If rotate_signers_command is a repeat signer set, this will revert
-        if let Err(err) = gateway_config.rotate_signers(new_verifier_set) {
-            msg!("Failed to rotate signers {:?}", err);
-            return Ok(());
+        let new_verifier_set_tracker = match gateway_config.rotate_signers(new_verifier_set) {
+            Ok(new_verifier_set_tracker) => new_verifier_set_tracker,
+            Err(err) => {
+                msg!("Failed to rotate signers {:?}", err);
+                return Err(ProgramError::InvalidAccountData);
+            }
         };
+        assert_valid_verifier_set_tracker_pda(
+            &new_verifier_set_tracker,
+            new_empty_verifier_set.key,
+        );
+
+        program_utils::init_pda(
+            payer,
+            new_empty_verifier_set,
+            program_id,
+            system_account,
+            new_verifier_set_tracker.clone(),
+            &[
+                seed_prefixes::VERIFIER_SET_TRACKER_SEED,
+                new_verifier_set_tracker.verifier_set_hash.as_slice(),
+                &[new_verifier_set_tracker.bump],
+            ],
+        )?;
 
         // Emit event if the signers were rotated
         emit_signers_rotated_event(new_verifier_set)?;
@@ -163,7 +200,7 @@ fn emit_signers_rotated_event(verifier_set: &ArchivedVerifierSet) -> Result<(), 
         weights.push(weight);
     }
 
-    let quorum: u128 = verifier_set.threshold().into();
+    let quorum: u128 = verifier_set.quorum().into();
 
     let rotate_signers_command = RotateSignersCommand {
         command_id: verifier_set.hash(hasher_impl()),

@@ -960,12 +960,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445"
 
 [[package]]
-name = "bimap"
-version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "230c5f1ca6a325a32553f8640d31ac9b49f2411e901e427570154868b46da4f7"
-
-[[package]]
 name = "bincode"
 version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3549,7 +3543,6 @@ dependencies = [
  "axelar-message-primitives",
  "axelar-rkyv-encoding",
  "base64 0.21.7",
- "bimap",
  "bincode",
  "borsh 1.5.1",
  "hex",
@@ -3566,6 +3559,7 @@ dependencies = [
  "solana-sdk",
  "test-fixtures",
  "thiserror",
+ "typed-builder",
 ]
 
 [[package]]
@@ -10032,6 +10026,7 @@ dependencies = [
  "solana-sdk",
  "spl-token 4.0.1",
  "tokio",
+ "typed-builder",
 ]
 
 [[package]]
@@ -10599,6 +10594,26 @@ dependencies = [
  "url 2.5.2",
  "utf-8",
  "webpki-roots 0.24.0",
+]
+
+[[package]]
+name = "typed-builder"
+version = "0.19.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a06fbd5b8de54c5f7c91f6fe4cebb949be2125d7758e630bb58b1d831dbce600"
+dependencies = [
+ "typed-builder-macro",
+]
+
+[[package]]
+name = "typed-builder-macro"
+version = "0.19.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9534daa9fd3ed0bd911d462a37f172228077e7abf18c18a5f67199d959205f8"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.70",
 ]
 
 [[package]]
