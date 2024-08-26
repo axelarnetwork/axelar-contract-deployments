@@ -8,7 +8,7 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
@@ -222,7 +222,7 @@ if (require.main === module) {
 
     program.name('InterchainTokenFactory').description('Script to perform interchain token factory commands');
 
-    addExtendedOptions(program, { address: true, salt: true });
+    addEvmOptions(program, { address: true, salt: true });
 
     program.addOption(
         new Option('--action <action>', 'interchain token factory action')
