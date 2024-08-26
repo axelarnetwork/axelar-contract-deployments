@@ -22,7 +22,7 @@ const {
     getDeployOptions,
     mainProcessor,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
@@ -297,7 +297,7 @@ if (require.main === module) {
 
     program.name('deploy-upgradable').description('Deploy upgradable contracts');
 
-    addExtendedOptions(program, { artifactPath: true, contractName: true, salt: true, skipChains: true, upgrade: true, predictOnly: true });
+    addEvmOptions(program, { artifactPath: true, contractName: true, salt: true, skipChains: true, upgrade: true, predictOnly: true });
 
     program.addOption(
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
