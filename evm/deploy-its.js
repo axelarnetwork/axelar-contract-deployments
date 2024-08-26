@@ -25,7 +25,7 @@ const {
     getDeployedAddress,
     wasEventEmitted,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
 
 /**
@@ -478,7 +478,7 @@ if (require.main === module) {
             .default('create3'),
     );
 
-    addExtendedOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true });
+    addEvmOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments'));
     program.addOption(new Option('--contractName <contractName>', 'contract name').default('InterchainTokenService')); // added for consistency

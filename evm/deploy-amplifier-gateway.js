@@ -28,7 +28,7 @@ const {
     getDeployOptions,
     getDomainSeparator,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
 const { WEIGHTED_SIGNERS_TYPE, encodeWeightedSigners } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
@@ -399,7 +399,7 @@ async function programHandler() {
     program.name('deploy-amplifier-gateway').description('Deploy Amplifier Gateway');
 
     // use create3 as default deploy method
-    addExtendedOptions(program, { salt: true, deployMethod: 'create3', skipExisting: true, upgrade: true, predictOnly: true });
+    addEvmOptions(program, { salt: true, deployMethod: 'create3', skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('--previousSignersRetention <previousSignersRetention>', 'previous signer retention').default(15));

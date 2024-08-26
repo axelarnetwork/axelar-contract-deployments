@@ -30,7 +30,7 @@ const InterchainTokenService = getContractJSON('InterchainTokenService');
 const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
 const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
 const IOwnable = getContractJSON('IOwnable');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const tokenManagerImplementations = {
     INTERCHAIN_TOKEN: 0,
@@ -656,7 +656,7 @@ if (require.main === module) {
 
     program.name('ITS').description('Script to perform ITS commands');
 
-    addExtendedOptions(program, { address: true, salt: true });
+    addEvmOptions(program, { address: true, salt: true });
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('InterchainTokenService'));
     program.addOption(
