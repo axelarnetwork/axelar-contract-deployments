@@ -19,6 +19,7 @@ const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
     isString,
     isStringArray,
+    isStringLowercase,
     isKeccak256Hash,
     isNumber,
     toBigNumberString,
@@ -215,10 +216,10 @@ const makeNexusGatewayInstantiateMsg = ({ nexus }, { Router: { address: router }
 const makeVotingVerifierInstantiateMsg = (
     contractConfig,
     { ServiceRegistry: { address: serviceRegistryAddress }, Rewards: { address: rewardsAddress } },
-    { axelarId: chainId },
+    { axelarId },
 ) => {
     const {
-        [chainId]: {
+        [axelarId]: {
             governanceAddress,
             serviceName,
             sourceGatewayAddress,
@@ -230,6 +231,10 @@ const makeVotingVerifierInstantiateMsg = (
         },
     } = contractConfig;
 
+    if (!isStringLowercase(axelarId)) {
+        throw new Error('Missing or invalid axelar ID');
+    }
+
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
     }
@@ -239,35 +244,35 @@ const makeVotingVerifierInstantiateMsg = (
     }
 
     if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].governanceAddress in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].governanceAddress in axelar info`);
     }
 
     if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].serviceName in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].serviceName in axelar info`);
     }
 
     if (!isString(sourceGatewayAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].sourceGatewayAddress in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].sourceGatewayAddress in axelar info`);
     }
 
     if (!isStringArray(votingThreshold)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].votingThreshold in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].votingThreshold in axelar info`);
     }
 
     if (!isNumber(blockExpiry)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].blockExpiry in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].blockExpiry in axelar info`);
     }
 
     if (!isNumber(confirmationHeight)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].confirmationHeight in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].confirmationHeight in axelar info`);
     }
 
     if (!isString(msgIdFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].msgIdFormat in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].msgIdFormat in axelar info`);
     }
 
     if (!isString(addressFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].addressFormat in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].addressFormat in axelar info`);
     }
 
     return {
@@ -279,7 +284,7 @@ const makeVotingVerifierInstantiateMsg = (
         voting_threshold: votingThreshold,
         block_expiry: toBigNumberString(blockExpiry),
         confirmation_height: confirmationHeight,
-        source_chain: chainId,
+        source_chain: axelarId,
         msg_id_format: msgIdFormat,
         address_format: addressFormat,
     };
@@ -307,7 +312,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
     } = config;
     const chainConfig = getChainConfig(config, chainName);
 
-    const { axelarId: chainId } = chainConfig;
+    const { axelarId } = chainConfig;
 
     const {
         Router: { address: routerAddress },
@@ -315,15 +320,15 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
         VotingVerifier: {
-            [chainId]: { address: verifierAddress },
+            [axelarId]: { address: verifierAddress },
         },
         Gateway: {
-            [chainId]: { address: gatewayAddress },
+            [axelarId]: { address: gatewayAddress },
         },
         MultisigProver: contractConfig,
     } = contracts;
     const {
-        [chainId]: {
+        [axelarId]: {
             adminAddress,
             governanceAddress,
             domainSeparator,
@@ -335,7 +340,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         },
     } = contractConfig;
 
-    if (!isString(chainId)) {
+    if (!isStringLowercase(axelarId)) {
         throw new Error(`Missing or invalid axelar ID for chain ${chainName}`);
     }
 
@@ -347,19 +352,19 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         throw new Error(`Missing or invalid chain ID`);
     }
 
-    const separator = domainSeparator || calculateDomainSeparator(chainId, routerAddress, axelarChainId);
-    contractConfig[chainId].domainSeparator = separator;
+    const separator = domainSeparator || calculateDomainSeparator(axelarId, routerAddress, axelarChainId);
+    contractConfig[axelarId].domainSeparator = separator;
 
     if (!validateAddress(adminAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].adminAddress in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].adminAddress in axelar info`);
     }
 
     if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].governanceAddress in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].governanceAddress in axelar info`);
     }
 
     if (!validateAddress(gatewayAddress)) {
-        throw new Error(`Missing or invalid Gateway[${chainId}].address in axelar info`);
+        throw new Error(`Missing or invalid Gateway[${axelarId}].address in axelar info`);
     }
 
     if (!validateAddress(coordinatorAddress)) {
@@ -375,31 +380,31 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].address in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].address in axelar info`);
     }
 
     if (!isKeccak256Hash(separator)) {
-        throw new Error(`Invalid MultisigProver[${chainId}].domainSeparator in axelar info`);
+        throw new Error(`Invalid MultisigProver[${axelarId}].domainSeparator in axelar info`);
     }
 
     if (!isStringArray(signingThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].signingThreshold in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].signingThreshold in axelar info`);
     }
 
     if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].serviceName in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].serviceName in axelar info`);
     }
 
     if (!isNumber(verifierSetDiffThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].verifierSetDiffThreshold in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].verifierSetDiffThreshold in axelar info`);
     }
 
     if (!isString(encoder)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].encoder in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].encoder in axelar info`);
     }
 
     if (!isString(keyType)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].keyType in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].keyType in axelar info`);
     }
 
     return {
@@ -413,7 +418,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         domain_separator: separator.replace('0x', ''),
         signing_threshold: signingThreshold,
         service_name: serviceName,
-        chain_name: chainId,
+        chain_name: axelarId,
         verifier_set_diff_threshold: verifierSetDiffThreshold,
         encoder,
         key_type: keyType,
@@ -431,6 +436,10 @@ const makeAxelarnetGatewayInstantiateMsg = (config, chainName) => {
     const {
         Router: { address: routerAddress },
     } = contracts;
+
+    if (!isString(axelarId)) {
+        throw new Error(`Missing or invalid axelar ID for chain ${chainName}`);
+    }
 
     if (!validateAddress(routerAddress)) {
         throw new Error('Missing or invalid Router.address in axelar info');
