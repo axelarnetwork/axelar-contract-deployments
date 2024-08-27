@@ -107,5 +107,4 @@ const addExtendedOptions = (program, options = {}) => {
 module.exports = {
     addEnvOption,
     addBaseOptions,
-    addExtendedOptions,
 };

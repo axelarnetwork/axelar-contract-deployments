@@ -254,7 +254,7 @@ const programHandler = () => {
 
     // TODO: combine deploy-contract and submit-proposal options to remove duplicates
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
-    program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
+    program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').env('ARTIFACT_PATH'));
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
 

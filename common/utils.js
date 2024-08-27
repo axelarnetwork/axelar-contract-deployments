@@ -10,7 +10,7 @@ const readlineSync = require('readline-sync');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { keccak256, hexlify },
+    utils: { keccak256, hexlify, defaultAbiCoder },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
@@ -57,12 +57,16 @@ function printLog(log) {
     console.log(JSON.stringify({ log }, null, 2));
 }
 
-const isNonEmptyString = (arg) => {
-    return typeof arg === 'string' && arg !== '';
-};
-
 const isString = (arg) => {
     return typeof arg === 'string';
+};
+
+const isNonEmptyString = (arg) => {
+    return isString(arg) && arg !== '';
+};
+
+const isStringLowercase = (arg) => {
+    return isNonEmptyString(arg) && arg === arg.toLowerCase();
 };
 
 const isStringArray = (arr) => Array.isArray(arr) && arr.every(isString);
@@ -347,6 +351,17 @@ const isValidCosmosAddress = (str) => {
     }
 };
 
+const getSaltFromKey = (key) => {
+    return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
+};
+
+const getContractConfig = async (config, chain) => {
+    const key = Buffer.from('config');
+    const client = await CosmWasmClient.connect(config.axelar.rpc);
+    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
+    return JSON.parse(Buffer.from(value).toString('ascii'));
+};
+
 async function getDomainSeparator(config, chain, options) {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
@@ -377,22 +392,42 @@ async function getDomainSeparator(config, chain, options) {
         throw new Error(`missing or invalid chain ID`);
     }
 
+    const expectedDomainSeparator = calculateDomainSeparator(chain.axelarId, routerAddress, chainId);
+
+    if (options.domainSeparator === 'offline') {
+        printInfo('Computed domain separator offline');
+        return expectedDomainSeparator;
+    }
+
     printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
     const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
-    const expectedDomainSeparator = calculateDomainSeparator(chain.axelarId, routerAddress, chainId);
 
     if (domainSeparator !== expectedDomainSeparator) {
         throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
     }
 
-    return domainSeparator;
+    return expectedDomainSeparator;
 }
 
-const getContractConfig = async (config, chain) => {
-    const key = Buffer.from('config');
+const getChainConfig = (config, chainName) => {
+    if (chainName === 'none') {
+        return undefined;
+    }
+
+    const chainConfig = config.chains[chainName] || config[chainName];
+
+    if (!chainConfig) {
+        throw new Error(`Chain ${chainName} not found in config`);
+    }
+
+    return chainConfig;
+};
+
+const getMultisigProof = async (config, chain, multisigSessionId) => {
+    const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
     const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
-    return JSON.parse(Buffer.from(value).toString('ascii'));
+    const value = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, query);
+    return value;
 };
 
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
@@ -409,6 +444,7 @@ module.exports = {
     isNonEmptyString,
     isString,
     isStringArray,
+    isStringLowercase,
     isNumber,
     isValidNumber,
     isValidDecimal,
@@ -429,4 +465,9 @@ module.exports = {
     timeout,
     validateParameters,
     getDomainSeparator,
+    getChainConfig,
+    getMultisigProof,
+    getContractConfig,
+    getSaltFromKey,
+    calculateDomainSeparator,
 };
