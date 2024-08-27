@@ -189,6 +189,11 @@ node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test -
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
 
+To submit a proof constructed on Amplifier, run the following with the multisig session id,
+```bash
+node sui/gateway.js submitProof [multisig session id]
+```
+
 ### Multisig
 
 To create a Multisig, follow the documentation [here](https://docs.sui.io/guides/developer/cryptography/multisig).

@@ -124,6 +124,11 @@ const squidStruct = bcs.struct('Squid', {
     coin_bag: coinBagStrcut,
 });
 
+const executeDataStruct = bcs.struct('ExecuteData', {
+    payload: bcs.vector(bcs.u8()),
+    proof: bcs.vector(bcs.u8()),
+});
+
 module.exports = {
     addressStruct,
     signerStruct,
@@ -140,4 +145,5 @@ module.exports = {
     discoveryStruct,
     itsStruct,
     squidStruct,
+    executeDataStruct,
 };

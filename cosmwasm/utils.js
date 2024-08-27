@@ -1,10 +1,6 @@
 'use strict';
 
 const zlib = require('zlib');
-const { ethers } = require('hardhat');
-const {
-    utils: { keccak256 },
-} = ethers;
 const { createHash } = require('crypto');
 
 const { readFileSync } = require('fs');
@@ -20,7 +16,16 @@ const {
     ExecuteContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
-const { getSaltFromKey, isString, isStringArray, isKeccak256Hash, isNumber, toBigNumberString } = require('../evm/utils');
+const {
+    isString,
+    isStringArray,
+    isKeccak256Hash,
+    isNumber,
+    toBigNumberString,
+    getChainConfig,
+    getSaltFromKey,
+    calculateDomainSeparator,
+} = require('../common');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
@@ -46,8 +51,6 @@ const isValidCosmosAddress = (str) => {
 
 const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'));
 
-const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
-
 const getSalt = (salt, contractName, chainNames) => fromHex(getSaltFromKey(salt || contractName.concat(chainNames)));
 
 const getLabel = ({ contractName, label }) => label || contractName;
@@ -66,11 +69,7 @@ const getChains = (config, { chainNames, instantiate2 }) => {
         throw new Error('Cannot pass --instantiate2 with more than one chain');
     }
 
-    const undefinedChain = chains.find((chain) => !config.chains[chain.toLowerCase()] && chain !== 'none');
-
-    if (undefinedChain) {
-        throw new Error(`Chain ${undefinedChain} is not defined in the info file`);
-    }
+    chains.every((chain) => chain === 'none' || getChainConfig(config, chain));
 
     return chains;
 };
@@ -216,7 +215,7 @@ const makeNexusGatewayInstantiateMsg = ({ nexus }, { Router: { address: router }
 const makeVotingVerifierInstantiateMsg = (
     contractConfig,
     { ServiceRegistry: { address: serviceRegistryAddress }, Rewards: { address: rewardsAddress } },
-    { id: chainId },
+    { axelarId: chainId },
 ) => {
     const {
         [chainId]: {
@@ -286,7 +285,7 @@ const makeVotingVerifierInstantiateMsg = (
     };
 };
 
-const makeGatewayInstantiateMsg = ({ Router: { address: routerAddress }, VotingVerifier }, { id: chainId }) => {
+const makeGatewayInstantiateMsg = ({ Router: { address: routerAddress }, VotingVerifier }, { axelarId: chainId }) => {
     const {
         [chainId]: { address: verifierAddress },
     } = VotingVerifier;
@@ -305,8 +304,8 @@ const makeGatewayInstantiateMsg = ({ Router: { address: routerAddress }, VotingV
 const makeMultisigProverInstantiateMsg = (config, chainName) => {
     const {
         axelar: { contracts, chainId: axelarChainId },
-        chains: { [chainName]: chainConfig },
     } = config;
+    const chainConfig = getChainConfig(config, chainName);
 
     const { axelarId: chainId } = chainConfig;
 
@@ -424,8 +423,8 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
 const makeInstantiateMsg = (contractName, chainName, config) => {
     const {
         axelar: { contracts },
-        chains: { [chainName]: chainConfig },
     } = config;
+    const chainConfig = getChainConfig(config, chainName);
 
     const { [contractName]: contractConfig } = contracts;
 
@@ -618,12 +617,12 @@ const getExecuteContractParams = (config, options, chainName) => {
         axelar: {
             contracts: { [contractName]: contractConfig },
         },
-        chains: { [chainName]: chainConfig },
     } = config;
+    const chainConfig = getChainConfig(config, chainName);
 
     return {
         ...getSubmitProposalParams(options),
-        contract: chainConfig ? contractConfig[chainConfig.axelarId].address : contractConfig.address,
+        contract: contractConfig[chainConfig.axelarId]?.address || contractConfig.address,
         msg: Buffer.from(msg),
     };
 };
