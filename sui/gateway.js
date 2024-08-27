@@ -202,7 +202,7 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
     tx.moveCall({
         target: `${packageId}::gateway::approve_messages`,
         arguments: [
-            tx.object(contractConfig.objects.gateway),
+            tx.object(contractConfig.objects.Gateway),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedMessages).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedProof).toBytes()),
         ],
@@ -213,14 +213,10 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
     printInfo('Approved messages', receipt.digest);
 }
 
-async function rotateSigners(keypair, client, config, chain, contractConfig, args, options) {
+async function submitProof(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
-    const [multisigSessionId] = args;
+    const [ multisigSessionId ] = args;
     const { payload, status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
-
-    if (!payload.verifier_set) {
-        throw new Error('No signers to rotate');
-    }
 
     if (!status.completed) {
         throw new Error('Multisig session not completed');
@@ -228,17 +224,38 @@ async function rotateSigners(keypair, client, config, chain, contractConfig, arg
 
     const executeData = executeDataStruct.parse(arrayify('0x' + status.completed.execute_data));
 
+    if (!payload.verifier_set) {
+        throw new Error('No signers to rotate');
+    }
+
     const tx = new Transaction();
 
-    tx.moveCall({
-        target: `${packageId}::gateway::rotate_signers`,
-        arguments: [
-            tx.object(contractConfig.objects.Gateway),
-            tx.object(suiClockAddress),
-            tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.payload)).toBytes()),
-            tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.proof)).toBytes()),
-        ],
-    });
+    if (payload.verifier_set) {
+        printInfo('Submitting rotate_signers');
+
+        tx.moveCall({
+            target: `${packageId}::gateway::rotate_signers`,
+            arguments: [
+                tx.object(contractConfig.objects.Gateway),
+                tx.object(suiClockAddress),
+                tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.payload)).toBytes()),
+                tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.proof)).toBytes()),
+            ],
+        });
+    } else if (payload.messages) {
+            printInfo('Submitting approve_messages');
+
+            tx.moveCall({
+                target: `${packageId}::gateway::approve_messages`,
+                arguments: [
+                    tx.object(contractConfig.objects.Gateway),
+                    tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.payload)).toBytes()),
+                    tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.proof)).toBytes()),
+                ],
+            });
+    } else {
+        throw new Error(`Unknown payload type: ${payload}`);
+    }
 
     const receipt = await broadcast(client, keypair, tx);
 
@@ -271,9 +288,9 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
         ],
     });
 
-    await broadcast(client, keypair, tx);
+    const receipt = await broadcast(client, keypair, tx);
 
-    printInfo('Signers rotated succesfully');
+    printInfo('Signers rotated', receipt.digest);
 }
 
 async function mainProcessor(processor, args, options) {
@@ -324,10 +341,10 @@ if (require.main === module) {
         });
 
     program
-        .command('rotateSigners <multisigSessionId>')
-        .description('Rotate signers at the gateway contract from amplifier proof')
+        .command('submitProof <multisigSessionId>')
+        .description('Submit proof for the provided amplifier multisig session id')
         .action((multisigSessionId, options) => {
-            mainProcessor(rotateSigners, [multisigSessionId], options);
+            mainProcessor(submitProof, [multisigSessionId], options);
         });
 
     program
