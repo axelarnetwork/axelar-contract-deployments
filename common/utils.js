@@ -406,6 +406,10 @@ async function getDomainSeparator(config, chain, options) {
 }
 
 const getChainConfig = (config, chainName) => {
+    if (chainName == 'none') {
+        return undefined;
+    }
+
     const chainConfig = config.chains[chainName] || config[chainName];
 
     if (!chainConfig) {
