@@ -34,6 +34,7 @@ const {
     sleep,
     findProjectRoot,
     timeout,
+    getSaltFromKey,
 } = require('../common');
 const {
     create3DeployContract,
@@ -47,10 +48,6 @@ const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
-
-const getSaltFromKey = (key) => {
-    return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
-};
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
@@ -491,13 +488,6 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     const threshold = Number(evmAddresses.threshold);
 
     return { addresses, weights, threshold, keyID: evmAddresses.key_id };
-};
-
-const getContractConfig = async (config, chain) => {
-    const key = Buffer.from('config');
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
-    return JSON.parse(Buffer.from(value).toString('ascii'));
 };
 
 const getAmplifierKeyAddresses = async (config, chain) => {
@@ -1062,7 +1052,6 @@ module.exports = {
     getDeployOptions,
     isValidChain,
     getAmplifierKeyAddresses,
-    getContractConfig,
     relayTransaction,
     getDeploymentTx,
     getWeightedSigners,
