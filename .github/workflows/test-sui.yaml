@@ -49,9 +49,7 @@ jobs:
                     "tokenSymbol": "SUI",
                     "rpc": "http://127.0.0.1:9000",
                     "faucetUrl": "http://127.0.0.1:9123",
-                    "contracts": {
-                      "AxelarGateway": {}
-                    }
+                    "contracts": {}
                 }
             }' > ./axelar-chains-config/info/local.json
 
