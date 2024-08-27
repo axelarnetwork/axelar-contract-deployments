@@ -2,9 +2,6 @@ name: Test Sui
 
 on: pull_request
 
-env:
-  SUI_VERSION: mainnet-v1.25.3
-
 jobs:
   test-sui:
     runs-on: blacksmith-2vcpu-ubuntu-2204
@@ -21,6 +18,12 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Read SUI_VERSION from JSON
+        id: read-json
+        run: |
+          SUI_VERSION=$(jq -r '.SUI_VERSION' sui/version.json)
+          echo "SUI_VERSION=${SUI_VERSION}" >> $GITHUB_ENV
 
       - name: Setup Sui CLI and install dependencies
         uses: ./.github/actions/setup-sui
