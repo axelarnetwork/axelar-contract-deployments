@@ -16,11 +16,13 @@ const {
     executeDataStruct,
     proofStruct,
     addBaseOptions,
+    addOptionsToCommands,
     getSigners,
     getWallet,
     printWalletInfo,
     getRawPrivateKey,
     broadcast,
+    suiClockAddress,
 } = require('./utils');
 const secp256k1 = require('secp256k1');
 
@@ -106,12 +108,7 @@ function getProof(keypair, commandType, data, contractConfig, options) {
     return encodedProof;
 }
 
-async function callContract(keypair, client, config, chain, args, options) {
-    if (!chain.contracts.AxelarGateway) {
-        throw new Error('Axelar Gateway package not found.');
-    }
-
-    const contractConfig = chain.contracts.AxelarGateway;
+async function callContract(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
 
     const [destinationChain, destinationAddress, payload] = args;
@@ -150,12 +147,7 @@ async function callContract(keypair, client, config, chain, args, options) {
     printInfo('Contract called');
 }
 
-async function approveMessages(keypair, client, config, chain, args, options) {
-    if (!chain.contracts.AxelarGateway) {
-        throw new Error('Axelar Gateway package not found.');
-    }
-
-    const contractConfig = chain.contracts.AxelarGateway;
+async function approveMessages(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
     const [multisigSessionId] = args;
     const { payload, status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
@@ -168,7 +160,7 @@ async function approveMessages(keypair, client, config, chain, args, options) {
         throw new Error('Multisig session not completed');
     }
 
-    const executeData = executeDataStruct.parse(new Uint8Array(arrayify('0x' + status.completed.execute_data)));
+    const executeData = executeDataStruct.parse(arrayify('0x' + status.completed.execute_data));
 
     const tx = new Transaction();
 
@@ -181,17 +173,12 @@ async function approveMessages(keypair, client, config, chain, args, options) {
         ],
     });
 
-    await broadcast(client, keypair, tx);
+    const receipt = await broadcast(client, keypair, tx);
 
-    printInfo('Approved messages');
+    printInfo('Approved messages', receipt.digest);
 }
 
-async function approve(keypair, client, config, chain, args, options) {
-    if (!chain.contracts.AxelarGateway) {
-        throw new Error('Axelar Gateway package not found.');
-    }
-
-    const contractConfig = chain.contracts.AxelarGateway;
+async function approve(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
     const [sourceChain, messageId, sourceAddress, destinationId, payloadHash] = args;
 
@@ -221,17 +208,12 @@ async function approve(keypair, client, config, chain, args, options) {
         ],
     });
 
-    await broadcast(client, keypair, tx);
+    const receipt = await broadcast(client, keypair, tx);
 
-    printInfo('Approved messages');
+    printInfo('Approved messages', receipt.digest);
 }
 
-async function rotateSigners(keypair, client, config, chain, args, options) {
-    if (!chain.contracts.AxelarGateway) {
-        throw new Error('Axelar Gateway package not found.');
-    }
-
-    const contractConfig = chain.contracts.AxelarGateway;
+async function rotateSigners(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
     const [multisigSessionId] = args;
     const { payload, status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
@@ -244,7 +226,7 @@ async function rotateSigners(keypair, client, config, chain, args, options) {
         throw new Error('Multisig session not completed');
     }
 
-    const executeData = executeDataStruct.parse(new Uint8Array(arrayify('0x' + status.completed.execute_data)));
+    const executeData = executeDataStruct.parse(arrayify('0x' + status.completed.execute_data));
 
     const tx = new Transaction();
 
@@ -252,23 +234,18 @@ async function rotateSigners(keypair, client, config, chain, args, options) {
         target: `${packageId}::gateway::rotate_signers`,
         arguments: [
             tx.object(contractConfig.objects.Gateway),
-            tx.object('0x6'),
+            tx.object(suiClockAddress),
             tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.payload)).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.proof)).toBytes()),
         ],
     });
 
-    await broadcast(client, keypair, tx);
+    const receipt = await broadcast(client, keypair, tx);
 
-    printInfo('Signers rotated succesfully');
+    printInfo('Signers rotated', receipt.digest);
 }
 
-async function rotate(keypair, client, config, chain, args, options) {
-    if (!chain.contracts.AxelarGateway) {
-        throw new Error('Axelar Gateway package not found.');
-    }
-
-    const contractConfig = chain.contracts.AxelarGateway;
+async function rotate(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
     const signers = await getSigners(keypair, config, chain.axelarId, options);
 
@@ -288,7 +265,7 @@ async function rotate(keypair, client, config, chain, args, options) {
         target: `${packageId}::gateway::rotate_signers`,
         arguments: [
             tx.object(contractConfig.objects.Gateway),
-            tx.object('0x6'),
+            tx.object(suiClockAddress),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedProof).toBytes()),
         ],
@@ -305,7 +282,11 @@ async function mainProcessor(processor, args, options) {
     const [keypair, client] = getWallet(config.sui, options);
     await printWalletInfo(keypair, client, config.sui, options);
 
-    await processor(keypair, client, config, config.sui, args, options);
+    if (!config.sui.contracts?.AxelarGateway) {
+        throw new Error('Axelar Gateway package not found.');
+    }
+
+    await processor(keypair, client, config, config.sui, config.sui.contracts.AxelarGateway, args, options);
 
     saveConfig(config, options.env);
 }
@@ -315,7 +296,7 @@ if (require.main === module) {
 
     program.name('gateway').description('Gateway contract operations.');
 
-    const rotateCmd = program
+    program
         .command('rotate')
         .description('Rotate signers of the gateway contract')
         .addOption(new Option('--signers <signers>', 'JSON with the initial signer set'))
@@ -326,7 +307,7 @@ if (require.main === module) {
             mainProcessor(rotate, [], options);
         });
 
-    const approveCmd = program
+    program
         .command('approve <sourceChain> <messageId> <sourceAddress> <destinationId> <payloadHash>')
         .description('Approve messages at the gateway contract')
         .addOption(new Option('--proof <proof>', 'JSON of the proof'))
@@ -335,21 +316,21 @@ if (require.main === module) {
             mainProcessor(approve, [sourceChain, messageId, sourceAddress, destinationId, payloadHash], options);
         });
 
-    const approveMessagesCmd = program
+    program
         .command('approveMessages <multisigSessionId>')
         .description('Approve messages at the gateway contract from amplifier proof')
         .action((multisigSessionId, options) => {
             mainProcessor(approveMessages, [multisigSessionId], options);
         });
 
-    const rotateSignersCmd = program
+    program
         .command('rotateSigners <multisigSessionId>')
         .description('Rotate signers at the gateway contract from amplifier proof')
         .action((multisigSessionId, options) => {
             mainProcessor(rotateSigners, [multisigSessionId], options);
         });
 
-    const callContractCmd = program
+    program
         .command('call-contract <destinationChain> <destinationAddress> <payload>')
         .description('Initiate sending a cross-chain message via the gateway')
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
@@ -357,12 +338,7 @@ if (require.main === module) {
             mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
         });
 
-    addBaseOptions(program);
-    addBaseOptions(rotateSignersCmd);
-    addBaseOptions(rotateCmd);
-    addBaseOptions(callContractCmd);
-    addBaseOptions(approveCmd);
-    addBaseOptions(approveMessagesCmd);
+    addOptionsToCommands(program, addBaseOptions);
 
     program.parse();
 }

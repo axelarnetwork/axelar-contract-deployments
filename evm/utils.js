@@ -34,6 +34,7 @@ const {
     sleep,
     findProjectRoot,
     timeout,
+    getSaltFromKey,
 } = require('../common');
 const {
     create3DeployContract,
@@ -47,10 +48,6 @@ const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
-
-const getSaltFromKey = (key) => {
-    return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
-};
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);

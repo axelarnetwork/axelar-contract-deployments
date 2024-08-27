@@ -10,7 +10,7 @@ const readlineSync = require('readline-sync');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { keccak256 },
+    utils: { keccak256, defaultAbiCoder },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
@@ -347,6 +347,10 @@ const isValidCosmosAddress = (str) => {
     }
 };
 
+const getSaltFromKey = (key) => {
+    return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
+};
+
 const getContractConfig = async (config, chain) => {
     const key = Buffer.from('config');
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -450,4 +454,6 @@ module.exports = {
     getChainConfig,
     getMultisigProof,
     getContractConfig,
+    getSaltFromKey,
+    calculateDomainSeparator,
 };

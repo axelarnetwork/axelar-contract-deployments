@@ -1,10 +1,6 @@
 'use strict';
 
 const zlib = require('zlib');
-const { ethers } = require('hardhat');
-const {
-    utils: { keccak256 },
-} = ethers;
 const { createHash } = require('crypto');
 
 const { readFileSync } = require('fs');
@@ -20,7 +16,16 @@ const {
     ExecuteContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
-const { getSaltFromKey, isString, isStringArray, isKeccak256Hash, isNumber, toBigNumberString, getChainConfig } = require('../evm/utils');
+const {
+    isString,
+    isStringArray,
+    isKeccak256Hash,
+    isNumber,
+    toBigNumberString,
+    getChainConfig,
+    getSaltFromKey,
+    calculateDomainSeparator,
+} = require('../common');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
@@ -45,8 +50,6 @@ const isValidCosmosAddress = (str) => {
 };
 
 const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'));
-
-const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
 const getSalt = (salt, contractName, chainNames) => fromHex(getSaltFromKey(salt || contractName.concat(chainNames)));
 
