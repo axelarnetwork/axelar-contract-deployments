@@ -66,7 +66,7 @@ const isNonEmptyString = (arg) => {
 };
 
 const isStringLowercase = (arg) => {
-    return isString(arg) && arg === arg.toLowerCase();
+    return isNonEmptyString(arg) && arg === arg.toLowerCase();
 };
 
 const isStringArray = (arr) => Array.isArray(arr) && arr.every(isString);
