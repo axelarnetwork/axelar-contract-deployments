@@ -426,7 +426,7 @@ const makeAxelarnetGatewayInstantiateMsg = (config, chainName) => {
     } = config;
     const chainConfig = getChainConfig(config, chainName);
 
-    const { axelarId: chainId } = chainConfig;
+    const { axelarId } = chainConfig;
 
     const {
         Router: { address: routerAddress },
@@ -438,7 +438,7 @@ const makeAxelarnetGatewayInstantiateMsg = (config, chainName) => {
 
     return {
         router_address: routerAddress,
-        chain_name: chainId,
+        chain_name: axelarId.toLowerCase(),
     };
 };
 
