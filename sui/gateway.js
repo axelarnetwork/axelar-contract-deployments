@@ -215,7 +215,7 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
 
 async function submitProof(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
-    const [ multisigSessionId ] = args;
+    const [multisigSessionId] = args;
     const { payload, status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
 
     if (!status.completed) {
@@ -243,16 +243,16 @@ async function submitProof(keypair, client, config, chain, contractConfig, args,
             ],
         });
     } else if (payload.messages) {
-            printInfo('Submitting approve_messages');
+        printInfo('Submitting approve_messages');
 
-            tx.moveCall({
-                target: `${packageId}::gateway::approve_messages`,
-                arguments: [
-                    tx.object(contractConfig.objects.Gateway),
-                    tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.payload)).toBytes()),
-                    tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.proof)).toBytes()),
-                ],
-            });
+        tx.moveCall({
+            target: `${packageId}::gateway::approve_messages`,
+            arguments: [
+                tx.object(contractConfig.objects.Gateway),
+                tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.payload)).toBytes()),
+                tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.proof)).toBytes()),
+            ],
+        });
     } else {
         throw new Error(`Unknown payload type: ${payload}`);
     }
