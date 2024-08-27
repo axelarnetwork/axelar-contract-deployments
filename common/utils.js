@@ -388,14 +388,18 @@ async function getDomainSeparator(config, chain, options) {
         throw new Error(`missing or invalid chain ID`);
     }
 
-    printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
-    // const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
     const expectedDomainSeparator = calculateDomainSeparator(chain.axelarId, routerAddress, chainId);
+    if (options.domainSeparator === 'offline') {
+        printInfo('Computed domain separator offline')
+        return expectedDomainSeparator;
+    }
 
-    // TODO: add domain separator prediction support to display before amplifier contracts are ready
-    // if (domainSeparator !== expectedDomainSeparator) {
-    //     throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
-    // }
+    printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
+    const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
+
+    if (domainSeparator !== expectedDomainSeparator) {
+        throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
+    }
 
     return expectedDomainSeparator;
 }
