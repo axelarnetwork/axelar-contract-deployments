@@ -27,6 +27,7 @@ const {
     getSingletonChannelId,
     getItsChannelId,
     getSquidChannelId,
+    checkSuiVersionMatch,
 } = require('./utils');
 
 /**
@@ -245,6 +246,9 @@ async function postDeploySquid(published, keypair, client, config, chain, option
 
 async function deploy(keypair, client, supportedContract, config, chain, options) {
     const { packageDir, packageName } = supportedContract;
+
+    // Print warning if version mismatch from defined version in version.json
+    checkSuiVersionMatch();
 
     // Deploy package
     const published = await deployPackage(packageDir, client, keypair, options);
