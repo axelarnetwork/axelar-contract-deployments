@@ -1,8 +1,6 @@
 use axelar_rkyv_encoding::types::Payload;
 use gmp_gateway::commands::OwnedCommand;
-use gmp_gateway::state::{
-    ApprovedMessageStatus, GatewayApprovedCommand, GatewayCommandStatus, RotateSignersStatus,
-};
+use gmp_gateway::state::{ApprovedMessageStatus, GatewayApprovedCommand};
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
 use solana_sdk::pubkey::Pubkey;
 use test_fixtures::account::CheckValidPDAInTests;
@@ -54,58 +52,7 @@ async fn succesfully_initialize_validate_message_command() {
         assert!(!gateway_approved_command.is_validate_message_executed());
         assert!(matches!(
             gateway_approved_command.status(),
-            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
-        ));
-    }
-}
-
-#[tokio::test]
-async fn succesfully_initialize_rotate_signers_message() {
-    // Setup
-    let SolanaAxelarIntegrationMetadata {
-        mut fixture,
-        signers,
-        gateway_root_pda,
-        domain_separator,
-        ..
-    } = SolanaAxelarIntegration::builder()
-        .initial_signer_weights(vec![10, 4])
-        .build()
-        .setup()
-        .await;
-
-    // Signer set is slightly different to prevent hash collisions because there's
-    // no random data
-    let verifier_set = make_signers(&[44], 44);
-    let payload = Payload::VerifierSet(verifier_set.verifier_set().clone());
-    let command = OwnedCommand::RotateSigners(verifier_set.verifier_set());
-
-    fixture
-        .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
-        .await;
-
-    // Action
-    let ixs = gateway_approved_command_ixs(&[command], gateway_root_pda, &fixture);
-    let gateway_approved_command_pdas = ixs.iter().map(|(pda, _)| *pda).collect::<Vec<_>>();
-    let ixs = ixs.into_iter().map(|(_, ix)| ix).collect::<Vec<_>>();
-    fixture.send_tx(&ixs).await;
-
-    // Assert
-    for pda in gateway_approved_command_pdas {
-        let account = fixture
-            .banks_client
-            .get_account(pda)
-            .await
-            .expect("call failed")
-            .expect("account not found");
-        let gateway_approved_command = account
-            .check_initialized_pda::<GatewayApprovedCommand>(&gmp_gateway::id())
-            .unwrap();
-        assert!(!gateway_approved_command.is_command_executed());
-        assert!(!gateway_approved_command.is_validate_message_executed());
-        assert!(matches!(
-            gateway_approved_command.status(),
-            GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
+            ApprovedMessageStatus::Pending
         ));
     }
 }
@@ -178,7 +125,7 @@ async fn succesfully_initialize_command_which_belongs_to_a_different_execute_dat
         assert!(!gateway_approved_command.is_validate_message_executed());
         assert!(matches!(
             gateway_approved_command.status(),
-            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
+            ApprovedMessageStatus::Pending
         ));
     }
 }

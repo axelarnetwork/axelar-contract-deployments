@@ -32,19 +32,19 @@ impl Processor {
 
         let (_canonical_pda, bump, seeds) =
             GatewayApprovedCommand::pda(gateway_root_pda.key, &command);
-        let comamnd = GatewayApprovedCommand::pending(bump, &command);
+        let command = GatewayApprovedCommand::pending(bump);
 
         // Check: Approved Message account is not initialized.
         approved_command_pda.check_uninitialized_pda()?;
         // Check: Approved message account uses the canonical bump.
-        comamnd.assert_valid_pda(&seeds, approved_command_pda.key);
+        command.assert_valid_pda(&seeds, approved_command_pda.key);
 
         program_utils::init_pda(
             payer,
             approved_command_pda,
             program_id,
             system_account,
-            comamnd,
+            command,
             &[seeds.as_ref(), &[bump]],
         )
     }

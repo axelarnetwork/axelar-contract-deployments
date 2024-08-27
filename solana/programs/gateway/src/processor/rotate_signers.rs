@@ -87,7 +87,7 @@ impl Processor {
         };
         let command = ArchivedCommand::from(new_verifier_set);
 
-        let mut approved_command_account = message_account
+        let approved_command_account = message_account
             .as_ref()
             .check_initialized_pda::<GatewayApprovedCommand>(program_id)?
             .command_valid_and_pending(gateway_root_pda.key, &command, message_account)?
@@ -125,8 +125,6 @@ impl Processor {
             return Err(ProgramError::InvalidArgument);
         }
 
-        // Set command state as executed
-        approved_command_account.set_signers_rotated_executed()?;
         gateway_config.auth_weighted.last_rotation_timestamp = current_time;
 
         // Save the updated approved message account

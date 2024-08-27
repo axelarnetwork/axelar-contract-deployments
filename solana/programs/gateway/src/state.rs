@@ -5,8 +5,6 @@ pub mod config;
 pub mod execute_data;
 pub mod verifier_set_tracker;
 
-pub use approved_command::{
-    ApprovedMessageStatus, GatewayApprovedCommand, GatewayCommandStatus, RotateSignersStatus,
-};
+pub use approved_command::{ApprovedMessageStatus, GatewayApprovedCommand};
 pub use config::GatewayConfig;
 pub use execute_data::GatewayExecuteData;

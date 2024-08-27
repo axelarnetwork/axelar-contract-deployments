@@ -10,7 +10,7 @@ use solana_program::program_error::ProgramError;
 use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
 
-use crate::commands::{AxelarMessage, Command, CommandKind};
+use crate::commands::{AxelarMessage, Command};
 use crate::error::GatewayError;
 
 /// Gateway Approved Command type.
@@ -18,19 +18,9 @@ use crate::error::GatewayError;
 #[repr(C)]
 pub struct GatewayApprovedCommand {
     /// Status of the command
-    status: GatewayCommandStatus,
+    status: ApprovedMessageStatus,
     /// The bump that was used to create the PDA
     pub bump: u8,
-}
-
-/// Differnet states of the command
-#[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
-pub enum GatewayCommandStatus {
-    /// The status of a single `ApprovedMessage` command
-    /// Maps to this [line in the Solidity Gateway](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/78fde453094074ca93ef7eea1e1395fba65ba4f6/contracts/AxelarGateway.sol#L525)
-    ApprovedMessage(ApprovedMessageStatus),
-    /// The status of a single `RotateSigners` command
-    RotateSigners(RotateSignersStatus),
 }
 
 /// After the command itself is marked as `Approved`, the command can be used
@@ -47,30 +37,13 @@ pub enum ApprovedMessageStatus {
     Executed,
 }
 
-/// Represents the state of a `RotateSigners` command that comes from the
-/// Axelar network.
-#[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
-pub enum RotateSignersStatus {
-    /// The state of the command before it has been approved
-    Pending,
-    /// `RotateSigners` has been called and the command has been executed
-    Executed,
-}
-
 impl GatewayApprovedCommand {
     /// Returns an pending command.
-    pub fn pending(bump: u8, command: &impl Command) -> Self {
-        let status = {
-            match command.kind() {
-                CommandKind::ApproveMessage => {
-                    GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
-                }
-                CommandKind::RotateSigner => {
-                    GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
-                }
-            }
-        };
-        Self { status, bump }
+    pub fn pending(bump: u8) -> Self {
+        Self {
+            status: ApprovedMessageStatus::Pending,
+            bump,
+        }
     }
 
     /// Ensures that the command is valid (seed hash matches) and is in a
@@ -114,52 +87,31 @@ impl GatewayApprovedCommand {
             return Err(GatewayError::GatewayCommandNotApproved.into());
         }
 
-        self.status = GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Executed);
+        self.status = ApprovedMessageStatus::Executed;
 
         Ok(())
     }
 
     /// Sets the command status as approved.
     pub fn set_ready_for_validate_message(&mut self) -> Result<(), ProgramError> {
-        if !matches!(
-            self.status,
-            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
-        ) {
+        if !matches!(self.status, ApprovedMessageStatus::Pending) {
             return Err(GatewayError::GatewayCommandStatusNotPending.into());
         }
-        self.status = GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Approved);
-
-        Ok(())
-    }
-    /// Sets the command status as executed.
-    pub fn set_signers_rotated_executed(&mut self) -> Result<(), ProgramError> {
-        if !matches!(
-            self.status,
-            GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
-        ) {
-            return Err(GatewayError::GatewayCommandStatusNotPending.into());
-        }
-        self.status = GatewayCommandStatus::RotateSigners(RotateSignersStatus::Executed);
+        self.status = ApprovedMessageStatus::Approved;
 
         Ok(())
     }
 
     /// returns `true` if this command was executed by the gateway.
     pub fn is_command_pending(&self) -> bool {
-        matches!(
-            self.status,
-            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Pending)
-                | GatewayCommandStatus::RotateSigners(RotateSignersStatus::Pending)
-        )
+        matches!(self.status, ApprovedMessageStatus::Pending)
     }
 
     /// Returns `true` if this command was executed by the gateway.
     pub fn is_command_executed(&self) -> bool {
         matches!(
             self.status,
-            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Executed)
-                | GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Approved)
-                | GatewayCommandStatus::RotateSigners(RotateSignersStatus::Executed)
+            ApprovedMessageStatus::Executed | ApprovedMessageStatus::Approved
         )
     }
 
@@ -167,23 +119,17 @@ impl GatewayApprovedCommand {
     /// destination program has called the
     /// [`GatewayInstructon::ValidateMessage`] instruction.
     pub fn is_validate_message_executed(&self) -> bool {
-        matches!(
-            self.status,
-            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Executed)
-        )
+        matches!(self.status, ApprovedMessageStatus::Executed)
     }
 
     /// Returns `true` if this command was approved. Done after the
     /// [`GatewayInstructon::ApproveMessages`] has been called.
     pub fn is_command_approved(&self) -> bool {
-        matches!(
-            self.status,
-            GatewayCommandStatus::ApprovedMessage(ApprovedMessageStatus::Approved)
-        )
+        matches!(self.status, ApprovedMessageStatus::Approved)
     }
 
     /// Returns the status of this command.
-    pub fn status(&self) -> &GatewayCommandStatus {
+    pub fn status(&self) -> &ApprovedMessageStatus {
         &self.status
     }
 
