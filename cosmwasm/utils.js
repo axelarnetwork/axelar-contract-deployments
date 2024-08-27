@@ -420,6 +420,28 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
     };
 };
 
+const makeAxelarnetGatewayInstantiateMsg = (config, chainName) => {
+    const {
+        axelar: { contracts },
+    } = config;
+    const chainConfig = getChainConfig(config, chainName);
+
+    const { axelarId: chainId } = chainConfig;
+
+    const {
+        Router: { address: routerAddress },
+    } = contracts;
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    return {
+        router_address: routerAddress,
+        chain_name: chainId,
+    };
+};
+
 const makeInstantiateMsg = (contractName, chainName, config) => {
     const {
         axelar: { contracts },
@@ -499,6 +521,14 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
             }
 
             return makeMultisigProverInstantiateMsg(config, chainName);
+        }
+
+        case 'AxelarnetGateway': {
+            if (!chainConfig) {
+                throw new Error('AxelarnetGateway requires chainNames option');
+            }
+
+            return makeAxelarnetGatewayInstantiateMsg(config, chainName);
         }
     }
 
