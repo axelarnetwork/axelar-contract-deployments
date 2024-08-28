@@ -1,7 +1,7 @@
 const { Command, Option } = require('commander');
 const { getWallet } = require('./utils');
 const { loadConfig } = require('../evm/utils');
-const { CHAIN_ENVIRONMENTS } = require('../common');
+const { addEnvOption } = require('../common');
 require('./cli-utils');
 
 async function processCommand(options, _, chain) {
@@ -13,9 +13,7 @@ if (require.main === module) {
 
     program.name('balances').description('Wallet balance');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment').choices(CHAIN_ENVIRONMENTS).default('testnet').makeOptionMandatory(true).env('ENV'),
-    );
+    addEnvOption(program);
 
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
 
