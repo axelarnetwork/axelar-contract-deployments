@@ -141,17 +141,28 @@ jobs:
 
       - name: Init Multisig
         run: |
+          # Create new addresses
           sui client new-address secp256k1 multisig1
           sui client new-address secp256k1 multisig2
-          KEY_1=$(sui keytool export --key-identity multisig1 --json | jq .key.publicBase64Key | sed 's/"//g')
-          KEY_2=$(sui keytool export --key-identity multisig2 --json | jq .key.publicBase64Key | sed 's/"//g')
-          ADDRESS_1=$(sui keytool export --key-identity multisig1 --json | jq .key.suiAddress | sed 's/"//g')
-          ADDRESS_2=$(sui keytool export --key-identity multisig2 --json | jq .key.suiAddress | sed 's/"//g')
-          MULTISIG_ADDRESS=$(sui keytool multi-sig-address --pks $KEY_1 $KEY_2 --weights 1 1 --threshold 1 --json | jq .multisigAddress | sed 's/"//g')
+
+          # Export keys and addresses
+          KEY_1=$(sui keytool export --key-identity multisig1 --json | jq -r .key.publicBase64Key)
+          KEY_2=$(sui keytool export --key-identity multisig2 --json | jq -r .key.publicBase64Key)
+          ADDRESS_1=$(sui keytool export --key-identity multisig1 --json | jq -r .key.suiAddress)
+          ADDRESS_2=$(sui keytool export --key-identity multisig2 --json | jq -r .key.suiAddress)
+
+          # Get multisig address
+          MULTISIG_ADDRESS=$(sui keytool multi-sig-address --pks $KEY_1 $KEY_2 --weights 1 1 --threshold 1 --json | jq -r .multisigAddress)
+
+          # Initialize multisig
           node sui/multisig.js --action init --threshold 1 --base64PublicKeys $KEY_1 $KEY_2 --schemeTypes secp256k1 secp256k1
+
+          # Faucet operations
           node sui/faucet.js --recipient $ADDRESS_1
           node sui/faucet.js --recipient $ADDRESS_2
           node sui/faucet.js --recipient $MULTISIG_ADDRESS
+
+          # Set environment variables
           echo "KEY_1=$KEY_1" >> $GITHUB_ENV
           echo "KEY_2=$KEY_2" >> $GITHUB_ENV
           echo "ADDRESS_1=$ADDRESS_1" >> $GITHUB_ENV
