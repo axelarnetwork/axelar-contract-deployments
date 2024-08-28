@@ -86,7 +86,7 @@ async function deploy(config, chain, options) {
     let proxyAddress;
 
     if (reuseProxy) {
-        proxyAddress = chain.contracts.AxelarGateway?.address;
+        proxyAddress = chain.contracts[contractName]?.address;
 
         if (proxyAddress === undefined) {
             throw new Error('Proxy address is missing in the config file');
@@ -112,15 +112,7 @@ async function deploy(config, chain, options) {
         printInfo('Predicted gateway proxy address', proxyAddress, chalk.cyan);
     }
 
-    let existingAddress;
-
-    for (const chainConfig of Object.values(config.chains)) {
-        existingAddress = chainConfig.contracts?.[contractName]?.address;
-
-        if (existingAddress !== undefined) {
-            break;
-        }
-    }
+    const existingAddress = chain.contracts[contractName]?.address
 
     if (existingAddress !== undefined && proxyAddress !== existingAddress) {
         printWarn(`Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} in chain configs.`);
