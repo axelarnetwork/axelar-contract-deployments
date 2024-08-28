@@ -44,7 +44,7 @@ async function initMultisigConfig(chain, options) {
     const signers = base64PublicKeys.map((key, i) => ({
         publicKey: key,
         weight: parseInt(weights[i]),
-        schemeType: options.scheme,
+        schemeType: options.schemeTypes[i],
     }));
 
     chain.multisig = {
