@@ -31,12 +31,10 @@ const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
-const prepareWallet = ({ mnemonic }) => DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
-const prepareClient = ({ axelar: { rpc, gasPrice } }, wallet) =>
-    SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice }).then((client) => {
-        return { wallet, client };
-    });
+const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
+    await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
@@ -76,55 +74,52 @@ const getChains = (config, { chainNames, instantiate2 }) => {
 
 const uploadContract = async (client, wallet, config, options) => {
     const { contractName, instantiate2, salt, chainNames } = options;
-    return wallet
-        .getAccounts()
-        .then(([account]) => {
-            const wasm = readWasmFile(options);
-            const {
-                axelar: { gasPrice, gasLimit },
-            } = config;
-            const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-            return client.upload(account.address, wasm, uploadFee).then(({ checksum, codeId }) => ({ checksum, codeId, account }));
-        })
-        .then(({ account, checksum, codeId }) => {
-            const address = instantiate2
-                ? instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainNames), 'axelar')
-                : null;
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
 
-            return { codeId, address };
-        });
+    const [account] = await wallet.getAccounts();
+    const wasm = readWasmFile(options);
+
+    const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+    const { checksum, codeId } = await client.upload(account.address, wasm, uploadFee);
+
+    const address = instantiate2
+        ? instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainNames), 'axelar')
+        : null;
+
+    return { codeId, address };
 };
 
-const instantiateContract = (client, wallet, initMsg, config, options) => {
+const instantiateContract = async (client, wallet, initMsg, config, options) => {
     const { contractName, salt, instantiate2, chainNames, admin } = options;
 
-    return wallet
-        .getAccounts()
-        .then(([account]) => {
-            const contractConfig = config.axelar.contracts[contractName];
+    const [account] = await wallet.getAccounts();
 
-            const {
-                axelar: { gasPrice, gasLimit },
-            } = config;
-            const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+    const contractConfig = config.axelar.contracts[contractName];
 
-            const contractLabel = getLabel(options);
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
+    const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
-            return instantiate2
-                ? client.instantiate2(
-                      account.address,
-                      contractConfig.codeId,
-                      getSalt(salt, contractName, chainNames),
-                      initMsg,
-                      contractLabel,
-                      initFee,
-                      { admin },
-                  )
-                : client.instantiate(account.address, contractConfig.codeId, initMsg, contractLabel, initFee, {
-                      admin,
-                  });
-        })
-        .then(({ contractAddress }) => contractAddress);
+    const contractLabel = getLabel(options);
+
+    const { contractAddress } = instantiate2
+        ? await client.instantiate2(
+              account.address,
+              contractConfig.codeId,
+              getSalt(salt, contractName, chainNames),
+              initMsg,
+              contractLabel,
+              initFee,
+              { admin },
+          )
+        : await client.instantiate(account.address, contractConfig.codeId, initMsg, contractLabel, initFee, {
+              admin,
+          });
+
+    return contractAddress;
 };
 
 const validateAddress = (address) => {
@@ -566,10 +561,9 @@ const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
     return codeId;
 };
 
-const instantiate2AddressForProposal = (client, contractConfig, { contractName, salt, chainNames, runAs }) => {
-    return client
-        .getCodeDetails(contractConfig.codeId)
-        .then(({ checksum }) => instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar'));
+const instantiate2AddressForProposal = async (client, contractConfig, { contractName, salt, chainNames, runAs }) => {
+    const { checksum } = await client.getCodeDetails(contractConfig.codeId);
+    return instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar');
 };
 
 const getInstantiatePermission = (accessType, addresses) => {
@@ -734,22 +728,19 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
-const submitProposal = (client, wallet, config, options, content) => {
-    return wallet
-        .getAccounts()
-        .then(([account]) => {
-            const {
-                axelar: { gasPrice, gasLimit },
-            } = config;
+const submitProposal = async (client, wallet, config, options, content) => {
+    const [account] = await wallet.getAccounts();
 
-            const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
 
-            const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-            return client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
-        })
-        .then(
-            ({ events }) => events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value,
-        );
+    const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
+
+    const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+    const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+
+    return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
 
 module.exports = {

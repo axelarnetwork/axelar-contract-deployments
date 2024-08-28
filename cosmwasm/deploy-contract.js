@@ -17,7 +17,7 @@ const {
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const upload = (client, wallet, chainName, config, options) => {
+const upload = async (client, wallet, chainName, config, options) => {
     const { reuseCodeId, contractName, fetchCodeId } = options;
     const {
         axelar: {
@@ -29,31 +29,28 @@ const upload = (client, wallet, chainName, config, options) => {
     if (!fetchCodeId && (!reuseCodeId || isNil(contractConfig.codeId))) {
         printInfo('Uploading contract binary');
 
-        return uploadContract(client, wallet, config, options)
-            .then(({ address, codeId }) => {
-                printInfo('Uploaded contract binary');
-                contractConfig.codeId = codeId;
+        const { address, codeId } = await uploadContract(client, wallet, config, options);
 
-                if (!address) {
-                    return;
-                }
+        printInfo('Uploaded contract binary');
+        contractConfig.codeId = codeId;
 
-                if (chainConfig) {
-                    contractConfig[chainConfig.axelarId] = {
-                        ...contractConfig[chainConfig.axelarId],
-                        address,
-                    };
-                } else {
-                    contractConfig.address = address;
-                }
+        if (!address) {
+            return;
+        }
 
-                printInfo('Expected contract address', address);
-            })
-            .then(() => ({ wallet, client }));
+        if (chainConfig) {
+            contractConfig[chainConfig.axelarId] = {
+                ...contractConfig[chainConfig.axelarId],
+                address,
+            };
+        } else {
+            contractConfig.address = address;
+        }
+
+        printInfo('Expected contract address', address);
+    } else {
+        printInfo('Skipping upload. Reusing previously uploaded bytecode');
     }
-
-    printInfo('Skipping upload. Reusing previously uploaded bytecode');
-    return Promise.resolve({ wallet, client });
 };
 
 const instantiate = async (client, wallet, chainName, config, options) => {
@@ -72,18 +69,18 @@ const instantiate = async (client, wallet, chainName, config, options) => {
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
-    return instantiateContract(client, wallet, initMsg, config, options).then((contractAddress) => {
-        if (chainConfig) {
-            contractConfig[chainConfig.axelarId] = {
-                ...contractConfig[chainConfig.axelarId],
-                address: contractAddress,
-            };
-        } else {
-            contractConfig.address = contractAddress;
-        }
+    const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
 
-        printInfo(`Instantiated ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
-    });
+    if (chainConfig) {
+        contractConfig[chainConfig.axelarId] = {
+            ...contractConfig[chainConfig.axelarId],
+            address: contractAddress,
+        };
+    } else {
+        contractConfig.address = contractAddress;
+    }
+
+    printInfo(`Instantiated ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
 };
 
 const main = async (options) => {
@@ -92,19 +89,20 @@ const main = async (options) => {
 
     const chains = getChains(config, options);
 
-    await prepareWallet(options)
-        .then((wallet) => prepareClient(config, wallet))
-        .then(({ wallet, client }) => upload(client, wallet, chains[0], config, options))
-        .then(({ wallet, client }) => {
-            if (uploadOnly || prompt(`Proceed with deployment on axelar?`, yes)) {
-                return;
-            }
+    const wallet = await prepareWallet(options);
+    const client = await prepareClient(config, wallet);
 
-            return chains.reduce((promise, chain) => {
-                return promise.then(() => instantiate(client, wallet, chain.toLowerCase(), config, options));
-            }, Promise.resolve());
-        })
-        .then(() => saveConfig(config, env));
+    await upload(client, wallet, chains[0], config, options);
+
+    if (uploadOnly || prompt(`Proceed with deployment on axelar?`, yes)) {
+        return;
+    }
+
+    for (const chain of chains) {
+        await instantiate(client, wallet, chain.toLowerCase(), config, options);
+    }
+
+    saveConfig(config, env);
 };
 
 const programHandler = () => {
