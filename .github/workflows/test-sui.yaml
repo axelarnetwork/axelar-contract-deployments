@@ -169,8 +169,8 @@ jobs:
 
       - name: Sign Tx File with Multisig Signer
         run: |
-          pk_1=$(sui keytool export --key-identity multisig-1 --json | jq .exportedPrivateKey | sed 's/"//g')
-          pk_2=$(sui keytool export --key-identity multisig-2 --json | jq .exportedPrivateKey | sed 's/"//g')
+          pk_1=$(sui keytool export --key-identity multisig1 --json | jq .exportedPrivateKey | sed 's/"//g')
+          pk_2=$(sui keytool export --key-identity multisig2 --json | jq .exportedPrivateKey | sed 's/"//g')
           node sui/multisig.js --action sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-1.json --offline --privateKey $pk_1
           node sui/multisig.js --action sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-2.json --offline --privateKey $pk_2
 
