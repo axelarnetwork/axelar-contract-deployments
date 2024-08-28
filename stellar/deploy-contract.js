@@ -5,6 +5,7 @@ const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const { getNetworkPassphrase, getWallet, prepareTransaction, sendTransaction, buildTransaction, estimateCost } = require('./utils');
+const { addEnvOption } = require('../common');
 require('./cli-utils');
 
 function getInitializeArgs(chain, contractName, wallet, options) {
@@ -108,13 +109,7 @@ function main() {
     const program = new Command();
     program.name('deploy-contract').description('Deploy Axelar Soroban contracts on Stellar');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
+    addEnvOption(program);
     program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').env('PRIVATE_KEY'));
     program.addOption(new Option('-v, --verbose', 'verbose output').default(false));
     program.addOption(new Option('--initialize', 'initialize the contract'));

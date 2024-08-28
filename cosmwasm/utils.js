@@ -56,8 +56,7 @@ const getSalt = (salt, contractName, chainNames) => fromHex(getSaltFromKey(salt 
 
 const getLabel = ({ contractName, label }) => label || contractName;
 
-const readWasmFile = ({ artifactPath, contractName, aarch64 }) =>
-    readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
+const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
 
 const getChains = (config, { chainNames, instantiate2 }) => {
     let chains = chainNames.split(',').map((str) => str.trim());
