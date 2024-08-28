@@ -2400,7 +2400,7 @@
         "rewardsDenom": "uaxl",
         "params": {
           "epoch_duration": "14400",
-          "rewards_per_epoch": "",
+          "rewards_per_epoch": "730000000",
           "participation_threshold": [
             "8",
             "10"
@@ -2442,10 +2442,8 @@
         }
       },
       "Gateway": {
-        "flow": {
-        },
-        "hedera": {
-        }
+        "flow": {},
+        "hedera": {}
       },
       "VotingVerifier": {
         "flow": {
