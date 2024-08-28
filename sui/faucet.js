@@ -16,7 +16,7 @@ async function processCommand(config, chain, options) {
         recipient,
     });
 
-    printInfo('Funds requested');
+    printInfo('Funds requested', recipient);
 }
 
 async function mainProcessor(options, processor) {
