@@ -3,8 +3,7 @@
 require('dotenv').config();
 const { isNil } = require('lodash');
 
-const { addEnvOption } = require('../common');
-const { isNumber, printInfo, loadConfig, saveConfig, prompt } = require('../evm/utils');
+const { isNumber, printInfo, loadConfig, saveConfig, prompt, getChainConfig } = require('../evm/utils');
 const {
     prepareWallet,
     prepareClient,
@@ -16,7 +15,7 @@ const {
 } = require('./utils');
 
 const { Command, Option } = require('commander');
-const { addCommonAmplifierOptions } = require('./cli-utils');
+const { addAmplifierOptions } = require('./cli-utils');
 
 const upload = (client, wallet, chainName, config, options) => {
     const { reuseCodeId, contractName, fetchCodeId } = options;
@@ -113,12 +112,8 @@ const programHandler = () => {
 
     program.name('upload-contract').description('Upload CosmWasm contracts');
 
-    addCommonAmplifierOptions(program);
+    addAmplifierOptions(program);
 
-    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
-    program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
-    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
     program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
     program.addOption(
         new Option(
