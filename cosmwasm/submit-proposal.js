@@ -21,7 +21,7 @@ const {
     instantiate2AddressForProposal,
     governanceAddress,
 } = require('./utils');
-const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../evm/utils');
+const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
