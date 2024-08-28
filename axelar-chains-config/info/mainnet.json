@@ -2383,6 +2383,98 @@
     "lcd": "https://lcd-axelar.imperator.co:443",
     "grpc": "grpc-axelar.imperator.co:2062",
     "tokenSymbol": "AXL",
-    "axelarscanApi": "https://api.axelarscan.io"
+    "axelarscanApi": "https://api.axelarscan.io",
+    "contracts": {
+      "ServiceRegistry": {
+        "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+      },
+      "Router": {
+        "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+      },
+      "NexusGateway": {
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r"
+      },
+      "Rewards": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "rewardsDenom": "uaxl",
+        "params": {
+          "epoch_duration": "14400",
+          "rewards_per_epoch": "",
+          "participation_threshold": [
+            "8",
+            "10"
+          ]
+        }
+      },
+      "Coordinator": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+      },
+      "Multisig": {
+        "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "blockExpiry": 10
+      },
+      "MultisigProver": {
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa"
+        },
+        "hedera": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa"
+        }
+      },
+      "Gateway": {
+        "flow": {
+        },
+        "hedera": {
+        }
+      },
+      "VotingVerifier": {
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 10000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55"
+        },
+        "hedera": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 10000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55"
+        }
+      }
+    }
   }
 }
