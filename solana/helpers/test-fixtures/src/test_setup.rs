@@ -2,12 +2,18 @@ use std::path::PathBuf;
 
 use axelar_message_primitives::command::U256;
 use axelar_message_primitives::DataPayload;
+use axelar_rkyv_encoding::rkyv::validation::validators::DefaultValidator;
+use axelar_rkyv_encoding::rkyv::CheckBytes;
 use axelar_rkyv_encoding::types::u128::U128;
-use axelar_rkyv_encoding::types::{ArchivedExecuteData, Message, Payload, VerifierSet};
+use axelar_rkyv_encoding::types::{Message, Payload, VerifierSet};
 use borsh::BorshDeserialize;
 use gateway::commands::OwnedCommand;
 use gateway::hasher_impl;
 use gateway::instructions::{InitializeConfig, VerifierSetWraper};
+use gateway::processor::ToBytes;
+use gateway::state::execute_data::{
+    ApproveMessagesVariant, ArchivedGatewayExecuteData, ExecuteDataVariant, RotateSignersVariant,
+};
 use gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
 use itertools::Itertools;
 use solana_program::hash::Hash;
@@ -432,7 +438,7 @@ impl TestFixture {
             .unwrap();
     }
 
-    pub async fn init_execute_data(
+    async fn init_approve_messages_execute_data(
         &mut self,
         gateway_root_pda: &Pubkey,
         payload: Payload,
@@ -440,25 +446,81 @@ impl TestFixture {
         domain_separator: &[u8; 32],
     ) -> (Pubkey, Vec<u8>) {
         let (raw_data, _) = prepare_execute_data(payload, signers, domain_separator);
-
         let execute_data_pda = self
-            .init_execute_data_with_custom_data(gateway_root_pda, &raw_data, domain_separator)
+            .init_approve_messages_execute_data_with_custom_data(
+                gateway_root_pda,
+                &raw_data,
+                domain_separator,
+            )
             .await;
 
         (execute_data_pda, raw_data)
     }
 
-    pub async fn init_execute_data_with_custom_data(
+    async fn init_rotate_signers_execute_data(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        payload: Payload,
+        signers: &SigningVerifierSet,
+        domain_separator: &[u8; 32],
+    ) -> (Pubkey, Vec<u8>) {
+        let (raw_data, _) = prepare_execute_data(payload, signers, domain_separator);
+        let execute_data_pda = self
+            .init_rotate_signers_execute_data_with_custom_data(
+                gateway_root_pda,
+                &raw_data,
+                domain_separator,
+            )
+            .await;
+
+        (execute_data_pda, raw_data)
+    }
+
+    pub async fn init_execute_data(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        payload: Payload,
+        signers: &SigningVerifierSet,
+        domain_separator: &[u8; 32],
+    ) -> (Pubkey, Vec<u8>) {
+        match &payload {
+            Payload::Messages(_) => {
+                self.init_approve_messages_execute_data(
+                    gateway_root_pda,
+                    payload,
+                    signers,
+                    domain_separator,
+                )
+                .await
+            }
+            Payload::VerifierSet(_) => {
+                self.init_rotate_signers_execute_data(
+                    gateway_root_pda,
+                    payload,
+                    signers,
+                    domain_separator,
+                )
+                .await
+            }
+        }
+    }
+
+    pub async fn init_approve_messages_execute_data_with_custom_data<'a>(
         &mut self,
         gateway_root_pda: &Pubkey,
         raw_data: &[u8],
         domain_separator: &[u8; 32],
     ) -> Pubkey {
-        let execute_data = GatewayExecuteData::new(raw_data, gateway_root_pda, domain_separator)
-            .expect("valid execute_data raw bytes");
-        let (execute_data_pda, _) = execute_data.pda(gateway_root_pda);
+        let execute_data = GatewayExecuteData::<ApproveMessagesVariant>::new(
+            raw_data,
+            gateway_root_pda,
+            domain_separator,
+        )
+        .expect("valid execute_data raw bytes");
+        let (execute_data_pda, _) =
+            gateway::get_execute_data_pda(gateway_root_pda, &execute_data.hash_decoded_contents());
 
-        let (ix, _) = gateway::instructions::initialize_execute_data(
+        let (ix, _) = gateway::instructions::initialize_approve_messages_execute_data(
             self.payer.pubkey(),
             *gateway_root_pda,
             domain_separator,
@@ -474,19 +536,67 @@ impl TestFixture {
 
         // Confidence check: the ExecuteData account bytes contain the exact
         // execute_data raw bytes
-        self.validate_recently_inscribed_execute_data(execute_data_pda, raw_data)
-            .await;
+        let bytes = execute_data.to_bytes().unwrap();
+        self.validate_recently_inscribed_execute_data::<ApproveMessagesVariant>(
+            execute_data_pda,
+            &bytes,
+        )
+        .await;
 
         execute_data_pda
     }
 
-    async fn validate_recently_inscribed_execute_data(
+    pub async fn init_rotate_signers_execute_data_with_custom_data(
+        &mut self,
+        gateway_root_pda: &Pubkey,
+        raw_data: &[u8],
+        domain_separator: &[u8; 32],
+    ) -> Pubkey {
+        let execute_data = GatewayExecuteData::<RotateSignersVariant>::new(
+            raw_data,
+            gateway_root_pda,
+            domain_separator,
+        )
+        .expect("valid execute_data raw bytes");
+        let (execute_data_pda, _) =
+            gateway::get_execute_data_pda(gateway_root_pda, &execute_data.hash_decoded_contents());
+
+        let (ix, _) = gateway::instructions::initialize_rotate_signers_execute_data(
+            self.payer.pubkey(),
+            *gateway_root_pda,
+            domain_separator,
+            raw_data,
+        )
+        .unwrap();
+
+        self.send_tx(&[
+            ComputeBudgetInstruction::set_compute_unit_limit(1399850_u32),
+            ix,
+        ])
+        .await;
+
+        // Confidence check: the ExecuteData account bytes contain the exact
+        // execute_data raw bytes
+        let bytes = execute_data.to_bytes().unwrap();
+        self.validate_recently_inscribed_execute_data::<RotateSignersVariant>(
+            execute_data_pda,
+            &bytes,
+        )
+        .await;
+
+        execute_data_pda
+    }
+
+    async fn validate_recently_inscribed_execute_data<'a, T>(
         &mut self,
         execute_data_pda: Pubkey,
-        raw_data: &[u8],
-    ) {
+        raw_data: &'a [u8],
+    ) where
+        T: ExecuteDataVariant + 'a,
+        T::ArchivedData: CheckBytes<DefaultValidator<'a>>,
+    {
         // Confidence check: execute_data can be deserialized
-        assert!(ArchivedExecuteData::from_bytes(raw_data).is_ok());
+        assert!(ArchivedGatewayExecuteData::<T>::from_bytes(raw_data).is_ok());
 
         let account = self
             .banks_client

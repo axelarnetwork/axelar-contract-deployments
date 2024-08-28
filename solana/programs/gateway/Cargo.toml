@@ -31,6 +31,7 @@ program-utils.workspace = true
 axelar-message-primitives.workspace = true
 axelar-rkyv-encoding.workspace = true
 hex.workspace = true
+rkyv.workspace = true
 
 [dev-dependencies]
 solana-client.workspace = true

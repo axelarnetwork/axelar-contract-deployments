@@ -3551,6 +3551,7 @@ dependencies = [
  "num-derive",
  "num-traits",
  "program-utils",
+ "rkyv",
  "sha3 0.10.8",
  "solana-client",
  "solana-logger",

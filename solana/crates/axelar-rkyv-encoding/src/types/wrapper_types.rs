@@ -73,10 +73,6 @@ impl ArchivedHasheableMessageVec {
         &self.len_be_bytes
     }
 
-    pub(crate) fn inner_vec(&self) -> &ArchivedVec<ArchivedMessage> {
-        &self.inner_vec
-    }
-
     pub fn iter(&self) -> std::slice::Iter<'_, ArchivedMessage> {
         self.inner_vec.iter()
     }

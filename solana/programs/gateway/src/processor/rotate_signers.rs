@@ -16,8 +16,9 @@ use super::Processor;
 use crate::axelar_auth_weighted::SignerSetMetadata;
 use crate::commands::ArchivedCommand;
 use crate::events::GatewayEvent;
+use crate::state::execute_data::{ArchivedGatewayExecuteData, RotateSignersVariant};
 use crate::state::verifier_set_tracker::VerifierSetTracker;
-use crate::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
+use crate::state::{GatewayApprovedCommand, GatewayConfig};
 use crate::{assert_valid_verifier_set_tracker_pda, hasher_impl, seed_prefixes};
 
 impl Processor {
@@ -75,16 +76,14 @@ impl Processor {
             .check_initialized_pda_without_deserialization(program_id)?;
 
         let borrowed_account_data = gateway_approve_messages_execute_data_pda.data.borrow();
-        let execute_data = GatewayExecuteData::new(
-            *borrowed_account_data,
-            gateway_root_pda.key,
-            &gateway_config.domain_separator,
-        )?;
 
-        let Some(new_verifier_set) = execute_data.verifier_set() else {
-            msg!("Invalid command provided. 'rotate-signers' expected.");
-            return Err(ProgramError::InvalidArgument);
+        let Ok(execute_data) =
+            ArchivedGatewayExecuteData::<RotateSignersVariant>::from_bytes(&borrowed_account_data)
+        else {
+            return Err(ProgramError::InvalidAccountData);
         };
+
+        let new_verifier_set = &execute_data.data;
         let command = ArchivedCommand::from(new_verifier_set);
 
         let approved_command_account = message_account
@@ -100,7 +99,7 @@ impl Processor {
         let signer_data = gateway_config
             .validate_proof(
                 execute_data.payload_hash,
-                execute_data.proof(),
+                &execute_data.proof,
                 &signer_verifier_set,
             )
             .map_err(|err| {

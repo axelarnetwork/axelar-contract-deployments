@@ -2,7 +2,7 @@
 
 use std::borrow::Cow;
 
-use axelar_rkyv_encoding::types::ArchivedMessage;
+use axelar_rkyv_encoding::types::{ArchivedMessage, HasheableMessageVec, VerifierSet};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
@@ -16,7 +16,7 @@ use solana_program::{msg, system_instruction, system_program};
 use crate::check_program_account;
 use crate::commands::ArchivedCommand;
 use crate::error::GatewayError;
-use crate::instructions::{GatewayInstruction};
+use crate::instructions::GatewayInstruction;
 
 mod approve_messages;
 mod call_contract;
@@ -67,9 +67,21 @@ impl Processor {
                 msg!("Instruction: Initialize Config");
                 Self::process_initialize_config(program_id, accounts, init_config)
             }
-            GatewayInstruction::InitializeExecuteData { execute_data } => {
-                msg!("Instruction: Initialize Execute Data");
-                Self::process_initialize_execute_data(program_id, accounts, execute_data)
+            GatewayInstruction::InitializeApproveMessagesExecuteData { execute_data } => {
+                msg!("Instruction: Initialize Approve Messages Execute Data");
+                Self::process_initialize_execute_data::<HasheableMessageVec>(
+                    program_id,
+                    accounts,
+                    execute_data,
+                )
+            }
+            GatewayInstruction::InitializeRotateSignersExecuteData { execute_data } => {
+                msg!("Instruction: Initialize Rotate Signers Execute Data");
+                Self::process_initialize_execute_data::<VerifierSet>(
+                    program_id,
+                    accounts,
+                    execute_data,
+                )
             }
             GatewayInstruction::InitializePendingCommand(command) => {
                 msg!("Instruction: Initialize Pending Command");

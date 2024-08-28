@@ -21,3 +21,23 @@ impl Payload {
         Self::VerifierSet(verifier_set)
     }
 }
+
+impl TryFrom<Payload> for HasheableMessageVec {
+    type Error = ();
+    fn try_from(value: Payload) -> Result<Self, Self::Error> {
+        match value {
+            Payload::Messages(messages) => Ok(messages),
+            _ => Err(()),
+        }
+    }
+}
+
+impl TryFrom<Payload> for VerifierSet {
+    type Error = ();
+    fn try_from(value: Payload) -> Result<Self, Self::Error> {
+        match value {
+            Payload::VerifierSet(verifier_set) => Ok(verifier_set),
+            _ => Err(()),
+        }
+    }
+}

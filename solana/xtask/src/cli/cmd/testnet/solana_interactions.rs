@@ -125,21 +125,51 @@ pub(crate) fn solana_call_executable(
 }
 
 #[tracing::instrument(skip_all)]
-pub(crate) fn solana_init_execute_data(
+pub(crate) fn solana_init_approve_messages_execute_data(
     solana_keypair: &Keypair,
     gateway_root_pda: solana_sdk::pubkey::Pubkey,
     execute_data: &[u8],
     solana_rpc_client: &solana_client::rpc_client::RpcClient,
 ) -> solana_sdk::pubkey::Pubkey {
     tracing::info!("solana gateway.initialize_execute_data()");
-    let (ix, execute_data) = gmp_gateway::instructions::initialize_execute_data(
+    let (ix, execute_data) = gmp_gateway::instructions::initialize_approve_messages_execute_data(
         solana_keypair.pubkey(),
         gateway_root_pda,
         &solana_domain_separator(),
         execute_data,
     )
     .unwrap();
-    let (execute_data_pda, ..) = execute_data.pda(&gateway_root_pda);
+    let (execute_data_pda, ..) =
+        gmp_gateway::get_execute_data_pda(&gateway_root_pda, &execute_data.hash_decoded_contents());
+    tracing::info!(?execute_data_pda, "execute data pda");
+    send_solana_tx(
+        solana_rpc_client,
+        &[
+            ComputeBudgetInstruction::set_compute_unit_limit(1_399_850_u32),
+            ix,
+        ],
+        solana_keypair,
+    );
+    execute_data_pda
+}
+
+#[tracing::instrument(skip_all)]
+pub(crate) fn solana_init_rotate_signers_execute_data(
+    solana_keypair: &Keypair,
+    gateway_root_pda: solana_sdk::pubkey::Pubkey,
+    execute_data: &[u8],
+    solana_rpc_client: &solana_client::rpc_client::RpcClient,
+) -> solana_sdk::pubkey::Pubkey {
+    tracing::info!("solana gateway.initialize_execute_data()");
+    let (ix, execute_data) = gmp_gateway::instructions::initialize_rotate_signers_execute_data(
+        solana_keypair.pubkey(),
+        gateway_root_pda,
+        &solana_domain_separator(),
+        execute_data,
+    )
+    .unwrap();
+    let (execute_data_pda, ..) =
+        gmp_gateway::get_execute_data_pda(&gateway_root_pda, &execute_data.hash_decoded_contents());
     tracing::info!(?execute_data_pda, "execute data pda");
     send_solana_tx(
         solana_rpc_client,

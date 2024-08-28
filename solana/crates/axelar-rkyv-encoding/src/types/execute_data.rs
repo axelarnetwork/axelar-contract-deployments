@@ -4,10 +4,10 @@ use rkyv::bytecheck::{self, CheckBytes, StructCheckError};
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{AlignedVec, Archive, Deserialize, Serialize};
 
+use super::ArchivedHasheableMessageVec;
 use crate::hasher::AxelarRkyv256Hasher;
 use crate::types::{
-    ArchivedMessage, ArchivedPayload, ArchivedProof, ArchivedVerifierSet, Payload, Proof,
-    VerifierSet,
+    ArchivedPayload, ArchivedProof, ArchivedVerifierSet, Payload, Proof, VerifierSet,
 };
 use crate::visitor::{ArchivedVisitor, Visitor};
 
@@ -41,9 +41,9 @@ impl ArchivedExecuteData {
         &self.proof
     }
 
-    pub fn messages(&self) -> Option<&[ArchivedMessage]> {
+    pub fn messages(&self) -> Option<&ArchivedHasheableMessageVec> {
         match &self.payload {
-            ArchivedPayload::Messages(messages) => Some(messages.inner_vec().as_slice()),
+            ArchivedPayload::Messages(messages) => Some(messages),
             _ => None,
         }
     }

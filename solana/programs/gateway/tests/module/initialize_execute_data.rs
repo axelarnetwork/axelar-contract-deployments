@@ -1,5 +1,6 @@
-use axelar_rkyv_encoding::types::Payload;
+use axelar_rkyv_encoding::types::{HasheableMessageVec, Payload, VerifierSet};
 use gmp_gateway::instructions::InitializeConfig;
+use gmp_gateway::state::execute_data::ArchivedGatewayExecuteData;
 use gmp_gateway::state::{GatewayConfig, GatewayExecuteData};
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
 use solana_sdk::account::Account;
@@ -32,17 +33,23 @@ async fn test_successfylly_initialize_execute_data() {
 
     let payload = Payload::new_messages(make_messages(1));
     let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
-    let gateway_execute_data =
-        GatewayExecuteData::new(&raw_execute_data, &gateway_root_pda, &domain_separator)
-            .expect("valid GatewayExecuteData");
+    let gateway_execute_data = GatewayExecuteData::<HasheableMessageVec>::new(
+        &raw_execute_data,
+        &gateway_root_pda,
+        &domain_separator,
+    )
+    .expect("valid GatewayExecuteData");
 
-    let (execute_data_pda, _) = gateway_execute_data.pda(&gateway_root_pda);
+    let (execute_data_pda, _) = gmp_gateway::get_execute_data_pda(
+        &gateway_root_pda,
+        &gateway_execute_data.hash_decoded_contents(),
+    );
 
     // Action
     fixture
         .send_tx(&[
             ComputeBudgetInstruction::set_compute_unit_limit(1_399_850_u32),
-            gmp_gateway::instructions::initialize_execute_data(
+            gmp_gateway::instructions::initialize_approve_messages_execute_data(
                 fixture.payer.pubkey(),
                 gateway_root_pda,
                 &domain_separator,
@@ -60,14 +67,12 @@ async fn test_successfylly_initialize_execute_data() {
         .await
         .unwrap()
         .expect("metadata");
+
     assert_eq!(account.owner, gmp_gateway::id());
-    let deserialized_gateway_execute_data = GatewayExecuteData::new(
-        account.data.as_slice(),
-        &gateway_root_pda,
-        &domain_separator,
-    )
-    .expect("GatewayExecuteData can be deserialized");
-    assert_eq!(deserialized_gateway_execute_data, gateway_execute_data);
+    let deserialized_gateway_execute_data =
+        ArchivedGatewayExecuteData::<HasheableMessageVec>::from_bytes(account.data.as_slice())
+            .expect("GatewayExecuteData can be deserialized");
+    assert_eq!(*deserialized_gateway_execute_data, gateway_execute_data);
 }
 
 #[tokio::test]
@@ -90,13 +95,19 @@ async fn test_succesfully_initialize_rotate_signers() {
     let payload = Payload::VerifierSet(new_signers.verifier_set());
 
     let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
-    let gateway_execute_data =
-        GatewayExecuteData::new(&raw_execute_data, &gateway_root_pda, &domain_separator)
-            .expect("valid GatewayExecuteData");
-    let (execute_data_pda, _) = gateway_execute_data.pda(&gateway_root_pda);
+    let gateway_execute_data = GatewayExecuteData::<VerifierSet>::new(
+        &raw_execute_data,
+        &gateway_root_pda,
+        &domain_separator,
+    )
+    .expect("valid GatewayExecuteData");
+    let (execute_data_pda, _) = gmp_gateway::get_execute_data_pda(
+        &gateway_root_pda,
+        &gateway_execute_data.hash_decoded_contents(),
+    );
 
     // Action
-    let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
+    let (ix, _) = gmp_gateway::instructions::initialize_rotate_signers_execute_data(
         fixture.payer.pubkey(),
         gateway_root_pda,
         &domain_separator,
@@ -119,13 +130,10 @@ async fn test_succesfully_initialize_rotate_signers() {
         .unwrap()
         .expect("metadata");
     assert_eq!(account.owner, gmp_gateway::id());
-    let deserialized_gateway_execute_data = GatewayExecuteData::new(
-        account.data.as_slice(),
-        &gateway_root_pda,
-        &domain_separator,
-    )
-    .expect("GatewayExecuteData can be deserialized");
-    assert_eq!(deserialized_gateway_execute_data, gateway_execute_data);
+    let deserialized_gateway_execute_data =
+        ArchivedGatewayExecuteData::<VerifierSet>::from_bytes(account.data.as_slice())
+            .expect("GatewayExecuteData can be deserialized");
+    assert_eq!(*deserialized_gateway_execute_data, gateway_execute_data);
 }
 
 #[tokio::test]
@@ -159,7 +167,7 @@ async fn test_fail_on_invalid_root_pda() {
     let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
 
     // Action
-    let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
+    let (ix, _) = gmp_gateway::instructions::initialize_approve_messages_execute_data(
         fixture.payer.pubkey(),
         fake_gateway_root_pda,
         &domain_separator,
@@ -210,7 +218,7 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
     let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
 
     // Action
-    let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
+    let (ix, _) = gmp_gateway::instructions::initialize_approve_messages_execute_data(
         fixture.payer.pubkey(),
         fake_gateway_root_pda,
         // gateway_root_pda,
@@ -248,7 +256,7 @@ async fn test_fail_on_uninitialized_root_pda() {
     let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
 
     // Action
-    let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
+    let (ix, _) = gmp_gateway::instructions::initialize_approve_messages_execute_data(
         fixture.payer.pubkey(),
         uninitialized_gateway_config_pda,
         &domain_separator,
@@ -293,7 +301,7 @@ async fn test_fail_on_already_initialized_execute_data_account() {
         .await;
 
     // We try to init the execute data account again with the same data
-    let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
+    let (ix, _) = gmp_gateway::instructions::initialize_approve_messages_execute_data(
         fixture.payer.pubkey(),
         gateway_root_pda,
         &domain_separator,

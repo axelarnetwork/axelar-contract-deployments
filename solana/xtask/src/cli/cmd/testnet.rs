@@ -128,7 +128,7 @@ pub(crate) async fn evm_to_solana(
     );
 
     // update execute data
-    let execute_data_pda = solana_interactions::solana_init_execute_data(
+    let execute_data_pda = solana_interactions::solana_init_approve_messages_execute_data(
         &solana_keypair,
         gateway_root_pda,
         &execute_data,

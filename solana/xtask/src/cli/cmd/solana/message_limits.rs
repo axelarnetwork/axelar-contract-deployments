@@ -7,7 +7,7 @@ use std::sync::Arc;
 use axelar_message_primitives::command::U256;
 use axelar_message_primitives::{DataPayload, EncodingScheme};
 use axelar_rkyv_encoding::test_fixtures::random_weight;
-use axelar_rkyv_encoding::types::{Message, Payload};
+use axelar_rkyv_encoding::types::{HasheableMessageVec, Message, Payload};
 use gmp_gateway::axelar_auth_weighted::RotationDelaySecs;
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::instructions::{InitializeConfig, VerifierSetWraper};
@@ -239,15 +239,18 @@ async fn try_iteration_with_params(
         .unzip();
     let (payload, commands) = payload_and_commands(&messages);
     let (raw_execute_data, _) = prepare_execute_data(payload, signers.as_ref(), &DOMAIN_SEPARATOR);
-    let execute_data = GatewayExecuteData::new(
+    let execute_data = GatewayExecuteData::<HasheableMessageVec>::new(
         &raw_execute_data,
         gateway_config_pda.as_ref(),
         &DOMAIN_SEPARATOR,
     )
     .expect("Failed to create execute data");
-    let (execute_data_pda, _) = execute_data.pda(gateway_config_pda.as_ref());
+    let (execute_data_pda, _) = gmp_gateway::get_execute_data_pda(
+        gateway_config_pda.as_ref(),
+        &execute_data.hash_decoded_contents(),
+    );
 
-    let (ix, _) = gmp_gateway::instructions::initialize_execute_data(
+    let (ix, _) = gmp_gateway::instructions::initialize_approve_messages_execute_data(
         keypair.pubkey(),
         *gateway_config_pda,
         &DOMAIN_SEPARATOR,

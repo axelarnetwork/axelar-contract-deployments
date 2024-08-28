@@ -693,7 +693,7 @@ async fn fail_if_invalid_signatures() {
     // Signature malformation finished
     // ------
     let execute_data_pda = fixture
-        .init_execute_data_with_custom_data(
+        .init_approve_messages_execute_data_with_custom_data(
             &gateway_root_pda,
             &execute_data_raw_bytes,
             &domain_separator,
@@ -748,7 +748,7 @@ async fn fail_if_invalid_signer_set_signed_command_batch() {
         &domain_separator,
     );
     let execute_data_pda = fixture
-        .init_execute_data_with_custom_data(
+        .init_approve_messages_execute_data_with_custom_data(
             &gateway_root_pda,
             &gateway_execute_data_raw,
             &domain_separator,
@@ -812,7 +812,7 @@ async fn fail_if_subset_without_expected_weight_signed_batch() {
         &domain_separator,
     );
     let execute_data_pda = fixture
-        .init_execute_data_with_custom_data(
+        .init_approve_messages_execute_data_with_custom_data(
             &gateway_root_pda,
             &gateway_execute_data_raw,
             &domain_separator,
@@ -873,7 +873,7 @@ async fn succeed_if_majority_of_subset_without_expected_weight_signed_batch() {
         &domain_separator,
     );
     let execute_data_pda = fixture
-        .init_execute_data_with_custom_data(
+        .init_approve_messages_execute_data_with_custom_data(
             &gateway_root_pda,
             &gateway_execute_data_raw,
             &domain_separator,
@@ -924,7 +924,7 @@ async fn fail_if_signed_commands_differ_from_the_execute_ones() {
         &domain_separator,
     );
     let execute_data_pda = fixture
-        .init_execute_data_with_custom_data(
+        .init_approve_messages_execute_data_with_custom_data(
             &gateway_root_pda,
             &gateway_execute_data_raw,
             &domain_separator,
@@ -982,7 +982,7 @@ async fn fail_if_quorum_differs_between_registered_and_signed() {
         &domain_separator,
     );
     let execute_data_pda = fixture
-        .init_execute_data_with_custom_data(
+        .init_approve_messages_execute_data_with_custom_data(
             &gateway_root_pda,
             &gateway_execute_data_raw,
             &domain_separator,

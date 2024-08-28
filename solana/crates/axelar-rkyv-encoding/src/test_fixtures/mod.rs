@@ -156,13 +156,15 @@ pub fn random_weight() -> U128 {
     U128::from_le(weight_buffer)
 }
 
+pub fn random_messages() -> Vec<Message> {
+    (0..OsRng.gen_range(1..10))
+        .map(|_| random_message())
+        .collect()
+}
+
 pub fn random_payload() -> Payload {
     if OsRng.gen_bool(0.5) {
-        Payload::new_messages(
-            (0..OsRng.gen_range(1..10))
-                .map(|_| random_message())
-                .collect(),
-        )
+        Payload::new_messages(random_messages())
     } else {
         Payload::new_verifier_set(random_valid_verifier_set())
     }

@@ -12,8 +12,9 @@ use solana_program::pubkey::Pubkey;
 use super::Processor;
 use crate::commands::ArchivedCommand;
 use crate::events::GatewayEvent;
+use crate::state::execute_data::{ApproveMessagesVariant, ArchivedGatewayExecuteData};
 use crate::state::verifier_set_tracker::VerifierSetTracker;
-use crate::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
+use crate::state::{GatewayApprovedCommand, GatewayConfig};
 
 impl Processor {
     /// Approves an array of messages, signed by the Axelar signers.
@@ -45,23 +46,23 @@ impl Processor {
         gateway_approve_messages_execute_data_pda
             .check_initialized_pda_without_deserialization(program_id)?;
         let borrowed_account_data = gateway_approve_messages_execute_data_pda.data.borrow();
-        let execute_data = GatewayExecuteData::new(
-            *borrowed_account_data,
-            gateway_root_pda.key,
-            &gateway_config.domain_separator,
-        )?;
+
+        let Ok(execute_data) = ArchivedGatewayExecuteData::<ApproveMessagesVariant>::from_bytes(
+            &borrowed_account_data[..],
+        ) else {
+            msg!("Failed to deserialize execute_data bytes");
+            return Err(ProgramError::InvalidAccountData);
+        };
 
         // Check: proof operators are known.
-        gateway_config
-            .validate_proof(
-                execute_data.payload_hash,
-                execute_data.proof(),
-                &verifier_set_tracker,
-            )
-            .map_err(|err| {
-                msg!("Proof validation failed: {:?}", err);
-                ProgramError::InvalidArgument
-            })?;
+        if let Err(err) = gateway_config.validate_proof(
+            execute_data.payload_hash,
+            &execute_data.proof,
+            &verifier_set_tracker,
+        ) {
+            msg!("Proof validation failed: {:?}", err);
+            return Err(ProgramError::InvalidArgument);
+        }
 
         approve_messages(accounts_iter, execute_data, program_id, gateway_root_pda)?;
         Ok(())
@@ -70,17 +71,14 @@ impl Processor {
 
 fn approve_messages<'a, 'b>(
     accounts_iter: impl Iterator<Item = &'a AccountInfo<'b>>,
-    execute_data: GatewayExecuteData<'_>,
+    execute_data: &ArchivedGatewayExecuteData<ApproveMessagesVariant>,
     program_id: &Pubkey,
     gateway_root_pda: &AccountInfo<'_>,
 ) -> Result<(), ProgramError>
 where
     'b: 'a,
 {
-    let Some(messages) = execute_data.messages() else {
-        msg!("Non-approve command provided to 'approve-messages'");
-        return Err(ProgramError::InvalidArgument);
-    };
+    let messages = &execute_data.data;
 
     for item in accounts_iter.zip_longest(messages.iter()) {
         let EitherOrBoth::Both(message_account, axelar_message) = item else {

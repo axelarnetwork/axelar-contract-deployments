@@ -1,10 +1,11 @@
-use crate::types::{
-    ArchivedCrossChainId, ArchivedExecuteData, ArchivedMessage, ArchivedPayload, ArchivedProof,
-    ArchivedPublicKey, ArchivedSignature, ArchivedU128, ArchivedVerifierSet,
-    ArchivedWeightedSigner, CrossChainId, Message, Payload, PublicKey, VerifierSet, U128,
-};
 #[cfg(test)]
-use crate::types::{ExecuteData, Proof, Signature, WeightedSigner};
+use crate::types::ExecuteData;
+use crate::types::{
+    ArchivedCrossChainId, ArchivedExecuteData, ArchivedHasheableMessageVec, ArchivedMessage,
+    ArchivedPayload, ArchivedProof, ArchivedPublicKey, ArchivedSignature, ArchivedU128,
+    ArchivedVerifierSet, ArchivedWeightedSigner, CrossChainId, HasheableMessageVec, Message,
+    Payload, Proof, PublicKey, Signature, VerifierSet, WeightedSigner, U128,
+};
 
 const CHAIN_NAME_DELIMITER: &[u8] = b"-";
 
@@ -16,7 +17,6 @@ pub trait Visitor<'a> {
         self.visit_proof(proof);
     }
 
-    #[cfg(test)]
     fn visit_proof(&mut self, proof: &'a Proof) {
         let Proof {
             signers_with_signatures,
@@ -32,7 +32,6 @@ pub trait Visitor<'a> {
         self.visit_u64(proof.nonce_be_bytes());
     }
 
-    #[cfg(test)]
     fn visit_weighted_signature(&mut self, pubkey: &'a PublicKey, signature: &'a WeightedSigner) {
         let WeightedSigner { signature, weight } = signature;
         self.visit_public_key(pubkey);
@@ -42,7 +41,6 @@ pub trait Visitor<'a> {
         self.visit_u128(weight);
     }
 
-    #[cfg(test)]
     fn visit_signature(&mut self, signature: &'a Signature) {
         match signature {
             Signature::EcdsaRecoverable(signature) => {
@@ -60,15 +58,19 @@ pub trait Visitor<'a> {
         match payload {
             Payload::Messages(messages) => {
                 self.tag(b"messages");
-                self.prefix_length(messages.len_be_bytes());
-                for message in messages.iter() {
-                    self.visit_message(message);
-                }
+                self.visit_messages(messages)
             }
             Payload::VerifierSet(verifier_set) => {
                 self.tag(b"verifier_set");
                 self.visit_verifier_set(verifier_set)
             }
+        }
+    }
+
+    fn visit_messages(&mut self, messages: &'a HasheableMessageVec) {
+        self.prefix_length(messages.len_be_bytes());
+        for message in messages.iter() {
+            self.visit_message(message);
         }
     }
 
@@ -184,15 +186,19 @@ pub trait ArchivedVisitor<'a> {
         match payload {
             ArchivedPayload::Messages(messages) => {
                 self.tag(b"messages");
-                self.prefix_length(messages.len_be_bytes());
-                for message in messages.iter() {
-                    self.visit_message(message);
-                }
+                self.visit_messages(messages)
             }
             ArchivedPayload::VerifierSet(verifier_set) => {
                 self.tag(b"verifier_set");
                 self.visit_verifier_set(verifier_set)
             }
+        }
+    }
+
+    fn visit_messages(&mut self, messages: &'a ArchivedHasheableMessageVec) {
+        self.prefix_length(messages.len_be_bytes());
+        for message in messages.iter() {
+            self.visit_message(message);
         }
     }
 

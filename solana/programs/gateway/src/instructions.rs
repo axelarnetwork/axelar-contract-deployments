@@ -1,6 +1,7 @@
 //! Instruction types
 
 use std::error::Error;
+use std::fmt::Debug;
 
 use axelar_rkyv_encoding::types::{ArchivedVerifierSet, VerifierSet};
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
@@ -13,6 +14,9 @@ use solana_program::pubkey::Pubkey;
 use crate::axelar_auth_weighted::{RotationDelaySecs, SignerSetEpoch};
 use crate::commands::{MessageWrapper, OwnedCommand};
 use crate::hasher_impl;
+use crate::state::execute_data::{
+    ApproveMessagesVariant, ExecuteDataVariant, RotateSignersVariant,
+};
 use crate::state::{GatewayApprovedCommand, GatewayExecuteData};
 
 /// Instructions supported by the gateway program.
@@ -69,11 +73,11 @@ pub enum GatewayInstruction {
     /// 3..N [WRITE] uninitialized VerifierSetTracker PDA accounts
     InitializeConfig(InitializeConfig<(VerifierSetWraper, PdaBump)>),
 
-    /// Initializes an Execute Data PDA account.
+    /// Initializes an Approve Messages Execute Data PDA account.
     /// The Execute Data is a batch of commands that will be executed by the
     /// Execute instruction (separate step). The `execute_data` will be
     /// decoded on-chain to verify the data is correct and generate the proper
-    /// hash, and store it in the Execute Data PDA account.
+    /// hash, and store it in the Approve Messages Execute Data PDA account.
     ///
     /// It's expected that for each command in the batch, there is a
     /// corresponding `GatewayApprovedCommand` account. The sequence of
@@ -81,9 +85,26 @@ pub enum GatewayInstruction {
     ///
     /// Accounts expected by this instruction:
     /// 0. [WRITE, SIGNER] Funding account
-    /// 1. [WRITE] Execute Data PDA account
+    /// 1. [WRITE] Approve Messages Execute Data PDA account
     /// 2. [] System Program account
-    InitializeExecuteData {
+    InitializeApproveMessagesExecuteData {
+        /// The execute data that will be decoded.
+        /// We decode it on-chain so we can verify the data is correct and
+        /// generate the proper hash.
+        execute_data: Vec<u8>,
+    },
+
+    /// Initializes a Rotate Signers Execute Data PDA account.
+    /// The Execute Data is a batch of commands that will be executed by the
+    /// Execute instruction (separate step). The `execute_data` will be
+    /// decoded on-chain to verify the data is correct and generate the proper
+    /// hash, and store it in the Rotate Signers Execute Data PDA account.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [WRITE, SIGNER] Funding account
+    /// 1. [WRITE] Rotate Signers Execute Data PDA account
+    /// 2. [] System Program account
+    InitializeRotateSignersExecuteData {
         /// The execute data that will be decoded.
         /// We decode it on-chain so we can verify the data is correct and
         /// generate the proper hash.
@@ -371,24 +392,31 @@ pub fn initialize_pending_command(
     })
 }
 
-/// Creates a [`GatewayInstruction::InitializeExecuteData`] instruction.
-pub fn initialize_execute_data<'b>(
+fn initialize_gateway_execute_data<T>(
     payer: Pubkey,
     gateway_root_pda: Pubkey,
     domain_separator: &[u8; 32],
-    // The encoded data that will be decoded on-chain.
-    raw_execute_data: &'b [u8],
-) -> Result<(Instruction, GatewayExecuteData<'b>), ProgramError> {
+    instruction: GatewayInstruction,
+) -> Result<(Instruction, GatewayExecuteData<T>), ProgramError>
+where
+    T: ExecuteDataVariant,
+{
+    let raw_execute_data = match &instruction {
+        GatewayInstruction::InitializeApproveMessagesExecuteData { execute_data } => execute_data,
+        GatewayInstruction::InitializeRotateSignersExecuteData { execute_data } => execute_data,
+        _ => return Err(ProgramError::InvalidInstructionData),
+    };
+
     // We decode the data off-chain so we can find its PDA.
     let decoded_execute_data =
         GatewayExecuteData::new(raw_execute_data, &gateway_root_pda, domain_separator)?;
-    let (execute_data_pda, _) = decoded_execute_data.pda(&gateway_root_pda);
+    let (execute_data_pda, _) = crate::get_execute_data_pda(
+        &gateway_root_pda,
+        &decoded_execute_data.hash_decoded_contents(),
+    );
+
     // We store the raw data so we can verify it on-chain.
-    let data = to_vec(&GatewayInstruction::InitializeExecuteData {
-        // TODO: Try to avoid allocating the data twice here, as both `borsh::to_vec`
-        // and `std::slice::to_vec` copy the execute_data bytes into new vectors.
-        execute_data: raw_execute_data.to_vec(),
-    })?;
+    let data = to_vec(&instruction)?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -405,6 +433,37 @@ pub fn initialize_execute_data<'b>(
         },
         decoded_execute_data,
     ))
+}
+/// Creates a [`GatewayInstruction::InitializeApproveMessagesExecuteData`]
+/// instruction.
+pub fn initialize_approve_messages_execute_data(
+    payer: Pubkey,
+    gateway_root_pda: Pubkey,
+    domain_separator: &[u8; 32],
+    // The encoded data that will be decoded on-chain.
+    raw_execute_data: &[u8],
+) -> Result<(Instruction, GatewayExecuteData<ApproveMessagesVariant>), ProgramError> {
+    let instruction = GatewayInstruction::InitializeApproveMessagesExecuteData {
+        execute_data: raw_execute_data.to_vec(),
+    };
+
+    initialize_gateway_execute_data(payer, gateway_root_pda, domain_separator, instruction)
+}
+
+/// Creates a [`GatewayInstruction::InitializeRotateSignersExecuteData`]
+/// instruction.
+pub fn initialize_rotate_signers_execute_data(
+    payer: Pubkey,
+    gateway_root_pda: Pubkey,
+    domain_separator: &[u8; 32],
+    // The encoded data that will be decoded on-chain.
+    raw_execute_data: &[u8],
+) -> Result<(Instruction, GatewayExecuteData<RotateSignersVariant>), ProgramError> {
+    let instruction = GatewayInstruction::InitializeRotateSignersExecuteData {
+        execute_data: raw_execute_data.to_vec(),
+    };
+
+    initialize_gateway_execute_data(payer, gateway_root_pda, domain_separator, instruction)
 }
 
 /// Creates a [`GatewayInstruction::InitializeConfig`] instruction.

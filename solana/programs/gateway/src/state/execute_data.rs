@@ -1,120 +1,235 @@
 //! Module for the `GatewayExecuteData` account type.
-
 use std::borrow::Cow;
+use std::fmt::Debug;
 
-use axelar_rkyv_encoding::types::{
-    ArchivedExecuteData, ArchivedMessage, ArchivedProof, ArchivedVerifierSet,
+use axelar_rkyv_encoding::hasher::AxelarRkyv256Hasher;
+use axelar_rkyv_encoding::rkyv::bytecheck::{self, CheckBytes, StructCheckError};
+use axelar_rkyv_encoding::rkyv::ser::serializers::{
+    AlignedSerializer, AllocScratch, CompositeSerializer, FallbackScratch, HeapScratch,
+    SharedSerializeMap,
 };
+use axelar_rkyv_encoding::types::{
+    ArchivedHasheableMessageVec, ArchivedVerifierSet, ExecuteData, HasheableMessageVec, Payload,
+    Proof, VerifierSet,
+};
+use axelar_rkyv_encoding::visitor::Visitor;
+use rkyv::validation::validators::{DefaultValidator, DefaultValidatorError};
+use rkyv::{AlignedVec, Archive, Deserialize, Serialize};
 use solana_program::pubkey::Pubkey;
 
 use crate::error::GatewayError;
 use crate::hasher_impl;
 use crate::processor::ToBytes;
 
+/// Hash of the data the within the ExecuteData + the proof.
+pub type ExecuteDataHash = [u8; 32];
+
+/// Data for the `ApproveMessages` command.
+pub type ApproveMessagesVariant = HasheableMessageVec;
+
+/// Data for the `RotateSigners` command.
+pub type RotateSignersVariant = VerifierSet;
+
+/// Trait required for types that can be used as a variant for data related
+/// to a command.
+pub trait ExecuteDataVariant:
+    Archive<Archived = Self::ArchivedData>
+    + TryFrom<Payload>
+    + Visitable
+    + PartialEq
+    + Eq
+    + Serialize<
+        CompositeSerializer<
+            AlignedSerializer<AlignedVec>,
+            FallbackScratch<HeapScratch<0>, AllocScratch>,
+            SharedSerializeMap,
+        >,
+    > + Debug
+{
+    /// The archived version of the data.
+    type ArchivedData: Debug + PartialEq + Eq;
+}
+
+impl ExecuteDataVariant for ApproveMessagesVariant {
+    type ArchivedData = ArchivedHasheableMessageVec;
+}
+impl ExecuteDataVariant for RotateSignersVariant {
+    type ArchivedData = ArchivedVerifierSet;
+}
+
 /// Gateway Execute Data type.
-/// Represents the execution data for a gateway transaction.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[repr(C)]
-pub struct GatewayExecuteData<'a> {
-    /// `rkyv`-archived bytes for the `execute_data` value produced by the
-    /// `multisig-prover` contract.
-    pub inner: &'a ArchivedExecuteData,
+/// Represents the execution data for an ApproveMessages or a RotateSigners
+/// gateway transaction.
+#[derive(Archive, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[archive(compare(PartialEq))]
+#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+pub struct GatewayExecuteData<T>
+where
+    T: ExecuteDataVariant,
+{
+    /// The list of messages to verify or the new verifier set
+    pub data: T,
+
+    /// The proof signed by the Axelar signers for this command.
+    pub proof: Proof,
 
     /// Pre-computed message payload hash
     pub payload_hash: [u8; 32],
 
     /// The bump seed for the PDA account.
     pub bump: u8,
-
-    /// The original bytes that form `Self.inner`
-    original_execute_data: &'a [u8],
 }
 
-impl ToBytes for GatewayExecuteData<'_> {
+impl<T> ToBytes for GatewayExecuteData<T>
+where
+    T: ExecuteDataVariant,
+{
     fn to_bytes(&self) -> Result<Cow<'_, [u8]>, GatewayError> {
-        Ok(Cow::Borrowed(self.original_execute_data))
+        let bytes: Vec<u8> = rkyv::to_bytes::<_, 0>(self)
+            .map_err(|_| GatewayError::ByteSerializationError)?
+            .to_vec();
+
+        Ok(Cow::Owned(bytes))
     }
 }
 
-impl<'a> GatewayExecuteData<'a> {
+impl<T> GatewayExecuteData<T>
+where
+    T: ExecuteDataVariant,
+{
     /// Creates a new `GatewayExecuteData` struct.
     pub fn new(
-        data: &'a [u8],
+        data: &[u8],
         gateway_root_pda: &Pubkey,
         domain_separator: &[u8; 32],
-    ) -> Result<GatewayExecuteData<'a>, GatewayError> {
-        let execute_data = match ArchivedExecuteData::from_bytes(data) {
-            Ok(execute_data) => execute_data,
-            Err(err) => {
-                solana_program::msg!("Failed to deserialize execute_data bytes {:?}", err);
-                return Err(GatewayError::MalformedProof);
-            }
+    ) -> Result<GatewayExecuteData<T>, GatewayError> {
+        let Ok(execute_data) = ExecuteData::from_bytes(data) else {
+            return Err(GatewayError::MalformedProof);
         };
 
-        let payload_hash = execute_data.internal_payload_hash(domain_separator, hasher_impl());
+        let payload_hash = axelar_rkyv_encoding::hash_payload(
+            domain_separator,
+            &execute_data.proof.verifier_set(),
+            &execute_data.payload,
+            hasher_impl(),
+        );
+
         let mut gateway_execute_data = Self {
-            inner: execute_data,
+            data: execute_data
+                .payload
+                .try_into()
+                .map_err(|_| GatewayError::ByteSerializationError)?,
+            proof: execute_data.proof,
             payload_hash,
             bump: 0, // bump will be set after we derive the PDA
-            original_execute_data: data,
         };
-        let (_pubkey, bump) = gateway_execute_data.pda(gateway_root_pda);
+
+        let hash = gateway_execute_data.hash_decoded_contents();
+        let (_pubkey, bump) = crate::get_execute_data_pda(gateway_root_pda, &hash);
         gateway_execute_data.bump = bump;
 
         Ok(gateway_execute_data)
     }
 
-    /// Finds a PDA for this account. Returns its Pubkey, the canonical bump and
-    /// the seeds used to derive them.
-    pub fn pda(&self, gateway_root_pda: &Pubkey) -> (Pubkey, u8) {
-        let (pubkey, bump) = Pubkey::find_program_address(
-            &[
-                gateway_root_pda.as_ref(),
-                self.inner.hash(hasher_impl()).as_slice(),
-            ],
-            &crate::ID,
-        );
-        (pubkey, bump)
+    /// Returns hash of the contents from the decoded ExecuteData.
+    pub fn hash_decoded_contents(&self) -> [u8; 32] {
+        let mut hasher = hasher_impl();
+        self.data.accept(&mut hasher);
+        Visitor::visit_proof(&mut hasher, &self.proof);
+        hasher.result().into()
     }
+}
 
-    /// Asserts that the PDA for this account is valid.
-    pub fn assert_valid_pda(&self, gateway_root_pda: &Pubkey, expected_pubkey: &Pubkey) {
-        let (derived_pubkey, _bump) = self.pda(gateway_root_pda);
-        assert_eq!(
-            &derived_pubkey, expected_pubkey,
-            "invalid pda for the gateway execute data account"
-        );
+impl<'a, T> ArchivedGatewayExecuteData<T>
+where
+    T: ExecuteDataVariant,
+    T::ArchivedData: CheckBytes<DefaultValidator<'a>>,
+{
+    /// Tries to interpret bytes as an archived ApproveMessagesExecuteData.
+    pub fn from_bytes(
+        bytes: &'a [u8],
+    ) -> Result<&Self, rkyv::validation::CheckArchiveError<StructCheckError, DefaultValidatorError>>
+    {
+        rkyv::check_archived_root::<GatewayExecuteData<T>>(bytes)
     }
+}
 
-    /// Returns the archived proof for the internal execute_data value.
-    pub fn proof(&self) -> &ArchivedProof {
-        self.inner.proof()
+/// Trait for types that can be visited by a `Visitor`.
+pub trait Visitable {
+    /// Accepts a visitor to visit the implementing type.
+    fn accept<'a, V: Visitor<'a>>(&'a self, visitor: &mut V);
+}
+
+impl Visitable for ApproveMessagesVariant {
+    fn accept<'a, V: Visitor<'a>>(&'a self, visitor: &mut V) {
+        visitor.visit_messages(self)
     }
+}
 
-    /// Returns the archived message array for the internal execute_data value,
-    /// if it has one.
-    pub fn messages(&self) -> Option<&[ArchivedMessage]> {
-        self.inner.messages()
-    }
-
-    /// Returns the proposed verifier set for the internal execute_data value,
-    /// if it has one.
-    pub fn verifier_set(&self) -> Option<&ArchivedVerifierSet> {
-        self.inner.verifier_set()
+impl Visitable for RotateSignersVariant {
+    fn accept<'a, V: Visitor<'a>>(&'a self, visitor: &mut V) {
+        visitor.visit_verifier_set(self)
     }
 }
 
 #[test]
-fn test_gateway_execute_data_roundtrip() {
-    use axelar_rkyv_encoding::test_fixtures::random_valid_execute_data_and_verifier_set;
+fn test_gateway_approve_messages_execute_data_roundtrip() {
+    use axelar_rkyv_encoding::test_fixtures::{
+        random_messages, random_valid_execute_data_and_verifier_set_for_payload,
+    };
+    use axelar_rkyv_encoding::types::{HasheableMessageVec, Payload};
+
     let domain_separator = [5; 32];
     let gateway_root_pda = Pubkey::new_unique();
-    let (execute_data, _) = random_valid_execute_data_and_verifier_set(&domain_separator);
+    let payload = Payload::new_messages(random_messages());
+    let (execute_data, _) =
+        random_valid_execute_data_and_verifier_set_for_payload(&domain_separator, payload);
+    let raw_data = execute_data.to_bytes::<0>().unwrap();
+
+    let gateway_execute_data = GatewayExecuteData::<HasheableMessageVec>::new(
+        &raw_data,
+        &gateway_root_pda,
+        &domain_separator,
+    )
+    .unwrap();
+    let serialized_gateway_execute_data = ToBytes::to_bytes(&gateway_execute_data).unwrap();
+
+    let execute_data_pda = ArchivedGatewayExecuteData::<HasheableMessageVec>::from_bytes(
+        &serialized_gateway_execute_data[..],
+    )
+    .unwrap();
+
+    let original_messages: HasheableMessageVec = execute_data.payload.try_into().unwrap();
+
+    assert_eq!(execute_data_pda.proof, execute_data.proof);
+    assert_eq!(execute_data_pda.data, original_messages);
+}
+
+#[test]
+fn test_gateway_rotate_signers_execute_data_roundtrip() {
+    use axelar_rkyv_encoding::test_fixtures::{
+        random_valid_execute_data_and_verifier_set_for_payload, random_valid_verifier_set,
+    };
+    use axelar_rkyv_encoding::types::{Payload, VerifierSet};
+
+    let domain_separator = [5; 32];
+    let gateway_root_pda = Pubkey::new_unique();
+    let payload = Payload::new_verifier_set(random_valid_verifier_set());
+    let (execute_data, _) =
+        random_valid_execute_data_and_verifier_set_for_payload(&domain_separator, payload);
     let raw_data = execute_data.to_bytes::<0>().unwrap();
 
     let gateway_execute_data =
-        GatewayExecuteData::new(&raw_data, &gateway_root_pda, &domain_separator).unwrap();
+        GatewayExecuteData::<VerifierSet>::new(&raw_data, &gateway_root_pda, &domain_separator)
+            .unwrap();
     let serialized_gateway_execute_data = ToBytes::to_bytes(&gateway_execute_data).unwrap();
 
-    assert_eq!(*serialized_gateway_execute_data, *raw_data);
+    let execute_data_pda =
+        ArchivedGatewayExecuteData::<VerifierSet>::from_bytes(&serialized_gateway_execute_data[..])
+            .unwrap();
+
+    let original_set: VerifierSet = execute_data.payload.try_into().unwrap();
+
+    assert_eq!(execute_data_pda.proof, execute_data.proof);
+    assert_eq!(execute_data_pda.data, original_set);
 }
