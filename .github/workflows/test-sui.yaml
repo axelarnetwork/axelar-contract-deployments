@@ -139,7 +139,44 @@ jobs:
 
       ###### Command: Multisig ######
 
-      # TODO: Add multisig tests
+      - name: Init Multisig
+        run: |
+          sui client new-address secp256k1 multisig1
+          sui client new-address secp256k1 multisig2
+          KEY_1=$(sui keytool export --key-identity multisig-1 --json | jq .key.publicBase64Key | sed 's/"//g')
+          KEY_2=$(sui keytool export --key-identity multisig-2 --json | jq .key.publicBase64Key | sed 's/"//g')
+          ADDRESS_1=$(sui keytool export --key-identity multisig-1 --json | jq .key.suiAddress | sed 's/"//g')
+          ADDRESS_2=$(sui keytool export --key-identity multisig-2 --json | jq .key.suiAddress | sed 's/"//g')
+          MULTISIG_ADDRESS=$(sui keytool multi-sig-address --pks $KEY_1 $KEY_2 --weights 1 1 --threshold 1 --json | jq .multisigAddress | sed 's/"//g')
+          node sui/multisig.js --action init --threshold 1 --base64PublicKeys $KEY_1 $KEY_2 --schemeTypes secp256k1 secp256k1
+          node sui/faucet.js --recipient $ADDRESS_1
+          node sui/faucet.js --recipient $ADDRESS_2
+          node sui/faucet.js --recipient $MULTISIG_ADDRESS
+          echo "KEY_1=$KEY_1" >> $GITHUB_ENV
+          echo "KEY_2=$KEY_2" >> $GITHUB_ENV
+          echo "ADDRESS_1=$ADDRESS_1" >> $GITHUB_ENV
+          echo "ADDRESS_2=$ADDRESS_2" >> $GITHUB_ENV
+          echo "MULTISIG_ADDRESS=$MULTISIG_ADDRESS" >> $GITHUB_ENV
+
+      - name: Transfer Upgrade Cap to Multisig Address
+        run: |
+          upgrade_cap=$(cat axelar-chains-config/info/local.json | jq -r '.sui.contracts.AxelarGateway.objects.UpgradeCap')
+          node sui/transfer-object.js --objectId $upgrade_cap --recipient $MULTISIG_ADDRESS
+
+      - name: Generate Unsigned Tx File
+        run: |
+          node sui/deploy-contract.js upgrade AxelarGateway any_upgrade --offline --txFilePath ./tx-upgrade.json --sender $MULTISIG_ADDRESS
+
+      - name: Sign Tx File with Multisig Signer
+        run: |
+          pk_1=$(sui keytool export --key-identity multisig-1 --json | jq .exportedPrivateKey | sed 's/"//g')
+          pk_2=$(sui keytool export --key-identity multisig-2 --json | jq .exportedPrivateKey | sed 's/"//g')
+          node sui/multisig.js --action sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-1.json --offline --privateKey $pk_1
+          node sui/multisig.js --action sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-2.json --offline --privateKey $pk_2
+
+      - name: Submit Signed Tx File
+        run: |
+          node sui/multisig.js --txBlockPath ./tx-upgrade.json --signatureFilePath ./combined.json --action combine --signatures signature-1.json signature-2.json
 
       ###### Command: Transfer Object ######
       - name: Transfer Object
