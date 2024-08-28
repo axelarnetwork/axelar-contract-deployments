@@ -143,10 +143,10 @@ jobs:
         run: |
           sui client new-address secp256k1 multisig1
           sui client new-address secp256k1 multisig2
-          KEY_1=$(sui keytool export --key-identity multisig-1 --json | jq .key.publicBase64Key | sed 's/"//g')
-          KEY_2=$(sui keytool export --key-identity multisig-2 --json | jq .key.publicBase64Key | sed 's/"//g')
-          ADDRESS_1=$(sui keytool export --key-identity multisig-1 --json | jq .key.suiAddress | sed 's/"//g')
-          ADDRESS_2=$(sui keytool export --key-identity multisig-2 --json | jq .key.suiAddress | sed 's/"//g')
+          KEY_1=$(sui keytool export --key-identity multisig1 --json | jq .key.publicBase64Key | sed 's/"//g')
+          KEY_2=$(sui keytool export --key-identity multisig2 --json | jq .key.publicBase64Key | sed 's/"//g')
+          ADDRESS_1=$(sui keytool export --key-identity multisig1 --json | jq .key.suiAddress | sed 's/"//g')
+          ADDRESS_2=$(sui keytool export --key-identity multisig2 --json | jq .key.suiAddress | sed 's/"//g')
           MULTISIG_ADDRESS=$(sui keytool multi-sig-address --pks $KEY_1 $KEY_2 --weights 1 1 --threshold 1 --json | jq .multisigAddress | sed 's/"//g')
           node sui/multisig.js --action init --threshold 1 --base64PublicKeys $KEY_1 $KEY_2 --schemeTypes secp256k1 secp256k1
           node sui/faucet.js --recipient $ADDRESS_1
