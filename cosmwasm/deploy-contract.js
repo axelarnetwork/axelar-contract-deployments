@@ -3,7 +3,7 @@
 require('dotenv').config();
 const { isNil } = require('lodash');
 
-const { isNumber, printInfo, loadConfig, saveConfig, prompt, getChainConfig } = require('../evm/utils');
+const { isNumber, printInfo, loadConfig, saveConfig, prompt, getChainConfig } = require('../common');
 const {
     prepareWallet,
     prepareClient,
