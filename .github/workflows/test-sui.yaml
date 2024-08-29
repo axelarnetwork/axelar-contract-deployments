@@ -1,6 +1,6 @@
 name: Test Sui
 
-on: 
+on:
   pull_request:
     paths:
       - sui/**
