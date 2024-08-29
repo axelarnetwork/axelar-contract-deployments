@@ -152,8 +152,6 @@ jobs:
           # Export keys and addresses
           KEY_1=$(sui keytool export --key-identity multisig1 --json | jq -r .key.publicBase64Key)
           KEY_2=$(sui keytool export --key-identity multisig2 --json | jq -r .key.publicBase64Key)
-          ADDRESS_1=$(sui keytool export --key-identity multisig1 --json | jq -r .key.suiAddress)
-          ADDRESS_2=$(sui keytool export --key-identity multisig2 --json | jq -r .key.suiAddress)
 
           # Get multisig address
           MULTISIG_ADDRESS=$(sui keytool multi-sig-address --pks $KEY_1 $KEY_2 --weights 1 1 --threshold 1 --json | jq -r .multisigAddress)
@@ -165,10 +163,6 @@ jobs:
           node sui/faucet.js --recipient $MULTISIG_ADDRESS
 
           # Set environment variables
-          echo "KEY_1=$KEY_1" >> $GITHUB_ENV
-          echo "KEY_2=$KEY_2" >> $GITHUB_ENV
-          echo "ADDRESS_1=$ADDRESS_1" >> $GITHUB_ENV
-          echo "ADDRESS_2=$ADDRESS_2" >> $GITHUB_ENV
           echo "MULTISIG_ADDRESS=$MULTISIG_ADDRESS" >> $GITHUB_ENV
 
       - name: Transfer Upgrade Cap to Multisig Address
