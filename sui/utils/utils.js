@@ -2,7 +2,8 @@
 
 const { ethers } = require('hardhat');
 const toml = require('toml');
-const { printInfo, printError } = require('../../common/utils');
+const { execSync } = require('child_process');
+const { printInfo, printError, printWarn } = require('../../common/utils');
 const {
     BigNumber,
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
@@ -71,6 +72,33 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
 const findPublishedObject = (published, packageDir, contractName) => {
     const packageId = published.packageId;
     return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageDir}::${contractName}`);
+};
+
+const getInstalledSuiVersion = () => {
+    const suiVersion = execSync('sui --version').toString().trim();
+    return parseVersion(suiVersion);
+};
+
+const getDefinedSuiVersion = () => {
+    const version = fs.readFileSync(`${__dirname}/../version.json`, 'utf8');
+    const suiVersion = JSON.parse(version).SUI_VERSION;
+    return parseVersion(suiVersion);
+};
+
+const parseVersion = (version) => {
+    const versionMatch = version.match(/\d+\.\d+\.\d+/);
+    return versionMatch[0];
+};
+
+const checkSuiVersionMatch = () => {
+    const installedVersion = getInstalledSuiVersion();
+    const definedVersion = getDefinedSuiVersion();
+
+    if (installedVersion !== definedVersion) {
+        printWarn('Version mismatch detected:');
+        printWarn(`- Installed SUI version: ${installedVersion}`);
+        printWarn(`- Version used for tests: ${definedVersion}`);
+    }
 };
 
 const readMovePackageName = (moveDir) => {
@@ -220,6 +248,7 @@ module.exports = {
     paginateAll,
     suiPackageAddress,
     suiClockAddress,
+    checkSuiVersionMatch,
     findOwnedObjectId,
     getBcsBytesByObjectId,
     deployPackage,

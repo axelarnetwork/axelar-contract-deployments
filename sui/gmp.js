@@ -1,9 +1,8 @@
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { saveConfig, printInfo } = require('../common/utils');
+const { loadConfig, saveConfig, printInfo } = require('../common/utils');
 const {
-    loadConfig,
     getBcsBytesByObjectId,
     addBaseOptions,
     addOptionsToCommands,
@@ -22,9 +21,9 @@ async function sendCommand(keypair, client, contracts, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
     const params = options.params;
 
-    const [testConfig, gasServiceConfig] = contracts;
+    const [exampleConfig, gasServiceConfig] = contracts;
     const gasServiceObjectId = gasServiceConfig.objects.GasService;
-    const singletonObjectId = testConfig.objects.Singleton;
+    const singletonObjectId = exampleConfig.objects.Singleton;
 
     const unitAmount = getUnitAmount(feeAmount);
     const walletAddress = keypair.toSuiAddress();
@@ -34,7 +33,7 @@ async function sendCommand(keypair, client, contracts, args, options) {
     const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
 
     tx.moveCall({
-        target: `${testConfig.address}::test::send_call`,
+        target: `${exampleConfig.address}::gmp::send_call`,
         arguments: [
             tx.object(singletonObjectId),
             tx.object(gasServiceObjectId),
@@ -53,18 +52,18 @@ async function sendCommand(keypair, client, contracts, args, options) {
 }
 
 async function execute(keypair, client, contracts, args, options) {
-    const [testConfig, , axelarGatewayConfig] = contracts;
+    const [exampleConfig, , axelarGatewayConfig] = contracts;
 
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
     const gatewayObjectId = axelarGatewayConfig.objects.Gateway;
     const discoveryObjectId = axelarGatewayConfig.objects.RelayerDiscovery;
 
-    // Get the channel id from the options or use the channel id from the deployed test contract object.
-    const channelId = options.channelId || testConfig.objects.channelId;
+    // Get the channel id from the options or use the channel id from the deployed Example contract object.
+    const channelId = options.channelId || exampleConfig.objects.ChannelId;
 
     if (!channelId) {
-        throw new Error('Please provide either a channel id (--channelId) or deploy the test contract');
+        throw new Error('Please provide either a channel id (--channelId) or deploy the Example contract');
     }
 
     // Get Discovery table id from discovery object
@@ -151,7 +150,7 @@ async function processCommand(command, chain, args, options) {
 
     await printWalletInfo(keypair, client, chain, options);
 
-    const contracts = [chain.contracts.Test, chain.contracts.GasService, chain.contracts.AxelarGateway];
+    const contracts = [chain.contracts.Example, chain.contracts.GasService, chain.contracts.AxelarGateway];
 
     await command(keypair, client, contracts, args, options);
 }
