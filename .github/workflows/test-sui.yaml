@@ -11,8 +11,6 @@ on:
 jobs:
   test-sui:
     name: Test Sui
-    needs: check-relevant-changes
-    if: needs.check-relevant-changes.outputs.run_tests == 'true'
     runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - name: Checkout code
