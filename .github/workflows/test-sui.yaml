@@ -33,9 +33,13 @@ jobs:
       - name: Spin up Sui Network
         run: nohup sh -c "sui-test-validator" > nohup.out 2> nohup.err < /dev/null &
 
-      - name: Sleep for 40 seconds
-        run: sleep 40s
-        shell: bash
+      - name: Wait for Sui network
+        uses: nev7n/wait_for_response@v1
+        with:
+          url: 'http://127.0.0.1:9123'
+          responseCode: 200
+          timeout: 60000
+          interval: 1000
 
       - name: Setup Sui Local Network
         run: |
@@ -158,8 +162,6 @@ jobs:
           node sui/multisig.js --action init --threshold 1 --base64PublicKeys $KEY_1 $KEY_2 --schemeTypes secp256k1 secp256k1
 
           # Faucet operations
-          node sui/faucet.js --recipient $ADDRESS_1
-          node sui/faucet.js --recipient $ADDRESS_2
           node sui/faucet.js --recipient $MULTISIG_ADDRESS
 
           # Set environment variables
