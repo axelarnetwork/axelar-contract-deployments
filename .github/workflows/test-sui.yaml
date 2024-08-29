@@ -1,0 +1,212 @@
+name: Test Sui
+
+on:
+  pull_request:
+    paths:
+      - sui/**
+      - common/**
+      - .github/actions/setup-sui/**
+      - .github/workflows/test-sui.yaml
+
+jobs:
+  test-sui:
+    name: Test Sui
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 18.x
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Read SUI_VERSION from JSON
+        id: read-json
+        run: |
+          SUI_VERSION=$(jq -r '.SUI_VERSION' sui/version.json)
+          echo "SUI_VERSION=${SUI_VERSION}" >> $GITHUB_ENV
+
+      - name: Setup Sui CLI and install dependencies
+        uses: ./.github/actions/setup-sui
+        with:
+          SUI_VERSION: ${{ env.SUI_VERSION }}
+
+      - name: Spin up Sui Network
+        run: nohup sh -c "sui-test-validator" > nohup.out 2> nohup.err < /dev/null &
+
+      - name: Wait for Sui network
+        uses: nev7n/wait_for_response@v1
+        with:
+          url: 'http://localhost:9123'
+          responseCode: 200
+          timeout: 60000
+          interval: 1000
+
+      - name: Setup Sui Local Network
+        run: |
+          sui client new-env --alias local --rpc http://127.0.0.1:9000
+          sui client switch --env local
+
+      - name: Prepare local.json
+        run: |
+          echo '{
+                "sui": {
+                    "name": "Sui",
+                    "axelarId": "sui",
+                    "networkType": "localnet",
+                    "tokenSymbol": "SUI",
+                    "rpc": "http://127.0.0.1:9000",
+                    "faucetUrl": "http://127.0.0.1:9123",
+                    "contracts": {}
+                }
+            }' > ./axelar-chains-config/info/local.json
+
+      # Create .env file with default hardhat private key that's prefunded
+      - name: Prepare .env
+        run: |
+          echo "PRIVATE_KEY=$SUI_PRIVATE_KEY" >> .env
+          echo 'ENV=local' >> .env
+          echo 'SKIP_EXISTING = true' >> .env
+
+      - name: Display local.json
+        run: cat ./axelar-chains-config/info/local.json
+
+      - name: Request SUI from faucet
+        run: node sui/faucet.js
+
+      ###### Command: Deploy Contract ######
+
+      - name: Deploy AxelarGateway
+        run: node sui/deploy-contract deploy AxelarGateway --signers wallet
+
+      - name: Deploy GasService
+        run: node sui/deploy-contract deploy GasService
+
+      - name: Deploy Operators
+        run: node sui/deploy-contract deploy Operators
+
+      - name: Deploy Example
+        run: node sui/deploy-contract deploy Example
+
+      ###### Command: Gas Service ######
+
+      - name: Pay Gas
+        run: node sui/gas-service.js payGas --amount 100 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+
+      - name: Refund Gas
+        run: node sui/gas-service.js refund 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 --amount 1
+
+      - name: Collect Gas
+        run: node sui/gas-service.js collectGas --amount 0.1
+
+      ###### Command: Gateway ######
+      - name: Gateway Approve
+        run: node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
+
+      - name: Gateway Call Contract
+        run: node sui/gateway.js call-contract ethereum 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
+
+      - name: Gateway Rotate Signers
+        run: node sui/gateway.js rotate --signers wallet --proof wallet --newNonce test2
+
+      ###### Command: GMP ######
+
+      - name: Execute Outgoing Call Contract
+        run: node sui/gmp.js sendCall ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0.1 0x1234
+
+      - name: Execute Incoming Call Contract
+        run: |
+          channel_id=$(cat axelar-chains-config/info/local.json | jq '.sui.contracts.Example.objects.ChannelId' | sed 's/"//g')
+          echo "Channel ID: $channel_id"
+          node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 $channel_id 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
+          node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
+
+      ###### Command: Operators ######
+
+      - name: Store Capability Object in Operators
+        run: node sui/operators.js storeCap
+
+      - name: Add Operator
+        run: node sui/operators.js add $SUI_ADDRESS
+
+      - name: Collect Gas with Operator
+        run: node sui/operators.js collectGas --amount 1
+
+      - name: Refund Gas with Operator
+        run: node sui/operators.js refund 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 --amount 1
+
+      - name: Remove Operator
+        run: node sui/operators.js remove $SUI_ADDRESS
+
+      ###### Command: Generate Keypair ######
+      - name: Generate Keypair
+        run: node sui/generate-keypair.js
+
+      ###### Command: Multisig ######
+
+      - name: Init Multisig
+        run: |
+          # Create new addresses
+          sui client new-address secp256k1 multisig1
+          sui client new-address secp256k1 multisig2
+
+          # Export keys and addresses
+          KEY_1=$(sui keytool export --key-identity multisig1 --json | jq -r .key.publicBase64Key)
+          KEY_2=$(sui keytool export --key-identity multisig2 --json | jq -r .key.publicBase64Key)
+
+          # Get multisig address
+          MULTISIG_ADDRESS=$(sui keytool multi-sig-address --pks $KEY_1 $KEY_2 --weights 1 1 --threshold 1 --json | jq -r .multisigAddress)
+
+          # Initialize multisig
+          node sui/multisig.js --action init --threshold 1 --base64PublicKeys $KEY_1 $KEY_2 --schemeTypes secp256k1 secp256k1
+
+          # Faucet operations
+          node sui/faucet.js --recipient $MULTISIG_ADDRESS
+
+          # Set environment variables
+          echo "MULTISIG_ADDRESS=$MULTISIG_ADDRESS" >> $GITHUB_ENV
+
+      - name: Transfer Upgrade Cap to Multisig Address
+        run: |
+          upgrade_cap=$(cat axelar-chains-config/info/local.json | jq -r '.sui.contracts.AxelarGateway.objects.UpgradeCap')
+          node sui/transfer-object.js --objectId $upgrade_cap --recipient $MULTISIG_ADDRESS
+
+      - name: Generate Unsigned Tx File
+        run: |
+          node sui/deploy-contract.js upgrade AxelarGateway any_upgrade --offline --txFilePath ./tx-upgrade.json --sender $MULTISIG_ADDRESS
+
+      - name: Sign Tx File with Multisig Signer
+        run: |
+          pk_1=$(sui keytool export --key-identity multisig1 --json | jq .exportedPrivateKey | sed 's/"//g')
+          pk_2=$(sui keytool export --key-identity multisig2 --json | jq .exportedPrivateKey | sed 's/"//g')
+          node sui/multisig.js --action sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-1.json --offline --privateKey $pk_1
+          node sui/multisig.js --action sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-2.json --offline --privateKey $pk_2
+
+      - name: Submit Signed Tx File
+        run: |
+          # Define output file for the executed transaction
+          output_file="./output.json"
+
+          # Execute the upgrade transaction
+          node sui/multisig.js --txBlockPath ./tx-upgrade.json --signatureFilePath ./combined.json --action combine --signatures signature-1.json signature-2.json --executeResultPath ${output_file}
+
+          # Store the new package id in a variable
+          new_package_id=$(jq '.objectChanges[] | select(.type == "published") | .packageId' $output_file | sed 's/"//g')
+
+          # Update the local.json file with the new package id
+          jq --arg pkg "$new_package_id" '.sui.contracts.AxelarGateway.address = $pkg' axelar-chains-config/info/local.json > temp.json \
+          && mv temp.json axelar-chains-config/info/local.json
+
+      - name: Post Upgrade Gateway Approval With New Package ID
+        run: node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-10 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
+
+      ###### Command: Transfer Object ######
+      - name: Transfer Object
+        run: |
+          object_id=$(sui client objects --json | jq -r '.[-1].data.objectId')
+          node sui/transfer-object.js --objectId $object_id --recipient 0xdd7c964ff032273889eb6029a29314413b461629c45c0442c6f9cf8342450c12

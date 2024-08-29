@@ -100,7 +100,7 @@ node sui/deploy-contract.js deploy GasService
 Deploy the test GMP package:
 
 ```bash
-node sui/deploy-contract.js deploy Test
+node sui/deploy-contract.js deploy Example
 ```
 
 Deploy the Operators package:

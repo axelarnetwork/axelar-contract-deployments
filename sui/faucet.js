@@ -3,19 +3,20 @@
 const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui/faucet');
 const { saveConfig, loadConfig, printInfo } = require('../common/utils');
 const { getWallet, printWalletInfo, addBaseOptions } = require('./utils');
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 
 async function processCommand(config, chain, options) {
     const [keypair, client] = getWallet(chain, options);
+    const recipient = options.recipient || keypair.toSuiAddress();
 
     await printWalletInfo(keypair, client, chain, options);
 
     await requestSuiFromFaucetV0({
         host: getFaucetHost(chain.networkType),
-        recipient: keypair.toSuiAddress(),
+        recipient,
     });
 
-    printInfo('Funds requested');
+    printInfo('Funds requested', recipient);
 }
 
 async function mainProcessor(options, processor) {
@@ -27,13 +28,15 @@ async function mainProcessor(options, processor) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('faucet').description('Query the faucet for funds.');
+    program
+        .name('faucet')
+        .addOption(new Option('--recipient <recipient>', 'recipient to request funds for'))
+        .description('Query the faucet for funds.')
+        .action((options) => {
+            mainProcessor(options, processCommand);
+        });
 
     addBaseOptions(program);
-
-    program.action((options) => {
-        mainProcessor(options, processCommand);
-    });
 
     program.parse();
 }

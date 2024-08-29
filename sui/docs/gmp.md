@@ -57,7 +57,6 @@ This command will execute the message to the contract that associated with the g
 node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234 --channelId 0xcd5d203ea2cf1139af83939e3f74114a31fe682cc90f73a0d2647956bc3e5acf
 ```
 
-
 Note:
 - `source`, `sourceAddress` and `messageId` needed to be matched with the approve command.
 - `payload` must be associated with the `payloadHash` in the approve command.
