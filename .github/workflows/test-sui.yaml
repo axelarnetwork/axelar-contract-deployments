@@ -33,9 +33,13 @@ jobs:
       - name: Spin up Sui Network
         run: nohup sh -c "sui-test-validator" > nohup.out 2> nohup.err < /dev/null &
 
-      - name: Sleep for 30 seconds
-        run: sleep 30s
-        shell: bash
+      - name: Wait for Sui network
+        uses: nev7n/wait_for_response@v1
+        with:
+          url: 'http://localhost:9123'
+          responseCode: 200
+          timeout: 60000
+          interval: 1000
 
       - name: Setup Sui Local Network
         run: |
@@ -139,7 +143,61 @@ jobs:
 
       ###### Command: Multisig ######
 
-      # TODO: Add multisig tests
+      - name: Init Multisig
+        run: |
+          # Create new addresses
+          sui client new-address secp256k1 multisig1
+          sui client new-address secp256k1 multisig2
+
+          # Export keys and addresses
+          KEY_1=$(sui keytool export --key-identity multisig1 --json | jq -r .key.publicBase64Key)
+          KEY_2=$(sui keytool export --key-identity multisig2 --json | jq -r .key.publicBase64Key)
+
+          # Get multisig address
+          MULTISIG_ADDRESS=$(sui keytool multi-sig-address --pks $KEY_1 $KEY_2 --weights 1 1 --threshold 1 --json | jq -r .multisigAddress)
+
+          # Initialize multisig
+          node sui/multisig.js --action init --threshold 1 --base64PublicKeys $KEY_1 $KEY_2 --schemeTypes secp256k1 secp256k1
+
+          # Faucet operations
+          node sui/faucet.js --recipient $MULTISIG_ADDRESS
+
+          # Set environment variables
+          echo "MULTISIG_ADDRESS=$MULTISIG_ADDRESS" >> $GITHUB_ENV
+
+      - name: Transfer Upgrade Cap to Multisig Address
+        run: |
+          upgrade_cap=$(cat axelar-chains-config/info/local.json | jq -r '.sui.contracts.AxelarGateway.objects.UpgradeCap')
+          node sui/transfer-object.js --objectId $upgrade_cap --recipient $MULTISIG_ADDRESS
+
+      - name: Generate Unsigned Tx File
+        run: |
+          node sui/deploy-contract.js upgrade AxelarGateway any_upgrade --offline --txFilePath ./tx-upgrade.json --sender $MULTISIG_ADDRESS
+
+      - name: Sign Tx File with Multisig Signer
+        run: |
+          pk_1=$(sui keytool export --key-identity multisig1 --json | jq .exportedPrivateKey | sed 's/"//g')
+          pk_2=$(sui keytool export --key-identity multisig2 --json | jq .exportedPrivateKey | sed 's/"//g')
+          node sui/multisig.js --action sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-1.json --offline --privateKey $pk_1
+          node sui/multisig.js --action sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-2.json --offline --privateKey $pk_2
+
+      - name: Submit Signed Tx File
+        run: |
+          # Define output file for the executed transaction
+          output_file="./output.json"
+
+          # Execute the upgrade transaction
+          node sui/multisig.js --txBlockPath ./tx-upgrade.json --signatureFilePath ./combined.json --action combine --signatures signature-1.json signature-2.json --executeResultPath ${output_file}
+
+          # Store the new package id in a variable
+          new_package_id=$(jq '.objectChanges[] | select(.type == "published") | .packageId' $output_file | sed 's/"//g')
+
+          # Update the local.json file with the new package id
+          jq --arg pkg "$new_package_id" '.sui.contracts.AxelarGateway.address = $pkg' axelar-chains-config/info/local.json > temp.json \
+          && mv temp.json axelar-chains-config/info/local.json
+
+      - name: Post Upgrade Gateway Approval With New Package ID
+        run: node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-10 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
 
       ###### Command: Transfer Object ######
       - name: Transfer Object
