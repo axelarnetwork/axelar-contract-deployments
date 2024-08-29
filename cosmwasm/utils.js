@@ -5,7 +5,7 @@ const { createHash } = require('crypto');
 
 const { readFileSync } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
-const { instantiate2Address, SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const {
@@ -72,8 +72,18 @@ const getChains = (config, { chainNames, instantiate2 }) => {
     return chains;
 };
 
+const updateContractConfig = (contractConfig, chainConfig, key, value) => {
+    if (chainConfig) {
+        contractConfig[chainConfig.axelarId] = {
+            ...contractConfig[chainConfig.axelarId],
+            [key]: value,
+        };
+    } else {
+        contractConfig[key] = value;
+    }
+};
+
 const uploadContract = async (client, wallet, config, options) => {
-    const { contractName, instantiate2, salt, chainNames } = options;
     const {
         axelar: { gasPrice, gasLimit },
     } = config;
@@ -82,13 +92,8 @@ const uploadContract = async (client, wallet, config, options) => {
     const wasm = readWasmFile(options);
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-    const { checksum, codeId } = await client.upload(account.address, wasm, uploadFee);
 
-    const address = instantiate2
-        ? instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainNames), 'axelar')
-        : null;
-
-    return { codeId, address };
+    return await client.upload(account.address, wasm, uploadFee);
 };
 
 const instantiateContract = async (client, wallet, initMsg, config, options) => {
@@ -561,11 +566,6 @@ const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
     return codeId;
 };
 
-const instantiate2AddressForProposal = async (client, contractConfig, { contractName, salt, chainNames, runAs }) => {
-    const { checksum } = await client.getCodeDetails(contractConfig.codeId);
-    return instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar');
-};
-
 const getInstantiatePermission = (accessType, addresses) => {
     return {
         permission: accessType,
@@ -747,14 +747,16 @@ module.exports = {
     governanceAddress,
     prepareWallet,
     prepareClient,
+    fromHex,
+    getSalt,
     calculateDomainSeparator,
     readWasmFile,
     getChains,
+    updateContractConfig,
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
     fetchCodeIdFromCodeHash,
-    instantiate2AddressForProposal,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeStoreInstantiateProposal,

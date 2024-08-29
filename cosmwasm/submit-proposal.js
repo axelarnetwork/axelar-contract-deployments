@@ -4,11 +4,14 @@ require('dotenv').config();
 
 const { createHash } = require('crypto');
 
+const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
+
 const {
     prepareWallet,
     prepareClient,
     readWasmFile,
     getChains,
+    updateContractConfig,
     fetchCodeIdFromCodeHash,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
@@ -18,7 +21,6 @@ const {
     encodeExecuteContractProposal,
     submitProposal,
     makeInstantiateMsg,
-    instantiate2AddressForProposal,
     governanceAddress,
 } = require('./utils');
 const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../common');
@@ -33,19 +35,10 @@ const {
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const updateContractConfig = (contractConfig, chainConfig, key, value) => {
-    if (chainConfig) {
-        contractConfig[chainConfig.axelarId] = {
-            ...contractConfig[chainConfig.axelarId],
-            [key]: value,
-        };
-    } else {
-        contractConfig[key] = value;
-    }
-};
-
 const predictAndUpdateAddress = async (client, contractConfig, chainConfig, options) => {
-    const contractAddress = await instantiate2AddressForProposal(client, contractConfig, options);
+    const { checksum } = await client.getCodeDetails(contractConfig.codeId);
+    const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar');
+
     updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
 
     return contractAddress;
