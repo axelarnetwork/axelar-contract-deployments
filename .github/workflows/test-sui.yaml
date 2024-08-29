@@ -18,6 +18,9 @@ jobs:
               - 'sui/**'
             common:
               - 'common/**'
+            .github:
+              - '.github/actions/setup-sui/**'
+              - '.github/workflows/test-sui.yaml'
 
       - name: Summarize Changes
         run: |
