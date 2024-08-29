@@ -36,7 +36,7 @@ jobs:
       - name: Wait for Sui network
         uses: nev7n/wait_for_response@v1
         with:
-          url: 'http://127.0.0.1:9123'
+          url: 'http://localhost:9123'
           responseCode: 200
           timeout: 60000
           interval: 1000
