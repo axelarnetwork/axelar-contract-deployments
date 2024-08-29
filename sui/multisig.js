@@ -77,7 +77,6 @@ async function signTx(keypair, client, options) {
 
 async function executeCombinedSignature(client, options) {
     const { combinedSignPath } = options;
-
     if (options.offline) {
         throw new Error('Cannot execute in offline mode');
     }
@@ -225,7 +224,9 @@ if (require.main === module) {
         new Option('--base64PublicKeys [base64PublicKeys...]', 'An array of public keys to use for init the multisig address'),
     );
     program.addOption(new Option('--weights [weights...]', 'weight for multisig'));
-    program.addOption(new Option('--schemeTypes [schemeTypes...]', 'scheme types for each base64 public keys'));
+    program.addOption(
+        new Option('--schemeTypes [schemeTypes...]', 'scheme types for base64 public keys. The default value is secp256k1 for each'),
+    );
     program.addOption(new Option('--threshold <threshold>', 'threshold for multisig'));
 
     program.action((options) => {
