@@ -223,9 +223,14 @@ if (require.main === module) {
     program.addOption(
         new Option('--base64PublicKeys [base64PublicKeys...]', 'An array of public keys to use for init the multisig address'),
     );
-    program.addOption(new Option('--weights [weights...]', 'weight for multisig'));
     program.addOption(
-        new Option('--schemeTypes [schemeTypes...]', 'scheme types for base64 public keys. The default value is secp256k1 for each'),
+        new Option('--weights [weights...]', 'An array of weight for each base64 public key. The default value is 1 for each'),
+    );
+    program.addOption(
+        new Option(
+            '--schemeTypes [schemeTypes...]',
+            'An array of scheme types for each base64 public key. The default value is secp256k1 for each',
+        ),
     );
     program.addOption(new Option('--threshold <threshold>', 'threshold for multisig'));
 
