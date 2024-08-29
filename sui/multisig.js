@@ -139,6 +139,11 @@ async function combineSignature(client, chain, options) {
 
     if (!options.offline) {
         const txResult = await broadcastSignature(client, txBlockBytes, combinedSignature);
+
+        if (options.executeResultPath) {
+            storeSignedTx(options.executeResultPath, txResult);
+        }
+
         printInfo('Executed', txResult.digest);
     } else {
         const data = {
@@ -219,6 +224,7 @@ if (require.main === module) {
     program.addOption(new Option('--offline', 'run in offline mode'));
     program.addOption(new Option('--combinedSignPath <file>', 'combined signature file path'));
     program.addOption(new Option('--signatureFilePath <file>', 'signed signature will be stored'));
+    program.addOption(new Option('--executeResultPath <file>', 'execute result will be stored'));
 
     // The following options are only used with the init action
     program.addOption(
