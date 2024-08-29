@@ -77,6 +77,7 @@ async function signTx(keypair, client, options) {
 
 async function executeCombinedSignature(client, options) {
     const { combinedSignPath } = options;
+
     if (options.offline) {
         throw new Error('Cannot execute in offline mode');
     }
