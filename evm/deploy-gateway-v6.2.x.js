@@ -167,6 +167,10 @@ async function deploy(config, chain, options) {
 
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
 
+    if (await isContract(proxyAddress, wallet.provider)) {
+        printError(`Contract already deployed at predicted address "${proxyAddress}"!`);
+    }
+
     if (predictOnly || prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
         return;
     }
