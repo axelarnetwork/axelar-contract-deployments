@@ -224,10 +224,6 @@ async function submitProof(keypair, client, config, chain, contractConfig, args,
 
     const executeData = executeDataStruct.parse(arrayify('0x' + status.completed.execute_data));
 
-    if (!payload.verifier_set) {
-        throw new Error('No signers to rotate');
-    }
-
     const tx = new Transaction();
 
     if (payload.verifier_set) {
@@ -259,7 +255,7 @@ async function submitProof(keypair, client, config, chain, contractConfig, args,
 
     const receipt = await broadcast(client, keypair, tx);
 
-    printInfo('Signers rotated', receipt.digest);
+    printInfo('Submitted Amplifier proof', receipt.digest);
 }
 
 async function rotate(keypair, client, config, chain, contractConfig, args, options) {

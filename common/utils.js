@@ -57,12 +57,16 @@ function printLog(log) {
     console.log(JSON.stringify({ log }, null, 2));
 }
 
-const isNonEmptyString = (arg) => {
-    return typeof arg === 'string' && arg !== '';
-};
-
 const isString = (arg) => {
     return typeof arg === 'string';
+};
+
+const isNonEmptyString = (arg) => {
+    return isString(arg) && arg !== '';
+};
+
+const isStringLowercase = (arg) => {
+    return isNonEmptyString(arg) && arg === arg.toLowerCase();
 };
 
 const isStringArray = (arr) => Array.isArray(arr) && arr.every(isString);
@@ -406,6 +410,10 @@ async function getDomainSeparator(config, chain, options) {
 }
 
 const getChainConfig = (config, chainName) => {
+    if (chainName === 'none') {
+        return undefined;
+    }
+
     const chainConfig = config.chains[chainName] || config[chainName];
 
     if (!chainConfig) {
@@ -436,6 +444,7 @@ module.exports = {
     isNonEmptyString,
     isString,
     isStringArray,
+    isStringLowercase,
     isNumber,
     isValidNumber,
     isValidDecimal,

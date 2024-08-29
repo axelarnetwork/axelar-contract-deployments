@@ -4,12 +4,10 @@ require('dotenv').config();
 
 const { Option, InvalidArgumentError } = require('commander');
 const { getUnitAmount } = require('./amount-utils');
-const { CHAIN_ENVIRONMENTS } = require('../../common');
+const { addEnvOption } = require('../../common');
 
 const addBaseOptions = (program, options = {}) => {
-    program.addOption(
-        new Option('-e, --env <env>', 'environment').choices(CHAIN_ENVIRONMENTS).default('testnet').makeOptionMandatory(true).env('ENV'),
-    );
+    addEnvOption(program);
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
     program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
 

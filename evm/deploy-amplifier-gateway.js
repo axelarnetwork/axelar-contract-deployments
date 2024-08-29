@@ -27,6 +27,7 @@ const {
     getDeployedAddress,
     getDeployOptions,
     getDomainSeparator,
+    isContract,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
@@ -126,6 +127,10 @@ async function deploy(config, chain, options) {
         printWarn(`Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} in chain configs.`);
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
         printWarn('This is NOT required if the deployments are done by different integrators');
+    }
+
+    if (await isContract(proxyAddress, wallet.provider)) {
+        printError(`Contract already deployed at predicted address "${proxyAddress}"!`);
     }
 
     if (predictOnly || prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
