@@ -1,8 +1,13 @@
 mod address;
-mod axelar_message;
-pub mod command;
+mod destination_program_id;
 mod payload;
+mod u256;
 
 pub use address::*;
-pub use axelar_message::*;
+pub use destination_program_id::*;
 pub use payload::*;
+pub use u256::*;
+
+pub mod command {
+    pub use super::u256::*;
+}

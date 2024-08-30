@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 anyhow.workspace = true
 axelar-wasm-std.workspace = true
-bcs.workspace = true
 connection-router.workspace = true
 cosmwasm-std.workspace = true
 hex.workspace = true

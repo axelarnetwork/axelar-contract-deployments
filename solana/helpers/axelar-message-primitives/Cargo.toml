@@ -7,22 +7,19 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "lib"]
 
-
 [dependencies]
 alloy-sol-types.workspace = true
 solana-program.workspace = true
 borsh.workspace = true
 hex.workspace = true
 anyhow.workspace = true
-itertools.workspace = true
 thiserror.workspace = true
-bcs.workspace = true
 bytemuck.workspace = true
 bnum.workspace = true
-cosmwasm-schema.workspace = true
 sha3.workspace = true
 libsecp256k1.workspace = true
 ethers-core.workspace = true
+rkyv = { workspace = true, features = ["validation"] }
 
 [dev-dependencies]
 evm-contracts-rs.workspace = true

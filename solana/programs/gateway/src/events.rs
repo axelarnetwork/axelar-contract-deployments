@@ -1,7 +1,6 @@
 //! Types used for logging messages.
 use std::borrow::Cow;
 
-use axelar_message_primitives::command::RotateSignersCommand;
 use axelar_rkyv_encoding::types::{ArchivedMessage, Message};
 use base64::engine::general_purpose;
 use base64::Engine as _;
@@ -59,7 +58,7 @@ pub enum GatewayEvent<'a> {
     /// Logged when the Gateway receives an outbound message.
     CallContract(Cow<'a, CallContract>),
     /// The event emitted after successful keys rotation.
-    SignersRotated(Cow<'a, RotateSignersCommand>),
+    SignersRotated(Cow<'a, ()>),
     /// Emitted for every approved message after the Gateway validates a command
     /// batch
     MessageApproved(Cow<'a, MessageApproved>),
@@ -75,9 +74,7 @@ impl<'a> BorshDeserialize for GatewayEvent<'a> {
             0 => Ok(GatewayEvent::CallContract(Cow::Owned(
                 CallContract::deserialize_reader(reader)?,
             ))),
-            1 => Ok(GatewayEvent::SignersRotated(Cow::Owned(
-                RotateSignersCommand::deserialize_reader(reader)?,
-            ))),
+            1 => Ok(GatewayEvent::SignersRotated(Cow::Owned(()))),
             2 => Ok(GatewayEvent::MessageApproved(Cow::Owned(
                 MessageApproved::deserialize_reader(reader)?,
             ))),
@@ -193,13 +190,6 @@ mod tests {
             payload: b"function_call()".to_vec(),
             payload_hash: [1; 32],
         };
-        let rotate_signers_command = RotateSignersCommand {
-            command_id: [1; 32],
-            destination_chain: 222,
-            signer_set: vec![],
-            weights: vec![],
-            quorum: 42,
-        };
         let message_approved = MessageApproved {
             command_id: [2; 32],
             message_id: vec![2; 32],
@@ -210,12 +200,10 @@ mod tests {
         };
         let events_owned = vec![
             GatewayEvent::CallContract(Cow::Owned(call_contract.clone())),
-            GatewayEvent::SignersRotated(Cow::Owned(rotate_signers_command.clone())),
             GatewayEvent::MessageApproved(Cow::Owned(message_approved.clone())),
         ];
         let events_borrowed = vec![
             GatewayEvent::CallContract(Cow::Borrowed(&call_contract)),
-            GatewayEvent::SignersRotated(Cow::Borrowed(&rotate_signers_command)),
             GatewayEvent::MessageApproved(Cow::Borrowed(&message_approved)),
         ];
 

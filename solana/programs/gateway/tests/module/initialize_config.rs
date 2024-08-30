@@ -1,4 +1,4 @@
-use axelar_message_primitives::command::U256;
+use axelar_message_primitives::U256;
 use gmp_gateway::hasher_impl;
 use gmp_gateway::instructions::{InitializeConfig, VerifierSetWraper};
 use gmp_gateway::state::verifier_set_tracker::VerifierSetTracker;
@@ -15,7 +15,7 @@ const NONCE: u64 = 44;
 const DOMAIN_SEPARATOR: [u8; 32] = [42; 32];
 
 fn cmp_config(init: &InitializeConfig<VerifierSetWraper>, created: &GatewayConfig) -> bool {
-    let current_epoch = init.initial_signer_sets.len().into();
+    let current_epoch: U256 = init.initial_signer_sets.len().into();
     created.operator == init.operator
         && created.domain_separator == init.domain_separator
         && created.auth_weighted.current_epoch == current_epoch

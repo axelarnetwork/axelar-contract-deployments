@@ -2,13 +2,13 @@
 
 use std::mem::size_of;
 
-use axelar_message_primitives::command::{ProofError, U256};
+use axelar_message_primitives::{BnumU256, U256};
 use axelar_rkyv_encoding::types::{ArchivedProof, ArchivedVerifierSet, MessageValidationError};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::msg;
 use thiserror::Error;
 
-use crate::state::verifier_set_tracker::{VerifierSetTracker};
+use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::{get_verifier_set_tracker_pda, hasher_impl};
 
 /// Errors that might happen when updating the signers and epochs set.
@@ -25,11 +25,6 @@ pub enum AxelarAuthWeightedError {
     /// Invalid Weight threshold
     #[error("Invalid Weight threshold")]
     InvalidWeightThreshold,
-
-    /// Error wrapping a `ProofError` from the
-    /// `axelar_message_primitives::command` module.
-    #[error(transparent)]
-    ProofError(#[from] ProofError),
 
     /// Error wrapping a `MessageValidationError` from the
     /// `axelar_rkyv_encoding` crate.
@@ -104,11 +99,11 @@ impl AxelarAuthWeighted {
         }
 
         let epoch = self.current_epoch();
-        if epoch
+        let elapsed: BnumU256 = epoch
             .checked_sub(verifier_set_tracker.epoch)
             .ok_or(AxelarAuthWeightedError::EpochCalculationOverflow)?
-            >= self.previous_signers_retention
-        {
+            .into();
+        if elapsed >= self.previous_signers_retention.into() {
             msg!("verifier set is too old");
             return Err(AxelarAuthWeightedError::InvalidSignerSet);
         }
@@ -256,12 +251,11 @@ impl BorshDeserialize for AxelarAuthWeighted {
 
 #[cfg(test)]
 mod tests {
-    
+
     use axelar_rkyv_encoding::types::{PublicKey, Signature};
     use solana_sdk::pubkey::Pubkey;
 
     use super::*;
-    
     use crate::state::GatewayConfig;
 
     const DOMAIN_SEPARATOR: [u8; 32] = [77u8; 32];

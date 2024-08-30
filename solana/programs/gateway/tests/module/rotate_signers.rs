@@ -1,3 +1,4 @@
+use axelar_message_primitives::U256;
 use axelar_rkyv_encoding::types::{Payload, VerifierSet};
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::instructions::GatewayInstruction;
@@ -80,11 +81,8 @@ async fn successfully_rotates_signers() {
     let root_pda_data = fixture
         .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
         .await;
-    let new_epoch = 2u128;
-    assert_eq!(
-        root_pda_data.auth_weighted.current_epoch(),
-        new_epoch.into()
-    );
+    let new_epoch: U256 = 2u128.into();
+    assert_eq!(root_pda_data.auth_weighted.current_epoch(), new_epoch);
     // todo -- assert that the signer tracker pda has been initialized
 
     // - test that both signer sets can sign new messages
@@ -242,11 +240,8 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
     let root_pda_data = fixture
         .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
         .await;
-    let new_epoch = 3u128;
-    assert_eq!(
-        root_pda_data.auth_weighted.current_epoch(),
-        new_epoch.into()
-    );
+    let new_epoch: U256 = 3u128.into();
+    assert_eq!(root_pda_data.auth_weighted.current_epoch(), new_epoch);
     // todo -- assert verifier set pda
 }
 
@@ -528,8 +523,8 @@ async fn ignore_rotate_signers_if_total_weight_is_smaller_than_quorum() {
     let gateway = fixture
         .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
         .await;
-    let constant_epoch = 1u128;
-    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch.into());
+    let constant_epoch: U256 = 1u128.into();
+    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch);
     // todo -- assert verifier set pda
 }
 
@@ -618,7 +613,7 @@ async fn fail_on_rotate_signers_if_new_ops_len_is_zero() {
     let gateway = fixture
         .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
         .await;
-    let constant_epoch = 1u128;
-    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch.into());
+    let constant_epoch: U256 = 1u128.into();
+    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch);
     // todo -- assert verifier set pda
 }

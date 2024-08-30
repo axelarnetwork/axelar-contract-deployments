@@ -1,7 +1,5 @@
 use std::borrow::Cow;
 
-use axelar_message_primitives::command::RotateSignersCommand;
-use axelar_message_primitives::Address;
 use axelar_rkyv_encoding::types::ArchivedVerifierSet;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -19,7 +17,7 @@ use crate::events::GatewayEvent;
 use crate::state::execute_data::{ArchivedGatewayExecuteData, RotateSignersVariant};
 use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::{GatewayApprovedCommand, GatewayConfig};
-use crate::{assert_valid_verifier_set_tracker_pda, hasher_impl, seed_prefixes};
+use crate::{assert_valid_verifier_set_tracker_pda, seed_prefixes};
 
 impl Processor {
     /// Rotate the weighted signers, signed off by the latest Axelar signers.
@@ -180,32 +178,6 @@ impl Processor {
 /// breaking the public API (currently used by AMPD and the Relayer). Once we
 /// use 'axelar-rkyv-encoding' types across all APIs this can be revisited and
 /// adjusted.
-fn emit_signers_rotated_event(verifier_set: &ArchivedVerifierSet) -> Result<(), ProgramError> {
-    let size = verifier_set.size();
-
-    let mut signer_set = Vec::with_capacity(size);
-    let mut weights = Vec::with_capacity(size);
-
-    for (pubkey, weight) in verifier_set.signers() {
-        let pubkey = pubkey.to_bytes();
-        let weight: u128 = weight.into();
-        let Ok(address) = Address::try_from(pubkey.as_slice()) else {
-            msg!("Invalid public key length: {}", pubkey.len());
-            return Err(ProgramError::InvalidArgument);
-        };
-        signer_set.push(address);
-        weights.push(weight);
-    }
-
-    let quorum: u128 = verifier_set.quorum().into();
-
-    let rotate_signers_command = RotateSignersCommand {
-        command_id: verifier_set.hash(hasher_impl()),
-        destination_chain: 0, // XXX: the chain ID is not relevant for rotating signers.
-        signer_set,
-        weights,
-        quorum,
-    };
-
-    GatewayEvent::SignersRotated(Cow::Owned(rotate_signers_command)).emit()
+fn emit_signers_rotated_event(_verifier_set: &ArchivedVerifierSet) -> Result<(), ProgramError> {
+    GatewayEvent::SignersRotated(Cow::Owned(())).emit()
 }
