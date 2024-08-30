@@ -12,11 +12,10 @@ use solana_program::sysvar::Sysvar;
 
 use super::Processor;
 use crate::axelar_auth_weighted::SignerSetMetadata;
-use crate::commands::ArchivedCommand;
 use crate::events::GatewayEvent;
 use crate::state::execute_data::{ArchivedGatewayExecuteData, RotateSignersVariant};
 use crate::state::verifier_set_tracker::VerifierSetTracker;
-use crate::state::{GatewayApprovedCommand, GatewayConfig};
+use crate::state::{GatewayConfig};
 use crate::{assert_valid_verifier_set_tracker_pda, seed_prefixes};
 
 impl Processor {
@@ -37,7 +36,6 @@ impl Processor {
         let mut accounts_iter = accounts.iter();
         let gateway_root_pda = next_account_info(&mut accounts_iter)?;
         let gateway_approve_messages_execute_data_pda = next_account_info(&mut accounts_iter)?;
-        let message_account = next_account_info(&mut accounts_iter)?;
         let signer_verifier_set = next_account_info(&mut accounts_iter)?;
         let new_empty_verifier_set = next_account_info(&mut accounts_iter)?;
         let payer = next_account_info(&mut accounts_iter)?;
@@ -82,16 +80,6 @@ impl Processor {
         };
 
         let new_verifier_set = &execute_data.data;
-        let command = ArchivedCommand::from(new_verifier_set);
-
-        let approved_command_account = message_account
-            .as_ref()
-            .check_initialized_pda::<GatewayApprovedCommand>(program_id)?
-            .command_valid_and_pending(gateway_root_pda.key, &command, message_account)?
-            .ok_or_else(|| {
-                msg!("Command already executed");
-                ProgramError::InvalidArgument
-            })?;
 
         // Check: proof signer set is known.
         let signer_data = gateway_config
@@ -124,10 +112,7 @@ impl Processor {
 
         gateway_config.auth_weighted.last_rotation_timestamp = current_time;
 
-        // Save the updated approved message account
-        let mut data = message_account.try_borrow_mut_data()?;
-        approved_command_account.pack_into_slice(&mut data);
-
+        // Rotate the signers
         let new_verifier_set_tracker = match gateway_config.rotate_signers(new_verifier_set) {
             Ok(new_verifier_set_tracker) => new_verifier_set_tracker,
             Err(err) => {

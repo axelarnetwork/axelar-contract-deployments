@@ -12,7 +12,7 @@ use test_fixtures::test_setup::{
 };
 
 use crate::{
-    get_approved_command, get_gateway_events, get_gateway_events_from_execute_data, make_messages,
+    get_gateway_events, get_gateway_events_from_execute_data, make_messages,
     make_payload_and_commands,
 };
 
@@ -44,18 +44,12 @@ async fn successfully_rotates_signers() {
     let (execute_data_pda, _) = fixture
         .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
-    let gateway_approved_command_pda = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &command)
-        .await
-        .pop()
-        .unwrap();
 
     // Action
     let tx = fixture
         .rotate_signers_with_metadata(
             &gateway_root_pda,
             &execute_data_pda,
-            &gateway_approved_command_pda,
             &signers.verifier_set_tracker(),
             &new_signer_set.verifier_set_tracker(),
         )
@@ -72,10 +66,6 @@ async fn successfully_rotates_signers() {
     {
         assert_eq!(actual, expected);
     }
-
-    // - command PDAs get updated
-    let approved_command = get_approved_command(&mut fixture, &gateway_approved_command_pda).await;
-    assert!(approved_command.is_command_executed());
 
     // - signers have been updated
     let root_pda_data = fixture
@@ -197,17 +187,11 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
     let (execute_data_pda, _) = fixture
         .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
-    let rotate_signers_command_pda = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &command)
-        .await
-        .pop()
-        .unwrap();
 
     // Action
     let ix = gmp_gateway::instructions::rotate_signers(
         execute_data_pda,
         gateway_root_pda,
-        rotate_signers_command_pda,
         Some(operator.pubkey()),
         signers.verifier_set_tracker(),
         newer_signer_set.verifier_set_tracker(),
@@ -231,10 +215,6 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
     {
         assert_eq!(actual, expected);
     }
-
-    // - command PDAs get updated
-    let approved_command = get_approved_command(&mut fixture, &rotate_signers_command_pda).await;
-    assert!(approved_command.is_command_executed());
 
     // - signers have been updated
     let root_pda_data = fixture
@@ -274,24 +254,18 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
         .await;
 
     let newer_signer_set = make_signers(&[500, 200], 700);
-    let (payload, command) = payload_and_command(&newer_signer_set.verifier_set());
+    let (payload, ..) = payload_and_command(&newer_signer_set.verifier_set());
 
     // we stil use the initial signer set to sign the data (the `signers` variable)
     let (execute_data_pda, _) = fixture
         .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
-    let rotate_signers_command_pda = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &command)
-        .await
-        .pop()
-        .unwrap();
 
     // Action
     let fake_operator = Keypair::new();
     let ix = gmp_gateway::instructions::rotate_signers(
         execute_data_pda,
         gateway_root_pda,
-        rotate_signers_command_pda,
         Some(fake_operator.pubkey()), // `stranger_danger` in place of the expected `operator`
         signers.verifier_set_tracker(),
         newer_signer_set.verifier_set_tracker(),
@@ -335,7 +309,7 @@ async fn fail_if_operator_is_not_using_pre_registered_signer_set() {
     // generate a new random operator set to be used (do not register it)
     let new_signer_set = make_signers(&[500, 200], 1);
     let random_signer_set = make_signers(&[11], 54);
-    let (payload, command) = payload_and_command(&new_signer_set.verifier_set());
+    let (payload, ..) = payload_and_command(&new_signer_set.verifier_set());
 
     // using `new_signers` which is the cause of the failure
     let (execute_data_pda, _) = fixture
@@ -346,17 +320,11 @@ async fn fail_if_operator_is_not_using_pre_registered_signer_set() {
             &domain_separator,
         )
         .await;
-    let rotate_signers_command_pda = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &command)
-        .await
-        .pop()
-        .unwrap();
 
     // Action
     let ix = gmp_gateway::instructions::rotate_signers(
         execute_data_pda,
         gateway_root_pda,
-        rotate_signers_command_pda,
         Some(operator.pubkey()),
         random_signer_set.verifier_set_tracker(),
         new_signer_set.verifier_set_tracker(),
@@ -587,22 +555,16 @@ async fn fail_on_rotate_signers_if_new_ops_len_is_zero() {
         .await;
 
     let new_signer_set = make_signers(&[], 1);
-    let (payload, command) = payload_and_command(&new_signer_set.verifier_set());
+    let (payload, ..) = payload_and_command(&new_signer_set.verifier_set());
     let (execute_data_pda, _) = fixture
         .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
 
     // Action
-    let gateway_approved_command_pdas = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &command)
-        .await
-        .pop()
-        .unwrap();
     let tx = fixture
         .rotate_signers_with_metadata(
             &gateway_root_pda,
             &execute_data_pda,
-            &gateway_approved_command_pdas,
             &signers.verifier_set_tracker(),
             &new_signer_set.verifier_set_tracker(),
         )

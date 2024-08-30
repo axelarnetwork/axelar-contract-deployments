@@ -99,11 +99,11 @@ impl AxelarAuthWeighted {
         }
 
         let epoch = self.current_epoch();
-        let elapsed: BnumU256 = epoch
+        let diff: BnumU256 = epoch
             .checked_sub(verifier_set_tracker.epoch)
             .ok_or(AxelarAuthWeightedError::EpochCalculationOverflow)?
             .into();
-        if elapsed >= self.previous_signers_retention.into() {
+        if diff >= self.previous_signers_retention.into() {
             msg!("verifier set is too old");
             return Err(AxelarAuthWeightedError::InvalidSignerSet);
         }

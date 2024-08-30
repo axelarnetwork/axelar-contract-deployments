@@ -683,14 +683,12 @@ impl TestFixture {
         &mut self,
         gateway_root_pda: &Pubkey,
         execute_data_pda: &Pubkey,
-        rotate_signers_command_pda: &Pubkey,
         current_verifier_set_tracker_pda: &Pubkey,
         new_verifier_set_tracker_pda: &Pubkey,
     ) -> BanksTransactionResultWithMetadata {
         let ix = gateway::instructions::rotate_signers(
             *execute_data_pda,
             *gateway_root_pda,
-            *rotate_signers_command_pda,
             None,
             *current_verifier_set_tracker_pda,
             *new_verifier_set_tracker_pda,
@@ -781,7 +779,6 @@ impl TestFixture {
     /// gateway.rotate_signers.
     ///
     /// Returns:
-    /// - approved command PDA
     /// - execute data thats stored inside the execute data PDA
     /// - execute data PDA
     pub async fn fully_rotate_signers(
@@ -790,8 +787,8 @@ impl TestFixture {
         new_signer_set: VerifierSet,
         signers: &SigningVerifierSet,
         domain_separator: &[u8; 32],
-    ) -> (Pubkey, Vec<u8>, Pubkey) {
-        let (command_pdas, execute_data, execute_data_pda, tx) = self
+    ) -> (Vec<u8>, Pubkey) {
+        let (execute_data, execute_data_pda, tx) = self
             .fully_rotate_signers_with_execute_metadata(
                 gateway_root_pda,
                 new_signer_set,
@@ -800,7 +797,7 @@ impl TestFixture {
             )
             .await;
         assert!(tx.result.is_ok());
-        (command_pdas, execute_data, execute_data_pda)
+        (execute_data, execute_data_pda)
     }
 
     pub async fn fully_rotate_signers_with_execute_metadata(
@@ -809,7 +806,7 @@ impl TestFixture {
         new_signer_set: VerifierSet,
         signers: &SigningVerifierSet,
         domain_separator: &[u8; 32],
-    ) -> (Pubkey, Vec<u8>, Pubkey, BanksTransactionResultWithMetadata) {
+    ) -> (Vec<u8>, Pubkey, BanksTransactionResultWithMetadata) {
         let current_verifier_set_tracker_pda = signers.verifier_set_tracker();
         let (new_verifier_set_tracker_pda, _) =
             gateway::get_verifier_set_tracker_pda(&gateway::ID, new_signer_set.hash(hasher_impl()));
@@ -822,28 +819,16 @@ impl TestFixture {
             )
             .await;
 
-        let command = OwnedCommand::RotateSigners(new_signer_set);
-        let rotate_signers_command_pda = self
-            .init_pending_gateway_commands(gateway_root_pda, &[command])
-            .await
-            .pop()
-            .unwrap();
         let tx = self
             .rotate_signers_with_metadata(
                 gateway_root_pda,
                 &execute_data_pda,
-                &rotate_signers_command_pda,
                 &current_verifier_set_tracker_pda,
                 &new_verifier_set_tracker_pda,
             )
             .await;
 
-        (
-            rotate_signers_command_pda,
-            execute_data,
-            execute_data_pda,
-            tx,
-        )
+        (execute_data, execute_data_pda, tx)
     }
 
     pub async fn get_account<T: solana_program::program_pack::Pack + BorshDeserialize>(

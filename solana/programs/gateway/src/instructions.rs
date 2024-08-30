@@ -39,15 +39,13 @@ pub enum GatewayInstruction {
     /// Accounts expected by this instruction:
     /// 0. [WRITE] Gateway Root Config PDA account
     /// 1. [] Gateway ExecuteData PDA account
-    /// 2. [WRITE] Gateway ApprovedCommand PDA account. The command needs to be
-    ///    `RotateSigners`.
-    /// 3. [] Verifier Setr Tracker PDA account (the one that signed the
+    /// 2. [] Verifier Setr Tracker PDA account (the one that signed the
     ///    ExecuteData)
-    /// 4. [WRITE, SIGNER] new uninitialized VerifierSetTracker PDA account (the
+    /// 3. [WRITE, SIGNER] new uninitialized VerifierSetTracker PDA account (the
     ///    one that needs to be initialized)
-    /// 5. [WRITE, SIGNER] Funding account for the new VerifierSetTracker PDA
-    /// 6. [] System Program account
-    /// 7. Opional: [SIGNER] `Operator` that's stored in the gateway confi PDA.
+    /// 4. [WRITE, SIGNER] Funding account for the new VerifierSetTracker PDA
+    /// 5. [] System Program account
+    /// 6. Optional: [SIGNER] `Operator` that's stored in the gateway config PDA.
     RotateSigners,
 
     /// Represents the `CallContract` Axelar event.
@@ -283,7 +281,6 @@ pub fn approve_messages(
 pub fn rotate_signers(
     execute_data_account: Pubkey,
     gateway_root_pda: Pubkey,
-    command_account: Pubkey,
     operator: Option<Pubkey>,
     current_verifier_set_tracker_pda: Pubkey,
     new_verifier_set_tracker_pda: Pubkey,
@@ -294,7 +291,6 @@ pub fn rotate_signers(
     let mut accounts = vec![
         AccountMeta::new(gateway_root_pda, false),
         AccountMeta::new_readonly(execute_data_account, false),
-        AccountMeta::new(command_account, false),
         AccountMeta::new_readonly(current_verifier_set_tracker_pda, false),
         AccountMeta::new(new_verifier_set_tracker_pda, false),
         AccountMeta::new(payer, true),
