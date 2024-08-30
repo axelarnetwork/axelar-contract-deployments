@@ -25,7 +25,7 @@ function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, m
 
     tx.moveCall({
         target: `${contractConfig.address}::operators::restore_cap`,
-        arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.object(gasCollectorCapId), cap, loanedCap],
+        arguments: [tx.object(operatorId), tx.object(gasCollectorCapId), cap, loanedCap],
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
 
