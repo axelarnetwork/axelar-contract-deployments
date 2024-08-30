@@ -27,8 +27,9 @@ const {
     getDeployedAddress,
     getDeployOptions,
     getDomainSeparator,
+    isContract,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
 const { WEIGHTED_SIGNERS_TYPE, encodeWeightedSigners } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
@@ -126,6 +127,10 @@ async function deploy(config, chain, options) {
         printWarn(`Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} in chain configs.`);
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
         printWarn('This is NOT required if the deployments are done by different integrators');
+    }
+
+    if (await isContract(proxyAddress, wallet.provider)) {
+        printError(`Contract already deployed at predicted address "${proxyAddress}"!`);
     }
 
     if (predictOnly || prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
@@ -399,7 +404,7 @@ async function programHandler() {
     program.name('deploy-amplifier-gateway').description('Deploy Amplifier Gateway');
 
     // use create3 as default deploy method
-    addExtendedOptions(program, { salt: true, deployMethod: 'create3', skipExisting: true, upgrade: true, predictOnly: true });
+    addEvmOptions(program, { salt: true, deployMethod: 'create3', skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('--previousSignersRetention <previousSignersRetention>', 'previous signer retention').default(15));

@@ -100,7 +100,7 @@ node sui/deploy-contract.js deploy GasService
 Deploy the test GMP package:
 
 ```bash
-node sui/deploy-contract.js deploy Test
+node sui/deploy-contract.js deploy Example
 ```
 
 Deploy the Operators package:
@@ -147,6 +147,24 @@ The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChai
 node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
+Collect gas:
+
+Conditions:
+- The `GasCollectorCap` object id is read from the chain config, under gas service objects.
+```bash
+# store GasCollectorCap to the Operators contract
+node sui/operators.js storeCap
+```
+- The sender must be a whitelisted operator and hold the `OperatorCap` capability.
+```bash
+# execute the following command from the owner account
+node sui/operators add <operator address>
+```
+
+```bash
+node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
+```
+
 Approve messages:
 
 If the gateway was deployed using the wallet, you can submit a message approval with it
@@ -170,6 +188,11 @@ node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test -
 ```
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
+
+To submit a proof constructed on Amplifier, run the following with the multisig session id,
+```bash
+node sui/gateway.js submitProof [multisig session id]
+```
 
 ### Multisig
 
@@ -282,3 +305,29 @@ node sui/transfer-object.js --objectId <object id to be transferred> --recipient
 
 node sui/transfer-object.js --contractName <Can be checked from config> --objectName <picked from config> --recipient <recipient address>
 ```
+
+## Coins Management
+
+List of coins in the wallet:
+
+```bash
+node sui/tokens.js list
+```
+
+Merge the coins:
+
+```bash
+node sui/tokens.js merge --coin-type <coin type to merge>
+```
+
+If coin type is not provided, it will merge all the coins.
+
+Split the coins:
+
+```bash
+node sui/tokens.js split --amount <amount> --coin-type <coin type to split> --transfer <recipient address>
+```
+
+Note:
+-   If coin type is not provided, it will split all the coins.
+-   If transfer address is not provided, it will split the coins in the same wallet. Otherwise, it will transfer the splitted coins to the provided address.

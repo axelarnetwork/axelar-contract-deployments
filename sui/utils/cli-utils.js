@@ -4,15 +4,10 @@ require('dotenv').config();
 
 const { Option, InvalidArgumentError } = require('commander');
 const { getUnitAmount } = require('./amount-utils');
+const { addEnvOption } = require('../../common');
 
 const addBaseOptions = (program, options = {}) => {
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'devnet-amplifier', 'devnet-verifiers', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
+    addEnvOption(program);
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
     program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
 
@@ -60,8 +55,6 @@ const addOptionsToCommands = (program, optionMethod, options) => {
             optionMethod(command, options);
         });
     }
-
-    optionMethod(program, options);
 };
 
 // Custom option processing for amount. https://github.com/tj/commander.js?tab=readme-ov-file#custom-option-processing

@@ -3,7 +3,7 @@
 require('dotenv').config();
 const { isNil } = require('lodash');
 
-const { isNumber, printInfo, loadConfig, saveConfig, prompt } = require('../evm/utils');
+const { isNumber, printInfo, loadConfig, saveConfig, prompt, getChainConfig } = require('../common');
 const {
     prepareWallet,
     prepareClient,
@@ -12,10 +12,10 @@ const {
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
-    governanceAddress,
 } = require('./utils');
 
 const { Command, Option } = require('commander');
+const { addAmplifierOptions } = require('./cli-utils');
 
 const upload = (client, wallet, chainName, config, options) => {
     const { reuseCodeId, contractName, fetchCodeId } = options;
@@ -23,8 +23,8 @@ const upload = (client, wallet, chainName, config, options) => {
         axelar: {
             contracts: { [contractName]: contractConfig },
         },
-        chains: { [chainName]: chainConfig },
     } = config;
+    const chainConfig = chainName === 'none' ? undefined : getChainConfig(config, chainName);
 
     if (!fetchCodeId && (!reuseCodeId || isNil(contractConfig.codeId))) {
         printInfo('Uploading contract binary');
@@ -52,7 +52,7 @@ const upload = (client, wallet, chainName, config, options) => {
             .then(() => ({ wallet, client }));
     }
 
-    printInfo('Skipping upload. Reusing previously uploaded binary');
+    printInfo('Skipping upload. Reusing previously uploaded bytecode');
     return Promise.resolve({ wallet, client });
 };
 
@@ -112,35 +112,15 @@ const programHandler = () => {
 
     program.name('upload-contract').description('Upload CosmWasm contracts');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
-    program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
-    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
+    addAmplifierOptions(program);
+
     program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
-    program.addOption(new Option('-s, --salt <salt>', 'salt for instantiate2. defaults to contract name').env('SALT'));
-    program.addOption(
-        new Option('--admin <address>', 'when instantiating contract, set an admin address. Defaults to governance module account').default(
-            governanceAddress,
-        ),
-    );
     program.addOption(
         new Option(
             '-u, --uploadOnly',
             'upload the contract without instantiating. prints expected contract address if --instantiate2 is passed',
         ),
     );
-    program.addOption(new Option('--instantiate2', 'use instantiate2 for constant address deployment'));
-    program.addOption(new Option('--aarch64', 'aarch64').env('AARCH64').default(false));
-    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-
-    program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
 
     program.action((options) => {
         main(options);

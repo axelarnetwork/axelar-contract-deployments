@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint --fix '**/*.js'",
-    "prettier": "prettier --write '**/*.js' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'"
+    "prettier": "prettier --write '**/*.js' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'",
+    "test:sui": "mocha sui"
   },
   "repository": {
     "type": "git",
@@ -23,7 +24,7 @@
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
     "@axelar-network/axelar-cgp-solidity": "6.3.1",
-    "@axelar-network/axelar-cgp-sui": "0.3.0",
+    "@axelar-network/axelar-cgp-sui": "^0.4.1",
     "@axelar-network/axelar-gmp-sdk-solidity": "5.10.0",
     "@axelar-network/interchain-token-service": "file:../interchain-token-service",
     "@cosmjs/cosmwasm-stargate": "^0.32.1",

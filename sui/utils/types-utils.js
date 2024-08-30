@@ -83,12 +83,18 @@ const discoveryStruct = bcs.struct('Discovery', {
     fields: discoveryTable,
 });
 
-const tableStruct = bcs.struct('Table', {
+const bagStruct = bcs.struct('Bag', {
     id: UID,
     size: bcs.U64,
 });
 
-const bagStruct = bcs.struct('Bag', {
+const operatorsStruct = bcs.struct('Operators', {
+    id: UID,
+    operators: bcs.vector(addressStruct),
+    caps: bagStruct,
+});
+
+const tableStruct = bcs.struct('Table', {
     id: UID,
     size: bcs.U64,
 });
@@ -118,11 +124,17 @@ const squidStruct = bcs.struct('Squid', {
     coin_bag: coinBagStrcut,
 });
 
+const executeDataStruct = bcs.struct('ExecuteData', {
+    payload: bcs.vector(bcs.u8()),
+    proof: bcs.vector(bcs.u8()),
+});
+
 module.exports = {
     addressStruct,
     signerStruct,
     bytes32Struct,
     signersStruct,
+    operatorsStruct,
     messageToSignStruct,
     messageStruct,
     approvedMessageStruct,
@@ -133,4 +145,5 @@ module.exports = {
     discoveryStruct,
     itsStruct,
     squidStruct,
+    executeDataStruct,
 };

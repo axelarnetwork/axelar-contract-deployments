@@ -2,7 +2,8 @@
 
 const { ethers } = require('hardhat');
 const toml = require('toml');
-const { printInfo, printError } = require('../common/utils');
+const { execSync } = require('child_process');
+const { printInfo, printError, printWarn } = require('../../common/utils');
 const {
     BigNumber,
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
@@ -16,6 +17,7 @@ const { singletonStruct, itsStruct, squidStruct } = require('./types-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
+const suiCoinId = '0x2::sui::SUI';
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -53,7 +55,7 @@ const getBcsBytesByObjectId = async (client, objectId) => {
 };
 
 const deployPackage = async (packageName, client, keypair, options = {}) => {
-    const compileDir = `${__dirname}/move`;
+    const compileDir = `${__dirname}/../move`;
 
     copyMovePackage(packageName, null, compileDir);
 
@@ -72,9 +74,39 @@ const findPublishedObject = (published, packageDir, contractName) => {
     return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageDir}::${contractName}`);
 };
 
+const getInstalledSuiVersion = () => {
+    const suiVersion = execSync('sui --version').toString().trim();
+    return parseVersion(suiVersion);
+};
+
+const getDefinedSuiVersion = () => {
+    const version = fs.readFileSync(`${__dirname}/../version.json`, 'utf8');
+    const suiVersion = JSON.parse(version).SUI_VERSION;
+    return parseVersion(suiVersion);
+};
+
+const parseVersion = (version) => {
+    const versionMatch = version.match(/\d+\.\d+\.\d+/);
+    return versionMatch[0];
+};
+
+const checkSuiVersionMatch = () => {
+    const installedVersion = getInstalledSuiVersion();
+    const definedVersion = getDefinedSuiVersion();
+
+    if (installedVersion !== definedVersion) {
+        printWarn('Version mismatch detected:');
+        printWarn(`- Installed SUI version: ${installedVersion}`);
+        printWarn(`- Version used for tests: ${definedVersion}`);
+    }
+};
+
 const readMovePackageName = (moveDir) => {
     try {
-        const moveToml = fs.readFileSync(`${__dirname}/../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`, 'utf8');
+        const moveToml = fs.readFileSync(
+            `${__dirname}/../../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`,
+            'utf8',
+        );
 
         const { package: movePackage } = toml.parse(moveToml);
 
@@ -145,10 +177,79 @@ const getSigners = async (keypair, config, chain, options) => {
     return getAmplifierSigners(config, chain);
 };
 
+const isGasToken = (coinType) => {
+    return coinType === suiCoinId;
+};
+
+const paginateAll = async (client, paginatedFn, params, pageLimit = 100) => {
+    let cursor;
+    let response = await client[paginatedFn]({
+        ...params,
+        cursor,
+        limit: pageLimit,
+    });
+    const items = response.data;
+
+    while (response.hasNextPage) {
+        response = await client[paginatedFn]({
+            ...params,
+            cursor: response.nextCursor,
+            limit: pageLimit,
+        });
+        items.push(...response.data);
+    }
+
+    return items;
+};
+
+const findOwnedObjectId = async (client, ownerAddress, objectType) => {
+    const ownedObjects = await client.getOwnedObjects({
+        owner: ownerAddress,
+        options: {
+            showContent: true,
+        },
+    });
+
+    const targetObject = ownedObjects.data.find(({ data }) => data.content.type === objectType);
+
+    if (!targetObject) {
+        throw new Error(`No object found for type: ${objectType}`);
+    }
+
+    return targetObject.data.content.fields.id.id;
+};
+
+const getBagContentId = async (client, objectType, bagId, bagName) => {
+    const result = await client.getDynamicFields({
+        parentId: bagId,
+        name: bagName,
+    });
+
+    const objectId = result.data.find((cap) => cap.objectType === objectType)?.objectId;
+
+    if (!objectId) {
+        throw new Error(`${objectType} not found in the capabilities bag`);
+    }
+
+    const objectDetails = await client.getObject({
+        id: objectId,
+        options: {
+            showContent: true,
+        },
+    });
+
+    return objectDetails.data.content.fields.value.fields.id.id;
+};
+
 module.exports = {
+    suiCoinId,
+    getAmplifierSigners,
+    isGasToken,
+    paginateAll,
     suiPackageAddress,
     suiClockAddress,
-    getAmplifierSigners,
+    checkSuiVersionMatch,
+    findOwnedObjectId,
     getBcsBytesByObjectId,
     deployPackage,
     findPublishedObject,
@@ -158,4 +259,5 @@ module.exports = {
     getItsChannelId,
     getSquidChannelId,
     getSigners,
+    getBagContentId,
 };
