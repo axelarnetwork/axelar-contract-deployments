@@ -9,6 +9,8 @@ const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 const {
     prepareWallet,
     prepareClient,
+    fromHex,
+    getSalt,
     readWasmFile,
     getChains,
     updateContractConfig,
@@ -36,6 +38,8 @@ const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
 const predictAndUpdateAddress = async (client, contractConfig, chainConfig, options) => {
+    const { contractName, salt, chainNames, runAs } = options;
+
     const { checksum } = await client.getCodeDetails(contractConfig.codeId);
     const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar');
 

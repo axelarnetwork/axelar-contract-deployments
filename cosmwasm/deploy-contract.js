@@ -86,12 +86,10 @@ const main = async (options) => {
 
     await upload(client, wallet, chains[0], config, options);
 
-    if (uploadOnly || prompt(`Proceed with deployment on axelar?`, yes)) {
-        return;
-    }
-
-    for (const chain of chains) {
-        await instantiate(client, wallet, chain.toLowerCase(), config, options);
+    if (!(uploadOnly || prompt(`Proceed with deployment on axelar?`, yes))) {
+        for (const chain of chains) {
+            await instantiate(client, wallet, chain.toLowerCase(), config, options);
+        }
     }
 
     saveConfig(config, env);
