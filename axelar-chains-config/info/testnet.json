@@ -2288,6 +2288,26 @@
       "confirmations": 1,
       "finality": "400",
       "approxFinalityWaitTime": 30
+    },
+    "flow": {
+      "name": "Flow",
+      "id": "flow",
+      "axelarId": "flow",
+      "chainId": 545,
+      "rpc": "https://testnet.evm.nodes.onflow.org",
+      "tokenSymbol": "FLOW",
+      "contracts": {},
+      "explorer": {
+        "name": "Flowscan",
+        "url": "https://evm-testnet.flowscan.io/",
+        "api": "https://evm-testnet.flowscan.io/api"
+      },
+      "gasOptions": {
+        "gasLimit": 10000000
+      },
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     }
   },
   "stellar": {
