@@ -35,6 +35,7 @@ ethers.workspace = true
 evm-contracts-test-suite.workspace = true
 axelar-solana-memo-program.workspace = true
 solana-cli-config = "2.0.1"
+solana-rpc = "2.0.1"
 solana-rpc-client-api = "2.0.1"
 solana-test-validator = "2.0.5"
 solana-transaction-status = "2.0.1"
@@ -63,6 +64,10 @@ router-api = { path = "../../axelar-amplifier/packages/router-api" }
 axelar-rkyv-encoding.workspace = true
 axelar-executable.workspace = true
 itertools.workspace = true
+rand.workspace = true
+thiserror.workspace = true
+derive_builder = "0.20"
+csv-async = { version = "1.3.0", features = ["tokio"] }
 
 [dev-dependencies]
 solana-program.workspace = true

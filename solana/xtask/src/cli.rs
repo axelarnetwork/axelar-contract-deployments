@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
+use axelar_message_primitives::EncodingScheme;
 use clap::{Parser, Subcommand};
 use cmd::solana::SolanaContract;
 use ethers::core::k256::ecdsa::SigningKey;
@@ -219,6 +220,11 @@ pub(crate) enum Solana {
     MessageLimitsReport {
         /// Where to output the report
         output_dir: PathBuf,
+
+        /// Enable ABI encoding scheme. When ommited, borsh
+        /// encoding is used.
+        #[arg(short, long)]
+        abi_encoding: bool,
     },
     Init {
         #[command(subcommand)]
@@ -448,8 +454,17 @@ async fn handle_solana(command: Solana) -> eyre::Result<()> {
                 ws_url.as_ref(),
             )?;
         }
-        Solana::MessageLimitsReport { output_dir } => {
-            cmd::solana::generate_message_limits_report(&output_dir).await?;
+        Solana::MessageLimitsReport {
+            output_dir,
+            abi_encoding,
+        } => {
+            let encoding = if abi_encoding {
+                EncodingScheme::AbiEncoding
+            } else {
+                EncodingScheme::Borsh
+            };
+
+            cmd::solana::generate_message_limits_report(&output_dir, encoding).await?;
         }
         Solana::Init { contract } => match contract {
             SolanaInitSubcommand::GmpGateway {
