@@ -130,7 +130,7 @@ const getObjectIdsByObjectTypes = (txn, objectTypes) =>
 // Parse bcs bytes from singleton object which is created when the Test contract is deployed
 const getSingletonChannelId = async (client, singletonObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
-    const data = bcsStructs.common.Singleton.parse(bcsBytes);
+    const data = bcsStructs.gmp.Singleton.parse(bcsBytes);
     return '0x' + data.channel.id;
 };
 
