@@ -1,7 +1,7 @@
 //! Module for the `VerifierSetTracker` account type.
 use std::mem::size_of;
 
-use axelar_message_primitives::command::U256;
+use axelar_message_primitives::U256;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;

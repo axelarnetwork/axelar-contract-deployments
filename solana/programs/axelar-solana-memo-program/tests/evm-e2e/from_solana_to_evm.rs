@@ -1,10 +1,12 @@
-use std::borrow::Cow;
+use std::str::FromStr;
 
 use axelar_solana_memo_program::instruction::call_gateway_with_memo;
+use ethers_core::utils::hex::ToHex;
 use ethers_core::utils::keccak256;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo::ReceivedMemoFilter;
-use gateway::events::{CallContract, GatewayEvent};
+use gateway::events::{ArchivedCallContract, ArchivedGatewayEvent, EventContainer, GatewayEvent};
 use solana_program_test::tokio;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::Transaction;
 
@@ -28,11 +30,11 @@ async fn test_send_from_solana_to_evm() {
     let solana_id = "solana-localnet";
     let memo = "🐪🐪🐪🐪";
     let destination_address: ethers_core::types::Address = evm_memo.address();
-    let destination_chain = "ethereum".to_string().into_bytes();
+    let destination_chain = "ethereum".to_string();
 
     // Action:
     // - send message from Solana memo program to Solana gateway
-    let call_contract = call_solana_gateway(
+    let gateway_event = call_solana_gateway(
         &solana_chain.gateway_root_pda,
         &mut solana_chain.fixture,
         memo,
@@ -40,10 +42,14 @@ async fn test_send_from_solana_to_evm() {
         &destination_address,
     )
     .await;
+    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
+        panic!("Expected CallContract event, got {:?}", gateway_event);
+    };
+
     // - EVM operators sign the contract call
     let (messages, proof) = evm_prepare_approve_contract_call(
         solana_id,
-        &call_contract,
+        call_contract,
         &mut weighted_signers,
         domain_separator,
     );
@@ -71,12 +77,12 @@ async fn test_send_from_solana_to_evm() {
         .unwrap();
     assert!(is_approved, "contract call was not approved");
     assert_eq!(
-        keccak256(call_contract.payload.clone()),
+        keccak256(&call_contract.payload),
         call_contract.payload_hash
     );
     assert_eq!(
         evm_memo.address(),
-        ethers_core::types::Address::from_slice(call_contract.destination_address.as_slice())
+        ethers_core::types::Address::from_str(call_contract.destination_address.as_str()).unwrap()
     );
 
     // Action - Relayer calls the EVM memo program with the payload
@@ -85,7 +91,7 @@ async fn test_send_from_solana_to_evm() {
             message.source_chain,
             message.message_id,
             message.source_address,
-            call_contract.payload.into(),
+            call_contract.payload.to_vec().into(),
         )
         .send()
         .await
@@ -112,7 +118,7 @@ async fn test_send_from_solana_to_evm() {
 
 fn evm_prepare_approve_contract_call(
     solana_id: &str,
-    call_contract: &CallContract,
+    call_contract: &ArchivedCallContract,
     signer_set: &mut evm_contracts_test_suite::evm_weighted_signers::WeightedSigners,
     domain_separator: [u8; 32],
 ) -> (
@@ -123,10 +129,11 @@ fn evm_prepare_approve_contract_call(
         evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::Message {
             source_chain: solana_id.to_string(),
             message_id: "message555".to_string(),
-            source_address: call_contract.sender.to_string(),
-            contract_address: ethers_core::types::Address::from_slice(
-                call_contract.destination_address.as_slice(),
-            ),
+            source_address: Pubkey::from(call_contract.sender).to_string(),
+            contract_address: ethers_core::types::Address::from_str(
+                call_contract.destination_address.as_str(),
+            )
+            .unwrap(),
             payload_hash: call_contract.payload_hash,
         };
     let approve_contract_call_command =
@@ -145,16 +152,18 @@ async fn call_solana_gateway(
     gateway_root_pda: &solana_sdk::pubkey::Pubkey,
     solana_fixture: &mut test_fixtures::test_setup::TestFixture,
     memo: &str,
-    destination_chain: Vec<u8>,
+    destination_chain: String,
     destination_address: &ethers_core::types::H160,
-) -> CallContract {
+) -> EventContainer {
+    let destination_address = destination_address.encode_hex();
+    dbg!(&destination_address);
     let transaction = Transaction::new_signed_with_payer(
         &[call_gateway_with_memo(
             gateway_root_pda,
             &solana_fixture.payer.pubkey(),
             memo.to_string(),
             destination_chain,
-            destination_address.as_bytes().to_vec(),
+            destination_address,
         )
         .unwrap()],
         Some(&solana_fixture.payer.pubkey()),
@@ -178,9 +187,6 @@ async fn call_solana_gateway(
         .iter()
         .find_map(GatewayEvent::parse_log)
         .expect("Gateway event was not emitted?");
-    let GatewayEvent::CallContract(Cow::Owned(call_contract)) = gateway_event else {
-        panic!("Expected CallContract event, got {:?}", gateway_event);
-    };
 
-    call_contract
+    gateway_event
 }

@@ -1,6 +1,3 @@
-use std::borrow::Cow;
-
-use axelar_rkyv_encoding::types::ArchivedVerifierSet;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -12,10 +9,10 @@ use solana_program::sysvar::Sysvar;
 
 use super::Processor;
 use crate::axelar_auth_weighted::SignerSetMetadata;
-use crate::events::GatewayEvent;
+use crate::events::{GatewayEvent, RotateSignersEvent};
 use crate::state::execute_data::{ArchivedGatewayExecuteData, RotateSignersVariant};
 use crate::state::verifier_set_tracker::VerifierSetTracker;
-use crate::state::{GatewayConfig};
+use crate::state::GatewayConfig;
 use crate::{assert_valid_verifier_set_tracker_pda, seed_prefixes};
 
 impl Processor {
@@ -139,7 +136,12 @@ impl Processor {
         )?;
 
         // Emit event if the signers were rotated
-        emit_signers_rotated_event(new_verifier_set)?;
+        GatewayEvent::SignersRotated(RotateSignersEvent {
+            new_epoch: new_verifier_set_tracker.epoch,
+            new_signers_hash: new_verifier_set_tracker.verifier_set_hash,
+            execute_data_pda: gateway_approve_messages_execute_data_pda.key.to_bytes(),
+        })
+        .emit()?;
 
         // Store the gateway data back to the account.
         let mut data = gateway_root_pda.try_borrow_mut_data()?;
@@ -157,12 +159,4 @@ impl Processor {
             .expect("Current time minus rotate signers last successful operation time should not underflow");
         Ok(secs_since_last_rotation >= config.auth_weighted.minimum_rotation_delay)
     }
-}
-
-/// FIXME: Temporary workaround to emit a 'SignersRotated' event without
-/// breaking the public API (currently used by AMPD and the Relayer). Once we
-/// use 'axelar-rkyv-encoding' types across all APIs this can be revisited and
-/// adjusted.
-fn emit_signers_rotated_event(_verifier_set: &ArchivedVerifierSet) -> Result<(), ProgramError> {
-    GatewayEvent::SignersRotated(Cow::Owned(())).emit()
 }

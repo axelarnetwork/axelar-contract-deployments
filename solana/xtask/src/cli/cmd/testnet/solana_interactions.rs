@@ -1,9 +1,9 @@
-use std::borrow::Cow;
 use std::str::FromStr;
 
 use axelar_message_primitives::DataPayload;
 use axelar_wasm_std::nonempty;
 use gmp_gateway::commands::OwnedCommand;
+use gmp_gateway::events::ArchivedGatewayEvent;
 use gmp_gateway::state::GatewayApprovedCommand;
 use router_api::{Address, ChainName, CrossChainId};
 use solana_sdk::commitment_config::CommitmentConfig;
@@ -31,8 +31,8 @@ pub(crate) fn send_memo_from_solana(
                 gateway_root_pda,
                 &solana_keypair.pubkey(),
                 memo.to_string(),
-                destination_chain.id.clone().into_bytes(),
-                ethers::utils::to_checksum(&destination_memo_contract, None).into_bytes(),
+                destination_chain.id.clone(),
+                ethers::utils::to_checksum(&destination_memo_contract, None),
             )
             .unwrap(),
         ],
@@ -64,26 +64,24 @@ pub(crate) fn send_memo_from_solana(
         .enumerate()
         .find_map(|(idx, log)| gmp_gateway::events::GatewayEvent::parse_log(log).map(|x| (idx, x)))
         .expect("Gateway event was not emitted (or we couldn't parse it)?");
-    let gmp_gateway::events::GatewayEvent::CallContract(Cow::Owned(call_contract)) = gateway_event
-    else {
+    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
-    let payload = call_contract.payload;
+    let payload = call_contract.payload.to_vec();
     let signature = signature.to_string();
     let message = router_api::Message {
         cc_id: CrossChainId {
             chain: ChainName::from_str(solana_chain_id).unwrap(),
             id: nonempty::String::from_str(&format!("{signature}-{event_idx}")).unwrap(),
         },
-        source_address: Address::from_str(call_contract.sender.to_string().as_str()).unwrap(),
-        destination_chain: ChainName::from_str(
-            String::from_utf8_lossy(&call_contract.destination_chain).as_ref(),
+        source_address: Address::from_str(
+            solana_sdk::pubkey::Pubkey::from(call_contract.sender)
+                .to_string()
+                .as_str(),
         )
         .unwrap(),
-        destination_address: Address::from_str(
-            String::from_utf8_lossy(&call_contract.destination_address).as_ref(),
-        )
-        .unwrap(),
+        destination_chain: ChainName::from_str(call_contract.destination_chain.as_str()).unwrap(),
+        destination_address: Address::from_str(call_contract.destination_address.as_str()).unwrap(),
         payload_hash: call_contract.payload_hash,
     };
 

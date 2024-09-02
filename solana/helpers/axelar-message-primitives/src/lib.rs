@@ -7,7 +7,3 @@ pub use address::*;
 pub use destination_program_id::*;
 pub use payload::*;
 pub use u256::*;
-
-pub mod command {
-    pub use super::u256::*;
-}

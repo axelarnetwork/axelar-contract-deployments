@@ -5,7 +5,7 @@ use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use axelar_message_primitives::command::U256;
+use axelar_message_primitives::U256;
 use axelar_rkyv_encoding::types::{PublicKey, VerifierSet, U128};
 use gmp_gateway::axelar_auth_weighted::RotationDelaySecs;
 use gmp_gateway::instructions::{InitializeConfig, VerifierSetWraper};

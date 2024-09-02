@@ -36,9 +36,9 @@ pub enum AxelarMemoInstruction {
         /// Memo to send to the gateway
         memo: String,
         /// Destination chain we want to communicate with
-        destination_chain: Vec<u8>,
+        destination_chain: String,
         /// Destination contract address on the destination chain
-        destination_address: Vec<u8>,
+        destination_address: String,
     },
 }
 
@@ -75,8 +75,8 @@ pub fn call_gateway_with_memo(
     gateway_root_pda: &Pubkey,
     sender: &Pubkey,
     memo: String,
-    destination_chain: Vec<u8>,
-    destination_address: Vec<u8>,
+    destination_chain: String,
+    destination_address: String,
 ) -> Result<Instruction, ProgramError> {
     let instruction_data =
         AxelarCallableInstruction::Native(AxelarMemoInstruction::SendToGateway {

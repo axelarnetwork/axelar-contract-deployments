@@ -1,11 +1,10 @@
 use std::path::PathBuf;
 
-use axelar_message_primitives::command::U256;
-use axelar_message_primitives::DataPayload;
+use axelar_message_primitives::{DataPayload, U256};
 use axelar_rkyv_encoding::rkyv::validation::validators::DefaultValidator;
 use axelar_rkyv_encoding::rkyv::CheckBytes;
 use axelar_rkyv_encoding::types::u128::U128;
-use axelar_rkyv_encoding::types::{Message, Payload, VerifierSet};
+use axelar_rkyv_encoding::types::{ExecuteData, Message, Payload, VerifierSet};
 use borsh::BorshDeserialize;
 use gateway::commands::OwnedCommand;
 use gateway::hasher_impl;
@@ -438,42 +437,62 @@ impl TestFixture {
             .unwrap();
     }
 
-    async fn init_approve_messages_execute_data(
+    pub async fn init_approve_messages_execute_data(
         &mut self,
         gateway_root_pda: &Pubkey,
         payload: Payload,
         signers: &SigningVerifierSet,
         domain_separator: &[u8; 32],
-    ) -> (Pubkey, Vec<u8>) {
+    ) -> (
+        Pubkey,
+        ExecuteData,
+        GatewayExecuteData<ApproveMessagesVariant>,
+    ) {
         let (raw_data, _) = prepare_execute_data(payload, signers, domain_separator);
         let execute_data_pda = self
             .init_approve_messages_execute_data_with_custom_data(
                 gateway_root_pda,
-                &raw_data,
+                &raw_data.to_bytes::<0>().unwrap(),
                 domain_separator,
             )
             .await;
+        let execute_data = GatewayExecuteData::new(
+            &raw_data.to_bytes::<0>().unwrap(),
+            gateway_root_pda,
+            domain_separator,
+        )
+        .unwrap();
 
-        (execute_data_pda, raw_data)
+        (execute_data_pda, raw_data, execute_data)
     }
 
-    async fn init_rotate_signers_execute_data(
+    pub async fn init_rotate_signers_execute_data(
         &mut self,
         gateway_root_pda: &Pubkey,
         payload: Payload,
         signers: &SigningVerifierSet,
         domain_separator: &[u8; 32],
-    ) -> (Pubkey, Vec<u8>) {
+    ) -> (
+        Pubkey,
+        ExecuteData,
+        GatewayExecuteData<RotateSignersVariant>,
+    ) {
         let (raw_data, _) = prepare_execute_data(payload, signers, domain_separator);
         let execute_data_pda = self
             .init_rotate_signers_execute_data_with_custom_data(
                 gateway_root_pda,
-                &raw_data,
+                &raw_data.to_bytes::<0>().unwrap(),
                 domain_separator,
             )
             .await;
+        let execute_data = GatewayExecuteData::new(
+            &raw_data.to_bytes::<0>().unwrap(),
+            gateway_root_pda,
+            domain_separator,
+        )
+        .unwrap();
 
-        (execute_data_pda, raw_data)
+        (execute_data_pda, raw_data, execute_data)
     }
 
     pub async fn init_execute_data(
@@ -485,22 +504,26 @@ impl TestFixture {
     ) -> (Pubkey, Vec<u8>) {
         match &payload {
             Payload::Messages(_) => {
-                self.init_approve_messages_execute_data(
-                    gateway_root_pda,
-                    payload,
-                    signers,
-                    domain_separator,
-                )
-                .await
+                let res = self
+                    .init_approve_messages_execute_data(
+                        gateway_root_pda,
+                        payload,
+                        signers,
+                        domain_separator,
+                    )
+                    .await;
+                (res.0, res.1.to_bytes::<0>().unwrap())
             }
             Payload::VerifierSet(_) => {
-                self.init_rotate_signers_execute_data(
-                    gateway_root_pda,
-                    payload,
-                    signers,
-                    domain_separator,
-                )
-                .await
+                let res = self
+                    .init_rotate_signers_execute_data(
+                        gateway_root_pda,
+                        payload,
+                        signers,
+                        domain_separator,
+                    )
+                    .await;
+                (res.0, res.1.to_bytes::<0>().unwrap())
             }
         }
     }
@@ -818,7 +841,6 @@ impl TestFixture {
                 domain_separator,
             )
             .await;
-
         let tx = self
             .rotate_signers_with_metadata(
                 gateway_root_pda,

@@ -36,8 +36,6 @@ pub enum GatewayInstruction {
 
     /// Rotate signers for the Gateway Root Config PDA account.
     ///
-    /// Accounts expected by this instruction:
-    /// 0. [WRITE] Gateway Root Config PDA account
     /// 1. [] Gateway ExecuteData PDA account
     /// 2. [] Verifier Setr Tracker PDA account (the one that signed the
     ///    ExecuteData)
@@ -55,9 +53,9 @@ pub enum GatewayInstruction {
     /// 1. [] Gateway Root Config PDA account
     CallContract {
         /// The name of the target blockchain.
-        destination_chain: Vec<u8>,
+        destination_chain: String,
         /// The address of the target contract in the destination blockchain.
-        destination_contract_address: Vec<u8>,
+        destination_contract_address: String,
         /// Contract call data.
         payload: Vec<u8>,
     },
@@ -341,8 +339,8 @@ pub fn handle_execute_data(
 pub fn call_contract(
     gateway_root_pda: Pubkey,
     sender: Pubkey,
-    destination_chain: Vec<u8>,
-    destination_contract_address: Vec<u8>,
+    destination_chain: String,
+    destination_contract_address: String,
     payload: Vec<u8>,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&GatewayInstruction::CallContract {
@@ -578,9 +576,8 @@ pub mod tests {
 
     #[test]
     fn round_trip_call_contract() {
-        let destination_chain = "ethereum".as_bytes().to_vec();
-        let destination_contract_address =
-            hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
+        let destination_chain = "ethereum".to_owned();
+        let destination_contract_address = "2F43DDFf564Fb260dbD783D55fc6E4c70Be18862".to_owned();
         let payload = vec![5; 100];
 
         let instruction = GatewayInstruction::CallContract {
@@ -598,9 +595,8 @@ pub mod tests {
     #[test]
     fn round_trip_call_contract_function() {
         let sender = Keypair::new().pubkey();
-        let destination_chain = "ethereum".as_bytes().to_vec();
-        let destination_contract_address =
-            hex::decode("2F43DDFf564Fb260dbD783D55fc6E4c70Be18862").unwrap();
+        let destination_chain = "ethereum".to_owned();
+        let destination_contract_address = "2F43DDFf564Fb260dbD783D55fc6E4c70Be18862".to_owned();
         let payload = vec![5; 100];
 
         let instruction = call_contract(

@@ -1,7 +1,7 @@
 mod common;
 
 use anyhow::{Ok, Result};
-use axelar_message_primitives::command::U256;
+use axelar_message_primitives::U256;
 use base64::engine::general_purpose;
 use base64::Engine;
 use borsh::BorshDeserialize;

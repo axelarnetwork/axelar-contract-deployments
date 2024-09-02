@@ -8,6 +8,7 @@ use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
+use crate::events::GatewayEvent;
 use crate::state::GatewayConfig;
 
 impl Processor {
@@ -82,6 +83,12 @@ impl Processor {
         // Store the gateway data back to the account.
         let mut data = gateway_root_pda.try_borrow_mut_data()?;
         gateway_config.pack_into_slice(&mut data);
+
+        // Emit an event
+        GatewayEvent::OperatorshipTransferred(crate::events::OperatorshipTransferred {
+            operator: new_operator.key.to_bytes(),
+        })
+        .emit()?;
 
         Ok(())
     }

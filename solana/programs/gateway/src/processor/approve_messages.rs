@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 
 use itertools::*;
 use program_utils::ValidPDA;
@@ -100,7 +99,7 @@ where
 
         approved_command_account.set_ready_for_validate_message()?;
         let message_approved = axelar_message.try_into()?;
-        let event = GatewayEvent::MessageApproved(Cow::Borrowed(&message_approved));
+        let event = GatewayEvent::MessageApproved(message_approved);
         event.emit()?;
 
         // Save the updated approved message account

@@ -12,7 +12,7 @@ use test_fixtures::test_setup::{
 };
 
 use crate::{
-    get_gateway_events, get_gateway_events_from_execute_data, make_messages,
+    get_gateway_events, get_rotate_signers_gateway_events_from_execute_data, make_messages,
     make_payload_and_commands,
 };
 
@@ -39,10 +39,10 @@ async fn successfully_rotates_signers() {
         .setup()
         .await;
     let new_signer_set = make_signers(&[500, 200], 1);
-    let (payload, command) = payload_and_command(&new_signer_set.verifier_set());
+    let (payload, _command) = payload_and_command(&new_signer_set.verifier_set());
 
-    let (execute_data_pda, _) = fixture
-        .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
+    let (execute_data_pda, _execute_data, pda_execute_data) = fixture
+        .init_rotate_signers_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
 
     // Action
@@ -57,22 +57,25 @@ async fn successfully_rotates_signers() {
 
     // Assert
     assert!(tx.result.is_ok());
+    let new_epoch: U256 = 2u128.into();
+
     // - expected events
-    let emitted_events = get_gateway_events(&tx);
-    let expected_approved_command_logs = get_gateway_events_from_execute_data(&command);
-    for (actual, expected) in emitted_events
-        .iter()
-        .zip(expected_approved_command_logs.iter())
-    {
-        assert_eq!(actual, expected);
-    }
+    let emitted_event = get_gateway_events(&tx).pop().unwrap();
+    let expected_event = get_rotate_signers_gateway_events_from_execute_data(
+        pda_execute_data,
+        &gateway_root_pda,
+        new_epoch,
+    );
+    assert_eq!(emitted_event, expected_event);
 
     // - signers have been updated
     let root_pda_data = fixture
         .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
         .await;
-    let new_epoch: U256 = 2u128.into();
-    assert_eq!(root_pda_data.auth_weighted.current_epoch(), new_epoch);
+    assert_eq!(
+        root_pda_data.auth_weighted.current_epoch(),
+        new_epoch.clone()
+    );
     // todo -- assert that the signer tracker pda has been initialized
 
     // - test that both signer sets can sign new messages
@@ -182,10 +185,10 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
         .await;
 
     let newer_signer_set = make_signers(&[500, 200], 2);
-    let (payload, command) = payload_and_command(&new_signer_set.verifier_set());
+    let (payload, _command) = payload_and_command(&new_signer_set.verifier_set());
     // we stil use the initial signer set to sign the data (the `signers` variable)
-    let (execute_data_pda, _) = fixture
-        .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
+    let (execute_data_pda, _, pda_execute_data) = fixture
+        .init_rotate_signers_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
 
     // Action
@@ -207,21 +210,23 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
 
     // Assert
     assert!(tx.result.is_ok());
-    let emitted_events = get_gateway_events(&tx);
-    let expected_approved_command_logs = get_gateway_events_from_execute_data(&command);
-    for (actual, expected) in emitted_events
-        .iter()
-        .zip(expected_approved_command_logs.iter())
-    {
-        assert_eq!(actual, expected);
-    }
+    let new_epoch: U256 = 3_u128.into();
+    let emitted_event = get_gateway_events(&tx).pop().unwrap();
+    let expected_event = get_rotate_signers_gateway_events_from_execute_data(
+        pda_execute_data,
+        &gateway_root_pda,
+        new_epoch,
+    );
+    assert_eq!(emitted_event, expected_event);
 
     // - signers have been updated
     let root_pda_data = fixture
         .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
         .await;
-    let new_epoch: U256 = 3u128.into();
-    assert_eq!(root_pda_data.auth_weighted.current_epoch(), new_epoch);
+    assert_eq!(
+        root_pda_data.auth_weighted.current_epoch(),
+        new_epoch.clone()
+    );
     // todo -- assert verifier set pda
 }
 

@@ -10,16 +10,18 @@ mod rotate_signers;
 mod transfer_operatorship;
 
 use std::collections::BTreeMap;
+use std::str::FromStr;
 
-use axelar_message_primitives::{DataPayload, EncodingScheme};
+use axelar_message_primitives::{DataPayload, EncodingScheme, U256};
 use axelar_rkyv_encoding::hash_payload;
 use axelar_rkyv_encoding::types::{
     ExecuteData, Message, Payload, Proof, PublicKey, WeightedSigner,
 };
 use gmp_gateway::commands::OwnedCommand;
-use gmp_gateway::events::GatewayEvent;
+use gmp_gateway::events::{EventContainer, GatewayEvent};
 use gmp_gateway::hasher_impl;
-use gmp_gateway::state::GatewayApprovedCommand;
+use gmp_gateway::state::execute_data::{ApproveMessagesVariant, RotateSignersVariant};
+use gmp_gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
 use solana_program_test::{processor, ProgramTest};
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
@@ -70,18 +72,51 @@ pub fn gateway_approved_command_ixs(
     ixs
 }
 
-fn get_gateway_events_from_execute_data(commands: &[OwnedCommand]) -> Vec<GatewayEvent<'static>> {
-    commands
+fn get_approve_messages_gateway_events_from_execute_data(
+    execute_data: &GatewayExecuteData<ApproveMessagesVariant>,
+) -> Vec<EventContainer> {
+    execute_data
+        .data
         .iter()
-        .cloned()
-        .map(gmp_gateway::events::GatewayEvent::try_from)
-        .collect::<Result<Vec<_>, _>>()
-        .expect("failed to parse events from execute_data")
+        .map(|x| {
+            let event = GatewayEvent::MessageApproved(gmp_gateway::events::MessageApproved {
+                command_id: x.cc_id().command_id(hasher_impl()),
+                source_chain: x.cc_id().chain().to_owned().into_bytes(),
+                message_id: x.cc_id().id().to_owned().into_bytes(),
+                source_address: x.source_address().into(),
+                destination_address: Pubkey::from_str(x.destination_address())
+                    .unwrap()
+                    .to_bytes(),
+                payload_hash: *x.payload_hash(),
+            });
+            let vec = event.encode();
+            EventContainer::new(vec.to_vec()).unwrap()
+        })
+        .collect()
+}
+
+fn get_rotate_signers_gateway_events_from_execute_data(
+    execute_data: GatewayExecuteData<RotateSignersVariant>,
+    gateway_root_pda: &Pubkey,
+    expected_epoch: U256,
+) -> EventContainer {
+    let event = GatewayEvent::SignersRotated(gmp_gateway::events::RotateSignersEvent {
+        new_epoch: expected_epoch,
+        new_signers_hash: execute_data.data.hash(hasher_impl()),
+        execute_data_pda: gmp_gateway::get_execute_data_pda(
+            gateway_root_pda,
+            &execute_data.hash_decoded_contents(),
+        )
+        .0
+        .to_bytes(),
+    });
+    let vec = event.encode();
+    EventContainer::new(vec.to_vec()).unwrap()
 }
 
 fn get_gateway_events(
     tx: &solana_program_test::BanksTransactionResultWithMetadata,
-) -> Vec<GatewayEvent<'static>> {
+) -> Vec<EventContainer> {
     tx.metadata
         .as_ref()
         .unwrap()

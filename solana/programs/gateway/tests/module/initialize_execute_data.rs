@@ -34,7 +34,7 @@ async fn test_successfylly_initialize_execute_data() {
     let payload = Payload::new_messages(make_messages(1));
     let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
     let gateway_execute_data = GatewayExecuteData::<HasheableMessageVec>::new(
-        &raw_execute_data,
+        &raw_execute_data.to_bytes::<0>().unwrap(),
         &gateway_root_pda,
         &domain_separator,
     )
@@ -53,7 +53,7 @@ async fn test_successfylly_initialize_execute_data() {
                 fixture.payer.pubkey(),
                 gateway_root_pda,
                 &domain_separator,
-                &raw_execute_data,
+                &raw_execute_data.to_bytes::<0>().unwrap(),
             )
             .unwrap()
             .0,
@@ -96,7 +96,7 @@ async fn test_succesfully_initialize_rotate_signers() {
 
     let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);
     let gateway_execute_data = GatewayExecuteData::<VerifierSet>::new(
-        &raw_execute_data,
+        &raw_execute_data.to_bytes::<0>().unwrap(),
         &gateway_root_pda,
         &domain_separator,
     )
@@ -111,7 +111,7 @@ async fn test_succesfully_initialize_rotate_signers() {
         fixture.payer.pubkey(),
         gateway_root_pda,
         &domain_separator,
-        &raw_execute_data,
+        &raw_execute_data.to_bytes::<0>().unwrap(),
     )
     .expect("failed to create initialize_execute_data instruction");
 
@@ -171,7 +171,7 @@ async fn test_fail_on_invalid_root_pda() {
         fixture.payer.pubkey(),
         fake_gateway_root_pda,
         &domain_separator,
-        &raw_execute_data,
+        &raw_execute_data.to_bytes::<0>().unwrap(),
     )
     .expect("failed to create initialize_execute_data instruction");
 
@@ -223,7 +223,7 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
         fake_gateway_root_pda,
         // gateway_root_pda,
         &domain_separator,
-        &raw_execute_data,
+        &raw_execute_data.to_bytes::<0>().unwrap(),
     )
     .expect("failed to create initialize_execute_data instruction");
     let BanksTransactionResultWithMetadata { metadata, result } = fixture
@@ -260,7 +260,7 @@ async fn test_fail_on_uninitialized_root_pda() {
         fixture.payer.pubkey(),
         uninitialized_gateway_config_pda,
         &domain_separator,
-        &raw_execute_data,
+        &raw_execute_data.to_bytes::<0>().unwrap(),
     )
     .expect("failed to create initialize_execute_data instruction");
 

@@ -1,4 +1,4 @@
-use axelar_message_primitives::command::U256;
+use axelar_message_primitives::U256;
 use axelar_rkyv_encoding::types::{ArchivedExecuteData, ExecuteData, Payload};
 use gmp_gateway::state::GatewayApprovedCommand;
 use itertools::Itertools;
@@ -9,9 +9,9 @@ use test_fixtures::test_setup::{
 };
 
 use crate::{
-    get_approved_command, get_gateway_events, get_gateway_events_from_execute_data, make_message,
-    make_messages, make_payload_and_commands, payload_and_commands,
-    prepare_questionable_execute_data,
+    get_approve_messages_gateway_events_from_execute_data, get_approved_command,
+    get_gateway_events, make_message, make_messages, make_payload_and_commands,
+    payload_and_commands, prepare_questionable_execute_data,
 };
 
 #[tokio::test]
@@ -69,8 +69,8 @@ async fn successfully_approves_commands_when_there_are_3_validate_message_comman
         .await;
 
     let (payload, commands) = make_payload_and_commands(3);
-    let (execute_data_pda, _) = fixture
-        .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
+    let (execute_data_pda, _, execute_data_pda_contents) = fixture
+        .init_approve_messages_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
 
     let gateway_approved_command_pdas = fixture
@@ -91,11 +91,14 @@ async fn successfully_approves_commands_when_there_are_3_validate_message_comman
     assert!(tx.result.is_ok());
     // - events get emitted
     let emitted_events = get_gateway_events(&tx);
-    let expected_approved_command_logs = get_gateway_events_from_execute_data(&commands);
+    let expected_approved_command_logs =
+        get_approve_messages_gateway_events_from_execute_data(&execute_data_pda_contents);
     for (actual, expected) in emitted_events
         .iter()
         .zip(expected_approved_command_logs.iter())
     {
+        let actual = actual.parse();
+        let expected = expected.parse();
         assert_eq!(actual, expected);
     }
 
@@ -574,13 +577,11 @@ async fn fail_if_signer_set_epoch_is_older_than_4() {
     // to register the next latest signer set. We iterate over all signer sets,
     // calling "rotate signer" with the last known signer set to register
     // the next latest signer set.
-    dbg!("rotating singers");
     for (idx, (current_signers, new_signers)) in
         ([&initial_signers].into_iter().chain(new_signer_sets.iter()))
             .tuple_windows::<(_, _)>()
             .enumerate()
     {
-        dbg!("rotate idx", &idx);
         let new_epoch = U256::from((idx + 1) as u128);
         let root_pda_data = fixture
             .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
@@ -596,7 +597,6 @@ async fn fail_if_signer_set_epoch_is_older_than_4() {
             )
             .await;
     }
-    dbg!("signers rotated");
 
     // Now we have registered 5 sets in total (1 initial signer set + 4 that we
     // generated). The "epoch" is an incremental counter. But the data structure

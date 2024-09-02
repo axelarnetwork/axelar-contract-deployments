@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -14,8 +13,8 @@ impl Processor {
     pub fn process_call_contract(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        destination_chain: Vec<u8>,
-        destination_contract_address: Vec<u8>,
+        destination_chain: String,
+        destination_contract_address: String,
         payload: Vec<u8>,
     ) -> ProgramResult {
         let accounts_iter = &mut accounts.iter();
@@ -31,10 +30,10 @@ impl Processor {
             destination_chain,
             payload,
             payload_hash,
-            sender: *sender.key,
+            sender: sender.key.to_bytes(),
             destination_address: destination_contract_address,
         };
-        let event = GatewayEvent::CallContract(Cow::Borrowed(&call_contract));
+        let event = GatewayEvent::CallContract(call_contract);
         event.emit()?;
         Ok(())
     }

@@ -7,6 +7,7 @@ use solana_program::pubkey::Pubkey;
 
 use super::Processor;
 use crate::commands::{AxelarMessage, Command};
+use crate::events::GatewayEvent;
 use crate::state::{GatewayApprovedCommand, GatewayConfig};
 
 impl Processor {
@@ -42,6 +43,9 @@ impl Processor {
         // Store the data back to the account.
         let mut data = approved_message_pda.try_borrow_mut_data()?;
         approved_message.pack_into_slice(&mut data);
+
+        // Emit an event
+        GatewayEvent::MessageExecuted(crate::events::MessageExecuted { command_id }).emit()?;
 
         Ok(())
     }

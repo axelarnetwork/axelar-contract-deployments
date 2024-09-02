@@ -11,7 +11,7 @@ pub fn prepare_execute_data(
     payload: Payload,
     signers: &SigningVerifierSet,
     domain_separator: &[u8; 32],
-) -> (Vec<u8>, VerifierSet) {
+) -> (ExecuteData, VerifierSet) {
     // Setup
     let verifier_set = signers.verifier_set();
     let payload_hash = hash_payload(domain_separator, &verifier_set, &payload, hasher_impl());
@@ -40,10 +40,10 @@ pub fn prepare_execute_data(
     .unwrap();
 
     // Confidence check: ExecuteData can be deserialized
-    ExecuteData::from_bytes(&execute_data_bytes).expect("valid deserialization");
+    let execute_data = ExecuteData::from_bytes(&execute_data_bytes).expect("valid deserialization");
 
     // Confidence check: ExecuteData can be cast to its archive
     ArchivedExecuteData::from_bytes(&execute_data_bytes).expect("valid archival");
 
-    (execute_data_bytes, verifier_set)
+    (execute_data, verifier_set)
 }

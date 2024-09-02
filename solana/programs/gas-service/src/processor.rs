@@ -1,6 +1,6 @@
 //! Program processor
 
-use axelar_message_primitives::command::U256;
+use axelar_message_primitives::U256;
 use borsh::BorshDeserialize;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;

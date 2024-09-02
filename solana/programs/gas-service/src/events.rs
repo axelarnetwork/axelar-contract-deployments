@@ -1,6 +1,6 @@
 //! Axelar Gas Service events.
 
-use axelar_message_primitives::command::U256;
+use axelar_message_primitives::U256;
 use base64::engine::general_purpose;
 use base64::Engine as _;
 use borsh::{BorshDeserialize, BorshSerialize};

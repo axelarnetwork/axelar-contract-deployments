@@ -1,7 +1,7 @@
 //! Instruction module; consist of fasade instructions, test ix constructors and
 //! internal helpers.
 
-use axelar_message_primitives::command::U256;
+use axelar_message_primitives::U256;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;

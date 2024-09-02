@@ -4,8 +4,7 @@ use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use axelar_message_primitives::command::U256;
-use axelar_message_primitives::{DataPayload, EncodingScheme};
+use axelar_message_primitives::{DataPayload, EncodingScheme, U256};
 use axelar_rkyv_encoding::test_fixtures::random_weight;
 use axelar_rkyv_encoding::types::{HasheableMessageVec, Message, Payload};
 use derive_builder::Builder;
@@ -295,6 +294,7 @@ async fn do_init_approve_messages_execute_data(
 ) -> Result<(Pubkey, u64), Error> {
     let (raw_execute_data, _) =
         prepare_execute_data(payload, inputs.signers.as_ref(), &DOMAIN_SEPARATOR);
+    let raw_execute_data = raw_execute_data.to_bytes::<0>().unwrap();
     let execute_data = GatewayExecuteData::<HasheableMessageVec>::new(
         &raw_execute_data,
         inputs.gateway_config_pda.as_ref(),
