@@ -1736,7 +1736,11 @@
           "salt": "Create3Deployer"
         },
         "AxelarGasService": {
-          "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392"
+          "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
+          "salt": "AxelarGasService",
+          "address": "0xeE1d04E4F9F9AdEB7be7d6996f4A726773460A87",
+          "implementation": "0x1F002cd258e2e818eC5ecCD46DD6cb938c5Cf7f8",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "Operators": {
           "owner": "0xBeF25f4733b9d451072416360609e5A4c115293E",
