@@ -151,7 +151,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
-    const encodedSigners = bcsStructs.gateway.WeightedSigner.serialize({
+    const encodedSigners = bcsStructs.gateway.WeightedSigners.serialize({
         ...signers,
         nonce: bcsStructs.common.Bytes32.serialize(signers.nonce).toBytes(),
     }).toBytes();
