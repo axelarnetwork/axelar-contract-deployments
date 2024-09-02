@@ -174,7 +174,7 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
     const [sourceChain, messageId, sourceAddress, destinationId, payloadHash] = args;
 
     const encodedMessages = bcs
-        .vector(bcsStructs.gateway.ApprovedMessageZ)
+        .vector(bcsStructs.gateway.ApprovedMessage)
         .serialize([
             {
                 source_chain: sourceChain,

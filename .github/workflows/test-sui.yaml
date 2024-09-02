@@ -37,6 +37,8 @@ jobs:
           SUI_VERSION: ${{ env.SUI_VERSION }}
 
       - name: Spin up Sui Network
+        # sui-test-validator will be deprecated in the future.
+        # this command follows the guide in https://docs.sui.io/guides/developer/getting-started/local-network
         run: nohup sh -c "RUST_LOG="off,sui_node=info" sui start --with-faucet --force-regenesis" > nohup.out 2> nohup.err < /dev/null &
 
       - name: Wait for Sui network
