@@ -2395,8 +2395,8 @@
       "Router": {
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "225",
-        "storeCodeProposalCodeHash": "b6506197d3fb9def42ec477d50e199b50a410013eadc5e863b2f3558e37ba46a"
+        "storeCodeProposalId": "234",
+        "storeCodeProposalCodeHash": "c89ad7b98afcafea866ff9b9064ade1dc865a0b4a257cbd0a80fae433c916eab"
       },
       "NexusGateway": {
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
@@ -2454,8 +2454,8 @@
           "encoder": "abi",
           "keyType": "ecdsa"
         },
-        "storeCodeProposalId": "233",
-        "storeCodeProposalCodeHash": "808d8b5e48af4f2ffe770b0f332e9c3cd0165ea43da475bba3083204dceb1142"
+        "storeCodeProposalId": "235",
+        "storeCodeProposalCodeHash": "6c4d2f520d62bcd7edd4de772257e74b48a8dfba39f853a9c12ff51ca9ea1e83"
       },
       "Gateway": {
         "flow": {},
