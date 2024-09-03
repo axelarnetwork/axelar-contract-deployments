@@ -1,12 +1,6 @@
 name: Test Sui
 
-on:
-  pull_request:
-    paths:
-      - sui/**
-      - common/**
-      - .github/actions/setup-sui/**
-      - .github/workflows/test-sui.yaml
+on: pull_request
 
 jobs:
   test-sui:
@@ -16,7 +10,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Node.js
+      - name: Check for Relevant Changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            sui:
+              - 'sui/**'
+            common:
+              - 'common/**'
+            github:
+              - '.github/actions/setup-sui/**'
+              - '.github/workflows/test-sui.yaml'
+
+      - name: Summarize Changes
+        run: |
+          echo "Changes in sui: ${{ steps.filter.outputs.sui }}"
+          echo "Changes in common: ${{ steps.filter.outputs.common }}"
+          echo "Changes in github: ${{ steps.filter.outputs.github }}"
+
+      - name: Exit if no relevant changes
+        if: steps.filter.outputs.sui == 'false' && steps.filter.outputs.common == 'false' && steps.filter.outputs.github == 'false'
+        run: |
+          echo "No relevant changes detected. Skipping tests."
+          exit 0
+
+      - name: Setup Node.js
         uses: useblacksmith/setup-node@v5
         with:
           node-version: 18.x
@@ -37,7 +56,9 @@ jobs:
           SUI_VERSION: ${{ env.SUI_VERSION }}
 
       - name: Spin up Sui Network
-        run: nohup sh -c "sui-test-validator" > nohup.out 2> nohup.err < /dev/null &
+        # sui-test-validator will be deprecated in the future.
+        # this command follows the guide in https://docs.sui.io/guides/developer/getting-started/local-network
+        run: nohup sh -c "RUST_LOG="off,sui_node=info" sui start --with-faucet --force-regenesis" > nohup.out 2> nohup.err < /dev/null &
 
       - name: Wait for Sui network
         uses: nev7n/wait_for_response@v1

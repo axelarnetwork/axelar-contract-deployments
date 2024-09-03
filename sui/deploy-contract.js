@@ -1,5 +1,5 @@
 const { Command, Option } = require('commander');
-const { updateMoveToml, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { ethers } = require('hardhat');
 const { toB64 } = require('@mysten/sui/utils');
 const { bcs } = require('@mysten/sui/bcs');
@@ -14,8 +14,6 @@ const {
     getWallet,
     printWalletInfo,
     broadcast,
-    bytes32Struct,
-    signersStruct,
     upgradePackage,
     UPGRADE_POLICIES,
     getSigners,
@@ -153,12 +151,10 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
-    const encodedSigners = signersStruct
-        .serialize({
-            ...signers,
-            nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
-        })
-        .toBytes();
+    const encodedSigners = bcsStructs.gateway.WeightedSigners.serialize({
+        ...signers,
+        nonce: bcsStructs.common.Bytes32.serialize(signers.nonce).toBytes(),
+    }).toBytes();
 
     const tx = new Transaction();
 
