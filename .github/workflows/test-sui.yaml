@@ -29,8 +29,13 @@ jobs:
           echo "Changes in common: ${{ steps.filter.outputs.common }}"
           echo "Changes in github: ${{ steps.filter.outputs.github }}"
 
+      - name: Exit if no relevant changes
+        if: steps.filter.outputs.sui == 'false' && steps.filter.outputs.common == 'false' && steps.filter.outputs.github == 'false'
+        run: |
+          echo "No relevant changes detected. Skipping tests."
+          exit 0
+
       - name: Setup Node.js
-        if: steps.filter.outputs.sui == 'true' || steps.filter.outputs.common == 'true' || steps.filter.outputs.github == 'true'
         uses: useblacksmith/setup-node@v5
         with:
           node-version: 18.x
