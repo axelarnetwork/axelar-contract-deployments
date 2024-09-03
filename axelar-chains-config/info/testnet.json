@@ -2438,6 +2438,20 @@
           "domainSeparator": "0xba2c562b33e107ee4817b6d9f9a160fed81afb7712cd379293731cfe1b65d8a4",
           "address": "axelar1u7qt6kz34ljjx6c94444e2v57uzt2tdlgxc6qjkvu4c5phncca8qakejex"
         },
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "domainSeparator": "0x79191ee0824b0f995492dc4ac6e737040f4d9fd4501f6078e56671da70968259",
+          "address": "axelar1rsuejfntt4rs2y8dn4dd3acszs00zyg9wpnsc6fmhevcp6plu5qspzn7e0"
+        },
         "storeCodeProposalId": "107",
         "storeCodeProposalCodeHash": "6c4d2f520d62bcd7edd4de772257e74b48a8dfba39f853a9c12ff51ca9ea1e83",
         "codeId": 12
@@ -2448,6 +2462,9 @@
         },
         "test-sepolia": {
           "address": "axelar17hcsrrluv5zsrrt725wmscs3ma98hrg5f0t0ukmjxuyt2k7cwr3saxuwjc"
+        },
+        "flow": {
+          "address": "axelar1w8frw33jn0yx59845wdgk0yru6fxvgr6hlh4xfdtdf08y5jamcnsyu0z6u"
         },
         "storeCodeProposalId": "106",
         "storeCodeProposalCodeHash": "eae97caf40ae6b5eea1e145eec27a59e73aa6f9de389fa9ca0cfc9354a3b68ac",
@@ -2481,6 +2498,20 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "address": "axelar1r4rmvn83vrfj4evy5l8cv2nat2v0whm36ds3crn2mhlq8ufmhvts9467zz"
+        },
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "address": "axelar1kkqdsqvwq9a7p9fj0w89wpx2m2t0vrxl782aslhq0kdw2xxd2aesv3un04"
         },
         "storeCodeProposalId": "105",
         "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b",
