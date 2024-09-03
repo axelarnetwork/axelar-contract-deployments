@@ -4,11 +4,16 @@ require('dotenv').config();
 
 const { createHash } = require('crypto');
 
+const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
+
 const {
     prepareWallet,
     prepareClient,
+    fromHex,
+    getSalt,
     readWasmFile,
     getChains,
+    updateContractConfig,
     fetchCodeIdFromCodeHash,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
@@ -18,7 +23,6 @@ const {
     encodeExecuteContractProposal,
     submitProposal,
     makeInstantiateMsg,
-    instantiate2AddressForProposal,
     governanceAddress,
 } = require('./utils');
 const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../common');
@@ -33,23 +37,15 @@ const {
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const updateContractConfig = (contractConfig, chainConfig, key, value) => {
-    if (chainConfig) {
-        contractConfig[chainConfig.axelarId] = {
-            ...contractConfig[chainConfig.axelarId],
-            [key]: value,
-        };
-    } else {
-        contractConfig[key] = value;
-    }
-};
+const predictAndUpdateAddress = async (client, contractConfig, chainConfig, options) => {
+    const { contractName, salt, chainNames, runAs } = options;
 
-const predictAndUpdateAddress = (client, contractConfig, chainConfig, options, contractName, chainName) => {
-    return instantiate2AddressForProposal(client, contractConfig, options).then((contractAddress) => {
-        updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
+    const { checksum } = await client.getCodeDetails(contractConfig.codeId);
+    const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar');
 
-        return contractAddress;
-    });
+    updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
+
+    return contractAddress;
 };
 
 const printProposal = (proposal, proposalType) => {
@@ -59,7 +55,7 @@ const printProposal = (proposal, proposalType) => {
     );
 };
 
-const storeCode = (client, wallet, config, options) => {
+const storeCode = async (client, wallet, config, options) => {
     const { contractName } = options;
     const {
         axelar: {
@@ -72,18 +68,17 @@ const storeCode = (client, wallet, config, options) => {
     printProposal(proposal, StoreCodeProposal);
 
     if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
+        return;
     }
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+    const proposalId = await submitProposal(client, wallet, config, options, proposal);
+    printInfo('Proposal submitted', proposalId);
 
-        contractConfig.storeCodeProposalId = proposalId;
-        contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
-    });
+    contractConfig.storeCodeProposalId = proposalId;
+    contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
 };
 
-const storeInstantiate = (client, wallet, config, options, chainName) => {
+const storeInstantiate = async (client, wallet, config, options, chainName) => {
     const { contractName, instantiate2 } = options;
     const {
         axelar: {
@@ -102,15 +97,14 @@ const storeInstantiate = (client, wallet, config, options, chainName) => {
     printProposal(proposal, StoreAndInstantiateContractProposal);
 
     if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
+        return;
     }
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+    const proposalId = await submitProposal(client, wallet, config, options, proposal);
+    printInfo('Proposal submitted', proposalId);
 
-        updateContractConfig(contractConfig, chainConfig, 'storeInstantiateProposalId', proposalId);
-        contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
-    });
+    updateContractConfig(contractConfig, chainConfig, 'storeInstantiateProposalId', proposalId);
+    contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
 };
 
 const instantiate = async (client, wallet, config, options, chainName) => {
@@ -129,7 +123,7 @@ const instantiate = async (client, wallet, config, options, chainName) => {
     }
 
     if (predictOnly) {
-        return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
+        return predictAndUpdateAddress(client, contractConfig, chainConfig, options);
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
@@ -145,21 +139,20 @@ const instantiate = async (client, wallet, config, options, chainName) => {
     }
 
     if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
+        return;
     }
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+    const proposalId = await submitProposal(client, wallet, config, options, proposal);
+    printInfo('Proposal submitted', proposalId);
 
-        updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
+    updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
 
-        if (instantiate2) {
-            return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
-        }
-    });
+    if (instantiate2) {
+        return predictAndUpdateAddress(client, contractConfig, chainConfig, options);
+    }
 };
 
-const execute = (client, wallet, config, options, chainName) => {
+const execute = async (client, wallet, config, options, chainName) => {
     const { contractName } = options;
     const {
         axelar: {
@@ -173,14 +166,13 @@ const execute = (client, wallet, config, options, chainName) => {
     printProposal(proposal, ExecuteContractProposal);
 
     if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
+        return;
     }
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+    const proposalId = await submitProposal(client, wallet, config, options, proposal);
+    printInfo('Proposal submitted', proposalId);
 
-        updateContractConfig(contractConfig, chainConfig, 'executeProposalId', proposalId);
-    });
+    updateContractConfig(contractConfig, chainConfig, 'executeProposalId', proposalId);
 };
 
 const main = async (options) => {
@@ -195,53 +187,58 @@ const main = async (options) => {
         config.axelar.contracts[contractName] = {};
     }
 
-    await prepareWallet(options)
-        .then((wallet) => prepareClient(config, wallet))
-        .then(({ wallet, client }) => {
-            switch (proposalType) {
-                case 'store':
-                    return storeCode(client, wallet, config, options);
+    const wallet = await prepareWallet(options);
+    const client = await prepareClient(config, wallet);
 
-                case 'storeInstantiate': {
-                    const chains = getChains(config, options);
+    switch (proposalType) {
+        case 'store':
+            await storeCode(client, wallet, config, options);
+            break;
 
-                    return chains.reduce((promise, chain) => {
-                        return promise.then(() => storeInstantiate(client, wallet, config, options, chain.toLowerCase()));
-                    }, Promise.resolve());
-                }
+        case 'storeInstantiate': {
+            const chains = getChains(config, options);
 
-                case 'instantiate': {
-                    const chains = getChains(config, options);
-
-                    return chains.reduce((promise, chain) => {
-                        return promise.then(() =>
-                            instantiate(client, wallet, config, options, chain.toLowerCase()).then((contractAddress) => {
-                                if (contractAddress) {
-                                    printInfo(
-                                        `Predicted address for ${
-                                            chain.toLowerCase() === 'none' ? '' : chain.toLowerCase().concat(' ')
-                                        }${contractName}. Address`,
-                                        contractAddress,
-                                    );
-                                }
-                            }),
-                        );
-                    }, Promise.resolve());
-                }
-
-                case 'execute': {
-                    const chains = getChains(config, options);
-
-                    return chains.reduce((promise, chain) => {
-                        return promise.then(() => execute(client, wallet, config, options, chain.toLowerCase()));
-                    }, Promise.resolve());
-                }
-
-                default:
-                    throw new Error('Invalid proposal type');
+            for (const chain of chains) {
+                await storeInstantiate(client, wallet, config, options, chain.toLowerCase());
             }
-        })
-        .then(() => saveConfig(config, env));
+
+            break;
+        }
+
+        case 'instantiate': {
+            const chains = getChains(config, options);
+
+            for (const chain of chains) {
+                const contractAddress = await instantiate(client, wallet, config, options, chain.toLowerCase());
+
+                if (contractAddress) {
+                    printInfo(
+                        `Predicted address for ${
+                            chain.toLowerCase() === 'none' ? '' : chain.toLowerCase().concat(' ')
+                        }${contractName}. Address`,
+                        contractAddress,
+                    );
+                }
+            }
+
+            break;
+        }
+
+        case 'execute': {
+            const chains = getChains(config, options);
+
+            for (const chain of chains) {
+                await execute(client, wallet, config, options, chain.toLowerCase());
+            }
+
+            break;
+        }
+
+        default:
+            throw new Error('Invalid proposal type');
+    }
+
+    saveConfig(config, env);
 };
 
 const programHandler = () => {
