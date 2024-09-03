@@ -74,9 +74,6 @@
       "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
       "tokenSymbol": "ETH",
       "confirmations": 1,
-      "gasOptions": {
-        "gasLimit": 5000000
-      },
       "contracts": {
         "AxelarGateway": {
           "gasOptions": {
@@ -116,13 +113,22 @@
         },
         "InterchainGovernance": {
           "address": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "AxelarGasService": {
+          "collector": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "salt": "AxelarGasService devnet-amplifier",
+          "address": "0x1179d44e69ba5252B7478a8602617d5EEeb2F377",
+          "implementation": "0xeF805CF590B12FD32F76Eb81A236461Cf4f3D796",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         }
       },
       "explorer": {
         "name": "Snowtrace",
         "url": "https://testnet.snowtrace.io",
         "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
     },
     "fantom": {
       "name": "fantom",
@@ -263,12 +269,9 @@
       "id": "eth-sepolia",
       "axelarId": "eth-sepolia",
       "chainId": 11155111,
-      "rpc": "https://rpc.ankr.com/eth_sepolia",
+      "rpc": "https://1rpc.io/sepolia",
       "tokenSymbol": "ETH",
       "confirmations": 1,
-      "gasOptions": {
-        "gasLimit": 5000000
-      },
       "contracts": {
         "AxelarGateway": {
           "gasOptions": {
@@ -314,7 +317,9 @@
         "explorer": "Sepoliascan",
         "url": "https://sepolia.etherscan.io",
         "api": "https://api-sepolia.etherscan.io/api"
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
     },
     "op-sepolia": {
       "name": "op-sepolia",
@@ -390,9 +395,6 @@
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
       "confirmations": 1,
-      "gasOptions": {
-        "gasLimit": 5000000
-      },
       "contracts": {
         "AxelarGateway": {
           "gasOptions": {
@@ -438,7 +440,9 @@
         "name": "Opscan",
         "url": "https://sepolia-optimistic.etherscan.io",
         "api": "https://api-sepolia-optimistic.etherscan.io/api"
-      }
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 25
     }
   },
   "axelar": {
