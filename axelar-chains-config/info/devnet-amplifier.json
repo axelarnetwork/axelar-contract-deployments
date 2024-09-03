@@ -311,6 +311,13 @@
         },
         "InterchainGovernance": {
           "address": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "AxelarGasService": {
+          "collector": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "salt": "AxelarGasService devnet-amplifier",
+          "address": "0x1179d44e69ba5252B7478a8602617d5EEeb2F377",
+          "implementation": "0x833CD30e0d4905D8150FeD75E18D8D3595ad30B4",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         }
       },
       "explorer": {
@@ -434,6 +441,13 @@
         },
         "InterchainGovernance": {
           "address": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "AxelarGasService": {
+          "collector": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "salt": "AxelarGasService devnet-amplifier",
+          "address": "0x1179d44e69ba5252B7478a8602617d5EEeb2F377",
+          "implementation": "0x833CD30e0d4905D8150FeD75E18D8D3595ad30B4",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         }
       },
       "explorer": {
