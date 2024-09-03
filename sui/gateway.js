@@ -2,6 +2,7 @@ const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
 const { ethers } = require('hardhat');
+const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify, keccak256, toUtf8Bytes },
     constants: { HashZero },
@@ -9,12 +10,6 @@ const {
 
 const { saveConfig, printInfo, loadConfig, getMultisigProof } = require('../common/utils');
 const {
-    bytes32Struct,
-    signersStruct,
-    messageToSignStruct,
-    messageStruct,
-    executeDataStruct,
-    proofStruct,
     addBaseOptions,
     addOptionsToCommands,
     getSigners,
@@ -88,22 +83,18 @@ function getProof(keypair, commandType, data, contractConfig, options) {
 
     const dataHash = arrayify(hashMessage(commandType, data));
 
-    const message = messageToSignStruct
-        .serialize({
-            domain_separator: contractConfig.domainSeparator,
-            signers_hash: keccak256(signersStruct.serialize(signers).toBytes()),
-            data_hash: dataHash,
-        })
-        .toBytes();
+    const message = bcsStructs.gateway.MessageToSign.serialize({
+        domain_separator: contractConfig.domainSeparator,
+        signers_hash: keccak256(bcsStructs.gateway.WeightedSigners.serialize(signers).toBytes()),
+        data_hash: dataHash,
+    }).toBytes();
 
     const signatures = getSignatures(keypair, message, options);
 
-    const encodedProof = proofStruct
-        .serialize({
-            signers,
-            signatures,
-        })
-        .toBytes();
+    const encodedProof = bcsStructs.gateway.Proof.serialize({
+        signers,
+        signatures,
+    }).toBytes();
 
     return encodedProof;
 }
@@ -160,7 +151,7 @@ async function approveMessages(keypair, client, config, chain, contractConfig, a
         throw new Error('Multisig session not completed');
     }
 
-    const executeData = executeDataStruct.parse(arrayify('0x' + status.completed.execute_data));
+    const executeData = bcsStructs.gateway.ExecuteData.parse(arrayify('0x' + status.completed.execute_data));
 
     const tx = new Transaction();
 
@@ -183,14 +174,14 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
     const [sourceChain, messageId, sourceAddress, destinationId, payloadHash] = args;
 
     const encodedMessages = bcs
-        .vector(messageStruct)
+        .vector(bcsStructs.gateway.Message)
         .serialize([
             {
                 source_chain: sourceChain,
                 message_id: messageId,
                 source_address: sourceAddress,
                 destination_id: destinationId,
-                payload_hash: bytes32Struct.serialize(arrayify(payloadHash)).toBytes(),
+                payload_hash: payloadHash,
             },
         ])
         .toBytes();
@@ -222,7 +213,7 @@ async function submitProof(keypair, client, config, chain, contractConfig, args,
         throw new Error('Multisig session not completed');
     }
 
-    const executeData = executeDataStruct.parse(arrayify('0x' + status.completed.execute_data));
+    const executeData = bcsStructs.gateway.ExecuteData.parse(arrayify('0x' + status.completed.execute_data));
 
     const tx = new Transaction();
 
@@ -263,12 +254,10 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
     const signers = await getSigners(keypair, config, chain.axelarId, options);
 
     const newNonce = options.newNonce ? keccak256(toUtf8Bytes(options.newNonce)) : signers.nonce;
-    const encodedSigners = signersStruct
-        .serialize({
-            ...signers,
-            nonce: bytes32Struct.serialize(newNonce).toBytes(),
-        })
-        .toBytes();
+    const encodedSigners = bcsStructs.gateway.WeightedSigners.serialize({
+        ...signers,
+        nonce: bcsStructs.common.Bytes32.serialize(newNonce).toBytes(),
+    }).toBytes();
 
     const encodedProof = getProof(keypair, COMMAND_TYPE_ROTATE_SIGNERS, encodedSigners, contractConfig, options);
 
