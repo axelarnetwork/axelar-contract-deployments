@@ -1,9 +1,9 @@
-name: Test
+name: Test Evm
 
 on: pull_request
 
 jobs:
-  test:
+  test-evm:
     runs-on: blacksmith-2vcpu-ubuntu-2204
 
     steps:
