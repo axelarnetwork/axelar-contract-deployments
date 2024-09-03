@@ -3,14 +3,15 @@ name: Test Sui
 on: pull_request
 
 jobs:
-  check-relevant-changes:
-    name: Check for Relevant Changes
+  test-sui:
+    name: Test Sui
     runs-on: blacksmith-2vcpu-ubuntu-2204
-    outputs:
-      run_tests: ${{ steps.filter.outputs.sui == 'true' || steps.filter.outputs.common == 'true' || steps.filter.outputs.github == 'true' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for Relevant Changes
+        uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -27,16 +28,9 @@ jobs:
           echo "Changes in sui: ${{ steps.filter.outputs.sui }}"
           echo "Changes in common: ${{ steps.filter.outputs.common }}"
           echo "Changes in github: ${{ steps.filter.outputs.github }}"
-  test-sui:
-    name: Test Sui
-    needs: check-relevant-changes
-    if: ${{ needs.check-relevant-changes.outputs.run_tests == 'true' }}
-    runs-on: blacksmith-2vcpu-ubuntu-2204
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Install Node.js
+      - name: Setup Node.js
+        if: steps.filter.outputs.sui == 'true' || steps.filter.outputs.common == 'true' || steps.filter.outputs.github == 'true'
         uses: useblacksmith/setup-node@v5
         with:
           node-version: 18.x
