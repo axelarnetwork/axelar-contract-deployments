@@ -200,12 +200,12 @@ const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGa
     return { admin_address: adminAddress, governance_address: governanceAddress, nexus_gateway: nexusGateway };
 };
 
-const makeNexusGatewayInstantiateMsg = ({ nexus }, { Router: { address: router }, AxelarnetGateway: { address: axelarnet_gateway } }) => {
+const makeNexusGatewayInstantiateMsg = ({ nexus }, { Router: { address: router }, AxelarnetGateway: { address: axelarnetGateway } }) => {
     if (!validateAddress(nexus)) {
         throw new Error('Missing or invalid NexusGateway.nexus in axelar info');
     }
 
-    if (!validateAddress(axelarnet_gateway)) {
+    if (!validateAddress(axelarnetGateway)) {
         throw new Error('Missing or invalid AxelarnetGateway.address in axelar info');
     }
 
@@ -213,7 +213,7 @@ const makeNexusGatewayInstantiateMsg = ({ nexus }, { Router: { address: router }
         throw new Error('Missing or invalid Router.address in axelar info');
     }
 
-    return { nexus, axelarnet_gateway, router };
+    return { nexus, axelarnet_gateway: axelarnetGateway, router };
 };
 
 const makeVotingVerifierInstantiateMsg = (
