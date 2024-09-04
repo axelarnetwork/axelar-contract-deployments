@@ -116,7 +116,7 @@ pub(crate) async fn axelar_destination_multisig_prover_construct_proof(
 pub(crate) async fn axelar_source_gateway_route_messages(
     message: &router_api::Message,
     cosmwasm_signer: &SigningClient,
-    soruce_axelar_gateway: &devnet_amplifier::Contract,
+    source_axelar_gateway: &devnet_amplifier::Contract,
 ) -> eyre::Result<()> {
     tracing::info!("Axelar source Gateway.route_messages()");
     let msg = gateway_api::msg::ExecuteMsg::RouteMessages(vec![message.clone()]);
@@ -124,7 +124,7 @@ pub(crate) async fn axelar_source_gateway_route_messages(
         sender: cosmwasm_signer.signer_account_id()?,
         msg: serde_json::to_vec(&msg)?,
         funds: vec![],
-        contract: cosmrs::AccountId::from_str(soruce_axelar_gateway.address.as_str()).unwrap(),
+        contract: cosmrs::AccountId::from_str(source_axelar_gateway.address.as_str()).unwrap(),
     };
     let _response = cosmwasm_signer
         .sign_and_broadcast(vec![execute.into_any()?], &default_gas())
@@ -136,7 +136,7 @@ pub(crate) async fn axelar_source_gateway_route_messages(
 pub(crate) async fn axelar_source_gateway_verify_messages(
     message: &router_api::Message,
     cosmwasm_signer: &SigningClient,
-    soruce_axelar_gateway: &devnet_amplifier::Contract,
+    source_axelar_gateway: &devnet_amplifier::Contract,
 ) -> eyre::Result<()> {
     tracing::info!(?message, "Axelar gateway.verify_messages");
     let msg = gateway_api::msg::ExecuteMsg::VerifyMessages(vec![message.clone()]);
@@ -144,7 +144,7 @@ pub(crate) async fn axelar_source_gateway_verify_messages(
         sender: cosmwasm_signer.signer_account_id()?,
         msg: serde_json::to_vec(&msg)?,
         funds: vec![],
-        contract: cosmrs::AccountId::from_str(soruce_axelar_gateway.address.as_str()).unwrap(),
+        contract: cosmrs::AccountId::from_str(source_axelar_gateway.address.as_str()).unwrap(),
     };
     let _response = cosmwasm_signer
         .sign_and_broadcast(vec![execute.into_any()?], &default_gas())

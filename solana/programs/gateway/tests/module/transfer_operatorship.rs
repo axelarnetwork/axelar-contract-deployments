@@ -8,8 +8,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use test_fixtures::test_setup::{
-    SolanaAxelarIntegration,
-    SolanaAxelarIntegrationMetadata, TestFixture,
+    SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata, TestFixture,
 };
 
 #[tokio::test]
@@ -121,7 +120,7 @@ async fn successfully_transfer_operatorship_when_signer_is_upgrade_authority() {
     );
 }
 
-// fail if gateway not initialied
+// fail if gateway not initialized
 #[tokio::test]
 async fn fail_if_gateway_not_initialised() {
     // Setup
@@ -163,7 +162,7 @@ async fn fail_if_gateway_not_initialised() {
         .unwrap()
         .log_messages
         .into_iter()
-        // todo: improve errror message
+        // todo: improve error message
         .any(|msg| { msg.contains("insufficient funds for instruction") }));
 }
 
@@ -274,7 +273,7 @@ async fn fail_if_stranger_dose_not_sing_anything() {
         .setup()
         .await;
 
-    // Action - the stranger does not  actually sign the tx, he just hopes ther's
+    // Action - the stranger does not actually sign the tx, he just hopes there's
     // not a check
     let stranger_danger = Keypair::new();
     let new_operator = Pubkey::new_unique();

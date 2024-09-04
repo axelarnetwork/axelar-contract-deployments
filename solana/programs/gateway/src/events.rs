@@ -157,7 +157,7 @@ impl GatewayEvent {
         Ok(())
     }
 
-    /// Encode the [`GatewayEvent`] into a [`Vec<u8>`] which satifies rkyv
+    /// Encode the [`GatewayEvent`] into a [`Vec<u8>`] which satisfies rkyv
     /// alignment requirements
     pub fn encode(&self) -> rkyv::AlignedVec {
         rkyv::to_bytes::<_, 0>(self).unwrap()
@@ -184,7 +184,7 @@ pub struct EventContainer {
 }
 
 impl EventContainer {
-    /// Create a new [`EventContainer`] from an rkyv enocded [`GatewayEvent`]
+    /// Create a new [`EventContainer`] from an rkyv encoded [`GatewayEvent`]
     ///
     /// The method will return `None` if the buffer cannod be deserialised into
     /// a valid [`ArchivedGatewayEvent`]

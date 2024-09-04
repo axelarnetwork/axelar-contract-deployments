@@ -172,7 +172,7 @@ impl BorshDeserialize for OwnedCommand {
 }
 
 /// FIXME: This is a workaround to wrap the serialized Message from the
-/// `axelar-rkyv-encoding` crate. It shoud not be needed once we fully migrate
+/// `axelar-rkyv-encoding` crate. It should not be needed once we fully migrate
 /// types from that crate.
 #[derive(BorshDeserialize, BorshSerialize, PartialEq, Eq, Debug, Clone)]
 pub struct MessageWrapper {

@@ -44,7 +44,7 @@ impl Processor {
         let mut gateway_config =
             gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
 
-        // Validate teh PDAs of the verifier sets
+        // Validate the PDAs of the verifier sets
         let signer_verifier_set =
             match signer_verifier_set.check_initialized_pda::<VerifierSetTracker>(program_id) {
                 Ok(set) => set,
@@ -57,7 +57,7 @@ impl Processor {
 
         // we always enforce the delay unless unless the operator has been provided and
         // its also the Gateway opreator
-        // refence: https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/c290c7337fd447ecbb7426e52ac381175e33f602/contracts/gateway/AxelarAmplifierGateway.sol#L98-L101
+        // reference: https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/c290c7337fd447ecbb7426e52ac381175e33f602/contracts/gateway/AxelarAmplifierGateway.sol#L98-L101
         let enforce_rotation_delay = operator.map_or(true, |operator| {
             let operator_matches = *operator.key == gateway_config.operator;
             let operator_is_sigener = operator.is_signer;

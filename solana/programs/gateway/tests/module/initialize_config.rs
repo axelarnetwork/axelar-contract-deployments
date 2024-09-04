@@ -1,6 +1,6 @@
 use axelar_message_primitives::U256;
 use gmp_gateway::hasher_impl;
-use gmp_gateway::instructions::{InitializeConfig, VerifierSetWraper};
+use gmp_gateway::instructions::{InitializeConfig, VerifierSetWrapper};
 use gmp_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use gmp_gateway::state::GatewayConfig;
 use solana_program_test::tokio;
@@ -14,7 +14,7 @@ use crate::program_test;
 const NONCE: u64 = 44;
 const DOMAIN_SEPARATOR: [u8; 32] = [42; 32];
 
-fn cmp_config(init: &InitializeConfig<VerifierSetWraper>, created: &GatewayConfig) -> bool {
+fn cmp_config(init: &InitializeConfig<VerifierSetWrapper>, created: &GatewayConfig) -> bool {
     let current_epoch: U256 = init.initial_signer_sets.len().into();
     created.operator == init.operator
         && created.domain_separator == init.domain_separator
@@ -26,7 +26,7 @@ fn cmp_config(init: &InitializeConfig<VerifierSetWraper>, created: &GatewayConfi
 }
 
 async fn assert_verifier_sets(
-    init_config: InitializeConfig<VerifierSetWraper>,
+    init_config: InitializeConfig<VerifierSetWrapper>,
     fixture: &mut TestFixture,
 ) {
     let (cnf, pdas) = init_config.with_verifier_set_bump();
@@ -76,7 +76,7 @@ async fn test_successfylly_initialize_config_with_single_initial_signer() {
         .await;
     assert!(cmp_config(&init_config, &root_pda_data));
 
-    // Assert -- blokc timestamp updated
+    // Assert -- block timestamp updated
     let clock = fixture.banks_client.get_sysvar::<Clock>().await.unwrap();
     let block_timestamp = clock.unix_timestamp as u64;
     assert_eq!(
@@ -121,7 +121,7 @@ async fn test_successfylly_initialize_config_with_multiple_initial_signers() {
         .await;
     assert!(cmp_config(&init_config, &root_pda_data));
 
-    // Assert -- blokc timestamp updated
+    // Assert -- block timestamp updated
     let clock = fixture.banks_client.get_sysvar::<Clock>().await.unwrap();
     let block_timestamp = clock.unix_timestamp as u64;
     assert_eq!(

@@ -88,7 +88,7 @@ pub(crate) async fn deploy(client: &SigningClient) -> eyre::Result<[u64; 3]> {
     for (contract, code_id_storage) in CONTRACTS.into_iter().zip(code_ids.iter_mut()) {
         tracing::info!(contract = ?contract.wasm_artifact_name, "about to deploy contract");
 
-        let wasm_byte_code = read_wasm_for_delpoyment(contract.wasm_artifact_name)?;
+        let wasm_byte_code = read_wasm_for_deployment(contract.wasm_artifact_name)?;
         let msg_store_code = MsgStoreCode {
             sender: client.signer_account_id()?,
             wasm_byte_code,
@@ -109,7 +109,7 @@ pub(crate) async fn deploy(client: &SigningClient) -> eyre::Result<[u64; 3]> {
                 },
             )
             .await?;
-        tracing::debug!(tx_result = ?response, "raw respones reult");
+        tracing::debug!(tx_result = ?response, "raw response reult");
 
         let code_id = response.extract("store_code", "code_id")?;
         tracing::info!(code_id, contract = ?contract.wasm_artifact_name, "code stored");
@@ -150,7 +150,7 @@ pub(crate) async fn init_solana_voting_verifier(
     let response = client
         .sign_and_broadcast(vec![instantiate.into_any()?], &default_gas())
         .await?;
-    tracing::debug!(tx_result = ?response, "raw respones reult");
+    tracing::debug!(tx_result = ?response, "raw response reult");
     let contract_address = response.extract("instantiate", "_contract_address")?;
     tracing::info!(contract_address, "Voting verifier contract address");
 
@@ -185,7 +185,7 @@ pub(crate) async fn init_gateway(
     let response = client
         .sign_and_broadcast(vec![instantiate.into_any()?], &default_gas())
         .await?;
-    tracing::debug!(tx_result = ?response, "raw respones reult");
+    tracing::debug!(tx_result = ?response, "raw response reult");
     let contract_address = response.extract("instantiate", "_contract_address")?;
     tracing::info!(contract_address, "gateway contract address");
 
@@ -239,7 +239,7 @@ pub(crate) async fn init_solana_multisig_prover(
     let response = client
         .sign_and_broadcast(vec![instantiate.into_any()?], &default_gas())
         .await?;
-    tracing::debug!(tx_result = ?response, "raw respones reult");
+    tracing::debug!(tx_result = ?response, "raw response reult");
 
     let contract_address = response.extract("instantiate", "_contract_address")?;
     tracing::info!(contract_address, "Multisig prover contract address");
@@ -286,12 +286,12 @@ pub(crate) fn generate_wallet() -> eyre::Result<()> {
     tracing::info!(
         account_id = ?account_id,
         private_key = ?key_bytes_hex,
-        "genereted a new private key, fund it according to the docs here - https://docs.axelar.dev/validator/amplifier/verifier-onboarding#fund-your-wallet"
+        "generated a new private key, fund it according to the docs here - https://docs.axelar.dev/validator/amplifier/verifier-onboarding#fund-your-wallet"
     );
     Ok(())
 }
 
-fn read_wasm_for_delpoyment(wasm_artifact_name: &str) -> eyre::Result<Vec<u8>> {
+fn read_wasm_for_deployment(wasm_artifact_name: &str) -> eyre::Result<Vec<u8>> {
     let wasm = path::optimised_wasm_output(wasm_artifact_name);
     let wasm = std::fs::read(wasm)?;
     let mut output = Vec::with_capacity(wasm.len());

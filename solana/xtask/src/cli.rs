@@ -33,7 +33,7 @@ pub(crate) enum Cli {
         #[command(subcommand)]
         command: Solana,
     },
-    /// Delpoy, instantiate and operate with evm chains and our demo contracts
+    /// Deploy, instantiate and operate with evm chains and our demo contracts
     Evm {
         #[arg(short, long)]
         source_evm_chain: String,
@@ -170,7 +170,7 @@ pub(crate) enum CosmwasmInit {
     },
 }
 /// The contracts are pre-built as ensured by the `evm-contracts-rs` crate in
-/// our workspace. On EVM we don't differentiate deployment fron initialization
+/// our workspace. On EVM we don't differentiate deployment from initialization
 /// as we do on Solana.
 #[derive(Subcommand)]
 pub(crate) enum Evm {
@@ -211,7 +211,7 @@ pub(crate) enum Solana {
         #[arg(short, long)]
         program_id_keypair_path: PathBuf,
         // ---
-        // TODO: expose "upgrate_authority"
+        // TODO: expose "upgrade_authority"
     },
     /// Iteratively send messages to the Solana Gateway, permuting different
     /// argument sizes and report the ones that succeed until the message
@@ -221,7 +221,7 @@ pub(crate) enum Solana {
         /// Where to output the report
         output_dir: PathBuf,
 
-        /// Enable ABI encoding scheme. When ommited, borsh
+        /// Enable ABI encoding scheme. When omitted, borsh
         /// encoding is used.
         #[arg(short, long)]
         abi_encoding: bool,

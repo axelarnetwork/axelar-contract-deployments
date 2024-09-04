@@ -10,7 +10,7 @@ use axelar_rkyv_encoding::types::{HasheableMessageVec, Message, Payload};
 use derive_builder::Builder;
 use gmp_gateway::axelar_auth_weighted::RotationDelaySecs;
 use gmp_gateway::commands::OwnedCommand;
-use gmp_gateway::instructions::{InitializeConfig, VerifierSetWraper};
+use gmp_gateway::instructions::{InitializeConfig, VerifierSetWrapper};
 use gmp_gateway::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteData};
 use itertools::izip;
 use rand::distributions::Alphanumeric;
@@ -247,7 +247,7 @@ async fn initialize_programs(
     validator_rpc_client: Arc<RpcClient>,
 ) -> Result<(Pubkey, (Pubkey, u8)), Error> {
     let (gateway_config_pda, _) = GatewayConfig::pda();
-    let verifier_set = VerifierSetWraper::new_from_verifier_set(initial_signers.verifier_set())?;
+    let verifier_set = VerifierSetWrapper::new_from_verifier_set(initial_signers.verifier_set())?;
     let initialize_config = InitializeConfig {
         domain_separator: DOMAIN_SEPARATOR,
         initial_signer_sets: vec![verifier_set],
@@ -487,7 +487,7 @@ async fn evaluate_iteration_with_side_effects(
     result: Result<Row, Error>,
     writer: Arc<Mutex<csv_async::AsyncSerializer<File>>>,
     batch_size: usize,
-    num_addditional_accounts: usize,
+    num_additional_accounts: usize,
     message_size: usize,
 ) {
     match result {
@@ -502,7 +502,7 @@ async fn evaluate_iteration_with_side_effects(
         })) => {
             tracing::error!("{message}");
 
-            match (batch_size, num_addditional_accounts, message_size) {
+            match (batch_size, num_additional_accounts, message_size) {
                 // In case we are at the first iteration of both inner loops and we fail, we
                 // reached the overall limit and should stop running.
                 (MIN_MESSAGES_PER_BATCH, MIN_ACCOUNTS_AMOUNT, MIN_MESSAGE_SIZE) => {
@@ -657,10 +657,10 @@ fn get_filename(encoding: EncodingScheme) -> String {
 fn make_message_with_payload_data(
     data: &[u8],
     counter_pda: Pubkey,
-    num_addditional_accounts: usize,
+    num_additional_accounts: usize,
     encoding: EncodingScheme,
 ) -> (Message, DataPayload<'_>) {
-    let accounts = (0..num_addditional_accounts).fold(
+    let accounts = (0..num_additional_accounts).fold(
         vec![AccountMeta::new(counter_pda, false)],
         |mut acc, _| {
             acc.push(AccountMeta::new(Pubkey::new_unique(), false));

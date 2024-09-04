@@ -749,7 +749,7 @@ async fn collect_fees_happy_scenario() -> Result<()> {
         (rent_exempt + fees) - amount_to_collect
     );
 
-    // Check: Reciever got funds.
+    // Check: Receiver got funds.
     assert_eq!(
         banks_client
             .get_account(receiver_address.pubkey())
@@ -955,7 +955,7 @@ async fn refund_happy_scenario() -> Result<()> {
         (rent_exempt + fees) - amount_to_collect
     );
 
-    // Check: Reciever got funds.
+    // Check: Receiver got funds.
     assert_eq!(
         banks_client
             .get_account(receiver_address.pubkey())

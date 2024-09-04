@@ -6,6 +6,11 @@ skip_core_tasks = true
 workspace = false
 dependencies = ["check", "test", "unused-deps"]
 
+[tasks.typos]
+workspace = false
+install_crate = "typos-cli"
+command = "typos"
+
 [tasks.fmt]
 workspace = false
 command = "cargo"

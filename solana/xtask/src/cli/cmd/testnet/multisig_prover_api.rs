@@ -1,4 +1,4 @@
-// NOTE: there are issues with using `multisig-prover` as a dependency (bulid
+// NOTE: there are issues with using `multisig-prover` as a dependency (build
 // breaks). Thats why the types are re-defined here
 use axelar_wasm_std::nonempty::Uint64;
 use axelar_wasm_std::MajorityThreshold;

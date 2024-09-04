@@ -9,7 +9,7 @@ use solana_sdk::transaction::Transaction;
 use crate::program_test;
 
 #[tokio::test]
-async fn test_succesfully_send_to_gateway() {
+async fn test_successfully_send_to_gateway() {
     // Setup
     let mut solana_chain = program_test().await;
     let memo = "🐪🐪🐪🐪";

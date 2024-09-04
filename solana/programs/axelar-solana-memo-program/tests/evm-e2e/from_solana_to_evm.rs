@@ -56,7 +56,7 @@ async fn test_send_from_solana_to_evm() {
     let message = messages[0].clone();
     // - The relayer relays the contract call to the EVM gateway
     // evm_gateway.message_hash_to_sign(, )
-    let _tx_reciept = evm_gateway
+    let _tx_receipt = evm_gateway
         .approve_messages(messages, proof)
         .send()
         .await

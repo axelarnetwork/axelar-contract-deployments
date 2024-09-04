@@ -2,11 +2,11 @@ use std::path::PathBuf;
 
 use ethers::contract::Abigen;
 
-/// Using a buid.rs script to generate the bindings for the EVM contracts
+/// Using a build.rs script to generate the bindings for the EVM contracts
 /// and write them to the OUT_DIR.
 ///
 /// The generated bindings are then included in the lib.rs file.
-/// This is preffered to using the `abigen!` macro because it does not act on
+/// This is preferred to using the `abigen!` macro because it does not act on
 /// `*.json` file changes and cannot be used in a `build.rs` script.
 fn main() {
     build_contract();

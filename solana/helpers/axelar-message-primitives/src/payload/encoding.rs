@@ -38,7 +38,7 @@ impl<'payload> DataPayload<'payload> {
     fn encoding_scheme_prefixed_array(&self) -> Vec<u8> {
         let mut writer_vec = Vec::<u8>::with_capacity(
             // This might not be the exact size, but it's a good approximation
-            // Ideally we calcualte the size of data before writing it.
+            // Ideally we calculate the size of data before writing it.
             // Could be achieved with a build.rs script that generates the size of the data for
             // each encoding type.
             size_of::<u8>() // encoding scheme

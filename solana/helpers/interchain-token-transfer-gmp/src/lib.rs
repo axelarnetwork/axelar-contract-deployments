@@ -18,7 +18,7 @@ sol! {
     /// This message has the following data encoded and should only be sent
     /// after the proper tokens have been procured by the service. It should
     /// result in the proper funds being transferred to the user at the
-    /// destionation chain.
+    /// destination chain.
     #[derive(Debug, PartialEq)]
     #[repr(C)]
     struct InterchainTransfer {

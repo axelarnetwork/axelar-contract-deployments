@@ -1,4 +1,4 @@
-//! Utility crate for managing tasks, commond commands,
+//! Utility crate for managing tasks, common commands,
 //! deployments for the solana-axelar integration.
 
 use std::sync::OnceLock;

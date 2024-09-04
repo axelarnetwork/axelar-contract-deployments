@@ -1,4 +1,4 @@
-//! Instruction module; consist of fasade instructions, test ix constructors and
+//! Instruction module; consist of facade instructions, test ix constructors and
 //! internal helpers.
 
 use axelar_message_primitives::U256;

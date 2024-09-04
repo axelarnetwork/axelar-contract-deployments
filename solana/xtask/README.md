@@ -1,7 +1,7 @@
 ## Xtask CLI :joystick:
 
 Xtask CLi helps humans and non humans to execute common operations on this workspace,
-like building, deploying and intialising programas (A.k.a Solana smart contracts)
+like building, deploying and initialising programs (A.k.a Solana smart contracts)
 
 ### How to run
 
@@ -22,13 +22,13 @@ $ cargo test
 ### Solana programs
 
 - Solana programs use `cargo build-sbf` subcommand to build the programs, this produces a `[contract-name].so` artifact that needs to be deployed on the Solana chan
-- The deployment of Solana programs is not exactly straight forward. Every program has a hardcoded program id `solana_program::declare_id!()` which is an ED25519 Public key. For you to be able to deploy the program and actually have it working, you need to have the coresponding private key for the hardcded `program id`.
-- After the solana program has been deployed, it is stateless, and the initializatoin process is defined per-program level. Generally, initialization is a separate step that needs to be done post-deployment. Unless the PDAs are designed to have a configuration singleton, the program can be intialised multiple tiemes.
+- The deployment of Solana programs is not exactly straight forward. Every program has a hardcoded program id `solana_program::declare_id!()` which is an ED25519 Public key. For you to be able to deploy the program and actually have it working, you need to have the corresponding private key for the hardcded `program id`.
+- After the solana program has been deployed, it is stateless, and the initializatoin process is defined per-program level. Generally, initialization is a separate step that needs to be done post-deployment. Unless the PDAs are designed to have a configuration singleton, the program can be initialised multiple tiemes.
 
 ### EVM contracts
 
 - The evm contracts don't need to built explicitly using xtask, that is handled by a `build.rs` file, that invokes `forge build` under the hood. The build script also generates Rust bindings for the EVM code.
-- Contract deployment and intialization is done as a singular step.
+- Contract deployment and initialization is done as a singular step.
 
 ### Cosmwasm contracts
 

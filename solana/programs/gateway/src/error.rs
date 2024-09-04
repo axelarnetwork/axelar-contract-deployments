@@ -95,7 +95,7 @@ pub enum GatewayError {
     InvalidApprovedMessageAccount,
 
     /// Failed to decode `execute_data`
-    #[error("Falied to decode execute_data")]
+    #[error("Failed to decode execute_data")]
     FailedToDecodeExecuteData,
 
     /// Arithmetic overflow
@@ -104,7 +104,7 @@ pub enum GatewayError {
 
     /// Signer Set set epoch is different than the current epoch
     #[error("Signer Set set epoch is different than the current epoch.")]
-    EpochMissmatch,
+    EpochMismatch,
 
     /// Failed to decode a valid signature
     #[error("Failed to deserialize signature")]
@@ -132,7 +132,7 @@ pub enum GatewayError {
     UnorderedOrDuplicateSignerSet,
 
     // 30
-    /// Thresold was presented as zero, which is an invalid value.
+    /// Threshold was presented as zero, which is an invalid value.
     #[error("Threshold cannot be equal to zero")]
     ZeroThreshold,
 

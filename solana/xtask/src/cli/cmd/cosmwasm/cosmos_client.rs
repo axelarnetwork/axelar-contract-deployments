@@ -40,7 +40,7 @@ pub(crate) mod network {
                 .await?
                 .into_inner()
                 .account
-                .ok_or_eyre("account query returned None - account might not be intialised")?;
+                .ok_or_eyre("account query returned None - account might not be initialised")?;
 
             let account =
                 cosmrs::proto::cosmos::auth::v1beta1::BaseAccount::decode(res.value.as_slice())?;
@@ -162,7 +162,7 @@ pub(crate) mod signer {
             let tx_commit_response = tx_raw.broadcast_commit(&rpc_client).await?;
             tracing::debug!("tx broadcasted");
 
-            tracing::info!(hash = ?tx_commit_response.hash, tx_result = ?tx_commit_response.tx_result.log, "raw respones log");
+            tracing::info!(hash = ?tx_commit_response.hash, tx_result = ?tx_commit_response.tx_result.log, "raw response log");
             Ok(tx_commit_response)
         }
 

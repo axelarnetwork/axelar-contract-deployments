@@ -12,7 +12,7 @@ use solana_program::{msg, system_program};
 use super::Processor;
 use crate::axelar_auth_weighted::AxelarAuthWeighted;
 use crate::error::GatewayError;
-use crate::instructions::{InitializeConfig, VerifierSetWraper};
+use crate::instructions::{InitializeConfig, VerifierSetWrapper};
 use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::GatewayConfig;
 use crate::{
@@ -25,7 +25,7 @@ impl Processor {
     pub fn process_initialize_config(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        init_config: InitializeConfig<(VerifierSetWraper, u8)>,
+        init_config: InitializeConfig<(VerifierSetWrapper, u8)>,
     ) -> ProgramResult {
         let (core_accounts, init_verifier_sets) = accounts.split_at(3);
 

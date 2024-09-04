@@ -76,7 +76,7 @@ async fn test_successfylly_initialize_execute_data() {
 }
 
 #[tokio::test]
-async fn test_succesfully_initialize_rotate_signers() {
+async fn test_successfully_initialize_rotate_signers() {
     // Setup
     let SolanaAxelarIntegrationMetadata {
         mut fixture,

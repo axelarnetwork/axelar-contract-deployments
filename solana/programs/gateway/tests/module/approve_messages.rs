@@ -611,7 +611,7 @@ async fn fail_if_signer_set_epoch_is_older_than_4() {
     assert_eq!(root_pda_data.auth_weighted.current_epoch(), current_epoch);
 
     // Action
-    // Any of the lastest 4 signer sets are allowed to "approve messages" coming
+    // Any of the latest 4 signer sets are allowed to "approve messages" coming
     // Axelar->Solana direction.
     for signer_set in &new_signer_sets {
         fixture

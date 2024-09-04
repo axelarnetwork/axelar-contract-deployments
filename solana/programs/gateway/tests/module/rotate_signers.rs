@@ -110,7 +110,7 @@ async fn cannot_invoke_rotate_signers_without_respecting_minimum_delay() {
         .build()
         .setup()
         .await;
-    // after we set up the gateway, the minimumn delay needs to be forwarded
+    // after we set up the gateway, the minimum delay needs to be forwarded
     fixture.forward_time(minimum_delay_seconds as i64).await;
 
     // Action - rotate the signer set for the first time.
@@ -193,7 +193,7 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
 
     let newer_signer_set = make_signers(&[500, 200], 2);
     let (payload, _command) = payload_and_command(&newer_signer_set.verifier_set());
-    // we stil use the initial signer set to sign the data (the `signers` variable)
+    // we still use the initial signer set to sign the data (the `signers` variable)
     let (execute_data_pda, _, pda_execute_data) = fixture
         .init_rotate_signers_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;
@@ -276,7 +276,7 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
     let newer_signer_set = make_signers(&[500, 200], 700);
     let (payload, ..) = payload_and_command(&newer_signer_set.verifier_set());
 
-    // we stil use the initial signer set to sign the data (the `signers` variable)
+    // we still use the initial signer set to sign the data (the `signers` variable)
     let (execute_data_pda, _) = fixture
         .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
         .await;

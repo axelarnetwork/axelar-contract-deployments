@@ -17,11 +17,11 @@ pub(crate) mod contract {
         wasm_opt: &Path,
         contracts: &[WasmContracts],
     ) -> Result<()> {
-        let amplifer_dir = axelar_amplifier_dir();
+        let amplifier_dir = axelar_amplifier_dir();
         let _env_guard = sh.push_env("RUSTFLAGS", "-C link-args=-s");
 
         for contract in contracts {
-            let contract_dir = amplifer_dir
+            let contract_dir = amplifier_dir
                 .join("contracts")
                 .join(contract.contract_project_folder);
 
@@ -31,7 +31,7 @@ pub(crate) mod contract {
             tracing::info!("building contract");
             cmd!(sh, "cargo wasm").run()?;
 
-            let wasm_artifact = amplifer_dir
+            let wasm_artifact = amplifier_dir
                 .join("target")
                 .join("wasm32-unknown-unknown")
                 .join("release")
@@ -67,8 +67,8 @@ pub(crate) mod toolchain {
     // TODO: we should upstream a `rust-toolchain.toml` contribution to the
     // amplifier repo
     pub(crate) fn setup_toolchain(sh: &Shell) -> Result<PushEnv<'_>> {
-        let amplifer_dir = axelar_amplifier_dir();
-        let in_ampl_dir = sh.push_dir(amplifer_dir.clone());
+        let amplifier_dir = axelar_amplifier_dir();
+        let in_ampl_dir = sh.push_dir(amplifier_dir.clone());
         cmd!(sh, "rustup install nightly-2024-07-16").run()?;
         let env_toolchain = sh.push_env("RUSTUP_TOOLCHAIN", "nightly-2024-07-16");
         cmd!(sh, "rustup target add wasm32-unknown-unknown").run()?;

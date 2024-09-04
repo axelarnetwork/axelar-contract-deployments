@@ -68,7 +68,7 @@ pub enum GatewayInstruction {
     /// 1. [WRITE] Gateway Root Config PDA account
     /// 2. [] System Program account
     /// 3..N [WRITE] uninitialized VerifierSetTracker PDA accounts
-    InitializeConfig(InitializeConfig<(VerifierSetWraper, PdaBump)>),
+    InitializeConfig(InitializeConfig<(VerifierSetWrapper, PdaBump)>),
 
     /// Initializes an Approve Messages Execute Data PDA account.
     /// The Execute Data is a batch of commands that will be executed by the
@@ -130,7 +130,7 @@ pub enum GatewayInstruction {
     /// Accounts expected by this instruction:
     /// 1. [WRITE] Approved Message PDA account
     /// 2. [] Gateway Root Config PDA account
-    /// 3. [SIGNER] PDA signer account (caller). Dervied from the destination
+    /// 3. [SIGNER] PDA signer account (caller). Derived from the destination
     ///    program id.
     ValidateMessage(MessageWrapper),
 
@@ -168,11 +168,11 @@ pub struct InitializeConfig<T> {
 
 type PdaBump = u8;
 type InitializeConfigTransformation = (
-    InitializeConfig<(VerifierSetWraper, PdaBump)>,
+    InitializeConfig<(VerifierSetWrapper, PdaBump)>,
     Vec<(Pubkey, PdaBump)>,
 );
 
-impl InitializeConfig<VerifierSetWraper> {
+impl InitializeConfig<VerifierSetWrapper> {
     /// Convert  [`InitializeConfig`] to a type that can be submitted to the
     /// gateway by calculating the PDAs for the initial signers.
     pub fn with_verifier_set_bump(self) -> InitializeConfigTransformation {
@@ -218,12 +218,12 @@ impl InitializeConfig<VerifierSetWraper> {
 /// borsh, we depend on the data to be encoded with rkyv. This is a wrapper that
 /// implements borsh.
 #[derive(Debug, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
-pub struct VerifierSetWraper {
+pub struct VerifierSetWrapper {
     /// rkyv encoded [`axelar_rkyv_encoding::types::VerifierSet`]
     verifier_set: Vec<u8>,
 }
 
-impl VerifierSetWraper {
+impl VerifierSetWrapper {
     /// Encode the verifier set and initialize the wrapper
     pub fn new_from_verifier_set(
         verifier_set: VerifierSet,
@@ -464,7 +464,7 @@ pub fn initialize_rotate_signers_execute_data(
 /// Creates a [`GatewayInstruction::InitializeConfig`] instruction.
 pub fn initialize_config(
     payer: Pubkey,
-    config: InitializeConfig<VerifierSetWraper>,
+    config: InitializeConfig<VerifierSetWrapper>,
     gateway_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let mut accounts = vec![

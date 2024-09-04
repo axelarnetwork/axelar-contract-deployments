@@ -102,7 +102,7 @@ mod tests {
     use crate::test_fixtures::random_bytes;
 
     #[test]
-    fn test_endiannes() {
+    fn test_endianness() {
         let bytes = random_bytes::<16>();
         let u128 = U128::from_le(bytes);
         assert_eq!(*u128.to_le(), bytes);

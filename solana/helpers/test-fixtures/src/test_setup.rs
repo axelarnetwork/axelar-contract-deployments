@@ -8,7 +8,7 @@ use axelar_rkyv_encoding::types::{ExecuteData, Message, Payload, VerifierSet};
 use borsh::BorshDeserialize;
 use gateway::commands::OwnedCommand;
 use gateway::hasher_impl;
-use gateway::instructions::{InitializeConfig, VerifierSetWraper};
+use gateway::instructions::{InitializeConfig, VerifierSetWrapper};
 use gateway::processor::ToBytes;
 use gateway::state::execute_data::{
     ApproveMessagesVariant, ArchivedGatewayExecuteData, ExecuteDataVariant, RotateSignersVariant,
@@ -328,17 +328,17 @@ impl TestFixture {
         root_pda_address
     }
 
-    pub fn create_verifier_sets(&self, signers: &[&SigningVerifierSet]) -> Vec<VerifierSetWraper> {
+    pub fn create_verifier_sets(&self, signers: &[&SigningVerifierSet]) -> Vec<VerifierSetWrapper> {
         signers
             .iter()
-            .map(|set| VerifierSetWraper::new_from_verifier_set(set.verifier_set()).unwrap())
+            .map(|set| VerifierSetWrapper::new_from_verifier_set(set.verifier_set()).unwrap())
             .collect_vec()
     }
 
     pub fn base_initialize_config(
         &self,
         domain_separator: [u8; 32],
-    ) -> InitializeConfig<VerifierSetWraper> {
+    ) -> InitializeConfig<VerifierSetWrapper> {
         InitializeConfig {
             domain_separator,
             initial_signer_sets: vec![],
@@ -350,7 +350,7 @@ impl TestFixture {
 
     pub async fn initialize_gateway_config_account(
         &mut self,
-        init_config: InitializeConfig<VerifierSetWraper>,
+        init_config: InitializeConfig<VerifierSetWrapper>,
     ) -> Pubkey {
         let (gateway_config_pda, _) = gateway::get_gateway_root_config_pda();
         let ix = gateway::instructions::initialize_config(
@@ -918,10 +918,10 @@ mod tests {
     use super::*;
 
     /// Try to deploy the same program elf file using the
-    /// `bbf_loader_upgradeable` programm directly, and regiestering the PDAs
+    /// `bbf_loader_upgradeable` program directly, and regiestering the PDAs
     /// manually.
     /// The core asserts is to ensure that the account data storage
-    /// is the same, thus ensuring that both operatiosn are somewhat equivelant.
+    /// is the same, thus ensuring that both operatiosn are somewhat equivalent.
     #[tokio::test]
     async fn test_manually_added_bpf_upgradeable_accounts_contain_expected_state() {
         // setup

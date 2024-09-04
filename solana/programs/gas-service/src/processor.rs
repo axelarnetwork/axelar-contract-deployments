@@ -208,7 +208,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = get_gas_service_root_pda();
+        let (addr, bump) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -230,7 +230,7 @@ impl Processor {
                 fees,
             ),
             &[sender_account.clone(), gas_service_root_pda_account.clone()],
-            &[&[&[bumb]]],
+            &[&[&[bump]]],
         )?;
 
         events::emit_native_gas_paid_for_contract_call_event(
@@ -285,7 +285,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = get_gas_service_root_pda();
+        let (addr, bump) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -307,7 +307,7 @@ impl Processor {
                 fees,
             ),
             &[sender_account.clone(), gas_service_root_pda_account.clone()],
-            &[&[&[bumb]]],
+            &[&[&[bump]]],
         )?;
 
         events::emit_native_gas_paid_for_contract_call_with_token_event(
@@ -359,7 +359,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = get_gas_service_root_pda();
+        let (addr, bump) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -381,7 +381,7 @@ impl Processor {
                 fees,
             ),
             &[sender_account.clone(), gas_service_root_pda_account.clone()],
-            &[&[&[bumb]]],
+            &[&[&[bump]]],
         )?;
 
         events::emit_native_gas_paid_for_express_call_event(
@@ -438,7 +438,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = get_gas_service_root_pda();
+        let (addr, bump) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -460,7 +460,7 @@ impl Processor {
                 fees,
             ),
             &[sender_account.clone(), gas_service_root_pda_account.clone()],
-            &[&[&[bumb]]],
+            &[&[&[bump]]],
         )?;
 
         events::emit_native_gas_paid_for_express_call_with_token_event(
@@ -508,7 +508,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = get_gas_service_root_pda();
+        let (addr, bump) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -530,7 +530,7 @@ impl Processor {
                 fees,
             ),
             &[sender_account.clone(), gas_service_root_pda_account.clone()],
-            &[&[&[bumb]]],
+            &[&[&[bump]]],
         )?;
 
         events::emit_native_gas_added_event(tx_hash, log_index, fees, refund_address)?;
@@ -570,7 +570,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, bumb) = get_gas_service_root_pda();
+        let (addr, bump) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -592,7 +592,7 @@ impl Processor {
                 fees,
             ),
             &[sender_account.clone(), gas_service_root_pda_account.clone()],
-            &[&[&[bumb]]],
+            &[&[&[bump]]],
         )?;
 
         events::emit_native_express_gas_added_event(tx_hash, log_index, fees, refund_address)?;
@@ -621,7 +621,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, _bumb) = get_gas_service_root_pda();
+        let (addr, _bump) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -649,7 +649,7 @@ impl Processor {
             return Err(GasServiceError::SenderAccountIsNotExpectedAuthority.into());
         }
 
-        // Check: The requested amount bigger than tresure account saldo minus required
+        // Check: The requested amount bigger than treasure account saldo minus required
         // rent exempt value.
         let space = gas_service_root_pda_account.data.borrow().len();
         let rent_sysvar = Rent::get()?;
@@ -686,7 +686,7 @@ impl Processor {
         }
 
         // Check: Root PDA Account.
-        let (addr, _bumb) = get_gas_service_root_pda();
+        let (addr, _bump) = get_gas_service_root_pda();
         if gas_service_root_pda_account.key != &addr {
             return Err(GasServiceError::InvalidGasServiceRootPDAAccount.into());
         }
@@ -714,7 +714,7 @@ impl Processor {
             return Err(GasServiceError::SenderAccountIsNotExpectedAuthority.into());
         }
 
-        // Check: The requested amount bigger than tresure account saldo minus required
+        // Check: The requested amount bigger than treasure account saldo minus required
         // rent exempt value.
         let space = gas_service_root_pda_account.data.borrow().len();
         let rent_sysvar = Rent::get()?;

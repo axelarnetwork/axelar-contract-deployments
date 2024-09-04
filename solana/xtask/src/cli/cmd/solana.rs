@@ -8,7 +8,7 @@ use std::str::FromStr;
 use axelar_message_primitives::U256;
 use axelar_rkyv_encoding::types::{PublicKey, VerifierSet, U128};
 use gmp_gateway::axelar_auth_weighted::RotationDelaySecs;
-use gmp_gateway::instructions::{InitializeConfig, VerifierSetWraper};
+use gmp_gateway::instructions::{InitializeConfig, VerifierSetWrapper};
 use gmp_gateway::state::GatewayConfig;
 pub(crate) use message_limits::generate_message_limits_report;
 use solana_client::rpc_client::RpcClient;
@@ -110,7 +110,7 @@ pub(crate) async fn init_gmp_gateway(
         reconstructed = ?verifier_set,
         "reconstructed verifier set"
     );
-    let verifier_set = VerifierSetWraper::new_from_verifier_set(verifier_set).unwrap();
+    let verifier_set = VerifierSetWrapper::new_from_verifier_set(verifier_set).unwrap();
     let init_config = InitializeConfig {
         domain_separator: solana_domain_separator(),
         initial_signer_sets: vec![verifier_set],
@@ -142,7 +142,7 @@ pub(crate) async fn init_gmp_gateway(
 }
 
 pub(crate) fn init_memo_program(
-    // todo change all instances of &Opion<X> to Option<&X>
+    // todo change all instances of &Option<X> to Option<&X>
     rpc_url: Option<&Url>,
     payer_kp_path: Option<&PathBuf>,
 ) -> eyre::Result<()> {

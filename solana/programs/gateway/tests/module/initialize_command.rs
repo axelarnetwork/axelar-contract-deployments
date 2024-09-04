@@ -12,7 +12,7 @@ use test_fixtures::test_setup::{
 use crate::{gateway_approved_command_ixs, make_payload_and_commands, program_test};
 
 #[tokio::test]
-async fn succesfully_initialize_validate_message_command() {
+async fn successfully_initialize_validate_message_command() {
     // Setup
     let SolanaAxelarIntegrationMetadata {
         mut fixture,
@@ -83,7 +83,7 @@ async fn fail_when_gateway_root_pda_not_initialized() {
 }
 
 #[tokio::test]
-async fn succesfully_initialize_command_which_belongs_to_a_different_execute_data_set() {
+async fn successfully_initialize_command_which_belongs_to_a_different_execute_data_set() {
     // Setup
     let SolanaAxelarIntegrationMetadata {
         mut fixture,
@@ -217,7 +217,7 @@ async fn fail_when_rotate_signers_is_already_initialized() {
 }
 
 #[tokio::test]
-async fn succed_when_same_signers_with_diffrent_nonce_get_initialized() {
+async fn succeed_when_same_signers_with_different_nonce_get_initialized() {
     // Setup
     let SolanaAxelarIntegrationMetadata {
         mut fixture,

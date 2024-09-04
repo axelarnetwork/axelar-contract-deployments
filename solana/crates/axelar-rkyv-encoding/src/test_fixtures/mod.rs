@@ -259,7 +259,7 @@ pub fn random_execute_data_and_verifier_set_for_payload_with_invalid_signatures(
     {
         Some(Signature::EcdsaRecoverable(bytes)) => bytes.as_mut_slice(),
         Some(Signature::Ed25519(bytes)) => bytes.as_mut_slice(),
-        _ => unimplemented!("signature not attaced"),
+        _ => unimplemented!("signature not attached"),
     };
     signature_bytes[0] ^= 1;
 

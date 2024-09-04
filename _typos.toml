@@ -1,0 +1,3 @@
+# https://github.com/crate-ci/typos/blob/master/docs/reference.md
+[files]
+extend-exclude = ["axelar-amplifier", "evm-contracts/lib/*", "offchain", "solana/xtask/devnet-amplifier.json"]
