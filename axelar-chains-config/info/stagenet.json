@@ -1715,7 +1715,9 @@
           "deploymentMethod": "create",
           "previousSignersRetention": 15,
           "domainSeparator": "0x3dad2b901117c30d4f601c3b9e9ee89cec4371e79e9908122e8e1da1904347ee",
-          "minimumRotationDelay": 300
+          "minimumRotationDelay": 300,
+          "chainType": "evm",
+          "connectionType": "amplifier"
         },
         "InterchainGovernance": {
           "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
@@ -1758,7 +1760,7 @@
         "api": "https://evm-testnet.flowscan.io/api"
       },
       "gasOptions": {
-        "gasLimit": 10000000
+        "gasLimit": 8000000
       },
       "confirmations": 1,
       "finality": "finalized",
