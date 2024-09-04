@@ -569,9 +569,10 @@ async fn fail_if_signer_set_epoch_is_older_than_4() {
         .await;
 
     // We generate 4 new unique signer sets (not registered yet)
-    let new_signer_sets = (1..=MAX_ALLOWED_SIGNERS as u128)
+    let new_signer_sets = (0..MAX_ALLOWED_SIGNERS as u128)
         .map(|weight| make_signers(&[55u128, weight], 55 + weight as u64))
         .collect::<Vec<_>>();
+    assert_eq!(MAX_ALLOWED_SIGNERS, new_signer_sets.len());
 
     // Only the latest signer set is allowed to call "rotate signers" ix
     // to register the next latest signer set. We iterate over all signer sets,
@@ -582,6 +583,7 @@ async fn fail_if_signer_set_epoch_is_older_than_4() {
             .tuple_windows::<(_, _)>()
             .enumerate()
     {
+        dbg!(idx);
         let new_epoch = U256::from((idx + 1) as u128);
         let root_pda_data = fixture
             .get_account::<gmp_gateway::state::GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
@@ -596,6 +598,7 @@ async fn fail_if_signer_set_epoch_is_older_than_4() {
                 &domain_separator,
             )
             .await;
+        dbg!("rotatetd");
     }
 
     // Now we have registered 5 sets in total (1 initial signer set + 4 that we

@@ -36,14 +36,15 @@ pub enum GatewayInstruction {
 
     /// Rotate signers for the Gateway Root Config PDA account.
     ///
-    /// 1. [] Gateway ExecuteData PDA account
-    /// 2. [] Verifier Setr Tracker PDA account (the one that signed the
+    /// 0. [] Gateway ExecuteData PDA account
+    /// 1. [] Verifier Setr Tracker PDA account (the one that signed the
     ///    ExecuteData)
-    /// 3. [WRITE, SIGNER] new uninitialized VerifierSetTracker PDA account (the
+    /// 2. [WRITE, SIGNER] new uninitialized VerifierSetTracker PDA account (the
     ///    one that needs to be initialized)
-    /// 4. [WRITE, SIGNER] Funding account for the new VerifierSetTracker PDA
-    /// 5. [] System Program account
-    /// 6. Optional: [SIGNER] `Operator` that's stored in the gateway config PDA.
+    /// 3. [WRITE, SIGNER] Funding account for the new VerifierSetTracker PDA
+    /// 4. [] System Program account
+    /// 5. Optional: [SIGNER] `Operator` that's stored in the gateway config
+    ///    PDA.
     RotateSigners,
 
     /// Represents the `CallContract` Axelar event.

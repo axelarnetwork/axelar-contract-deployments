@@ -2,13 +2,14 @@ use axelar_message_primitives::U256;
 use axelar_rkyv_encoding::types::{Payload, VerifierSet};
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::instructions::GatewayInstruction;
-use gmp_gateway::state::GatewayConfig;
 use solana_program_test::tokio;
+use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use test_fixtures::test_setup::{
-    make_signers, SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
+    make_signers, make_signers_with_quorum, SolanaAxelarIntegration,
+    SolanaAxelarIntegrationMetadata,
 };
 
 use crate::{
@@ -23,7 +24,6 @@ fn payload_and_command(verifier_set: &VerifierSet) -> (Payload, [OwnedCommand; 1
 }
 
 /// successfully process execute when there is 1 rotate signers commands
-#[ignore]
 #[tokio::test]
 async fn successfully_rotates_signers() {
     // Setup
@@ -35,6 +35,7 @@ async fn successfully_rotates_signers() {
         ..
     } = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![11, 42, 33])
+        .previous_signers_retention(2)
         .build()
         .setup()
         .await;
@@ -76,7 +77,13 @@ async fn successfully_rotates_signers() {
         root_pda_data.auth_weighted.current_epoch(),
         new_epoch.clone()
     );
-    // todo -- assert that the signer tracker pda has been initialized
+    // assert that the signer tracker pda has been initialized
+    let _ = fixture
+        .get_account::<gmp_gateway::state::verifier_set_tracker::VerifierSetTracker>(
+            &new_signer_set.verifier_set_tracker(),
+            &gmp_gateway::ID,
+        )
+        .await;
 
     // - test that both signer sets can sign new messages
     for signer_set in [new_signer_set, signers] {
@@ -157,7 +164,6 @@ async fn cannot_invoke_rotate_signers_without_respecting_minimum_delay() {
 
 /// Ensure that we can use an old signer set to sign messages as long as the
 /// operator also signed the `rotate_signers` ix
-#[ignore]
 #[tokio::test]
 async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_operator() {
     // Setup
@@ -170,6 +176,7 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
         ..
     } = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![11, 22, 150])
+        .previous_signers_retention(2) // the signer retention defines n amount of old signrs whose signatures are valid
         .build()
         .setup()
         .await;
@@ -185,7 +192,7 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
         .await;
 
     let newer_signer_set = make_signers(&[500, 200], 2);
-    let (payload, _command) = payload_and_command(&new_signer_set.verifier_set());
+    let (payload, _command) = payload_and_command(&newer_signer_set.verifier_set());
     // we stil use the initial signer set to sign the data (the `signers` variable)
     let (execute_data_pda, _, pda_execute_data) = fixture
         .init_rotate_signers_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
@@ -203,7 +210,10 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
     .unwrap();
     let tx = fixture
         .send_tx_with_custom_signers_with_metadata(
-            &[ix],
+            &[
+                ComputeBudgetInstruction::set_compute_unit_limit(u32::MAX),
+                ix,
+            ],
             &[&operator, &fixture.payer.insecure_clone()],
         )
         .await;
@@ -227,12 +237,16 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
         root_pda_data.auth_weighted.current_epoch(),
         new_epoch.clone()
     );
-    // todo -- assert verifier set pda
+    let _ = fixture
+        .get_account::<gmp_gateway::state::verifier_set_tracker::VerifierSetTracker>(
+            &newer_signer_set.verifier_set_tracker(),
+            &gmp_gateway::ID,
+        )
+        .await;
 }
 
 /// We use a different account in place of the expected operator to try and
 /// rotate signers - but an on-chain check rejects his attempts
-#[ignore]
 #[tokio::test]
 async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gateway_state() {
     // Setup
@@ -244,6 +258,7 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
         ..
     } = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![11, 22, 150])
+        .previous_signers_retention(100)
         .build()
         .setup()
         .await;
@@ -279,7 +294,10 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
     .unwrap();
     let tx = fixture
         .send_tx_with_custom_signers_with_metadata(
-            &[ix],
+            &[
+                ComputeBudgetInstruction::set_compute_unit_limit(u32::MAX),
+                ix,
+            ],
             &[&fake_operator, &fixture.payer.insecure_clone()],
         )
         .await;
@@ -296,7 +314,6 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
 
 /// ensure that the operator still needs to use a valid signer set to to
 /// force-rotate the signers
-#[ignore]
 #[tokio::test]
 async fn fail_if_operator_is_not_using_pre_registered_signer_set() {
     // Setup
@@ -308,15 +325,16 @@ async fn fail_if_operator_is_not_using_pre_registered_signer_set() {
         ..
     } = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![11, 22, 150])
+        .previous_signers_retention(100)
         .build()
         .setup()
         .await;
     // generate a new random operator set to be used (do not register it)
-    let new_signer_set = make_signers(&[500, 200], 1);
     let random_signer_set = make_signers(&[11], 54);
+    let new_signer_set = make_signers(&[500, 200], 1);
     let (payload, ..) = payload_and_command(&new_signer_set.verifier_set());
 
-    // using `new_signers` which is the cause of the failure
+    // using `initial_singers` to sign the message which is the cause of the failure
     let (execute_data_pda, _) = fixture
         .init_execute_data(
             &gateway_root_pda,
@@ -338,7 +356,10 @@ async fn fail_if_operator_is_not_using_pre_registered_signer_set() {
     .unwrap();
     let tx = fixture
         .send_tx_with_custom_signers_with_metadata(
-            &[ix],
+            &[
+                ComputeBudgetInstruction::set_compute_unit_limit(u32::MAX),
+                ix,
+            ],
             &[&operator, &fixture.payer.insecure_clone()],
         )
         .await;
@@ -350,61 +371,74 @@ async fn fail_if_operator_is_not_using_pre_registered_signer_set() {
         .unwrap()
         .log_messages
         .into_iter()
-        .any(|msg| { msg.contains("EpochNotFound") }));
+        .any(|msg| { msg.contains("Invalid VerifierSetTracker PDA") }));
 }
 
 /// Ensure that the operator also need to explicitly sign the ix
-#[ignore]
 #[tokio::test]
 async fn fail_if_operator_only_passed_but_not_actual_signer() {
     // Setup
     let SolanaAxelarIntegrationMetadata {
         mut fixture,
-        signers,
         gateway_root_pda,
         operator,
         domain_separator,
+        signers: initial_singers,
         ..
     } = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![11, 22, 150])
+        .previous_signers_retention(100)
         .build()
         .setup()
         .await;
-    // -- we set a new signer set to be the "latest" signer set
+    // generate a new random operator set to be used (do not register it)
     let new_signer_set = make_signers(&[500, 200], 1);
-    let (payload, command) = payload_and_command(&new_signer_set.verifier_set());
-
-    // we stil use the initial signer set to sign the data (the `signers` variable)
-    let (execute_data_pda, _) = fixture
-        .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
+    fixture
+        .fully_rotate_signers(
+            &gateway_root_pda,
+            new_signer_set.verifier_set(),
+            &initial_singers,
+            &domain_separator,
+        )
         .await;
-    let rotate_signers_command_pda = fixture
-        .init_pending_gateway_commands(&gateway_root_pda, &command)
-        .await
-        .pop()
-        .unwrap();
+    let random_signer_set = make_signers(&[11], 54);
+    let (payload, ..) = payload_and_command(&random_signer_set.verifier_set());
+
+    // using `initial_singers` to sign the message which is the cause of the failure
+    let (execute_data_pda, _) = fixture
+        .init_execute_data(
+            &gateway_root_pda,
+            payload,
+            &initial_singers,
+            &domain_separator,
+        )
+        .await;
 
     // Action
-    let data = borsh::to_vec(&GatewayInstruction::RotateSigners).unwrap();
     let accounts = vec![
         AccountMeta::new(gateway_root_pda, false),
-        AccountMeta::new(execute_data_pda, false),
-        AccountMeta::new(rotate_signers_command_pda, false),
-        AccountMeta::new(operator.pubkey(), false), /* the flag being `false` is the cause of
-                                                     * failure for the tx */
-        AccountMeta::new_readonly(signers.verifier_set_tracker(), false),
-        AccountMeta::new(new_signer_set.verifier_set_tracker(), false),
+        AccountMeta::new_readonly(execute_data_pda, false),
+        AccountMeta::new_readonly(initial_singers.verifier_set_tracker(), false),
+        AccountMeta::new(random_signer_set.verifier_set_tracker(), false),
         AccountMeta::new(fixture.payer.pubkey(), true),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new(operator.pubkey(), false), /* this is `false` because operator does not
+                                                     * sign in
+                                                     * this test */
     ];
-
     let ix = Instruction {
         program_id: gmp_gateway::id(),
         accounts,
-        data,
+        data: borsh::to_vec(&GatewayInstruction::RotateSigners).unwrap(),
     };
     let tx = fixture
-        .send_tx_with_custom_signers_with_metadata(&[ix], &[&fixture.payer.insecure_clone()])
+        .send_tx_with_custom_signers_with_metadata(
+            &[
+                ComputeBudgetInstruction::set_compute_unit_limit(u32::MAX),
+                ix,
+            ],
+            &[&fixture.payer.insecure_clone()],
+        )
         .await;
 
     // Assert
@@ -416,9 +450,9 @@ async fn fail_if_operator_only_passed_but_not_actual_signer() {
         .into_iter()
         .any(|msg| { msg.contains("Proof is not signed by the latest signer set") }));
 }
+
 /// disallow rotate signers if any other signer set besides the most recent
 /// epoch signed the proof
-#[ignore]
 #[tokio::test]
 async fn fail_if_rotate_signers_signed_by_old_signer_set() {
     // Setup
@@ -430,6 +464,7 @@ async fn fail_if_rotate_signers_signed_by_old_signer_set() {
         ..
     } = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![11, 22, 150])
+        .previous_signers_retention(100)
         .build()
         .setup()
         .await;
@@ -465,9 +500,8 @@ async fn fail_if_rotate_signers_signed_by_old_signer_set() {
 
 /// `rotate_signer_set` is ignored if total weight is smaller than new
 /// command weight quorum (tx succeeds)
-#[ignore]
 #[tokio::test]
-async fn ignore_rotate_signers_if_total_weight_is_smaller_than_quorum() {
+async fn fail_rotate_signers_if_total_weight_is_smaller_than_quorum() {
     // Setup
     let SolanaAxelarIntegrationMetadata {
         mut fixture,
@@ -480,7 +514,7 @@ async fn ignore_rotate_signers_if_total_weight_is_smaller_than_quorum() {
         .build()
         .setup()
         .await;
-    let new_signer_set = make_signers(&[1, 1], 10);
+    let new_signer_set = make_signers_with_quorum(&[1, 1], u64::MAX, 10);
 
     // Action
     let (.., tx) = fixture
@@ -492,16 +526,15 @@ async fn ignore_rotate_signers_if_total_weight_is_smaller_than_quorum() {
         )
         .await;
 
-    assert!(tx.result.is_ok());
-    let gateway = fixture
-        .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let constant_epoch: U256 = 1u128.into();
-    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch);
-    // todo -- assert verifier set pda
+    assert!(tx.result.is_err());
+    assert!(tx
+        .metadata
+        .unwrap()
+        .log_messages
+        .into_iter()
+        .any(|msg| { msg.contains("insufficient weight for the new verifier set") }));
 }
 
-#[ignore]
 #[tokio::test]
 async fn fail_if_order_of_commands_is_not_the_same_as_order_of_accounts() {
     // Setup
@@ -542,8 +575,7 @@ async fn fail_if_order_of_commands_is_not_the_same_as_order_of_accounts() {
     assert!(tx.result.is_err());
 }
 
-/// `rotate_signer_set` is ignored if new signer set len is 0 (tx succeeds)
-#[ignore]
+/// `rotate_signer_set` fails when new singner len is zero
 #[tokio::test]
 async fn fail_on_rotate_signers_if_new_ops_len_is_zero() {
     // Setup
@@ -576,11 +608,11 @@ async fn fail_on_rotate_signers_if_new_ops_len_is_zero() {
         .await;
 
     // Assert
-    assert!(tx.result.is_ok());
-    let gateway = fixture
-        .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
-        .await;
-    let constant_epoch: U256 = 1u128.into();
-    assert_eq!(gateway.auth_weighted.current_epoch(), constant_epoch);
-    // todo -- assert verifier set pda
+    assert!(tx.result.is_err());
+    assert!(tx
+        .metadata
+        .unwrap()
+        .log_messages
+        .into_iter()
+        .any(|msg| { msg.contains("InvalidSignerSet") }));
 }

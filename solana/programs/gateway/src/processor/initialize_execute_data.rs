@@ -45,7 +45,10 @@ impl Processor {
         };
 
         // Check: Execute Data account is not initialized.
-        execute_data_account.check_uninitialized_pda()?;
+        if let Err(err) = execute_data_account.check_uninitialized_pda() {
+            msg!("Execute Datat PDA already initialized");
+            return Err(err);
+        }
         // Check: Execute Data PDA is correctly derived
         crate::assert_valid_execute_data_pda(
             &execute_data,

@@ -104,7 +104,7 @@ impl AxelarAuthWeighted {
             .ok_or(AxelarAuthWeightedError::EpochCalculationOverflow)?
             .into();
         if elapsed >= self.previous_signers_retention.into() {
-            msg!("verifier set is too old");
+            msg!("signing verifier set is too old");
             return Err(AxelarAuthWeightedError::InvalidSignerSet);
         }
 
@@ -125,10 +125,12 @@ impl AxelarAuthWeighted {
     ) -> Result<VerifierSetTracker, AxelarAuthWeightedError> {
         // signers must be sorted binary or alphabetically in lower case
         if new_verifier_set.is_empty() {
+            msg!("No signers in the new set");
             return Err(AxelarAuthWeightedError::InvalidSignerSet);
         }
 
         if !matches!(new_verifier_set.sufficient_weight(), Some(true)) {
+            msg!("insufficient weight for the new verifier set");
             return Err(AxelarAuthWeightedError::InvalidWeightThreshold);
         }
 
