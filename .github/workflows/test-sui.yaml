@@ -48,7 +48,7 @@ jobs:
         run: |
           cp node_modules/@axelar-network/axelar-cgp-sui/version.json .
 
-      - name: Setup Sui CLI and install dependencies
+      - name: Setup Sui CLI
         uses: axelarnetwork/axelar-cgp-sui/.github/actions/install@main
 
       - name: Setup Sui Wallet
