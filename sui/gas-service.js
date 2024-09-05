@@ -6,7 +6,7 @@ const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify },
 } = ethers;
-const { saveConfig, loadConfig, printInfo, printError } = require('../common/utils');
+const { saveConfig, loadConfig, printError } = require('../common/utils');
 const {
     getWallet,
     printWalletInfo,
@@ -46,7 +46,7 @@ async function payGas(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx, 'Gas Paid');
+    await broadcast(client, keypair, tx, 'Gas Paid');
 }
 
 async function addGas(keypair, client, gasServiceConfig, args, options) {
