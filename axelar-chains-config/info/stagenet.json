@@ -1691,6 +1691,80 @@
         "url": "https://sepolia.etherscan.io",
         "api": "https://api-sepolia.etherscan.io/api"
       }
+    },
+    "flow": {
+      "name": "Flow",
+      "id": "flow",
+      "axelarId": "flow",
+      "chainId": 545,
+      "rpc": "https://testnet.evm.nodes.onflow.org",
+      "tokenSymbol": "FLOW",
+      "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "operator": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "proxyDeploymentArgs": [
+            "0xC5578b1c63CE803B9f7f185652CC1E14Af887b8f",
+            "0xBeF25f4733b9d451072416360609e5A4c115293E",
+            "0x000000000000000000000000bef25f4733b9d451072416360609e5a4c115293e0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000aa39300000000000000000000000000000000000000000000000000000000000000050000000000000000000000004ed1fd87673ed52b810710e1e81c10df10906f40000000000000000000000000000000000000000000000000000000000000000100000000000000000000000054059b18cf1b10d648d922e00c149e68b3d77e90000000000000000000000000000000000000000000000000000000000000000100000000000000000000000057c026c5a2dcb35fd220f3436ff4096978066bb50000000000000000000000000000000000000000000000000000000000000001000000000000000000000000d368332a3cb3ea8a38144508c1ddea649c4d23fd0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000f48dfdc4f1666701ba74efa1d8491f4811c064a40000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "c7483b242156a8149fe6c4efcf62184d9fbf6b1be5530872f80a472d33070cf6",
+          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "implementation": "0xC5578b1c63CE803B9f7f185652CC1E14Af887b8f",
+          "implementationCodehash": "0x3bd2a46c04ccf59a0e454ef828232d66a71c5a9b8004e0ea516257a7ad0aa21c",
+          "deploymentMethod": "create",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x3dad2b901117c30d4f601c3b9e9ee89cec4371e79e9908122e8e1da1904347ee",
+          "minimumRotationDelay": 300,
+          "chainType": "evm",
+          "connectionType": "amplifier"
+        },
+        "InterchainGovernance": {
+          "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "AxelarGasService": {
+          "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
+          "salt": "AxelarGasService",
+          "address": "0xeE1d04E4F9F9AdEB7be7d6996f4A726773460A87",
+          "implementation": "0x1F002cd258e2e818eC5ecCD46DD6cb938c5Cf7f8",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Operators": {
+          "owner": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "address": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        }
+      },
+      "explorer": {
+        "name": "Flowscan",
+        "url": "https://evm-testnet.flowscan.io/",
+        "api": "https://evm-testnet.flowscan.io/api"
+      },
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     }
   },
   "axelar": {
@@ -1710,7 +1784,10 @@
         "storeCodeProposalCodeHash": "c89ad7b98afcafea866ff9b9064ade1dc865a0b4a257cbd0a80fae433c916eab",
         "codeId": 1,
         "address": "axelar1saq5hcztvd26vvkquv4dzn8e0uu967nuyxtcful3pvv7ajsw4kmq72xft9",
-        "executeProposalId": "16"
+        "executeProposalId": "16",
+        "flow": {
+          "executeProposalId": "44"
+        }
       },
       "NexusGateway": {
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
@@ -1741,7 +1818,10 @@
         "storeCodeProposalCodeHash": "1c058dec7e9c294f4e7401bd9611d2e811e0cf3a41917c4dd22766ea40b95fa2",
         "codeId": 5,
         "address": "axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y",
-        "executeProposalId": "20"
+        "executeProposalId": "20",
+        "flow": {
+          "executeProposalId": "46"
+        }
       },
       "Multisig": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
@@ -1751,7 +1831,10 @@
         "storeCodeProposalCodeHash": "a01cfc3c3a6e5fb22ea5818f2de8a453e0f37b9a54380d76eb4d4ea8d8b6de94",
         "codeId": 6,
         "address": "axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u",
-        "executeProposalId": "18"
+        "executeProposalId": "18",
+        "flow": {
+          "executeProposalId": "45"
+        }
       },
       "MultisigProver": {
         "test-avalanche": {
@@ -1782,6 +1865,20 @@
           "domainSeparator": "0x94c6f03682e3588a4fd0e312943191a70ae9e50b80d4b062af08f9311a78fada",
           "address": "axelar14t526efvs4r6pmg3ntjve9t5k3hagswngrnaya83365w0ad9ky0s333suh"
         },
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "domainSeparator": "0x3dad2b901117c30d4f601c3b9e9ee89cec4371e79e9908122e8e1da1904347ee",
+          "address": "axelar1u8cmvyq54fepjlt77vqnwyxhf4rqn5j5axgta7py34zlwue3v5fsy2pvhf"
+        },
         "storeCodeProposalId": "11",
         "storeCodeProposalCodeHash": "6c4d2f520d62bcd7edd4de772257e74b48a8dfba39f853a9c12ff51ca9ea1e83",
         "codeId": 9
@@ -1792,6 +1889,9 @@
         },
         "test-sepolia": {
           "address": "axelar1rx2meeesr74reunatsdxh82yqsxzz9w6j2k38rjhkcq57gvefsrsrm2eys"
+        },
+        "flow": {
+          "address": "axelar1t6ksvsckf48j5fey7cqhsu482yemaf8tcecterc4d38rw75vfvcsz85aum"
         },
         "storeCodeProposalId": "10",
         "storeCodeProposalCodeHash": "eae97caf40ae6b5eea1e145eec27a59e73aa6f9de389fa9ca0cfc9354a3b68ac",
@@ -1825,6 +1925,20 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "address": "axelar1t3lwxcgjlauvcwsdvy4669azp9ks0q0hd2cxn95cdge63723z9ns8pdqms"
+        },
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "address": "axelar1adz8u3q5mdfp73weg3f65e8ce5jvq4dwlqqm3lxqyy4pjf77nwtql8gjwr"
         },
         "storeCodeProposalId": "9",
         "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b",
