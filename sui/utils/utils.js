@@ -2,7 +2,6 @@
 
 const { ethers } = require('hardhat');
 const toml = require('toml');
-const { execSync } = require('child_process');
 const { printInfo, printError, printWarn } = require('../../common/utils');
 const {
     BigNumber,
