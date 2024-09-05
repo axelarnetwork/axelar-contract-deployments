@@ -1,6 +1,6 @@
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
-const { printInfo, printError, loadConfig } = require('../common/utils');
+const { printError, loadConfig } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
