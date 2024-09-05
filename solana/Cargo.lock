@@ -11374,6 +11374,7 @@ dependencies = [
  "axelar-solana-memo-program",
  "axelar-wasm-std 0.1.0",
  "base64 0.21.7",
+ "bincode",
  "bip39",
  "borsh 1.5.1",
  "clap 4.5.9",

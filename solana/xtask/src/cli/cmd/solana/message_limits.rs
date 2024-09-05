@@ -8,6 +8,7 @@ use axelar_message_primitives::{DataPayload, EncodingScheme, U256};
 use axelar_rkyv_encoding::test_fixtures::random_weight;
 use axelar_rkyv_encoding::types::{HasheableMessageVec, Message, Payload};
 use derive_builder::Builder;
+use futures::StreamExt;
 use gmp_gateway::axelar_auth_weighted::RotationDelaySecs;
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::instructions::{InitializeConfig, VerifierSetWrapper};
@@ -15,7 +16,7 @@ use gmp_gateway::state::{GatewayApprovedCommand, GatewayConfig, GatewayExecuteDa
 use itertools::izip;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use solana_client::client_error::ClientErrorKind;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_client::rpc_config::RpcTransactionConfig;
@@ -30,7 +31,7 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::Transaction;
 use solana_test_validator::{TestValidator, TestValidatorGenesis, UpgradeableProgramInfo};
-use solana_transaction_status::{Encodable, UiTransactionEncoding};
+use solana_transaction_status::UiTransactionEncoding;
 use test_fixtures::axelar_message::custom_message;
 use test_fixtures::execute_data::prepare_execute_data;
 use test_fixtures::test_setup::{self, SigningVerifierSet};
@@ -92,7 +93,7 @@ pub(crate) async fn generate_message_limits_report(
     let file_name = get_filename(encoding);
     let file_path = output_dir.join(file_name);
     let writer = Arc::new(Mutex::new(csv_async::AsyncSerializer::from_writer(
-        File::create(file_path).await?,
+        File::create(&file_path).await?,
     )));
 
     'signers: for num_signers in SIGNERS_AMOUNT_RANGE {
@@ -168,6 +169,7 @@ pub(crate) async fn generate_message_limits_report(
     }
 
     writer.lock().await.flush().await?;
+    sort_output_file(file_path).await?;
 
     Ok(())
 }
@@ -176,6 +178,15 @@ pub(crate) async fn generate_message_limits_report(
 enum Error {
     #[error("Transaction missing metadata information")]
     TransactionMissingMetadata,
+
+    #[error("File IO error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("CSV file error: {0}")]
+    Csv(#[from] csv_async::Error),
+
+    #[error("Error serializing with bincode: {0}")]
+    Bincode(#[from] bincode::Error),
 
     #[error("RPC client error: {0}")]
     RpcClient(#[from] RpcClientError),
@@ -196,7 +207,7 @@ enum Error {
     Unexpected(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
 
-#[derive(Debug, Builder, Serialize)]
+#[derive(Debug, Builder, Serialize, Deserialize)]
 struct Row {
     #[serde(rename = "number_of_signers")]
     num_signers: usize,
@@ -204,11 +215,11 @@ struct Row {
     #[serde(rename = "number_of_messages_per_batch")]
     batch_size: usize,
 
-    #[serde(rename = "message_size(bytes)")]
-    message_size: usize,
-
     #[serde(rename = "number_of_accounts")]
     num_accounts: usize,
+
+    #[serde(rename = "message_size(bytes)")]
+    message_size: usize,
 
     #[serde(rename = "execute_data_size(bytes)")]
     execute_data_size: usize,
@@ -557,13 +568,7 @@ async fn submit_transaction(
         &[&wallet_signer],
         recent_blockhash,
     );
-    let transaction_encoded = transaction.encode(UiTransactionEncoding::Base64);
-    let tx_size = match transaction_encoded {
-        solana_transaction_status::EncodedTransaction::LegacyBinary(b)
-        | solana_transaction_status::EncodedTransaction::Binary(b, _) => b.len(),
-        _ => 0,
-    };
-
+    let tx_size = bincode::serialize(&transaction)?.len();
     let signature = rpc_client
         .send_and_confirm_transaction(&transaction)
         .await?;
@@ -694,4 +699,32 @@ fn setup_panic_hook() {
         tracing::error!("Exiting the application.");
         std::process::exit(1);
     }));
+}
+
+async fn sort_output_file(file: impl AsRef<Path>) -> Result<(), Error> {
+    let mut reader = csv_async::AsyncDeserializer::from_reader(File::open(&file).await?);
+    let results = reader
+        .deserialize::<Row>()
+        .collect::<Vec<Result<Row, csv_async::Error>>>()
+        .await;
+    let mut rows = results
+        .into_iter()
+        .collect::<Result<Vec<Row>, csv_async::Error>>()?;
+
+    rows.sort_by(|a, b| {
+        a.num_signers.cmp(&b.num_signers).then(
+            a.batch_size
+                .cmp(&b.batch_size)
+                .then(a.num_accounts.cmp(&b.num_accounts))
+                .then(a.message_size.cmp(&b.message_size)),
+        )
+    });
+
+    let mut writer = csv_async::AsyncSerializer::from_writer(File::create(file).await?);
+    for row in rows {
+        writer.serialize(row).await?;
+    }
+    writer.flush().await?;
+
+    Ok(())
 }
