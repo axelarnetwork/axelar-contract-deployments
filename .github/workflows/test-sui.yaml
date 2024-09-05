@@ -35,6 +35,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Prepare version.json file
+        run: |
+          curl -sL https://raw.githubusercontent.com/axelarnetwork/axelar-cgp-sui/v0.6.0/version.json -o version.json
+
       - name: Setup Sui CLI and install dependencies
         uses: axelarnetwork/axelar-cgp-sui/.github/actions/install@v0.6.0
 
