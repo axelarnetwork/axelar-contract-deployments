@@ -2319,7 +2319,7 @@
         "api": "https://evm-testnet.flowscan.io/api"
       },
       "gasOptions": {
-        "gasLimit": 10000000
+        "gasLimit": 8000000
       },
       "confirmations": 1,
       "finality": "finalized",
