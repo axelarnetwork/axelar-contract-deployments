@@ -37,10 +37,10 @@ jobs:
 
       - name: Prepare version.json file
         run: |
-          curl -sL https://raw.githubusercontent.com/axelarnetwork/axelar-cgp-sui/v0.6.0/version.json -o version.json
+          cp node_modules/@axelar-network/axelar-cgp-sui/version.json .
 
       - name: Setup Sui CLI and install dependencies
-        uses: axelarnetwork/axelar-cgp-sui/.github/actions/install@v0.6.0
+        uses: axelarnetwork/axelar-cgp-sui/.github/actions/install@main
 
       - name: Setup Sui Wallet
         shell: bash
