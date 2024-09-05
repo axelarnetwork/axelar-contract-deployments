@@ -46,9 +46,7 @@ async function sendCommand(keypair, client, contracts, args, options) {
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Call sent', receipt.digest);
+    await broadcast(client, keypair, tx, 'Call Sent');
 }
 
 async function execute(keypair, client, contracts, args, options) {
@@ -140,9 +138,7 @@ async function execute(keypair, client, contracts, args, options) {
         arguments: txArgs,
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Call executed', receipt.digest);
+    await broadcast(client, keypair, tx, 'Call Executed');
 }
 
 async function processCommand(command, chain, args, options) {

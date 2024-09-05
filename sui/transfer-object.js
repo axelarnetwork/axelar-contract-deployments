@@ -38,9 +38,7 @@ async function processCommand(chain, options) {
     const tx = new Transaction();
     tx.transferObjects([`${objectId}`], tx.pure.address(recipient));
 
-    const result = await broadcast(client, keypair, tx);
-
-    printInfo('Object Transferred', result.digest);
+    await broadcast(client, keypair, tx, 'Transferred Object');
 }
 
 async function mainProcessor(options, processor) {
