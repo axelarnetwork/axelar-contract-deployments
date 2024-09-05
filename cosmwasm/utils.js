@@ -15,6 +15,7 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
     isString,
@@ -654,10 +655,19 @@ const getExecuteContractParams = (config, options, chainName) => {
 
     return {
         ...getSubmitProposalParams(options),
-        contract: contractConfig[chainConfig.axelarId]?.address || contractConfig.address,
+        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
         msg: Buffer.from(msg),
     };
 };
+
+const getParameterChangeParams = ({ title, description, changes }) => ({
+    title,
+    description,
+    changes: JSON.parse(changes).map(({ value, ...rest }) => ({
+        ...rest,
+        value: JSON.stringify(value), // `value` must be JSON encoded: https://github.com/cosmos/cosmos-sdk/blob/9abd946ba0cdc6d0e708bf862b2ca202b13f2d7b/x/params/client/utils/utils.go#L23
+    })),
+});
 
 const encodeStoreCodeProposal = (options) => {
     const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
@@ -712,6 +722,15 @@ const encodeExecuteContractProposal = (config, options, chainName) => {
     };
 };
 
+const encodeParameterChangeProposal = (options) => {
+    const proposal = ParameterChangeProposal.fromPartial(getParameterChangeParams(options));
+
+    return {
+        typeUrl: '/cosmos.params.v1beta1.ParameterChangeProposal',
+        value: Uint8Array.from(ParameterChangeProposal.encode(proposal).finish()),
+    };
+};
+
 const encodeSubmitProposal = (content, config, options, proposer) => {
     const {
         axelar: { tokenSymbol },
@@ -763,6 +782,7 @@ module.exports = {
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
+    encodeParameterChangeProposal,
     submitProposal,
     isValidCosmosAddress,
 };

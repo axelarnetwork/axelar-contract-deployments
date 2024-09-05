@@ -21,6 +21,7 @@ const {
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
+    encodeParameterChangeProposal,
     submitProposal,
     makeInstantiateMsg,
     governanceAddress,
@@ -33,6 +34,7 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
@@ -55,6 +57,23 @@ const printProposal = (proposal, proposalType) => {
     );
 };
 
+const confirmProposalSubmission = (options, proposal, proposalType) => {
+    printProposal(proposal, proposalType);
+
+    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+        return false;
+    }
+
+    return true;
+};
+
+const callSubmitProposal = async (client, wallet, config, options, proposal) => {
+    const proposalId = await submitProposal(client, wallet, config, options, proposal);
+    printInfo('Proposal submitted', proposalId);
+
+    return proposalId;
+};
+
 const storeCode = async (client, wallet, config, options) => {
     const { contractName } = options;
     const {
@@ -65,14 +84,11 @@ const storeCode = async (client, wallet, config, options) => {
 
     const proposal = encodeStoreCodeProposal(options);
 
-    printProposal(proposal, StoreCodeProposal);
-
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+    if (!confirmProposalSubmission(options, proposal, StoreCodeProposal)) {
         return;
     }
 
-    const proposalId = await submitProposal(client, wallet, config, options, proposal);
-    printInfo('Proposal submitted', proposalId);
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractConfig.storeCodeProposalId = proposalId;
     contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
@@ -92,16 +108,13 @@ const storeInstantiate = async (client, wallet, config, options, chainName) => {
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
-
     const proposal = encodeStoreInstantiateProposal(config, options, initMsg);
-    printProposal(proposal, StoreAndInstantiateContractProposal);
 
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+    if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
         return;
     }
 
-    const proposalId = await submitProposal(client, wallet, config, options, proposal);
-    printInfo('Proposal submitted', proposalId);
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     updateContractConfig(contractConfig, chainConfig, 'storeInstantiateProposalId', proposalId);
     contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
@@ -129,21 +142,21 @@ const instantiate = async (client, wallet, config, options, chainName) => {
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
 
     let proposal;
+    let proposalType;
 
     if (instantiate2) {
         proposal = encodeInstantiate2Proposal(config, options, initMsg);
-        printProposal(proposal, InstantiateContract2Proposal);
+        proposalType = InstantiateContract2Proposal;
     } else {
         proposal = encodeInstantiateProposal(config, options, initMsg);
-        printProposal(proposal, InstantiateContractProposal);
+        proposalType = InstantiateContractProposal;
     }
 
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+    if (!confirmProposalSubmission(options, proposal, proposalType)) {
         return;
     }
 
-    const proposalId = await submitProposal(client, wallet, config, options, proposal);
-    printInfo('Proposal submitted', proposalId);
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
 
@@ -163,16 +176,23 @@ const execute = async (client, wallet, config, options, chainName) => {
 
     const proposal = encodeExecuteContractProposal(config, options, chainName);
 
-    printProposal(proposal, ExecuteContractProposal);
-
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+    if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
         return;
     }
 
-    const proposalId = await submitProposal(client, wallet, config, options, proposal);
-    printInfo('Proposal submitted', proposalId);
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     updateContractConfig(contractConfig, chainConfig, 'executeProposalId', proposalId);
+};
+
+const paramChange = async (client, wallet, config, options) => {
+    const proposal = encodeParameterChangeProposal(options);
+
+    if (!confirmProposalSubmission(options, proposal, ParameterChangeProposal)) {
+        return;
+    }
+
+    await callSubmitProposal(client, wallet, config, options, proposal);
 };
 
 const main = async (options) => {
@@ -234,6 +254,11 @@ const main = async (options) => {
             break;
         }
 
+        case 'paramChange': {
+            await paramChange(client, wallet, config, options);
+            break;
+        }
+
         default:
             throw new Error('Invalid proposal type');
     }
@@ -258,7 +283,7 @@ const programHandler = () => {
     );
     program.addOption(
         new Option('--proposalType <proposalType>', 'proposal type')
-            .choices(['store', 'storeInstantiate', 'instantiate', 'execute'])
+            .choices(['store', 'storeInstantiate', 'instantiate', 'execute', 'paramChange'])
             .makeOptionMandatory(true),
     );
 
@@ -271,6 +296,8 @@ const programHandler = () => {
     );
 
     program.addOption(new Option('--msg <msg>', 'json encoded message to submit with an execute contract proposal'));
+
+    program.addOption(new Option('--changes <changes>', 'parameter changes'));
 
     program.addOption(new Option('--predictOnly', 'output the predicted changes only').env('PREDICT_ONLY'));
 
