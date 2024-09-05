@@ -12,7 +12,14 @@ const {
 const fs = require('fs');
 const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-const { updateMoveToml, copyMovePackage, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const {
+    updateMoveToml,
+    copyMovePackage,
+    TxBuilder,
+    bcsStructs,
+    getDefinedSuiVersion,
+    getInstalledSuiVersion,
+} = require('@axelar-network/axelar-cgp-sui');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
@@ -71,22 +78,6 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
 const findPublishedObject = (published, packageDir, contractName) => {
     const packageId = published.packageId;
     return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageDir}::${contractName}`);
-};
-
-const getInstalledSuiVersion = () => {
-    const suiVersion = execSync('sui --version').toString().trim();
-    return parseVersion(suiVersion);
-};
-
-const getDefinedSuiVersion = () => {
-    const version = fs.readFileSync(`${__dirname}/../version.json`, 'utf8');
-    const suiVersion = JSON.parse(version).SUI_VERSION;
-    return parseVersion(suiVersion);
-};
-
-const parseVersion = (version) => {
-    const versionMatch = version.match(/\d+\.\d+\.\d+/);
-    return versionMatch[0];
 };
 
 const checkSuiVersionMatch = () => {
