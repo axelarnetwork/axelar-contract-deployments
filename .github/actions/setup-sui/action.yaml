@@ -1,15 +1,16 @@
 name: Setup Sui CLI
 description: 'Setup Sui CLI and install dependencies'
 
-inputs:
-  SUI_VERSION:
-    description: 'The version of Sui CLI to install'
-    required: true
-
 runs:
   using: 'composite'
 
   steps:
+    - name: Get Sui Version
+      shell: bash
+      run: |
+        SUI_VERSION=$(jq -r '.SUI_VERSION' sui/version.json)
+        echo "SUI_VERSION=$SUI_VERSION" >> $GITHUB_ENV
+
     - name: Debug Action Input
       shell: bash
       run: echo "SUI_VERSION=${{ inputs.SUI_VERSION }}"
@@ -25,7 +26,7 @@ runs:
       uses: actions/cache@v4
       with:
         path: sui-cli/sui-binaries/
-        key: sui-${{ inputs.SUI_VERSION }}
+        key: sui-${{ env.SUI_VERSION }}
 
     - name: Download and Install Sui
       shell: bash
@@ -45,21 +46,10 @@ runs:
       uses: actions/cache@v4
       with:
         path: sui-cli/sui-binaries/
-        key: sui-${{ inputs.SUI_VERSION }}
+        key: sui-${{ env.SUI_VERSION }}
 
     - name: Add Sui binaries to PATH
       shell: bash
       run: |
         sudo cp ./sui-cli/sui-binaries/sui /usr/local/bin/sui
         sudo cp ./sui-cli/sui-binaries/sui-debug /usr/local/bin/sui-debug
-
-    - name: Setup Sui Wallet
-      shell: bash
-      run: |
-        echo -e "y\n\n1" | sui client envs
-        sui client new-address secp256k1 wallet
-        sui client switch --address wallet
-        SUI_PRIVATE_KEY=$(sui keytool export --key-identity wallet --json | jq .exportedPrivateKey | sed 's/"//g')
-        SUI_ADDRESS=$(sui keytool export --key-identity wallet --json | jq .key.suiAddress | sed 's/"//g')
-        echo "SUI_PRIVATE_KEY=${SUI_PRIVATE_KEY}" >> $GITHUB_ENV
-        echo "SUI_ADDRESS=${SUI_ADDRESS}" >> $GITHUB_ENV
