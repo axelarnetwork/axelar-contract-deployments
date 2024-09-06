@@ -5,7 +5,7 @@ const { createHash } = require('crypto');
 
 const { readFileSync } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
-const { instantiate2Address, SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const {
@@ -15,6 +15,7 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
     isString,
@@ -31,12 +32,10 @@ const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
-const prepareWallet = ({ mnemonic }) => DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
-const prepareClient = ({ axelar: { rpc, gasPrice } }, wallet) =>
-    SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice }).then((client) => {
-        return { wallet, client };
-    });
+const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
+    await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
@@ -74,57 +73,59 @@ const getChains = (config, { chainNames, instantiate2 }) => {
     return chains;
 };
 
-const uploadContract = async (client, wallet, config, options) => {
-    const { contractName, instantiate2, salt, chainNames } = options;
-    return wallet
-        .getAccounts()
-        .then(([account]) => {
-            const wasm = readWasmFile(options);
-            const {
-                axelar: { gasPrice, gasLimit },
-            } = config;
-            const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-            return client.upload(account.address, wasm, uploadFee).then(({ checksum, codeId }) => ({ checksum, codeId, account }));
-        })
-        .then(({ account, checksum, codeId }) => {
-            const address = instantiate2
-                ? instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainNames), 'axelar')
-                : null;
-
-            return { codeId, address };
-        });
+const updateContractConfig = (contractConfig, chainConfig, key, value) => {
+    if (chainConfig) {
+        contractConfig[chainConfig.axelarId] = {
+            ...contractConfig[chainConfig.axelarId],
+            [key]: value,
+        };
+    } else {
+        contractConfig[key] = value;
+    }
 };
 
-const instantiateContract = (client, wallet, initMsg, config, options) => {
+const uploadContract = async (client, wallet, config, options) => {
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
+
+    const [account] = await wallet.getAccounts();
+    const wasm = readWasmFile(options);
+
+    const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+
+    return await client.upload(account.address, wasm, uploadFee);
+};
+
+const instantiateContract = async (client, wallet, initMsg, config, options) => {
     const { contractName, salt, instantiate2, chainNames, admin } = options;
 
-    return wallet
-        .getAccounts()
-        .then(([account]) => {
-            const contractConfig = config.axelar.contracts[contractName];
+    const [account] = await wallet.getAccounts();
 
-            const {
-                axelar: { gasPrice, gasLimit },
-            } = config;
-            const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+    const contractConfig = config.axelar.contracts[contractName];
 
-            const contractLabel = getLabel(options);
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
+    const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
-            return instantiate2
-                ? client.instantiate2(
-                      account.address,
-                      contractConfig.codeId,
-                      getSalt(salt, contractName, chainNames),
-                      initMsg,
-                      contractLabel,
-                      initFee,
-                      { admin },
-                  )
-                : client.instantiate(account.address, contractConfig.codeId, initMsg, contractLabel, initFee, {
-                      admin,
-                  });
-        })
-        .then(({ contractAddress }) => contractAddress);
+    const contractLabel = getLabel(options);
+
+    const { contractAddress } = instantiate2
+        ? await client.instantiate2(
+              account.address,
+              contractConfig.codeId,
+              getSalt(salt, contractName, chainNames),
+              initMsg,
+              contractLabel,
+              initFee,
+              { admin },
+          )
+        : await client.instantiate(account.address, contractConfig.codeId, initMsg, contractLabel, initFee, {
+              admin,
+          });
+
+    return contractAddress;
 };
 
 const validateAddress = (address) => {
@@ -200,16 +201,20 @@ const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGa
     return { admin_address: adminAddress, governance_address: governanceAddress, nexus_gateway: nexusGateway };
 };
 
-const makeNexusGatewayInstantiateMsg = ({ nexus }, { Router: { address: router } }) => {
+const makeNexusGatewayInstantiateMsg = ({ nexus }, { Router: { address: router }, AxelarnetGateway: { address: axelarnetGateway } }) => {
     if (!validateAddress(nexus)) {
         throw new Error('Missing or invalid NexusGateway.nexus in axelar info');
+    }
+
+    if (!validateAddress(axelarnetGateway)) {
+        throw new Error('Missing or invalid AxelarnetGateway.address in axelar info');
     }
 
     if (!validateAddress(router)) {
         throw new Error('Missing or invalid Router.address in axelar info');
     }
 
-    return { nexus, router };
+    return { nexus, axelarnet_gateway: axelarnetGateway, router };
 };
 
 const makeVotingVerifierInstantiateMsg = (
@@ -566,12 +571,6 @@ const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
     return codeId;
 };
 
-const instantiate2AddressForProposal = (client, contractConfig, { contractName, salt, chainNames, runAs }) => {
-    return client
-        .getCodeDetails(contractConfig.codeId)
-        .then(({ checksum }) => instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar'));
-};
-
 const getInstantiatePermission = (accessType, addresses) => {
     return {
         permission: accessType,
@@ -660,10 +659,19 @@ const getExecuteContractParams = (config, options, chainName) => {
 
     return {
         ...getSubmitProposalParams(options),
-        contract: contractConfig[chainConfig.axelarId]?.address || contractConfig.address,
+        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
         msg: Buffer.from(msg),
     };
 };
+
+const getParameterChangeParams = ({ title, description, changes }) => ({
+    title,
+    description,
+    changes: JSON.parse(changes).map(({ value, ...rest }) => ({
+        ...rest,
+        value: JSON.stringify(value), // `value` must be JSON encoded: https://github.com/cosmos/cosmos-sdk/blob/9abd946ba0cdc6d0e708bf862b2ca202b13f2d7b/x/params/client/utils/utils.go#L23
+    })),
+});
 
 const encodeStoreCodeProposal = (options) => {
     const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
@@ -718,6 +726,15 @@ const encodeExecuteContractProposal = (config, options, chainName) => {
     };
 };
 
+const encodeParameterChangeProposal = (options) => {
+    const proposal = ParameterChangeProposal.fromPartial(getParameterChangeParams(options));
+
+    return {
+        typeUrl: '/cosmos.params.v1beta1.ParameterChangeProposal',
+        value: Uint8Array.from(ParameterChangeProposal.encode(proposal).finish()),
+    };
+};
+
 const encodeSubmitProposal = (content, config, options, proposer) => {
     const {
         axelar: { tokenSymbol },
@@ -734,42 +751,42 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
-const submitProposal = (client, wallet, config, options, content) => {
-    return wallet
-        .getAccounts()
-        .then(([account]) => {
-            const {
-                axelar: { gasPrice, gasLimit },
-            } = config;
+const submitProposal = async (client, wallet, config, options, content) => {
+    const [account] = await wallet.getAccounts();
 
-            const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
 
-            const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-            return client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
-        })
-        .then(
-            ({ events }) => events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value,
-        );
+    const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
+
+    const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+    const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+
+    return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
 
 module.exports = {
     governanceAddress,
     prepareWallet,
     prepareClient,
+    fromHex,
+    getSalt,
     calculateDomainSeparator,
     readWasmFile,
     getChains,
+    updateContractConfig,
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
     fetchCodeIdFromCodeHash,
-    instantiate2AddressForProposal,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
+    encodeParameterChangeProposal,
     submitProposal,
     isValidCosmosAddress,
 };

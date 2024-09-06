@@ -15,7 +15,7 @@ function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, m
     const operatorId = contractConfig.objects.Operators;
     const gasCollectorCapId = gasServiceConfig.objects.GasCollectorCap;
 
-    const [cap, loanedCap] = tx.moveCall({
+    const [cap, borrowObj] = tx.moveCall({
         target: `${contractConfig.address}::operators::loan_cap`,
         arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.object(gasCollectorCapId)],
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
@@ -25,7 +25,7 @@ function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, m
 
     tx.moveCall({
         target: `${contractConfig.address}::operators::restore_cap`,
-        arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.object(gasCollectorCapId), cap, loanedCap],
+        arguments: [tx.object(operatorId), tx.object(operatorCapId), cap, borrowObj],
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
 

@@ -1,43 +1,71 @@
 name: Test Sui
 
-on:
-  pull_request:
-    paths:
-      - sui/**
-      - common/**
-      - .github/actions/setup-sui/**
-      - .github/workflows/test-sui.yaml
+on: pull_request
 
 jobs:
+  check-relevant-changes:
+    name: Check for Relevant Changes
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    outputs:
+      run_tests: ${{ steps.filter.outputs.sui == 'true' || steps.filter.outputs.common == 'true' || steps.filter.outputs.github == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            sui:
+              - 'sui/**'
+            common:
+              - 'common/**'
+            github:
+              - '.github/actions/setup-sui/**'
+              - '.github/workflows/test-sui.yaml'
+      - name: Summarize Changes
+        run: |
+          echo "Changes in sui: ${{ steps.filter.outputs.sui }}"
+          echo "Changes in common: ${{ steps.filter.outputs.common }}"
+          echo "Changes in github: ${{ steps.filter.outputs.github }}"
   test-sui:
     name: Test Sui
+    needs: check-relevant-changes
+    if: ${{ needs.check-relevant-changes.outputs.run_tests == 'true' }}
     runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Node.js
-        uses: useblacksmith/setup-node@v5
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: '18'
           cache: 'npm'
 
-      - name: Install
+      - name: Install dependencies
         run: npm ci
 
-      - name: Read SUI_VERSION from JSON
-        id: read-json
+      - name: Prepare version.json file
         run: |
-          SUI_VERSION=$(jq -r '.SUI_VERSION' sui/version.json)
-          echo "SUI_VERSION=${SUI_VERSION}" >> $GITHUB_ENV
+          cp node_modules/@axelar-network/axelar-cgp-sui/version.json .
 
-      - name: Setup Sui CLI and install dependencies
-        uses: ./.github/actions/setup-sui
-        with:
-          SUI_VERSION: ${{ env.SUI_VERSION }}
+      - name: Setup Sui CLI
+        uses: axelarnetwork/axelar-cgp-sui/.github/actions/install@main
+
+      - name: Setup Sui Wallet
+        shell: bash
+        run: |
+          echo -e "y\n\n1" | sui client envs
+          sui client new-address secp256k1 wallet
+          sui client switch --address wallet
+          SUI_PRIVATE_KEY=$(sui keytool export --key-identity wallet --json | jq .exportedPrivateKey | sed 's/"//g')
+          SUI_ADDRESS=$(sui keytool export --key-identity wallet --json | jq .key.suiAddress | sed 's/"//g')
+          echo "SUI_PRIVATE_KEY=${SUI_PRIVATE_KEY}" >> $GITHUB_ENV
+          echo "SUI_ADDRESS=${SUI_ADDRESS}" >> $GITHUB_ENV
 
       - name: Spin up Sui Network
-        run: nohup sh -c "sui-test-validator" > nohup.out 2> nohup.err < /dev/null &
+        # sui-test-validator will be deprecated in the future.
+        # this command follows the guide in https://docs.sui.io/guides/developer/getting-started/local-network
+        run: nohup sh -c "RUST_LOG="off,sui_node=info" sui start --with-faucet --force-regenesis" > nohup.out 2> nohup.err < /dev/null &
 
       - name: Wait for Sui network
         uses: nev7n/wait_for_response@v1
