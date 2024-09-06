@@ -1,5 +1,149 @@
 {
   "chains": {
+    "core-avalanche": {
+      "name": "Avalanche Fuji",
+      "id": "core-avalanche",
+      "axelarId": "core-avalanche",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators devnet-amplifier(core)"
+        },
+        "AxelarGasService": {
+          "collector": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
+          "address": "0xc429E38e4F47B6c8c937fe12a5E1F58Bff785228",
+          "implementation": "0xe91751b1622eDF6080505Fe104c82DE082FCCC3a",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        }
+      },
+      "explorer": {
+        "name": "Snowtrace",
+        "url": "https://testnet.snowtrace.io",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
+    },
+    "core-ethereum": {
+      "name": "Ethereum Sepolia",
+      "id": "core-ethereum",
+      "axelarId": "core-ethereum",
+      "chainId": 11155111,
+      "rpc": "https://eth-sepolia-public.unifra.io",
+      "tokenSymbol": "ETH",
+      "confirmations": 1,
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators devnet-amplifier(core)"
+        },
+        "AxelarGasService": {
+          "collector": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
+          "address": "0x18b6b5B0278E19e045440D1f00e7d63f3498b909",
+          "implementation": "0x57C1C14F9c16C7bc2Ad9d4911bC0F77e75ecb7c8",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        }
+      },
+      "explorer": {
+        "explorer": "Sepoliascan",
+        "url": "https://sepolia.etherscan.io",
+        "api": "https://api-sepolia.etherscan.io/api"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40
+    },
+    "core-optimism": {
+      "name": "Optimism Sepolia",
+      "id": "core-optimism",
+      "axelarId": "core-optimism",
+      "chainId": 11155420,
+      "rpc": "https://sepolia.optimism.io",
+      "tokenSymbol": "ETH",
+      "confirmations": 1,
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators devnet-amplifier(core)"
+        },
+        "AxelarGasService": {
+          "collector": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
+          "address": "0xDe7470e5Bb15D61B19FCa43d19EA611C88c86124",
+          "implementation": "0x6268918abaFCc97b552680C870A6092b153aaa5E",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        }
+      },
+      "explorer": {
+        "name": "Opscan",
+        "url": "https://sepolia-optimistic.etherscan.io",
+        "api": "https://api-sepolia-optimistic.etherscan.io/api"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 25
+    },
     "avalanche-fuji": {
       "name": "Avalanche Fuji",
       "id": "avalanche-fuji",
