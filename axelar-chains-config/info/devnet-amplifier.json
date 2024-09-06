@@ -8,6 +8,13 @@
       "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
       "tokenSymbol": "AVAX",
       "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "Snowtrace",
+        "url": "https://testnet.snowtrace.io",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
+      },
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -40,14 +47,7 @@
           "implementation": "0x07988B56280B7654259e2A6E26d512517483DC02",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         }
-      },
-      "explorer": {
-        "name": "Snowtrace",
-        "url": "https://testnet.snowtrace.io",
-        "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
-      },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      }
     },
     "core-ethereum": {
       "name": "Ethereum Sepolia",
@@ -57,6 +57,13 @@
       "rpc": "https://eth-sepolia-public.unifra.io",
       "tokenSymbol": "ETH",
       "confirmations": 1,
+      "explorer": {
+        "explorer": "Sepoliascan",
+        "url": "https://sepolia.etherscan.io",
+        "api": "https://api-sepolia.etherscan.io/api"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 25,
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -89,14 +96,7 @@
           "implementation": "0x36D0555763F6787848777AFC88c832e1ac2fC80B",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         }
-      },
-      "explorer": {
-        "explorer": "Sepoliascan",
-        "url": "https://sepolia.etherscan.io",
-        "api": "https://api-sepolia.etherscan.io/api"
-      },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      }
     },
     "core-optimism": {
       "name": "Optimism Sepolia",
@@ -106,6 +106,13 @@
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
       "confirmations": 1,
+      "explorer": {
+        "name": "Opscan",
+        "url": "https://sepolia-optimistic.etherscan.io",
+        "api": "https://api-sepolia-optimistic.etherscan.io/api"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40,
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -138,14 +145,7 @@
           "implementation": "0x163223c2e74728c6BE8d57F5491E749410acB908",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         }
-      },
-      "explorer": {
-        "name": "Opscan",
-        "url": "https://sepolia-optimistic.etherscan.io",
-        "api": "https://api-sepolia-optimistic.etherscan.io/api"
-      },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      }
     },
     "avalanche-fuji": {
       "name": "Avalanche Fuji",
@@ -155,6 +155,13 @@
       "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
       "tokenSymbol": "ETH",
       "confirmations": 1,
+      "explorer": {
+        "name": "Snowtrace",
+        "url": "https://testnet.snowtrace.io",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
       "contracts": {
         "AxelarGateway": {
           "gasOptions": {
@@ -211,14 +218,7 @@
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "salt": "Operators devnet-amplifier"
         }
-      },
-      "explorer": {
-        "name": "Snowtrace",
-        "url": "https://testnet.snowtrace.io",
-        "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
-      },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      }
     },
     "eth-sepolia": {
       "name": "Ethereum Sepolia",
@@ -228,6 +228,13 @@
       "rpc": "https://1rpc.io/sepolia",
       "tokenSymbol": "ETH",
       "confirmations": 1,
+      "explorer": {
+        "explorer": "Sepoliascan",
+        "url": "https://sepolia.etherscan.io",
+        "api": "https://api-sepolia.etherscan.io/api"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 25,
       "contracts": {
         "AxelarGateway": {
           "gasOptions": {
@@ -284,14 +291,7 @@
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "salt": "Operators devnet-amplifier"
         }
-      },
-      "explorer": {
-        "explorer": "Sepoliascan",
-        "url": "https://sepolia.etherscan.io",
-        "api": "https://api-sepolia.etherscan.io/api"
-      },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      }
     },
     "optimism-sepolia": {
       "name": "Optimism Sepolia",
@@ -301,6 +301,13 @@
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
       "confirmations": 1,
+      "explorer": {
+        "name": "Opscan",
+        "url": "https://sepolia-optimistic.etherscan.io",
+        "api": "https://api-sepolia-optimistic.etherscan.io/api"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 40,
       "contracts": {
         "AxelarGateway": {
           "gasOptions": {
@@ -357,14 +364,7 @@
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "salt": "Operators devnet-amplifier"
         }
-      },
-      "explorer": {
-        "name": "Opscan",
-        "url": "https://sepolia-optimistic.etherscan.io",
-        "api": "https://api-sepolia-optimistic.etherscan.io/api"
-      },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      }
     }
   },
   "axelar": {
