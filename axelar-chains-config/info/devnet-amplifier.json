@@ -47,7 +47,7 @@
         "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      "approxFinalityWaitTime": 1
     },
     "core-ethereum": {
       "name": "Ethereum Sepolia",
