@@ -12,7 +12,7 @@ const addAmplifierOptions = (program) => {
 
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').env('ARTIFACT_PATH'));
-    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name'));
     program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none').env('CHAINS'));
 
     program.addOption(new Option('-s, --salt <salt>', 'salt for instantiate2. defaults to contract name').env('SALT'));
