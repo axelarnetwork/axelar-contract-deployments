@@ -49,11 +49,20 @@
           "address": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "AxelarGasService": {
-          "collector": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "collector": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
           "salt": "AxelarGasService devnet-amplifier",
           "address": "0x1179d44e69ba5252B7478a8602617d5EEeb2F377",
-          "implementation": "0xeF805CF590B12FD32F76Eb81A236461Cf4f3D796",
+          "implementation": "0xDC290c5e736c7ae15af984300bB7db0D30f248eC",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators devnet-amplifier"
         }
       },
       "explorer": {
@@ -113,11 +122,20 @@
           "address": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "AxelarGasService": {
-          "collector": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "collector": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
           "salt": "AxelarGasService devnet-amplifier",
           "address": "0x1179d44e69ba5252B7478a8602617d5EEeb2F377",
-          "implementation": "0x833CD30e0d4905D8150FeD75E18D8D3595ad30B4",
+          "implementation": "0xC75c1Dc33514db5c39a13b2e7fE82A05050535EF",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators devnet-amplifier"
         }
       },
       "explorer": {
@@ -177,11 +195,20 @@
           "address": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "AxelarGasService": {
-          "collector": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "collector": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
           "salt": "AxelarGasService devnet-amplifier",
           "address": "0x1179d44e69ba5252B7478a8602617d5EEeb2F377",
-          "implementation": "0x833CD30e0d4905D8150FeD75E18D8D3595ad30B4",
+          "implementation": "0xB7477c7c249d3378858Cd74E2790eAF0b7777CC2",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators devnet-amplifier"
         }
       },
       "explorer": {
