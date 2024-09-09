@@ -273,22 +273,27 @@ async function processCommand(config, chain, options) {
     printInfo('Deployer contract', deployerContract);
     printInfo(`${contractName} will be deployed to`, predictedAddress, chalk.cyan);
 
-    const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
+    let existingAddress, existingCodeHash;
+
+    for (const chainConfig of Object.values(config.chains)) {
+        existingAddress = chainConfig.contracts?.[contractName]?.address;
+        existingCodeHash = chainConfig.contracts?.[contractName]?.predeployCodehash;
+
+        if (existingAddress !== undefined) {
+            break;
+        }
+    }
 
     if (existingAddress !== undefined && predictedAddress !== existingAddress) {
-        printWarn(
-            `Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}.`,
-        );
-
-        const existingCodeHash = config.chains.ethereum.contracts[contractName].predeployCodehash;
-
+        printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} in chain configs.`);
         if (predeployCodehash !== existingCodeHash) {
             printWarn(
-                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${config.chains.ethereum.name}.`,
+                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} in chain configs.`,
             );
         }
 
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
+        printWarn('This is NOT required if the deployments are done by different integrators');
     }
 
     if (predictOnly || prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
