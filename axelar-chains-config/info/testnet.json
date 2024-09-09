@@ -24,7 +24,9 @@
           "previousSignersRetention": 15,
           "domainSeparator": "0xc62f68d52873fff0ee62d39771c681ed8e889f8cd452b31cb389106430f69fca",
           "minimumRotationDelay": 3600,
-          "salt": "Amplifier Test Temporary"
+          "salt": "Amplifier Test Temporary",
+          "chainType": "evm",
+          "connectionType": "amplifier"
         },
         "AxelarGasService": {
           "collector": "0x6D37Ca166d05132e632C78882391031a3B5b6cE8",
@@ -117,7 +119,9 @@
           "previousSignersRetention": 15,
           "domainSeparator": "0xba2c562b33e107ee4817b6d9f9a160fed81afb7712cd379293731cfe1b65d8a4",
           "minimumRotationDelay": 3600,
-          "salt": "Amplifier Test Temporary"
+          "salt": "Amplifier Test Temporary",
+          "chainType": "evm",
+          "connectionType": "amplifier"
         },
         "Multisig": {
           "threshold": 2,
@@ -196,7 +200,9 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
@@ -298,7 +304,9 @@
           "authModule": "0xE39d7d526DFd7B6D10972708C77ED19c3f2f5625",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -411,7 +419,9 @@
           "authModule": "0xE39d7d526DFd7B6D10972708C77ED19c3f2f5625",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -529,7 +539,9 @@
           "governance": "0x4F0f42bF41ba60895134EC99dE79A041E5269003",
           "mintLimiter": "0xF0E17583C906f3e672e591791a88c1116F53081c",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -645,7 +657,9 @@
           "authModule": "0xE39d7d526DFd7B6D10972708C77ED19c3f2f5625",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -765,7 +779,9 @@
           "authModule": "0xD9Af006C3b33a87eE8168B9e25721DFb00FC3d2d",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -878,7 +894,9 @@
           "authModule": "0x7A599c9bB4D88F648701B653739688edEfd830E8",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -990,7 +1008,9 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementationCodehash": "0xc3516b0df24004564d42ebd7c4e4d3814655ea19ec2535627ebcdced0970cccd",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
@@ -1103,7 +1123,9 @@
           "governance": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
@@ -1235,7 +1257,9 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
@@ -1345,7 +1369,9 @@
           "authModule": "0x24C2b56128fF8E7bFaD578ABefB0fc7Dfa9ba358",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "minimumTimeDelay": 300,
@@ -1454,7 +1480,9 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
@@ -1577,7 +1605,9 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
@@ -1670,7 +1700,9 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "minimumTimeDelay": 300,
@@ -1783,7 +1815,9 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "minimumTimeDelay": 300,
@@ -1896,7 +1930,9 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "minimumTimeDelay": 300,
@@ -2031,7 +2067,9 @@
           "authModule": "0xC4FBd54fF3876377dE2B2F9471e581B44eaD1Ea9",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2091,7 +2129,9 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -2199,7 +2239,9 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "chainType": "evm",
+          "connectionType": "consensus"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
