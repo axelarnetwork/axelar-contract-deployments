@@ -368,6 +368,8 @@ async function deploy(config, chain, options) {
     contractConfig.tokenDeployer = tokenDeployer.address;
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = options.deployMethod;
+    contractConfig.connectionType = options.amplifier ? 'amplifier' : 'consensus';
+    contractConfig.chainType = 'evm';
 
     if (options.deployMethod !== 'create') {
         contractConfig.salt = salt;
