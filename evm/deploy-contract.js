@@ -27,7 +27,7 @@ const {
     getContractJSON,
     getDeployOptions,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 
 async function getConstructorArgs(contractName, config, wallet, options) {
     const args = options.args ? JSON.parse(options.args) : {};
@@ -335,7 +335,7 @@ if (require.main === module) {
 
     program.name('deploy-contract').description('Deploy contracts using create, create2, or create3');
 
-    addExtendedOptions(program, {
+    addEvmOptions(program, {
         artifactPath: true,
         contractName: true,
         salt: true,

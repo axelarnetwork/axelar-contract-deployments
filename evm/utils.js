@@ -1,5 +1,6 @@
 'use strict';
 
+const axios = require('axios');
 const { ethers } = require('hardhat');
 const {
     ContractFactory,
@@ -33,6 +34,7 @@ const {
     sleep,
     findProjectRoot,
     timeout,
+    getSaltFromKey,
 } = require('../common');
 const {
     create3DeployContract,
@@ -46,10 +48,6 @@ const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
-
-const getSaltFromKey = (key) => {
-    return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
-};
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
@@ -490,13 +488,6 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     const threshold = Number(evmAddresses.threshold);
 
     return { addresses, weights, threshold, keyID: evmAddresses.key_id };
-};
-
-const getContractConfig = async (config, chain) => {
-    const key = Buffer.from('config');
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
-    return JSON.parse(Buffer.from(value).toString('ascii'));
 };
 
 const getAmplifierKeyAddresses = async (config, chain) => {
@@ -981,6 +972,19 @@ async function relayTransaction(options, chain, contract, method, params, native
     );
 }
 
+async function getDeploymentTx(apiUrl, apiKey, tokenAddress) {
+    apiUrl = `${apiUrl}?module=contract&action=getcontractcreation&contractaddresses=${tokenAddress}&apikey=${apiKey}`;
+
+    try {
+        const response = await axios.get(apiUrl);
+        return response.data.result[0].txHash;
+    } catch (error) {
+        printWarn(`Error fetching deployment tx for token ${tokenAddress}:`, error);
+    }
+
+    throw new Error('Deployment transaction not found.');
+}
+
 async function getWeightedSigners(config, chain, options) {
     let signers;
     let verifierSetId;
@@ -1048,7 +1052,7 @@ module.exports = {
     getDeployOptions,
     isValidChain,
     getAmplifierKeyAddresses,
-    getContractConfig,
     relayTransaction,
+    getDeploymentTx,
     getWeightedSigners,
 };

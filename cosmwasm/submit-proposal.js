@@ -4,11 +4,16 @@ require('dotenv').config();
 
 const { createHash } = require('crypto');
 
+const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
+
 const {
     prepareWallet,
     prepareClient,
+    fromHex,
+    getSalt,
     readWasmFile,
     getChains,
+    updateContractConfig,
     fetchCodeIdFromCodeHash,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
@@ -16,12 +21,12 @@ const {
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
+    encodeParameterChangeProposal,
     submitProposal,
     makeInstantiateMsg,
-    instantiate2AddressForProposal,
     governanceAddress,
 } = require('./utils');
-const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../evm/utils');
+const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -29,26 +34,20 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 
 const { Command, Option } = require('commander');
+const { addAmplifierOptions } = require('./cli-utils');
 
-const updateContractConfig = (contractConfig, chainConfig, key, value) => {
-    if (chainConfig) {
-        contractConfig[chainConfig.axelarId] = {
-            ...contractConfig[chainConfig.axelarId],
-            [key]: value,
-        };
-    } else {
-        contractConfig[key] = value;
-    }
-};
+const predictAndUpdateAddress = async (client, contractConfig, chainConfig, options) => {
+    const { contractName, salt, chainNames, runAs } = options;
 
-const predictAndUpdateAddress = (client, contractConfig, chainConfig, options, contractName, chainName) => {
-    return instantiate2AddressForProposal(client, contractConfig, options).then((contractAddress) => {
-        updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
+    const { checksum } = await client.getCodeDetails(contractConfig.codeId);
+    const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar');
 
-        return contractAddress;
-    });
+    updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
+
+    return contractAddress;
 };
 
 const printProposal = (proposal, proposalType) => {
@@ -58,7 +57,24 @@ const printProposal = (proposal, proposalType) => {
     );
 };
 
-const storeCode = (client, wallet, config, options) => {
+const confirmProposalSubmission = (options, proposal, proposalType) => {
+    printProposal(proposal, proposalType);
+
+    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+        return false;
+    }
+
+    return true;
+};
+
+const callSubmitProposal = async (client, wallet, config, options, proposal) => {
+    const proposalId = await submitProposal(client, wallet, config, options, proposal);
+    printInfo('Proposal submitted', proposalId);
+
+    return proposalId;
+};
+
+const storeCode = async (client, wallet, config, options) => {
     const { contractName } = options;
     const {
         axelar: {
@@ -68,21 +84,17 @@ const storeCode = (client, wallet, config, options) => {
 
     const proposal = encodeStoreCodeProposal(options);
 
-    printProposal(proposal, StoreCodeProposal);
-
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
+    if (!confirmProposalSubmission(options, proposal, StoreCodeProposal)) {
+        return;
     }
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
-        contractConfig.storeCodeProposalId = proposalId;
-        contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
-    });
+    contractConfig.storeCodeProposalId = proposalId;
+    contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
 };
 
-const storeInstantiate = (client, wallet, config, options, chainName) => {
+const storeInstantiate = async (client, wallet, config, options, chainName) => {
     const { contractName, instantiate2 } = options;
     const {
         axelar: {
@@ -96,20 +108,16 @@ const storeInstantiate = (client, wallet, config, options, chainName) => {
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
-
     const proposal = encodeStoreInstantiateProposal(config, options, initMsg);
-    printProposal(proposal, StoreAndInstantiateContractProposal);
 
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
+    if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
+        return;
     }
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
-        updateContractConfig(contractConfig, chainConfig, 'storeInstantiateProposalId', proposalId);
-        contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
-    });
+    updateContractConfig(contractConfig, chainConfig, 'storeInstantiateProposalId', proposalId);
+    contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
 };
 
 const instantiate = async (client, wallet, config, options, chainName) => {
@@ -128,37 +136,36 @@ const instantiate = async (client, wallet, config, options, chainName) => {
     }
 
     if (predictOnly) {
-        return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
+        return predictAndUpdateAddress(client, contractConfig, chainConfig, options);
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
 
     let proposal;
+    let proposalType;
 
     if (instantiate2) {
         proposal = encodeInstantiate2Proposal(config, options, initMsg);
-        printProposal(proposal, InstantiateContract2Proposal);
+        proposalType = InstantiateContract2Proposal;
     } else {
         proposal = encodeInstantiateProposal(config, options, initMsg);
-        printProposal(proposal, InstantiateContractProposal);
+        proposalType = InstantiateContractProposal;
     }
 
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
+    if (!confirmProposalSubmission(options, proposal, proposalType)) {
+        return;
     }
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
-        updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
+    updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
 
-        if (instantiate2) {
-            return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
-        }
-    });
+    if (instantiate2) {
+        return predictAndUpdateAddress(client, contractConfig, chainConfig, options);
+    }
 };
 
-const execute = (client, wallet, config, options, chainName) => {
+const execute = async (client, wallet, config, options, chainName) => {
     const { contractName } = options;
     const {
         axelar: {
@@ -169,17 +176,23 @@ const execute = (client, wallet, config, options, chainName) => {
 
     const proposal = encodeExecuteContractProposal(config, options, chainName);
 
-    printProposal(proposal, ExecuteContractProposal);
-
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
+    if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
+        return;
     }
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
-        updateContractConfig(contractConfig, chainConfig, 'executeProposalId', proposalId);
-    });
+    updateContractConfig(contractConfig, chainConfig, 'executeProposalId', proposalId);
+};
+
+const paramChange = async (client, wallet, config, options) => {
+    const proposal = encodeParameterChangeProposal(options);
+
+    if (!confirmProposalSubmission(options, proposal, ParameterChangeProposal)) {
+        return;
+    }
+
+    await callSubmitProposal(client, wallet, config, options, proposal);
 };
 
 const main = async (options) => {
@@ -194,53 +207,63 @@ const main = async (options) => {
         config.axelar.contracts[contractName] = {};
     }
 
-    await prepareWallet(options)
-        .then((wallet) => prepareClient(config, wallet))
-        .then(({ wallet, client }) => {
-            switch (proposalType) {
-                case 'store':
-                    return storeCode(client, wallet, config, options);
+    const wallet = await prepareWallet(options);
+    const client = await prepareClient(config, wallet);
 
-                case 'storeInstantiate': {
-                    const chains = getChains(config, options);
+    switch (proposalType) {
+        case 'store':
+            await storeCode(client, wallet, config, options);
+            break;
 
-                    return chains.reduce((promise, chain) => {
-                        return promise.then(() => storeInstantiate(client, wallet, config, options, chain.toLowerCase()));
-                    }, Promise.resolve());
-                }
+        case 'storeInstantiate': {
+            const chains = getChains(config, options);
 
-                case 'instantiate': {
-                    const chains = getChains(config, options);
-
-                    return chains.reduce((promise, chain) => {
-                        return promise.then(() =>
-                            instantiate(client, wallet, config, options, chain.toLowerCase()).then((contractAddress) => {
-                                if (contractAddress) {
-                                    printInfo(
-                                        `Predicted address for ${
-                                            chain.toLowerCase() === 'none' ? '' : chain.toLowerCase().concat(' ')
-                                        }${contractName}. Address`,
-                                        contractAddress,
-                                    );
-                                }
-                            }),
-                        );
-                    }, Promise.resolve());
-                }
-
-                case 'execute': {
-                    const chains = getChains(config, options);
-
-                    return chains.reduce((promise, chain) => {
-                        return promise.then(() => execute(client, wallet, config, options, chain.toLowerCase()));
-                    }, Promise.resolve());
-                }
-
-                default:
-                    throw new Error('Invalid proposal type');
+            for (const chain of chains) {
+                await storeInstantiate(client, wallet, config, options, chain.toLowerCase());
             }
-        })
-        .then(() => saveConfig(config, env));
+
+            break;
+        }
+
+        case 'instantiate': {
+            const chains = getChains(config, options);
+
+            for (const chain of chains) {
+                const contractAddress = await instantiate(client, wallet, config, options, chain.toLowerCase());
+
+                if (contractAddress) {
+                    printInfo(
+                        `Predicted address for ${
+                            chain.toLowerCase() === 'none' ? '' : chain.toLowerCase().concat(' ')
+                        }${contractName}. Address`,
+                        contractAddress,
+                    );
+                }
+            }
+
+            break;
+        }
+
+        case 'execute': {
+            const chains = getChains(config, options);
+
+            for (const chain of chains) {
+                await execute(client, wallet, config, options, chain.toLowerCase());
+            }
+
+            break;
+        }
+
+        case 'paramChange': {
+            await paramChange(client, wallet, config, options);
+            break;
+        }
+
+        default:
+            throw new Error('Invalid proposal type');
+    }
+
+    saveConfig(config, env);
 };
 
 const programHandler = () => {
@@ -248,27 +271,7 @@ const programHandler = () => {
 
     program.name('submit-proposal').description('Submit governance proposals');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'devnet-amplifier', 'devnet-verifiers', 'stagenet', 'testnet', 'mainnet'])
-            .default('devnet-amplifier')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
-    program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
-    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
-
-    program.addOption(new Option('-s, --salt <salt>', 'salt for instantiate2. defaults to contract name').env('SALT'));
-    program.addOption(
-        new Option('--admin <address>', 'when instantiating contract, set an admin address. Defaults to governance module account').default(
-            governanceAddress,
-        ),
-    );
-    program.addOption(new Option('--instantiate2', 'use instantiate2 for constant address deployment'));
-    program.addOption(new Option('--aarch64', 'aarch64').env('AARCH64').default(false));
-    program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
+    addAmplifierOptions(program);
 
     program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
     program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
@@ -280,10 +283,9 @@ const programHandler = () => {
     );
     program.addOption(
         new Option('--proposalType <proposalType>', 'proposal type')
-            .choices(['store', 'storeInstantiate', 'instantiate', 'execute'])
+            .choices(['store', 'storeInstantiate', 'instantiate', 'execute', 'paramChange'])
             .makeOptionMandatory(true),
     );
-    program.addOption(new Option('--predictOnly', 'output the predicted changes only').env('PREDICT_ONLY'));
 
     program.addOption(new Option('--source <source>', "a valid HTTPS URI to the contract's source code"));
     program.addOption(
@@ -293,9 +295,11 @@ const programHandler = () => {
         new Option('-i, --instantiateAddresses <instantiateAddresses>', 'comma separated list of addresses allowed to instantiate'),
     );
 
-    program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
-
     program.addOption(new Option('--msg <msg>', 'json encoded message to submit with an execute contract proposal'));
+
+    program.addOption(new Option('--changes <changes>', 'parameter changes'));
+
+    program.addOption(new Option('--predictOnly', 'output the predicted changes only').env('PREDICT_ONLY'));
 
     program.action((options) => {
         main(options);

@@ -1,18 +1,22 @@
-const { saveConfig, printInfo, printError } = require('../common/utils');
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { loadConfig } = require('../common/utils');
-const { gasServiceStruct } = require('./types-utils');
-const { getBcsBytesByObjectId } = require('./utils');
 const { ethers } = require('hardhat');
-const { getFormattedAmount } = require('./amount-utils');
+const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify },
 } = ethers;
-
-const { addOptionsToCommands, addBaseOptions, parseSuiUnitAmount } = require('./cli-utils');
-const { getWallet, printWalletInfo, broadcast } = require('./sign-utils');
+const { saveConfig, loadConfig, printError } = require('../common/utils');
+const {
+    getWallet,
+    printWalletInfo,
+    broadcast,
+    getBcsBytesByObjectId,
+    getFormattedAmount,
+    addOptionsToCommands,
+    addBaseOptions,
+    parseSuiUnitAmount,
+} = require('./utils');
 
 async function payGas(keypair, client, gasServiceConfig, args, options) {
     const walletAddress = keypair.toSuiAddress();
@@ -42,9 +46,7 @@ async function payGas(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Gas paid', receipt.digest);
+    await broadcast(client, keypair, tx, 'Gas Paid');
 }
 
 async function addGas(keypair, client, gasServiceConfig, args, options) {
@@ -72,9 +74,7 @@ async function addGas(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Gas added', receipt.digest);
+    await broadcast(client, keypair, tx, 'Gas Added');
 }
 
 async function collectGas(keypair, client, gasServiceConfig, args, options) {
@@ -87,7 +87,7 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
     const receiver = options.receiver || walletAddress;
 
     const bytes = await getBcsBytesByObjectId(client, gasServiceObjectId);
-    const { balance: gasServiceBalance } = gasServiceStruct.parse(bytes);
+    const { balance: gasServiceBalance } = bcsStructs.gasService.GasService.parse(bytes);
 
     // Check if the gas service balance is sufficient
     if (gasServiceBalance < unitAmount) {
@@ -107,9 +107,7 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Gas collected', receipt.digest);
+    await broadcast(client, keypair, tx, 'Gas Collected');
 }
 
 async function refund(keypair, client, gasServiceConfig, args, options) {
@@ -123,7 +121,7 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
     const receiver = options.receiver || walletAddress;
 
     const bytes = await getBcsBytesByObjectId(client, gasServiceObjectId);
-    const { balance: gasServiceBalance } = gasServiceStruct.parse(bytes);
+    const { balance: gasServiceBalance } = bcsStructs.gasService.GasService.parse(bytes);
 
     // Check if the gas service balance is sufficient
     if (gasServiceBalance < unitAmount) {
@@ -143,9 +141,7 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Gas refunded', receipt.digest);
+    await broadcast(client, keypair, tx, 'Gas Refunded');
 }
 
 async function processCommand(command, chain, args, options) {
@@ -176,7 +172,7 @@ if (require.main === module) {
         .description('Pay gas for the new contract call.')
         .option('--refundAddress <refundAddress>', 'Refund address. Default is the sender address.')
         .requiredOption('--amount <amount>', 'Amount to pay gas', parseSuiUnitAmount)
-        .option('--params <params>', 'Params. Default is empty.')
+        .option('--params <params>', 'Params. Default is empty.', '0x')
         .action((destinationChain, destinationAddress, channelId, payload, options) => {
             mainProcessor(options, [destinationChain, destinationAddress, channelId, payload], processCommand, payGas);
         });

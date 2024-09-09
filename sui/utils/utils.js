@@ -2,7 +2,7 @@
 
 const { ethers } = require('hardhat');
 const toml = require('toml');
-const { printInfo, printError } = require('../common/utils');
+const { printInfo, printError, printWarn } = require('../../common/utils');
 const {
     BigNumber,
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
@@ -11,11 +11,18 @@ const {
 const fs = require('fs');
 const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { singletonStruct, itsStruct, squidStruct } = require('./types-utils');
+const {
+    updateMoveToml,
+    copyMovePackage,
+    TxBuilder,
+    bcsStructs,
+    getDefinedSuiVersion,
+    getInstalledSuiVersion,
+} = require('@axelar-network/axelar-cgp-sui');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
+const suiCoinId = '0x2::sui::SUI';
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -53,7 +60,7 @@ const getBcsBytesByObjectId = async (client, objectId) => {
 };
 
 const deployPackage = async (packageName, client, keypair, options = {}) => {
-    const compileDir = `${__dirname}/move`;
+    const compileDir = `${__dirname}/../move`;
 
     copyMovePackage(packageName, null, compileDir);
 
@@ -72,9 +79,23 @@ const findPublishedObject = (published, packageDir, contractName) => {
     return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageDir}::${contractName}`);
 };
 
+const checkSuiVersionMatch = () => {
+    const installedVersion = getInstalledSuiVersion();
+    const definedVersion = getDefinedSuiVersion();
+
+    if (installedVersion !== definedVersion) {
+        printWarn('Version mismatch detected:');
+        printWarn(`- Installed SUI version: ${installedVersion}`);
+        printWarn(`- Version used for tests: ${definedVersion}`);
+    }
+};
+
 const readMovePackageName = (moveDir) => {
     try {
-        const moveToml = fs.readFileSync(`${__dirname}/../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`, 'utf8');
+        const moveToml = fs.readFileSync(
+            `${__dirname}/../../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`,
+            'utf8',
+        );
 
         const { package: movePackage } = toml.parse(moveToml);
 
@@ -99,19 +120,19 @@ const getObjectIdsByObjectTypes = (txn, objectTypes) =>
 // Parse bcs bytes from singleton object which is created when the Test contract is deployed
 const getSingletonChannelId = async (client, singletonObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
-    const data = singletonStruct.parse(bcsBytes);
+    const data = bcsStructs.gmp.Singleton.parse(bcsBytes);
     return '0x' + data.channel.id;
 };
 
 const getItsChannelId = async (client, itsObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, itsObjectId);
-    const data = itsStruct.parse(bcsBytes);
+    const data = bcsStructs.its.ITS.parse(bcsBytes);
     return '0x' + data.channel.id;
 };
 
 const getSquidChannelId = async (client, squidObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, squidObjectId);
-    const data = squidStruct.parse(bcsBytes);
+    const data = bcsStructs.squid.Squid.parse(bcsBytes);
     return '0x' + data.channel.id;
 };
 
@@ -145,10 +166,79 @@ const getSigners = async (keypair, config, chain, options) => {
     return getAmplifierSigners(config, chain);
 };
 
+const isGasToken = (coinType) => {
+    return coinType === suiCoinId;
+};
+
+const paginateAll = async (client, paginatedFn, params, pageLimit = 100) => {
+    let cursor;
+    let response = await client[paginatedFn]({
+        ...params,
+        cursor,
+        limit: pageLimit,
+    });
+    const items = response.data;
+
+    while (response.hasNextPage) {
+        response = await client[paginatedFn]({
+            ...params,
+            cursor: response.nextCursor,
+            limit: pageLimit,
+        });
+        items.push(...response.data);
+    }
+
+    return items;
+};
+
+const findOwnedObjectId = async (client, ownerAddress, objectType) => {
+    const ownedObjects = await client.getOwnedObjects({
+        owner: ownerAddress,
+        options: {
+            showContent: true,
+        },
+    });
+
+    const targetObject = ownedObjects.data.find(({ data }) => data.content.type === objectType);
+
+    if (!targetObject) {
+        throw new Error(`No object found for type: ${objectType}`);
+    }
+
+    return targetObject.data.content.fields.id.id;
+};
+
+const getBagContentId = async (client, objectType, bagId, bagName) => {
+    const result = await client.getDynamicFields({
+        parentId: bagId,
+        name: bagName,
+    });
+
+    const objectId = result.data.find((cap) => cap.objectType === objectType)?.objectId;
+
+    if (!objectId) {
+        throw new Error(`${objectType} not found in the capabilities bag`);
+    }
+
+    const objectDetails = await client.getObject({
+        id: objectId,
+        options: {
+            showContent: true,
+        },
+    });
+
+    return objectDetails.data.content.fields.value.fields.id.id;
+};
+
 module.exports = {
+    suiCoinId,
+    getAmplifierSigners,
+    isGasToken,
+    paginateAll,
     suiPackageAddress,
     suiClockAddress,
-    getAmplifierSigners,
+    checkSuiVersionMatch,
+    findOwnedObjectId,
     getBcsBytesByObjectId,
     deployPackage,
     findPublishedObject,
@@ -158,4 +248,5 @@ module.exports = {
     getItsChannelId,
     getSquidChannelId,
     getSigners,
+    getBagContentId,
 };

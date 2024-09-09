@@ -29,7 +29,7 @@ const {
     getGasOptions,
     getDeployOptions,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
@@ -166,6 +166,10 @@ async function deploy(config, chain, options) {
     }
 
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
+
+    if (await isContract(proxyAddress, wallet.provider)) {
+        printError(`Contract already deployed at predicted address "${proxyAddress}"!`);
+    }
 
     if (predictOnly || prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
         return;
@@ -523,7 +527,7 @@ async function programHandler() {
 
     program.name('deploy-gateway-v6.2.x').description('Deploy gateway v6.2.x');
 
-    addExtendedOptions(program, { salt: true, deployMethod: 'create', skipExisting: true, upgrade: true, predictOnly: true });
+    addEvmOptions(program, { salt: true, deployMethod: 'create', skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
     program.addOption(new Option('--reuseProxy', 'reuse proxy contract modules for new implementation deployment'));

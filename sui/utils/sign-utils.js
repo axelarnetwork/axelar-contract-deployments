@@ -8,7 +8,7 @@ const { Secp256k1Keypair, Secp256k1PublicKey } = require('@mysten/sui/keypairs/s
 const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui/keypairs/secp256r1');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui/client');
 const { fromB64, fromHEX } = require('@mysten/bcs');
-const { printInfo } = require('../common/utils');
+const { printInfo } = require('../../common/utils');
 const { ethers } = require('hardhat');
 const {
     utils: { hexlify },
@@ -95,8 +95,8 @@ function getRawPrivateKey(keypair) {
     return decodeSuiPrivateKey(keypair.getSecretKey()).secretKey;
 }
 
-async function broadcast(client, keypair, tx) {
-    return await client.signAndExecuteTransaction({
+async function broadcast(client, keypair, tx, actionName) {
+    const receipt = await client.signAndExecuteTransaction({
         transaction: tx,
         signer: keypair,
         options: {
@@ -105,10 +105,16 @@ async function broadcast(client, keypair, tx) {
             showContent: true,
         },
     });
+
+    if (actionName) {
+        printInfo(actionName, receipt.digest);
+    }
+
+    return receipt;
 }
 
-async function broadcastSignature(client, txBytes, signature) {
-    return await client.executeTransactionBlock({
+async function broadcastSignature(client, txBytes, signature, actionName) {
+    const receipt = await client.executeTransactionBlock({
         transactionBlock: txBytes,
         signature,
         options: {
@@ -117,6 +123,12 @@ async function broadcastSignature(client, txBytes, signature) {
             showEvents: true,
         },
     });
+
+    if (actionName) {
+        printInfo(actionName, receipt.digest);
+    }
+
+    return receipt;
 }
 
 async function signTransactionBlockBytes(keypair, client, txBytes, options) {

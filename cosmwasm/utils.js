@@ -1,15 +1,11 @@
 'use strict';
 
 const zlib = require('zlib');
-const { ethers } = require('hardhat');
-const {
-    utils: { keccak256 },
-} = ethers;
 const { createHash } = require('crypto');
 
 const { readFileSync } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
-const { instantiate2Address, SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const {
@@ -19,18 +15,27 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
-const { getSaltFromKey, isString, isStringArray, isKeccak256Hash, isNumber, toBigNumberString } = require('../evm/utils');
+const {
+    isString,
+    isStringArray,
+    isStringLowercase,
+    isKeccak256Hash,
+    isNumber,
+    toBigNumberString,
+    getChainConfig,
+    getSaltFromKey,
+    calculateDomainSeparator,
+} = require('../common');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
-const prepareWallet = ({ mnemonic }) => DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
-const prepareClient = ({ axelar: { rpc, gasPrice } }, wallet) =>
-    SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice }).then((client) => {
-        return { wallet, client };
-    });
+const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
+    await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
@@ -46,12 +51,11 @@ const isValidCosmosAddress = (str) => {
 
 const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'));
 
-const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
-
 const getSalt = (salt, contractName, chainNames) => fromHex(getSaltFromKey(salt || contractName.concat(chainNames)));
 
-const readWasmFile = ({ artifactPath, contractName, aarch64 }) =>
-    readFileSync(`${artifactPath}/${pascalToSnake(contractName)}${aarch64 ? '-aarch64' : ''}.wasm`);
+const getLabel = ({ contractName, label }) => label || contractName;
+
+const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
 
 const getChains = (config, { chainNames, instantiate2 }) => {
     let chains = chainNames.split(',').map((str) => str.trim());
@@ -64,62 +68,64 @@ const getChains = (config, { chainNames, instantiate2 }) => {
         throw new Error('Cannot pass --instantiate2 with more than one chain');
     }
 
-    const undefinedChain = chains.find((chain) => !config.chains[chain.toLowerCase()] && chain !== 'none');
-
-    if (undefinedChain) {
-        throw new Error(`Chain ${undefinedChain} is not defined in the info file`);
-    }
+    chains.every((chain) => chain === 'none' || getChainConfig(config, chain));
 
     return chains;
 };
 
-const uploadContract = async (client, wallet, config, options) => {
-    const { contractName, instantiate2, salt, chainNames } = options;
-    return wallet
-        .getAccounts()
-        .then(([account]) => {
-            const wasm = readWasmFile(options);
-            const {
-                axelar: { gasPrice, gasLimit },
-            } = config;
-            const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-            return client.upload(account.address, wasm, uploadFee).then(({ checksum, codeId }) => ({ checksum, codeId, account }));
-        })
-        .then(({ account, checksum, codeId }) => {
-            const address = instantiate2
-                ? instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainNames), 'axelar')
-                : null;
-
-            return { codeId, address };
-        });
+const updateContractConfig = (contractConfig, chainConfig, key, value) => {
+    if (chainConfig) {
+        contractConfig[chainConfig.axelarId] = {
+            ...contractConfig[chainConfig.axelarId],
+            [key]: value,
+        };
+    } else {
+        contractConfig[key] = value;
+    }
 };
 
-const instantiateContract = (client, wallet, initMsg, config, { contractName, salt, instantiate2, chainNames, admin }) => {
-    return wallet
-        .getAccounts()
-        .then(([account]) => {
-            const contractConfig = config.axelar.contracts[contractName];
+const uploadContract = async (client, wallet, config, options) => {
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
 
-            const {
-                axelar: { gasPrice, gasLimit },
-            } = config;
-            const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+    const [account] = await wallet.getAccounts();
+    const wasm = readWasmFile(options);
 
-            return instantiate2
-                ? client.instantiate2(
-                      account.address,
-                      contractConfig.codeId,
-                      getSalt(salt, contractName, chainNames),
-                      initMsg,
-                      contractName,
-                      initFee,
-                      { admin },
-                  )
-                : client.instantiate(account.address, contractConfig.codeId, initMsg, contractName, initFee, {
-                      admin,
-                  });
-        })
-        .then(({ contractAddress }) => contractAddress);
+    const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+
+    return await client.upload(account.address, wasm, uploadFee);
+};
+
+const instantiateContract = async (client, wallet, initMsg, config, options) => {
+    const { contractName, salt, instantiate2, chainNames, admin } = options;
+
+    const [account] = await wallet.getAccounts();
+
+    const contractConfig = config.axelar.contracts[contractName];
+
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
+    const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+
+    const contractLabel = getLabel(options);
+
+    const { contractAddress } = instantiate2
+        ? await client.instantiate2(
+              account.address,
+              contractConfig.codeId,
+              getSalt(salt, contractName, chainNames),
+              initMsg,
+              contractLabel,
+              initFee,
+              { admin },
+          )
+        : await client.instantiate(account.address, contractConfig.codeId, initMsg, contractLabel, initFee, {
+              admin,
+          });
+
+    return contractAddress;
 };
 
 const validateAddress = (address) => {
@@ -167,7 +173,7 @@ const makeMultisigInstantiateMsg = ({ adminAddress, governanceAddress, blockExpi
     };
 };
 
-const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) => {
+const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom }) => {
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Rewards.governanceAddress in axelar info');
     }
@@ -176,7 +182,7 @@ const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) 
         throw new Error('Missing or invalid Rewards.rewardsDenom in axelar info');
     }
 
-    return { governance_address: governanceAddress, rewards_denom: rewardsDenom, params };
+    return { governance_address: governanceAddress, rewards_denom: rewardsDenom };
 };
 
 const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGateway: { address: nexusGateway } }) => {
@@ -195,25 +201,29 @@ const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGa
     return { admin_address: adminAddress, governance_address: governanceAddress, nexus_gateway: nexusGateway };
 };
 
-const makeNexusGatewayInstantiateMsg = ({ nexus }, { Router: { address: router } }) => {
+const makeNexusGatewayInstantiateMsg = ({ nexus }, { Router: { address: router }, AxelarnetGateway: { address: axelarnetGateway } }) => {
     if (!validateAddress(nexus)) {
         throw new Error('Missing or invalid NexusGateway.nexus in axelar info');
+    }
+
+    if (!validateAddress(axelarnetGateway)) {
+        throw new Error('Missing or invalid AxelarnetGateway.address in axelar info');
     }
 
     if (!validateAddress(router)) {
         throw new Error('Missing or invalid Router.address in axelar info');
     }
 
-    return { nexus, router };
+    return { nexus, axelarnet_gateway: axelarnetGateway, router };
 };
 
 const makeVotingVerifierInstantiateMsg = (
     contractConfig,
     { ServiceRegistry: { address: serviceRegistryAddress }, Rewards: { address: rewardsAddress } },
-    { id: chainId },
+    { axelarId },
 ) => {
     const {
-        [chainId]: {
+        [axelarId]: {
             governanceAddress,
             serviceName,
             sourceGatewayAddress,
@@ -225,6 +235,10 @@ const makeVotingVerifierInstantiateMsg = (
         },
     } = contractConfig;
 
+    if (!isStringLowercase(axelarId)) {
+        throw new Error('Missing or invalid axelar ID');
+    }
+
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
     }
@@ -234,35 +248,35 @@ const makeVotingVerifierInstantiateMsg = (
     }
 
     if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].governanceAddress in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].governanceAddress in axelar info`);
     }
 
     if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].serviceName in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].serviceName in axelar info`);
     }
 
     if (!isString(sourceGatewayAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].sourceGatewayAddress in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].sourceGatewayAddress in axelar info`);
     }
 
     if (!isStringArray(votingThreshold)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].votingThreshold in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].votingThreshold in axelar info`);
     }
 
     if (!isNumber(blockExpiry)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].blockExpiry in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].blockExpiry in axelar info`);
     }
 
     if (!isNumber(confirmationHeight)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].confirmationHeight in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].confirmationHeight in axelar info`);
     }
 
     if (!isString(msgIdFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].msgIdFormat in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].msgIdFormat in axelar info`);
     }
 
     if (!isString(addressFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].addressFormat in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].addressFormat in axelar info`);
     }
 
     return {
@@ -274,13 +288,13 @@ const makeVotingVerifierInstantiateMsg = (
         voting_threshold: votingThreshold,
         block_expiry: toBigNumberString(blockExpiry),
         confirmation_height: confirmationHeight,
-        source_chain: chainId,
+        source_chain: axelarId,
         msg_id_format: msgIdFormat,
         address_format: addressFormat,
     };
 };
 
-const makeGatewayInstantiateMsg = ({ Router: { address: routerAddress }, VotingVerifier }, { id: chainId }) => {
+const makeGatewayInstantiateMsg = ({ Router: { address: routerAddress }, VotingVerifier }, { axelarId: chainId }) => {
     const {
         [chainId]: { address: verifierAddress },
     } = VotingVerifier;
@@ -299,10 +313,10 @@ const makeGatewayInstantiateMsg = ({ Router: { address: routerAddress }, VotingV
 const makeMultisigProverInstantiateMsg = (config, chainName) => {
     const {
         axelar: { contracts, chainId: axelarChainId },
-        chains: { [chainName]: chainConfig },
     } = config;
+    const chainConfig = getChainConfig(config, chainName);
 
-    const { axelarId: chainId } = chainConfig;
+    const { axelarId } = chainConfig;
 
     const {
         Router: { address: routerAddress },
@@ -310,15 +324,15 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
         VotingVerifier: {
-            [chainId]: { address: verifierAddress },
+            [axelarId]: { address: verifierAddress },
         },
         Gateway: {
-            [chainId]: { address: gatewayAddress },
+            [axelarId]: { address: gatewayAddress },
         },
         MultisigProver: contractConfig,
     } = contracts;
     const {
-        [chainId]: {
+        [axelarId]: {
             adminAddress,
             governanceAddress,
             domainSeparator,
@@ -330,7 +344,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         },
     } = contractConfig;
 
-    if (!isString(chainId)) {
+    if (!isStringLowercase(axelarId)) {
         throw new Error(`Missing or invalid axelar ID for chain ${chainName}`);
     }
 
@@ -342,19 +356,19 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         throw new Error(`Missing or invalid chain ID`);
     }
 
-    const separator = domainSeparator || calculateDomainSeparator(chainId, routerAddress, axelarChainId);
-    contractConfig[chainId].domainSeparator = separator;
+    const separator = domainSeparator || calculateDomainSeparator(axelarId, routerAddress, axelarChainId);
+    contractConfig[axelarId].domainSeparator = separator;
 
     if (!validateAddress(adminAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].adminAddress in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].adminAddress in axelar info`);
     }
 
     if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].governanceAddress in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].governanceAddress in axelar info`);
     }
 
     if (!validateAddress(gatewayAddress)) {
-        throw new Error(`Missing or invalid Gateway[${chainId}].address in axelar info`);
+        throw new Error(`Missing or invalid Gateway[${axelarId}].address in axelar info`);
     }
 
     if (!validateAddress(coordinatorAddress)) {
@@ -370,31 +384,31 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].address in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].address in axelar info`);
     }
 
     if (!isKeccak256Hash(separator)) {
-        throw new Error(`Invalid MultisigProver[${chainId}].domainSeparator in axelar info`);
+        throw new Error(`Invalid MultisigProver[${axelarId}].domainSeparator in axelar info`);
     }
 
     if (!isStringArray(signingThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].signingThreshold in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].signingThreshold in axelar info`);
     }
 
     if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].serviceName in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].serviceName in axelar info`);
     }
 
     if (!isNumber(verifierSetDiffThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].verifierSetDiffThreshold in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].verifierSetDiffThreshold in axelar info`);
     }
 
     if (!isString(encoder)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].encoder in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].encoder in axelar info`);
     }
 
     if (!isString(keyType)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].keyType in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${axelarId}].keyType in axelar info`);
     }
 
     return {
@@ -408,18 +422,44 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         domain_separator: separator.replace('0x', ''),
         signing_threshold: signingThreshold,
         service_name: serviceName,
-        chain_name: chainId,
+        chain_name: axelarId,
         verifier_set_diff_threshold: verifierSetDiffThreshold,
         encoder,
         key_type: keyType,
     };
 };
 
+const makeAxelarnetGatewayInstantiateMsg = (config, chainName) => {
+    const {
+        axelar: { contracts },
+    } = config;
+    const chainConfig = getChainConfig(config, chainName);
+
+    const { axelarId } = chainConfig;
+
+    const {
+        Router: { address: routerAddress },
+    } = contracts;
+
+    if (!isString(axelarId)) {
+        throw new Error(`Missing or invalid axelar ID for chain ${chainName}`);
+    }
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    return {
+        router_address: routerAddress,
+        chain_name: axelarId.toLowerCase(),
+    };
+};
+
 const makeInstantiateMsg = (contractName, chainName, config) => {
     const {
         axelar: { contracts },
-        chains: { [chainName]: chainConfig },
     } = config;
+    const chainConfig = getChainConfig(config, chainName);
 
     const { [contractName]: contractConfig } = contracts;
 
@@ -495,6 +535,14 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
             return makeMultisigProverInstantiateMsg(config, chainName);
         }
+
+        case 'AxelarnetGateway': {
+            if (!chainConfig) {
+                throw new Error('AxelarnetGateway requires chainNames option');
+            }
+
+            return makeAxelarnetGatewayInstantiateMsg(config, chainName);
+        }
     }
 
     throw new Error(`${contractName} is not supported.`);
@@ -521,12 +569,6 @@ const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
     }
 
     return codeId;
-};
-
-const instantiate2AddressForProposal = (client, contractConfig, { contractName, salt, chainNames, runAs }) => {
-    return client
-        .getCodeDetails(contractConfig.codeId)
-        .then(({ checksum }) => instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar'));
 };
 
 const getInstantiatePermission = (accessType, addresses) => {
@@ -573,12 +615,12 @@ const getStoreCodeParams = (options) => {
 };
 
 const getStoreInstantiateParams = (config, options, msg) => {
-    const { contractName, admin } = options;
+    const { admin } = options;
 
     return {
         ...getStoreCodeParams(options),
         admin,
-        label: contractName,
+        label: getLabel(options),
         msg: Buffer.from(JSON.stringify(msg)),
     };
 };
@@ -592,7 +634,7 @@ const getInstantiateContractParams = (config, options, msg) => {
         ...getSubmitProposalParams(options),
         admin,
         codeId: contractConfig.codeId,
-        label: contractName,
+        label: getLabel(options),
         msg: Buffer.from(JSON.stringify(msg)),
     };
 };
@@ -612,15 +654,24 @@ const getExecuteContractParams = (config, options, chainName) => {
         axelar: {
             contracts: { [contractName]: contractConfig },
         },
-        chains: { [chainName]: chainConfig },
     } = config;
+    const chainConfig = getChainConfig(config, chainName);
 
     return {
         ...getSubmitProposalParams(options),
-        contract: chainConfig ? contractConfig[chainConfig.axelarId].address : contractConfig.address,
+        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
         msg: Buffer.from(msg),
     };
 };
+
+const getParameterChangeParams = ({ title, description, changes }) => ({
+    title,
+    description,
+    changes: JSON.parse(changes).map(({ value, ...rest }) => ({
+        ...rest,
+        value: JSON.stringify(value), // `value` must be JSON encoded: https://github.com/cosmos/cosmos-sdk/blob/9abd946ba0cdc6d0e708bf862b2ca202b13f2d7b/x/params/client/utils/utils.go#L23
+    })),
+});
 
 const encodeStoreCodeProposal = (options) => {
     const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
@@ -675,6 +726,15 @@ const encodeExecuteContractProposal = (config, options, chainName) => {
     };
 };
 
+const encodeParameterChangeProposal = (options) => {
+    const proposal = ParameterChangeProposal.fromPartial(getParameterChangeParams(options));
+
+    return {
+        typeUrl: '/cosmos.params.v1beta1.ParameterChangeProposal',
+        value: Uint8Array.from(ParameterChangeProposal.encode(proposal).finish()),
+    };
+};
+
 const encodeSubmitProposal = (content, config, options, proposer) => {
     const {
         axelar: { tokenSymbol },
@@ -691,42 +751,42 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
-const submitProposal = (client, wallet, config, options, content) => {
-    return wallet
-        .getAccounts()
-        .then(([account]) => {
-            const {
-                axelar: { gasPrice, gasLimit },
-            } = config;
+const submitProposal = async (client, wallet, config, options, content) => {
+    const [account] = await wallet.getAccounts();
 
-            const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
 
-            const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-            return client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
-        })
-        .then(
-            ({ events }) => events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value,
-        );
+    const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
+
+    const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+    const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+
+    return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
 
 module.exports = {
     governanceAddress,
     prepareWallet,
     prepareClient,
+    fromHex,
+    getSalt,
     calculateDomainSeparator,
     readWasmFile,
     getChains,
+    updateContractConfig,
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
     fetchCodeIdFromCodeHash,
-    instantiate2AddressForProposal,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
+    encodeParameterChangeProposal,
     submitProposal,
     isValidCosmosAddress,
 };
