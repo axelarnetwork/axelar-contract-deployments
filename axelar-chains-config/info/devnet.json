@@ -241,16 +241,21 @@
       "axelarId": "hedera",
       "skipRevertTests": true,
       "chainId": 296,
-      "rpc": "https://testnet.hedera.validationcloud.io/v1/6c6wqC3i87s0MPa9gXMny1szu96fFdMTwnpbBa6bC5w",
+      "rpc": "https://testnet.hashio.io/api",
       "tokenSymbol": "HBAR",
-      "confirmations": 0,
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
       "explorer": {
         "name": "HashScan",
-        "url": "",
+        "url": "https://hashscan.io/testnet",
         "api": ""
       },
       "gasOptions": {
-        "gasLimit": 10000000
+        "gasLimit": 8000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
       }
     },
     "hederapreviewnet1": {
@@ -402,7 +407,10 @@
         "storeCodeProposalCodeHash": "b9456a87ffbba0890b30f1313629592e83771c7378c49aec76ff7b1dde73db07",
         "codeId": 1,
         "address": "axelar17ahqgeynfaqdemr7vsempc0nx892gvvf2jucjkljhc90eqknsxwquhlees",
-        "executeProposalId": "37"
+        "executeProposalId": "37",
+        "hedera": {
+          "executeProposalId": "41"
+        }
       },
       "NexusGateway": {
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
@@ -433,7 +441,10 @@
         "storeCodeProposalCodeHash": "f49800d724186d013b16551828d378d7e410b8c54f7320a5b6d2ed06e20f7fa3",
         "codeId": 5,
         "address": "axelar1xa750yqmswl0e0ukk4d0ee9qu8jzycag5u9q5t4zlpvxzpeweevspw80a5",
-        "executeProposalId": "39"
+        "executeProposalId": "39",
+        "hedera": {
+          "executeProposalId": "43"
+        }
       },
       "Multisig": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
@@ -443,7 +454,10 @@
         "storeCodeProposalCodeHash": "4b01a9823e3d09d56b7b451c92ab40e6bdd36e4d55ae423b5e5c979258f00dfa",
         "codeId": 6,
         "address": "axelar104kxgzr9vh6k6a49d9hjf980866eqlu4vhgzpv26ex8xhaf52juq66kd9t",
-        "executeProposalId": "38"
+        "executeProposalId": "38",
+        "hedera": {
+          "executeProposalId": "42"
+        }
       },
       "MultisigProver": {
         "storeCodeProposalId": "9",
@@ -523,6 +537,21 @@
           "domainSeparator": "0xf8478f314406c98b5a9fa81c019b0d1b5d1018d17b4a66ab6e0316a7bd55a676",
           "address": "axelar1p39gxhsexa6v40lkd4glvw84ujkv9nxrdzng7da5utsgvaqv96zs0kgdal"
         },
+        "hedera": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "destinationChainID": "297",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "verifiers",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "domainSeparator": "0x01b2ef6c3ac2151f8c3bfbcf0dc47a5ac50f847c681fd0eddce18b9f2a7a11c5",
+          "address": "axelar1j9jj962m72qu9g67p99u0tdff7f38vflh3hljzzjfuw22g3x83ssntmxaz"
+        },
         "codeId": 9
       },
       "Gateway": {
@@ -543,6 +572,9 @@
         },
         "hederapreviewnet3": {
           "address": "axelar17a38gd8h5paxrsre88vxd9e6g363rcjpjsd76hadsy6x6uqg5wjs7422cy"
+        },
+        "hedera": {
+          "address": "axelar1zyrsjffq2mq0v9340vys6hwkg60ptnk2773sp2x8tadq2qua6kuseurk0l"
         }
       },
       "VotingVerifier": {
@@ -617,6 +649,20 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "address": "axelar1jq5pg9j4u4jaltyh7e30hffhg25wv692gm66z4nkjdelfpn6fwrslkga2r"
+        },
+        "hedera": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "verifiers",
+          "sourceGatewayAddress": "0x64a63a6E9Ff507b0659C38c138CA8869eD2420Cb",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "address": "axelar1wra4cx4cs0hlljgw9sgajws7jm5a6rgcgdpx47l5heq06aj78sysg7m72j"
         },
         "codeId": 7
       }
