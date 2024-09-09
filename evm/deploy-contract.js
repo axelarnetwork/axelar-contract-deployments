@@ -286,6 +286,7 @@ async function processCommand(config, chain, options) {
 
     if (existingAddress !== undefined && predictedAddress !== existingAddress) {
         printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} in chain configs.`);
+
         if (predeployCodehash !== existingCodeHash) {
             printWarn(
                 `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} in chain configs.`,
