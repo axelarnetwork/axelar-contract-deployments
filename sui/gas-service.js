@@ -6,7 +6,7 @@ const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify },
 } = ethers;
-const { saveConfig, loadConfig, printInfo, printError } = require('../common/utils');
+const { saveConfig, loadConfig, printError } = require('../common/utils');
 const {
     getWallet,
     printWalletInfo,
@@ -46,9 +46,7 @@ async function payGas(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Gas paid', receipt.digest);
+    await broadcast(client, keypair, tx, 'Gas Paid');
 }
 
 async function addGas(keypair, client, gasServiceConfig, args, options) {
@@ -76,9 +74,7 @@ async function addGas(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Gas added', receipt.digest);
+    await broadcast(client, keypair, tx, 'Gas Added');
 }
 
 async function collectGas(keypair, client, gasServiceConfig, args, options) {
@@ -111,9 +107,7 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Gas collected', receipt.digest);
+    await broadcast(client, keypair, tx, 'Gas Collected');
 }
 
 async function refund(keypair, client, gasServiceConfig, args, options) {
@@ -147,9 +141,7 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Gas refunded', receipt.digest);
+    await broadcast(client, keypair, tx, 'Gas Refunded');
 }
 
 async function processCommand(command, chain, args, options) {

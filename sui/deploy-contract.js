@@ -117,9 +117,7 @@ async function postDeployExample(published, keypair, client, config, chain, opti
         arguments: [tx.object(relayerDiscovery), tx.object(singletonObjectId)],
     });
 
-    const registerTx = await broadcast(client, keypair, tx);
-
-    printInfo('Register transaction', registerTx.digest);
+    await broadcast(client, keypair, tx, 'Registered Transaction');
 }
 
 async function postDeployOperators(published, keypair, client, config, chain, options) {
@@ -184,9 +182,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         });
     }
 
-    const result = await broadcast(client, keypair, tx);
-
-    printInfo('Setup Gateway', result.digest);
+    const result = await broadcast(client, keypair, tx, 'Setup Gateway');
 
     const [gateway] = getObjectIdsByObjectTypes(result, [`${packageId}::gateway::Gateway`]);
 
@@ -217,9 +213,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
         arguments: [tx.object(itsObjectId), tx.object(relayerDiscovery)],
     });
 
-    const registerTx = await broadcast(client, keypair, tx);
-
-    printInfo('Register transaction', registerTx.digest);
+    await broadcast(client, keypair, tx, 'Registered Transaction');
 }
 
 async function postDeploySquid(published, keypair, client, config, chain, options) {
@@ -235,9 +229,7 @@ async function postDeploySquid(published, keypair, client, config, chain, option
         arguments: [tx.object(squidObjectId), tx.object(chain.contracts.ITS.objects.ITS), tx.object(relayerDiscovery)],
     });
 
-    const registerTx = await broadcast(client, keypair, tx);
-
-    printInfo('Register transaction', registerTx.digest);
+    await broadcast(client, keypair, tx, 'Registered Transaction');
 }
 
 async function deploy(keypair, client, supportedContract, config, chain, options) {
