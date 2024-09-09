@@ -95,8 +95,8 @@ function getRawPrivateKey(keypair) {
     return decodeSuiPrivateKey(keypair.getSecretKey()).secretKey;
 }
 
-async function broadcast(client, keypair, tx) {
-    return await client.signAndExecuteTransaction({
+async function broadcast(client, keypair, tx, actionName) {
+    const receipt = await client.signAndExecuteTransaction({
         transaction: tx,
         signer: keypair,
         options: {
@@ -105,10 +105,16 @@ async function broadcast(client, keypair, tx) {
             showContent: true,
         },
     });
+
+    if (actionName) {
+        printInfo(actionName, receipt.digest);
+    }
+
+    return receipt;
 }
 
-async function broadcastSignature(client, txBytes, signature) {
-    return await client.executeTransactionBlock({
+async function broadcastSignature(client, txBytes, signature, actionName) {
+    const receipt = await client.executeTransactionBlock({
         transactionBlock: txBytes,
         signature,
         options: {
@@ -117,6 +123,12 @@ async function broadcastSignature(client, txBytes, signature) {
             showEvents: true,
         },
     });
+
+    if (actionName) {
+        printInfo(actionName, receipt.digest);
+    }
+
+    return receipt;
 }
 
 async function signTransactionBlockBytes(keypair, client, txBytes, options) {
