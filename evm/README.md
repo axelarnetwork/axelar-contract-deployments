@@ -35,6 +35,14 @@ Deploy the Axelar Amplifier Gateway contract. This is the required gateway contr
 
 For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. It'll default to the deployer and can be transferred to governance later.
 
+### Submit Amplifier Proofs
+
+To submit proofs constructed on Amplifier to the gateway, use the following command:
+
+```bash
+node evm/gateway.js --action submitProof --multisigSessionId [session id]
+```
+
 ## Axelar Gateway (legacy connection)
 
 Deploy the original Axelar gateway contract for legacy consensus-based connection. Set the governance and mint limiter via the `--governance` and `--mintLimiter` flags.
@@ -230,7 +238,7 @@ Download the pending requests [spreadsheet](https://docs.google.com/spreadsheets
 
 `node evm/check-ownership-request.js -f sheet_path.csv`
 
-## Verify AxelarAmplifierGateway contract. 
+## Verify AxelarAmplifierGateway contract.
 `--address` can be optionally specified (otherwise will default to the value from config).
 
 1. First clone the `axelar-gmp-sdk-solidity` repo: `git clone git@github.com:axelarnetwork/axelar-gmp-sdk-solidity.git`
