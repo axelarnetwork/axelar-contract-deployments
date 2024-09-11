@@ -6,10 +6,9 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "lib"]
 
-
 [dependencies]
+borsh.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
-borsh.workspace = true
 
 [dev-dependencies]

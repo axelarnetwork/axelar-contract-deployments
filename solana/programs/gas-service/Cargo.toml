@@ -13,16 +13,16 @@ crate-type = ["cdylib", "lib"]
 no-entrypoint = []
 
 [dependencies]
+axelar-message-primitives.workspace = true
 base64.workspace = true
 borsh.workspace = true
 num-derive.workspace = true
 num-traits.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
-axelar-message-primitives.workspace = true
 
 [dev-dependencies]
-solana-program-test.workspace = true
 anyhow.workspace = true
 hex.workspace = true
+solana-program-test.workspace = true
 solana-sdk.workspace = true

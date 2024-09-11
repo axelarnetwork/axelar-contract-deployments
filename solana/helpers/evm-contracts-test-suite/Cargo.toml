@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ethers.workspace = true
 anyhow.workspace = true
+ethers.workspace = true
 evm-contracts-rs.workspace = true
 
 [dev-dependencies]
+rstest.workspace = true
 test-log.workspace = true
 tokio.workspace = true
-rstest.workspace = true

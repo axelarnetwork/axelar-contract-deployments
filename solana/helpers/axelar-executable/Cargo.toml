@@ -7,12 +7,11 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "lib"]
 
-
 [dependencies]
-axelar-rkyv-encoding.workspace = true
-solana-program.workspace = true
-borsh.workspace = true
 axelar-message-primitives.workspace = true
+axelar-rkyv-encoding.workspace = true
+borsh.workspace = true
 gateway.workspace = true
+solana-program.workspace = true
 
 [dev-dependencies]

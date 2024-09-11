@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow.workspace = true
 axelar-wasm-std.workspace = true
+borsh.workspace = true
 connection-router.workspace = true
 cosmwasm-std.workspace = true
 hex.workspace = true
@@ -15,19 +16,18 @@ rand.workspace = true
 signature.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
-borsh.workspace = true
 tokio.workspace = true
 typed-builder.workspace = true
 
 axelar-executable.workspace = true
 axelar-message-primitives.workspace = true
 axelar-rkyv-encoding = { workspace = true, features = ["test-fixtures"] }
-solana-program-test = { workspace = true }
 interchain-token-transfer-gmp = { workspace = true }
+solana-program-test = { workspace = true }
 
-spl-token = { workspace = true, features = ["no-entrypoint"] }
 gas-service = { workspace = true, features = ["no-entrypoint"] }
 gateway = { workspace = true, features = ["no-entrypoint"] }
+spl-token = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
 bincode.workspace = true

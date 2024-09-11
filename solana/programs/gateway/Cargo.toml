@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [lints.rust]
-unused_imports = "warn"
-rust_2018_idioms = "deny"
 missing_docs = "warn"
+rust_2018_idioms = "deny"
 unreachable_pub = "warn"
+unused_imports = "warn"
 unused_must_use = "deny"
 
 [lib]
@@ -18,27 +18,27 @@ no-entrypoint = []
 test-sbf = []
 
 [dependencies]
-base64.workspace = true
-borsh.workspace = true
-bincode.workspace = true
-itertools.workspace = true
-num-derive.workspace = true
-num-traits.workspace = true
-solana-program.workspace = true
-libsecp256k1.workspace = true
-thiserror.workspace = true
-program-utils.workspace = true
 axelar-message-primitives.workspace = true
 axelar-rkyv-encoding.workspace = true
+base64.workspace = true
+bincode.workspace = true
+borsh.workspace = true
 hex.workspace = true
+itertools.workspace = true
+libsecp256k1.workspace = true
+num-derive.workspace = true
+num-traits.workspace = true
+program-utils.workspace = true
 rkyv.workspace = true
+solana-program.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
+hex.workspace = true
+sha3.workspace = true
 solana-client.workspace = true
 solana-logger.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
 test-fixtures.workspace = true
-hex.workspace = true
-sha3.workspace = true
 typed-builder.workspace = true

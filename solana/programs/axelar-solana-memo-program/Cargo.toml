@@ -11,18 +11,18 @@ crate-type = ["cdylib", "lib"]
 no-entrypoint = []
 
 [dependencies]
-solana-program.workspace = true
-borsh.workspace = true
 axelar-executable = { workspace = true }
-program-utils = { workspace = true }
+borsh.workspace = true
 gateway = { workspace = true, features = ["no-entrypoint"] }
+program-utils = { workspace = true }
+solana-program.workspace = true
 
 [dev-dependencies]
+axelar-rkyv-encoding.workspace = true
+ethers-core.workspace = true
+evm-contracts-test-suite.workspace = true
+itertools.workspace = true
+rstest.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
 test-fixtures.workspace = true
-ethers-core.workspace = true
-itertools.workspace = true
-evm-contracts-test-suite.workspace = true
-rstest.workspace = true
-axelar-rkyv-encoding.workspace = true

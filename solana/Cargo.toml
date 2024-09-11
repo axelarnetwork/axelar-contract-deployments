@@ -2,31 +2,75 @@
 members = ["programs/*", "helpers/*", "xtask", "crates/*"]
 resolver = "2"
 
+[workspace.lints.clippy]
+cargo = { priority = -1, level = "deny" }
+complexity = { priority = -1, level = "deny" }
+correctness = { priority = -1, level = "deny" }
+nursery = { priority = -1, level = "deny" }
+pedantic = { priority = -1, level = "deny" }
+perf = { priority = -1, level = "deny" }
+restriction = { priority = -1, level = "deny" }
+style = { priority = -1, level = "deny" }
+suspicious = { priority = -1, level = "deny" }
+
+absolute_paths = "allow"
+blanket_clippy_restriction_lints = "allow"
+cargo_common_metadata = "allow"
+dbg_macro = "allow"
+exhaustive_enums = "allow"
+exhaustive_structs = "allow"
+future_not_send = "allow"
+implicit_return = "allow"
+missing_docs_in_private_items = "allow"
+missing_inline_in_public_items = "allow"
+missing_trait_methods = "allow"
+mod_module_files = "allow"
+multiple_crate_versions = "allow"
+pub_use = "allow"
+question_mark_used = "allow"
+ref_patterns = "allow"
+separated_literal_suffix = "allow"
+shadow_reuse = "allow"
+single_call_fn = "allow"
+single_char_lifetime_names = "allow"
+wildcard_imports = "allow"
+
+[workspace.lints.rust]
+missing_docs = "warn"
+rust_2018_idioms = "deny"
+unreachable_pub = "warn"
+unused_imports = "warn"
+unused_must_use = "deny"
+
 [workspace.dependencies]
 alloy-primitives = "0.7"
 alloy-sol-types = "0.7"
 anyhow = "1"
 base64 = "0.21"
 bcs = "0.1.6"
+bincode = "1"
 bnum = { version = "0.10", features = ["serde"] }
 borsh = { version = "1", features = ["derive"] }
 bs58 = "0.5.1"
 bytemuck = "1"
 cosmwasm-schema = "2"
 cosmwasm-std = "1.5"
+ed25519-dalek = "2"
 ethers = "2"
 ethers-core = "2"
+futures = "0.3"
 hex = "0.4"
 itertools = "0.12"
-ed25519-dalek = "2"
 k256 = { version = "0.13", features = ["ecdsa"] }
 libsecp256k1 = { version = "0.6", default-features = false }
 num-derive = "0.4"
-xshell = "0.2"
 num-traits = "0.2"
+rand = "0.8"
+reqwest = { version = "0.12", features = ["json", "stream"] }
 rkyv = "0.7"
 rstest = "0.19"
 serde = "1"
+serde_json = "1"
 sha3 = "0.10"
 signature = "2"
 solana-client = "2.0.1"
@@ -35,32 +79,28 @@ solana-program = "2.0.1"
 solana-program-test = "2.0.1"
 solana-sdk = "2.0.1"
 solana-test-validator = "2.0.1"
-serde_json = "1"
 spl-associated-token-account = "2.3"
 spl-token = "4.0.0"
 test-log = { version = "0.2", features = ["trace"], default-features = false }
 thiserror = "1"
 tokio = { version = "1", features = ["full"] }
-bincode = "1"
-reqwest = { version = "0.12", features = ["json", "stream"] }
-futures = "0.3"
-rand = "0.8"
 typed-builder = "0.19"
+xshell = "0.2"
 
 # solana programs
-gateway = { path = "programs/gateway", package = "gmp-gateway" }
-gas-service = { path = "programs/gas-service" }
 axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program" }
+gas-service = { path = "programs/gas-service" }
+gateway = { path = "programs/gateway", package = "gmp-gateway" }
 
 # helper crates
-program-utils = { path = "helpers/program-utils" }
-interchain-token-transfer-gmp = { path = "helpers/interchain-token-transfer-gmp" }
-test-fixtures = { path = "helpers/test-fixtures" }
 axelar-executable = { path = "helpers/axelar-executable" }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
+axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = ["solana"] }
 evm-contracts-rs = { path = "helpers/evm-contracts-rs" }
 evm-contracts-test-suite = { path = "helpers/evm-contracts-test-suite" }
-axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = ["solana"] }
+interchain-token-transfer-gmp = { path = "helpers/interchain-token-transfer-gmp" }
+program-utils = { path = "helpers/program-utils" }
+test-fixtures = { path = "helpers/test-fixtures" }
 
 [workspace.dependencies.multisig]
 git = "https://github.com/axelarnetwork/axelar-amplifier"

@@ -9,76 +9,76 @@ correctness = { priority = -1, level = "deny" }
 pedantic = { priority = -1, level = "deny" }
 
 [lints.rust]
-unused_imports = "warn"
-rust_2018_idioms = "deny"
 missing_docs = "warn"
+rust_2018_idioms = "deny"
 unreachable_pub = "warn"
+unused_imports = "warn"
 unused_must_use = "deny"
 
 [dependencies]
-eyre = "0.6"
-color-eyre = "0.6"
-clap = { version = "4", features = ["derive"] }
-tokio.workspace = true
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-xshell.workspace = true
-solana-sdk.workspace = true
-gmp-gateway = { path = "./../programs/gateway" }
+axelar-executable.workspace = true
 axelar-message-primitives = { path = "./../helpers/axelar-message-primitives" }
-test-fixtures = { path = "./../helpers/test-fixtures" }
-solana-client = "2.0.1"
-url = "2"
-toml = "0.8"
-serde.workspace = true
-ethers.workspace = true
-evm-contracts-test-suite.workspace = true
+axelar-rkyv-encoding.workspace = true
 axelar-solana-memo-program.workspace = true
-solana-cli-config = "2.0.1"
-solana-rpc = "2.0.1"
-solana-rpc-client-api = "2.0.1"
-solana-test-validator = "2.0.5"
-solana-transaction-status = "2.0.1"
-reqwest.workspace = true
-futures.workspace = true
-flate2 = "1.0"
-tar = "0.4"
+axelar-wasm-std = { path = "../../axelar-amplifier/packages/axelar-wasm-std", features = ["library"] }
+base64.workspace = true
+bincode = "1.3"
+bip39 = { version = "2", features = ["rand"] }
+borsh.workspace = true
+clap = { version = "4", features = ["derive"] }
+color-eyre = "0.6"
 const_format = { version = "0.2", features = ["fmt"] }
 cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
-k256 = "0.13"
+cosmwasm-schema.workspace = true
+csv-async = { version = "1.3.0", features = ["tokio"] }
+derive_builder = "0.20"
+ethers.workspace = true
+evm-contracts-test-suite.workspace = true
+eyre = "0.6"
+flate2 = "1.0"
+futures.workspace = true
+gateway = { path = "../../axelar-amplifier/contracts/gateway", features = ["library"] }
+gateway-api = { path = "../../axelar-amplifier/packages/gateway-api" }
+gmp-gateway = { path = "./../programs/gateway" }
 hex.workspace = true
-borsh.workspace = true
-base64.workspace = true
+inquire = "0.7.5"
+itertools.workspace = true
+k256 = "0.13"
+multisig = { path = "../../axelar-amplifier/contracts/multisig", features = ["library"] }
+rand.workspace = true
+reqwest.workspace = true
+router-api = { path = "../../axelar-amplifier/packages/router-api" }
 rust_decimal = "1.34"
 rust_decimal_macros = "1.34"
+serde.workspace = true
 serde_json.workspace = true
-cosmwasm-schema.workspace = true
-bip39 = { version = "2", features = ["rand"] }
-voting-verifier = { path = "../../axelar-amplifier/contracts/voting-verifier", features = ["library"] }
-gateway = { path = "../../axelar-amplifier/contracts/gateway", features = ["library"] }
-multisig = { path = "../../axelar-amplifier/contracts/multisig", features = ["library"] }
-axelar-wasm-std = { path = "../../axelar-amplifier/packages/axelar-wasm-std", features = ["library"] }
-inquire = "0.7.5"
-gateway-api = { path = "../../axelar-amplifier/packages/gateway-api" }
-router-api = { path = "../../axelar-amplifier/packages/router-api" }
-axelar-rkyv-encoding.workspace = true
-axelar-executable.workspace = true
-itertools.workspace = true
-rand.workspace = true
+solana-cli-config = "2.0.1"
+solana-client = "2.0.1"
+solana-rpc = "2.0.1"
+solana-rpc-client-api = "2.0.1"
+solana-sdk.workspace = true
+solana-test-validator = "2.0.5"
+solana-transaction-status = "2.0.1"
+tar = "0.4"
+test-fixtures = { path = "./../helpers/test-fixtures" }
 thiserror.workspace = true
-derive_builder = "0.20"
-csv-async = { version = "1.3.0", features = ["tokio"] }
-bincode = "1.3"
+tokio.workspace = true
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+url = "2"
+voting-verifier = { path = "../../axelar-amplifier/contracts/voting-verifier", features = ["library"] }
+xshell.workspace = true
 
 [dev-dependencies]
+borsh.workspace = true
+hex.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
-hex.workspace = true
 solana-streamer = "2.0.1"
 tempfile = "3"
-borsh.workspace = true
 
 [build-dependencies]
-serde_json.workspace = true
-quote = "1"
 proc-macro2 = "1"
+quote = "1"
+serde_json.workspace = true

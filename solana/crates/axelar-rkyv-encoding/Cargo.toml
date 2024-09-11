@@ -5,36 +5,33 @@ edition = "2021"
 
 [dependencies]
 bnum.workspace = true
-rkyv = { workspace = true, features = ["validation"] }
-sha3.workspace = true
-thiserror.workspace = true
-rand = { workspace = true, optional = true }
-libsecp-rand = { package = "rand", version = "0.7", optional = true }
+bs58.workspace = true
 ed25519-dalek = { workspace = true }
 hex.workspace = true
-bs58.workspace = true
-libsecp256k1 = { workspace = true, default-features = false, features = [
-  "static-context",
-  "hmac",
-] }
+libsecp-rand = { package = "rand", version = "0.7", optional = true }
+libsecp256k1 = { workspace = true, default-features = false, features = ["static-context", "hmac"] }
+rand = { workspace = true, optional = true }
+rkyv = { workspace = true, features = ["validation"] }
+sha3.workspace = true
 solana-program = { workspace = true, optional = true}
+thiserror.workspace = true
 
 
 [dev-dependencies]
 ed25519-dalek = { workspace = true, features = ["rand_core", "digest"] }
-rand.workspace = true
 libsecp-rand = { package = "rand", version = "0.7" }
+rand.workspace = true
 
 
 [features]
 default = []
+solana = ["dep:solana-program"]
 test-fixtures = [
-  "dep:rand",
   "dep:libsecp-rand",
+  "dep:rand",
   "dep:solana-program",
+  "ed25519-dalek/digest",
+  "ed25519-dalek/rand_core",
   "libsecp-rand/getrandom",
   "rand/getrandom",
-  "ed25519-dalek/rand_core",
-  "ed25519-dalek/digest",
 ]
-solana = ["dep:solana-program"]
