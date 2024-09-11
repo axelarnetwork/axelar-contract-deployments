@@ -20,7 +20,7 @@ pub struct Proof {
     pub signers_with_signatures: HasheableSignersWithSignaturesBTreeMap,
     pub threshold: U128,
     pub nonce: u64,
-    nonce_be_bytes: [u8; 8],
+    nonce_le_bytes: [u8; 8],
 }
 
 impl Proof {
@@ -35,12 +35,12 @@ impl Proof {
             ),
             threshold,
             nonce,
-            nonce_be_bytes: nonce.to_be_bytes(),
+            nonce_le_bytes: nonce.to_le_bytes(),
         }
     }
 
-    pub fn nonce_be_bytes(&self) -> &[u8; 8] {
-        &self.nonce_be_bytes
+    pub fn nonce_le_bytes(&self) -> &[u8; 8] {
+        &self.nonce_le_bytes
     }
 
     pub fn verifier_set(&self) -> VerifierSet {
@@ -68,13 +68,13 @@ impl ArchivedProof {
         visitor: &mut impl crate::visitor::ArchivedVisitor<'a>,
     ) {
         // Follow `ArchivedVisitor::visit_verifier_set` exact steps
-        visitor.prefix_length(self.signers_with_signatures.len_be_bytes());
+        visitor.prefix_length(self.signers_with_signatures.len_le_bytes());
         for (pubkey, weighted_signature) in self.signers_with_signatures.iter() {
             visitor.visit_public_key(pubkey);
             visitor.visit_u128(&weighted_signature.weight);
         }
         visitor.visit_u128(&self.threshold);
-        visitor.visit_u64(self.nonce_be_bytes());
+        visitor.visit_u64(self.nonce_le_bytes());
     }
 
     pub fn validate_for_message(&self, message: &[u8; 32]) -> Result<(), MessageValidationError> {
@@ -147,8 +147,8 @@ impl ArchivedProof {
         self.signers_with_signatures.inner_map()
     }
 
-    pub fn nonce_be_bytes(&self) -> &[u8; 8] {
-        &self.nonce_be_bytes
+    pub fn nonce_le_bytes(&self) -> &[u8; 8] {
+        &self.nonce_le_bytes
     }
 }
 

@@ -24,12 +24,12 @@ pub trait Visitor<'a> {
             ..
         } = proof;
 
-        self.prefix_length(signers_with_signatures.len_be_bytes());
+        self.prefix_length(signers_with_signatures.len_le_bytes());
         for signature in signers_with_signatures.iter() {
             self.visit_weighted_signature(signature.0, signature.1);
         }
         self.visit_u128(threshold);
-        self.visit_u64(proof.nonce_be_bytes());
+        self.visit_u64(proof.nonce_le_bytes());
     }
 
     fn visit_weighted_signature(&mut self, pubkey: &'a PublicKey, signature: &'a WeightedSigner) {
@@ -68,7 +68,7 @@ pub trait Visitor<'a> {
     }
 
     fn visit_messages(&mut self, messages: &'a HasheableMessageVec) {
-        self.prefix_length(messages.len_be_bytes());
+        self.prefix_length(messages.len_le_bytes());
         for message in messages.iter() {
             self.visit_message(message);
         }
@@ -90,13 +90,13 @@ pub trait Visitor<'a> {
     }
 
     fn visit_verifier_set(&mut self, verifier_set: &'a VerifierSet) {
-        self.prefix_length(verifier_set.signers.len_be_bytes());
+        self.prefix_length(verifier_set.signers.len_le_bytes());
         for (public_key, weight) in verifier_set.signers.iter() {
             self.visit_public_key(public_key);
             self.visit_u128(weight);
         }
         self.visit_u128(&verifier_set.quorum);
-        self.visit_u64(verifier_set.created_at_be_bytes())
+        self.visit_u64(verifier_set.created_at_le_bytes())
     }
 
     fn visit_public_key(&mut self, public_key: &'a PublicKey) {
@@ -147,12 +147,12 @@ pub trait ArchivedVisitor<'a> {
             threshold,
             ..
         } = proof;
-        self.prefix_length(signers_with_signatures.len_be_bytes());
+        self.prefix_length(signers_with_signatures.len_le_bytes());
         for (pubkey, signature) in signers_with_signatures.iter() {
             self.visit_weighted_signature(pubkey, signature);
         }
         self.visit_u128(threshold);
-        self.visit_u64(proof.nonce_be_bytes());
+        self.visit_u64(proof.nonce_le_bytes());
     }
 
     fn visit_weighted_signature(
@@ -196,7 +196,7 @@ pub trait ArchivedVisitor<'a> {
     }
 
     fn visit_messages(&mut self, messages: &'a ArchivedHasheableMessageVec) {
-        self.prefix_length(messages.len_be_bytes());
+        self.prefix_length(messages.len_le_bytes());
         for message in messages.iter() {
             self.visit_message(message);
         }
@@ -218,13 +218,13 @@ pub trait ArchivedVisitor<'a> {
     }
 
     fn visit_verifier_set(&mut self, verifier_set: &'a ArchivedVerifierSet) {
-        self.prefix_length(verifier_set.signers.len_be_bytes());
+        self.prefix_length(verifier_set.signers.len_le_bytes());
         for (public_key, weight) in verifier_set.signers.iter() {
             self.visit_public_key(public_key);
             self.visit_u128(weight);
         }
         self.visit_u128(&verifier_set.quorum);
-        self.visit_u64(verifier_set.created_at_be_bytes())
+        self.visit_u64(verifier_set.created_at_le_bytes())
     }
 
     fn visit_public_key(&mut self, public_key: &'a ArchivedPublicKey) {

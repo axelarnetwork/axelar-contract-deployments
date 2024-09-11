@@ -17,7 +17,7 @@ type Signers = BTreeMap<PublicKey, U128>;
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct VerifierSet {
     pub(crate) created_at: u64,
-    created_at_be_bytes: [u8; 8],
+    created_at_le_bytes: [u8; 8],
     pub(crate) signers: HasheableSignersBTreeMap,
     pub(crate) quorum: U128,
 }
@@ -26,7 +26,7 @@ impl VerifierSet {
     pub fn new(created_at: u64, signers: Signers, quorum: U128) -> Self {
         Self {
             created_at,
-            created_at_be_bytes: created_at.to_be_bytes(),
+            created_at_le_bytes: created_at.to_le_bytes(),
             signers: HasheableSignersBTreeMap::new(signers),
             quorum,
         }
@@ -60,8 +60,8 @@ impl VerifierSet {
         self.created_at
     }
 
-    pub fn created_at_be_bytes(&self) -> &[u8; 8] {
-        &self.created_at_be_bytes
+    pub fn created_at_le_bytes(&self) -> &[u8; 8] {
+        &self.created_at_le_bytes
     }
 }
 
@@ -103,8 +103,8 @@ impl ArchivedVerifierSet {
         rkyv::check_archived_root::<VerifierSet>(bytes)
     }
 
-    pub fn created_at_be_bytes(&self) -> &[u8; 8] {
-        &self.created_at_be_bytes
+    pub fn created_at_le_bytes(&self) -> &[u8; 8] {
+        &self.created_at_le_bytes
     }
 }
 
