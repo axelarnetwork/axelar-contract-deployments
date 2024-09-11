@@ -1765,6 +1765,29 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1
+    },
+    "hedera": {
+      "name": "Hedera",
+      "timeout": 50000,
+      "axelarId": "hedera",
+      "skipRevertTests": true,
+      "chainId": 296,
+      "rpc": "https://testnet.hashio.io/api",
+      "tokenSymbol": "HBAR",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "HashScan",
+        "url": "https://hashscan.io/testnet",
+        "api": ""
+      },
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
     }
   },
   "axelar": {
@@ -1879,6 +1902,20 @@
           "domainSeparator": "0x3dad2b901117c30d4f601c3b9e9ee89cec4371e79e9908122e8e1da1904347ee",
           "address": "axelar1u8cmvyq54fepjlt77vqnwyxhf4rqn5j5axgta7py34zlwue3v5fsy2pvhf"
         },
+        "hedera": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "domainSeparator": "0xfbfcd8a4d93cdf3dc1099795eefb83c109414406fc09015f4d0758ed6b99c43c",
+          "address": "axelar1x3xd2z2p3703cdwu98tc27x5j9tgq60lyxdwtnggx05zj3egg0wqsnckd0"
+        },
         "storeCodeProposalId": "11",
         "storeCodeProposalCodeHash": "6c4d2f520d62bcd7edd4de772257e74b48a8dfba39f853a9c12ff51ca9ea1e83",
         "codeId": 9
@@ -1892,6 +1929,9 @@
         },
         "flow": {
           "address": "axelar1t6ksvsckf48j5fey7cqhsu482yemaf8tcecterc4d38rw75vfvcsz85aum"
+        },
+        "hedera": {
+          "address": "axelar1zyr567z9v779kcdmf7rq624zk3ea4nq0s948r83h2f5xqzvhxyqs5vq7p7"
         },
         "storeCodeProposalId": "10",
         "storeCodeProposalCodeHash": "eae97caf40ae6b5eea1e145eec27a59e73aa6f9de389fa9ca0cfc9354a3b68ac",
@@ -1939,6 +1979,20 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "address": "axelar1adz8u3q5mdfp73weg3f65e8ce5jvq4dwlqqm3lxqyy4pjf77nwtql8gjwr"
+        },
+        "hedera": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "address": "axelar1h8gx392pzlj6ff5lv3kc9jwegu0wwqjrur7ht93frus5czape9ns3j3d0a"
         },
         "storeCodeProposalId": "9",
         "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b",
