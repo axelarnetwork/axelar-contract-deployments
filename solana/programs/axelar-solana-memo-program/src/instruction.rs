@@ -25,6 +25,17 @@ pub enum AxelarMemoInstruction {
         /// The pda bump for the counter PDA
         counter_pda_bump: u8,
     },
+
+    /// Process a Memo
+    ///
+    /// Accounts expected by this instruction:
+    ///
+    /// 0. [w] counter PDA
+    ProcessMemo {
+        /// The memo to receive
+        memo: String,
+    },
+
     /// Send a memo to a contract deployed on a different chain.
     ///
     /// Accounts expected by this instruction:
@@ -48,11 +59,11 @@ pub fn initialize(
     gateway_root_pda: &Pubkey,
     counter_pda: &(Pubkey, u8),
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Native(
-        AxelarMemoInstruction::Initialize {
+    let data = to_vec(&AxelarCallableInstruction::Native(to_vec(
+        &AxelarMemoInstruction::Initialize {
             counter_pda_bump: counter_pda.1,
         },
-    ))?;
+    )?))?;
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -79,11 +90,11 @@ pub fn call_gateway_with_memo(
     destination_address: String,
 ) -> Result<Instruction, ProgramError> {
     let instruction_data =
-        AxelarCallableInstruction::Native(AxelarMemoInstruction::SendToGateway {
+        AxelarCallableInstruction::Native(to_vec(&AxelarMemoInstruction::SendToGateway {
             memo,
             destination_chain,
             destination_address,
-        });
+        })?);
     let accounts = vec![
         AccountMeta::new(*sender, true),
         AccountMeta::new_readonly(*gateway_root_pda, false),

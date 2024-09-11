@@ -29,6 +29,10 @@ fn main() {
         (
             "AxelarAmplifierGatewayProxy",
             "../../../evm-contracts/out/AxelarAmplifierGatewayProxy.sol/AxelarAmplifierGatewayProxy.json",
+        ),
+        (
+            "AxelarSolanaMultiCall",
+            "../../../evm-contracts/out/AxelarSolanaMultiCall.sol/AxelarSolanaMultiCall.json",
         )
     ];
     for (contract_name, path) in contracts {

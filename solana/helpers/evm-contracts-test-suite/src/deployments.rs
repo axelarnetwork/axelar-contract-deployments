@@ -1,7 +1,8 @@
 use ethers::types::{Address, U256};
 use ethers::utils::keccak256;
 use evm_contracts_rs::contracts::{
-    axelar_amplifier_gateway, axelar_amplifier_gateway_proxy, axelar_memo, example_encoder,
+    axelar_amplifier_gateway, axelar_amplifier_gateway_proxy, axelar_memo, axelar_solana_multicall,
+    example_encoder,
 };
 
 use crate::ContractMiddleware;
@@ -80,6 +81,22 @@ impl crate::EvmSigner {
             contract.address(),
             self.signer.clone(),
         ))
+    }
+
+    /// Deploys the `AxelarSolanaMultiCall` contract.
+    pub async fn deploy_solana_multicall(
+        &self,
+        gateway: axelar_amplifier_gateway::AxelarAmplifierGateway<ContractMiddleware>,
+    ) -> anyhow::Result<axelar_solana_multicall::AxelarSolanaMultiCall<ContractMiddleware>> {
+        let contract = axelar_solana_multicall::AxelarSolanaMultiCall::deploy(
+            self.signer.clone(),
+            gateway.address(),
+        )?
+        .send()
+        .await?;
+        Ok(axelar_solana_multicall::AxelarSolanaMultiCall::<
+            ContractMiddleware,
+        >::new(contract.address(), self.signer.clone()))
     }
 }
 

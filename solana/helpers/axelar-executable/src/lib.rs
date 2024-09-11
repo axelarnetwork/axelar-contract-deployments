@@ -17,6 +17,10 @@ use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+/// The index of the first account that is expected to be passed to the
+/// destination program.
+pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 4;
+
 /// Perform CPI call to the Axelar Gateway to ensure that the given command is
 /// approved
 ///
@@ -125,7 +129,7 @@ pub fn construct_axelar_executable_ix(
     let (gateway_approved_message_signing_pda, _) =
         destination_program.signing_pda(&incoming_message.cc_id().command_id(hasher_impl()));
 
-    let payload = AxelarCallableInstruction::<()>::AxelarExecute(AxelarExecutablePayload {
+    let payload = AxelarCallableInstruction::AxelarExecute(AxelarExecutablePayload {
         payload_without_accounts,
         message: incoming_message.clone().try_into()?,
         encoding_scheme: payload.encoding_scheme(),
@@ -168,9 +172,9 @@ pub struct AxelarExecutablePayload {
 /// This is the wrapper instruction that the destination program should expect
 /// as the incoming &[u8]
 #[derive(Debug, PartialEq, borsh::BorshSerialize, borsh::BorshDeserialize)]
-pub enum AxelarCallableInstruction<T> {
+pub enum AxelarCallableInstruction {
     /// The payload is coming from the Axelar Gateway (submitted by the relayer)
     AxelarExecute(AxelarExecutablePayload),
     /// The payload is coming from the user
-    Native(T),
+    Native(Vec<u8>),
 }

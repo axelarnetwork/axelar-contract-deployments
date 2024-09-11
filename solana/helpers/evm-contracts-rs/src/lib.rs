@@ -29,4 +29,8 @@ pub mod contracts {
     pub mod axelar_amplifier_gateway_proxy {
         include!(concat!(env!("OUT_DIR"), "/AxelarAmplifierGatewayProxy.rs"));
     }
+
+    pub mod axelar_solana_multicall {
+        include!(concat!(env!("OUT_DIR"), "/AxelarSolanaMultiCall.rs"));
+    }
 }

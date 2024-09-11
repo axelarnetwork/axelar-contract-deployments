@@ -26,6 +26,7 @@ missing_inline_in_public_items = "allow"
 missing_trait_methods = "allow"
 mod_module_files = "allow"
 multiple_crate_versions = "allow"
+negative_feature_names = "allow"
 pub_use = "allow"
 question_mark_used = "allow"
 ref_patterns = "allow"
@@ -89,6 +90,7 @@ xshell = "0.2"
 
 # solana programs
 axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program" }
+axelar-solana-multicall = { path = "programs/axelar-solana-multicall" }
 gas-service = { path = "programs/gas-service" }
 gateway = { path = "programs/gateway", package = "gmp-gateway" }
 

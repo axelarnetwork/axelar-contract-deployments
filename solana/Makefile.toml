@@ -90,6 +90,7 @@ script = """
 cargo test-sbf --package gas-service
 cargo test-sbf --package gmp-gateway
 cargo test-sbf --package axelar-solana-memo-program
+cargo test-sbf --package axelar-solana-multicall
 """
 dependencies = [
   # normal tests that don't get picked up by test-sbf

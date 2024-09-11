@@ -2,7 +2,10 @@
 
 use std::str::from_utf8;
 
-use axelar_executable::{validate_message, AxelarCallableInstruction, AxelarExecutablePayload};
+use axelar_executable::{
+    validate_message, AxelarCallableInstruction, AxelarExecutablePayload,
+    PROGRAM_ACCOUNTS_START_INDEX,
+};
 use borsh::BorshDeserialize;
 use program_utils::{check_program_account, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -24,15 +27,17 @@ pub fn process_instruction(
 ) -> ProgramResult {
     check_program_account(program_id, crate::check_id)?;
 
-    let payload = AxelarCallableInstruction::<AxelarMemoInstruction>::try_from_slice(input)?;
+    let payload = AxelarCallableInstruction::try_from_slice(input)?;
+
     match payload {
         AxelarCallableInstruction::AxelarExecute(payload) => {
             msg!("Instruction: AxelarExecute");
-            process_message_from_axelar(program_id, accounts, payload)
+            process_message_from_axelar(program_id, accounts, &payload)
         }
         AxelarCallableInstruction::Native(payload) => {
             msg!("Instruction: Native");
-            process_native_ix(program_id, accounts, payload)
+            let instruction = AxelarMemoInstruction::try_from_slice(&payload)?;
+            process_native_ix(program_id, accounts, instruction)
         }
     }
 }
@@ -42,38 +47,17 @@ pub fn process_instruction(
 pub fn process_message_from_axelar(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    payload: AxelarExecutablePayload,
+    payload: &AxelarExecutablePayload,
 ) -> ProgramResult {
-    validate_message(program_id, accounts, &payload)?;
-
-    let account_info_iter = &mut accounts.iter();
-    let _gateway_approved_message_pda = next_account_info(account_info_iter)?;
-    let _signing_pda = next_account_info(account_info_iter)?;
-    let _gateway_root_pda = next_account_info(account_info_iter)?;
-    let _gateway_program_id = next_account_info(account_info_iter)?;
-    let counter_pda = next_account_info(account_info_iter)?;
-
-    // Iterate over the rest of the provided accounts
-    for account_info in account_info_iter {
-        // NOTE: The accounts WILL NEVER be signers, but they MAY be writable
-        msg!(
-            "Provided account {:?}-{}-{}",
-            account_info.key,
-            account_info.is_signer,
-            account_info.is_writable
-        );
-    }
+    validate_message(program_id, accounts, payload)?;
+    let (_, accounts) = accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
 
     let memo = from_utf8(&payload.payload_without_accounts).map_err(|err| {
         msg!("Invalid UTF-8, from byte {}", err.valid_up_to());
         ProgramError::InvalidInstructionData
     })?;
-    msg!("Memo (len {}): {:?}", memo.len(), memo);
 
-    let mut counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
-    counter_pda_account.counter += 1;
-    let mut data = counter_pda.try_borrow_mut_data()?;
-    counter_pda_account.pack_into_slice(&mut data);
+    process_memo(program_id, accounts, memo)?;
 
     Ok(())
 }
@@ -110,7 +94,33 @@ pub fn process_native_ix(
         AxelarMemoInstruction::Initialize { counter_pda_bump } => {
             process_initialize_memo_program_counter(program_id, accounts, counter_pda_bump)?;
         }
+        AxelarMemoInstruction::ProcessMemo { memo } => process_memo(program_id, accounts, &memo)?,
     }
+
+    Ok(())
+}
+
+fn process_memo(program_id: &Pubkey, accounts: &[AccountInfo<'_>], memo: &str) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+    let counter_pda = next_account_info(account_info_iter)?;
+
+    // Iterate over the rest of the provided accounts
+    for account_info in account_info_iter {
+        // NOTE: The accounts WILL NEVER be signers, but they MAY be writable
+        msg!(
+            "Provided account {:?}-{}-{}",
+            account_info.key,
+            account_info.is_signer,
+            account_info.is_writable
+        );
+    }
+
+    msg!("Memo (len {}): {:?}", memo.len(), memo);
+
+    let mut counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
+    counter_pda_account.counter += 1;
+    let mut data = counter_pda.try_borrow_mut_data()?;
+    counter_pda_account.pack_into_slice(&mut data);
 
     Ok(())
 }

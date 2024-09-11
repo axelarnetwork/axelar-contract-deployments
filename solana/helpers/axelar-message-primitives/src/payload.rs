@@ -108,6 +108,8 @@ pub enum PayloadError {
     BorshDeserializeError,
     #[error(transparent)]
     AbiError(#[from] alloy_sol_types::Error),
+    #[error("Internal type conversion error")]
+    Conversion,
 }
 
 impl From<PayloadError> for ProgramError {
