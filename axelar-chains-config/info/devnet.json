@@ -308,6 +308,21 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x1042f2aB72E7f74764005f2Ed4daA9d991824d96",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0x1042f2aB72E7f74764005f2Ed4daA9d991824d96",
+          "address": "0xA7C33481D2aBaf19b1cBB9367A61d1ad11bAD875",
+          "implementation": "0x90393a035fbCFF407601053a668B3B17112AA334",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         }
       }
     },
