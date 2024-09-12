@@ -67,7 +67,7 @@ const PACKAGE_CONFIGS = {
         Governance: {},
         ITS: postDeployIts,
         Squid: postDeploySquid,
-        Utils: postDeployUtils,
+        Utils: {},
     },
 };
 
@@ -232,14 +232,6 @@ async function postDeploySquid(published, keypair, client, config, chain, option
     });
 
     await broadcast(client, keypair, tx, 'Registered Transaction');
-}
-
-async function postDeployUtils(published, keypair, client, config, chain, options) {
-    const { packageId, publishTxn } = published;
-    //const { operator } = options;
-    //
-    //const [operatorObjectId] = getObjectIdsByObjectTypes(publishTxn, [`${packageId}::utils::Operator`]);
-    //chain.contracts.Utils.objects = { Operator: operatorObjectId };
 }
 
 async function deploy(keypair, client, supportedContract, config, chain, options) {
