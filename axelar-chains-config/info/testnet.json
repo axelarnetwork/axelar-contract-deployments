@@ -8,7 +8,7 @@
       "chainId": 296,
       "rpc": "https://testnet.hashio.io/api",
       "tokenSymbol": "HBAR",
-      "confirmations": 1,
+      "confirmations": 1000000,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
       "explorer": {
