@@ -1,5 +1,27 @@
 {
   "chains": {
+    "hedera": {
+      "name": "Hedera",
+      "timeout": 50000,
+      "axelarId": "hedera",
+      "skipRevertTests": true,
+      "chainId": 296,
+      "rpc": "https://testnet.hashio.io/api",
+      "tokenSymbol": "HBAR",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "HashScan",
+        "url": "https://hashscan.io/testnet",
+        "api": ""
+      },
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "contracts": {
+      }
+    },
     "test-avalanche": {
       "name": "test-avalanche",
       "id": "test-avalanche",
