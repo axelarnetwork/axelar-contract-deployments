@@ -192,7 +192,7 @@ Order of execution to satisfy dependencies:
 
 ### Uploading and instantiating in one step
 
-The command `store-instantiate` from the `submit-proposal` script, allows uploading and instantiating in one step. However, there are a couple of caveats to be aware of:
+The command `storeInstantiate` from the `submit-proposal` script, allows uploading and instantiating in one step. However, there are a couple of caveats to be aware of:
 
 1. There is no support for `instantiate2` in this proposal type. This means that the contract address will not be known until the proposal is executed.
 
@@ -201,7 +201,7 @@ The command `store-instantiate` from the `submit-proposal` script, allows upload
 Example usage:
 
 ```
-node cosmwasm/submit-proposal.js store-instantiate -c ServiceRegistry -t "ServiceRegistry proposal title" -d "ServiceRegistry proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
+node cosmwasm/submit-proposal.js storeInstantiate -c ServiceRegistry -t "ServiceRegistry proposal title" -d "ServiceRegistry proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
 ```
 
 ### Execute a contract through governance proposal
@@ -216,12 +216,12 @@ node cosmwasm/submit-proposal.js execute -c Router -t "Proposal title" -d "Propo
 
 ### Submit a proposal to change a parameter
 
-To submit a governance proposal to change a parameter, use the `submit-proposal` script with the `param-change` command. The `--changes` option should be used to pass a JSON string representing an array of parameter changes.
+To submit a governance proposal to change a parameter, use the `submit-proposal` script with the `paramChange` command. The `--changes` option should be used to pass a JSON string representing an array of parameter changes.
 
 Example usage:
 
 ```
-node cosmwasm/submit-proposal.js param-change \
+node cosmwasm/submit-proposal.js paramChange \
 	-t "Set Gateway at Nexus Module" \
 	-d "Proposal to update nexus param gateway address." \
 	--deposit 100000000 \
