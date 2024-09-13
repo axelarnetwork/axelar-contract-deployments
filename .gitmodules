@@ -6,12 +6,13 @@
 [submodule "evm-contracts/lib/forge-std"]
 	path = evm-contracts/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-        shallow = true
+    shallow = true
 [submodule "evm-contracts/lib/axelar-gmp-sdk-solidity"]
 	path = evm-contracts/lib/axelar-gmp-sdk-solidity
 	url = https://github.com/axelarnetwork/axelar-gmp-sdk-solidity
-        shallow = true
+    shallow = true
 [submodule "axelar-amplifier"]
 	path = axelar-amplifier
-	url = git@github.com:eigerco/axelar-amplifier.git
+	url = https://github.com/eigerco/axelar-amplifier.git
+    shallow = true
 	branch = solana
