@@ -255,7 +255,7 @@ const programHandler = () => {
     });
 
     const storeInstantiateCmd = program
-        .command('store-instantiate')
+        .command('storeInstantiate')
         .description('Submit and instantiate a wasm contract proposal')
         .action((options) => {
             mainProcessor(storeInstantiate, options);
@@ -294,7 +294,7 @@ const programHandler = () => {
     addAmplifierOptions(executeCmd, { contractOptions: true, executeProposalOptions: true, proposalOptions: true, runAs: true });
 
     const paramChangeCmd = program
-        .command('param-change')
+        .command('paramChange')
         .description('Submit a parameter change proposal')
         .action((options) => {
             mainProcessor(paramChange, options);
