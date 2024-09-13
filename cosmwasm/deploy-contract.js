@@ -100,7 +100,13 @@ const programHandler = () => {
 
     program.name('upload-contract').description('Upload CosmWasm contracts');
 
-    addAmplifierOptions(program);
+    addAmplifierOptions(program, {
+        contractOptions: true,
+        storeOptions: true,
+        instantiateOptions: true,
+        instantiate2Options: true,
+        fetchCodeId: true,
+    });
 
     program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
     program.addOption(
