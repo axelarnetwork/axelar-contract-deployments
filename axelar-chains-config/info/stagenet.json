@@ -1820,6 +1820,22 @@
         },
         "InterchainGovernance": {
           "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "Operators": {
+          "owner": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "address": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
+          "salt": "AxelarGasService",
+          "address": "0xeE1d04E4F9F9AdEB7be7d6996f4A726773460A87",
+          "implementation": "0x465F92fc79dE7304B2fc734f894A9fb679120b75",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         }
       }
     }
