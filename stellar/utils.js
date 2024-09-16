@@ -144,6 +144,10 @@ async function estimateCost(tx, server) {
 
     const response = await server._simulateTransaction(tx);
 
+    if (response.error) {
+        throw new Error(response.error);
+    }
+
     const events = response.events.map((event) => {
         const e = DiagnosticEvent.fromXDR(event, 'base64');
 

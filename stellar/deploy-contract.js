@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, Address, ScInt, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, Address, nativeToScVal, scValToNative } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
@@ -9,7 +9,7 @@ const { addEnvOption } = require('../common');
 require('./cli-utils');
 
 function getInitializeArgs(chain, contractName, wallet, options) {
-    const address = Address.fromString(wallet.publicKey());
+    const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
 
     switch (contractName) {
         case 'axelar_gateway': {
@@ -19,32 +19,80 @@ function getInitializeArgs(chain, contractName, wallet, options) {
                 throw new Error('Missing axelar_auth_verifiers contract address');
             }
 
-            return [Address.fromString(authAddress), address];
+            return [nativeToScVal(authAddress, { type: 'address' }), owner];
         }
 
         case 'axelar_auth_verifiers': {
-            const previousSignersRetention = new ScInt(15, { type: 'u64' });
-            const domainSeparator = Buffer.alloc(32);
-            const miniumumRotationDelay = new ScInt(0, { type: 'u64' });
-            const initialSigners = nativeToScVal({
-                signers: [
+            const previousSignersRetention = nativeToScVal(15, { type: 'u64' });
+            const domainSeparator = nativeToScVal(Buffer.alloc(32));
+            const minimumRotationDelay = nativeToScVal(0, { type: 'u64' });
+            const initialSigners = nativeToScVal(
+                [
                     {
-                        signer: Address.fromString(wallet.publicKey()).toBuffer(),
-                        weight: new ScInt(1, { type: 'u128' }),
+                        nonce: Buffer.alloc(32),
+                        signers: [
+                            {
+                                signer: Address.fromString(wallet.publicKey()).toBuffer(),
+                                weight: 1,
+                            },
+                        ],
+                        threshold: 1,
                     },
                 ],
-                threshold: new ScInt(1, { type: 'u128' }),
-                nonce: Buffer.alloc(32),
-            });
+                {
+                    type: {
+                        signers: [
+                            'symbol',
+                            {
+                                signer: ['symbol', 'bytes'],
+                                weight: ['symbol', 'u128'],
+                            },
+                        ],
+                        nonce: ['symbol', 'bytes'],
+                        threshold: ['symbol', 'u128'],
+                    },
+                },
+            );
 
-            return [address, previousSignersRetention, domainSeparator, miniumumRotationDelay, initialSigners];
+            return [owner, previousSignersRetention, domainSeparator, minimumRotationDelay, initialSigners];
         }
 
         case 'axelar_operators':
-            return [address];
+            return [owner];
         default:
             throw new Error(`Unknown contract: ${contractName}`);
     }
+}
+
+function serializeValue(value) {
+    if (value instanceof Uint8Array) {
+        return Buffer.from(value).toString('hex');
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(serializeValue);
+    }
+
+    if (typeof value === 'bigint') {
+        return value.toString();
+    }
+
+    if (typeof value === 'object') {
+        return Object.entries(value).reduce((acc, [key, val]) => {
+            acc[key] = serializeValue(val);
+            return acc;
+        }, {});
+    }
+
+    return value;
+}
+
+function printValue(value) {
+    if (Array.isArray(value)) {
+        return JSON.stringify(value.map(printValue));
+    }
+
+    return value.toString();
 }
 
 async function processCommand(options, config, chain) {
@@ -76,15 +124,12 @@ async function processCommand(options, config, chain) {
     }
 
     const initializeArgs = getInitializeArgs(chain, contractName, wallet, options);
-    chain.contracts[contractName].initializeArgs = initializeArgs.map((arg) => arg.toString());
+    chain.contracts[contractName].initializeArgs = initializeArgs.map(scValToNative).map(serializeValue);
 
     const contract = new Contract(contractAddress);
-    const operation = contract.call('initialize', ...initializeArgs.map((arg) => arg.toScVal()));
+    const operation = contract.call('initialize', ...initializeArgs);
 
-    printInfo(
-        'Initializing contract with args',
-        initializeArgs.map((arg) => arg.toString()),
-    );
+    printInfo('Initializing contract with args', initializeArgs.map(scValToNative).map(serializeValue).map(printValue));
 
     if (options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
