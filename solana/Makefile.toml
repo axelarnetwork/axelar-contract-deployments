@@ -80,7 +80,7 @@ args = [
 workspace = false
 install_crate = "clippy"
 command = "cargo"
-args = ["clippy", "--workspace", "--locked", "--", "-D", "warnings"]
+args = ["clippy", "--no-deps", "--all-targets", "--workspace", "--locked", "--", "-D", "warnings"]
 
 [tasks.test]
 workspace = false

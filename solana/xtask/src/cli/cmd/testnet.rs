@@ -3,78 +3,65 @@ pub(crate) mod evm_interaction;
 pub(crate) mod multisig_prover_api;
 pub(crate) mod solana_interactions;
 
+use std::str::FromStr;
 use std::time::Duration;
 
 use axelar_message_primitives::DataPayload;
-use ethers::types::Address as EvmAddress;
+use ethers::abi::AbiDecode;
+use ethers::types::{Address as EvmAddress, H160};
 use evm_contracts_test_suite::EvmSigner;
+use eyre::OptionExt;
 use gmp_gateway::hasher_impl;
 use solana_sdk::signature::Keypair;
 
-use self::devnet_amplifier::EvmChain;
+use super::axelar_deployments::{AxelarDeploymentRoot, EvmChain};
 use super::cosmwasm::cosmos_client::signer::SigningClient;
-use super::cosmwasm::domain_separator;
+use super::deployments::SolanaDeploymentRoot;
 use crate::cli::cmd::evm::{send_memo_from_evm_to_evm, send_memo_to_solana};
 
-pub(crate) const SOLANA_CHAIN_NAME: &str = "solana-devnet";
-pub(crate) const SOLANA_CHAIN_ID: u64 = 43113;
-
-pub(crate) fn solana_domain_separator() -> [u8; 32] {
-    domain_separator(SOLANA_CHAIN_NAME, SOLANA_CHAIN_ID)
-}
-
-fn solana_axelar_voting_verifier() -> devnet_amplifier::VotingVerifier {
-    devnet_amplifier::VotingVerifier {
-        governance_address: "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9".to_string(),
-        source_gateway_address: "gtwrtxmhBP2TCXV1SgDQ6FijJkuuXyWoP2aFqaPcwhj".to_string(),
-        address: "axelar1qsvct6yu0dmx73axhsrjkrd9606jhkh35wfj8ernkdde6864yecszv8s6p".to_string(),
-        msg_id_format: "base58".to_string(),
-    }
-}
-
-fn solana_axelar_gateway() -> devnet_amplifier::Contract {
-    devnet_amplifier::Contract {
-        address: "axelar12yhem4kvpk7lsny8250z8k5n0p7wuqewjzyyah66jg3y2rjgdxfssej9wn".to_string(),
-    }
-}
-
-fn solana_axelar_multisig_prover() -> devnet_amplifier::MultisigProver {
-    devnet_amplifier::MultisigProver {
-        governance_address: "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9".to_string(),
-        destination_chain_id: SOLANA_CHAIN_NAME.to_string(),
-        service_name: "validators".to_string(),
-        encoder: "rkyv".to_string(),
-        address: "axelar1y7vkqzms5vqt0m0lx95ylh9upc0l552vzyhfwnnc3wajyaj6g5ysf03420".to_string(),
-        domain_separator: hex::encode(solana_domain_separator()),
-        key_type: "ecdsa".to_string(),
-    }
-}
-
-#[allow(clippy::all, clippy::pedantic, warnings, clippy::unreadable_literal)]
-pub(crate) mod devnet_amplifier {
-    include!(concat!(env!("OUT_DIR"), "/devnet_amplifier.rs"));
-}
-
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 pub(crate) async fn evm_to_solana(
     source_chain: &EvmChain,
     source_evm_signer: EvmSigner,
     cosmwasm_signer: SigningClient,
-    source_memo_contract: EvmAddress,
     solana_rpc_client: solana_client::rpc_client::RpcClient,
     solana_keypair: Keypair,
     memo_to_send: String,
+    axelar_deployments: &AxelarDeploymentRoot,
+    solana_deployments: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<()> {
-    let destination_chain_name = SOLANA_CHAIN_NAME;
-    let axelar_cosmwasm = devnet_amplifier::get_axelar();
-    let source_axelar_gateway = axelar_cosmwasm
+    let destination_chain_name = solana_deployments
+        .solana_configuration
+        .chain_name_on_axelar_chain
+        .as_str();
+    let source_axelar_gateway = axelar_deployments
+        .axelar
+        .contracts
         .gateway
+        .networks
         .get(source_chain.id.as_str())
+        .and_then(|x| cosmrs::AccountId::from_str(x.address.as_str()).ok())
         .unwrap();
-    let source_axelar_voting_verifier = axelar_cosmwasm
+    let source_axelar_voting_verifier = axelar_deployments
+        .axelar
+        .contracts
         .voting_verifier
+        .networks
         .get(source_chain.id.as_str())
+        .and_then(|x| cosmrs::AccountId::from_str(x.address.as_str()).ok())
         .unwrap();
-    let destination_multisig_prover = solana_axelar_multisig_prover();
+    let destination_multisig_prover = cosmrs::AccountId::from_str(
+        solana_deployments
+            .multisig_prover
+            .as_ref()
+            .ok_or_eyre("multisig prover deployment not found")?
+            .address
+            .as_str(),
+    )
+    .unwrap();
+    let our_evm_deployment_tracker = solana_deployments
+        .evm_deployments
+        .get_or_insert_mut(source_chain);
 
     let root_pda = gmp_gateway::get_gateway_root_config_pda().0;
     let root_pda = solana_rpc_client.get_account(&root_pda).unwrap();
@@ -84,9 +71,9 @@ pub(crate) async fn evm_to_solana(
 
     let tx = send_memo_to_solana(
         source_evm_signer,
-        source_memo_contract,
         memo_to_send.as_str(),
         destination_chain_name,
+        our_evm_deployment_tracker,
     )
     .await?;
     tracing::info!(
@@ -105,9 +92,10 @@ pub(crate) async fn evm_to_solana(
         memo_to_send,
         &message,
         cosmwasm_signer,
-        source_axelar_gateway,
-        source_axelar_voting_verifier,
+        &source_axelar_gateway,
+        &source_axelar_voting_verifier,
         &destination_multisig_prover,
+        &solana_deployments.axelar_configuration,
     )
     .await?;
     let gateway_root_pda = gmp_gateway::get_gateway_root_config_pda().0;
@@ -120,12 +108,13 @@ pub(crate) async fn evm_to_solana(
     );
 
     // solana: initialize pending command pdas
-    let (gateway_approved_message_pda, message) = solana_interactions::solana_init_approved_command(
-        &gateway_root_pda,
-        &message,
-        &solana_keypair,
-        &solana_rpc_client,
-    );
+    let (gateway_approved_message_pda, message) =
+        solana_interactions::solana_init_approved_command(
+            &gateway_root_pda,
+            &message,
+            &solana_keypair,
+            &solana_rpc_client,
+        )?;
 
     // update execute data
     let execute_data_pda = solana_interactions::solana_init_approve_messages_execute_data(
@@ -133,7 +122,8 @@ pub(crate) async fn evm_to_solana(
         gateway_root_pda,
         &execute_data,
         &solana_rpc_client,
-    );
+        &solana_deployments.solana_configuration,
+    )?;
 
     // call `approve messages`
     solana_interactions::solana_approve_messages(
@@ -143,7 +133,7 @@ pub(crate) async fn evm_to_solana(
         signing_verifier_set_pda,
         &solana_rpc_client,
         &solana_keypair,
-    );
+    )?;
 
     // call the destination memo program
     solana_interactions::solana_call_executable(
@@ -153,7 +143,7 @@ pub(crate) async fn evm_to_solana(
         gateway_root_pda,
         &solana_rpc_client,
         &solana_keypair,
-    );
+    )?;
 
     let (counter_pda, _counter_bump) =
         axelar_solana_memo_program::get_counter_pda(&gateway_root_pda);
@@ -163,6 +153,7 @@ pub(crate) async fn evm_to_solana(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 pub(crate) async fn solana_to_evm(
     destination_chain: &EvmChain,
     destination_evm_signer: EvmSigner,
@@ -171,15 +162,39 @@ pub(crate) async fn solana_to_evm(
     solana_rpc_client: solana_client::rpc_client::RpcClient,
     solana_keypair: Keypair,
     memo_to_send: String,
+    axelar_deployments: &AxelarDeploymentRoot,
+    solana_deployments: &SolanaDeploymentRoot,
 ) -> eyre::Result<()> {
-    let source_chain_name = SOLANA_CHAIN_NAME;
-    let source_axelar_gateway = solana_axelar_gateway();
-    let axelar_cosmwasm = devnet_amplifier::get_axelar();
-    let destination_multisig_prover = axelar_cosmwasm
+    let source_chain_name = solana_deployments
+        .solana_configuration
+        .chain_name_on_axelar_chain
+        .as_str();
+    let source_axelar_gateway = cosmrs::AccountId::from_str(
+        solana_deployments
+            .axelar_gateway
+            .as_ref()
+            .ok_or_eyre("gateway deployment not found")?
+            .address
+            .as_str(),
+    )
+    .unwrap();
+    let source_axelar_voting_verifier = cosmrs::AccountId::from_str(
+        solana_deployments
+            .voting_verifier
+            .as_ref()
+            .ok_or_eyre("voting verifier deployment not found")?
+            .address
+            .as_str(),
+    )
+    .unwrap();
+    let destination_multisig_prover = axelar_deployments
+        .axelar
+        .contracts
         .multisig_prover
+        .networks
         .get(destination_chain.id.as_str())
+        .and_then(|x| cosmrs::AccountId::from_str(x.address.as_str()).ok())
         .unwrap();
-    let source_axelar_voting_verifier = solana_axelar_voting_verifier();
 
     let gateway_root_pda = gmp_gateway::get_gateway_root_config_pda().0;
     let (payload, message) = solana_interactions::send_memo_from_solana(
@@ -190,7 +205,7 @@ pub(crate) async fn solana_to_evm(
         source_chain_name,
         destination_memo_contract,
         memo_to_send.as_str(),
-    );
+    )?;
     let execute_data = cosmwasm_interactions::wire_cosmwasm_contracts(
         source_chain_name,
         &destination_chain.id,
@@ -199,7 +214,8 @@ pub(crate) async fn solana_to_evm(
         cosmwasm_signer,
         &source_axelar_gateway,
         &source_axelar_voting_verifier,
-        destination_multisig_prover,
+        &destination_multisig_prover,
+        &solana_deployments.axelar_configuration,
     )
     .await?;
 
@@ -223,37 +239,52 @@ pub(crate) async fn solana_to_evm(
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) async fn evm_to_evm(
-    source_chain: &devnet_amplifier::EvmChain,
-    destination_chain: &devnet_amplifier::EvmChain,
-    source_memo_contract: EvmAddress,
-    destination_memo_contract: EvmAddress,
+    source_chain: &EvmChain,
+    destination_chain: &EvmChain,
     source_evm_signer: EvmSigner,
     destination_evm_signer: EvmSigner,
     memo_to_send: String,
     cosmwasm_signer: SigningClient,
+    axelar_deployments: &AxelarDeploymentRoot,
+    solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<()> {
-    let axelar_cosmwasm = devnet_amplifier::get_axelar();
-    let source_axelar_gateway = axelar_cosmwasm
+    let source_axelar_gateway = axelar_deployments
+        .axelar
+        .contracts
         .gateway
+        .networks
         .get(source_chain.id.as_str())
+        .and_then(|x| cosmrs::AccountId::from_str(x.address.as_str()).ok())
         .unwrap();
-    let source_axelar_voting_verifier = axelar_cosmwasm
+    let source_axelar_voting_verifier = axelar_deployments
+        .axelar
+        .contracts
         .voting_verifier
+        .networks
         .get(source_chain.id.as_str())
+        .and_then(|x| cosmrs::AccountId::from_str(x.address.as_str()).ok())
         .unwrap();
-    let destination_multisig_prover = axelar_cosmwasm
+    let destination_multisig_prover = axelar_deployments
+        .axelar
+        .contracts
         .multisig_prover
+        .networks
         .get(destination_chain.id.as_str())
+        .and_then(|x| cosmrs::AccountId::from_str(x.address.as_str()).ok())
         .unwrap();
 
-    // let destination_memo_contract =
-    // ethers::utils::to_checksum(&destination_memo_contract, None);
+    let source_chain_tracker = &solana_deployment_root
+        .evm_deployments
+        .get_or_insert_mut(source_chain)
+        .clone();
+    let destination_chain_tracker = solana_deployment_root
+        .evm_deployments
+        .get_or_insert_mut(destination_chain);
     let tx = send_memo_from_evm_to_evm(
         source_evm_signer,
-        source_memo_contract,
         memo_to_send.clone(),
-        destination_chain.id.clone(),
-        ethers::utils::to_checksum(&destination_memo_contract, None),
+        destination_chain_tracker,
+        source_chain_tracker,
     )
     .await?;
     tracing::info!(
@@ -272,9 +303,10 @@ pub(crate) async fn evm_to_evm(
         memo_to_send,
         &message,
         cosmwasm_signer,
-        source_axelar_gateway,
-        source_axelar_voting_verifier,
-        destination_multisig_prover,
+        &source_axelar_gateway,
+        &source_axelar_voting_verifier,
+        &destination_multisig_prover,
+        &solana_deployment_root.axelar_configuration,
     )
     .await?;
 
@@ -285,6 +317,12 @@ pub(crate) async fn evm_to_evm(
         &destination_evm_signer,
     )
     .await?;
+    let destination_memo_contract = H160::decode_hex(
+        destination_chain_tracker
+            .memo_program_address
+            .as_ref()
+            .ok_or_eyre("memo contract not deployed")?,
+    )?;
     evm_interaction::call_execute_on_destination_evm_contract(
         message,
         destination_memo_contract,

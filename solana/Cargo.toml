@@ -67,6 +67,7 @@ libsecp256k1 = { version = "0.6", default-features = false }
 num-derive = "0.4"
 num-traits = "0.2"
 rand = "0.8"
+regex = "1.10"
 reqwest = { version = "0.12", features = ["json", "stream"] }
 rkyv = "0.7"
 rstest = "0.19"
@@ -74,6 +75,7 @@ serde = "1"
 serde_json = "1"
 sha3 = "0.10"
 signature = "2"
+simd-json = "0.13"
 solana-client = "2.0.1"
 solana-logger = "2.0.1"
 solana-program = "2.0.1"
@@ -85,6 +87,8 @@ spl-token = "4.0.0"
 test-log = { version = "0.2", features = ["trace"], default-features = false }
 thiserror = "1"
 tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-error = "0.2"
 typed-builder = "0.19"
 xshell = "0.2"
 

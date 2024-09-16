@@ -5,19 +5,22 @@ use std::time::Duration;
 use axelar_message_primitives::EncodingScheme;
 use clap::{Parser, Subcommand};
 use cmd::solana::SolanaContract;
+use ethers::abi::AbiDecode;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
 use ethers::signers::coins_bip39::English;
 use ethers::signers::{LocalWallet, MnemonicBuilder, Signer};
-use ethers::types::Address;
-use eyre::Context;
+use eyre::{Context, OptionExt};
 use gmp_gateway::axelar_auth_weighted::RotationDelaySecs;
 use k256::SecretKey;
 use url::Url;
 
+use self::cmd::axelar_deployments::{AxelarDeploymentRoot, EvmChain};
 use self::cmd::cosmwasm::cosmos_client::signer::SigningClient;
-use self::cmd::cosmwasm::{AXELAR_ACCOUNT_PREFIX, AXELAR_DEVNET};
-use self::cmd::testnet::SOLANA_CHAIN_NAME;
+use self::cmd::deployments::{
+    AxelarConfiguration, CustomEvmChainDeployments, SolanaDeploymentRoot,
+};
+use crate::cli::cmd::path::xtask_crate_root_dir;
 
 pub(crate) mod cmd;
 
@@ -64,10 +67,6 @@ pub(crate) enum TestnetFlowDirection {
         #[arg(long)]
         axelar_private_key_hex: String,
         #[arg(long)]
-        source_memo_contract: Option<Address>,
-        #[arg(long)]
-        destination_memo_contract: Option<Address>,
-        #[arg(long)]
         destination_evm_private_key_hex: String,
         #[arg(long)]
         source_evm_chain: String,
@@ -77,13 +76,8 @@ pub(crate) enum TestnetFlowDirection {
         memo_to_send: String,
     },
     EvmToSolana {
-        // -- solana configs --
-        /// The RPC URL of the target validator. If not provided, it will
-        /// fallback into Solana CLI defaults.
-        #[arg(short, long)]
-        solana_rpc_url: Option<Url>,
-        #[arg(short, long)]
-        keypair_path: Option<PathBuf>,
+        #[arg(long)]
+        memo_to_send: String,
         // -- axelar configs --
         #[arg(long)]
         axelar_private_key_hex: String,
@@ -91,20 +85,9 @@ pub(crate) enum TestnetFlowDirection {
         #[arg(long)]
         source_evm_private_key_hex: String,
         #[arg(long)]
-        source_memo_contract: Address,
-        #[arg(long)]
         source_evm_chain: String,
-        #[arg(long)]
-        memo_to_send: String,
     },
     SolanaToEvm {
-        // -- solana configs --
-        /// The RPC URL of the target validator. If not provided, it will
-        /// fallback into Solana CLI defaults.
-        #[arg(short, long)]
-        solana_rpc_url: Option<Url>,
-        #[arg(short, long)]
-        keypair_path: Option<PathBuf>,
         #[arg(long)]
         memo_to_send: String,
         // -- axelar configs --
@@ -113,8 +96,6 @@ pub(crate) enum TestnetFlowDirection {
         // -- evm configs --
         #[arg(long)]
         destination_evm_private_key_hex: String,
-        #[arg(long)]
-        destination_memo_contract: Address,
         #[arg(long)]
         destination_evm_chain: String,
     },
@@ -130,8 +111,6 @@ pub(crate) enum Cosmwasm {
         private_key_hex: String,
     },
     Init {
-        #[arg(short, long)]
-        code_id: u64,
         #[arg(short, long)]
         private_key_hex: String,
         #[command(subcommand)]
@@ -157,17 +136,9 @@ pub(crate) enum CosmwasmInit {
     /// Initialize an already deployed voting verifier contract.
     SolanaVotingVerifier,
     /// Initialize an already deployed gateway contract
-    Gateway {
-        #[arg(short, long)]
-        voting_verifier_address: String,
-    },
+    Gateway {},
     // Initialize an already deployed multisig prover contract.
-    SolanaMultisigProver {
-        #[arg(long)]
-        gateway_address: String,
-        #[arg(long)]
-        voting_verifier_address: String,
-    },
+    SolanaMultisigProver {},
 }
 /// The contracts are pre-built as ensured by the `evm-contracts-rs` crate in
 /// our workspace. On EVM we don't differentiate deployment from initialization
@@ -176,8 +147,6 @@ pub(crate) enum CosmwasmInit {
 pub(crate) enum Evm {
     DeployAxelarMemo {},
     SendMemoToSolana {
-        #[arg(short, long)]
-        evm_memo_contract_address: ethers::types::Address,
         #[arg(short, long)]
         memo_to_send: String,
     },
@@ -238,59 +207,66 @@ pub(crate) enum SolanaInitSubcommand {
     /// Initialize an already deployed gateway contract.
     GmpGateway {
         #[arg(short, long)]
-        cosmwasm_multisig_prover: String,
-        #[arg(short, long)]
         axelar_private_key_hex: String,
-        /// The RPC URL of the target validator.
-        /// If not provided, this will fallback in solana CLI current
-        /// configuration.
-        #[arg(short, long)]
-        rpc_url: Option<Url>,
-        /// The payer keypair file. This is a file containing the byte slice
-        /// serialization of a `solana_sdk::signer::keypair::Keypair` .
-        /// If not provided, this will fallback in solana CLI current
-        /// configuration.
-        #[arg(short, long)]
-        payer_kp_path: Option<PathBuf>,
         #[arg(short, long)]
         previous_signers_retention: u128,
         #[arg(short, long)]
         minimum_rotation_delay: RotationDelaySecs,
     },
-    AxelarSolanaMemoProgram {
-        /// The RPC URL of the target validator.
-        /// If not provided, this will fallback in solana CLI current
-        /// configuration.
-        #[arg(short, long)]
-        rpc_url: Option<Url>,
-        /// The payer keypair file. This is a file containing the byte slice
-        /// serialization of a `solana_sdk::signer::keypair::Keypair` .
-        /// If not provided, this will fallback in solana CLI current
-        /// configuration.
-        #[arg(short, long)]
-        payer_kp_path: Option<PathBuf>,
-    },
+    AxelarSolanaMemoProgram {},
 }
 
 impl Cli {
     pub(crate) async fn run(self) -> eyre::Result<()> {
+        let solana_chain_name_on_axelar_chain = "solana-devnet".to_string();
+        let axelar_chain_name = "devnet-amplifier";
+
+        let axelar_deployment_root = get_axelar_configuration(axelar_chain_name)?;
+        let mut solana_deployment_root = SolanaDeploymentRoot::new(
+            solana_chain_name_on_axelar_chain,
+            &axelar_deployment_root.axelar,
+            cmd::solana::defaults::rpc_url()?.to_string(),
+        )?;
         match self {
-            Cli::Solana { command } => handle_solana(command).await?,
+            Cli::Solana { command } => handle_solana(command, &mut solana_deployment_root).await?,
             Cli::Evm {
                 source_evm_chain,
                 admin_private_key,
                 command,
-            } => handle_evm(source_evm_chain, admin_private_key, command).await?,
-            Cli::Cosmwasm { command } => handle_cosmwasm(command).await?,
-            Cli::Testnet { command } => handle_testnet(command).await?,
-            Cli::GenerateEvm => handle_generating_evm_wallet()?,
+            } => {
+                handle_evm(
+                    source_evm_chain,
+                    admin_private_key,
+                    command,
+                    &axelar_deployment_root,
+                    &mut solana_deployment_root,
+                )
+                .await?;
+            }
+            Cli::Cosmwasm { command } => {
+                handle_cosmwasm(command, &mut solana_deployment_root).await?;
+            }
+            Cli::Testnet { command } => {
+                handle_testnet(
+                    command,
+                    &axelar_deployment_root,
+                    &mut solana_deployment_root,
+                )
+                .await?;
+            }
+            Cli::GenerateEvm => handle_generating_evm_wallet(&axelar_deployment_root)?,
         };
+        solana_deployment_root.save()?;
         Ok(())
     }
 }
 
 #[allow(clippy::too_many_lines)]
-async fn handle_testnet(command: TestnetFlowDirection) -> eyre::Result<()> {
+async fn handle_testnet(
+    command: TestnetFlowDirection,
+    axelar_deployment_root: &AxelarDeploymentRoot,
+    solana_deployment_root: &mut SolanaDeploymentRoot,
+) -> eyre::Result<()> {
     match command {
         TestnetFlowDirection::EvmToEvm {
             source_evm_private_key_hex: source_evm_private_key,
@@ -299,106 +275,116 @@ async fn handle_testnet(command: TestnetFlowDirection) -> eyre::Result<()> {
             source_evm_chain,
             destination_evm_chain,
             memo_to_send,
-            source_memo_contract,
-            destination_memo_contract,
         } => {
-            let source_chain = get_evm_chain(source_evm_chain.as_str())?;
-            let destination_chain = get_evm_chain(destination_evm_chain.as_str())?;
+            let source_chain = axelar_deployment_root.get_evm_chain(source_evm_chain.as_str())?;
+            let destination_chain =
+                axelar_deployment_root.get_evm_chain(destination_evm_chain.as_str())?;
 
             let source_evm_signer = create_evm_signer(&source_chain, source_evm_private_key).await;
             let destination_evm_signer =
                 create_evm_signer(&source_chain, destination_evm_private_key).await;
 
-            let cosmwasm_signer = create_axelar_cosmsos_signer(axelar_private_key_hex)?;
-            let source_memo_contract =
-                get_or_deploy_evm_contract(source_memo_contract, &source_evm_signer, &source_chain)
-                    .await?;
-            let destination_memo_contract = get_or_deploy_evm_contract(
-                destination_memo_contract,
+            let cosmwasm_signer = create_axelar_cosmsos_signer(
+                axelar_private_key_hex,
+                &solana_deployment_root.axelar_configuration,
+            )?;
+
+            let source_evm_deployment_tracker = solana_deployment_root
+                .evm_deployments
+                .get_or_insert_mut(&source_chain);
+            maybe_deploy_evm_memo_contract(
+                &source_evm_signer,
+                &source_chain,
+                source_evm_deployment_tracker,
+            )
+            .await?;
+            let destination_evm_deployment_tracker = solana_deployment_root
+                .evm_deployments
+                .get_or_insert_mut(&destination_chain);
+            maybe_deploy_evm_memo_contract(
                 &destination_evm_signer,
                 &destination_chain,
+                destination_evm_deployment_tracker,
             )
             .await?;
 
             cmd::testnet::evm_to_evm(
                 &source_chain,
                 &destination_chain,
-                source_memo_contract,
-                destination_memo_contract,
                 source_evm_signer,
                 destination_evm_signer,
                 memo_to_send,
                 cosmwasm_signer,
+                axelar_deployment_root,
+                solana_deployment_root,
             )
             .await?;
         }
         TestnetFlowDirection::EvmToSolana {
-            solana_rpc_url,
-            keypair_path,
             axelar_private_key_hex,
             source_evm_private_key_hex,
-            source_memo_contract,
             source_evm_chain,
             memo_to_send,
         } => {
-            let source_chain = get_evm_chain(source_evm_chain.as_str())?;
+            let source_chain = axelar_deployment_root.get_evm_chain(source_evm_chain.as_str())?;
             let source_evm_signer =
                 create_evm_signer(&source_chain, source_evm_private_key_hex).await;
-            let cosmwasm_signer = create_axelar_cosmsos_signer(axelar_private_key_hex)?;
-            let source_memo_contract = get_or_deploy_evm_contract(
-                Some(source_memo_contract),
+            let cosmwasm_signer = create_axelar_cosmsos_signer(
+                axelar_private_key_hex,
+                &solana_deployment_root.axelar_configuration,
+            )?;
+            let source_evm_deployment_tracker = solana_deployment_root
+                .evm_deployments
+                .get_or_insert_mut(&source_chain);
+            let _source_memo_contract = maybe_deploy_evm_memo_contract(
                 &source_evm_signer,
                 &source_chain,
+                source_evm_deployment_tracker,
             )
             .await?;
             let solana_rpc_client = solana_client::rpc_client::RpcClient::new(
-                cmd::solana::defaults::rpc_url_with_fallback_in_sol_cli_config(
-                    solana_rpc_url.as_ref(),
-                )?
-                .to_string(),
+                cmd::solana::defaults::rpc_url()?.to_string(),
             );
-            let solana_keypair = cmd::solana::defaults::payer_kp_with_fallback_in_sol_cli_config(
-                keypair_path.as_ref(),
-            )?;
+            let solana_keypair = cmd::solana::defaults::payer_kp()?;
             cmd::testnet::evm_to_solana(
                 &source_chain,
                 source_evm_signer,
                 cosmwasm_signer,
-                source_memo_contract,
                 solana_rpc_client,
                 solana_keypair,
                 memo_to_send,
+                axelar_deployment_root,
+                solana_deployment_root,
             )
             .await?;
         }
         TestnetFlowDirection::SolanaToEvm {
-            solana_rpc_url,
-            keypair_path,
             memo_to_send,
             axelar_private_key_hex,
             destination_evm_private_key_hex,
-            destination_memo_contract,
             destination_evm_chain,
         } => {
-            let destination_chain = get_evm_chain(destination_evm_chain.as_str())?;
+            let destination_chain =
+                axelar_deployment_root.get_evm_chain(destination_evm_chain.as_str())?;
             let destination_evm_signer =
                 create_evm_signer(&destination_chain, destination_evm_private_key_hex).await;
-            let cosmwasm_signer = create_axelar_cosmsos_signer(axelar_private_key_hex)?;
-            let destination_memo_contract = get_or_deploy_evm_contract(
-                Some(destination_memo_contract),
+            let cosmwasm_signer = create_axelar_cosmsos_signer(
+                axelar_private_key_hex,
+                &solana_deployment_root.axelar_configuration,
+            )?;
+            let destination_evm_deployment_tracker = solana_deployment_root
+                .evm_deployments
+                .get_or_insert_mut(&destination_chain);
+            let destination_memo_contract = maybe_deploy_evm_memo_contract(
                 &destination_evm_signer,
                 &destination_chain,
+                destination_evm_deployment_tracker,
             )
             .await?;
             let solana_rpc_client = solana_client::rpc_client::RpcClient::new(
-                cmd::solana::defaults::rpc_url_with_fallback_in_sol_cli_config(
-                    solana_rpc_url.as_ref(),
-                )?
-                .to_string(),
+                cmd::solana::defaults::rpc_url()?.to_string(),
             );
-            let solana_keypair = cmd::solana::defaults::payer_kp_with_fallback_in_sol_cli_config(
-                keypair_path.as_ref(),
-            )?;
+            let solana_keypair = cmd::solana::defaults::payer_kp()?;
             cmd::testnet::solana_to_evm(
                 &destination_chain,
                 destination_evm_signer,
@@ -407,6 +393,8 @@ async fn handle_testnet(command: TestnetFlowDirection) -> eyre::Result<()> {
                 solana_rpc_client,
                 solana_keypair,
                 memo_to_send,
+                axelar_deployment_root,
+                solana_deployment_root,
             )
             .await?;
         }
@@ -415,26 +403,38 @@ async fn handle_testnet(command: TestnetFlowDirection) -> eyre::Result<()> {
     Ok(())
 }
 
-async fn get_or_deploy_evm_contract(
-    memo_contract: Option<ethers::types::H160>,
+async fn maybe_deploy_evm_memo_contract(
     evm_signer: &evm_contracts_test_suite::EvmSigner,
-    chain: &cmd::testnet::devnet_amplifier::EvmChain,
+    chain: &EvmChain,
+    our_evm_deployment: &mut CustomEvmChainDeployments,
 ) -> Result<ethers::types::H160, eyre::Error> {
-    let destination_memo_contract = if let Some(addr) = memo_contract {
-        addr
-    } else {
-        tracing::info!(chain = ?chain.id, "memo contract not present, deploying");
-        let res =
-            cmd::evm::deploy_axelar_memo(evm_signer.clone(), chain.axelar_gateway.parse().unwrap())
-                .await?;
-        tracing::info!("sleeping for 10 seconds for the change to propagate");
-        tokio::time::sleep(Duration::from_secs(10)).await;
-        res
-    };
-    Ok(destination_memo_contract)
+    if let Some(addr) = our_evm_deployment.memo_program_address.as_ref() {
+        return Ok(ethers::types::H160::decode_hex(addr)?);
+    }
+
+    tracing::info!(chain = ?chain.id, "memo contract not present, deploying");
+    let res = cmd::evm::deploy_axelar_memo(
+        evm_signer.clone(),
+        chain
+            .contracts
+            .axelar_gateway
+            .as_ref()
+            .ok_or_eyre("gateway not deployed on this chain")?
+            .address
+            .parse()
+            .unwrap(),
+        our_evm_deployment,
+    )
+    .await?;
+    tracing::info!("sleeping for 10 seconds for the change to propagate");
+    tokio::time::sleep(Duration::from_secs(10)).await;
+    Ok(res)
 }
 
-async fn handle_solana(command: Solana) -> eyre::Result<()> {
+async fn handle_solana(
+    command: Solana,
+    solana_deployment_root: &mut SolanaDeploymentRoot,
+) -> eyre::Result<()> {
     match command {
         Solana::Build => {
             cmd::solana::build_contracts(None)?;
@@ -468,118 +468,125 @@ async fn handle_solana(command: Solana) -> eyre::Result<()> {
         }
         Solana::Init { contract } => match contract {
             SolanaInitSubcommand::GmpGateway {
-                rpc_url,
-                payer_kp_path,
                 axelar_private_key_hex,
-                cosmwasm_multisig_prover,
                 previous_signers_retention,
                 minimum_rotation_delay,
             } => {
-                let cosmwasm_signer = create_axelar_cosmsos_signer(axelar_private_key_hex)?;
+                let cosmwasm_signer = create_axelar_cosmsos_signer(
+                    axelar_private_key_hex,
+                    &solana_deployment_root.axelar_configuration,
+                )?;
                 cmd::solana::init_gmp_gateway(
-                    rpc_url.as_ref(),
-                    payer_kp_path.as_ref(),
-                    cosmwasm_multisig_prover.as_str(),
                     cosmwasm_signer,
                     previous_signers_retention,
                     minimum_rotation_delay,
+                    solana_deployment_root,
                 )
                 .await?;
             }
-            SolanaInitSubcommand::AxelarSolanaMemoProgram {
-                rpc_url,
-                payer_kp_path,
-            } => {
-                cmd::solana::init_memo_program(rpc_url.as_ref(), payer_kp_path.as_ref())?;
+            SolanaInitSubcommand::AxelarSolanaMemoProgram {} => {
+                cmd::solana::init_memo_program(solana_deployment_root)?;
             }
         },
     };
     Ok(())
 }
 
-async fn handle_evm(chain: String, admin_private_key: String, command: Evm) -> eyre::Result<()> {
-    let chain = get_evm_chain(chain.as_str())?;
+async fn handle_evm(
+    chain: String,
+    admin_private_key: String,
+    command: Evm,
+    axelar_deployment_root: &AxelarDeploymentRoot,
+    solana_deployment_root: &mut SolanaDeploymentRoot,
+) -> eyre::Result<()> {
+    let chain = axelar_deployment_root.get_evm_chain(chain.as_str())?;
     let signer = create_evm_signer(&chain, admin_private_key).await;
     match command {
         Evm::DeployAxelarMemo {} => {
-            get_or_deploy_evm_contract(None, &signer, &chain).await?;
+            let deployment_tracker = solana_deployment_root
+                .evm_deployments
+                .get_or_insert_mut(&chain);
+            maybe_deploy_evm_memo_contract(&signer, &chain, deployment_tracker).await?;
         }
-        Evm::SendMemoToSolana {
-            evm_memo_contract_address,
-            memo_to_send,
-        } => {
+        Evm::SendMemoToSolana { memo_to_send } => {
+            let deployment_tracker = solana_deployment_root
+                .evm_deployments
+                .get_or_insert_mut(&chain);
             cmd::evm::send_memo_to_solana(
                 signer,
-                evm_memo_contract_address,
                 memo_to_send.as_str(),
-                SOLANA_CHAIN_NAME,
+                &solana_deployment_root
+                    .solana_configuration
+                    .chain_name_on_axelar_chain,
+                deployment_tracker,
             )
             .await?;
         }
     };
     Ok(())
 }
-async fn handle_cosmwasm(command: Cosmwasm) -> eyre::Result<()> {
+async fn handle_cosmwasm(
+    command: Cosmwasm,
+    solana_deployment_root: &mut SolanaDeploymentRoot,
+) -> eyre::Result<()> {
     match command {
         Cosmwasm::Build => {
             cmd::cosmwasm::build().await?;
         }
         Cosmwasm::Deploy { private_key_hex } => {
-            let cosmwasm_signer = create_axelar_cosmsos_signer(private_key_hex)?;
-            cmd::cosmwasm::deploy(&cosmwasm_signer).await?;
+            let cosmwasm_signer = create_axelar_cosmsos_signer(
+                private_key_hex,
+                &solana_deployment_root.axelar_configuration,
+            )?;
+            cmd::cosmwasm::deploy(
+                &cosmwasm_signer,
+                &mut solana_deployment_root.axelar_configuration,
+            )
+            .await?;
         }
         Cosmwasm::GenerateWallet => cmd::cosmwasm::generate_wallet()?,
         Cosmwasm::Init {
-            code_id,
             command,
             private_key_hex,
         } => {
-            let client = create_axelar_cosmsos_signer(private_key_hex)?;
+            let client = create_axelar_cosmsos_signer(
+                private_key_hex,
+                &solana_deployment_root.axelar_configuration,
+            )?;
             match command {
                 CosmwasmInit::SolanaVotingVerifier => {
-                    cmd::cosmwasm::init_solana_voting_verifier(code_id, &client).await?;
+                    cmd::cosmwasm::init_solana_voting_verifier(&client, solana_deployment_root)
+                        .await?;
                 }
-                CosmwasmInit::Gateway {
-                    voting_verifier_address,
-                } => {
-                    cmd::cosmwasm::init_gateway(code_id, &client, voting_verifier_address).await?;
+                CosmwasmInit::Gateway {} => {
+                    cmd::cosmwasm::init_gateway(&client, solana_deployment_root).await?;
                 }
-                CosmwasmInit::SolanaMultisigProver {
-                    gateway_address,
-                    voting_verifier_address,
-                } => {
-                    cmd::cosmwasm::init_solana_multisig_prover(
-                        code_id,
-                        &client,
-                        gateway_address,
-                        voting_verifier_address,
-                    )
-                    .await?;
+                CosmwasmInit::SolanaMultisigProver {} => {
+                    cmd::cosmwasm::init_solana_multisig_prover(&client, solana_deployment_root)
+                        .await?;
                 }
             }
         }
-        Cosmwasm::AmpdSetup => cmd::cosmwasm::ampd::setup_ampd().await?,
+        Cosmwasm::AmpdSetup => {
+            cmd::cosmwasm::ampd::setup_ampd(&solana_deployment_root.solana_configuration).await?;
+        }
         Cosmwasm::AmpdAndTofndRun => cmd::cosmwasm::ampd::start_with_tofnd().await?,
         Cosmwasm::RedeployAndInitAll { private_key_hex } => {
-            let client = create_axelar_cosmsos_signer(private_key_hex)?;
-            let [vv_code_id, gtw_code_id, msg_prover_code_id] =
-                cmd::cosmwasm::deploy(&client).await?;
-            let vv_addr = cmd::cosmwasm::init_solana_voting_verifier(vv_code_id, &client).await?;
-            let gtw_addr =
-                cmd::cosmwasm::init_gateway(gtw_code_id, &client, vv_addr.clone()).await?;
-            let _multisig_addr = cmd::cosmwasm::init_solana_multisig_prover(
-                msg_prover_code_id,
-                &client,
-                gtw_addr,
-                vv_addr,
-            )
-            .await?;
+            let client = create_axelar_cosmsos_signer(
+                private_key_hex,
+                &solana_deployment_root.axelar_configuration,
+            )?;
+            cmd::cosmwasm::deploy(&client, &mut solana_deployment_root.axelar_configuration)
+                .await?;
+            cmd::cosmwasm::init_solana_voting_verifier(&client, solana_deployment_root).await?;
+            cmd::cosmwasm::init_gateway(&client, solana_deployment_root).await?;
+            cmd::cosmwasm::init_solana_multisig_prover(&client, solana_deployment_root).await?;
         }
     };
     Ok(())
 }
 
-fn handle_generating_evm_wallet() -> eyre::Result<()> {
+fn handle_generating_evm_wallet(axelar_deployment_root: &AxelarDeploymentRoot) -> eyre::Result<()> {
     let mnemonic = bip39::Mnemonic::generate(24)?;
     let words = mnemonic.word_iter().collect::<Vec<_>>().join(" ");
     let mnemonic = MnemonicBuilder::<English>::default()
@@ -597,8 +604,7 @@ fn handle_generating_evm_wallet() -> eyre::Result<()> {
         println!("  Address: 0x{}", hex::encode(addr.to_fixed_bytes()));
     }
 
-    let chains = cmd::testnet::devnet_amplifier::get_chains();
-    let allowed_chains = chains.keys().collect::<Vec<_>>();
+    let allowed_chains = axelar_deployment_root.chains.keys().collect::<Vec<_>>();
     println!("supported chains for axelar testnet operations: {allowed_chains:?}");
     Ok(())
 }
@@ -624,13 +630,13 @@ async fn init_evm_signer(
 }
 
 async fn create_evm_signer(
-    chain: &cmd::testnet::devnet_amplifier::EvmChain,
+    chain: &EvmChain,
     private_key_hex: String,
 ) -> evm_contracts_test_suite::EvmSigner {
     let private_key =
         SecretKey::from_slice(hex::decode(private_key_hex).unwrap().as_ref()).unwrap();
     let wallet = LocalWallet::from_bytes(private_key.to_bytes().as_ref()).unwrap();
-    let source_signer = init_evm_signer(&chain.rpc, wallet.clone()).await;
+    let source_signer = init_evm_signer(&chain.rpc.parse().unwrap(), wallet.clone()).await;
 
     evm_contracts_test_suite::EvmSigner {
         wallet: wallet.clone(),
@@ -640,28 +646,30 @@ async fn create_evm_signer(
 
 fn create_axelar_cosmsos_signer(
     axelar_private_key_hex: String,
+    config: &AxelarConfiguration,
 ) -> Result<SigningClient, eyre::Error> {
     let key_bytes = hex::decode(axelar_private_key_hex)?;
     let signing_key = cosmrs::crypto::secp256k1::SigningKey::from_slice(&key_bytes)
         .context("invalid secp256k1 private key")?;
     let cosmwasm_signer = SigningClient {
-        network: AXELAR_DEVNET.clone(),
-        account_prefix: AXELAR_ACCOUNT_PREFIX.to_owned(),
+        network: cmd::cosmwasm::cosmos_client::network::Network::new(
+            config.axelar_chain.chain_id.clone(),
+            config.axelar_chain.grpc.clone(),
+            config.axelar_chain.rpc.clone(),
+        ),
+        account_prefix: config.axelar_account_prefix.clone(),
         signing_key,
     };
     Ok(cosmwasm_signer)
 }
 
-fn get_evm_chain(evm_chain: &str) -> eyre::Result<cmd::testnet::devnet_amplifier::EvmChain> {
-    let chains = cmd::testnet::devnet_amplifier::get_chains();
-    let chain = chains
-        .get(evm_chain)
-        .ok_or_else(|| {
-            let allowed_chains = chains.keys().collect::<Vec<_>>();
-            eyre::eyre!("allowed chain values are {allowed_chains:?}")
-        })?
-        .clone();
+fn get_axelar_configuration(axelar_chain_name: &str) -> eyre::Result<AxelarDeploymentRoot> {
+    let path = match axelar_chain_name {
+        "devnet-amplifier" => xtask_crate_root_dir().join("devnet-amplifier.json"),
+        _ => eyre::bail!("invalid axelar chain name"),
+    };
 
-    tracing::info!(?chain, "resolved evm chain");
-    Ok(chain.clone())
+    let file = std::fs::File::open(path)?;
+    let deployment = AxelarDeploymentRoot::from_reader(file);
+    Ok(deployment)
 }

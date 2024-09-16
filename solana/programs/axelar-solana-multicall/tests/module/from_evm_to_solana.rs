@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use core::str::FromStr;
 
 use axelar_executable::axelar_message_primitives::DataPayload;
 use axelar_solana_memo_program::instruction::AxelarMemoInstruction;
@@ -46,7 +46,7 @@ async fn test_send_from_evm_to_solana() {
             destination_program: axelar_solana_memo_program::id().to_bytes(),
             payload: SolanaGatewayPayload {
                 execute_payload: borsh::to_vec(&AxelarMemoInstruction::ProcessMemo {
-                    memo: memo.to_string(),
+                    memo: (*memo).to_string(),
                 })
                 .expect("failed to create multicall instruction")
                 .into(),
@@ -55,10 +55,14 @@ async fn test_send_from_evm_to_solana() {
         });
     }
 
-    let log = call_evm_gateway(&evm_multicall, solana_id, calls, &evm_gateway).await;
-    let decoded_payload = DataPayload::decode(log.payload.as_ref()).unwrap();
+    let evm_gateway_event_log =
+        call_evm_gateway(&evm_multicall, solana_id, calls, &evm_gateway).await;
+    let decoded_payload = DataPayload::decode(evm_gateway_event_log.payload.as_ref()).unwrap();
     let msg_from_evm_axelar = custom_message(
-        solana_sdk::pubkey::Pubkey::from_str(log.destination_contract_address.as_str()).unwrap(),
+        solana_sdk::pubkey::Pubkey::from_str(
+            evm_gateway_event_log.destination_contract_address.as_str(),
+        )
+        .unwrap(),
         &decoded_payload,
     );
     let (gateway_approved_command_pdas, _, _) = solana_chain
@@ -127,7 +131,7 @@ async fn call_evm_gateway(
 
     let logs: Vec<ContractCallFilter> = evm_gateway
         .contract_call_filter()
-        .from_block(0u64)
+        .from_block(0_u64)
         .query()
         .await
         .unwrap();

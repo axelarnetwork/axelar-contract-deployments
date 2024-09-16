@@ -10,16 +10,35 @@ pub(crate) mod network {
 
     #[derive(Debug, Clone)]
     pub(crate) struct Network {
-        pub(crate) chain_id: &'static str,
-        pub(crate) grpc_endpoint: &'static str,
-        pub(crate) rpc_endpoint: &'static str,
+        pub(crate) chain_id: String,
+        grpc_endpoint: String,
+        rpc_endpoint: String,
     }
 
     impl Network {
+        pub(crate) fn new(
+            chain_id: String,
+            mut grpc_endpoint: String,
+            rpc_endpoint: String,
+        ) -> Self {
+            if !grpc_endpoint.starts_with("https://") {
+                grpc_endpoint = format!("https://{grpc_endpoint}");
+            }
+            Self {
+                chain_id,
+                grpc_endpoint,
+                rpc_endpoint,
+            }
+        }
+
+        pub(crate) fn grpc_endpoint(&self) -> &str {
+            self.grpc_endpoint.as_str()
+        }
+
         pub(crate) async fn rpc(&self) -> eyre::Result<cosmrs::rpc::HttpClient> {
             use cosmrs::rpc::Client;
             tracing::debug!("attempting to create a http client");
-            let rpc_client = cosmrs::rpc::HttpClient::new(self.rpc_endpoint)?;
+            let rpc_client = cosmrs::rpc::HttpClient::new(self.rpc_endpoint.as_str())?;
 
             rpc_client
                 .wait_until_healthy(Duration::from_secs(5))
@@ -30,6 +49,8 @@ pub(crate) mod network {
 
             Ok(rpc_client)
         }
+
+        #[tracing::instrument]
         pub(crate) async fn account(&self, address: &str) -> eyre::Result<BaseAccount> {
             let mut c = query_client::QueryClient::connect(self.grpc_endpoint.to_string()).await?;
 
@@ -51,7 +72,7 @@ pub(crate) mod network {
 
         pub(crate) async fn simulate(&self, tx_bytes: Vec<u8>) -> eyre::Result<GasInfo> {
             let mut c = cosmrs::proto::cosmos::tx::v1beta1::service_client::ServiceClient::connect(
-                self.grpc_endpoint,
+                self.grpc_endpoint.clone(),
             )
             .await?;
 
@@ -173,7 +194,8 @@ pub(crate) mod signer {
         ) -> eyre::Result<T> {
             use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 
-            let mut c = query_client::QueryClient::connect(self.network.grpc_endpoint).await?;
+            let grpc_endpoint = self.network.grpc_endpoint().to_owned();
+            let mut c = query_client::QueryClient::connect(grpc_endpoint).await?;
 
             let res = c
                 .smart_contract_state(

@@ -1,3 +1,8 @@
+use anyhow::anyhow;
+use ethers::contract::ContractFactory;
+use ethers::providers::Middleware;
+use ethers::signers::Signer;
+use ethers::types::transaction::eip2718::TypedTransaction;
 use ethers::types::{Address, U256};
 use ethers::utils::keccak256;
 use evm_contracts_rs::contracts::{
@@ -70,15 +75,20 @@ impl crate::EvmSigner {
     }
 
     /// Deploys the `AxelarMemo` contract.
+    #[tracing::instrument(skip_all, err)]
     pub async fn deploy_axelar_memo(
         &self,
         gateway: axelar_amplifier_gateway::AxelarAmplifierGateway<ContractMiddleware>,
     ) -> anyhow::Result<axelar_memo::AxelarMemo<ContractMiddleware>> {
-        let contract = axelar_memo::AxelarMemo::deploy(self.signer.clone(), gateway.address())?
-            .send()
-            .await?;
+        let factory = ContractFactory::new(
+            axelar_memo::AXELARMEMO_ABI.clone(),
+            axelar_memo::AXELARMEMO_BYTECODE.clone(),
+            self.signer.clone(),
+        );
+        let deployer = factory.deploy(gateway.address())?;
+        let contract = self.deploy_custom_poll(deployer.tx).await?;
         Ok(axelar_memo::AxelarMemo::<ContractMiddleware>::new(
-            contract.address(),
+            contract,
             self.signer.clone(),
         ))
     }
@@ -88,15 +98,39 @@ impl crate::EvmSigner {
         &self,
         gateway: axelar_amplifier_gateway::AxelarAmplifierGateway<ContractMiddleware>,
     ) -> anyhow::Result<axelar_solana_multicall::AxelarSolanaMultiCall<ContractMiddleware>> {
-        let contract = axelar_solana_multicall::AxelarSolanaMultiCall::deploy(
+        let factory = ContractFactory::new(
+            axelar_solana_multicall::AXELARSOLANAMULTICALL_ABI.clone(),
+            axelar_solana_multicall::AXELARSOLANAMULTICALL_BYTECODE.clone(),
             self.signer.clone(),
-            gateway.address(),
-        )?
-        .send()
-        .await?;
+        );
+        let deployer = factory.deploy(gateway.address())?;
+        let contract = self.deploy_custom_poll(deployer.tx).await?;
         Ok(axelar_solana_multicall::AxelarSolanaMultiCall::<
             ContractMiddleware,
-        >::new(contract.address(), self.signer.clone()))
+        >::new(contract, self.signer.clone()))
+    }
+
+    /// This is useful when deploying to evm networks like avalanche-fuji, where
+    /// otherwise `ethers-rs` would show up an error like "transaction dropped
+    /// from mempool"
+    async fn deploy_custom_poll(
+        &self,
+        mut tx: TypedTransaction,
+    ) -> Result<ethers::types::H160, anyhow::Error> {
+        self.signer.fill_transaction(&mut tx, None).await?;
+        let _signature = self.wallet.sign_transaction(&tx).await?;
+        let res = self.signer.send_transaction(tx.clone(), None).await?;
+        let res = res
+            .retries(10)
+            .interval(std::time::Duration::from_millis(500))
+            .log_msg("deployment")
+            .log()
+            .await?
+            .ok_or(anyhow!("no tx receipt"))?;
+        let contract = res
+            .contract_address
+            .ok_or(anyhow!("no contract address in the receipt"))?;
+        Ok(contract)
     }
 }
 

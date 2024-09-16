@@ -1,0 +1,223 @@
+{
+  "solana_configuration": {
+    "chain_name_on_axelar_chain": "solana-devnet",
+    "domain_separator": [
+      17,
+      196,
+      225,
+      33,
+      170,
+      132,
+      165,
+      194,
+      222,
+      68,
+      213,
+      222,
+      203,
+      109,
+      38,
+      83,
+      137,
+      119,
+      17,
+      199,
+      132,
+      43,
+      250,
+      102,
+      66,
+      136,
+      180,
+      111,
+      4,
+      73,
+      17,
+      179
+    ],
+    "rpc": "https://api.devnet.solana.com/",
+    "gateway_program_id": "gtwEpzTprUX7TJLx1hFXNeqCXJMsoxYQhQaEbnuDcj1"
+  },
+  "axelar_configuration": {
+    "axelar_chain": {
+      "contracts": {
+        "ServiceRegistry": {
+          "governanceAccount": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "codeId": 624,
+          "address": "axelar1c9fkszt5lq34vvvlat3fxj6yv7ejtqapz04e97vtc9m5z9cwnamq8zjlhz"
+        },
+        "Router": {
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "codeId": 623,
+          "address": "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y"
+        },
+        "Multisig": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "blockExpiry": 10,
+          "codeId": 617,
+          "address": "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r"
+        },
+        "Coordinator": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "codeId": 615,
+          "address": "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g"
+        },
+        "Rewards": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "rewardsDenom": "uamplifier",
+          "params": {
+            "epoch_duration": "10",
+            "rewards_per_epoch": "100",
+            "participation_threshold": [
+              "9",
+              "10"
+            ]
+          },
+          "codeId": 620,
+          "address": "axelar1vaj9sfzc3z0gpel90wu4ljutncutv0wuhvvwfsh30rqxq422z89qnd989l"
+        },
+        "NexusGateway": {
+          "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
+          "codeId": 619,
+          "address": "axelar1jjjr3tqs0nzjv3y9fg4xvzkww50jq06a9qp77r8kzmqyla97556sxx7702"
+        },
+        "VotingVerifier": {
+          "codeId": 626,
+          "avalanche-fuji": {
+            "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "serviceName": "validators",
+            "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
+            "votingThreshold": [
+              "6",
+              "10"
+            ],
+            "blockExpiry": 10,
+            "confirmationHeight": 1,
+            "msgIdFormat": "hex_tx_hash_and_event_index",
+            "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj"
+          },
+          "eth-sepolia": {
+            "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "serviceName": "validators",
+            "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
+            "votingThreshold": [
+              "6",
+              "10"
+            ],
+            "blockExpiry": 10,
+            "confirmationHeight": 1,
+            "msgIdFormat": "hex_tx_hash_and_event_index",
+            "address": "axelar16swl5eh3vspnyzddwltuf93hc65nwju7498u0zyq33u4cj8rxy4sgxx30m"
+          },
+          "optimism-sepolia": {
+            "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "serviceName": "validators",
+            "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
+            "votingThreshold": [
+              "6",
+              "10"
+            ],
+            "blockExpiry": 10,
+            "confirmationHeight": 1,
+            "msgIdFormat": "hex_tx_hash_and_event_index",
+            "address": "axelar1qtg2es55w6zp539a2xh9mnajxqq2rsqghf604muyw85vrn0ky97qyu795s"
+          }
+        },
+        "Gateway": {
+          "codeId": 616,
+          "optimism-sepolia": {
+            "address": "axelar16wd6350f575t5cts9sduqmt7nsw9kc822ltf6dcn46rvejmmg8cqrq4ara"
+          },
+          "eth-sepolia": {
+            "address": "axelar18zrymnzgdmutdjhqlfsslzy4yvzw8uylysjwqlq4uk4muq3qx30qde39qz"
+          },
+          "avalanche-fuji": {
+            "address": "axelar1agyunp32jwynnkrf92wuvac2xa7cvgthtk5yr3wh7jypg59zjjqqsqf36s"
+          }
+        },
+        "MultisigProver": {
+          "codeId": 618,
+          "avalanche-fuji": {
+            "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "destinationChainID": "43113",
+            "signingThreshold": [
+              "6",
+              "10"
+            ],
+            "serviceName": "validators",
+            "verifierSetDiffThreshold": 1,
+            "encoder": "abi",
+            "keyType": "ecdsa",
+            "domainSeparator": "0xfa2912a57d663fcffbcb3d4c56334eb8babe48008b4b7458f4332e0828a12f40",
+            "address": "axelar1p22kz5jr7a9ruu8ypg40smual0uagl64dwvz5xt042vu8fa7l7dsl3wx8q"
+          },
+          "optimism-sepolia": {
+            "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "destinationChainID": "11155420",
+            "signingThreshold": [
+              "6",
+              "10"
+            ],
+            "serviceName": "validators",
+            "verifierSetDiffThreshold": 1,
+            "encoder": "abi",
+            "keyType": "ecdsa",
+            "domainSeparator": "0xf865bf16595139bf568a034d575ffdbdd524dd2dbf8cce1de2ddaf7b964bf8e6",
+            "address": "axelar1p0yyfy7f70zdc0ludh6kffjzs8mvun5prdf7nh7s2cgq74g67nmsjcw7t4"
+          },
+          "eth-sepolia": {
+            "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+            "destinationChainID": "11155111",
+            "signingThreshold": [
+              "6",
+              "10"
+            ],
+            "serviceName": "validators",
+            "verifierSetDiffThreshold": 1,
+            "encoder": "abi",
+            "keyType": "ecdsa",
+            "domainSeparator": "0xc04aba7c8ccda4059d622ac3e17bb4ef1c1e2358f25bfea5902a44d3a34d616a",
+            "address": "axelar15ra7d5uvnmc6ety6sqxsvsfz4t34ud6lc5gmt39res0c5thkqp2qdwj4af"
+          }
+        }
+      },
+      "id": "Axelarnet",
+      "axelarId": "Axelarnet",
+      "chainId": "devnet-amplifier",
+      "rpc": "http://devnet-amplifier.axelar.dev:26657",
+      "lcd": "http://devnet-amplifier.axelar.dev:1317",
+      "grpc": "devnet-amplifier.axelar.dev:9090",
+      "tokenSymbol": "AMPLIFIER",
+      "gasPrice": "0.00005uamplifier",
+      "gasLimit": "auto"
+    },
+    "axelar_account_prefix": "axelar",
+    "axelar_base_denom": "uamplifier",
+    "multisig_prover_encoder": "rkyv",
+    "service_name": "verifiers",
+    "verifier_key_type": "ecdsa",
+    "voting_verifier_block_expiry": 10,
+    "voting_verifier_majority_threshould": [
+      1,
+      1
+    ],
+    "voting_verifier_confirmation_height": 1,
+    "voting_verifier_msg_id_format": "base58_solana_tx_signature_and_event_index",
+    "verifier_set_diff_threshold": 1,
+    "gateway_code_id": 691,
+    "voting_verifier_code_id": 690,
+    "multisig_prover_code_id": 692
+  },
+  "voting_verifier": null,
+  "axelar_gateway": null,
+  "multisig_prover": null,
+  "solana_gateway": null,
+  "solana_memo_program": null,
+  "evm_deployments": {
+    "chains": {}
+  }
+}

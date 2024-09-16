@@ -29,7 +29,7 @@ async fn test_multicall_different_encodings() {
                 axelar_solana_memo_program::id(),
                 vec![counter_account.clone()],
                 borsh::to_vec(&AxelarMemoInstruction::ProcessMemo {
-                    memo: memo.to_string(),
+                    memo: (*memo).to_string(),
                 })
                 .expect("failed to create multicall instruction"),
             )
@@ -93,8 +93,7 @@ async fn test_multicall_different_encodings() {
 #[tokio::test]
 async fn test_empty_multicall_should_succeed() {
     let TestContext {
-        mut solana_chain,
-        memo_program_counter_pda: _,
+        mut solana_chain, ..
     } = axelar_solana_setup().await;
 
     for encoding in [EncodingScheme::Borsh, EncodingScheme::AbiEncoding] {

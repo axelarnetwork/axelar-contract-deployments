@@ -47,6 +47,8 @@ async fn main() -> eyre::Result<()> {
     tracing_subscriber::registry()
         .with(fmt::layer())
         .with(filter_layer)
+        // needed for colour eyre to give better error output
+        .with(tracing_error::ErrorLayer::default())
         .init();
 
     LOG_FILTER_HANDLE

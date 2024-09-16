@@ -7,6 +7,7 @@ use std::str::FromStr;
 
 use axelar_message_primitives::U256;
 use axelar_rkyv_encoding::types::{PublicKey, VerifierSet, U128};
+use eyre::OptionExt;
 use gmp_gateway::axelar_auth_weighted::RotationDelaySecs;
 use gmp_gateway::instructions::{InitializeConfig, VerifierSetWrapper};
 use gmp_gateway::state::GatewayConfig;
@@ -14,14 +15,14 @@ pub(crate) use message_limits::generate_message_limits_report;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
-use solana_sdk::transaction::Transaction;
 use tracing::info;
 use url::Url;
 use xshell::{cmd, Shell};
 
 use super::cosmwasm::cosmos_client::signer::SigningClient;
-use super::testnet::solana_domain_separator;
+use super::deployments::{SolanaDeploymentRoot, SolanaMemoProgram};
 use super::testnet::solana_interactions::send_solana_tx;
+use crate::cli::cmd::deployments::SolanaGatewayDeployment;
 use crate::cli::cmd::testnet::multisig_prover_api;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
@@ -71,20 +72,24 @@ pub(crate) fn deploy(
 }
 
 pub(crate) async fn init_gmp_gateway(
-    rpc_url: Option<&Url>,
-    payer_kp_path: Option<&PathBuf>,
-    destination_multisig_prover: &str,
     cosmwasm_signer: SigningClient,
     previous_signers_retention: u128,
     minimum_rotation_delay: RotationDelaySecs,
+    solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<()> {
-    let payer_kp = defaults::payer_kp_with_fallback_in_sol_cli_config(payer_kp_path)?;
+    let payer_kp = defaults::payer_kp()?;
 
     let (gateway_config_pda, _bump) = GatewayConfig::pda();
 
     // Query the cosmwasm multisig prover to get the latest verifier set
-    let destination_multisig_prover = cosmrs::AccountId::from_str(destination_multisig_prover)?;
-    let res = cosmwasm_signer
+    let destination_multisig_prover = cosmrs::AccountId::from_str(
+        &solana_deployment_root
+            .multisig_prover
+            .as_ref()
+            .ok_or_eyre("multisig prover not deployed")?
+            .address,
+    )?;
+    let multisig_prover_response = cosmwasm_signer
         .query::<multisig_prover_api::VerifierSetResponse>(
             destination_multisig_prover.clone(),
             serde_json::to_vec(&multisig_prover_api::QueryMsg::CurrentVerifierSet {})?,
@@ -92,18 +97,18 @@ pub(crate) async fn init_gmp_gateway(
         .await?;
 
     let mut signers = BTreeMap::new();
-    for signer in res.verifier_set.signers.values() {
+    for signer in multisig_prover_response.verifier_set.signers.values() {
         let pubkey = PublicKey::new_ecdsa(signer.pub_key.as_ref().try_into()?);
         let weight = U128::from(signer.weight.u128());
         signers.insert(pubkey, weight);
     }
     let verifier_set = VerifierSet::new(
-        res.verifier_set.created_at,
+        multisig_prover_response.verifier_set.created_at,
         signers,
-        U128::from(res.verifier_set.threshold.u128()),
+        U128::from(multisig_prover_response.verifier_set.threshold.u128()),
     );
     tracing::info!(
-        returned = ?res.verifier_set,
+        returned = ?multisig_prover_response.verifier_set,
         "returned verifier set"
     );
     tracing::info!(
@@ -112,7 +117,7 @@ pub(crate) async fn init_gmp_gateway(
     );
     let verifier_set = VerifierSetWrapper::new_from_verifier_set(verifier_set).unwrap();
     let init_config = InitializeConfig {
-        domain_separator: solana_domain_separator(),
+        domain_separator: solana_deployment_root.solana_configuration.domain_separator,
         initial_signer_sets: vec![verifier_set],
         minimum_rotation_delay,
         operator: payer_kp.pubkey(),
@@ -120,35 +125,36 @@ pub(crate) async fn init_gmp_gateway(
     };
     tracing::info!(?init_config, "initting auth weighted");
 
-    let ix = gmp_gateway::instructions::initialize_config(
-        payer_kp.pubkey(),
-        init_config,
-        gateway_config_pda,
+    let rpc_client = RpcClient::new(defaults::rpc_url()?.to_string());
+    send_solana_tx(
+        &rpc_client,
+        &[gmp_gateway::instructions::initialize_config(
+            payer_kp.pubkey(),
+            init_config.clone(),
+            gateway_config_pda,
+        )?],
+        &payer_kp,
     )?;
 
-    let rpc_client =
-        RpcClient::new(defaults::rpc_url_with_fallback_in_sol_cli_config(rpc_url)?.to_string());
-    let recent_hash = rpc_client.get_latest_blockhash()?;
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&payer_kp.pubkey()),
-        &[&payer_kp],
-        recent_hash,
-    );
-
-    let _signature = rpc_client.send_and_confirm_transaction_with_spinner(&tx)?;
+    // save the information in our deployment tracker
+    solana_deployment_root.solana_gateway = Some(SolanaGatewayDeployment {
+        domain_separator: init_config.domain_separator,
+        initial_signer_sets: vec![multisig_prover_response.verifier_set],
+        minimum_rotation_delay: init_config.minimum_rotation_delay,
+        operator: init_config.operator,
+        previous_signers_retention: init_config.previous_signers_retention.to_le_bytes(),
+        program_id: gmp_gateway::id(),
+        config_pda: gateway_config_pda,
+    });
 
     Ok(())
 }
 
 pub(crate) fn init_memo_program(
-    // todo change all instances of &Option<X> to Option<&X>
-    rpc_url: Option<&Url>,
-    payer_kp_path: Option<&PathBuf>,
+    solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<()> {
-    let payer_kp = defaults::payer_kp_with_fallback_in_sol_cli_config(payer_kp_path)?;
-    let rpc_client =
-        RpcClient::new(defaults::rpc_url_with_fallback_in_sol_cli_config(rpc_url)?.to_string());
+    let payer_kp = defaults::payer_kp()?;
+    let rpc_client = RpcClient::new(defaults::rpc_url()?.to_string());
 
     let gateway_root_pda = gmp_gateway::get_gateway_root_config_pda().0;
     let counter = axelar_solana_memo_program::get_counter_pda(&gateway_root_pda);
@@ -157,7 +163,13 @@ pub(crate) fn init_memo_program(
         &gateway_root_pda,
         &counter,
     )?;
-    send_solana_tx(&rpc_client, &[ix], &payer_kp);
+    send_solana_tx(&rpc_client, &[ix], &payer_kp)?;
+    solana_deployment_root.solana_memo_program = Some(SolanaMemoProgram {
+        solana_gateway_root_config_pda: gateway_root_pda,
+        program_id: axelar_solana_memo_program::id(),
+        counter_pda: counter.0,
+    });
+
     Ok(())
 }
 
@@ -264,51 +276,31 @@ pub(crate) mod defaults {
     use std::path::PathBuf;
     use std::str::FromStr;
 
+    use eyre::OptionExt;
     use solana_cli_config::Config;
     use solana_sdk::signature::Keypair;
     use solana_sdk::signer::EncodableKey;
     use url::Url;
+    use xshell::{cmd, Shell};
 
-    /// If provided, it parses the Keypair from the provided
-    /// path. If not provided, it calculates and uses default Solana CLI
-    /// keypair path. Finally, it tries to read the file.
-    pub(crate) fn payer_kp_with_fallback_in_sol_cli_config(
-        payer_kp_path: Option<&PathBuf>,
-    ) -> eyre::Result<Keypair> {
-        let calculated_payer_kp_path = match payer_kp_path {
-            Some(kp_path) => kp_path.clone(),
-            None => PathBuf::from(Config::default().keypair_path),
-        };
-        crate::cli::cmd::path::ensure_path_exists(&calculated_payer_kp_path, "payer keypair")?;
-        Keypair::read_from_file(&calculated_payer_kp_path)
+    pub(crate) fn payer_kp() -> eyre::Result<Keypair> {
+        let payer_kp_path = PathBuf::from(Config::default().keypair_path);
+        crate::cli::cmd::path::ensure_path_exists(&payer_kp_path, "payer keypair")?;
+        Keypair::read_from_file(&payer_kp_path)
             .map_err(|_| eyre::Error::msg("Could not read payer key pair"))
     }
 
-    /// If provided, it parses the provided RPC URL. If not provided,
-    /// it calculates and uses default Solana CLI
-    /// rpc URL.
-    pub(crate) fn rpc_url_with_fallback_in_sol_cli_config(
-        rpc_url: Option<&Url>,
-    ) -> eyre::Result<Url> {
-        let calculated_rpc_url = if let Some(kp_path) = rpc_url {
-            kp_path.clone()
-        } else {
-            #[allow(deprecated)]
-            // We are not explicitly supporting windows, plus home_dir() is what solana is using
-            // under the hood.
-            let mut sol_config_path =
-                std::env::home_dir().ok_or(eyre::eyre!("Home dir not found !"))?;
-            sol_config_path.extend([".config", "solana", "cli", "config.yml"]);
+    pub(crate) fn rpc_url() -> eyre::Result<Url> {
+        let sh = Shell::new()?;
+        let rpc_url = cmd!(sh, "solana config get json_rpc_url")
+            .read()?
+            .as_str()
+            .split_whitespace()
+            .last()
+            .ok_or_eyre("rpc url could not be extracted from solana config")?
+            .to_string();
 
-            let sol_cli_config = Config::load(
-                sol_config_path
-                    .to_str()
-                    .ok_or(eyre::eyre!("Config path not valid unicode !"))?,
-            )?;
-            Url::from_str(&sol_cli_config.json_rpc_url)?
-        };
-
-        Ok(calculated_rpc_url)
+        Ok(Url::from_str(&rpc_url)?)
     }
 }
 

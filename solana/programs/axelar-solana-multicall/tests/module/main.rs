@@ -1,3 +1,11 @@
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    clippy::tests_outside_test_module,
+    clippy::str_to_string
+)]
+
 use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway;
 use evm_contracts_test_suite::evm_weighted_signers::WeightedSigners;

@@ -6,7 +6,7 @@ use cosmrs::tx::Msg;
 use cosmrs::Denom;
 use eyre::OptionExt;
 use k256::elliptic_curve::rand_core::OsRng;
-use multisig::key::KeyType;
+use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use solana_sdk::keccak::hashv;
 use xshell::Shell;
@@ -16,11 +16,14 @@ pub(crate) mod cosmos_client;
 
 use build::{build_contracts, download_wasm_opt, setup_toolchain, unpack_tar_gz};
 
-use self::cosmos_client::network::Network;
 use self::path::{binaryen_tar_file, binaryen_unpacked, wasm_opt_binary};
+use super::deployments::{AxelarConfiguration, SolanaDeploymentRoot};
 use crate::cli::cmd::cosmwasm::cosmos_client::gas::Gas;
 use crate::cli::cmd::cosmwasm::cosmos_client::signer::SigningClient;
-use crate::cli::cmd::testnet::{multisig_prover_api, solana_domain_separator, SOLANA_CHAIN_NAME};
+use crate::cli::cmd::deployments::{
+    AxelarGatewayDeployment, MultisigProverDeployment, VotingVerifierDeployment,
+};
+use crate::cli::cmd::testnet::multisig_prover_api;
 
 struct WasmContracts {
     wasm_artifact_name: &'static str,
@@ -42,28 +45,6 @@ const CONTRACTS: [WasmContracts; 3] = [
     },
 ];
 
-pub(crate) const AXELAR_DEVNET: Network = Network {
-    chain_id: "devnet-amplifier",
-    grpc_endpoint: "http://devnet-amplifier.axelar.dev:9090",
-    rpc_endpoint: "http://devnet-amplifier.axelar.dev:26657",
-};
-
-pub(crate) const AXELAR_ACCOUNT_PREFIX: &str = "axelar";
-
-const AXELAR_BASE_DENOM: &str = "uamplifier";
-const ROUTER_ADDRESS: &str = "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y";
-const GOVERNANCE_ADDRESS: &str = "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9";
-const MULTISIG_ADDRESS: &str = "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r";
-const COORDINATOR_ADDRESS: &str =
-    "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g";
-const SERVICE_REGISTRY_ADDRESS: &str =
-    "axelar1c9fkszt5lq34vvvlat3fxj6yv7ejtqapz04e97vtc9m5z9cwnamq8zjlhz";
-const BLOCK_EXPIRY: u64 = 10;
-const CONFIRMATION_HEIGHT: u64 = 1;
-const REWARDS_ADDRESS: &str = "axelar1vaj9sfzc3z0gpel90wu4ljutncutv0wuhvvwfsh30rqxq422z89qnd989l";
-const SERVICE_NAME: &str = "validators";
-const VERIFIER_SET_DIFF_THRESHOLD: u32 = 1;
-
 pub(crate) async fn build() -> eyre::Result<()> {
     let sh = Shell::new()?;
 
@@ -82,61 +63,106 @@ pub(crate) async fn build() -> eyre::Result<()> {
     Ok(())
 }
 
-pub(crate) async fn deploy(client: &SigningClient) -> eyre::Result<[u64; 3]> {
+pub(crate) async fn deploy(
+    client: &SigningClient,
+    config: &mut AxelarConfiguration,
+) -> eyre::Result<()> {
     // deploy each contract - do not instantiate
-    let mut code_ids = [0_u64; 3];
-    for (contract, code_id_storage) in CONTRACTS.into_iter().zip(code_ids.iter_mut()) {
-        tracing::info!(contract = ?contract.wasm_artifact_name, "about to deploy contract");
+    config
+        .voting_verifier_code_id
+        .replace(deploy_contract(&CONTRACTS[0], client, config).await?);
+    config
+        .gateway_code_id
+        .replace(deploy_contract(&CONTRACTS[1], client, config).await?);
+    config
+        .multisig_prover_code_id
+        .replace(deploy_contract(&CONTRACTS[2], client, config).await?);
+    Ok(())
+}
 
-        let wasm_byte_code = read_wasm_for_deployment(contract.wasm_artifact_name)?;
-        let msg_store_code = MsgStoreCode {
-            sender: client.signer_account_id()?,
-            wasm_byte_code,
-            instantiate_permission: None,
-        }
-        .to_any()?;
-
-        let response = client
-            .sign_and_broadcast(
-                vec![msg_store_code],
-                &Gas {
-                    gas_price: cosmos_client::gas::GasPrice {
-                        amount: dec!(0.007),
-                        denom: Denom::from_str(AXELAR_BASE_DENOM)
-                            .expect("base denom is always valid"),
-                    },
-                    gas_adjustment: dec!(1.5),
-                },
-            )
-            .await?;
-        tracing::debug!(tx_result = ?response, "raw response reult");
-
-        let code_id = response.extract("store_code", "code_id")?;
-        tracing::info!(code_id, contract = ?contract.wasm_artifact_name, "code stored");
-        let code_id = code_id.parse()?;
-        *code_id_storage = code_id;
+async fn deploy_contract(
+    contract: &WasmContracts,
+    client: &SigningClient,
+    config: &AxelarConfiguration,
+) -> Result<u64, eyre::Error> {
+    tracing::info!(contract = ?contract.wasm_artifact_name, "about to deploy contract");
+    let wasm_byte_code = read_wasm_for_deployment(contract.wasm_artifact_name)?;
+    let msg_store_code = MsgStoreCode {
+        sender: client.signer_account_id()?,
+        wasm_byte_code,
+        instantiate_permission: None,
     }
-    Ok(code_ids)
+    .to_any()?;
+    let response = client
+        .sign_and_broadcast(vec![msg_store_code], &default_gas(config)?)
+        .await?;
+    tracing::debug!(tx_result = ?response, "raw response reult");
+    let code_id = response.extract("store_code", "code_id")?;
+    tracing::info!(code_id, contract = ?contract.wasm_artifact_name, "code stored");
+    let code_id = code_id.parse()?;
+    Ok(code_id)
 }
 
 pub(crate) async fn init_solana_voting_verifier(
-    code_id: u64,
     client: &SigningClient,
+    solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<String> {
     use voting_verifier::msg::InstantiateMsg;
 
+    let code_id = solana_deployment_root
+        .axelar_configuration
+        .voting_verifier_code_id
+        .ok_or_eyre("voting verifier code id not present. Was it deployed?")?;
     let instantiate_msg = InstantiateMsg {
-        service_registry_address: SERVICE_REGISTRY_ADDRESS.to_string().try_into().unwrap(),
-        service_name: SERVICE_NAME.to_string().try_into().unwrap(),
-        source_gateway_address: gmp_gateway::id().to_string().try_into().unwrap(),
-        voting_threshold: majority_threshold(),
-        block_expiry: BLOCK_EXPIRY,
-        confirmation_height: CONFIRMATION_HEIGHT,
-        source_chain: SOLANA_CHAIN_NAME.to_string().try_into().unwrap(),
-        rewards_address: REWARDS_ADDRESS.to_string(),
-        governance_address: GOVERNANCE_ADDRESS.to_string().try_into().unwrap(),
-        msg_id_format:
-            axelar_wasm_std::msg_id::MessageIdFormat::Base58SolanaTxSignatureAndEventIndex,
+        service_registry_address: solana_deployment_root
+            .axelar_configuration
+            .axelar_chain
+            .contracts
+            .service_registry
+            .address
+            .to_string()
+            .try_into()?,
+        service_name: solana_deployment_root
+            .axelar_configuration
+            .service_name
+            .to_string()
+            .try_into()?,
+        source_gateway_address: solana_deployment_root
+            .solana_configuration
+            .gateway_program_id
+            .clone()
+            .try_into()?,
+        voting_threshold: majority_threshold(&solana_deployment_root.axelar_configuration),
+        block_expiry: solana_deployment_root
+            .axelar_configuration
+            .voting_verifier_block_expiry,
+        confirmation_height: solana_deployment_root
+            .axelar_configuration
+            .voting_verifier_confirmation_height,
+        source_chain: solana_deployment_root
+            .solana_configuration
+            .chain_name_on_axelar_chain
+            .to_string()
+            .try_into()?,
+        rewards_address: solana_deployment_root
+            .axelar_configuration
+            .axelar_chain
+            .contracts
+            .rewards
+            .address
+            .to_string(),
+        governance_address: solana_deployment_root
+            .axelar_configuration
+            .axelar_chain
+            .contracts
+            .service_registry
+            .governance_account
+            .to_string()
+            .try_into()?,
+        msg_id_format: solana_deployment_root
+            .axelar_configuration
+            .voting_verifier_msg_id_format
+            .clone(),
     };
     tracing::info!(?instantiate_msg, "instantiate msg");
     let instantiate = MsgInstantiateContract {
@@ -148,113 +174,219 @@ pub(crate) async fn init_solana_voting_verifier(
         funds: vec![],
     };
     let response = client
-        .sign_and_broadcast(vec![instantiate.into_any()?], &default_gas())
+        .sign_and_broadcast(
+            vec![instantiate.into_any()?],
+            &default_gas(&solana_deployment_root.axelar_configuration)?,
+        )
         .await?;
     tracing::debug!(tx_result = ?response, "raw response reult");
     let contract_address = response.extract("instantiate", "_contract_address")?;
     tracing::info!(contract_address, "Voting verifier contract address");
 
+    solana_deployment_root.voting_verifier = Some(VotingVerifierDeployment {
+        code_id,
+        address: contract_address.clone(),
+        init_params: instantiate_msg,
+    });
+
     Ok(contract_address)
 }
 
-fn majority_threshold() -> axelar_wasm_std::MajorityThreshold {
-    axelar_wasm_std::Threshold::try_from((1u64, 1u64))
+fn majority_threshold(config: &AxelarConfiguration) -> axelar_wasm_std::MajorityThreshold {
+    axelar_wasm_std::Threshold::try_from(config.voting_verifier_majority_threshould)
         .unwrap()
         .try_into()
         .unwrap()
 }
 
 pub(crate) async fn init_gateway(
-    code_id: u64,
     client: &SigningClient,
-    voting_verifier_address: String,
+    solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<String> {
     use gateway::msg::InstantiateMsg;
 
+    let code_id = solana_deployment_root
+        .axelar_configuration
+        .gateway_code_id
+        .ok_or_eyre("gateway code id not present. Was it deployed?")?;
+    let instantiate_msg = InstantiateMsg {
+        verifier_address: solana_deployment_root
+            .voting_verifier
+            .as_ref()
+            .ok_or_eyre("voting verifier not deployed")?
+            .address
+            .clone(),
+        router_address: solana_deployment_root
+            .axelar_configuration
+            .axelar_chain
+            .contracts
+            .router
+            .address
+            .clone(),
+    };
     let instantiate = MsgInstantiateContract {
         sender: client.signer_account_id()?,
         admin: Some(client.signer_account_id()?),
         code_id,
         label: Some("init-gateway".to_string()),
-        msg: serde_json::to_vec(&InstantiateMsg {
-            verifier_address: voting_verifier_address,
-            router_address: ROUTER_ADDRESS.to_string(),
-        })?,
+        msg: serde_json::to_vec(&instantiate_msg)?,
         funds: vec![],
     };
     let response = client
-        .sign_and_broadcast(vec![instantiate.into_any()?], &default_gas())
+        .sign_and_broadcast(
+            vec![instantiate.into_any()?],
+            &default_gas(&solana_deployment_root.axelar_configuration)?,
+        )
         .await?;
     tracing::debug!(tx_result = ?response, "raw response reult");
     let contract_address = response.extract("instantiate", "_contract_address")?;
     tracing::info!(contract_address, "gateway contract address");
 
+    solana_deployment_root.axelar_gateway = Some(AxelarGatewayDeployment {
+        code_id,
+        address: contract_address.clone(),
+        init_params: instantiate_msg,
+    });
+
     Ok(contract_address)
 }
 
-pub(crate) fn default_gas() -> Gas {
-    Gas {
+#[tracing::instrument(skip_all, fields(gas = ?config.axelar_chain.gas_price), err)]
+pub(crate) fn default_gas(config: &AxelarConfiguration) -> eyre::Result<Gas> {
+    // the factual data is in form of "0.123uamplifier" -- we get rid of non-numbers
+    let gas_price = config
+        .axelar_chain
+        .gas_price
+        .chars()
+        .take_while(|c| c.is_ascii_digit() || *c == '.')
+        .collect::<String>();
+    Ok(Gas {
         gas_price: cosmos_client::gas::GasPrice {
-            amount: dec!(0.007),
-            denom: Denom::from_str(AXELAR_BASE_DENOM).expect("base denom is always valid"),
+            amount: Decimal::from_str_exact(gas_price.as_str())?,
+            denom: Denom::from_str(&config.axelar_base_denom)?,
         },
         gas_adjustment: dec!(1.5),
-    }
+    })
 }
 
 pub(crate) async fn init_solana_multisig_prover(
-    code_id: u64,
     client: &SigningClient,
-    gateway_address: String,
-    voting_verifier_address: String,
+    solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<String> {
     use crate::cli::cmd::testnet::multisig_prover_api::InstantiateMsg;
+    let code_id = solana_deployment_root
+        .axelar_configuration
+        .gateway_code_id
+        .ok_or_eyre("gateway code id not present")?;
 
-    let msg = InstantiateMsg {
+    let instantiate_msg = InstantiateMsg {
         admin_address: client.signer_account_id()?.to_string(),
-        governance_address: GOVERNANCE_ADDRESS.to_string(),
-        gateway_address,
-        multisig_address: MULTISIG_ADDRESS.to_string(),
-        coordinator_address: COORDINATOR_ADDRESS.to_string(),
-        service_registry_address: SERVICE_REGISTRY_ADDRESS.to_string(),
-        voting_verifier_address,
-        signing_threshold: majority_threshold(),
-        service_name: SERVICE_NAME.to_string(),
-        chain_name: SOLANA_CHAIN_NAME.to_string(),
-        verifier_set_diff_threshold: VERIFIER_SET_DIFF_THRESHOLD,
-        encoder: "rkyv".to_string(),
-        key_type: KeyType::Ecdsa,
-        domain_separator: hex::encode(solana_domain_separator()),
+        governance_address: solana_deployment_root
+            .axelar_configuration
+            .axelar_chain
+            .contracts
+            .service_registry
+            .governance_account
+            .clone(),
+        gateway_address: solana_deployment_root
+            .axelar_gateway
+            .as_ref()
+            .ok_or_eyre("gateway on Axelar chain not deployed")?
+            .address
+            .clone(),
+        multisig_address: solana_deployment_root
+            .axelar_configuration
+            .axelar_chain
+            .contracts
+            .multisig
+            .address
+            .to_string(),
+        coordinator_address: solana_deployment_root
+            .axelar_configuration
+            .axelar_chain
+            .contracts
+            .coordinator
+            .address
+            .to_string(),
+        service_registry_address: solana_deployment_root
+            .axelar_configuration
+            .axelar_chain
+            .contracts
+            .service_registry
+            .address
+            .to_string(),
+        voting_verifier_address: solana_deployment_root
+            .voting_verifier
+            .as_ref()
+            .ok_or_eyre("voting verifier not deployed?")?
+            .address
+            .clone(),
+        signing_threshold: majority_threshold(&solana_deployment_root.axelar_configuration),
+        service_name: solana_deployment_root
+            .axelar_configuration
+            .service_name
+            .to_string(),
+        chain_name: solana_deployment_root
+            .solana_configuration
+            .chain_name_on_axelar_chain
+            .to_string(),
+        verifier_set_diff_threshold: solana_deployment_root
+            .axelar_configuration
+            .verifier_set_diff_threshold,
+        encoder: solana_deployment_root
+            .axelar_configuration
+            .multisig_prover_encoder
+            .clone(),
+        key_type: solana_deployment_root
+            .axelar_configuration
+            .verifier_key_type,
+        domain_separator: hex::encode(solana_deployment_root.solana_configuration.domain_separator),
     };
-    tracing::info!(?msg, "init msg");
+    tracing::info!(?instantiate_msg, "init msg");
 
     let instantiate = MsgInstantiateContract {
         sender: client.signer_account_id()?,
         admin: Some(client.signer_account_id()?),
         code_id,
         label: Some("init-multisig-prover".to_string()),
-        msg: serde_json::to_vec(&msg)?,
+        msg: serde_json::to_vec(&instantiate_msg)?,
         funds: vec![],
     };
     let response = client
-        .sign_and_broadcast(vec![instantiate.into_any()?], &default_gas())
+        .sign_and_broadcast(
+            vec![instantiate.into_any()?],
+            &default_gas(&solana_deployment_root.axelar_configuration)?,
+        )
         .await?;
     tracing::debug!(tx_result = ?response, "raw response reult");
 
     let contract_address = response.extract("instantiate", "_contract_address")?;
     tracing::info!(contract_address, "Multisig prover contract address");
 
-    update_verifier_set_multisig_prover(contract_address.as_str(), client).await?;
+    solana_deployment_root.multisig_prover = Some(MultisigProverDeployment {
+        code_id,
+        init_params: instantiate_msg,
+        address: contract_address.clone(),
+    });
+
+    update_verifier_set_multisig_prover(client, solana_deployment_root).await?;
     Ok(contract_address)
 }
 
 pub(crate) async fn update_verifier_set_multisig_prover(
-    contract_address: &str,
     client: &SigningClient,
+    solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<()> {
     tracing::info!("calling multisig_prover_api::MultisigProverExecuteMsg::UpdateVerifierSet");
     let msg = multisig_prover_api::MultisigProverExecuteMsg::UpdateVerifierSet {};
-    let destination_multisig_prover = cosmrs::AccountId::from_str(contract_address).unwrap();
+    let destination_multisig_prover = cosmrs::AccountId::from_str(
+        solana_deployment_root
+            .multisig_prover
+            .as_ref()
+            .ok_or_eyre("multisig prover not deployed")?
+            .address
+            .as_str(),
+    )?;
     let execute = MsgExecuteContract {
         sender: client.signer_account_id()?,
         msg: serde_json::to_vec(&msg)?,
@@ -262,19 +394,17 @@ pub(crate) async fn update_verifier_set_multisig_prover(
         contract: destination_multisig_prover.clone(),
     };
     let response = client
-        .sign_and_broadcast(vec![execute.into_any()?], &default_gas())
+        .sign_and_broadcast(
+            vec![execute.into_any()?],
+            &default_gas(&solana_deployment_root.axelar_configuration)?,
+        )
         .await?;
     tracing::info!(tx_result = ?response, "raw multisig update verifier set result");
     Ok(())
 }
 
-pub(crate) fn domain_separator(chain_name: &str, chain_id: u64) -> [u8; 32] {
-    hashv(&[
-        chain_name.as_bytes(),
-        ROUTER_ADDRESS.as_bytes(),
-        &chain_id.to_le_bytes(),
-    ])
-    .to_bytes()
+pub(crate) fn domain_separator(chain_name: &str, router_address: &str) -> [u8; 32] {
+    hashv(&[chain_name.as_bytes(), router_address.as_bytes()]).to_bytes()
 }
 
 pub(crate) fn generate_wallet() -> eyre::Result<()> {
@@ -312,10 +442,10 @@ pub(crate) mod ampd {
 
     use super::path::axelar_amplifier_dir;
     use crate::cli::cmd::cosmwasm::path::{self, ampd_home_dir};
+    use crate::cli::cmd::deployments::SolanaConfiguration;
     use crate::cli::cmd::path::{workspace_root_dir, xtask_crate_root_dir};
-    use crate::cli::cmd::testnet::SOLANA_CHAIN_NAME;
 
-    pub(crate) async fn setup_ampd() -> eyre::Result<()> {
+    pub(crate) async fn setup_ampd(solana_config: &SolanaConfiguration) -> eyre::Result<()> {
         if !Confirm::new("Welcome to ampd-setup ! This will perform/guide you through the verifier onboarding process described here https://docs.axelar.dev/validator/amplifier/verifier-onboarding (devnet-amplifier chain).
 
         It will overwrite your $HOME/.ampd/config.toml if it exist.
@@ -388,7 +518,7 @@ pub(crate) mod ampd {
             .args(vec![
                 "register-chain-support",
                 "validators",
-                SOLANA_CHAIN_NAME,
+                solana_config.chain_name_on_axelar_chain.as_str(),
             ])
             .run()?;
 

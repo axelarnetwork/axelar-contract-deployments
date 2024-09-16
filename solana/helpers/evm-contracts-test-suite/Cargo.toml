@@ -7,6 +7,7 @@ edition = "2021"
 anyhow.workspace = true
 ethers.workspace = true
 evm-contracts-rs.workspace = true
+tracing.workspace = true
 
 [dev-dependencies]
 rstest.workspace = true

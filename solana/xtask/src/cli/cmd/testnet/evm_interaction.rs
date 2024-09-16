@@ -8,9 +8,10 @@ use ethers::types::{Address as EvmAddress, TransactionRequest};
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo;
 use evm_contracts_test_suite::{ContractMiddleware, EvmSigner};
+use eyre::OptionExt;
 use router_api::{Address, ChainName, CrossChainId};
 
-use super::devnet_amplifier::EvmChain;
+use crate::cli::cmd::axelar_deployments::EvmChain;
 
 #[tracing::instrument(skip_all, ret)]
 pub(crate) fn create_axelar_message_from_evm_log(
@@ -76,9 +77,18 @@ pub(crate) async fn approve_messages_on_evm_gateway(
     destination_evm_signer: &EvmSigner,
 ) -> eyre::Result<()> {
     let destination_evm_gateway = EvmAddress::from_slice(
-        hex::decode(destination_chain.axelar_gateway.strip_prefix("0x").unwrap())
-            .unwrap()
-            .as_ref(),
+        hex::decode(
+            destination_chain
+                .contracts
+                .axelar_gateway
+                .as_ref()
+                .ok_or_eyre("gateway not deployed on the destination chain")?
+                .address
+                .strip_prefix("0x")
+                .unwrap(),
+        )
+        .unwrap()
+        .as_ref(),
     );
     let tx = TransactionRequest::new()
         .to(destination_evm_gateway)
