@@ -842,6 +842,11 @@ function getContractJSON(contractName, artifactPath) {
     }
 }
 
+function getQualifiedContractName(contractName) {
+    const contractJSON = getContractJSON(contractName);
+    return `${contractJSON.sourceName}:${contractJSON.contractName}`;
+}
+
 /**
  * Retrieves gas options for contract interactions.
  *
@@ -1017,6 +1022,10 @@ async function getWeightedSigners(config, chain, options) {
     return { signers: [signers], verifierSetId };
 }
 
+const verifyContractByName = (env, chain, contract, args, options = {}, name) => {
+    verifyContract(env, chain, contract, args, { ...options, contractPath: getQualifiedContractName(name) });
+};
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1055,4 +1064,6 @@ module.exports = {
     relayTransaction,
     getDeploymentTx,
     getWeightedSigners,
+    getQualifiedContractName,
+    verifyContractByName,
 };
