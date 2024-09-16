@@ -1,0 +1,54 @@
+name: Ampd breaking changes detection
+on:
+  schedule:
+    # 7 am in the morning. If there are errors due to dependencies, engineers will be notified.
+    # We are not fixing versions because everything is liquid right now.
+    - cron: "0 07 * * *"
+  push:
+    branches:
+      - add-ci-cronjob-for-ampd
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: "Build the code"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: eigerco/axelar-amplifier
+          fetch-depth: 0
+      
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+
+      # Initially do not cache deps, do a fresh build from zero.
+
+      # - uses: Swatinem/rust-cache@v2
+      #   with:
+      #     cache-all-crates: true
+      #     cache-on-failure: true
+      #     workspaces: "ampd -> target"
+      #     shared-key: "ampd"
+      
+      - name: Configure Git
+        run: |
+          git config --global user.email "someone@example.com"
+          git config --global user.name "A Name"
+          git remote add upstream https://github.com/axelarnetwork/axelar-amplifier.git
+
+      - name: Bring changes from upstream to main
+        run: |          
+          git fetch upstream
+          git merge --allow-unrelated-histories upstream/main
+      
+      - name: Try to integrate the changes from main into solana branch
+        run: |
+          git checkout solana
+          git merge main
+      
+      - name: Build the code
+        run: cargo clean && cargo build
+      
+      - name: Test the code
+        run: cargo test
