@@ -7,6 +7,7 @@
       "chainId": 1,
       "rpc": "https://mainnet.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x4F4495243837681061C4743b74B3eEdf548D56A5",
@@ -20,7 +21,6 @@
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -148,6 +148,7 @@
       "chainId": 43114,
       "rpc": "https://api.avax.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x5029C0EFf6C34351a0CEc334542cDb22c7928f78",
@@ -161,7 +162,6 @@
           "startingKeyIDs": [
             "evm-avalanche-9169969"
           ],
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -272,6 +272,7 @@
       "chainId": 250,
       "rpc": "https://rpc.ftm.tools",
       "tokenSymbol": "FTM",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
@@ -285,7 +286,6 @@
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -400,6 +400,7 @@
       "chainId": 137,
       "rpc": "https://polygon-rpc.com",
       "tokenSymbol": "MATIC",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x6f015F16De9fC8791b234eF68D486d2bF203FBA8",
@@ -413,7 +414,6 @@
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -527,6 +527,7 @@
       "chainId": 1284,
       "rpc": "https://rpc.api.moonbeam.network",
       "tokenSymbol": "GLMR",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x4F4495243837681061C4743b74B3eEdf548D56A5",
@@ -540,7 +541,6 @@
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -652,6 +652,7 @@
       "rpc": "https://bscrpc.com",
       "tokenSymbol": "BNB",
       "wrappedSymbol": "WBNB",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
@@ -665,7 +666,6 @@
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -790,6 +790,7 @@
       "chainId": 42161,
       "rpc": "https://arb1.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -803,7 +804,6 @@
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -919,6 +919,7 @@
       "chainId": 42220,
       "rpc": "https://forno.celo.org",
       "tokenSymbol": "CELO",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -934,7 +935,6 @@
           "salt": "AxelarGateway v6.2",
           "governance": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -1045,6 +1045,7 @@
       "chainId": 2222,
       "rpc": "https://evm.kava.io",
       "tokenSymbol": "KAVA",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -1058,7 +1059,6 @@
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -1169,6 +1169,7 @@
       "chainId": 314,
       "rpc": "https://rpc.ankr.com/filecoin",
       "tokenSymbol": "FIL",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -1182,7 +1183,6 @@
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -1298,6 +1298,7 @@
       "chainId": 10,
       "rpc": "https://optimism-mainnet.public.blastapi.io",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -1311,7 +1312,6 @@
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -1431,6 +1431,7 @@
       "chainId": 59144,
       "rpc": "https://rpc.linea.build",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -1444,7 +1445,6 @@
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -1559,6 +1559,7 @@
       "chainId": 8453,
       "rpc": "https://developer-access-mainnet.base.org",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -1572,7 +1573,6 @@
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -1689,6 +1689,7 @@
       "chainId": 5000,
       "rpc": "https://rpc.mantle.xyz",
       "tokenSymbol": "MNT",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1702,7 +1703,6 @@
           "implementationCodehash": "0x44a3e78ebfbd139f4023ba77ffced61aeea29f0a20eec807d260e805e272c5c9",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -1823,6 +1823,7 @@
       "chainId": 534352,
       "rpc": "https://rpc.scroll.io",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1836,7 +1837,6 @@
           ],
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -1951,6 +1951,7 @@
       "rpc": "https://fullnode.parachain.centrifuge.io",
       "tokenSymbol": "CFG",
       "confirmations": 1,
+      "chainType": "evm",
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -1979,7 +1980,6 @@
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -2051,6 +2051,7 @@
       "chainId": 13371,
       "rpc": "https://rpc.immutable.com/",
       "tokenSymbol": "IMX",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
@@ -2064,7 +2065,6 @@
           "implementationCodehash": "0x9bdd7652536460a69d217dc4fd03669ef763ba66d1dcdf5068ef6e887b2c1ea8",
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0x8A156bCA562FB75385c4d41ea6903E270A34B727",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -2176,6 +2176,7 @@
         "url": "https://fraxscan.com",
         "api": "https://api.fraxscan.com/api"
       },
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
@@ -2189,7 +2190,6 @@
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "AxelarGasService": {
@@ -2285,6 +2285,7 @@
       "chainId": 81457,
       "rpc": "https://rpc.blast.io",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -2313,7 +2314,6 @@
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
-          "chainType": "evm",
           "connectionType": "consensus"
         },
         "InterchainGovernance": {
