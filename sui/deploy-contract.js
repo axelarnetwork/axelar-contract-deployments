@@ -63,11 +63,8 @@ const PACKAGE_CONFIGS = {
         GasService: postDeployGasService,
         Example: postDeployExample,
         Operators: postDeployOperators,
-        Abi: {},
-        Governance: {},
         ITS: postDeployIts,
         Squid: postDeploySquid,
-        Utils: () => undefined,
     },
 };
 
@@ -253,7 +250,10 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 
     // Execute post-deployment function
     const executePostDeploymentFn = PACKAGE_CONFIGS.postDeployFunctions[packageName];
-    await executePostDeploymentFn(published, keypair, client, config, chain, options);
+
+    if (executePostDeploymentFn) {
+        await executePostDeploymentFn(published, keypair, client, config, chain, options);
+    }
 
     printInfo(`${packageName} Configuration Updated`, JSON.stringify(chain.contracts[packageName], null, 2));
 }
