@@ -10,46 +10,13 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
+      "chainType": "evm",
       "explorer": {
         "name": "Snowtrace",
         "url": "https://testnet.snowtrace.io",
         "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
       },
-      "chainType": "evm",
       "contracts": {
-        "AxelarGateway": {
-          "address": "0x146cbBBD1D03DA0619baa96Ed1d145A549959499",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "implementation": "0x25C97DC353fF1dBBD04d8096AC6C87B5244D856d",
-          "implementationCodehash": "0xfd4a15c7e849df6fd0feb9a9bfd642a6c4311f53295101b0d3e1207dc206521c",
-          "deploymentMethod": "create3",
-          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "previousSignersRetention": 15,
-          "domainSeparator": "0x598ba04d225cec385d1ce3cf3c9a076af803aa5c614bc0e0d176f04ac8d28f55",
-          "minimumRotationDelay": 300,
-          "salt": "AxelarAmplifierGateway devnet-amplifier",
-          "gasOptions": {
-            "gasLimit": 5000000
-          },
-          "proxyDeploymentArgs": [
-            "0x25C97DC353fF1dBBD04d8096AC6C87B5244D856d",
-            "0xd7A0e641Bfbb9AA83aAb9f3e89bf83e128d321c4",
-            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a612330000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000cb9e1000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "initialVerifierSetId": "87bba3c9140d07b5e585b35254e9c1068574117685e34a51561cab4b719df381",
-          "connectionType": "amplifier"
-        },
-        "InterchainGovernance": {
-          "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 100,
-          "address": "0xd7A0e641Bfbb9AA83aAb9f3e89bf83e128d321c4",
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
-          "deploymentMethod": "create3",
-          "codehash": "0x7a42cdec9730e5e54cfd6b6eae340b35922e538338839cd5d23ff8e75fb24dd0",
-          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance"
-        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
           "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
@@ -91,6 +58,7 @@
       "rpc": "https://eth-sepolia-public.unifra.io",
       "tokenSymbol": "ETH",
       "confirmations": 1,
+      "chainType": "evm",
       "explorer": {
         "explorer": "Sepoliascan",
         "url": "https://sepolia.etherscan.io",
@@ -140,6 +108,7 @@
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
       "confirmations": 1,
+      "chainType": "evm",
       "explorer": {
         "name": "Opscan",
         "url": "https://sepolia-optimistic.etherscan.io",
@@ -190,6 +159,13 @@
       "tokenSymbol": "AVAX",
       "confirmations": 1,
       "chainType": "evm",
+      "explorer": {
+        "name": "Snowtrace",
+        "url": "https://testnet.snowtrace.io",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
       "contracts": {
         "AxelarGateway": {
           "gasOptions": {
@@ -237,152 +213,16 @@
           "address": "0x1179d44e69ba5252B7478a8602617d5EEeb2F377",
           "implementation": "0xDC290c5e736c7ae15af984300bB7db0D30f248eC",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
-        }
-      },
-      "explorer": {
-        "name": "Snowtrace",
-        "url": "https://testnet.snowtrace.io",
-        "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
-      },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 40
-    },
-    "fantom": {
-      "name": "fantom",
-      "id": "fantom",
-      "axelarId": "fantom",
-      "chainId": 4002,
-      "rpc": "https://rpc.testnet.fantom.network",
-      "tokenSymbol": "ETH",
-      "confirmations": 1,
-      "gasOptions": {
-        "gasLimit": 5000000
-      },
-      "chainType": "evm",
-      "contracts": {
-        "AxelarGateway": {
-          "address": "0xFe34259F1EEc1Ea702A175bC5C2a4a29df6cfb43",
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "implementation": "0x37e6F01C4BA68BA121dA57CfB0d54B822006010d",
-          "implementationCodehash": "0x6b7c920082c38c45886db0d7e1826ee424079993209d249b1ec714622f01e23f",
-          "deploymentMethod": "create3",
-          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "previousSignersRetention": 15,
-          "domainSeparator": "0x9799ef60ed6cac8cd489e8932dcac928ed47c499a9cda8d128dcf1e934a196b4",
-          "minimumRotationDelay": 300,
-          "salt": "AxelarAmplifierGateway devnet-amplifier",
-          "gasOptions": {
-            "gasLimit": 5000000
-          },
-          "proxyDeploymentArgs": [
-            "0x37e6F01C4BA68BA121dA57CfB0d54B822006010d",
-            "0x0aa18e321c89bbdfCE9913aa0cA20B977aDc4B48",
-            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a612330000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000cba59000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "initialVerifierSetId": "6fa58485dfe7043bd61ce646c3353e4afdb30d5686371e7ef5d00fba13d589fd",
-          "connectionType": "amplifier"
-        },
-        "InterchainGovernance": {
-          "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 100,
-          "address": "0x0aa18e321c89bbdfCE9913aa0cA20B977aDc4B48",
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
-          "deploymentMethod": "create3",
-          "codehash": "0x239a905161dd2c2ee8f567b0d3f10d8c82285bbc9bcd0a283ca20c1e743ce734",
-          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance"
-        },
-        "ConstAddressDeployer": {
-          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
-          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
-          "deploymentMethod": "create",
-          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
-          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
-        },
-        "Create3Deployer": {
-          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "salt": "Operators devnet-amplifier"
         }
-      },
-      "explorer": {
-        "name": "Ftmscan",
-        "url": "https://testnet.ftmscan.com",
-        "api": "https://api-testnet.ftmscan.com/api"
-      }
-    },
-    "ethereum-sepolia": {
-      "name": "ethereum-sepolia",
-      "id": "ethereum-sepolia",
-      "axelarId": "ethereum-sepolia",
-      "chainId": 11155111,
-      "rpc": "https://rpc.ankr.com/eth_sepolia",
-      "tokenSymbol": "ETH",
-      "confirmations": 1,
-      "gasOptions": {
-        "gasLimit": 5000000
-      },
-      "chainType": "evm",
-      "contracts": {
-        "AxelarGateway": {
-          "address": "0xeE9E463Fd8bE9AF266e1B143C27F7D42648f4006",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "implementation": "0x957E7eC2da3Cd93Fd49E1ac7DF0499a3EC9814a1",
-          "implementationCodehash": "0x325acd254c3c32b5da3a8f4379dfe6a3dccef30f6697bbc53e2cbef3fd5bd3c1",
-          "authModule": "0x3bBF2f935177dc06356dCbD83365788C0F21a865",
-          "tokenDeployer": "0x17310d0967626063af4C81cc7d0A9C631d9546c0",
-          "deploymentMethod": "create3",
-          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "previousSignersRetention": 15,
-          "domainSeparator": "0x5034999c74b28c4db74dca67073b78629cc0ff7bf005f2f79cd8caf7d9588406",
-          "minimumRotationDelay": 300,
-          "salt": "AxelarAmplifierGateway devnet-amplifier",
-          "gasOptions": {
-            "gasLimit": 5000000
-          },
-          "proxyDeploymentArgs": [
-            "0x957E7eC2da3Cd93Fd49E1ac7DF0499a3EC9814a1",
-            "0x3Cd679Cd00b61a8540Fcc3aE90Bba30DC3eeb6ee",
-            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a612330000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000cbac7000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "initialVerifierSetId": "7c394e3acd7ab02d9518e18f21a73499275623b19fb51d9a428bf329eea1e1e8",
-          "connectionType": "amplifier"
-        },
-        "InterchainGovernance": {
-          "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 100,
-          "address": "0x3Cd679Cd00b61a8540Fcc3aE90Bba30DC3eeb6ee",
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
-          "deploymentMethod": "create3",
-          "codehash": "0x186df8a587b3ad2edea4fbaf0a44c1da6a365dcd9481cca1645bd99d857485ca",
-          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance"
-        },
-        "ConstAddressDeployer": {
-          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
-          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
-          "deploymentMethod": "create",
-          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
-          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
-        },
-        "Create3Deployer": {
-          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2",
-          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
-          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
-          "salt": "Create3Deployer"
-        }
-      },
-      "explorer": {
-        "explorer": "Sepoliascan",
-        "url": "https://sepolia.etherscan.io",
-        "api": "https://api-sepolia.etherscan.io/api"
       }
     },
     "eth-sepolia": {
@@ -394,6 +234,13 @@
       "tokenSymbol": "ETH",
       "confirmations": 1,
       "chainType": "evm",
+      "explorer": {
+        "explorer": "Sepoliascan",
+        "url": "https://sepolia.etherscan.io",
+        "api": "https://api-sepolia.etherscan.io/api"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 25,
       "contracts": {
         "AxelarGateway": {
           "gasOptions": {
@@ -441,72 +288,11 @@
           "address": "0x1179d44e69ba5252B7478a8602617d5EEeb2F377",
           "implementation": "0xC75c1Dc33514db5c39a13b2e7fE82A05050535EF",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
-        }
-      },
-      "explorer": {
-        "explorer": "Sepoliascan",
-        "url": "https://sepolia.etherscan.io",
-        "api": "https://api-sepolia.etherscan.io/api"
-      },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 40
-    },
-    "op-sepolia": {
-      "name": "op-sepolia",
-      "id": "op-sepolia",
-      "axelarId": "op-sepolia",
-      "chainId": 11155420,
-      "rpc": "https://sepolia.optimism.io",
-      "tokenSymbol": "ETH",
-      "confirmations": 1,
-      "gasOptions": {
-        "gasLimit": 5000000
-      },
-      "chainType": "evm",
-      "contracts": {
-        "AxelarGateway": {
-          "address": "0x4a6991003d59c55710FD4D9ecE71e93883961510",
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "implementation": "0xC7547fb5bc2Fde4Aec37De85DecA111FF3E0169b",
-          "implementationCodehash": "0x88ada364cc70966a39887ae006d790a7af331377a0f073472f4efdf2cc60e717",
-          "deploymentMethod": "create3",
-          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "previousSignersRetention": 15,
-          "domainSeparator": "0x6d61fa7631ca30c4a3c6e731891c867f9eddf00e909ef07a76e0790994dcd592",
-          "minimumRotationDelay": 300,
-          "salt": "AxelarAmplifierGateway devnet-amplifier",
-          "connectionType": "amplifier",
-          "gasOptions": {
-            "gasLimit": 5000000
-          },
-          "proxyDeploymentArgs": [
-            "0xC7547fb5bc2Fde4Aec37De85DecA111FF3E0169b",
-            "0xE7741c9044F96FDb1fb08405a6199995E94Ef6ba",
-            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a612330000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000cbb3c000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "initialVerifierSetId": "f844cbd6aa9c37f48687a07818a8938291054e7ce0347bc2e4b788d38521baba"
-        },
-        "InterchainGovernance": {
-          "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 100,
-          "address": "0xE7741c9044F96FDb1fb08405a6199995E94Ef6ba",
-          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
-          "deploymentMethod": "create3",
-          "codehash": "0x5d6623658f7d8d16360ef8060d5ad5be7bbd0cc0204339565d9f94e6889c559c",
-          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance"
-        },
-        "ConstAddressDeployer": {
-          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
-          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
-          "deploymentMethod": "create",
-          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
-          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
-        },
-        "Create3Deployer": {
-          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create2",
           "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
