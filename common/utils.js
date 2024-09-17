@@ -400,7 +400,7 @@ async function getDomainSeparator(config, chain, options) {
     }
 
     printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
-    const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
+    const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domainSeparator);
 
     if (domainSeparator !== expectedDomainSeparator) {
         throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
