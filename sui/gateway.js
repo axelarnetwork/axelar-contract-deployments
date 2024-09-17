@@ -164,9 +164,7 @@ async function approveMessages(keypair, client, config, chain, contractConfig, a
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Approved messages', receipt.digest);
+    await broadcast(client, keypair, tx, 'Approved Messages');
 }
 
 async function approve(keypair, client, config, chain, contractConfig, args, options) {
@@ -199,9 +197,7 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Approved messages', receipt.digest);
+    await broadcast(client, keypair, tx, 'Approved Messages');
 }
 
 async function submitProof(keypair, client, config, chain, contractConfig, args, options) {
@@ -244,9 +240,7 @@ async function submitProof(keypair, client, config, chain, contractConfig, args,
         throw new Error(`Unknown payload type: ${payload}`);
     }
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Submitted Amplifier proof', receipt.digest);
+    await broadcast(client, keypair, tx, 'Submitted Amplifier Proof');
 }
 
 async function rotate(keypair, client, config, chain, contractConfig, args, options) {
@@ -273,9 +267,7 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Signers rotated', receipt.digest);
+    await broadcast(client, keypair, tx, 'Rotated Signers');
 }
 
 async function mainProcessor(processor, args, options) {
