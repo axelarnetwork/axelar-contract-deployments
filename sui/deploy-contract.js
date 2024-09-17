@@ -67,7 +67,7 @@ const PACKAGE_CONFIGS = {
         Governance: {},
         ITS: postDeployIts,
         Squid: postDeploySquid,
-        Utils: {},
+        Utils: () => undefined,
     },
 };
 
