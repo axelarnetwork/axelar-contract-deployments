@@ -53,6 +53,7 @@ node sui/faucet.js
 
 Deploy the gateway package:
 
+>   Before deploying the gateway package, make sure to deploy the Utils package.
 -   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
 ```bash
@@ -90,6 +91,12 @@ policy should be one of the following:
 -   `dep_upgrade`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
 
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
+
+Deploy the Utils package:
+
+```bash
+node sui/deploy-contract.js deploy Utils
+```
 
 Deploy the Gas Service package:
 
