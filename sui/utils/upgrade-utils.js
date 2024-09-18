@@ -20,9 +20,9 @@ function getUpgradePolicyId(policy) {
     }
 }
 
-async function upgradePackage(client, keypair, packageToUpgrade, contractConfig, builder, options) {
+async function upgradePackage(client, keypair, packageToUpgrade, contractConfig, builder, moveDir, options) {
     const { packageDir, packageName } = packageToUpgrade;
-    const { modules, dependencies, digest } = await builder.getContractBuild(packageDir);
+    const { modules, dependencies, digest } = await builder.getContractBuild(packageDir, moveDir);
     const { offline } = options;
     const sender = options.sender || keypair.toSuiAddress();
     const upgradeCap = contractConfig.objects?.UpgradeCap;
