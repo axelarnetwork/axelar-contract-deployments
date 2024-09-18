@@ -251,7 +251,6 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 }
 
 async function upgrade(keypair, client, supportedPackage, policy, config, chain, options) {
-    const { packageDependencies } = options;
     const { packageName } = supportedPackage;
     options.policy = policy;
 
@@ -263,17 +262,9 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     const contractConfig = contractsConfig?.[packageName];
 
     validateParameters({ isNonEmptyString: { packageName } });
-    const moveDir = `${__dirname}/move`;
-
-    if (packageDependencies) {
-        for (const dependencies of packageDependencies) {
-            const packageId = contractsConfig[dependencies]?.address;
-            updateMoveToml(dependencies.toLowerCase(), packageId, moveDir);
-        }
-    }
 
     const builder = new TxBuilder(client);
-    await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, moveDir, options);
+    await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
 }
 
 async function mainProcessor(args, options, processor) {
@@ -370,7 +361,6 @@ if (require.main === module) {
             .addOption(new Option('--sender <sender>', 'transaction sender'))
             .addOption(new Option('--digest <digest>', 'digest hash for upgrade'))
             .addOption(new Option('--offline', 'store tx block for sign'))
-            .addOption(new Option('--packageDependencies [packageDependencies...]', 'package dependencies'))
             .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
             .action((policy, options) => {
                 mainProcessor([supportedPackage, policy], options, upgrade);
