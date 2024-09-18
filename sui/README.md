@@ -53,7 +53,8 @@ node sui/faucet.js
 
 Deploy the gateway package:
 
->   Before deploying the gateway package, make sure to deploy the Utils package.
+> Run `node sui/deploy-contract.js deploy Utils` before deploying the gateway package.
+
 -   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
 ```bash
