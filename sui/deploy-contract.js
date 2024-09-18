@@ -49,14 +49,6 @@ const PACKAGE_DIRS = ['utils', 'gas_service', 'example', 'axelar_gateway', 'oper
 const PACKAGE_CONFIGS = {
     cmdOptions: {
         AxelarGateway: () => GATEWAY_CMD_OPTIONS,
-        GasService: () => [],
-        Example: () => [],
-        Operators: () => [],
-        Abi: () => [],
-        Governance: () => [],
-        ITS: () => [],
-        Squid: () => [],
-        Utils: () => [],
     },
     postDeployFunctions: {
         AxelarGateway: postDeployAxelarGateway,
@@ -334,10 +326,13 @@ const addDeployOptions = (program) => {
     // Get the package name from the program name
     const packageName = program.name();
     // Find the corresponding options for the package
-    const options = PACKAGE_CONFIGS.cmdOptions[packageName]();
+    const cmdOptions = PACKAGE_CONFIGS.cmdOptions[packageName];
 
-    // Add the options to the program
-    options.forEach((option) => program.addOption(option));
+    if (cmdOptions) {
+        const options = cmdOptions();
+        // Add the options to the program
+        options.forEach((option) => program.addOption(option));
+    }
 
     // Add the base deploy options to the program
     DEPLOY_CMD_OPTIONS.forEach((option) => program.addOption(option));
