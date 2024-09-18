@@ -2094,7 +2094,7 @@
       }
     },
     "id": "Axelarnet",
-    "axelarId": "Axelarnet",
+    "axelarId": "axelar",
     "chainId": "axelar-stagenet-724",
     "rpc": "http://k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:26657",
     "lcd": "http://k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:1317",
