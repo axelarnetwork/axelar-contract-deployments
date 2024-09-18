@@ -1,5 +1,5 @@
 const { Command, Option } = require('commander');
-const { updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { ethers } = require('hardhat');
 const { toB64 } = require('@mysten/sui/utils');
 const { bcs } = require('@mysten/sui/bcs');
@@ -262,6 +262,8 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     const contractConfig = contractsConfig?.[packageName];
 
     validateParameters({ isNonEmptyString: { packageName } });
+
+    // TODO: Synchronize dependencies with `sui/move` folder and update `published-at` field if necessary
 
     const builder = new TxBuilder(client);
     await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
