@@ -1768,7 +1768,6 @@
     },
     "hedera": {
       "name": "Hedera",
-      "timeout": 50000,
       "axelarId": "hedera",
       "skipRevertTests": true,
       "chainId": 296,
@@ -1777,6 +1776,8 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
+      "timeout": 50000,
+      "chainType": "evm",
       "explorer": {
         "name": "HashScan",
         "url": "https://hashscan.io/testnet",
@@ -1816,7 +1817,8 @@
           "deploymentMethod": "create",
           "previousSignersRetention": 15,
           "domainSeparator": "0xfbfcd8a4d93cdf3dc1099795eefb83c109414406fc09015f4d0758ed6b99c43c",
-          "minimumRotationDelay": 300
+          "minimumRotationDelay": 300,
+          "connectionType":"amplifier"
         },
         "InterchainGovernance": {
           "address": "0xBeF25f4733b9d451072416360609e5A4c115293E"
