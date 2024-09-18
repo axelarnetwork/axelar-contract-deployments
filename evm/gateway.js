@@ -23,9 +23,10 @@ const {
     getGasOptions,
     httpGet,
     getContractJSON,
+    getMultisigProof,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet } = require('./sign-utils');
+const { getWallet, signTransaction } = require('./sign-utils');
 
 const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 const IAxelarExecutable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarExecutable.json');
@@ -441,6 +442,29 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'submitProof': {
+            const { multisigSessionId } = options;
+
+            if (!multisigSessionId) {
+                throw new Error('Missing multisig session ID');
+            }
+
+            const { status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
+
+            if (!status.completed) {
+                throw new Error('Multisig session not completed');
+            }
+
+            const tx = {
+                to: gateway.address,
+                data: '0x' + status.completed.execute_data,
+            };
+
+            await signTransaction(wallet, chain, tx, options);
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -477,6 +501,7 @@ if (require.main === module) {
                 'params',
                 'approveWithBatch',
                 'rotateSigners',
+                'submitProof',
             ])
             .makeOptionMandatory(true),
     );
@@ -487,6 +512,7 @@ if (require.main === module) {
     program.addOption(new Option('--destinationChain <destinationChain>', 'GMP destination chain'));
     program.addOption(new Option('--batchID <batchID>', 'EVM batch ID').default(''));
     program.addOption(new Option('--symbol <symbol>', 'EVM token symbol'));
+    program.addOption(new Option('--multisigSessionId <multisigSessionId>', 'Amplifier multisig proof session ID'));
 
     program.action((options) => {
         main(options);
