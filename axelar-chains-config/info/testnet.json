@@ -2408,6 +2408,7 @@
     },
     "hedera": {
       "name": "Hedera",
+      "id": "hedera",
       "axelarId": "hedera",
       "skipRevertTests": true,
       "chainId": 296,
