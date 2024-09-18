@@ -282,7 +282,7 @@ async function deploy(config, chain, options) {
     contractConfig.domainSeparator = domainSeparator;
     contractConfig.minimumRotationDelay = minimumRotationDelay;
     contractConfig.connectionType = 'amplifier';
-    contractConfig.chainType = 'evm';
+    chain.chainType = 'evm';
 
     if (options.deployMethod !== 'create') {
         contractConfig.salt = salt;
