@@ -7,6 +7,7 @@
       "chainId": 43113,
       "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
@@ -19,7 +20,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
@@ -115,6 +117,7 @@
       "chainId": 4002,
       "rpc": "https://rpc.testnet.fantom.network",
       "tokenSymbol": "FTM",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
@@ -127,7 +130,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
@@ -223,6 +227,7 @@
       "chainId": 1287,
       "rpc": "https://moonbeam-alpha.api.onfinality.io/public",
       "tokenSymbol": "DEV",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
@@ -235,7 +240,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
@@ -334,6 +340,7 @@
       "chainId": 97,
       "rpc": "https://data-seed-prebsc-1-s1.binance.org:8545/",
       "tokenSymbol": "BNB",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {},
         "AxelarGasService": {
@@ -374,6 +381,7 @@
       "chainId": 2221,
       "rpc": "https://evm.testnet.kava.io",
       "tokenSymbol": "KAVA",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
@@ -386,7 +394,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
@@ -478,6 +487,7 @@
       "rpc": "https://1rpc.io/sepolia",
       "tokenSymbol": "ETH",
       "confirmations": 2,
+      "chainType": "evm",
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
@@ -501,7 +511,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "minimumTimeDelay": 300,
@@ -587,6 +598,7 @@
       "rpc": "https://sepolia-rollup.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
       "confirmations": 2,
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
@@ -599,7 +611,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
@@ -688,6 +701,7 @@
       "rpc": "https://centrifuge-parachain.api.onfinality.io/rpc?apikey=66c3bd57-e1d5-4d22-bfc6-d63436b44a5a",
       "tokenSymbol": "CFG",
       "confirmations": 1,
+      "chainType": "evm",
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
@@ -729,6 +743,7 @@
       "chainId": 59141,
       "rpc": "https://rpc.sepolia.linea.build",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
@@ -741,7 +756,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
@@ -836,6 +852,7 @@
       "rpc": "https://rpc-amoy.polygon.technology",
       "tokenSymbol": "MATIC",
       "confirmations": 2,
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
@@ -848,7 +865,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
@@ -941,6 +959,7 @@
       "chainId": 84532,
       "rpc": "https://sepolia.base.org",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
       },
@@ -978,7 +997,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "minimumTimeDelay": 300,
@@ -1051,6 +1071,7 @@
       "chainId": 168587773,
       "rpc": "https://sepolia.blast.io/",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
       },
@@ -1088,7 +1109,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "minimumTimeDelay": 300,
@@ -1161,6 +1183,7 @@
       "chainId": 2522,
       "rpc": "https://rpc.testnet.frax.com",
       "tokenSymbol": "frxETH",
+      "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
       },
@@ -1217,7 +1240,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
@@ -1270,6 +1294,7 @@
       "chainId": 5003,
       "rpc": "https://rpc.sepolia.mantle.xyz",
       "tokenSymbol": "MNT",
+      "chainType": "evm",
       "confirmations": 2,
       "explorer": {
         "name": "Mantle Explorer",
@@ -1324,7 +1349,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "Operators": {
           "owner": "0xBeF25f4733b9d451072416360609e5A4c115293E",
@@ -1376,6 +1402,7 @@
       "chainId": 11155420,
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
       },
@@ -1413,7 +1440,8 @@
           "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
           "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "minimumTimeDelay": 300,
@@ -1486,6 +1514,7 @@
       "chainId": 43113,
       "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "confirmations": 1,
       "gasOptions": {
         "gasLimit": 5000000
@@ -1507,7 +1536,8 @@
           "previousSignersRetention": 15,
           "domainSeparator": "0x09d0886d5d99ed975cfad0fc5d20195302e21081fa5aa5c9986eae988ab09bd0",
           "minimumRotationDelay": 300,
-          "salt": "temporary stagenet deployment"
+          "salt": "temporary stagenet deployment",
+          "connectionType": "amplifier"
         },
         "InterchainGovernance": {
           "address": "0xa57617802eaAE1429DC91146ae003cDb4b1C471e",
@@ -1589,6 +1619,7 @@
       "chainId": 11155111,
       "rpc": "https://rpc.ankr.com/eth_sepolia",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "confirmations": 1,
       "gasOptions": {
         "gasLimit": 8000000,
@@ -1612,7 +1643,8 @@
           "previousSignersRetention": 15,
           "domainSeparator": "0x94c6f03682e3588a4fd0e312943191a70ae9e50b80d4b062af08f9311a78fada",
           "minimumRotationDelay": 300,
-          "salt": "temporary stagenet deployment"
+          "salt": "temporary stagenet deployment",
+          "connectionType": "amplifier"
         },
         "InterchainGovernance": {
           "minimumTimeDelay": 300,
@@ -1699,6 +1731,7 @@
       "chainId": 545,
       "rpc": "https://testnet.evm.nodes.onflow.org",
       "tokenSymbol": "FLOW",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
@@ -1716,7 +1749,6 @@
           "previousSignersRetention": 15,
           "domainSeparator": "0x3dad2b901117c30d4f601c3b9e9ee89cec4371e79e9908122e8e1da1904347ee",
           "minimumRotationDelay": 300,
-          "chainType": "evm",
           "connectionType": "amplifier"
         },
         "InterchainGovernance": {
