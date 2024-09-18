@@ -2720,7 +2720,7 @@
       }
     },
     "id": "Axelarnet",
-    "axelarId": "Axelarnet",
+    "axelarId": "axelar",
     "chainId": "axelar-testnet-lisbon-3",
     "rpc": "https://tm.axelar-testnet.lava.build:443",
     "lcd": "https://rest.axelar-testnet.lava.build",
