@@ -2649,6 +2649,9 @@
         "flow": {
           "address": "axelar1w8frw33jn0yx59845wdgk0yru6fxvgr6hlh4xfdtdf08y5jamcnsyu0z6u"
         },
+        "hedera": {
+          "address": "axelar1xgr3j2wuc9ut7yjz4nr677scmzd4z6lh3srnpmdh0nyqzcfka3rqe2nsmq"
+        },
         "storeCodeProposalId": "106",
         "storeCodeProposalCodeHash": "eae97caf40ae6b5eea1e145eec27a59e73aa6f9de389fa9ca0cfc9354a3b68ac",
         "codeId": 11
