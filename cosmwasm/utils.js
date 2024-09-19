@@ -14,6 +14,7 @@ const {
     InstantiateContractProposal,
     InstantiateContract2Proposal,
     ExecuteContractProposal,
+    MigrateContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
@@ -71,6 +72,16 @@ const getChains = (config, { chainNames, instantiate2 }) => {
     chains.every((chain) => chain === 'none' || getChainConfig(config, chain));
 
     return chains;
+};
+
+const getAmplifierContractConfig = (config, contractName) => {
+    const contractConfig = config.axelar.contracts[contractName];
+
+    if (!contractConfig) {
+        throw new Error(`Contract ${contractName} not found in config`);
+    }
+
+    return contractConfig;
 };
 
 const updateContractConfig = (contractConfig, chainConfig, key, value) => {
@@ -673,6 +684,20 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
     })),
 });
 
+const getMigrateContractParams = (config, options, chainName) => {
+    const { contractName, msg } = options;
+
+    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const chainConfig = getChainConfig(config, chainName);
+
+    return {
+        ...getSubmitProposalParams(options),
+        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
+        codeId: contractConfig.codeId,
+        msg: Buffer.from(msg),
+    };
+};
+
 const encodeStoreCodeProposal = (options) => {
     const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
 
@@ -735,6 +760,15 @@ const encodeParameterChangeProposal = (options) => {
     };
 };
 
+const encodeMigrateContractProposal = (config, options, chainName) => {
+    const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options, chainName));
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.MigrateContractProposal',
+        value: Uint8Array.from(MigrateContractProposal.encode(proposal).finish()),
+    };
+};
+
 const encodeSubmitProposal = (content, config, options, proposer) => {
     const {
         axelar: { tokenSymbol },
@@ -775,6 +809,7 @@ module.exports = {
     calculateDomainSeparator,
     readWasmFile,
     getChains,
+    getAmplifierContractConfig,
     updateContractConfig,
     uploadContract,
     instantiateContract,
@@ -787,6 +822,7 @@ module.exports = {
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
     encodeParameterChangeProposal,
+    encodeMigrateContractProposal,
     submitProposal,
     isValidCosmosAddress,
 };
