@@ -210,7 +210,6 @@ const migrate = async (client, wallet, config, options) => {
 
         const { contractName, fetchCodeId } = options;
         const contractConfig = getAmplifierContractConfig(config, contractName);
-        const chainConfig = getChainConfig(config, chainName);
 
         if (fetchCodeId) {
             contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
