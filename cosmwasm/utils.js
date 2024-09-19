@@ -450,6 +450,7 @@ const makeAxelarnetGatewayInstantiateMsg = (config, chainName) => {
 
     const {
         Router: { address: routerAddress },
+        NexusGateway: { address: nexusAddress },
     } = contracts;
 
     if (!isString(axelarId)) {
@@ -462,6 +463,7 @@ const makeAxelarnetGatewayInstantiateMsg = (config, chainName) => {
 
     return {
         router_address: routerAddress,
+        nexus_gateway: nexusAddress,
         chain_name: axelarId.toLowerCase(),
     };
 };

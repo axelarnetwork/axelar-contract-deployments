@@ -53,9 +53,7 @@ async function checkKeyRotation(config, chain) {
 async function getAuthParams(config, chain, options) {
     printInfo(`Retrieving validator addresses for ${chain} from Axelar network`);
 
-    if (!options.amplifier) {
-        await checkKeyRotation(config, chain);
-    }
+    await checkKeyRotation(config, chain);
 
     const params = [];
     const keyIDs = [];
@@ -368,6 +366,8 @@ async function deploy(config, chain, options) {
     contractConfig.tokenDeployer = tokenDeployer.address;
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = options.deployMethod;
+    contractConfig.connectionType = 'consensus';
+    chain.chainType = 'evm';
 
     if (options.deployMethod !== 'create') {
         contractConfig.salt = salt;
@@ -539,7 +539,6 @@ async function programHandler() {
     program.addOption(new Option('--governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('--mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
     program.addOption(new Option('--keyID <keyID>', 'key ID').env('KEY_ID'));
-    program.addOption(new Option('-a, --amplifier', 'deploy amplifier gateway').env('AMPLIFIER'));
     program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));

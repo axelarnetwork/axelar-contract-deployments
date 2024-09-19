@@ -44,12 +44,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Prepare version.json file
-        run: |
-          cp node_modules/@axelar-network/axelar-cgp-sui/version.json .
-
       - name: Setup Sui CLI
-        uses: axelarnetwork/axelar-cgp-sui/.github/actions/install@main
+        uses: axelarnetwork/axelar-cgp-sui/.github/actions/install-sui-cli@main
+        with:
+          sui-version: $(jq -r '.SUI_VERSION' node_modules/@axelar-network/axelar-cgp-sui/version.json)
 
       - name: Setup Sui Wallet
         shell: bash
@@ -108,6 +106,9 @@ jobs:
         run: node sui/faucet.js
 
       ###### Command: Deploy Contract ######
+
+      - name: Deploy Utils
+        run: node sui/deploy-contract deploy Utils
 
       - name: Deploy AxelarGateway
         run: node sui/deploy-contract deploy AxelarGateway --signers wallet
