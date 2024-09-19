@@ -275,12 +275,10 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
     validateParameters({ isNonEmptyString: { packageName } });
 
-    if (options.env !== 'local') {
-        const packageDependencies = getLocalDependencies(packageDir, moveDir);
-        for (const { name } of packageDependencies) {
-            const packageAddress = contractsConfig[name]?.address;
-            updateMoveToml(packageDir, packageAddress, moveDir);
-        }
+    const packageDependencies = getLocalDependencies(packageDir, moveDir);
+    for (const { name } of packageDependencies) {
+        const packageAddress = contractsConfig[name]?.address;
+        updateMoveToml(packageDir, packageAddress, moveDir);
     }
 
     const builder = new TxBuilder(client);
