@@ -1,5 +1,5 @@
 const { Command, Option } = require('commander');
-const { updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { ethers } = require('hardhat');
 const { toB64 } = require('@mysten/sui/utils');
 const { bcs } = require('@mysten/sui/bcs');
@@ -41,7 +41,7 @@ const {
  * 2. Ensure the corresponding folder exists in the specified path
  *
  */
-const PACKAGE_DIRS = ['gas_service', 'example', 'axelar_gateway', 'operators', 'abi', 'governance', 'its', 'squid'];
+const PACKAGE_DIRS = ['utils', 'gas_service', 'example', 'axelar_gateway', 'operators', 'abi', 'governance', 'its', 'squid'];
 
 /**
  * Package Mapping Object for Command Options and Post-Deployment Functions
@@ -49,21 +49,12 @@ const PACKAGE_DIRS = ['gas_service', 'example', 'axelar_gateway', 'operators', '
 const PACKAGE_CONFIGS = {
     cmdOptions: {
         AxelarGateway: () => GATEWAY_CMD_OPTIONS,
-        GasService: () => [],
-        Example: () => [],
-        Operators: () => [],
-        Abi: () => [],
-        Governance: () => [],
-        ITS: () => [],
-        Squid: () => [],
     },
     postDeployFunctions: {
         AxelarGateway: postDeployAxelarGateway,
         GasService: postDeployGasService,
         Example: postDeployExample,
         Operators: postDeployOperators,
-        Abi: {},
-        Governance: {},
         ITS: postDeployIts,
         Squid: postDeploySquid,
     },
@@ -251,13 +242,15 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 
     // Execute post-deployment function
     const executePostDeploymentFn = PACKAGE_CONFIGS.postDeployFunctions[packageName];
-    await executePostDeploymentFn(published, keypair, client, config, chain, options);
+
+    if (executePostDeploymentFn) {
+        await executePostDeploymentFn(published, keypair, client, config, chain, options);
+    }
 
     printInfo(`${packageName} Configuration Updated`, JSON.stringify(chain.contracts[packageName], null, 2));
 }
 
 async function upgrade(keypair, client, supportedPackage, policy, config, chain, options) {
-    const { packageDependencies } = options;
     const { packageName } = supportedPackage;
     options.policy = policy;
 
@@ -270,12 +263,7 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
     validateParameters({ isNonEmptyString: { packageName } });
 
-    if (packageDependencies) {
-        for (const dependencies of packageDependencies) {
-            const packageId = contractsConfig[dependencies]?.address;
-            updateMoveToml(dependencies, packageId);
-        }
-    }
+    // TODO: Synchronize dependencies with `sui/move` folder and update `published-at` field if necessary
 
     const builder = new TxBuilder(client);
     await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
@@ -331,10 +319,13 @@ const addDeployOptions = (program) => {
     // Get the package name from the program name
     const packageName = program.name();
     // Find the corresponding options for the package
-    const options = PACKAGE_CONFIGS.cmdOptions[packageName]();
+    const cmdOptions = PACKAGE_CONFIGS.cmdOptions[packageName];
 
-    // Add the options to the program
-    options.forEach((option) => program.addOption(option));
+    if (cmdOptions) {
+        const options = cmdOptions();
+        // Add the options to the program
+        options.forEach((option) => program.addOption(option));
+    }
 
     // Add the base deploy options to the program
     DEPLOY_CMD_OPTIONS.forEach((option) => program.addOption(option));

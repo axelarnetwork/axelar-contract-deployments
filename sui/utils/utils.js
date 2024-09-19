@@ -23,6 +23,7 @@ const {
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
 const suiCoinId = '0x2::sui::SUI';
+const moveDir = `${__dirname}/../move`;
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -60,17 +61,15 @@ const getBcsBytesByObjectId = async (client, objectId) => {
 };
 
 const deployPackage = async (packageName, client, keypair, options = {}) => {
-    const compileDir = `${__dirname}/../move`;
-
-    copyMovePackage(packageName, null, compileDir);
+    copyMovePackage(packageName, null, moveDir);
 
     const builder = new TxBuilder(client);
-    await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), compileDir);
+    await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), moveDir);
     const publishTxn = await builder.signAndExecute(keypair);
 
     const packageId = (publishTxn.objectChanges?.find((a) => a.type === 'published') ?? []).packageId;
 
-    updateMoveToml(packageName, packageId, compileDir);
+    updateMoveToml(packageName, packageId, moveDir);
     return { packageId, publishTxn };
 };
 
@@ -249,4 +248,5 @@ module.exports = {
     getSquidChannelId,
     getSigners,
     getBagContentId,
+    moveDir,
 };
