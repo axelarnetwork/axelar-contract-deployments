@@ -107,6 +107,9 @@ jobs:
 
       ###### Command: Deploy Contract ######
 
+      - name: Deploy Utils
+        run: node sui/deploy-contract deploy Utils
+
       - name: Deploy AxelarGateway
         run: node sui/deploy-contract deploy AxelarGateway --signers wallet
 
