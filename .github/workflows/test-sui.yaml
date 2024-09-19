@@ -207,7 +207,7 @@ jobs:
 
       - name: Generate Unsigned Tx File
         run: |
-          node sui/deploy-contract.js upgrade AxelarGateway any_upgrade --offline --txFilePath ./tx-upgrade.json --sender $MULTISIG_ADDRESS --packageDependencies Utils
+          node sui/deploy-contract.js upgrade AxelarGateway any_upgrade --offline --txFilePath ./tx-upgrade.json --sender $MULTISIG_ADDRESS
 
       - name: Sign Tx File with Multisig Signer
         run: |
