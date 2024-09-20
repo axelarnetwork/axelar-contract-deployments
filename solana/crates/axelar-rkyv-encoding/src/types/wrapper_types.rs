@@ -24,14 +24,15 @@ use super::{
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct HasheableMessageVec {
-    len_le_bytes: [u8; 8],
+    // adjusted to 32 bits to accommodate wasm32
+    len_le_bytes: [u8; 4],
     inner_vec: Vec<Message>,
 }
 
 impl HasheableMessageVec {
     pub fn new(inner_vec: Vec<Message>) -> Self {
         Self {
-            len_le_bytes: inner_vec.len().to_le_bytes(),
+            len_le_bytes: usize_to_le_len_bytes(inner_vec.len()),
             inner_vec,
         }
     }
@@ -40,7 +41,7 @@ impl HasheableMessageVec {
         self.inner_vec.as_slice()
     }
 
-    pub fn len_le_bytes(&self) -> &[u8; 8] {
+    pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
 
@@ -54,6 +55,12 @@ impl HasheableMessageVec {
     }
 }
 
+fn usize_to_le_len_bytes(data: usize) -> [u8; 4] {
+    u32::try_from(data)
+        .expect("usize too large to map it to u32")
+        .to_le_bytes()
+}
+
 impl FromIterator<Message> for HasheableMessageVec {
     fn from_iter<T: IntoIterator<Item = Message>>(iter: T) -> Self {
         let inner_vec: Vec<Message> = iter.into_iter().collect();
@@ -64,12 +71,14 @@ impl FromIterator<Message> for HasheableMessageVec {
 impl ArchivedHasheableMessageVec {
     pub fn new(inner_vec: ArchivedVec<ArchivedMessage>) -> Self {
         Self {
-            len_le_bytes: inner_vec.len().to_le_bytes(),
+            len_le_bytes: u32::try_from(inner_vec.len())
+                .expect("len too large")
+                .to_le_bytes(),
             inner_vec,
         }
     }
 
-    pub fn len_le_bytes(&self) -> &[u8; 8] {
+    pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
 
@@ -82,14 +91,15 @@ impl ArchivedHasheableMessageVec {
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct HasheableSignersBTreeMap {
-    len_le_bytes: [u8; 8],
+    // adjusted to 32 bits to accommodate wasm32
+    len_le_bytes: [u8; 4],
     inner_map: BTreeMap<PublicKey, U128>,
 }
 
 impl HasheableSignersBTreeMap {
     pub fn new(inner_map: BTreeMap<PublicKey, U128>) -> Self {
         Self {
-            len_le_bytes: inner_map.len().to_le_bytes(),
+            len_le_bytes: usize_to_le_len_bytes(inner_map.len()),
             inner_map,
         }
     }
@@ -102,7 +112,7 @@ impl HasheableSignersBTreeMap {
         self.inner_map.is_empty()
     }
 
-    pub fn len_le_bytes(&self) -> &[u8; 8] {
+    pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
 
@@ -126,7 +136,7 @@ impl HasheableSignersBTreeMap {
 impl ArchivedHasheableSignersBTreeMap {
     pub fn new(inner_map: ArchivedBTreeMap<ArchivedPublicKey, ArchivedU128>) -> Self {
         Self {
-            len_le_bytes: inner_map.len().to_le_bytes(),
+            len_le_bytes: usize_to_le_len_bytes(inner_map.len()),
             inner_map,
         }
     }
@@ -139,7 +149,7 @@ impl ArchivedHasheableSignersBTreeMap {
         self.inner_map.is_empty()
     }
 
-    pub fn len_le_bytes(&self) -> &[u8; 8] {
+    pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
 
@@ -165,14 +175,15 @@ impl ArchivedHasheableSignersBTreeMap {
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct HasheableSignersWithSignaturesBTreeMap {
-    len_le_bytes: [u8; 8],
+    // adjusted to 32 bits to accommodate wasm32
+    len_le_bytes: [u8; 4],
     inner_map: BTreeMap<PublicKey, WeightedSigner>,
 }
 
 impl HasheableSignersWithSignaturesBTreeMap {
     pub fn new(inner_map: BTreeMap<PublicKey, WeightedSigner>) -> Self {
         Self {
-            len_le_bytes: inner_map.len().to_le_bytes(),
+            len_le_bytes: usize_to_le_len_bytes(inner_map.len()),
             inner_map,
         }
     }
@@ -185,7 +196,7 @@ impl HasheableSignersWithSignaturesBTreeMap {
         self.inner_map.is_empty()
     }
 
-    pub fn len_le_bytes(&self) -> &[u8; 8] {
+    pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
 
@@ -215,7 +226,7 @@ impl HasheableSignersWithSignaturesBTreeMap {
 impl ArchivedHasheableSignersWithSignaturesBTreeMap {
     pub fn new(inner_map: ArchivedBTreeMap<ArchivedPublicKey, ArchivedWeightedSigner>) -> Self {
         Self {
-            len_le_bytes: inner_map.len().to_le_bytes(),
+            len_le_bytes: usize_to_le_len_bytes(inner_map.len()),
             inner_map,
         }
     }
@@ -228,7 +239,7 @@ impl ArchivedHasheableSignersWithSignaturesBTreeMap {
         self.inner_map.is_empty()
     }
 
-    pub fn len_le_bytes(&self) -> &[u8; 8] {
+    pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
 

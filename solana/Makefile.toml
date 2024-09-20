@@ -46,6 +46,7 @@ args = ["clippy", "--fix", "--allow-dirty", "--allow-staged", "--workspace"]
 [tasks.unused-deps]
 workspace = false
 install_crate = "cargo-udeps"
+install_crate_args = ["--locked"]
 command = "cargo"
 args = ["udeps", "--all-targets", "--backend=depinfo"]
 
