@@ -355,7 +355,7 @@ const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
 };
 
-const getContractConfig = async (config, chain) => {
+const getAmplifierContractOnchainConfig = async (config, chain) => {
     const key = Buffer.from('config');
     const client = await CosmWasmClient.connect(config.axelar.rpc);
     const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
@@ -400,7 +400,7 @@ async function getDomainSeparator(config, chain, options) {
     }
 
     printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
-    const domainSeparator = hexlify((await getContractConfig(config, chain.axelarId)).domain_separator);
+    const domainSeparator = hexlify((await getAmplifierContractOnchainConfig(config, chain.axelarId)).domain_separator);
 
     if (domainSeparator !== expectedDomainSeparator) {
         throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
@@ -467,7 +467,7 @@ module.exports = {
     getDomainSeparator,
     getChainConfig,
     getMultisigProof,
-    getContractConfig,
+    getAmplifierContractOnchainConfig,
     getSaltFromKey,
     calculateDomainSeparator,
 };

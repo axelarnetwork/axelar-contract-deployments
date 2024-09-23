@@ -13,6 +13,7 @@ const {
     getSalt,
     readWasmFile,
     getChains,
+    getAmplifierContractConfig,
     updateContractConfig,
     fetchCodeIdFromCodeHash,
     decodeProposalAttributes,
@@ -22,16 +23,18 @@ const {
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
     encodeParameterChangeProposal,
+    encodeMigrateContractProposal,
     submitProposal,
     makeInstantiateMsg,
 } = require('./utils');
-const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../common');
+const { isNumber, saveConfig, loadConfig, printInfo, prompt, getChainConfig } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
     InstantiateContractProposal,
     InstantiateContract2Proposal,
     ExecuteContractProposal,
+    MigrateContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 
@@ -78,11 +81,7 @@ const callSubmitProposal = async (client, wallet, config, options, proposal) => 
 
 const storeCode = async (client, wallet, config, options) => {
     const { contractName } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-    } = config;
+    const contractConfig = getAmplifierContractConfig(config, contractName);
 
     const proposal = encodeStoreCodeProposal(options);
 
@@ -103,12 +102,8 @@ const storeInstantiate = async (client, wallet, config, options) => {
         const chainName = chain.toLowerCase();
 
         const { contractName, instantiate2 } = options;
-        const {
-            axelar: {
-                contracts: { [contractName]: contractConfig },
-            },
-            chains: { [chainName]: chainConfig },
-        } = config;
+        const contractConfig = getAmplifierContractConfig(config, contractName);
+        const chainConfig = getChainConfig(config, chainName);
 
         if (instantiate2) {
             throw new Error('instantiate2 not supported for storeInstantiate');
@@ -135,12 +130,8 @@ const instantiate = async (client, wallet, config, options) => {
         const chainName = chain.toLowerCase();
 
         const { contractName, instantiate2, predictOnly, fetchCodeId } = options;
-        const {
-            axelar: {
-                contracts: { [contractName]: contractConfig },
-            },
-            chains: { [chainName]: chainConfig },
-        } = config;
+        const contractConfig = getAmplifierContractConfig(config, contractName);
+        const chainConfig = getChainConfig(config, chainName);
 
         if (fetchCodeId) {
             contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
@@ -186,12 +177,8 @@ const execute = async (client, wallet, config, options) => {
         const chainName = chain.toLowerCase();
 
         const { contractName } = options;
-        const {
-            axelar: {
-                contracts: { [contractName]: contractConfig },
-            },
-            chains: { [chainName]: chainConfig },
-        } = config;
+        const contractConfig = getAmplifierContractConfig(config, contractName);
+        const chainConfig = getChainConfig(config, chainName);
 
         const proposal = encodeExecuteContractProposal(config, options, chainName);
 
@@ -213,6 +200,31 @@ const paramChange = async (client, wallet, config, options) => {
     }
 
     await callSubmitProposal(client, wallet, config, options, proposal);
+};
+
+const migrate = async (client, wallet, config, options) => {
+    const chains = getChains(config, options);
+
+    for (const chain of chains) {
+        const chainName = chain.toLowerCase();
+
+        const { contractName, fetchCodeId } = options;
+        const contractConfig = getAmplifierContractConfig(config, contractName);
+
+        if (fetchCodeId) {
+            contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
+        } else if (!isNumber(contractConfig.codeId)) {
+            throw new Error('Code Id is not defined');
+        }
+
+        const proposal = encodeMigrateContractProposal(config, options, chainName);
+
+        if (!confirmProposalSubmission(options, proposal, MigrateContractProposal)) {
+            return;
+        }
+
+        await callSubmitProposal(client, wallet, config, options, proposal);
+    }
 };
 
 const mainProcessor = async (processor, options) => {
@@ -300,6 +312,14 @@ const programHandler = () => {
             mainProcessor(paramChange, options);
         });
     addAmplifierOptions(paramChangeCmd, { paramChangeProposalOptions: true, proposalOptions: true });
+
+    const migrateCmd = program
+        .command('migrate')
+        .description('Submit a migrate contract proposal')
+        .action((options) => {
+            mainProcessor(migrate, options);
+        });
+    addAmplifierOptions(migrateCmd, { contractOptions: true, migrateOptions: true, proposalOptions: true, fetchCodeId: true });
 
     program.parse();
 };
