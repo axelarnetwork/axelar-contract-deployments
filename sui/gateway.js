@@ -274,7 +274,7 @@ async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
     const [keypair, client] = getWallet(config.sui, options);
-    await printWalletInfo(keypair, client, config.sui, options);
+    await printWalletInfo(keypair.toSuiAddress(), client, config.sui, options);
 
     if (!config.sui.contracts?.AxelarGateway) {
         throw new Error('Axelar Gateway package not found.');

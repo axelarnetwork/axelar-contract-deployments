@@ -5,7 +5,7 @@ const { getWallet, printWalletInfo, addExtendedOptions, broadcast } = require('.
 
 async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
-    await printWalletInfo(keypair, client, chain, options);
+    await printWalletInfo(keypair.toSuiAddress(), client, chain, options);
     const recipient = options.recipient;
 
     validateParameters({
