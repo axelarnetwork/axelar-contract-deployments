@@ -112,7 +112,11 @@ const addParamChangeProposalOptions = (program) => {
 };
 
 const addMigrateOptions = (program) => {
-    program.addOption(new Option('--msg <msg>', 'json encoded migration message').default('{}'));
+    program.addOption(
+        new Option('--msg <msg>', "json encoded migration message. Use '{}' to denote an empty migration message").makeOptionMandatory(
+            true,
+        ),
+    );
 };
 
 const addProposalOptions = (program) => {
