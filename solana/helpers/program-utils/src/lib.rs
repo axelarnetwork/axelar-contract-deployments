@@ -4,7 +4,6 @@
 
 use std::borrow::Borrow;
 
-use borsh::BorshDeserialize;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
@@ -36,7 +35,7 @@ macro_rules! log_everywhere {
 
 /// Initialize an associated account
 // TODO add constraint that the T: IsInitialized + Pack + BorshSerialize
-pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack + borsh::BorshSerialize>(
+pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack>(
     funder_info: &'a AccountInfo<'b>,
     to_create: &'a AccountInfo<'b>,
     program_id: &Pubkey,
@@ -100,7 +99,7 @@ pub fn check_program_account(program_id: &Pubkey, check_f: fn(&Pubkey) -> bool) 
 pub trait ValidPDA {
     /// Check if the account is an initialized PDA
     // TODO add constraint that the T: IsInitialized + Pack + BorshSerialize
-    fn check_initialized_pda<T: solana_program::program_pack::Pack + BorshDeserialize>(
+    fn check_initialized_pda<T: solana_program::program_pack::Pack>(
         &self,
         expected_owner_program_id: &Pubkey,
     ) -> Result<T, ProgramError>;
@@ -117,7 +116,7 @@ pub trait ValidPDA {
 }
 
 impl<'a> ValidPDA for &AccountInfo<'a> {
-    fn check_initialized_pda<T: solana_program::program_pack::Pack + BorshDeserialize>(
+    fn check_initialized_pda<T: solana_program::program_pack::Pack>(
         &self,
         expected_owner_program_id: &Pubkey,
     ) -> Result<T, ProgramError> {

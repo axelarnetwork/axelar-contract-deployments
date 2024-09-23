@@ -741,6 +741,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "axelar-solana-its"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "axelar-executable",
+ "axelar-message-primitives",
+ "axelar-rkyv-encoding",
+ "borsh 1.5.1",
+ "gmp-gateway",
+ "interchain-token-transfer-gmp",
+ "itertools 0.12.1",
+ "program-utils",
+ "rkyv",
+ "rstest",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "test-fixtures",
+]
+
+[[package]]
 name = "axelar-solana-memo-program"
 version = "0.1.0"
 dependencies = [

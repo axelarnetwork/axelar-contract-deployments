@@ -1,0 +1,34 @@
+[package]
+name = "axelar-solana-its"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[lints]
+workspace = true
+
+[features]
+no-entrypoint = []
+test-sbf = []
+
+[dependencies]
+alloy-primitives.workspace = true
+alloy-sol-types.workspace = true
+axelar-executable.workspace = true
+axelar-message-primitives.workspace = true
+axelar-rkyv-encoding.workspace = true
+borsh.workspace = true
+gateway = { workspace = true, features = ["no-entrypoint"] }
+interchain-token-transfer-gmp.workspace = true
+itertools.workspace = true
+program-utils.workspace = true
+rkyv.workspace = true
+solana-program.workspace = true
+
+[dev-dependencies]
+rstest.workspace = true
+solana-program-test.workspace = true
+solana-sdk.workspace = true
+test-fixtures.workspace = true

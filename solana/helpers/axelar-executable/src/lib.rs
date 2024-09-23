@@ -2,11 +2,12 @@
 
 //! Utility functions for on-chain integration with the Axelar Gatewey on Solana
 
+use std::borrow::Borrow;
 use std::str::FromStr;
 
 pub use axelar_message_primitives;
 use axelar_message_primitives::{DataPayload, DestinationProgramId, EncodingScheme};
-use axelar_rkyv_encoding::types::{ArchivedMessage, Message};
+use axelar_rkyv_encoding::types::{ArchivedMessage, CrossChainId, Message};
 use gateway::commands::MessageWrapper;
 use gateway::hasher_impl;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -38,12 +39,8 @@ pub fn validate_message(
 ) -> ProgramResult {
     msg!("Validating contract call");
 
-    let (relayer_prepended_accs, origin_chain_provided_accs) = accounts.split_at(4);
-    let account_info_iter = &mut relayer_prepended_accs.iter();
-    let gateway_approved_message_pda = next_account_info(account_info_iter)?;
-    let signing_pda = next_account_info(account_info_iter)?;
-    let gateway_root_pda = next_account_info(account_info_iter)?;
-    let _gateway_program_id = next_account_info(account_info_iter)?;
+    let (_relayer_prepended_accs, origin_chain_provided_accs) =
+        accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
 
     let axelar_payload = DataPayload::new(
         data.payload_without_accounts.as_slice(),
@@ -51,14 +48,67 @@ pub fn validate_message(
         data.encoding_scheme,
     );
 
+    validate_message_internal(
+        program_id,
+        accounts,
+        &data.message,
+        axelar_payload.hash()?.0.borrow(),
+    )
+}
+
+/// Perform CPI call to the Axelar Gateway to ensure that the given command
+/// (containing an ITS message) is approved
+///
+/// Expected accounts:
+/// 0. `gateway_approved_message_pda` - GatewayApprovedMessage PDA
+/// 1. `signing_pda` - Signing PDA that's associated with the provided
+///    `program_id`
+/// 2. `gateway_root_pda` - Gateway Root PDA
+/// 3. `gateway_program_id` - Gateway Prorgam ID
+/// N. accounts required by the inner instruction (part of the payload).
+pub fn validate_flattened_message(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo<'_>],
+    cross_chain_id: CrossChainId,
+    source_address: String,
+    destination_address: String,
+    destination_chain: String,
+    payload: &[u8],
+) -> ProgramResult {
+    let payload_hash = solana_program::keccak::hash(payload).to_bytes();
+    let message_wrapper: MessageWrapper = Message::new(
+        cross_chain_id,
+        source_address,
+        destination_chain,
+        destination_address,
+        payload_hash,
+    )
+    .try_into()?;
+
+    validate_message_internal(program_id, accounts, &message_wrapper, &payload_hash)
+}
+
+fn validate_message_internal(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo<'_>],
+    message: &MessageWrapper,
+    payload_hash: &[u8; 32],
+) -> ProgramResult {
+    msg!("Validating contract call");
+
+    let account_info_iter = &mut accounts.iter();
+    let gateway_approved_message_pda = next_account_info(account_info_iter)?;
+    let signing_pda = next_account_info(account_info_iter)?;
+    let gateway_root_pda = next_account_info(account_info_iter)?;
+    let _gateway_program_id = next_account_info(account_info_iter)?;
+
     // Build the actual Message we are going to use
-    let message: &ArchivedMessage = (&data.message).try_into()?;
-    let command_id = message.cc_id().command_id(hasher_impl());
+    let archived_message: &ArchivedMessage = message.try_into()?;
+    let command_id = archived_message.cc_id().command_id(hasher_impl());
 
     // Check: Original message's payload_hash is equivalent to provided payload's
     // hash
-    let provided_payload_hash = *axelar_payload.hash()?.0;
-    if *message.payload_hash() != provided_payload_hash {
+    if archived_message.payload_hash() != payload_hash {
         msg!("Invalid payload hash");
         return Err(ProgramError::InvalidInstructionData);
     }
@@ -76,7 +126,7 @@ pub fn validate_message(
             gateway_approved_message_pda.key,
             gateway_root_pda.key,
             signing_pda.key,
-            data.message.clone(),
+            message.clone(),
         )?,
         &[
             gateway_approved_message_pda.clone(),
