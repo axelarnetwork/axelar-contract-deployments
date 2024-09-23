@@ -11,12 +11,15 @@ async function processCommand(config, chain, options) {
 
     await printWalletInfo(keypair, client, chain, options);
 
-    await requestSuiFromFaucetV0({
-        host: getFaucetHost(chain.networkType),
-        recipient,
-    });
+    const balance = Number((await client.getBalance({ owner: recipient })).totalBalance) / 1e9;
+    if (balance < Number(options.minBalance)) {
+        await requestSuiFromFaucetV0({
+            host: getFaucetHost(chain.networkType),
+            recipient,
+        });
 
-    printInfo('Funds requested', recipient);
+        printInfo('Funds requested', recipient);
+    }
 }
 
 async function mainProcessor(options, processor) {
@@ -31,6 +34,12 @@ if (require.main === module) {
     program
         .name('faucet')
         .addOption(new Option('--recipient <recipient>', 'recipient to request funds for'))
+        .addOption(
+            new Option(
+                '--minBalance <amount>',
+                'tokens will only be requested from the faucet if recipient balance is below the amount provided',
+            ).default('1'),
+        )
         .description('Query the faucet for funds.')
         .action((options) => {
             mainProcessor(options, processCommand);
