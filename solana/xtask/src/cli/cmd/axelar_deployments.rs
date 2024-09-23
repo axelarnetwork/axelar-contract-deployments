@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
@@ -116,7 +116,7 @@ pub(crate) struct AxelarContracts {
 pub(crate) struct MultichainAxelarDeployment<T> {
     pub(crate) code_id: u64,
     #[serde(flatten)]
-    pub(crate) networks: HashMap<String, T>,
+    pub(crate) networks: BTreeMap<String, T>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -218,7 +218,7 @@ pub(crate) struct MultisigProver {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct AxelarDeploymentRoot {
-    pub(crate) chains: HashMap<String, EvmChain>,
+    pub(crate) chains: BTreeMap<String, EvmChain>,
     pub(crate) axelar: AxelarChain,
 }
 
@@ -262,7 +262,7 @@ mod tests {
     fn can_deserialize_evm_deployments() {
         let root = get_data();
         let mut data = simd_json::to_string(&root["chains"]).unwrap().into_bytes();
-        let _ = simd_json::from_slice::<HashMap<String, EvmChain>>(data.as_mut_slice()).unwrap();
+        let _ = simd_json::from_slice::<BTreeMap<String, EvmChain>>(data.as_mut_slice()).unwrap();
     }
 
     #[test]

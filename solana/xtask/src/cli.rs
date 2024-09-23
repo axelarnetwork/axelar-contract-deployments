@@ -1,11 +1,11 @@
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 
 use axelar_message_primitives::EncodingScheme;
 use clap::{Parser, Subcommand};
 use cmd::solana::SolanaContract;
-use ethers::abi::AbiDecode;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
 use ethers::signers::coins_bip39::English;
@@ -108,17 +108,17 @@ pub(crate) enum Cosmwasm {
     /// Deploy
     Deploy {
         #[arg(short, long)]
-        private_key_hex: String,
+        axelar_private_key_hex: String,
     },
     Init {
         #[arg(short, long)]
-        private_key_hex: String,
+        axelar_private_key_hex: String,
         #[command(subcommand)]
         command: CosmwasmInit,
     },
     RedeployAndInitAll {
         #[arg(short, long)]
-        private_key_hex: String,
+        axelar_private_key_hex: String,
     },
     /// Generate a new Axelar wallet, outputs the Axelar bech32 key and the hex
     /// private key
@@ -139,6 +139,8 @@ pub(crate) enum CosmwasmInit {
     Gateway {},
     // Initialize an already deployed multisig prover contract.
     SolanaMultisigProver {},
+    // Steup Multisig porver initial signers (post Axelar-governance approval)
+    SolanaMultisigProverInitialSigners {},
 }
 /// The contracts are pre-built as ensured by the `evm-contracts-rs` crate in
 /// our workspace. On EVM we don't differentiate deployment from initialization
@@ -227,8 +229,9 @@ impl Cli {
             &axelar_deployment_root.axelar,
             cmd::solana::defaults::rpc_url()?.to_string(),
         )?;
-        match self {
-            Cli::Solana { command } => handle_solana(command, &mut solana_deployment_root).await?,
+
+        let res = match self {
+            Cli::Solana { command } => handle_solana(command, &mut solana_deployment_root).await,
             Cli::Evm {
                 source_evm_chain,
                 admin_private_key,
@@ -241,10 +244,10 @@ impl Cli {
                     &axelar_deployment_root,
                     &mut solana_deployment_root,
                 )
-                .await?;
+                .await
             }
             Cli::Cosmwasm { command } => {
-                handle_cosmwasm(command, &mut solana_deployment_root).await?;
+                handle_cosmwasm(command, &mut solana_deployment_root).await
             }
             Cli::Testnet { command } => {
                 handle_testnet(
@@ -252,11 +255,12 @@ impl Cli {
                     &axelar_deployment_root,
                     &mut solana_deployment_root,
                 )
-                .await?;
+                .await
             }
-            Cli::GenerateEvm => handle_generating_evm_wallet(&axelar_deployment_root)?,
+            Cli::GenerateEvm => handle_generating_evm_wallet(&axelar_deployment_root),
         };
         solana_deployment_root.save()?;
+        res?;
         Ok(())
     }
 }
@@ -403,13 +407,15 @@ async fn handle_testnet(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 async fn maybe_deploy_evm_memo_contract(
     evm_signer: &evm_contracts_test_suite::EvmSigner,
     chain: &EvmChain,
     our_evm_deployment: &mut CustomEvmChainDeployments,
 ) -> Result<ethers::types::H160, eyre::Error> {
     if let Some(addr) = our_evm_deployment.memo_program_address.as_ref() {
-        return Ok(ethers::types::H160::decode_hex(addr)?);
+        tracing::info!(?addr, "memo addr");
+        return Ok(ethers::types::H160::from_str(addr)?);
     }
 
     tracing::info!(chain = ?chain.id, "memo contract not present, deploying");
@@ -533,7 +539,9 @@ async fn handle_cosmwasm(
         Cosmwasm::Build => {
             cmd::cosmwasm::build().await?;
         }
-        Cosmwasm::Deploy { private_key_hex } => {
+        Cosmwasm::Deploy {
+            axelar_private_key_hex: private_key_hex,
+        } => {
             let cosmwasm_signer = create_axelar_cosmsos_signer(
                 private_key_hex,
                 &solana_deployment_root.axelar_configuration,
@@ -547,7 +555,7 @@ async fn handle_cosmwasm(
         Cosmwasm::GenerateWallet => cmd::cosmwasm::generate_wallet()?,
         Cosmwasm::Init {
             command,
-            private_key_hex,
+            axelar_private_key_hex: private_key_hex,
         } => {
             let client = create_axelar_cosmsos_signer(
                 private_key_hex,
@@ -565,13 +573,22 @@ async fn handle_cosmwasm(
                     cmd::cosmwasm::init_solana_multisig_prover(&client, solana_deployment_root)
                         .await?;
                 }
+                CosmwasmInit::SolanaMultisigProverInitialSigners {} => {
+                    cmd::cosmwasm::update_verifier_set_multisig_prover(
+                        &client,
+                        solana_deployment_root,
+                    )
+                    .await?;
+                }
             }
         }
         Cosmwasm::AmpdSetup => {
-            cmd::cosmwasm::ampd::setup_ampd(&solana_deployment_root.solana_configuration).await?;
+            cmd::cosmwasm::ampd::setup_ampd(solana_deployment_root).await?;
         }
         Cosmwasm::AmpdAndTofndRun => cmd::cosmwasm::ampd::start_with_tofnd().await?,
-        Cosmwasm::RedeployAndInitAll { private_key_hex } => {
+        Cosmwasm::RedeployAndInitAll {
+            axelar_private_key_hex: private_key_hex,
+        } => {
             let client = create_axelar_cosmsos_signer(
                 private_key_hex,
                 &solana_deployment_root.axelar_configuration,

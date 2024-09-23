@@ -20,7 +20,7 @@ axelar-executable.workspace = true
 axelar-message-primitives = { path = "./../helpers/axelar-message-primitives" }
 axelar-rkyv-encoding.workspace = true
 axelar-solana-memo-program.workspace = true
-axelar-wasm-std = { path = "../../axelar-amplifier/packages/axelar-wasm-std", features = ["library"] }
+axelar-wasm-std = { path = "../../axelar-amplifier/packages/axelar-wasm-std" }
 base64.workspace = true
 bincode = "1.3"
 bip39 = { version = "2", features = ["rand"] }

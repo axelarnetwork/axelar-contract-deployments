@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use axelar_message_primitives::DataPayload;
-use axelar_wasm_std::nonempty;
 use eyre::OptionExt;
 use gmp_gateway::commands::OwnedCommand;
 use gmp_gateway::events::ArchivedGatewayEvent;
@@ -74,10 +73,7 @@ pub(crate) fn send_memo_from_solana(
     let payload = call_contract.payload.to_vec();
     let signature = signature.to_string();
     let message = router_api::Message {
-        cc_id: CrossChainId {
-            chain: ChainName::from_str(solana_chain_id)?,
-            id: nonempty::String::from_str(&format!("{signature}-{event_idx}"))?,
-        },
+        cc_id: CrossChainId::new(solana_chain_id, format!("{signature}-{event_idx}")).unwrap(),
         source_address: Address::from_str(
             solana_sdk::pubkey::Pubkey::from(call_contract.sender)
                 .to_string()
@@ -228,8 +224,8 @@ pub(crate) fn solana_init_approved_command(
     tracing::info!("solana gateway.initialize_commands()");
     let message = axelar_rkyv_encoding::types::Message::new(
         axelar_rkyv_encoding::types::CrossChainId::new(
-            message.cc_id.chain.to_string(),
-            message.cc_id.id.to_string(),
+            message.cc_id.source_chain.to_string(),
+            message.cc_id.message_id.to_string(),
         ),
         message.source_address.to_string(),
         message.destination_chain.to_string(),

@@ -10,6 +10,7 @@ use crate::cli::cmd::deployments::AxelarConfiguration;
 use crate::cli::cmd::testnet::multisig_prover_api;
 
 #[allow(clippy::too_many_arguments)]
+#[tracing::instrument(skip_all)]
 pub(crate) async fn wire_cosmwasm_contracts(
     source_chain_id: &str,
     destination_chain_id: &str,
@@ -60,14 +61,13 @@ pub(crate) async fn wire_cosmwasm_contracts(
     Ok(execute_data)
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn check_voting_verifier_status(
     message: &router_api::Message,
     cosmwasm_signer: &SigningClient,
     voting_verifier: cosmrs::AccountId,
 ) -> eyre::Result<()> {
-    let vv_msg = voting_verifier::msg::QueryMsg::GetMessagesStatus {
-        messages: vec![message.clone()],
-    };
+    let vv_msg = voting_verifier::msg::QueryMsg::MessagesStatus(vec![message.clone()]);
     let res = cosmwasm_signer
         .query::<serde_json::Value>(voting_verifier, serde_json::to_vec(&vv_msg).unwrap())
         .await?;
@@ -75,6 +75,7 @@ pub(crate) async fn check_voting_verifier_status(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn axelar_destination_multisig_prover_construct_proof(
     message: &router_api::Message,
     destination_multisig_prover: &cosmrs::AccountId,
@@ -82,9 +83,8 @@ pub(crate) async fn axelar_destination_multisig_prover_construct_proof(
     config: &AxelarConfiguration,
 ) -> eyre::Result<String> {
     tracing::info!("Axelar destination multisig_prover.construct_proof()");
-    let msg = multisig_prover_api::MultisigProverExecuteMsg::ConstructProof {
-        message_ids: vec![message.cc_id.clone()],
-    };
+    let msg =
+        multisig_prover_api::MultisigProverExecuteMsg::ConstructProof(vec![message.cc_id.clone()]);
     let execute = MsgExecuteContract {
         sender: cosmwasm_signer.signer_account_id()?,
         msg: serde_json::to_vec(&msg)?,
@@ -108,7 +108,7 @@ pub(crate) async fn axelar_destination_multisig_prover_construct_proof(
         let res = cosmwasm_signer
             .query::<multisig_prover_api::GetProofResponse>(
                 destination_multisig_prover.clone(),
-                serde_json::to_vec(&multisig_prover_api::QueryMsg::GetProof {
+                serde_json::to_vec(&multisig_prover_api::QueryMsg::Proof {
                     multisig_session_id: Uint64::try_from(id)?,
                 })?,
             )
@@ -127,6 +127,7 @@ pub(crate) async fn axelar_destination_multisig_prover_construct_proof(
     Ok(execute_data)
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn axelar_source_gateway_route_messages(
     message: &router_api::Message,
     cosmwasm_signer: &SigningClient,
@@ -148,6 +149,7 @@ pub(crate) async fn axelar_source_gateway_route_messages(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn axelar_source_gateway_verify_messages(
     message: &router_api::Message,
     cosmwasm_signer: &SigningClient,

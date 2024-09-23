@@ -17,7 +17,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-solana_program::declare_id!("gtwEpzTprUX7TJLx1hFXNeqCXJMsoxYQhQaEbnuDcj1");
+solana_program::declare_id!("gtwgM94UYHwBh3g7rWi1tcpkgELxHQRLPpPHsaECW57");
 
 /// Seed prefixes for different PDAs initialized by the Gateway
 pub mod seed_prefixes {

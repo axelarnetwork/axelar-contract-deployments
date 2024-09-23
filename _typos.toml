@@ -3,4 +3,15 @@
 itswMJtRUe2vd46rb5kDmYzfBHHej4PyX4twgnbT1TG = "itswMJtRUe2vd46rb5kDmYzfBHHej4PyX4twgnbT1TG"
 
 [files]
-extend-exclude = ["axelar-amplifier", "evm-contracts/lib/*", "offchain", "solana/xtask/devnet-amplifier.json"]
+extend-exclude = [
+  "axelar-amplifier",
+  "evm-contracts/lib/*",
+  "offchain",
+  "solana/xtask/solana-devnet.json",
+  "solana/xtask/devnet-amplifier.json",
+]
+
+[default]
+extend-ignore-identifiers-re = [
+  "gtwgM94UYHwBh3g7rWi1tcpkgELxHQRLPpPHsaECW57",
+]

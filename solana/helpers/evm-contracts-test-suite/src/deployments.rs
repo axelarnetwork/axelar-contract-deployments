@@ -120,18 +120,26 @@ impl crate::EvmSigner {
         self.signer.fill_transaction(&mut tx, None).await?;
         let _signature = self.wallet.sign_transaction(&tx).await?;
         let res = self.signer.send_transaction(tx.clone(), None).await?;
-        let res = res
-            .retries(10)
-            .interval(std::time::Duration::from_millis(500))
-            .log_msg("deployment")
-            .log()
-            .await?
-            .ok_or(anyhow!("no tx receipt"))?;
+        let res = await_receipt(res).await?;
         let contract = res
             .contract_address
             .ok_or(anyhow!("no contract address in the receipt"))?;
         Ok(contract)
     }
+}
+
+/// helper method to await for tx receipts on slow networks
+pub async fn await_receipt(
+    res: ethers::providers::PendingTransaction<'_, ethers::providers::Http>,
+) -> anyhow::Result<ethers::types::TransactionReceipt> {
+    let res = res
+        .retries(10)
+        .interval(std::time::Duration::from_millis(500))
+        .log_msg("deployment")
+        .log()
+        .await?
+        .ok_or(anyhow!("no tx receipt"))?;
+    Ok(res)
 }
 
 /// Return a hardcoded domain separator

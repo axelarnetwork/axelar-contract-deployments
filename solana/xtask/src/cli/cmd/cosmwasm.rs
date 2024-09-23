@@ -63,6 +63,7 @@ pub(crate) async fn build() -> eyre::Result<()> {
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn deploy(
     client: &SigningClient,
     config: &mut AxelarConfiguration,
@@ -103,17 +104,20 @@ async fn deploy_contract(
     Ok(code_id)
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn init_solana_voting_verifier(
     client: &SigningClient,
     solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<String> {
     use voting_verifier::msg::InstantiateMsg;
+    tracing::info!("init voting verifier");
 
     let code_id = solana_deployment_root
         .axelar_configuration
         .voting_verifier_code_id
         .ok_or_eyre("voting verifier code id not present. Was it deployed?")?;
     let instantiate_msg = InstantiateMsg {
+        address_format: axelar_wasm_std::address::AddressFormat::Base58Solana,
         service_registry_address: solana_deployment_root
             .axelar_configuration
             .axelar_chain
@@ -135,7 +139,8 @@ pub(crate) async fn init_solana_voting_verifier(
         voting_threshold: majority_threshold(&solana_deployment_root.axelar_configuration),
         block_expiry: solana_deployment_root
             .axelar_configuration
-            .voting_verifier_block_expiry,
+            .voting_verifier_block_expiry
+            .try_into()?,
         confirmation_height: solana_deployment_root
             .axelar_configuration
             .voting_verifier_confirmation_height,
@@ -150,7 +155,8 @@ pub(crate) async fn init_solana_voting_verifier(
             .contracts
             .rewards
             .address
-            .to_string(),
+            .to_string()
+            .try_into()?,
         governance_address: solana_deployment_root
             .axelar_configuration
             .axelar_chain
@@ -199,11 +205,13 @@ fn majority_threshold(config: &AxelarConfiguration) -> axelar_wasm_std::Majority
         .unwrap()
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn init_gateway(
     client: &SigningClient,
     solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<String> {
     use gateway::msg::InstantiateMsg;
+    tracing::info!("init gateway");
 
     let code_id = solana_deployment_root
         .axelar_configuration
@@ -269,15 +277,18 @@ pub(crate) fn default_gas(config: &AxelarConfiguration) -> eyre::Result<Gas> {
     })
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn init_solana_multisig_prover(
     client: &SigningClient,
     solana_deployment_root: &mut SolanaDeploymentRoot,
 ) -> eyre::Result<String> {
     use crate::cli::cmd::testnet::multisig_prover_api::InstantiateMsg;
+    tracing::info!("init multisig prover");
+
     let code_id = solana_deployment_root
         .axelar_configuration
-        .gateway_code_id
-        .ok_or_eyre("gateway code id not present")?;
+        .multisig_prover_code_id
+        .ok_or_eyre("multisig prover code id not present")?;
 
     let instantiate_msg = InstantiateMsg {
         admin_address: client.signer_account_id()?.to_string(),
@@ -370,6 +381,7 @@ pub(crate) async fn init_solana_multisig_prover(
     });
 
     update_verifier_set_multisig_prover(client, solana_deployment_root).await?;
+
     Ok(contract_address)
 }
 
@@ -442,10 +454,10 @@ pub(crate) mod ampd {
 
     use super::path::axelar_amplifier_dir;
     use crate::cli::cmd::cosmwasm::path::{self, ampd_home_dir};
-    use crate::cli::cmd::deployments::SolanaConfiguration;
+    use crate::cli::cmd::deployments::SolanaDeploymentRoot;
     use crate::cli::cmd::path::{workspace_root_dir, xtask_crate_root_dir};
 
-    pub(crate) async fn setup_ampd(solana_config: &SolanaConfiguration) -> eyre::Result<()> {
+    pub(crate) async fn setup_ampd(deployment_root: &SolanaDeploymentRoot) -> eyre::Result<()> {
         if !Confirm::new("Welcome to ampd-setup ! This will perform/guide you through the verifier onboarding process described here https://docs.axelar.dev/validator/amplifier/verifier-onboarding (devnet-amplifier chain).
 
         It will overwrite your $HOME/.ampd/config.toml if it exist.
@@ -505,20 +517,32 @@ pub(crate) mod ampd {
 
         info!("Bonding ampd verifier ...");
         sh.cmd(&ampd_build_path)
-            .args(vec!["bond-verifier", "validators", "100", "uamplifier"])
+            .args(vec![
+                "bond-verifier",
+                deployment_root.axelar_configuration.service_name.as_str(),
+                "100",
+                "uamplifier",
+            ])
             .run()?;
 
         info!("Registering ampd public key ...");
-        sh.cmd(&ampd_build_path)
+        let _err = sh
+            .cmd(&ampd_build_path)
             .args(vec!["register-public-key", "ecdsa"])
-            .run()?;
+            .run()
+            .inspect_err(|err| {
+                tracing::error!(?err, "error in registering the public key");
+            });
 
         info!("Registering support for Solana blockchain ...");
         sh.cmd(&ampd_build_path)
             .args(vec![
                 "register-chain-support",
-                "validators",
-                solana_config.chain_name_on_axelar_chain.as_str(),
+                deployment_root.axelar_configuration.service_name.as_str(),
+                deployment_root
+                    .solana_configuration
+                    .chain_name_on_axelar_chain
+                    .as_str(),
             ])
             .run()?;
 
@@ -547,46 +571,65 @@ pub(crate) mod ampd {
         build_ampd()?;
 
         tracing::info!("starting tofnd");
+        let expected_import_file = workspace_root_dir().join("tofnd").join("import");
+        if !expected_import_file.try_exists()? {
+            eyre::bail!("create a new `tofnd/import` file that would contain the tofnd root seed!")
+        }
+
         let tofnd_process = thread::spawn(move || {
-            // Run the docker ps command with filtering by the container name
             let container_name = "tofnd-solana";
             let sh = Shell::new()?;
+            // Check if the container exists (running or not)
             let output = sh
                 .cmd("docker")
                 .args([
                     "ps",
+                    "-a",
                     "--filter",
                     format!("name={container_name}").as_str(),
                     "--format",
-                    "{{.Names}}",
+                    "{{.Names}} {{.Status}}",
                 ])
                 .read()
                 .expect("Failed to execute command");
             tracing::info!(output, "docker tofnd check output");
 
-            // Check if the output contains the container name
-            if output.contains(container_name) {
-                println!("Container {container_name} is running");
-                return Ok(());
-            }
-            let _ws = sh.push_dir(workspace_root_dir());
+            if output.trim().is_empty() {
+                // Container does not exist, create and start it
+                let _ws = sh.push_dir(workspace_root_dir());
 
-            let tofnd = sh.cmd("docker").args([
-                "run",
-                "-d",
-                "--name",
-                container_name,
-                "-p",
-                "50051:50051",
-                "--env",
-                "MNEMONIC_CMD=auto",
-                "--env",
-                "NOPASSWORD=true",
-                "-v",
-                "./tofnd:/.tofnd",
-                "haiyizxx/tofnd:latest",
-            ]);
-            tofnd.run()?;
+                let tofnd = sh.cmd("docker").args([
+                    "run",
+                    "-d",
+                    "--name",
+                    container_name,
+                    "-p",
+                    "50051:50051",
+                    "--env",
+                    "MNEMONIC_CMD=auto",
+                    "--env",
+                    "NOPASSWORD=true",
+                    "-v",
+                    "./tofnd:/.tofnd",
+                    "haiyizxx/tofnd:latest",
+                ]);
+                tofnd.run()?;
+                tracing::info!("Created and started container {}", container_name);
+            } else {
+                // Container exists
+                let status_line = output.trim();
+                if status_line.contains("Up") {
+                    // Container is running, attach to it
+                    tracing::info!("Container {} is already running", container_name);
+                    let attach = sh.cmd("docker").args(["attach", container_name]);
+                    attach.run()?;
+                } else {
+                    // Container is not running, start it
+                    let start = sh.cmd("docker").args(["start", container_name]);
+                    start.run()?;
+                    tracing::info!("Started container {}", container_name);
+                }
+            }
             Ok::<_, eyre::Error>(())
         });
 

@@ -29,17 +29,15 @@ impl SolanaDeploymentRoot {
         axelar: &AxelarChain,
         solana_rpc: String,
     ) -> eyre::Result<Self> {
-        let file_storage = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(storage_file_path(
-                solana_chain_name_on_axelar_chain.as_str(),
-            ))?;
+        let path = storage_file_path(solana_chain_name_on_axelar_chain.as_str());
+        let span = tracing::info_span!("deployment file storage");
+        let _span_guard = span.enter();
+        tracing::info!(?path);
+        let file_storage = OpenOptions::new().read(true).write(true).open(path)?;
 
         // read from file or init new
-        let solana_root = Self::from_file(file_storage).unwrap_or_else(|_| {
+        let solana_root = Self::from_file(file_storage).unwrap_or_else(|err| {
+            tracing::warn!(?err, "initiallizing a new solana deployment file");
             let axelar_config =
                 AxelarConfiguration::new_from_axelar_chain_deployment(axelar.clone());
             let solana_configuration = SolanaConfiguration::new(
@@ -64,10 +62,12 @@ impl SolanaDeploymentRoot {
     }
 
     fn from_file(mut reader: impl std::io::Read) -> eyre::Result<Self> {
-        let mut data = Vec::with_capacity(15_000);
-        reader.read_to_end(&mut data)?;
+        let mut data = Vec::new();
+        let bytes = reader.read_to_end(&mut data)?;
+        tracing::info!(?bytes, "read");
+        let slice = &mut data[0..bytes];
 
-        let data = simd_json::from_slice::<Self>(data.as_mut_slice())?;
+        let data = simd_json::from_slice::<Self>(slice)?;
         Ok(data)
     }
 
@@ -122,7 +122,7 @@ impl AxelarConfiguration {
             verifier_key_type: KeyType::Ecdsa,
             axelar_chain: axelar,
             axelar_account_prefix: "axelar".to_string(),
-            service_name: "verifiers".to_string(),
+            service_name: "validators".to_string(),
             voting_verifier_majority_threshould: (1, 1),
             voting_verifier_block_expiry: 10,
             voting_verifier_confirmation_height: 1,

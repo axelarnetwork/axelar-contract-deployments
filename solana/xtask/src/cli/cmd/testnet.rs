@@ -7,7 +7,6 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use axelar_message_primitives::DataPayload;
-use ethers::abi::AbiDecode;
 use ethers::types::{Address as EvmAddress, H160};
 use evm_contracts_test_suite::EvmSigner;
 use eyre::OptionExt;
@@ -20,6 +19,7 @@ use super::deployments::SolanaDeploymentRoot;
 use crate::cli::cmd::evm::{send_memo_from_evm_to_evm, send_memo_to_solana};
 
 #[allow(clippy::too_many_lines, clippy::too_many_arguments)]
+#[tracing::instrument(skip_all)]
 pub(crate) async fn evm_to_solana(
     source_chain: &EvmChain,
     source_evm_signer: EvmSigner,
@@ -154,6 +154,7 @@ pub(crate) async fn evm_to_solana(
 }
 
 #[allow(clippy::too_many_lines, clippy::too_many_arguments)]
+#[tracing::instrument(skip_all)]
 pub(crate) async fn solana_to_evm(
     destination_chain: &EvmChain,
     destination_evm_signer: EvmSigner,
@@ -238,6 +239,7 @@ pub(crate) async fn solana_to_evm(
 }
 
 #[allow(clippy::too_many_arguments)]
+#[tracing::instrument(skip_all)]
 pub(crate) async fn evm_to_evm(
     source_chain: &EvmChain,
     destination_chain: &EvmChain,
@@ -294,7 +296,7 @@ pub(crate) async fn evm_to_evm(
         "memo sent"
     );
     tracing::info!("sleeping to allow the tx to settle");
-    tokio::time::sleep(Duration::from_secs(30)).await;
+    tokio::time::sleep(Duration::from_secs(10)).await;
     let (payload, message) = evm_interaction::create_axelar_message_from_evm_log(&tx, source_chain);
 
     let execute_data = cosmwasm_interactions::wire_cosmwasm_contracts(
@@ -317,7 +319,7 @@ pub(crate) async fn evm_to_evm(
         &destination_evm_signer,
     )
     .await?;
-    let destination_memo_contract = H160::decode_hex(
+    let destination_memo_contract = H160::from_str(
         destination_chain_tracker
             .memo_program_address
             .as_ref()
