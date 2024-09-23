@@ -9,7 +9,7 @@ async function processCommand(config, chain, options) {
     const [keypair, client] = getWallet(chain, options);
     const recipient = options.recipient || keypair.toSuiAddress();
 
-    await printWalletInfo(keypair, client, chain, options);
+    await printWalletInfo(recipient, client, chain, options);
 
     const balance = Number((await client.getBalance({ owner: recipient })).totalBalance) / 1e9;
     if (balance < Number(options.minBalance)) {

@@ -69,10 +69,10 @@ function getWallet(chain, options) {
     return [keypair, client];
 }
 
-async function printWalletInfo(keypair, client, chain, options) {
-    printInfo('Wallet address', keypair.toSuiAddress());
+async function printWalletInfo(owner, client, chain, options) {
+    printInfo('Wallet address', owner);
 
-    const coins = await client.getBalance({ owner: keypair.toSuiAddress() });
+    const coins = await client.getBalance({ owner });
     printInfo('Wallet balance', `${coins.totalBalance / 1e9} ${chain.tokenSymbol || coins.coinType}`);
 }
 
