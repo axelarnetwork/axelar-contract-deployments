@@ -36,6 +36,8 @@ soroban keys show wallet
 
 Set `PRIVATE_KEY` in `.env` to the above value.
 
+Testnet funds can be obtained via a [faucet](https://ftl.ai/), and transferred to your wallet.
+
 ## Deployments
 
 Setup
@@ -55,20 +57,16 @@ cargo wasm --release
 Deploy the auth contract
 
 ```bash
-node stellar/deploy-contract.js --contractName axelar_auth_verifiers --wasmPath ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_auth_verifier.optimized.wasm
+node stellar/deploy-contract.js --contractName axelar_auth_verifier --wasmPath ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_auth_verifier.optimized.wasm --initialize
 ```
 
-Deploy the gateway contract and initialize it with the auth contract
+Deploy the gateway contract
+
 ```bash
 node stellar/deploy-contract.js --contractName axelar_gateway --wasmPath ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm --initialize
 ```
 
-Initialize the auth contract. TODO: run initialize during the first step itself once initialize works correctly.
-```bash
-node stellar/deploy-contract.js --contractName axelar_auth_verifiers --wasmPath ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_auth_verifier.optimized.wasm --initialize --address [auth contract address] --estimateCost
-```
-
-`-estimateCost` will show the gas costs for the initialize transaction.
+Provide `--estimateCost` to show the gas costs for the initialize transaction instead of executing it.
 
 ### Operators
 
@@ -89,5 +87,26 @@ node stellar/generate-bindings.js --wasmPath /path/to/optimized.wasm --contractI
 Soroban contracts can be interacted directly via the CLI as well. See the help text for individual contract cmds as follows.
 
 ```bash
-soroban contract invoke --network testnet --id [contract address] --source-account wallet -- --help
+soroban contract invoke --network testnet --id [contract-address] --source-account wallet -- --help
+```
+
+### Gateway
+
+#### Call contract
+
+`node stellar/gateway.js call-contract ethereum 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234`
+
+#### Approve messages
+
+A message approval can be submitted to the gateway contract. Replace `wallet` with another Stellar address if needed.
+`node stellar/gateway.js approve ethereum id 0x1234 wallet 0x5678`
+
+#### Rotate signers
+
+A signer rotation can be submitted to the gateway contract. Use `--currentNonce` to override the default current nonce set for subsequent rotations. Skip `--signers` to rotate to the Amplifier verifier set registered in the prover contract.
+
+```bash
+node node stellar/gateway.js rotate --newNonce test --signers wallet
+
+node node stellar/gateway.js rotate --newNonce test2 --currentNonce test --signers wallet
 ```

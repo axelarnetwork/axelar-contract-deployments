@@ -1,12 +1,12 @@
 const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
-const { getWallet, prepareTransaction, buildTransaction, sendTransaction, estimateCost } = require('./utils');
+const { getWallet, broadcast } = require('./utils');
 const { loadConfig, printInfo, parseArgs, validateParameters } = require('../evm/utils');
 const { addEnvOption } = require('../common');
 require('./cli-utils');
 
 async function processCommand(options, _, chain) {
-    const [wallet, server] = await getWallet(chain, options);
+    const wallet = await getWallet(chain, options);
 
     const contract = new Contract(options.address || chain.contracts?.axelar_operators?.address);
 
@@ -96,15 +96,7 @@ async function processCommand(options, _, chain) {
         }
     }
 
-    if (options.estimateCost) {
-        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
-        const resourceCost = await estimateCost(tx, server);
-        printInfo('Resource cost', JSON.stringify(resourceCost, null, 2));
-        return;
-    }
-
-    const signedTx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
-    const returnValue = await sendTransaction(signedTx, server);
+    const returnValue = await broadcast(operation, wallet, chain, `Performed ${options.action}`, options);
 
     if (returnValue) {
         printInfo('Return value', returnValue);

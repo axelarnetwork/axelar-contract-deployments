@@ -9,7 +9,14 @@ const {
     BASE_FEE,
     xdr: { DiagnosticEvent, SorobanTransactionData },
 } = require('@stellar/stellar-sdk');
-const { printInfo, sleep } = require('../evm/utils');
+const { printInfo, sleep, addEnvOption } = require('../common');
+const { Option } = require('commander');
+const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+const { ethers } = require('hardhat');
+const {
+    utils: { arrayify, hexlify },
+    BigNumber,
+} = ethers;
 
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
@@ -25,6 +32,22 @@ function getNetworkPassphrase(networkType) {
             throw new Error(`Unknown network type: ${networkType}`);
     }
 }
+
+const addBaseOptions = (program, options = {}) => {
+    addEnvOption(program);
+    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    // program.addOption(new Option('--estimateCost', 'estimate on-chain resources').default(false));
+
+    if (!options.ignorePrivateKey) {
+        program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+    }
+
+    if (options.address) {
+        program.addOption(new Option('--address <address>', 'override contract address'));
+    }
+
+    return program;
+};
 
 async function buildTransaction(operation, server, wallet, networkType, options = {}) {
     const account = await server.getAccount(wallet.publicKey());
@@ -62,13 +85,13 @@ const prepareTransaction = async (operation, server, wallet, networkType, option
     return preparedTransaction;
 };
 
-async function sendTransaction(tx, server, options = {}) {
+async function sendTransaction(tx, server, action, options = {}) {
     // Submit the transaction to the Soroban-RPC server. The RPC server will
     // then submit the transaction into the network for us. Then we will have to
     // wait, polling `getTransaction` until the transaction completes.
     try {
         const sendResponse = await server.sendTransaction(tx);
-        printInfo('Transaction hash', '0x' + sendResponse.hash);
+        printInfo(`${action}`, '0x' + sendResponse.hash);
 
         if (options.verbose) {
             printInfo('Transaction broadcast response', JSON.stringify(sendResponse));
@@ -118,6 +141,20 @@ async function sendTransaction(tx, server, options = {}) {
     }
 }
 
+async function broadcast(operation, wallet, chain, action, options = {}) {
+    const server = new SorobanRpc.Server(chain.rpc);
+
+    if (options.estimateCost) {
+        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+        const resourceCost = await estimateCost(tx, server);
+        printInfo('Gas cost', JSON.stringify(resourceCost, null, 2));
+        return;
+    }
+
+    const tx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
+    return await sendTransaction(tx, server, action, options);
+}
+
 function getAssetCode(balance, chain) {
     return balance.asset_type === 'native' ? chain.tokenSymbol : balance.asset_code;
 }
@@ -136,7 +173,7 @@ async function getWallet(chain, options) {
 
     printInfo('Wallet sequence', account.sequenceNumber());
 
-    return [keypair, provider];
+    return keypair;
 }
 
 async function estimateCost(tx, server) {
@@ -177,11 +214,37 @@ async function estimateCost(tx, server) {
     };
 }
 
+const getAmplifierVerifiers = async (config, chainAxelarId) => {
+    const client = await CosmWasmClient.connect(config.axelar.rpc);
+    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
+        config.axelar.contracts.MultisigProver[chainAxelarId].address,
+        'current_verifier_set',
+    );
+    const signers = Object.values(verifierSet.signers);
+
+    const weightedSigners = signers
+        .map((signer) => ({
+            signer: arrayify(`0x${signer.pub_key.ed25519}`),
+            weight: Number(signer.weight),
+        }))
+        .sort((a, b) => hexlify(a.signer).localeCompare(hexlify(b.signer)));
+
+    return {
+        signers: weightedSigners,
+        threshold: Number(verifierSet.threshold),
+        nonce: ethers.utils.hexZeroPad(BigNumber.from(verifierSet.created_at).toHexString(), 32),
+        verifierSetId,
+    };
+};
+
 module.exports = {
     buildTransaction,
     prepareTransaction,
     sendTransaction,
+    broadcast,
     getWallet,
     estimateCost,
     getNetworkPassphrase,
+    addBaseOptions,
+    getAmplifierVerifiers,
 };
