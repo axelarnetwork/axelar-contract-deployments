@@ -76,7 +76,7 @@ const main = async (options) => {
     const wallet = await prepareWallet(options);
     const client = await prepareClient(config, wallet);
 
-    await upload(client, wallet, chains[0], config, options);
+    await upload(client, wallet, config, options);
 
     if (!(uploadOnly || prompt(`Proceed with deployment on axelar?`, yes))) {
         await instantiate(client, wallet, config, options);
