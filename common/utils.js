@@ -409,14 +409,14 @@ async function getDomainSeparator(config, chain, options) {
     return expectedDomainSeparator;
 }
 
-const getChainConfig = (config, chainName) => {
+const getChainConfig = (config, chainName, options = {}) => {
     if (chainName === 'none') {
         return undefined;
     }
 
     const chainConfig = config.chains[chainName] || config[chainName];
 
-    if (!chainConfig) {
+    if (!options.skipCheck && !chainConfig) {
         throw new Error(`Chain ${chainName} not found in config`);
     }
 

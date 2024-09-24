@@ -91,7 +91,10 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const payload = options.payload || '0x';
+    let payload = options.payload || '0x';
+    if (!payload.startsWith('0x')) {
+        payload = '0x' + payload;
+    }
 
     if (!payload) {
         throw new Error('Missing GMP payload');
@@ -238,7 +241,7 @@ async function processCommand(config, chain, options) {
 
         // eslint-disable-next-line no-fallthrough
         case 'approveAndExecute': {
-            const payloadHash = payload.startsWith('0x') ? keccak256(arrayify(payload)) : id(payload);
+            const payloadHash = keccak256(arrayify(payload));
 
             const commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
 
@@ -277,15 +280,16 @@ async function processCommand(config, chain, options) {
 
         // eslint-disable-next-line no-duplicate-case,no-fallthrough
         case 'approveAndExecute': {
-            const payloadHash = payload.startsWith('0x') ? keccak256(arrayify(payload)) : id(payload);
+            const payloadHash = keccak256(arrayify(payload));
             const { sourceChain, sourceAddress } = options;
 
-            let commandID;
+            let commandId;
 
             if (options.messageId) {
-                commandID = id(`${sourceChain}_${options.messageId}`);
+                // Derive commandId for Amplifier gateway
+                commandId = id(`${sourceChain}_${options.messageId}`);
             } else {
-                commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+                commandId = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
             }
 
             if (!options.destination) {
@@ -297,7 +301,7 @@ async function processCommand(config, chain, options) {
 
             if (
                 !(await gateway.isContractCallApproved(
-                    commandID,
+                    commandId,
                     sourceChain,
                     sourceAddress,
                     options.destination,
@@ -310,7 +314,7 @@ async function processCommand(config, chain, options) {
 
             const appContract = new Contract(options.destination, IAxelarExecutable.abi, wallet);
 
-            const tx = await appContract.execute(commandID, sourceChain, sourceAddress, payload);
+            const tx = await appContract.execute(commandId, sourceChain, sourceAddress, payload);
             printInfo('Execute tx', tx.hash);
             await tx.wait(chain.confirmations);
 
