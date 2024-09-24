@@ -595,8 +595,8 @@
         }
       }
     },
-    "id": "Axelarnet",
-    "axelarId": "axelar",
+    "id": "axelarnet",
+    "axelarId": "axelarnet",
     "chainId": "devnet-amplifier",
     "rpc": "http://devnet-amplifier.axelar.dev:26657",
     "lcd": "http://devnet-amplifier.axelar.dev:1317",
