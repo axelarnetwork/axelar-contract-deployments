@@ -241,6 +241,15 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     // Print warning if version mismatch from defined version in version.json
     checkSuiVersionMatch();
 
+    // Check if dependencies are deployed
+    const dependencies = getLocalDependencies(packageDir, moveDir);
+
+    for (const { name } of dependencies) {
+        if (!chain.contracts[name]) {
+            throw new Error(`Contract ${name} needed to be deployed before deploying ${packageName}`);
+        }
+    }
+
     // Deploy package
     const published = await deployPackage(packageDir, client, keypair, options);
 
