@@ -1,5 +1,5 @@
 const { Command, Option } = require('commander');
-const { updateMoveToml, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { ethers } = require('hardhat');
 const { toB64 } = require('@mysten/sui/utils');
 const { bcs } = require('@mysten/sui/bcs');
@@ -14,8 +14,6 @@ const {
     getWallet,
     printWalletInfo,
     broadcast,
-    bytes32Struct,
-    signersStruct,
     upgradePackage,
     UPGRADE_POLICIES,
     getSigners,
@@ -28,6 +26,7 @@ const {
     getItsChannelId,
     getSquidChannelId,
     checkSuiVersionMatch,
+    moveDir,
 } = require('./utils');
 
 /**
@@ -43,7 +42,18 @@ const {
  * 2. Ensure the corresponding folder exists in the specified path
  *
  */
-const PACKAGE_DIRS = ['gas_service', 'example', 'axelar_gateway', 'operators', 'abi', 'governance', 'its', 'squid'];
+const PACKAGE_DIRS = [
+    'version_control',
+    'utils',
+    'gas_service',
+    'example',
+    'axelar_gateway',
+    'operators',
+    'abi',
+    'governance',
+    'its',
+    'squid',
+];
 
 /**
  * Package Mapping Object for Command Options and Post-Deployment Functions
@@ -51,21 +61,12 @@ const PACKAGE_DIRS = ['gas_service', 'example', 'axelar_gateway', 'operators', '
 const PACKAGE_CONFIGS = {
     cmdOptions: {
         AxelarGateway: () => GATEWAY_CMD_OPTIONS,
-        GasService: () => [],
-        Example: () => [],
-        Operators: () => [],
-        Abi: () => [],
-        Governance: () => [],
-        ITS: () => [],
-        Squid: () => [],
     },
     postDeployFunctions: {
         AxelarGateway: postDeployAxelarGateway,
         GasService: postDeployGasService,
         Example: postDeployExample,
         Operators: postDeployOperators,
-        Abi: {},
-        Governance: {},
         ITS: postDeployIts,
         Squid: postDeploySquid,
     },
@@ -119,9 +120,7 @@ async function postDeployExample(published, keypair, client, config, chain, opti
         arguments: [tx.object(relayerDiscovery), tx.object(singletonObjectId)],
     });
 
-    const registerTx = await broadcast(client, keypair, tx);
-
-    printInfo('Register transaction', registerTx.digest);
+    await broadcast(client, keypair, tx, 'Registered Transaction');
 }
 
 async function postDeployOperators(published, keypair, client, config, chain, options) {
@@ -153,12 +152,10 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
-    const encodedSigners = signersStruct
-        .serialize({
-            ...signers,
-            nonce: bytes32Struct.serialize(signers.nonce).toBytes(),
-        })
-        .toBytes();
+    const encodedSigners = bcsStructs.gateway.WeightedSigners.serialize({
+        ...signers,
+        nonce: bcsStructs.common.Bytes32.serialize(signers.nonce).toBytes(),
+    }).toBytes();
 
     const tx = new Transaction();
 
@@ -188,9 +185,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         });
     }
 
-    const result = await broadcast(client, keypair, tx);
-
-    printInfo('Setup Gateway', result.digest);
+    const result = await broadcast(client, keypair, tx, 'Setup Gateway');
 
     const [gateway] = getObjectIdsByObjectTypes(result, [`${packageId}::gateway::Gateway`]);
 
@@ -221,9 +216,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
         arguments: [tx.object(itsObjectId), tx.object(relayerDiscovery)],
     });
 
-    const registerTx = await broadcast(client, keypair, tx);
-
-    printInfo('Register transaction', registerTx.digest);
+    await broadcast(client, keypair, tx, 'Registered Transaction');
 }
 
 async function postDeploySquid(published, keypair, client, config, chain, options) {
@@ -239,9 +232,7 @@ async function postDeploySquid(published, keypair, client, config, chain, option
         arguments: [tx.object(squidObjectId), tx.object(chain.contracts.ITS.objects.ITS), tx.object(relayerDiscovery)],
     });
 
-    const registerTx = await broadcast(client, keypair, tx);
-
-    printInfo('Register transaction', registerTx.digest);
+    await broadcast(client, keypair, tx, 'Registered Transaction');
 }
 
 async function deploy(keypair, client, supportedContract, config, chain, options) {
@@ -263,14 +254,16 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 
     // Execute post-deployment function
     const executePostDeploymentFn = PACKAGE_CONFIGS.postDeployFunctions[packageName];
-    await executePostDeploymentFn(published, keypair, client, config, chain, options);
+
+    if (executePostDeploymentFn) {
+        await executePostDeploymentFn(published, keypair, client, config, chain, options);
+    }
 
     printInfo(`${packageName} Configuration Updated`, JSON.stringify(chain.contracts[packageName], null, 2));
 }
 
 async function upgrade(keypair, client, supportedPackage, policy, config, chain, options) {
-    const { packageDependencies } = options;
-    const { packageName } = supportedPackage;
+    const { packageName, packageDir } = supportedPackage;
     options.policy = policy;
 
     if (!chain.contracts[packageName]) {
@@ -282,11 +275,11 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
     validateParameters({ isNonEmptyString: { packageName } });
 
-    if (packageDependencies) {
-        for (const dependencies of packageDependencies) {
-            const packageId = contractsConfig[dependencies]?.address;
-            updateMoveToml(dependencies, packageId);
-        }
+    const packageDependencies = getLocalDependencies(packageDir, moveDir);
+
+    for (const { name } of packageDependencies) {
+        const packageAddress = contractsConfig[name]?.address;
+        updateMoveToml(packageDir, packageAddress, moveDir);
     }
 
     const builder = new TxBuilder(client);
@@ -343,10 +336,13 @@ const addDeployOptions = (program) => {
     // Get the package name from the program name
     const packageName = program.name();
     // Find the corresponding options for the package
-    const options = PACKAGE_CONFIGS.cmdOptions[packageName]();
+    const cmdOptions = PACKAGE_CONFIGS.cmdOptions[packageName];
 
-    // Add the options to the program
-    options.forEach((option) => program.addOption(option));
+    if (cmdOptions) {
+        const options = cmdOptions();
+        // Add the options to the program
+        options.forEach((option) => program.addOption(option));
+    }
 
     // Add the base deploy options to the program
     DEPLOY_CMD_OPTIONS.forEach((option) => program.addOption(option));

@@ -69,10 +69,14 @@ function getWallet(chain, options) {
     return [keypair, client];
 }
 
-async function printWalletInfo(keypair, client, chain, options) {
-    printInfo('Wallet address', keypair.toSuiAddress());
+async function printWalletInfo(wallet, client, chain, options) {
+    const owner =
+        wallet instanceof Ed25519Keypair || wallet instanceof Secp256k1Keypair || wallet instanceof Secp256r1Keypair
+            ? wallet.toSuiAddress()
+            : wallet;
+    printInfo('Wallet address', owner);
 
-    const coins = await client.getBalance({ owner: keypair.toSuiAddress() });
+    const coins = await client.getBalance({ owner });
     printInfo('Wallet balance', `${coins.totalBalance / 1e9} ${chain.tokenSymbol || coins.coinType}`);
 }
 
@@ -95,8 +99,8 @@ function getRawPrivateKey(keypair) {
     return decodeSuiPrivateKey(keypair.getSecretKey()).secretKey;
 }
 
-async function broadcast(client, keypair, tx) {
-    return await client.signAndExecuteTransaction({
+async function broadcast(client, keypair, tx, actionName) {
+    const receipt = await client.signAndExecuteTransaction({
         transaction: tx,
         signer: keypair,
         options: {
@@ -105,10 +109,16 @@ async function broadcast(client, keypair, tx) {
             showContent: true,
         },
     });
+
+    if (actionName) {
+        printInfo(actionName, receipt.digest);
+    }
+
+    return receipt;
 }
 
-async function broadcastSignature(client, txBytes, signature) {
-    return await client.executeTransactionBlock({
+async function broadcastSignature(client, txBytes, signature, actionName) {
+    const receipt = await client.executeTransactionBlock({
         transactionBlock: txBytes,
         signature,
         options: {
@@ -117,6 +127,12 @@ async function broadcastSignature(client, txBytes, signature) {
             showEvents: true,
         },
     });
+
+    if (actionName) {
+        printInfo(actionName, receipt.digest);
+    }
+
+    return receipt;
 }
 
 async function signTransactionBlockBytes(keypair, client, txBytes, options) {

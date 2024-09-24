@@ -1,7 +1,8 @@
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { loadConfig, saveConfig, printInfo } = require('../common/utils');
+const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { loadConfig, saveConfig } = require('../common/utils');
 const {
     getBcsBytesByObjectId,
     addBaseOptions,
@@ -9,7 +10,6 @@ const {
     getUnitAmount,
     getWallet,
     printWalletInfo,
-    discoveryStruct,
     broadcast,
 } = require('./utils');
 const { ethers } = require('hardhat');
@@ -46,9 +46,7 @@ async function sendCommand(keypair, client, contracts, args, options) {
         ],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Call sent', receipt.digest);
+    await broadcast(client, keypair, tx, 'Call Sent');
 }
 
 async function execute(keypair, client, contracts, args, options) {
@@ -68,7 +66,7 @@ async function execute(keypair, client, contracts, args, options) {
 
     // Get Discovery table id from discovery object
     const tableBcsBytes = await getBcsBytesByObjectId(client, discoveryObjectId);
-    const { fields } = discoveryStruct.parse(tableBcsBytes);
+    const { fields } = bcsStructs.common.Discovery.parse(tableBcsBytes);
     const tableId = fields.id;
 
     // Get the transaction list from the discovery table
@@ -140,9 +138,7 @@ async function execute(keypair, client, contracts, args, options) {
         arguments: txArgs,
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Call executed', receipt.digest);
+    await broadcast(client, keypair, tx, 'Call Executed');
 }
 
 async function processCommand(command, chain, args, options) {

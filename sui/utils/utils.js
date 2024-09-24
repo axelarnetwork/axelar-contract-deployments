@@ -2,7 +2,6 @@
 
 const { ethers } = require('hardhat');
 const toml = require('toml');
-const { execSync } = require('child_process');
 const { printInfo, printError, printWarn } = require('../../common/utils');
 const {
     BigNumber,
@@ -12,12 +11,19 @@ const {
 const fs = require('fs');
 const { fromB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-const { updateMoveToml, copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { singletonStruct, itsStruct, squidStruct } = require('./types-utils');
+const {
+    updateMoveToml,
+    copyMovePackage,
+    TxBuilder,
+    bcsStructs,
+    getDefinedSuiVersion,
+    getInstalledSuiVersion,
+} = require('@axelar-network/axelar-cgp-sui');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
 const suiCoinId = '0x2::sui::SUI';
+const moveDir = `${__dirname}/../move`;
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -55,39 +61,21 @@ const getBcsBytesByObjectId = async (client, objectId) => {
 };
 
 const deployPackage = async (packageName, client, keypair, options = {}) => {
-    const compileDir = `${__dirname}/../move`;
-
-    copyMovePackage(packageName, null, compileDir);
+    copyMovePackage(packageName, null, moveDir);
 
     const builder = new TxBuilder(client);
-    await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), compileDir);
+    await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), moveDir);
     const publishTxn = await builder.signAndExecute(keypair);
 
     const packageId = (publishTxn.objectChanges?.find((a) => a.type === 'published') ?? []).packageId;
 
-    updateMoveToml(packageName, packageId, compileDir);
+    updateMoveToml(packageName, packageId, moveDir);
     return { packageId, publishTxn };
 };
 
 const findPublishedObject = (published, packageDir, contractName) => {
     const packageId = published.packageId;
     return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageDir}::${contractName}`);
-};
-
-const getInstalledSuiVersion = () => {
-    const suiVersion = execSync('sui --version').toString().trim();
-    return parseVersion(suiVersion);
-};
-
-const getDefinedSuiVersion = () => {
-    const version = fs.readFileSync(`${__dirname}/../version.json`, 'utf8');
-    const suiVersion = JSON.parse(version).SUI_VERSION;
-    return parseVersion(suiVersion);
-};
-
-const parseVersion = (version) => {
-    const versionMatch = version.match(/\d+\.\d+\.\d+/);
-    return versionMatch[0];
 };
 
 const checkSuiVersionMatch = () => {
@@ -131,19 +119,19 @@ const getObjectIdsByObjectTypes = (txn, objectTypes) =>
 // Parse bcs bytes from singleton object which is created when the Test contract is deployed
 const getSingletonChannelId = async (client, singletonObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, singletonObjectId);
-    const data = singletonStruct.parse(bcsBytes);
+    const data = bcsStructs.gmp.Singleton.parse(bcsBytes);
     return '0x' + data.channel.id;
 };
 
 const getItsChannelId = async (client, itsObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, itsObjectId);
-    const data = itsStruct.parse(bcsBytes);
+    const data = bcsStructs.its.ITS.parse(bcsBytes);
     return '0x' + data.channel.id;
 };
 
 const getSquidChannelId = async (client, squidObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, squidObjectId);
-    const data = squidStruct.parse(bcsBytes);
+    const data = bcsStructs.squid.Squid.parse(bcsBytes);
     return '0x' + data.channel.id;
 };
 
@@ -260,4 +248,5 @@ module.exports = {
     getSquidChannelId,
     getSigners,
     getBagContentId,
+    moveDir,
 };

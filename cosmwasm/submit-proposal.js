@@ -4,11 +4,17 @@ require('dotenv').config();
 
 const { createHash } = require('crypto');
 
+const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
+
 const {
     prepareWallet,
     prepareClient,
+    fromHex,
+    getSalt,
     readWasmFile,
     getChains,
+    getAmplifierContractConfig,
+    updateContractConfig,
     fetchCodeIdFromCodeHash,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
@@ -16,40 +22,37 @@ const {
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
+    encodeParameterChangeProposal,
+    encodeMigrateContractProposal,
     submitProposal,
     makeInstantiateMsg,
-    instantiate2AddressForProposal,
-    governanceAddress,
 } = require('./utils');
-const { isNumber, saveConfig, loadConfig, printInfo, prompt } = require('../common');
+const { isNumber, saveConfig, loadConfig, printInfo, prompt, getChainConfig } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
     InstantiateContractProposal,
     InstantiateContract2Proposal,
     ExecuteContractProposal,
+    MigrateContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 
-const { Command, Option } = require('commander');
+const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const updateContractConfig = (contractConfig, chainConfig, key, value) => {
-    if (chainConfig) {
-        contractConfig[chainConfig.axelarId] = {
-            ...contractConfig[chainConfig.axelarId],
-            [key]: value,
-        };
-    } else {
-        contractConfig[key] = value;
-    }
-};
+const predictAndUpdateAddress = async (client, contractConfig, chainConfig, chainName, options) => {
+    const { contractName, salt, chainNames, runAs } = options;
 
-const predictAndUpdateAddress = (client, contractConfig, chainConfig, options, contractName, chainName) => {
-    return instantiate2AddressForProposal(client, contractConfig, options).then((contractAddress) => {
-        updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
+    const { checksum } = await client.getCodeDetails(contractConfig.codeId);
+    const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar');
 
-        return contractAddress;
-    });
+    updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
+
+    printInfo(
+        `Predicted address for ${chainName.toLowerCase() === 'none' ? '' : chainName.toLowerCase().concat(' ')}${contractName}. Address`,
+        contractAddress,
+    );
 };
 
 const printProposal = (proposal, proposalType) => {
@@ -59,132 +62,173 @@ const printProposal = (proposal, proposalType) => {
     );
 };
 
-const storeCode = (client, wallet, config, options) => {
+const confirmProposalSubmission = (options, proposal, proposalType) => {
+    printProposal(proposal, proposalType);
+
+    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+        return false;
+    }
+
+    return true;
+};
+
+const callSubmitProposal = async (client, wallet, config, options, proposal) => {
+    const proposalId = await submitProposal(client, wallet, config, options, proposal);
+    printInfo('Proposal submitted', proposalId);
+
+    return proposalId;
+};
+
+const storeCode = async (client, wallet, config, options) => {
     const { contractName } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-    } = config;
+    const contractConfig = getAmplifierContractConfig(config, contractName);
 
     const proposal = encodeStoreCodeProposal(options);
 
-    printProposal(proposal, StoreCodeProposal);
-
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
+    if (!confirmProposalSubmission(options, proposal, StoreCodeProposal)) {
+        return;
     }
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
-        contractConfig.storeCodeProposalId = proposalId;
-        contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
-    });
+    contractConfig.storeCodeProposalId = proposalId;
+    contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
 };
 
-const storeInstantiate = (client, wallet, config, options, chainName) => {
-    const { contractName, instantiate2 } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-        chains: { [chainName]: chainConfig },
-    } = config;
+const storeInstantiate = async (client, wallet, config, options) => {
+    const chains = getChains(config, options);
 
-    if (instantiate2) {
-        throw new Error('instantiate2 not supported for storeInstantiate');
-    }
+    for (const chain of chains) {
+        const chainName = chain.toLowerCase();
 
-    const initMsg = makeInstantiateMsg(contractName, chainName, config);
+        const { contractName, instantiate2 } = options;
+        const contractConfig = getAmplifierContractConfig(config, contractName);
+        const chainConfig = getChainConfig(config, chainName);
 
-    const proposal = encodeStoreInstantiateProposal(config, options, initMsg);
-    printProposal(proposal, StoreAndInstantiateContractProposal);
+        if (instantiate2) {
+            throw new Error('instantiate2 not supported for storeInstantiate');
+        }
 
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
-    }
+        const initMsg = makeInstantiateMsg(contractName, chainName, config);
+        const proposal = encodeStoreInstantiateProposal(config, options, initMsg);
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+        if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
+            return;
+        }
+
+        const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
         updateContractConfig(contractConfig, chainConfig, 'storeInstantiateProposalId', proposalId);
         contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
-    });
+    }
 };
 
-const instantiate = async (client, wallet, config, options, chainName) => {
-    const { contractName, instantiate2, predictOnly, fetchCodeId } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-        chains: { [chainName]: chainConfig },
-    } = config;
+const instantiate = async (client, wallet, config, options) => {
+    const chains = getChains(config, options);
 
-    if (fetchCodeId) {
-        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
-    } else if (!isNumber(contractConfig.codeId)) {
-        throw new Error('Code Id is not defined');
-    }
+    for (const chain of chains) {
+        const chainName = chain.toLowerCase();
 
-    if (predictOnly) {
-        return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
-    }
+        const { contractName, instantiate2, predictOnly, fetchCodeId } = options;
+        const contractConfig = getAmplifierContractConfig(config, contractName);
+        const chainConfig = getChainConfig(config, chainName);
 
-    const initMsg = makeInstantiateMsg(contractName, chainName, config);
+        if (fetchCodeId) {
+            contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
+        } else if (!isNumber(contractConfig.codeId)) {
+            throw new Error('Code Id is not defined');
+        }
 
-    let proposal;
+        if (predictOnly) {
+            return predictAndUpdateAddress(client, contractConfig, chainConfig, chainName, options);
+        }
 
-    if (instantiate2) {
-        proposal = encodeInstantiate2Proposal(config, options, initMsg);
-        printProposal(proposal, InstantiateContract2Proposal);
-    } else {
-        proposal = encodeInstantiateProposal(config, options, initMsg);
-        printProposal(proposal, InstantiateContractProposal);
-    }
+        const initMsg = makeInstantiateMsg(contractName, chainName, config);
 
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
-    }
+        let proposal;
+        let proposalType;
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+        if (instantiate2) {
+            proposal = encodeInstantiate2Proposal(config, options, initMsg);
+            proposalType = InstantiateContract2Proposal;
+        } else {
+            proposal = encodeInstantiateProposal(config, options, initMsg);
+            proposalType = InstantiateContractProposal;
+        }
+
+        if (!confirmProposalSubmission(options, proposal, proposalType)) {
+            return;
+        }
+
+        const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
         updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
 
         if (instantiate2) {
-            return predictAndUpdateAddress(client, contractConfig, chainConfig, options, contractName, chainName);
+            return predictAndUpdateAddress(client, contractConfig, chainConfig, chainName, options);
         }
-    });
+    }
 };
 
-const execute = (client, wallet, config, options, chainName) => {
-    const { contractName } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-        chains: { [chainName]: chainConfig },
-    } = config;
+const execute = async (client, wallet, config, options) => {
+    const chains = getChains(config, options);
 
-    const proposal = encodeExecuteContractProposal(config, options, chainName);
+    for (const chain of chains) {
+        const chainName = chain.toLowerCase();
 
-    printProposal(proposal, ExecuteContractProposal);
+        const { contractName } = options;
+        const contractConfig = getAmplifierContractConfig(config, contractName);
+        const chainConfig = getChainConfig(config, chainName);
 
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return Promise.resolve();
-    }
+        const proposal = encodeExecuteContractProposal(config, options, chainName);
 
-    return submitProposal(client, wallet, config, options, proposal).then((proposalId) => {
-        printInfo('Proposal submitted', proposalId);
+        if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
+            return;
+        }
+
+        const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
         updateContractConfig(contractConfig, chainConfig, 'executeProposalId', proposalId);
-    });
+    }
 };
 
-const main = async (options) => {
-    const { env, proposalType, contractName } = options;
+const paramChange = async (client, wallet, config, options) => {
+    const proposal = encodeParameterChangeProposal(options);
+
+    if (!confirmProposalSubmission(options, proposal, ParameterChangeProposal)) {
+        return;
+    }
+
+    await callSubmitProposal(client, wallet, config, options, proposal);
+};
+
+const migrate = async (client, wallet, config, options) => {
+    const chains = getChains(config, options);
+
+    for (const chain of chains) {
+        const chainName = chain.toLowerCase();
+
+        const { contractName, fetchCodeId } = options;
+        const contractConfig = getAmplifierContractConfig(config, contractName);
+
+        if (fetchCodeId) {
+            contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
+        } else if (!isNumber(contractConfig.codeId)) {
+            throw new Error('Code Id is not defined');
+        }
+
+        const proposal = encodeMigrateContractProposal(config, options, chainName);
+
+        if (!confirmProposalSubmission(options, proposal, MigrateContractProposal)) {
+            return;
+        }
+
+        await callSubmitProposal(client, wallet, config, options, proposal);
+    }
+};
+
+const mainProcessor = async (processor, options) => {
+    const { env, contractName } = options;
     const config = loadConfig(env);
 
     if (config.axelar.contracts === undefined) {
@@ -195,53 +239,12 @@ const main = async (options) => {
         config.axelar.contracts[contractName] = {};
     }
 
-    await prepareWallet(options)
-        .then((wallet) => prepareClient(config, wallet))
-        .then(({ wallet, client }) => {
-            switch (proposalType) {
-                case 'store':
-                    return storeCode(client, wallet, config, options);
+    const wallet = await prepareWallet(options);
+    const client = await prepareClient(config, wallet);
 
-                case 'storeInstantiate': {
-                    const chains = getChains(config, options);
+    await processor(client, wallet, config, options);
 
-                    return chains.reduce((promise, chain) => {
-                        return promise.then(() => storeInstantiate(client, wallet, config, options, chain.toLowerCase()));
-                    }, Promise.resolve());
-                }
-
-                case 'instantiate': {
-                    const chains = getChains(config, options);
-
-                    return chains.reduce((promise, chain) => {
-                        return promise.then(() =>
-                            instantiate(client, wallet, config, options, chain.toLowerCase()).then((contractAddress) => {
-                                if (contractAddress) {
-                                    printInfo(
-                                        `Predicted address for ${
-                                            chain.toLowerCase() === 'none' ? '' : chain.toLowerCase().concat(' ')
-                                        }${contractName}. Address`,
-                                        contractAddress,
-                                    );
-                                }
-                            }),
-                        );
-                    }, Promise.resolve());
-                }
-
-                case 'execute': {
-                    const chains = getChains(config, options);
-
-                    return chains.reduce((promise, chain) => {
-                        return promise.then(() => execute(client, wallet, config, options, chain.toLowerCase()));
-                    }, Promise.resolve());
-                }
-
-                default:
-                    throw new Error('Invalid proposal type');
-            }
-        })
-        .then(() => saveConfig(config, env));
+    saveConfig(config, env);
 };
 
 const programHandler = () => {
@@ -249,37 +252,74 @@ const programHandler = () => {
 
     program.name('submit-proposal').description('Submit governance proposals');
 
-    addAmplifierOptions(program);
-
-    program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
-    program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
-    program.addOption(new Option('--deposit <deposit>', 'the proposal deposit').makeOptionMandatory(true));
-    program.addOption(
-        new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address').default(
-            governanceAddress,
-        ),
-    );
-    program.addOption(
-        new Option('--proposalType <proposalType>', 'proposal type')
-            .choices(['store', 'storeInstantiate', 'instantiate', 'execute'])
-            .makeOptionMandatory(true),
-    );
-
-    program.addOption(new Option('--source <source>', "a valid HTTPS URI to the contract's source code"));
-    program.addOption(
-        new Option('--builder <builder>', 'a valid docker image name with tag, such as "cosmwasm/workspace-optimizer:0.16.0'),
-    );
-    program.addOption(
-        new Option('-i, --instantiateAddresses <instantiateAddresses>', 'comma separated list of addresses allowed to instantiate'),
-    );
-
-    program.addOption(new Option('--msg <msg>', 'json encoded message to submit with an execute contract proposal'));
-
-    program.addOption(new Option('--predictOnly', 'output the predicted changes only').env('PREDICT_ONLY'));
-
-    program.action((options) => {
-        main(options);
+    const storeCmd = program
+        .command('store')
+        .description('Submit a wasm binary proposal')
+        .action((options) => {
+            mainProcessor(storeCode, options);
+        });
+    addAmplifierOptions(storeCmd, {
+        contractOptions: true,
+        storeOptions: true,
+        storeProposalOptions: true,
+        proposalOptions: true,
+        runAs: true,
     });
+
+    const storeInstantiateCmd = program
+        .command('storeInstantiate')
+        .description('Submit and instantiate a wasm contract proposal')
+        .action((options) => {
+            mainProcessor(storeInstantiate, options);
+        });
+    addAmplifierOptions(storeInstantiateCmd, {
+        contractOptions: true,
+        storeOptions: true,
+        storeProposalOptions: true,
+        proposalOptions: true,
+        instantiateOptions: true,
+        runAs: true,
+    });
+
+    const instantiateCmd = program
+        .command('instantiate')
+        .description('Submit an instantiate wasm contract proposal')
+        .action((options) => {
+            mainProcessor(instantiate, options);
+        });
+    addAmplifierOptions(instantiateCmd, {
+        contractOptions: true,
+        instantiateOptions: true,
+        instantiate2Options: true,
+        instantiateProposalOptions: true,
+        proposalOptions: true,
+        fetchCodeId: true,
+        runAs: true,
+    });
+
+    const executeCmd = program
+        .command('execute')
+        .description('Submit a execute wasm contract proposal')
+        .action((options) => {
+            mainProcessor(execute, options);
+        });
+    addAmplifierOptions(executeCmd, { contractOptions: true, executeProposalOptions: true, proposalOptions: true, runAs: true });
+
+    const paramChangeCmd = program
+        .command('paramChange')
+        .description('Submit a parameter change proposal')
+        .action((options) => {
+            mainProcessor(paramChange, options);
+        });
+    addAmplifierOptions(paramChangeCmd, { paramChangeProposalOptions: true, proposalOptions: true });
+
+    const migrateCmd = program
+        .command('migrate')
+        .description('Submit a migrate contract proposal')
+        .action((options) => {
+            mainProcessor(migrate, options);
+        });
+    addAmplifierOptions(migrateCmd, { contractOptions: true, migrateOptions: true, proposalOptions: true, fetchCodeId: true });
 
     program.parse();
 };

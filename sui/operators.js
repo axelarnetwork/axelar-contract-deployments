@@ -1,6 +1,6 @@
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
-const { printInfo, printError, loadConfig } = require('../common/utils');
+const { printError, loadConfig } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -15,7 +15,7 @@ function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, m
     const operatorId = contractConfig.objects.Operators;
     const gasCollectorCapId = gasServiceConfig.objects.GasCollectorCap;
 
-    const [cap, loanedCap] = tx.moveCall({
+    const [cap, borrowObj] = tx.moveCall({
         target: `${contractConfig.address}::operators::loan_cap`,
         arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.object(gasCollectorCapId)],
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
@@ -25,7 +25,7 @@ function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, m
 
     tx.moveCall({
         target: `${contractConfig.address}::operators::restore_cap`,
-        arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.object(gasCollectorCapId), cap, loanedCap],
+        arguments: [tx.object(operatorId), tx.object(operatorCapId), cap, borrowObj],
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
 
@@ -46,9 +46,7 @@ async function collectGas(keypair, client, gasServiceConfig, contractConfig, arg
         });
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Gas collected', receipt.digest);
+    await broadcast(client, keypair, tx, 'Gas Collected');
 }
 
 async function refund(keypair, client, gasServiceConfig, contractConfig, args, options) {
@@ -72,9 +70,7 @@ async function refund(keypair, client, gasServiceConfig, contractConfig, args, o
         });
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Gas refunded', receipt.digest);
+    await broadcast(client, keypair, tx, 'Refunded Gas');
 }
 
 async function storeCap(keypair, client, gasServiceConfig, contractConfig, args, options) {
@@ -91,9 +87,7 @@ async function storeCap(keypair, client, gasServiceConfig, contractConfig, args,
         typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Capability stored', receipt.digest);
+    await broadcast(client, keypair, tx, 'Stored Capability');
 }
 
 async function addOperator(keypair, client, gasServiceConfig, contractConfig, args, options) {
@@ -109,9 +103,7 @@ async function addOperator(keypair, client, gasServiceConfig, contractConfig, ar
         arguments: [tx.object(operatorsObjectId), tx.object(ownerCapObjectId), tx.pure.address(newOperatorAddress)],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Operator Added', receipt.digest);
+    await broadcast(client, keypair, tx, 'Added Operator');
 }
 
 async function removeCap(keypair, client, gasServiceConfig, contractConfig, args, options) {
@@ -133,9 +125,7 @@ async function removeCap(keypair, client, gasServiceConfig, contractConfig, args
     tx.transferObjects([cap], capReceiver);
 
     try {
-        const receipt = await broadcast(client, keypair, tx);
-
-        printInfo('Capability Removed', receipt.digest);
+        await broadcast(client, keypair, tx, 'Removed Capability');
     } catch (e) {
         printError('RemoveCap Error', e.message);
     }
@@ -154,9 +144,7 @@ async function removeOperator(keypair, client, gasServiceConfig, contractConfig,
         arguments: [tx.object(operatorsObjectId), tx.object(ownerCapObjectId), tx.pure.address(operatorAddress)],
     });
 
-    const receipt = await broadcast(client, keypair, tx);
-
-    printInfo('Operator Removed', receipt.digest);
+    await broadcast(client, keypair, tx, 'Removed Operator');
 }
 
 async function mainProcessor(processor, args, options) {
