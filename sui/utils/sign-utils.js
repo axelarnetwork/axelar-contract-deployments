@@ -110,9 +110,7 @@ async function broadcast(client, keypair, tx, actionName) {
         },
     });
 
-    if (actionName) {
-        printInfo(actionName, receipt.digest);
-    }
+    printInfo(actionName || 'Tx', receipt.digest);
 
     return receipt;
 }
