@@ -364,7 +364,7 @@ async function processCommand(config, chain, options) {
                 wallet,
             );
 
-            const implementationType = await tokenManager.implementationType();
+            const implementationType = (await tokenManager.implementationType()).toNumber();
             const decimals = await token.decimals();
             amount = BigNumber.from(amount).mul(BigNumber.from(10).pow(decimals));
             const balance = await token.balanceOf(wallet.address);
@@ -377,7 +377,7 @@ async function processCommand(config, chain, options) {
                 implementationType !== tokenManagerImplementations.MINT_BURN &&
                 implementationType !== tokenManagerImplementations.INTERCHAIN_TOKEN
             ) {
-                printInfo('Approving ITS for a transfer');
+                printInfo('Approving ITS for a transfer for token with token manager type', implementationType);
                 await token.approve(interchainTokenService.address, amount, gasOptions).then((tx) => tx.wait());
             }
 
