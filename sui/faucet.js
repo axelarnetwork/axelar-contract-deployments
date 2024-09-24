@@ -1,7 +1,7 @@
 'use strict';
 
 const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui/faucet');
-const { saveConfig, loadConfig, printInfo } = require('../common/utils');
+const { saveConfig, loadConfig, printInfo, printWarn } = require('../common/utils');
 const { getWallet, printWalletInfo, addBaseOptions } = require('./utils');
 const { Command, Option } = require('commander');
 
@@ -12,14 +12,16 @@ async function processCommand(config, chain, options) {
     await printWalletInfo(recipient, client, chain, options);
 
     const balance = Number((await client.getBalance({ owner: recipient })).totalBalance) / 1e9;
-    if (balance < Number(options.minBalance)) {
-        await requestSuiFromFaucetV0({
-            host: getFaucetHost(chain.networkType),
-            recipient,
-        });
-
-        printInfo('Funds requested', recipient);
+    if (balance >= Number(options.minBalance)) {
+        printWarn('Wallet balance above minimum, skipping faucet request');
     }
+
+    await requestSuiFromFaucetV0({
+        host: getFaucetHost(chain.networkType),
+        recipient,
+    });
+
+    printInfo('Funds requested', recipient);
 }
 
 async function mainProcessor(options, processor) {
