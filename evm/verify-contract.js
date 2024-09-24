@@ -192,7 +192,13 @@ async function processCommand(config, chain, options) {
             await verifyContract(env, chain.axelarId, interchainTokenDeployer, [interchainToken], verifyOptions);
             await verifyContract(env, chain.axelarId, tokenManager, [contractAddress], verifyOptions);
             await verifyContract(env, chain.axelarId, tokenHandler, [chain.contracts.AxelarGateway.address], verifyOptions);
-            await verifyContract(env, chain.axelarId, gatewayCaller, [chain.contracts.AxelarGateway.address, chain.contracts.AxelarGasService.address], verifyOptions);
+            await verifyContract(
+                env,
+                chain.axelarId,
+                gatewayCaller,
+                [chain.contracts.AxelarGateway.address, chain.contracts.AxelarGasService.address],
+                verifyOptions,
+            );
             await verifyContract(
                 env,
                 chain.axelarId,

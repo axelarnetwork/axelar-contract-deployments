@@ -132,7 +132,7 @@ async function processCommand(config, chain, options) {
                 name,
                 symbol,
                 decimals,
-                parseInt(initialSupply * (10 ** decimals)),
+                parseInt(initialSupply * 10 ** decimals),
                 minter,
                 gasOptions,
             );
