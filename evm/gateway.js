@@ -278,8 +278,15 @@ async function processCommand(config, chain, options) {
         // eslint-disable-next-line no-duplicate-case,no-fallthrough
         case 'approveAndExecute': {
             const payloadHash = payload.startsWith('0x') ? keccak256(arrayify(payload)) : id(payload);
+            const { sourceChain, sourceAddress } = options;
 
-            const commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+            let commandID;
+
+            if (options.messageId) {
+                commandID = id(`${sourceChain}_${options.messageId}`);
+            } else {
+                commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+            }
 
             if (!options.destination) {
                 throw new Error('Missing destination contract address');
@@ -291,8 +298,8 @@ async function processCommand(config, chain, options) {
             if (
                 !(await gateway.isContractCallApproved(
                     commandID,
-                    'Axelarnet',
-                    'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj',
+                    sourceChain,
+                    sourceAddress,
                     options.destination,
                     payloadHash,
                 ))
@@ -303,7 +310,7 @@ async function processCommand(config, chain, options) {
 
             const appContract = new Contract(options.destination, IAxelarExecutable.abi, wallet);
 
-            const tx = await appContract.execute(commandID, 'Axelarnet', 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj', payload);
+            const tx = await appContract.execute(commandID, sourceChain, sourceAddress, payload);
             printInfo('Execute tx', tx.hash);
             await tx.wait(chain.confirmations);
 
@@ -508,6 +515,9 @@ if (require.main === module) {
 
     program.addOption(new Option('--payload <payload>', 'gmp payload'));
     program.addOption(new Option('--commandID <commandID>', 'execute command ID'));
+    program.addOption(new Option('--messageId <messageId>', 'GMP call message ID'));
+    program.addOption(new Option('--sourceChain <sourceChain>', 'GMP source chain'));
+    program.addOption(new Option('--sourceAddress <sourceAddress>', 'GMP source address'));
     program.addOption(new Option('--destination <destination>', 'GMP destination address'));
     program.addOption(new Option('--destinationChain <destinationChain>', 'GMP destination chain'));
     program.addOption(new Option('--batchID <batchID>', 'EVM batch ID').default(''));
