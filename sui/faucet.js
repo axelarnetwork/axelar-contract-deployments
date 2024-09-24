@@ -12,6 +12,7 @@ async function processCommand(config, chain, options) {
     await printWalletInfo(recipient, client, chain, options);
 
     const balance = Number((await client.getBalance({ owner: recipient })).totalBalance) / 1e9;
+    
     if (balance >= Number(options.minBalance)) {
         printWarn('Wallet balance above minimum, skipping faucet request');
         process.exit(0);
