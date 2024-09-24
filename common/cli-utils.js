@@ -30,9 +30,7 @@ const addBaseOptions = (program, options = {}) => {
     program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
 
     if (!options.ignoreChainNames) {
-        program.addOption(
-            new Option('-n, --chainNames <chainNames>', 'chains to run the script over').makeOptionMandatory(true).env('CHAINS'),
-        );
+        program.addOption(new Option('-n, --chainNames <chainNames>', 'chains to run the script over').env('CHAINS'));
         program.addOption(new Option('--skipChains <skipChains>', 'chains to skip over'));
         program.addOption(
             new Option(
@@ -40,6 +38,7 @@ const addBaseOptions = (program, options = {}) => {
                 'start from a specific chain onwards in the config, useful when a cmd fails for an intermediate chain',
             ),
         );
+        program.addOption(new Option('--chainType <chainType>', 'chain type to run script over'));
     }
 
     if (!options.ignorePrivateKey) {

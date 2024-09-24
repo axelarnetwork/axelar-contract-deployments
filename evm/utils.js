@@ -636,18 +636,27 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         throw new Error('Environment was not provided');
     }
 
-    if (!options.chainName && !options.chainNames) {
-        throw new Error('Chain names were not provided');
-    }
-
     printInfo('Environment', options.env);
 
     const config = loadConfig(options.env);
-    let chains = options.chainName ? [options.chainName] : options.chainNames.split(',');
     const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim().toLowerCase());
+
+    let chains = [];
 
     if (options.chainNames === 'all') {
         chains = Object.keys(config.chains);
+        chains = chains.map((chain) => chain.trim().toLowerCase());
+    } else if (options.chainType) {
+        chains = Object.keys(config.chains);
+        chains.filter((chain) => config.chains[chain].chainType === options.chainType);
+    } else if (options.chainName) {
+        chains = [options.chainName];
+    } else if (options.chainNames) {
+        chains = options.chainNames.split(',');
+    }
+
+    if (chains.length === 0) {
+        throw new Error('Chain names were not provided');
     }
 
     chains = chains.map((chain) => chain.trim().toLowerCase());
