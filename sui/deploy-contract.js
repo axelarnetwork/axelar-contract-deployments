@@ -242,7 +242,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     checkSuiVersionMatch();
 
     // Check if dependencies are deployed
-    const dependencies = getLocalDependencies(packageDir, moveDir);
+    const dependencies = getLocalDependencies(packageDir, `${__dirname}/../node_modules/@axelar-network/axelar-cgp-sui/move`);
 
     for (const { name } of dependencies) {
         if (!chain.contracts[name]) {
