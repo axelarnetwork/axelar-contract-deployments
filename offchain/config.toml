@@ -1,3 +1,0 @@
-[alias]
-relayer = "run --package relayer --"
-solana-client = "run --package eiger-solana-client --"

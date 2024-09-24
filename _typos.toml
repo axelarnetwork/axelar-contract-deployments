@@ -6,7 +6,6 @@ itswMJtRUe2vd46rb5kDmYzfBHHej4PyX4twgnbT1TG = "itswMJtRUe2vd46rb5kDmYzfBHHej4PyX
 extend-exclude = [
   "axelar-amplifier",
   "evm-contracts/lib/*",
-  "offchain",
   "solana/xtask/solana-devnet.json",
   "solana/xtask/devnet-amplifier.json",
 ]
