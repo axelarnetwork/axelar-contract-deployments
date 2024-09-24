@@ -124,7 +124,7 @@ async function callContract(keypair, client, config, chain, contractConfig, args
             tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
         ],
-      });
+    });
 
     tx.moveCall({
         target: `${packageId}::gateway::send_message`,
