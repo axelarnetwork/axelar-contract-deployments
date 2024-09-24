@@ -233,3 +233,20 @@ node cosmwasm/submit-proposal.js paramChange \
   }
 ]'
 ```
+
+### Submit a proposal to migrate a contract
+
+To submit a governance proposal to migrate a contract, use the `submit-proposal` script with the `migrate` command. The `--msg` option should be used to pass the migrate message.
+
+Example usage:
+
+```
+node cosmwasm/submit-proposal.js migrate \
+  -c MultisigProver \
+  -t "Proposal title" \
+  -d "Proposal description" \
+  -n avalanche \
+  --msg '{}' \
+  --fetchCodeId \
+  --deposit 100000000
+```
