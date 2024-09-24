@@ -1,5 +1,5 @@
 const { Command, Option } = require('commander');
-const { TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { ethers } = require('hardhat');
 const { toB64 } = require('@mysten/sui/utils');
 const { bcs } = require('@mysten/sui/bcs');
@@ -26,6 +26,7 @@ const {
     getItsChannelId,
     getSquidChannelId,
     checkSuiVersionMatch,
+    moveDir,
 } = require('./utils');
 
 /**
@@ -41,7 +42,18 @@ const {
  * 2. Ensure the corresponding folder exists in the specified path
  *
  */
-const PACKAGE_DIRS = ['utils', 'gas_service', 'example', 'axelar_gateway', 'operators', 'abi', 'governance', 'its', 'squid'];
+const PACKAGE_DIRS = [
+    'version_control',
+    'utils',
+    'gas_service',
+    'example',
+    'axelar_gateway',
+    'operators',
+    'abi',
+    'governance',
+    'its',
+    'squid',
+];
 
 /**
  * Package Mapping Object for Command Options and Post-Deployment Functions
@@ -251,7 +263,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 }
 
 async function upgrade(keypair, client, supportedPackage, policy, config, chain, options) {
-    const { packageName } = supportedPackage;
+    const { packageName, packageDir } = supportedPackage;
     options.policy = policy;
 
     if (!chain.contracts[packageName]) {
@@ -263,7 +275,12 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
     validateParameters({ isNonEmptyString: { packageName } });
 
-    // TODO: Synchronize dependencies with `sui/move` folder and update `published-at` field if necessary
+    const packageDependencies = getLocalDependencies(packageDir, moveDir);
+
+    for (const { name } of packageDependencies) {
+        const packageAddress = contractsConfig[name]?.address;
+        updateMoveToml(packageDir, packageAddress, moveDir);
+    }
 
     const builder = new TxBuilder(client);
     await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
