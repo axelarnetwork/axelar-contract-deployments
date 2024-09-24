@@ -299,15 +299,7 @@ async function processCommand(config, chain, options) {
             printInfo('Destination app contract', options.destination);
             printInfo('Payload Hash', payloadHash);
 
-            if (
-                !(await gateway.isContractCallApproved(
-                    commandId,
-                    sourceChain,
-                    sourceAddress,
-                    options.destination,
-                    payloadHash,
-                ))
-            ) {
+            if (!(await gateway.isContractCallApproved(commandId, sourceChain, sourceAddress, options.destination, payloadHash))) {
                 printWarn('Contract call not approved at the gateway');
                 return;
             }
