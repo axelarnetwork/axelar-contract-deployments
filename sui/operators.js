@@ -162,7 +162,7 @@ async function mainProcessor(processor, args, options) {
     }
 
     const [keypair, client] = getWallet(config.sui, options);
-    await printWalletInfo(keypair.toSuiAddress(), client, config.sui, options);
+    await printWalletInfo(keypair, client, config.sui, options);
     await processor(keypair, client, gasServiceConfig, contractConfig, args, options);
 }
 

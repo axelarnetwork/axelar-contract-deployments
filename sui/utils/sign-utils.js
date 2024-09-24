@@ -69,7 +69,8 @@ function getWallet(chain, options) {
     return [keypair, client];
 }
 
-async function printWalletInfo(owner, client, chain, options) {
+async function printWalletInfo(wallet, client, chain, options) {
+    const owner = wallet instanceof Ed25519Keypair || wallet instanceof Secp256k1Keypair || wallet instanceof Secp256r1Keypair ? wallet.toSuiAddress() : wallet;
     printInfo('Wallet address', owner);
 
     const coins = await client.getBalance({ owner });

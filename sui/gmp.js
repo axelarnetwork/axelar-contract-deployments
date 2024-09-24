@@ -144,7 +144,7 @@ async function execute(keypair, client, contracts, args, options) {
 async function processCommand(command, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
-    await printWalletInfo(keypair.toSuiAddress(), client, chain, options);
+    await printWalletInfo(keypair, client, chain, options);
 
     const contracts = [chain.contracts.Example, chain.contracts.GasService, chain.contracts.AxelarGateway];
 

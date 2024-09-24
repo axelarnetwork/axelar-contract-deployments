@@ -147,7 +147,7 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
 async function processCommand(command, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
-    await printWalletInfo(keypair.toSuiAddress(), client, chain, options);
+    await printWalletInfo(keypair, client, chain, options);
 
     if (!chain.contracts.GasService) {
         throw new Error('GasService contract not found');
