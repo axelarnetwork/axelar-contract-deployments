@@ -23,6 +23,7 @@ const {
     getGasOptions,
     isNonEmptyString,
     isValidChain,
+    getChainConfig,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -364,7 +365,7 @@ async function processCommand(config, chain, options) {
                 wallet,
             );
 
-            const implementationType = await tokenManager.implementationType();
+            const implementationType = (await tokenManager.implementationType()).toNumber();
             const decimals = await token.decimals();
             amount = BigNumber.from(amount).mul(BigNumber.from(10).pow(decimals));
             const balance = await token.balanceOf(wallet.address);
@@ -373,8 +374,11 @@ async function processCommand(config, chain, options) {
                 throw new Error(`Insufficient balance for transfer. Balance: ${balance}, amount: ${amount}`);
             }
 
-            if (implementationType !== tokenManagerImplementations.MINT_BURN) {
-                printInfo('Approving ITS for a transfer');
+            if (
+                implementationType !== tokenManagerImplementations.MINT_BURN &&
+                implementationType !== tokenManagerImplementations.INTERCHAIN_TOKEN
+            ) {
+                printInfo('Approving ITS for a transfer for token with token manager type', implementationType);
                 await token.approve(interchainTokenService.address, amount, gasOptions).then((tx) => tx.wait());
             }
 
@@ -476,9 +480,12 @@ async function processCommand(config, chain, options) {
                 trustedChains = itsChains.map((chain) => chain.axelarId);
                 trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address);
             } else {
-                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.axelarId;
+                const trustedChain =
+                    getChainConfig(config, options.trustedChain.toLowerCase(), { skipCheck: true })?.axelarId ||
+                    options.trustedChain.toLowerCase();
                 const trustedAddress =
-                    options.trustedAddress || config.chains[options.trustedChain.toLowerCase()]?.contracts?.InterchainTokenService?.address;
+                    options.trustedAddress ||
+                    getChainConfig(config, options.trustedChain.toLowerCase())?.contracts?.InterchainTokenService?.address;
 
                 if (trustedChain === undefined || trustedAddress === undefined) {
                     throw new Error(`Invalid chain/address: ${options.trustedChain}`);
