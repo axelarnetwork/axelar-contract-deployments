@@ -66,7 +66,7 @@ const instantiate = async (client, wallet, config, options) => {
 
     updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
 
-    printInfo(`Instantiated ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
+    printInfo(`Instantiated ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 };
 
 const main = async (options) => {

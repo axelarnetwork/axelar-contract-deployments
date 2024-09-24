@@ -48,7 +48,7 @@ const predictAndUpdateAddress = async (client, contractConfig, chainConfig, opti
 
     updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
 
-    printInfo(`Predicted address for ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
+    printInfo(`Predicted address for ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 };
 
 const printProposal = (proposal, proposalType) => {
