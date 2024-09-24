@@ -12,7 +12,6 @@ const {
     fromHex,
     getSalt,
     readWasmFile,
-    getChains,
     getAmplifierContractConfig,
     updateContractConfig,
     fetchCodeIdFromCodeHash,
@@ -41,18 +40,15 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const predictAndUpdateAddress = async (client, contractConfig, chainConfig, chainName, options) => {
-    const { contractName, salt, chainNames, runAs } = options;
+const predictAndUpdateAddress = async (client, contractConfig, chainConfig, options) => {
+    const { contractName, salt, chainName, runAs } = options;
 
     const { checksum } = await client.getCodeDetails(contractConfig.codeId);
-    const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainNames), 'axelar');
+    const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainName), 'axelar');
 
     updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
 
-    printInfo(
-        `Predicted address for ${chainName.toLowerCase() === 'none' ? '' : chainName.toLowerCase().concat(' ')}${contractName}. Address`,
-        contractAddress,
-    );
+    printInfo(`Predicted address for ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
 };
 
 const printProposal = (proposal, proposalType) => {
@@ -96,100 +92,82 @@ const storeCode = async (client, wallet, config, options) => {
 };
 
 const storeInstantiate = async (client, wallet, config, options) => {
-    const chains = getChains(config, options);
+    const { contractName, instantiate2, chainName } = options;
+    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const chainConfig = getChainConfig(config, chainName);
 
-    for (const chain of chains) {
-        const chainName = chain.toLowerCase();
-
-        const { contractName, instantiate2 } = options;
-        const contractConfig = getAmplifierContractConfig(config, contractName);
-        const chainConfig = getChainConfig(config, chainName);
-
-        if (instantiate2) {
-            throw new Error('instantiate2 not supported for storeInstantiate');
-        }
-
-        const initMsg = makeInstantiateMsg(contractName, chainName, config);
-        const proposal = encodeStoreInstantiateProposal(config, options, initMsg);
-
-        if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
-            return;
-        }
-
-        const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
-
-        updateContractConfig(contractConfig, chainConfig, 'storeInstantiateProposalId', proposalId);
-        contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
+    if (instantiate2) {
+        throw new Error('instantiate2 not supported for storeInstantiate');
     }
+
+    const initMsg = makeInstantiateMsg(contractName, chainName, config);
+    const proposal = encodeStoreInstantiateProposal(config, options, initMsg);
+
+    if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
+        return;
+    }
+
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
+
+    updateContractConfig(contractConfig, chainConfig, 'storeInstantiateProposalId', proposalId);
+    contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
 };
 
 const instantiate = async (client, wallet, config, options) => {
-    const chains = getChains(config, options);
+    const { contractName, instantiate2, predictOnly, fetchCodeId, chainName } = options;
+    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const chainConfig = getChainConfig(config, chainName);
 
-    for (const chain of chains) {
-        const chainName = chain.toLowerCase();
+    if (fetchCodeId) {
+        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
+    } else if (!isNumber(contractConfig.codeId)) {
+        throw new Error('Code Id is not defined');
+    }
 
-        const { contractName, instantiate2, predictOnly, fetchCodeId } = options;
-        const contractConfig = getAmplifierContractConfig(config, contractName);
-        const chainConfig = getChainConfig(config, chainName);
+    if (predictOnly) {
+        return predictAndUpdateAddress(client, contractConfig, chainConfig, options);
+    }
 
-        if (fetchCodeId) {
-            contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
-        } else if (!isNumber(contractConfig.codeId)) {
-            throw new Error('Code Id is not defined');
-        }
+    const initMsg = makeInstantiateMsg(contractName, chainName, config);
 
-        if (predictOnly) {
-            return predictAndUpdateAddress(client, contractConfig, chainConfig, chainName, options);
-        }
+    let proposal;
+    let proposalType;
 
-        const initMsg = makeInstantiateMsg(contractName, chainName, config);
+    if (instantiate2) {
+        proposal = encodeInstantiate2Proposal(config, options, initMsg);
+        proposalType = InstantiateContract2Proposal;
+    } else {
+        proposal = encodeInstantiateProposal(config, options, initMsg);
+        proposalType = InstantiateContractProposal;
+    }
 
-        let proposal;
-        let proposalType;
+    if (!confirmProposalSubmission(options, proposal, proposalType)) {
+        return;
+    }
 
-        if (instantiate2) {
-            proposal = encodeInstantiate2Proposal(config, options, initMsg);
-            proposalType = InstantiateContract2Proposal;
-        } else {
-            proposal = encodeInstantiateProposal(config, options, initMsg);
-            proposalType = InstantiateContractProposal;
-        }
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
-        if (!confirmProposalSubmission(options, proposal, proposalType)) {
-            return;
-        }
+    updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
 
-        const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
-
-        updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
-
-        if (instantiate2) {
-            return predictAndUpdateAddress(client, contractConfig, chainConfig, chainName, options);
-        }
+    if (instantiate2) {
+        return predictAndUpdateAddress(client, contractConfig, chainConfig, options);
     }
 };
 
 const execute = async (client, wallet, config, options) => {
-    const chains = getChains(config, options);
+    const { contractName, chainName } = options;
+    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const chainConfig = getChainConfig(config, chainName);
 
-    for (const chain of chains) {
-        const chainName = chain.toLowerCase();
+    const proposal = encodeExecuteContractProposal(config, options, chainName);
 
-        const { contractName } = options;
-        const contractConfig = getAmplifierContractConfig(config, contractName);
-        const chainConfig = getChainConfig(config, chainName);
-
-        const proposal = encodeExecuteContractProposal(config, options, chainName);
-
-        if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
-            return;
-        }
-
-        const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
-
-        updateContractConfig(contractConfig, chainConfig, 'executeProposalId', proposalId);
+    if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
+        return;
     }
+
+    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
+
+    updateContractConfig(contractConfig, chainConfig, 'executeProposalId', proposalId);
 };
 
 const paramChange = async (client, wallet, config, options) => {
@@ -203,28 +181,22 @@ const paramChange = async (client, wallet, config, options) => {
 };
 
 const migrate = async (client, wallet, config, options) => {
-    const chains = getChains(config, options);
+    const { contractName, fetchCodeId, chainName } = options;
+    const contractConfig = getAmplifierContractConfig(config, contractName);
 
-    for (const chain of chains) {
-        const chainName = chain.toLowerCase();
-
-        const { contractName, fetchCodeId } = options;
-        const contractConfig = getAmplifierContractConfig(config, contractName);
-
-        if (fetchCodeId) {
-            contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
-        } else if (!isNumber(contractConfig.codeId)) {
-            throw new Error('Code Id is not defined');
-        }
-
-        const proposal = encodeMigrateContractProposal(config, options, chainName);
-
-        if (!confirmProposalSubmission(options, proposal, MigrateContractProposal)) {
-            return;
-        }
-
-        await callSubmitProposal(client, wallet, config, options, proposal);
+    if (fetchCodeId) {
+        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
+    } else if (!isNumber(contractConfig.codeId)) {
+        throw new Error('Code Id is not defined');
     }
+
+    const proposal = encodeMigrateContractProposal(config, options, chainName);
+
+    if (!confirmProposalSubmission(options, proposal, MigrateContractProposal)) {
+        return;
+    }
+
+    await callSubmitProposal(client, wallet, config, options, proposal);
 };
 
 const mainProcessor = async (processor, options) => {

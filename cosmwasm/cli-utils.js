@@ -68,7 +68,7 @@ const addAmplifierOptions = (program, options) => {
 
 const addContractOptions = (program) => {
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none').env('CHAINS'));
+    program.addOption(new Option('-n, --chainName <chainName>', 'chain name').default('none').env('CHAIN'));
 };
 
 const addStoreOptions = (program) => {
