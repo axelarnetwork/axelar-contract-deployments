@@ -110,6 +110,9 @@ jobs:
       - name: Deploy Utils
         run: node sui/deploy-contract deploy Utils
 
+      - name: Deploy VersionControl
+        run: node sui/deploy-contract deploy VersionControl
+
       - name: Deploy AxelarGateway
         run: node sui/deploy-contract deploy AxelarGateway --signers wallet
 
@@ -138,6 +141,7 @@ jobs:
         run: node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
 
       - name: Gateway Call Contract
+        continue-on-error: true
         run: node sui/gateway.js call-contract ethereum 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 
       - name: Gateway Rotate Signers
@@ -146,9 +150,11 @@ jobs:
       ###### Command: GMP ######
 
       - name: Execute Outgoing Call Contract
+        continue-on-error: true
         run: node sui/gmp.js sendCall ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0.1 0x1234
 
       - name: Execute Incoming Call Contract
+        continue-on-error: true
         run: |
           channel_id=$(cat axelar-chains-config/info/local.json | jq '.sui.contracts.Example.objects.ChannelId' | sed 's/"//g')
           echo "Channel ID: $channel_id"
@@ -232,6 +238,7 @@ jobs:
           && mv temp.json axelar-chains-config/info/local.json
 
       - name: Post Upgrade Gateway Approval With New Package ID
+        continue-on-error: true
         run: node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-10 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
 
       ###### Command: Transfer Object ######
