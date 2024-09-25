@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: axelarnetwork/axelar-cgp-sui/.github/actions/setup-node@main
+        uses: axelarnetwork/axelar-cgp-sui/.github/actions/nodejs-ci@main
         with:
           nodejs-version: '18' # Hardcoded to ensure consistency.
 
