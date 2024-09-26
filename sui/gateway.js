@@ -116,14 +116,19 @@ async function callContract(keypair, client, config, chain, contractConfig, args
         });
     }
 
-    tx.moveCall({
-        target: `${packageId}::gateway::call_contract`,
+    const messageTicket = tx.moveCall({
+        target: `${packageId}::gateway::prepare_message`,
         arguments: [
             channel,
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
             tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
         ],
+    });
+
+    tx.moveCall({
+        target: `${packageId}::gateway::send_message`,
+        arguments: [messageTicket],
     });
 
     if (!options.channel) {
@@ -133,9 +138,7 @@ async function callContract(keypair, client, config, chain, contractConfig, args
         });
     }
 
-    await broadcast(client, keypair, tx);
-
-    printInfo('Contract called');
+    await broadcast(client, keypair, tx, 'Message sent');
 }
 
 async function approveMessages(keypair, client, config, chain, contractConfig, args, options) {
