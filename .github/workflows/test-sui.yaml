@@ -36,11 +36,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: axelarnetwork/axelar-cgp-sui/.github/actions/nodejs-ci@main
+        uses: actions/setup-node@v4
         with:
-          nodejs-version: '18' # Hardcoded to ensure consistency.
+          node-version: '18' # Hardcoded to ensure consistency.
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
-      - name: Get SUI Version
+      - name: Install dependencies
+        shell: bash
+        run: npm ci
+
+      - name: Get Sui Version
         shell: bash
         run: |
           SUI_VERSION=$(jq -r '.SUI_VERSION' "node_modules/@axelar-network/axelar-cgp-sui/version.json")
