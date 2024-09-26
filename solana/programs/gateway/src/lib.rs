@@ -15,7 +15,7 @@ use axelar_rkyv_encoding::hasher::solana::SolanaKeccak256Hasher;
 pub use solana_program;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
-use solana_program::pubkey::Pubkey;
+use solana_program::pubkey::{Pubkey, PubkeyError};
 
 solana_program::declare_id!("gtwgM94UYHwBh3g7rWi1tcpkgELxHQRLPpPHsaECW57");
 
@@ -109,6 +109,24 @@ pub fn get_execute_data_pda(
     (pubkey, bump)
 }
 
+/// Create the PDA for a given execute data hash and bump.
+#[inline]
+pub fn create_execute_data_pda(
+    gateway_root_pda: &Pubkey,
+    hash: &crate::state::execute_data::ExecuteDataHash,
+    bump: u8,
+) -> Result<Pubkey, PubkeyError> {
+    Pubkey::create_program_address(
+        &[
+            seed_prefixes::EXECUTE_DATA_SEED,
+            gateway_root_pda.as_ref(),
+            hash,
+            &[bump],
+        ],
+        &crate::ID,
+    )
+}
+
 /// Asserts that the PDA for this account is valid.
 #[inline]
 pub fn assert_valid_execute_data_pda<T>(
@@ -138,4 +156,15 @@ pub fn assert_valid_execute_data_pda<T>(
 /// Provides abstraction for the hashing mechanism.
 pub fn hasher_impl() -> SolanaKeccak256Hasher<'static> {
     SolanaKeccak256Hasher::default()
+}
+
+/// Test that the bump from `get_execute_data_pda` generates the same public key
+/// when used with the same hash by `create_execute_data_pda`.
+#[test]
+fn test_get_and_create_execute_data_pda_bump_reuse() {
+    let gateway_root_pda = Pubkey::new_unique();
+    let random_bytes = Pubkey::new_unique().to_bytes();
+    let (found_pda, bump) = get_execute_data_pda(&gateway_root_pda, &random_bytes);
+    let created_pda = create_execute_data_pda(&gateway_root_pda, &random_bytes, bump).unwrap();
+    assert_eq!(found_pda, created_pda);
 }

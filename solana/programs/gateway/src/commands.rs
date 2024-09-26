@@ -13,9 +13,11 @@ use solana_program::pubkey::Pubkey;
 use crate::error::GatewayError;
 use crate::hasher_impl;
 
+#[derive(BorshDeserialize, BorshSerialize, Eq, PartialEq, PartialOrd, Ord, Debug)]
+#[borsh(use_discriminant = true)]
 pub enum CommandKind {
-    ApproveMessage,
-    RotateSigner,
+    ApproveMessage = 0,
+    RotateSigner = 1,
 }
 
 pub trait Command {

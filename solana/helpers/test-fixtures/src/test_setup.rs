@@ -288,7 +288,7 @@ impl TestFixture {
         .await;
         let programdata_data_offset = UpgradeableLoaderState::size_of_programdata_metadata();
         let program_data_len = program_bytecode.len() + programdata_data_offset;
-        println!("program data len {program_data_len}");
+
         add_upgradeable_loader_account(
             &mut self.context,
             &program_data_pda,

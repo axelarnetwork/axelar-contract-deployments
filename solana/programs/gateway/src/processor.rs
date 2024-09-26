@@ -13,6 +13,7 @@ use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_instruction, system_program};
 
+pub use self::initialize_execute_data::BufferMetadata;
 use crate::check_program_account;
 use crate::commands::ArchivedCommand;
 use crate::error::GatewayError;
@@ -99,6 +100,30 @@ impl Processor {
             GatewayInstruction::TransferOperatorship => {
                 msg!("Instruction: Transfer Operatorship");
                 Self::process_transfer_operatorship(program_id, accounts)
+            }
+            GatewayInstruction::InitializeExecuteDataBuffer {
+                buffer_size,
+                user_seed,
+                bump_seed,
+                command_kind,
+            } => {
+                msg!("Instruction: Initialize Execute Data Buffer");
+                Self::process_initialize_execute_data_buffer(
+                    program_id,
+                    accounts,
+                    buffer_size,
+                    &user_seed,
+                    bump_seed,
+                    command_kind,
+                )
+            }
+            GatewayInstruction::WriteExecuteDataBuffer { offset, bytes } => {
+                msg!("Instruction: Write Execute Data Buffer");
+                Self::process_write_execute_data_buffer(program_id, accounts, &bytes, offset)
+            }
+            GatewayInstruction::FinalizeExecuteDataBuffer {} => {
+                msg!("Instruction: Finalize Execute Data Buffer");
+                Self::process_finalize_execute_data_buffer(program_id, accounts)
             }
         }
     }

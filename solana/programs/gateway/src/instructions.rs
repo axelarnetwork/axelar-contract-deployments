@@ -12,7 +12,7 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use crate::axelar_auth_weighted::{RotationDelaySecs, SignerSetEpoch};
-use crate::commands::{MessageWrapper, OwnedCommand};
+use crate::commands::{CommandKind, MessageWrapper, OwnedCommand};
 use crate::hasher_impl;
 use crate::state::execute_data::{
     ApproveMessagesVariant, ExecuteDataVariant, RotateSignersVariant,
@@ -146,6 +146,59 @@ pub enum GatewayInstruction {
     /// 3. [] Gateway programdata account (owned by `bpf_loader_upgradeable`)
     /// 4. [] New operator
     TransferOperatorship,
+
+    /// Initializes an `execute_data` PDA buffer account.
+    ///
+    /// This instruction will revert if the buffer account already exists.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [WRITE, SIGNER] Funding account
+    /// 1. [] Gateway Root Config PDA account
+    /// 2. [WRITE] Execute Data PDA buffer account
+    /// 3. [] System Program account
+    InitializeExecuteDataBuffer {
+        /// The number of bytes to allocate for the new buffer account
+        buffer_size: u64,
+        /// User provided seed for the buffer account PDA
+        user_seed: [u8; 32],
+        /// Buffer account PDA bump seed
+        bump_seed: u8,
+        /// The command kind that will be written into this buffer
+        command_kind: CommandKind,
+    },
+
+    /// Write `execute_data` parts into the PDA buffer account.
+    ///
+    /// This instruction will revert on the following cases
+    /// 1. Buffer account is already finalized
+    /// 2. offset + bytes.len() is greater than the buffer size.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [WRITE] Execute Data PDA buffer account
+    WriteExecuteDataBuffer {
+        /// Offset at which to write the given bytes.
+        offset: usize,
+        /// Serialized `execute_data` data.
+        bytes: Vec<u8>,
+    },
+
+    /// Finalize an `execute_data` PDA buffer account.
+    ///
+    /// The `execute_data` will be decoded on-chain to verify the data
+    /// is correct and generate the proper hash, and store it in the
+    /// Approve Messages Execute Data PDA account.
+    ///
+    /// It's expected that for each command in the batch, there is a
+    /// corresponding `GatewayApprovedCommand` account. The sequence of
+    /// which is initialized first is not important.
+    ///
+    /// This instruction will revert if the buffer account is already
+    /// finalized.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [] Gateway Root Config PDA account
+    /// 1. [WRITE] Execute Data PDA buffer account
+    FinalizeExecuteDataBuffer {},
 }
 
 /// Configuration parameters for initializing the axelar-solana gateway
@@ -533,6 +586,77 @@ pub fn transfer_operatorship(
         program_id: crate::id(),
         accounts,
         data,
+    })
+}
+
+/// Creates a [`GatewayInstruction::InitializeExecuteDataBuffer`] instruction.
+pub fn initialize_execute_data_buffer(
+    gateway_root_pda: Pubkey,
+    payer: Pubkey,
+    buffer_size: u64,
+    user_seed: [u8; 32],
+    command_kind: CommandKind,
+) -> Result<Instruction, ProgramError> {
+    let (buffer_pda, bump_seed) = crate::get_execute_data_pda(&gateway_root_pda, &user_seed);
+
+    let accounts = vec![
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new(buffer_pda, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    let instruction = GatewayInstruction::InitializeExecuteDataBuffer {
+        buffer_size,
+        user_seed,
+        bump_seed,
+        command_kind,
+    };
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data: borsh::to_vec(&instruction)?,
+    })
+}
+
+/// Creates a [`GatewayInstruction::WriteExecuteDataBuffer`] instruction.
+pub fn write_execute_data_buffer(
+    gateway_root_pda: Pubkey,
+    user_seed: &[u8; 32],
+    bump_seed: u8,
+    bytes: &[u8],
+    offset: usize,
+) -> Result<Instruction, ProgramError> {
+    let buffer_pda = crate::create_execute_data_pda(&gateway_root_pda, user_seed, bump_seed)?;
+    let accounts = vec![AccountMeta::new(buffer_pda, false)];
+    let instruction = GatewayInstruction::WriteExecuteDataBuffer {
+        offset,
+        bytes: bytes.to_vec(),
+    };
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data: borsh::to_vec(&instruction)?,
+    })
+}
+
+/// Creates a [`GatewayInstruction::FinalizeExecuteDataBuffer`] instruction.
+pub fn finalize_execute_data_buffer(
+    gateway_root_pda: Pubkey,
+    user_seed: &[u8; 32],
+    bump_seed: u8,
+) -> Result<Instruction, ProgramError> {
+    let buffer_pda = crate::create_execute_data_pda(&gateway_root_pda, user_seed, bump_seed)?;
+    let accounts = vec![
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new(buffer_pda, false),
+    ];
+    let instruction = GatewayInstruction::FinalizeExecuteDataBuffer {};
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data: borsh::to_vec(&instruction)?,
     })
 }
 
