@@ -45,6 +45,10 @@ const addAmplifierOptions = (program, options) => {
         addParamChangeProposalOptions(program);
     }
 
+    if (options.migrateOptions) {
+        addMigrateOptions(program);
+    }
+
     if (options.proposalOptions) {
         addProposalOptions(program);
     }
@@ -64,7 +68,7 @@ const addAmplifierOptions = (program, options) => {
 
 const addContractOptions = (program) => {
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none').env('CHAINS'));
+    program.addOption(new Option('-n, --chainName <chainName>', 'chain name').env('CHAIN'));
 };
 
 const addStoreOptions = (program) => {
@@ -100,11 +104,19 @@ const addInstantiateProposalOptions = (program) => {
 };
 
 const addExecuteProposalOptions = (program) => {
-    program.addOption(new Option('--msg <msg>', 'json encoded execute message'));
+    program.addOption(new Option('--msg <msg>', 'json encoded execute message').makeOptionMandatory(true));
 };
 
 const addParamChangeProposalOptions = (program) => {
     program.addOption(new Option('--changes <changes>', 'parameter changes'));
+};
+
+const addMigrateOptions = (program) => {
+    program.addOption(
+        new Option('--msg <msg>', "json encoded migration message. Use '{}' to denote an empty migration message").makeOptionMandatory(
+            true,
+        ),
+    );
 };
 
 const addProposalOptions = (program) => {
