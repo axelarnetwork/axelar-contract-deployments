@@ -30,6 +30,7 @@ const {
     calculateDomainSeparator,
 } = require('../common');
 const { normalizeBech32 } = require('@cosmjs/encoding');
+const { get } = require('http');
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
@@ -58,14 +59,53 @@ const getLabel = ({ contractName, label }) => label || contractName;
 
 const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
 
-const getAmplifierContractConfig = (config, contractName) => {
-    const contractConfig = config.axelar.contracts[contractName];
+const initContractConfig = (config, { contractName, chainName }) => {
+    config.axelar = config.axelar || {};
+    config.axelar.contracts = config.axelar.contracts || {};
+    config.axelar.contracts[contractName] = config.axelar.contracts[contractName] || {};
 
-    if (!contractConfig) {
+    if (chainName) {
+        config.axelar.contracts[contractName][chainName] = config.axelar.contracts[contractName][chainName] || {};
+    }
+};
+
+const getContractBaseConfig = (config, contractName) => {
+    const contractBaseConfig = config.axelar.contracts[contractName];
+    if (!contractBaseConfig) {
         throw new Error(`Contract ${contractName} not found in config`);
     }
 
+    return contractBaseConfig;
+};
+
+const getContractChainConfig = (contractBaseConfig, chainName) => {
+    const contractConfig = contractBaseConfig[chainName];
+    if (!contractConfig) {
+        throw new Error(`Contract ${contractName} (${chainName}) not found in config`);
+    }
+
     return contractConfig;
+};
+
+const getAmplifierContractConfig = (config, { contractName, chainName }) => {
+    const contractBaseConfig = getContractBaseConfig(config, contractName);
+
+    if (!chainName) {
+        return contractBaseConfig;
+    }
+
+    return getContractChainConfig(contractBaseConfig, chainName);
+};
+
+const getContractConfigOrDefault = (config, contractName, chainName, property) => {
+    const contractBaseConfig = getContractBaseConfig(config, contractName);
+    const def = contractBaseConfig[property];
+
+    if (!chainName) {
+        return def;
+    }
+
+    return getContractChainConfig(contractBaseConfig, chainName)[property] || def;
 };
 
 const updateContractConfig = (contractConfig, chainConfig, key, value) => {
@@ -670,10 +710,10 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
     })),
 });
 
-const getMigrateContractParams = (config, options, chainName) => {
-    const { contractName, msg } = options;
+const getMigrateContractParams = (config, options) => {
+    const { msg, chainName } = options;
 
-    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const contractConfig = getAmplifierContractConfig(config, options);
     const chainConfig = getChainConfig(config, chainName);
 
     return {
@@ -746,8 +786,8 @@ const encodeParameterChangeProposal = (options) => {
     };
 };
 
-const encodeMigrateContractProposal = (config, options, chainName) => {
-    const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options, chainName));
+const encodeMigrateContractProposal = (config, options) => {
+    const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options));
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.MigrateContractProposal',
@@ -794,6 +834,7 @@ module.exports = {
     getSalt,
     calculateDomainSeparator,
     readWasmFile,
+    initContractConfig,
     getAmplifierContractConfig,
     updateContractConfig,
     uploadContract,

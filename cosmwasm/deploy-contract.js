@@ -11,6 +11,7 @@ const {
     prepareClient,
     fromHex,
     getSalt,
+    initContractConfig,
     getAmplifierContractConfig,
     updateContractConfig,
     fetchCodeIdFromCodeHash,
@@ -25,7 +26,7 @@ const { addAmplifierOptions } = require('./cli-utils');
 const upload = async (client, wallet, config, options) => {
     const { reuseCodeId, contractName, fetchCodeId, instantiate2, salt, chainName } = options;
 
-    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const contractConfig = getAmplifierContractConfig(config, options);
     const chainConfig = getChainConfig(config, chainName);
 
     if (!fetchCodeId && (!reuseCodeId || isNil(contractConfig.codeId))) {
@@ -52,7 +53,7 @@ const upload = async (client, wallet, config, options) => {
 const instantiate = async (client, wallet, config, options) => {
     const { contractName, fetchCodeId, chainName } = options;
 
-    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const contractConfig = getAmplifierContractConfig(config, options);
     const chainConfig = getChainConfig(config, chainName);
 
     if (fetchCodeId) {
@@ -72,6 +73,8 @@ const instantiate = async (client, wallet, config, options) => {
 const main = async (options) => {
     const { env, uploadOnly, yes } = options;
     const config = loadConfig(env);
+
+    initContractConfig(config, options);
 
     const wallet = await prepareWallet(options);
     const client = await prepareClient(config, wallet);

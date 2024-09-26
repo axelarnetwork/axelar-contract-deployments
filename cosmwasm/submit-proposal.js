@@ -12,6 +12,7 @@ const {
     fromHex,
     getSalt,
     readWasmFile,
+    initContractConfig,
     getAmplifierContractConfig,
     updateContractConfig,
     fetchCodeIdFromCodeHash,
@@ -76,8 +77,8 @@ const callSubmitProposal = async (client, wallet, config, options, proposal) => 
 };
 
 const storeCode = async (client, wallet, config, options) => {
-    const { contractName } = options;
-    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const { contractName, chainName } = options;
+    const contractConfig = getAmplifierContractConfig(config, options);
 
     const proposal = encodeStoreCodeProposal(options);
 
@@ -93,7 +94,7 @@ const storeCode = async (client, wallet, config, options) => {
 
 const storeInstantiate = async (client, wallet, config, options) => {
     const { contractName, instantiate2, chainName } = options;
-    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const contractConfig = getAmplifierContractConfig(config, options);
     const chainConfig = getChainConfig(config, chainName);
 
     if (instantiate2) {
@@ -115,7 +116,7 @@ const storeInstantiate = async (client, wallet, config, options) => {
 
 const instantiate = async (client, wallet, config, options) => {
     const { contractName, instantiate2, predictOnly, fetchCodeId, chainName } = options;
-    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const contractConfig = getAmplifierContractConfig(config, options);
     const chainConfig = getChainConfig(config, chainName);
 
     if (fetchCodeId) {
@@ -156,7 +157,7 @@ const instantiate = async (client, wallet, config, options) => {
 
 const execute = async (client, wallet, config, options) => {
     const { contractName, chainName } = options;
-    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const contractConfig = getAmplifierContractConfig(config, options);
     const chainConfig = getChainConfig(config, chainName);
 
     const proposal = encodeExecuteContractProposal(config, options, chainName);
@@ -182,7 +183,7 @@ const paramChange = async (client, wallet, config, options) => {
 
 const migrate = async (client, wallet, config, options) => {
     const { contractName, fetchCodeId, chainName } = options;
-    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const contractConfig = getAmplifierContractConfig(config, options);
 
     if (fetchCodeId) {
         contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
@@ -190,7 +191,7 @@ const migrate = async (client, wallet, config, options) => {
         throw new Error('Code Id is not defined');
     }
 
-    const proposal = encodeMigrateContractProposal(config, options, chainName);
+    const proposal = encodeMigrateContractProposal(config, options);
 
     if (!confirmProposalSubmission(options, proposal, MigrateContractProposal)) {
         return;
@@ -200,16 +201,10 @@ const migrate = async (client, wallet, config, options) => {
 };
 
 const mainProcessor = async (processor, options) => {
-    const { env, contractName } = options;
+    const { env } = options;
     const config = loadConfig(env);
 
-    if (config.axelar.contracts === undefined) {
-        config.axelar.contracts = {};
-    }
-
-    if (config.axelar.contracts[contractName] === undefined) {
-        config.axelar.contracts[contractName] = {};
-    }
+    initContractConfig(config, options);
 
     const wallet = await prepareWallet(options);
     const client = await prepareClient(config, wallet);
