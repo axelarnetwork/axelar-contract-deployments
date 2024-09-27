@@ -842,6 +842,11 @@ function getContractJSON(contractName, artifactPath) {
     }
 }
 
+function getQualifiedContractName(contractName) {
+    const contractJSON = getContractJSON(contractName);
+    return `${contractJSON.sourceName}:${contractJSON.contractName}`;
+}
+
 /**
  * Retrieves gas options for contract interactions.
  *
@@ -1017,6 +1022,11 @@ async function getWeightedSigners(config, chain, options) {
     return { signers: [signers], verifierSetId };
 }
 
+// Verify contract using it's source code path. The path is retrieved dynamically by the name.
+const verifyContractByName = (env, chain, name, contract, args, options = {}) => {
+    verifyContract(env, chain, contract, args, { ...options, contractPath: getQualifiedContractName(name) });
+};
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1055,4 +1065,6 @@ module.exports = {
     relayTransaction,
     getDeploymentTx,
     getWeightedSigners,
+    getQualifiedContractName,
+    verifyContractByName,
 };
