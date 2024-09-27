@@ -645,12 +645,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
     if (options.chainNames === 'all') {
         chains = Object.keys(config.chains);
-        chains = chains.map((chain) => chain.trim().toLowerCase());
-    } else if (options.chainType) {
-        chains = Object.keys(config.chains);
-        chains.filter((chain) => config.chains[chain].chainType === options.chainType);
-    } else if (options.chainName) {
-        chains = [options.chainName];
+        chains = chains.filter((chain) => config.chains[chain].chainType === 'evm');
     } else if (options.chainNames) {
         chains = options.chainNames.split(',');
     }
