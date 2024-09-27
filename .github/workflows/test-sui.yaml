@@ -110,6 +110,9 @@ jobs:
       - name: Deploy Utils
         run: node sui/deploy-contract deploy Utils
 
+      - name: Deploy VersionControl
+        run: node sui/deploy-contract deploy VersionControl
+
       - name: Deploy AxelarGateway
         run: node sui/deploy-contract deploy AxelarGateway --signers wallet
 
