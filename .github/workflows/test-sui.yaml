@@ -38,16 +38,24 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '18' # Hardcoded to ensure consistency.
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
+        shell: bash
         run: npm ci
 
+      - name: Get Sui Version
+        shell: bash
+        run: |
+          SUI_VERSION=$(jq -r '.SUI_VERSION' "node_modules/@axelar-network/axelar-cgp-sui/version.json")
+          echo "SUI_VERSION=$SUI_VERSION" >> $GITHUB_ENV
+
       - name: Setup Sui CLI
-        uses: axelarnetwork/axelar-cgp-sui/.github/actions/install-sui-cli@main
+        uses: axelarnetwork/axelar-cgp-sui/.github/actions/setup-sui@main
         with:
-          sui-version: $(jq -r '.SUI_VERSION' node_modules/@axelar-network/axelar-cgp-sui/version.json)
+          sui-version: ${{ env.SUI_VERSION }}
 
       - name: Setup Sui Wallet
         shell: bash
@@ -141,7 +149,6 @@ jobs:
         run: node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
 
       - name: Gateway Call Contract
-        continue-on-error: true
         run: node sui/gateway.js call-contract ethereum 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 
       - name: Gateway Rotate Signers
@@ -150,11 +157,9 @@ jobs:
       ###### Command: GMP ######
 
       - name: Execute Outgoing Call Contract
-        continue-on-error: true
         run: node sui/gmp.js sendCall ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0.1 0x1234
 
       - name: Execute Incoming Call Contract
-        continue-on-error: true
         run: |
           channel_id=$(cat axelar-chains-config/info/local.json | jq '.sui.contracts.Example.objects.ChannelId' | sed 's/"//g')
           echo "Channel ID: $channel_id"
@@ -238,7 +243,6 @@ jobs:
           && mv temp.json axelar-chains-config/info/local.json
 
       - name: Post Upgrade Gateway Approval With New Package ID
-        continue-on-error: true
         run: node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-10 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
 
       ###### Command: Transfer Object ######
