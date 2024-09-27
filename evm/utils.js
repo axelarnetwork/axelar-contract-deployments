@@ -1022,7 +1022,7 @@ async function getWeightedSigners(config, chain, options) {
     return { signers: [signers], verifierSetId };
 }
 
-// To be used if multiple contracts are detected with matching bytecode
+// Verify contract using it's source code path. The path is retrieved dynamically by the name.
 const verifyContractByName = (env, chain, name, contract, args, options = {}) => {
     verifyContract(env, chain, contract, args, { ...options, contractPath: getQualifiedContractName(name) });
 };
