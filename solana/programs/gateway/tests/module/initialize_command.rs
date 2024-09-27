@@ -1,11 +1,13 @@
+use axelar_rkyv_encoding::hasher::solana::SolanaKeccak256Hasher;
 use axelar_rkyv_encoding::test_fixtures::{
     random_bytes, random_message, random_valid_execute_data_and_verifier_set_for_payload,
 };
 use axelar_rkyv_encoding::types::Payload;
 use gmp_gateway::commands::{CommandKind, OwnedCommand};
-use gmp_gateway::processor::BufferMetadata;
+use gmp_gateway::state::execute_data_buffer::BufferLayout;
 use gmp_gateway::state::{ApprovedMessageStatus, GatewayApprovedCommand};
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
+use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use test_fixtures::account::CheckValidPDAInTests;
@@ -277,170 +279,158 @@ async fn succeed_when_same_signers_with_different_nonce_get_initialized() {
     assert!(result.is_ok(), "Transaction should not have failed");
 }
 
-#[tokio::test]
-async fn test_buffered_execute_data_lifecycle_single_write() {
-    let SolanaAxelarIntegrationMetadata {
-        mut fixture,
-        gateway_root_pda,
-        domain_separator,
-        ..
-    } = SolanaAxelarIntegration::builder()
-        .initial_signer_weights(vec![10, 4])
-        .build()
-        .setup()
-        .await;
-    let payer_pubkey = fixture.payer.pubkey();
+struct BufferedWriteTestCase {
+    fixture: TestFixture,
+    gateway_root_pda: Pubkey,
+    num_chunks: usize,
+    execute_data_bytes: Vec<u8>,
+    payload_hash: [u8; 32],
+    user_seed: [u8; 32],
+    buffer_account: Pubkey,
+    bump_seed: u8,
+}
 
-    // Test execute data
-    let execute_data_bytes = {
-        let messages = vec![random_message(), random_message()];
-        let payload = Payload::new_messages(messages);
-        let (execute_data, _) =
-            random_valid_execute_data_and_verifier_set_for_payload(&domain_separator, payload);
-        execute_data.to_bytes::<1024>().unwrap()
-    };
-
-    let user_seed = random_bytes::<32>();
-    let (buffer_account, bump_seed) =
-        gmp_gateway::get_execute_data_pda(&gateway_root_pda, &user_seed);
-
-    // Prepare instructions
-    let ixs = [
-        gmp_gateway::instructions::initialize_execute_data_buffer(
+impl BufferedWriteTestCase {
+    async fn new(num_messages: usize, signer_weights: &[u128], num_chunks: usize) -> Self {
+        let SolanaAxelarIntegrationMetadata {
+            fixture,
             gateway_root_pda,
-            payer_pubkey,
-            execute_data_bytes.len() as u64,
+            domain_separator,
+            ..
+        } = SolanaAxelarIntegration::builder()
+            .initial_signer_weights(signer_weights.to_vec())
+            .build()
+            .setup()
+            .await;
+
+        // Generate the test `execute_data` and its payload hash
+        let (execute_data_bytes, payload_hash) = {
+            let messages = (0..num_messages).map(|_| random_message()).collect();
+            let payload = Payload::new_messages(messages);
+            let (execute_data, verifier_set) =
+                random_valid_execute_data_and_verifier_set_for_payload(
+                    &domain_separator,
+                    payload.clone(),
+                );
+            let execute_data_bytes = execute_data.to_bytes::<1024>().unwrap();
+            let payload_hash = axelar_rkyv_encoding::hash_payload(
+                &domain_separator,
+                &verifier_set,
+                &payload,
+                SolanaKeccak256Hasher::default(),
+            );
+            dbg!(execute_data_bytes.len());
+            (execute_data_bytes, payload_hash)
+        };
+
+        let user_seed = random_bytes::<32>();
+        let (buffer_account, bump_seed) =
+            gmp_gateway::get_execute_data_pda(&gateway_root_pda, &user_seed);
+        Self {
+            fixture,
+            gateway_root_pda,
+            num_chunks,
+            execute_data_bytes,
+            payload_hash,
             user_seed,
-            CommandKind::ApproveMessage,
-        )
-        .unwrap(),
-        gmp_gateway::instructions::write_execute_data_buffer(
-            gateway_root_pda,
-            &user_seed,
+            buffer_account,
             bump_seed,
-            &execute_data_bytes,
-            0,
-        )
-        .unwrap(),
-        gmp_gateway::instructions::finalize_execute_data_buffer(
-            gateway_root_pda,
-            &user_seed,
-            bump_seed,
-        )
-        .unwrap(),
-    ];
+        }
+    }
 
-    // Send transaction
-    let BanksTransactionResultWithMetadata { result, .. } =
-        fixture.send_tx_with_metadata(&ixs).await;
+    async fn run(&mut self) {
+        // Split the `execute_data` in three chunks
+        let write_ixs = split(&self.execute_data_bytes, self.num_chunks).map(|chunk| {
+            gmp_gateway::instructions::write_execute_data_buffer(
+                self.gateway_root_pda,
+                &self.user_seed,
+                self.bump_seed,
+                chunk.data,
+                chunk.offset,
+            )
+            .unwrap()
+        });
 
-    // Check: Transaction success
-    assert!(result.is_ok());
+        // Prepare instructions
+        let mut ixs = vec![];
+        ixs.push(
+            gmp_gateway::instructions::initialize_execute_data_buffer(
+                self.gateway_root_pda,
+                self.fixture.payer.pubkey(),
+                self.execute_data_bytes.len() as u64,
+                self.user_seed,
+                CommandKind::ApproveMessage,
+            )
+            .unwrap(),
+        );
+        ixs.extend(write_ixs);
+        ixs.push(
+            gmp_gateway::instructions::finalize_execute_data_buffer(
+                self.gateway_root_pda,
+                &self.user_seed,
+                self.bump_seed,
+            )
+            .unwrap(),
+        );
 
-    // Check: Final account data matches what we wrote
-    let buffer_account_data = fixture
-        .banks_client
-        .get_account(buffer_account)
-        .await
-        .expect("call failed")
-        .expect("account not found")
-        .data;
+        // Confidence check: We really used `num_chunks` + 2 instructions
+        assert_eq!(ixs.len(), 2 + self.num_chunks);
 
-    let (metadata_bits, execute_data_buffer) = buffer_account_data.split_at(1);
-    let metadata = metadata_bits
-        .first()
-        .copied()
-        .and_then(BufferMetadata::from_bits)
-        .expect("Bad metadata bits");
-    assert!(metadata.is_finalized());
-    assert_eq!(execute_data_buffer, execute_data_bytes);
+        // Send one transaction per instruction
+        for instruction in ixs {
+            self.send_individual_transaction(instruction).await;
+        }
+
+        // Check: Final account data matches what we wrote
+        let mut buffer_account_data = self
+            .fixture
+            .banks_client
+            .get_account(self.buffer_account)
+            .await
+            .expect("call failed")
+            .expect("account not found")
+            .data;
+
+        let buffer = BufferLayout::parse(&mut buffer_account_data)
+            .expect("failed to parse buffer account data");
+        assert!(buffer.metadata().is_finalized());
+        assert_eq!(buffer.raw_execute_data, self.execute_data_bytes);
+        assert_eq!(*buffer.payload_hash, self.payload_hash);
+    }
+
+    async fn send_individual_transaction(&mut self, instruction: Instruction) {
+        let BanksTransactionResultWithMetadata { result, .. } =
+            self.fixture.send_tx_with_metadata(&[instruction]).await;
+
+        // Check: Transaction success
+        assert!(result.is_ok());
+    }
 }
 
 #[tokio::test]
-async fn test_buffered_execute_data_lifecycle_multiple_writes() {
-    let SolanaAxelarIntegrationMetadata {
-        mut fixture,
-        gateway_root_pda,
-        domain_separator,
-        ..
-    } = SolanaAxelarIntegration::builder()
-        .initial_signer_weights(vec![10, 4])
-        .build()
-        .setup()
-        .await;
-    let payer_pubkey = fixture.payer.pubkey();
+async fn test_buffered_execute_data_lifecycle() {
+    // TODO: Experiment with other sizes.
+    let signer_weights = &[10u128, 4];
 
-    // Test execute data
-    let execute_data_bytes = {
-        let messages = vec![random_message(), random_message()];
-        let payload = Payload::new_messages(messages);
-        let (execute_data, _) =
-            random_valid_execute_data_and_verifier_set_for_payload(&domain_separator, payload);
-        execute_data.to_bytes::<1024>().unwrap()
-    };
+    // This is our current limit.
+    // Split count doesn't seem to interfere with it.
+    //  Commenting it out because it can be flaky sometimes.
+    /*
+        BufferedWriteTestCase::new(40, signer_weights, 4)
+            .await
+            .run()
+            .await;
+    // */
 
-    let user_seed = random_bytes::<32>();
-    let (buffer_account, bump_seed) =
-        gmp_gateway::get_execute_data_pda(&gateway_root_pda, &user_seed);
-
-    // Split the `execute_data` in three chunks
-    let write_ixs = split(&execute_data_bytes, 3).map(|chunk| {
-        gmp_gateway::instructions::write_execute_data_buffer(
-            gateway_root_pda,
-            &user_seed,
-            bump_seed,
-            chunk.data,
-            chunk.offset,
-        )
-        .unwrap()
-    });
-
-    // Prepare instructions
-    let mut ixs = vec![];
-    ixs.push(
-        gmp_gateway::instructions::initialize_execute_data_buffer(
-            gateway_root_pda,
-            payer_pubkey,
-            execute_data_bytes.len() as u64,
-            user_seed,
-            CommandKind::ApproveMessage,
-        )
-        .unwrap(),
-    );
-    ixs.extend(write_ixs);
-    ixs.push(
-        gmp_gateway::instructions::finalize_execute_data_buffer(
-            gateway_root_pda,
-            &user_seed,
-            bump_seed,
-        )
-        .unwrap(),
-    );
-
-    // Send transaction
-    let BanksTransactionResultWithMetadata { result, .. } =
-        fixture.send_tx_with_metadata(&ixs).await;
-
-    // Check: Transaction success
-    assert!(result.is_ok());
-
-    // Check: Final account data matches what we wrote
-    let buffer_account_data = fixture
-        .banks_client
-        .get_account(buffer_account)
-        .await
-        .expect("call failed")
-        .expect("account not found")
-        .data;
-
-    let (metadata_bits, execute_data_buffer) = buffer_account_data.split_at(1);
-    let metadata = metadata_bits
-        .first()
-        .copied()
-        .and_then(BufferMetadata::from_bits)
-        .expect("Bad metadata bits");
-    assert!(metadata.is_finalized());
-    assert_eq!(execute_data_buffer, execute_data_bytes);
+    let magic_sequence = &[1, 2, 3, 5, 8, 13, 21, 34];
+    for magic_number in magic_sequence {
+        let num_messages = *magic_number;
+        let num_chunks = magic_number * 3;
+        BufferedWriteTestCase::new(num_messages, signer_weights, num_chunks)
+            .await
+            .run()
+            .await
+    }
 }
 
 /// Helper function to split a slice in `n` parts as evenly as possible

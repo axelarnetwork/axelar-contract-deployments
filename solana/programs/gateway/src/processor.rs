@@ -13,7 +13,6 @@ use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_instruction, system_program};
 
-pub use self::initialize_execute_data::BufferMetadata;
 use crate::check_program_account;
 use crate::commands::ArchivedCommand;
 use crate::error::GatewayError;

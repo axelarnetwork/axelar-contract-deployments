@@ -1,4 +1,4 @@
-use bitflags::bitflags;
+use axelar_rkyv_encoding::types::{ArchivedExecuteData, ArchivedPayload};
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -13,9 +13,8 @@ use super::{Processor, ToBytes};
 use crate::commands::CommandKind;
 use crate::error::GatewayError;
 use crate::seed_prefixes;
-use crate::state::execute_data::{
-    ApproveMessagesVariant, ExecuteDataVariant, RotateSignersVariant,
-};
+use crate::state::execute_data::ExecuteDataVariant;
+use crate::state::execute_data_buffer::{BufferLayout, RESERVED_BUFFER_METADATA_BYTES};
 use crate::state::{GatewayConfig, GatewayExecuteData};
 
 impl Processor {
@@ -112,9 +111,9 @@ impl Processor {
             return Err(ProgramError::InvalidAccountData);
         }
 
-        // Add an extra first byte to track buffer metadata.
+        // Adjust buffer size to hold extra information.
         let adjusted_buffer_size = buffer_size
-            .checked_add(1)
+            .checked_add(RESERVED_BUFFER_METADATA_BYTES as u64)
             .ok_or(ProgramError::AccountDataTooSmall)?;
 
         // Prepare the `create_account` instruction
@@ -146,12 +145,10 @@ impl Processor {
             &[signers_seeds],
         )?;
 
-        // Set the metadata/flags in the buffer's first byte
-        let mut buffer = buffer_account.try_borrow_mut_data()?;
-        let first_byte = buffer
-            .first_mut()
-            .ok_or(ProgramError::AccountDataTooSmall)?;
-        *first_byte = BufferMetadata::new_from_command_kind(command_kind).bits();
+        // Set the buffer metadata
+        let mut data = buffer_account.try_borrow_mut_data()?;
+        let mut buffer = BufferLayout::parse(&mut data)?;
+        buffer.set_command_kind(command_kind);
 
         Ok(())
     }
@@ -172,32 +169,27 @@ impl Processor {
         assert_eq!(buffer_account.owner, program_id);
 
         let mut data = buffer_account.try_borrow_mut_data()?;
-
-        // Split the finalization byte from the account data.
-        if data.len() <= 1 {
-            return Err(ProgramError::AccountDataTooSmall);
-        };
-        let (metadata, buffer) = data.split_at_mut(1);
+        let buffer = BufferLayout::parse(&mut data)?;
 
         // Check: buffer account should not be finalized.
-        if metadata
-            .first()
-            .and_then(|bits| BufferMetadata::from_bits(*bits))
-            .ok_or(ProgramError::InvalidAccountData)?
-            .is_finalized()
-        {
+        if buffer.metadata().is_finalized() {
             msg!("Buffer account is finalized");
             return Err(ProgramError::InvalidAccountData);
         }
 
         // Check: Write bounds
         let write_offset = offset.saturating_add(bytes.len());
-        if buffer.len() < write_offset {
-            msg!("Write overflow: {} < {}", buffer.len(), write_offset);
+        if buffer.raw_execute_data.len() < write_offset {
+            msg!(
+                "Write overflow: {} < {}",
+                buffer.raw_execute_data.len(),
+                write_offset
+            );
             return Err(ProgramError::AccountDataTooSmall);
         }
 
         buffer
+            .raw_execute_data
             .get_mut(offset..write_offset)
             .ok_or(ProgramError::AccountDataTooSmall)?
             .copy_from_slice(bytes);
@@ -225,143 +217,44 @@ impl Processor {
             .domain_separator;
 
         let mut data = buffer_account.try_borrow_mut_data()?;
-
-        // Split the finalization byte from the account data.
-        if data.len() <= 1 {
-            return Err(ProgramError::AccountDataTooSmall);
-        };
-        let (metadata_bits, buffer) = data.split_at_mut(1);
+        let mut buffer = BufferLayout::parse(&mut data)?;
 
         // Check: buffer account should not be finalized.
-        let mut metadata = metadata_bits
-            .first()
-            .and_then(|bits| BufferMetadata::from_bits(*bits))
-            .ok_or(ProgramError::InvalidAccountData)?;
-
-        if metadata.is_finalized() {
+        if buffer.metadata().is_finalized() {
             msg!("Buffer account is finalized");
             return Err(ProgramError::InvalidAccountData);
         }
 
-        // Deserialize according to command kind.
-        // We don't use the value, this step is used just for checking data integrity.
-        match metadata.command_kind() {
-            CommandKind::ApproveMessage => {
-                GatewayExecuteData::<ApproveMessagesVariant>::new(
-                    buffer,
-                    gateway_root_pda.key,
-                    &domain_separator,
-                )
-                .map_err(|error| {
-                    msg!("Failed to deserialize execute_data bytes: {}", error);
-                    ProgramError::InvalidAccountData
-                })?;
-            }
-            CommandKind::RotateSigner => {
-                GatewayExecuteData::<RotateSignersVariant>::new(
-                    buffer,
-                    gateway_root_pda.key,
-                    &domain_separator,
-                )
-                .map_err(|error| {
-                    msg!("Failed to deserialize execute_data bytes: {}", error);
-                    ProgramError::InvalidAccountData
-                })?;
-            }
+        // Deserialize / Unarchive
+        let archived_execute_data = ArchivedExecuteData::from_bytes(buffer.raw_execute_data)
+            .map_err(|error| {
+                msg!("Failed to deserialize execute_data: {}", error);
+                ProgramError::InvalidAccountData
+            })?;
+
+        // Check: Buffer metadata `COMMAND_KIND` matches buffer content.
+        if !matches!(
+            (
+                buffer.metadata().command_kind(),
+                &archived_execute_data.payload
+            ),
+            (CommandKind::ApproveMessage, ArchivedPayload::Messages(_))
+                | (CommandKind::RotateSigner, ArchivedPayload::VerifierSet(_))
+        ) {
+            msg!("Buffer metadata COMMAND_KIND doesn't match its contents");
+            return Err(GatewayError::InvalidExecuteDataAccount)?;
         }
 
-        // TODO: What's next?
+        // Hash the payload and persist into the buffer account.
+        let payload_hash =
+            archived_execute_data.internal_payload_hash(&domain_separator, crate::hasher_impl());
+        buffer.payload_hash.copy_from_slice(payload_hash.as_slice());
+
+        // TODO: add validation in a separate instruction.
 
         // Mark buffer as finalized
-        metadata.finalize();
-        metadata_bits[0] = metadata.bits();
+        buffer.finalize();
 
         Ok(())
-    }
-}
-
-bitflags! {
-    /// Represents the options for the `execute_data` PDA account buffer.
-    #[derive(Eq, PartialEq)]
-    pub struct BufferMetadata: u8 {
-        /// Buffer finalization status.
-        ///
-        /// Finalized     => 1
-        /// Not finalized => 0
-        const FINALIZED = 1;
-
-        /// The command kind contained in the buffer.
-        ///
-        /// ApproveMessages => 0
-        /// RotateSigners   => 1
-        const COMMAND_KIND = 1 << 1;
-    }
-}
-
-impl BufferMetadata {
-    fn new_from_command_kind(command_kind: CommandKind) -> Self {
-        match command_kind {
-            CommandKind::ApproveMessage => Self::empty(),
-            CommandKind::RotateSigner => Self::COMMAND_KIND,
-        }
-    }
-
-    fn finalize(&mut self) {
-        self.insert(Self::FINALIZED);
-    }
-
-    /// Returns true if the `FINALIZED` flag is set.
-    pub fn is_finalized(&self) -> bool {
-        self.contains(Self::FINALIZED)
-    }
-
-    /// Returns the internal [`CommandKind`] according to the `COMMAND_KIND`
-    /// flag.
-    pub fn command_kind(&self) -> CommandKind {
-        if self.contains(Self::COMMAND_KIND) {
-            CommandKind::RotateSigner
-        } else {
-            CommandKind::ApproveMessage
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_execute_data_buffer_metadata_flags() {
-        // Test all possible combinations of the flags (0 to 3)
-        for bits in 0..=3u8 {
-            let meta = BufferMetadata::from_bits(bits).unwrap();
-
-            // `Self::is_finalized` should return `true` if the `FINALIZED` flag is set, and
-            // `false` otherwise.
-            assert_eq!(
-                meta.is_finalized(),
-                meta.contains(BufferMetadata::FINALIZED),
-                "Method `is_finalized` failed for bits {:02b}",
-                bits
-            );
-
-            // `Self::command_kind()` should return `CommandKind::ApproveMessage` if the
-            // `COMMAND_KIND` flag is not set.
-            assert_eq!(
-                matches!(meta.command_kind(), CommandKind::ApproveMessage),
-                !meta.contains(BufferMetadata::COMMAND_KIND),
-                "Invalid output for `command_kind` method for bits {:02b}",
-                bits
-            );
-
-            // `Self::command_kind()` should return `CommandKind::RotateSigner` if the
-            // `COMMAND_KIND` flag is set.
-            assert_eq!(
-                matches!(meta.command_kind(), CommandKind::RotateSigner),
-                meta.contains(BufferMetadata::COMMAND_KIND),
-                "Invalid output for `command_kind` method for bits {:02b}",
-                bits
-            );
-        }
     }
 }
