@@ -152,8 +152,10 @@ async function processCommand(config, chain, options) {
         case 'AxelarGateway': {
             if (contractConfig.connectionType === 'amplifier') {
                 verifyAmplifierGateway(chain, contractConfig, env, wallet, verifyOptions, options);
-            } else {
+            } else if (contractConfig.connectionType === 'consensus') {
                 verifyConsensusGateway(config, chain, contractConfig, env, wallet, verifyOptions, options);
+            } else {
+                throw new Error(`Incompatible Gateway connection type`);
             }
 
             break;
