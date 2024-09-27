@@ -44,7 +44,12 @@ impl TestBlockchain {
     /// configuration.
     pub fn new() -> Self {
         let mnemonic = "abstract vacuum mammal awkward pudding scene penalty purchase dinner depart evoke puzzle";
-        let anvil = Anvil::new().mnemonic(mnemonic).spawn();
+        let args = [
+            "--code-size-limit",
+            "1048576", // 1MiB
+            "--disable-block-gas-limit",
+        ];
+        let anvil = Anvil::new().mnemonic(mnemonic).args(args).spawn();
         Self::new_with_anvil(anvil)
     }
 

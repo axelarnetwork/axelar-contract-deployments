@@ -33,8 +33,65 @@ fn main() {
         (
             "AxelarSolanaMultiCall",
             "../../../evm-contracts/out/AxelarSolanaMultiCall.sol/AxelarSolanaMultiCall.json",
-        )
+        ),
+        (
+            "TestCanonicalToken",
+            "../../../evm-contracts/out/TestCanonicalToken.sol/TestCanonicalToken.json",
+        ),
+        (
+            "InterchainTokenService",
+            "../../../evm-contracts/out/InterchainTokenService.sol/InterchainTokenService.json",
+        ),
+        (
+            "InterchainTokenFactory",
+            "../../../evm-contracts/out/InterchainTokenFactory.sol/InterchainTokenFactory.json",
+        ),
+        (
+            "GatewayCaller",
+            "../../../evm-contracts/out/GatewayCaller.sol/GatewayCaller.json",
+        ),
+        (
+            "InterchainTokenDeployer",
+            "../../../evm-contracts/out/InterchainTokenDeployer.sol/InterchainTokenDeployer.json",
+        ),
+        (
+            "InterchainToken",
+            "../../../evm-contracts/out/InterchainToken.sol/InterchainToken.json",
+        ),
+        (
+            "TokenHandler",
+            "../../../evm-contracts/out/TokenHandler.sol/TokenHandler.json",
+        ),
+        (
+            "TokenManagerDeployer",
+            "../../../evm-contracts/out/TokenManagerDeployer.sol/TokenManagerDeployer.json",
+        ),
+        (
+            "TokenManager",
+            "../../../evm-contracts/out/TokenManager.sol/TokenManager.json",
+        ),
+        (
+            "AxelarGasService",
+            "../../../evm-contracts/out/AxelarGasService.sol/AxelarGasService.json",
+        ),
+        (
+            "Create3Deployer",
+            "../../../evm-contracts/out/Create3Deployer.sol/Create3Deployer.json",
+        ),
+        (
+            "InterchainProxy",
+            "../../../evm-contracts/out/InterchainProxy.sol/InterchainProxy.json",
+        ),
+        (
+            "AxelarGateway",
+            "../../../evm-contracts/out/AxelarGateway.sol/AxelarGateway.json",
+        ),
+        (
+            "AxelarAuthWeighted",
+            "../../../evm-contracts/out/AxelarAuthWeighted.sol/AxelarAuthWeighted.json",
+        ),
     ];
+
     for (contract_name, path) in contracts {
         let mut output = output_dir.clone();
         output.push(format!("{}.rs", contract_name));
@@ -42,6 +99,9 @@ fn main() {
         Abigen::new(contract_name, path)
             .unwrap()
             .emit_cargo_directives(true)
+            // The Create3Deployer's deploy method conflicts with the ethers-rs generated deploy
+            // method, thus we need to give it a different name here.
+            .add_method_alias("deploy(bytes,bytes32)", "custom_deploy")
             .generate()
             .unwrap()
             .write_to_file(output.as_path())

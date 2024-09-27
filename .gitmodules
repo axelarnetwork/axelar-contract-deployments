@@ -16,3 +16,19 @@
 	url = https://github.com/eigerco/axelar-amplifier.git
     shallow = true
 	branch = solana
+[submodule "evm-contracts/lib/interchain-token-service"]
+	path = evm-contracts/lib/interchain-token-service
+	url = https://github.com/axelarnetwork/interchain-token-service
+    shallow = true
+[submodule "evm-contracts/lib/axelar-gmp-sdk-solidity-its-compat"]
+	path = evm-contracts/lib/axelar-gmp-sdk-solidity-its-compat
+	url = https://github.com/axelarnetwork/axelar-gmp-sdk-solidity
+    shallow = true
+[submodule "evm-contracts/lib/axelar-cgp-solidity"]
+	path = evm-contracts/lib/axelar-cgp-solidity
+	url = https://github.com/axelarnetwork/axelar-cgp-solidity.git
+    shallow = true
+[submodule "evm-contracts/lib/openzeppelin-contracts"]
+	path = evm-contracts/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+    shallow = true

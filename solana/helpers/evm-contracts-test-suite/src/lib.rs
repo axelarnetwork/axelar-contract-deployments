@@ -18,7 +18,7 @@ use ethers::signers::{LocalWallet, Signer, Wallet};
 pub use {ethers, evm_contracts_rs};
 pub mod chain;
 mod deployments;
-pub use deployments::{await_receipt, get_domain_separator};
+pub use deployments::{await_receipt, get_domain_separator, ItsContracts};
 
 /// A wrapper around the `SignerMiddleware` that provides some extra helpers
 #[derive(Clone)]

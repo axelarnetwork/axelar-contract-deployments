@@ -750,6 +750,7 @@ dependencies = [
  "axelar-message-primitives",
  "axelar-rkyv-encoding",
  "borsh 1.5.1",
+ "evm-contracts-test-suite",
  "gmp-gateway",
  "interchain-token-transfer-gmp",
  "itertools 0.12.1",

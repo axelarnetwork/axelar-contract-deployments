@@ -28,6 +28,7 @@ rkyv.workspace = true
 solana-program.workspace = true
 
 [dev-dependencies]
+evm-contracts-test-suite.workspace = true
 rstest.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true

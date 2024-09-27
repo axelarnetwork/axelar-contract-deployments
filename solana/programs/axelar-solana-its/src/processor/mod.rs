@@ -65,8 +65,9 @@ impl Processor {
                     GMPPayload::InterchainTransfer(_interchain_token_transfer) => {
                         msg!("Received InterchainTransfer message");
                     }
-                    GMPPayload::DeployInterchainToken(_deploy_interchain_token) => {
+                    GMPPayload::DeployInterchainToken(deploy_interchain_token) => {
                         msg!("Received DeployInterchainToken message");
+                        msg!("Token ID: {:?}", deploy_interchain_token.token_id);
                     }
                     GMPPayload::DeployTokenManager(_deploy_token_manager) => {
                         msg!("Received DeployTokenManager message");
