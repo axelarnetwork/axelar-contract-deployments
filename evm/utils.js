@@ -1022,7 +1022,8 @@ async function getWeightedSigners(config, chain, options) {
     return { signers: [signers], verifierSetId };
 }
 
-const verifyContractByName = (env, chain, contract, args, options = {}, name) => {
+// To be used if multiple contracts are detected with matching bytecode
+const verifyContractByName = (env, chain, name, contract, args, options = {}) => {
     verifyContract(env, chain, contract, args, { ...options, contractPath: getQualifiedContractName(name) });
 };
 
