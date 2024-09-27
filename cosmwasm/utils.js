@@ -69,43 +69,22 @@ const initContractConfig = (config, { contractName, chainName }) => {
     }
 };
 
-const getContractBaseConfig = (config, contractName) => {
+const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     const contractBaseConfig = config.axelar.contracts[contractName];
     if (!contractBaseConfig) {
         throw new Error(`Contract ${contractName} not found in config`);
     }
 
-    return contractBaseConfig;
-};
+    if (!chainName) {
+        return contractBaseConfig;
+    }
 
-const getContractChainConfig = (contractBaseConfig, chainName) => {
-    const contractConfig = contractBaseConfig[chainName];
+    let contractConfig = contractBaseConfig[chainName];
     if (!contractConfig) {
         throw new Error(`Contract ${contractName} (${chainName}) not found in config`);
     }
 
     return contractConfig;
-};
-
-const getAmplifierContractConfig = (config, { contractName, chainName }) => {
-    const contractBaseConfig = getContractBaseConfig(config, contractName);
-
-    if (!chainName) {
-        return contractBaseConfig;
-    }
-
-    return getContractChainConfig(contractBaseConfig, chainName);
-};
-
-const getContractConfigOrDefault = (config, contractName, chainName, property) => {
-    const contractBaseConfig = getContractBaseConfig(config, contractName);
-    const def = contractBaseConfig[property];
-
-    if (!chainName) {
-        return def;
-    }
-
-    return getContractChainConfig(contractBaseConfig, chainName)[property] || def;
 };
 
 const updateContractConfig = (contractConfig, chainConfig, key, value) => {
