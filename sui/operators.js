@@ -36,7 +36,11 @@ async function collectGas(keypair, client, gasServiceConfig, contractConfig, arg
     const [amount] = args;
     const receiver = options.receiver || keypair.toSuiAddress();
 
-    const operatorCapId = await findOwnedObjectIdByType(client, keypair.toSuiAddress(), `${contractConfig.address}::operators::OperatorCap`);
+    const operatorCapId = await findOwnedObjectIdByType(
+        client,
+        keypair.toSuiAddress(),
+        `${contractConfig.address}::operators::OperatorCap`,
+    );
     const tx = new Transaction();
 
     operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, (cap) => {
@@ -53,7 +57,11 @@ async function refund(keypair, client, gasServiceConfig, contractConfig, args, o
     const [messageId] = args;
     const amount = options.amount;
     const receiver = options.receiver || keypair.toSuiAddress();
-    const operatorCapId = await findOwnedObjectIdByType(client, keypair.toSuiAddress(), `${contractConfig.address}::operators::OperatorCap`);
+    const operatorCapId = await findOwnedObjectIdByType(
+        client,
+        keypair.toSuiAddress(),
+        `${contractConfig.address}::operators::OperatorCap`,
+    );
 
     const tx = new Transaction();
 
