@@ -201,7 +201,7 @@ const findOwnedObjectIdByType = async (client, ownerAddress, objectType) => {
         },
     });
 
-    if (ownedObjects.data.length === 0 || ownedObjects.data.length > 1) {
+    if (ownedObjects.data.length !== 1) {
         throw new Error(`Expecting exactly one object of type ${objectType} owned by ${ownerAddress}`);
     }
 
