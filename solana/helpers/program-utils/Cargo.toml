@@ -8,6 +8,7 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 borsh.workspace = true
+rkyv.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
 

@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
 use axelar_message_primitives::{DataPayload, U256};
+use axelar_rkyv_encoding::rkyv::de::deserializers::SharedDeserializeMap;
 use axelar_rkyv_encoding::rkyv::validation::validators::DefaultValidator;
-use axelar_rkyv_encoding::rkyv::CheckBytes;
+use axelar_rkyv_encoding::rkyv::{Archive, CheckBytes, Deserialize};
 use axelar_rkyv_encoding::types::u128::U128;
 use axelar_rkyv_encoding::types::{ExecuteData, Message, Payload, VerifierSet};
 use borsh::BorshDeserialize;
@@ -865,6 +866,22 @@ impl TestFixture {
             .expect("get_account")
             .expect("account not none");
         account.check_initialized_pda::<T>(expected_owner).unwrap()
+    }
+
+    pub async fn get_rkyv_account<T>(&mut self, account: &Pubkey, expected_owner: &Pubkey) -> T
+    where
+        T: Archive,
+        T::Archived: Deserialize<T, SharedDeserializeMap>,
+    {
+        let account = self
+            .banks_client
+            .get_account(*account)
+            .await
+            .expect("get_account")
+            .expect("account not none");
+        account
+            .check_rkyv_initialized_pda::<T>(expected_owner)
+            .unwrap()
     }
 
     pub async fn call_execute_on_axelar_executable<'a>(

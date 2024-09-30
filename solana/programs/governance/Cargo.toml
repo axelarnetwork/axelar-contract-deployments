@@ -1,0 +1,33 @@
+[package]
+name = "governance"
+version = "0.1.0"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+test-sbf = []
+
+[dependencies]
+solana-program.workspace = true
+borsh.workspace = true
+axelar-executable = { workspace = true }
+gateway = { workspace = true, features = ["no-entrypoint"] }
+program-utils.workspace = true
+governance-gmp.workspace = true
+rkyv.workspace = true
+axelar-rkyv-encoding.workspace = true
+alloy-sol-types.workspace = true
+
+[dev-dependencies]
+solana-logger.workspace = true
+solana-program-test.workspace = true
+solana-sdk.workspace = true
+test-fixtures.workspace = true
+ethers.workspace = true
+alloy-primitives.workspace = true

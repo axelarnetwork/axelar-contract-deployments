@@ -1,6 +1,7 @@
 # https://github.com/crate-ci/typos/blob/master/docs/reference.md
 [default.extend-identifiers]
 itswMJtRUe2vd46rb5kDmYzfBHHej4PyX4twgnbT1TG = "itswMJtRUe2vd46rb5kDmYzfBHHej4PyX4twgnbT1TG"
+B3gam8xC15TDne4XtAVAvDDfqJFeSH6mv6sn6TanVJju = "B3gam8xC15TDne4XtAVAvDDfqJFeSH6mv6sn6TanVJju"
 
 [files]
 extend-exclude = [

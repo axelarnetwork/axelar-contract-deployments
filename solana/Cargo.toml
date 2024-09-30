@@ -4,44 +4,51 @@ resolver = "2"
 
 [workspace.lints.clippy]
 cargo = { priority = -1, level = "deny" }
-complexity = { priority = -1, level = "deny" }
-correctness = { priority = -1, level = "deny" }
-nursery = { priority = -1, level = "deny" }
-pedantic = { priority = -1, level = "deny" }
-perf = { priority = -1, level = "deny" }
-restriction = { priority = -1, level = "deny" }
-style = { priority = -1, level = "deny" }
-suspicious = { priority = -1, level = "deny" }
+complexity = { priority = -2, level = "deny" }
+perf = { priority = -3, level = "deny" }
+correctness = { priority = -4, level = "deny" }
+restriction = { priority = -5, level = "deny" }
+style = { priority = -6, level = "deny" }
+suspicious = { priority = -7, level = "deny" }
+pedantic = { priority = -8, level = "deny" }
+nursery = { priority = -9, level = "deny" }
 
-absolute_paths = "allow"
-blanket_clippy_restriction_lints = "allow"
+assertions_on_result_states = "allow"
 cargo_common_metadata = "allow"
+missing_docs_in_private_items = "allow"
+blanket_clippy_restriction_lints = "allow"
+implicit_return = "allow"
 dbg_macro = "allow"
+single_call_fn = "allow"
+missing_inline_in_public_items = "allow"
+question_mark_used = "allow"
+absolute_paths = "allow"
+missing_trait_methods = "allow"
+wildcard_imports = "allow"
+shadow_reuse = "allow"
 exhaustive_enums = "allow"
+ref_patterns = "allow"
+pub_use = "allow"
+single_char_lifetime_names = "allow"
+multiple_crate_versions = "allow"
 exhaustive_structs = "allow"
 future_not_send = "allow"
-implicit_return = "allow"
-missing_docs_in_private_items = "allow"
-missing_inline_in_public_items = "allow"
-missing_trait_methods = "allow"
-mod_module_files = "allow"
-multiple_crate_versions = "allow"
-negative_feature_names = "allow"
-pub_use = "allow"
-question_mark_used = "allow"
-ref_patterns = "allow"
 separated_literal_suffix = "allow"
-shadow_reuse = "allow"
-single_call_fn = "allow"
-single_char_lifetime_names = "allow"
-wildcard_imports = "allow"
+mod_module_files = "allow"
+negative_feature_names = "allow"
+std_instead_of_alloc = "allow"
+expect_used = "allow"
+pub_with_shorthand = "allow"
+redundant_pub_crate = "allow"
+option_if_let_else = "allow"
+self_named_module_files = "allow"
 
 [workspace.lints.rust]
-missing_docs = "warn"
-rust_2018_idioms = "deny"
-unreachable_pub = "warn"
-unused_imports = "warn"
-unused_must_use = "deny"
+missing_docs = { level = "warn", priority = -1 }
+rust_2018_idioms = { level = "deny", priority = 0 }
+unreachable_pub = { level = "warn", priority = -1 }
+unused_imports = { level = "warn", priority = -1 }
+unused_must_use = { level = "deny", priority = -1 }
 
 [workspace.dependencies]
 alloy-primitives = "0.7"
@@ -102,10 +109,13 @@ gateway = { path = "programs/gateway", package = "gmp-gateway" }
 # helper crates
 axelar-executable = { path = "helpers/axelar-executable" }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
-axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = ["solana"] }
+axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = [
+    "solana",
+] }
 evm-contracts-rs = { path = "helpers/evm-contracts-rs" }
 evm-contracts-test-suite = { path = "helpers/evm-contracts-test-suite" }
 interchain-token-transfer-gmp = { path = "helpers/interchain-token-transfer-gmp" }
+governance-gmp = { path = "helpers/governance-gmp" }
 program-utils = { path = "helpers/program-utils" }
 test-fixtures = { path = "helpers/test-fixtures" }
 

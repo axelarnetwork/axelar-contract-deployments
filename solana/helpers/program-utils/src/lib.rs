@@ -3,7 +3,10 @@
 //! Program utility functions
 
 use std::borrow::Borrow;
+use std::io::Write;
 
+use rkyv::ser::serializers::AllocSerializer;
+use rkyv::{Archive, Serialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
@@ -11,7 +14,7 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
-use solana_program::{system_instruction, system_program};
+use solana_program::{msg, system_instruction, system_program};
 
 /// mini helper to log from native Rust or to the program log
 /// Very useful for debugging when you have to run some code on Solana and via
@@ -65,6 +68,45 @@ pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack>(
     Ok(())
 }
 
+/// Initialize an associated account
+pub fn init_rkyv_pda<'a, 'b, const N: usize, T>(
+    funder_info: &'a AccountInfo<'b>,
+    to_create: &'a AccountInfo<'b>,
+    program_id: &Pubkey,
+    system_program_info: &'a AccountInfo<'b>,
+    rkyv_type: T,
+    signer_seeds: &[&[u8]],
+) -> Result<(), ProgramError>
+where
+    T: Serialize<AllocSerializer<N>>,
+{
+    let data = rkyv::to_bytes::<_, N>(&rkyv_type).map_err(|err| {
+        msg!("Cannot serialize rkyv account data: {}", err);
+        ProgramError::InvalidArgument
+    })?;
+
+    let rent = Rent::get()?;
+    let ix = &system_instruction::create_account(
+        funder_info.key,
+        to_create.key,
+        rent.minimum_balance(data.len()).max(1),
+        data.len() as u64,
+        program_id,
+    );
+    invoke_signed(
+        ix,
+        &[
+            funder_info.clone(),
+            to_create.clone(),
+            system_program_info.clone(),
+        ],
+        &[signer_seeds],
+    )?;
+    let mut account_data = to_create.try_borrow_mut_data()?;
+    account_data.write_all(&data)?;
+    Ok(())
+}
+
 /// Close an associated account
 pub fn close_pda(
     lamport_destination: &AccountInfo<'_>,
@@ -113,6 +155,17 @@ pub trait ValidPDA {
 
     /// Check if the account is an initialized PDA
     fn check_uninitialized_pda(&self) -> Result<(), ProgramError>;
+}
+
+/// Checks the rkyv encoded account program is initialised and
+/// returns it's content.
+pub fn check_rkyv_initialized_pda<'a, T: Archive>(
+    expected_owner_program_id: &Pubkey,
+    acc_info: &'a AccountInfo,
+    acc_data: &'a [u8],
+) -> Result<&'a T::Archived, ProgramError> {
+    acc_info.check_initialized_pda_without_deserialization(expected_owner_program_id)?;
+    Ok(unsafe { rkyv::archived_root::<T>(acc_data) })
 }
 
 impl<'a> ValidPDA for &AccountInfo<'a> {

@@ -156,6 +156,28 @@ impl ArchivedMessage {
     }
 }
 
+/// Metadata that belongs to a Gmp message. This is mainly used in
+/// special cases in which the relayer is aware and does a special message
+/// handling.
+///
+/// See ITS and Governance contracts as examples of usage.
+#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
+#[archive(compare(PartialEq))]
+#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+pub struct GmpMetadata {
+    /// The cross-chain id
+    pub cross_chain_id: CrossChainId,
+
+    /// Address of the source contract
+    pub source_address: String,
+
+    /// Address of the destination contract
+    pub destination_address: String,
+
+    /// Id of the destination chain
+    pub destination_chain: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

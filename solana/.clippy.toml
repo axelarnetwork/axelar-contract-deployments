@@ -1,1 +1,3 @@
 large-error-threshold = 161
+allow-dbg-in-tests = true
+allow-unwrap-in-tests = true
