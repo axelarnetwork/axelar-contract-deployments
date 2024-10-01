@@ -15,6 +15,9 @@ solana_program::declare_id!("itswMJtRUe2vd46rb5kDmYzfBHHej4PyX4twgnbT1TG");
 pub mod seed_prefixes {
     /// The seed prefix for deriving the ITS root PDA
     pub const ITS_SEED: &[u8] = b"interchain-token-service";
+
+    /// The seed prefix for deriving the token manager PDA
+    pub const TOKEN_MANAGER_SEED: &[u8] = b"token-manager";
 }
 
 /// Checks that the supplied program ID is the correct one
@@ -67,4 +70,26 @@ fn its_root_pda_internal(gateway_root_pda: &Pubkey, program_id: &Pubkey) -> (Pub
 #[must_use]
 pub fn its_root_pda(gateway_root_pda: &Pubkey) -> (Pubkey, u8) {
     its_root_pda_internal(gateway_root_pda, &crate::id())
+}
+
+fn token_manager_pda_internal(
+    its_root_pda: &Pubkey,
+    token_id: &[u8],
+    program_id: &Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[
+            seed_prefixes::TOKEN_MANAGER_SEED,
+            its_root_pda.as_ref(),
+            token_id,
+        ],
+        program_id,
+    )
+}
+
+/// Derives the PDA for a [`TokenManager`].
+#[inline]
+#[must_use]
+pub fn token_manager_pda(its_root_pda: &Pubkey, token_id: &[u8]) -> (Pubkey, u8) {
+    token_manager_pda_internal(its_root_pda, token_id, &crate::id())
 }

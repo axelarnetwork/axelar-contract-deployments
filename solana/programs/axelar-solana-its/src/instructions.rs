@@ -3,7 +3,7 @@
 use std::error::Error;
 
 use axelar_message_primitives::DestinationProgramId;
-use axelar_rkyv_encoding::types::CrossChainId;
+use axelar_rkyv_encoding::types::GmpMetadata;
 use gateway::hasher_impl;
 use interchain_token_transfer_gmp::GMPPayload;
 use rkyv::bytecheck::EnumCheckError;
@@ -39,20 +39,11 @@ pub enum InterchainTokenServiceInstruction {
     /// 2. [] ITS root pda
     /// 3..N Accounts depend on the inner ITS instruction.
     ItsGmpPayload {
+        /// The GMP metadata
+        gmp_metadata: GmpMetadata,
+
         /// The GMP payload
         abi_payload: Vec<u8>,
-
-        /// The cross-chain id
-        cross_chain_id: CrossChainId,
-
-        /// Address of the source contract
-        source_address: String,
-
-        /// Address of the destination contract
-        destination_address: String,
-
-        /// Id of the destination chain
-        destination_chain: String,
     },
 }
 
@@ -135,26 +126,21 @@ pub fn initialize(
 ///
 /// If serialization fails.
 pub fn its_gmp_payload(
+    payer: &Pubkey,
     gateway_approved_message_pda: &Pubkey,
     gateway_root_pda: &Pubkey,
+    gmp_metadata: GmpMetadata,
     abi_payload: Vec<u8>,
-    cross_chain_id: CrossChainId,
-    source_address: String,
-    destination_address: String,
-    destination_chain: String,
 ) -> Result<Instruction, ProgramError> {
-    let mut its_accounts = derive_its_accounts(&abi_payload)?;
-    let command_id = cross_chain_id.command_id(hasher_impl());
+    let command_id = gmp_metadata.cross_chain_id.command_id(hasher_impl());
     let destination_program = DestinationProgramId(crate::id());
     let (gateway_approved_message_signing_pda, _) = destination_program.signing_pda(&command_id);
     let (its_root_pda, _) = crate::its_root_pda(gateway_root_pda);
+    let mut its_accounts = derive_its_accounts(&its_root_pda, &abi_payload)?;
 
     let instruction = InterchainTokenServiceInstruction::ItsGmpPayload {
         abi_payload,
-        cross_chain_id,
-        source_address,
-        destination_address,
-        destination_chain,
+        gmp_metadata,
     };
 
     let data = instruction
@@ -162,12 +148,15 @@ pub fn its_gmp_payload(
         .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
     let mut accounts = vec![
+        AccountMeta::new(*payer, true),
         AccountMeta::new(*gateway_approved_message_pda, false),
         AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),
         AccountMeta::new_readonly(*gateway_root_pda, false),
         AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new(its_root_pda, false),
+        AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new_readonly(its_root_pda, false),
     ];
+
     accounts.append(&mut its_accounts);
 
     Ok(Instruction {
@@ -178,15 +167,17 @@ pub fn its_gmp_payload(
 }
 
 // TODO: Derive the accounts required for the ITS transaction.
-fn derive_its_accounts(abi_payload: &[u8]) -> Result<Vec<AccountMeta>, ProgramError> {
+fn derive_its_accounts(
+    its_root_pda: &Pubkey,
+    abi_payload: &[u8],
+) -> Result<Vec<AccountMeta>, ProgramError> {
     match GMPPayload::decode(abi_payload) {
-        Ok(GMPPayload::InterchainTransfer(_transfer_data)) => {}
-        Ok(GMPPayload::DeployTokenManager(_token_manager_data)) => {}
-        Ok(GMPPayload::DeployInterchainToken(_interchain_token_data)) => {}
-        Err(_) => {
-            return Err(ProgramError::InvalidInstructionData);
-        }
+        Ok(GMPPayload::InterchainTransfer(_transfer_data)) => Ok(vec![]),
+        Ok(GMPPayload::DeployTokenManager(token_manager_data)) => Ok(vec![AccountMeta::new(
+            crate::token_manager_pda(its_root_pda, &token_manager_data.token_id.0).0,
+            false,
+        )]),
+        Ok(GMPPayload::DeployInterchainToken(_interchain_token_data)) => Ok(vec![]),
+        Err(_) => Err(ProgramError::InvalidInstructionData),
     }
-
-    Ok(vec![])
 }

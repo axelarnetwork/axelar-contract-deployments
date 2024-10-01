@@ -178,6 +178,17 @@ pub struct GmpMetadata {
     pub destination_chain: String,
 }
 
+impl From<Message> for GmpMetadata {
+    fn from(value: Message) -> Self {
+        Self {
+            cross_chain_id: value.cc_id,
+            source_address: value.source_address,
+            destination_address: value.destination_address,
+            destination_chain: value.destination_chain,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

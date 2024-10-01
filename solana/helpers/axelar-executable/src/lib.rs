@@ -7,7 +7,7 @@ use std::str::FromStr;
 
 pub use axelar_message_primitives;
 use axelar_message_primitives::{DataPayload, DestinationProgramId, EncodingScheme};
-use axelar_rkyv_encoding::types::{ArchivedMessage, CrossChainId, Message};
+use axelar_rkyv_encoding::types::{ArchivedMessage, GmpMetadata, Message};
 use gateway::commands::MessageWrapper;
 use gateway::hasher_impl;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -66,21 +66,18 @@ pub fn validate_message(
 /// 2. `gateway_root_pda` - Gateway Root PDA
 /// 3. `gateway_program_id` - Gateway Prorgam ID
 /// N. accounts required by the inner instruction (part of the payload).
-pub fn validate_flattened_message(
+pub fn validate_with_gmp_metadata(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    cross_chain_id: CrossChainId,
-    source_address: String,
-    destination_address: String,
-    destination_chain: String,
+    gmp_metadata: GmpMetadata,
     payload: &[u8],
 ) -> ProgramResult {
     let payload_hash = solana_program::keccak::hash(payload).to_bytes();
     let message_wrapper: MessageWrapper = Message::new(
-        cross_chain_id,
-        source_address,
-        destination_chain,
-        destination_address,
+        gmp_metadata.cross_chain_id,
+        gmp_metadata.source_address,
+        gmp_metadata.destination_chain,
+        gmp_metadata.destination_address,
         payload_hash,
     )
     .try_into()?;

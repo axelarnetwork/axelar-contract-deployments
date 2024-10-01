@@ -3,6 +3,7 @@ use evm_contracts_test_suite::ethers::types::U64;
 use evm_contracts_test_suite::ethers::utils::hex;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_gateway::ContractCallFilter;
 use solana_program_test::tokio;
+use solana_sdk::signer::Signer;
 
 use crate::{axelar_evm_setup, axelar_solana_setup, ItsProgramWrapper};
 
@@ -93,13 +94,11 @@ async fn test_send_from_evm_to_solana() {
 
     // - Relayer calls the Solana ITS program
     let instruction = axelar_solana_its::instructions::its_gmp_payload(
+        &solana_chain.fixture.payer.pubkey(),
         &gateway_approved_command_pdas[0],
         &solana_chain.gateway_root_pda,
+        axelar_message.into(),
         payload,
-        axelar_message.cc_id().clone(),
-        axelar_message.source_address().to_string(),
-        axelar_message.destination_address().to_string(),
-        solana_chain_name,
     )
     .expect("failed to create instruction");
 
