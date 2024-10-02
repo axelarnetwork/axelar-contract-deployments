@@ -19,6 +19,7 @@ const {
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
+    printInfo,
     isString,
     isStringArray,
     isStringLowercase,
@@ -30,7 +31,6 @@ const {
     calculateDomainSeparator,
 } = require('../common');
 const { normalizeBech32 } = require('@cosmjs/encoding');
-const { get } = require('http');
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
@@ -69,11 +69,17 @@ const initContractConfig = (config, { contractName, chainName }) => {
     }
 };
 
-const getAmplifierContractConfig = (config, { contractName, chainName }) => {
+const getAmplifierBaseContractConfig = (config, contractName) => {
     const contractBaseConfig = config.axelar.contracts[contractName];
     if (!contractBaseConfig) {
         throw new Error(`Contract ${contractName} not found in config`);
     }
+
+    return contractBaseConfig;
+};
+
+const getAmplifierContractConfig = (config, { contractName, chainName }) => {
+    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
 
     if (!chainName) {
         return contractBaseConfig;
@@ -84,18 +90,27 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
         throw new Error(`Contract ${contractName} (${chainName}) not found in config`);
     }
 
-    return contractConfig;
+    return { contractBaseConfig, contractConfig };
 };
 
-const updateContractConfig = (contractConfig, chainConfig, key, value) => {
-    if (chainConfig) {
-        contractConfig[chainConfig.axelarId] = {
-            ...contractConfig[chainConfig.axelarId],
-            [key]: value,
-        };
+const updateCodeId = async (config, options) => {
+    const { fetchCodeId, codeId } = options;
+
+    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
+
+    if (codeId) {
+        contractConfig.codeId = codeId;
+    } else if (fetchCodeId) {
+        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
     } else {
-        contractConfig[key] = value;
+        contractConfig.codeId = contractBaseConfig.lastUploadedCodeId;
     }
+
+    if (!isNumber(contractConfig.codeId)) {
+        throw new Error('Code Id is not defined');
+    }
+
+    printInfo(`Using code id ${contractConfig.codeId}`);
 };
 
 const uploadContract = async (client, wallet, config, options) => {
@@ -568,8 +583,8 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     throw new Error(`${contractName} is not supported.`);
 };
 
-const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
-    if (!contractConfig.storeCodeProposalCodeHash) {
+const fetchCodeIdFromCodeHash = async (client, contractBaseConfig) => {
+    if (!contractBaseConfig.storeCodeProposalCodeHash) {
         throw new Error('storeCodeProposalCodeHash not found in contract config');
     }
 
@@ -578,7 +593,7 @@ const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
 
     // most likely to be near the end, so we iterate backwards. We also get the latest if there are multiple
     for (let i = codes.length - 1; i >= 0; i--) {
-        if (codes[i].checksum.toUpperCase() === contractConfig.storeCodeProposalCodeHash.toUpperCase()) {
+        if (codes[i].checksum.toUpperCase() === contractBaseConfig.storeCodeProposalCodeHash.toUpperCase()) {
             codeId = codes[i].id;
             break;
         }
@@ -587,6 +602,10 @@ const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
     if (!codeId) {
         throw new Error('codeId not found on network for the given codeHash');
     }
+
+    contractBaseConfig.lastUploadedCodeId = codeId;
+
+    printInfo(`Fetched code id ${codeId} from the network`);
 
     return codeId;
 };
@@ -696,7 +715,7 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
 const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
 
-    const contractConfig = getAmplifierContractConfig(config, options);
+    const { contractConfig } = getAmplifierContractConfig(config, options);
     const chainConfig = getChainConfig(config, chainName);
 
     return {
@@ -818,8 +837,9 @@ module.exports = {
     calculateDomainSeparator,
     readWasmFile,
     initContractConfig,
+    getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
-    updateContractConfig,
+    updateCodeId,
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,

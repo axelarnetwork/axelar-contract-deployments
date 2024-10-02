@@ -13,9 +13,8 @@ const {
     getSalt,
     readWasmFile,
     initContractConfig,
+    getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
-    updateContractConfig,
-    fetchCodeIdFromCodeHash,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeStoreInstantiateProposal,
@@ -27,7 +26,7 @@ const {
     submitProposal,
     makeInstantiateMsg,
 } = require('./utils');
-const { isNumber, saveConfig, loadConfig, printInfo, prompt, getChainConfig } = require('../common');
+const { saveConfig, loadConfig, printInfo, prompt } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -41,13 +40,13 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const predictAndUpdateAddress = async (client, contractConfig, chainConfig, options) => {
+const predictAndUpdateAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
 
     const { checksum } = await client.getCodeDetails(contractConfig.codeId);
     const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainName), 'axelar');
 
-    updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
+    contractConfig.address = contractAddress;
 
     printInfo(`Predicted address for ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 };
@@ -77,8 +76,7 @@ const callSubmitProposal = async (client, wallet, config, options, proposal) => 
 };
 
 const storeCode = async (client, wallet, config, options) => {
-    const { contractName, chainName } = options;
-    const contractConfig = getAmplifierContractConfig(config, options);
+    const contractBaseConfig = getAmplifierBaseContractConfig(config, options);
 
     const proposal = encodeStoreCodeProposal(options);
 
@@ -88,14 +86,13 @@ const storeCode = async (client, wallet, config, options) => {
 
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
-    contractConfig.storeCodeProposalId = proposalId;
-    contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
+    contractBaseConfig.storeCodeProposalId = proposalId;
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
 };
 
 const storeInstantiate = async (client, wallet, config, options) => {
     const { contractName, instantiate2, chainName } = options;
-    const contractConfig = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config, chainName);
+    const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, options);
 
     if (instantiate2) {
         throw new Error('instantiate2 not supported for storeInstantiate');
@@ -110,23 +107,18 @@ const storeInstantiate = async (client, wallet, config, options) => {
 
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
-    updateContractConfig(contractConfig, chainConfig, 'storeInstantiateProposalId', proposalId);
-    contractConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
+    contractConfig.storeInstantiateProposalId = proposalId;
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
 };
 
 const instantiate = async (client, wallet, config, options) => {
-    const { contractName, instantiate2, predictOnly, fetchCodeId, chainName } = options;
-    const contractConfig = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config, chainName);
+    const { contractName, instantiate2, predictOnly, chainName } = options;
+    const { contractConfig } = getAmplifierContractConfig(config, options);
 
-    if (fetchCodeId) {
-        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
-    } else if (!isNumber(contractConfig.codeId)) {
-        throw new Error('Code Id is not defined');
-    }
+    await updateCodeId(config, options);
 
     if (predictOnly) {
-        return predictAndUpdateAddress(client, contractConfig, chainConfig, options);
+        return predictAndUpdateAddress(client, contractConfig, options);
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
@@ -148,17 +140,15 @@ const instantiate = async (client, wallet, config, options) => {
 
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
-    updateContractConfig(contractConfig, chainConfig, 'instantiateProposalId', proposalId);
+    contractConfig.instantiateProposalId = proposalId;
 
     if (instantiate2) {
-        return predictAndUpdateAddress(client, contractConfig, chainConfig, options);
+        return predictAndUpdateAddress(client, contractConfig, options);
     }
 };
 
 const execute = async (client, wallet, config, options) => {
-    const { contractName, chainName } = options;
-    const contractConfig = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config, chainName);
+    const { chainName } = options;
 
     const proposal = encodeExecuteContractProposal(config, options, chainName);
 
@@ -166,9 +156,7 @@ const execute = async (client, wallet, config, options) => {
         return;
     }
 
-    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
-
-    updateContractConfig(contractConfig, chainConfig, 'executeProposalId', proposalId);
+    await callSubmitProposal(client, wallet, config, options, proposal);
 };
 
 const paramChange = async (client, wallet, config, options) => {
@@ -182,14 +170,7 @@ const paramChange = async (client, wallet, config, options) => {
 };
 
 const migrate = async (client, wallet, config, options) => {
-    const { contractName, fetchCodeId, chainName } = options;
-    const contractConfig = getAmplifierContractConfig(config, options);
-
-    if (fetchCodeId) {
-        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
-    } else if (!isNumber(contractConfig.codeId)) {
-        throw new Error('Code Id is not defined');
-    }
+    await updateCodeId(config, options);
 
     const proposal = encodeMigrateContractProposal(config, options);
 
@@ -260,6 +241,7 @@ const programHandler = () => {
         instantiate2Options: true,
         instantiateProposalOptions: true,
         proposalOptions: true,
+        codeId: true,
         fetchCodeId: true,
         runAs: true,
     });
@@ -286,7 +268,13 @@ const programHandler = () => {
         .action((options) => {
             mainProcessor(migrate, options);
         });
-    addAmplifierOptions(migrateCmd, { contractOptions: true, migrateOptions: true, proposalOptions: true, fetchCodeId: true });
+    addAmplifierOptions(migrateCmd, {
+        contractOptions: true,
+        migrateOptions: true,
+        proposalOptions: true,
+        codeId: true,
+        fetchCodeId: true,
+    });
 
     program.parse();
 };

@@ -53,6 +53,10 @@ const addAmplifierOptions = (program, options) => {
         addProposalOptions(program);
     }
 
+    if (options.codeId) {
+        program.addOption(new Option('--codeId <codeId>', 'the code id of the contract previously uploaded'));
+    }
+
     if (options.fetchCodeId) {
         program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
     }

@@ -5,7 +5,7 @@ const { isNil } = require('lodash');
 
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
-const { isNumber, printInfo, loadConfig, saveConfig, prompt, getChainConfig } = require('../common');
+const { printInfo, loadConfig, saveConfig, prompt } = require('../common');
 const {
     prepareWallet,
     prepareClient,
@@ -13,8 +13,6 @@ const {
     getSalt,
     initContractConfig,
     getAmplifierContractConfig,
-    updateContractConfig,
-    fetchCodeIdFromCodeHash,
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
@@ -26,22 +24,21 @@ const { addAmplifierOptions } = require('./cli-utils');
 const upload = async (client, wallet, config, options) => {
     const { reuseCodeId, contractName, fetchCodeId, instantiate2, salt, chainName } = options;
 
-    const contractConfig = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config, chainName);
+    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
 
-    if (!fetchCodeId && (!reuseCodeId || isNil(contractConfig.codeId))) {
+    if (!fetchCodeId && (!reuseCodeId || isNil(contractBaseConfig.lastUploadedCodeId))) {
         printInfo('Uploading contract binary');
 
         const { checksum, codeId } = await uploadContract(client, wallet, config, options);
 
         printInfo('Uploaded contract binary');
-        contractConfig.codeId = codeId;
+        contractBaseConfig.lastUploadedCodeId = codeId;
 
         if (instantiate2) {
             const [account] = await wallet.getAccounts();
             const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');
 
-            updateContractConfig(contractConfig, chainConfig, 'address', address);
+            contractConfig.address = address;
 
             printInfo('Expected contract address', address);
         }
@@ -51,21 +48,16 @@ const upload = async (client, wallet, config, options) => {
 };
 
 const instantiate = async (client, wallet, config, options) => {
-    const { contractName, fetchCodeId, chainName } = options;
+    const { contractName, chainName } = options;
 
-    const contractConfig = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config, chainName);
+    const { contractConfig } = getAmplifierContractConfig(config, options);
 
-    if (fetchCodeId) {
-        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
-    } else if (!isNumber(contractConfig.codeId)) {
-        throw new Error('Code Id is not defined');
-    }
+    await updateCodeId(config, options);
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
     const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
 
-    updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
+    contractConfig.address = contractAddress;
 
     printInfo(`Instantiated ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 };
@@ -98,6 +90,7 @@ const programHandler = () => {
         storeOptions: true,
         instantiateOptions: true,
         instantiate2Options: true,
+        codeId: true,
         fetchCodeId: true,
     });
 
