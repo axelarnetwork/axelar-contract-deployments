@@ -48,6 +48,7 @@ const PACKAGE_DIRS = [
     'gas_service',
     'example',
     'axelar_gateway',
+    'relayer_discovery',
     'operators',
     'abi',
     'governance',
@@ -64,6 +65,7 @@ const PACKAGE_CONFIGS = {
     },
     postDeployFunctions: {
         AxelarGateway: postDeployAxelarGateway,
+        RelayerDiscovery: postDeployRelayerDiscovery,
         GasService: postDeployGasService,
         Example: postDeployExample,
         Operators: postDeployOperators,
@@ -96,6 +98,15 @@ const supportedPackages = PACKAGE_DIRS.map((dir) => ({
  * Define post-deployment functions for each supported package below.
  */
 
+async function postDeployRelayerDiscovery(published, keypair, client, config, chain, options) {
+    const [relayerDiscoveryObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+        `${published.packageId}::discovery::RelayerDiscovery`,
+    ]);
+    chain.contracts.RelayerDiscovery.objects = {
+        RelayerDiscovery: relayerDiscoveryObjectId,
+    };
+}
+
 async function postDeployGasService(published, keypair, client, config, chain, options) {
     const [gasCollectorCapObjectId, gasServiceObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::gas_service::GasCollectorCap`,
@@ -108,7 +119,7 @@ async function postDeployGasService(published, keypair, client, config, chain, o
 }
 
 async function postDeployExample(published, keypair, client, config, chain, options) {
-    const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
+    const relayerDiscovery = config.sui.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
     const [singletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
     const channelId = await getSingletonChannelId(client, singletonObjectId);
@@ -148,7 +159,6 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 
     const [creatorCap, relayerDiscovery, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
         `${packageId}::gateway::CreatorCap`,
-        `${packageId}::discovery::RelayerDiscovery`,
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
@@ -159,17 +169,12 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 
     const tx = new Transaction();
 
-    const separator = tx.moveCall({
-        target: `${packageId}::bytes32::new`,
-        arguments: [tx.pure(arrayify(domainSeparator))],
-    });
-
     tx.moveCall({
         target: `${packageId}::gateway::setup`,
         arguments: [
             tx.object(creatorCap),
             tx.pure.address(operator),
-            separator,
+            tx.pure.address(domainSeparator),
             tx.pure.u64(minimumRotationDelay),
             tx.pure.u64(options.previousSigners),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
@@ -204,7 +209,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 }
 
 async function postDeployIts(published, keypair, client, config, chain, options) {
-    const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
+    const relayerDiscovery = config.sui.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
     const [itsObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::ITS`]);
     const channelId = await getItsChannelId(client, itsObjectId);
@@ -220,7 +225,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
 }
 
 async function postDeploySquid(published, keypair, client, config, chain, options) {
-    const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
+    const relayerDiscovery = config.sui.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
     const [squidObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::squid::Squid`]);
     const channelId = await getSquidChannelId(client, squidObjectId);
