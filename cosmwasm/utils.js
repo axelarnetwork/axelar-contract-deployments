@@ -146,12 +146,16 @@ const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
 
-const makeCoordinatorInstantiateMsg = ({ governanceAddress }) => {
+const makeCoordinatorInstantiateMsg = ({ governanceAddress }, { ServiceRegistry: { address: registryAddress } }) => {
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Coordinator.governanceAddress in axelar info');
     }
 
-    return { governance_address: governanceAddress };
+    if (!validateAddress(registryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    return { governance_address: governanceAddress, service_registry: registryAddress };
 };
 
 const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
@@ -485,7 +489,7 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
                 throw new Error('Coordinator does not support chainName option');
             }
 
-            return makeCoordinatorInstantiateMsg(contractConfig);
+            return makeCoordinatorInstantiateMsg(contractConfig, contracts);
         }
 
         case 'ServiceRegistry': {
