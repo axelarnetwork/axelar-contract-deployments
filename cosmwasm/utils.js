@@ -71,6 +71,7 @@ const initContractConfig = (config, { contractName, chainName }) => {
 
 const getAmplifierBaseContractConfig = (config, contractName) => {
     const contractBaseConfig = config.axelar.contracts[contractName];
+
     if (!contractBaseConfig) {
         throw new Error(`Contract ${contractName} not found in config`);
     }
@@ -86,6 +87,7 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     }
 
     const contractConfig = contractBaseConfig[chainName];
+
     if (!contractConfig) {
         throw new Error(`Contract ${contractName} (${chainName}) not found in config`);
     }
