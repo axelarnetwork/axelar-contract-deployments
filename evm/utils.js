@@ -648,6 +648,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         chains = chains.filter((chain) => !config.chains[chain].chainType || config.chains[chain].chainType === 'evm');
     } else if (options.chainNames) {
         chains = options.chainNames.split(',');
+        chains.forEach((chain) => {
+            if (config.chains[chain].chainType && config.chains[chain].chainType !== 'evm') {
+                throw new Error(`Cannot run script for a non EVM chain: ${chain}`);
+            }
+        });
     }
 
     if (chains.length === 0) {
