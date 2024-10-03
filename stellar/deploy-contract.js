@@ -4,11 +4,7 @@ const { Contract, Address, nativeToScVal, scValToNative } = require('@stellar/st
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const {
-    getNetworkPassphrase,
-    getWallet,
-    broadcast,
-} = require('./utils');
+const { getNetworkPassphrase, getWallet, broadcast } = require('./utils');
 const { addEnvOption, getDomainSeparator } = require('../common');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');

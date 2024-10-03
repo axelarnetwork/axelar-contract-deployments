@@ -1,11 +1,11 @@
 const { Command, Option } = require('commander');
-const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, Address, nativeToScVal, xdr } = require('@stellar/stellar-sdk');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, keccak256, id },
 } = ethers;
 
-const { saveConfig, loadConfig, addOptionsToCommands } = require('../common');
+const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo } = require('../common');
 const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
 
@@ -122,6 +122,35 @@ async function rotate(wallet, config, chain, contractConfig, args, options) {
     await broadcast(operation, wallet, chain, 'Rotated signers', options);
 }
 
+async function submitProof(wallet, config, chain, contractConfig, args, options) {
+    const contract = new Contract(contractConfig.address);
+    const [multisigSessionId] = args;
+    const { payload, status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
+
+    if (!status.completed) {
+        throw new Error('Multisig session not completed');
+    }
+
+    const executeData = Buffer.from(arrayify('0x' + status.completed.execute_data));
+    const [data, proof] = xdr.ScVal.fromXDR(executeData).vec();
+
+    let operation;
+
+    if (payload.verifier_set) {
+        printInfo('Submitting rotate_signers');
+
+        operation = contract.call('rotate_signers', data, proof);
+    } else if (payload.messages) {
+        printInfo('Submitting approve_messages');
+
+        operation = contract.call('approve_messages', data, proof);
+    } else {
+        throw new Error(`Unknown payload type: ${payload}`);
+    }
+
+    await broadcast(operation, wallet, chain, 'Submitted Amplifier Proof', options);
+}
+
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
     const chain = config.stellar;
@@ -161,10 +190,10 @@ if (require.main === module) {
         });
 
     program
-        .command('submitProof <multisigSessionId>')
+        .command('submit-proof <multisigSessionId>')
         .description('Submit proof for the provided amplifier multisig session id')
         .action((multisigSessionId, options) => {
-            mainProcessor(undefined, [multisigSessionId], options);
+            mainProcessor(submitProof, [multisigSessionId], options);
         });
 
     program
