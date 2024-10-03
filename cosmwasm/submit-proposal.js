@@ -15,6 +15,7 @@ const {
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
+    updateCodeId,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeStoreInstantiateProposal,
@@ -76,7 +77,8 @@ const callSubmitProposal = async (client, wallet, config, options, proposal) => 
 };
 
 const storeCode = async (client, wallet, config, options) => {
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, options);
+    const { contractName } = options;
+    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
 
     const proposal = encodeStoreCodeProposal(options);
 
@@ -115,7 +117,7 @@ const instantiate = async (client, wallet, config, options) => {
     const { contractName, instantiate2, predictOnly, chainName } = options;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
-    await updateCodeId(config, options);
+    await updateCodeId(client, config, options);
 
     if (predictOnly) {
         return predictAndUpdateAddress(client, contractConfig, options);
@@ -170,7 +172,7 @@ const paramChange = async (client, wallet, config, options) => {
 };
 
 const migrate = async (client, wallet, config, options) => {
-    await updateCodeId(config, options);
+    await updateCodeId(client, config, options);
 
     const proposal = encodeMigrateContractProposal(config, options);
 

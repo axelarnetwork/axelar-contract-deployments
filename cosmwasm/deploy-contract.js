@@ -13,6 +13,7 @@ const {
     getSalt,
     initContractConfig,
     getAmplifierContractConfig,
+    updateCodeId,
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
@@ -26,24 +27,35 @@ const upload = async (client, wallet, config, options) => {
 
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
 
-    if (!fetchCodeId && (!reuseCodeId || isNil(contractBaseConfig.lastUploadedCodeId))) {
-        printInfo('Uploading contract binary');
+    if (options.codeId) {
+        printInfo('Option codeId defined. Skipping upload.');
+        return;
+    }
 
-        const { checksum, codeId } = await uploadContract(client, wallet, config, options);
+    if (fetchCodeId) {
+        printInfo('Option fetchCodeId defined. Skipping upload.');
+        return;
+    }
 
-        printInfo('Uploaded contract binary');
-        contractBaseConfig.lastUploadedCodeId = codeId;
+    if (reuseCodeId && !isNil(contractBaseConfig.lastUploadedCodeId)) {
+        printInfo('Skipping upload. Reusing previously uploaded bytecode with codeId', contractBaseConfig.lastUploadedCodeId);
+        return;
+    }
 
-        if (instantiate2) {
-            const [account] = await wallet.getAccounts();
-            const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');
+    printInfo('Uploading contract binary');
 
-            contractConfig.address = address;
+    const { checksum, codeId } = await uploadContract(client, wallet, config, options);
 
-            printInfo('Expected contract address', address);
-        }
-    } else {
-        printInfo('Skipping upload. Reusing previously uploaded bytecode');
+    printInfo('Uploaded contract binary');
+    contractBaseConfig.lastUploadedCodeId = codeId;
+
+    if (instantiate2) {
+        const [account] = await wallet.getAccounts();
+        const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');
+
+        contractConfig.address = address;
+
+        printInfo('Expected contract address', address);
     }
 };
 
@@ -52,7 +64,7 @@ const instantiate = async (client, wallet, config, options) => {
 
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
-    await updateCodeId(config, options);
+    await updateCodeId(client, config, options);
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
     const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);

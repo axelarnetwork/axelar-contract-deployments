@@ -82,10 +82,10 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
 
     if (!chainName) {
-        return contractBaseConfig;
+        return { contractBaseConfig, contractConfig: contractBaseConfig }; // contractConfig is the same for non-chain specific contracts
     }
 
-    let contractConfig = contractBaseConfig[chainName];
+    const contractConfig = contractBaseConfig[chainName];
     if (!contractConfig) {
         throw new Error(`Contract ${contractName} (${chainName}) not found in config`);
     }
@@ -93,7 +93,7 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     return { contractBaseConfig, contractConfig };
 };
 
-const updateCodeId = async (config, options) => {
+const updateCodeId = async (client, config, options) => {
     const { fetchCodeId, codeId } = options;
 
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
@@ -101,16 +101,14 @@ const updateCodeId = async (config, options) => {
     if (codeId) {
         contractConfig.codeId = codeId;
     } else if (fetchCodeId) {
-        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
-    } else {
+        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractBaseConfig);
+    } else if (contractBaseConfig.lastUploadedCodeId) {
         contractConfig.codeId = contractBaseConfig.lastUploadedCodeId;
-    }
-
-    if (!isNumber(contractConfig.codeId)) {
+    } else {
         throw new Error('Code Id is not defined');
     }
 
-    printInfo(`Using code id ${contractConfig.codeId}`);
+    printInfo('Using code id', contractConfig.codeId);
 };
 
 const uploadContract = async (client, wallet, config, options) => {
@@ -131,7 +129,7 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
 
     const [account] = await wallet.getAccounts();
 
-    const contractConfig = config.axelar.contracts[contractName];
+    const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
         axelar: { gasPrice, gasLimit },
@@ -665,9 +663,9 @@ const getStoreInstantiateParams = (config, options, msg) => {
 };
 
 const getInstantiateContractParams = (config, options, msg) => {
-    const { contractName, admin } = options;
+    const { admin } = options;
 
-    const contractConfig = config.axelar.contracts[contractName];
+    const { contractConfig } = getAmplifierContractConfig(config, options);
 
     return {
         ...getSubmitProposalParams(options),

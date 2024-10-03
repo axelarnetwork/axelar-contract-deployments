@@ -5,7 +5,7 @@ require('dotenv').config();
 const { addEnvOption } = require('../common');
 const { governanceAddress } = require('./utils');
 
-const { Option } = require('commander');
+const { Option, InvalidArgumentError } = require('commander');
 
 const addAmplifierOptions = (program, options) => {
     addEnvOption(program);
@@ -54,7 +54,17 @@ const addAmplifierOptions = (program, options) => {
     }
 
     if (options.codeId) {
-        program.addOption(new Option('--codeId <codeId>', 'the code id of the contract previously uploaded'));
+        program.addOption(
+            new Option('--codeId <codeId>', 'the code id of the contract previously uploaded').argParser((value) => {
+                const parsedValue = parseInt(value, 10);
+
+                if (isNaN(parsedValue)) {
+                    throw new InvalidArgumentError('Not a valid number.');
+                }
+
+                return parsedValue;
+            }),
+        );
     }
 
     if (options.fetchCodeId) {
