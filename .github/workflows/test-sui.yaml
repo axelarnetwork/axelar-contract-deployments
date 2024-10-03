@@ -38,18 +38,24 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '18' # Hardcoded to ensure consistency.
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
+        shell: bash
         run: npm ci
 
-      - name: Prepare version.json file
+      - name: Get Sui Version
+        shell: bash
         run: |
-          cp node_modules/@axelar-network/axelar-cgp-sui/version.json .
+          SUI_VERSION=$(jq -r '.SUI_VERSION' "node_modules/@axelar-network/axelar-cgp-sui/version.json")
+          echo "SUI_VERSION=$SUI_VERSION" >> $GITHUB_ENV
 
       - name: Setup Sui CLI
-        uses: axelarnetwork/axelar-cgp-sui/.github/actions/install@main
+        uses: axelarnetwork/axelar-cgp-sui/.github/actions/setup-sui@main
+        with:
+          sui-version: ${{ env.SUI_VERSION }}
 
       - name: Setup Sui Wallet
         shell: bash
@@ -108,6 +114,12 @@ jobs:
         run: node sui/faucet.js
 
       ###### Command: Deploy Contract ######
+
+      - name: Deploy Utils
+        run: node sui/deploy-contract deploy Utils
+
+      - name: Deploy VersionControl
+        run: node sui/deploy-contract deploy VersionControl
 
       - name: Deploy AxelarGateway
         run: node sui/deploy-contract deploy AxelarGateway --signers wallet

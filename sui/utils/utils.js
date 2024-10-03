@@ -23,6 +23,7 @@ const {
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
 const suiCoinId = '0x2::sui::SUI';
+const moveDir = `${__dirname}/../move`;
 
 const getAmplifierSigners = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -60,17 +61,15 @@ const getBcsBytesByObjectId = async (client, objectId) => {
 };
 
 const deployPackage = async (packageName, client, keypair, options = {}) => {
-    const compileDir = `${__dirname}/../move`;
-
-    copyMovePackage(packageName, null, compileDir);
+    copyMovePackage(packageName, null, moveDir);
 
     const builder = new TxBuilder(client);
-    await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), compileDir);
+    await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), moveDir);
     const publishTxn = await builder.signAndExecute(keypair);
 
     const packageId = (publishTxn.objectChanges?.find((a) => a.type === 'published') ?? []).packageId;
 
-    updateMoveToml(packageName, packageId, compileDir);
+    updateMoveToml(packageName, packageId, moveDir);
     return { packageId, publishTxn };
 };
 
@@ -191,15 +190,22 @@ const paginateAll = async (client, paginatedFn, params, pageLimit = 100) => {
     return items;
 };
 
-const findOwnedObjectId = async (client, ownerAddress, objectType) => {
+const findOwnedObjectIdByType = async (client, ownerAddress, objectType) => {
     const ownedObjects = await client.getOwnedObjects({
         owner: ownerAddress,
+        filter: {
+            StructType: objectType,
+        },
         options: {
             showContent: true,
         },
     });
 
-    const targetObject = ownedObjects.data.find(({ data }) => data.content.type === objectType);
+    if (ownedObjects.data.length !== 1) {
+        throw new Error(`Expecting exactly one object of type ${objectType} owned by ${ownerAddress}`);
+    }
+
+    const targetObject = ownedObjects.data[0];
 
     if (!targetObject) {
         throw new Error(`No object found for type: ${objectType}`);
@@ -238,7 +244,7 @@ module.exports = {
     suiPackageAddress,
     suiClockAddress,
     checkSuiVersionMatch,
-    findOwnedObjectId,
+    findOwnedObjectIdByType,
     getBcsBytesByObjectId,
     deployPackage,
     findPublishedObject,
@@ -249,4 +255,5 @@ module.exports = {
     getSquidChannelId,
     getSigners,
     getBagContentId,
+    moveDir,
 };

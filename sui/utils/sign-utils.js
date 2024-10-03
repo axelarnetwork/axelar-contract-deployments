@@ -69,10 +69,14 @@ function getWallet(chain, options) {
     return [keypair, client];
 }
 
-async function printWalletInfo(keypair, client, chain, options) {
-    printInfo('Wallet address', keypair.toSuiAddress());
+async function printWalletInfo(wallet, client, chain, options) {
+    const owner =
+        wallet instanceof Ed25519Keypair || wallet instanceof Secp256k1Keypair || wallet instanceof Secp256r1Keypair
+            ? wallet.toSuiAddress()
+            : wallet;
+    printInfo('Wallet address', owner);
 
-    const coins = await client.getBalance({ owner: keypair.toSuiAddress() });
+    const coins = await client.getBalance({ owner });
     printInfo('Wallet balance', `${coins.totalBalance / 1e9} ${chain.tokenSymbol || coins.coinType}`);
 }
 
@@ -106,9 +110,7 @@ async function broadcast(client, keypair, tx, actionName) {
         },
     });
 
-    if (actionName) {
-        printInfo(actionName, receipt.digest);
-    }
+    printInfo(actionName || 'Tx', receipt.digest);
 
     return receipt;
 }

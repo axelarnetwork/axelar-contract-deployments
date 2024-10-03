@@ -11,7 +11,7 @@ const {
     prepareClient,
     fromHex,
     getSalt,
-    getChains,
+    getAmplifierContractConfig,
     updateContractConfig,
     fetchCodeIdFromCodeHash,
     uploadContract,
@@ -22,14 +22,11 @@ const {
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const upload = async (client, wallet, chainName, config, options) => {
-    const { reuseCodeId, contractName, fetchCodeId, instantiate2, salt, chainNames } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-    } = config;
-    const chainConfig = chainName === 'none' ? undefined : getChainConfig(config, chainName);
+const upload = async (client, wallet, config, options) => {
+    const { reuseCodeId, contractName, fetchCodeId, instantiate2, salt, chainName } = options;
+
+    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const chainConfig = getChainConfig(config, chainName);
 
     if (!fetchCodeId && (!reuseCodeId || isNil(contractConfig.codeId))) {
         printInfo('Uploading contract binary');
@@ -41,7 +38,7 @@ const upload = async (client, wallet, chainName, config, options) => {
 
         if (instantiate2) {
             const [account] = await wallet.getAccounts();
-            const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainNames), 'axelar');
+            const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');
 
             updateContractConfig(contractConfig, chainConfig, 'address', address);
 
@@ -52,14 +49,11 @@ const upload = async (client, wallet, chainName, config, options) => {
     }
 };
 
-const instantiate = async (client, wallet, chainName, config, options) => {
-    const { contractName, fetchCodeId } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-        chains: { [chainName]: chainConfig },
-    } = config;
+const instantiate = async (client, wallet, config, options) => {
+    const { contractName, fetchCodeId, chainName } = options;
+
+    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const chainConfig = getChainConfig(config, chainName);
 
     if (fetchCodeId) {
         contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
@@ -72,24 +66,20 @@ const instantiate = async (client, wallet, chainName, config, options) => {
 
     updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
 
-    printInfo(`Instantiated ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
+    printInfo(`Instantiated ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 };
 
 const main = async (options) => {
     const { env, uploadOnly, yes } = options;
     const config = loadConfig(env);
 
-    const chains = getChains(config, options);
-
     const wallet = await prepareWallet(options);
     const client = await prepareClient(config, wallet);
 
-    await upload(client, wallet, chains[0], config, options);
+    await upload(client, wallet, config, options);
 
     if (!(uploadOnly || prompt(`Proceed with deployment on axelar?`, yes))) {
-        for (const chain of chains) {
-            await instantiate(client, wallet, chain.toLowerCase(), config, options);
-        }
+        await instantiate(client, wallet, config, options);
     }
 
     saveConfig(config, env);
