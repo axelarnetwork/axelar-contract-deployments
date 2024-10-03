@@ -2495,38 +2495,7 @@
       "url": "https://soroban.nownodes.io/testnet"
     },
     "tokenSymbol": "XLM",
-    "contracts": {
-      "axelar_auth_verifier": {
-        "address": "CALCSIEVIORZ33WVJKYAXV2LLDGPCEIF2Q457M7YTR33QXHA3G6VGPEA",
-        "deployer": "GAIA45FE43FHCKPK5A2RYBDTYG3D3TT3F3KHFWGWX53TH7FIMBK6LRSJ",
-        "initializeArgs": {
-          "owner": "GAIA45FE43FHCKPK5A2RYBDTYG3D3TT3F3KHFWGWX53TH7FIMBK6LRSJ",
-          "previousSignersRetention": "15",
-          "domainSeparator": "9f4d2f8cde4b1353174635431b10ec2c2ab3d024c9ca0da568276c4b6ac167be",
-          "minimumRotationDelay": "0",
-          "initialSigners": [
-            {
-              "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
-              "signers": [
-                {
-                  "signer": "100e74a4e6ca7129eae8351c0473c1b63dce7b2ed472d8d6bf7733fca86055e5",
-                  "weight": "1"
-                }
-              ],
-              "threshold": "1"
-            }
-          ]
-        }
-      },
-      "axelar_gateway": {
-        "address": "CDGGN2R3R4GMCD757ALTIHOOX6GF4C3VC6RGO2XAWGWSA2EDUWLX4KFU",
-        "deployer": "GAIA45FE43FHCKPK5A2RYBDTYG3D3TT3F3KHFWGWX53TH7FIMBK6LRSJ",
-        "initializeArgs": {
-          "authAddress": "CALCSIEVIORZ33WVJKYAXV2LLDGPCEIF2Q457M7YTR33QXHA3G6VGPEA",
-          "owner": "GAIA45FE43FHCKPK5A2RYBDTYG3D3TT3F3KHFWGWX53TH7FIMBK6LRSJ"
-        }
-      }
-    }
+    "contracts": {}
   },
   "sui": {
     "name": "Sui",
