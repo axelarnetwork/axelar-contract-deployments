@@ -31,6 +31,17 @@ const itsAddresses = {
 async function getTokens(name) {
     const chainName = name.toLowerCase();
 
+    /*
+    if (chainName == 'filecoin') {
+        console.log('skipping: ', name);
+        return;
+    } else if (chainName == 'scroll') {
+        console.log('processing: ', name);
+    } else {
+        console.log('skipping: ', name);
+        return;
+    }*/
+
     if (!tokenManagerInfo[name]) return;
     const tokenManagers = tokenManagerInfo[name].tokenManagers;
     const chain = info.chains[name];
