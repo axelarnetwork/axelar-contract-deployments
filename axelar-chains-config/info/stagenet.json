@@ -1882,6 +1882,7 @@
         "storeCodeProposalId": "5",
         "storeCodeProposalCodeHash": "aa762ada72f295c0890c7beca089b13498b95d04f59262cea4bdf64b07d9edc7",
         "codeId": 3,
+        "lastUploadedCodeId": 3,
         "address": "axelar15454y4v8x2ennqq6k0t4cu4r0cpqsy3d6m2jw7d0p4tagaafs29qnlhljd",
         "executeProposalId": "14"
       },
@@ -1891,6 +1892,7 @@
         "storeCodeProposalId": "3",
         "storeCodeProposalCodeHash": "c89ad7b98afcafea866ff9b9064ade1dc865a0b4a257cbd0a80fae433c916eab",
         "codeId": 1,
+        "lastUploadedCodeId": 1,
         "address": "axelar1saq5hcztvd26vvkquv4dzn8e0uu967nuyxtcful3pvv7ajsw4kmq72xft9",
         "executeProposalId": "16",
         "flow": {
@@ -1905,6 +1907,7 @@
         "storeCodeProposalId": "4",
         "storeCodeProposalCodeHash": "3f0fd354823ec5d85f051a7c54bd020498a2e37866cbf480e0c107aceae1b84d",
         "codeId": 2,
+        "lastUploadedCodeId": 2,
         "address": "axelar1aqun445kcqth3aunxlvly8grgyqt4c68q0g0df99nccs72plgh0s0eptw9"
       },
       "Rewards": {
@@ -1921,6 +1924,7 @@
         "storeCodeProposalId": "6",
         "storeCodeProposalCodeHash": "0e3cd88efc3125537e3c0b3db97b9e7d8fcb51431293077a2be109b384f26ff1",
         "codeId": 4,
+        "lastUploadedCodeId": 4,
         "address": "axelar1nyhmtdrzx77ynqgu8cug0u7eqz2kzfk9mctvaa4stqpekg4s9vnsgu54at"
       },
       "Coordinator": {
@@ -1928,6 +1932,7 @@
         "storeCodeProposalId": "7",
         "storeCodeProposalCodeHash": "1c058dec7e9c294f4e7401bd9611d2e811e0cf3a41917c4dd22766ea40b95fa2",
         "codeId": 5,
+        "lastUploadedCodeId": 5,
         "address": "axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y",
         "executeProposalId": "20",
         "flow": {
@@ -1944,6 +1949,7 @@
         "storeCodeProposalId": "8",
         "storeCodeProposalCodeHash": "a01cfc3c3a6e5fb22ea5818f2de8a453e0f37b9a54380d76eb4d4ea8d8b6de94",
         "codeId": 6,
+        "lastUploadedCodeId": 6,
         "address": "axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u",
         "executeProposalId": "18",
         "flow": {
@@ -1966,6 +1972,7 @@
           "encoder": "abi",
           "keyType": "ecdsa",
           "domainSeparator": "0x09d0886d5d99ed975cfad0fc5d20195302e21081fa5aa5c9986eae988ab09bd0",
+          "codeId": 9,
           "address": "axelar1fzd0kqdewaupvngygmtltda9ru9zm590kj00sz4vxla4h6hlawtqpcfkqe"
         },
         "test-sepolia": {
@@ -1980,6 +1987,7 @@
           "encoder": "abi",
           "keyType": "ecdsa",
           "domainSeparator": "0x94c6f03682e3588a4fd0e312943191a70ae9e50b80d4b062af08f9311a78fada",
+          "codeId": 9,
           "address": "axelar14t526efvs4r6pmg3ntjve9t5k3hagswngrnaya83365w0ad9ky0s333suh"
         },
         "flow": {
@@ -1994,6 +2002,7 @@
           "encoder": "abi",
           "keyType": "ecdsa",
           "domainSeparator": "0x3dad2b901117c30d4f601c3b9e9ee89cec4371e79e9908122e8e1da1904347ee",
+          "codeId": 9,
           "address": "axelar1u8cmvyq54fepjlt77vqnwyxhf4rqn5j5axgta7py34zlwue3v5fsy2pvhf"
         },
         "hedera": {
@@ -2008,28 +2017,33 @@
           "encoder": "abi",
           "keyType": "ecdsa",
           "domainSeparator": "0xfbfcd8a4d93cdf3dc1099795eefb83c109414406fc09015f4d0758ed6b99c43c",
+          "codeId": 9,
           "address": "axelar1x3xd2z2p3703cdwu98tc27x5j9tgq60lyxdwtnggx05zj3egg0wqsnckd0"
         },
         "storeCodeProposalId": "11",
         "storeCodeProposalCodeHash": "6c4d2f520d62bcd7edd4de772257e74b48a8dfba39f853a9c12ff51ca9ea1e83",
-        "codeId": 9
+        "lastUploadedCodeId": 9
       },
       "Gateway": {
         "test-avalanche": {
+          "codeId": 8,
           "address": "axelar1m085sw92u49myttmelqaxxx04cu50wxv8ftz06cur32ct7v78wjqlzaej7"
         },
         "test-sepolia": {
+          "codeId": 8,
           "address": "axelar1rx2meeesr74reunatsdxh82yqsxzz9w6j2k38rjhkcq57gvefsrsrm2eys"
         },
         "flow": {
+          "codeId": 8,
           "address": "axelar1t6ksvsckf48j5fey7cqhsu482yemaf8tcecterc4d38rw75vfvcsz85aum"
         },
         "hedera": {
+          "codeId": 8,
           "address": "axelar1zyr567z9v779kcdmf7rq624zk3ea4nq0s948r83h2f5xqzvhxyqs5vq7p7"
         },
         "storeCodeProposalId": "10",
         "storeCodeProposalCodeHash": "eae97caf40ae6b5eea1e145eec27a59e73aa6f9de389fa9ca0cfc9354a3b68ac",
-        "codeId": 8
+        "lastUploadedCodeId": 8
       },
       "VotingVerifier": {
         "test-avalanche": {
@@ -2044,6 +2058,7 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
+          "codeId": 7,
           "address": "axelar10c8qetyyr5rart47a5luvm6lys4709u3jhyeakzd0e7nxdw0ah3stmxvd3"
         },
         "test-sepolia": {
@@ -2058,6 +2073,7 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
+          "codeId": 7,
           "address": "axelar1t3lwxcgjlauvcwsdvy4669azp9ks0q0hd2cxn95cdge63723z9ns8pdqms"
         },
         "flow": {
@@ -2072,6 +2088,7 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
+          "codeId": 7,
           "address": "axelar1adz8u3q5mdfp73weg3f65e8ce5jvq4dwlqqm3lxqyy4pjf77nwtql8gjwr"
         },
         "hedera": {
@@ -2086,11 +2103,12 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
+          "codeId": 7,
           "address": "axelar1h8gx392pzlj6ff5lv3kc9jwegu0wwqjrur7ht93frus5czape9ns3j3d0a"
         },
         "storeCodeProposalId": "9",
         "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b",
-        "codeId": 7
+        "lastUploadedCodeId": 7
       }
     },
     "id": "Axelarnet",
