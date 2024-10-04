@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 
-const { addEnvOption } = require('../common');
+const { isNumber, addEnvOption } = require('../common');
 const { governanceAddress } = require('./utils');
 
 const { Option, InvalidArgumentError } = require('commander');
@@ -58,7 +58,7 @@ const addAmplifierOptions = (program, options) => {
             new Option('--codeId <codeId>', 'the code id of the contract previously uploaded').argParser((value) => {
                 const parsedValue = parseInt(value, 10);
 
-                if (isNaN(parsedValue)) {
+                if (!isNumber(parsedValue)) {
                     throw new InvalidArgumentError('Not a valid number.');
                 }
 

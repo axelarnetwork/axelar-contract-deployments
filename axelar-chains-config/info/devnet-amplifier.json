@@ -569,7 +569,7 @@
           "codeId": 616,
           "address": "axelar1agyunp32jwynnkrf92wuvac2xa7cvgthtk5yr3wh7jypg59zjjqqsqf36s"
         },
-        "lastUploadedCodeId": 616,
+        "lastUploadedCodeId": 752,
         "eth-sepolia": {
           "codeId": 616,
           "address": "axelar18zrymnzgdmutdjhqlfsslzy4yvzw8uylysjwqlq4uk4muq3qx30qde39qz"
@@ -580,7 +580,8 @@
         },
         "flow": {
           "address": "axelar10w5sqgun0q3m0vkz29vh55ujug57m0t54cue04aesrg45rqcgf6sjv4wwh"
-        }
+        },
+        "avalanche": {}
       },
       "MultisigProver": {
         "avalanche-fuji": {
