@@ -54,7 +54,7 @@ async function execute(keypair, client, chain, args, options) {
     const discoveryObjectId = chain.contracts.RelayerDiscovery.objects.RelayerDiscovery;
 
     // Get the channel id from the options or use the channel id from the deployed Example contract object.
-    const channelId = options.channelId || exampleConfig.objects.ChannelId;
+    const channelId = options.channelId || chain.contracts.Example.objects.ChannelId;
 
     if (!channelId) {
         throw new Error('Please provide either a channel id (--channelId) or deploy the Example contract');
@@ -94,7 +94,7 @@ async function execute(keypair, client, chain, args, options) {
     // Take the approved message from the gateway contract.
     // Note: The message needed to be approved first.
     const approvedMessage = tx.moveCall({
-        target: `${axelarGatewayConfig.address}::gateway::take_approved_message`,
+        target: `${chain.contracts.AxelarGateway.address}::gateway::take_approved_message`,
         arguments: [
             tx.object(gatewayObjectId),
             tx.pure(bcs.string().serialize(sourceChain).toBytes()),
