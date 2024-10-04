@@ -119,7 +119,7 @@ async function postDeployGasService(published, keypair, client, config, chain, o
 }
 
 async function postDeployExample(published, keypair, client, config, chain, options) {
-    const relayerDiscovery = config.sui.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
+    const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
     const [singletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
     const channelId = await getSingletonChannelId(client, singletonObjectId);
@@ -209,7 +209,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 }
 
 async function postDeployIts(published, keypair, client, config, chain, options) {
-    const relayerDiscovery = config.sui.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
+    const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
     const [itsObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::ITS`]);
     const channelId = await getItsChannelId(client, itsObjectId);
@@ -225,7 +225,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
 }
 
 async function postDeploySquid(published, keypair, client, config, chain, options) {
-    const relayerDiscovery = config.sui.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
+    const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
     const [squidObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::squid::Squid`]);
     const channelId = await getSquidChannelId(client, squidObjectId);

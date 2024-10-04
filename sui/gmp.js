@@ -17,13 +17,11 @@ const {
     utils: { arrayify },
 } = ethers;
 
-async function sendCommand(keypair, client, contracts, args, options) {
+async function sendCommand(keypair, client, chain, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
     const params = options.params;
-
-    const [exampleConfig, gasServiceConfig] = contracts;
-    const gasServiceObjectId = gasServiceConfig.objects.GasService;
-    const singletonObjectId = exampleConfig.objects.Singleton;
+    const gasServiceObjectId = chain.contracts.GasService.objects.GasService;
+    const singletonObjectId = chain.contracts.Example.objects.Singleton;
 
     const unitAmount = getUnitAmount(feeAmount);
     const walletAddress = keypair.toSuiAddress();
@@ -33,7 +31,7 @@ async function sendCommand(keypair, client, contracts, args, options) {
     const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
 
     tx.moveCall({
-        target: `${exampleConfig.address}::gmp::send_call`,
+        target: `${chain.contracts.Example.address}::gmp::send_call`,
         arguments: [
             tx.object(singletonObjectId),
             tx.object(gasServiceObjectId),
@@ -49,13 +47,11 @@ async function sendCommand(keypair, client, contracts, args, options) {
     await broadcast(client, keypair, tx, 'Call Sent');
 }
 
-async function execute(keypair, client, contracts, args, options) {
-    const [exampleConfig, , axelarGatewayConfig] = contracts;
-
+async function execute(keypair, client, chain, args, options) {
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
-    const gatewayObjectId = axelarGatewayConfig.objects.Gateway;
-    const discoveryObjectId = axelarGatewayConfig.objects.RelayerDiscovery;
+    const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
+    const discoveryObjectId = chain.contracts.RelayerDiscovery.objects.RelayerDiscovery;
 
     // Get the channel id from the options or use the channel id from the deployed Example contract object.
     const channelId = options.channelId || exampleConfig.objects.ChannelId;
@@ -146,9 +142,7 @@ async function processCommand(command, chain, args, options) {
 
     await printWalletInfo(keypair, client, chain, options);
 
-    const contracts = [chain.contracts.Example, chain.contracts.GasService, chain.contracts.AxelarGateway];
-
-    await command(keypair, client, contracts, args, options);
+    await command(keypair, client, chain, args, options);
 }
 
 async function mainProcessor(command, options, args, processor) {
