@@ -9,9 +9,9 @@ const toml = require('toml');
 const RPCs = toml.parse(fs.readFileSync('./axelar-chains-config/info/rpcs.toml', 'utf-8'));
 
 // This is before the its was deployed on mainnet.
-const startTimestamp = 1702800000;
+// const startTimestamp = 1702800000;
 let eventsLength = 2000;
-let queryLimit = {
+const queryLimit = {
     ethereum: 500000,
     avalanche: 2048,
     fantom: 500000,
@@ -48,6 +48,7 @@ async function getTokenManagers(name) {
         const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
 
         const blockNumber = await provider.getBlockNumber();
+
         if (!tokenManagerInfo[name]) {
             tokenManagerInfo[name] = { start: blockNumber, end: blockNumber, tokenManagers: [] };
         }
@@ -56,8 +57,8 @@ async function getTokenManagers(name) {
         console.log('current block number: ', blockNumber);
 
         while (blockNumber > tokenManagerInfo[name].end) {
-            //let end = blockNumber > tokenManagerInfo[name].end + eventsLength ? blockNumber : tokenManagerInfo[name].end + eventsLength;
-            let end = tokenManagerInfo[name].end + eventsLength;
+            // let end = blockNumber > tokenManagerInfo[name].end + eventsLength ? blockNumber : tokenManagerInfo[name].end + eventsLength;
+            const end = tokenManagerInfo[name].end + eventsLength;
             console.log(end);
             const events = await its.queryFilter(filter, tokenManagerInfo[name].end + 1, end);
             tokenManagerInfo[name].tokenManagers = tokenManagerInfo[name].tokenManagers.concat(events.map((event) => event.args));
@@ -69,6 +70,7 @@ async function getTokenManagers(name) {
         console.log(e);
     }
 }
+
 (async () => {
     for (const name of Object.keys(info.chains)) {
         // add an await to run in sequence, which is slower.

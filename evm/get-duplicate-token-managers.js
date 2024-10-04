@@ -8,7 +8,7 @@ const fs = require('fs');
 const toml = require('toml');
 
 const RPCs = toml.parse(fs.readFileSync('./axelar-chains-config/info/rpcs.toml', 'utf-8'));
-let ITS_Address = {
+const itsAddresses = {
     ethereum: '0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C',
     avalanche: '0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C',
     fantom: '0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C',
@@ -29,16 +29,7 @@ let ITS_Address = {
 };
 
 async function getTokens(name) {
-    let chainName = name.toLowerCase();
-    if (chainName == 'filecoin') {
-        console.log('skipping: ', name);
-        return;
-    } else if (chainName == 'scroll') {
-        console.log('processing: ', name);
-    } else {
-        console.log('skipping: ', name);
-        return;
-    }
+    const chainName = name.toLowerCase();
 
     if (!tokenManagerInfo[name]) return;
     const tokenManagers = tokenManagerInfo[name].tokenManagers;
@@ -47,37 +38,39 @@ async function getTokens(name) {
 
     const rpc = RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === chainName).rpc_addr;
     const provider = getDefaultProvider(rpc);
-    const service = new Contract(ITS_Address[chainName], IInterchainTokenService.abi, provider);
+    const service = new Contract(itsAddresses[chainName], IInterchainTokenService.abi, provider);
 
     let counter = 0;
     let index = 1;
-    let final_result = [];
+    const finalResult = [];
+
     for (const tokenData of tokenManagers) {
         // event TokenManagerDeployed(tokenId, tokenManager_, tokenManagerType, params);
-        let tokenId = tokenData[0];
-        let tokenManagerAddress = tokenData[1];
-        let tokenManagerType = tokenData[2];
-        let interchainTokenAddress = await service.interchainTokenAddress(tokenId);
+        const tokenId = tokenData[0];
+        const tokenManagerAddress = tokenData[1];
+        const tokenManagerType = tokenData[2];
+        const interchainTokenAddress = await service.interchainTokenAddress(tokenId);
 
         console.log('Processing (%s/%s), tokenId: %s', index, tokenManagers.length, tokenId);
         const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, provider);
         tokenData.tokenAddress = await tokenManager.tokenAddress();
 
-        if (interchainTokenAddress != tokenData.tokenAddress && tokenManagerType == 0) {
-            let result = {};
-            result['tokenId'] = tokenId;
-            result['tokenManager_tokenAddress'] = tokenData.tokenAddress;
-            result['interchainTokenAddress'] = interchainTokenAddress;
-            result['tokenManagerType'] = tokenManagerType;
+        if (interchainTokenAddress !== tokenData.tokenAddress && tokenManagerType === 0) {
+            const result = {};
+            result.tokenId = tokenId;
+            result.tokenManager_tokenAddress = tokenData.tokenAddress;
+            result.interchainTokenAddress = interchainTokenAddress;
+            result.tokenManagerType = tokenManagerType;
 
             console.log(result);
-            final_result.push(result);
+            finalResult.push(result);
             counter++;
         }
+
         index++;
     }
 
-    fs.writeFileSync(`result_${chainName}.json`, JSON.stringify(final_result, null, 2));
+    fs.writeFileSync(`result_${chainName}.json`, JSON.stringify(finalResult, null, 2));
     console.log('Chain: %s, Diff Address: %s out of %s', chainName, counter, tokenManagers.length);
 
     /*
@@ -105,6 +98,7 @@ async function getTokens(name) {
 (async () => {
     for (const name of Object.keys(info.chains)) {
         console.log(name);
+
         try {
             await getTokens(name);
         } catch (e) {
