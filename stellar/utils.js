@@ -8,6 +8,7 @@ const {
     Networks,
     BASE_FEE,
     xdr: { DiagnosticEvent, SorobanTransactionData },
+    Address,
 } = require('@stellar/stellar-sdk');
 const { printInfo, sleep, addEnvOption } = require('../common');
 const { Option } = require('commander');
@@ -224,18 +225,41 @@ const getAmplifierVerifiers = async (config, chainAxelarId) => {
 
     const weightedSigners = signers
         .map((signer) => ({
-            signer: arrayify(`0x${signer.pub_key.ed25519}`),
+            signer: Address.account(Buffer.from(arrayify(`0x${signer.pub_key.ed25519}`))).toString(),
             weight: Number(signer.weight),
         }))
-        .sort((a, b) => hexlify(a.signer).localeCompare(hexlify(b.signer)));
+        .sort((a, b) => a.signer.localeCompare(b.signer));
 
     return {
         signers: weightedSigners,
         threshold: Number(verifierSet.threshold),
-        nonce: ethers.utils.hexZeroPad(BigNumber.from(verifierSet.created_at).toHexString(), 32),
+        nonce: arrayify(ethers.utils.hexZeroPad(BigNumber.from(verifierSet.created_at).toHexString(), 32)),
         verifierSetId,
     };
 };
+
+function serializeValue(value) {
+    if (value instanceof Uint8Array) {
+        return Buffer.from(value).toString('base64');
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(serializeValue);
+    }
+
+    if (typeof value === 'bigint') {
+        return value.toString();
+    }
+
+    if (typeof value === 'object') {
+        return Object.entries(value).reduce((acc, [key, val]) => {
+            acc[key] = serializeValue(val);
+            return acc;
+        }, {});
+    }
+
+    return value;
+}
 
 module.exports = {
     buildTransaction,
@@ -247,4 +271,5 @@ module.exports = {
     getNetworkPassphrase,
     addBaseOptions,
     getAmplifierVerifiers,
+    serializeValue,
 };

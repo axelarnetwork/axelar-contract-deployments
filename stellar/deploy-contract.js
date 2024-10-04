@@ -4,7 +4,7 @@ const { Contract, Address, nativeToScVal, scValToNative } = require('@stellar/st
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getNetworkPassphrase, getWallet, broadcast } = require('./utils');
+const { getNetworkPassphrase, getWallet, broadcast, serializeValue } = require('./utils');
 const { addEnvOption, getDomainSeparator } = require('../common');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
@@ -74,29 +74,6 @@ async function postDeployGateway(chain, wallet, options) {
 const postDeployFunctions = {
     axelar_gateway: postDeployGateway,
 };
-
-function serializeValue(value) {
-    if (value instanceof Uint8Array) {
-        return Buffer.from(value).toString('hex');
-    }
-
-    if (Array.isArray(value)) {
-        return value.map(serializeValue);
-    }
-
-    if (typeof value === 'bigint') {
-        return value.toString();
-    }
-
-    if (typeof value === 'object') {
-        return Object.entries(value).reduce((acc, [key, val]) => {
-            acc[key] = serializeValue(val);
-            return acc;
-        }, {});
-    }
-
-    return value;
-}
 
 async function processCommand(options, config, chain) {
     const { wasmPath, contractName } = options;

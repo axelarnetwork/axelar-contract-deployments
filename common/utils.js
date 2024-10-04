@@ -13,6 +13,7 @@ const {
     utils: { keccak256, hexlify, defaultAbiCoder },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
+const { type } = require('os');
 
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
@@ -30,6 +31,10 @@ const writeJSON = (data, name) => {
 };
 
 const printInfo = (msg, info = '', colour = chalk.green) => {
+    if (typeof info === 'object') {
+        info = JSON.stringify(info, null, 2);
+    }
+
     if (info) {
         console.log(`${msg}: ${colour(info)}\n`);
     } else {

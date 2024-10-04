@@ -1,12 +1,12 @@
 const { Command, Option } = require('commander');
-const { Contract, Address, nativeToScVal, xdr } = require('@stellar/stellar-sdk');
+const { Contract, Address, nativeToScVal, xdr, scValToNative } = require('@stellar/stellar-sdk');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, keccak256, id },
 } = ethers;
 
-const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo } = require('../common');
-const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers } = require('./utils');
+const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, prompt } = require('../common');
+const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers, serializeValue } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
 
 const getNewSigners = async (wallet, config, chain, options) => {
