@@ -10,49 +10,67 @@ const RPCs = toml.parse(fs.readFileSync('./axelar-chains-config/info/rpcs.toml',
 
 // This is before the its was deployed on mainnet.
 const startTimestamp = 1702800000;
-const eventsLength = 2000;
+let eventsLength = 2000;
+let queryLimit = {
+    ethereum: 500000,
+    avalanche: 2048,
+    fantom: 500000,
+    polygon: 500000,
+    moonbeam: 2000,
+    binance: 10000,
+    arbitrum: 500000,
+    celo: 2000,
+    kava: 10000,
+    filecoin: 0,
+    optimism: 10000,
+    linea: 500000,
+    base: 10000,
+    mantle: 10000,
+    blast: 10000,
+    fraxtal: 50000,
+    scroll: 500000,
+};
 
 async function getTokenManagers(name) {
     try {
         const chain = info.chains[name];
-        if(chain.contracts.InterchainTokenService.skip) return;
+        if (chain.contracts.InterchainTokenService.skip) return;
+
+        // if (name != 'mantle') { return; }
+
+        eventsLength = queryLimit[name.toLowerCase()];
+        console.log('processing... ', name);
+        console.log(name, eventsLength);
 
         const rpc = RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === name.toLowerCase()).rpc_addr;
         const provider = getDefaultProvider(rpc);
 
-        const  its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
-        
+        const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
+
         const blockNumber = await provider.getBlockNumber();
-        if(!tokenManagerInfo[name]) {
-            tokenManagerInfo[name] = {start: blockNumber, end: blockNumber, tokenManagers: []};
+        if (!tokenManagerInfo[name]) {
+            tokenManagerInfo[name] = { start: blockNumber, end: blockNumber, tokenManagers: [] };
         }
 
         const filter = its.filters.TokenManagerDeployed();
-        while(blockNumber > tokenManagerInfo[name].end) {
-            let end = blockNumber > tokenManagerInfo[name].end + eventsLength ? blockNumber : tokenManagerInfo[name].end + eventsLength;
+        console.log('current block number: ', blockNumber);
+
+        while (blockNumber > tokenManagerInfo[name].end) {
+            //let end = blockNumber > tokenManagerInfo[name].end + eventsLength ? blockNumber : tokenManagerInfo[name].end + eventsLength;
+            let end = tokenManagerInfo[name].end + eventsLength;
+            console.log(end);
             const events = await its.queryFilter(filter, tokenManagerInfo[name].end + 1, end);
-            tokenManagerInfo[name].tokenManagers = tokenManagerInfo[name].tokenManagers.concat(events.map(event => event.args));
+            tokenManagerInfo[name].tokenManagers = tokenManagerInfo[name].tokenManagers.concat(events.map((event) => event.args));
             tokenManagerInfo[name].end = end;
             fs.writeFileSync('./axelar-chains-config/info/tokenManagers.json', JSON.stringify(tokenManagerInfo, null, 2));
-        }
-
-        while(true) {
-            const block = await provider.getBlock(tokenManagerInfo[name].start);
-            console.log(name, block.timestamp);
-            if(block.timestamp < startTimestamp || tokenManagerInfo[name].start < 0) break;
-            const events = await its.queryFilter(filter, tokenManagerInfo[name].start - eventsLength, tokenManagerInfo[name].start-1);
-
-            tokenManagerInfo[name].tokenManagers = tokens[name].tokenManagers.concat(events.map(event => event.args));
-            tokenManagerInfo[name].start -= eventsLength;
-            fs.writeFileSync('./axelar-chains-config/info/tokenManagers.json', JSON.stringify(tokenManagerInfo, null, 2))
         }
     } catch (e) {
         console.log(name);
         console.log(e);
     }
 }
-(async() => {   
-    for(const name of Object.keys(info.chains)) {
+(async () => {
+    for (const name of Object.keys(info.chains)) {
         // add an await to run in sequence, which is slower.
         getTokenManagers(name);
     }
