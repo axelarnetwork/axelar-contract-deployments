@@ -10,7 +10,7 @@ function weightedSignersToScVal(signers) {
                 signer: Address.fromString(signer).toBuffer(),
                 weight,
             })),
-            threshold: 1,
+            threshold: signers.threshold,
         },
         {
             type: {

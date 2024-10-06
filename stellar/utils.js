@@ -240,7 +240,7 @@ const getAmplifierVerifiers = async (config, chainAxelarId) => {
 
 function serializeValue(value) {
     if (value instanceof Uint8Array) {
-        return Buffer.from(value).toString('base64');
+        return Buffer.from(value).toString('hex');
     }
 
     if (Array.isArray(value)) {
