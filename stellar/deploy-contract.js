@@ -4,8 +4,8 @@ const { Contract, Address, nativeToScVal, scValToNative } = require('@stellar/st
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getNetworkPassphrase, getWallet, broadcast, serializeValue } = require('./utils');
-const { addEnvOption, getDomainSeparator } = require('../common');
+const { getNetworkPassphrase, getWallet, broadcast, serializeValue, addBaseOptions } = require('./utils');
+const { addEnvOption, getDomainSeparator, getChainConfig } = require('../common');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
 const {
@@ -128,7 +128,7 @@ async function processCommand(options, config, chain) {
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    await processor(options, config, config.stellar);
+    await processor(options, config, getChainConfig(config, options.chainName));
     saveConfig(config, options.env);
 }
 
@@ -136,13 +136,11 @@ function main() {
     const program = new Command();
     program.name('deploy-contract').description('Deploy Axelar Soroban contracts on Stellar');
 
-    addEnvOption(program);
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').env('PRIVATE_KEY'));
-    program.addOption(new Option('-v, --verbose', 'verbose output').default(false));
+    addBaseOptions(program, { address: true });
+
     program.addOption(new Option('--initialize', 'initialize the contract'));
     program.addOption(new Option('--contractName <contractName>', 'contract name to deploy').makeOptionMandatory(true));
     program.addOption(new Option('--wasmPath <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
-    program.addOption(new Option('--address <address>', 'existing instance to initialize'));
     program.addOption(new Option('--estimateCost', 'estimate on-chain resources').default(false));
     program.addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'));
     program.addOption(

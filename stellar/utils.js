@@ -37,7 +37,8 @@ function getNetworkPassphrase(networkType) {
 const addBaseOptions = (program, options = {}) => {
     addEnvOption(program);
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    // program.addOption(new Option('--estimateCost', 'estimate on-chain resources').default(false));
+    program.addOption(new Option('--chainName <chainName>', 'chain name for stellar in amplifier').default('stellar').env('CHAIN'));
+    program.addOption(new Option('-v, --verbose', 'verbose output').default(false));
 
     if (!options.ignorePrivateKey) {
         program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));

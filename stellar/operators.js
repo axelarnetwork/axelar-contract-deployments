@@ -1,8 +1,8 @@
 const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
-const { getWallet, broadcast } = require('./utils');
+const { getWallet, broadcast, addBaseOptions } = require('./utils');
 const { loadConfig, printInfo, parseArgs, validateParameters } = require('../evm/utils');
-const { addEnvOption } = require('../common');
+const { getChainConfig } = require('../common');
 require('./cli-utils');
 
 async function processCommand(options, _, chain) {
@@ -108,23 +108,20 @@ if (require.main === module) {
 
     program.name('operators').description('Operators contract management');
 
-    addEnvOption(program);
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-    program.addOption(new Option('-v, --verbose', 'verbose output').default(false));
+    addBaseOptions(program, { address: true });
     program.addOption(
         new Option('--action <action>', 'operator contract action')
             .choices(['is_operator', 'add_operator', 'remove_operator', 'refund', 'execute'])
             .makeOptionMandatory(true),
     );
     program.addOption(new Option('--estimateCost', 'estimate on-chain resources').default(false));
-    program.addOption(new Option('--address <address>', 'operators contract address'));
     program.addOption(new Option('--args <args>', 'arguments for the contract call'));
     program.addOption(new Option('--target <target>', 'target contract for the execute call'));
     program.addOption(new Option('--method <method>', 'target method for the execute call'));
 
     program.action((options) => {
         const config = loadConfig(options.env);
-        processCommand(options, config, config.stellar);
+        processCommand(options, config, getChainConfig(config, options.chainName));
     });
 
     program.parse();

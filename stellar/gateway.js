@@ -5,7 +5,7 @@ const {
     utils: { arrayify, keccak256, id },
 } = ethers;
 
-const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, prompt } = require('../common');
+const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, prompt, getChainConfig } = require('../common');
 const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers, serializeValue } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
 
@@ -153,7 +153,7 @@ async function submitProof(wallet, config, chain, contractConfig, args, options)
 
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
-    const chain = config.stellar;
+    const chain = getChainConfig(config, options.chainName);
 
     const wallet = await getWallet(chain, options);
 
