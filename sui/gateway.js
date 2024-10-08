@@ -141,35 +141,6 @@ async function callContract(keypair, client, config, chain, contractConfig, args
     await broadcast(client, keypair, tx, 'Message sent');
 }
 
-async function approveMessages(keypair, client, config, chain, contractConfig, args, options) {
-    const packageId = contractConfig.address;
-    const [multisigSessionId] = args;
-    const { payload, status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
-
-    if (!payload.messages) {
-        throw new Error('No messages to approve');
-    }
-
-    if (!status.completed) {
-        throw new Error('Multisig session not completed');
-    }
-
-    const executeData = bcsStructs.gateway.ExecuteData.parse(arrayify('0x' + status.completed.execute_data));
-
-    const tx = new Transaction();
-
-    tx.moveCall({
-        target: `${packageId}::gateway::approve_messages`,
-        arguments: [
-            tx.object(contractConfig.objects.Gateway),
-            tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.payload)).toBytes()),
-            tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.proof)).toBytes()),
-        ],
-    });
-
-    await broadcast(client, keypair, tx, 'Approved Messages');
-}
-
 async function approve(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
     const [sourceChain, messageId, sourceAddress, destinationId, payloadHash] = args;
@@ -311,13 +282,6 @@ if (require.main === module) {
         .addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'))
         .action((sourceChain, messageId, sourceAddress, destinationId, payloadHash, options) => {
             mainProcessor(approve, [sourceChain, messageId, sourceAddress, destinationId, payloadHash], options);
-        });
-
-    program
-        .command('approveMessages <multisigSessionId>')
-        .description('Approve messages at the gateway contract from amplifier proof')
-        .action((multisigSessionId, options) => {
-            mainProcessor(approveMessages, [multisigSessionId], options);
         });
 
     program
