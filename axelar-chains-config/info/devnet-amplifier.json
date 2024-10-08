@@ -389,10 +389,10 @@
     "tokenSymbol": "XLM",
     "contracts": {
       "axelar_auth_verifier": {
-        "address": "CANMVGKWNCOKSS55B5RYDHCE6PSMH2RAK4XVQQJXGH7XKAOCNB7BFIQO",
-        "deployer": "GAIA45FE43FHCKPK5A2RYBDTYG3D3TT3F3KHFWGWX53TH7FIMBK6LRSJ",
+        "address": "CB6CUT7WKACYHDUTQ6WDVE2RNBEFTKD644HDNV7IDE7AVLVJQQZOMJ3F",
+        "deployer": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
         "initializeArgs": {
-          "owner": "GAIA45FE43FHCKPK5A2RYBDTYG3D3TT3F3KHFWGWX53TH7FIMBK6LRSJ",
+          "owner": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
           "previousSignersRetention": "15",
           "domainSeparator": "6edeaa190b323389a7ff6dc04abca058c9633d07b2579e20f82d2a0082d8c0d3",
           "minimumRotationDelay": "0",
@@ -401,7 +401,7 @@
               "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
               "signers": [
                 {
-                  "signer": "100e74a4e6ca7129eae8351c0473c1b63dce7b2ed472d8d6bf7733fca86055e5",
+                  "signer": "168983122cd64add01997a5ad115fbcb52fea5ed659a9702b83efbcb3a5e598e",
                   "weight": "1"
                 }
               ],
@@ -411,11 +411,11 @@
         }
       },
       "axelar_gateway": {
-        "address": "CBGJKKE4PWB5KHP6MUMFZZRT6IZCMBSBZKMKKTCPOOW6BBSV3FRH3YWP",
-        "deployer": "GAIA45FE43FHCKPK5A2RYBDTYG3D3TT3F3KHFWGWX53TH7FIMBK6LRSJ",
+        "address": "CA5XTIRON5WOKSX6KCM35KWPYZN752EJVQV3TLSDWOWGRAZDOVQAJSQO",
+        "deployer": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
         "initializeArgs": {
-          "authAddress": "CANMVGKWNCOKSS55B5RYDHCE6PSMH2RAK4XVQQJXGH7XKAOCNB7BFIQO",
-          "owner": "GAIA45FE43FHCKPK5A2RYBDTYG3D3TT3F3KHFWGWX53TH7FIMBK6LRSJ"
+          "authAddress": "CB6CUT7WKACYHDUTQ6WDVE2RNBEFTKD644HDNV7IDE7AVLVJQQZOMJ3F",
+          "owner": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG"
         }
       }
     }
@@ -478,7 +478,7 @@
           "addressFormat": "eip55",
           "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj"
         },
-        "codeId": 626,
+        "codeId": 763,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -510,7 +510,7 @@
         "stellar-test": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
-          "sourceGatewayAddress": "CBGJKKE4PWB5KHP6MUMFZZRT6IZCMBSBZKMKKTCPOOW6BBSV3FRH3YWP",
+          "sourceGatewayAddress": "CA5XTIRON5WOKSX6KCM35KWPYZN752EJVQV3TLSDWOWGRAZDOVQAJSQO",
           "votingThreshold": [
             "6",
             "10"
@@ -518,19 +518,23 @@
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "stellar"
+          "addressFormat": "stellar",
+          "address": "axelar1huyudq29jvepa04y7kaq6rwmx6d932wmdrvvdjathmkxc5wkpqqqz0c2h6"
         }
       },
       "Gateway": {
         "avalanche-fuji": {
           "address": "axelar1agyunp32jwynnkrf92wuvac2xa7cvgthtk5yr3wh7jypg59zjjqqsqf36s"
         },
-        "codeId": 616,
+        "codeId": 764,
         "eth-sepolia": {
           "address": "axelar18zrymnzgdmutdjhqlfsslzy4yvzw8uylysjwqlq4uk4muq3qx30qde39qz"
         },
         "optimism-sepolia": {
           "address": "axelar16wd6350f575t5cts9sduqmt7nsw9kc822ltf6dcn46rvejmmg8cqrq4ara"
+        },
+        "stellar-test": {
+          "address": "axelar1vu96skmp99c3sxe85rah727e2ap92lsr4fk6zu7y7q3wjluwhmgs84ruhe"
         }
       },
       "MultisigProver": {
@@ -549,7 +553,7 @@
           "domainSeparator": "0xfa2912a57d663fcffbcb3d4c56334eb8babe48008b4b7458f4332e0828a12f40",
           "address": "axelar1p22kz5jr7a9ruu8ypg40smual0uagl64dwvz5xt042vu8fa7l7dsl3wx8q"
         },
-        "codeId": 618,
+        "codeId": 765,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -579,6 +583,20 @@
           "keyType": "ecdsa",
           "domainSeparator": "0xf865bf16595139bf568a034d575ffdbdd524dd2dbf8cce1de2ddaf7b964bf8e6",
           "address": "axelar1p0yyfy7f70zdc0ludh6kffjzs8mvun5prdf7nh7s2cgq74g67nmsjcw7t4"
+        },
+        "stellar-test": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "stellar_xdr",
+          "keyType": "ed25519",
+          "address": "axelar1njlpnavy7z942vylfhe7l8chz0dsd0xcupzywp03xe2p7t4n746qga80lw",
+          "domainSeparator": "0x6edeaa190b323389a7ff6dc04abca058c9633d07b2579e20f82d2a0082d8c0d3"
         }
       }
     },
