@@ -92,14 +92,33 @@ soroban contract invoke --network testnet --id [contract-address] --source-accou
 
 ### Gateway
 
+To get help on the gateway commands, run:
+`node stellar/gateway.js --help`
+
 #### Call contract
 
-`node stellar/gateway.js call-contract ethereum 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234`
+```bash
+node stellar/gateway.js call-contract [destination_chain] [dstination_address] [payload]
+
+# Example
+node stellar/gateway.js call-contract ethereum 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
+```
+
+### Submit multisig prover proof
+
+Submit a proof constructed on Amplifier to the Stellar gateway contract.
+
+```bash
+node stellar/gateway.js submit-proof [multisig-session-id]
+```
 
 #### Approve messages
 
-A message approval can be submitted to the gateway contract. Replace `wallet` with another Stellar address if needed.
-`node stellar/gateway.js approve ethereum id 0x1234 wallet 0x5678`
+A message approval can be submitted to the gateway contract. Setting `[destination address]` to `wallet` will use the wallet address as the destination.
+
+```bash
+node stellar/gateway.js approve [source-chain] [message-id] [source-address] [destination-address] [payload]
+```
 
 #### Rotate signers
 
