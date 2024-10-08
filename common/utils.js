@@ -369,7 +369,11 @@ const getAmplifierContractOnchainConfig = async (config, chain) => {
 async function getDomainSeparator(config, chain, options) {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
-        return options.domainSeparator || ethers.constants.HashZero;
+        if (options.domainSeparator && options.domainSeparator !== 'offline') {
+            return options.domainSeparator;
+        }
+
+        return ethers.constants.HashZero;
     }
 
     if (isKeccak256Hash(options.domainSeparator)) {
