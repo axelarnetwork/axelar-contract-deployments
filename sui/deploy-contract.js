@@ -336,7 +336,7 @@ const GATEWAY_CMD_OPTIONS = [
     new Option(
         '--domainSeparator <domainSeparator>',
         'domain separator (pass in the keccak256 hash value OR "offline" meaning that its computed locally)',
-    ),
+    ).default('offline'),
     new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'),
     new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'),
 ];

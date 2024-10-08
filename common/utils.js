@@ -13,7 +13,6 @@ const {
     utils: { keccak256, hexlify, defaultAbiCoder },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
-const { type } = require('os');
 
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);

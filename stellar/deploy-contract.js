@@ -5,7 +5,7 @@ const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const { getNetworkPassphrase, getWallet, broadcast, serializeValue, addBaseOptions } = require('./utils');
-const { addEnvOption, getDomainSeparator, getChainConfig } = require('../common');
+const { getDomainSeparator, getChainConfig } = require('../common');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
 const {

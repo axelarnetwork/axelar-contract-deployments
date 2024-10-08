@@ -1,4 +1,4 @@
-const { Command, Option } = require('commander');
+const { Command } = require('commander');
 const { getWallet, addBaseOptions } = require('./utils');
 const { loadConfig } = require('../evm/utils');
 const { getChainConfig } = require('../common');

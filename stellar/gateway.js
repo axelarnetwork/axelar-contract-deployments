@@ -1,12 +1,12 @@
 const { Command, Option } = require('commander');
-const { Contract, Address, nativeToScVal, xdr, scValToNative } = require('@stellar/stellar-sdk');
+const { Contract, Address, nativeToScVal, xdr } = require('@stellar/stellar-sdk');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, keccak256, id },
 } = ethers;
 
-const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, prompt, getChainConfig } = require('../common');
-const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers, serializeValue } = require('./utils');
+const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, getChainConfig } = require('../common');
+const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
 
 const getNewSigners = async (wallet, config, chain, options) => {
@@ -109,6 +109,16 @@ async function approve(wallet, _, chain, contractConfig, args, options) {
     await broadcast(operation, wallet, chain, 'Messages Approved', options);
 }
 
+async function validateMessage(wallet, _, chain, contractConfig, args, options) {
+    const contract = new Contract(contractConfig.address);
+    const [sourceChain, messageId, sourceAddress, payload] = args;
+    const caller = Address.fromString(wallet.publicKey());
+
+    const operation = contract.call('validate_message', caller, messageId, sourceChain, sourceAddress, Buffer.from(keccak256(payload), 'hex'));
+
+    await broadcast(operation, wallet, chain, 'Message validated', options);
+}
+
 async function rotate(wallet, config, chain, contractConfig, args, options) {
     const contract = new Contract(contractConfig.address);
 
@@ -187,6 +197,13 @@ if (require.main === module) {
         .addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'))
         .action((sourceChain, messageId, sourceAddress, destinationAddress, payload, options) => {
             mainProcessor(approve, [sourceChain, messageId, sourceAddress, destinationAddress, payload], options);
+        });
+
+    program
+        .command('validateMessage <sourceChain> <messageId> <sourceAddress> <payload>')
+        .description('Validate an approved message at the gateway contract. The signer will be treated as the destination address')
+        .action((sourceChain, messageId, sourceAddress, payload, options) => {
+            mainProcessor(validateMessage, [sourceChain, messageId, sourceAddress, payload], options);
         });
 
     program
