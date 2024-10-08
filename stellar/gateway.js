@@ -84,7 +84,7 @@ async function callContract(wallet, _, chain, contractConfig, args, options) {
         nativeToScVal(Buffer.from(arrayify(payload)), { type: 'bytes' }),
     );
 
-    await broadcast(operation, wallet, chain, 'Contract called', options);
+    await broadcast(operation, wallet, chain, 'Contract Called', options);
 }
 
 async function approve(wallet, _, chain, contractConfig, args, options) {
@@ -106,7 +106,7 @@ async function approve(wallet, _, chain, contractConfig, args, options) {
 
     const operation = contract.call('approve_messages', messages, proof);
 
-    await broadcast(operation, wallet, chain, 'Approved Messages', options);
+    await broadcast(operation, wallet, chain, 'Messages Approved', options);
 }
 
 async function rotate(wallet, config, chain, contractConfig, args, options) {
@@ -119,7 +119,7 @@ async function rotate(wallet, config, chain, contractConfig, args, options) {
 
     const operation = contract.call('rotate_signers', newSigners, proof);
 
-    await broadcast(operation, wallet, chain, 'Rotated signers', options);
+    await broadcast(operation, wallet, chain, 'Signers Rotated', options);
 }
 
 async function submitProof(wallet, config, chain, contractConfig, args, options) {
@@ -148,7 +148,7 @@ async function submitProof(wallet, config, chain, contractConfig, args, options)
         throw new Error(`Unknown payload type: ${payload}`);
     }
 
-    await broadcast(operation, wallet, chain, 'Submitted Amplifier Proof', options);
+    await broadcast(operation, wallet, chain, 'Amplifier Proof Submitted', options);
 }
 
 async function mainProcessor(processor, args, options) {
