@@ -457,8 +457,8 @@
     "horizonRpc": "https://horizon-testnet.stellar.org",
     "networkType": "testnet",
     "explorer": {
-      "name": "Soroban Nownodes",
-      "url": "https://soroban.nownodes.io/testnet"
+      "name": "Stellar Expert",
+      "url": "https://stellar.expert/explorer/testnet"
     },
     "tokenSymbol": "XLM",
     "contracts": {

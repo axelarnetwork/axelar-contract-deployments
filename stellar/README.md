@@ -114,10 +114,18 @@ node stellar/gateway.js submit-proof [multisig-session-id]
 
 #### Approve messages
 
-A message approval can be submitted to the gateway contract. Setting `[destination address]` to `wallet` will use the wallet address as the destination.
+A message approval can be submitted to the gateway contract for a test deployment where the wallet is the signer on the gateway. Setting `[destination address]` to `wallet` will use the wallet address as the destination.
 
 ```bash
 node stellar/gateway.js approve [source-chain] [message-id] [source-address] [destination-address] [payload]
+```
+
+#### Validate messages
+
+An approved message can be validated by the gateway contract for a test deployment as follows:
+
+```bash
+node stellar/gateway.js validate-message [source-chain] [message-id] [source-address] [payload]
 ```
 
 #### Rotate signers

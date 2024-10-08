@@ -93,7 +93,7 @@ async function sendTransaction(tx, server, action, options = {}) {
     // wait, polling `getTransaction` until the transaction completes.
     try {
         const sendResponse = await server.sendTransaction(tx);
-        printInfo(`${action}`, '0x' + sendResponse.hash);
+        printInfo(`${action} Tx`, sendResponse.hash);
 
         if (options.verbose) {
             printInfo('Transaction broadcast response', JSON.stringify(sendResponse));

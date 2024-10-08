@@ -113,8 +113,9 @@ async function validateMessage(wallet, _, chain, contractConfig, args, options) 
     const contract = new Contract(contractConfig.address);
     const [sourceChain, messageId, sourceAddress, payload] = args;
     const caller = Address.fromString(wallet.publicKey());
+    const callArgs = [caller, messageId, sourceChain, sourceAddress, Buffer.from(arrayify(keccak256(payload)))].map(nativeToScVal);
 
-    const operation = contract.call('validate_message', caller, messageId, sourceChain, sourceAddress, Buffer.from(keccak256(payload), 'hex'));
+    const operation = contract.call('validate_message', ...callArgs);
 
     await broadcast(operation, wallet, chain, 'Message validated', options);
 }
@@ -200,7 +201,7 @@ if (require.main === module) {
         });
 
     program
-        .command('validateMessage <sourceChain> <messageId> <sourceAddress> <payload>')
+        .command('validate-message <sourceChain> <messageId> <sourceAddress> <payload>')
         .description('Validate an approved message at the gateway contract. The signer will be treated as the destination address')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
             mainProcessor(validateMessage, [sourceChain, messageId, sourceAddress, payload], options);
