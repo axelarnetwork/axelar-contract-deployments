@@ -15,7 +15,7 @@ const { Option } = require('commander');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexlify },
+    utils: { arrayify },
     BigNumber,
 } = ethers;
 
