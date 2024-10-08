@@ -30,6 +30,10 @@ const writeJSON = (data, name) => {
 };
 
 const printInfo = (msg, info = '', colour = chalk.green) => {
+    if (typeof info === 'object') {
+        info = JSON.stringify(info, null, 2);
+    }
+
     if (info) {
         console.log(`${msg}: ${colour(info)}\n`);
     } else {
@@ -365,7 +369,11 @@ const getAmplifierContractOnchainConfig = async (config, chain) => {
 async function getDomainSeparator(config, chain, options) {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
-        return options.domainSeparator || ethers.constants.HashZero;
+        if (options.domainSeparator && options.domainSeparator !== 'offline') {
+            return options.domainSeparator;
+        }
+
+        return ethers.constants.HashZero;
     }
 
     if (isKeccak256Hash(options.domainSeparator)) {
