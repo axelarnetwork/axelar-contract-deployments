@@ -2542,7 +2542,75 @@
         },
         "storeCodeProposalId": "231",
         "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b"
+      },
+        "altcoinchain": {
+   "name": "Altcoinchain",
+   "id": "Altcoinchain",
+   "axelarId": "Altcoinchain",
+   "chainId": 2330,
+   "rpc": "<Altcoinchain_RPC_Endpoint>",
+   "tokenSymbol": "ALT",
+   "chainType": "evm",
+   "contracts": {
+      "AxelarGateway": {
+         "address": "0x11bB8d90D10736D6672396ED988f53aba1C8bB2d",
+         "deployer": "0x331177989bc9C6C70d7D0Fed2F24B63Fd0d4f477",
+         "implementation": "<Implementation_Address>",
+         "authModule": "0x066aaeaa49e1e07dB18607c0C053d9c5F685e133",
+         "tokenDeployer": "0x46817128b8bFEfb6759478dA2B41cB2967a3B9fe",
+         "deploymentMethod": "create3",
+         "salt": "AxelarGateway v1.0",  // Salt value added
+         "connectionType": "consensus"
+      },
+      "AxelarGasService": {
+         "address": "0xbf4Aebee4689974D0a9afeacd9bdC64Fc0f79B5D",
+         "implementation": "<Implementation_Address>",
+         "deployer": "0x331177989bc9C6C70d7D0Fed2F24B63Fd0d4f477",
+         "collector": "0x331177989bc9C6C70d7D0Fed2F24B63Fd0d4f477"
+      },
+      "AxelarDepositService": {
+         "address": "<AxelarDepositService_Address>",
+         "wrappedSymbol": "WALT",
+         "refundIssuer": "0x331177989bc9C6C70d7D0Fed2F24B63Fd0d4f477",
+         "implementation": "<Implementation_Address>",
+         "deployer": "0x331177989bc9C6C70d7D0Fed2F24B63Fd0d4f477"
+      },
+      "Multisig": {
+         "threshold": 3,
+         "signers": [
+            "0xa569cd844c2d1f72e9b59081990d0b01f603ff23",
+            "0x658dc5fda0b97565cd660e73c5476c51423d275a",
+            "0xfdd83e38f1eb7549cddc0c0531bb171ad95635a6"
+         ],
+         "address": "0xa308e893B479d068Ed99820cFB44284531f5Deec",
+         "deployer": "0x331177989bc9C6C70d7D0Fed2F24B63Fd0d4f477",
+         "deploymentMethod": "create3",
+         "salt": "Multisig v1.0"
+      },
+      "Operators": {
+         "owner": "0x331177989bc9C6C70d7D0Fed2F24B63Fd0d4f477",
+         "address": "<Operators_Address>",
+         "deployer": "0x331177989bc9C6C70d7D0Fed2F24B63Fd0d4f477",
+         "deploymentMethod": "create2"
       }
+   },
+   "explorer": {
+      "name": "Altcoinchain Explorer",
+      "url": "http://node-sub.network:4100",
+      "api": "<Explorer_API_Endpoint>"
+   },
+   "gasOptions": {
+      "gasLimit": 8000000,
+      "gasPriceAdjustment": 1.8
+   },
+   "staticGasOptions": {
+      "gasLimit": 3000000,
+      "gasPrice": 1000000000000
+   },
+   "finality": "1",
+   "approxFinalityWaitTime": 1
+}
+
     }
   }
 }
