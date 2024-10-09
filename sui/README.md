@@ -53,7 +53,10 @@ node sui/faucet.js
 
 Deploy the gateway package:
 
-> Run `node sui/deploy-contract.js deploy Utils` before deploying the gateway package.
+> `Utils` and `VersionControl` contracts need to be deployed before AxelarGateway contract. Run the following commands to deploy both contracts:
+>
+> -   `node sui/deploy-contract.js deploy Utils` .
+> -   `node sui/deploy-contract.js deploy VersionControl`.
 
 -   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
