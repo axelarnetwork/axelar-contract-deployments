@@ -2517,7 +2517,9 @@
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 0,
           "encoder": "abi",
-          "keyType": "ecdsa"
+          "keyType": "ecdsa",
+          "domainSeparator": "0x3c8c7d9e180f608dcf6fc9b1c3ef905ac295b1c4cb2fe8ca2c4fcde1b6e9a8c6",
+          "address": "axelar1rsuejfntt4rs2y8dn4dd3acszs00zyg9wpnsc6fmhevcp6plu5qspzn7e0"
         },
         "hedera": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -2532,13 +2534,17 @@
           "keyType": "ecdsa"
         },
         "storeCodeProposalId": "235",
-        "storeCodeProposalCodeHash": "6c4d2f520d62bcd7edd4de772257e74b48a8dfba39f853a9c12ff51ca9ea1e83"
+        "storeCodeProposalCodeHash": "6c4d2f520d62bcd7edd4de772257e74b48a8dfba39f853a9c12ff51ca9ea1e83",
+        "codeId": 12
       },
       "Gateway": {
-        "flow": {},
+        "flow": {
+          "address": "axelar1w8frw33jn0yx59845wdgk0yru6fxvgr6hlh4xfdtdf08y5jamcnsyu0z6u"
+        },
         "hedera": {},
         "storeCodeProposalId": "232",
-        "storeCodeProposalCodeHash": "eae97caf40ae6b5eea1e145eec27a59e73aa6f9de389fa9ca0cfc9354a3b68ac"
+        "storeCodeProposalCodeHash": "eae97caf40ae6b5eea1e145eec27a59e73aa6f9de389fa9ca0cfc9354a3b68ac",
+        "codeId": 9
       },
       "VotingVerifier": {
         "flow": {
@@ -2552,7 +2558,8 @@
           "blockExpiry": 10,
           "confirmationHeight": 10000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55"
+          "addressFormat": "eip55",
+          "address": "axelar1kkqdsqvwq9a7p9fj0w89wpx2m2t0vrxl782aslhq0kdw2xxd2aesv3un04"
         },
         "hedera": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -2568,7 +2575,8 @@
           "addressFormat": "eip55"
         },
         "storeCodeProposalId": "231",
-        "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b"
+        "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b",
+        "codeId": 8
       }
     }
   }
