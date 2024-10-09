@@ -104,6 +104,8 @@ async function callContract(keypair, client, config, chain, contractConfig, args
 
     const [destinationChain, destinationAddress, payload] = args;
 
+    const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
+
     let channel = options.channel;
 
     const tx = new Transaction();
@@ -128,7 +130,7 @@ async function callContract(keypair, client, config, chain, contractConfig, args
 
     tx.moveCall({
         target: `${packageId}::gateway::send_message`,
-        arguments: [messageTicket],
+        arguments: [tx.object(gatewayObjectId), messageTicket],
     });
 
     if (!options.channel) {
