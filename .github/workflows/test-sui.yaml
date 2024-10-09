@@ -121,11 +121,11 @@ jobs:
       - name: Deploy VersionControl
         run: node sui/deploy-contract deploy VersionControl
 
-      - name: Deploy Relayer Discovery
-        run: node sui/deploy-contract deploy RelayerDiscovery
-
       - name: Deploy AxelarGateway
         run: node sui/deploy-contract deploy AxelarGateway --signers wallet
+
+      - name: Deploy Relayer Discovery
+        run: node sui/deploy-contract deploy RelayerDiscovery
 
       - name: Deploy GasService
         run: node sui/deploy-contract deploy GasService
