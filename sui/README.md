@@ -25,7 +25,7 @@ Set `PRIVATE_KEY="suiprivkey..."` in your `.env` file. Other private key types a
 
 If you want to run against a local Sui network, then create a `axelar-chains-config/info/local.json` config containing:
 
-```bash
+```json
 {
     "sui": {
         "name": "Sui",

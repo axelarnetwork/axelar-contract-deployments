@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const { Option, InvalidArgumentError } = require('commander');
 const { getUnitAmount } = require('./amount-utils');
-const { addEnvOption } = require('../../common');
+const { addEnvOption, addOptionsToCommands } = require('../../common');
 
 const addBaseOptions = (program, options = {}) => {
     addEnvOption(program);
@@ -45,16 +45,6 @@ const addExtendedOptions = (program, options = {}) => {
     }
 
     return program;
-};
-
-// `optionMethod` is a method such as `addBaseOptions`
-// `options` is an option object for optionMethod
-const addOptionsToCommands = (program, optionMethod, options) => {
-    if (program.commands.length > 0) {
-        program.commands.forEach((command) => {
-            optionMethod(command, options);
-        });
-    }
 };
 
 // Custom option processing for amount. https://github.com/tj/commander.js?tab=readme-ov-file#custom-option-processing

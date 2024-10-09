@@ -43,6 +43,7 @@ const PACKAGE_DIRS = [
     'utils',
     'gas_service',
     'example',
+    'relayer_discovery',
     'axelar_gateway',
     'relayer_discovery',
     'operators',
@@ -117,17 +118,29 @@ async function postDeployGasService(published, keypair, client, config, chain, o
 async function postDeployExample(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [singletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
-    const channelId = await getSingletonChannelId(client, singletonObjectId);
-    chain.contracts.Example.objects = { Singleton: singletonObjectId, ChannelId: channelId };
+    // GMP Example Params
+    const [gmpSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
+
+    // ITS Example Params
+    const itsObjectId = config.sui.contracts.ITS?.objects?.ITS;
+    const [itsSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::Singleton`]);
 
     const tx = new Transaction();
+
     tx.moveCall({
         target: `${published.packageId}::gmp::register_transaction`,
-        arguments: [tx.object(relayerDiscovery), tx.object(singletonObjectId)],
+        arguments: [tx.object(relayerDiscovery), tx.object(gmpSingletonObjectId)],
+    });
+
+    tx.moveCall({
+        target: `${published.packageId}::its::register_transaction`,
+        arguments: [tx.object(relayerDiscovery), tx.object(itsSingletonObjectId), tx.object(itsObjectId)],
     });
 
     await broadcast(client, keypair, tx, 'Registered Transaction');
+
+    const channelId = await getSingletonChannelId(client, gmpSingletonObjectId);
+    chain.contracts.Example.objects = { GmpSingleton: gmpSingletonObjectId, GmpChannelId: channelId };
 }
 
 async function postDeployOperators(published, keypair, client, config, chain, options) {
@@ -208,8 +221,11 @@ async function postDeployIts(published, keypair, client, config, chain, options)
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
     const [itsObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::ITS`]);
-    const channelId = await getItsChannelId(client, itsObjectId);
-    chain.contracts.ITS.objects = { ITS: itsObjectId, ChannelId: channelId };
+    const [itsV0ObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its_v0::ITS_v0`]);
+
+    const channelId = await getItsChannelId(client, itsV0ObjectId);
+
+    chain.contracts.ITS.objects = { ITS: itsObjectId, ITSv0: itsV0ObjectId, ChannelId: channelId };
 
     const tx = new Transaction();
     tx.moveCall({
@@ -337,7 +353,7 @@ const GATEWAY_CMD_OPTIONS = [
     new Option(
         '--domainSeparator <domainSeparator>',
         'domain separator (pass in the keccak256 hash value OR "offline" meaning that its computed locally)',
-    ),
+    ).default('offline'),
     new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'),
     new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'),
 ];
