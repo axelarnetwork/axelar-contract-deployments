@@ -21,7 +21,8 @@ async function sendCommand(keypair, client, chain, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
     const params = options.params;
     const gasServiceObjectId = chain.contracts.GasService.objects.GasService;
-    const singletonObjectId = chain.contracts.Example.objects.Singleton;
+    const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
+    const singletonObjectId = chain.contracts.Example.objects.GmpSingleton;
 
     const unitAmount = getUnitAmount(feeAmount);
     const walletAddress = keypair.toSuiAddress();
@@ -34,6 +35,7 @@ async function sendCommand(keypair, client, chain, args, options) {
         target: `${chain.contracts.Example.address}::gmp::send_call`,
         arguments: [
             tx.object(singletonObjectId),
+            tx.object(gatewayObjectId),
             tx.object(gasServiceObjectId),
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
             tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
