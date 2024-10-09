@@ -53,10 +53,10 @@ node sui/faucet.js
 
 Before deploying the gateway package:
 
-`Utils` and `VersionControl` contracts need to be deployed before AxelarGateway contract. Run the following commands to deploy both contracts:
+`Utils` and `VersionControl` contracts need to be deployed before `AxelarGateway` contract. Run the following commands to deploy both contracts:
 
--   `node sui/deploy-contract.js deploy Utils` .
--   `node sui/deploy-contract.js deploy VersionControl`.
+-   `node sui/deploy-contract.js deploy Utils`
+-   `node sui/deploy-contract.js deploy VersionControl`
 
 Deploy the gateway package:
 
