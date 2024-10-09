@@ -45,7 +45,6 @@ const PACKAGE_DIRS = [
     'example',
     'relayer_discovery',
     'axelar_gateway',
-    'relayer_discovery',
     'operators',
     'abi',
     'governance',
@@ -134,13 +133,20 @@ async function postDeployExample(published, keypair, client, config, chain, opti
 
     tx.moveCall({
         target: `${published.packageId}::its::register_transaction`,
-        arguments: [tx.object(relayerDiscovery), tx.object(itsSingletonObjectId), tx.object(itsObjectId)],
+        arguments: [tx.object(relayerDiscovery), tx.object(itsSingletonObjectId), tx.object(itsObjectId), tx.object(suiClockAddress)],
     });
 
     await broadcast(client, keypair, tx, 'Registered Transaction');
 
-    const channelId = await getSingletonChannelId(client, gmpSingletonObjectId);
-    chain.contracts.Example.objects = { GmpSingleton: gmpSingletonObjectId, GmpChannelId: channelId };
+    const gmpChannelId = await getSingletonChannelId(client, gmpSingletonObjectId);
+    const itsChannelId = await getSingletonChannelId(client, itsSingletonObjectId);
+
+    chain.contracts.Example.objects = {
+        GmpSingleton: gmpSingletonObjectId,
+        GmpChannelId: gmpChannelId,
+        ItsSingleton: itsSingletonObjectId,
+        ItsChannelId: itsChannelId,
+    };
 }
 
 async function postDeployOperators(published, keypair, client, config, chain, options) {
@@ -166,7 +172,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         isValidNumber: { minimumRotationDelay },
     });
 
-    const [creatorCap, relayerDiscovery, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
+    const [creatorCap, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
         `${packageId}::gateway::CreatorCap`,
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
@@ -208,7 +214,6 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         ...chain.contracts.AxelarGateway,
         objects: {
             Gateway: gateway,
-            RelayerDiscovery: relayerDiscovery,
             UpgradeCap: upgradeCap,
         },
         domainSeparator,
@@ -268,6 +273,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     }
 
     // Deploy package
+    console.log('Publising', packageDir);
     const published = await deployPackage(packageDir, client, keypair, options);
 
     printInfo(`Deployed ${packageName} Package`, published.packageId);
@@ -290,7 +296,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 
 async function upgrade(keypair, client, supportedPackage, policy, config, chain, options) {
     const { packageName, packageDir } = supportedPackage;
-    options.policy = policy;
+    options.policy = poPublishUpgradeMissingDependencylicy;
 
     if (!chain.contracts[packageName]) {
         throw new Error(`Cannot find specified contract: ${packageName}`);
