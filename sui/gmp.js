@@ -51,7 +51,7 @@ async function execute(keypair, client, chain, args, options) {
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
     const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
-    const discoveryObjectId = chain.contracts.RelayerDiscovery.objects.RelayerDiscovery;
+    const discoveryObjectId = chain.contracts.RelayerDiscovery.objects.RelayerDiscoveryv0;
 
     // Get the channel id from the options or use the channel id from the deployed Example contract object.
     const channelId = options.channelId || chain.contracts.Example.objects.ChannelId;
@@ -62,8 +62,9 @@ async function execute(keypair, client, chain, args, options) {
 
     // Get Discovery table id from discovery object
     const tableBcsBytes = await getBcsBytesByObjectId(client, discoveryObjectId);
-    const { fields } = bcsStructs.common.Discovery.parse(tableBcsBytes);
-    const tableId = fields.id;
+    const data = bcsStructs.relayerDiscovery.RelayerDiscovery.parse(tableBcsBytes);
+    console.log(data);
+    const tableId = data.value.configurations.id;
 
     // Get the transaction list from the discovery table
     const tableResult = await client.getDynamicFields({
