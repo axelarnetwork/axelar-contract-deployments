@@ -51,12 +51,14 @@ To get test SUI coins to your address via a faucet.
 node sui/faucet.js
 ```
 
-Deploy the gateway package:
+Before deploying the gateway package:
 
-> `Utils` and `VersionControl` contracts need to be deployed before AxelarGateway contract. Run the following commands to deploy both contracts:
->
-> -   `node sui/deploy-contract.js deploy Utils` .
-> -   `node sui/deploy-contract.js deploy VersionControl`.
+`Utils` and `VersionControl` contracts need to be deployed before AxelarGateway contract. Run the following commands to deploy both contracts:
+
+-   `node sui/deploy-contract.js deploy Utils` .
+-   `node sui/deploy-contract.js deploy VersionControl`.
+
+Deploy the gateway package:
 
 -   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
