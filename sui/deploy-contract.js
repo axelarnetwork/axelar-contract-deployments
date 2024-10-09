@@ -209,7 +209,10 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 
     const result = await broadcast(client, keypair, tx, 'Setup Gateway');
 
-    const [gateway] = getObjectIdsByObjectTypes(result, [`${packageId}::gateway::Gateway`]);
+    const [gateway, gatewayv0] = getObjectIdsByObjectTypes(result, [
+        `${packageId}::gateway::Gateway`,
+        `${packageId}::gateway_v0::Gateway_v0`,
+    ]);
 
     // Update chain configuration
     chain.contracts.AxelarGateway = {
@@ -217,6 +220,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         objects: {
             Gateway: gateway,
             UpgradeCap: upgradeCap,
+            Gatewayv0: gatewayv0,
         },
         domainSeparator,
         operator,
