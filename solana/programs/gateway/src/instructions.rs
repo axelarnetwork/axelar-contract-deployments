@@ -182,6 +182,53 @@ pub enum GatewayInstruction {
         bytes: Vec<u8>,
     },
 
+    /// Finalizes the writing phase for an `execute_data` PDA buffer account and
+    /// writes the calculated `Payload` hash into its metadata section.
+    ///
+    /// This instruction will revert on the following circumstances:
+    /// 1. The buffer account is already finalized.
+    /// 2. The buffer account already had the `execute_data` hash calculated and
+    ///    persisted.
+    /// 3. Instruction fails to decode the previously written `execute_data`
+    ///    bytes.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [] Gateway Root Config PDA account
+    /// 1. [WRITE] Execute Data PDA buffer account
+    CommitPayloadHash {},
+
+    /// Initializes the signature validation state machine.
+    ///
+    /// Requires that the `execute_data_buffer`'s write phase has been
+    /// finalized.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [] Gateway Root Config PDA account
+    /// 1. [WRITE] Execute Data PDA buffer account
+    InitializeSignatureVerification {
+        /// Merkle root for the `Proof`'s signatures.
+        signature_merkle_root: [u8; 32],
+    },
+
+    /// Verifies a signature as part of the `execute_data` validation
+    /// process.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [] Gateway Root Config PDA account
+    /// 1. [WRITE] Execute Data PDA buffer account
+    VerifySignature {
+        /// The signature bytes.
+        signature_bytes: Vec<u8>,
+        /// The signer's public key bytes.
+        public_key_bytes: Vec<u8>,
+        /// The signer's weight.
+        signer_weight: u128,
+        /// The signer's position within the verifier set.
+        signer_index: u8,
+        /// This signatures's proof of inclusion in the signatures merkle tree.
+        signature_merkle_proof: Vec<u8>,
+    },
+
     /// Finalize an `execute_data` PDA buffer account.
     ///
     /// The `execute_data` will be decoded on-chain to verify the data
@@ -193,11 +240,11 @@ pub enum GatewayInstruction {
     /// which is initialized first is not important.
     ///
     /// This instruction will revert if the buffer account is already
-    /// finalized.
+    /// finalized or if the signature verification didn't collect
+    /// sufficient signer weight.
     ///
     /// Accounts expected by this instruction:
-    /// 0. [] Gateway Root Config PDA account
-    /// 1. [WRITE] Execute Data PDA buffer account
+    /// 0. [WRITE] Execute Data PDA buffer account
     FinalizeExecuteDataBuffer {},
 }
 
@@ -641,8 +688,8 @@ pub fn write_execute_data_buffer(
     })
 }
 
-/// Creates a [`GatewayInstruction::FinalizeExecuteDataBuffer`] instruction.
-pub fn finalize_execute_data_buffer(
+/// Creates a [`GatewayInstruction::CommitPayloadHash`] instruction.
+pub fn commit_payload_hash(
     gateway_root_pda: Pubkey,
     user_seed: &[u8; 32],
     bump_seed: u8,
@@ -652,6 +699,77 @@ pub fn finalize_execute_data_buffer(
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new(buffer_pda, false),
     ];
+    let instruction = GatewayInstruction::CommitPayloadHash {};
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data: borsh::to_vec(&instruction)?,
+    })
+}
+
+/// Creates a [`GatewayInstruction::InitializeSignatureVerification`]
+/// instruction.
+pub fn initialize_signature_verification(
+    gateway_root_pda: Pubkey,
+    user_seed: &[u8; 32],
+    bump_seed: u8,
+    signature_merkle_root: [u8; 32],
+) -> Result<Instruction, ProgramError> {
+    let buffer_pda = crate::create_execute_data_pda(&gateway_root_pda, user_seed, bump_seed)?;
+    let accounts = vec![
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new(buffer_pda, false),
+    ];
+    let instruction = GatewayInstruction::InitializeSignatureVerification {
+        signature_merkle_root,
+    };
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data: borsh::to_vec(&instruction)?,
+    })
+}
+
+/// Creates a [`GatewayInstruction::VerifySignature`] instruction.
+#[allow(clippy::too_many_arguments)]
+pub fn verify_signature(
+    gateway_root_pda: Pubkey,
+    user_seed: &[u8; 32],
+    bump_seed: u8,
+    signature_bytes: Vec<u8>,
+    public_key_bytes: Vec<u8>,
+    signer_weight: u128,
+    signer_index: u8,
+    signature_merkle_proof: Vec<u8>,
+) -> Result<Instruction, ProgramError> {
+    let buffer_pda = crate::create_execute_data_pda(&gateway_root_pda, user_seed, bump_seed)?;
+    let accounts = vec![
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new(buffer_pda, false),
+    ];
+
+    let instruction = GatewayInstruction::VerifySignature {
+        signature_bytes,
+        public_key_bytes,
+        signer_weight,
+        signer_index,
+        signature_merkle_proof,
+    };
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data: borsh::to_vec(&instruction)?,
+    })
+}
+
+/// Creates a [`GatewayInstruction::FinalizeExecuteDataBuffer`] instruction.
+pub fn finalize_execute_data_buffer(
+    gateway_root_pda: Pubkey,
+    user_seed: &[u8; 32],
+    bump_seed: u8,
+) -> Result<Instruction, ProgramError> {
+    let buffer_pda = crate::create_execute_data_pda(&gateway_root_pda, user_seed, bump_seed)?;
+    let accounts = vec![AccountMeta::new(buffer_pda, false)];
     let instruction = GatewayInstruction::FinalizeExecuteDataBuffer {};
     Ok(Instruction {
         program_id: crate::id(),

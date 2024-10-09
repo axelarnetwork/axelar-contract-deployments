@@ -120,9 +120,44 @@ impl Processor {
                 msg!("Instruction: Write Execute Data Buffer");
                 Self::process_write_execute_data_buffer(program_id, accounts, &bytes, offset)
             }
+            GatewayInstruction::CommitPayloadHash {} => {
+                msg!("Instruction: Commit Payload Hash");
+                Self::process_commit_payload_hash(program_id, accounts)
+            }
+
             GatewayInstruction::FinalizeExecuteDataBuffer {} => {
                 msg!("Instruction: Finalize Execute Data Buffer");
                 Self::process_finalize_execute_data_buffer(program_id, accounts)
+            }
+
+            GatewayInstruction::InitializeSignatureVerification {
+                signature_merkle_root,
+            } => {
+                msg!("Instruction: Initialize Signature Verification");
+                Self::process_initialize_signature_verification(
+                    program_id,
+                    accounts,
+                    &signature_merkle_root,
+                )
+            }
+
+            GatewayInstruction::VerifySignature {
+                signature_bytes,
+                public_key_bytes,
+                signer_weight,
+                signer_index,
+                signature_merkle_proof,
+            } => {
+                msg!("Instruction: Verify Signature");
+                Self::process_verify_signature(
+                    program_id,
+                    accounts,
+                    &signature_bytes,
+                    &public_key_bytes,
+                    signer_weight,
+                    signer_index,
+                    &signature_merkle_proof,
+                )
             }
         }
     }

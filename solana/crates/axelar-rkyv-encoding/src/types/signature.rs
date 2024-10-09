@@ -47,6 +47,15 @@ impl AsRef<[u8]> for Signature {
     }
 }
 
+impl AsRef<[u8]> for ArchivedSignature {
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            ArchivedSignature::EcdsaRecoverable(bytes) => bytes,
+            ArchivedSignature::Ed25519(bytes) => bytes,
+        }
+    }
+}
+
 impl AsMut<[u8]> for Signature {
     fn as_mut(&mut self) -> &mut [u8] {
         match self {

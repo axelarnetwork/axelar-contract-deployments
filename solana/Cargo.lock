@@ -498,9 +498,9 @@ dependencies = [
 
 [[package]]
 name = "arrayref"
-version = "0.3.7"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b4930d2cb77ce62f89ee5d5289b4ac049559b1c45539271f5ed4fdc7db34545"
+checksum = "76a2e8124351fda1ef8aaaa3bbd7ebbcb486bbcd4225aca0aa0d84bb2db8fecb"
 
 [[package]]
 name = "arrayvec"
@@ -3660,19 +3660,23 @@ dependencies = [
 name = "gmp-gateway"
 version = "0.1.0"
 dependencies = [
+ "arrayref",
  "axelar-message-primitives",
  "axelar-rkyv-encoding",
  "base64 0.21.7",
  "bincode",
  "bitflags 2.6.0",
+ "bitvec",
  "borsh 1.5.1",
  "hex",
  "itertools 0.12.1",
+ "lazy_static",
  "libsecp256k1",
  "num-derive",
  "num-traits",
  "program-utils",
  "rkyv",
+ "rs_merkle",
  "sha3 0.10.8",
  "solana-client",
  "solana-logger",
@@ -6835,6 +6839,15 @@ dependencies = [
  "libc",
  "rtoolbox",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "rs_merkle"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b241d2e59b74ef9e98d94c78c47623d04c8392abaf82014dfd372a16041128f"
+dependencies = [
+ "sha2 0.10.8",
 ]
 
 [[package]]

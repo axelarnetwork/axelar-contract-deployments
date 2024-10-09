@@ -13,7 +13,7 @@ use solana_program::pubkey::Pubkey;
 use crate::error::GatewayError;
 use crate::hasher_impl;
 
-#[derive(BorshDeserialize, BorshSerialize, Eq, PartialEq, PartialOrd, Ord, Debug)]
+#[derive(BorshDeserialize, BorshSerialize, Eq, PartialEq, PartialOrd, Ord, Debug, Clone, Copy)]
 #[borsh(use_discriminant = true)]
 pub enum CommandKind {
     ApproveMessage = 0,

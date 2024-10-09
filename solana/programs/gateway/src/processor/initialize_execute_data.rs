@@ -15,6 +15,10 @@ use crate::error::GatewayError;
 use crate::seed_prefixes;
 use crate::state::execute_data::ExecuteDataVariant;
 use crate::state::execute_data_buffer::{BufferLayout, RESERVED_BUFFER_METADATA_BYTES};
+use crate::state::signature_verification::merkle_tree::MerkleProof;
+use crate::state::signature_verification::{
+    batch_context_from_proof, SignatureNode, SignatureVerification, SignatureVerifier,
+};
 use crate::state::{GatewayConfig, GatewayExecuteData};
 
 impl Processor {
@@ -198,9 +202,9 @@ impl Processor {
     }
 
     /// Handles the
-    /// [`crate::instructions::GatewayInstruction::FinalizeExecuteDataBuffer`]
+    /// [`crate::instructions::GatewayInstruction::CommitPayloadHash`]
     /// instruction.
-    pub fn process_finalize_execute_data_buffer(
+    pub fn process_commit_payload_hash(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
     ) -> ProgramResult {
@@ -220,9 +224,17 @@ impl Processor {
         let mut buffer = BufferLayout::parse(&mut data)?;
 
         // Check: buffer account should not be finalized.
-        if buffer.metadata().is_finalized() {
-            msg!("Buffer account is finalized");
-            return Err(ProgramError::InvalidAccountData);
+        {
+            let metadata = buffer.metadata();
+            if metadata.is_finalized() {
+                msg!("Buffer account is already finalized");
+                return Err(ProgramError::InvalidAccountData);
+            }
+
+            if metadata.has_payload_hash() {
+                msg!("Payload hash have already been calculated");
+                return Err(ProgramError::InvalidAccountData);
+            }
         }
 
         // Deserialize / Unarchive
@@ -250,11 +262,176 @@ impl Processor {
             archived_execute_data.internal_payload_hash(&domain_separator, crate::hasher_impl());
         buffer.payload_hash.copy_from_slice(payload_hash.as_slice());
 
-        // TODO: add validation in a separate instruction.
+        buffer.commit_payload_hash(&payload_hash)
+    }
 
-        // Mark buffer as finalized
-        buffer.finalize();
+    /// Handles the
+    /// [`crate::instructions::GatewayInstruction::InitializeSignatureVerification`]
+    /// instruction.
+    pub fn process_initialize_signature_verification(
+        program_id: &Pubkey,
+        accounts: &[AccountInfo<'_>],
+        merkle_root: &[u8; 32],
+    ) -> ProgramResult {
+        // Accounts
+        let accounts_iter = &mut accounts.iter();
+        let gateway_root_pda = next_account_info(accounts_iter)?;
+        let buffer_account = next_account_info(accounts_iter)?;
+        assert!(buffer_account.is_writable);
+        assert_eq!(buffer_account.owner, program_id);
+
+        // Check: Gateway Root PDA is initialized.
+        let domain_separator = gateway_root_pda
+            .check_initialized_pda::<GatewayConfig>(program_id)?
+            .domain_separator;
+
+        let mut data = buffer_account.try_borrow_mut_data()?;
+        let mut buffer = BufferLayout::parse(&mut data)?;
+
+        // Check: buffer account should have its payload hash calculated.
+        if !buffer.metadata().has_payload_hash() {
+            msg!("Payload hash has not been calculated yet");
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        // Deserialize / Unarchive
+        let archived_execute_data = ArchivedExecuteData::from_bytes(buffer.raw_execute_data)
+            .map_err(|error| {
+                msg!("Failed to deserialize execute_data: {}", error);
+                ProgramError::InvalidAccountData
+            })?;
+
+        let batch_context = batch_context_from_proof(
+            *gateway_root_pda.key,
+            domain_separator,
+            &archived_execute_data.proof,
+            *buffer.payload_hash,
+        )?;
+        buffer.initialize_signature_verification(merkle_root, batch_context);
 
         Ok(())
+    }
+
+    /// Handles the
+    /// [`crate::instructions::GatewayInstruction::InitializeSignatureVerification`]
+    /// instruction.
+    pub fn process_verify_signature(
+        program_id: &Pubkey,
+        accounts: &[AccountInfo<'_>],
+        signature_bytes: &[u8],
+        public_key_bytes: &[u8],
+        signer_weight: u128,
+        signer_index: u8,
+        signature_merkle_proof: &[u8],
+    ) -> ProgramResult {
+        // Accounts
+        let accounts_iter = &mut accounts.iter();
+        let gateway_root_pda = next_account_info(accounts_iter)?;
+        let buffer_account = next_account_info(accounts_iter)?;
+        assert!(buffer_account.is_writable);
+        assert_eq!(buffer_account.owner, program_id);
+
+        // Check: Gateway Root PDA is initialized.
+        let domain_separator = gateway_root_pda
+            .check_initialized_pda::<GatewayConfig>(program_id)?
+            .domain_separator;
+
+        let mut data = buffer_account.try_borrow_mut_data()?;
+        let mut buffer = BufferLayout::parse(&mut data)?;
+
+        // Check: buffer account should have its payload hash calculated.
+        if !buffer.metadata().has_payload_hash() {
+            msg!("Payload hash has not been calculated yet");
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        // Check: buffer account should have a non-empty signature merkle root
+        let mut signature_verification =
+            SignatureVerification::deserialize(buffer.signature_verification);
+        if signature_verification.root().iter().all(|x| x == &0) {
+            msg!("Merkle root has not been initialized");
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        // Deserialize / Unarchive
+        let archived_execute_data = ArchivedExecuteData::from_bytes(buffer.raw_execute_data)
+            .map_err(|error| {
+                msg!("Failed to deserialize execute_data: {}", error);
+                ProgramError::InvalidAccountData
+            })?;
+
+        let batch_context = batch_context_from_proof(
+            *gateway_root_pda.key,
+            domain_separator,
+            &archived_execute_data.proof,
+            *buffer.payload_hash,
+        )?;
+
+        // Build the signature leaf node
+        let signature_node = SignatureNode::new(
+            signature_bytes,
+            public_key_bytes,
+            signer_weight,
+            signer_index,
+            &batch_context,
+        );
+
+        // Deserialize the signature merkle proof
+        let merkle_proof = MerkleProof::from_bytes(signature_merkle_proof).map_err(|_| {
+            msg!("Signature does not belong to this verification session");
+            ProgramError::InvalidArgument
+        })?;
+
+        // Verify if the signature leaf node belongs to this  verification session
+        signature_verification.verify_signature(
+            &signature_node,
+            merkle_proof,
+            GatewaySignatureVerifier {},
+        );
+
+        // Update the signature verification session
+        buffer.update_signature_verification(signature_verification);
+
+        Ok(())
+    }
+
+    /// Handles the
+    /// [`crate::instructions::GatewayInstruction::FinalizeExecuteDataBuffer`]
+    /// instruction.
+    pub fn process_finalize_execute_data_buffer(
+        program_id: &Pubkey,
+        accounts: &[AccountInfo<'_>],
+    ) -> ProgramResult {
+        // Accounts
+        let accounts_iter = &mut accounts.iter();
+        let buffer_account = next_account_info(accounts_iter)?;
+        assert!(buffer_account.is_writable);
+        assert_eq!(buffer_account.owner, program_id);
+
+        let mut data = buffer_account.try_borrow_mut_data()?;
+        let mut buffer = BufferLayout::parse(&mut data)?;
+
+        // Check: buffer account should not be finalized.
+        if buffer.metadata().is_finalized() {
+            msg!("Buffer account is already finalized");
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        buffer.finalize()
+    }
+}
+
+struct GatewaySignatureVerifier {}
+impl SignatureVerifier<&[u8], &[u8]> for GatewaySignatureVerifier {
+    /// TODO: Implement this
+    fn verify_signature(
+        &self,
+        _signature: &&[u8],
+        _public_key: &&[u8],
+        _message: &[u8; 32],
+    ) -> Option<u128> {
+        // WARN: This will always verify the signature without looking at the inputs
+        // TODO: implement this
+        Some(u128::MAX)
     }
 }

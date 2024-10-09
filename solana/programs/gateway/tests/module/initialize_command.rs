@@ -2,10 +2,17 @@ use axelar_rkyv_encoding::hasher::solana::SolanaKeccak256Hasher;
 use axelar_rkyv_encoding::test_fixtures::{
     random_bytes, random_message, random_valid_execute_data_and_verifier_set_for_payload,
 };
-use axelar_rkyv_encoding::types::Payload;
+use axelar_rkyv_encoding::types::{
+    ArchivedExecuteData, ArchivedPublicKey, ArchivedWeightedSigner, Payload,
+};
 use gmp_gateway::commands::{CommandKind, OwnedCommand};
 use gmp_gateway::state::execute_data_buffer::BufferLayout;
+use gmp_gateway::state::signature_verification::merkle_tree::MerkleTree;
+use gmp_gateway::state::signature_verification::{
+    batch_context_from_proof, BatchContext, SignatureNode, SignatureVerification,
+};
 use gmp_gateway::state::{ApprovedMessageStatus, GatewayApprovedCommand};
+use itertools::Itertools;
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
 use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
@@ -282,6 +289,7 @@ async fn succeed_when_same_signers_with_different_nonce_get_initialized() {
 struct BufferedWriteTestCase {
     fixture: TestFixture,
     gateway_root_pda: Pubkey,
+    domain_separator: [u8; 32],
     num_chunks: usize,
     execute_data_bytes: Vec<u8>,
     payload_hash: [u8; 32],
@@ -319,7 +327,6 @@ impl BufferedWriteTestCase {
                 &payload,
                 SolanaKeccak256Hasher::default(),
             );
-            dbg!(execute_data_bytes.len());
             (execute_data_bytes, payload_hash)
         };
 
@@ -329,6 +336,7 @@ impl BufferedWriteTestCase {
         Self {
             fixture,
             gateway_root_pda,
+            domain_separator,
             num_chunks,
             execute_data_bytes,
             payload_hash,
@@ -338,8 +346,129 @@ impl BufferedWriteTestCase {
         }
     }
 
-    async fn run(&mut self) {
-        // Split the `execute_data` in three chunks
+    /// Runs the full test case.
+    async fn run_test(&mut self) {
+        self.run_prepare_execute_data_for_signature_verification()
+            .await;
+        self.run_signature_verification().await;
+        self.run_finalize().await;
+    }
+
+    /// Verifies all signatures for a given command batch.
+    /// Instructions sent by this function:
+    /// - 1: InitializeSignatureVerification
+    /// - N: VerifySignature, where N is the number of signers in the batch.
+    async fn run_signature_verification(&mut self) {
+        // Setup
+        let archived_execute_data = self.archived_execute_data();
+        let batch_context = self.batch_context(archived_execute_data);
+        let signatures_merkle_tree = self.build_signatures_merkle_tree();
+        let signature_merkle_root = signatures_merkle_tree
+            .root()
+            .expect("test merkle tree should have at least one node");
+
+        // `VerifySignature` instruction iterator
+        let validate_signature_ixs = self
+            .signature_leaf_nodes(archived_execute_data, &batch_context)
+            .enumerate()
+            .map(|(position, signature_leaf_node)| {
+                let signature_merkle_proof = signatures_merkle_tree.proof(&[position]);
+                let signature_leaf_node_hash = signature_leaf_node.hash();
+
+                // Confidence check: Produced signature node and proof is valid
+                assert!(
+                    signature_merkle_proof.verify(
+                        signature_merkle_root,
+                        &[position],
+                        &[signature_leaf_node_hash],
+                        batch_context.signer_count as usize,
+                    ),
+                    "prepared signature node failed preflight inclusion check"
+                );
+
+                let (signature_bytes, public_key_bytes, signer_weight, signer_index) =
+                    signature_leaf_node.into_parts();
+
+                gmp_gateway::instructions::verify_signature(
+                    self.gateway_root_pda,
+                    &self.user_seed,
+                    self.bump_seed,
+                    signature_bytes,
+                    public_key_bytes,
+                    signer_weight,
+                    signer_index,
+                    signature_merkle_proof.to_bytes(),
+                )
+                .unwrap()
+            });
+
+        let mut ixs = Vec::new();
+        ixs.push(
+            gmp_gateway::instructions::initialize_signature_verification(
+                self.gateway_root_pda,
+                &self.user_seed,
+                self.bump_seed,
+                signature_merkle_root,
+            )
+            .unwrap(),
+        );
+        ixs.extend(validate_signature_ixs);
+
+        for instruction in ixs {
+            self.send_individual_transaction(instruction).await;
+        }
+
+        // Check if buffer account data changed as expected
+        let mut buffer_account_data = self.fetch_buffer_account_data().await;
+        let buffer = BufferLayout::parse(&mut buffer_account_data)
+            .expect("failed to parse buffer account data");
+
+        // Check signatures merkle tree
+        let sig_verification = SignatureVerification::deserialize(buffer.signature_verification);
+        assert_eq!(
+            sig_verification.root(),
+            self.calculate_signatures_merkle_root(),
+            "on-chain signature merkle root should be the same as the one we calculated off-chain"
+        );
+
+        assert!(
+            sig_verification.is_valid(),
+            "not all signatures have been verified, but they should be by now"
+        );
+    }
+
+    /// Finalizes the `execute_data_buffer`.
+    ///
+    /// Instructions sent by this function:
+    /// - 1: FinalizeExecuteDataBuffer
+    async fn run_finalize(&mut self) {
+        let finalize_ix = gmp_gateway::instructions::finalize_execute_data_buffer(
+            self.gateway_root_pda,
+            &self.user_seed,
+            self.bump_seed,
+        )
+        .unwrap();
+
+        self.send_individual_transaction(finalize_ix).await;
+
+        // Check if buffer account data changed as expected
+        let mut buffer_account_data = self.fetch_buffer_account_data().await;
+        let buffer = BufferLayout::parse(&mut buffer_account_data)
+            .expect("failed to parse buffer account data");
+        assert!(
+            buffer.metadata().is_finalized(),
+            "buffer should be finalized by now"
+        );
+    }
+
+    /// Sends the full `execute_data` bytes in chunks to the Gateway.
+    ///
+    /// Instructions sent by this function:
+    /// - 1: InitializeExecuteDataBuffer
+    /// - N: WriteExecuteDataBuffer, where N = `self.num_chunks`
+    /// - 1: CommitPayloadHash
+    async fn run_prepare_execute_data_for_signature_verification(&mut self) {
+        // Split the `execute_data` into chunks
         let write_ixs = split(&self.execute_data_bytes, self.num_chunks).map(|chunk| {
             gmp_gateway::instructions::write_execute_data_buffer(
                 self.gateway_root_pda,
@@ -352,20 +481,17 @@ impl BufferedWriteTestCase {
         });
 
         // Prepare instructions
-        let mut ixs = vec![];
-        ixs.push(
-            gmp_gateway::instructions::initialize_execute_data_buffer(
-                self.gateway_root_pda,
-                self.fixture.payer.pubkey(),
-                self.execute_data_bytes.len() as u64,
-                self.user_seed,
-                CommandKind::ApproveMessage,
-            )
-            .unwrap(),
-        );
+        let mut ixs = vec![gmp_gateway::instructions::initialize_execute_data_buffer(
+            self.gateway_root_pda,
+            self.fixture.payer.pubkey(),
+            self.execute_data_bytes.len() as u64,
+            self.user_seed,
+            CommandKind::ApproveMessage,
+        )
+        .unwrap()];
         ixs.extend(write_ixs);
         ixs.push(
-            gmp_gateway::instructions::finalize_execute_data_buffer(
+            gmp_gateway::instructions::commit_payload_hash(
                 self.gateway_root_pda,
                 &self.user_seed,
                 self.bump_seed,
@@ -374,28 +500,34 @@ impl BufferedWriteTestCase {
         );
 
         // Confidence check: We really used `num_chunks` + 2 instructions
-        assert_eq!(ixs.len(), 2 + self.num_chunks);
+        assert_eq!(
+            ixs.len(),
+            2 + self.num_chunks,
+            "an unexpected number of instructions was used"
+        );
 
         // Send one transaction per instruction
         for instruction in ixs {
             self.send_individual_transaction(instruction).await;
         }
+        // Check if buffer account data changed as expected
+        let mut buffer_account_data = self.fetch_buffer_account_data().await;
+        let buffer = BufferLayout::parse(&mut buffer_account_data)
+            .expect("failed to parse buffer account data");
+        assert!(buffer.metadata().has_payload_hash());
+        assert!(!buffer.metadata().is_finalized());
+        assert_eq!(buffer.raw_execute_data, self.execute_data_bytes);
+        assert_eq!(*buffer.payload_hash, self.payload_hash);
+    }
 
-        // Check: Final account data matches what we wrote
-        let mut buffer_account_data = self
-            .fixture
+    async fn fetch_buffer_account_data(&mut self) -> Vec<u8> {
+        self.fixture
             .banks_client
             .get_account(self.buffer_account)
             .await
             .expect("call failed")
             .expect("account not found")
-            .data;
-
-        let buffer = BufferLayout::parse(&mut buffer_account_data)
-            .expect("failed to parse buffer account data");
-        assert!(buffer.metadata().is_finalized());
-        assert_eq!(buffer.raw_execute_data, self.execute_data_bytes);
-        assert_eq!(*buffer.payload_hash, self.payload_hash);
+            .data
     }
 
     async fn send_individual_transaction(&mut self, instruction: Instruction) {
@@ -404,6 +536,69 @@ impl BufferedWriteTestCase {
 
         // Check: Transaction success
         assert!(result.is_ok());
+    }
+
+    fn archived_execute_data(&self) -> &ArchivedExecuteData {
+        ArchivedExecuteData::from_bytes(&self.execute_data_bytes)
+            .expect("test should use valid execute_data bytes")
+    }
+
+    fn batch_context(&self, archived_execute_data: &ArchivedExecuteData) -> BatchContext {
+        batch_context_from_proof(
+            self.gateway_root_pda,
+            self.domain_separator,
+            &archived_execute_data.proof,
+            self.payload_hash,
+        )
+        .expect("test should parse batch context from proof")
+    }
+
+    fn signers_with_signatures<'a>(
+        &'a self,
+        archived_execute_data: &'a ArchivedExecuteData,
+    ) -> impl Iterator<Item = (&'a ArchivedPublicKey, &'a ArchivedWeightedSigner)> {
+        archived_execute_data.proof.signers_with_signatures.iter()
+    }
+
+    fn signature_leaf_nodes<'a>(
+        &'a self,
+        archived_execute_data: &'a ArchivedExecuteData,
+        batch_context: &'a BatchContext,
+    ) -> impl Iterator<Item = SignatureNode<'a, Vec<u8>, Vec<u8>>> + 'a {
+        self.signers_with_signatures(archived_execute_data)
+            .enumerate()
+            .map(|(signer_index, (signer_pubkey, weighted_signer))| {
+                let public_key_bytes = signer_pubkey.to_bytes();
+                let signature_bytes: Vec<u8> = weighted_signer
+                    .signature
+                    .as_ref()
+                    .map(|signature| signature.as_ref().into())
+                    .unwrap_or_default();
+                let signer_weight = (&weighted_signer.weight).into();
+
+                SignatureNode::new(
+                    signature_bytes,
+                    public_key_bytes,
+                    signer_weight,
+                    signer_index.try_into().expect("usize to fit into an u8"),
+                    batch_context,
+                )
+            })
+    }
+
+    fn build_signatures_merkle_tree(&self) -> MerkleTree {
+        let archived_execute_data = self.archived_execute_data();
+        let batch_context = &self.batch_context(archived_execute_data);
+        let leaves = self
+            .signature_leaf_nodes(archived_execute_data, batch_context)
+            .collect_vec();
+        SignatureVerification::build_merkle_tree::<_, _>(leaves.as_slice())
+    }
+
+    fn calculate_signatures_merkle_root(&self) -> [u8; 32] {
+        self.build_signatures_merkle_tree()
+            .root()
+            .expect("test merkle tree should have at least one node")
     }
 }
 
@@ -418,7 +613,7 @@ async fn test_buffered_execute_data_lifecycle() {
     /*
         BufferedWriteTestCase::new(40, signer_weights, 4)
             .await
-            .run()
+            .run_test()
             .await;
     // */
 
@@ -428,7 +623,7 @@ async fn test_buffered_execute_data_lifecycle() {
         let num_chunks = magic_number * 3;
         BufferedWriteTestCase::new(num_messages, signer_weights, num_chunks)
             .await
-            .run()
+            .run_test()
             .await
     }
 }
