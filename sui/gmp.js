@@ -56,7 +56,7 @@ async function execute(keypair, client, chain, args, options) {
     const discoveryObjectId = chain.contracts.RelayerDiscovery.objects.RelayerDiscoveryv0;
 
     // Get the channel id from the options or use the channel id from the deployed Example contract object.
-    const channelId = options.channelId || chain.contracts.Example.objects.ItsChannelId;
+    const channelId = options.channelId || chain.contracts.Example.objects.GmpChannelId;
 
     if (!channelId) {
         throw new Error('Please provide either a channel id (--channelId) or deploy the Example contract');
