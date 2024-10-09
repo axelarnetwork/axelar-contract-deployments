@@ -170,7 +170,7 @@ jobs:
 
       - name: Execute Incoming Call Contract
         run: |
-          channel_id=$(cat axelar-chains-config/info/local.json | jq '.sui.contracts.Example.objects.ChannelId' | sed 's/"//g')
+          channel_id=$(cat axelar-chains-config/info/local.json | jq '.sui.contracts.Example.objects.GmpChannelId' | sed 's/"//g')
           echo "Channel ID: $channel_id"
           node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 $channel_id 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
           node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
