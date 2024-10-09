@@ -451,7 +451,7 @@ const makeAxelarnetGatewayInstantiateMsg = (config, chainName) => {
 
     return {
         router_address: routerAddress,
-        nexus_gateway: nexusAddress,
+        nexus: nexusAddress,
         chain_name: axelarId.toLowerCase(),
     };
 };
