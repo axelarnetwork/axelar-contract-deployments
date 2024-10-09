@@ -65,7 +65,6 @@ async function execute(keypair, client, chain, args, options) {
     // Get Discovery table id from discovery object
     const tableBcsBytes = await getBcsBytesByObjectId(client, discoveryObjectId);
     const data = bcsStructs.relayerDiscovery.RelayerDiscovery.parse(tableBcsBytes);
-    console.log(data);
     const tableId = data.value.configurations.id;
 
     // Get the transaction list from the discovery table
