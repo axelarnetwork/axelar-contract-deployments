@@ -47,6 +47,7 @@ const PACKAGE_DIRS = [
     'utils',
     'gas_service',
     'example',
+    'relayer_discovery',
     'axelar_gateway',
     'operators',
     'abi',
@@ -219,8 +220,11 @@ async function postDeployIts(published, keypair, client, config, chain, options)
     const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
 
     const [itsObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::ITS`]);
-    const channelId = await getItsChannelId(client, itsObjectId);
-    chain.contracts.ITS.objects = { ITS: itsObjectId, ChannelId: channelId };
+    const [itsV0ObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its_v0::ITS_v0`]);
+
+    const channelId = await getItsChannelId(client, itsV0ObjectId);
+
+    chain.contracts.ITS.objects = { ITS: itsObjectId, ITSv0: itsV0ObjectId, ChannelId: channelId };
 
     const tx = new Transaction();
     tx.moveCall({
