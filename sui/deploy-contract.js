@@ -104,13 +104,15 @@ async function postDeployRelayerDiscovery(published, keypair, client, config, ch
 }
 
 async function postDeployGasService(published, keypair, client, config, chain, options) {
-    const [gasCollectorCapObjectId, gasServiceObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [gasCollectorCapObjectId, gasServiceObjectId, gasServicev0ObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::gas_service::GasCollectorCap`,
         `${published.packageId}::gas_service::GasService`,
+        `${published.packageId}::gas_service_v0::GasService_v0`,
     ]);
     chain.contracts.GasService.objects = {
         GasCollectorCap: gasCollectorCapObjectId,
         GasService: gasServiceObjectId,
+        GasServicev0: gasServicev0ObjectId,
     };
 }
 
@@ -225,12 +227,14 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 async function postDeployIts(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [itsObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::ITS`]);
-    const [itsV0ObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its_v0::ITS_v0`]);
+    const [itsObjectId, itsv0ObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+        `${published.packageId}::its::ITS`,
+        `${published.packageId}::its_v0::ITS_v0`,
+    ]);
 
-    const channelId = await getItsChannelId(client, itsV0ObjectId);
+    const channelId = await getItsChannelId(client, itsv0ObjectId);
 
-    chain.contracts.ITS.objects = { ITS: itsObjectId, ITSv0: itsV0ObjectId, ChannelId: channelId };
+    chain.contracts.ITS.objects = { ITS: itsObjectId, ITSv0: itsv0ObjectId, ChannelId: channelId };
 
     const tx = new Transaction();
     tx.moveCall({
