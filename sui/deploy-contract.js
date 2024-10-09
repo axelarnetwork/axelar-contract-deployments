@@ -96,7 +96,7 @@ const supportedPackages = PACKAGE_DIRS.map((dir) => ({
 
 async function postDeployRelayerDiscovery(published, keypair, client, config, chain, options) {
     const [relayerDiscoveryObjectId, relayerDiscoveryObjectIdv0] = getObjectIdsByObjectTypes(published.publishTxn, [
-        `${published.packageId}::relayer_discovery::RelayerDiscovery`,
+        `${published.packageId}::discovery::RelayerDiscovery`,
         `${published.packageId}::relayer_discovery_v0::RelayerDiscovery_v0`,
     ]);
 
