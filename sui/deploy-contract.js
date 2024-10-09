@@ -296,7 +296,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 
 async function upgrade(keypair, client, supportedPackage, policy, config, chain, options) {
     const { packageName, packageDir } = supportedPackage;
-    options.policy = poPublishUpgradeMissingDependencylicy;
+    options.policy = policy;
 
     if (!chain.contracts[packageName]) {
         throw new Error(`Cannot find specified contract: ${packageName}`);
