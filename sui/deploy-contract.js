@@ -110,17 +110,29 @@ async function postDeployGasService(published, keypair, client, config, chain, o
 async function postDeployExample(published, keypair, client, config, chain, options) {
     const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
 
-    const [singletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
-    const channelId = await getSingletonChannelId(client, singletonObjectId);
-    chain.contracts.Example.objects = { Singleton: singletonObjectId, ChannelId: channelId };
+    // GMP Example Params
+    const [gmpSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
+
+    // ITS Example Params
+    const itsObjectId = config.sui.contracts.ITS?.objects?.ITS;
+    const [itsSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::Singleton`]);
 
     const tx = new Transaction();
+
     tx.moveCall({
         target: `${published.packageId}::gmp::register_transaction`,
-        arguments: [tx.object(relayerDiscovery), tx.object(singletonObjectId)],
+        arguments: [tx.object(relayerDiscovery), tx.object(gmpSingletonObjectId)],
+    });
+
+    tx.moveCall({
+        target: `${published.packageId}::its::register_transaction`,
+        arguments: [tx.object(relayerDiscovery), tx.object(itsSingletonObjectId), tx.object(itsObjectId)],
     });
 
     await broadcast(client, keypair, tx, 'Registered Transaction');
+
+    const channelId = await getSingletonChannelId(client, gmpSingletonObjectId);
+    chain.contracts.Example.objects = { GmpSingleton: gmpSingletonObjectId, GmpChannelId: channelId };
 }
 
 async function postDeployOperators(published, keypair, client, config, chain, options) {
