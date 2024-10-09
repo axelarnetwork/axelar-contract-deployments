@@ -273,7 +273,6 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     }
 
     // Deploy package
-    console.log('Publising', packageDir);
     const published = await deployPackage(packageDir, client, keypair, options);
 
     printInfo(`Deployed ${packageName} Package`, published.packageId);
