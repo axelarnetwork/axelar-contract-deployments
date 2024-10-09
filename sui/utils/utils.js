@@ -107,7 +107,7 @@ const readMovePackageName = (moveDir) => {
 
 const getObjectIdsByObjectTypes = (txn, objectTypes) =>
     objectTypes.map((objectType) => {
-        const objectId = txn.objectChanges.find((change) => change.objectType === objectType)?.objectId;
+        const objectId = txn.objectChanges.find((change) => change.objectType?.includes(objectType))?.objectId;
 
         if (!objectId) {
             throw new Error(`No object found for type: ${objectType}`);
@@ -126,7 +126,8 @@ const getSingletonChannelId = async (client, singletonObjectId) => {
 const getItsChannelId = async (client, itsObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, itsObjectId);
     const data = bcsStructs.its.ITS.parse(bcsBytes);
-    return '0x' + data.channel.id;
+    const channelId = data.value.channel.id;
+    return '0x' + channelId;
 };
 
 const getSquidChannelId = async (client, squidObjectId) => {
