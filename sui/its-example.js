@@ -204,7 +204,7 @@ async function mainProcessor(command, options, args, processor) {
 
 if (require.main === module) {
     const program = new Command();
-    program.name('GMP').description('Example of SUI ITS commands');
+    program.name('ITS').description('SUI ITS scripts');
 
     const sendTokenTransferProgram = new Command()
         .name('sendToken')
