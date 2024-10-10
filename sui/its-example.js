@@ -1,7 +1,7 @@
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { bcsStructs, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
+const { bcsStructs, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, printInfo } = require('../common/utils');
 const {
     getBcsBytesByObjectId,
@@ -46,12 +46,17 @@ async function sendToken(keypair, client, contracts, args, options) {
 
     const tx = txBuilder.tx;
 
-    const coin = tx.splitCoins(objectIds.token, [unitAmount]);
     const gas = tx.splitCoins(tx.gas, [unitFeeAmount]);
 
     const TokenId = await txBuilder.moveCall({
         target: `${ITS.address}::token_id::from_u256`,
-        arguments: [objectIds.tokenId],
+        arguments: [ItsToken.objects.TokenId],
+    });
+
+    const Coin = await txBuilder.moveCall({
+        target: `${SUI_PACKAGE_ID}::coin::mint`,
+        arguments: [ItsToken.objects.TreasuryCap, unitAmount],
+        typeArguments: [ItsToken.typeArgument],
     });
 
     await txBuilder.moveCall({
@@ -62,7 +67,7 @@ async function sendToken(keypair, client, contracts, args, options) {
             objectIds.gateway,
             objectIds.gasService,
             TokenId,
-            coin,
+            Coin,
             destinationChain,
             destinationAddress,
             '0x', // its token metadata
@@ -74,7 +79,7 @@ async function sendToken(keypair, client, contracts, args, options) {
         typeArguments: [ItsToken.typeArgument],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, 'Token Sent');
+    await broadcastFromTxBuilder(txBuilder, keypair, `${amount} ${symbol} Token Sent`);
 }
 
 async function receiveTokenTransfer(keypair, client, contracts, args, options) {
@@ -219,6 +224,19 @@ async function deployToken(keypair, client, contracts, args, options) {
             TokenId: result.events[0].parsedJson.token_id.id,
         },
     };
+
+    // Mint Token
+    const mintTxBuilder = new TxBuilder(client);
+
+    const coin = await mintTxBuilder.moveCall({
+        target: `${SUI_PACKAGE_ID}::coin::mint`,
+        arguments: [TreasuryCap, getUnitAmount('1000', decimals)],
+        typeArguments: [tokenType],
+    });
+
+    mintTxBuilder.tx.transferObjects([coin], walletAddress);
+
+    await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted 1,000 ${symbol}`);
 }
 
 async function sendTokenDeployment(keypair, client, contracts, args, options) {}
