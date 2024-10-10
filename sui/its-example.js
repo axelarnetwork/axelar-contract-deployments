@@ -163,6 +163,55 @@ async function receiveTokenTransfer(keypair, client, contracts, args, options) {
     await broadcast(client, keypair, tx, 'Call Executed');
 }
 
+async function deployToken(keypair, client, contracts, args, options) {
+    const [symbol, name, decimals] = args;
+
+    const walletAddress = keypair.toSuiAddress();
+    copyMovePackage('interchain_token', null, moveDir);
+    // Define the interchain token options
+    const interchainTokenOptions = {
+        symbol,
+        name,
+        decimals,
+    };
+
+    // Publish the interchain token
+    const txBuilder = new TxBuilder(client);
+
+    const cap = await txBuilder.publishInterchainToken(moveDir, interchainTokenOptions);
+
+    txBuilder.tx.transferObjects([cap], walletAddress);
+
+    const publishTxn = await broadcastFromTxBuilder(txBuilder, keypair, `Published ${symbol}`);
+
+    const publishObject = findPublishedObject(publishTxn);
+
+    const packageId = publishObject.packageId;
+    const tokenType = `${packageId}::${symbol.toLowerCase()}::${symbol.toUpperCase()}`;
+
+    const [TreasuryCap, Metadata] = getObjectIdsByObjectTypes(publishTxn, [`TreasuryCap<${tokenType}>`, `Metadata<${tokenType}>`]);
+
+    // Save the token address and objects in the contracts object.
+    contracts[symbol.toUpperCase()] = {
+        address: packageId,
+        objects: {
+            TreasuryCap,
+            Metadata,
+        },
+    };
+
+    // Register Token in ITS
+    const { Example, ITS } = contracts;
+    const registerTxBuilder = new TxBuilder(client);
+
+    await registerTxBuilder.moveCall({
+        target: `${Example.address}::its::register_coin`,
+        arguments: [ITS.objects.ITS, Metadata],
+        typeArguments: [tokenType],
+    });
+
+    await broadcastFromTxBuilder(registerTxBuilder, keypair, `Registered ${symbol} in ITS`);
+}
 
 async function sendTokenDeployment(keypair, client, contracts, args, options) {}
 
@@ -228,6 +277,14 @@ if (require.main === module) {
             mainProcessor(receiveTokenTransfer, options, [sourceChain, messageId, sourceAddress, payload], processCommand);
         });
 
+    const deployTokenProgram = new Command()
+        .name('deploy-token')
+        .description('Deploy token')
+        .command('deploy-token <symbol> <name> <decimals>')
+        .action((symbol, name, decimals, options) => {
+            mainProcessor(deployToken, options, [symbol, name, decimals], processCommand);
+        });
+
     const sendTokenDeploymentProgram = new Command()
         .name('send-deployment')
         .description('Send token deployment')
@@ -262,6 +319,7 @@ if (require.main === module) {
 
     program.addCommand(sendTokenTransferProgram);
     program.addCommand(receiveTokenTransferProgram);
+    program.addCommand(deployTokenProgram);
     program.addCommand(sendTokenDeploymentProgram);
     program.addCommand(receiveTokenDeploymentProgram);
     program.addCommand(setupTrustedAddressProgram);
