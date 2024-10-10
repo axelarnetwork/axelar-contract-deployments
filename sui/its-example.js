@@ -197,15 +197,6 @@ async function deployToken(keypair, client, contracts, args, options) {
 
     const [TreasuryCap, Metadata] = getObjectIdsByObjectTypes(publishTxn, [`TreasuryCap<${tokenType}>`, `Metadata<${tokenType}>`]);
 
-    // Save the token address and objects in the contracts object.
-    contracts[symbol.toUpperCase()] = {
-        address: packageId,
-        objects: {
-            TreasuryCap,
-            Metadata,
-        },
-    };
-
     // Register Token in ITS
     const { Example, ITS } = contracts;
     const registerTxBuilder = new TxBuilder(client);
@@ -216,7 +207,18 @@ async function deployToken(keypair, client, contracts, args, options) {
         typeArguments: [tokenType],
     });
 
-    await broadcastFromTxBuilder(registerTxBuilder, keypair, `Registered ${symbol} in ITS`);
+    const result = await broadcastFromTxBuilder(registerTxBuilder, keypair, `Registered ${symbol} in ITS`, { showEvents: true });
+
+    // Save the deployed token info in the contracts object.
+    contracts[symbol.toUpperCase()] = {
+        address: packageId,
+        typeArgument: tokenType,
+        objects: {
+            TreasuryCap,
+            Metadata,
+            TokenId: result.events[0].parsedJson.token_id.id,
+        },
+    };
 }
 
 async function sendTokenDeployment(keypair, client, contracts, args, options) {}
