@@ -116,8 +116,8 @@ async function broadcast(client, keypair, tx, actionName) {
     return receipt;
 }
 
-async function broadcastFromTxBuilder(txBuilder, keypair, actionName) {
-    const receipt = await txBuilder.signAndExecute(keypair);
+async function broadcastFromTxBuilder(txBuilder, keypair, actionName, suiResponseOptions) {
+    const receipt = await txBuilder.signAndExecute(keypair, suiResponseOptions);
 
     printInfo(actionName || 'Tx', receipt.digest);
 
