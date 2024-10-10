@@ -207,7 +207,7 @@ if (require.main === module) {
     program.name('ITS').description('SUI ITS scripts');
 
     const sendTokenTransferProgram = new Command()
-        .name('sendToken')
+        .name('send-token')
         .description('Send token')
         .command('sendTokenTransfer <destChain> <destContractAddress> <feeAmount> <payload>')
         .action((destChain, destContractAddress, feeAmount, options) => {
@@ -215,7 +215,7 @@ if (require.main === module) {
         });
 
     const receiveTokenTransferProgram = new Command()
-        .name('receiveToken')
+        .name('receive-token')
         .description('Receive token')
         .command('receiveTokenTransfer <sourceChain> <messageId> <sourceAddress> <payload>')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
@@ -223,7 +223,7 @@ if (require.main === module) {
         });
 
     const sendTokenDeploymentProgram = new Command()
-        .name('sendDeployment')
+        .name('send-deployment')
         .description('Send token deployment')
         .command('sendTokenDeployment <feeAmount> <payload>')
         .action((feeAmount, payload, options) => {
@@ -231,7 +231,7 @@ if (require.main === module) {
         });
 
     const receiveTokenDeploymentProgram = new Command()
-        .name('receiveDeployment')
+        .name('receive-deployment')
         .description('Receive token deployment')
         .command('receiveTokenDeployment <messageId> <sourceAddress> <payload>')
         .action((messageId, sourceAddress, payload, options) => {
@@ -239,7 +239,7 @@ if (require.main === module) {
         });
 
     const setupTrustedAddressProgram = new Command()
-        .name('setupTrustedAddress')
+        .name('setup-trusted-address')
         .description('Setup trusted address')
         .command('setupTrustedAddress <trustedChain> <trustedAddress>')
         .action((trustedChain, trustedAddress, options) => {
@@ -247,7 +247,7 @@ if (require.main === module) {
         });
 
     const mintTokenProgram = new Command()
-        .name('mintToken')
+        .name('mint-token')
         .description('Mint token')
         .command('mintToken <feeAmount> <payload>')
         .action((feeAmount, payload, options) => {
