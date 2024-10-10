@@ -50,6 +50,7 @@ const PACKAGE_DIRS = [
     'governance',
     'its',
     'squid',
+    'interchain_token',
 ];
 
 /**

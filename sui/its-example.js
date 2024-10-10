@@ -1,69 +1,74 @@
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { bcsStructs, CLOCK_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig } = require('../common/utils');
+const { bcsStructs, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
+const { loadConfig, saveConfig, printInfo } = require('../common/utils');
 const {
     getBcsBytesByObjectId,
     addBaseOptions,
     addOptionsToCommands,
     getUnitAmount,
     getWallet,
+    findPublishedObject,
     printWalletInfo,
     broadcast,
+    getObjectIdsByObjectTypes,
     broadcastFromTxBuilder,
+    moveDir,
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify },
 } = ethers;
 
-async function sendTokenTransfer(keypair, client, contracts, args, options) {
-    const [destinationChain, destinationAddress, feeAmount] = args;
+async function sendToken(keypair, client, contracts, args, options) {
+    const [destinationChain, destinationAddress, feeAmount, amount] = args;
 
-    const [exampleConfig, gasServiceConfig, gatewayConfig, itsConfig] = contracts;
+    const { Example, GasService, AxelarGateway, ITS } = contracts;
 
-    const unitAmount = getUnitAmount(feeAmount);
+    const unitAmount = getUnitAmount(amount);
+    const unitFeeAmount = getUnitAmount(feeAmount);
     const walletAddress = keypair.toSuiAddress();
-    const refundAddress = options.refundAddress || walletAddress;
 
     const objectIds = {
-        singleton: exampleConfig.objects.ItsSingleton,
-        its: itsConfig.objects.ITS,
-        gateway: gatewayConfig.objects.Gateway,
-        gasService: gasServiceConfig.objects.GasService,
+        singleton: Example.objects.ItsSingleton,
+        its: ITS.objects.ITS,
+        gateway: AxelarGateway.objects.Gateway,
+        gasService: GasService.objects.GasService,
     };
 
-    const tx = new Transaction();
+    const txBuilder = new TxBuilder(client);
+
+    const tx = txBuilder.tx;
 
     const coin = tx.splitCoins(objectIds.token, [unitAmount]);
-    const gas = tx.splitCoins(tx.gas, [1e8]);
+    const gas = tx.splitCoins(tx.gas, [unitFeeAmount]);
 
-    const TokenId = tx.moveCall({
-        target: `${itsConfig.address}::token_id::from_u256`,
+    const TokenId = await txBuilder.moveCall({
+        target: `${ITS.address}::token_id::from_u256`,
         arguments: [objectIds.tokenId],
     });
 
-    tx.moveCall({
-        target: `${exampleConfig.address}::its::send_interchain_transfer_call`,
+    await txBuilder.moveCall({
+        target: `${Example.address}::its::send_interchain_transfer_call`,
         arguments: [
-            tx.object(objectIds.singleton),
-            tx.object(objectIds.its),
-            tx.object(objectIds.gateway),
-            tx.object(objectIds.gasService),
+            objectIds.singleton,
+            objectIds.its,
+            objectIds.gateway,
+            objectIds.gasService,
             TokenId,
             coin,
-            tx.pure(bcs.string().serialize(destinationChain).toBytes()),
-            tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
+            destinationChain,
+            destinationAddress,
             '0x', // its token metadata
-            tx.pure.address(walletAddress),
+            walletAddress,
             gas,
             '0x', // gas params
             CLOCK_PACKAGE_ID,
         ],
     });
 
-    await broadcast(client, keypair, tx, 'Call Sent');
+    await broadcastFromTxBuilder(txBuilder, keypair, 'Token Sent');
 }
 
 async function receiveTokenTransfer(keypair, client, contracts, args, options) {
@@ -158,6 +163,7 @@ async function receiveTokenTransfer(keypair, client, contracts, args, options) {
     await broadcast(client, keypair, tx, 'Call Executed');
 }
 
+
 async function sendTokenDeployment(keypair, client, contracts, args, options) {}
 
 async function receiveTokenDeployment(keypair, client, contracts, args, options) {}
@@ -165,7 +171,7 @@ async function receiveTokenDeployment(keypair, client, contracts, args, options)
 async function setupTrustedAddress(keypair, client, contracts, args, options) {
     const [trustedChain, trustedAddress] = args;
 
-    const [, , , itsConfig] = contracts;
+    const { ITS: itsConfig } = contracts;
 
     const { OwnerCap, ITS } = itsConfig.objects;
 
@@ -191,9 +197,9 @@ async function processCommand(command, chain, args, options) {
 
     await printWalletInfo(keypair, client, chain, options);
 
-    const contracts = [chain.contracts.Example, chain.contracts.GasService, chain.contracts.AxelarGateway, chain.contracts.ITS];
+    //const contracts = [chain.contracts.Example, chain.contracts.GasService, chain.contracts.AxelarGateway, chain.contracts.ITS];
 
-    await command(keypair, client, contracts, args, options);
+    await command(keypair, client, chain.contracts, args, options);
 }
 
 async function mainProcessor(command, options, args, processor) {
@@ -209,15 +215,15 @@ if (require.main === module) {
     const sendTokenTransferProgram = new Command()
         .name('send-token')
         .description('Send token')
-        .command('sendTokenTransfer <destChain> <destContractAddress> <feeAmount> <payload>')
-        .action((destChain, destContractAddress, feeAmount, options) => {
-            mainProcessor(sendTokenTransfer, options, [destChain, destContractAddress, feeAmount], processCommand);
+        .command('send-token <dest-chain> <dest-contract-address> <fee> <amount>')
+        .action((destChain, destContractAddress, feeAmount, amount, options) => {
+            mainProcessor(sendToken, options, [destChain, destContractAddress, feeAmount, amount], processCommand);
         });
 
     const receiveTokenTransferProgram = new Command()
         .name('receive-token')
         .description('Receive token')
-        .command('receiveTokenTransfer <sourceChain> <messageId> <sourceAddress> <payload>')
+        .command('receive-token <source-chain> <message-id> <source-address> <payload>')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
             mainProcessor(receiveTokenTransfer, options, [sourceChain, messageId, sourceAddress, payload], processCommand);
         });
@@ -225,7 +231,7 @@ if (require.main === module) {
     const sendTokenDeploymentProgram = new Command()
         .name('send-deployment')
         .description('Send token deployment')
-        .command('sendTokenDeployment <feeAmount> <payload>')
+        .command('send-deployment  <payload>')
         .action((feeAmount, payload, options) => {
             mainProcessor(sendTokenDeployment, options, [feeAmount, payload], processCommand);
         });
@@ -233,7 +239,7 @@ if (require.main === module) {
     const receiveTokenDeploymentProgram = new Command()
         .name('receive-deployment')
         .description('Receive token deployment')
-        .command('receiveTokenDeployment <messageId> <sourceAddress> <payload>')
+        .command('receive-deployment <message-id> <source-address> <payload>')
         .action((messageId, sourceAddress, payload, options) => {
             mainProcessor(receiveTokenDeployment, options, [messageId, sourceAddress, payload], processCommand);
         });
@@ -241,7 +247,7 @@ if (require.main === module) {
     const setupTrustedAddressProgram = new Command()
         .name('setup-trusted-address')
         .description('Setup trusted address')
-        .command('setupTrustedAddress <trustedChain> <trustedAddress>')
+        .command('setup-trusted-address <trusted-chain> <trusted-address>')
         .action((trustedChain, trustedAddress, options) => {
             mainProcessor(setupTrustedAddress, options, [trustedChain, trustedAddress], processCommand);
         });
@@ -249,7 +255,7 @@ if (require.main === module) {
     const mintTokenProgram = new Command()
         .name('mint-token')
         .description('Mint token')
-        .command('mintToken <feeAmount> <payload>')
+        .command('mint-token <feeAmount> <payload>')
         .action((feeAmount, payload, options) => {
             mainProcessor(mintToken, options, [feeAmount, payload], processCommand);
         });

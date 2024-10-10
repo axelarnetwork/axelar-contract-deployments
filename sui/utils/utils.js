@@ -67,15 +67,14 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
     await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), moveDir);
     const publishTxn = await builder.signAndExecute(keypair);
 
-    const packageId = (publishTxn.objectChanges?.find((a) => a.type === 'published') ?? []).packageId;
+    const packageId = (findPublishedObject(publishTxn) ?? []).packageId;
 
     updateMoveToml(packageName, packageId, moveDir);
     return { packageId, publishTxn };
 };
 
-const findPublishedObject = (published, packageDir, contractName) => {
-    const packageId = published.packageId;
-    return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageDir}::${contractName}`);
+const findPublishedObject = (publishTxn) => {
+    return publishTxn.objectChanges.find((change) => change.type === 'published');
 };
 
 const checkSuiVersionMatch = () => {
