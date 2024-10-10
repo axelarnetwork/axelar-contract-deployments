@@ -1,7 +1,7 @@
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { bcsStructs, CLOCK_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig } = require('../common/utils');
 const {
     getBcsBytesByObjectId,
@@ -11,6 +11,7 @@ const {
     getWallet,
     printWalletInfo,
     broadcast,
+    broadcastFromTxBuilder,
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
@@ -18,31 +19,47 @@ const {
 } = ethers;
 
 async function sendTokenTransfer(keypair, client, contracts, args, options) {
-    const [destinationChain, destinationAddress, feeAmount, payload] = args;
-    const params = options.params;
+    const [destinationChain, destinationAddress, feeAmount] = args;
 
-    const [exampleConfig, gasServiceConfig] = contracts;
-    const gasServiceObjectId = gasServiceConfig.objects.GasService;
-    const singletonObjectId = exampleConfig.objects.Singleton;
+    const [exampleConfig, gasServiceConfig, gatewayConfig, itsConfig] = contracts;
 
     const unitAmount = getUnitAmount(feeAmount);
     const walletAddress = keypair.toSuiAddress();
     const refundAddress = options.refundAddress || walletAddress;
 
+    const objectIds = {
+        singleton: exampleConfig.objects.ItsSingleton,
+        its: itsConfig.objects.ITS,
+        gateway: gatewayConfig.objects.Gateway,
+        gasService: gasServiceConfig.objects.GasService,
+    };
+
     const tx = new Transaction();
-    const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
+
+    const coin = tx.splitCoins(objectIds.token, [unitAmount]);
+    const gas = tx.splitCoins(tx.gas, [1e8]);
+
+    const TokenId = tx.moveCall({
+        target: `${itsConfig.address}::token_id::from_u256`,
+        arguments: [objectIds.tokenId],
+    });
 
     tx.moveCall({
-        target: `${exampleConfig.address}::gmp::send_call`,
+        target: `${exampleConfig.address}::its::send_interchain_transfer_call`,
         arguments: [
-            tx.object(singletonObjectId),
-            tx.object(gasServiceObjectId),
+            tx.object(objectIds.singleton),
+            tx.object(objectIds.its),
+            tx.object(objectIds.gateway),
+            tx.object(objectIds.gasService),
+            TokenId,
+            coin,
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
             tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
-            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
-            tx.pure.address(refundAddress),
-            coin,
-            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()),
+            '0x', // its token metadata
+            tx.pure.address(walletAddress),
+            gas,
+            '0x', // gas params
+            CLOCK_PACKAGE_ID,
         ],
     });
 
@@ -166,6 +183,7 @@ async function setupTrustedAddress(keypair, client, contracts, args, options) {
 
     await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
 }
+
 async function mintToken(keypair, client, contracts, args, options) {}
 
 async function processCommand(command, chain, args, options) {
@@ -173,7 +191,7 @@ async function processCommand(command, chain, args, options) {
 
     await printWalletInfo(keypair, client, chain, options);
 
-    const contracts = [chain.contracts.Example, chain.contracts.GasService, chain.contracts.AxelarGateway];
+    const contracts = [chain.contracts.Example, chain.contracts.GasService, chain.contracts.AxelarGateway, chain.contracts.ITS];
 
     await command(keypair, client, contracts, args, options);
 }
@@ -189,24 +207,23 @@ if (require.main === module) {
     program.name('GMP').description('Example of SUI ITS commands');
 
     const sendTokenTransferProgram = new Command()
-        .name('sendTokenTransfer')
-        .description('Send token transfer')
+        .name('sendToken')
+        .description('Send token')
         .command('sendTokenTransfer <destChain> <destContractAddress> <feeAmount> <payload>')
-        .option('--params <params>', 'GMP call params. Default is empty.', '0x')
-        .action((destChain, destContractAddress, feeAmount, payload, options) => {
-            mainProcessor(sendTokenTransfer, options, [destChain, destContractAddress, feeAmount, payload], processCommand);
+        .action((destChain, destContractAddress, feeAmount, options) => {
+            mainProcessor(sendTokenTransfer, options, [destChain, destContractAddress, feeAmount], processCommand);
         });
 
     const receiveTokenTransferProgram = new Command()
-        .name('receiveTokenTransfer')
-        .description('Receive token transfer')
+        .name('receiveToken')
+        .description('Receive token')
         .command('receiveTokenTransfer <sourceChain> <messageId> <sourceAddress> <payload>')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
             mainProcessor(receiveTokenTransfer, options, [sourceChain, messageId, sourceAddress, payload], processCommand);
         });
 
     const sendTokenDeploymentProgram = new Command()
-        .name('sendTokenDeployment')
+        .name('sendDeployment')
         .description('Send token deployment')
         .command('sendTokenDeployment <feeAmount> <payload>')
         .action((feeAmount, payload, options) => {
@@ -214,7 +231,7 @@ if (require.main === module) {
         });
 
     const receiveTokenDeploymentProgram = new Command()
-        .name('receiveTokenDeployment')
+        .name('receiveDeployment')
         .description('Receive token deployment')
         .command('receiveTokenDeployment <messageId> <sourceAddress> <payload>')
         .action((messageId, sourceAddress, payload, options) => {
