@@ -49,7 +49,7 @@ impl VerifierSet {
     }
 
     pub fn signers(&self) -> &Signers {
-        self.signers.inner_map()
+        &self.signers
     }
 
     pub fn quorum(&self) -> &U128 {

@@ -9,6 +9,7 @@
 //! See original issue for more information: https://github.com/eigerco/solana-axelar-internal/issues/361
 
 use std::collections::BTreeMap;
+use std::ops::{Deref, DerefMut};
 
 use rkyv::bytecheck::{self, CheckBytes};
 use rkyv::collections::ArchivedBTreeMap;
@@ -37,21 +38,15 @@ impl HasheableMessageVec {
         }
     }
 
-    pub fn as_slice(&self) -> &[Message] {
-        self.inner_vec.as_slice()
-    }
-
     pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
+}
+impl Deref for HasheableMessageVec {
+    type Target = [Message];
 
-    #[allow(dead_code)]
-    pub(crate) fn inner_vec(self) -> Vec<Message> {
-        self.inner_vec
-    }
-
-    pub fn iter(&self) -> std::slice::Iter<Message> {
-        self.inner_vec.iter()
+    fn deref(&self) -> &Self::Target {
+        &self.inner_vec
     }
 }
 
@@ -81,9 +76,13 @@ impl ArchivedHasheableMessageVec {
     pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
+}
 
-    pub fn iter(&self) -> std::slice::Iter<'_, ArchivedMessage> {
-        self.inner_vec.iter()
+impl Deref for ArchivedHasheableMessageVec {
+    type Target = ArchivedVec<ArchivedMessage>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner_vec
     }
 }
 
@@ -104,32 +103,16 @@ impl HasheableSignersBTreeMap {
         }
     }
 
-    pub fn len(&self) -> usize {
-        self.inner_map.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.inner_map.is_empty()
-    }
-
     pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
+}
 
-    pub fn keys(&self) -> std::collections::btree_map::Keys<PublicKey, U128> {
-        self.inner_map.keys()
-    }
+impl Deref for HasheableSignersBTreeMap {
+    type Target = BTreeMap<PublicKey, U128>;
 
-    pub fn values(&self) -> std::collections::btree_map::Values<PublicKey, U128> {
-        self.inner_map.values()
-    }
-
-    pub(crate) fn inner_map(&self) -> &BTreeMap<PublicKey, U128> {
+    fn deref(&self) -> &Self::Target {
         &self.inner_map
-    }
-
-    pub fn iter(&self) -> std::collections::btree_map::Iter<PublicKey, U128> {
-        self.inner_map.iter()
     }
 }
 
@@ -141,33 +124,16 @@ impl ArchivedHasheableSignersBTreeMap {
         }
     }
 
-    pub fn len(&self) -> usize {
-        self.inner_map.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.inner_map.is_empty()
-    }
-
     pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
+}
 
-    pub fn keys(&self) -> rkyv::collections::btree_map::Keys<ArchivedPublicKey, ArchivedU128> {
-        self.inner_map.keys()
-    }
+impl Deref for ArchivedHasheableSignersBTreeMap {
+    type Target = ArchivedBTreeMap<ArchivedPublicKey, ArchivedU128>;
 
-    pub fn values(&self) -> rkyv::collections::btree_map::Values<ArchivedPublicKey, ArchivedU128> {
-        self.inner_map.values()
-    }
-
-    #[allow(dead_code)]
-    pub(crate) fn inner_map(&self) -> &ArchivedBTreeMap<ArchivedPublicKey, ArchivedU128> {
+    fn deref(&self) -> &Self::Target {
         &self.inner_map
-    }
-
-    pub fn iter(&self) -> rkyv::collections::btree_map::Iter<'_, ArchivedPublicKey, ArchivedU128> {
-        self.inner_map.iter()
     }
 }
 
@@ -188,38 +154,23 @@ impl HasheableSignersWithSignaturesBTreeMap {
         }
     }
 
-    pub fn len(&self) -> usize {
-        self.inner_map.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.inner_map.is_empty()
-    }
-
     pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
+}
 
-    pub fn keys(&self) -> std::collections::btree_map::Keys<PublicKey, WeightedSigner> {
-        self.inner_map.keys()
-    }
+impl Deref for HasheableSignersWithSignaturesBTreeMap {
+    type Target = BTreeMap<PublicKey, WeightedSigner>;
 
-    pub fn values(&self) -> std::collections::btree_map::Values<PublicKey, WeightedSigner> {
-        self.inner_map.values()
-    }
-
-    #[allow(dead_code)]
-    pub(crate) fn inner_map(&self) -> &BTreeMap<PublicKey, WeightedSigner> {
+    fn deref(&self) -> &Self::Target {
         &self.inner_map
     }
+}
 
-    #[cfg(any(test, feature = "test-fixtures"))]
-    pub fn mut_inner_map(&mut self) -> &mut BTreeMap<PublicKey, WeightedSigner> {
+#[cfg(any(test, feature = "test-fixtures"))]
+impl DerefMut for HasheableSignersWithSignaturesBTreeMap {
+    fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner_map
-    }
-
-    pub fn iter(&self) -> std::collections::btree_map::Iter<PublicKey, WeightedSigner> {
-        self.inner_map.iter()
     }
 }
 
@@ -231,37 +182,15 @@ impl ArchivedHasheableSignersWithSignaturesBTreeMap {
         }
     }
 
-    pub fn len(&self) -> usize {
-        self.inner_map.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.inner_map.is_empty()
-    }
-
     pub fn len_le_bytes(&self) -> &[u8; 4] {
         &self.len_le_bytes
     }
+}
 
-    pub fn keys(
-        &self,
-    ) -> rkyv::collections::btree_map::Keys<ArchivedPublicKey, ArchivedWeightedSigner> {
-        self.inner_map.keys()
-    }
+impl Deref for ArchivedHasheableSignersWithSignaturesBTreeMap {
+    type Target = ArchivedBTreeMap<ArchivedPublicKey, ArchivedWeightedSigner>;
 
-    pub fn values(
-        &self,
-    ) -> rkyv::collections::btree_map::Values<ArchivedPublicKey, ArchivedWeightedSigner> {
-        self.inner_map.values()
-    }
-
-    pub(crate) fn inner_map(&self) -> &ArchivedBTreeMap<ArchivedPublicKey, ArchivedWeightedSigner> {
+    fn deref(&self) -> &Self::Target {
         &self.inner_map
-    }
-
-    pub fn iter(
-        &self,
-    ) -> rkyv::collections::btree_map::Iter<'_, ArchivedPublicKey, ArchivedWeightedSigner> {
-        self.inner_map.iter()
     }
 }

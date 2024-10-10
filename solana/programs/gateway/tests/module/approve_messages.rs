@@ -677,7 +677,6 @@ async fn fail_if_invalid_signatures() {
     if let Some(x) = ex
         .proof
         .signers_with_signatures
-        .mut_inner_map()
         .iter_mut()
         .next()
         .unwrap()

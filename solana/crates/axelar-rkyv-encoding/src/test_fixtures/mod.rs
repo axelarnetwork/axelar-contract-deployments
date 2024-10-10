@@ -217,7 +217,7 @@ pub fn random_valid_execute_data_and_verifier_set_for_payload(
         .iter()
         .map(|(pubkey, signing_key)| {
             let signature = signing_key.sign(&original_payload_hash);
-            let weight = verifier_set.signers.inner_map().get(pubkey).unwrap();
+            let weight = verifier_set.signers.get(pubkey).unwrap();
             (*pubkey, WeightedSigner::new(Some(signature), *weight))
         })
         .collect();
@@ -251,7 +251,6 @@ pub fn random_execute_data_and_verifier_set_for_payload_with_invalid_signatures(
     let signature_bytes: &mut [u8] = match &mut execute_data
         .proof
         .signers_with_signatures
-        .mut_inner_map()
         .values_mut()
         .next()
         .unwrap()

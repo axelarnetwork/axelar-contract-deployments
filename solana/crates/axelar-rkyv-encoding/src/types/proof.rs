@@ -144,7 +144,7 @@ impl ArchivedProof {
     pub fn signers_with_signatures(
         &self,
     ) -> &ArchivedBTreeMap<ArchivedPublicKey, ArchivedWeightedSigner> {
-        self.signers_with_signatures.inner_map()
+        &self.signers_with_signatures
     }
 
     pub fn nonce_le_bytes(&self) -> &[u8; 8] {
