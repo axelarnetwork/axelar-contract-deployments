@@ -145,6 +145,27 @@ async function sendTokenDeployment(keypair, client, contracts, args, options) {}
 
 async function receiveTokenDeployment(keypair, client, contracts, args, options) {}
 
+async function setupTrustedAddress(keypair, client, contracts, args, options) {
+    const [trustedChain, trustedAddress] = args;
+
+    const [, , , itsConfig] = contracts;
+
+    const { OwnerCap, ITS } = itsConfig.objects;
+
+    const txBuilder = new TxBuilder(client);
+
+    const trustedAddressesObject = await txBuilder.moveCall({
+        target: `${itsConfig.address}::trusted_addresses::new`,
+        arguments: [[trustedChain], [trustedAddress]],
+    });
+
+    await txBuilder.moveCall({
+        target: `${itsConfig.address}::its::set_trusted_addresses`,
+        arguments: [ITS, OwnerCap, trustedAddressesObject],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
+}
 async function mintToken(keypair, client, contracts, args, options) {}
 
 async function processCommand(command, chain, args, options) {
@@ -200,6 +221,14 @@ if (require.main === module) {
             mainProcessor(receiveTokenDeployment, options, [messageId, sourceAddress, payload], processCommand);
         });
 
+    const setupTrustedAddressProgram = new Command()
+        .name('setupTrustedAddress')
+        .description('Setup trusted address')
+        .command('setupTrustedAddress <trustedChain> <trustedAddress>')
+        .action((trustedChain, trustedAddress, options) => {
+            mainProcessor(setupTrustedAddress, options, [trustedChain, trustedAddress], processCommand);
+        });
+
     const mintTokenProgram = new Command()
         .name('mintToken')
         .description('Mint token')
@@ -212,6 +241,7 @@ if (require.main === module) {
     program.addCommand(receiveTokenTransferProgram);
     program.addCommand(sendTokenDeploymentProgram);
     program.addCommand(receiveTokenDeploymentProgram);
+    program.addCommand(setupTrustedAddressProgram);
     program.addCommand(mintTokenProgram);
 
     addOptionsToCommands(program, addBaseOptions);
