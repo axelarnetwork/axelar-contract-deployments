@@ -22,9 +22,14 @@ const {
 } = ethers;
 
 async function sendToken(keypair, client, contracts, args, options) {
-    const [destinationChain, destinationAddress, feeAmount, amount] = args;
+    const [symbol, destinationChain, destinationAddress, feeAmount, amount] = args;
 
     const { Example, GasService, AxelarGateway, ITS } = contracts;
+    const ItsToken = contracts[symbol.toUpperCase()];
+
+    if (!ItsToken) {
+        throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
+    }
 
     const unitAmount = getUnitAmount(amount);
     const unitFeeAmount = getUnitAmount(feeAmount);
@@ -66,6 +71,7 @@ async function sendToken(keypair, client, contracts, args, options) {
             '0x', // gas params
             CLOCK_PACKAGE_ID,
         ],
+        typeArguments: [ItsToken.typeArgument],
     });
 
     await broadcastFromTxBuilder(txBuilder, keypair, 'Token Sent');
@@ -264,9 +270,9 @@ if (require.main === module) {
     const sendTokenTransferProgram = new Command()
         .name('send-token')
         .description('Send token')
-        .command('send-token <dest-chain> <dest-contract-address> <fee> <amount>')
-        .action((destChain, destContractAddress, feeAmount, amount, options) => {
-            mainProcessor(sendToken, options, [destChain, destContractAddress, feeAmount, amount], processCommand);
+        .command('send-token <symbol> <dest-chain> <dest-contract-address> <fee> <amount>')
+        .action((symbol, destChain, destContractAddress, feeAmount, amount, options) => {
+            mainProcessor(sendToken, options, [symbol, destChain, destContractAddress, feeAmount, amount], processCommand);
         });
 
     const receiveTokenTransferProgram = new Command()
