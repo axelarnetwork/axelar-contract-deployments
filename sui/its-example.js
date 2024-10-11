@@ -9,7 +9,7 @@ const {
 } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, printInfo } = require('../common/utils');
 const {
-    getBcsBytesByObjectId,
+    parseExecuteDataFromTransaction,
     addBaseOptions,
     addOptionsToCommands,
     getUnitAmount,
@@ -132,17 +132,6 @@ async function receiveToken(keypair, client, contracts, args, options) {
         throw new Error(`Transaction not found for channel ${channelId}`);
     }
 
-    // Get the transaction object from the object id
-    const txObject = await client.getObject({
-        id: transaction.objectId,
-        options: {
-            showContent: true,
-        },
-    });
-
-    // Extract the fields from the transaction object
-    const txFields = txObject.data.content.fields.value.fields.move_calls[0].fields;
-
     const receiveTxBuilder = new TxBuilder(client);
 
     // Take the approved message from the gateway contract.
@@ -151,28 +140,7 @@ async function receiveToken(keypair, client, contracts, args, options) {
         arguments: [gatewayObjectId, sourceChain, messageId, sourceAddress, itsChannelId, payload],
     });
 
-    const { module_name: moduleName, name, package_id: packageId } = txFields.function.fields;
-
-    // Build the arguments for the move call
-    // There're 5 types of arguments as mentioned in the following link https://github.com/axelarnetwork/axelar-cgp-sui/blob/72579e5c7735da61d215bd712627edad562cb82a/src/bcs.ts#L44-L49
-    const txArgs = txFields.arguments.map(([argType, ...arg]) => {
-        if (argType === 0) {
-            return '0x' + Buffer.from(arg).toString('hex');
-        } else if (argType === 1) {
-            // TODO: handle pures followed by the bcs encoded form of the pure
-            // throw new Error('Not implemented yet');
-        } else if (argType === 2) {
-            return approvedMessage;
-        } else if (argType === 3) {
-            // TODO: handle the payload of the contract call (to be passed into the intermediate function)
-            throw new Error('Not implemented yet');
-        } else if (argType === 4) {
-            // TODO: handle an argument returned from a previous move call, followed by a u8 specified which call to get the return of (0 for the first transaction AFTER the one that gets ApprovedMessage out), and then another u8 specifying which argument to input.
-            throw new Error('Not implemented yet');
-        }
-
-        throw new Error(`Unknown argument type: ${argType}`);
-    });
+    const { moduleName, name, packageId, txArgs } = await parseExecuteDataFromTransaction(client, transaction, approvedMessage);
 
     // Execute the move call dynamically based on the transaction object
     await receiveTxBuilder.moveCall({
