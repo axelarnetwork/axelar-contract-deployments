@@ -5,7 +5,7 @@ use std::error::Error;
 use axelar_message_primitives::DestinationProgramId;
 use axelar_rkyv_encoding::types::GmpMetadata;
 use gateway::hasher_impl;
-use interchain_token_transfer_gmp::GMPPayload;
+use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use rkyv::bytecheck::EnumCheckError;
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
@@ -13,6 +13,9 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
+use spl_associated_token_account::get_associated_token_address_with_program_id;
+
+use crate::state::token_manager;
 
 /// Instructions supported by the multicall program.
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
@@ -23,9 +26,9 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// Accounts expected by this instruction:
     ///
-    /// 0. [signer] The address of payer / sender
+    /// 0. [writeable,signer] The address of payer / sender
     /// 1. [] gateway root pda
-    /// 2. [] ITS root pda
+    /// 2. [writeable] ITS root pda
     /// 3. [] system program id
     Initialize {
         /// The pda bump for the ITS root PDA
@@ -34,7 +37,7 @@ pub enum InterchainTokenServiceInstruction {
 
     /// A GMP Interchain Token Service instruction.
     ///
-    /// 0. [signer] The address of payer / sender
+    /// 0. [writeable,signer] The address of payer / sender
     /// 1. [] gateway root pda
     /// 2. [] ITS root pda
     /// 3..N Accounts depend on the inner ITS instruction.
@@ -173,11 +176,44 @@ fn derive_its_accounts(
 ) -> Result<Vec<AccountMeta>, ProgramError> {
     match GMPPayload::decode(abi_payload) {
         Ok(GMPPayload::InterchainTransfer(_transfer_data)) => Ok(vec![]),
-        Ok(GMPPayload::DeployTokenManager(token_manager_data)) => Ok(vec![AccountMeta::new(
-            crate::token_manager_pda(its_root_pda, &token_manager_data.token_id.0).0,
-            false,
-        )]),
+        Ok(GMPPayload::DeployTokenManager(message)) => {
+            derive_deploy_token_manager_accounts(its_root_pda, &message)
+        }
         Ok(GMPPayload::DeployInterchainToken(_interchain_token_data)) => Ok(vec![]),
         Err(_) => Err(ProgramError::InvalidInstructionData),
     }
+}
+
+fn derive_deploy_token_manager_accounts(
+    its_root_pda: &Pubkey,
+    message: &DeployTokenManager,
+) -> Result<Vec<AccountMeta>, ProgramError> {
+    let token_id = Pubkey::new_from_array(message.token_id.0);
+    let (token_manager_pda, _) = crate::token_manager_pda(its_root_pda, token_id.as_ref());
+
+    let token_mint = token_manager::decode_params(message.params.as_ref())
+        .map(|(_, token_mint)| Pubkey::try_from(token_mint.as_ref()))?
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    let token_manager_ata = get_associated_token_address_with_program_id(
+        &token_manager_pda,
+        &token_mint,
+        &spl_token::id(),
+    );
+
+    let token_manager_ata_2022 = get_associated_token_address_with_program_id(
+        &token_manager_pda,
+        &token_mint,
+        &spl_token_2022::id(),
+    );
+
+    Ok(vec![
+        AccountMeta::new(token_manager_pda, false),
+        AccountMeta::new(token_mint, false),
+        AccountMeta::new(token_manager_ata, false),
+        AccountMeta::new(token_manager_ata_2022, false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(spl_token_2022::id(), false),
+        AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+    ])
 }

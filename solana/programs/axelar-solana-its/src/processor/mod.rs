@@ -73,7 +73,6 @@ impl Processor {
                         msg!("Token ID: {:?}", deploy_interchain_token.token_id);
                     }
                     GMPPayload::DeployTokenManager(deploy_token_manager) => {
-                        msg!("Received DeployTokenManager message");
                         token_manager::process_deploy(
                             payer,
                             instruction_accounts,

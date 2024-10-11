@@ -34,7 +34,7 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::signers::Signers;
 use solana_sdk::transaction::Transaction;
-use spl_token::state::Mint;
+use spl_token_2022::state::Mint;
 pub use {connection_router, interchain_token_transfer_gmp};
 
 use crate::account::CheckValidPDAInTests;
@@ -374,7 +374,11 @@ impl TestFixture {
         gateway_config_pda
     }
 
-    pub async fn init_new_mint(&mut self, mint_authority: Pubkey) -> Pubkey {
+    pub async fn init_new_mint(
+        &mut self,
+        mint_authority: Pubkey,
+        token_program_id: Pubkey,
+    ) -> Pubkey {
         let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
         let mint_account = Keypair::new();
         let rent = self.banks_client.get_rent().await.unwrap();
@@ -386,10 +390,10 @@ impl TestFixture {
                     &mint_account.pubkey(),
                     rent.minimum_balance(Mint::LEN),
                     Mint::LEN as u64,
-                    &spl_token::id(),
+                    &token_program_id,
                 ),
-                spl_token::instruction::initialize_mint(
-                    &spl_token::id(),
+                spl_token_2022::instruction::initialize_mint(
+                    &token_program_id,
                     &mint_account.pubkey(),
                     &mint_authority,
                     None,
@@ -415,10 +419,11 @@ impl TestFixture {
         to: Pubkey,
         mint_authority: Keypair,
         amount: u64,
+        token_program_id: Pubkey,
     ) {
         let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
-        let ix = spl_token::instruction::mint_to(
-            &spl_token::id(),
+        let ix = spl_token_2022::instruction::mint_to(
+            &token_program_id,
             &mint,
             &to,
             &mint_authority.pubkey(),

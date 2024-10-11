@@ -3,7 +3,8 @@
 
 use core::mem::size_of;
 
-use alloy_primitives::U256;
+use alloy_primitives::{Bytes, FixedBytes, U256};
+use alloy_sol_types::SolValue;
 use axelar_rkyv_encoding::types::PublicKey;
 use rkyv::{Archive, Deserialize, Serialize};
 use solana_program::program_error::ProgramError;
@@ -14,6 +15,8 @@ use solana_program::program_error::ProgramError;
 /// Each of these types correspond to an enum value. When deploying a token
 /// manager developers must pass in the corresponding value for their desired
 /// token manager type.
+///
+/// NOTE: The Gateway token manager type is not supported on Solana.
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq))]
@@ -56,6 +59,8 @@ pub enum Type {
     /// when it is bridged back. The key feature with this token manager is
     /// that you have the option to set a fee that will be deducted when
     /// executing an `interchainTransfer`.
+    ///
+    /// This token type is currently not supported.
     LockUnlockFee,
 
     /// The mint/burn token manager type is the most common token manager type
@@ -65,11 +70,6 @@ pub enum Type {
     /// manager will need to be granted the role to be able to execute the
     /// `mint` and `burn` function on the token.
     MintBurn,
-
-    /// For tokens that will be connected with the Axelar Gateway this Gateway
-    /// manager type is also available. It will allow tokens to be sent
-    /// cross-chain via the `callContractWithToken` function.
-    Gateway,
 }
 
 impl TryFrom<U256> for Type {
@@ -86,7 +86,6 @@ impl TryFrom<U256> for Type {
             2 => Self::LockUnlock,
             3 => Self::LockUnlockFee,
             4 => Self::MintBurn,
-            5 => Self::Gateway,
             _ => return Err(ProgramError::InvalidInstructionData),
         };
 
@@ -113,6 +112,13 @@ pub struct TokenManager {
 
     /// The token manager PDA bump seed.
     pub bump: u8,
+
+    /// The list of operators that are allowed to manage the flow limiters.
+    pub operators: Vec<PublicKey>,
+
+    /// The list of accounts that are allowed to request the `TokenManager` to
+    /// mint tokens.
+    pub minters: Option<Vec<PublicKey>>,
 }
 
 impl TokenManager {
@@ -131,6 +137,8 @@ impl TokenManager {
         token_address: PublicKey,
         associated_token_account: PublicKey,
         bump: u8,
+        operators: Vec<PublicKey>,
+        minters: Option<Vec<PublicKey>>,
     ) -> Self {
         Self {
             ty,
@@ -138,6 +146,34 @@ impl TokenManager {
             token_address,
             associated_token_account,
             bump,
+            operators,
+            minters,
         }
     }
+}
+
+/// Decodes the operator and token address from the given data.
+///
+/// The counterpart on EVM is implemented [here](https://github.com/axelarnetwork/interchain-token-service/blob/main/contracts/token-manager/TokenManager.sol#L191).
+///
+/// # Errors
+///
+/// If the data cannot be decoded.
+pub fn decode_params(data: &[u8]) -> Result<(Option<PublicKey>, PublicKey), ProgramError> {
+    let (operator_bytes, token_address) = <(Bytes, FixedBytes<32>)>::abi_decode(data, true)
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    if operator_bytes.is_empty() {
+        return Ok((None, PublicKey::new_ed25519(token_address.0)));
+    }
+
+    let operator = operator_bytes
+        .as_ref()
+        .try_into()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    Ok((
+        Some(PublicKey::new_ed25519(operator)),
+        PublicKey::new_ed25519(token_address.0),
+    ))
 }

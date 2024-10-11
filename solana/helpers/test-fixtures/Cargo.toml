@@ -27,7 +27,7 @@ solana-program-test = { workspace = true }
 
 gas-service = { workspace = true, features = ["no-entrypoint"] }
 gateway = { workspace = true, features = ["no-entrypoint"] }
-spl-token = { workspace = true, features = ["no-entrypoint"] }
+spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
 bincode.workspace = true

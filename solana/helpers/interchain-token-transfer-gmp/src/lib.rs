@@ -70,8 +70,7 @@ sol! {
         bytes32 token_id;
         /// The type of the token manager, look at the [code](https://github.com/axelarnetwork/interchain-token-service/blob/main/contracts/interfaces/ITokenManagerType.sol) for details on EVM, but it could be different for different architectures
         uint256 token_manager_type;
-        /// An address on the destination chain that can mint/burn the deployed
-        /// token on the destination chain, empty for no minter
+        /// The parameters for the token manager deployments, look [here](https://github.com/axelarnetwork/interchain-token-service/blob/92cbbf16569f5eb31587bc2ea12dd5c4b804efbf/contracts/token-manager/TokenManager.sol#L191) for details on EVM chain parameters.
         bytes params;
     }
 }
