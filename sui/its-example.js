@@ -90,19 +90,20 @@ async function sendToken(keypair, client, contracts, args, options) {
 }
 
 async function receiveToken(keypair, client, contracts, args, options) {
-    const { Example, RelayerDiscovery, AxelarGateway, ITS } = contracts;
-
-    const [sourceChain, messageId, sourceAddress, tokenSymbol, amount] = args;
     const itsData = options.data || ethers.constants.HashZero;
+    const { Example, RelayerDiscovery, AxelarGateway, ITS } = contracts;
+    const [sourceChain, messageId, sourceAddress, tokenSymbol, amount] = args;
 
     // Prepare Object Ids
     const symbol = tokenSymbol.toUpperCase();
-    const discoveryObjectId = RelayerDiscovery.objects.RelayerDiscoveryv0;
-    const gatewayObjectId = AxelarGateway.objects.Gateway;
-    const itsChannelId = ITS.objects.ChannelId;
-    const channelId = options.channelId || Example.objects.ItsChannelId;
+    const ids = {
+        discovery: RelayerDiscovery.objects.RelayerDiscoveryv0,
+        gateway: AxelarGateway.objects.Gateway,
+        itsChannel: ITS.objects.ChannelId,
+        exampleChannel: options.channelId || Example.objects.ItsChannelId,
+    };
 
-    if (!channelId) {
+    if (!ids.exampleChannel) {
         throw new Error('Please provide either a channel id (--channelId) or deploy the Example contract');
     }
 
@@ -116,28 +117,24 @@ async function receiveToken(keypair, client, contracts, args, options) {
 
     const payload = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
-        [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, channelId, unitAmount, itsData],
+        [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, ids.exampleChannel, unitAmount, itsData],
     );
 
-    const payloadHash = keccak256(payload);
-    printInfo('Payload Hash', payloadHash);
+    // To check with the payload hash from the approve command for debugging
+    printInfo('Payload Hash', keccak256(payload));
 
     // Get Discovery table id from discovery object
-    const transactionList = await getTransactionList(client, discoveryObjectId);
+    const transactionList = await getTransactionList(client, ids.discovery);
 
     // Find the transaction with associated channel id
-    const transaction = transactionList.find((row) => row.name.value === channelId);
-
-    if (!transaction) {
-        throw new Error(`Transaction not found for channel ${channelId}`);
-    }
+    const transaction = transactionList.find((row) => row.name.value === ids.exampleChannel);
 
     const receiveTxBuilder = new TxBuilder(client);
 
     // Take the approved message from the gateway contract.
     const approvedMessage = await receiveTxBuilder.moveCall({
         target: `${AxelarGateway.address}::gateway::take_approved_message`,
-        arguments: [gatewayObjectId, sourceChain, messageId, sourceAddress, itsChannelId, payload],
+        arguments: [ids.gateway, sourceChain, messageId, sourceAddress, ids.itsChannel, payload],
     });
 
     const { moduleName, name, packageId, txArgs } = await parseExecuteDataFromTransaction(client, transaction, approvedMessage);
