@@ -1,7 +1,12 @@
 const { Command } = require('commander');
-const { Transaction } = require('@mysten/sui/transactions');
-const { bcs } = require('@mysten/sui/bcs');
-const { bcsStructs, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
+const {
+    bcsStructs,
+    ITSMessageType,
+    SUI_PACKAGE_ID,
+    CLOCK_PACKAGE_ID,
+    TxBuilder,
+    copyMovePackage,
+} = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, printInfo } = require('../common/utils');
 const {
     getBcsBytesByObjectId,
@@ -11,14 +16,14 @@ const {
     getWallet,
     findPublishedObject,
     printWalletInfo,
-    broadcast,
     getObjectIdsByObjectTypes,
     broadcastFromTxBuilder,
     moveDir,
+    getTransactionList,
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify },
+    utils: { defaultAbiCoder, keccak256 },
 } = ethers;
 
 async function sendToken(keypair, client, contracts, args, options) {
@@ -31,7 +36,9 @@ async function sendToken(keypair, client, contracts, args, options) {
         throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
     }
 
-    const unitAmount = getUnitAmount(amount);
+    const decimals = ItsToken.decimals;
+
+    const unitAmount = getUnitAmount(amount, decimals);
     const unitFeeAmount = getUnitAmount(feeAmount);
     const walletAddress = keypair.toSuiAddress();
 
@@ -82,31 +89,41 @@ async function sendToken(keypair, client, contracts, args, options) {
     await broadcastFromTxBuilder(txBuilder, keypair, `${amount} ${symbol} Token Sent`);
 }
 
-async function receiveTokenTransfer(keypair, client, contracts, args, options) {
-    const [exampleConfig, , axelarGatewayConfig] = contracts;
+async function receiveToken(keypair, client, contracts, args, options) {
+    const { Example, RelayerDiscovery, AxelarGateway, ITS } = contracts;
 
-    const [sourceChain, messageId, sourceAddress, payload] = args;
+    const [sourceChain, messageId, sourceAddress, tokenSymbol, amount] = args;
+    const itsData = options.data || '0x';
 
-    const gatewayObjectId = axelarGatewayConfig.objects.Gateway;
-    const discoveryObjectId = axelarGatewayConfig.objects.RelayerDiscovery;
-
-    // Get the channel id from the options or use the channel id from the deployed Example contract object.
-    const channelId = options.channelId || exampleConfig.objects.ChannelId;
+    // Prepare Object Ids
+    const symbol = tokenSymbol.toUpperCase();
+    const discoveryObjectId = RelayerDiscovery.objects.RelayerDiscoveryv0;
+    const gatewayObjectId = AxelarGateway.objects.Gateway;
+    const itsChannelId = ITS.objects.ChannelId;
+    const channelId = options.channelId || Example.objects.ItsChannelId;
 
     if (!channelId) {
         throw new Error('Please provide either a channel id (--channelId) or deploy the Example contract');
     }
 
-    // Get Discovery table id from discovery object
-    const tableBcsBytes = await getBcsBytesByObjectId(client, discoveryObjectId);
-    const { fields } = bcsStructs.common.Discovery.parse(tableBcsBytes);
-    const tableId = fields.id;
+    if (!contracts[symbol]) {
+        throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
+    }
 
-    // Get the transaction list from the discovery table
-    const tableResult = await client.getDynamicFields({
-        parentId: tableId,
-    });
-    const transactionList = tableResult.data;
+    const unitAmount = getUnitAmount(amount, contracts[symbol].decimals);
+    const Token = contracts[symbol];
+    const tokenId = Token.objects.TokenId;
+
+    const payload = defaultAbiCoder.encode(
+        ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
+        [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, channelId, unitAmount, itsData],
+    );
+
+    const payloadHash = keccak256(payload);
+    printInfo('Payload Hash', payloadHash);
+
+    // Get Discovery table id from discovery object
+    const transactionList = await getTransactionList(client, discoveryObjectId);
 
     // Find the transaction with associated channel id
     const transaction = transactionList.find((row) => row.name.value === channelId);
@@ -126,20 +143,12 @@ async function receiveTokenTransfer(keypair, client, contracts, args, options) {
     // Extract the fields from the transaction object
     const txFields = txObject.data.content.fields.value.fields.move_calls[0].fields;
 
-    const tx = new Transaction();
+    const receiveTxBuilder = new TxBuilder(client);
 
     // Take the approved message from the gateway contract.
-    // Note: The message needed to be approved first.
-    const approvedMessage = tx.moveCall({
-        target: `${axelarGatewayConfig.address}::gateway::take_approved_message`,
-        arguments: [
-            tx.object(gatewayObjectId),
-            tx.pure(bcs.string().serialize(sourceChain).toBytes()),
-            tx.pure(bcs.string().serialize(messageId).toBytes()),
-            tx.pure(bcs.string().serialize(sourceAddress).toBytes()),
-            tx.pure.address(channelId),
-            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
-        ],
+    const approvedMessage = await receiveTxBuilder.moveCall({
+        target: `${AxelarGateway.address}::gateway::take_approved_message`,
+        arguments: [gatewayObjectId, sourceChain, messageId, sourceAddress, itsChannelId, payload],
     });
 
     const { module_name: moduleName, name, package_id: packageId } = txFields.function.fields;
@@ -148,10 +157,10 @@ async function receiveTokenTransfer(keypair, client, contracts, args, options) {
     // There're 5 types of arguments as mentioned in the following link https://github.com/axelarnetwork/axelar-cgp-sui/blob/72579e5c7735da61d215bd712627edad562cb82a/src/bcs.ts#L44-L49
     const txArgs = txFields.arguments.map(([argType, ...arg]) => {
         if (argType === 0) {
-            return tx.object(Buffer.from(arg).toString('hex'));
+            return '0x' + Buffer.from(arg).toString('hex');
         } else if (argType === 1) {
             // TODO: handle pures followed by the bcs encoded form of the pure
-            throw new Error('Not implemented yet');
+            // throw new Error('Not implemented yet');
         } else if (argType === 2) {
             return approvedMessage;
         } else if (argType === 3) {
@@ -166,12 +175,13 @@ async function receiveTokenTransfer(keypair, client, contracts, args, options) {
     });
 
     // Execute the move call dynamically based on the transaction object
-    tx.moveCall({
+    await receiveTxBuilder.moveCall({
         target: `${packageId}::${moduleName}::${name}`,
         arguments: txArgs,
+        typeArguments: [Token.typeArgument],
     });
 
-    await broadcast(client, keypair, tx, 'Call Executed');
+    await broadcastFromTxBuilder(receiveTxBuilder, keypair, `${symbol} Token Received`);
 }
 
 async function deployToken(keypair, client, contracts, args, options) {
@@ -218,6 +228,7 @@ async function deployToken(keypair, client, contracts, args, options) {
     contracts[symbol.toUpperCase()] = {
         address: packageId,
         typeArgument: tokenType,
+        decimals,
         objects: {
             TreasuryCap,
             Metadata,
@@ -263,6 +274,12 @@ async function setupTrustedAddress(keypair, client, contracts, args, options) {
     });
 
     await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
+
+    // Add trusted address to ITS config
+    if (!contracts.ITS.trustedAddresses) contracts.ITS.trustedAddresses = {};
+    if (!contracts.ITS.trustedAddresses[trustedChain]) contracts.ITS.trustedAddresses[trustedChain] = [];
+
+    contracts.ITS.trustedAddresses[trustedChain].push(trustedAddress);
 }
 
 async function mintToken(keypair, client, contracts, args, options) {}
@@ -298,9 +315,9 @@ if (require.main === module) {
     const receiveTokenTransferProgram = new Command()
         .name('receive-token')
         .description('Receive token')
-        .command('receive-token <source-chain> <message-id> <source-address> <payload>')
-        .action((sourceChain, messageId, sourceAddress, payload, options) => {
-            mainProcessor(receiveTokenTransfer, options, [sourceChain, messageId, sourceAddress, payload], processCommand);
+        .command('receive-token <source-chain> <message-id> <source-address> <token-symbol> <amount>')
+        .action((sourceChain, messageId, sourceAddress, tokenSymbol, amount, options) => {
+            mainProcessor(receiveToken, options, [sourceChain, messageId, sourceAddress, tokenSymbol, amount], processCommand);
         });
 
     const deployTokenProgram = new Command()

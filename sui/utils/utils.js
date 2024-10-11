@@ -236,6 +236,18 @@ const getBagContentId = async (client, objectType, bagId, bagName) => {
     return objectDetails.data.content.fields.value.fields.id.id;
 };
 
+const getTransactionList = async (client, discoveryObjectId) => {
+    const tableBcsBytes = await getBcsBytesByObjectId(client, discoveryObjectId);
+    const data = bcsStructs.relayerDiscovery.RelayerDiscovery.parse(tableBcsBytes);
+    const tableId = data.value.configurations.id;
+
+    const tableResult = await client.getDynamicFields({
+        parentId: tableId,
+    });
+
+    return tableResult.data;
+};
+
 module.exports = {
     suiCoinId,
     getAmplifierSigners,
@@ -256,4 +268,5 @@ module.exports = {
     getSigners,
     getBagContentId,
     moveDir,
+    getTransactionList,
 };
