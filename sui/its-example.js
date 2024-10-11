@@ -93,7 +93,7 @@ async function receiveToken(keypair, client, contracts, args, options) {
     const { Example, RelayerDiscovery, AxelarGateway, ITS } = contracts;
 
     const [sourceChain, messageId, sourceAddress, tokenSymbol, amount] = args;
-    const itsData = options.data || '0x';
+    const itsData = options.data || ethers.constants.HashZero;
 
     // Prepare Object Ids
     const symbol = tokenSymbol.toUpperCase();
