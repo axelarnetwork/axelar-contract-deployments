@@ -369,7 +369,7 @@ if (require.main === module) {
 
     const sendTokenTransferProgram = new Command()
         .name('send-token')
-        .description('Send token')
+        .description('Send token from Sui to other chain.')
         .command('send-token <symbol> <dest-chain> <dest-contract-address> <fee> <amount>')
         .action((symbol, destChain, destContractAddress, feeAmount, amount, options) => {
             mainProcessor(sendToken, options, [symbol, destChain, destContractAddress, feeAmount, amount], processCommand);
@@ -377,7 +377,7 @@ if (require.main === module) {
 
     const receiveTokenTransferProgram = new Command()
         .name('receive-token')
-        .description('Receive token')
+        .description('Receive token from other chain to Sui.')
         .command('receive-token <source-chain> <message-id> <source-address> <token-symbol> <amount>')
         .action((sourceChain, messageId, sourceAddress, tokenSymbol, amount, options) => {
             mainProcessor(receiveToken, options, [sourceChain, messageId, sourceAddress, tokenSymbol, amount], processCommand);
@@ -385,7 +385,7 @@ if (require.main === module) {
 
     const deployTokenProgram = new Command()
         .name('deploy-token')
-        .description('Deploy token')
+        .description('Deploy token on Sui.')
         .command('deploy-token <symbol> <name> <decimals>')
         .addOption(new Option('--skip-register', 'Skip register', false))
         .action((symbol, name, decimals, options) => {
@@ -394,7 +394,7 @@ if (require.main === module) {
 
     const sendTokenDeploymentProgram = new Command()
         .name('send-deployment')
-        .description('Send token deployment')
+        .description('Send token deployment from Sui to other chain.')
         .command('send-deployment <symbol> <destination-chain> <destination-address> <fee>')
         .action((symbol, destinationChain, destinationITSAddress, fee, options) => {
             mainProcessor(sendDeployment, options, [symbol, destinationChain, destinationITSAddress, fee], processCommand);
@@ -405,7 +405,7 @@ if (require.main === module) {
     // To deploy the token, use the command `node sui/its-example.js deploy-token <symbol> <name> <decimals>`
     const receiveTokenDeploymentProgram = new Command()
         .name('receive-deployment')
-        .description('Receive token deployment')
+        .description('Receive token deployment from other chain to Sui.')
         .command('receive-deployment <symbol> <source-chain> <message-id> <source-address> <destination-contract-address> <payload>')
         .action((symbol, sourceChain, messageId, sourceAddress, destinationContractAddress, payload, options) => {
             mainProcessor(
@@ -428,7 +428,7 @@ if (require.main === module) {
 
     const mintTokenProgram = new Command()
         .name('mint-token')
-        .description('Mint token')
+        .description('Mint token for the given symbol on Sui. The token must be deployed on Sui first.')
         .command('mint-token <symbol>')
         .addOption(new Option('--recipient <recipient>', 'Recipient address'))
         .addOption(new Option('--amount <amount>', 'Amount to mint').default('1000'))
@@ -438,7 +438,7 @@ if (require.main === module) {
 
     const printDeploymentPayloadProgram = new Command()
         .name('print-deployment-info')
-        .description('Print deployment info')
+        .description('Print deployment info. This script will be useful for testing receive deployment flow.')
         .command('print-deployment-info <name> <symbol> <decimals>')
         .addOption(new Option('--distributor <distributor>', 'Distributor address').default(ethers.constants.HashZero))
         .addOption(new Option('--tokenId <tokenId>', 'Token ID').default(hexlify(randomBytes(32))))
