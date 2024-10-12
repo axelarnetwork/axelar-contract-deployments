@@ -215,7 +215,45 @@ async function deployToken(keypair, client, contracts, args, options) {
     await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted 1,000 ${symbol}`);
 }
 
-async function sendTokenDeployment(keypair, client, contracts, args, options) {}
+async function sendDeployment(keypair, client, contracts, args, options) {
+    const { AxelarGateway, GasService, ITS, Example } = contracts;
+    const [symbol, destinationChain, destinationITSAddress, feeAmount] = args;
+    const Token = contracts[symbol.toUpperCase()];
+    const feeUnitAmount = getUnitAmount(feeAmount);
+
+    const txBuilder = new TxBuilder(client);
+
+    const tx = txBuilder.tx;
+    const gas = tx.splitCoins(tx.gas, [feeUnitAmount]);
+
+    if (!ITS.trustedAddresses[destinationChain] || !ITS.trustedAddresses[destinationChain].includes(destinationITSAddress)) {
+        throw new Error(
+            `Destination address ${destinationITSAddress} is not trusted on ${destinationChain}. Check if the given adress is trusted on ${destinationChain} or set trusted address with 'node sui/its-example.js setup-trusted-address <destination-chain> <destination-address>'`,
+        );
+    }
+
+    const TokenId = await txBuilder.moveCall({
+        target: `${ITS.address}::token_id::from_u256`,
+        arguments: [Token.objects.TokenId],
+    });
+
+    await txBuilder.moveCall({
+        target: `${Example.address}::its::deploy_remote_interchain_token`,
+        arguments: [
+            ITS.objects.ITS,
+            AxelarGateway.objects.Gateway,
+            GasService.objects.GasService,
+            destinationChain,
+            TokenId,
+            gas,
+            '0x',
+            keypair.toSuiAddress(),
+        ],
+        typeArguments: [Token.typeArgument],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, `Sent ${symbol} Deployment on ${destinationChain}`);
+}
 
 async function receiveTokenDeployment(keypair, client, contracts, args, options) {}
 
@@ -296,9 +334,9 @@ if (require.main === module) {
     const sendTokenDeploymentProgram = new Command()
         .name('send-deployment')
         .description('Send token deployment')
-        .command('send-deployment  <payload>')
-        .action((feeAmount, payload, options) => {
-            mainProcessor(sendTokenDeployment, options, [feeAmount, payload], processCommand);
+        .command('send-deployment <symbol> <destination-chain> <destination-address> <fee>')
+        .action((symbol, destinationChain, destinationITSAddress, fee, options) => {
+            mainProcessor(sendDeployment, options, [symbol, destinationChain, destinationITSAddress, fee], processCommand);
         });
 
     const receiveTokenDeploymentProgram = new Command()
