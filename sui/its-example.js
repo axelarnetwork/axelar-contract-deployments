@@ -1,12 +1,5 @@
-const { Command } = require('commander');
-const {
-    bcsStructs,
-    ITSMessageType,
-    SUI_PACKAGE_ID,
-    CLOCK_PACKAGE_ID,
-    TxBuilder,
-    copyMovePackage,
-} = require('@axelar-network/axelar-cgp-sui');
+const { Command, Option } = require('commander');
+const { ITSMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, printInfo } = require('../common/utils');
 const {
     parseExecuteDataFromTransaction,
@@ -23,7 +16,7 @@ const {
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
-    utils: { defaultAbiCoder, keccak256 },
+    utils: { defaultAbiCoder, keccak256, toUtf8Bytes, hexlify, randomBytes },
 } = ethers;
 
 async function sendToken(keypair, client, contracts, args, options) {
@@ -179,15 +172,22 @@ async function deployToken(keypair, client, contracts, args, options) {
 
     // Register Token in ITS
     const { Example, ITS } = contracts;
-    const registerTxBuilder = new TxBuilder(client);
+    let tokenId;
 
-    await registerTxBuilder.moveCall({
-        target: `${Example.address}::its::register_coin`,
-        arguments: [ITS.objects.ITS, Metadata],
-        typeArguments: [tokenType],
-    });
+    if (!options.skipRegister) {
+        const registerTxBuilder = new TxBuilder(client);
 
-    const result = await broadcastFromTxBuilder(registerTxBuilder, keypair, `Registered ${symbol} in ITS`, { showEvents: true });
+        await registerTxBuilder.moveCall({
+            target: `${Example.address}::its::register_coin`,
+            arguments: [ITS.objects.ITS, Metadata],
+            typeArguments: [tokenType],
+        });
+
+        const result = await broadcastFromTxBuilder(registerTxBuilder, keypair, `Registered ${symbol} in ITS`, { showEvents: true });
+        tokenId = result.events[0].parsedJson.token_id.id;
+    } else {
+        printInfo(`Skipped registering ${symbol} in ITS`);
+    }
 
     // Save the deployed token info in the contracts object.
     contracts[symbol.toUpperCase()] = {
@@ -197,22 +197,24 @@ async function deployToken(keypair, client, contracts, args, options) {
         objects: {
             TreasuryCap,
             Metadata,
-            TokenId: result.events[0].parsedJson.token_id.id,
+            TokenId: tokenId,
         },
     };
 
     // Mint Token
-    const mintTxBuilder = new TxBuilder(client);
+    if (!options.skipMint) {
+        const mintTxBuilder = new TxBuilder(client);
 
-    const coin = await mintTxBuilder.moveCall({
-        target: `${SUI_PACKAGE_ID}::coin::mint`,
-        arguments: [TreasuryCap, getUnitAmount('1000', decimals)],
-        typeArguments: [tokenType],
-    });
+        const coin = await mintTxBuilder.moveCall({
+            target: `${SUI_PACKAGE_ID}::coin::mint`,
+            arguments: [TreasuryCap, getUnitAmount('1000', decimals)],
+            typeArguments: [tokenType],
+        });
 
-    mintTxBuilder.tx.transferObjects([coin], walletAddress);
+        mintTxBuilder.tx.transferObjects([coin], walletAddress);
 
-    await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted 1,000 ${symbol}`);
+        await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted 1,000 ${symbol}`);
+    }
 }
 
 async function sendDeployment(keypair, client, contracts, args, options) {
@@ -255,7 +257,61 @@ async function sendDeployment(keypair, client, contracts, args, options) {
     await broadcastFromTxBuilder(txBuilder, keypair, `Sent ${symbol} Deployment on ${destinationChain}`);
 }
 
-async function receiveTokenDeployment(keypair, client, contracts, args, options) {}
+async function printDeploymentInfo(contracts, args, options) {
+    const [name, symbol, decimals] = args;
+
+    const byteName = toUtf8Bytes(name);
+    const byteSymbol = toUtf8Bytes(symbol);
+    const tokenDecimals = parseInt(decimals);
+    const tokenId = options.tokenId;
+    const tokenDistributor = options.distributor;
+
+    // ITS transfer payload from Ethereum to Sui
+    const payload = defaultAbiCoder.encode(
+        ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
+        [ITSMessageType.InterchainTokenDeployment, tokenId, byteName, byteSymbol, tokenDecimals, tokenDistributor],
+    );
+
+    printInfo(
+        JSON.stringify(
+            {
+                payload,
+                tokenId,
+                payloadHash: keccak256(payload),
+            },
+            null,
+            2,
+        ),
+    );
+}
+
+async function receiveDeployment(keypair, client, contracts, args, options) {
+    const [symbol, sourceChain, messageId, sourceAddress, destinationContractAddress, payload] = args;
+
+    const { AxelarGateway, ITS } = contracts;
+    const Token = contracts[symbol.toUpperCase()];
+
+    const txBuilder = new TxBuilder(client);
+
+    const approvedMessage = await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::gateway::take_approved_message`,
+        arguments: [AxelarGateway.objects.Gateway, sourceChain, messageId, sourceAddress, destinationContractAddress, payload],
+    });
+
+    await txBuilder.moveCall({
+        target: `${ITS.address}::its::give_unregistered_coin`,
+        arguments: [ITS.objects.ITS, Token.objects.TreasuryCap, Token.objects.Metadata],
+        typeArguments: [Token.typeArgument],
+    });
+
+    await txBuilder.moveCall({
+        target: `${ITS.address}::its::receive_deploy_interchain_token`,
+        arguments: [ITS.objects.ITS, approvedMessage],
+        typeArguments: [Token.typeArgument],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, `Received ${symbol} Token Deployment`);
+}
 
 async function setupTrustedAddress(keypair, client, contracts, args, options) {
     const [trustedChain, trustedAddress] = args;
@@ -327,6 +383,8 @@ if (require.main === module) {
         .name('deploy-token')
         .description('Deploy token')
         .command('deploy-token <symbol> <name> <decimals>')
+        .addOption(new Option('--skip-register', 'Skip register', false))
+        .addOption(new Option('--skip-mint', 'Skip mint', false))
         .action((symbol, name, decimals, options) => {
             mainProcessor(deployToken, options, [symbol, name, decimals], processCommand);
         });
@@ -342,9 +400,14 @@ if (require.main === module) {
     const receiveTokenDeploymentProgram = new Command()
         .name('receive-deployment')
         .description('Receive token deployment')
-        .command('receive-deployment <message-id> <source-address> <payload>')
-        .action((messageId, sourceAddress, payload, options) => {
-            mainProcessor(receiveTokenDeployment, options, [messageId, sourceAddress, payload], processCommand);
+        .command('receive-deployment <symbol> <source-chain> <message-id> <source-address> <destination-contract-address> <payload>')
+        .action((symbol, sourceChain, messageId, sourceAddress, destinationContractAddress, payload, options) => {
+            mainProcessor(
+                receiveDeployment,
+                options,
+                [symbol, sourceChain, messageId, sourceAddress, destinationContractAddress, payload],
+                processCommand,
+            );
         });
 
     const setupTrustedAddressProgram = new Command()
@@ -363,6 +426,17 @@ if (require.main === module) {
             mainProcessor(mintToken, options, [feeAmount, payload], processCommand);
         });
 
+    const printDeploymentPayloadProgram = new Command()
+        .name('print-deployment-info')
+        .description('Print deployment info')
+        .command('print-deployment-info <name> <symbol> <decimals>')
+        .addOption(new Option('--distributor <distributor>', 'Distributor address').default(ethers.constants.HashZero))
+        .addOption(new Option('--tokenId <tokenId>', 'Token ID').default(hexlify(randomBytes(32))))
+        .action((name, symbol, decimals, options) => {
+            const config = loadConfig(options.env);
+            printDeploymentInfo(config.sui.contracts, [name, symbol, decimals], options);
+        });
+
     program.addCommand(sendTokenTransferProgram);
     program.addCommand(receiveTokenTransferProgram);
     program.addCommand(deployTokenProgram);
@@ -370,6 +444,7 @@ if (require.main === module) {
     program.addCommand(receiveTokenDeploymentProgram);
     program.addCommand(setupTrustedAddressProgram);
     program.addCommand(mintTokenProgram);
+    program.addCommand(printDeploymentPayloadProgram);
 
     addOptionsToCommands(program, addBaseOptions);
 
