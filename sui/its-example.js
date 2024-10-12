@@ -205,21 +205,6 @@ async function deployToken(keypair, client, contracts, args, options) {
             TokenId: tokenId,
         },
     };
-
-    // Mint Token
-    if (!options.skipMint) {
-        const mintTxBuilder = new TxBuilder(client);
-
-        const coin = await mintTxBuilder.moveCall({
-            target: `${SUI_PACKAGE_ID}::coin::mint`,
-            arguments: [TreasuryCap, getUnitAmount('1000', decimals)],
-            typeArguments: [tokenType],
-        });
-
-        mintTxBuilder.tx.transferObjects([coin], walletAddress);
-
-        await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted 1,000 ${symbol}`);
-    }
 }
 
 async function sendDeployment(keypair, client, contracts, args, options) {
@@ -403,7 +388,6 @@ if (require.main === module) {
         .description('Deploy token')
         .command('deploy-token <symbol> <name> <decimals>')
         .addOption(new Option('--skip-register', 'Skip register', false))
-        .addOption(new Option('--skip-mint', 'Skip mint', false))
         .action((symbol, name, decimals, options) => {
             mainProcessor(deployToken, options, [symbol, name, decimals], processCommand);
         });
@@ -418,7 +402,7 @@ if (require.main === module) {
 
     // The token must be deployed on sui first before executing receive deployment command
     // and the token must have zero supply, otherwise the command will fail.
-    // To deploy the token, use the command `node sui/its-example.js deploy-token <symbol> <name> <decimals> --skip-register --skip-mint`
+    // To deploy the token, use the command `node sui/its-example.js deploy-token <symbol> <name> <decimals>`
     const receiveTokenDeploymentProgram = new Command()
         .name('receive-deployment')
         .description('Receive token deployment')
