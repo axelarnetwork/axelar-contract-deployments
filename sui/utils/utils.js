@@ -291,6 +291,14 @@ const parseExecuteDataFromTransaction = async (client, transaction, approvedMess
     };
 };
 
+const checkTrustedAddresses = (trustedAddresses, destinationChain, destinationAddress) => {
+    if (!trustedAddresses[destinationChain] || !trustedAddresses[destinationChain].includes(destinationAddress)) {
+        throw new Error(
+            `Destination address ${destinationAddress} is not trusted on ${destinationChain}. Check if the given adress is trusted on ${destinationChain} or set trusted address with 'node sui/its-example.js setup-trusted-address <destination-chain> <destination-address>'`,
+        );
+    }
+};
+
 module.exports = {
     suiCoinId,
     getAmplifierSigners,
@@ -313,4 +321,5 @@ module.exports = {
     moveDir,
     getTransactionList,
     parseExecuteDataFromTransaction,
+    checkTrustedAddresses,
 };

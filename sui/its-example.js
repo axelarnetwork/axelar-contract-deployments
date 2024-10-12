@@ -13,6 +13,7 @@ const {
     broadcastFromTxBuilder,
     moveDir,
     getTransactionList,
+    checkTrustedAddresses,
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
@@ -28,6 +29,8 @@ async function sendToken(keypair, client, contracts, args, options) {
     if (!ItsToken) {
         throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
     }
+
+    checkTrustedAddresses(ITS.trustedAddresses, destinationChain, destinationAddress);
 
     const decimals = ItsToken.decimals;
 
@@ -86,6 +89,8 @@ async function receiveToken(keypair, client, contracts, args, options) {
     const itsData = options.data || ethers.constants.HashZero;
     const { Example, RelayerDiscovery, AxelarGateway, ITS } = contracts;
     const [sourceChain, messageId, sourceAddress, tokenSymbol, amount] = args;
+
+    checkTrustedAddresses(ITS.trustedAddresses, sourceChain, sourceAddress);
 
     // Prepare Object Ids
     const symbol = tokenSymbol.toUpperCase();
@@ -228,11 +233,7 @@ async function sendDeployment(keypair, client, contracts, args, options) {
     const tx = txBuilder.tx;
     const gas = tx.splitCoins(tx.gas, [feeUnitAmount]);
 
-    if (!ITS.trustedAddresses[destinationChain] || !ITS.trustedAddresses[destinationChain].includes(destinationITSAddress)) {
-        throw new Error(
-            `Destination address ${destinationITSAddress} is not trusted on ${destinationChain}. Check if the given adress is trusted on ${destinationChain} or set trusted address with 'node sui/its-example.js setup-trusted-address <destination-chain> <destination-address>'`,
-        );
-    }
+    checkTrustedAddresses(ITS.trustedAddresses, destinationChain, destinationITSAddress);
 
     const TokenId = await txBuilder.moveCall({
         target: `${ITS.address}::token_id::from_u256`,
@@ -290,6 +291,8 @@ async function receiveDeployment(keypair, client, contracts, args, options) {
 
     const { AxelarGateway, ITS } = contracts;
     const Token = contracts[symbol.toUpperCase()];
+
+    checkTrustedAddresses(ITS.trustedAddresses, sourceChain, sourceAddress);
 
     const txBuilder = new TxBuilder(client);
 
@@ -397,6 +400,9 @@ if (require.main === module) {
             mainProcessor(sendDeployment, options, [symbol, destinationChain, destinationITSAddress, fee], processCommand);
         });
 
+    // The token must be deployed on sui first before executing receive deployment command
+    // and the token must have zero supply, otherwise the command will fail.
+    // To deploy the token, use the command `node sui/its-example.js deploy-token <symbol> <name> <decimals> --skip-register --skip-mint`
     const receiveTokenDeploymentProgram = new Command()
         .name('receive-deployment')
         .description('Receive token deployment')
@@ -410,6 +416,8 @@ if (require.main === module) {
             );
         });
 
+    // This command is used to setup the trusted address on the ITS contract.
+    // The trusted address is used to verify the message from the source chain.
     const setupTrustedAddressProgram = new Command()
         .name('setup-trusted-address')
         .description('Setup trusted address')
