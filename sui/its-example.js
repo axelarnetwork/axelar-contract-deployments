@@ -344,14 +344,30 @@ async function setupTrustedAddress(keypair, client, contracts, args, options) {
     contracts.ITS.trustedAddresses[trustedChain].push(trustedAddress);
 }
 
-async function mintToken(keypair, client, contracts, args, options) {}
+async function mintToken(keypair, client, contracts, args, options) {
+    const [symbol] = args;
+    const amount = options.amount;
+    const recipient = options.recipient || keypair.toSuiAddress();
+    const Token = contracts[symbol.toUpperCase()];
+    const unitAmount = getUnitAmount(amount, Token.decimals);
+
+    const mintTxBuilder = new TxBuilder(client);
+
+    const coin = await mintTxBuilder.moveCall({
+        target: `${SUI_PACKAGE_ID}::coin::mint`,
+        arguments: [Token.objects.TreasuryCap, unitAmount],
+        typeArguments: [Token.typeArgument],
+    });
+
+    mintTxBuilder.tx.transferObjects([coin], recipient);
+
+    await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`);
+}
 
 async function processCommand(command, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
     await printWalletInfo(keypair, client, chain, options);
-
-    //const contracts = [chain.contracts.Example, chain.contracts.GasService, chain.contracts.AxelarGateway, chain.contracts.ITS];
 
     await command(keypair, client, chain.contracts, args, options);
 }
@@ -429,9 +445,11 @@ if (require.main === module) {
     const mintTokenProgram = new Command()
         .name('mint-token')
         .description('Mint token')
-        .command('mint-token <feeAmount> <payload>')
-        .action((feeAmount, payload, options) => {
-            mainProcessor(mintToken, options, [feeAmount, payload], processCommand);
+        .command('mint-token <symbol>')
+        .addOption(new Option('--recipient <recipient>', 'Recipient address'))
+        .addOption(new Option('--amount <amount>', 'Amount to mint').default('1000'))
+        .action((symbol, options) => {
+            mainProcessor(mintToken, options, [symbol], processCommand);
         });
 
     const printDeploymentPayloadProgram = new Command()
