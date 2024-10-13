@@ -147,6 +147,72 @@ async function receiveToken(keypair, client, contracts, args, options) {
     await broadcastFromTxBuilder(receiveTxBuilder, keypair, `${symbol} Token Received`);
 }
 
+async function sendDeployment(keypair, client, contracts, args, options) {
+    const { AxelarGateway, GasService, ITS, Example } = contracts;
+    const [symbol, destinationChain, destinationITSAddress, feeAmount] = args;
+    const Token = contracts[symbol.toUpperCase()];
+    const feeUnitAmount = getUnitAmount(feeAmount);
+
+    const txBuilder = new TxBuilder(client);
+
+    const tx = txBuilder.tx;
+    const gas = tx.splitCoins(tx.gas, [feeUnitAmount]);
+
+    checkTrustedAddresses(ITS.trustedAddresses, destinationChain, destinationITSAddress);
+
+    const TokenId = await txBuilder.moveCall({
+        target: `${ITS.address}::token_id::from_u256`,
+        arguments: [Token.objects.TokenId],
+    });
+
+    await txBuilder.moveCall({
+        target: `${Example.address}::its::deploy_remote_interchain_token`,
+        arguments: [
+            ITS.objects.ITS,
+            AxelarGateway.objects.Gateway,
+            GasService.objects.GasService,
+            destinationChain,
+            TokenId,
+            gas,
+            '0x',
+            keypair.toSuiAddress(),
+        ],
+        typeArguments: [Token.typeArgument],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, `Sent ${symbol} Deployment on ${destinationChain}`);
+}
+
+async function receiveDeployment(keypair, client, contracts, args, options) {
+    const [symbol, sourceChain, messageId, sourceAddress, destinationContractAddress, payload] = args;
+
+    const { AxelarGateway, ITS } = contracts;
+    const Token = contracts[symbol.toUpperCase()];
+
+    checkTrustedAddresses(ITS.trustedAddresses, sourceChain, sourceAddress);
+
+    const txBuilder = new TxBuilder(client);
+
+    const approvedMessage = await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::gateway::take_approved_message`,
+        arguments: [AxelarGateway.objects.Gateway, sourceChain, messageId, sourceAddress, destinationContractAddress, payload],
+    });
+
+    await txBuilder.moveCall({
+        target: `${ITS.address}::its::give_unregistered_coin`,
+        arguments: [ITS.objects.ITS, Token.objects.TreasuryCap, Token.objects.Metadata],
+        typeArguments: [Token.typeArgument],
+    });
+
+    await txBuilder.moveCall({
+        target: `${ITS.address}::its::receive_deploy_interchain_token`,
+        arguments: [ITS.objects.ITS, approvedMessage],
+        typeArguments: [Token.typeArgument],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, `Received ${symbol} Token Deployment`);
+}
+
 async function deployToken(keypair, client, contracts, args, options) {
     const [symbol, name, decimals] = args;
 
@@ -207,42 +273,6 @@ async function deployToken(keypair, client, contracts, args, options) {
     };
 }
 
-async function sendDeployment(keypair, client, contracts, args, options) {
-    const { AxelarGateway, GasService, ITS, Example } = contracts;
-    const [symbol, destinationChain, destinationITSAddress, feeAmount] = args;
-    const Token = contracts[symbol.toUpperCase()];
-    const feeUnitAmount = getUnitAmount(feeAmount);
-
-    const txBuilder = new TxBuilder(client);
-
-    const tx = txBuilder.tx;
-    const gas = tx.splitCoins(tx.gas, [feeUnitAmount]);
-
-    checkTrustedAddresses(ITS.trustedAddresses, destinationChain, destinationITSAddress);
-
-    const TokenId = await txBuilder.moveCall({
-        target: `${ITS.address}::token_id::from_u256`,
-        arguments: [Token.objects.TokenId],
-    });
-
-    await txBuilder.moveCall({
-        target: `${Example.address}::its::deploy_remote_interchain_token`,
-        arguments: [
-            ITS.objects.ITS,
-            AxelarGateway.objects.Gateway,
-            GasService.objects.GasService,
-            destinationChain,
-            TokenId,
-            gas,
-            '0x',
-            keypair.toSuiAddress(),
-        ],
-        typeArguments: [Token.typeArgument],
-    });
-
-    await broadcastFromTxBuilder(txBuilder, keypair, `Sent ${symbol} Deployment on ${destinationChain}`);
-}
-
 async function printDeploymentInfo(contracts, args, options) {
     const [name, symbol, decimals] = args;
 
@@ -269,36 +299,6 @@ async function printDeploymentInfo(contracts, args, options) {
             2,
         ),
     );
-}
-
-async function receiveDeployment(keypair, client, contracts, args, options) {
-    const [symbol, sourceChain, messageId, sourceAddress, destinationContractAddress, payload] = args;
-
-    const { AxelarGateway, ITS } = contracts;
-    const Token = contracts[symbol.toUpperCase()];
-
-    checkTrustedAddresses(ITS.trustedAddresses, sourceChain, sourceAddress);
-
-    const txBuilder = new TxBuilder(client);
-
-    const approvedMessage = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::gateway::take_approved_message`,
-        arguments: [AxelarGateway.objects.Gateway, sourceChain, messageId, sourceAddress, destinationContractAddress, payload],
-    });
-
-    await txBuilder.moveCall({
-        target: `${ITS.address}::its::give_unregistered_coin`,
-        arguments: [ITS.objects.ITS, Token.objects.TreasuryCap, Token.objects.Metadata],
-        typeArguments: [Token.typeArgument],
-    });
-
-    await txBuilder.moveCall({
-        target: `${ITS.address}::its::receive_deploy_interchain_token`,
-        arguments: [ITS.objects.ITS, approvedMessage],
-        typeArguments: [Token.typeArgument],
-    });
-
-    await broadcastFromTxBuilder(txBuilder, keypair, `Received ${symbol} Token Deployment`);
 }
 
 async function setupTrustedAddress(keypair, client, contracts, args, options) {
