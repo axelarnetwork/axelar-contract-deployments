@@ -79,7 +79,7 @@ jobs:
         uses: ./.github/actions/setup-solana-repo
 
       - name: Cache Solana
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/solana
           key: solana-${{ env.SOLANA_VERSION }}
