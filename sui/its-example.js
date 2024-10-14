@@ -118,9 +118,6 @@ async function receiveToken(keypair, client, contracts, args, options) {
         [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, ids.exampleChannel, unitAmount, itsData],
     );
 
-    // To check with the payload hash from the approve command for debugging
-    printInfo('Payload Hash', keccak256(payload));
-
     // Get Discovery table id from discovery object
     const transactionList = await getTransactionList(client, ids.discovery);
 
@@ -273,7 +270,7 @@ async function deployToken(keypair, client, contracts, args, options) {
     };
 }
 
-async function printDeploymentInfo(contracts, args, options) {
+async function printReceiveDeploymentInfo(contracts, args, options) {
     const [name, symbol, decimals] = args;
 
     const byteName = toUtf8Bytes(name);
@@ -286,6 +283,34 @@ async function printDeploymentInfo(contracts, args, options) {
     const payload = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
         [ITSMessageType.InterchainTokenDeployment, tokenId, byteName, byteSymbol, tokenDecimals, tokenDistributor],
+    );
+
+    printInfo(
+        JSON.stringify(
+            {
+                payload,
+                tokenId,
+                payloadHash: keccak256(payload),
+            },
+            null,
+            2,
+        ),
+    );
+}
+
+async function printReceiveTransferInfo(contracts, args, options) {
+    const { Example } = contracts;
+    const [symbol, sourceAddress, amount] = args;
+
+    const Token = contracts[symbol];
+    const unitAmount = getUnitAmount(amount, Token.decimals);
+    const tokenId = Token.objects.TokenId;
+    const itsBytes = options.itsBytes;
+    const channelId = options.channelId || Example.objects.ItsChannelId;
+
+    const payload = defaultAbiCoder.encode(
+        ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
+        [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, channelId, unitAmount, itsBytes],
     );
 
     printInfo(
@@ -436,15 +461,25 @@ if (require.main === module) {
             mainProcessor(mintToken, options, [symbol], processCommand);
         });
 
-    const printDeploymentPayloadProgram = new Command()
+    const printDeploymentInfoProgram = new Command()
         .name('print-deployment-info')
         .description('Print deployment info. This script will be useful for testing receive deployment flow.')
-        .command('print-deployment-info <name> <symbol> <decimals>')
+        .command('print-receive-deployment <name> <symbol> <decimals>')
         .addOption(new Option('--distributor <distributor>', 'Distributor address').default(ethers.constants.HashZero))
         .addOption(new Option('--tokenId <tokenId>', 'Token ID').default(hexlify(randomBytes(32))))
         .action((name, symbol, decimals, options) => {
             const config = loadConfig(options.env);
-            printDeploymentInfo(config.sui.contracts, [name, symbol, decimals], options);
+            printReceiveDeploymentInfo(config.sui.contracts, [name, symbol, decimals], options);
+        });
+
+    const printReceiveTransferInfoProgram = new Command()
+        .name('print-transfer-info')
+        .description('Print receive token info. This script will be useful for testing receive token flow.')
+        .command('print-receive-transfer <symbol> <source-address> <amount>')
+        .addOption(new Option('--itsBytes <itsBytes>', 'ITS Bytes').default(ethers.constants.HashZero))
+        .action((symbol, sourceAddress, amount, options) => {
+            const config = loadConfig(options.env);
+            printReceiveTransferInfo(config.sui.contracts, [symbol, sourceAddress, amount], options);
         });
 
     program.addCommand(sendTokenTransferProgram);
@@ -454,7 +489,8 @@ if (require.main === module) {
     program.addCommand(receiveTokenDeploymentProgram);
     program.addCommand(setupTrustedAddressProgram);
     program.addCommand(mintTokenProgram);
-    program.addCommand(printDeploymentPayloadProgram);
+    program.addCommand(printDeploymentInfoProgram);
+    program.addCommand(printReceiveTransferInfoProgram);
 
     addOptionsToCommands(program, addBaseOptions);
 
