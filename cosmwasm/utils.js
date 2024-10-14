@@ -462,7 +462,7 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
     };
 };
 
-const makeAxelarnetGatewayInstantiateMsg = (config, chainName) => {
+const makeAxelarnetGatewayInstantiateMsg = ({ nexus }, config, chainName) => {
     const {
         axelar: { contracts },
     } = config;
@@ -472,7 +472,6 @@ const makeAxelarnetGatewayInstantiateMsg = (config, chainName) => {
 
     const {
         Router: { address: routerAddress },
-        NexusGateway: { address: nexusAddress },
     } = contracts;
 
     if (!isString(axelarId)) {
@@ -484,8 +483,8 @@ const makeAxelarnetGatewayInstantiateMsg = (config, chainName) => {
     }
 
     return {
+        nexus,
         router_address: routerAddress,
-        nexus_gateway: nexusAddress,
         chain_name: axelarId.toLowerCase(),
     };
 };
@@ -576,7 +575,7 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
                 throw new Error('AxelarnetGateway requires chainName option');
             }
 
-            return makeAxelarnetGatewayInstantiateMsg(config, chainName);
+            return makeAxelarnetGatewayInstantiateMsg(contractConfig, config, chainName);
         }
     }
 

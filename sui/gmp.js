@@ -17,13 +17,12 @@ const {
     utils: { arrayify },
 } = ethers;
 
-async function sendCommand(keypair, client, contracts, args, options) {
+async function sendCommand(keypair, client, chain, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
     const params = options.params;
-
-    const [exampleConfig, gasServiceConfig] = contracts;
-    const gasServiceObjectId = gasServiceConfig.objects.GasService;
-    const singletonObjectId = exampleConfig.objects.Singleton;
+    const gasServiceObjectId = chain.contracts.GasService.objects.GasService;
+    const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
+    const singletonObjectId = chain.contracts.Example.objects.GmpSingleton;
 
     const unitAmount = getUnitAmount(feeAmount);
     const walletAddress = keypair.toSuiAddress();
@@ -33,9 +32,10 @@ async function sendCommand(keypair, client, contracts, args, options) {
     const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
 
     tx.moveCall({
-        target: `${exampleConfig.address}::gmp::send_call`,
+        target: `${chain.contracts.Example.address}::gmp::send_call`,
         arguments: [
             tx.object(singletonObjectId),
+            tx.object(gatewayObjectId),
             tx.object(gasServiceObjectId),
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
             tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
@@ -49,16 +49,14 @@ async function sendCommand(keypair, client, contracts, args, options) {
     await broadcast(client, keypair, tx, 'Call Sent');
 }
 
-async function execute(keypair, client, contracts, args, options) {
-    const [exampleConfig, , axelarGatewayConfig] = contracts;
-
+async function execute(keypair, client, chain, args, options) {
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
-    const gatewayObjectId = axelarGatewayConfig.objects.Gateway;
-    const discoveryObjectId = axelarGatewayConfig.objects.RelayerDiscovery;
+    const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
+    const discoveryObjectId = chain.contracts.RelayerDiscovery.objects.RelayerDiscoveryv0;
 
     // Get the channel id from the options or use the channel id from the deployed Example contract object.
-    const channelId = options.channelId || exampleConfig.objects.ChannelId;
+    const channelId = options.channelId || chain.contracts.Example.objects.GmpChannelId;
 
     if (!channelId) {
         throw new Error('Please provide either a channel id (--channelId) or deploy the Example contract');
@@ -66,8 +64,8 @@ async function execute(keypair, client, contracts, args, options) {
 
     // Get Discovery table id from discovery object
     const tableBcsBytes = await getBcsBytesByObjectId(client, discoveryObjectId);
-    const { fields } = bcsStructs.common.Discovery.parse(tableBcsBytes);
-    const tableId = fields.id;
+    const data = bcsStructs.relayerDiscovery.RelayerDiscovery.parse(tableBcsBytes);
+    const tableId = data.value.configurations.id;
 
     // Get the transaction list from the discovery table
     const tableResult = await client.getDynamicFields({
@@ -98,7 +96,7 @@ async function execute(keypair, client, contracts, args, options) {
     // Take the approved message from the gateway contract.
     // Note: The message needed to be approved first.
     const approvedMessage = tx.moveCall({
-        target: `${axelarGatewayConfig.address}::gateway::take_approved_message`,
+        target: `${chain.contracts.AxelarGateway.address}::gateway::take_approved_message`,
         arguments: [
             tx.object(gatewayObjectId),
             tx.pure(bcs.string().serialize(sourceChain).toBytes()),
@@ -146,9 +144,7 @@ async function processCommand(command, chain, args, options) {
 
     await printWalletInfo(keypair, client, chain, options);
 
-    const contracts = [chain.contracts.Example, chain.contracts.GasService, chain.contracts.AxelarGateway];
-
-    await command(keypair, client, contracts, args, options);
+    await command(keypair, client, chain, args, options);
 }
 
 async function mainProcessor(command, options, args, processor) {

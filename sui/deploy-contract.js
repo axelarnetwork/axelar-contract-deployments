@@ -1,12 +1,8 @@
 const { Command, Option } = require('commander');
 const { getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
-const { ethers } = require('hardhat');
 const { toB64 } = require('@mysten/sui/utils');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
-const {
-    utils: { arrayify },
-} = ethers;
 const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator, loadConfig } = require('../common');
 const {
     addBaseOptions,
@@ -47,6 +43,7 @@ const PACKAGE_DIRS = [
     'utils',
     'gas_service',
     'example',
+    'relayer_discovery',
     'axelar_gateway',
     'operators',
     'abi',
@@ -64,6 +61,7 @@ const PACKAGE_CONFIGS = {
     },
     postDeployFunctions: {
         AxelarGateway: postDeployAxelarGateway,
+        RelayerDiscovery: postDeployRelayerDiscovery,
         GasService: postDeployGasService,
         Example: postDeployExample,
         Operators: postDeployOperators,
@@ -96,31 +94,64 @@ const supportedPackages = PACKAGE_DIRS.map((dir) => ({
  * Define post-deployment functions for each supported package below.
  */
 
+async function postDeployRelayerDiscovery(published, keypair, client, config, chain, options) {
+    const [relayerDiscoveryObjectId, relayerDiscoveryObjectIdv0] = getObjectIdsByObjectTypes(published.publishTxn, [
+        `${published.packageId}::discovery::RelayerDiscovery`,
+        `${published.packageId}::relayer_discovery_v0::RelayerDiscovery_v0`,
+    ]);
+
+    chain.contracts.RelayerDiscovery.objects = {
+        RelayerDiscovery: relayerDiscoveryObjectId,
+        RelayerDiscoveryv0: relayerDiscoveryObjectIdv0,
+    };
+}
+
 async function postDeployGasService(published, keypair, client, config, chain, options) {
-    const [gasCollectorCapObjectId, gasServiceObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [gasCollectorCapObjectId, gasServiceObjectId, gasServicev0ObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::gas_service::GasCollectorCap`,
         `${published.packageId}::gas_service::GasService`,
+        `${published.packageId}::gas_service_v0::GasService_v0`,
     ]);
     chain.contracts.GasService.objects = {
         GasCollectorCap: gasCollectorCapObjectId,
         GasService: gasServiceObjectId,
+        GasServicev0: gasServicev0ObjectId,
     };
 }
 
 async function postDeployExample(published, keypair, client, config, chain, options) {
-    const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
+    const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [singletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
-    const channelId = await getSingletonChannelId(client, singletonObjectId);
-    chain.contracts.Example.objects = { Singleton: singletonObjectId, ChannelId: channelId };
+    // GMP Example Params
+    const [gmpSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
+
+    // ITS Example Params
+    const itsObjectId = config.sui.contracts.ITS?.objects?.ITS;
+    const [itsSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::Singleton`]);
 
     const tx = new Transaction();
+
     tx.moveCall({
         target: `${published.packageId}::gmp::register_transaction`,
-        arguments: [tx.object(relayerDiscovery), tx.object(singletonObjectId)],
+        arguments: [tx.object(relayerDiscovery), tx.object(gmpSingletonObjectId)],
+    });
+
+    tx.moveCall({
+        target: `${published.packageId}::its::register_transaction`,
+        arguments: [tx.object(relayerDiscovery), tx.object(itsSingletonObjectId), tx.object(itsObjectId), tx.object(suiClockAddress)],
     });
 
     await broadcast(client, keypair, tx, 'Registered Transaction');
+
+    const gmpChannelId = await getSingletonChannelId(client, gmpSingletonObjectId);
+    const itsChannelId = await getSingletonChannelId(client, itsSingletonObjectId);
+
+    chain.contracts.Example.objects = {
+        GmpSingleton: gmpSingletonObjectId,
+        GmpChannelId: gmpChannelId,
+        ItsSingleton: itsSingletonObjectId,
+        ItsChannelId: itsChannelId,
+    };
 }
 
 async function postDeployOperators(published, keypair, client, config, chain, options) {
@@ -146,9 +177,8 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         isValidNumber: { minimumRotationDelay },
     });
 
-    const [creatorCap, relayerDiscovery, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
+    const [creatorCap, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
         `${packageId}::gateway::CreatorCap`,
-        `${packageId}::discovery::RelayerDiscovery`,
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
@@ -159,17 +189,12 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 
     const tx = new Transaction();
 
-    const separator = tx.moveCall({
-        target: `${packageId}::bytes32::new`,
-        arguments: [tx.pure(arrayify(domainSeparator))],
-    });
-
     tx.moveCall({
         target: `${packageId}::gateway::setup`,
         arguments: [
             tx.object(creatorCap),
             tx.pure.address(operator),
-            separator,
+            tx.pure.address(domainSeparator),
             tx.pure.u64(minimumRotationDelay),
             tx.pure.u64(options.previousSigners),
             tx.pure(bcs.vector(bcs.u8()).serialize(encodedSigners).toBytes()),
@@ -187,15 +212,18 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 
     const result = await broadcast(client, keypair, tx, 'Setup Gateway');
 
-    const [gateway] = getObjectIdsByObjectTypes(result, [`${packageId}::gateway::Gateway`]);
+    const [gateway, gatewayv0] = getObjectIdsByObjectTypes(result, [
+        `${packageId}::gateway::Gateway`,
+        `${packageId}::gateway_v0::Gateway_v0`,
+    ]);
 
     // Update chain configuration
     chain.contracts.AxelarGateway = {
         ...chain.contracts.AxelarGateway,
         objects: {
             Gateway: gateway,
-            RelayerDiscovery: relayerDiscovery,
             UpgradeCap: upgradeCap,
+            Gatewayv0: gatewayv0,
         },
         domainSeparator,
         operator,
@@ -204,11 +232,16 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 }
 
 async function postDeployIts(published, keypair, client, config, chain, options) {
-    const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
+    const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [itsObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::ITS`]);
-    const channelId = await getItsChannelId(client, itsObjectId);
-    chain.contracts.ITS.objects = { ITS: itsObjectId, ChannelId: channelId };
+    const [itsObjectId, itsv0ObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+        `${published.packageId}::its::ITS`,
+        `${published.packageId}::its_v0::ITS_v0`,
+    ]);
+
+    const channelId = await getItsChannelId(client, itsv0ObjectId);
+
+    chain.contracts.ITS.objects = { ITS: itsObjectId, ITSv0: itsv0ObjectId, ChannelId: channelId };
 
     const tx = new Transaction();
     tx.moveCall({
@@ -220,7 +253,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
 }
 
 async function postDeploySquid(published, keypair, client, config, chain, options) {
-    const relayerDiscovery = config.sui.contracts.AxelarGateway?.objects?.RelayerDiscovery;
+    const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
     const [squidObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::squid::Squid`]);
     const channelId = await getSquidChannelId(client, squidObjectId);
@@ -336,7 +369,7 @@ const GATEWAY_CMD_OPTIONS = [
     new Option(
         '--domainSeparator <domainSeparator>',
         'domain separator (pass in the keccak256 hash value OR "offline" meaning that its computed locally)',
-    ),
+    ).default('offline'),
     new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'),
     new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'),
 ];

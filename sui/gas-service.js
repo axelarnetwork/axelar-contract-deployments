@@ -81,13 +81,14 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
     const walletAddress = keypair.toSuiAddress();
 
     const gasServicePackageId = gasServiceConfig.address;
-    const gasServiceObjectId = gasServiceConfig.objects.GasService;
+    const gasServiceObjectId = gasServiceConfig.objects.GasServicev0;
 
     const unitAmount = options.amount;
     const receiver = options.receiver || walletAddress;
 
     const bytes = await getBcsBytesByObjectId(client, gasServiceObjectId);
-    const { balance: gasServiceBalance } = bcsStructs.gasService.GasService.parse(bytes);
+    const result = bcsStructs.gasService.GasService.parse(bytes);
+    const gasServiceBalance = result.value.balance;
 
     // Check if the gas service balance is sufficient
     if (gasServiceBalance < unitAmount) {
@@ -114,14 +115,15 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
     const walletAddress = keypair.toSuiAddress();
 
     const gasServicePackageId = gasServiceConfig.address;
-    const gasServiceObjectId = gasServiceConfig.objects.GasService;
+    const gasServicev0ObjectId = gasServiceConfig.objects.GasServicev0;
 
     const [messageId] = args;
     const unitAmount = options.amount;
     const receiver = options.receiver || walletAddress;
 
-    const bytes = await getBcsBytesByObjectId(client, gasServiceObjectId);
-    const { balance: gasServiceBalance } = bcsStructs.gasService.GasService.parse(bytes);
+    const bytes = await getBcsBytesByObjectId(client, gasServicev0ObjectId);
+    const result = bcsStructs.gasService.GasService.parse(bytes);
+    const gasServiceBalance = result.value.balance;
 
     // Check if the gas service balance is sufficient
     if (gasServiceBalance < unitAmount) {

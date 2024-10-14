@@ -1,58 +1,90 @@
 'use strict';
 
-const { Contract, Address, ScInt, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, Address, nativeToScVal, scValToNative } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getNetworkPassphrase, getWallet, prepareTransaction, sendTransaction, buildTransaction, estimateCost } = require('./utils');
-const { addEnvOption } = require('../common');
+const { getNetworkPassphrase, getWallet, broadcast, serializeValue, addBaseOptions } = require('./utils');
+const { getDomainSeparator, getChainConfig } = require('../common');
+const { weightedSignersToScVal } = require('./type-utils');
+const { ethers } = require('hardhat');
+const {
+    utils: { arrayify, id },
+} = ethers;
 require('./cli-utils');
 
-function getInitializeArgs(chain, contractName, wallet, options) {
-    const address = Address.fromString(wallet.publicKey());
+async function getInitializeArgs(config, chain, contractName, wallet, options) {
+    const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
 
     switch (contractName) {
         case 'axelar_gateway': {
-            const authAddress = chain.contracts?.axelar_auth_verifiers?.address;
+            const authAddress = chain.contracts?.axelar_auth_verifier?.address;
 
             if (!authAddress) {
-                throw new Error('Missing axelar_auth_verifiers contract address');
+                throw new Error('Missing axelar_auth_verifier contract address');
             }
 
-            return [Address.fromString(authAddress), address];
+            return {
+                authAddress: nativeToScVal(authAddress, { type: 'address' }),
+                owner,
+            };
         }
 
-        case 'axelar_auth_verifiers': {
-            const previousSignersRetention = new ScInt(15, { type: 'u64' });
-            const domainSeparator = Buffer.alloc(32);
-            const miniumumRotationDelay = new ScInt(0, { type: 'u64' });
-            const initialSigners = nativeToScVal({
-                signers: [
-                    {
-                        signer: Address.fromString(wallet.publicKey()).toBuffer(),
-                        weight: new ScInt(1, { type: 'u128' }),
-                    },
-                ],
-                threshold: new ScInt(1, { type: 'u128' }),
-                nonce: Buffer.alloc(32),
-            });
+        case 'axelar_auth_verifier': {
+            const previousSignersRetention = nativeToScVal(15);
+            const domainSeparator = nativeToScVal(Buffer.from(arrayify(await getDomainSeparator(config, chain, options))));
+            const minimumRotationDelay = nativeToScVal(0);
+            const nonce = options.nonce ? arrayify(id(options.nonce)) : Array(32).fill(0);
+            const initialSigners = nativeToScVal([
+                weightedSignersToScVal({
+                    nonce,
+                    signers: [
+                        {
+                            signer: wallet.publicKey(),
+                            weight: 1,
+                        },
+                    ],
+                    threshold: 1,
+                }),
+            ]);
 
-            return [address, previousSignersRetention, domainSeparator, miniumumRotationDelay, initialSigners];
+            return {
+                owner,
+                previousSignersRetention,
+                domainSeparator,
+                minimumRotationDelay,
+                initialSigners,
+            };
         }
 
         case 'axelar_operators':
-            return [address];
+            return { owner };
         default:
             throw new Error(`Unknown contract: ${contractName}`);
     }
 }
+
+async function postDeployGateway(chain, wallet, options) {
+    printInfo('Transferring ownership of auth contract to the gateway');
+    const auth = new Contract(chain.contracts.axelar_auth_verifier.address);
+    const operation = auth.call('transfer_ownership', nativeToScVal(chain.contracts.axelar_gateway.address, { type: 'address' }));
+    await broadcast(operation, wallet, chain, 'Transferred ownership', options);
+}
+
+const postDeployFunctions = {
+    axelar_gateway: postDeployGateway,
+};
 
 async function processCommand(options, config, chain) {
     const { wasmPath, contractName } = options;
 
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
-    const [wallet, server] = await getWallet(chain, options);
+    const wallet = await getWallet(chain, options);
+
+    if (!chain.contracts) {
+        chain.contracts = {};
+    }
 
     const cmd = `soroban contract deploy --wasm ${wasmPath} --source ${options.privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
     printInfo('Deploying contract', contractName);
@@ -75,33 +107,28 @@ async function processCommand(options, config, chain) {
         return;
     }
 
-    const initializeArgs = getInitializeArgs(chain, contractName, wallet, options);
-    chain.contracts[contractName].initializeArgs = initializeArgs.map((arg) => arg.toString());
+    const initializeArgs = await getInitializeArgs(config, chain, contractName, wallet, options);
+    const serializedArgs = Object.fromEntries(
+        Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),
+    );
+    chain.contracts[contractName].initializeArgs = serializedArgs;
 
     const contract = new Contract(contractAddress);
-    const operation = contract.call('initialize', ...initializeArgs.map((arg) => arg.toScVal()));
+    const operation = contract.call('initialize', ...Object.values(initializeArgs));
 
-    printInfo(
-        'Initializing contract with args',
-        initializeArgs.map((arg) => arg.toString()),
-    );
+    printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
-    if (options.estimateCost) {
-        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
-        const resourceCost = await estimateCost(tx, server);
-        printInfo('Resource cost', JSON.stringify(resourceCost, null, 2));
-        return;
+    await broadcast(operation, wallet, chain, 'Initialized contract', options);
+
+    if (postDeployFunctions[contractName]) {
+        await postDeployFunctions[contractName](chain, wallet, options);
+        printInfo('Post deployment setup executed');
     }
-
-    const preparedTx = await prepareTransaction(operation, server, wallet, networkType, options);
-    const returnValue = await sendTransaction(preparedTx, server);
-
-    printInfo('Contract initialized', returnValue);
 }
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    await processor(options, config, config.stellar);
+    await processor(options, config, getChainConfig(config, options.chainName));
     saveConfig(config, options.env);
 }
 
@@ -109,14 +136,19 @@ function main() {
     const program = new Command();
     program.name('deploy-contract').description('Deploy Axelar Soroban contracts on Stellar');
 
-    addEnvOption(program);
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').env('PRIVATE_KEY'));
-    program.addOption(new Option('-v, --verbose', 'verbose output').default(false));
+    addBaseOptions(program, { address: true });
+
     program.addOption(new Option('--initialize', 'initialize the contract'));
     program.addOption(new Option('--contractName <contractName>', 'contract name to deploy').makeOptionMandatory(true));
     program.addOption(new Option('--wasmPath <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
-    program.addOption(new Option('--address <address>', 'existing instance to initialize'));
     program.addOption(new Option('--estimateCost', 'estimate on-chain resources').default(false));
+    program.addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'));
+    program.addOption(
+        new Option(
+            '--domainSeparator <domainSeparator>',
+            'domain separator (pass in the keccak256 hash value OR "offline" meaning that its computed locally)',
+        ).default('offline'),
+    );
 
     program.action((options) => {
         mainProcessor(options, processCommand);
