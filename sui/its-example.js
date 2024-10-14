@@ -86,7 +86,7 @@ async function sendToken(keypair, client, contracts, args, options) {
 }
 
 async function receiveToken(keypair, client, contracts, args, options) {
-    const itsData = options.data || ethers.constants.HashZero;
+    const itsData = options.data;
     const { Example, RelayerDiscovery, AxelarGateway, ITS } = contracts;
     const [sourceChain, messageId, sourceAddress, tokenSymbol, amount] = args;
 
@@ -109,8 +109,8 @@ async function receiveToken(keypair, client, contracts, args, options) {
         throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
     }
 
-    const unitAmount = getUnitAmount(amount, contracts[symbol].decimals);
     const Token = contracts[symbol];
+    const unitAmount = getUnitAmount(amount, Token.decimals);
     const tokenId = Token.objects.TokenId;
 
     const payload = defaultAbiCoder.encode(
@@ -404,6 +404,7 @@ if (require.main === module) {
         .name('receive-token')
         .description('Receive token from other chain to Sui.')
         .command('receive-token <source-chain> <message-id> <source-address> <token-symbol> <amount>')
+        .addOption(new Option('--data <data>', 'Data').default(ethers.constants.HashZero))
         .action((sourceChain, messageId, sourceAddress, tokenSymbol, amount, options) => {
             mainProcessor(receiveToken, options, [sourceChain, messageId, sourceAddress, tokenSymbol, amount], processCommand);
         });
