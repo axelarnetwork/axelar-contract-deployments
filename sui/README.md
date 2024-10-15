@@ -302,8 +302,8 @@ example for adding multisig info to chains config:
 
 ## Examples
 
-[GMP Example Guide](docs/gmp.md)
-[ITS Example Guide](docs/its.md)
+-   [GMP Example Guide](docs/gmp.md)
+-   [ITS Example Guide](docs/its.md)
 
 ## Troubleshooting
 
