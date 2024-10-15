@@ -43,6 +43,7 @@ sourceChain=Ethereum
 transferMessageId=0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-01
 deployMessageId=0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-02
 sourceAddress=0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5
+fee=0.1
 amount=1
 symbol=IMD
 decimals=9
@@ -87,7 +88,7 @@ node sui/its-example.js setup-trusted-address $sourceChain $sourceAddress
 ### Send Token to Gateway
 
 ```bash
-node sui/its-example send-token $symbol $sourceChain $sourceAddress 0.1 10
+node sui/its-example send-token $symbol $sourceChain $sourceAddress $fee $amount
 ```
 
 ### Receive Token
@@ -109,7 +110,7 @@ node sui/its-example receive-token $sourceChain $transferMessageId $sourceAddres
 ### Send Token Deployment to Gateway
 
 ```bash
-node sui/its-example send-deployment $symbol $sourceChain $sourceAddress 0.1 10
+node sui/its-example send-deployment $symbol $sourceChain $sourceAddress $fee
 ```
 
 ### Receive Token Deployment
