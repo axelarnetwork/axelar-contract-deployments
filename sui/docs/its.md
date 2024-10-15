@@ -64,7 +64,7 @@ node sui/its-example deploy-token $emptyTokenSymbol $emptyTokenName $emptyTokenD
 
 This command modifies the token template in the `interchain_token.move` file with the given name, symbol, and decimals. It then deploys the modified token contract and stores the Metadata, TreasuryCap, and TokenId in the config. Finally, it registers the coin on the ITS contract.
 
-Prepare additional parameters for the example:
+After the token deployment, continue to run the following scripts to prepare additional parameters for the example:
 
 ```bash
 transferInfo=$(node sui/its-example.js print-receive-transfer $symbol $sourceAddress $amount)
