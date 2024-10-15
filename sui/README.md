@@ -203,6 +203,7 @@ node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test -
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
 
 To submit a proof constructed on Amplifier, run the following with the multisig session id,
+
 ```bash
 node sui/gateway.js submitProof [multisig session id]
 ```
@@ -299,9 +300,10 @@ example for adding multisig info to chains config:
 }
 ```
 
-GMP Demo:
+## Examples
 
-Follow the instructions [here](docs/gmp.md)
+[GMP Example Guide](docs/gmp.md)
+[ITS Example Guide](docs/its.md)
 
 ## Troubleshooting
 
@@ -342,5 +344,6 @@ node sui/tokens.js split --amount <amount> --coin-type <coin type to split> --tr
 ```
 
 Note:
+
 -   If coin type is not provided, it will split all the coins.
 -   If transfer address is not provided, it will split the coins in the same wallet. Otherwise, it will transfer the splitted coins to the provided address.
