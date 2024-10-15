@@ -51,7 +51,7 @@ emptyTokenSymbol=ETY
 emptyTokenName=Empty
 emptyTokenDecimals=6
 config=$(cat axelar-chains-config/info/local.json)
-channelId=$(echo $config | jq -r '.sui.contracts.ITS.objects.ChannelId)
+channelId=$(echo $config | jq -r '.sui.contracts.ITS.objects.ChannelId')
 destinationContractAddress=$(echo $config | jq -r '.sui.contracts.Example.objects.ItsChannelId')
 ```
 
