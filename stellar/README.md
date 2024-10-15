@@ -10,28 +10,31 @@ brew install libsodium
 npm ci
 ```
 
-Install Soroban CLI
+Install Stellar Soroban CLI
 
 ```bash
-cargo install --locked soroban-cli --features opt
+cargo install --locked stellar-cli --features opt
 ```
 
 Add Soroban network in the config
 
 ```bash
-soroban network add testnet --rpc-url https://soroban-testnet.stellar.org:443 "Test SDF Network ; September 2015" --global
+stellar network add \
+  --global testnet \
+  --rpc-url https://soroban-testnet.stellar.org:443 \
+  --network-passphrase "Test SDF Network ; September 2015"
 ```
 
 Create a new Stellar keypair
 
 ```bash
-soroban keys generate wallet --network testnet
+stellar keys generate wallet --network testnet
 
 # Address
-soroban keys address wallet
+stellar keys address wallet
 
 # Get private key
-soroban keys show wallet
+stellar keys show wallet
 ```
 
 Set `PRIVATE_KEY` in `.env` to the above value.
@@ -44,21 +47,19 @@ Setup
 
 1. Checkout the axelar-cgp-soroban repo.
 2. Compile the Soroban wasm contracts
+
 ```bash
-cargo wasm --release
+cargo build
+stellar contract build
 ```
+
 3. Optimize the contracts
+
 ```bash
 ./optimize.sh
 ```
 
 ### Gateway
-
-Deploy the auth contract
-
-```bash
-node stellar/deploy-contract.js --contractName axelar_auth_verifier --wasmPath ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_auth_verifier.optimized.wasm --initialize
-```
 
 Deploy the gateway contract
 
@@ -79,7 +80,7 @@ node stellar/deploy-contract.js --contractName axelar_operators --wasmPath ../ax
 Generate TypeScript bindings for the contract
 
 ```bash
-node stellar/generate-bindings.js --wasmPath /path/to/optimized.wasm --contractId [contract address] --outputDir ./stellar/bindings/[contract name]
+node stellar/generate-bindings.js --wasmPath /path/to/optimized.wasm --contractId [contract_address] --outputDir ./stellar/bindings/[contract name]
 ```
 
 ## Contract Interaction
@@ -87,13 +88,16 @@ node stellar/generate-bindings.js --wasmPath /path/to/optimized.wasm --contractI
 Soroban contracts can be interacted directly via the CLI as well. See the help text for individual contract cmds as follows.
 
 ```bash
-soroban contract invoke --network testnet --id [contract-address] --source-account wallet -- --help
+stellar contract invoke --network testnet --id [contract_address] --source-account wallet -- --help
 ```
 
 ### Gateway
 
 To get help on the gateway commands, run:
-`node stellar/gateway.js --help`
+
+```bash
+node stellar/gateway.js --help
+```
 
 #### Call contract
 
@@ -101,7 +105,7 @@ To get help on the gateway commands, run:
 node stellar/gateway.js call-contract [destination_chain] [dstination_address] [payload]
 
 # Example
-node stellar/gateway.js call-contract ethereum 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
+node stellar/gateway.js call-contract avalanche 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 ```
 
 ### Submit multisig prover proof
@@ -109,31 +113,30 @@ node stellar/gateway.js call-contract ethereum 0x4F4495243837681061C4743b74B3eEd
 Submit a proof constructed on Amplifier to the Stellar gateway contract.
 
 ```bash
-node stellar/gateway.js submit-proof [multisig-session-id]
+node stellar/gateway.js submit-proof [multisig_session_id]
 ```
 
-#### Approve messages
+### Approve messages
 
-A message approval can be submitted to the gateway contract for a test deployment where the wallet is the signer on the gateway. Setting `[destination address]` to `wallet` will use the wallet address as the destination.
+A message approval can be submitted to the gateway contract for a test deployment where the wallet is the signer on the gateway. Setting `[destination_address]` to `wallet` will use the wallet address as the destination.
 
 ```bash
-node stellar/gateway.js approve [source-chain] [message-id] [source-address] [destination-address] [payload]
+node stellar/gateway.js approve [source_chain] [message_id] [source_address] [destination_address] [payload]
 ```
 
-#### Validate messages
+### Validate messages
 
 An approved message can be validated by the gateway contract for a test deployment as follows:
 
 ```bash
-node stellar/gateway.js validate-message [source-chain] [message-id] [source-address] [payload]
+node stellar/gateway.js validate-message [source_chain] [message_id] [source_address] [payload]
 ```
 
-#### Rotate signers
+### Rotate signers
 
 A signer rotation can be submitted to the gateway contract. Use `--currentNonce` to override the default current nonce set for subsequent rotations. Skip `--signers` to rotate to the Amplifier verifier set registered in the prover contract.
 
 ```bash
-node node stellar/gateway.js rotate --newNonce test --signers wallet
-
-node node stellar/gateway.js rotate --newNonce test2 --currentNonce test --signers wallet
+node stellar/gateway.js rotate --newNonce test --signers wallet
+node stellar/gateway.js rotate --newNonce test2 --currentNonce test --signers wallet
 ```

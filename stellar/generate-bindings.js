@@ -15,7 +15,7 @@ function processCommand(options, _, chain) {
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
 
-    const cmd = `soroban contract bindings typescript --wasm ${wasmPath} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}" --contract-id ${contractId} --output-dir ${outputDir} ${
+    const cmd = `stellar contract bindings typescript --wasm ${wasmPath} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}" --contract-id ${contractId} --output-dir ${outputDir} ${
         overwrite ? '--overwrite' : ''
     }`;
     console.log(`Executing command: ${cmd}`);
