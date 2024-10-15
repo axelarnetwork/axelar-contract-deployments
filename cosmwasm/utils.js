@@ -19,6 +19,7 @@ const {
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
+    printInfo,
     isString,
     isStringArray,
     isStringLowercase,
@@ -58,25 +59,58 @@ const getLabel = ({ contractName, label }) => label || contractName;
 
 const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
 
-const getAmplifierContractConfig = (config, contractName) => {
-    const contractConfig = config.axelar.contracts[contractName];
+const initContractConfig = (config, { contractName, chainName }) => {
+    config.axelar = config.axelar || {};
+    config.axelar.contracts = config.axelar.contracts || {};
+    config.axelar.contracts[contractName] = config.axelar.contracts[contractName] || {};
 
-    if (!contractConfig) {
+    if (chainName) {
+        config.axelar.contracts[contractName][chainName] = config.axelar.contracts[contractName][chainName] || {};
+    }
+};
+
+const getAmplifierBaseContractConfig = (config, contractName) => {
+    const contractBaseConfig = config.axelar.contracts[contractName];
+
+    if (!contractBaseConfig) {
         throw new Error(`Contract ${contractName} not found in config`);
     }
 
-    return contractConfig;
+    return contractBaseConfig;
 };
 
-const updateContractConfig = (contractConfig, chainConfig, key, value) => {
-    if (chainConfig) {
-        contractConfig[chainConfig.axelarId] = {
-            ...contractConfig[chainConfig.axelarId],
-            [key]: value,
-        };
-    } else {
-        contractConfig[key] = value;
+const getAmplifierContractConfig = (config, { contractName, chainName }) => {
+    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+
+    if (!chainName) {
+        return { contractBaseConfig, contractConfig: contractBaseConfig }; // contractConfig is the same for non-chain specific contracts
     }
+
+    const contractConfig = contractBaseConfig[chainName];
+
+    if (!contractConfig) {
+        throw new Error(`Contract ${contractName} (${chainName}) not found in config`);
+    }
+
+    return { contractBaseConfig, contractConfig };
+};
+
+const updateCodeId = async (client, config, options) => {
+    const { fetchCodeId, codeId } = options;
+
+    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
+
+    if (codeId) {
+        contractConfig.codeId = codeId;
+    } else if (fetchCodeId) {
+        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractBaseConfig);
+    } else if (contractBaseConfig.lastUploadedCodeId) {
+        contractConfig.codeId = contractBaseConfig.lastUploadedCodeId;
+    } else {
+        throw new Error('Code Id is not defined');
+    }
+
+    printInfo('Using code id', contractConfig.codeId);
 };
 
 const uploadContract = async (client, wallet, config, options) => {
@@ -97,7 +131,7 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
 
     const [account] = await wallet.getAccounts();
 
-    const contractConfig = config.axelar.contracts[contractName];
+    const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
         axelar: { gasPrice, gasLimit },
@@ -548,8 +582,8 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     throw new Error(`${contractName} is not supported.`);
 };
 
-const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
-    if (!contractConfig.storeCodeProposalCodeHash) {
+const fetchCodeIdFromCodeHash = async (client, contractBaseConfig) => {
+    if (!contractBaseConfig.storeCodeProposalCodeHash) {
         throw new Error('storeCodeProposalCodeHash not found in contract config');
     }
 
@@ -558,7 +592,7 @@ const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
 
     // most likely to be near the end, so we iterate backwards. We also get the latest if there are multiple
     for (let i = codes.length - 1; i >= 0; i--) {
-        if (codes[i].checksum.toUpperCase() === contractConfig.storeCodeProposalCodeHash.toUpperCase()) {
+        if (codes[i].checksum.toUpperCase() === contractBaseConfig.storeCodeProposalCodeHash.toUpperCase()) {
             codeId = codes[i].id;
             break;
         }
@@ -567,6 +601,10 @@ const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
     if (!codeId) {
         throw new Error('codeId not found on network for the given codeHash');
     }
+
+    contractBaseConfig.lastUploadedCodeId = codeId;
+
+    printInfo(`Fetched code id ${codeId} from the network`);
 
     return codeId;
 };
@@ -626,9 +664,9 @@ const getStoreInstantiateParams = (config, options, msg) => {
 };
 
 const getInstantiateContractParams = (config, options, msg) => {
-    const { contractName, admin } = options;
+    const { admin } = options;
 
-    const contractConfig = config.axelar.contracts[contractName];
+    const { contractConfig } = getAmplifierContractConfig(config, options);
 
     return {
         ...getSubmitProposalParams(options),
@@ -673,10 +711,10 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
     })),
 });
 
-const getMigrateContractParams = (config, options, chainName) => {
-    const { contractName, msg } = options;
+const getMigrateContractParams = (config, options) => {
+    const { msg, chainName } = options;
 
-    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const { contractConfig } = getAmplifierContractConfig(config, options);
     const chainConfig = getChainConfig(config, chainName);
 
     return {
@@ -749,8 +787,8 @@ const encodeParameterChangeProposal = (options) => {
     };
 };
 
-const encodeMigrateContractProposal = (config, options, chainName) => {
-    const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options, chainName));
+const encodeMigrateContractProposal = (config, options) => {
+    const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options));
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.MigrateContractProposal',
@@ -797,8 +835,10 @@ module.exports = {
     getSalt,
     calculateDomainSeparator,
     readWasmFile,
+    initContractConfig,
+    getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
-    updateContractConfig,
+    updateCodeId,
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
