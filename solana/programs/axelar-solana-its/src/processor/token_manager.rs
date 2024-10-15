@@ -8,11 +8,11 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::program_option::COption;
-use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
 use spl_token_2022::extension::StateWithExtensions;
 use spl_token_2022::state::Mint;
 
+use crate::instructions::Bumps;
 use crate::seed_prefixes;
 use crate::state::token_manager::{self, TokenManager};
 
@@ -25,8 +25,68 @@ use crate::state::token_manager::{self, TokenManager};
 pub fn process_deploy<'a>(
     payer: &AccountInfo<'a>,
     accounts: &[AccountInfo<'a>],
-    program_id: &Pubkey,
     payload: &DeployTokenManager,
+    bumps: Bumps,
+) -> ProgramResult {
+    let token_manager_type: token_manager::Type = payload.token_manager_type.try_into()?;
+    if token_manager::Type::NativeInterchainToken == token_manager_type {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    let Ok((operator, token_address)) = token_manager::decode_params(payload.params.as_ref())
+    else {
+        msg!("Failed to decode operator and token address");
+        return Err(ProgramError::InvalidInstructionData);
+    };
+
+    let deploy_token_manager = DeployTokenManagerInternal::new(
+        payload.token_manager_type.try_into()?,
+        PublicKey::new_ed25519(payload.token_id.0),
+        operator,
+        token_address,
+        None,
+    );
+
+    deploy(payer, accounts, bumps, deploy_token_manager)
+}
+
+pub(crate) struct DeployTokenManagerInternal<'a> {
+    token_manager_type: token_manager::Type,
+    token_id: PublicKey,
+    operator: Option<PublicKey>,
+    token_address: PublicKey,
+    additional_minter: Option<AccountInfo<'a>>,
+}
+
+impl<'a> DeployTokenManagerInternal<'a> {
+    pub(crate) const fn new(
+        token_manager_type: token_manager::Type,
+        token_id: PublicKey,
+        operator: Option<PublicKey>,
+        token_address: PublicKey,
+        additional_minter: Option<AccountInfo<'a>>,
+    ) -> Self {
+        Self {
+            token_manager_type,
+            token_id,
+            operator,
+            token_address,
+            additional_minter,
+        }
+    }
+}
+
+/// Deploys a new [`TokenManager`] PDA.
+///
+/// # Errors
+///
+/// An error occurred when deploying the [`TokenManager`] PDA. The reason can be
+/// derived from the logs.
+pub(crate) fn deploy<'a>(
+    payer: &AccountInfo<'a>,
+    accounts: &[AccountInfo<'a>],
+    bumps: Bumps,
+    deploy_token_manager: DeployTokenManagerInternal<'a>,
 ) -> ProgramResult {
     check_accounts(accounts)?;
 
@@ -41,19 +101,16 @@ pub fn process_deploy<'a>(
     let token_program_2022 = next_account_info(accounts_iter)?;
     let _ata_program = next_account_info(accounts_iter)?;
 
-    let ty: token_manager::Type = payload.token_manager_type.try_into()?;
-    validate_token_type(&ty, token_mint, token_manager_pda)?;
+    validate_token_type(
+        &deploy_token_manager.token_manager_type,
+        token_mint,
+        token_manager_pda,
+    )?;
 
     let (token_program, token_manager_ata) = if token_mint.owner == token_program_legacy.key {
         (token_program_legacy, token_manager_ata_legacy)
     } else {
         (token_program_2022, token_manager_ata_2022)
-    };
-
-    let Ok((operator, token_address)) = token_manager::decode_params(payload.params.as_ref())
-    else {
-        msg!("Failed to decode operator and token address");
-        return Err(ProgramError::InvalidInstructionData);
     };
 
     create_associated_token_account(
@@ -65,30 +122,33 @@ pub fn process_deploy<'a>(
         token_program,
     )?;
 
-    let token_id = PublicKey::new_ed25519(payload.token_id.0);
-    let (_token_manager_pda, bump) = crate::token_manager_pda(its_root_pda.key, token_id.as_ref());
+    let (interchain_token_pda, _) = crate::interchain_token_pda(
+        its_root_pda.key,
+        deploy_token_manager.token_id.as_ref(),
+        bumps.interchain_token_pda_bump,
+    );
+    let (_token_manager_pda, bump) =
+        crate::token_manager_pda(&interchain_token_pda, bumps.token_manager_pda_bump);
     let token_manager_ata = PublicKey::new_ed25519(token_manager_ata.key.to_bytes());
     let mut operators = vec![PublicKey::new_ed25519(its_root_pda.key.to_bytes())];
 
-    if let Some(operator) = operator {
+    if let Some(operator) = deploy_token_manager.operator {
         operators.push(operator);
     }
 
-    let minters = match ty {
+    let minters = match deploy_token_manager.token_manager_type {
         token_manager::Type::NativeInterchainToken
         | token_manager::Type::MintBurn
-        | token_manager::Type::MintBurnFrom => {
-            // TODO: The mint authority set by the user, if any, is sent within the
-            // `DeployInterchainToken` message.
-            Some(vec![])
-        }
+        | token_manager::Type::MintBurnFrom => deploy_token_manager
+            .additional_minter
+            .map(|minter| vec![PublicKey::new_ed25519(minter.key.to_bytes())]),
         token_manager::Type::LockUnlock | token_manager::Type::LockUnlockFee => None,
     };
 
     let token_manager = TokenManager::new(
-        ty,
-        token_id,
-        token_address,
+        deploy_token_manager.token_manager_type,
+        deploy_token_manager.token_id,
+        deploy_token_manager.token_address,
         token_manager_ata,
         bump,
         operators,
@@ -98,13 +158,12 @@ pub fn process_deploy<'a>(
     program_utils::init_rkyv_pda::<{ TokenManager::LEN }, _>(
         payer,
         token_manager_pda,
-        program_id,
+        &crate::id(),
         system_account,
         token_manager,
         &[
             seed_prefixes::TOKEN_MANAGER_SEED,
-            its_root_pda.key.as_ref(),
-            token_id.as_ref(),
+            interchain_token_pda.as_ref(),
             &[bump],
         ],
     )?;

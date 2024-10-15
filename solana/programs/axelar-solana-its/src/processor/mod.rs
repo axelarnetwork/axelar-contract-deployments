@@ -1,7 +1,9 @@
 //! Program state processor
 
 use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
+use axelar_rkyv_encoding::types::GmpMetadata;
 use interchain_token_transfer_gmp::GMPPayload;
+use itertools::Itertools;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -10,9 +12,10 @@ use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
 
 use crate::check_program_account;
-use crate::instructions::InterchainTokenServiceInstruction;
+use crate::instructions::{derive_its_accounts, Bumps, InterchainTokenServiceInstruction};
 use crate::state::InterchainTokenService;
 
+pub mod interchain_token;
 pub mod token_manager;
 
 /// Program state handler.
@@ -41,46 +44,14 @@ impl Processor {
 
         match instruction {
             InterchainTokenServiceInstruction::Initialize { pda_bump } => {
-                msg!("Received Initialize message");
-                process_initialize(program_id, accounts, pda_bump)?;
+                process_initialize(accounts, pda_bump)?;
             }
             InterchainTokenServiceInstruction::ItsGmpPayload {
                 abi_payload,
                 gmp_metadata,
+                bumps,
             } => {
-                let accounts_iter = &mut accounts.iter();
-                let payer = next_account_info(accounts_iter)?;
-                let (gateway_accounts, instruction_accounts) = accounts_iter
-                    .as_slice()
-                    .split_at(PROGRAM_ACCOUNTS_START_INDEX);
-
-                validate_with_gmp_metadata(
-                    program_id,
-                    gateway_accounts,
-                    gmp_metadata,
-                    &abi_payload,
-                )?;
-
-                let payload = GMPPayload::decode(&abi_payload)
-                    .map_err(|_err| ProgramError::InvalidInstructionData)?;
-
-                match payload {
-                    GMPPayload::InterchainTransfer(_interchain_token_transfer) => {
-                        msg!("Received InterchainTransfer message");
-                    }
-                    GMPPayload::DeployInterchainToken(deploy_interchain_token) => {
-                        msg!("Received DeployInterchainToken message");
-                        msg!("Token ID: {:?}", deploy_interchain_token.token_id);
-                    }
-                    GMPPayload::DeployTokenManager(deploy_token_manager) => {
-                        token_manager::process_deploy(
-                            payer,
-                            instruction_accounts,
-                            program_id,
-                            &deploy_token_manager,
-                        )?;
-                    }
-                }
+                process_its_gmp_payload(accounts, gmp_metadata, &abi_payload, bumps)?;
             }
         }
 
@@ -88,11 +59,7 @@ impl Processor {
     }
 }
 
-fn process_initialize(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo<'_>],
-    pda_bump: u8,
-) -> ProgramResult {
+fn process_initialize(accounts: &[AccountInfo<'_>], pda_bump: u8) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let payer = next_account_info(account_info_iter)?;
     let gateway_root_pda = next_account_info(account_info_iter)?;
@@ -113,7 +80,7 @@ fn process_initialize(
     program_utils::init_rkyv_pda::<{ InterchainTokenService::LEN }, _>(
         payer,
         its_root_pda,
-        program_id,
+        &crate::id(),
         system_account,
         data,
         &[
@@ -122,6 +89,89 @@ fn process_initialize(
             &[pda_bump],
         ],
     )?;
+
+    Ok(())
+}
+
+fn process_its_gmp_payload(
+    accounts: &[AccountInfo<'_>],
+    gmp_metadata: GmpMetadata,
+    abi_payload: &[u8],
+    bumps: Bumps,
+) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let payer = next_account_info(accounts_iter)?;
+
+    let (gateway_accounts, instruction_accounts) = accounts_iter
+        .as_slice()
+        .split_at(PROGRAM_ACCOUNTS_START_INDEX);
+
+    validate_with_gmp_metadata(&crate::id(), gateway_accounts, gmp_metadata, abi_payload)?;
+
+    let _gateway_approved_message_pda = next_account_info(accounts_iter)?;
+    let _signing_pda = next_account_info(accounts_iter)?;
+    let gateway_root_pda = next_account_info(accounts_iter)?;
+    let _gateway_program_id = next_account_info(accounts_iter)?;
+
+    validate_its_accounts(
+        instruction_accounts,
+        gateway_root_pda.key,
+        abi_payload,
+        bumps,
+    )?;
+
+    let payload =
+        GMPPayload::decode(abi_payload).map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    match payload {
+        GMPPayload::InterchainTransfer(_interchain_token_transfer) => {
+            msg!("Received InterchainTransfer message");
+        }
+        GMPPayload::DeployInterchainToken(deploy_interchain_token) => {
+            interchain_token::process_deploy(
+                payer,
+                instruction_accounts,
+                deploy_interchain_token,
+                bumps,
+            )?;
+        }
+        GMPPayload::DeployTokenManager(deploy_token_manager) => {
+            token_manager::process_deploy(
+                payer,
+                instruction_accounts,
+                &deploy_token_manager,
+                bumps,
+            )?;
+        }
+    }
+    Ok(())
+}
+
+fn validate_its_accounts(
+    accounts: &[AccountInfo<'_>],
+    gateway_root_pda: &Pubkey,
+    abi_payload: &[u8],
+    bumps: Bumps,
+) -> ProgramResult {
+    let (derived_its_accounts, new_bumps) =
+        derive_its_accounts(gateway_root_pda, abi_payload, Some(bumps))?;
+
+    if new_bumps != bumps {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    for element in accounts.iter().zip_longest(derived_its_accounts.iter()) {
+        match element {
+            itertools::EitherOrBoth::Both(provided, derived) => {
+                if provided.key != &derived.pubkey {
+                    return Err(ProgramError::InvalidAccountData);
+                }
+            }
+            itertools::EitherOrBoth::Left(_) | itertools::EitherOrBoth::Right(_) => {
+                return Err(ProgramError::InvalidAccountData)
+            }
+        }
+    }
 
     Ok(())
 }

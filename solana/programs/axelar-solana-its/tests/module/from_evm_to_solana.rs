@@ -1,13 +1,16 @@
 use axelar_rkyv_encoding::test_fixtures::random_message_with_destination_and_payload;
-use evm_contracts_test_suite::ethers::types::U64;
-use evm_contracts_test_suite::ethers::utils::hex;
+use axelar_solana_its::state::token_manager::TokenManager;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_gateway::ContractCallFilter;
 use solana_program_test::tokio;
 use solana_sdk::signer::Signer;
+use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
+use spl_token_2022::state::Mint;
+use spl_token_metadata_interface::state::TokenMetadata;
 
 use crate::{axelar_evm_setup, axelar_solana_setup, ItsProgramWrapper};
 
 #[tokio::test]
+#[allow(clippy::too_many_lines)]
 async fn test_send_from_evm_to_solana() {
     // Setup - Solana
     let ItsProgramWrapper {
@@ -17,13 +20,13 @@ async fn test_send_from_evm_to_solana() {
     } = axelar_solana_setup().await;
     // Setup - EVM
     let (_evm_chain, evm_signer, its_contracts) = axelar_evm_setup().await;
-
+    let token_name = "Canonical Token";
+    let token_symbol = "CT";
     let test_its_canonical_token = evm_signer
-        .deploy_axelar_test_canonical_token("Canonical Token".to_owned(), "CT".to_owned(), 18)
+        .deploy_axelar_test_canonical_token(token_name.to_owned(), token_symbol.to_owned(), 18)
         .await
         .unwrap();
-
-    let register_tx = its_contracts
+    its_contracts
         .interchain_token_factory
         .register_canonical_interchain_token(test_its_canonical_token.address())
         .send()
@@ -33,12 +36,9 @@ async fn test_send_from_evm_to_solana() {
         .unwrap()
         .unwrap();
 
-    assert_eq!(register_tx.status.unwrap(), U64::one());
-
     let event_filter = its_contracts
         .interchain_token_service
         .interchain_token_id_claimed_filter();
-
     let token_id = event_filter
         .query()
         .await
@@ -46,8 +46,7 @@ async fn test_send_from_evm_to_solana() {
         .first()
         .unwrap()
         .token_id;
-
-    let deploy_tx = its_contracts
+    its_contracts
         .interchain_token_factory
         .deploy_remote_canonical_interchain_token(
             String::new(),
@@ -61,8 +60,6 @@ async fn test_send_from_evm_to_solana() {
         .await
         .unwrap()
         .unwrap();
-
-    assert_eq!(deploy_tx.status.unwrap(), U64::one());
 
     let log: ContractCallFilter = its_contracts
         .gateway
@@ -102,22 +99,40 @@ async fn test_send_from_evm_to_solana() {
     )
     .expect("failed to create instruction");
 
-    let tx1 = solana_chain
+    let _tx1 = solana_chain
         .fixture
         .send_tx_with_metadata(&[instruction])
         .await;
+    let (its_root_pda, _its_root_pda_bump) =
+        axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
+    let (mint, _) = axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
 
-    let log_msgs = tx1.metadata.unwrap().log_messages;
-    assert!(
-        log_msgs.iter().any(|tx_log| tx_log
-            .as_str()
-            .contains("Received DeployInterchainToken message")),
-        "DeployInterchainToken message not received"
-    );
-    assert!(
-        log_msgs
-            .iter()
-            .any(|tx_log| tx_log.as_str().contains(&hex::encode(token_id))),
-        "Token Id doesn't match"
-    );
+    let mint_account = solana_chain
+        .fixture
+        .banks_client
+        .get_account(mint)
+        .await
+        .expect("banks client error")
+        .expect("mint account empty");
+
+    let mint_state = StateWithExtensions::<Mint>::unpack(&mint_account.data).unwrap();
+    let token_metadata = mint_state
+        .get_variable_len_extension::<TokenMetadata>()
+        .unwrap();
+
+    assert_eq!(token_name, token_metadata.name);
+    assert_eq!(token_symbol, token_metadata.symbol);
+
+    let (interchain_token_pda, _) =
+        axelar_solana_its::find_interchain_token_pda(&its_root_pda, token_id.as_ref());
+    let (token_manager_pda, _bump) =
+        axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+
+    let token_manager = solana_chain
+        .fixture
+        .get_rkyv_account::<TokenManager>(&token_manager_pda, &axelar_solana_its::id())
+        .await;
+
+    assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
+    assert_eq!(mint.as_ref(), token_manager.token_address.as_ref());
 }

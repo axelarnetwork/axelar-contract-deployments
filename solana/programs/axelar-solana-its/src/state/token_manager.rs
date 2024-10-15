@@ -20,6 +20,7 @@ use solana_program::program_error::ProgramError;
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq))]
+#[non_exhaustive]
 pub enum Type {
     /// For tokens that are deployed directly from ITS itself they use a native
     /// interchain token manager. Tokens that are deployed via the frontend
@@ -90,6 +91,18 @@ impl TryFrom<U256> for Type {
         };
 
         Ok(converted)
+    }
+}
+
+impl From<Type> for U256 {
+    fn from(value: Type) -> Self {
+        match value {
+            Type::NativeInterchainToken => Self::from(0),
+            Type::MintBurnFrom => Self::from(1),
+            Type::LockUnlock => Self::from(2),
+            Type::LockUnlockFee => Self::from(3),
+            Type::MintBurn => Self::from(4),
+        }
     }
 }
 

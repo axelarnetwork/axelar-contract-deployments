@@ -102,6 +102,14 @@ impl GMPPayload {
             GMPPayload::DeployTokenManager(data) => data.abi_encode_params(),
         }
     }
+
+    pub fn token_id(&self) -> &[u8; 32] {
+        match self {
+            GMPPayload::InterchainTransfer(data) => &data.token_id,
+            GMPPayload::DeployInterchainToken(data) => &data.token_id,
+            GMPPayload::DeployTokenManager(data) => &data.token_id,
+        }
+    }
 }
 
 #[cfg(test)]

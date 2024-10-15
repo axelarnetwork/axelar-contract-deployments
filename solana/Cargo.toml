@@ -96,8 +96,10 @@ solana-program-test = "2.0.1"
 solana-sdk = "2.0.1"
 solana-test-validator = "2.0.1"
 spl-associated-token-account = "5.0.1" 
+spl-pod = "0.4.0"
 spl-token = "6.0.0"
 spl-token-2022 = "5.0.2"
+spl-token-metadata-interface = "0.5.1"
 test-log = { version = "0.2", features = ["trace"], default-features = false }
 thiserror = "1"
 tokio = { version = "1", features = ["full"] }

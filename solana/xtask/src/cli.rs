@@ -605,7 +605,7 @@ async fn handle_cosmwasm(
 
 fn handle_generating_evm_wallet(axelar_deployment_root: &AxelarDeploymentRoot) -> eyre::Result<()> {
     let mnemonic = bip39::Mnemonic::generate(24)?;
-    let words = mnemonic.word_iter().collect::<Vec<_>>().join(" ");
+    let words = mnemonic.words().collect::<Vec<_>>().join(" ");
     let mnemonic = MnemonicBuilder::<English>::default()
         .phrase(ethers::types::PathOrString::String(words.clone()));
     println!("mnemonic: {words}");

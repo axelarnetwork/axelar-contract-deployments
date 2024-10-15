@@ -27,8 +27,10 @@ program-utils.workspace = true
 rkyv.workspace = true
 solana-program.workspace = true
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
+spl-pod.workspace = true
 spl-token = { workspace = true, features = ["no-entrypoint"] }
-spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
+spl-token-2022 = { workspace = true, features = ["no-entrypoint", "serde-traits"] }
+spl-token-metadata-interface = { workspace = true, features = ["serde-traits"] }
 
 [dev-dependencies]
 evm-contracts-test-suite.workspace = true

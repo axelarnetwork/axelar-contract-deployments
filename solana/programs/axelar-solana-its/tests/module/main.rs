@@ -47,7 +47,8 @@ async fn axelar_solana_setup() -> ItsProgramWrapper {
         .build()
         .setup()
         .await;
-    let (its_pda, its_pda_bump) = axelar_solana_its::its_root_pda(&solana_chain.gateway_root_pda);
+    let (its_pda, its_pda_bump) =
+        axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
     solana_chain
         .fixture
         .send_tx(&[axelar_solana_its::instructions::initialize(
