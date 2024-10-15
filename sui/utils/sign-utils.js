@@ -3,7 +3,6 @@
 const { verifyTransactionSignature } = require('@mysten/sui/verify');
 const { decodeSuiPrivateKey } = require('@mysten/sui/cryptography');
 const { Ed25519Keypair, Ed25519PublicKey } = require('@mysten/sui/keypairs/ed25519');
-const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { MultiSigPublicKey } = require('@mysten/sui/multisig');
 const { Secp256k1Keypair, Secp256k1PublicKey } = require('@mysten/sui/keypairs/secp256k1');
 const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui/keypairs/secp256r1');
