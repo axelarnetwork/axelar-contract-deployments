@@ -51,8 +51,8 @@ emptyTokenSymbol=ETY
 emptyTokenName=Empty
 emptyTokenDecimals=6
 config=$(cat axelar-chains-config/info/local.json)
-channelId=$(echo $config | jq '.sui.contracts.ITS.objects.ChannelId' | tr -d '"')
-destinationContractAddress=$(echo $config | jq '.sui.contracts.Example.objects.ItsChannelId' | tr -d '"')
+channelId=$(echo $config | jq -r '.sui.contracts.ITS.objects.ChannelId)
+destinationContractAddress=$(echo $config | jq -r '.sui.contracts.Example.objects.ItsChannelId')
 ```
 
 ### Deploy Test Tokens
@@ -68,10 +68,10 @@ Prepare additional parameters for the example:
 
 ```bash
 transferInfo=$(node sui/its-example.js print-receive-transfer $symbol $sourceAddress $amount)
-transferPayloadHash=$(echo $transferInfo | jq .payloadHash | tr -d '"')
+transferPayloadHash=$(echo $transferInfo | jq -r .payloadHash)
 deploymentInfo=$(node sui/its-example.js print-receive-deployment $emptyTokenName $emptyTokenSymbol $emptyTokenDecimals)
-deployPayload=$(echo $deploymentInfo | jq .payload | tr -d '"')
-deployPayloadHash=$(echo $deploymentInfo | jq .payloadHash | tr -d '"')
+deployPayload=$(echo $deploymentInfo | jq -r .payload)
+deployPayloadHash=$(echo $deploymentInfo | jq -r .payloadHash)
 ```
 
 ### Setup Trusted Addresses
