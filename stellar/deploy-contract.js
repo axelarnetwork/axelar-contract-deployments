@@ -52,8 +52,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 }
 
 async function processCommand(options, config, chain) {
-    const { wasmPath, contractName } = options;
-
+    const { wasmPath, contractName, privateKey } = options;
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
     const wallet = await getWallet(chain, options);
@@ -62,7 +61,7 @@ async function processCommand(options, config, chain) {
         chain.contracts = {};
     }
 
-    const cmd = `${stellarCmd} contract deploy --wasm ${wasmPath} --source ${options.privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
+    const cmd = `${stellarCmd} contract deploy --wasm ${wasmPath} --source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
     printInfo('Deploying contract', contractName);
 
     let contractAddress = options.address;
@@ -110,13 +109,16 @@ function main() {
     addBaseOptions(program, { address: true });
 
     program.addOption(new Option('--initialize', 'initialize the contract'));
-    program.addOption(new Option('--contractName <contractName>', 'contract name to deploy').makeOptionMandatory(true));
-    program.addOption(new Option('--wasmPath <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
+    program.addOption(new Option('--contract-name <contractName>', 'contract name to deploy').makeOptionMandatory(true));
+    program.addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
     program.addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'));
-    program.addOption(new Option('--previousSignersRetention', 'previous signer retention').default(15));
+    program.addOption(
+        new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention').default(15).argParser(Number),
+    );
+
     program.addOption(
         new Option(
-            '--domainSeparator <domainSeparator>',
+            '--domain-separator <domainSeparator>',
             'domain separator (pass in the keccak256 hash value OR "offline" meaning that its computed locally)',
         ).default('offline'),
     );

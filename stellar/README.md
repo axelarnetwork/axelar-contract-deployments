@@ -64,15 +64,15 @@ stellar contract build
 Deploy the gateway contract
 
 ```bash
-node stellar/deploy-contract.js --contractName axelar_gateway --wasmPath ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm --initialize
+node stellar/deploy-contract.js --contract-name axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm --initialize
 ```
 
-Provide `--estimateCost` to show the gas costs for the initialize transaction instead of executing it.
+Provide `--estimate-cost` to show the gas costs for the initialize transaction instead of executing it.
 
 ### Operators
 
 ```bash
-node stellar/deploy-contract.js --contractName axelar_operators --wasmPath ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm --initialize
+node stellar/deploy-contract.js --contract-name axelar_operators --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm --initialize
 ```
 
 ## Generate bindings
@@ -80,7 +80,7 @@ node stellar/deploy-contract.js --contractName axelar_operators --wasmPath ../ax
 Generate TypeScript bindings for the contract
 
 ```bash
-node stellar/generate-bindings.js --wasmPath /path/to/optimized.wasm --contractId [contract-address] --outputDir ./stellar/bindings/[contract-name]
+node stellar/generate-bindings.js --wasm-path /path/to/optimized.wasm --contract-id [contract-address] --output-dir ./stellar/bindings/[contract-name]
 ```
 
 ## Contract Interaction
@@ -118,7 +118,7 @@ node stellar/gateway.js submit-proof [multisig-session-id]
 
 ### Approve messages
 
-A message approval can be submitted to the gateway contract for a test deployment where the wallet is the signer on the gateway. Setting `[destination_address]` to `wallet` will use the wallet address as the destination.
+A message approval can be submitted to the gateway contract for a test deployment where the wallet is the signer on the gateway. Setting `[destination-address]` to `wallet` will use the wallet address as the destination.
 
 ```bash
 node stellar/gateway.js approve [source-chain] [message-id] [source-address] [destination-address] [payload]
@@ -134,9 +134,9 @@ node stellar/gateway.js validate-message [source-chain] [message-id] [source-add
 
 ### Rotate signers
 
-A signer rotation can be submitted to the gateway contract. Use `--currentNonce` to override the default current nonce set for subsequent rotations. Skip `--signers` to rotate to the Amplifier verifier set registered in the prover contract.
+A signer rotation can be submitted to the gateway contract. Use `--current-nonce` to override the default current nonce set for subsequent rotations. Skip `--signers` to rotate to the Amplifier verifier set registered in the prover contract.
 
 ```bash
-node stellar/gateway.js rotate --newNonce test --signers wallet
-node stellar/gateway.js rotate --newNonce test2 --currentNonce test --signers wallet
+node stellar/gateway.js rotate --new-nonce test --signers wallet
+node stellar/gateway.js rotate --new-nonce test2 --current-nonce test --signers wallet
 ```

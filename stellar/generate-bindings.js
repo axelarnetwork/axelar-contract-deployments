@@ -29,10 +29,10 @@ function main() {
     program.name('Generate TypeScript Bindings for Soroban contract').description('Generates TypeScript bindings for a Soroban contract.');
 
     addEnvOption(program);
-    program.addOption(new Option('--wasmPath <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
-    program.addOption(new Option('--contractId <contractId>', 'contract ID').makeOptionMandatory(true));
+    program.addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
+    program.addOption(new Option('--contract-id <contractId>', 'contract ID').makeOptionMandatory(true));
     program.addOption(
-        new Option('--outputDir <outputDir>', 'output directory for the generated bindings').default(path.join(__dirname, 'bindings')),
+        new Option('--output-dir <outputDir>', 'output directory for the generated bindings').default(path.join(__dirname, 'bindings')),
     );
 
     program.action((options) => {
