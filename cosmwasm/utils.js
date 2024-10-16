@@ -462,20 +462,17 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
     };
 };
 
-const makeAxelarnetGatewayInstantiateMsg = ({ nexus }, config, chainName) => {
+const makeAxelarnetGatewayInstantiateMsg = ({ nexus }, config) => {
     const {
-        axelar: { contracts },
+        axelar: { contracts, axelarId },
     } = config;
-    const chainConfig = getChainConfig(config, chainName);
-
-    const { axelarId } = chainConfig;
 
     const {
         Router: { address: routerAddress },
     } = contracts;
 
     if (!isString(axelarId)) {
-        throw new Error(`Missing or invalid axelar ID for chain ${chainName}`);
+        throw new Error(`Missing or invalid axelar ID for Axelar`);
     }
 
     if (!validateAddress(routerAddress)) {
@@ -486,6 +483,27 @@ const makeAxelarnetGatewayInstantiateMsg = ({ nexus }, config, chainName) => {
         nexus,
         router_address: routerAddress,
         chain_name: axelarId.toLowerCase(),
+    };
+};
+
+const makeInterchainTokenServiceInstantiateMsg = (config, { adminAddress, governanceAddress }) => {
+    const {
+        axelar: { contracts },
+    } = config;
+
+    const {
+        AxelarnetGateway: { address: axelarnetGatewayAddress },
+    } = contracts;
+
+    if (!validateAddress(axelarnetGatewayAddress)) {
+        throw new Error('Missing or invalid AxelarnetGateway.address in axelar info');
+    }
+
+    return {
+        governance_address: governanceAddress,
+        admin_address: adminAddress,
+        axelarnet_gateway_address: axelarnetGatewayAddress,
+        its_addresses: {},
     };
 };
 
@@ -575,7 +593,11 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
                 throw new Error('AxelarnetGateway requires chainName option');
             }
 
-            return makeAxelarnetGatewayInstantiateMsg(contractConfig, config, chainName);
+            return makeAxelarnetGatewayInstantiateMsg(contractConfig, config);
+        }
+
+        case 'InterchainTokenService': {
+            return makeInterchainTokenServiceInstantiateMsg(config, contractConfig);
         }
     }
 
