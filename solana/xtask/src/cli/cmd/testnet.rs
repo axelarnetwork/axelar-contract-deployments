@@ -29,6 +29,7 @@ pub(crate) async fn evm_to_solana(
     memo_to_send: String,
     axelar_deployments: &AxelarDeploymentRoot,
     solana_deployments: &mut SolanaDeploymentRoot,
+    only_evm_calls: bool,
 ) -> eyre::Result<()> {
     let destination_chain_name = solana_deployments
         .solana_configuration
@@ -83,6 +84,9 @@ pub(crate) async fn evm_to_solana(
         "memo sent"
     );
     tracing::info!("sleeping to allow the tx to settle");
+    if only_evm_calls {
+        return Ok(());
+    }
     tokio::time::sleep(Duration::from_secs(30)).await;
     let (payload, message) = evm_interaction::create_axelar_message_from_evm_log(&tx, source_chain);
     let decoded_payload = DataPayload::decode(payload.0.as_ref()).unwrap();
@@ -165,6 +169,7 @@ pub(crate) async fn solana_to_evm(
     memo_to_send: String,
     axelar_deployments: &AxelarDeploymentRoot,
     solana_deployments: &SolanaDeploymentRoot,
+    only_solana_calls: bool,
 ) -> eyre::Result<()> {
     let source_chain_name = solana_deployments
         .solana_configuration
@@ -207,6 +212,9 @@ pub(crate) async fn solana_to_evm(
         destination_memo_contract,
         memo_to_send.as_str(),
     )?;
+    if only_solana_calls {
+        return Ok(());
+    }
     let execute_data = cosmwasm_interactions::wire_cosmwasm_contracts(
         source_chain_name,
         &destination_chain.id,
@@ -221,8 +229,9 @@ pub(crate) async fn solana_to_evm(
     .await?;
 
     // Call the EVM contracts
+    let evm_gateway = destination_chain.get_evm_gateway()?;
     evm_interaction::approve_messages_on_evm_gateway(
-        destination_chain,
+        evm_gateway,
         execute_data,
         &destination_evm_signer,
     )
@@ -230,6 +239,7 @@ pub(crate) async fn solana_to_evm(
     evm_interaction::call_execute_on_destination_evm_contract(
         message,
         destination_memo_contract,
+        evm_gateway,
         destination_evm_signer,
         payload.iter().collect::<ethers::types::Bytes>(),
     )
@@ -313,8 +323,9 @@ pub(crate) async fn evm_to_evm(
     .await?;
 
     // Call the destination chain Gateway
+    let evm_gateway = destination_chain.get_evm_gateway()?;
     evm_interaction::approve_messages_on_evm_gateway(
-        destination_chain,
+        evm_gateway,
         execute_data,
         &destination_evm_signer,
     )
@@ -328,6 +339,7 @@ pub(crate) async fn evm_to_evm(
     evm_interaction::call_execute_on_destination_evm_contract(
         message,
         destination_memo_contract,
+        evm_gateway,
         destination_evm_signer,
         payload,
     )

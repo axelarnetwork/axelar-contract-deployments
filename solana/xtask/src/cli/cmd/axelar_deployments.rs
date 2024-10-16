@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use ethers::types::Address as EvmAddress;
+use eyre::OptionExt;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -243,6 +245,20 @@ impl AxelarDeploymentRoot {
 
         tracing::info!(?chain, "resolved evm chain");
         Ok(chain.clone())
+    }
+}
+
+impl EvmChain {
+    pub(crate) fn get_evm_gateway(&self) -> eyre::Result<EvmAddress> {
+        let data = self
+            .contracts
+            .axelar_gateway
+            .as_ref()
+            .ok_or_eyre("gateway not deployed on the destination chain")?
+            .address
+            .strip_prefix("0x")
+            .ok_or_eyre("expected prefix not there")?;
+        Ok(EvmAddress::from_slice(&hex::decode(data)?))
     }
 }
 

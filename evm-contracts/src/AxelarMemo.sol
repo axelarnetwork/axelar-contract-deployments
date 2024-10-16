@@ -2,23 +2,19 @@
 pragma solidity 0.8.19;
 
 import {AbiSolanaGatewayPayload, SolanaGatewayPayload, SolanaAccountRepr} from "./SolanaGatewayPayload.sol";
-import {IBaseAmplifierGateway} from "axelar-gmp-sdk-solidity/interfaces/IBaseAmplifierGateway.sol";
+import {AxelarExecutable} from "axelar-gmp-sdk-solidity/executable/AxelarExecutable.sol";
 
 /// @title Axelar Memo Contract
 /// @dev This contract provides functionalities to send and receive a memo message to Solana using Axelar Gateway
-contract AxelarMemo {
+contract AxelarMemo is AxelarExecutable {
     /// @dev The number of messages received
     uint256 public MESSAGES_RECEIVED;
-
-    /// @dev The amplifier gateway address
-    IBaseAmplifierGateway public gateway;
 
     /// @dev Event emitted when a memo message is received
     /// @param memoMessage The memo message received
     event ReceivedMemo(string memoMessage);
 
-    constructor(address gateway_) {
-        gateway = IBaseAmplifierGateway(gateway_);
+    constructor(address gateway_) AxelarExecutable(gateway_) {
         MESSAGES_RECEIVED = 0;
     }
 
@@ -42,28 +38,18 @@ contract AxelarMemo {
         bytes memory encodedPayload = payload.encode();
         gateway.callContract(string(solanaChain), solanaDestinationProgram, encodedPayload);
     }
-    
-    function sendToEvm(
-        string calldata destinationContract,
-        bytes calldata otherEvmChain,
-        bytes calldata memoMessage
-    ) external {
+
+    function sendToEvm(string calldata destinationContract, bytes calldata otherEvmChain, bytes calldata memoMessage)
+        external
+    {
         gateway.callContract(string(otherEvmChain), destinationContract, memoMessage);
     }
 
-    /// @dev Receives a memo message from Solana
-    function execute(
-        string calldata sourceChain,
-        string calldata messageId,
-        string calldata sourceAddress,
-        bytes calldata payload
-    ) external {
+    function _execute(string calldata, string calldata, bytes calldata payload) internal override {
+        string memory converted = string(payload);
+
         MESSAGES_RECEIVED += 1;
 
-        bool valid = gateway.validateMessage(sourceChain, messageId, sourceAddress, keccak256(payload));
-        require(valid, "the message is not valid");
-
-        string memory converted = string(payload);
         emit ReceivedMemo(converted);
     }
 }

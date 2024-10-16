@@ -18,12 +18,7 @@ contract AxelarSolanaMultiCall {
         bytes calldata solanaChain,
         string calldata solanaMultiCallAddress
     ) external {
-        bytes memory encodedPayload = AxelarSolanaMultiCallPayloadEncoder
-            .encode(calls);
-        gateway.callContract(
-            string(solanaChain),
-            solanaMultiCallAddress,
-            encodedPayload
-        );
+        bytes memory encodedPayload = AxelarSolanaMultiCallPayloadEncoder.encode(calls);
+        gateway.callContract(string(solanaChain), solanaMultiCallAddress, encodedPayload);
     }
 }

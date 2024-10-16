@@ -10,6 +10,7 @@ use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
 use ethers::signers::coins_bip39::English;
 use ethers::signers::{LocalWallet, MnemonicBuilder, Signer};
+use ethers::utils::hex::ToHexExt;
 use eyre::{Context, OptionExt};
 use gmp_gateway::axelar_auth_weighted::RotationDelaySecs;
 use k256::SecretKey;
@@ -86,6 +87,8 @@ pub(crate) enum TestnetFlowDirection {
         source_evm_private_key_hex: String,
         #[arg(long)]
         source_evm_chain: String,
+        #[arg(long)]
+        only_evm_calls: bool,
     },
     SolanaToEvm {
         #[arg(long)]
@@ -98,6 +101,8 @@ pub(crate) enum TestnetFlowDirection {
         destination_evm_private_key_hex: String,
         #[arg(long)]
         destination_evm_chain: String,
+        #[arg(long)]
+        only_solana_calls: bool,
     },
 }
 
@@ -329,6 +334,7 @@ async fn handle_testnet(
             source_evm_private_key_hex,
             source_evm_chain,
             memo_to_send,
+            only_evm_calls,
         } => {
             let source_chain = axelar_deployment_root.get_evm_chain(source_evm_chain.as_str())?;
             let source_evm_signer =
@@ -359,6 +365,7 @@ async fn handle_testnet(
                 memo_to_send,
                 axelar_deployment_root,
                 solana_deployment_root,
+                only_evm_calls,
             )
             .await?;
         }
@@ -367,6 +374,7 @@ async fn handle_testnet(
             axelar_private_key_hex,
             destination_evm_private_key_hex,
             destination_evm_chain,
+            only_solana_calls,
         } => {
             let destination_chain =
                 axelar_deployment_root.get_evm_chain(destination_evm_chain.as_str())?;
@@ -399,6 +407,7 @@ async fn handle_testnet(
                 memo_to_send,
                 axelar_deployment_root,
                 solana_deployment_root,
+                only_solana_calls,
             )
             .await?;
         }
@@ -512,7 +521,22 @@ async fn handle_evm(
             let deployment_tracker = solana_deployment_root
                 .evm_deployments
                 .get_or_insert_mut(&chain);
-            maybe_deploy_evm_memo_contract(&signer, &chain, deployment_tracker).await?;
+            let res = cmd::evm::deploy_axelar_memo(
+                signer.clone(),
+                chain
+                    .contracts
+                    .axelar_gateway
+                    .as_ref()
+                    .ok_or_eyre("gateway not deployed on this chain")?
+                    .address
+                    .parse()
+                    .unwrap(),
+                deployment_tracker,
+            )
+            .await?;
+            let new_memo_address = res.encode_hex_upper_with_prefix();
+            tracing::info!(new_memo_address =?new_memo_address, "sleeping for 10 seconds for the change to propagate");
+            tokio::time::sleep(Duration::from_secs(10)).await;
         }
         Evm::SendMemoToSolana { memo_to_send } => {
             let deployment_tracker = solana_deployment_root

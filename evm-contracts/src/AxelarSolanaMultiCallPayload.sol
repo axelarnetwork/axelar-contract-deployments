@@ -31,38 +31,29 @@ struct AxelarSolanaCall {
 }
 
 library AxelarSolanaMultiCallPayloadEncoder {
-    function encode(
-        AxelarSolanaCall[] calldata calls
-    ) internal pure returns (bytes memory) {
+    function encode(AxelarSolanaCall[] calldata calls) internal pure returns (bytes memory) {
         uint64 currentIndex = 0;
-        uint totalAccounts = calls.length;
+        uint256 totalAccounts = calls.length;
         ProgramPayload[] memory payloads = new ProgramPayload[](calls.length);
 
-        for (uint i = 0; i < calls.length; i++) {
+        for (uint256 i = 0; i < calls.length; i++) {
             totalAccounts += calls[i].payload.accounts.length;
         }
 
-        SolanaAccountRepr[] memory topLevelAccounts = new SolanaAccountRepr[](
-            totalAccounts
-        );
+        SolanaAccountRepr[] memory topLevelAccounts = new SolanaAccountRepr[](totalAccounts);
 
-        for (uint i = 0; i < calls.length; i++) {
+        for (uint256 i = 0; i < calls.length; i++) {
             payloads[i] = ProgramPayload({
                 instructionData: calls[i].payload.executePayload,
                 programAccountIndex: currentIndex,
                 accountsStartIndex: currentIndex + 1,
-                accountsEndIndex: currentIndex +
-                    1 +
-                    uint64(calls[i].payload.accounts.length)
+                accountsEndIndex: currentIndex + 1 + uint64(calls[i].payload.accounts.length)
             });
 
-            topLevelAccounts[currentIndex++] = SolanaAccountRepr({
-                pubkey: calls[i].destinationProgram,
-                isSigner: false,
-                isWritable: false
-            });
+            topLevelAccounts[currentIndex++] =
+                SolanaAccountRepr({pubkey: calls[i].destinationProgram, isSigner: false, isWritable: false});
 
-            for (uint j = 0; j < calls[i].payload.accounts.length; j++) {
+            for (uint256 j = 0; j < calls[i].payload.accounts.length; j++) {
                 topLevelAccounts[currentIndex++] = calls[i].payload.accounts[j];
             }
         }

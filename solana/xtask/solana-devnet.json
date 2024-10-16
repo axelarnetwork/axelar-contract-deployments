@@ -595,7 +595,7 @@
           "url": "https://testnet.snowtrace.io",
           "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
         },
-        "memo_program_address": "0x4366a041ba4237f9b7553b8a73e8af1f2ee1f4d1"
+        "memo_program_address": "0xe2cdb4040034e05b78d53ac32205a347a213c905"
       }
     }
   }

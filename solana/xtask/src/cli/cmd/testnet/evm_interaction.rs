@@ -6,10 +6,11 @@ use ethers::contract::EthEvent;
 use ethers::providers::Middleware;
 use ethers::types::{Address as EvmAddress, TransactionRequest};
 use ethers::utils::to_checksum;
-use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
+use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::{
+    self, ContractCallFilter,
+};
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo;
 use evm_contracts_test_suite::{ContractMiddleware, EvmSigner};
-use eyre::OptionExt;
 use router_api::{Address, ChainName, CrossChainId};
 
 use crate::cli::cmd::axelar_deployments::EvmChain;
@@ -45,6 +46,7 @@ pub(crate) fn create_axelar_message_from_evm_log(
 pub(crate) async fn call_execute_on_destination_evm_contract(
     message: router_api::Message,
     destination_memo_contract: ethers::types::H160,
+    destination_gateway_contract: ethers::types::H160,
     destination_evm_signer: EvmSigner,
     payload: ethers::types::Bytes,
 ) -> eyre::Result<()> {
@@ -52,6 +54,11 @@ pub(crate) async fn call_execute_on_destination_evm_contract(
         destination_memo_contract,
         destination_evm_signer.signer.clone(),
     );
+    let destination_gateway =
+        axelar_amplifier_gateway::AxelarAmplifierGateway::<ContractMiddleware>::new(
+            destination_gateway_contract,
+            destination_evm_signer.signer.clone(),
+        );
 
     let source_chain = message.cc_id.source_chain.to_string();
     let message_id = message.cc_id.message_id.clone().to_string();
@@ -63,7 +70,10 @@ pub(crate) async fn call_execute_on_destination_evm_contract(
         ?payload,
         "sending `execute` to the destination contract"
     );
-    let pending = memo_contract.execute(source_chain, message_id, source_address, payload);
+    let command_id = destination_gateway
+        .message_to_command_id(source_chain.clone(), message_id)
+        .await?;
+    let pending = memo_contract.execute(command_id, source_chain, source_address, payload);
     let pending = pending.send().await?;
 
     let _receipt = evm_contracts_test_suite::await_receipt(pending)
@@ -74,24 +84,10 @@ pub(crate) async fn call_execute_on_destination_evm_contract(
 
 #[tracing::instrument(skip_all)]
 pub(crate) async fn approve_messages_on_evm_gateway(
-    destination_chain: &EvmChain,
+    destination_evm_gateway: EvmAddress,
     execute_data: Vec<u8>,
     destination_evm_signer: &EvmSigner,
 ) -> eyre::Result<()> {
-    let destination_evm_gateway = EvmAddress::from_slice(
-        hex::decode(
-            destination_chain
-                .contracts
-                .axelar_gateway
-                .as_ref()
-                .ok_or_eyre("gateway not deployed on the destination chain")?
-                .address
-                .strip_prefix("0x")
-                .unwrap(),
-        )
-        .unwrap()
-        .as_ref(),
-    );
     let tx = TransactionRequest::new()
         .to(destination_evm_gateway)
         .data(execute_data);

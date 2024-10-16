@@ -86,10 +86,14 @@ async fn test_send_from_solana_to_evm() {
     );
 
     // Action - Relayer calls the EVM memo program with the payload
+    let command_id = evm_gateway
+        .message_to_command_id(message.source_chain.clone(), message.message_id.clone())
+        .await
+        .unwrap();
     evm_memo
         .execute(
+            command_id,
             message.source_chain,
-            message.message_id,
             message.source_address,
             call_contract.payload.to_vec().into(),
         )
