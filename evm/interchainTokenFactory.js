@@ -137,6 +137,9 @@ async function processCommand(config, chain, options) {
                 gasOptions,
             );
 
+            const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
+
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
             break;
@@ -164,6 +167,8 @@ async function processCommand(config, chain, options) {
                 gasValue,
                 { value: gasValue, ...gasOptions },
             );
+            const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
@@ -176,6 +181,9 @@ async function processCommand(config, chain, options) {
             validateParameters({ isValidAddress: { tokenAddress } });
 
             const tx = await interchainTokenFactory.registerCanonicalInterchainToken(tokenAddress, gasOptions);
+
+            const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
+            printInfo('tokenId', tokenId);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'TokenManagerDeploymentStarted');
 
@@ -201,6 +209,9 @@ async function processCommand(config, chain, options) {
                 gasValue,
                 { value: gasValue, ...gasOptions },
             );
+
+            const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
+            printInfo('tokenId', tokenId);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 

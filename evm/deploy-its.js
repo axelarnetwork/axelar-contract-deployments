@@ -53,8 +53,23 @@ async function deployAll(config, wallet, chain, options) {
     const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
 
     const salt = options.salt ? `ITS ${options.salt}` : 'ITS';
-    const proxySalt = options.proxySalt || options.salt ? `ITS ${options.proxySalt || options.salt}` : 'ITS';
-    const factorySalt = options.proxySalt || options.salt ? `ITS Factory ${options.proxySalt || options.salt}` : 'ITS Factory';
+    let proxySalt, factorySalt;
+
+    // If reusing the proxy, then proxy salt is the existing value
+    if (options.reuseProxy) {
+        proxySalt = contractConfig.proxySalt;
+        factorySalt = itsFactoryContractConfig.salt;
+    } else if (options.proxySalt) {
+        proxySalt = `ITS ${options.proxySalt}`;
+        factorySalt = `ITS Factory ${options.proxySalt}`;
+    } else if (options.salt) {
+        proxySalt = `ITS ${options.salt}`;
+        factorySalt = `ITS Factory ${options.salt}`;
+    } else {
+        proxySalt = 'ITS';
+        factorySalt = 'ITS Factory';
+    }
+
     const implementationSalt = `${salt} Implementation`;
 
     contractConfig.salt = salt;
@@ -86,7 +101,11 @@ async function deployAll(config, wallet, chain, options) {
         throw new Error(`Invalid ITS address: ${interchainTokenService}`);
     }
 
-    printInfo('Interchain Token Service will be deployed to', interchainTokenService);
+    if (options.reuseProxy) {
+        printInfo('Reusing existing Interchain Token Service proxy', interchainTokenService);
+    } else {
+        printInfo('Interchain Token Service will be deployed to', interchainTokenService);
+    }
 
     const interchainTokenFactory = options.reuseProxy
         ? itsFactoryContractConfig.address
@@ -102,14 +121,22 @@ async function deployAll(config, wallet, chain, options) {
         throw new Error(`Invalid Interchain Token Factory address: ${interchainTokenFactory}`);
     }
 
-    printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
+    if (options.reuseProxy) {
+        printInfo('Reusing existing Interchain Token Factory proxy', interchainTokenFactory);
+    } else {
+        printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
+    }
 
     // Register all chains that ITS is or will be deployed on.
     // Add a "skip": true under ITS key in the config if the chain will not have ITS.
     const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
     const trustedChains = itsChains.map((chain) => chain.axelarId);
     const trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address || interchainTokenService);
-    printInfo('Trusted chains', trustedChains);
+
+    // Trusted addresses are only used when deploying a new proxy
+    if (!options.reuseProxy) {
+        printInfo('Trusted chains', trustedChains);
+    }
 
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
 
@@ -206,7 +233,23 @@ async function deployAll(config, wallet, chain, options) {
                     deployMethod,
                     wallet,
                     getContractJSON('TokenHandler', artifactPath),
-                    [],
+                    [contracts.AxelarGateway.address],
+                    deployOptions,
+                    gasOptions,
+                    verifyOptions,
+                    chain,
+                );
+            },
+        },
+        gatewayCaller: {
+            name: 'Gateway Caller',
+            contractName: 'GatewayCaller',
+            async deploy() {
+                return await deployContract(
+                    deployMethod,
+                    wallet,
+                    getContractJSON('GatewayCaller', artifactPath),
+                    [contracts.AxelarGateway.address, contracts.AxelarGasService.address],
                     deployOptions,
                     gasOptions,
                     verifyOptions,
@@ -227,6 +270,7 @@ async function deployAll(config, wallet, chain, options) {
                     chain.axelarId,
                     contractConfig.tokenManager,
                     contractConfig.tokenHandler,
+                    contractConfig.gatewayCaller,
                 ];
 
                 printInfo('ITS Implementation args', args);
@@ -314,7 +358,7 @@ async function deployAll(config, wallet, chain, options) {
 
         // When upgrading/reusing proxy, avoid re-deploying the proxy and the interchain token contract
         if (options.reuseProxy && ['InterchainToken', 'InterchainProxy'].includes(deployment.contractName)) {
-            printInfo(`Reusing ${deployment.name} deployment for contract ${deployment.contractName} at ${contractConfig[key]}`);
+            printInfo(`Reusing ${deployment.name} deployment`);
             continue;
         }
 
