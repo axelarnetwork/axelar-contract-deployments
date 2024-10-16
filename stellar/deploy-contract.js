@@ -4,7 +4,7 @@ const { Contract, Address, nativeToScVal, scValToNative } = require('@stellar/st
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getNetworkPassphrase, getWallet, broadcast, serializeValue, addBaseOptions } = require('./utils');
+const { stellarCmd, getNetworkPassphrase, getWallet, broadcast, serializeValue, addBaseOptions } = require('./utils');
 const { getDomainSeparator, getChainConfig } = require('../common');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
@@ -14,26 +14,13 @@ const {
 require('./cli-utils');
 
 async function getInitializeArgs(config, chain, contractName, wallet, options) {
-    const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
+    const operator = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
 
     switch (contractName) {
         case 'axelar_gateway': {
-            const authAddress = chain.contracts?.axelar_auth_verifier?.address;
-
-            if (!authAddress) {
-                throw new Error('Missing axelar_auth_verifier contract address');
-            }
-
-            return {
-                authAddress: nativeToScVal(authAddress, { type: 'address' }),
-                owner,
-            };
-        }
-
-        case 'axelar_auth_verifier': {
-            const previousSignersRetention = nativeToScVal(15);
             const domainSeparator = nativeToScVal(Buffer.from(arrayify(await getDomainSeparator(config, chain, options))));
             const minimumRotationDelay = nativeToScVal(0);
+            const previousSignersRetention = nativeToScVal(options.previousSignersRetention);
             const nonce = options.nonce ? arrayify(id(options.nonce)) : Array(32).fill(0);
             const initialSigners = nativeToScVal([
                 weightedSignersToScVal({
@@ -49,35 +36,23 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             ]);
 
             return {
-                owner,
-                previousSignersRetention,
+                operator,
                 domainSeparator,
                 minimumRotationDelay,
+                previousSignersRetention,
                 initialSigners,
             };
         }
 
         case 'axelar_operators':
-            return { owner };
+            return { operator };
         default:
             throw new Error(`Unknown contract: ${contractName}`);
     }
 }
 
-async function postDeployGateway(chain, wallet, options) {
-    printInfo('Transferring ownership of auth contract to the gateway');
-    const auth = new Contract(chain.contracts.axelar_auth_verifier.address);
-    const operation = auth.call('transfer_ownership', nativeToScVal(chain.contracts.axelar_gateway.address, { type: 'address' }));
-    await broadcast(operation, wallet, chain, 'Transferred ownership', options);
-}
-
-const postDeployFunctions = {
-    axelar_gateway: postDeployGateway,
-};
-
 async function processCommand(options, config, chain) {
-    const { wasmPath, contractName } = options;
-
+    const { wasmPath, contractName, privateKey } = options;
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
     const wallet = await getWallet(chain, options);
@@ -86,7 +61,7 @@ async function processCommand(options, config, chain) {
         chain.contracts = {};
     }
 
-    const cmd = `soroban contract deploy --wasm ${wasmPath} --source ${options.privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
+    const cmd = `${stellarCmd} contract deploy --wasm ${wasmPath} --source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
     printInfo('Deploying contract', contractName);
 
     let contractAddress = options.address;
@@ -119,11 +94,6 @@ async function processCommand(options, config, chain) {
     printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
     await broadcast(operation, wallet, chain, 'Initialized contract', options);
-
-    if (postDeployFunctions[contractName]) {
-        await postDeployFunctions[contractName](chain, wallet, options);
-        printInfo('Post deployment setup executed');
-    }
 }
 
 async function mainProcessor(options, processor) {
@@ -139,13 +109,16 @@ function main() {
     addBaseOptions(program, { address: true });
 
     program.addOption(new Option('--initialize', 'initialize the contract'));
-    program.addOption(new Option('--contractName <contractName>', 'contract name to deploy').makeOptionMandatory(true));
-    program.addOption(new Option('--wasmPath <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
-    program.addOption(new Option('--estimateCost', 'estimate on-chain resources').default(false));
+    program.addOption(new Option('--contract-name <contractName>', 'contract name to deploy').makeOptionMandatory(true));
+    program.addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
     program.addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'));
     program.addOption(
+        new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention').default(15).argParser(Number),
+    );
+
+    program.addOption(
         new Option(
-            '--domainSeparator <domainSeparator>',
+            '--domain-separator <domainSeparator>',
             'domain separator (pass in the keccak256 hash value OR "offline" meaning that its computed locally)',
         ).default('offline'),
     );
