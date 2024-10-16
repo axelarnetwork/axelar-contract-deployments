@@ -2430,6 +2430,7 @@
         "storeCodeProposalId": "227",
         "storeCodeProposalCodeHash": "aa762ada72f295c0890c7beca089b13498b95d04f59262cea4bdf64b07d9edc7",
         "codeId": 4,
+        "lastUploadedCodeId": 4,
         "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m"
       },
       "Router": {
@@ -2438,6 +2439,7 @@
         "storeCodeProposalId": "234",
         "storeCodeProposalCodeHash": "c89ad7b98afcafea866ff9b9064ade1dc865a0b4a257cbd0a80fae433c916eab",
         "codeId": 11,
+        "lastUploadedCodeId": 11,
         "address": "axelar1d9atnamjjhtc46zmzyc202llqs0rhtxnphs6mkjurekath3mkgtq7hsk93"
       },
       "NexusGateway": {
@@ -2445,6 +2447,7 @@
         "storeCodeProposalId": "226",
         "storeCodeProposalCodeHash": "3f0fd354823ec5d85f051a7c54bd020498a2e37866cbf480e0c107aceae1b84d",
         "codeId": 3,
+        "lastUploadedCodeId": 3,
         "address": "axelar14x5fqsezmzame904gkydguycsuqy5f8lp5knkzanccy8g8nz3yus65wveg"
       },
       "Rewards": {
@@ -2461,6 +2464,7 @@
         "storeCodeProposalId": "246",
         "storeCodeProposalCodeHash": "58bad05811e78e958da699aad49f39e6f3ad2502db3f494459208bb2d1f02bfa",
         "codeId": 5,
+        "lastUploadedCodeId": 5,
         "address": "axelar1harq5xe68lzl2kx4e5ch4k8840cgqnry567g0fgw7vt2atcuugrqfa7j5z"
       },
       "Coordinator": {
@@ -2468,6 +2472,7 @@
         "storeCodeProposalId": "229",
         "storeCodeProposalCodeHash": "1c058dec7e9c294f4e7401bd9611d2e811e0cf3a41917c4dd22766ea40b95fa2",
         "codeId": 6,
+        "lastUploadedCodeId": 6,
         "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx"
       },
       "Multisig": {
@@ -2477,6 +2482,7 @@
         "storeCodeProposalId": "230",
         "storeCodeProposalCodeHash": "a01cfc3c3a6e5fb22ea5818f2de8a453e0f37b9a54380d76eb4d4ea8d8b6de94",
         "codeId": 7,
+        "lastUploadedCodeId": 7,
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5"
       },
       "MultisigProver": {
