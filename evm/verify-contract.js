@@ -9,9 +9,68 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { verifyContract, getEVMAddresses, printInfo, printError, mainProcessor, getContractJSON, validateParameters } = require('./utils');
+const {
+    verifyContract,
+    getEVMAddresses,
+    printInfo,
+    printError,
+    mainProcessor,
+    getContractJSON,
+    validateParameters,
+    verifyContractByName,
+} = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getTrustedChainsAndAddresses } = require('./its');
+
+async function verifyConsensusGateway(config, chain, contractConfig, env, wallet, verifyOptions, options) {
+    const contractJson = getContractJSON('AxelarGateway');
+    const contractFactory = await getContractFactoryFromArtifact(contractJson, wallet);
+
+    const gateway = contractFactory.attach(contractConfig.address);
+    const implementation = await gateway.implementation();
+    const auth = await gateway.authModule();
+    const tokenDeployer = await gateway.tokenDeployer();
+
+    const { addresses, weights, threshold } = await getEVMAddresses(config, chain.axelarId, {
+        keyID: chain.contracts.AxelarGateway.startingKeyIDs[0] || options.args || `evm-${chain.axelarId.toLowerCase()}-genesis`,
+    });
+    const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
+    const setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [contractConfig.deployer, contractConfig.deployer, '0x']);
+
+    await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
+    await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
+    await verifyContract(env, chain.name, implementation, [auth, tokenDeployer], verifyOptions);
+    await verifyContract(env, chain.name, contractConfig.address, [implementation, setupParams], verifyOptions);
+}
+
+async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verifyOptions, options) {
+    const contractJson = getContractJSON('AxelarAmplifierGateway');
+    const contractFactory = await getContractFactoryFromArtifact(contractJson, wallet);
+
+    const amplifierGateway = contractFactory.attach(options.address || contractConfig.address);
+    const implementation = await amplifierGateway.implementation();
+    const previousSignersRetention = (await amplifierGateway.previousSignersRetention()).toNumber();
+    const domainSeparator = await amplifierGateway.domainSeparator();
+    const minimumRotationDelay = (await amplifierGateway.minimumRotationDelay()).toNumber();
+
+    verifyContractByName(
+        env,
+        chain.name,
+        'AxelarGateway',
+        implementation,
+        [previousSignersRetention, domainSeparator, minimumRotationDelay],
+        verifyOptions,
+    );
+
+    verifyContractByName(
+        env,
+        chain.name,
+        'AxelarAmplifierGatewayProxy',
+        amplifierGateway.address,
+        contractConfig.proxyDeploymentArgs,
+        verifyOptions,
+    );
+}
 
 async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
@@ -29,10 +88,11 @@ async function processCommand(config, chain, options) {
     }
 
     printInfo('Verifying contract', contractName);
-    printInfo('Contract address', options.address || chain.contracts[contractName]?.address);
+
+    const contractAddress = options.address || chain.contracts[contractName]?.address;
+    printInfo('Contract address', contractAddress);
 
     const contractConfig = chain.contracts[contractName];
-    const contractAddress = options.address || contractConfig.address;
     const contractJson = getContractJSON(contractName);
     const contractFactory = await getContractFactoryFromArtifact(contractJson, wallet);
 
@@ -90,24 +150,13 @@ async function processCommand(config, chain, options) {
         }
 
         case 'AxelarGateway': {
-            const gateway = contractFactory.attach(contractAddress);
-            const implementation = await gateway.implementation();
-            const auth = await gateway.authModule();
-            const tokenDeployer = await gateway.tokenDeployer();
-
-            const { addresses, weights, threshold } = await getEVMAddresses(config, chain.axelarId, {
-                keyID: chain.contracts.AxelarGateway.startingKeyIDs[0] || options.args || `evm-${chain.axelarId.toLowerCase()}-genesis`,
-            });
-            const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
-            const setupParams = defaultAbiCoder.encode(
-                ['address', 'address', 'bytes'],
-                [contractConfig.deployer, contractConfig.deployer, '0x'],
-            );
-
-            await verifyContract(env, chain.axelarId, auth, [authParams], verifyOptions);
-            await verifyContract(env, chain.axelarId, tokenDeployer, [], verifyOptions);
-            await verifyContract(env, chain.axelarId, implementation, [auth, tokenDeployer], verifyOptions);
-            await verifyContract(env, chain.axelarId, contractAddress, [implementation, setupParams], verifyOptions);
+            if (contractConfig.connectionType === 'amplifier') {
+                verifyAmplifierGateway(chain, contractConfig, env, wallet, verifyOptions, options);
+            } else if (contractConfig.connectionType === 'consensus') {
+                verifyConsensusGateway(config, chain, contractConfig, env, wallet, verifyOptions, options);
+            } else {
+                throw new Error(`Incompatible Gateway connection type`);
+            }
 
             break;
         }
@@ -270,28 +319,6 @@ async function processCommand(config, chain, options) {
                     contractPath: 'contracts/proxies/TokenManagerProxy.sol:TokenManagerProxy',
                 },
             );
-
-            break;
-        }
-
-        case 'AxelarAmplifierGateway': {
-            const contractConfig = chain.contracts.AxelarGateway;
-            const amplifierGateway = contractFactory.attach(options.address || contractConfig.address);
-
-            const implementation = await amplifierGateway.implementation();
-            const previousSignersRetention = (await amplifierGateway.previousSignersRetention()).toNumber();
-            const domainSeparator = await amplifierGateway.domainSeparator();
-            const minimumRotationDelay = (await amplifierGateway.minimumRotationDelay()).toNumber();
-
-            await verifyContract(
-                env,
-                chain.axelarId,
-                implementation,
-                [previousSignersRetention, domainSeparator, minimumRotationDelay],
-                verifyOptions,
-            );
-
-            await verifyContract(env, chain.axelarId, amplifierGateway.address, contractConfig.proxyDeploymentArgs, verifyOptions);
 
             break;
         }

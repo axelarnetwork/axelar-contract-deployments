@@ -107,7 +107,7 @@ const readMovePackageName = (moveDir) => {
 
 const getObjectIdsByObjectTypes = (txn, objectTypes) =>
     objectTypes.map((objectType) => {
-        const objectId = txn.objectChanges.find((change) => change.objectType === objectType)?.objectId;
+        const objectId = txn.objectChanges.find((change) => change.objectType?.includes(objectType))?.objectId;
 
         if (!objectId) {
             throw new Error(`No object found for type: ${objectType}`);
@@ -126,7 +126,8 @@ const getSingletonChannelId = async (client, singletonObjectId) => {
 const getItsChannelId = async (client, itsObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, itsObjectId);
     const data = bcsStructs.its.ITS.parse(bcsBytes);
-    return '0x' + data.channel.id;
+    const channelId = data.value.channel.id;
+    return '0x' + channelId;
 };
 
 const getSquidChannelId = async (client, squidObjectId) => {
@@ -190,15 +191,22 @@ const paginateAll = async (client, paginatedFn, params, pageLimit = 100) => {
     return items;
 };
 
-const findOwnedObjectId = async (client, ownerAddress, objectType) => {
+const findOwnedObjectIdByType = async (client, ownerAddress, objectType) => {
     const ownedObjects = await client.getOwnedObjects({
         owner: ownerAddress,
+        filter: {
+            StructType: objectType,
+        },
         options: {
             showContent: true,
         },
     });
 
-    const targetObject = ownedObjects.data.find(({ data }) => data.content.type === objectType);
+    if (ownedObjects.data.length !== 1) {
+        throw new Error(`Expecting exactly one object of type ${objectType} owned by ${ownerAddress}`);
+    }
+
+    const targetObject = ownedObjects.data[0];
 
     if (!targetObject) {
         throw new Error(`No object found for type: ${objectType}`);
@@ -237,7 +245,7 @@ module.exports = {
     suiPackageAddress,
     suiClockAddress,
     checkSuiVersionMatch,
-    findOwnedObjectId,
+    findOwnedObjectIdByType,
     getBcsBytesByObjectId,
     deployPackage,
     findPublishedObject,

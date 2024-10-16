@@ -636,18 +636,27 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         throw new Error('Environment was not provided');
     }
 
-    if (!options.chainName && !options.chainNames) {
-        throw new Error('Chain names were not provided');
-    }
-
     printInfo('Environment', options.env);
 
     const config = loadConfig(options.env);
-    let chains = options.chainName ? [options.chainName] : options.chainNames.split(',');
     const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim().toLowerCase());
+
+    let chains = [];
 
     if (options.chainNames === 'all') {
         chains = Object.keys(config.chains);
+        chains = chains.filter((chain) => !config.chains[chain].chainType || config.chains[chain].chainType === 'evm');
+    } else if (options.chainNames) {
+        chains = options.chainNames.split(',');
+        chains.forEach((chain) => {
+            if (config.chains[chain].chainType && config.chains[chain].chainType !== 'evm') {
+                throw new Error(`Cannot run script for a non EVM chain: ${chain}`);
+            }
+        });
+    }
+
+    if (chains.length === 0) {
+        throw new Error('Chain names were not provided');
     }
 
     chains = chains.map((chain) => chain.trim().toLowerCase());
@@ -842,6 +851,11 @@ function getContractJSON(contractName, artifactPath) {
     }
 }
 
+function getQualifiedContractName(contractName) {
+    const contractJSON = getContractJSON(contractName);
+    return `${contractJSON.sourceName}:${contractJSON.contractName}`;
+}
+
 /**
  * Retrieves gas options for contract interactions.
  *
@@ -1017,6 +1031,11 @@ async function getWeightedSigners(config, chain, options) {
     return { signers: [signers], verifierSetId };
 }
 
+// Verify contract using it's source code path. The path is retrieved dynamically by the name.
+const verifyContractByName = (env, chain, name, contract, args, options = {}) => {
+    verifyContract(env, chain, contract, args, { ...options, contractPath: getQualifiedContractName(name) });
+};
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1055,4 +1074,6 @@ module.exports = {
     relayTransaction,
     getDeploymentTx,
     getWeightedSigners,
+    getQualifiedContractName,
+    verifyContractByName,
 };

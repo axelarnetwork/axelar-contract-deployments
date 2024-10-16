@@ -19,6 +19,7 @@ const {
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
+    printInfo,
     isString,
     isStringArray,
     isStringLowercase,
@@ -52,47 +53,64 @@ const isValidCosmosAddress = (str) => {
 
 const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'));
 
-const getSalt = (salt, contractName, chainNames) => fromHex(getSaltFromKey(salt || contractName.concat(chainNames)));
+const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
 const getLabel = ({ contractName, label }) => label || contractName;
 
 const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
 
-const getChains = (config, { chainNames, instantiate2 }) => {
-    let chains = chainNames.split(',').map((str) => str.trim());
+const initContractConfig = (config, { contractName, chainName }) => {
+    config.axelar = config.axelar || {};
+    config.axelar.contracts = config.axelar.contracts || {};
+    config.axelar.contracts[contractName] = config.axelar.contracts[contractName] || {};
 
-    if (chainNames === 'all') {
-        chains = Object.keys(config.chains);
+    if (chainName) {
+        config.axelar.contracts[contractName][chainName] = config.axelar.contracts[contractName][chainName] || {};
     }
-
-    if (chains.length !== 1 && instantiate2) {
-        throw new Error('Cannot pass --instantiate2 with more than one chain');
-    }
-
-    chains.every((chain) => chain === 'none' || getChainConfig(config, chain));
-
-    return chains;
 };
 
-const getAmplifierContractConfig = (config, contractName) => {
-    const contractConfig = config.axelar.contracts[contractName];
+const getAmplifierBaseContractConfig = (config, contractName) => {
+    const contractBaseConfig = config.axelar.contracts[contractName];
 
-    if (!contractConfig) {
+    if (!contractBaseConfig) {
         throw new Error(`Contract ${contractName} not found in config`);
     }
 
-    return contractConfig;
+    return contractBaseConfig;
 };
 
-const updateContractConfig = (contractConfig, chainConfig, key, value) => {
-    if (chainConfig) {
-        contractConfig[chainConfig.axelarId] = {
-            ...contractConfig[chainConfig.axelarId],
-            [key]: value,
-        };
-    } else {
-        contractConfig[key] = value;
+const getAmplifierContractConfig = (config, { contractName, chainName }) => {
+    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+
+    if (!chainName) {
+        return { contractBaseConfig, contractConfig: contractBaseConfig }; // contractConfig is the same for non-chain specific contracts
     }
+
+    const contractConfig = contractBaseConfig[chainName];
+
+    if (!contractConfig) {
+        throw new Error(`Contract ${contractName} (${chainName}) not found in config`);
+    }
+
+    return { contractBaseConfig, contractConfig };
+};
+
+const updateCodeId = async (client, config, options) => {
+    const { fetchCodeId, codeId } = options;
+
+    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
+
+    if (codeId) {
+        contractConfig.codeId = codeId;
+    } else if (fetchCodeId) {
+        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractBaseConfig);
+    } else if (contractBaseConfig.lastUploadedCodeId) {
+        contractConfig.codeId = contractBaseConfig.lastUploadedCodeId;
+    } else {
+        throw new Error('Code Id is not defined');
+    }
+
+    printInfo('Using code id', contractConfig.codeId);
 };
 
 const uploadContract = async (client, wallet, config, options) => {
@@ -109,11 +127,11 @@ const uploadContract = async (client, wallet, config, options) => {
 };
 
 const instantiateContract = async (client, wallet, initMsg, config, options) => {
-    const { contractName, salt, instantiate2, chainNames, admin } = options;
+    const { contractName, salt, instantiate2, chainName, admin } = options;
 
     const [account] = await wallet.getAccounts();
 
-    const contractConfig = config.axelar.contracts[contractName];
+    const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
         axelar: { gasPrice, gasLimit },
@@ -126,7 +144,7 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
         ? await client.instantiate2(
               account.address,
               contractConfig.codeId,
-              getSalt(salt, contractName, chainNames),
+              getSalt(salt, contractName, chainName),
               initMsg,
               contractLabel,
               initFee,
@@ -143,12 +161,16 @@ const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
 
-const makeCoordinatorInstantiateMsg = ({ governanceAddress }) => {
+const makeCoordinatorInstantiateMsg = ({ governanceAddress }, { ServiceRegistry: { address: registryAddress } }) => {
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Coordinator.governanceAddress in axelar info');
     }
 
-    return { governance_address: governanceAddress };
+    if (!validateAddress(registryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    return { governance_address: governanceAddress, service_registry: registryAddress };
 };
 
 const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
@@ -440,14 +462,13 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
     };
 };
 
-const makeAxelarnetGatewayInstantiateMsg = (config) => {
+const makeAxelarnetGatewayInstantiateMsg = ({ nexus }, config) => {
     const {
         axelar: { contracts, axelarId },
     } = config;
 
     const {
         Router: { address: routerAddress },
-        NexusGateway: { address: nexusAddress },
     } = contracts;
 
     if (!isString(axelarId)) {
@@ -459,8 +480,8 @@ const makeAxelarnetGatewayInstantiateMsg = (config) => {
     }
 
     return {
+        nexus,
         router_address: routerAddress,
-        nexus_gateway: nexusAddress,
         chain_name: axelarId.toLowerCase(),
     };
 };
@@ -497,15 +518,15 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     switch (contractName) {
         case 'Coordinator': {
             if (chainConfig) {
-                throw new Error('Coordinator does not support chainNames option');
+                throw new Error('Coordinator does not support chainName option');
             }
 
-            return makeCoordinatorInstantiateMsg(contractConfig);
+            return makeCoordinatorInstantiateMsg(contractConfig, contracts);
         }
 
         case 'ServiceRegistry': {
             if (chainConfig) {
-                throw new Error('ServiceRegistry does not support chainNames option');
+                throw new Error('ServiceRegistry does not support chainName option');
             }
 
             return makeServiceRegistryInstantiateMsg(contractConfig);
@@ -513,7 +534,7 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
         case 'Multisig': {
             if (chainConfig) {
-                throw new Error('Multisig does not support chainNames option');
+                throw new Error('Multisig does not support chainName option');
             }
 
             return makeMultisigInstantiateMsg(contractConfig, contracts);
@@ -521,7 +542,7 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
         case 'Rewards': {
             if (chainConfig) {
-                throw new Error('Rewards does not support chainNames option');
+                throw new Error('Rewards does not support chainName option');
             }
 
             return makeRewardsInstantiateMsg(contractConfig);
@@ -529,7 +550,7 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
         case 'Router': {
             if (chainConfig) {
-                throw new Error('Router does not support chainNames option');
+                throw new Error('Router does not support chainName option');
             }
 
             return makeRouterInstantiateMsg(contractConfig, contracts);
@@ -537,7 +558,7 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
         case 'NexusGateway': {
             if (chainConfig) {
-                throw new Error('NexusGateway does not support chainNames option');
+                throw new Error('NexusGateway does not support chainName option');
             }
 
             return makeNexusGatewayInstantiateMsg(contractConfig, contracts);
@@ -545,7 +566,7 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
         case 'VotingVerifier': {
             if (!chainConfig) {
-                throw new Error('VotingVerifier requires chainNames option');
+                throw new Error('VotingVerifier requires chainName option');
             }
 
             return makeVotingVerifierInstantiateMsg(contractConfig, contracts, chainConfig);
@@ -553,7 +574,7 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
         case 'Gateway': {
             if (!chainConfig) {
-                throw new Error('Gateway requires chainNames option');
+                throw new Error('Gateway requires chainName option');
             }
 
             return makeGatewayInstantiateMsg(contracts, chainConfig);
@@ -561,14 +582,18 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
 
         case 'MultisigProver': {
             if (!chainConfig) {
-                throw new Error('MultisigProver requires chainNames option');
+                throw new Error('MultisigProver requires chainName option');
             }
 
             return makeMultisigProverInstantiateMsg(config, chainName);
         }
 
         case 'AxelarnetGateway': {
-            return makeAxelarnetGatewayInstantiateMsg(config);
+            if (!chainConfig) {
+                throw new Error('AxelarnetGateway requires chainName option');
+            }
+
+            return makeAxelarnetGatewayInstantiateMsg(contractConfig, config);
         }
 
         case 'InterchainTokenService': {
@@ -579,8 +604,8 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     throw new Error(`${contractName} is not supported.`);
 };
 
-const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
-    if (!contractConfig.storeCodeProposalCodeHash) {
+const fetchCodeIdFromCodeHash = async (client, contractBaseConfig) => {
+    if (!contractBaseConfig.storeCodeProposalCodeHash) {
         throw new Error('storeCodeProposalCodeHash not found in contract config');
     }
 
@@ -589,7 +614,7 @@ const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
 
     // most likely to be near the end, so we iterate backwards. We also get the latest if there are multiple
     for (let i = codes.length - 1; i >= 0; i--) {
-        if (codes[i].checksum.toUpperCase() === contractConfig.storeCodeProposalCodeHash.toUpperCase()) {
+        if (codes[i].checksum.toUpperCase() === contractBaseConfig.storeCodeProposalCodeHash.toUpperCase()) {
             codeId = codes[i].id;
             break;
         }
@@ -598,6 +623,10 @@ const fetchCodeIdFromCodeHash = async (client, contractConfig) => {
     if (!codeId) {
         throw new Error('codeId not found on network for the given codeHash');
     }
+
+    contractBaseConfig.lastUploadedCodeId = codeId;
+
+    printInfo(`Fetched code id ${codeId} from the network`);
 
     return codeId;
 };
@@ -657,9 +686,9 @@ const getStoreInstantiateParams = (config, options, msg) => {
 };
 
 const getInstantiateContractParams = (config, options, msg) => {
-    const { contractName, admin } = options;
+    const { admin } = options;
 
-    const contractConfig = config.axelar.contracts[contractName];
+    const { contractConfig } = getAmplifierContractConfig(config, options);
 
     return {
         ...getSubmitProposalParams(options),
@@ -671,11 +700,11 @@ const getInstantiateContractParams = (config, options, msg) => {
 };
 
 const getInstantiateContract2Params = (config, options, msg) => {
-    const { contractName, salt, chainNames } = options;
+    const { contractName, salt, chainName } = options;
 
     return {
         ...getInstantiateContractParams(config, options, msg),
-        salt: getSalt(salt, contractName, chainNames),
+        salt: getSalt(salt, contractName, chainName),
     };
 };
 
@@ -704,10 +733,10 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
     })),
 });
 
-const getMigrateContractParams = (config, options, chainName) => {
-    const { contractName, msg } = options;
+const getMigrateContractParams = (config, options) => {
+    const { msg, chainName } = options;
 
-    const contractConfig = getAmplifierContractConfig(config, contractName);
+    const { contractConfig } = getAmplifierContractConfig(config, options);
     const chainConfig = getChainConfig(config, chainName);
 
     return {
@@ -780,8 +809,8 @@ const encodeParameterChangeProposal = (options) => {
     };
 };
 
-const encodeMigrateContractProposal = (config, options, chainName) => {
-    const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options, chainName));
+const encodeMigrateContractProposal = (config, options) => {
+    const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options));
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.MigrateContractProposal',
@@ -828,9 +857,10 @@ module.exports = {
     getSalt,
     calculateDomainSeparator,
     readWasmFile,
-    getChains,
+    initContractConfig,
+    getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
-    updateContractConfig,
+    updateCodeId,
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,

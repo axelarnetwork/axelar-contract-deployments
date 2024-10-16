@@ -104,6 +104,8 @@ async function callContract(keypair, client, config, chain, contractConfig, args
 
     const [destinationChain, destinationAddress, payload] = args;
 
+    const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
+
     let channel = options.channel;
 
     const tx = new Transaction();
@@ -116,14 +118,19 @@ async function callContract(keypair, client, config, chain, contractConfig, args
         });
     }
 
-    tx.moveCall({
-        target: `${packageId}::gateway::call_contract`,
+    const messageTicket = tx.moveCall({
+        target: `${packageId}::gateway::prepare_message`,
         arguments: [
             channel,
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
             tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
         ],
+    });
+
+    tx.moveCall({
+        target: `${packageId}::gateway::send_message`,
+        arguments: [tx.object(gatewayObjectId), messageTicket],
     });
 
     if (!options.channel) {
@@ -133,38 +140,7 @@ async function callContract(keypair, client, config, chain, contractConfig, args
         });
     }
 
-    await broadcast(client, keypair, tx);
-
-    printInfo('Contract called');
-}
-
-async function approveMessages(keypair, client, config, chain, contractConfig, args, options) {
-    const packageId = contractConfig.address;
-    const [multisigSessionId] = args;
-    const { payload, status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
-
-    if (!payload.messages) {
-        throw new Error('No messages to approve');
-    }
-
-    if (!status.completed) {
-        throw new Error('Multisig session not completed');
-    }
-
-    const executeData = bcsStructs.gateway.ExecuteData.parse(arrayify('0x' + status.completed.execute_data));
-
-    const tx = new Transaction();
-
-    tx.moveCall({
-        target: `${packageId}::gateway::approve_messages`,
-        arguments: [
-            tx.object(contractConfig.objects.Gateway),
-            tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.payload)).toBytes()),
-            tx.pure(bcs.vector(bcs.u8()).serialize(new Uint8Array(executeData.proof)).toBytes()),
-        ],
-    });
-
-    await broadcast(client, keypair, tx, 'Approved Messages');
+    await broadcast(client, keypair, tx, 'Message sent');
 }
 
 async function approve(keypair, client, config, chain, contractConfig, args, options) {
@@ -308,13 +284,6 @@ if (require.main === module) {
         .addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'))
         .action((sourceChain, messageId, sourceAddress, destinationId, payloadHash, options) => {
             mainProcessor(approve, [sourceChain, messageId, sourceAddress, destinationId, payloadHash], options);
-        });
-
-    program
-        .command('approveMessages <multisigSessionId>')
-        .description('Approve messages at the gateway contract from amplifier proof')
-        .action((multisigSessionId, options) => {
-            mainProcessor(approveMessages, [multisigSessionId], options);
         });
 
     program

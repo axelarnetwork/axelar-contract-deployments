@@ -5,15 +5,15 @@ const { isNil } = require('lodash');
 
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
-const { isNumber, printInfo, loadConfig, saveConfig, prompt, getChainConfig } = require('../common');
+const { printInfo, loadConfig, saveConfig, prompt } = require('../common');
 const {
     prepareWallet,
     prepareClient,
     fromHex,
     getSalt,
-    getChains,
-    updateContractConfig,
-    fetchCodeIdFromCodeHash,
+    initContractConfig,
+    getAmplifierContractConfig,
+    updateCodeId,
     uploadContract,
     instantiateContract,
     makeInstantiateMsg,
@@ -22,74 +22,71 @@ const {
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const upload = async (client, wallet, chainName, config, options) => {
-    const { reuseCodeId, contractName, fetchCodeId, instantiate2, salt, chainNames } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-    } = config;
-    const chainConfig = chainName === 'none' ? undefined : getChainConfig(config, chainName);
+const upload = async (client, wallet, config, options) => {
+    const { reuseCodeId, contractName, fetchCodeId, instantiate2, salt, chainName } = options;
 
-    if (!fetchCodeId && (!reuseCodeId || isNil(contractConfig.codeId))) {
-        printInfo('Uploading contract binary');
+    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
 
-        const { checksum, codeId } = await uploadContract(client, wallet, config, options);
+    if (options.codeId) {
+        printInfo('Option codeId defined. Skipping upload.');
+        return;
+    }
 
-        printInfo('Uploaded contract binary');
-        contractConfig.codeId = codeId;
+    if (fetchCodeId) {
+        printInfo('Option fetchCodeId defined. Skipping upload.');
+        return;
+    }
 
-        if (instantiate2) {
-            const [account] = await wallet.getAccounts();
-            const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainNames), 'axelar');
+    if (reuseCodeId && !isNil(contractBaseConfig.lastUploadedCodeId)) {
+        printInfo('Skipping upload. Reusing previously uploaded bytecode with codeId', contractBaseConfig.lastUploadedCodeId);
+        return;
+    }
 
-            updateContractConfig(contractConfig, chainConfig, 'address', address);
+    printInfo('Uploading contract binary');
 
-            printInfo('Expected contract address', address);
-        }
-    } else {
-        printInfo('Skipping upload. Reusing previously uploaded bytecode');
+    const { checksum, codeId } = await uploadContract(client, wallet, config, options);
+
+    printInfo('Uploaded contract binary');
+    contractBaseConfig.lastUploadedCodeId = codeId;
+
+    if (instantiate2) {
+        const [account] = await wallet.getAccounts();
+        const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');
+
+        contractConfig.address = address;
+
+        printInfo('Expected contract address', address);
     }
 };
 
-const instantiate = async (client, wallet, chainName, config, options) => {
-    const { contractName, fetchCodeId } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-        chains: { [chainName]: chainConfig },
-    } = config;
+const instantiate = async (client, wallet, config, options) => {
+    const { contractName, chainName } = options;
 
-    if (fetchCodeId) {
-        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractConfig);
-    } else if (!isNumber(contractConfig.codeId)) {
-        throw new Error('Code Id is not defined');
-    }
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    await updateCodeId(client, config, options);
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
     const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
 
-    updateContractConfig(contractConfig, chainConfig, 'address', contractAddress);
+    contractConfig.address = contractAddress;
 
-    printInfo(`Instantiated ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
+    printInfo(`Instantiated ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 };
 
 const main = async (options) => {
     const { env, uploadOnly, yes } = options;
     const config = loadConfig(env);
 
-    const chains = getChains(config, options);
+    initContractConfig(config, options);
 
     const wallet = await prepareWallet(options);
     const client = await prepareClient(config, wallet);
 
-    await upload(client, wallet, chains[0], config, options);
+    await upload(client, wallet, config, options);
 
     if (!(uploadOnly || prompt(`Proceed with deployment on axelar?`, yes))) {
-        for (const chain of chains) {
-            await instantiate(client, wallet, chain.toLowerCase(), config, options);
-        }
+        await instantiate(client, wallet, config, options);
     }
 
     saveConfig(config, env);
@@ -105,6 +102,7 @@ const programHandler = () => {
         storeOptions: true,
         instantiateOptions: true,
         instantiate2Options: true,
+        codeId: true,
         fetchCodeId: true,
     });
 

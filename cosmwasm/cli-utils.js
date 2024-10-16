@@ -2,10 +2,10 @@
 
 require('dotenv').config();
 
-const { addEnvOption } = require('../common');
+const { isNumber, addEnvOption } = require('../common');
 const { governanceAddress } = require('./utils');
 
-const { Option } = require('commander');
+const { Option, InvalidArgumentError } = require('commander');
 
 const addAmplifierOptions = (program, options) => {
     addEnvOption(program);
@@ -53,6 +53,20 @@ const addAmplifierOptions = (program, options) => {
         addProposalOptions(program);
     }
 
+    if (options.codeId) {
+        program.addOption(
+            new Option('--codeId <codeId>', 'the code id of the contract previously uploaded').argParser((value) => {
+                const parsedValue = parseInt(value, 10);
+
+                if (!isNumber(parsedValue)) {
+                    throw new InvalidArgumentError('Not a valid number.');
+                }
+
+                return parsedValue;
+            }),
+        );
+    }
+
     if (options.fetchCodeId) {
         program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
     }
@@ -68,7 +82,7 @@ const addAmplifierOptions = (program, options) => {
 
 const addContractOptions = (program) => {
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none').env('CHAINS'));
+    program.addOption(new Option('-n, --chainName <chainName>', 'chain name').env('CHAIN').argParser((value) => value.toLowerCase()));
 };
 
 const addStoreOptions = (program) => {
