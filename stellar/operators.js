@@ -114,7 +114,6 @@ if (require.main === module) {
             .choices(['is_operator', 'add_operator', 'remove_operator', 'refund', 'execute'])
             .makeOptionMandatory(true),
     );
-    program.addOption(new Option('--estimateCost', 'estimate on-chain resources').default(false));
     program.addOption(new Option('--args <args>', 'arguments for the contract call'));
     program.addOption(new Option('--target <target>', 'target contract for the execute call'));
     program.addOption(new Option('--method <method>', 'target method for the execute call'));
