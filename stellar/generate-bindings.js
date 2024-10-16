@@ -4,7 +4,7 @@ const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig } = require('../evm/utils');
 const path = require('path');
-const { getNetworkPassphrase } = require('./utils');
+const { stellarCmd, getNetworkPassphrase } = require('./utils');
 const { addEnvOption } = require('../common');
 require('./cli-utils');
 
@@ -15,7 +15,7 @@ function processCommand(options, _, chain) {
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
 
-    const cmd = `stellar contract bindings typescript --wasm ${wasmPath} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}" --contract-id ${contractId} --output-dir ${outputDir} ${
+    const cmd = `${stellarCmd} contract bindings typescript --wasm ${wasmPath} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}" --contract-id ${contractId} --output-dir ${outputDir} ${
         overwrite ? '--overwrite' : ''
     }`;
     console.log(`Executing command: ${cmd}`);

@@ -4,7 +4,7 @@ const { Contract, Address, nativeToScVal, scValToNative } = require('@stellar/st
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getNetworkPassphrase, getWallet, broadcast, serializeValue, addBaseOptions } = require('./utils');
+const { stellarCmd, getNetworkPassphrase, getWallet, broadcast, serializeValue, addBaseOptions } = require('./utils');
 const { getDomainSeparator, getChainConfig } = require('../common');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
@@ -20,7 +20,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
         case 'axelar_gateway': {
             const domainSeparator = nativeToScVal(Buffer.from(arrayify(await getDomainSeparator(config, chain, options))));
             const minimumRotationDelay = nativeToScVal(0);
-            const previousSignersRetention = nativeToScVal(15);
+            const previousSignersRetention = nativeToScVal(options.previousSignersRetention);
             const nonce = options.nonce ? arrayify(id(options.nonce)) : Array(32).fill(0);
             const initialSigners = nativeToScVal([
                 weightedSignersToScVal({
@@ -62,7 +62,7 @@ async function processCommand(options, config, chain) {
         chain.contracts = {};
     }
 
-    const cmd = `stellar contract deploy --wasm ${wasmPath} --source ${options.privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
+    const cmd = `${stellarCmd} contract deploy --wasm ${wasmPath} --source ${options.privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
     printInfo('Deploying contract', contractName);
 
     let contractAddress = options.address;
@@ -112,8 +112,8 @@ function main() {
     program.addOption(new Option('--initialize', 'initialize the contract'));
     program.addOption(new Option('--contractName <contractName>', 'contract name to deploy').makeOptionMandatory(true));
     program.addOption(new Option('--wasmPath <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
-    program.addOption(new Option('--estimateCost', 'estimate on-chain resources').default(false));
     program.addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'));
+    program.addOption(new Option('--previousSignersRetention', 'previous signer retention').default(15));
     program.addOption(
         new Option(
             '--domainSeparator <domainSeparator>',

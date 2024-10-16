@@ -10,7 +10,7 @@ brew install libsodium
 npm ci
 ```
 
-Install Stellar Soroban CLI
+Install Stellar CLI
 
 ```bash
 cargo install --locked stellar-cli --features opt
@@ -80,7 +80,7 @@ node stellar/deploy-contract.js --contractName axelar_operators --wasmPath ../ax
 Generate TypeScript bindings for the contract
 
 ```bash
-node stellar/generate-bindings.js --wasmPath /path/to/optimized.wasm --contractId [contract_address] --outputDir ./stellar/bindings/[contract name]
+node stellar/generate-bindings.js --wasmPath /path/to/optimized.wasm --contractId [contract-address] --outputDir ./stellar/bindings/[contract-name]
 ```
 
 ## Contract Interaction
@@ -88,7 +88,7 @@ node stellar/generate-bindings.js --wasmPath /path/to/optimized.wasm --contractI
 Soroban contracts can be interacted directly via the CLI as well. See the help text for individual contract cmds as follows.
 
 ```bash
-stellar contract invoke --network testnet --id [contract_address] --source-account wallet -- --help
+stellar contract invoke --network testnet --id [contract-address] --source-account wallet -- --help
 ```
 
 ### Gateway
@@ -102,7 +102,7 @@ node stellar/gateway.js --help
 #### Call contract
 
 ```bash
-node stellar/gateway.js call-contract [destination_chain] [dstination_address] [payload]
+node stellar/gateway.js call-contract [destination-chain] [dstination-address] [payload]
 
 # Example
 node stellar/gateway.js call-contract avalanche 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
@@ -113,7 +113,7 @@ node stellar/gateway.js call-contract avalanche 0x4F4495243837681061C4743b74B3eE
 Submit a proof constructed on Amplifier to the Stellar gateway contract.
 
 ```bash
-node stellar/gateway.js submit-proof [multisig_session_id]
+node stellar/gateway.js submit-proof [multisig-session-id]
 ```
 
 ### Approve messages
@@ -121,7 +121,7 @@ node stellar/gateway.js submit-proof [multisig_session_id]
 A message approval can be submitted to the gateway contract for a test deployment where the wallet is the signer on the gateway. Setting `[destination_address]` to `wallet` will use the wallet address as the destination.
 
 ```bash
-node stellar/gateway.js approve [source_chain] [message_id] [source_address] [destination_address] [payload]
+node stellar/gateway.js approve [source-chain] [message-id] [source-address] [destination-address] [payload]
 ```
 
 ### Validate messages
@@ -129,7 +129,7 @@ node stellar/gateway.js approve [source_chain] [message_id] [source_address] [de
 An approved message can be validated by the gateway contract for a test deployment as follows:
 
 ```bash
-node stellar/gateway.js validate-message [source_chain] [message_id] [source_address] [payload]
+node stellar/gateway.js validate-message [source-chain] [message-id] [source-address] [payload]
 ```
 
 ### Rotate signers
