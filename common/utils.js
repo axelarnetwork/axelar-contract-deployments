@@ -417,7 +417,7 @@ async function getDomainSeparator(config, chain, options) {
     return expectedDomainSeparator;
 }
 
-const getChainConfig = (config, chainName) => {
+const getChainConfig = (config, chainName, options = {}) => {
     if (!chainName) {
         return undefined;
     }

@@ -92,6 +92,7 @@ async function processCommand(config, chain, options) {
     }
 
     let payload = options.payload || '0x';
+
     if (!payload.startsWith('0x')) {
         payload = '0x' + payload;
     }
