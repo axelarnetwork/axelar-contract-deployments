@@ -2,6 +2,8 @@ use crate::visitor::{ArchivedVisitor, Visitor};
 
 pub mod generic;
 
+pub mod merkle_trait;
+pub mod merkle_tree;
 #[cfg(any(test, feature = "test-fixtures", feature = "solana"))]
 pub mod solana;
 

@@ -3,10 +3,10 @@
 use std::mem::size_of;
 
 use arrayref::{array_refs, mut_array_refs};
+use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, MerkleTree, SolanaSyscallHasher};
 use axelar_rkyv_encoding::types::ArchivedProof;
 use bitvec::order::Lsb0;
 use bitvec::{bitarr, BitArr};
-use merkle_tree::{MerkleProof, MerkleTree};
 use solana_program::hash::hashv;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
@@ -226,7 +226,9 @@ impl SignatureVerification {
     /// Returns the Merkle Tree for the given signature (leaf) nodes.
     ///
     /// Intended to be used by off-chain agents to prepare their instructions.
-    pub fn build_merkle_tree<S, K>(leaves: &[SignatureNode<'_, S, K>]) -> MerkleTree
+    pub fn build_merkle_tree<S, K>(
+        leaves: &[SignatureNode<'_, S, K>],
+    ) -> MerkleTree<SolanaSyscallHasher>
     where
         S: AsRef<[u8]>,
         K: AsRef<[u8]>,
@@ -264,7 +266,7 @@ impl SignatureVerification {
     pub fn verify_signature<S, K>(
         &mut self,
         signature_node: &SignatureNode<'_, S, K>,
-        proof: MerkleProof,
+        proof: MerkleProof<SolanaSyscallHasher>,
         signature_verifier: impl SignatureVerifier<S, K>,
     ) -> bool
     where
@@ -367,50 +369,6 @@ pub trait SignatureVerifier<S, K> {
     fn verify_signature(&self, signature: &S, public_key: &K, message: &Hash) -> Option<u128>;
 }
 
-/// Type definitions for the Merkle Tree primitives used by
-/// [`SignatureVerification`]
-pub mod merkle_tree {
-    use super::*;
-
-    /// Merkle Tree implementation that uses Solana's `hashv` syscall to merge
-    /// its nodes.
-    pub type MerkleTree = rs_merkle::MerkleTree<SolanaSyscallHasher>;
-
-    /// Merkle Proof implementation that uses Solana's `hashv` syscall to merge
-    /// its nodes.
-    pub type MerkleProof = rs_merkle::MerkleProof<SolanaSyscallHasher>;
-
-    /// Hashing algorithm that defers to Solana's `hashv` syscall.
-    #[derive(Clone)]
-    pub struct SolanaSyscallHasher;
-
-    impl rs_merkle::Hasher for SolanaSyscallHasher {
-        type Hash = [u8; 32];
-
-        fn hash(data: &[u8]) -> Self::Hash {
-            hashv(&[data]).to_bytes()
-        }
-
-        /// This implementation deviates from the default for several reasons:
-        /// 1. It prefixes intermediate nodes before hashing to prevent second
-        ///    preimage attacks. This distinguishes leaf nodes from
-        ///    intermediates, blocking attempts to craft alternative trees with
-        ///    the same root hash using malicious hashes.
-        /// 2. If the left node doesn't have a sibling it is concatenated to
-        ///    itself and then hashed instead of just being propagated to the
-        ///    next level.
-        /// 3. It uses arrays instead of vectors to avoid heap allocations.
-        fn concat_and_hash(left: &Self::Hash, right: Option<&Self::Hash>) -> Self::Hash {
-            let mut concatenated: [u8; 65] = [0; 65];
-            let (prefix, left_node, right_node) = mut_array_refs![&mut concatenated, 1, 32, 32];
-            prefix[0] = 1;
-            left_node.copy_from_slice(left);
-            right_node.copy_from_slice(right.unwrap_or(left));
-            Self::hash(&concatenated)
-        }
-    }
-}
-
 /// Parses a `Proof` and returns a `BatchContext` instance.
 pub fn batch_context_from_proof(
     gateway_root_pda: Pubkey,
@@ -480,7 +438,7 @@ mod tests {
     struct TestCase<const NUM_SIGNATURES: usize> {
         sig_verification: SignatureVerification,
         signatures: [TestSignatureNode; NUM_SIGNATURES],
-        merkle_tree: MerkleTree,
+        merkle_tree: MerkleTree<SolanaSyscallHasher>,
     }
 
     lazy_static! {

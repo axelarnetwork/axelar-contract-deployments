@@ -11,10 +11,20 @@ fn test_hash_payload() {
     let verifier_set = random_valid_verifier_set();
     let payload = random_payload();
 
-    let hash1 = hash_payload(&domain_separator, &verifier_set, &payload, test_hasher_impl());
+    let hash1 = hash_payload(
+        &domain_separator,
+        &verifier_set,
+        &payload,
+        test_hasher_impl(),
+    );
 
     // Re-hash the same inputs and verify the hash is the same
-    let hash2 = hash_payload(&domain_separator, &verifier_set, &payload, test_hasher_impl());
+    let hash2 = hash_payload(
+        &domain_separator,
+        &verifier_set,
+        &payload,
+        test_hasher_impl(),
+    );
     assert_eq!(hash1, hash2);
 
     // Hash with different inputs and verify the hash is different
@@ -54,8 +64,11 @@ fn consistent_payload_hashes_across_boundaries() {
         &execute_data.payload,
         test_hasher_impl(),
     );
-    let internal_hash =
-        archived.hash_payload_for_verifier_set(&domain_separator, &verifier_set, test_hasher_impl());
+    let internal_hash = archived.hash_payload_for_verifier_set(
+        &domain_separator,
+        &verifier_set,
+        test_hasher_impl(),
+    );
 
     // Compare
     assert_eq!(external_hash, internal_hash);

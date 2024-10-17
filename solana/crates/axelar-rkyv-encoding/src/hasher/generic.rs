@@ -2,11 +2,8 @@ use std::marker::PhantomData;
 
 use sha3::{Digest, Keccak256};
 
-use crate::visitor::{ArchivedVisitor, Visitor};
-
 use super::{AxelarRkyv256Hasher, Hash256};
-
-
+use crate::visitor::{ArchivedVisitor, Visitor};
 
 #[derive(Clone, Default)]
 pub struct Keccak256Hasher<'a> {

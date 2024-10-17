@@ -1,11 +1,16 @@
 use std::collections::BTreeMap;
 use std::error::Error;
+use std::marker::PhantomData;
 
 use rkyv::bytecheck::{self, CheckBytes, StructCheckError};
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{Archive, Deserialize, Serialize};
 
 use super::HasheableSignersBTreeMap;
+use crate::hasher::generic::Keccak256Hasher;
+use crate::hasher::merkle_trait::Merkle;
+use crate::hasher::merkle_tree::{NativeHasher, SolanaSyscallHasher};
+use crate::hasher::solana::SolanaKeccak256Hasher;
 use crate::hasher::AxelarRkyv256Hasher;
 use crate::types::{ArchivedPublicKey, ArchivedU128, PublicKey, U128};
 use crate::visitor::{ArchivedVisitor, Visitor};
@@ -63,6 +68,21 @@ impl VerifierSet {
     pub fn created_at_le_bytes(&self) -> &[u8; 8] {
         &self.created_at_le_bytes
     }
+
+    pub fn element_iterator(&self) -> impl Iterator<Item = VerifierSetElement> + '_ {
+        self.signers()
+            .iter()
+            .enumerate()
+            .map(
+                |(position, (signer_pubkey, signer_weight))| VerifierSetElement {
+                    created_at: self.created_at,
+                    quorum: self.quorum.into(),
+                    signer_pubkey: *signer_pubkey,
+                    signer_weight: (*signer_weight).into(),
+                    position: position as u16,
+                },
+            )
+    }
 }
 
 impl ArchivedVerifierSet {
@@ -108,9 +128,76 @@ impl ArchivedVerifierSet {
     }
 }
 
+/// A `VerifierSet` element.
+pub struct VerifierSetElement {
+    created_at: u64,
+    quorum: u128,
+    signer_pubkey: PublicKey,
+    signer_weight: u128,
+    position: u16,
+}
+/// Wraps a [`VerifierSetElement`], is generic over the hashing context.
+///
+/// This type is the leaf node of a [`VerifierSet`]'s Merkle tree.
+pub struct VerifierSetLeafNode<T: rs_merkle::Hasher<Hash = [u8; 32]>> {
+    element: VerifierSetElement,
+    hasher: PhantomData<T>,
+}
+impl<'a, T> VerifierSetLeafNode<T>
+where
+    T: rs_merkle::Hasher<Hash = [u8; 32]>,
+{
+    /// Converts this leaf node into bytes that will become the leaf nodes of a
+    /// [`VerifierSet`]'s Merkle tree.
+    #[inline]
+    pub fn leaf_hash<H>(&'a self) -> [u8; 32]
+    where
+        H: AxelarRkyv256Hasher<'a>,
+    {
+        let mut hasher = H::default();
+        hasher.hash(&[0]); // Leaf node discriminator
+        hasher.hash(b"verifier-set");
+        hasher.hash(bytemuck::cast_ref::<_, [u8; 8]>(&self.element.created_at));
+        hasher.hash(bytemuck::cast_ref::<_, [u8; 16]>(&self.element.quorum));
+        Visitor::visit_public_key(&mut hasher, &self.element.signer_pubkey);
+        hasher.hash(bytemuck::cast_ref::<_, [u8; 16]>(
+            &self.element.signer_weight,
+        ));
+        hasher.hash(bytemuck::cast_ref::<_, [u8; 2]>(&self.element.position));
+        hasher.result().into()
+    }
+}
+
+impl From<VerifierSetLeafNode<SolanaSyscallHasher>> for [u8; 32] {
+    fn from(leaf_node: VerifierSetLeafNode<SolanaSyscallHasher>) -> Self {
+        leaf_node.leaf_hash::<SolanaKeccak256Hasher>()
+    }
+}
+impl From<VerifierSetLeafNode<NativeHasher>> for [u8; 32] {
+    fn from(leaf_node: VerifierSetLeafNode<NativeHasher>) -> Self {
+        leaf_node.leaf_hash::<Keccak256Hasher>()
+    }
+}
+
+impl<H> Merkle<H> for VerifierSet
+where
+    H: rs_merkle::Hasher<Hash = [u8; 32]>,
+    VerifierSetLeafNode<H>: Into<[u8; 32]>,
+{
+    type LeafNode = VerifierSetLeafNode<H>;
+
+    fn merkle_leaves(&self) -> impl Iterator<Item = VerifierSetLeafNode<H>> {
+        self.element_iterator().map(|element| VerifierSetLeafNode {
+            element,
+            hasher: PhantomData,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::hasher::merkle_trait::tests::assert_merkle_inclusion_proof;
     use crate::test_fixtures::{random_valid_verifier_set, test_hasher_impl};
 
     #[test]
@@ -161,5 +248,16 @@ mod tests {
         let archived = unsafe { rkyv::archived_root::<VerifierSet>(&serialized) };
 
         assert!(!archived.sufficient_weight().expect("no overflow"))
+    }
+
+    #[test]
+    fn test_verifier_set_merkle_inclusion_proof() {
+        let verifier_set = random_valid_verifier_set();
+
+        assert_eq!(
+            assert_merkle_inclusion_proof::<SolanaSyscallHasher, _>(&verifier_set),
+            assert_merkle_inclusion_proof::<NativeHasher, _>(&verifier_set),
+            "different hasher implementations should produce the same merkle root"
+        )
     }
 }

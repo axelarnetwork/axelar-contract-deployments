@@ -9,7 +9,7 @@
 //! See original issue for more information: https://github.com/eigerco/solana-axelar-internal/issues/361
 
 use std::collections::BTreeMap;
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 
 use rkyv::bytecheck::{self, CheckBytes};
 use rkyv::collections::ArchivedBTreeMap;
@@ -168,7 +168,7 @@ impl Deref for HasheableSignersWithSignaturesBTreeMap {
 }
 
 #[cfg(any(test, feature = "test-fixtures"))]
-impl DerefMut for HasheableSignersWithSignaturesBTreeMap {
+impl std::ops::DerefMut for HasheableSignersWithSignaturesBTreeMap {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner_map
     }

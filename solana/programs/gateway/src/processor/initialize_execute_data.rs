@@ -1,3 +1,4 @@
+use axelar_rkyv_encoding::hasher::merkle_tree::MerkleProof;
 use axelar_rkyv_encoding::types::{ArchivedExecuteData, ArchivedPayload};
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -15,7 +16,6 @@ use crate::error::GatewayError;
 use crate::seed_prefixes;
 use crate::state::execute_data::ExecuteDataVariant;
 use crate::state::execute_data_buffer::{BufferLayout, RESERVED_BUFFER_METADATA_BYTES};
-use crate::state::signature_verification::merkle_tree::MerkleProof;
 use crate::state::signature_verification::{
     batch_context_from_proof, SignatureNode, SignatureVerification, SignatureVerifier,
 };

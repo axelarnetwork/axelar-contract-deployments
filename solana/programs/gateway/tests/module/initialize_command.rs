@@ -1,3 +1,4 @@
+use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleTree, SolanaSyscallHasher};
 use axelar_rkyv_encoding::hasher::solana::SolanaKeccak256Hasher;
 use axelar_rkyv_encoding::test_fixtures::{
     random_bytes, random_message, random_valid_execute_data_and_verifier_set_for_payload,
@@ -7,7 +8,6 @@ use axelar_rkyv_encoding::types::{
 };
 use gmp_gateway::commands::{CommandKind, OwnedCommand};
 use gmp_gateway::state::execute_data_buffer::BufferLayout;
-use gmp_gateway::state::signature_verification::merkle_tree::MerkleTree;
 use gmp_gateway::state::signature_verification::{
     batch_context_from_proof, BatchContext, SignatureNode, SignatureVerification,
 };
@@ -586,7 +586,7 @@ impl BufferedWriteTestCase {
             })
     }
 
-    fn build_signatures_merkle_tree(&self) -> MerkleTree {
+    fn build_signatures_merkle_tree(&self) -> MerkleTree<SolanaSyscallHasher> {
         let archived_execute_data = self.archived_execute_data();
         let batch_context = &self.batch_context(archived_execute_data);
         let leaves = self
