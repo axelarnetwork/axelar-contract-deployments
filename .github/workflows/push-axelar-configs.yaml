@@ -1,0 +1,48 @@
+name: Update config and push to axelar-config
+
+on: workflow_dispatch
+
+jobs:
+  run-js-and-create-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run the processConfig script
+        id: run-js
+        run: |
+          mkdir output
+          node scripts/processConfig.js > output/chains.json
+        shell: bash
+
+      - name: Checkout target repository
+        uses: actions/checkout@v2
+        with:
+          repository: https://github.com/axelarnetwork/axelar-configs
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: axelar-configs
+
+      - name: Copy file into axelar-configs repo
+        run: |
+          cp output/chains.json axelar-configs/registry/testnet/new_chains.json
+
+      - name: Create pull request with changes in the axelar-configs repo
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'feat: updating chain configs for devnet'
+          title: 'Add new chain configs'
+          body: 'This PR updates chain configs in a workflow from the axelar-contract-deployments repo'
+          branch: feat/add-new-chains
+          base: main
+          path: axelar-configs

@@ -107,6 +107,7 @@ build/
 cache/
 artifacts/
 chains-info/
+output/
 
 local.json
 keys.json
