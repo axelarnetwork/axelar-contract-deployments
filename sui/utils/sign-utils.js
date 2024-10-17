@@ -115,6 +115,14 @@ async function broadcast(client, keypair, tx, actionName) {
     return receipt;
 }
 
+async function broadcastFromTxBuilder(txBuilder, keypair, actionName, suiResponseOptions) {
+    const receipt = await txBuilder.signAndExecute(keypair, suiResponseOptions);
+
+    printInfo(actionName || 'Tx', receipt.digest);
+
+    return receipt;
+}
+
 async function broadcastSignature(client, txBytes, signature, actionName) {
     const receipt = await client.executeTransactionBlock({
         transactionBlock: txBytes,
@@ -249,4 +257,5 @@ module.exports = {
     getMultisig,
     getWrappedPublicKey,
     signTransactionBlockBytes,
+    broadcastFromTxBuilder,
 };
