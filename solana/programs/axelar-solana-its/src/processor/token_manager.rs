@@ -95,10 +95,8 @@ pub(crate) fn deploy<'a>(
     let its_root_pda = next_account_info(accounts_iter)?;
     let token_manager_pda = next_account_info(accounts_iter)?;
     let token_mint = next_account_info(accounts_iter)?;
-    let token_manager_ata_legacy = next_account_info(accounts_iter)?;
-    let token_manager_ata_2022 = next_account_info(accounts_iter)?;
-    let token_program_legacy = next_account_info(accounts_iter)?;
-    let token_program_2022 = next_account_info(accounts_iter)?;
+    let token_manager_ata = next_account_info(accounts_iter)?;
+    let token_program = next_account_info(accounts_iter)?;
     let _ata_program = next_account_info(accounts_iter)?;
 
     validate_token_type(
@@ -106,12 +104,6 @@ pub(crate) fn deploy<'a>(
         token_mint,
         token_manager_pda,
     )?;
-
-    let (token_program, token_manager_ata) = if token_mint.owner == token_program_legacy.key {
-        (token_program_legacy, token_manager_ata_legacy)
-    } else {
-        (token_program_2022, token_manager_ata_2022)
-    };
 
     create_associated_token_account(
         payer,
@@ -122,13 +114,13 @@ pub(crate) fn deploy<'a>(
         token_program,
     )?;
 
-    let (interchain_token_pda, _) = crate::interchain_token_pda(
+    let (interchain_token_pda, _) = crate::create_interchain_token_pda(
         its_root_pda.key,
         deploy_token_manager.token_id.as_ref(),
         bumps.interchain_token_pda_bump,
     );
     let (_token_manager_pda, bump) =
-        crate::token_manager_pda(&interchain_token_pda, bumps.token_manager_pda_bump);
+        crate::create_token_manager_pda(&interchain_token_pda, bumps.token_manager_pda_bump);
     let token_manager_ata = PublicKey::new_ed25519(token_manager_ata.key.to_bytes());
     let mut operators = vec![PublicKey::new_ed25519(its_root_pda.key.to_bytes())];
 
@@ -177,10 +169,8 @@ fn check_accounts(accounts: &[AccountInfo<'_>]) -> ProgramResult {
     let its_root_pda = next_account_info(accounts_iter)?;
     let token_manager_pda = next_account_info(accounts_iter)?;
     let token_mint = next_account_info(accounts_iter)?;
-    let _token_manager_ata_legacy = next_account_info(accounts_iter)?;
-    let _token_manager_ata_2022 = next_account_info(accounts_iter)?;
-    let token_program_legacy = next_account_info(accounts_iter)?;
-    let token_program_2022 = next_account_info(accounts_iter)?;
+    let _token_manager_ata = next_account_info(accounts_iter)?;
+    let token_program = next_account_info(accounts_iter)?;
     let ata_program = next_account_info(accounts_iter)?;
 
     if !system_program::check_id(system_account.key) {
@@ -206,7 +196,7 @@ fn check_accounts(accounts: &[AccountInfo<'_>]) -> ProgramResult {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if token_program_legacy.key != token_mint.owner && token_program_2022.key != token_mint.owner {
+    if token_program.key != token_mint.owner {
         msg!("Mint and program account mismatch");
         return Err(ProgramError::IncorrectProgramId);
     }

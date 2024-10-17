@@ -1,6 +1,8 @@
 use axelar_rkyv_encoding::test_fixtures::random_message_with_destination_and_payload;
+use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use axelar_solana_its::state::token_manager::TokenManager;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_gateway::ContractCallFilter;
+use interchain_token_transfer_gmp::GMPPayload;
 use solana_program_test::tokio;
 use solana_sdk::signer::Signer;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
@@ -89,15 +91,20 @@ async fn test_send_from_evm_to_solana() {
         )
         .await;
 
+    let its_ix_inputs = ItsGmpInstructionInputs {
+        payer: solana_chain.fixture.payer.pubkey(),
+        gateway_approved_message_pda: gateway_approved_command_pdas[0],
+        gateway_root_pda: solana_chain.gateway_root_pda,
+        gmp_metadata: axelar_message.into(),
+        payload: GMPPayload::decode(&payload).unwrap(),
+        token_program: spl_token_2022::id(),
+        mint: None,
+        bumps: None,
+    };
+
     // - Relayer calls the Solana ITS program
-    let instruction = axelar_solana_its::instructions::its_gmp_payload(
-        &solana_chain.fixture.payer.pubkey(),
-        &gateway_approved_command_pdas[0],
-        &solana_chain.gateway_root_pda,
-        axelar_message.into(),
-        payload,
-    )
-    .expect("failed to create instruction");
+    let instruction = axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs)
+        .expect("failed to create instruction");
 
     let _tx1 = solana_chain
         .fixture

@@ -42,10 +42,8 @@ pub fn process_deploy<'a>(
     let _its_root_pda = next_account_info(accounts_iter)?;
     let token_manager_pda = next_account_info(accounts_iter)?;
     let token_mint = next_account_info(accounts_iter)?;
-    let _token_manager_ata_legacy = next_account_info(accounts_iter)?;
-    let _token_manager_ata_2022 = next_account_info(accounts_iter)?;
-    let _token_program_legacy = next_account_info(accounts_iter)?;
-    let _token_program_2022 = next_account_info(accounts_iter)?;
+    let _token_manager_ata = next_account_info(accounts_iter)?;
+    let _token_program = next_account_info(accounts_iter)?;
     let _ata_program = next_account_info(accounts_iter)?;
     let _rent_sysvar = next_account_info(accounts_iter)?;
     let additional_minter_account = next_account_info(accounts_iter).ok();
@@ -88,10 +86,8 @@ fn setup_mint<'a>(
     let its_root_pda = next_account_info(accounts_iter)?;
     let token_manager_pda = next_account_info(accounts_iter)?;
     let token_mint = next_account_info(accounts_iter)?;
-    let _token_manager_ata_legacy = next_account_info(accounts_iter)?;
-    let _token_manager_ata_2022 = next_account_info(accounts_iter)?;
-    let _token_program_legacy = next_account_info(accounts_iter)?;
-    let token_program_2022 = next_account_info(accounts_iter)?;
+    let _token_manager_ata = next_account_info(accounts_iter)?;
+    let token_program = next_account_info(accounts_iter)?;
     let _ata_program = next_account_info(accounts_iter)?;
     let rent_sysvar = next_account_info(accounts_iter)?;
     let _minter = next_account_info(accounts_iter).ok();
@@ -108,13 +104,13 @@ fn setup_mint<'a>(
             account_size
                 .try_into()
                 .map_err(|_err| ProgramError::InvalidAccountData)?,
-            token_program_2022.key,
+            token_program.key,
         ),
         &[
             payer.clone(),
             token_mint.clone(),
             system_account.clone(),
-            token_program_2022.clone(),
+            token_program.clone(),
             token_manager_pda.clone(),
         ],
         &[&[
@@ -147,7 +143,7 @@ fn setup_mint<'a>(
             token_mint.clone(),
             rent_sysvar.clone(),
             token_manager_pda.clone(),
-            token_program_2022.clone(),
+            token_program.clone(),
         ],
     )?;
 
@@ -168,16 +164,14 @@ fn setup_metadata<'a>(
     let its_root_pda = next_account_info(accounts_iter)?;
     let token_manager_pda = next_account_info(accounts_iter)?;
     let token_mint = next_account_info(accounts_iter)?;
-    let _token_manager_ata_legacy = next_account_info(accounts_iter)?;
-    let _token_manager_ata_2022 = next_account_info(accounts_iter)?;
-    let _token_program_legacy = next_account_info(accounts_iter)?;
-    let token_program_2022 = next_account_info(accounts_iter)?;
+    let _token_manager_ata = next_account_info(accounts_iter)?;
+    let token_program = next_account_info(accounts_iter)?;
     let _ata_program = next_account_info(accounts_iter)?;
     let _rent_sysvar = next_account_info(accounts_iter)?;
     let _minter = next_account_info(accounts_iter).ok();
 
     let rent = Rent::get()?;
-    let (interchain_token_pda, _) = crate::interchain_token_pda(
+    let (interchain_token_pda, _) = crate::create_interchain_token_pda(
         its_root_pda.key,
         token_id.as_ref(),
         bumps.interchain_token_pda_bump,
@@ -219,7 +213,7 @@ fn setup_metadata<'a>(
         &[
             token_mint.clone(),
             token_manager_pda.clone(),
-            token_program_2022.clone(),
+            token_program.clone(),
         ],
         &[&[
             seed_prefixes::TOKEN_MANAGER_SEED,
@@ -239,7 +233,7 @@ fn setup_metadata<'a>(
         &[
             token_mint.clone(),
             token_manager_pda.clone(),
-            token_program_2022.clone(),
+            token_program.clone(),
         ],
         &[&[
             seed_prefixes::TOKEN_MANAGER_SEED,

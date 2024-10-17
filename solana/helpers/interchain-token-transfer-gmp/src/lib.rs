@@ -95,7 +95,7 @@ impl GMPPayload {
         }
     }
 
-    pub fn encode(self) -> Vec<u8> {
+    pub fn encode(&self) -> Vec<u8> {
         match self {
             GMPPayload::InterchainTransfer(data) => data.abi_encode_params(),
             GMPPayload::DeployInterchainToken(data) => data.abi_encode_params(),

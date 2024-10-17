@@ -34,6 +34,8 @@ args = [
   "test-fixtures",
   "--package",
   "xtask",
+  "--package",
+  "its-instruction-builder",
   "--",
   "--emit=files",
 ]
@@ -78,6 +80,8 @@ args = [
   "test-fixtures",
   "--package",
   "xtask",
+  "--package",
+  "its-instruction-builder",
   "--check",
 ]
 
@@ -132,6 +136,8 @@ args = [
   "test-fixtures",
   "--package",
   "xtask",
+  "--package",
+  "its-instruction-builder",
 ]
 
 [tasks.audit]

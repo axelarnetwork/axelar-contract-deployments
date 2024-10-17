@@ -165,6 +165,17 @@ impl TokenManager {
     }
 }
 
+impl ArchivedTokenManager {
+    /// Deserializes the `TokenManager` from the given bytes using `rkyv` for
+    /// zero-copy deserialization.
+    #[must_use]
+    pub fn from_bytes(data: &[u8]) -> &Self {
+        // SAFETY: The data is assumed to be a valid archived `TokenManager`. The
+        // `TokenManager` is always serialized as an archived struct.
+        unsafe { rkyv::archived_root::<TokenManager>(data) }
+    }
+}
+
 /// Decodes the operator and token address from the given data.
 ///
 /// The counterpart on EVM is implemented [here](https://github.com/axelarnetwork/interchain-token-service/blob/main/contracts/token-manager/TokenManager.sol#L191).

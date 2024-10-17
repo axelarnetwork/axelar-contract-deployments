@@ -76,6 +76,15 @@ impl ArchivedPublicKey {
     }
 }
 
+impl AsRef<[u8]> for ArchivedPublicKey {
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            ArchivedPublicKey::Secp256k1(bytes) => bytes,
+            ArchivedPublicKey::Ed25519(bytes) => bytes,
+        }
+    }
+}
+
 impl FromStr for PublicKey {
     type Err = Box<dyn std::error::Error + Send + Sync>;
 

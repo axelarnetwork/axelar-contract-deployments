@@ -109,6 +109,7 @@ typed-builder = "0.19"
 xshell = "0.2"
 
 # solana programs
+axelar-solana-its = { path = "programs/axelar-solana-its" }
 axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program" }
 axelar-solana-multicall = { path = "programs/axelar-solana-multicall" }
 gas-service = { path = "programs/gas-service" }
@@ -123,6 +124,7 @@ axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = [
 evm-contracts-rs = { path = "helpers/evm-contracts-rs" }
 evm-contracts-test-suite = { path = "helpers/evm-contracts-test-suite" }
 interchain-token-transfer-gmp = { path = "helpers/interchain-token-transfer-gmp" }
+its-instruction-builder = { path = "helpers/its-instruction-builder" }
 governance-gmp = { path = "helpers/governance-gmp" }
 program-utils = { path = "helpers/program-utils" }
 test-fixtures = { path = "helpers/test-fixtures" }

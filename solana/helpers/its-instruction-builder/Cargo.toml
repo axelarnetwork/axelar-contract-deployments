@@ -1,0 +1,21 @@
+[package]
+name = "its-instruction-builder"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+axelar-message-primitives.workspace = true
+axelar-rkyv-encoding.workspace = true
+axelar-solana-its = { workspace = true, features = ["no-entrypoint"] }
+gateway = { workspace = true, features = ["no-entrypoint"] }
+interchain-token-transfer-gmp.workspace = true
+rkyv.workspace = true
+solana-client.workspace = true
+solana-sdk.workspace = true
+spl-token-2022 = { workspace = true, features = ["no-entrypoint", "serde-traits"] }

@@ -4,7 +4,7 @@ use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX
 use axelar_rkyv_encoding::types::GmpMetadata;
 use interchain_token_transfer_gmp::GMPPayload;
 use itertools::Itertools;
-use program_utils::ValidPDA;
+use program_utils::{check_rkyv_initialized_pda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
@@ -12,7 +12,10 @@ use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
 
 use crate::check_program_account;
-use crate::instructions::{derive_its_accounts, Bumps, InterchainTokenServiceInstruction};
+use crate::instructions::{
+    derive_its_accounts, its_account_indices, Bumps, InterchainTokenServiceInstruction,
+};
+use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
 
 pub mod interchain_token;
@@ -113,15 +116,10 @@ fn process_its_gmp_payload(
     let gateway_root_pda = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
 
-    validate_its_accounts(
-        instruction_accounts,
-        gateway_root_pda.key,
-        abi_payload,
-        bumps,
-    )?;
-
     let payload =
         GMPPayload::decode(abi_payload).map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    validate_its_accounts(instruction_accounts, gateway_root_pda.key, &payload, bumps)?;
 
     match payload {
         GMPPayload::InterchainTransfer(_interchain_token_transfer) => {
@@ -150,11 +148,31 @@ fn process_its_gmp_payload(
 fn validate_its_accounts(
     accounts: &[AccountInfo<'_>],
     gateway_root_pda: &Pubkey,
-    abi_payload: &[u8],
+    payload: &GMPPayload,
     bumps: Bumps,
 ) -> ProgramResult {
-    let (derived_its_accounts, new_bumps) =
-        derive_its_accounts(gateway_root_pda, abi_payload, Some(bumps))?;
+    // In this case we cannot derive the mint account, so we just use what we got
+    // and check later against the mint within the `TokenManager` PDA.
+    let maybe_mint = if let GMPPayload::InterchainTransfer(_) = payload {
+        accounts
+            .get(its_account_indices::TOKEN_MINT_INDEX)
+            .map(|account| *account.key)
+    } else {
+        None
+    };
+
+    let token_program = accounts
+        .get(its_account_indices::TOKEN_PROGRAM_INDEX)
+        .map(|account| *account.key)
+        .ok_or(ProgramError::InvalidAccountData)?;
+
+    let (derived_its_accounts, new_bumps) = derive_its_accounts(
+        gateway_root_pda,
+        payload,
+        token_program,
+        maybe_mint,
+        Some(bumps),
+    )?;
 
     if new_bumps != bumps {
         return Err(ProgramError::InvalidAccountData);
@@ -170,6 +188,24 @@ fn validate_its_accounts(
             itertools::EitherOrBoth::Left(_) | itertools::EitherOrBoth::Right(_) => {
                 return Err(ProgramError::InvalidAccountData)
             }
+        }
+    }
+
+    // Now we validate the mint account passed for `InterchainTransfer`
+    if let Some(mint) = maybe_mint {
+        let token_manager_pda = accounts
+            .get(its_account_indices::TOKEN_MANAGER_PDA_INDEX)
+            .ok_or(ProgramError::InvalidAccountData)?;
+        let token_manager_pda_data = token_manager_pda.try_borrow_data()?;
+
+        let token_manager = check_rkyv_initialized_pda::<TokenManager>(
+            &crate::id(),
+            token_manager_pda,
+            token_manager_pda_data.as_ref(),
+        )?;
+
+        if token_manager.token_address.as_ref() != mint.as_ref() {
+            return Err(ProgramError::InvalidAccountData);
         }
     }
 

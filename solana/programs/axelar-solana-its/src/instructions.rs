@@ -95,6 +95,31 @@ impl ArchivedInterchainTokenServiceInstruction {
     }
 }
 
+/// Convenience module with the indices of the accounts passed in the
+/// [`ItsGmpPayload`] instruction (offset by the prefixed GMP accounts).
+pub mod its_account_indices {
+    /// The index of the system program account.
+    pub const SYSTEM_PROGRAM_INDEX: usize = 0;
+
+    /// The index of the ITS root PDA account.
+    pub const ITS_ROOT_PDA_INDEX: usize = 1;
+
+    /// The index of the token manager PDA account.
+    pub const TOKEN_MANAGER_PDA_INDEX: usize = 2;
+
+    /// The index of the token mint account.
+    pub const TOKEN_MINT_INDEX: usize = 3;
+
+    /// The index of the token manager ATA account.
+    pub const TOKEN_MANAGER_ATA_INDEX: usize = 4;
+
+    /// The index of the token program account.
+    pub const TOKEN_PROGRAM_INDEX: usize = 5;
+
+    /// The index of the associated token program account.
+    pub const SPL_ASSOCIATED_TOKEN_ACCOUNT_INDEX: usize = 6;
+}
+
 /// Creates a [`InterchainTokenServiceInstruction::Initialize`] instruction.
 ///
 /// # Errors
@@ -142,31 +167,62 @@ pub struct Bumps {
     pub token_manager_pda_bump: u8,
 }
 
+/// Inputs for the [`its_gmp_payload`] function.
+pub struct ItsGmpInstructionInputs {
+    /// The payer account.
+    pub payer: Pubkey,
+
+    /// The PDA that tracks the approval of this message by the gateway program.
+    pub gateway_approved_message_pda: Pubkey,
+
+    /// The root PDA for the gateway program.
+    pub gateway_root_pda: Pubkey,
+
+    /// The Axelar GMP metadata.
+    pub gmp_metadata: GmpMetadata,
+
+    /// The ITS GMP payload.
+    pub payload: GMPPayload,
+
+    /// The token program required by the instruction (spl-token or
+    /// spl-token-2022).
+    pub token_program: Pubkey,
+
+    /// The mint account required by the instruction. Hard requirement for
+    /// `InterchainTransfer` instruction. Optional for `DeployTokenManager` and
+    /// ignored by `DeployInterchainToken`.
+    pub mint: Option<Pubkey>,
+
+    /// Bumps used to derive the ITS accounts. If not set, the
+    /// `find_program_address` is used which is more expensive.
+    pub bumps: Option<Bumps>,
+}
+
 /// Creates a [`InterchainTokenServiceInstruction::ItsGmpPayload`] instruction.
 ///
 /// # Errors
 ///
 /// If serialization fails.
-pub fn its_gmp_payload(
-    payer: &Pubkey,
-    gateway_approved_message_pda: &Pubkey,
-    gateway_root_pda: &Pubkey,
-    gmp_metadata: GmpMetadata,
-    abi_payload: Vec<u8>,
-) -> Result<Instruction, ProgramError> {
+pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, ProgramError> {
     let mut accounts = prefix_accounts(
-        payer,
-        gateway_approved_message_pda,
-        gateway_root_pda,
-        &gmp_metadata,
+        &inputs.payer,
+        &inputs.gateway_approved_message_pda,
+        &inputs.gateway_root_pda,
+        &inputs.gmp_metadata,
     );
-    let (mut its_accounts, bumps) = derive_its_accounts(gateway_root_pda, &abi_payload, None)?;
+    let (mut its_accounts, bumps) = derive_its_accounts(
+        &inputs.gateway_root_pda,
+        &inputs.payload,
+        inputs.token_program,
+        inputs.mint,
+        inputs.bumps,
+    )?;
 
     accounts.append(&mut its_accounts);
 
     let data = InterchainTokenServiceInstruction::ItsGmpPayload {
-        abi_payload,
-        gmp_metadata,
+        abi_payload: inputs.payload.encode(),
+        gmp_metadata: inputs.gmp_metadata,
         bumps,
     }
     .to_bytes()
@@ -200,7 +256,9 @@ fn prefix_accounts(
 
 pub(crate) fn derive_its_accounts(
     gateway_root_pda: &Pubkey,
-    abi_payload: &[u8],
+    payload: &GMPPayload,
+    token_program: Pubkey,
+    mint: Option<Pubkey>,
     maybe_bumps: Option<Bumps>,
 ) -> Result<(Vec<AccountMeta>, Bumps), ProgramError> {
     let (maybe_its_root_pda_bump, maybe_interchain_token_pda_bump, maybe_token_manager_pda_bump) =
@@ -212,20 +270,23 @@ pub(crate) fn derive_its_accounts(
             )
         });
 
-    let payload =
-        GMPPayload::decode(abi_payload).map_err(|_err| ProgramError::InvalidInstructionData)?;
     let token_id = payload.token_id();
     let (its_root_pda, its_root_pda_bump) =
-        crate::its_root_pda_internal(gateway_root_pda, maybe_its_root_pda_bump);
-    let (interchain_token_pda, interchain_token_pda_bump) = crate::interchain_token_pda_internal(
-        &its_root_pda,
-        token_id,
-        maybe_interchain_token_pda_bump,
-    );
+        crate::its_root_pda(gateway_root_pda, maybe_its_root_pda_bump);
+    let (interchain_token_pda, interchain_token_pda_bump) =
+        crate::interchain_token_pda(&its_root_pda, token_id, maybe_interchain_token_pda_bump);
     let (token_manager_pda, token_manager_pda_bump) =
-        crate::token_manager_pda_internal(&interchain_token_pda, maybe_token_manager_pda_bump);
-    let token_mint = try_retrieve_mint(&payload)?.unwrap_or(interchain_token_pda);
-    let mut accounts = derive_common_its_accounts(its_root_pda, token_mint, token_manager_pda);
+        crate::token_manager_pda(&interchain_token_pda, maybe_token_manager_pda_bump);
+    let token_mint = try_retrieve_mint(&interchain_token_pda, payload, mint)?;
+
+    if let GMPPayload::DeployInterchainToken(_) = payload {
+        if token_program != spl_token_2022::id() {
+            return Err(ProgramError::InvalidInstructionData);
+        }
+    }
+
+    let mut accounts =
+        derive_common_its_accounts(its_root_pda, token_mint, token_manager_pda, token_program);
 
     match payload {
         GMPPayload::InterchainTransfer(_transfer_data) => {}
@@ -257,17 +318,27 @@ pub(crate) fn derive_its_accounts(
     ))
 }
 
-fn try_retrieve_mint(payload: &GMPPayload) -> Result<Option<Pubkey>, ProgramError> {
+fn try_retrieve_mint(
+    interchain_token_pda: &Pubkey,
+    payload: &GMPPayload,
+    maybe_mint: Option<Pubkey>,
+) -> Result<Pubkey, ProgramError> {
+    if let Some(mint) = maybe_mint {
+        return Ok(mint);
+    }
+
     match payload {
         GMPPayload::DeployTokenManager(message) => {
             let token_mint = token_manager::decode_params(message.params.as_ref())
                 .map(|(_, token_mint)| Pubkey::try_from(token_mint.as_ref()))?
                 .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
-            Ok(Some(token_mint))
+            Ok(token_mint)
         }
-        GMPPayload::InterchainTransfer(_transfer_data) => Err(ProgramError::InvalidInstructionData),
-        GMPPayload::DeployInterchainToken(_message) => Ok(None),
+        GMPPayload::InterchainTransfer(_transfer_data) => {
+            maybe_mint.ok_or(ProgramError::InvalidInstructionData)
+        }
+        GMPPayload::DeployInterchainToken(_message) => Ok(*interchain_token_pda),
     }
 }
 
@@ -275,17 +346,12 @@ fn derive_common_its_accounts(
     its_root_pda: Pubkey,
     mint_account: Pubkey,
     token_manager_pda: Pubkey,
+    token_program: Pubkey,
 ) -> Vec<AccountMeta> {
     let token_manager_ata = get_associated_token_address_with_program_id(
         &token_manager_pda,
         &mint_account,
-        &spl_token::id(),
-    );
-
-    let token_manager_ata_2022 = get_associated_token_address_with_program_id(
-        &token_manager_pda,
-        &mint_account,
-        &spl_token_2022::id(),
+        &token_program,
     );
 
     vec![
@@ -294,9 +360,7 @@ fn derive_common_its_accounts(
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new(mint_account, false),
         AccountMeta::new(token_manager_ata, false),
-        AccountMeta::new(token_manager_ata_2022, false),
-        AccountMeta::new_readonly(spl_token::id(), false),
-        AccountMeta::new_readonly(spl_token_2022::id(), false),
+        AccountMeta::new_readonly(token_program, false),
         AccountMeta::new_readonly(spl_associated_token_account::id(), false),
     ]
 }

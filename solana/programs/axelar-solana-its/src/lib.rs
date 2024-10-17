@@ -60,10 +60,10 @@ pub fn check_initialization_bump(
     Ok(())
 }
 
-pub(crate) fn its_root_pda_internal(
-    gateway_root_pda: &Pubkey,
-    maybe_bump: Option<u8>,
-) -> (Pubkey, u8) {
+/// Tries to create the ITS root PDA using the provided bump, falling back to
+/// `find_program_address` if the bump is `None` or invalid.
+#[must_use]
+pub fn its_root_pda(gateway_root_pda: &Pubkey, maybe_bump: Option<u8>) -> (Pubkey, u8) {
     maybe_bump
         .and_then(|bump| {
             Pubkey::create_program_address(
@@ -82,24 +82,24 @@ pub(crate) fn its_root_pda_internal(
 }
 
 /// Tries to create the ITS root PDA using the provided bump, falling back to
-/// `find_program_address` if the bump is `None` or invalid.
+/// `find_program_address` if the bump invalid.
 #[inline]
 #[must_use]
-pub fn its_root_pda(gateway_root_pda: &Pubkey, bump: u8) -> (Pubkey, u8) {
-    its_root_pda_internal(gateway_root_pda, Some(bump))
+pub fn create_its_root_pda(gateway_root_pda: &Pubkey, bump: u8) -> (Pubkey, u8) {
+    its_root_pda(gateway_root_pda, Some(bump))
 }
 
 /// Derives interchain token service root PDA
 #[inline]
 #[must_use]
 pub fn find_its_root_pda(gateway_root_pda: &Pubkey) -> (Pubkey, u8) {
-    its_root_pda_internal(gateway_root_pda, None)
+    its_root_pda(gateway_root_pda, None)
 }
 
-pub(crate) fn token_manager_pda_internal(
-    interchain_token_pda: &Pubkey,
-    maybe_bump: Option<u8>,
-) -> (Pubkey, u8) {
+/// Tries to create the PDA for a [`Tokenmanager`] using the provided bump,
+/// falling back to `find_program_address` if the bump is `None` or invalid.
+#[must_use]
+pub fn token_manager_pda(interchain_token_pda: &Pubkey, maybe_bump: Option<u8>) -> (Pubkey, u8) {
     maybe_bump
         .and_then(|bump| {
             Pubkey::create_program_address(
@@ -123,22 +123,26 @@ pub(crate) fn token_manager_pda_internal(
             )
         })
 }
+
 /// Tries to create the PDA for a [`Tokenmanager`] using the provided bump,
-/// falling back to `find_program_address` if the bump is `None` or invalid.
+/// falling back to `find_program_address` if the bump is invalid.
 #[inline]
 #[must_use]
-pub fn token_manager_pda(interchain_token_pda: &Pubkey, bump: u8) -> (Pubkey, u8) {
-    token_manager_pda_internal(interchain_token_pda, Some(bump))
+pub fn create_token_manager_pda(interchain_token_pda: &Pubkey, bump: u8) -> (Pubkey, u8) {
+    token_manager_pda(interchain_token_pda, Some(bump))
 }
 
 /// Derives the PDA for a [`TokenManager`].
 #[inline]
 #[must_use]
 pub fn find_token_manager_pda(interchain_token_pda: &Pubkey) -> (Pubkey, u8) {
-    token_manager_pda_internal(interchain_token_pda, None)
+    token_manager_pda(interchain_token_pda, None)
 }
 
-pub(crate) fn interchain_token_pda_internal(
+/// Tries to create the PDA for an `InterchainToken` using the provided bump,
+/// falling back to `find_program_address` if the bump is `None` or invalid.
+#[must_use]
+pub fn interchain_token_pda(
     its_root_pda: &Pubkey,
     token_id: &[u8],
     maybe_bump: Option<u8>,
@@ -170,16 +174,20 @@ pub(crate) fn interchain_token_pda_internal(
 }
 
 /// Tries to create the PDA for an `InterchainToken` using the provided bump,
-/// falling back to `find_program_address` if the bump is `None` or invalid.
+/// falling back to `find_program_address` if the bump is invalid.
 #[inline]
 #[must_use]
-pub fn interchain_token_pda(its_root_pda: &Pubkey, token_id: &[u8], bump: u8) -> (Pubkey, u8) {
-    interchain_token_pda_internal(its_root_pda, token_id, Some(bump))
+pub fn create_interchain_token_pda(
+    its_root_pda: &Pubkey,
+    token_id: &[u8],
+    bump: u8,
+) -> (Pubkey, u8) {
+    interchain_token_pda(its_root_pda, token_id, Some(bump))
 }
 
 /// Derives the PDA for an interchain token account.
 #[inline]
 #[must_use]
 pub fn find_interchain_token_pda(its_root_pda: &Pubkey, token_id: &[u8]) -> (Pubkey, u8) {
-    interchain_token_pda_internal(its_root_pda, token_id, None)
+    interchain_token_pda(its_root_pda, token_id, None)
 }
