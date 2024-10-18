@@ -34,6 +34,7 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::signers::Signers;
 use solana_sdk::transaction::Transaction;
+use spl_token_2022::extension::ExtensionType;
 use spl_token_2022::state::Mint;
 pub use {connection_router, interchain_token_transfer_gmp};
 
@@ -392,6 +393,60 @@ impl TestFixture {
                     Mint::LEN as u64,
                     &token_program_id,
                 ),
+                spl_token_2022::instruction::initialize_mint(
+                    &token_program_id,
+                    &mint_account.pubkey(),
+                    &mint_authority,
+                    None,
+                    0,
+                )
+                .unwrap(),
+            ],
+            Some(&self.payer.pubkey()),
+            &[&self.payer, &mint_account],
+            recent_blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+
+        mint_account.pubkey()
+    }
+
+    pub async fn init_new_mint_with_fee(
+        &mut self,
+        mint_authority: Pubkey,
+        token_program_id: Pubkey,
+        fee_basis_points: u16,
+        maximum_fee: u64,
+        transfer_fee_config_authority: Option<&Pubkey>,
+        withdraw_withheld_authority: Option<&Pubkey>,
+    ) -> Pubkey {
+        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
+        let mint_account = Keypair::new();
+        let rent = self.banks_client.get_rent().await.unwrap();
+        let space =
+            ExtensionType::try_calculate_account_len::<Mint>(&[ExtensionType::TransferFeeConfig])
+                .unwrap();
+
+        let transaction = Transaction::new_signed_with_payer(
+            &[
+                system_instruction::create_account(
+                    &self.payer.pubkey(),
+                    &mint_account.pubkey(),
+                    rent.minimum_balance(space),
+                    space as u64,
+                    &token_program_id,
+                ),
+                spl_token_2022::extension::transfer_fee::instruction::initialize_transfer_fee_config(
+                    &token_program_id,
+                    &mint_account.pubkey(),
+                    transfer_fee_config_authority,
+                    withdraw_withheld_authority,
+                    fee_basis_points,
+                    maximum_fee
+                ).unwrap(),
                 spl_token_2022::instruction::initialize_mint(
                     &token_program_id,
                     &mint_account.pubkey(),

@@ -8,7 +8,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::program_option::COption;
 use solana_program::{msg, system_program};
-use spl_token_2022::extension::StateWithExtensions;
+use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions};
 use spl_token_2022::state::Mint;
 
 use crate::instructions::Bumps;
@@ -235,15 +235,17 @@ pub(crate) fn validate_token_manager_type(
             token_manager::Type::MintBurn
             | token_manager::Type::MintBurnFrom
             | token_manager::Type::NativeInterchainToken,
-        ) => {
-            if &key == token_manager_pda.key {
-                Ok(())
-            } else {
-                msg!(
-                    "TokenManager is not the mint authority, which is required for this token type"
-                );
-                Err(ProgramError::InvalidInstructionData)
-            }
+        ) if &key != token_manager_pda.key => {
+            msg!("TokenManager is not the mint authority, which is required for this token type");
+            Err(ProgramError::InvalidInstructionData)
+        }
+        (_, token_manager::Type::LockUnlockFee)
+            if !mint
+                .get_extension_types()?
+                .contains(&ExtensionType::TransferFeeConfig) =>
+        {
+            msg!("The mint is not compatible with the LockUnlockFee TokenManager type, please make sure the mint has the TransferFeeConfig extension initialized");
+            Err(ProgramError::InvalidAccountData)
         }
         _ => Ok(()),
     }
