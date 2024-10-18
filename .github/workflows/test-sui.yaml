@@ -196,7 +196,7 @@ jobs:
 
       - name: Deploy Test Tokens
         run: |
-          node sui/its-example deploy-token ${{ env.symbol }} ${{ env.name }} ${{ env.decimals }}
+          node sui/its-example deploy-token --origin ${{ env.symbol }} ${{ env.name }} ${{ env.decimals }}
           node sui/its-example deploy-token ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenName }} ${{ env.emptyTokenDecimals }}
 
           # Prepare additional parameters for the example:
