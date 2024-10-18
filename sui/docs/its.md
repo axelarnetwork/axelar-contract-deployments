@@ -51,7 +51,8 @@ name=interchain-moo-deng
 emptyTokenSymbol=ETY
 emptyTokenName=Empty
 emptyTokenDecimals=6
-config=$(cat axelar-chains-config/info/local.json)
+env=$(grep ENV= .env | cut -d '=' -f2 | tr -d '\n')
+config=$(cat "axelar-chains-config/info/${env}.json")
 channelId=$(echo $config | jq -r '.sui.contracts.ITS.objects.ChannelId')
 destinationContractAddress=$(echo $config | jq -r '.sui.contracts.Example.objects.ItsChannelId')
 ```
@@ -59,7 +60,7 @@ destinationContractAddress=$(echo $config | jq -r '.sui.contracts.Example.object
 ### Deploy Test Tokens
 
 ```bash
-node sui/its-example deploy-token $symbol $name $decimals
+node sui/its-example deploy-token --origin $symbol $name $decimals
 node sui/its-example deploy-token $emptyTokenSymbol $emptyTokenName $emptyTokenDecimals
 ```
 
@@ -126,5 +127,5 @@ node sui/gateway.js approve --proof wallet $sourceChain $deployMessageId $source
 2. Receive the token deployment:
 
 ```bash
-node sui/its-example receive-deployment $emptyTokenSymbol $sourceChain $deployMessageId $sourceAddress $channelId $deployPayload
+node sui/its-example receive-deployment $emptyTokenSymbol $sourceChain $deployMessageId $sourceAddress $deployPayload
 ```
