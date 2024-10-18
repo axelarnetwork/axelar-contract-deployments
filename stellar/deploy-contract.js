@@ -88,10 +88,9 @@ async function processCommand(options, config, chain) {
             printInfo('Upgraded contract successfully!', result);
             return;
         }
- 
-            printInfo('Deployed contract successfully!', result);
-            contractAddress = result;
-        
+
+        printInfo('Deployed contract successfully!', result);
+        contractAddress = result;
     } else {
         printInfo('Using existing contract', contractAddress);
     }
