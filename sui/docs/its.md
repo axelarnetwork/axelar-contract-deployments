@@ -70,6 +70,7 @@ After the token deployment, continue to run the following scripts to prepare add
 
 ```bash
 transferInfo=$(node sui/its-example.js print-receive-transfer $symbol $sourceAddress $amount)
+transferPayload=$(echo $transferInfo | jq -r .payload)
 transferPayloadHash=$(echo $transferInfo | jq -r .payloadHash)
 deploymentInfo=$(node sui/its-example.js print-receive-deployment $emptyTokenName $emptyTokenSymbol $emptyTokenDecimals)
 deployPayload=$(echo $deploymentInfo | jq -r .payload)
@@ -103,7 +104,7 @@ node sui/gateway.js approve --proof wallet $sourceChain $transferMessageId $sour
 2. Receive the token:
 
 ```bash
-node sui/its-example receive-token $sourceChain $transferMessageId $sourceAddress $symbol $amount
+node sui/its-example receive-token $sourceChain $transferMessageId $sourceAddress $symbol $transferPayload
 ```
 
 ## Token Deployment
@@ -127,5 +128,6 @@ node sui/gateway.js approve --proof wallet $sourceChain $deployMessageId $source
 2. Receive the token deployment:
 
 ```bash
-node sui/its-example receive-deployment $emptyTokenSymbol $sourceChain $deployMessageId $sourceAddress $deployPayload
+node sui/its-example receive-deployment $sourceChain $deployMessageId $sourceAddress $emptyTokenSymbol $deployPayload
+
 ```

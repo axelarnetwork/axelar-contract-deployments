@@ -86,51 +86,6 @@ async function sendToken(keypair, client, contracts, args, options) {
     await broadcastFromTxBuilder(txBuilder, keypair, `${amount} ${symbol} Token Sent`);
 }
 
-async function receiveToken(keypair, client, contracts, args, options) {
-    const itsData = options.data;
-    const { Example, ITS } = contracts;
-    const [sourceChain, messageId, sourceAddress, tokenSymbol, amount] = args;
-
-    checkTrustedAddresses(ITS.trustedAddresses, sourceChain, sourceAddress);
-
-    // Prepare Object Ids
-    const symbol = tokenSymbol.toUpperCase();
-    const ids = {
-        itsChannel: ITS.objects.ChannelId,
-        exampleChannel: options.channelId || Example.objects.ItsChannelId,
-    };
-
-    if (!ids.exampleChannel) {
-        throw new Error('Please provide either a channel id (--channelId) or deploy the Example contract');
-    }
-
-    if (!contracts[symbol]) {
-        throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
-    }
-
-    const Token = contracts[symbol];
-    const unitAmount = getUnitAmount(amount, Token.decimals);
-    const tokenId = Token.objects.TokenId;
-
-    const payload = defaultAbiCoder.encode(
-        ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
-        [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, ids.exampleChannel, unitAmount, itsData],
-    );
-
-    const discoveryInfo = parseDiscoveryInfo(contracts);
-    const gatewayInfo = parseGatewayInfo(contracts);
-
-    const messageInfo = {
-        source_chain: sourceChain,
-        message_id: messageId,
-        source_address: sourceAddress,
-        destination_id: ids.itsChannel,
-        payload: payload,
-    };
-
-    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, `${symbol} Token Received`);
-}
-
 async function sendDeployment(keypair, client, contracts, args, options) {
     const { AxelarGateway, GasService, ITS, Example } = contracts;
     const [symbol, destinationChain, destinationITSAddress, feeAmount] = args;
@@ -167,16 +122,21 @@ async function sendDeployment(keypair, client, contracts, args, options) {
     await broadcastFromTxBuilder(txBuilder, keypair, `Sent ${symbol} Deployment on ${destinationChain}`);
 }
 
-async function receiveDeployment(keypair, client, contracts, args, options) {
-    const [symbol, sourceChain, messageId, sourceAddress, payload] = args;
-
+async function handleReceivedMessage(keypair, client, contracts, args, options, actionName) {
     const { ITS } = contracts;
+    const [sourceChain, messageId, sourceAddress, tokenSymbol, payload] = args;
 
     checkTrustedAddresses(ITS.trustedAddresses, sourceChain, sourceAddress);
 
+    // Prepare Object Ids
+    const symbol = tokenSymbol.toUpperCase();
+
+    if (!contracts[symbol]) {
+        throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
+    }
+
     const discoveryInfo = parseDiscoveryInfo(contracts);
     const gatewayInfo = parseGatewayInfo(contracts);
-
     const messageInfo = {
         source_chain: sourceChain,
         message_id: messageId,
@@ -185,7 +145,17 @@ async function receiveDeployment(keypair, client, contracts, args, options) {
         payload: payload,
     };
 
-    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, `Received ${symbol} Token Deployment`);
+    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName);
+}
+
+async function receiveToken(keypair, client, contracts, args, options) {
+    const symbol = args[3];
+    await handleReceivedMessage(keypair, client, contracts, args, options, `${symbol} Token Received`);
+}
+
+async function receiveDeployment(keypair, client, contracts, args, options) {
+    const symbol = args[3];
+    await handleReceivedMessage(keypair, client, contracts, args, options, `Received ${symbol} Token Deployment`);
 }
 
 async function deployToken(keypair, client, contracts, args, options) {
@@ -232,20 +202,14 @@ async function deployToken(keypair, client, contracts, args, options) {
         });
         tokenId = result.events[0].parsedJson.token_id.id;
     } else {
-        const existingToken = contracts[symbol.toUpperCase()];
-
-        if (existingToken && !existingToken.origin) {
-            printInfo(`Already setup. Skipping setup non-origin for ${symbol} in ITS`);
-        } else {
-            await postDeployTxBuilder.moveCall({
-                target: `${ITS.address}::its::give_unregistered_coin`,
-                arguments: [ITS.objects.ITS, TreasuryCap, Metadata],
-                typeArguments: [tokenType],
-            });
-            await broadcastFromTxBuilder(postDeployTxBuilder, keypair, `Setup ${symbol} as a non-origin in ITS successfully`, {
-                showEvents: true,
-            });
-        }
+        await postDeployTxBuilder.moveCall({
+            target: `${ITS.address}::its::give_unregistered_coin`,
+            arguments: [ITS.objects.ITS, TreasuryCap, Metadata],
+            typeArguments: [tokenType],
+        });
+        await broadcastFromTxBuilder(postDeployTxBuilder, keypair, `Setup ${symbol} as a non-origin in ITS successfully`, {
+            showEvents: true,
+        });
     }
 
     // Save the deployed token info in the contracts object.
@@ -396,10 +360,10 @@ if (require.main === module) {
     const receiveTokenTransferProgram = new Command()
         .name('receive-token')
         .description('Receive token from other chain to Sui.')
-        .command('receive-token <source-chain> <message-id> <source-address> <token-symbol> <amount>')
+        .command('receive-token <source-chain> <message-id> <source-address> <token-symbol> <payload>')
         .addOption(new Option('--data <data>', 'Data').default(ethers.constants.HashZero))
-        .action((sourceChain, messageId, sourceAddress, tokenSymbol, amount, options) => {
-            mainProcessor(receiveToken, options, [sourceChain, messageId, sourceAddress, tokenSymbol, amount], processCommand);
+        .action((sourceChain, messageId, sourceAddress, tokenSymbol, payload, options) => {
+            mainProcessor(receiveToken, options, [sourceChain, messageId, sourceAddress, tokenSymbol, payload], processCommand);
         });
 
     const deployTokenProgram = new Command()
@@ -425,7 +389,7 @@ if (require.main === module) {
     const receiveTokenDeploymentProgram = new Command()
         .name('receive-deployment')
         .description('Receive token deployment from other chain to Sui.')
-        .command('receive-deployment <symbol> <source-chain> <message-id> <source-address> <payload>')
+        .command('receive-deployment <source-chain> <message-id> <source-address> <token-symbol> <payload>')
         .action((symbol, sourceChain, messageId, sourceAddress, payload, options) => {
             mainProcessor(receiveDeployment, options, [symbol, sourceChain, messageId, sourceAddress, payload], processCommand);
         });
