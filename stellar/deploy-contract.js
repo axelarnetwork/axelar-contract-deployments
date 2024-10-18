@@ -64,6 +64,7 @@ async function processCommand(options, config, chain) {
     const args = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
 
     let cmd;
+
     if (options.install) {
         cmd = `${stellarCmd} contract install --wasm ${wasmPath} ${args}`;
     } else if (options.upgrade) {
@@ -78,17 +79,19 @@ async function processCommand(options, config, chain) {
     let contractAddress = options.address;
 
     if (!contractAddress) {
-        let result = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
+        const result = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
+
         if (options.install) {
             printInfo('Contract WASM hash', result);
             return;
         } else if (options.upgrade) {
             printInfo('Upgraded contract successfully!', result);
             return;
-        } else {
+        }
+ 
             printInfo('Deployed contract successfully!', result);
             contractAddress = result;
-        }
+        
     } else {
         printInfo('Using existing contract', contractAddress);
     }
