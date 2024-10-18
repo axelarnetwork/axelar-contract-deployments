@@ -142,7 +142,7 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
         message_id: messageId,
         source_address: sourceAddress,
         destination_id: ITS.objects.ChannelId,
-        payload: payload,
+        payload,
     };
 
     await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName);
@@ -191,6 +191,7 @@ async function deployToken(keypair, client, contracts, args, options) {
     let tokenId;
 
     const postDeployTxBuilder = new TxBuilder(client);
+
     if (options.origin) {
         await postDeployTxBuilder.moveCall({
             target: `${Example.address}::its::register_coin`,

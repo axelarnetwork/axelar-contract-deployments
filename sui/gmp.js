@@ -1,10 +1,8 @@
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig } = require('../common/utils');
 const {
-    getBcsBytesByObjectId,
     addBaseOptions,
     addOptionsToCommands,
     getUnitAmount,
@@ -13,7 +11,6 @@ const {
     broadcast,
     parseGatewayInfo,
     parseDiscoveryInfo,
-    broadcastFromTxBuilder,
     broadcastExecuteApprovedMessage,
 } = require('./utils');
 const { ethers } = require('hardhat');
@@ -58,7 +55,6 @@ async function execute(keypair, client, chain, args, options) {
 
     const { Example } = chain.contracts;
 
-    // Get the channel id from the options or use the channel id from the deployed Example contract object.
     const channelId = options.channelId || chain.contracts.Example.objects.GmpChannelId;
 
     if (!channelId) {
