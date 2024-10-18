@@ -1,62 +1,71 @@
-# GMP Demo
+# Test GMP Flow on Sui
 
 This document provides a step-by-step guide to execute GMP flow on the SUI network.
 
-## Prerequisites
+## Table of Contents
 
-- Deploy gateway contract `node sui/deploy-gateway.js --signers wallet`
-- Deploy gas service contract `node sui/deploy-contract.js GasService`
-- Deploy test contract `node sui/deploy-test.js`
+1. [Setup the Environment](#setup-the-environment)
+2. [Send Command (Outgoing)](#send-command-outgoing)
+3. [Execute Command (Incoming)](#execute-command-incoming)
 
-## Usage
+## Setup the Environment
 
-### Send Command (Outgoing)
+Deploy the contracts with the following commands:
+
+### Contract Deployment
+
+```bash
+node sui/faucet
+node sui/deploy-contract deploy Utils
+node sui/deploy-contract deploy VersionControl
+node sui/deploy-contract deploy AxelarGateway --signers wallet
+node sui/deploy-contract deploy GasService
+node sui/deploy-contract deploy Abi
+node sui/deploy-contract deploy RelayerDiscovery
+node sui/deploy-contract deploy ITS
+node sui/deploy-contract deploy Example
+```
+
+### Prepare Parameters
+
+To simplify the process of obtaining necessary parameters, run the following script:
+
+```bash
+sourceChain=Ethereum
+sourceAddress=0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5
+messageId=0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-10
+fee=0.1
+payload=0x1234
+payloadHash=0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
+env=$(grep ENV= .env | cut -d '=' -f2 | tr -d '\n')
+config=$(cat "axelar-chains-config/info/${env}.json")
+destinationId=$(echo $config | jq -r '.sui.contracts.Example.objects.GmpChannelId')
+```
+
+## Send Command (Outgoing)
 
 Send a messsage from SUI to the destination chain.
 
 Example:
+
 ```bash
-# node sui/gmp.js sendCall <destChain> <destContractAddress> <feeAmount> <payload>
-node sui/gmp.js sendCall ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0.1 0x1234
+node sui/gmp.js sendCall $sourceChain $sourceAddress $fee $payload
 ```
 
-Note:
-- `feeAmount` is the amount of SUI coins to be sent to the destination chain. The amount is in full units. For example, `0.1` means 0.1 SUI coins.
-
-### Execute Command (Incoming)
+## Execute Command (Incoming)
 
 Execute a message from the source chain at SUI application module.
 
 1. Approve the incoming message
 
 ```bash
-# node sui/gateway.js approve --proof ...... <source> <messageId> <sourceAddress> <destinationId> <payloadHash>
-node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
+node sui/gateway.js approve --proof wallet $sourceChain $messageId $sourceAddress $destinationId $payloadHash
 ```
-
-Note:
-- `destinationId` is the channel id of test module. It can be retrieved from test module deployment output.
-- `payloadHash` is the keccak256 hash of the payload. The payloadHash in the example `(0x565...7432)` is the hash of `0x1234`.
 
 2. Execute the incoming message
 
 This command will execute the message to the deployed test contract.
-```bash
-# node sui/gmp.js execute <source> <messageId> <sourceAddress> <payload>
-
-# Example
-node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
-```
-
-This command will execute the message to the contract that associated with the given `channelId`
 
 ```bash
-# node sui/gmp.js execute <source> <messageId> <sourceAddress> <payload> --channelId <channelId>
-
-# Example
-node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234 --channelId 0xcd5d203ea2cf1139af83939e3f74114a31fe682cc90f73a0d2647956bc3e5acf
+node sui/gmp.js execute $sourceChain $messageId $sourceAddress $payload
 ```
-
-Note:
-- `source`, `sourceAddress` and `messageId` needed to be matched with the approve command.
-- `payload` must be associated with the `payloadHash` in the approve command.
