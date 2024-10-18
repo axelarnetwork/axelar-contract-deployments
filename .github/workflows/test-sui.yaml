@@ -210,7 +210,7 @@ jobs:
 
       - name: Setup Trusted Addresses
         run: |
-          node sui/its-example.js setup-trusted-address $sourceChain $sourceAddress
+          node sui/its.js setup-trusted-address $sourceChain $sourceAddress
 
       - name: Send Token to another chain
         run: |

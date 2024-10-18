@@ -283,34 +283,6 @@ async function printReceiveTransferInfo(contracts, args, options) {
     );
 }
 
-async function setupTrustedAddress(keypair, client, contracts, args, options) {
-    const [trustedChain, trustedAddress] = args;
-
-    const { ITS: itsConfig } = contracts;
-
-    const { OwnerCap, ITS } = itsConfig.objects;
-
-    const txBuilder = new TxBuilder(client);
-
-    const trustedAddressesObject = await txBuilder.moveCall({
-        target: `${itsConfig.address}::trusted_addresses::new`,
-        arguments: [[trustedChain], [trustedAddress]],
-    });
-
-    await txBuilder.moveCall({
-        target: `${itsConfig.address}::its::set_trusted_addresses`,
-        arguments: [ITS, OwnerCap, trustedAddressesObject],
-    });
-
-    await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
-
-    // Add trusted address to ITS config
-    if (!contracts.ITS.trustedAddresses) contracts.ITS.trustedAddresses = {};
-    if (!contracts.ITS.trustedAddresses[trustedChain]) contracts.ITS.trustedAddresses[trustedChain] = [];
-
-    contracts.ITS.trustedAddresses[trustedChain].push(trustedAddress);
-}
-
 async function mintToken(keypair, client, contracts, args, options) {
     const [symbol] = args;
     const amount = options.amount;
@@ -394,16 +366,6 @@ if (require.main === module) {
             mainProcessor(receiveDeployment, options, [symbol, sourceChain, messageId, sourceAddress, payload], processCommand);
         });
 
-    // This command is used to setup the trusted address on the ITS contract.
-    // The trusted address is used to verify the message from the source chain.
-    const setupTrustedAddressProgram = new Command()
-        .name('setup-trusted-address')
-        .description('Setup trusted address')
-        .command('setup-trusted-address <trusted-chain> <trusted-address>')
-        .action((trustedChain, trustedAddress, options) => {
-            mainProcessor(setupTrustedAddress, options, [trustedChain, trustedAddress], processCommand);
-        });
-
     const mintTokenProgram = new Command()
         .name('mint-token')
         .description('Mint token for the given symbol on Sui. The token must be deployed on Sui first.')
@@ -440,7 +402,6 @@ if (require.main === module) {
     program.addCommand(deployTokenProgram);
     program.addCommand(sendTokenDeploymentProgram);
     program.addCommand(receiveTokenDeploymentProgram);
-    program.addCommand(setupTrustedAddressProgram);
     program.addCommand(mintTokenProgram);
     program.addCommand(printDeploymentInfoProgram);
     program.addCommand(printReceiveTransferInfoProgram);

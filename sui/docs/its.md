@@ -82,7 +82,7 @@ deployPayloadHash=$(echo $deploymentInfo | jq -r .payloadHash)
 The trusted address is used to verify the message both incoming and outgoing directions.
 
 ```bash
-node sui/its-example.js setup-trusted-address $sourceChain $sourceAddress
+node sui/its.js setup-trusted-address $sourceChain $sourceAddress
 ```
 
 ## Token Transfer
