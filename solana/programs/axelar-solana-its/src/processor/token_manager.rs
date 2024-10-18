@@ -5,7 +5,6 @@ use interchain_token_transfer_gmp::DeployTokenManager;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::program_option::COption;
 use solana_program::{msg, system_program};
@@ -99,13 +98,13 @@ pub(crate) fn deploy<'a>(
     let token_program = next_account_info(accounts_iter)?;
     let _ata_program = next_account_info(accounts_iter)?;
 
-    validate_token_type(
-        &deploy_token_manager.token_manager_type,
+    validate_token_manager_type(
+        deploy_token_manager.token_manager_type,
         token_mint,
         token_manager_pda,
     )?;
 
-    create_associated_token_account(
+    crate::create_associated_token_account(
         payer,
         token_mint,
         token_manager_ata,
@@ -209,8 +208,8 @@ fn check_accounts(accounts: &[AccountInfo<'_>]) -> ProgramResult {
     Ok(())
 }
 
-fn validate_token_type(
-    ty: &token_manager::Type,
+pub(crate) fn validate_token_manager_type(
+    ty: token_manager::Type,
     token_mint: &AccountInfo<'_>,
     token_manager_pda: &AccountInfo<'_>,
 ) -> ProgramResult {
@@ -248,34 +247,4 @@ fn validate_token_type(
         }
         _ => Ok(()),
     }
-}
-
-fn create_associated_token_account<'a>(
-    payer: &AccountInfo<'a>,
-    token_mint_account: &AccountInfo<'a>,
-    associated_token_account: &AccountInfo<'a>,
-    wallet: &AccountInfo<'a>,
-    system_account: &AccountInfo<'a>,
-    token_program: &AccountInfo<'a>,
-) -> ProgramResult {
-    let create_ata_ix = spl_associated_token_account::instruction::create_associated_token_account(
-        payer.key,
-        wallet.key,
-        token_mint_account.key,
-        token_program.key,
-    );
-
-    invoke(
-        &create_ata_ix,
-        &[
-            payer.clone(),
-            associated_token_account.clone(),
-            wallet.clone(),
-            token_mint_account.clone(),
-            system_account.clone(),
-            token_program.clone(),
-        ],
-    )?;
-
-    Ok(())
 }

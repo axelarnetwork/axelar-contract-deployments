@@ -289,7 +289,23 @@ pub(crate) fn derive_its_accounts(
         derive_common_its_accounts(its_root_pda, token_mint, token_manager_pda, token_program);
 
     match payload {
-        GMPPayload::InterchainTransfer(_transfer_data) => {}
+        GMPPayload::InterchainTransfer(transfer_data) => {
+            let destination_wallet = Pubkey::new_from_array(
+                transfer_data
+                    .destination_address
+                    .as_ref()
+                    .try_into()
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?,
+            );
+            let destination_ata = get_associated_token_address_with_program_id(
+                &destination_wallet,
+                &token_mint,
+                &token_program,
+            );
+
+            accounts.push(AccountMeta::new(destination_wallet, false));
+            accounts.push(AccountMeta::new(destination_ata, false));
+        }
         GMPPayload::DeployInterchainToken(message) => {
             accounts.push(AccountMeta::new_readonly(sysvar::rent::id(), false));
             if message.minter.len() == axelar_rkyv_encoding::types::ED25519_PUBKEY_LEN {

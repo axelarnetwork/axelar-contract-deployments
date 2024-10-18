@@ -17,9 +17,9 @@ use solana_program::program_error::ProgramError;
 /// token manager type.
 ///
 /// NOTE: The Gateway token manager type is not supported on Solana.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
+#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, Copy)]
 #[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq))]
+#[archive_attr(derive(Debug, PartialEq, Eq, Clone, Copy))]
 #[non_exhaustive]
 pub enum Type {
     /// For tokens that are deployed directly from ITS itself they use a native
@@ -91,6 +91,18 @@ impl TryFrom<U256> for Type {
         };
 
         Ok(converted)
+    }
+}
+
+impl From<ArchivedType> for Type {
+    fn from(value: ArchivedType) -> Self {
+        match value {
+            ArchivedType::NativeInterchainToken => Self::NativeInterchainToken,
+            ArchivedType::MintBurnFrom => Self::MintBurnFrom,
+            ArchivedType::LockUnlock => Self::LockUnlock,
+            ArchivedType::LockUnlockFee => Self::LockUnlockFee,
+            ArchivedType::MintBurn => Self::MintBurn,
+        }
     }
 }
 

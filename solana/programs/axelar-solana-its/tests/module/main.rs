@@ -11,7 +11,6 @@ mod its_gmp_payload;
 
 use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::ItsContracts;
-use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use test_fixtures::test_setup::{SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata};
 
@@ -21,7 +20,6 @@ const SOLANA_CHAIN_NAME: &str = "solana-devnet";
 
 pub struct ItsProgramWrapper {
     pub solana_chain: SolanaAxelarIntegrationMetadata,
-    pub its_pda: Pubkey,
     pub chain_name: String,
 }
 
@@ -61,7 +59,6 @@ async fn axelar_solana_setup() -> ItsProgramWrapper {
 
     ItsProgramWrapper {
         solana_chain,
-        its_pda,
         chain_name: SOLANA_CHAIN_NAME.to_string(),
     }
 }

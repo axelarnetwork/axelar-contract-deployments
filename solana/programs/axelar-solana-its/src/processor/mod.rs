@@ -19,6 +19,7 @@ use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
 
 pub mod interchain_token;
+pub mod interchain_transfer;
 pub mod token_manager;
 
 /// Program state handler.
@@ -122,8 +123,13 @@ fn process_its_gmp_payload(
     validate_its_accounts(instruction_accounts, gateway_root_pda.key, &payload, bumps)?;
 
     match payload {
-        GMPPayload::InterchainTransfer(_interchain_token_transfer) => {
-            msg!("Received InterchainTransfer message");
+        GMPPayload::InterchainTransfer(interchain_token_transfer) => {
+            interchain_transfer::process_transfer(
+                payer,
+                instruction_accounts,
+                &interchain_token_transfer,
+                bumps,
+            )?;
         }
         GMPPayload::DeployInterchainToken(deploy_interchain_token) => {
             interchain_token::process_deploy(

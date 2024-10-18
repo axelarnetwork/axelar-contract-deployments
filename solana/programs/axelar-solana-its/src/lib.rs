@@ -1,6 +1,8 @@
 //! # Multicall program
+use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
+use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
@@ -190,4 +192,77 @@ pub fn create_interchain_token_pda(
 #[must_use]
 pub fn find_interchain_token_pda(its_root_pda: &Pubkey, token_id: &[u8]) -> (Pubkey, u8) {
     interchain_token_pda(its_root_pda, token_id, None)
+}
+
+/// Creates an associated token account for the given wallet address and token
+/// mint.
+///
+/// # Errors
+///
+/// Returns an error if the account already exists.
+pub(crate) fn create_associated_token_account<'a>(
+    payer: &AccountInfo<'a>,
+    token_mint_account: &AccountInfo<'a>,
+    associated_token_account: &AccountInfo<'a>,
+    wallet: &AccountInfo<'a>,
+    system_account: &AccountInfo<'a>,
+    token_program: &AccountInfo<'a>,
+) -> ProgramResult {
+    let create_ata_ix = spl_associated_token_account::instruction::create_associated_token_account(
+        payer.key,
+        wallet.key,
+        token_mint_account.key,
+        token_program.key,
+    );
+
+    invoke(
+        &create_ata_ix,
+        &[
+            payer.clone(),
+            associated_token_account.clone(),
+            wallet.clone(),
+            token_mint_account.clone(),
+            system_account.clone(),
+            token_program.clone(),
+        ],
+    )?;
+
+    Ok(())
+}
+
+/// Creates an associated token account for the given wallet address and token
+/// mint, if it doesn't already exist.
+///
+/// # Errors
+///
+/// Returns an error if the account already exists, but with a different owner.
+pub(crate) fn create_associated_token_account_idempotent<'a>(
+    payer: &AccountInfo<'a>,
+    token_mint_account: &AccountInfo<'a>,
+    associated_token_account: &AccountInfo<'a>,
+    wallet: &AccountInfo<'a>,
+    system_account: &AccountInfo<'a>,
+    token_program: &AccountInfo<'a>,
+) -> ProgramResult {
+    let create_ata_ix =
+        spl_associated_token_account::instruction::create_associated_token_account_idempotent(
+            payer.key,
+            wallet.key,
+            token_mint_account.key,
+            token_program.key,
+        );
+
+    invoke(
+        &create_ata_ix,
+        &[
+            payer.clone(),
+            associated_token_account.clone(),
+            wallet.clone(),
+            token_mint_account.clone(),
+            system_account.clone(),
+            token_program.clone(),
+        ],
+    )?;
+
+    Ok(())
 }
