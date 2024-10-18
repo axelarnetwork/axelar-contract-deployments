@@ -8,6 +8,7 @@ const { Secp256k1Keypair, Secp256k1PublicKey } = require('@mysten/sui/keypairs/s
 const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui/keypairs/secp256r1');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui/client');
 const { fromB64, fromHEX } = require('@mysten/bcs');
+const { execute } = require('@axelar-network/axelar-cgp-sui');
 const { printInfo } = require('../../common/utils');
 const { ethers } = require('hardhat');
 const {
@@ -114,6 +115,22 @@ async function broadcast(client, keypair, tx, actionName) {
 
     return receipt;
 }
+
+async function broadcastFromTxBuilder(txBuilder, keypair, actionName, suiResponseOptions) {
+    const receipt = await txBuilder.signAndExecute(keypair, suiResponseOptions);
+
+    printInfo(actionName || 'Tx', receipt.digest);
+
+    return receipt;
+}
+
+const broadcastExecuteApprovedMessage = async (client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName) => {
+    const receipt = await execute(client, keypair, discoveryInfo, gatewayInfo, messageInfo);
+
+    printInfo(actionName || 'Tx', receipt.digest);
+
+    return receipt;
+};
 
 async function broadcastSignature(client, txBytes, signature, actionName) {
     const receipt = await client.executeTransactionBlock({
@@ -249,4 +266,6 @@ module.exports = {
     getMultisig,
     getWrappedPublicKey,
     signTransactionBlockBytes,
+    broadcastFromTxBuilder,
+    broadcastExecuteApprovedMessage,
 };

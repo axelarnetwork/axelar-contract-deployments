@@ -163,7 +163,7 @@ jobs:
       - name: Gateway Rotate Signers
         run: node sui/gateway.js rotate --signers wallet --proof wallet --newNonce test2
 
-      ###### Command: GMP ######
+      ###### Command: GMP Example ######
 
       - name: Execute Outgoing Call Contract
         run: node sui/gmp.js sendCall ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0.1 0x1234
@@ -174,6 +174,61 @@ jobs:
           echo "Channel ID: $channel_id"
           node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 $channel_id 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
           node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
+
+      ###### Command: ITS Example ######
+
+      - name: Prepare ITS Example Parameters
+        run: |
+          echo "sourceChain=Ethereum" >> $GITHUB_ENV
+          echo "transferMessageId=0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-01" >> $GITHUB_ENV
+          echo "deployMessageId=0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-02" >> $GITHUB_ENV
+          echo "sourceAddress=0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5" >> $GITHUB_ENV
+          echo "amount=1" >> $GITHUB_ENV
+          echo "symbol=IMD" >> $GITHUB_ENV
+          echo "decimals=9" >> $GITHUB_ENV
+          echo "name=interchain-moo-deng" >> $GITHUB_ENV
+          echo "emptyTokenSymbol=ETY" >> $GITHUB_ENV
+          echo "emptyTokenName=Empty" >> $GITHUB_ENV
+          echo "emptyTokenDecimals=6" >> $GITHUB_ENV
+          config=$(cat axelar-chains-config/info/local.json)
+          echo "channelId=$(echo $config | jq -r '.sui.contracts.ITS.objects.ChannelId')" >> $GITHUB_ENV
+          echo "destinationContractAddress=$(echo $config | jq -r '.sui.contracts.Example.objects.ItsChannelId')" >> $GITHUB_ENV
+
+      - name: Deploy Test Tokens
+        run: |
+          node sui/its-example deploy-token --origin ${{ env.symbol }} ${{ env.name }} ${{ env.decimals }}
+          node sui/its-example deploy-token ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenName }} ${{ env.emptyTokenDecimals }}
+
+          # Prepare additional parameters for the example:
+          transferInfo=$(node sui/its-example.js print-receive-transfer ${{ env.symbol }} ${{ env.sourceAddress }} ${{ env.amount }})
+          deploymentInfo=$(node sui/its-example.js print-receive-deployment ${{ env.emptyTokenName }} ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenDecimals }})
+
+          echo "transferPayloadHash=$(echo $transferInfo | jq -r .payloadHash)" >> $GITHUB_ENV
+          echo "transferPayload=$(echo $transferInfo | jq -r .payload)" >> $GITHUB_ENV
+          echo "deployPayload=$(echo $deploymentInfo | jq -r .payload)" >> $GITHUB_ENV
+          echo "deployPayloadHash=$(echo $deploymentInfo | jq -r .payloadHash)" >> $GITHUB_ENV
+
+      - name: Setup Trusted Addresses
+        run: |
+          node sui/its.js setup-trusted-address $sourceChain $sourceAddress
+
+      - name: Send Token to another chain
+        run: |
+          node sui/its-example send-token $symbol $sourceChain $sourceAddress 0.1 10
+
+      - name: Receive Token from another chain
+        run: |
+          node sui/gateway.js approve --proof wallet $sourceChain $transferMessageId $sourceAddress $channelId $transferPayloadHash
+          node sui/its-example receive-token $sourceChain $transferMessageId $sourceAddress $symbol $transferPayload
+
+      - name: Send Token Deployment to another chain
+        run: |
+          node sui/its-example send-deployment $symbol $sourceChain $sourceAddress 0.1 10
+
+      - name: Receive Token Deployment from another chain
+        run: |
+          node sui/gateway.js approve --proof wallet $sourceChain $deployMessageId $sourceAddress $channelId $deployPayloadHash
+          node sui/its-example receive-deployment $sourceChain $deployMessageId $sourceAddress $emptyTokenSymbol $deployPayload
 
       ###### Command: Operators ######
 
