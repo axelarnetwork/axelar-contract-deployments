@@ -45,7 +45,7 @@ function getProof(dataHash, wallet, chain, options) {
     });
     const signerHash = keccak256(signers.toXDR());
 
-    const domainSeparator = chain.contracts.axelar_auth_verifier?.initializeArgs?.domainSeparator;
+    const domainSeparator = chain.contracts.axelar_gateway?.initializeArgs?.domainSeparator;
 
     if (!domainSeparator) {
         throw new Error('Domain separator not found');
@@ -127,8 +127,9 @@ async function rotate(wallet, config, chain, contractConfig, args, options) {
 
     const dataHash = encodeDataHash('RotateSigners', newSigners);
     const proof = getProof(dataHash, wallet, chain, options);
+    const bypassRotationDelay = nativeToScVal(false); // only operator can bypass rotation delay.
 
-    const operation = contract.call('rotate_signers', newSigners, proof);
+    const operation = contract.call('rotate_signers', newSigners, proof, bypassRotationDelay);
 
     await broadcast(operation, wallet, chain, 'Signers Rotated', options);
 }
@@ -186,8 +187,8 @@ if (require.main === module) {
         .command('rotate')
         .description('Rotate signers of the gateway contract')
         .addOption(new Option('--signers <signers>', 'Either use `wallet` or provide a JSON with the new signer set'))
-        .addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'))
-        .addOption(new Option('--newNonce <newNonce>', 'nonce of the new signers (useful for test rotations)'))
+        .addOption(new Option('--current-nonce <currentNonce>', 'nonce of the existing signers'))
+        .addOption(new Option('--new-nonce <newNonce>', 'nonce of the new signers (useful for test rotations)'))
         .action((options) => {
             mainProcessor(rotate, [], options);
         });
@@ -195,7 +196,7 @@ if (require.main === module) {
     program
         .command('approve <sourceChain> <messageId> <sourceAddress> <destinationAddress> <payload>')
         .description('Approve messages at the gateway contract')
-        .addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'))
+        .addOption(new Option('--current-nonce <currentNonce>', 'nonce of the existing signers'))
         .action((sourceChain, messageId, sourceAddress, destinationAddress, payload, options) => {
             mainProcessor(approve, [sourceChain, messageId, sourceAddress, destinationAddress, payload], options);
         });
