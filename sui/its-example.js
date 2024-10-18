@@ -2,7 +2,6 @@ const { Command, Option } = require('commander');
 const { ITSMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, printInfo } = require('../common/utils');
 const {
-    parseExecuteDataFromTransaction,
     addBaseOptions,
     addOptionsToCommands,
     getUnitAmount,
@@ -12,8 +11,10 @@ const {
     getObjectIdsByObjectTypes,
     broadcastFromTxBuilder,
     moveDir,
-    getTransactionList,
+    broadcastExecuteApprovedMessage,
     checkTrustedAddresses,
+    parseDiscoveryInfo,
+    parseGatewayInfo,
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
@@ -87,7 +88,7 @@ async function sendToken(keypair, client, contracts, args, options) {
 
 async function receiveToken(keypair, client, contracts, args, options) {
     const itsData = options.data;
-    const { Example, RelayerDiscovery, AxelarGateway, ITS } = contracts;
+    const { Example, ITS } = contracts;
     const [sourceChain, messageId, sourceAddress, tokenSymbol, amount] = args;
 
     checkTrustedAddresses(ITS.trustedAddresses, sourceChain, sourceAddress);
@@ -95,8 +96,6 @@ async function receiveToken(keypair, client, contracts, args, options) {
     // Prepare Object Ids
     const symbol = tokenSymbol.toUpperCase();
     const ids = {
-        discovery: RelayerDiscovery.objects.RelayerDiscoveryv0,
-        gateway: AxelarGateway.objects.Gateway,
         itsChannel: ITS.objects.ChannelId,
         exampleChannel: options.channelId || Example.objects.ItsChannelId,
     };
@@ -118,30 +117,18 @@ async function receiveToken(keypair, client, contracts, args, options) {
         [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, ids.exampleChannel, unitAmount, itsData],
     );
 
-    // Get Discovery table id from discovery object
-    const transactionList = await getTransactionList(client, ids.discovery);
+    const discoveryInfo = parseDiscoveryInfo(contracts);
+    const gatewayInfo = parseGatewayInfo(contracts);
 
-    // Find the transaction with associated channel id
-    const transaction = transactionList.find((row) => row.name.value === ids.exampleChannel);
+    const messageInfo = {
+        source_chain: sourceChain,
+        message_id: messageId,
+        source_address: sourceAddress,
+        destination_id: ids.itsChannel,
+        payload: payload,
+    };
 
-    const receiveTxBuilder = new TxBuilder(client);
-
-    // Take the approved message from the gateway contract.
-    const approvedMessage = await receiveTxBuilder.moveCall({
-        target: `${AxelarGateway.address}::gateway::take_approved_message`,
-        arguments: [ids.gateway, sourceChain, messageId, sourceAddress, ids.itsChannel, payload],
-    });
-
-    const { moduleName, name, packageId, txArgs } = await parseExecuteDataFromTransaction(client, transaction, approvedMessage);
-
-    // Execute the move call dynamically based on the transaction object
-    await receiveTxBuilder.moveCall({
-        target: `${packageId}::${moduleName}::${name}`,
-        arguments: txArgs,
-        typeArguments: [Token.typeArgument],
-    });
-
-    await broadcastFromTxBuilder(receiveTxBuilder, keypair, `${symbol} Token Received`);
+    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, `${symbol} Token Received`);
 }
 
 async function sendDeployment(keypair, client, contracts, args, options) {
@@ -181,33 +168,24 @@ async function sendDeployment(keypair, client, contracts, args, options) {
 }
 
 async function receiveDeployment(keypair, client, contracts, args, options) {
-    const [symbol, sourceChain, messageId, sourceAddress, destinationContractAddress, payload] = args;
+    const [symbol, sourceChain, messageId, sourceAddress, payload] = args;
 
-    const { AxelarGateway, ITS } = contracts;
-    const Token = contracts[symbol.toUpperCase()];
+    const { ITS } = contracts;
 
     checkTrustedAddresses(ITS.trustedAddresses, sourceChain, sourceAddress);
 
-    const txBuilder = new TxBuilder(client);
+    const discoveryInfo = parseDiscoveryInfo(contracts);
+    const gatewayInfo = parseGatewayInfo(contracts);
 
-    const approvedMessage = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::gateway::take_approved_message`,
-        arguments: [AxelarGateway.objects.Gateway, sourceChain, messageId, sourceAddress, destinationContractAddress, payload],
-    });
+    const messageInfo = {
+        source_chain: sourceChain,
+        message_id: messageId,
+        source_address: sourceAddress,
+        destination_id: ITS.objects.ChannelId,
+        payload: payload,
+    };
 
-    await txBuilder.moveCall({
-        target: `${ITS.address}::its::give_unregistered_coin`,
-        arguments: [ITS.objects.ITS, Token.objects.TreasuryCap, Token.objects.Metadata],
-        typeArguments: [Token.typeArgument],
-    });
-
-    await txBuilder.moveCall({
-        target: `${ITS.address}::its::receive_deploy_interchain_token`,
-        arguments: [ITS.objects.ITS, approvedMessage],
-        typeArguments: [Token.typeArgument],
-    });
-
-    await broadcastFromTxBuilder(txBuilder, keypair, `Received ${symbol} Token Deployment`);
+    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, `Received ${symbol} Token Deployment`);
 }
 
 async function deployToken(keypair, client, contracts, args, options) {
@@ -242,19 +220,32 @@ async function deployToken(keypair, client, contracts, args, options) {
     const { Example, ITS } = contracts;
     let tokenId;
 
-    if (!options.skipRegister) {
-        const registerTxBuilder = new TxBuilder(client);
-
-        await registerTxBuilder.moveCall({
+    const postDeployTxBuilder = new TxBuilder(client);
+    if (options.origin) {
+        await postDeployTxBuilder.moveCall({
             target: `${Example.address}::its::register_coin`,
             arguments: [ITS.objects.ITS, Metadata],
             typeArguments: [tokenType],
         });
-
-        const result = await broadcastFromTxBuilder(registerTxBuilder, keypair, `Registered ${symbol} in ITS`, { showEvents: true });
+        const result = await broadcastFromTxBuilder(postDeployTxBuilder, keypair, `Setup ${symbol} as an origin in ITS successfully`, {
+            showEvents: true,
+        });
         tokenId = result.events[0].parsedJson.token_id.id;
     } else {
-        printInfo(`Skipped registering ${symbol} in ITS`);
+        const existingToken = contracts[symbol.toUpperCase()];
+
+        if (existingToken && !existingToken.origin) {
+            printInfo(`Already setup. Skipping setup non-origin for ${symbol} in ITS`);
+        } else {
+            await postDeployTxBuilder.moveCall({
+                target: `${ITS.address}::its::give_unregistered_coin`,
+                arguments: [ITS.objects.ITS, TreasuryCap, Metadata],
+                typeArguments: [tokenType],
+            });
+            await broadcastFromTxBuilder(postDeployTxBuilder, keypair, `Setup ${symbol} as a non-origin in ITS successfully`, {
+                showEvents: true,
+            });
+        }
     }
 
     // Save the deployed token info in the contracts object.
@@ -266,6 +257,7 @@ async function deployToken(keypair, client, contracts, args, options) {
             TreasuryCap,
             Metadata,
             TokenId: tokenId,
+            origin: options.origin,
         },
     };
 }
@@ -273,16 +265,17 @@ async function deployToken(keypair, client, contracts, args, options) {
 async function printReceiveDeploymentInfo(contracts, args, options) {
     const [name, symbol, decimals] = args;
 
+    const messageType = ITSMessageType.InterchainTokenDeployment;
+    const tokenId = options.tokenId;
     const byteName = toUtf8Bytes(name);
     const byteSymbol = toUtf8Bytes(symbol);
     const tokenDecimals = parseInt(decimals);
-    const tokenId = options.tokenId;
     const tokenDistributor = options.distributor;
 
     // ITS transfer payload from Ethereum to Sui
     const payload = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
-        [ITSMessageType.InterchainTokenDeployment, tokenId, byteName, byteSymbol, tokenDecimals, tokenDistributor],
+        [messageType, tokenId, byteName, byteSymbol, tokenDecimals, tokenDistributor],
     );
 
     printInfo(
@@ -390,7 +383,7 @@ async function mainProcessor(command, options, args, processor) {
 
 if (require.main === module) {
     const program = new Command();
-    program.name('ITS').description('SUI ITS scripts');
+    program.name('ITS Example').description('SUI ITS Example scripts');
 
     const sendTokenTransferProgram = new Command()
         .name('send-token')
@@ -413,7 +406,7 @@ if (require.main === module) {
         .name('deploy-token')
         .description('Deploy token on Sui.')
         .command('deploy-token <symbol> <name> <decimals>')
-        .addOption(new Option('--skip-register', 'Skip register', false))
+        .addOption(new Option('--origin', 'Deploy as a origin token or receive deployment from another chain', false))
         .action((symbol, name, decimals, options) => {
             mainProcessor(deployToken, options, [symbol, name, decimals], processCommand);
         });
@@ -432,14 +425,9 @@ if (require.main === module) {
     const receiveTokenDeploymentProgram = new Command()
         .name('receive-deployment')
         .description('Receive token deployment from other chain to Sui.')
-        .command('receive-deployment <symbol> <source-chain> <message-id> <source-address> <destination-contract-address> <payload>')
-        .action((symbol, sourceChain, messageId, sourceAddress, destinationContractAddress, payload, options) => {
-            mainProcessor(
-                receiveDeployment,
-                options,
-                [symbol, sourceChain, messageId, sourceAddress, destinationContractAddress, payload],
-                processCommand,
-            );
+        .command('receive-deployment <symbol> <source-chain> <message-id> <source-address> <payload>')
+        .action((symbol, sourceChain, messageId, sourceAddress, payload, options) => {
+            mainProcessor(receiveDeployment, options, [symbol, sourceChain, messageId, sourceAddress, payload], processCommand);
         });
 
     // This command is used to setup the trusted address on the ITS contract.
