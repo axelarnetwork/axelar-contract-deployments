@@ -52,7 +52,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 }
 
 async function processCommand(options, config, chain) {
-    const { wasmPath, contractName, privateKey } = options;
+    const { contractName, contractId, privateKey, wasmPath, newWasmHash } = options;
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
     const wallet = await getWallet(chain, options);
@@ -61,14 +61,34 @@ async function processCommand(options, config, chain) {
         chain.contracts = {};
     }
 
-    const cmd = `${stellarCmd} contract deploy --wasm ${wasmPath} --source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
+    const args = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
+
+    let cmd;
+    if (options.install) {
+        cmd = `${stellarCmd} contract install --wasm ${wasmPath} ${args}`;
+    } else if (options.upgrade) {
+        cmd = `${stellarCmd} contract invoke --id ${contractId} ${args} -- upgrade --new_wasm_hash ${newWasmHash}`;
+    } else {
+        cmd = `${stellarCmd} contract deploy --wasm ${wasmPath} ${args}`;
+    }
+
+    printInfo('Executing command', cmd);
     printInfo('Deploying contract', contractName);
 
     let contractAddress = options.address;
 
     if (!contractAddress) {
-        contractAddress = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
-        printInfo('Deployed contract successfully!', contractAddress);
+        let result = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
+        if (options.install) {
+            printInfo('Contract WASM hash', result);
+            return;
+        } else if (options.upgrade) {
+            printInfo('Upgraded contract successfully!', result);
+            return;
+        } else {
+            printInfo('Deployed contract successfully!', result);
+            contractAddress = result;
+        }
     } else {
         printInfo('Using existing contract', contractAddress);
     }
@@ -109,9 +129,13 @@ function main() {
     addBaseOptions(program, { address: true });
 
     program.addOption(new Option('--initialize', 'initialize the contract'));
-    program.addOption(new Option('--contract-name <contractName>', 'contract name to deploy').makeOptionMandatory(true));
-    program.addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file').makeOptionMandatory(true));
+    program.addOption(new Option('--contract-name <contractName>', 'contract name to deploy'));
+    program.addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'));
     program.addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'));
+    program.addOption(new Option('--install', 'install only'));
+    program.addOption(new Option('--upgrade', 'upgrade only'));
+    program.addOption(new Option('--contract-id <contractId>', 'contract id (address) to upgrade'));
+    program.addOption(new Option('--new-wasm-hash <newWasmHash>', 'new WASM hash to upgrade'));
     program.addOption(
         new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention').default(15).argParser(Number),
     );
