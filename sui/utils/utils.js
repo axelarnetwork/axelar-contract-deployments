@@ -248,6 +248,20 @@ const getTransactionList = async (client, discoveryObjectId) => {
     return tableResult.data;
 };
 
+const parseDiscoveryInfo = (suiConfig) => {
+    return {
+        discovery: suiConfig.RelayerDiscovery.objects.RelayerDiscovery,
+        packageId: suiConfig.RelayerDiscovery.address,
+    };
+};
+
+const parseGatewayInfo = (suiConfig) => {
+    return {
+        gateway: suiConfig.AxelarGateway.objects.Gateway,
+        packageId: suiConfig.AxelarGateway.address,
+    };
+};
+
 const parseExecuteDataFromTransaction = async (client, transaction, approvedMessage) => {
     // Get the transaction object from the object id
     const txObject = await client.getObject({
@@ -322,4 +336,6 @@ module.exports = {
     getTransactionList,
     parseExecuteDataFromTransaction,
     checkTrustedAddresses,
+    parseDiscoveryInfo,
+    parseGatewayInfo,
 };
