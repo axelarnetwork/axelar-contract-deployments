@@ -54,23 +54,30 @@ pub struct SigningVerifierSet {
     pub signers: Vec<TestSigner>,
     pub nonce: u64,
     pub quorum: U128,
+    pub domain_separator: [u8; 32],
 }
 
 impl SigningVerifierSet {
-    pub fn new(signers: Vec<TestSigner>, nonce: u64) -> Self {
+    pub fn new(signers: Vec<TestSigner>, nonce: u64, domain_separator: [u8; 32]) -> Self {
         let quorum = signers
             .iter()
             .map(|signer| signer.weight)
             .try_fold(U128::ZERO, U128::checked_add)
             .expect("no arithmetic overflow");
-        Self::new_with_quorum(signers, nonce, quorum)
+        Self::new_with_quorum(signers, nonce, quorum, domain_separator)
     }
 
-    pub fn new_with_quorum(signers: Vec<TestSigner>, nonce: u64, quorum: U128) -> Self {
+    pub fn new_with_quorum(
+        signers: Vec<TestSigner>,
+        nonce: u64,
+        quorum: U128,
+        domain_separator: [u8; 32],
+    ) -> Self {
         Self {
             signers,
             nonce,
             quorum,
+            domain_separator,
         }
     }
 
@@ -88,7 +95,7 @@ impl SigningVerifierSet {
             .iter()
             .map(|x| (x.public_key, x.weight))
             .collect();
-        VerifierSet::new(self.nonce, signers, self.quorum)
+        VerifierSet::new(self.nonce, signers, self.quorum, self.domain_separator)
     }
 }
 
@@ -1166,6 +1173,7 @@ impl SolanaAxelarIntegration {
             Self::NONCE,
             self.custom_quorum
                 .unwrap_or_else(|| self.initial_signer_weights.iter().sum()),
+            Self::DOMAIN_SEPARATOR,
         );
         let operator = Keypair::new();
         let gateway_root_pda = fixture
@@ -1189,24 +1197,33 @@ impl SolanaAxelarIntegration {
     }
 }
 
-pub fn make_signers(weights: &[u128], nonce: u64) -> SigningVerifierSet {
+pub fn make_signers(
+    weights: &[u128],
+    nonce: u64,
+    domain_separator: [u8; 32],
+) -> SigningVerifierSet {
     let signers = weights
         .iter()
         .copied()
         .map(create_signer_with_weight)
         .collect::<Vec<_>>();
 
-    SigningVerifierSet::new(signers, nonce)
+    SigningVerifierSet::new(signers, nonce, domain_separator)
 }
 
-pub fn make_signers_with_quorum(weights: &[u128], nonce: u64, quorum: u128) -> SigningVerifierSet {
+pub fn make_signers_with_quorum(
+    weights: &[u128],
+    nonce: u64,
+    quorum: u128,
+    domain_separator: [u8; 32],
+) -> SigningVerifierSet {
     let signers = weights
         .iter()
         .copied()
         .map(create_signer_with_weight)
         .collect::<Vec<_>>();
 
-    SigningVerifierSet::new_with_quorum(signers, nonce, U128::from(quorum))
+    SigningVerifierSet::new_with_quorum(signers, nonce, U128::from(quorum), domain_separator)
 }
 
 pub fn workspace_root_dir() -> PathBuf {

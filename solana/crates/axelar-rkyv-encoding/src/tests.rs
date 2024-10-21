@@ -79,8 +79,13 @@ fn internal_and_external_payload_hash_equivalence() {
     // Setup
 
     let domain_separator = random_bytes::<32>();
-    let (execute_data, verifier_set) =
-        random_valid_execute_data_and_verifier_set(&domain_separator);
+    let (execute_data, verifier_set) = random_valid_execute_data_and_verifier_set(domain_separator);
+
+    // Confidence check:
+    assert_eq!(
+        domain_separator, verifier_set.domain_separator,
+        "Verifier set domain separator must be the same as we defined for the whole test"
+    );
 
     // Hash the payload as the multisig-prover contract would
     let payload_hash = hash_payload(

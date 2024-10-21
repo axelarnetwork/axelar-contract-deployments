@@ -109,7 +109,7 @@ where
 
         let payload_hash = axelar_rkyv_encoding::hash_payload(
             domain_separator,
-            &execute_data.proof.verifier_set(),
+            &execute_data.proof.verifier_set(*domain_separator),
             &execute_data.payload,
             hasher_impl(),
         );
@@ -183,7 +183,7 @@ fn test_gateway_approve_messages_execute_data_roundtrip() {
     let gateway_root_pda = Pubkey::new_unique();
     let payload = Payload::new_messages(random_messages());
     let (execute_data, _) =
-        random_valid_execute_data_and_verifier_set_for_payload(&domain_separator, payload);
+        random_valid_execute_data_and_verifier_set_for_payload(domain_separator, payload);
     let raw_data = execute_data.to_bytes::<0>().unwrap();
 
     let gateway_execute_data = GatewayExecuteData::<HasheableMessageVec>::new(
@@ -216,7 +216,7 @@ fn test_gateway_rotate_signers_execute_data_roundtrip() {
     let gateway_root_pda = Pubkey::new_unique();
     let payload = Payload::new_verifier_set(random_valid_verifier_set());
     let (execute_data, _) =
-        random_valid_execute_data_and_verifier_set_for_payload(&domain_separator, payload);
+        random_valid_execute_data_and_verifier_set_for_payload(domain_separator, payload);
     let raw_data = execute_data.to_bytes::<0>().unwrap();
 
     let gateway_execute_data =

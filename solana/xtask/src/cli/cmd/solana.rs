@@ -108,6 +108,7 @@ pub(crate) async fn init_gmp_gateway(
         multisig_prover_response.verifier_set.created_at,
         signers,
         U128::from(multisig_prover_response.verifier_set.threshold.u128()),
+        solana_deployment_root.solana_configuration.domain_separator,
     );
     tracing::info!(
         returned = ?multisig_prover_response.verifier_set,

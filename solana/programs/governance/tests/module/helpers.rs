@@ -72,7 +72,9 @@ pub(crate) fn sample_call_data() -> Vec<u8> {
     function.encode_input(&args).unwrap()
 }
 
-pub(crate) fn evm_governance_payload_command(command: GovernanceCommand) -> GovernanceCommandPayload {
+pub(crate) fn evm_governance_payload_command(
+    command: GovernanceCommand,
+) -> GovernanceCommandPayload {
     GovernanceCommandPayload {
         command,
         // 5GjBHaKUWnF87NFWLGK5jNzyosMA43PDE6drq3btfqSs
@@ -93,5 +95,6 @@ pub(crate) fn default_gmp_metadata() -> GmpMetadata {
         source_address: SOURCE_CHAIN_ADDRESS.to_string(),
         destination_address: "B3gam8xC15TDne4XtAVAvDDfqJFeSH6mv6sn6TanVJju".to_string(),
         destination_chain: "solana".to_string(),
+        domain_separator: Default::default(),
     }
 }

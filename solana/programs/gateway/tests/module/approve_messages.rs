@@ -247,7 +247,7 @@ async fn fail_if_gateway_config_has_no_signers_signed_by_unknown_signer_set() {
 
     let (payload, commands) = make_payload_and_commands(1);
 
-    let signers = make_signers(&[11, 22], 11);
+    let signers = make_signers(&[11, 22], 11, domain_separator);
 
     let (execute_data_pda, _) = fixture
         .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)
@@ -503,7 +503,6 @@ async fn fail_if_invalid_account_for_execute_data() {
 #[tokio::test]
 async fn fail_if_epoch_for_signers_was_not_found() {
     // Setup
-    let unregistered_signer_set_signers = make_signers(&[55u128, 66], 10);
     let SolanaAxelarIntegrationMetadata {
         mut fixture,
         signers: _signers,
@@ -515,6 +514,7 @@ async fn fail_if_epoch_for_signers_was_not_found() {
         .build()
         .setup()
         .await;
+    let unregistered_signer_set_signers = make_signers(&[55u128, 66], 10, domain_separator);
     let (payload, commands) = make_payload_and_commands(1);
     let (execute_data_pda, _) = fixture
         .init_execute_data(
@@ -570,7 +570,7 @@ async fn fail_if_signer_set_epoch_is_older_than_4() {
 
     // We generate 4 new unique signer sets (not registered yet)
     let new_signer_sets = (0..MAX_ALLOWED_SIGNERS as u128)
-        .map(|weight| make_signers(&[55u128, weight], 55 + weight as u64))
+        .map(|weight| make_signers(&[55u128, weight], 55 + weight as u64, domain_separator))
         .collect::<Vec<_>>();
     assert_eq!(MAX_ALLOWED_SIGNERS, new_signer_sets.len());
 
@@ -739,7 +739,7 @@ async fn fail_if_invalid_signer_set_signed_command_batch() {
         .setup()
         .await;
 
-    let unregistered_signers = make_signers(&[11], 321);
+    let unregistered_signers = make_signers(&[11], 321, domain_separator);
 
     let (payload, commands) = make_payload_and_commands(1);
     let gateway_execute_data_raw = prepare_questionable_execute_data(

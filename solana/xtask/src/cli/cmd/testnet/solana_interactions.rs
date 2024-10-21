@@ -217,6 +217,7 @@ pub(crate) fn solana_init_approved_command(
     message: &router_api::Message,
     solana_keypair: &Keypair,
     solana_rpc_client: &solana_client::rpc_client::RpcClient,
+    solana_config: &SolanaConfiguration,
 ) -> eyre::Result<(
     solana_sdk::pubkey::Pubkey,
     axelar_rkyv_encoding::types::Message,
@@ -231,6 +232,7 @@ pub(crate) fn solana_init_approved_command(
         message.destination_chain.to_string(),
         message.destination_address.to_string(),
         message.payload_hash,
+        solana_config.domain_separator,
     );
     let command = OwnedCommand::ApproveMessage(message.clone());
     let (gateway_approved_message_pda, _bump, _seeds) =

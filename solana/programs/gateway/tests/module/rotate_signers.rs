@@ -39,7 +39,7 @@ async fn successfully_rotates_signers() {
         .build()
         .setup()
         .await;
-    let new_signer_set = make_signers(&[500, 200], 1);
+    let new_signer_set = make_signers(&[500, 200], 1, domain_separator);
     let (payload, _command) = payload_and_command(&new_signer_set.verifier_set());
 
     let (execute_data_pda, _execute_data, pda_execute_data) = fixture
@@ -114,7 +114,7 @@ async fn cannot_invoke_rotate_signers_without_respecting_minimum_delay() {
     fixture.forward_time(minimum_delay_seconds as i64).await;
 
     // Action - rotate the signer set for the first time.
-    let new_signer_set = make_signers(&[500, 200], 1);
+    let new_signer_set = make_signers(&[500, 200], 1, domain_separator);
     fixture
         .fully_rotate_signers(
             &gateway_root_pda,
@@ -126,7 +126,7 @@ async fn cannot_invoke_rotate_signers_without_respecting_minimum_delay() {
 
     // Action - rotate the signer set for the second time. As this action succeeds
     // without waiting the minimum_delay_seconds, it should fail.
-    let newer_signer_set = make_signers(&[444, 555], 333);
+    let newer_signer_set = make_signers(&[444, 555], 333, domain_separator);
     let (.., tx) = fixture
         .fully_rotate_signers_with_execute_metadata(
             &gateway_root_pda,
@@ -148,7 +148,7 @@ async fn cannot_invoke_rotate_signers_without_respecting_minimum_delay() {
     fixture.forward_time(minimum_delay_seconds as i64).await;
 
     // Action, rotate signers again after waiting the minimum delay.
-    let newer_signer_set = make_signers(&[444, 555], 333);
+    let newer_signer_set = make_signers(&[444, 555], 333, domain_separator);
     let (.., tx) = fixture
         .fully_rotate_signers_with_execute_metadata(
             &gateway_root_pda,
@@ -181,7 +181,7 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
         .setup()
         .await;
     // -- we set a new signer set to be the "latest" signer set
-    let new_signer_set = make_signers(&[500, 200], 1);
+    let new_signer_set = make_signers(&[500, 200], 1, domain_separator);
     fixture
         .fully_rotate_signers(
             &gateway_root_pda,
@@ -191,7 +191,7 @@ async fn succeed_if_signer_set_signed_by_old_signer_set_and_submitted_by_the_ope
         )
         .await;
 
-    let newer_signer_set = make_signers(&[500, 200], 2);
+    let newer_signer_set = make_signers(&[500, 200], 2, domain_separator);
     let (payload, _command) = payload_and_command(&newer_signer_set.verifier_set());
     // we still use the initial signer set to sign the data (the `signers` variable)
     let (execute_data_pda, _, pda_execute_data) = fixture
@@ -263,7 +263,7 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
         .setup()
         .await;
     // -- we set a new signer set to be the "latest" signer set
-    let new_signer_set = make_signers(&[500, 200], 1);
+    let new_signer_set = make_signers(&[500, 200], 1, domain_separator);
     fixture
         .fully_rotate_signers(
             &gateway_root_pda,
@@ -273,7 +273,7 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
         )
         .await;
 
-    let newer_signer_set = make_signers(&[500, 200], 700);
+    let newer_signer_set = make_signers(&[500, 200], 700, domain_separator);
     let (payload, ..) = payload_and_command(&newer_signer_set.verifier_set());
 
     // we still use the initial signer set to sign the data (the `signers` variable)
@@ -330,8 +330,8 @@ async fn fail_if_operator_is_not_using_pre_registered_signer_set() {
         .setup()
         .await;
     // generate a new random operator set to be used (do not register it)
-    let random_signer_set = make_signers(&[11], 54);
-    let new_signer_set = make_signers(&[500, 200], 1);
+    let random_signer_set = make_signers(&[11], 54, domain_separator);
+    let new_signer_set = make_signers(&[500, 200], 1, domain_separator);
     let (payload, ..) = payload_and_command(&new_signer_set.verifier_set());
 
     // using `initial_singers` to sign the message which is the cause of the failure
@@ -392,7 +392,7 @@ async fn fail_if_operator_only_passed_but_not_actual_signer() {
         .setup()
         .await;
     // generate a new random operator set to be used (do not register it)
-    let new_signer_set = make_signers(&[500, 200], 1);
+    let new_signer_set = make_signers(&[500, 200], 1, domain_separator);
     fixture
         .fully_rotate_signers(
             &gateway_root_pda,
@@ -401,7 +401,7 @@ async fn fail_if_operator_only_passed_but_not_actual_signer() {
             &domain_separator,
         )
         .await;
-    let random_signer_set = make_signers(&[11], 54);
+    let random_signer_set = make_signers(&[11], 54, domain_separator);
     let (payload, ..) = payload_and_command(&random_signer_set.verifier_set());
 
     // using `initial_singers` to sign the message which is the cause of the failure
@@ -468,7 +468,7 @@ async fn fail_if_rotate_signers_signed_by_old_signer_set() {
         .build()
         .setup()
         .await;
-    let new_signer_set = make_signers(&[500, 200], 1);
+    let new_signer_set = make_signers(&[500, 200], 1, domain_separator);
     fixture
         .fully_rotate_signers(
             &gateway_root_pda,
@@ -479,7 +479,7 @@ async fn fail_if_rotate_signers_signed_by_old_signer_set() {
         .await;
 
     // Action
-    let newer_signer_set = make_signers(&[444, 555], 333);
+    let newer_signer_set = make_signers(&[444, 555], 333, domain_separator);
     let (.., tx) = fixture
         .fully_rotate_signers_with_execute_metadata(
             &gateway_root_pda,
@@ -514,7 +514,7 @@ async fn fail_rotate_signers_if_total_weight_is_smaller_than_quorum() {
         .build()
         .setup()
         .await;
-    let new_signer_set = make_signers_with_quorum(&[1, 1], u64::MAX, 10);
+    let new_signer_set = make_signers_with_quorum(&[1, 1], u64::MAX, 10, domain_separator);
 
     // Action
     let (.., tx) = fixture
@@ -591,7 +591,7 @@ async fn fail_on_rotate_signers_if_new_ops_len_is_zero() {
         .setup()
         .await;
 
-    let new_signer_set = make_signers(&[], 1);
+    let new_signer_set = make_signers(&[], 1, domain_separator);
     let (payload, ..) = payload_and_command(&new_signer_set.verifier_set());
     let (execute_data_pda, _) = fixture
         .init_execute_data(&gateway_root_pda, payload, &signers, &domain_separator)

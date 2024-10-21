@@ -92,9 +92,15 @@ impl AxelarAuthWeighted {
         message_hash: [u8; 32],
         proof: &ArchivedProof,
         verifier_set_tracker: &VerifierSetTracker,
+        domain_separator: &[u8; 32],
     ) -> Result<SignerSetMetadata, AxelarAuthWeightedError> {
-        if verifier_set_tracker.verifier_set_hash != proof.signer_set_hash(hasher_impl()) {
-            msg!("provided veriefier set tracker does match the derived one");
+        let proof_signer_set_hash = proof.signer_set_hash(hasher_impl(), domain_separator);
+        if verifier_set_tracker.verifier_set_hash != proof_signer_set_hash {
+            msg!(
+                "Provided verifier set tracker does match the derived one. Proof: {}, Registered: {}",
+                hex::encode(proof_signer_set_hash),
+                hex::encode(verifier_set_tracker.verifier_set_hash),
+            );
             return Err(AxelarAuthWeightedError::InvalidSignerSet);
         }
 

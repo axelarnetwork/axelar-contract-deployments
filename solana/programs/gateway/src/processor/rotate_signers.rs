@@ -84,6 +84,7 @@ impl Processor {
                 execute_data.payload_hash,
                 &execute_data.proof,
                 &signer_verifier_set,
+                &gateway_config.domain_separator,
             )
             .map_err(|err| {
                 msg!("Proof validation failed: {:?}", err);

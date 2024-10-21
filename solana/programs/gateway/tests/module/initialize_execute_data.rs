@@ -90,7 +90,7 @@ async fn test_successfully_initialize_rotate_signers() {
         .setup()
         .await;
     let nonce = 55;
-    let new_signers = make_signers(&[33, 150], nonce);
+    let new_signers = make_signers(&[33, 150], nonce, domain_separator);
 
     let payload = Payload::VerifierSet(new_signers.verifier_set());
 
@@ -155,8 +155,8 @@ async fn test_fail_on_invalid_root_pda() {
     let mut fixture = TestFixture::new(program_test).await;
     let nonce = 123;
     let quorum = 14;
-    let signers = make_signers_with_quorum(&[10, 4], nonce, quorum);
     let domain_separator = [255; 32];
+    let signers = make_signers_with_quorum(&[10, 4], nonce, quorum, domain_separator);
     fixture
         .initialize_gateway_config_account(InitializeConfig {
             initial_signer_sets: fixture.create_verifier_sets(&[&signers]),
@@ -207,7 +207,7 @@ async fn test_fail_on_invalid_root_pda_owned_by_system_program() {
     let quorum = 14;
     let nonce = 123321;
     let domain_separator = [32; 32];
-    let signers = make_signers_with_quorum(&[10, 4], nonce, quorum);
+    let signers = make_signers_with_quorum(&[10, 4], nonce, quorum, domain_separator);
     fixture
         .initialize_gateway_config_account(InitializeConfig {
             initial_signer_sets: fixture.create_verifier_sets(&[&signers]),
@@ -250,7 +250,7 @@ async fn test_fail_on_uninitialized_root_pda() {
     let quorum = 14;
     let nonce = 312;
     let domain_separator = [32; 32];
-    let signers = make_signers_with_quorum(&[10, 4], nonce, quorum);
+    let signers = make_signers_with_quorum(&[10, 4], nonce, quorum, domain_separator);
     let (uninitialized_gateway_config_pda, _) = GatewayConfig::pda();
     let (payload, _) = make_payload_and_commands(1);
     let (raw_execute_data, _) = prepare_execute_data(payload, &signers, &domain_separator);

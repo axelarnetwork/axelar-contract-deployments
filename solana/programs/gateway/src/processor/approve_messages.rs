@@ -57,6 +57,7 @@ impl Processor {
             execute_data.payload_hash,
             &execute_data.proof,
             &verifier_set_tracker,
+            &gateway_config.domain_separator,
         ) {
             msg!("Proof validation failed: {:?}", err);
             return Err(ProgramError::InvalidArgument);

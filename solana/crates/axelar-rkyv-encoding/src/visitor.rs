@@ -80,6 +80,7 @@ pub trait Visitor<'a> {
         self.visit_string(message.destination_chain.as_ref());
         self.visit_string(message.destination_address.as_str());
         self.visit_bytes(&message.payload_hash);
+        self.visit_bytes(&message.domain_separator);
     }
 
     /// Visit Message's CCID following its `Display` implementation.
@@ -96,7 +97,8 @@ pub trait Visitor<'a> {
             self.visit_u128(weight);
         }
         self.visit_u128(&verifier_set.quorum);
-        self.visit_u64(verifier_set.created_at_le_bytes())
+        self.visit_u64(verifier_set.created_at_le_bytes());
+        self.visit_bytes(&verifier_set.domain_separator);
     }
 
     fn visit_public_key(&mut self, public_key: &'a PublicKey) {
@@ -208,6 +210,7 @@ pub trait ArchivedVisitor<'a> {
         self.visit_string(message.destination_chain.as_ref());
         self.visit_string(message.destination_address.as_str());
         self.visit_bytes(&message.payload_hash);
+        self.visit_bytes(&message.domain_separator);
     }
 
     /// Visit Message's CCID following its `Display` implementation.
@@ -224,7 +227,8 @@ pub trait ArchivedVisitor<'a> {
             self.visit_u128(weight);
         }
         self.visit_u128(&verifier_set.quorum);
-        self.visit_u64(verifier_set.created_at_le_bytes())
+        self.visit_u64(verifier_set.created_at_le_bytes());
+        self.visit_bytes(&verifier_set.domain_separator);
     }
 
     fn visit_public_key(&mut self, public_key: &'a ArchivedPublicKey) {

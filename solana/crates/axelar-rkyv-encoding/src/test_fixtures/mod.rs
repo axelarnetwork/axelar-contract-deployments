@@ -52,6 +52,7 @@ pub fn random_message() -> Message {
         random_string(10),
         random_string(64),
         random_bytes(),
+        random_bytes(),
     )
 }
 
@@ -76,7 +77,7 @@ pub fn random_valid_verifier_set() -> VerifierSet {
         total_weight += Into::<BnumU128>::into(weight);
         signers.insert(pubkey, weight);
     }
-    VerifierSet::new(OsRng.gen(), signers, total_weight.into())
+    VerifierSet::new(OsRng.gen(), signers, total_weight.into(), random_bytes())
 }
 
 pub fn random_proof(message: &[u8]) -> Proof {
@@ -96,6 +97,7 @@ pub fn random_valid_proof_and_message<const MESSAGE_LENGTH: usize>() -> (Proof, 
 pub fn random_valid_proof_and_verifier_set(message: &[u8]) -> (Proof, VerifierSet) {
     let nonce: u64 = OsRng.gen();
     let num_signatures = OsRng.gen_range(1..10);
+    let domain_separator = random_bytes();
 
     // Generate signatures and calculate the total weight.
     let mut threshold = BnumU128::ZERO;
@@ -115,7 +117,12 @@ pub fn random_valid_proof_and_verifier_set(message: &[u8]) -> (Proof, VerifierSe
         .map(|(pubkey, weighted_signature)| (*pubkey, weighted_signature.weight))
         .collect();
 
-    let verifier_set = VerifierSet::new(nonce, verifier_set_signers, threshold.into());
+    let verifier_set = VerifierSet::new(
+        nonce,
+        verifier_set_signers,
+        threshold.into(),
+        domain_separator,
+    );
     let proof = Proof::new(signatures, threshold.into(), nonce);
 
     // Confidence checks
@@ -184,7 +191,9 @@ pub fn random_execute_data() -> ExecuteData {
     ExecuteData::new(payload, proof)
 }
 
-fn random_verifier_set_and_signing_keys() -> (VerifierSet, BTreeMap<PublicKey, TestSigningKey>) {
+fn random_verifier_set_and_signing_keys(
+    domain_separator: [u8; 32],
+) -> (VerifierSet, BTreeMap<PublicKey, TestSigningKey>) {
     let mut signers = BTreeMap::new();
     let mut signing_keys = BTreeMap::new();
     let mut total_weight = BnumU128::ZERO;
@@ -197,17 +206,18 @@ fn random_verifier_set_and_signing_keys() -> (VerifierSet, BTreeMap<PublicKey, T
         signers.insert(public_key, weight);
         signing_keys.insert(public_key, signing_key);
     }
-    let verifier_set = VerifierSet::new(OsRng.gen(), signers, total_weight.into());
+    let verifier_set =
+        VerifierSet::new(OsRng.gen(), signers, total_weight.into(), domain_separator);
     (verifier_set, signing_keys)
 }
 
 pub fn random_valid_execute_data_and_verifier_set_for_payload(
-    domain_separator: &[u8; 32],
+    domain_separator: [u8; 32],
     payload: Payload,
 ) -> (ExecuteData, VerifierSet) {
-    let (verifier_set, signing_keys) = random_verifier_set_and_signing_keys();
+    let (verifier_set, signing_keys) = random_verifier_set_and_signing_keys(domain_separator);
     let original_payload_hash = hash_payload(
-        domain_separator,
+        &domain_separator,
         &verifier_set,
         &payload,
         test_hasher_impl(),
@@ -234,14 +244,14 @@ pub fn random_valid_execute_data_and_verifier_set_for_payload(
 }
 
 pub fn random_valid_execute_data_and_verifier_set(
-    domain_separator: &[u8; 32],
+    domain_separator: [u8; 32],
 ) -> (ExecuteData, VerifierSet) {
     let payload = random_payload();
     random_valid_execute_data_and_verifier_set_for_payload(domain_separator, payload)
 }
 
 pub fn random_execute_data_and_verifier_set_for_payload_with_invalid_signatures(
-    domain_separator: &[u8; 32],
+    domain_separator: [u8; 32],
     payload: Payload,
 ) -> (ExecuteData, VerifierSet) {
     let (mut execute_data, verifier_set) =

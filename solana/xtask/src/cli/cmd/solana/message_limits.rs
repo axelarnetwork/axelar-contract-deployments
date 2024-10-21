@@ -103,6 +103,7 @@ pub(crate) async fn generate_message_limits_report(
                 .map(|_| random_weight().into())
                 .collect::<Vec<_>>(),
             NONCE,
+            DOMAIN_SEPARATOR,
         );
         let keypair = Arc::new(keypair);
         let validator_rpc_client = Arc::new(validator.get_async_rpc_client());

@@ -25,15 +25,22 @@ pub struct VerifierSet {
     created_at_le_bytes: [u8; 8],
     pub(crate) signers: HasheableSignersBTreeMap,
     pub(crate) quorum: U128,
+    pub(crate) domain_separator: [u8; 32],
 }
 
 impl VerifierSet {
-    pub fn new(created_at: u64, signers: Signers, quorum: U128) -> Self {
+    pub fn new(
+        created_at: u64,
+        signers: Signers,
+        quorum: U128,
+        domain_separator: [u8; 32],
+    ) -> Self {
         Self {
             created_at,
             created_at_le_bytes: created_at.to_le_bytes(),
             signers: HasheableSignersBTreeMap::new(signers),
             quorum,
+            domain_separator,
         }
     }
 
@@ -77,6 +84,7 @@ impl VerifierSet {
                 |(position, (signer_pubkey, signer_weight))| VerifierSetElement {
                     created_at: self.created_at,
                     quorum: self.quorum.into(),
+                    domain_separator: self.domain_separator,
                     signer_pubkey: *signer_pubkey,
                     signer_weight: (*signer_weight).into(),
                     position: position as u16,
@@ -134,6 +142,7 @@ pub struct VerifierSetElement {
     quorum: u128,
     signer_pubkey: PublicKey,
     signer_weight: u128,
+    domain_separator: [u8; 32],
     position: u16,
 }
 /// Wraps a [`VerifierSetElement`], is generic over the hashing context.
@@ -159,6 +168,7 @@ where
         hasher.hash(b"verifier-set");
         hasher.hash(bytemuck::cast_ref::<_, [u8; 8]>(&self.element.created_at));
         hasher.hash(bytemuck::cast_ref::<_, [u8; 16]>(&self.element.quorum));
+        hasher.hash(&self.element.domain_separator);
         Visitor::visit_public_key(&mut hasher, &self.element.signer_pubkey);
         hasher.hash(bytemuck::cast_ref::<_, [u8; 16]>(
             &self.element.signer_weight,

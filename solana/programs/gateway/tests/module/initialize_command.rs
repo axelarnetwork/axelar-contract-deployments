@@ -201,7 +201,7 @@ async fn fail_when_rotate_signers_is_already_initialized() {
         .setup()
         .await;
 
-    let new_signer_set = make_signers(&[44], 44);
+    let new_signer_set = make_signers(&[44], 44, domain_separator);
     let payload = Payload::VerifierSet(new_signer_set.verifier_set().clone());
     let command = OwnedCommand::RotateSigners(new_signer_set.verifier_set());
     fixture
@@ -246,7 +246,7 @@ async fn succeed_when_same_signers_with_different_nonce_get_initialized() {
         .await;
 
     // Signer set B is equal to A but with a different nonce.
-    let signer_set_a = make_signers(&[10u128, 4], 10);
+    let signer_set_a = make_signers(&[10u128, 4], 10, domain_separator);
     let signer_set_b = SigningVerifierSet {
         nonce: 55,
         ..signer_set_a.clone()
@@ -317,7 +317,7 @@ impl BufferedWriteTestCase {
             let payload = Payload::new_messages(messages);
             let (execute_data, verifier_set) =
                 random_valid_execute_data_and_verifier_set_for_payload(
-                    &domain_separator,
+                    domain_separator,
                     payload.clone(),
                 );
             let execute_data_bytes = execute_data.to_bytes::<1024>().unwrap();

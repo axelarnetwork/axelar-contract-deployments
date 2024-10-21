@@ -54,7 +54,7 @@ async fn assert_verifier_sets(
 async fn test_successfylly_initialize_config_with_single_initial_signer() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let initial_signers = make_signers(&[10, 4], NONCE);
+    let initial_signers = make_signers(&[10, 4], NONCE, DOMAIN_SEPARATOR);
     let (gateway_config_pda, _bump) = GatewayConfig::pda();
 
     // Action
@@ -101,9 +101,9 @@ async fn test_successfylly_initialize_config_with_multiple_initial_signers() {
     // Action
     let init_config = InitializeConfig {
         initial_signer_sets: fixture.create_verifier_sets(&[
-            &make_signers(&[10, 4], 8),
-            &make_signers(&[22, 114], 16),
-            &make_signers(&[10, 5], 18),
+            &make_signers(&[10, 4], 8, DOMAIN_SEPARATOR),
+            &make_signers(&[22, 114], 16, DOMAIN_SEPARATOR),
+            &make_signers(&[10, 5], 18, DOMAIN_SEPARATOR),
         ]),
         ..fixture.base_initialize_config(DOMAIN_SEPARATOR)
     };
@@ -176,7 +176,7 @@ async fn test_successfylly_initialize_config_with_25_signers() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
     let initial_weights = (0..25).map(|_| 10).collect::<Vec<_>>();
-    let initial_signers = make_signers(&initial_weights, NONCE);
+    let initial_signers = make_signers(&initial_weights, NONCE, DOMAIN_SEPARATOR);
     let (gateway_config_pda, _bump) = GatewayConfig::pda();
 
     // Action
@@ -213,7 +213,8 @@ async fn test_successfylly_initialize_config_with_25_signers_custom_small_thresh
     let mut fixture = TestFixture::new(program_test()).await;
     let quorum = 1_u128;
     let initial_weights = (0..25).map(|_| 10).collect::<Vec<_>>();
-    let initial_signers = make_signers_with_quorum(&initial_weights, NONCE, quorum);
+    let initial_signers =
+        make_signers_with_quorum(&initial_weights, NONCE, quorum, DOMAIN_SEPARATOR);
     let (gateway_config_pda, _bump) = GatewayConfig::pda();
 
     // Action
@@ -250,7 +251,8 @@ async fn test_successfylly_initialize_config_with_25_signers_custom_large_thresh
     let mut fixture = TestFixture::new(program_test()).await;
     let quorum = u128::MAX;
     let initial_weights = (0..25).map(|_| 10).collect::<Vec<_>>();
-    let initial_signers = make_signers_with_quorum(&initial_weights, NONCE, quorum);
+    let initial_signers =
+        make_signers_with_quorum(&initial_weights, NONCE, quorum, DOMAIN_SEPARATOR);
     let (gateway_config_pda, _bump) = GatewayConfig::pda();
 
     // Action
@@ -285,7 +287,7 @@ async fn test_successfylly_initialize_config_with_25_signers_custom_large_thresh
 async fn test_reverts_on_invalid_gateway_pda_pubkey() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let initial_signers = make_signers(&[10, 4], NONCE);
+    let initial_signers = make_signers(&[10, 4], NONCE, DOMAIN_SEPARATOR);
 
     let (_gateway_config_pda, _bump) = GatewayConfig::pda();
 
@@ -317,7 +319,7 @@ async fn test_reverts_on_invalid_gateway_pda_pubkey() {
 async fn test_reverts_on_already_initialized_gateway_pda() {
     // Setup
     let mut fixture = TestFixture::new(program_test()).await;
-    let initial_signers = make_signers(&[10, 4], NONCE);
+    let initial_signers = make_signers(&[10, 4], NONCE, DOMAIN_SEPARATOR);
     let gateway_config_pda = fixture
         .initialize_gateway_config_account(InitializeConfig {
             initial_signer_sets: fixture.create_verifier_sets(&[&initial_signers]),

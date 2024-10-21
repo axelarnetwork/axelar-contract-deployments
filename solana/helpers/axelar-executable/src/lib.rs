@@ -79,6 +79,7 @@ pub fn validate_with_gmp_metadata(
         gmp_metadata.destination_chain,
         gmp_metadata.destination_address,
         payload_hash,
+        gmp_metadata.domain_separator,
     )
     .try_into()?;
 

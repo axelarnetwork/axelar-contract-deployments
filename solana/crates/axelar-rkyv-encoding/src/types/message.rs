@@ -75,6 +75,7 @@ pub struct Message {
     pub(crate) destination_chain: String,
     pub(crate) destination_address: String,
     pub(crate) payload_hash: [u8; 32],
+    pub(crate) domain_separator: [u8; 32],
 }
 
 impl Message {
@@ -84,6 +85,7 @@ impl Message {
         destination_chain: String,
         destination_address: String,
         payload_hash: [u8; 32],
+        domain_separator: [u8; 32],
     ) -> Self {
         Self {
             cc_id,
@@ -91,6 +93,7 @@ impl Message {
             destination_chain,
             destination_address,
             payload_hash,
+            domain_separator,
         }
     }
 
@@ -176,6 +179,8 @@ pub struct GmpMetadata {
 
     /// Id of the destination chain
     pub destination_chain: String,
+
+    pub domain_separator: [u8; 32],
 }
 
 impl From<Message> for GmpMetadata {
@@ -185,6 +190,7 @@ impl From<Message> for GmpMetadata {
             source_address: value.source_address,
             destination_address: value.destination_address,
             destination_chain: value.destination_chain,
+            domain_separator: value.domain_separator,
         }
     }
 }

@@ -80,7 +80,7 @@ impl ArchivedExecuteData {
     ) -> [u8; 32] {
         Visitor::visit_bytes(&mut hasher_impl, domain_separator);
         self.proof
-            .drive_visitor_for_signer_set_hash(&mut hasher_impl);
+            .drive_visitor_for_signer_set_hash(&mut hasher_impl, domain_separator);
         ArchivedVisitor::visit_payload(&mut hasher_impl, &self.payload);
         hasher_impl.result().into()
     }

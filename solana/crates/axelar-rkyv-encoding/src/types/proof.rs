@@ -43,13 +43,13 @@ impl Proof {
         &self.nonce_le_bytes
     }
 
-    pub fn verifier_set(&self) -> VerifierSet {
+    pub fn verifier_set(&self, domain_separator: [u8; 32]) -> VerifierSet {
         let signers = self
             .signers_with_signatures
             .iter()
             .map(|(pubkey, signer)| (*pubkey, signer.weight))
             .collect();
-        VerifierSet::new(self.nonce, signers, self.threshold)
+        VerifierSet::new(self.nonce, signers, self.threshold, domain_separator)
     }
 }
 
@@ -58,14 +58,16 @@ impl ArchivedProof {
     pub fn signer_set_hash<'a>(
         &'a self,
         mut hasher_impl: impl AxelarRkyv256Hasher<'a>,
+        domain_separator: &'a [u8; 32],
     ) -> [u8; 32] {
-        self.drive_visitor_for_signer_set_hash(&mut hasher_impl);
+        self.drive_visitor_for_signer_set_hash(&mut hasher_impl, domain_separator);
         hasher_impl.result().into()
     }
 
     pub(crate) fn drive_visitor_for_signer_set_hash<'a>(
         &'a self,
         visitor: &mut impl crate::visitor::ArchivedVisitor<'a>,
+        domain_separator: &'a [u8; 32],
     ) {
         // Follow `ArchivedVisitor::visit_verifier_set` exact steps
         visitor.prefix_length(self.signers_with_signatures.len_le_bytes());
@@ -75,6 +77,7 @@ impl ArchivedProof {
         }
         visitor.visit_u128(&self.threshold);
         visitor.visit_u64(self.nonce_le_bytes());
+        visitor.visit_bytes(domain_separator);
     }
 
     pub fn validate_for_message(&self, message: &[u8; 32]) -> Result<(), MessageValidationError> {
@@ -247,7 +250,7 @@ mod tests {
             .validate_for_message_custom(&message, verify_ecdsa, verify_eddsa)
             .is_ok()); // Confidence check
         assert_eq!(
-            proof.signer_set_hash(test_hasher_impl()),
+            proof.signer_set_hash(test_hasher_impl(), &verifier_set.domain_separator),
             verifier_set.hash(test_hasher_impl())
         );
     }
