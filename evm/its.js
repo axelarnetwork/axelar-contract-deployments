@@ -478,7 +478,7 @@ async function processCommand(config, chain, options) {
             if (options.trustedChain === 'all') {
                 const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
                 trustedChains = itsChains.map((chain) => chain.axelarId);
-                trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address);
+                trustedAddresses = itsChains.map((_) => options.trustedAddress || chain.contracts?.InterchainTokenService?.address);
             } else {
                 const trustedChain =
                     getChainConfig(config, options.trustedChain.toLowerCase(), { skipCheck: true })?.axelarId ||
