@@ -11,6 +11,7 @@ mod its_gmp_payload;
 
 use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::ItsContracts;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use test_fixtures::test_setup::{SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata};
 
@@ -21,6 +22,7 @@ const SOLANA_CHAIN_NAME: &str = "solana-devnet";
 pub struct ItsProgramWrapper {
     pub solana_chain: SolanaAxelarIntegrationMetadata,
     pub chain_name: String,
+    pub counter_pda: Pubkey,
 }
 
 pub async fn program_test() -> SolanaAxelarIntegrationMetadata {
@@ -38,13 +40,30 @@ pub async fn program_test() -> SolanaAxelarIntegrationMetadata {
 async fn axelar_solana_setup() -> ItsProgramWrapper {
     let mut solana_chain = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![555, 222])
-        .programs_to_deploy(vec![(
-            "axelar_solana_its.so".into(),
-            axelar_solana_its::id(),
-        )])
+        .programs_to_deploy(vec![
+            ("axelar_solana_its.so".into(), axelar_solana_its::id()),
+            (
+                "axelar_solana_memo_program.so".into(),
+                axelar_solana_memo_program::id(),
+            ),
+        ])
         .build()
         .setup()
         .await;
+
+    let (counter_pda, counter_bump) =
+        axelar_solana_memo_program::get_counter_pda(&solana_chain.gateway_root_pda);
+
+    solana_chain
+        .fixture
+        .send_tx(&[axelar_solana_memo_program::instruction::initialize(
+            &solana_chain.fixture.payer.pubkey(),
+            &solana_chain.gateway_root_pda,
+            &(counter_pda, counter_bump),
+        )
+        .unwrap()])
+        .await;
+
     let (its_pda, its_pda_bump) =
         axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
     solana_chain
@@ -60,6 +79,7 @@ async fn axelar_solana_setup() -> ItsProgramWrapper {
     ItsProgramWrapper {
         solana_chain,
         chain_name: SOLANA_CHAIN_NAME.to_string(),
+        counter_pda,
     }
 }
 

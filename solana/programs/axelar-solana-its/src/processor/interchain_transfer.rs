@@ -1,12 +1,15 @@
 //! Module that handles the processing of the `InterchainTransfer` ITS
 //! instruction.
+use axelar_executable::AxelarCallableInstruction;
+use axelar_message_primitives::DataPayload;
 use interchain_token_transfer_gmp::InterchainTransfer;
 use program_utils::check_rkyv_initialized_pda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
+use solana_program::instruction::Instruction;
 use solana_program::msg;
-use solana_program::program::invoke_signed;
+use solana_program::program::{invoke, invoke_signed};
 use solana_program::program_error::ProgramError;
 use solana_program::sysvar::Sysvar;
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
@@ -39,8 +42,8 @@ use crate::state::token_manager::TokenManager;
 /// the [`TransferFeeConfig`] extension. In this case the fee basis
 /// configuration is set when the user creates the mint, we just need to
 /// calculate the fee according to the fee configuration and call the correct
-/// instruction to keep the fee withheld wherever the user defined they should be
-/// withheld.
+/// instruction to keep the fee withheld wherever the user defined they should
+/// be withheld.
 ///
 /// # Errors
 ///
@@ -52,12 +55,41 @@ pub fn process_transfer<'a>(
     payload: &InterchainTransfer,
     bumps: Bumps,
 ) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let _system_account = next_account_info(accounts_iter)?;
+    let _its_root_pda = next_account_info(accounts_iter)?;
+    let _token_manager_pda = next_account_info(accounts_iter)?;
+    let _token_mint = next_account_info(accounts_iter)?;
+    let _token_manager_ata = next_account_info(accounts_iter)?;
+    let _token_program = next_account_info(accounts_iter)?;
+    let _ata_program = next_account_info(accounts_iter)?;
+    let destination_wallet = next_account_info(accounts_iter)?;
+    let _destination_ata = next_account_info(accounts_iter)?;
+
     let Ok(converted_amount) = payload.amount.try_into() else {
         msg!("Failed to convert amount");
         return Err(ProgramError::InvalidInstructionData);
     };
 
     give_token(payer, accounts, converted_amount, bumps)?;
+
+    if !payload.data.is_empty() {
+        if !destination_wallet.executable {
+            return Err(ProgramError::InvalidInstructionData);
+        }
+
+        let program_payload = DataPayload::decode(&payload.data)?;
+
+        let instruction = Instruction {
+            program_id: *destination_wallet.key,
+            accounts: program_payload.account_meta().to_vec(),
+            data: borsh::to_vec(&AxelarCallableInstruction::Native(
+                program_payload.payload_without_accounts().to_vec(),
+            ))?,
+        };
+
+        invoke(&instruction, accounts_iter.as_slice())?;
+    }
 
     Ok(())
 }

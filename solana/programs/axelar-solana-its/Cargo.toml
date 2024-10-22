@@ -33,6 +33,7 @@ spl-token-2022 = { workspace = true, features = ["no-entrypoint", "serde-traits"
 spl-token-metadata-interface = { workspace = true, features = ["serde-traits"] }
 
 [dev-dependencies]
+axelar-solana-memo-program = { workspace = true, features = ["no-entrypoint"] }
 evm-contracts-test-suite.workspace = true
 rstest.workspace = true
 solana-program-test.workspace = true

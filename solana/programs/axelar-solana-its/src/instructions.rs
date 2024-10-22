@@ -2,7 +2,7 @@
 
 use std::error::Error;
 
-use axelar_message_primitives::DestinationProgramId;
+use axelar_message_primitives::{DataPayload, DestinationProgramId};
 use axelar_rkyv_encoding::types::GmpMetadata;
 use gateway::hasher_impl;
 use interchain_token_transfer_gmp::GMPPayload;
@@ -305,6 +305,13 @@ pub(crate) fn derive_its_accounts(
 
             accounts.push(AccountMeta::new(destination_wallet, false));
             accounts.push(AccountMeta::new(destination_ata, false));
+
+            if !transfer_data.data.is_empty() {
+                let execute_data = DataPayload::decode(transfer_data.data.as_ref())
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+                accounts.extend(execute_data.account_meta().iter().cloned());
+            }
         }
         GMPPayload::DeployInterchainToken(message) => {
             accounts.push(AccountMeta::new_readonly(sysvar::rent::id(), false));

@@ -1,12 +1,14 @@
+use axelar_message_primitives::{DataPayload, EncodingScheme, SolanaAccountRepr};
 use axelar_rkyv_encoding::test_fixtures::random_message_with_destination_and_payload;
 use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use axelar_solana_its::state::token_manager::TokenManager;
+use axelar_solana_memo_program::state::Counter;
 use evm_contracts_test_suite::ethers::signers::Signer;
 use evm_contracts_test_suite::ethers::types::{Address, Bytes};
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_gateway::ContractCallFilter;
 use evm_contracts_test_suite::ItsContracts;
 use interchain_token_transfer_gmp::GMPPayload;
-use solana_program_test::tokio;
+use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer as _;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
@@ -69,7 +71,7 @@ async fn relay_to_solana(
     payload: Vec<u8>,
     solana_chain: &mut SolanaAxelarIntegrationMetadata,
     maybe_mint: Option<Pubkey>,
-) {
+) -> BanksTransactionResultWithMetadata {
     let payload_hash = solana_sdk::keccak::hash(&payload).to_bytes();
     let axelar_message = random_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
@@ -99,18 +101,21 @@ async fn relay_to_solana(
 
     let instruction = axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs)
         .expect("failed to create instruction");
-    let _tx = solana_chain
+    solana_chain
         .fixture
         .send_tx_with_metadata(&[instruction])
-        .await;
+        .await
 }
 
 #[tokio::test]
 #[allow(clippy::too_many_lines)]
+#[allow(clippy::non_ascii_literal)]
+#[allow(clippy::little_endian_bytes)]
 async fn test_send_from_evm_to_solana() {
     let ItsProgramWrapper {
         mut solana_chain,
         chain_name: solana_chain_name,
+        counter_pda,
     } = axelar_solana_setup().await;
     let (_evm_chain, evm_signer, its_contracts) = axelar_evm_setup().await;
 
@@ -185,15 +190,37 @@ async fn test_send_from_evm_to_solana() {
         .unwrap()
         .unwrap();
 
+    let memo_instruction =
+        axelar_solana_memo_program::instruction::AxelarMemoInstruction::ProcessMemo {
+            memo: "🐪🐪🐪🐪".to_owned(),
+        };
     let transfer_amount = 500_000_u64;
+    let metadata = Bytes::from(
+        [
+            0_u32.to_le_bytes().as_slice(), // MetadataVersion.CONTRACT_CALL
+            &DataPayload::new(
+                &borsh::to_vec(&memo_instruction).unwrap(),
+                &[SolanaAccountRepr {
+                    pubkey: counter_pda.to_bytes().into(),
+                    is_signer: false,
+                    is_writable: true,
+                }],
+                EncodingScheme::AbiEncoding,
+            )
+            .encode()
+            .unwrap(),
+        ]
+        .concat(),
+    );
+
     its_contracts
         .interchain_token_service
         .interchain_transfer(
             token_id,
             solana_chain_name.clone(),
-            solana_chain.fixture.payer.pubkey().as_ref().to_vec().into(),
+            axelar_solana_memo_program::id().to_bytes().into(),
             transfer_amount.into(),
-            Bytes::new(),
+            metadata,
             0_u128.into(),
         )
         .send()
@@ -214,10 +241,10 @@ async fn test_send_from_evm_to_solana() {
         .expect("no logs found");
 
     let transfer_payload = transfer_log.payload.as_ref().to_vec();
-    relay_to_solana(transfer_payload, &mut solana_chain, Some(mint)).await;
+    let tx = relay_to_solana(transfer_payload, &mut solana_chain, Some(mint)).await;
 
     let ata = spl_associated_token_account::get_associated_token_address_with_program_id(
-        &solana_chain.fixture.payer.pubkey(),
+        &axelar_solana_memo_program::id(),
         &mint,
         &spl_token_2022::id(),
     );
@@ -230,6 +257,18 @@ async fn test_send_from_evm_to_solana() {
         .unwrap();
 
     assert_eq!(ata_account.mint, mint);
-    assert_eq!(ata_account.owner, solana_chain.fixture.payer.pubkey());
+    assert_eq!(ata_account.owner, axelar_solana_memo_program::id());
     assert_eq!(ata_account.amount, transfer_amount);
+
+    let log_msgs = tx.metadata.unwrap().log_messages;
+    assert!(
+        log_msgs.iter().any(|log| log.as_str().contains("🐪🐪🐪🐪")),
+        "expected memo not found in logs"
+    );
+    let counter = solana_chain
+        .fixture
+        .get_account::<Counter>(&counter_pda, &axelar_solana_memo_program::ID)
+        .await;
+
+    assert_eq!(counter.counter, 1);
 }
