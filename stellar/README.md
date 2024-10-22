@@ -99,7 +99,7 @@ To get help on the gateway commands, run:
 node stellar/gateway.js --help
 ```
 
-#### Call contract
+### Call contract
 
 ```bash
 node stellar/gateway.js call-contract [destination-chain] [dstination-address] [payload]
@@ -139,4 +139,26 @@ A signer rotation can be submitted to the gateway contract. Use `--current-nonce
 ```bash
 node stellar/gateway.js rotate --new-nonce test --signers wallet
 node stellar/gateway.js rotate --new-nonce test2 --current-nonce test --signers wallet
+```
+
+### Upgrade Gateway
+
+To upgrade the gateway run the following command:
+
+1. install: the Wasm bytecode must already be installed/present on the ledger.
+
+```bash
+node stellar/deploy-contract.js upgrade --contract-name axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm --install
+```
+
+2. upgrade: requires the amdin's authorization to proceed, it updates the contract with the new Wasm code.
+
+```bash
+node stellar/deploy-contract.js upgrade --contract-id [contract-address] --new-wasm-hash [new-wasm-has]
+```
+
+3. version: check the version of contract
+
+```bash
+stellar contract invoke --network testnet --id [contract-address] --source-account wallet -- version
 ```
