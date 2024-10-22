@@ -1,16 +1,17 @@
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig } = require('../common/utils');
 const {
-    getBcsBytesByObjectId,
     addBaseOptions,
     addOptionsToCommands,
     getUnitAmount,
     getWallet,
     printWalletInfo,
     broadcast,
+    parseGatewayInfo,
+    parseDiscoveryInfo,
+    broadcastExecuteApprovedMessage,
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
@@ -52,91 +53,25 @@ async function sendCommand(keypair, client, chain, args, options) {
 async function execute(keypair, client, chain, args, options) {
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
-    const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
-    const discoveryObjectId = chain.contracts.RelayerDiscovery.objects.RelayerDiscoveryv0;
+    const { Example } = chain.contracts;
 
-    // Get the channel id from the options or use the channel id from the deployed Example contract object.
     const channelId = options.channelId || chain.contracts.Example.objects.GmpChannelId;
 
     if (!channelId) {
         throw new Error('Please provide either a channel id (--channelId) or deploy the Example contract');
     }
 
-    // Get Discovery table id from discovery object
-    const tableBcsBytes = await getBcsBytesByObjectId(client, discoveryObjectId);
-    const data = bcsStructs.relayerDiscovery.RelayerDiscovery.parse(tableBcsBytes);
-    const tableId = data.value.configurations.id;
+    const gatewayInfo = parseGatewayInfo(chain.contracts);
+    const discoveryInfo = parseDiscoveryInfo(chain.contracts);
+    const messageInfo = {
+        source_chain: sourceChain,
+        message_id: messageId,
+        source_address: sourceAddress,
+        destination_id: Example.objects.GmpChannelId,
+        payload,
+    };
 
-    // Get the transaction list from the discovery table
-    const tableResult = await client.getDynamicFields({
-        parentId: tableId,
-    });
-    const transactionList = tableResult.data;
-
-    // Find the transaction with associated channel id
-    const transaction = transactionList.find((row) => row.name.value === channelId);
-
-    if (!transaction) {
-        throw new Error(`Transaction not found for channel ${channelId}`);
-    }
-
-    // Get the transaction object from the object id
-    const txObject = await client.getObject({
-        id: transaction.objectId,
-        options: {
-            showContent: true,
-        },
-    });
-
-    // Extract the fields from the transaction object
-    const txFields = txObject.data.content.fields.value.fields.move_calls[0].fields;
-
-    const tx = new Transaction();
-
-    // Take the approved message from the gateway contract.
-    // Note: The message needed to be approved first.
-    const approvedMessage = tx.moveCall({
-        target: `${chain.contracts.AxelarGateway.address}::gateway::take_approved_message`,
-        arguments: [
-            tx.object(gatewayObjectId),
-            tx.pure(bcs.string().serialize(sourceChain).toBytes()),
-            tx.pure(bcs.string().serialize(messageId).toBytes()),
-            tx.pure(bcs.string().serialize(sourceAddress).toBytes()),
-            tx.pure.address(channelId),
-            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
-        ],
-    });
-
-    const { module_name: moduleName, name, package_id: packageId } = txFields.function.fields;
-
-    // Build the arguments for the move call
-    // There're 5 types of arguments as mentioned in the following link https://github.com/axelarnetwork/axelar-cgp-sui/blob/72579e5c7735da61d215bd712627edad562cb82a/src/bcs.ts#L44-L49
-    const txArgs = txFields.arguments.map(([argType, ...arg]) => {
-        if (argType === 0) {
-            return tx.object(Buffer.from(arg).toString('hex'));
-        } else if (argType === 1) {
-            // TODO: handle pures followed by the bcs encoded form of the pure
-            throw new Error('Not implemented yet');
-        } else if (argType === 2) {
-            return approvedMessage;
-        } else if (argType === 3) {
-            // TODO: handle the payload of the contract call (to be passed into the intermediate function)
-            throw new Error('Not implemented yet');
-        } else if (argType === 4) {
-            // TODO: handle an argument returned from a previous move call, followed by a u8 specified which call to get the return of (0 for the first transaction AFTER the one that gets ApprovedMessage out), and then another u8 specifying which argument to input.
-            throw new Error('Not implemented yet');
-        }
-
-        throw new Error(`Unknown argument type: ${argType}`);
-    });
-
-    // Execute the move call dynamically based on the transaction object
-    tx.moveCall({
-        target: `${packageId}::${moduleName}::${name}`,
-        arguments: txArgs,
-    });
-
-    await broadcast(client, keypair, tx, 'Call Executed');
+    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, 'Call Executed');
 }
 
 async function processCommand(command, chain, args, options) {
