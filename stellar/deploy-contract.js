@@ -14,6 +14,7 @@ const {
 require('./cli-utils');
 
 async function getInitializeArgs(config, chain, contractName, wallet, options) {
+    const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
     const operator = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
 
     switch (contractName) {
@@ -36,6 +37,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             ]);
 
             return {
+                owner,
                 operator,
                 domainSeparator,
                 minimumRotationDelay,
@@ -85,7 +87,7 @@ async function processCommand(options, config, chain) {
             printInfo('Contract WASM hash', result);
             return;
         } else if (options.upgrade) {
-            printInfo('Upgraded contract successfully!', result);
+            printInfo('Upgraded contract successfully!');
             return;
         }
 
