@@ -72,9 +72,8 @@ async function processDeploy(options, config, chain) {
     let contractAddress = options.address;
 
     if (!contractAddress) {
-        const result = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
-        printInfo('Deployed contract successfully!', result);
-        contractAddress = result;
+        contractAddress = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
+        printInfo('Deployed contract successfully!', contractAddress);
     } else {
         printInfo('Using existing contract', contractAddress);
     }
