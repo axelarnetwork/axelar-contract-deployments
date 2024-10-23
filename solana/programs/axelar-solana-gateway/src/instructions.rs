@@ -1,9 +1,7 @@
 //! Instruction types
 
-use std::error::Error;
 use std::fmt::Debug;
 
-use axelar_rkyv_encoding::types::{ArchivedVerifierSet, VerifierSet};
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use itertools::Itertools;
 use solana_program::bpf_loader_upgradeable;
@@ -13,10 +11,10 @@ use solana_program::pubkey::Pubkey;
 
 use crate::axelar_auth_weighted::{RotationDelaySecs, SignerSetEpoch};
 use crate::commands::{CommandKind, MessageWrapper, OwnedCommand};
-use crate::hasher_impl;
 use crate::state::execute_data::{
     ApproveMessagesVariant, ExecuteDataVariant, RotateSignersVariant,
 };
+use crate::state::verifier_set_tracker::VerifierSetHash;
 use crate::state::{GatewayApprovedCommand, GatewayExecuteData};
 
 /// Instructions supported by the gateway program.
@@ -68,7 +66,7 @@ pub enum GatewayInstruction {
     /// 1. [WRITE] Gateway Root Config PDA account
     /// 2. [] System Program account
     /// 3..N [WRITE] uninitialized VerifierSetTracker PDA accounts
-    InitializeConfig(InitializeConfig<(VerifierSetWrapper, PdaBump)>),
+    InitializeConfig(InitializeConfig<(VerifierSetHash, PdaBump)>),
 
     /// Initializes an Approve Messages Execute Data PDA account.
     /// The Execute Data is a batch of commands that will be executed by the
@@ -268,11 +266,11 @@ pub struct InitializeConfig<T> {
 
 type PdaBump = u8;
 type InitializeConfigTransformation = (
-    InitializeConfig<(VerifierSetWrapper, PdaBump)>,
+    InitializeConfig<(VerifierSetHash, PdaBump)>,
     Vec<(Pubkey, PdaBump)>,
 );
 
-impl InitializeConfig<VerifierSetWrapper> {
+impl InitializeConfig<VerifierSetHash> {
     /// Convert  [`InitializeConfig`] to a type that can be submitted to the
     /// gateway by calculating the PDAs for the initial signers.
     pub fn with_verifier_set_bump(self) -> InitializeConfigTransformation {
@@ -302,48 +300,12 @@ impl InitializeConfig<VerifierSetWrapper> {
     pub fn calculate_verifier_set_pdas(&self) -> Vec<(Pubkey, PdaBump)> {
         self.initial_signer_sets
             .iter()
-            .map(|init_verifier_set| {
-                let hash = init_verifier_set
-                    .parse()
-                    .expect("invalid Verifier set provided")
-                    .hash(hasher_impl());
-                let (pda, derived_bump) = crate::get_verifier_set_tracker_pda(&crate::id(), hash);
+            .map(|init_verifier_set_hash| {
+                let (pda, derived_bump) =
+                    crate::get_verifier_set_tracker_pda(&crate::id(), *init_verifier_set_hash);
                 (pda, derived_bump)
             })
             .collect_vec()
-    }
-}
-
-/// Because [`axelar_rkyv_encoding::types::VerifierSet`] does not implement
-/// borsh, we depend on the data to be encoded with rkyv. This is a wrapper that
-/// implements borsh.
-#[derive(Debug, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
-pub struct VerifierSetWrapper {
-    /// rkyv encoded [`axelar_rkyv_encoding::types::VerifierSet`]
-    verifier_set: Vec<u8>,
-}
-
-impl VerifierSetWrapper {
-    /// Encode the verifier set and initialize the wrapper
-    pub fn new_from_verifier_set(
-        verifier_set: VerifierSet,
-    ) -> Result<Self, Box<dyn Error + Send + Sync>> {
-        Ok(Self {
-            verifier_set: verifier_set.to_bytes()?,
-        })
-    }
-
-    /// Decode the encoded verifier set
-    pub fn parse(
-        &self,
-    ) -> Result<
-        &ArchivedVerifierSet,
-        axelar_rkyv_encoding::rkyv::validation::CheckArchiveError<
-            axelar_rkyv_encoding::rkyv::bytecheck::StructCheckError,
-            axelar_rkyv_encoding::rkyv::validation::validators::DefaultValidatorError,
-        >,
-    > {
-        ArchivedVerifierSet::from_archived_bytes(&self.verifier_set)
     }
 }
 
@@ -564,7 +526,7 @@ pub fn initialize_rotate_signers_execute_data(
 /// Creates a [`GatewayInstruction::InitializeConfig`] instruction.
 pub fn initialize_config(
     payer: Pubkey,
-    config: InitializeConfig<VerifierSetWrapper>,
+    config: InitializeConfig<VerifierSetHash>,
     gateway_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let mut accounts = vec![

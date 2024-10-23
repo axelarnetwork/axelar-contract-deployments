@@ -12,12 +12,12 @@ use solana_program::{msg, system_program};
 use super::Processor;
 use crate::axelar_auth_weighted::AxelarAuthWeighted;
 use crate::error::GatewayError;
-use crate::instructions::{InitializeConfig, VerifierSetWrapper};
-use crate::state::verifier_set_tracker::VerifierSetTracker;
+use crate::instructions::InitializeConfig;
+use crate::state::verifier_set_tracker::{VerifierSetHash, VerifierSetTracker};
 use crate::state::GatewayConfig;
 use crate::{
     assert_valid_gateway_root_pda, assert_valid_verifier_set_tracker_pda,
-    get_gateway_root_config_internal, hasher_impl, seed_prefixes,
+    get_gateway_root_config_internal, seed_prefixes,
 };
 
 impl Processor {
@@ -25,7 +25,7 @@ impl Processor {
     pub fn process_initialize_config(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        init_config: InitializeConfig<(VerifierSetWrapper, u8)>,
+        init_config: InitializeConfig<(VerifierSetHash, u8)>,
     ) -> ProgramResult {
         let (core_accounts, init_verifier_sets) = accounts.split_at(3);
 
@@ -42,22 +42,20 @@ impl Processor {
         let verifier_sets = init_config
             .initial_signer_sets
             .iter()
-            .map(|(set, bump)| (*bump, set.parse().expect("invalid archived data")))
             .zip_eq(init_verifier_sets);
         let current_epochs: u64 = verifier_sets.len().try_into().unwrap();
         let current_epochs = U256::from_u64(current_epochs);
 
-        for (idx, ((pda_bump, verifier_set), verifier_set_pda)) in verifier_sets.enumerate() {
-            let verifier_set_hash = verifier_set.hash(hasher_impl());
+        for (idx, ((verifier_set_hash, pda_bump), verifier_set_pda)) in verifier_sets.enumerate() {
             let idx: u64 = idx.try_into().map_err(|_| {
                 msg!("could not transform idx");
                 ProgramError::InvalidInstructionData
             })?;
             let epoch = U256::from_u64(idx + 1);
             let tracker = VerifierSetTracker {
-                bump: pda_bump,
+                bump: *pda_bump,
                 epoch,
-                verifier_set_hash,
+                verifier_set_hash: *verifier_set_hash,
             };
             // check that everything has been derived correctly
             assert_valid_verifier_set_tracker_pda(&tracker, verifier_set_pda.key);
@@ -71,7 +69,7 @@ impl Processor {
                 &[
                     seed_prefixes::VERIFIER_SET_TRACKER_SEED,
                     verifier_set_hash.as_slice(),
-                    &[pda_bump],
+                    &[*pda_bump],
                 ],
             )?;
         }
