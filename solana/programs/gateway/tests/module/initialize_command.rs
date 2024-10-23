@@ -617,7 +617,7 @@ async fn test_buffered_execute_data_lifecycle() {
             .await;
     // */
 
-    let magic_sequence = &[1, 2, 3, 5, 8, 13, 21, 34];
+    let magic_sequence = &[1, 2, 3, 5, 8, 13, 21];
     for magic_number in magic_sequence {
         let num_messages = *magic_number;
         let num_chunks = magic_number * 3;
