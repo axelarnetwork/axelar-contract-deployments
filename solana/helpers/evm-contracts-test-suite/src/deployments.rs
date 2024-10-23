@@ -9,10 +9,10 @@ use ethers::types::{Address, Bytes, U256};
 use ethers::utils::keccak256;
 use evm_contracts_rs::contracts::{
     axelar_amplifier_gateway, axelar_amplifier_gateway_proxy, axelar_auth_weighted,
-    axelar_create3_deployer, axelar_gas_service, axelar_gateway, axelar_memo,
-    axelar_solana_multicall, example_encoder, gateway_caller, interchain_proxy, interchain_token,
-    interchain_token_deployer, interchain_token_factory, interchain_token_service,
-    test_canonical_token, token_handler, token_manager, token_manager_deployer,
+    axelar_create3_deployer, axelar_gas_service, axelar_memo, axelar_solana_multicall,
+    example_encoder, gateway_caller, interchain_proxy, interchain_token, interchain_token_deployer,
+    interchain_token_factory, interchain_token_service, test_canonical_token, token_handler,
+    token_manager, token_manager_deployer,
 };
 
 use crate::ContractMiddleware;
@@ -31,7 +31,7 @@ pub struct ItsContracts {
     pub auth_weighted: axelar_auth_weighted::AxelarAuthWeighted<ContractMiddleware>,
 
     /// AxelarGateway contract
-    pub gateway: axelar_gateway::AxelarGateway<ContractMiddleware>,
+    pub gateway: axelar_amplifier_gateway::AxelarAmplifierGateway<ContractMiddleware>,
 
     /// AxelarGasService contract
     pub gas_service: axelar_gas_service::AxelarGasService<ContractMiddleware>,
@@ -142,26 +142,6 @@ impl crate::EvmSigner {
                 self.signer.clone(),
             ),
         )
-    }
-
-    /// Deploys the `AxelarGateway` contract.
-    pub async fn deploy_axelar_gateway(
-        &self,
-        auth_module: Address,
-        token_deployer: Address,
-    ) -> anyhow::Result<axelar_gateway::AxelarGateway<ContractMiddleware>> {
-        let factory = ContractFactory::new(
-            axelar_gateway::AXELARGATEWAY_ABI.clone(),
-            axelar_gateway::AXELARGATEWAY_BYTECODE.clone(),
-            self.signer.clone(),
-        );
-        let deployer = factory.deploy((auth_module, token_deployer))?;
-        let contract = self.deploy_custom_poll(deployer.tx).await?;
-
-        Ok(axelar_gateway::AxelarGateway::<ContractMiddleware>::new(
-            contract,
-            self.signer.clone(),
-        ))
     }
 
     /// Deploys the `AxelarGasService` contract.
@@ -477,7 +457,7 @@ impl crate::EvmSigner {
             .await?;
         let token_manager_deployer = self.deploy_token_manager_deployer().await?;
         let gateway = self
-            .deploy_axelar_gateway(auth_weighted.address(), token_manager_deployer.address())
+            .deploy_axelar_amplifier_gateway(operator_sets, owner, operator)
             .await?;
         let interchain_token = self
             .deploy_interchain_token(interchain_token_service_address)

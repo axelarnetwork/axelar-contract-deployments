@@ -1,8 +1,9 @@
 //! Program state processor
 
+use alloy_primitives::U256;
 use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
 use axelar_rkyv_encoding::types::GmpMetadata;
-use interchain_token_transfer_gmp::GMPPayload;
+use interchain_token_transfer_gmp::{DeployInterchainToken, GMPPayload};
 use itertools::Itertools;
 use program_utils::{check_rkyv_initialized_pda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -13,7 +14,8 @@ use solana_program::{msg, system_program};
 
 use crate::check_program_account;
 use crate::instructions::{
-    derive_its_accounts, its_account_indices, Bumps, InterchainTokenServiceInstruction,
+    derive_its_accounts, its_account_indices, Bumps, DeployInterchainTokenInputs,
+    InterchainTokenServiceInstruction,
 };
 use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
@@ -56,6 +58,9 @@ impl Processor {
                 bumps,
             } => {
                 process_its_gmp_payload(accounts, gmp_metadata, &abi_payload, bumps)?;
+            }
+            InterchainTokenServiceInstruction::DeployInterchainToken { params, bumps } => {
+                process_deploy_interchain_token(accounts, params, bumps)?;
             }
         }
 
@@ -148,6 +153,49 @@ fn process_its_gmp_payload(
             )?;
         }
     }
+    Ok(())
+}
+
+fn process_deploy_interchain_token(
+    accounts: &[AccountInfo<'_>],
+    payload: DeployInterchainTokenInputs,
+    bumps: Option<Bumps>,
+) -> ProgramResult {
+    let (payer, other_accounts) = accounts
+        .split_first()
+        .ok_or(ProgramError::InvalidInstructionData)?;
+    let token_id = crate::interchain_token_id(payer.key, payload.salt.as_slice());
+    let deploy_message = DeployInterchainToken {
+        selector: U256::from(1_u8),
+        token_id: token_id.into(),
+        name: payload.name,
+        symbol: payload.symbol,
+        decimals: payload.decimals,
+        minter: payload.minter.into(),
+    };
+
+    match (payload.destination_chain, bumps) {
+        (Some(chain), _) => {
+            interchain_token::process_remote_deploy(
+                other_accounts,
+                &deploy_message,
+                chain,
+                payload.gas_value,
+            )?;
+        }
+        (None, Some(bumps)) => {
+            let (_gateway_root_pda, other_accounts) = other_accounts
+                .split_first()
+                .ok_or(ProgramError::InvalidInstructionData)?;
+
+            interchain_token::process_deploy(payer, other_accounts, deploy_message, bumps)?;
+        }
+        (None, None) => {
+            msg!("Missing ITS PDA bumps");
+            return Err(ProgramError::InvalidInstructionData);
+        }
+    };
+
     Ok(())
 }
 

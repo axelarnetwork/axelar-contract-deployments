@@ -42,16 +42,16 @@ where
         token_manager_pda_bump,
     });
 
-    let inputs = ItsGmpInstructionInputs {
-        payer,
-        gateway_approved_message_pda,
-        gateway_root_pda,
-        gmp_metadata,
-        payload,
-        token_program,
-        mint,
-        bumps,
-    };
+    let inputs = ItsGmpInstructionInputs::builder()
+        .payer(payer)
+        .gateway_approved_message_pda(gateway_approved_message_pda)
+        .gateway_root_pda(gateway_root_pda)
+        .gmp_metadata(gmp_metadata)
+        .payload(payload)
+        .token_program(token_program)
+        .mint_opt(mint)
+        .bumps_opt(bumps)
+        .build();
 
     axelar_solana_its::instructions::its_gmp_payload(inputs)
 }

@@ -76,16 +76,14 @@ async fn test_its_gmp_payload_deploy_token_manager(
         )
         .await;
 
-    let its_ix_inputs = ItsGmpInstructionInputs {
-        payer: solana_chain.fixture.payer.pubkey(),
-        gateway_approved_message_pda: gateway_approved_command_pdas[0],
-        gateway_root_pda: solana_chain.gateway_root_pda,
-        gmp_metadata: message.into(),
-        payload: its_gmp_payload,
-        token_program: token_program_id,
-        mint: None,
-        bumps: None,
-    };
+    let its_ix_inputs = ItsGmpInstructionInputs::builder()
+        .payer(solana_chain.fixture.payer.pubkey())
+        .gateway_approved_message_pda(gateway_approved_command_pdas[0])
+        .gateway_root_pda(solana_chain.gateway_root_pda)
+        .gmp_metadata(message.into())
+        .payload(its_gmp_payload)
+        .token_program(token_program_id)
+        .build();
 
     solana_chain
         .fixture
@@ -156,16 +154,14 @@ async fn test_its_gmp_payload_deploy_interchain_token() {
         )
         .await;
 
-    let its_ix_inputs = ItsGmpInstructionInputs {
-        payer: solana_chain.fixture.payer.pubkey(),
-        gateway_approved_message_pda: gateway_approved_command_pdas[0],
-        gateway_root_pda: solana_chain.gateway_root_pda,
-        gmp_metadata: message.into(),
-        payload: its_gmp_payload,
-        token_program: spl_token_2022::id(),
-        mint: None,
-        bumps: None,
-    };
+    let its_ix_inputs = ItsGmpInstructionInputs::builder()
+        .payer(solana_chain.fixture.payer.pubkey())
+        .gateway_approved_message_pda(gateway_approved_command_pdas[0])
+        .gateway_root_pda(solana_chain.gateway_root_pda)
+        .gmp_metadata(message.into())
+        .payload(its_gmp_payload)
+        .token_program(spl_token_2022::id())
+        .build();
 
     solana_chain
         .fixture
@@ -258,16 +254,14 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
         )
         .await;
 
-    let its_ix_inputs = ItsGmpInstructionInputs {
-        payer: solana_chain.fixture.payer.pubkey(),
-        gateway_approved_message_pda: gateway_approved_command_pdas[0],
-        gateway_root_pda: solana_chain.gateway_root_pda,
-        gmp_metadata: message.into(),
-        payload: its_gmp_payload,
-        token_program: token_program_id,
-        mint: None,
-        bumps: None,
-    };
+    let its_ix_inputs = ItsGmpInstructionInputs::builder()
+        .payer(solana_chain.fixture.payer.pubkey())
+        .gateway_approved_message_pda(gateway_approved_command_pdas[0])
+        .gateway_root_pda(solana_chain.gateway_root_pda)
+        .gmp_metadata(message.into())
+        .payload(its_gmp_payload)
+        .token_program(token_program_id)
+        .build();
 
     solana_chain
         .fixture
@@ -316,7 +310,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
 
     let transfer_abi_payload = its_gmp_transfer_payload.encode();
     let transfer_payload_hash = solana_sdk::keccak::hash(&transfer_abi_payload).to_bytes();
-    let transfermessage = random_message_with_destination_and_payload(
+    let transfer_message = random_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         transfer_payload_hash,
     );
@@ -325,22 +319,21 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
         .fixture
         .fully_approve_messages(
             &solana_chain.gateway_root_pda,
-            vec![transfermessage.clone()],
+            vec![transfer_message.clone()],
             &solana_chain.signers,
             &solana_chain.domain_separator,
         )
         .await;
 
-    let transfer_its_ix_inputs = ItsGmpInstructionInputs {
-        payer: solana_chain.fixture.payer.pubkey(),
-        gateway_approved_message_pda: transfer_gateway_approved_command_pdas[0],
-        gateway_root_pda: solana_chain.gateway_root_pda,
-        gmp_metadata: transfermessage.into(),
-        payload: its_gmp_transfer_payload,
-        token_program: token_program_id,
-        mint: Some(mint),
-        bumps: None,
-    };
+    let transfer_its_ix_inputs = ItsGmpInstructionInputs::builder()
+        .payer(solana_chain.fixture.payer.pubkey())
+        .gateway_approved_message_pda(transfer_gateway_approved_command_pdas[0])
+        .gateway_root_pda(solana_chain.gateway_root_pda)
+        .gmp_metadata(transfer_message.into())
+        .payload(its_gmp_transfer_payload)
+        .token_program(token_program_id)
+        .mint(mint)
+        .build();
 
     solana_chain
         .fixture
@@ -448,16 +441,14 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
         )
         .await;
 
-    let its_ix_inputs = ItsGmpInstructionInputs {
-        payer: solana_chain.fixture.payer.pubkey(),
-        gateway_approved_message_pda: gateway_approved_command_pdas[0],
-        gateway_root_pda: solana_chain.gateway_root_pda,
-        gmp_metadata: message.into(),
-        payload: its_gmp_payload,
-        token_program: spl_token_2022::id(),
-        mint: None,
-        bumps: None,
-    };
+    let its_ix_inputs = ItsGmpInstructionInputs::builder()
+        .payer(solana_chain.fixture.payer.pubkey())
+        .gateway_approved_message_pda(gateway_approved_command_pdas[0])
+        .gateway_root_pda(solana_chain.gateway_root_pda)
+        .gmp_metadata(message.into())
+        .payload(its_gmp_payload)
+        .token_program(spl_token_2022::id())
+        .build();
 
     solana_chain
         .fixture
@@ -506,7 +497,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
 
     let transfer_abi_payload = its_gmp_transfer_payload.encode();
     let transfer_payload_hash = solana_sdk::keccak::hash(&transfer_abi_payload).to_bytes();
-    let transfermessage = random_message_with_destination_and_payload(
+    let transfer_message = random_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         transfer_payload_hash,
     );
@@ -515,22 +506,21 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
         .fixture
         .fully_approve_messages(
             &solana_chain.gateway_root_pda,
-            vec![transfermessage.clone()],
+            vec![transfer_message.clone()],
             &solana_chain.signers,
             &solana_chain.domain_separator,
         )
         .await;
 
-    let transfer_its_ix_inputs = ItsGmpInstructionInputs {
-        payer: solana_chain.fixture.payer.pubkey(),
-        gateway_approved_message_pda: transfer_gateway_approved_command_pdas[0],
-        gateway_root_pda: solana_chain.gateway_root_pda,
-        gmp_metadata: transfermessage.into(),
-        payload: its_gmp_transfer_payload,
-        token_program: spl_token_2022::id(),
-        mint: Some(mint),
-        bumps: None,
-    };
+    let transfer_its_ix_inputs = ItsGmpInstructionInputs::builder()
+        .payer(solana_chain.fixture.payer.pubkey())
+        .gateway_approved_message_pda(transfer_gateway_approved_command_pdas[0])
+        .gateway_root_pda(solana_chain.gateway_root_pda)
+        .gmp_metadata(transfer_message.into())
+        .payload(its_gmp_transfer_payload)
+        .token_program(spl_token_2022::id())
+        .mint(mint)
+        .build();
 
     solana_chain
         .fixture

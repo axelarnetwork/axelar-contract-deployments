@@ -1,8 +1,11 @@
 //! Module that handles the processing of the `InterchainToken` deployment.
 
 use alloy_primitives::hex;
+use alloy_sol_types::SolValue;
+use axelar_message_primitives::U256;
 use axelar_rkyv_encoding::types::PublicKey;
 use interchain_token_transfer_gmp::DeployInterchainToken;
+use program_utils::check_rkyv_initialized_pda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::{invoke, invoke_signed};
@@ -21,7 +24,7 @@ use spl_token_metadata_interface::state::{Field, TokenMetadata};
 use super::token_manager::DeployTokenManagerInternal;
 use crate::instructions::Bumps;
 use crate::seed_prefixes;
-use crate::state::token_manager;
+use crate::state::{token_manager, InterchainTokenService};
 
 const TOKEN_ID_KEY: &str = "token_id";
 
@@ -70,6 +73,54 @@ pub fn process_deploy<'a>(
     );
 
     super::token_manager::deploy(payer, accounts, bumps, deploy_token_manager)?;
+
+    Ok(())
+}
+
+/// Processes a request to [`DeployInterchainToken`] on a remote chain.
+///
+/// # Errors
+///
+/// An error occurred when processing the message. The reason can be derived
+/// from the logs.
+pub fn process_remote_deploy(
+    accounts: &[AccountInfo<'_>],
+    payload: &DeployInterchainToken,
+    destination_chain: String,
+    _gas_value: U256,
+) -> ProgramResult {
+    // TODO: Make sure destination chain is not solana, if it is, bail.
+    let accounts_iter = &mut accounts.iter();
+    let gateway_root_pda = next_account_info(accounts_iter)?;
+    let _gateway_program_id = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
+    let its_root_pda_data = its_root_pda.try_borrow_data()?;
+    let its_state = check_rkyv_initialized_pda::<InterchainTokenService>(
+        &crate::id(),
+        its_root_pda,
+        *its_root_pda_data,
+    )?;
+
+    // TODO: Get chain's trusted address.
+    let destination_address = String::new();
+
+    // TODO: Call gas service to pay gas fee.
+
+    invoke_signed(
+        &gateway::instructions::call_contract(
+            *gateway_root_pda.key,
+            *its_root_pda.key,
+            destination_chain,
+            destination_address,
+            payload.abi_encode_params(),
+        )?,
+        &[its_root_pda.clone(), gateway_root_pda.clone()],
+        &[&[
+            seed_prefixes::ITS_SEED,
+            gateway_root_pda.key.as_ref(),
+            &[its_state.bump],
+        ]],
+    )?;
 
     Ok(())
 }

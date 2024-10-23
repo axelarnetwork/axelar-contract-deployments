@@ -1,4 +1,4 @@
-//! # Multicall program
+//! # `InterchainTokenService` program
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
@@ -265,4 +265,11 @@ pub(crate) fn create_associated_token_account_idempotent<'a>(
     )?;
 
     Ok(())
+}
+
+/// Calculates the tokenId that would correspond to a link for a given deployer
+/// with a specified salt
+#[must_use]
+pub fn interchain_token_id(deployer: &Pubkey, salt: &[u8]) -> [u8; 32] {
+    solana_program::keccak::hashv(&[deployer.as_ref(), salt]).to_bytes()
 }

@@ -31,6 +31,7 @@ spl-pod.workspace = true
 spl-token = { workspace = true, features = ["no-entrypoint"] }
 spl-token-2022 = { workspace = true, features = ["no-entrypoint", "serde-traits"] }
 spl-token-metadata-interface = { workspace = true, features = ["serde-traits"] }
+typed-builder.workspace = true
 
 [dev-dependencies]
 axelar-solana-memo-program = { workspace = true, features = ["no-entrypoint"] }

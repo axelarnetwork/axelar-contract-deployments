@@ -1,9 +1,10 @@
 //! Instructions supported by the multicall program.
 
+use std::borrow::Cow;
 use std::error::Error;
 
-use axelar_message_primitives::{DataPayload, DestinationProgramId};
-use axelar_rkyv_encoding::types::GmpMetadata;
+use axelar_message_primitives::{DataPayload, DestinationProgramId, U256};
+use axelar_rkyv_encoding::types::{GmpMetadata, PublicKey};
 use gateway::hasher_impl;
 use interchain_token_transfer_gmp::GMPPayload;
 use rkyv::bytecheck::EnumCheckError;
@@ -14,8 +15,34 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::{system_program, sysvar};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
+use typed_builder::TypedBuilder;
 
 use crate::state::token_manager;
+
+/// Convenience module with the indices of the accounts passed in the
+/// [`ItsGmpPayload`] instruction (offset by the prefixed GMP accounts).
+pub mod its_account_indices {
+    /// The index of the system program account.
+    pub const SYSTEM_PROGRAM_INDEX: usize = 0;
+
+    /// The index of the ITS root PDA account.
+    pub const ITS_ROOT_PDA_INDEX: usize = 1;
+
+    /// The index of the token manager PDA account.
+    pub const TOKEN_MANAGER_PDA_INDEX: usize = 2;
+
+    /// The index of the token mint account.
+    pub const TOKEN_MINT_INDEX: usize = 3;
+
+    /// The index of the token manager ATA account.
+    pub const TOKEN_MANAGER_ATA_INDEX: usize = 4;
+
+    /// The index of the token program account.
+    pub const TOKEN_PROGRAM_INDEX: usize = 5;
+
+    /// The index of the associated token program account.
+    pub const SPL_ASSOCIATED_TOKEN_ACCOUNT_INDEX: usize = 6;
+}
 
 /// Instructions supported by the multicall program.
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
@@ -33,6 +60,30 @@ pub enum InterchainTokenServiceInstruction {
     Initialize {
         /// The pda bump for the ITS root PDA
         pda_bump: u8,
+    },
+
+    /// Deploys an interchain token.
+    ///
+    /// 0. [writeable,signer] The address of payer / sender
+    /// 1. [] Gateway root pda
+    /// 2. [] System program id if local deployment OR Gateway program if remote
+    ///    deployment
+    /// 3. [] ITS root pda
+    /// 4. [writeable] Token Manager PDA (if local deployment)
+    /// 5. [writeable] The mint account to be created (if local deployment)
+    /// 6. [writeable] The Token Manager ATA (if local deployment)
+    /// 7. [] Token program id (if local deployment)
+    /// 8. [] Associated token program id (if local deployment)
+    /// 9. [] Rent sysvar (if local deployment)
+    /// 10. [] The minter account (if local deployment)
+    DeployInterchainToken {
+        /// The deploy params containing token metadata as well as other
+        /// required inputs.
+        params: DeployInterchainTokenInputs,
+
+        /// The PDA bumps for the ITS accounts, required if deploying the token
+        /// on the local chain.
+        bumps: Option<Bumps>,
     },
 
     /// A GMP Interchain Token Service instruction.
@@ -95,29 +146,125 @@ impl ArchivedInterchainTokenServiceInstruction {
     }
 }
 
-/// Convenience module with the indices of the accounts passed in the
-/// [`ItsGmpPayload`] instruction (offset by the prefixed GMP accounts).
-pub mod its_account_indices {
-    /// The index of the system program account.
-    pub const SYSTEM_PROGRAM_INDEX: usize = 0;
+/// Parameters for `[InterchainTokenServiceInstruction::DeployInterchainToken]`.
+///
+/// To construct this type, use its builder API.
+///
+/// # Example
+///
+/// ```ignore
+/// use axelar_solana_its::instructions::DeployInterchainTokenInputs;
+///
+/// let params = DeployInterchainTokenInputs::builder()
+///    .payer(payer_pubkey)
+///    .salt(salt)
+///    .name("MyToken".to_owned())
+///    .symbol("MT".to_owned())
+///    .decimals(18)
+///    .minter(payer_pubkey)
+///    .gas_value(100)
+///    .build();
+/// ```
+#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, TypedBuilder)]
+#[archive(compare(PartialEq))]
+#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+pub struct DeployInterchainTokenInputs {
+    /// The payer account for this transaction
+    #[builder(setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
+    pub(crate) payer: PublicKey,
 
-    /// The index of the ITS root PDA account.
-    pub const ITS_ROOT_PDA_INDEX: usize = 1;
+    ///(crate) The salt used to derive the tokenId associated with the token
+    pub(crate) salt: [u8; 32],
 
-    /// The index of the token manager PDA account.
-    pub const TOKEN_MANAGER_PDA_INDEX: usize = 2;
+    ///(crate) The chain where the `InterchainToken` should be deployed.
+    /// Deploys to (crate) Solana if `None`.
+    #[builder(default, setter(strip_option))]
+    pub(crate) destination_chain: Option<String>,
 
-    /// The index of the token mint account.
-    pub const TOKEN_MINT_INDEX: usize = 3;
+    ///(crate) Token name
+    pub(crate) name: String,
 
-    /// The index of the token manager ATA account.
-    pub const TOKEN_MANAGER_ATA_INDEX: usize = 4;
+    ///(crate) Token symbol
+    pub(crate) symbol: String,
 
-    /// The index of the token program account.
-    pub const TOKEN_PROGRAM_INDEX: usize = 5;
+    ///(crate) Token decimals
+    pub(crate) decimals: u8,
 
-    /// The index of the associated token program account.
-    pub const SPL_ASSOCIATED_TOKEN_ACCOUNT_INDEX: usize = 6;
+    ///(crate) The minter account
+    pub(crate) minter: Vec<u8>,
+
+    ///(crate) The gas value to be paid for the deploy transaction
+
+    #[builder(setter(transform = |x: u128| U256::from(x)))]
+    pub(crate) gas_value: U256,
+}
+
+/// Bumps for the ITS PDA accounts.
+#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, Copy)]
+#[archive(compare(PartialEq))]
+#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+pub struct Bumps {
+    /// The bump for the ITS root PDA.
+    pub its_root_pda_bump: u8,
+
+    /// The bump for the interchain token PDA.
+    pub interchain_token_pda_bump: u8,
+
+    /// The bump for the token manager PDA.
+    pub token_manager_pda_bump: u8,
+}
+
+/// Inputs for the [`its_gmp_payload`] function.
+///
+/// To construct this type, use its builder API.
+///
+/// # Example
+///
+/// ```ignore
+/// use axelar_solana_its::instructions::ItsGmpInstructionInputs;
+///
+/// let inputs = ItsGmpInstructionInputs::builder()
+///   .payer(payer_pubkey)
+///   .gateway_approved_message_pda(gateway_approved_message_pda)
+///   .gateway_root_pda(gateway_root_pda)
+///   .gmp_metadata(metadata)
+///   .payload(payload)
+///   .token_program(spl_token_2022::id())
+///   .mint(mint_pubkey)
+///   .bumps(bumps)
+///   .build();
+/// ```
+#[derive(Debug, Clone, TypedBuilder)]
+pub struct ItsGmpInstructionInputs {
+    /// The payer account.
+    pub(crate) payer: Pubkey,
+
+    /// The PDA that tracks the approval of this message by the gateway program.
+    pub(crate) gateway_approved_message_pda: Pubkey,
+
+    /// The root PDA for the gateway program.
+    pub(crate) gateway_root_pda: Pubkey,
+
+    /// The Axelar GMP metadata.
+    pub(crate) gmp_metadata: GmpMetadata,
+
+    /// The ITS GMP payload.
+    pub(crate) payload: GMPPayload,
+
+    /// The token program required by the instruction (spl-token or
+    /// spl-token-2022).
+    pub(crate) token_program: Pubkey,
+
+    /// The mint account required by the instruction. Hard requirement for
+    /// `InterchainTransfer` instruction. Optional for `DeployTokenManager` and
+    /// ignored by `DeployInterchainToken`.
+    #[builder(default, setter(strip_option(fallback = mint_opt)))]
+    pub(crate) mint: Option<Pubkey>,
+
+    /// Bumps used to derive the ITS accounts. If not set, the
+    /// `find_program_address` is used which is more expensive.
+    #[builder(default, setter(strip_option(fallback = bumps_opt)))]
+    pub(crate) bumps: Option<Bumps>,
 }
 
 /// Creates a [`InterchainTokenServiceInstruction::Initialize`] instruction.
@@ -152,50 +299,47 @@ pub fn initialize(
     })
 }
 
-/// Bumps for the ITS PDA accounts.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, Copy)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
-pub struct Bumps {
-    /// The bump for the ITS root PDA.
-    pub its_root_pda_bump: u8,
+/// Creates a [`InterchainTokenServiceInstruction::DeployInterchainToken`]
+/// instruction.
+///
+/// # Errors
+///
+/// If serialization fails.
+pub fn deploy_interchain_token(
+    payer: &Pubkey,
+    params: DeployInterchainTokenInputs,
+) -> Result<Instruction, ProgramError> {
+    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let mut accounts = vec![
+        AccountMeta::new(*payer, true),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+    ];
 
-    /// The bump for the interchain token PDA.
-    pub interchain_token_pda_bump: u8,
+    let bumps = if params.destination_chain.is_none() {
+        let (mut its_accounts, bumps) =
+            derive_its_accounts(&gateway_root_pda, &params, spl_token_2022::id(), None, None)?;
 
-    /// The bump for the token manager PDA.
-    pub token_manager_pda_bump: u8,
-}
+        accounts.append(&mut its_accounts);
 
-/// Inputs for the [`its_gmp_payload`] function.
-pub struct ItsGmpInstructionInputs {
-    /// The payer account.
-    pub payer: Pubkey,
+        Some(bumps)
+    } else {
+        let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
 
-    /// The PDA that tracks the approval of this message by the gateway program.
-    pub gateway_approved_message_pda: Pubkey,
+        accounts.push(AccountMeta::new_readonly(gateway::id(), false));
+        accounts.push(AccountMeta::new_readonly(its_root_pda, false));
 
-    /// The root PDA for the gateway program.
-    pub gateway_root_pda: Pubkey,
+        None
+    };
 
-    /// The Axelar GMP metadata.
-    pub gmp_metadata: GmpMetadata,
+    let data = InterchainTokenServiceInstruction::DeployInterchainToken { params, bumps }
+        .to_bytes()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
-    /// The ITS GMP payload.
-    pub payload: GMPPayload,
-
-    /// The token program required by the instruction (spl-token or
-    /// spl-token-2022).
-    pub token_program: Pubkey,
-
-    /// The mint account required by the instruction. Hard requirement for
-    /// `InterchainTransfer` instruction. Optional for `DeployTokenManager` and
-    /// ignored by `DeployInterchainToken`.
-    pub mint: Option<Pubkey>,
-
-    /// Bumps used to derive the ITS accounts. If not set, the
-    /// `find_program_address` is used which is more expensive.
-    pub bumps: Option<Bumps>,
+    Ok(Instruction {
+        program_id: crate::ID,
+        accounts,
+        data,
+    })
 }
 
 /// Creates a [`InterchainTokenServiceInstruction::ItsGmpPayload`] instruction.
@@ -254,13 +398,16 @@ fn prefix_accounts(
     ]
 }
 
-pub(crate) fn derive_its_accounts(
+pub(crate) fn derive_its_accounts<'a, T>(
     gateway_root_pda: &Pubkey,
-    payload: &GMPPayload,
+    payload: T,
     token_program: Pubkey,
     mint: Option<Pubkey>,
     maybe_bumps: Option<Bumps>,
-) -> Result<(Vec<AccountMeta>, Bumps), ProgramError> {
+) -> Result<(Vec<AccountMeta>, Bumps), ProgramError>
+where
+    T: TryInto<ItsMessageRef<'a>, Error = ProgramError>,
+{
     let (maybe_its_root_pda_bump, maybe_interchain_token_pda_bump, maybe_token_manager_pda_bump) =
         maybe_bumps.map_or((None, None, None), |bumps| {
             (
@@ -270,16 +417,18 @@ pub(crate) fn derive_its_accounts(
             )
         });
 
-    let token_id = payload.token_id();
+    let message: ItsMessageRef<'_> = payload.try_into()?;
+
+    let token_id = message.token_id();
     let (its_root_pda, its_root_pda_bump) =
         crate::its_root_pda(gateway_root_pda, maybe_its_root_pda_bump);
     let (interchain_token_pda, interchain_token_pda_bump) =
         crate::interchain_token_pda(&its_root_pda, token_id, maybe_interchain_token_pda_bump);
     let (token_manager_pda, token_manager_pda_bump) =
         crate::token_manager_pda(&interchain_token_pda, maybe_token_manager_pda_bump);
-    let token_mint = try_retrieve_mint(&interchain_token_pda, payload, mint)?;
+    let token_mint = try_retrieve_mint(&interchain_token_pda, &message, mint)?;
 
-    if let GMPPayload::DeployInterchainToken(_) = payload {
+    if let ItsMessageRef::DeployInterchainToken { .. } = message {
         if token_program != spl_token_2022::id() {
             return Err(ProgramError::InvalidInstructionData);
         }
@@ -288,12 +437,14 @@ pub(crate) fn derive_its_accounts(
     let mut accounts =
         derive_common_its_accounts(its_root_pda, token_mint, token_manager_pda, token_program);
 
-    match payload {
-        GMPPayload::InterchainTransfer(transfer_data) => {
+    match message {
+        ItsMessageRef::InterchainTransfer {
+            destination_address,
+            data,
+            ..
+        } => {
             let destination_wallet = Pubkey::new_from_array(
-                transfer_data
-                    .destination_address
-                    .as_ref()
+                destination_address
                     .try_into()
                     .map_err(|_err| ProgramError::InvalidInstructionData)?,
             );
@@ -306,21 +457,19 @@ pub(crate) fn derive_its_accounts(
             accounts.push(AccountMeta::new(destination_wallet, false));
             accounts.push(AccountMeta::new(destination_ata, false));
 
-            if !transfer_data.data.is_empty() {
-                let execute_data = DataPayload::decode(transfer_data.data.as_ref())
+            if !data.is_empty() {
+                let execute_data = DataPayload::decode(data)
                     .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
                 accounts.extend(execute_data.account_meta().iter().cloned());
             }
         }
-        GMPPayload::DeployInterchainToken(message) => {
+        ItsMessageRef::DeployInterchainToken { minter, .. } => {
             accounts.push(AccountMeta::new_readonly(sysvar::rent::id(), false));
-            if message.minter.len() == axelar_rkyv_encoding::types::ED25519_PUBKEY_LEN {
+            if minter.len() == axelar_rkyv_encoding::types::ED25519_PUBKEY_LEN {
                 accounts.push(AccountMeta::new_readonly(
                     Pubkey::new_from_array(
-                        message
-                            .minter
-                            .as_ref()
+                        minter
                             .try_into()
                             .map_err(|_err| ProgramError::InvalidInstructionData)?,
                     ),
@@ -328,7 +477,7 @@ pub(crate) fn derive_its_accounts(
                 ));
             }
         }
-        GMPPayload::DeployTokenManager(_message) => {}
+        ItsMessageRef::DeployTokenManager { .. } => {}
     };
 
     Ok((
@@ -343,7 +492,7 @@ pub(crate) fn derive_its_accounts(
 
 fn try_retrieve_mint(
     interchain_token_pda: &Pubkey,
-    payload: &GMPPayload,
+    payload: &ItsMessageRef<'_>,
     maybe_mint: Option<Pubkey>,
 ) -> Result<Pubkey, ProgramError> {
     if let Some(mint) = maybe_mint {
@@ -351,17 +500,17 @@ fn try_retrieve_mint(
     }
 
     match payload {
-        GMPPayload::DeployTokenManager(message) => {
-            let token_mint = token_manager::decode_params(message.params.as_ref())
+        ItsMessageRef::DeployTokenManager { params, .. } => {
+            let token_mint = token_manager::decode_params(params)
                 .map(|(_, token_mint)| Pubkey::try_from(token_mint.as_ref()))?
                 .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
             Ok(token_mint)
         }
-        GMPPayload::InterchainTransfer(_transfer_data) => {
+        ItsMessageRef::InterchainTransfer { .. } => {
             maybe_mint.ok_or(ProgramError::InvalidInstructionData)
         }
-        GMPPayload::DeployInterchainToken(_message) => Ok(*interchain_token_pda),
+        ItsMessageRef::DeployInterchainToken { .. } => Ok(*interchain_token_pda),
     }
 }
 
@@ -386,4 +535,97 @@ fn derive_common_its_accounts(
         AccountMeta::new_readonly(token_program, false),
         AccountMeta::new_readonly(spl_associated_token_account::id(), false),
     ]
+}
+
+#[allow(dead_code)]
+pub(crate) enum ItsMessageRef<'a> {
+    InterchainTransfer {
+        token_id: Cow<'a, [u8; 32]>,
+        source_address: &'a [u8],
+        destination_address: &'a [u8],
+        amount: u64,
+        data: &'a [u8],
+    },
+    DeployInterchainToken {
+        token_id: Cow<'a, [u8; 32]>,
+        name: &'a str,
+        symbol: &'a str,
+        decimals: u8,
+        minter: &'a [u8],
+    },
+    DeployTokenManager {
+        token_id: Cow<'a, [u8; 32]>,
+        token_manager_type: token_manager::Type,
+        params: &'a [u8],
+    },
+}
+
+impl ItsMessageRef<'_> {
+    /// Returns the token id for the message.
+    pub(crate) fn token_id(&self) -> &[u8; 32] {
+        match self {
+            ItsMessageRef::InterchainTransfer { token_id, .. }
+            | ItsMessageRef::DeployInterchainToken { token_id, .. }
+            | ItsMessageRef::DeployTokenManager { token_id, .. } => token_id,
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a GMPPayload> for ItsMessageRef<'a> {
+    type Error = ProgramError;
+    fn try_from(value: &'a GMPPayload) -> Result<Self, Self::Error> {
+        Ok(match value {
+            GMPPayload::InterchainTransfer(inner) => Self::InterchainTransfer {
+                token_id: Cow::Borrowed(&inner.token_id.0),
+                source_address: &inner.source_address.0,
+                destination_address: inner.destination_address.as_ref(),
+                amount: inner
+                    .amount
+                    .try_into()
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?,
+                data: inner.data.as_ref(),
+            },
+            GMPPayload::DeployInterchainToken(inner) => Self::DeployInterchainToken {
+                token_id: Cow::Borrowed(&inner.token_id.0),
+                name: &inner.name,
+                symbol: &inner.symbol,
+                decimals: inner.decimals,
+                minter: inner.minter.as_ref(),
+            },
+
+            GMPPayload::DeployTokenManager(inner) => Self::DeployTokenManager {
+                token_id: Cow::Borrowed(&inner.token_id.0),
+                token_manager_type: inner
+                    .token_manager_type
+                    .try_into()
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?,
+                params: inner.params.as_ref(),
+            },
+        })
+    }
+}
+
+impl<'a> TryFrom<&'a DeployInterchainTokenInputs> for ItsMessageRef<'a> {
+    type Error = ProgramError;
+
+    fn try_from(value: &'a DeployInterchainTokenInputs) -> Result<Self, Self::Error> {
+        let token_id = crate::interchain_token_id(
+            &Pubkey::new_from_array(
+                value
+                    .payer
+                    .as_ref()
+                    .try_into()
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?,
+            ),
+            &value.salt,
+        );
+
+        Ok(Self::DeployInterchainToken {
+            token_id: Cow::Owned(token_id),
+            name: &value.name,
+            symbol: &value.symbol,
+            decimals: value.decimals,
+            minter: value.minter.as_ref(),
+        })
+    }
 }

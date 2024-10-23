@@ -32,20 +32,37 @@ contract AxelarMemo is AxelarExecutable {
         bytes calldata memoMessage,
         SolanaAccountRepr[] calldata accounts
     ) external {
-        SolanaGatewayPayload memory payload =
-            SolanaGatewayPayload({executePayload: abi.encodePacked(memoMessage), accounts: accounts});
+        SolanaGatewayPayload memory payload = SolanaGatewayPayload({
+            executePayload: abi.encodePacked(memoMessage),
+            accounts: accounts
+        });
 
         bytes memory encodedPayload = payload.encode();
-        gateway.callContract(string(solanaChain), solanaDestinationProgram, encodedPayload);
+        gateway().callContract(
+            string(solanaChain),
+            solanaDestinationProgram,
+            encodedPayload
+        );
     }
 
-    function sendToEvm(string calldata destinationContract, bytes calldata otherEvmChain, bytes calldata memoMessage)
-        external
-    {
-        gateway.callContract(string(otherEvmChain), destinationContract, memoMessage);
+    function sendToEvm(
+        string calldata destinationContract,
+        bytes calldata otherEvmChain,
+        bytes calldata memoMessage
+    ) external {
+        gateway().callContract(
+            string(otherEvmChain),
+            destinationContract,
+            memoMessage
+        );
     }
 
-    function _execute(string calldata, string calldata, bytes calldata payload) internal override {
+    function _execute(
+        bytes32,
+        string calldata,
+        string calldata,
+        bytes calldata payload
+    ) internal override {
         string memory converted = string(payload);
 
         MESSAGES_RECEIVED += 1;

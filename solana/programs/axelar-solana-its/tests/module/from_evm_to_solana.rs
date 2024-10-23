@@ -5,7 +5,7 @@ use axelar_solana_its::state::token_manager::TokenManager;
 use axelar_solana_memo_program::state::Counter;
 use evm_contracts_test_suite::ethers::signers::Signer;
 use evm_contracts_test_suite::ethers::types::{Address, Bytes};
-use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_gateway::ContractCallFilter;
+use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
 use evm_contracts_test_suite::ItsContracts;
 use interchain_token_transfer_gmp::GMPPayload;
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
@@ -44,12 +44,7 @@ async fn setup_canonical_interchain_token(
 
     its_contracts
         .interchain_token_factory
-        .deploy_remote_canonical_interchain_token(
-            String::new(),
-            token_address,
-            solana_chain_name,
-            0_u128.into(),
-        )
+        .deploy_remote_canonical_interchain_token(token_address, solana_chain_name, 0_u128.into())
         .send()
         .await?
         .await?
@@ -88,16 +83,15 @@ async fn relay_to_solana(
         )
         .await;
 
-    let its_ix_inputs = ItsGmpInstructionInputs {
-        payer: solana_chain.fixture.payer.pubkey(),
-        gateway_approved_message_pda: gateway_approved_command_pdas[0],
-        gateway_root_pda: solana_chain.gateway_root_pda,
-        gmp_metadata: axelar_message.into(),
-        payload: GMPPayload::decode(&payload).unwrap(),
-        token_program: spl_token_2022::id(),
-        mint: maybe_mint,
-        bumps: None,
-    };
+    let its_ix_inputs = ItsGmpInstructionInputs::builder()
+        .payer(solana_chain.fixture.payer.pubkey())
+        .gateway_approved_message_pda(gateway_approved_command_pdas[0])
+        .gateway_root_pda(solana_chain.gateway_root_pda)
+        .gmp_metadata(axelar_message.into())
+        .payload(GMPPayload::decode(&payload).unwrap())
+        .token_program(spl_token_2022::id())
+        .mint_opt(maybe_mint)
+        .build();
 
     let instruction = axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs)
         .expect("failed to create instruction");
@@ -116,8 +110,9 @@ async fn test_send_from_evm_to_solana() {
         mut solana_chain,
         chain_name: solana_chain_name,
         counter_pda,
-    } = axelar_solana_setup().await;
-    let (_evm_chain, evm_signer, its_contracts) = axelar_evm_setup().await;
+    } = axelar_solana_setup(true).await;
+    let (_evm_chain, evm_signer, its_contracts, _weighted_signers, _domain_separator) =
+        axelar_evm_setup().await;
 
     let token_name = "Canonical Token";
     let token_symbol = "CT";
@@ -201,7 +196,7 @@ async fn test_send_from_evm_to_solana() {
             &DataPayload::new(
                 &borsh::to_vec(&memo_instruction).unwrap(),
                 &[SolanaAccountRepr {
-                    pubkey: counter_pda.to_bytes().into(),
+                    pubkey: counter_pda.unwrap().to_bytes().into(),
                     is_signer: false,
                     is_writable: true,
                 }],
@@ -267,7 +262,7 @@ async fn test_send_from_evm_to_solana() {
     );
     let counter = solana_chain
         .fixture
-        .get_account::<Counter>(&counter_pda, &axelar_solana_memo_program::ID)
+        .get_account::<Counter>(&counter_pda.unwrap(), &axelar_solana_memo_program::ID)
         .await;
 
     assert_eq!(counter.counter, 1);
