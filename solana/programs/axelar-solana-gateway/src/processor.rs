@@ -2,7 +2,6 @@
 
 use std::borrow::Cow;
 
-use axelar_rkyv_encoding::types::{ArchivedMessage, HasheableMessageVec, VerifierSet};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
@@ -14,7 +13,6 @@ use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_instruction, system_program};
 
 use crate::check_program_account;
-use crate::commands::ArchivedCommand;
 use crate::error::GatewayError;
 use crate::instructions::GatewayInstruction;
 
@@ -67,97 +65,18 @@ impl Processor {
                 msg!("Instruction: Initialize Config");
                 Self::process_initialize_config(program_id, accounts, init_config)
             }
-            GatewayInstruction::InitializeApproveMessagesExecuteData { execute_data } => {
-                msg!("Instruction: Initialize Approve Messages Execute Data");
-                Self::process_initialize_execute_data::<HasheableMessageVec>(
-                    program_id,
-                    accounts,
-                    execute_data,
-                )
-            }
-            GatewayInstruction::InitializeRotateSignersExecuteData { execute_data } => {
-                msg!("Instruction: Initialize Rotate Signers Execute Data");
-                Self::process_initialize_execute_data::<VerifierSet>(
-                    program_id,
-                    accounts,
-                    execute_data,
-                )
-            }
-            GatewayInstruction::InitializePendingCommand(command) => {
-                msg!("Instruction: Initialize Pending Command");
-                Self::process_initialize_command(program_id, accounts, command)
-            }
-            GatewayInstruction::ValidateMessage(wrapper) => {
-                msg!("Instruction: Validate Message");
-                let message: &ArchivedMessage = (&wrapper).try_into()?;
-                Self::process_validate_message(
-                    program_id,
-                    accounts,
-                    ArchivedCommand::ApproveMessage(message),
-                )
-            }
-            GatewayInstruction::TransferOperatorship => {
-                msg!("Instruction: Transfer Operatorship");
-                Self::process_transfer_operatorship(program_id, accounts)
-            }
-            GatewayInstruction::InitializeExecuteDataBuffer {
-                buffer_size,
-                user_seed,
-                bump_seed,
-                command_kind,
-            } => {
-                msg!("Instruction: Initialize Execute Data Buffer");
-                Self::process_initialize_execute_data_buffer(
-                    program_id,
-                    accounts,
-                    buffer_size,
-                    &user_seed,
-                    bump_seed,
-                    command_kind,
-                )
-            }
-            GatewayInstruction::WriteExecuteDataBuffer { offset, bytes } => {
-                msg!("Instruction: Write Execute Data Buffer");
-                Self::process_write_execute_data_buffer(program_id, accounts, &bytes, offset)
-            }
-            GatewayInstruction::CommitPayloadHash {} => {
-                msg!("Instruction: Commit Payload Hash");
-                Self::process_commit_payload_hash(program_id, accounts)
-            }
 
-            GatewayInstruction::FinalizeExecuteDataBuffer {} => {
-                msg!("Instruction: Finalize Execute Data Buffer");
-                Self::process_finalize_execute_data_buffer(program_id, accounts)
-            }
-
-            GatewayInstruction::InitializeSignatureVerification {
-                signature_merkle_root,
-            } => {
-                msg!("Instruction: Initialize Signature Verification");
-                Self::process_initialize_signature_verification(
-                    program_id,
-                    accounts,
-                    &signature_merkle_root,
-                )
-            }
+            GatewayInstruction::InitializePayloadVerificationSession {
+                payload_merkle_root: _,
+                bump_seed: _,
+            } => todo!(),
 
             GatewayInstruction::VerifySignature {
-                signature_bytes,
-                public_key_bytes,
-                signer_weight,
-                signer_index,
-                signature_merkle_proof,
+                verifier_set_leaf_node: _,
+                signer_merkle_proof: _,
             } => {
                 msg!("Instruction: Verify Signature");
-                Self::process_verify_signature(
-                    program_id,
-                    accounts,
-                    &signature_bytes,
-                    &public_key_bytes,
-                    signer_weight,
-                    signer_index,
-                    &signature_merkle_proof,
-                )
+                todo!()
             }
         }
     }

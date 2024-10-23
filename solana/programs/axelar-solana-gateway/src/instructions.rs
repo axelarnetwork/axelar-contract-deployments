@@ -4,18 +4,12 @@ use std::fmt::Debug;
 
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use itertools::Itertools;
-use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use crate::axelar_auth_weighted::{RotationDelaySecs, SignerSetEpoch};
-use crate::commands::{CommandKind, MessageWrapper, OwnedCommand};
-use crate::state::execute_data::{
-    ApproveMessagesVariant, ExecuteDataVariant, RotateSignersVariant,
-};
 use crate::state::verifier_set_tracker::VerifierSetHash;
-use crate::state::{GatewayApprovedCommand, GatewayExecuteData};
 
 /// Instructions supported by the gateway program.
 #[repr(u8)]
@@ -68,182 +62,39 @@ pub enum GatewayInstruction {
     /// 3..N [WRITE] uninitialized VerifierSetTracker PDA accounts
     InitializeConfig(InitializeConfig<(VerifierSetHash, PdaBump)>),
 
-    /// Initializes an Approve Messages Execute Data PDA account.
-    /// The Execute Data is a batch of commands that will be executed by the
-    /// Execute instruction (separate step). The `execute_data` will be
-    /// decoded on-chain to verify the data is correct and generate the proper
-    /// hash, and store it in the Approve Messages Execute Data PDA account.
-    ///
-    /// It's expected that for each command in the batch, there is a
-    /// corresponding `GatewayApprovedCommand` account. The sequence of
-    /// which is initialized first is not important.
-    ///
-    /// Accounts expected by this instruction:
-    /// 0. [WRITE, SIGNER] Funding account
-    /// 1. [WRITE] Approve Messages Execute Data PDA account
-    /// 2. [] System Program account
-    InitializeApproveMessagesExecuteData {
-        /// The execute data that will be decoded.
-        /// We decode it on-chain so we can verify the data is correct and
-        /// generate the proper hash.
-        execute_data: Vec<u8>,
-    },
-
-    /// Initializes a Rotate Signers Execute Data PDA account.
-    /// The Execute Data is a batch of commands that will be executed by the
-    /// Execute instruction (separate step). The `execute_data` will be
-    /// decoded on-chain to verify the data is correct and generate the proper
-    /// hash, and store it in the Rotate Signers Execute Data PDA account.
-    ///
-    /// Accounts expected by this instruction:
-    /// 0. [WRITE, SIGNER] Funding account
-    /// 1. [WRITE] Rotate Signers Execute Data PDA account
-    /// 2. [] System Program account
-    InitializeRotateSignersExecuteData {
-        /// The execute data that will be decoded.
-        /// We decode it on-chain so we can verify the data is correct and
-        /// generate the proper hash.
-        execute_data: Vec<u8>,
-    },
-
-    /// Initializes a pending command.
-    /// This instruction is used to initialize a command that will trackt he
-    /// execution state of a command contained in a batch.
-    ///
-    /// Accounts expected by this instruction:
-    /// 0. [WRITE, SIGNER] Funding account
-    /// 1. [WRITE] Gateway ApprovedCommand PDA account
-    /// 2. [] Gateway Root Config PDA account
-    /// 3. [] System Program account
-    InitializePendingCommand(OwnedCommand),
-
-    /// Validates message.
-    /// It is the responsibility of the destination program (contract) that
-    /// receives a message from Axelar to validate that the message has been
-    /// approved by the Gateway.
-    ///
-    /// Once the message has been validated, the command will no longer be valid
-    /// for future calls.
-    ///
-    /// Accounts expected by this instruction:
-    /// 1. [WRITE] Approved Message PDA account
-    /// 2. [] Gateway Root Config PDA account
-    /// 3. [SIGNER] PDA signer account (caller). Derived from the destination
-    ///    program id.
-    ValidateMessage(MessageWrapper),
-
-    /// Transfers operatorship of the Gateway Root Config PDA account.
-    ///
-    /// Only the current operator OR Gateway program owner can transfer
-    /// operatorship to a new operator.
-    ///
-    /// Accounts expected by this instruction:
-    /// 1. [WRITE] Config PDA account
-    /// 2. [SIGNER] Current operator OR the upgrade authority of the Gateway
-    ///    programdata account
-    /// 3. [] Gateway programdata account (owned by `bpf_loader_upgradeable`)
-    /// 4. [] New operator
-    TransferOperatorship,
-
-    /// Initializes an `execute_data` PDA buffer account.
-    ///
-    /// This instruction will revert if the buffer account already exists.
+    /// Initializes a verification session for a given Payload root.
     ///
     /// Accounts expected by this instruction:
     /// 0. [WRITE, SIGNER] Funding account
     /// 1. [] Gateway Root Config PDA account
-    /// 2. [WRITE] Execute Data PDA buffer account
+    /// 2. [WRITE] Verification session PDA buffer account
     /// 3. [] System Program account
-    InitializeExecuteDataBuffer {
-        /// The number of bytes to allocate for the new buffer account
-        buffer_size: u64,
-        /// User provided seed for the buffer account PDA
-        user_seed: [u8; 32],
+    InitializePayloadVerificationSession {
+        /// The Merkle root for the Payload being verified.
+        payload_merkle_root: [u8; 32],
         /// Buffer account PDA bump seed
         bump_seed: u8,
-        /// The command kind that will be written into this buffer
-        command_kind: CommandKind,
     },
 
-    /// Write `execute_data` parts into the PDA buffer account.
-    ///
-    /// This instruction will revert on the following cases
-    /// 1. Buffer account is already finalized
-    /// 2. offset + bytes.len() is greater than the buffer size.
-    ///
-    /// Accounts expected by this instruction:
-    /// 0. [WRITE] Execute Data PDA buffer account
-    WriteExecuteDataBuffer {
-        /// Offset at which to write the given bytes.
-        offset: usize,
-        /// Serialized `execute_data` data.
-        bytes: Vec<u8>,
-    },
-
-    /// Finalizes the writing phase for an `execute_data` PDA buffer account and
-    /// writes the calculated `Payload` hash into its metadata section.
-    ///
-    /// This instruction will revert on the following circumstances:
-    /// 1. The buffer account is already finalized.
-    /// 2. The buffer account already had the `execute_data` hash calculated and
-    ///    persisted.
-    /// 3. Instruction fails to decode the previously written `execute_data`
-    ///    bytes.
-    ///
-    /// Accounts expected by this instruction:
-    /// 0. [] Gateway Root Config PDA account
-    /// 1. [WRITE] Execute Data PDA buffer account
-    CommitPayloadHash {},
-
-    /// Initializes the signature validation state machine.
-    ///
-    /// Requires that the `execute_data_buffer`'s write phase has been
-    /// finalized.
-    ///
-    /// Accounts expected by this instruction:
-    /// 0. [] Gateway Root Config PDA account
-    /// 1. [WRITE] Execute Data PDA buffer account
-    InitializeSignatureVerification {
-        /// Merkle root for the `Proof`'s signatures.
-        signature_merkle_root: [u8; 32],
-    },
-
-    /// Verifies a signature as part of the `execute_data` validation
-    /// process.
+    /// Verifies a signature within a Payload verification session
     ///
     /// Accounts expected by this instruction:
     /// 0. [] Gateway Root Config PDA account
     /// 1. [WRITE] Execute Data PDA buffer account
     VerifySignature {
-        /// The signature bytes.
-        signature_bytes: Vec<u8>,
-        /// The signer's public key bytes.
-        public_key_bytes: Vec<u8>,
-        /// The signer's weight.
-        signer_weight: u128,
-        /// The signer's position within the verifier set.
-        signer_index: u8,
-        /// This signatures's proof of inclusion in the signatures merkle tree.
-        signature_merkle_proof: Vec<u8>,
-    },
+        /// Contains all the required information for the
+        verifier_set_leaf_node: GatewayVerifierSetLeafNode,
 
-    /// Finalize an `execute_data` PDA buffer account.
-    ///
-    /// The `execute_data` will be decoded on-chain to verify the data
-    /// is correct and generate the proper hash, and store it in the
-    /// Approve Messages Execute Data PDA account.
-    ///
-    /// It's expected that for each command in the batch, there is a
-    /// corresponding `GatewayApprovedCommand` account. The sequence of
-    /// which is initialized first is not important.
-    ///
-    /// This instruction will revert if the buffer account is already
-    /// finalized or if the signature verification didn't collect
-    /// sufficient signer weight.
-    ///
-    /// Accounts expected by this instruction:
-    /// 0. [WRITE] Execute Data PDA buffer account
-    FinalizeExecuteDataBuffer {},
+        /// The signer's proof of inclusion in the verifier set Merkle tree.
+        signer_merkle_proof: Vec<u8>,
+    },
+}
+
+/// Wrapper around `VerifierSetLeafNode<_>` which implement borsh traits.
+
+#[derive(BorshSerialize, BorshDeserialize, Eq, PartialEq, Debug)]
+pub struct GatewayVerifierSetLeafNode {
+    // TODO: implement this.
 }
 
 /// Configuration parameters for initializing the axelar-solana gateway
@@ -369,35 +220,6 @@ pub fn rotate_signers(
     })
 }
 
-/// Helper to create an instruction with the given ExecuteData and accounts.
-#[deprecated = "Use `rotate_signers` or `approve_messages` instead"]
-pub fn handle_execute_data(
-    gateway_root_pda: Pubkey,
-    execute_data_account: Pubkey,
-    command_accounts: &[Pubkey],
-    // todo: we don't need to expose the program id here
-    program_id: Pubkey,
-    data: Vec<u8>,
-) -> Result<Instruction, ProgramError> {
-    let mut accounts = vec![
-        AccountMeta::new(gateway_root_pda, false),
-        AccountMeta::new(execute_data_account, false),
-    ];
-
-    // Message accounts needs to be writable so we can set them as processed.
-    accounts.extend(
-        command_accounts
-            .iter()
-            .map(|key| AccountMeta::new(*key, false)),
-    );
-
-    Ok(Instruction {
-        program_id,
-        accounts,
-        data,
-    })
-}
-
 /// Creates a [`CallContract`] instruction.
 pub fn call_contract(
     gateway_root_pda: Pubkey,
@@ -422,105 +244,6 @@ pub fn call_contract(
         accounts,
         data,
     })
-}
-
-/// Creates a [`GatewayInstruction::InitializePendingCommand`] instruction.
-pub fn initialize_pending_command(
-    gateway_root_pda: &Pubkey,
-    payer: &Pubkey,
-    command: OwnedCommand,
-) -> Result<Instruction, ProgramError> {
-    let (approved_message_pda, _bump, _seed) =
-        GatewayApprovedCommand::pda(gateway_root_pda, &command);
-
-    let data = to_vec(&GatewayInstruction::InitializePendingCommand(command))?;
-
-    let accounts = vec![
-        AccountMeta::new(*payer, true),
-        AccountMeta::new(approved_message_pda, false),
-        AccountMeta::new_readonly(*gateway_root_pda, false),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
-    ];
-
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data,
-    })
-}
-
-fn initialize_gateway_execute_data<T>(
-    payer: Pubkey,
-    gateway_root_pda: Pubkey,
-    domain_separator: &[u8; 32],
-    instruction: GatewayInstruction,
-) -> Result<(Instruction, GatewayExecuteData<T>), ProgramError>
-where
-    T: ExecuteDataVariant,
-{
-    let raw_execute_data = match &instruction {
-        GatewayInstruction::InitializeApproveMessagesExecuteData { execute_data } => execute_data,
-        GatewayInstruction::InitializeRotateSignersExecuteData { execute_data } => execute_data,
-        _ => return Err(ProgramError::InvalidInstructionData),
-    };
-
-    // We decode the data off-chain so we can find its PDA.
-    let decoded_execute_data =
-        GatewayExecuteData::new(raw_execute_data, &gateway_root_pda, domain_separator)?;
-    let (execute_data_pda, _) = crate::get_execute_data_pda(
-        &gateway_root_pda,
-        &decoded_execute_data.hash_decoded_contents(),
-    );
-
-    // We store the raw data so we can verify it on-chain.
-    let data = to_vec(&instruction)?;
-
-    let accounts = vec![
-        AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(gateway_root_pda, false),
-        AccountMeta::new(execute_data_pda, false),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
-    ];
-
-    Ok((
-        Instruction {
-            program_id: crate::id(),
-            accounts,
-            data,
-        },
-        decoded_execute_data,
-    ))
-}
-/// Creates a [`GatewayInstruction::InitializeApproveMessagesExecuteData`]
-/// instruction.
-pub fn initialize_approve_messages_execute_data(
-    payer: Pubkey,
-    gateway_root_pda: Pubkey,
-    domain_separator: &[u8; 32],
-    // The encoded data that will be decoded on-chain.
-    raw_execute_data: &[u8],
-) -> Result<(Instruction, GatewayExecuteData<ApproveMessagesVariant>), ProgramError> {
-    let instruction = GatewayInstruction::InitializeApproveMessagesExecuteData {
-        execute_data: raw_execute_data.to_vec(),
-    };
-
-    initialize_gateway_execute_data(payer, gateway_root_pda, domain_separator, instruction)
-}
-
-/// Creates a [`GatewayInstruction::InitializeRotateSignersExecuteData`]
-/// instruction.
-pub fn initialize_rotate_signers_execute_data(
-    payer: Pubkey,
-    gateway_root_pda: Pubkey,
-    domain_separator: &[u8; 32],
-    // The encoded data that will be decoded on-chain.
-    raw_execute_data: &[u8],
-) -> Result<(Instruction, GatewayExecuteData<RotateSignersVariant>), ProgramError> {
-    let instruction = GatewayInstruction::InitializeRotateSignersExecuteData {
-        execute_data: raw_execute_data.to_vec(),
-    };
-
-    initialize_gateway_execute_data(payer, gateway_root_pda, domain_separator, instruction)
 }
 
 /// Creates a [`GatewayInstruction::InitializeConfig`] instruction.
@@ -548,195 +271,6 @@ pub fn initialize_config(
         program_id: crate::id(),
         accounts,
         data,
-    })
-}
-
-/// Creates a [`GatewayInstructon::ValidateMessage`] instruction.
-pub fn validate_message(
-    approved_message_pda: &Pubkey,
-    gateway_root_pda: &Pubkey,
-    caller: &Pubkey,
-    message_wrapper: MessageWrapper,
-) -> Result<Instruction, ProgramError> {
-    let accounts = vec![
-        AccountMeta::new(*approved_message_pda, false),
-        AccountMeta::new_readonly(*gateway_root_pda, false),
-        AccountMeta::new_readonly(*caller, true),
-    ];
-
-    let data = borsh::to_vec(&GatewayInstruction::ValidateMessage(message_wrapper))?;
-
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data,
-    })
-}
-
-/// Creates a [`GatewayInstruction::TransferOperatorship`] instruction.
-pub fn transfer_operatorship(
-    gateway_root_pda: Pubkey,
-    current_operator_or_gateway_program_owner: Pubkey,
-    new_operator: Pubkey,
-) -> Result<Instruction, ProgramError> {
-    let (programdata_pubkey, _) =
-        Pubkey::try_find_program_address(&[crate::id().as_ref()], &bpf_loader_upgradeable::id())
-            .ok_or(ProgramError::IncorrectProgramId)?;
-    let accounts = vec![
-        AccountMeta::new(gateway_root_pda, false),
-        AccountMeta::new_readonly(current_operator_or_gateway_program_owner, true),
-        AccountMeta::new_readonly(programdata_pubkey, false),
-        AccountMeta::new_readonly(new_operator, false),
-    ];
-
-    let data = borsh::to_vec(&GatewayInstruction::TransferOperatorship)?;
-
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data,
-    })
-}
-
-/// Creates a [`GatewayInstruction::InitializeExecuteDataBuffer`] instruction.
-pub fn initialize_execute_data_buffer(
-    gateway_root_pda: Pubkey,
-    payer: Pubkey,
-    buffer_size: u64,
-    user_seed: [u8; 32],
-    command_kind: CommandKind,
-) -> Result<Instruction, ProgramError> {
-    let (buffer_pda, bump_seed) = crate::get_execute_data_pda(&gateway_root_pda, &user_seed);
-
-    let accounts = vec![
-        AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(gateway_root_pda, false),
-        AccountMeta::new(buffer_pda, false),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
-    ];
-
-    let instruction = GatewayInstruction::InitializeExecuteDataBuffer {
-        buffer_size,
-        user_seed,
-        bump_seed,
-        command_kind,
-    };
-
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data: borsh::to_vec(&instruction)?,
-    })
-}
-
-/// Creates a [`GatewayInstruction::WriteExecuteDataBuffer`] instruction.
-pub fn write_execute_data_buffer(
-    gateway_root_pda: Pubkey,
-    user_seed: &[u8; 32],
-    bump_seed: u8,
-    bytes: &[u8],
-    offset: usize,
-) -> Result<Instruction, ProgramError> {
-    let buffer_pda = crate::create_execute_data_pda(&gateway_root_pda, user_seed, bump_seed)?;
-    let accounts = vec![AccountMeta::new(buffer_pda, false)];
-    let instruction = GatewayInstruction::WriteExecuteDataBuffer {
-        offset,
-        bytes: bytes.to_vec(),
-    };
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data: borsh::to_vec(&instruction)?,
-    })
-}
-
-/// Creates a [`GatewayInstruction::CommitPayloadHash`] instruction.
-pub fn commit_payload_hash(
-    gateway_root_pda: Pubkey,
-    user_seed: &[u8; 32],
-    bump_seed: u8,
-) -> Result<Instruction, ProgramError> {
-    let buffer_pda = crate::create_execute_data_pda(&gateway_root_pda, user_seed, bump_seed)?;
-    let accounts = vec![
-        AccountMeta::new_readonly(gateway_root_pda, false),
-        AccountMeta::new(buffer_pda, false),
-    ];
-    let instruction = GatewayInstruction::CommitPayloadHash {};
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data: borsh::to_vec(&instruction)?,
-    })
-}
-
-/// Creates a [`GatewayInstruction::InitializeSignatureVerification`]
-/// instruction.
-pub fn initialize_signature_verification(
-    gateway_root_pda: Pubkey,
-    user_seed: &[u8; 32],
-    bump_seed: u8,
-    signature_merkle_root: [u8; 32],
-) -> Result<Instruction, ProgramError> {
-    let buffer_pda = crate::create_execute_data_pda(&gateway_root_pda, user_seed, bump_seed)?;
-    let accounts = vec![
-        AccountMeta::new_readonly(gateway_root_pda, false),
-        AccountMeta::new(buffer_pda, false),
-    ];
-    let instruction = GatewayInstruction::InitializeSignatureVerification {
-        signature_merkle_root,
-    };
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data: borsh::to_vec(&instruction)?,
-    })
-}
-
-/// Creates a [`GatewayInstruction::VerifySignature`] instruction.
-#[allow(clippy::too_many_arguments)]
-pub fn verify_signature(
-    gateway_root_pda: Pubkey,
-    user_seed: &[u8; 32],
-    bump_seed: u8,
-    signature_bytes: Vec<u8>,
-    public_key_bytes: Vec<u8>,
-    signer_weight: u128,
-    signer_index: u8,
-    signature_merkle_proof: Vec<u8>,
-) -> Result<Instruction, ProgramError> {
-    let buffer_pda = crate::create_execute_data_pda(&gateway_root_pda, user_seed, bump_seed)?;
-    let accounts = vec![
-        AccountMeta::new_readonly(gateway_root_pda, false),
-        AccountMeta::new(buffer_pda, false),
-    ];
-
-    let instruction = GatewayInstruction::VerifySignature {
-        signature_bytes,
-        public_key_bytes,
-        signer_weight,
-        signer_index,
-        signature_merkle_proof,
-    };
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data: borsh::to_vec(&instruction)?,
-    })
-}
-
-/// Creates a [`GatewayInstruction::FinalizeExecuteDataBuffer`] instruction.
-pub fn finalize_execute_data_buffer(
-    gateway_root_pda: Pubkey,
-    user_seed: &[u8; 32],
-    bump_seed: u8,
-) -> Result<Instruction, ProgramError> {
-    let buffer_pda = crate::create_execute_data_pda(&gateway_root_pda, user_seed, bump_seed)?;
-    let accounts = vec![AccountMeta::new(buffer_pda, false)];
-    let instruction = GatewayInstruction::FinalizeExecuteDataBuffer {};
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data: borsh::to_vec(&instruction)?,
     })
 }
 
