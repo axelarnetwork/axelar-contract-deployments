@@ -89,16 +89,20 @@ jobs:
       - name: Prepare local.json
         run: |
           echo '{
-                "sui": {
-                    "name": "Sui",
-                    "axelarId": "sui",
-                    "networkType": "localnet",
-                    "tokenSymbol": "SUI",
-                    "rpc": "http://127.0.0.1:9000",
-                    "faucetUrl": "http://127.0.0.1:9123",
-                    "contracts": {}
-                }
-            }' > ./axelar-chains-config/info/local.json
+              "chains": {
+                  "sui": {
+                      "name": "Sui",
+                      "axelarId": "sui",
+                      "networkType": "localnet",
+                      "tokenSymbol": "SUI",
+                      "rpc": "http://127.0.0.1:9000",
+                      "faucetUrl": "http://127.0.0.1:9123",
+                      "contracts": {
+                          "AxelarGateway": {}
+                      }
+                  }
+              }
+          }' > ./axelar-chains-config/info/local.json
 
       # Create .env file with default hardhat private key that's prefunded
       - name: Prepare .env
