@@ -54,10 +54,9 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
     }
 }
 
-async function deploy(options, config, chain, ...args) {
+async function deploy(options, config, chain, contractName) {
     const { privateKey, wasmPath, yes } = options;
     const { rpc, networkType } = chain;
-    const contractName = args[0];
     const networkPassphrase = getNetworkPassphrase(networkType);
     const wallet = await getWallet(chain, options);
 
@@ -100,11 +99,11 @@ async function deploy(options, config, chain, ...args) {
     await broadcast(operation, wallet, chain, 'Initialized contract', options);
 }
 
-async function upgrade(options, _, chain, ..._args) {
+async function upgrade(options, _, chain, contractName) {
     const { privateKey, wasmPath, yes } = options;
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
-    const contractAddress = chain.contracts?.axelar_gateway.address;
+    const contractAddress = chain.contracts[contractName].address;
 
     if (prompt(`Proceed with upgrade on ${chain.name}?`, yes)) {
         return;
@@ -122,12 +121,12 @@ async function upgrade(options, _, chain, ..._args) {
     cmd = `${stellarCmd} contract invoke --id ${contractAddress} ${params} -- upgrade --new_wasm_hash ${newWasmHash}`;
     execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
 
-    chain.contracts.axelar_gateway.wasmHash = newWasmHash;
+    chain.contracts[contractName].wasmHash = newWasmHash;
 
     printInfo('Contract upgraded successfully!', contractAddress);
 }
 
-async function mainProcessor(options, processor, args) {
+async function mainProcessor(options, processor, contractName) {
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
 
@@ -135,17 +134,17 @@ async function mainProcessor(options, processor, args) {
         chain.contracts = {};
     }
 
-    await processor(options, config, chain, ...args);
+    await processor(options, config, chain, contractName);
     saveConfig(config, options.env);
 }
 
 function main() {
     // 1st level command
-    const program = new Command('deploy-contract').description('Deploy/Upgrade Soroban contracts on Stellar');
+    const program = new Command('deploy-contract').description('Deploy/Upgrade Stellar contracts');
 
     // 2nd level deploy command
     const deployCmd = new Command('deploy')
-        .description('Deploy a Soroban contract')
+        .description('Deploy a Stellar contract')
         .argument('<contract-name>', 'contract name to deploy')
         .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file').makeOptionMandatory(true))
         .addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'))
@@ -157,16 +156,16 @@ function main() {
                 .argParser(Number),
         )
         .action((contractName, options) => {
-            mainProcessor(options, deploy, [contractName]);
+            mainProcessor(options, deploy, contractName);
         });
 
     // 2nd level upgrade command
     const upgradeCmd = new Command('upgrade')
-        .description('Upgrade a Soroban contract')
+        .description('Upgrade a Stellar contract')
         .argument('<contract-name>', 'contract name to deploy')
         .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
         .action((contractName, options) => {
-            mainProcessor(options, upgrade, [contractName]);
+            mainProcessor(options, upgrade, contractName);
         });
 
     // Add base options to all 2nd level commands
