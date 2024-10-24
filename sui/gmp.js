@@ -18,8 +18,14 @@ const {
     utils: { arrayify },
 } = ethers;
 
-async function sendCommand(keypair, client, chain, args, options) {
+async function sendCommand(keypair, client, chains, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
+
+    if (options.env !== 'local' && !chains[destinationChain]) {
+        throw new Error(`Chain ${destinationChain} not found in the config`);
+    }
+
+    const chain = chains.sui;
     const params = options.params;
     const gasServiceObjectId = chain.contracts.GasService.objects.GasService;
     const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
@@ -50,8 +56,9 @@ async function sendCommand(keypair, client, chain, args, options) {
     await broadcast(client, keypair, tx, 'Call Sent');
 }
 
-async function execute(keypair, client, chain, args, options) {
+async function execute(keypair, client, chains, args, options) {
     const [sourceChain, messageId, sourceAddress, payload] = args;
+    const chain = chains.sui;
 
     const { Example } = chain.contracts;
 
@@ -84,7 +91,7 @@ async function processCommand(command, chain, args, options) {
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
-    await processor(command, config.chains.sui, args, options);
+    await processor(command, config.chains, args, options);
     saveConfig(config, options.env);
 }
 
