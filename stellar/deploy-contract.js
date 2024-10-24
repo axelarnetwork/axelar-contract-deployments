@@ -100,7 +100,7 @@ async function deploy(options, config, chain) {
 }
 
 async function upgrade(options, _, chain) {
-    const { contractName, privateKey, wasmPath } = options;
+    const { privateKey, wasmPath } = options;
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
     const contractAddress = chain.contracts?.axelar_gateway.address;
@@ -112,9 +112,9 @@ async function upgrade(options, _, chain) {
     const args = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
 
     let cmd = `${stellarCmd} contract install --wasm ${wasmPath} ${args}`;
-    const new_wasm_hash = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
+    const newWasmHash = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
 
-    cmd = `${stellarCmd} contract invoke --id ${contractAddress} ${args} -- upgrade --new_wasm_hash ${new_wasm_hash}`;
+    cmd = `${stellarCmd} contract invoke --id ${contractAddress} ${args} -- upgrade --new_wasm_hash ${newWasmHash}`;
     execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
 
     printInfo('Contract upgraded successfully!', contractAddress);

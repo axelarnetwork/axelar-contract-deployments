@@ -64,7 +64,7 @@ stellar contract build
 Deploy the gateway contract
 
 ```bash
-node stellar/deploy-contract.js --contract-name axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm --initialize
+node stellar/deploy-contract.js deploy axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm --initialize
 ```
 
 Provide `--estimate-cost` to show the gas costs for the initialize transaction instead of executing it.
@@ -72,7 +72,7 @@ Provide `--estimate-cost` to show the gas costs for the initialize transaction i
 ### Operators
 
 ```bash
-node stellar/deploy-contract.js --contract-name axelar_operators --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm --initialize
+node stellar/deploy-contract.js deploy axelar_operators --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm --initialize
 ```
 
 ## Generate bindings
@@ -143,22 +143,8 @@ node stellar/gateway.js rotate --new-nonce test2 --current-nonce test --signers 
 
 ### Upgrade Gateway
 
-To upgrade the gateway run the following command:
-
-1. install: the Wasm bytecode must already be installed/present on the ledger.
+To upgrade the gateway, run the following command:
 
 ```bash
-node stellar/deploy-contract.js upgrade --contract-name axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm --install
-```
-
-2. upgrade: requires the amdin's authorization to proceed, it updates the contract with the new Wasm code.
-
-```bash
-node stellar/deploy-contract.js upgrade --contract-id [contract-address] --new-wasm-hash [new-wasm-has]
-```
-
-3. version: check the version of contract
-
-```bash
-stellar contract invoke --network testnet --id [contract-address] --source-account wallet -- version
+node stellar/deploy-contract.js upgrade axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm
 ```
