@@ -118,6 +118,8 @@ async function upgrade(options, _, chain, contractName) {
     let cmd = `${stellarCmd} contract install --wasm ${wasmPath} ${params}`;
     const newWasmHash = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
 
+    printInfo('New Wasm hash', newWasmHash);
+
     cmd = `${stellarCmd} contract invoke --id ${contractAddress} ${params} -- upgrade --new_wasm_hash ${newWasmHash}`;
     execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
 
