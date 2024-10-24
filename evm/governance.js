@@ -58,13 +58,13 @@ async function getSetupParams(governance, targetContractName, target, contracts,
                 printWarn(`Gateway governor ${currGovernance} does not match governance contract: ${governance.address}`);
             }
 
-            let newGovernance = options.newGovernance || contracts.InterchainGovernance?.address;
+            let newGovernance = options.newGovernance || contracts.InterchainGovernance?.address || '0x';
 
             if (newGovernance === currGovernance) {
                 newGovernance = AddressZero;
             }
 
-            let newMintLimiter = options.newMintLimiter || contracts.Multisig?.address;
+            let newMintLimiter = options.newMintLimiter || contracts.Multisig?.address || '0x';
 
             if (newMintLimiter === `${currMintLimiter}`) {
                 newMintLimiter = AddressZero;
