@@ -67,15 +67,14 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
     await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), moveDir);
     const publishTxn = await builder.signAndExecute(keypair);
 
-    const packageId = (publishTxn.objectChanges?.find((a) => a.type === 'published') ?? []).packageId;
+    const packageId = (findPublishedObject(publishTxn) ?? []).packageId;
 
     updateMoveToml(packageName, packageId, moveDir);
     return { packageId, publishTxn };
 };
 
-const findPublishedObject = (published, packageDir, contractName) => {
-    const packageId = published.packageId;
-    return published.publishTxn.objectChanges.find((change) => change.objectType === `${packageId}::${packageDir}::${contractName}`);
+const findPublishedObject = (publishTxn) => {
+    return publishTxn.objectChanges.find((change) => change.type === 'published');
 };
 
 const checkSuiVersionMatch = () => {
@@ -237,6 +236,40 @@ const getBagContentId = async (client, objectType, bagId, bagName) => {
     return objectDetails.data.content.fields.value.fields.id.id;
 };
 
+const getTransactionList = async (client, discoveryObjectId) => {
+    const tableBcsBytes = await getBcsBytesByObjectId(client, discoveryObjectId);
+    const data = bcsStructs.relayerDiscovery.RelayerDiscovery.parse(tableBcsBytes);
+    const tableId = data.value.configurations.id;
+
+    const tableResult = await client.getDynamicFields({
+        parentId: tableId,
+    });
+
+    return tableResult.data;
+};
+
+const parseDiscoveryInfo = (suiConfig) => {
+    return {
+        discovery: suiConfig.RelayerDiscovery.objects.RelayerDiscovery,
+        packageId: suiConfig.RelayerDiscovery.address,
+    };
+};
+
+const parseGatewayInfo = (suiConfig) => {
+    return {
+        gateway: suiConfig.AxelarGateway.objects.Gateway,
+        packageId: suiConfig.AxelarGateway.address,
+    };
+};
+
+const checkTrustedAddresses = (trustedAddresses, destinationChain, destinationAddress) => {
+    if (!trustedAddresses[destinationChain] || !trustedAddresses[destinationChain].includes(destinationAddress)) {
+        throw new Error(
+            `Destination address ${destinationAddress} is not trusted on ${destinationChain}. Check if the given adress is trusted on ${destinationChain} or set trusted address with 'node sui/its-example.js setup-trusted-address <destination-chain> <destination-address>'`,
+        );
+    }
+};
+
 module.exports = {
     suiCoinId,
     getAmplifierSigners,
@@ -257,4 +290,8 @@ module.exports = {
     getSigners,
     getBagContentId,
     moveDir,
+    getTransactionList,
+    checkTrustedAddresses,
+    parseDiscoveryInfo,
+    parseGatewayInfo,
 };
