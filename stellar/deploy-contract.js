@@ -53,7 +53,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
     }
 }
 
-async function processDeploy(options, config, chain) {
+async function deploy(options, config, chain) {
     const { contractName, privateKey, wasmPath } = options;
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
@@ -61,19 +61,17 @@ async function processDeploy(options, config, chain) {
 
     if (!chain.contracts) {
         chain.contracts = {};
+        return;
     }
 
     const args = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
     const cmd = `${stellarCmd} contract deploy --wasm ${wasmPath} ${args}`;
 
-    printInfo('Executing command', cmd);
-    printInfo('Deploying contract', contractName);
-
     let contractAddress = options.address;
 
     if (!contractAddress) {
         contractAddress = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
-        printInfo('Deployed contract successfully!', contractAddress);
+        printInfo('Contract deployed successfully!', contractAddress);
     } else {
         printInfo('Using existing contract', contractAddress);
     }
@@ -101,35 +99,25 @@ async function processDeploy(options, config, chain) {
     await broadcast(operation, wallet, chain, 'Initialized contract', options);
 }
 
-async function processUpgrade(options, _, chain) {
-    const { contractName, contractId, privateKey, wasmPath, newWasmHash } = options;
+async function upgrade(options, _, chain) {
+    const { contractName, privateKey, wasmPath } = options;
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
+    const contractAddress = chain.contracts?.axelar_gateway.address;
 
-    if (!chain.contracts) {
-        chain.contracts = {};
+    if (!contractAddress) {
+        throw new Error('Stellar Gateway Address not found.');
     }
 
     const args = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
 
-    let cmd;
+    let cmd = `${stellarCmd} contract install --wasm ${wasmPath} ${args}`;
+    const new_wasm_hash = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
 
-    if (options.install) {
-        cmd = `${stellarCmd} contract install --wasm ${wasmPath} ${args}`;
-    } else {
-        cmd = `${stellarCmd} contract invoke --id ${contractId} ${args} -- upgrade --new_wasm_hash ${newWasmHash}`;
-    }
+    cmd = `${stellarCmd} contract invoke --id ${contractAddress} ${args} -- upgrade --new_wasm_hash ${new_wasm_hash}`;
+    execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
 
-    printInfo('Executing command', cmd);
-    printInfo('Deploying contract', contractName);
-
-    const result = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
-
-    if (options.install) {
-        printInfo('Contract WASM hash', result);
-    } else {
-        printInfo('Upgraded contract successfully!');
-    }
+    printInfo('Contract upgraded successfully!', contractAddress);
 }
 
 async function mainProcessor(options, processor) {
@@ -145,7 +133,7 @@ function main() {
     // 2nd level deploy command
     const deployCmd = new Command('deploy')
         .description('Deploy a Soroban contract')
-        .addOption(new Option('--contract-name <contractName>', 'contract name to deploy').makeOptionMandatory(true))
+        .argument('<contract-name>', 'contract name to deploy')
         .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file').makeOptionMandatory(true))
         .addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'))
         .addOption(new Option('--initialize', 'initialize the contract'))
@@ -155,20 +143,21 @@ function main() {
                 .default(15)
                 .argParser(Number),
         )
-        .action((options) => {
-            mainProcessor(options, processDeploy);
+        .action((contractName, options) => {
+            printInfo('Deploying contract', contractName);
+            options.contractName = contractName;
+            mainProcessor(options, deploy);
         });
 
     // 2nd level upgrade command
     const upgradeCmd = new Command('upgrade')
         .description('Upgrade a Soroban contract')
-        .addOption(new Option('--install', 'install only'))
-        .addOption(new Option('--contract-name <contractName>', 'contract name to deploy'))
+        .argument('<contract-name>', 'contract name to deploy')
         .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
-        .addOption(new Option('--contract-id <contractId>', 'contract id (address) to upgrade'))
-        .addOption(new Option('--new-wasm-hash <newWasmHash>', 'new WASM hash to upgrade'))
-        .action((options) => {
-            mainProcessor(options, processUpgrade);
+        .action((contractName, options) => {
+            printInfo('Upgrading contract', contractName);
+            options.contractName = contractName;
+            mainProcessor(options, upgrade);
         });
 
     // Add base options to all 2nd level commands
