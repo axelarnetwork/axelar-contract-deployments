@@ -127,7 +127,7 @@ async function postDeployExample(published, keypair, client, config, chain, opti
     const [gmpSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
 
     // ITS Example Params
-    const itsObjectId = config.sui.contracts.ITS?.objects?.ITS;
+    const itsObjectId = config.chains.sui.contracts.ITS?.objects?.ITS;
     const [itsSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::Singleton`]);
 
     const tx = new Transaction();
@@ -332,9 +332,9 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
 async function mainProcessor(args, options, processor) {
     const config = loadConfig(options.env);
-    const [keypair, client] = getWallet(config.sui, options);
-    await printWalletInfo(keypair, client, config.sui, options);
-    await processor(keypair, client, ...args, config, config.sui, options);
+    const [keypair, client] = getWallet(config.chains.sui, options);
+    await printWalletInfo(keypair, client, config.chains.sui, options);
+    await processor(keypair, client, ...args, config, config.chains.sui, options);
     saveConfig(config, options.env);
 
     if (options.offline) {

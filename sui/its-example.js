@@ -314,7 +314,7 @@ async function processCommand(command, chain, args, options) {
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
-    await processor(command, config.sui, args, options);
+    await processor(command, config.chains.sui, args, options);
     saveConfig(config, options.env);
 }
 
@@ -385,7 +385,7 @@ if (require.main === module) {
         .addOption(new Option('--tokenId <tokenId>', 'Token ID').default(hexlify(randomBytes(32))))
         .action((name, symbol, decimals, options) => {
             const config = loadConfig(options.env);
-            printReceiveDeploymentInfo(config.sui.contracts, [name, symbol, decimals], options);
+            printReceiveDeploymentInfo(config.chains.sui.contracts, [name, symbol, decimals], options);
         });
 
     const printReceiveTransferInfoProgram = new Command()
@@ -395,7 +395,7 @@ if (require.main === module) {
         .addOption(new Option('--itsBytes <itsBytes>', 'ITS Bytes').default(ethers.constants.HashZero))
         .action((symbol, sourceAddress, amount, options) => {
             const config = loadConfig(options.env);
-            printReceiveTransferInfo(config.sui.contracts, [symbol, sourceAddress, amount], options);
+            printReceiveTransferInfo(config.chains.sui.contracts, [symbol, sourceAddress, amount], options);
         });
 
     program.addCommand(sendTokenTransferProgram);
