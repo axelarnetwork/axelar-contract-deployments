@@ -343,11 +343,7 @@ async function processCommand(config, chain, options) {
                 throw new Error('Event not emitted in receipt.');
             }
 
-            if (!chain.contracts.InterchainGovernance) {
-                chain.contracts.InterchainGovernance = {};
-            }
-
-            chain.contracts.InterchainGovernance.address = newGovernance;
+            chain.contracts.AxelarGateway.governance = newGovernance;
 
             break;
         }
@@ -391,11 +387,7 @@ async function processCommand(config, chain, options) {
                 throw new Error('Event not emitted in receipt.');
             }
 
-            if (!chain.contracts.Multisig) {
-                chain.contracts.Multisig = {};
-            }
-
-            chain.contracts.Multisig.address = newMintLimiter;
+            chain.contracts.AxelarGateway.mintLimiter = newMintLimiter;
 
             break;
         }

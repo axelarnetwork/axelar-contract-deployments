@@ -367,23 +367,13 @@ async function deploy(config, chain, options) {
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = options.deployMethod;
     contractConfig.connectionType = 'consensus';
+    contractConfig.governance = governance;
+    contractConfig.mintLimiter = mintLimiter;
     chain.chainType = 'evm';
 
     if (options.deployMethod !== 'create') {
         contractConfig.salt = salt;
     }
-
-    if (!chain.contracts.InterchainGovernance) {
-        chain.contracts.InterchainGovernance = {};
-    }
-
-    chain.contracts.InterchainGovernance.address = governance;
-
-    if (!chain.contracts.Multisig) {
-        chain.contracts.Multisig = {};
-    }
-
-    chain.contracts.Multisig.address = mintLimiter;
 
     printInfo('Deployment status', 'SUCCESS');
 
@@ -418,18 +408,8 @@ async function upgrade(_, chain, options) {
     let governance = options.governance || chain.contracts.InterchainGovernance?.address;
     let mintLimiter = options.mintLimiter || chain.contracts.Multisig?.address;
     let setupParams = '0x';
-
-    if (!chain.contracts.InterchainGovernance) {
-        chain.contracts.InterchainGovernance = {};
-    }
-
-    chain.contracts.InterchainGovernance.address = governance;
-
-    if (!chain.contracts.Multisig) {
-        chain.contracts.Multisig = {};
-    }
-
-    chain.contracts.Multisig.address = mintLimiter;
+    contractConfig.governance = governance;
+    contractConfig.mintLimiter = mintLimiter;
 
     if (!offline) {
         if (governance && !(await isContract(governance, provider))) {

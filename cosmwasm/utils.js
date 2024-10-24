@@ -234,22 +234,6 @@ const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { Axelarn
     return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway };
 };
 
-const makeNexusGatewayInstantiateMsg = ({ nexus }, { Router: { address: router }, AxelarnetGateway: { address: axelarnetGateway } }) => {
-    if (!validateAddress(nexus)) {
-        throw new Error('Missing or invalid NexusGateway.nexus in axelar info');
-    }
-
-    if (!validateAddress(axelarnetGateway)) {
-        throw new Error('Missing or invalid AxelarnetGateway.address in axelar info');
-    }
-
-    if (!validateAddress(router)) {
-        throw new Error('Missing or invalid Router.address in axelar info');
-    }
-
-    return { nexus, axelarnet_gateway: axelarnetGateway, router };
-};
-
 const makeVotingVerifierInstantiateMsg = (
     contractConfig,
     { ServiceRegistry: { address: serviceRegistryAddress }, Rewards: { address: rewardsAddress } },
@@ -554,14 +538,6 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
             }
 
             return makeRouterInstantiateMsg(contractConfig, contracts);
-        }
-
-        case 'NexusGateway': {
-            if (chainConfig) {
-                throw new Error('NexusGateway does not support chainName option');
-            }
-
-            return makeNexusGatewayInstantiateMsg(contractConfig, contracts);
         }
 
         case 'VotingVerifier': {
