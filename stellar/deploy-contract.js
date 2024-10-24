@@ -6,6 +6,7 @@ const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const { stellarCmd, getNetworkPassphrase, getWallet, broadcast, serializeValue, addBaseOptions } = require('./utils');
 const { getDomainSeparator, getChainConfig } = require('../common');
+const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
 const {
@@ -53,19 +54,19 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
     }
 }
 
-async function deploy(options, config, chain) {
-    const { contractName, privateKey, wasmPath } = options;
+async function deploy(options, config, chain, ...args) {
+    const { privateKey, wasmPath, yes } = options;
     const { rpc, networkType } = chain;
+    const contractName = args[0];
     const networkPassphrase = getNetworkPassphrase(networkType);
     const wallet = await getWallet(chain, options);
 
-    if (!chain.contracts) {
-        chain.contracts = {};
+    if (prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
         return;
     }
 
-    const args = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
-    const cmd = `${stellarCmd} contract deploy --wasm ${wasmPath} ${args}`;
+    const params = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
+    const cmd = `${stellarCmd} contract deploy --wasm ${wasmPath} ${params}`;
 
     let contractAddress = options.address;
 
@@ -99,30 +100,42 @@ async function deploy(options, config, chain) {
     await broadcast(operation, wallet, chain, 'Initialized contract', options);
 }
 
-async function upgrade(options, _, chain) {
-    const { privateKey, wasmPath } = options;
+async function upgrade(options, _, chain, ..._args) {
+    const { privateKey, wasmPath, yes } = options;
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
     const contractAddress = chain.contracts?.axelar_gateway.address;
 
-    if (!contractAddress) {
-        throw new Error('Stellar Gateway Address not found.');
+    if (prompt(`Proceed with upgrade on ${chain.name}?`, yes)) {
+        return;
     }
 
-    const args = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
+    validateParameters({
+        isNonEmptyString: { contractAddress },
+    });
 
-    let cmd = `${stellarCmd} contract install --wasm ${wasmPath} ${args}`;
+    const params = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
+
+    let cmd = `${stellarCmd} contract install --wasm ${wasmPath} ${params}`;
     const newWasmHash = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
 
-    cmd = `${stellarCmd} contract invoke --id ${contractAddress} ${args} -- upgrade --new_wasm_hash ${newWasmHash}`;
+    cmd = `${stellarCmd} contract invoke --id ${contractAddress} ${params} -- upgrade --new_wasm_hash ${newWasmHash}`;
     execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
+
+    chain.contracts.axelar_gateway.wasmHash = newWasmHash;
 
     printInfo('Contract upgraded successfully!', contractAddress);
 }
 
-async function mainProcessor(options, processor) {
+async function mainProcessor(options, processor, args) {
     const config = loadConfig(options.env);
-    await processor(options, config, getChainConfig(config, options.chainName));
+    const chain = getChainConfig(config, options.chainName);
+
+    if (!chain.contracts) {
+        chain.contracts = {};
+    }
+
+    await processor(options, config, chain, ...args);
     saveConfig(config, options.env);
 }
 
@@ -144,9 +157,7 @@ function main() {
                 .argParser(Number),
         )
         .action((contractName, options) => {
-            printInfo('Deploying contract', contractName);
-            options.contractName = contractName;
-            mainProcessor(options, deploy);
+            mainProcessor(options, deploy, [contractName]);
         });
 
     // 2nd level upgrade command
@@ -155,9 +166,7 @@ function main() {
         .argument('<contract-name>', 'contract name to deploy')
         .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
         .action((contractName, options) => {
-            printInfo('Upgrading contract', contractName);
-            options.contractName = contractName;
-            mainProcessor(options, upgrade);
+            mainProcessor(options, upgrade, [contractName]);
         });
 
     // Add base options to all 2nd level commands
