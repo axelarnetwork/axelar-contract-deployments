@@ -1,0 +1,310 @@
+{
+  "chains": {
+    "sui": {
+      "axelarId": "sui",
+      "id": "sui"
+    },
+    "avalanche": {
+      "name": "avalanche",
+      "id": "avalanche",
+      "axelarId": "avalanche",
+      "chainId": 43113,
+      "rpc": "https://red-divine-dream.avalanche-testnet.quiknode.pro/fe8a71d7e75a6fce0f2232361b795745ae818f6a/ext/bc/C/rpc",
+      "tokenSymbol": "ETH",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "gasOptions": {
+            "gasLimit": 5000000
+          },
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "operator": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "proxyDeploymentArgs": [
+            "0x266F0D62478F94122e68980E859CB5F13B60d94A",
+            "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+            "0x000000000000000000000000c5c73c3032e0577662000887d60d279b5cc1c1ab00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000015200000000000000000000000000000000000000000000000000000000000000030000000000000000000000001487a7ac9e9c1d721d03bfb40153e785d2a8598b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000de12582278b2358fae5a35c502323caa9d9c71120000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e98f572815b362b6044b0f7754825bcbc0ea21ac0000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "9141d6f3b39cef06d47db0e8d4305ca4778e46b45d7bbd83c675ef58908a2a9c",
+          "address": "0x30c2a643cB8210c362BCbeBAe8082c19c1f95C4d",
+          "implementation": "0x266F0D62478F94122e68980E859CB5F13B60d94A",
+          "implementationCodehash": "0x321b1e3ce88b13a62ad27f2daab58ba5b59818ea21ac7e853caaac717c23bb3b",
+          "deploymentMethod": "create",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0xc6339ff730f063ac7146cb1f8f88ccc23a68530e02f08330f16dfaccbe0a0835",
+          "minimumRotationDelay": 0,
+          "connectionType": "amplifier"
+        },
+        "AxelarGasService": {
+          "collector": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "salt": "AxelarGasService",
+          "address": "0xC94aE4a471CcBC34adE78b39Ff2A6f9d12A389A3",
+          "implementation": "0x4d1B7Ca0BBd1b77Bf04e86Ee81044eEe02385213",
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB"
+        },
+        "InterchainTokenService": {
+          "gasOptions": {
+            "gasLimit": 8000000
+          },
+          "salt": "ITS 0.0.0-snapshot.b4a6870",
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "proxySalt": "ITS v1.0.0",
+          "tokenManagerDeployer": "0xB655786ba8D04B4774671Ae6aa58FE773dd2cbcA",
+          "interchainToken": "0xc8d0D2a2DD6a39BfCD6F49daf4F364dd5A8bbA09",
+          "interchainTokenDeployer": "0x807aD299b8898cE61a6A010521BcB41e6a20919E",
+          "tokenManager": "0xA0C37b30877351d7386cee5A8eD22Fa4c772851d",
+          "tokenHandler": "0x3414da43796567577FEE1bafD46762fE306E4bDA",
+          "gatewayCaller": "0x10B783F8De50845f7DCd1158ff5F01Ec8DFD4dEF",
+          "implementation": "0xEeE5145DBaD319c6D0bD78712C2A3C8e564bB657",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0x134FA683D2866BC40eCe594d1aeF4D28CE2eEe1B"
+        },
+        "InterchainGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "",
+          "minimumTimeDelay": 100,
+          "address": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB"
+        },
+        "Multisig": {
+          "signers": [
+            "0x7974A6e10B93e3508affB174c4F047f9965A4F85",
+            "0x987DA658eee3cABd227DA3280d722AB9b36F7323",
+            "0xD87974f74521fd7C2EaB6f947ada42Fe67B643C9",
+            "0xE50E91E947ad52273C6032eb8540d439624dEd8F",
+            "0x0722387C9c9a6C0Fe87e8F4991C500bB5cEB3136",
+            "0x19Fe27B335c2c0a75A46888c1dfC0516C7980396",
+            "0x0782681B18b5B62670161F60f86b0BA9545abb1A",
+            "0x1Eb42D9FEa9d836A1aa5e3b9CfcDC028717bCdE0"
+          ],
+          "threshold": 4
+        },
+        "ConstAddressDeployer": {
+          "address": "0x625bC7035420F259C0C380D63C2CFA97B567287D",
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "deploymentMethod": "create",
+          "codehash": "0x4b600dff103878d67d7c18acc899e208dda034de5a557b51186739e6e1cffff9",
+          "predeployCodehash": "0x4b600dff103878d67d7c18acc899e208dda034de5a557b51186739e6e1cffff9"
+        },
+        "Create3Deployer": {
+          "address": "0x4C8dd938c49B5E7F8F3A8717Cb199A0Eb9eCb44E",
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "salt": "ITS Factory v1.0.0",
+          "implementation": "0xaA4dfc7Dabd818f29bF12A02173d0a683137FC0e",
+          "address": "0xf3F00e343e09C458cF60C1A2768590c54B9a6E3E"
+        }
+      },
+      "chainType": "evm"
+    }
+  },
+  "axelar": {
+    "contracts": {
+      "ServiceRegistry": {
+        "governanceAccount": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+        "lastUploadedCodeId": 3,
+        "codeId": 3,
+        "address": "axelar1hrpna9v7vs3stzyd4z3xf00676kf78zpe2u5ksvljswn2vnjp3ystlgl4x"
+      },
+      "Router": {
+        "adminAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+        "governanceAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+        "lastUploadedCodeId": 1,
+        "address": "axelar163vlykge6yz2jpy4j6requdugq2ly209wgt7l3a9dadut2jw6zzqlfczpu",
+        "codeId": 1
+      },
+      "Multisig": {
+        "adminAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+        "governanceAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+        "blockExpiry": 10,
+        "lastUploadedCodeId": 6,
+        "codeId": 6,
+        "address": "axelar1466nf3zuxpya8q9emxukd7vftaf6h4psr0a07srl5zw74zh84yjq4687qd"
+      },
+      "Coordinator": {
+        "governanceAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+        "lastUploadedCodeId": 5,
+        "codeId": 5,
+        "address": "axelar1ufs3tlq4umljk0qfe8k5ya0x6hpavn897u2cnf9k0en9jr7qarqqa9263g"
+      },
+      "Rewards": {
+        "governanceAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+        "rewardsDenom": "ueurov",
+        "lastUploadedCodeId": 4,
+        "codeId": 4,
+        "address": "axelar1wkwy0xh89ksdgj9hr347dyd2dw7zesmtrue6kfzyml4vdtz6e5ws2pvc5e"
+      },
+      "AxelarnetGateway": {
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
+        "lastUploadedCodeId": 2,
+        "address": "axelar1xtdffmju0jynr36ep9jarv5awmxf4uhgzx8yhu28dlyxj2u5980sx6dkda",
+        "axelar": {
+          "codeId": 2,
+          "address": "axelar1xtdffmju0jynr36ep9jarv5awmxf4uhgzx8yhu28dlyxj2u5980sx6dkda"
+        }
+      },
+      "InterchainTokenService": {
+        "adminAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+        "governanceAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+        "lastUploadedCodeId": 7,
+        "codeId": 7,
+        "address": "axelar13ehuhysn5mqjeaheeuew2gjs785f6k7jm8vfsqg3jhtpkwppcmzqtedxty"
+      },
+      "VotingVerifier": {
+        "avalanche": {
+          "governanceAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x30c2a643cB8210c362BCbeBAe8082c19c1f95C4d",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 8,
+          "address": "axelar1qum2tr7hh4y7ruzew68c64myjec0dq2s2njf6waja5t0w879lutqv062tl"
+        },
+        "sui": {
+          "governanceAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x30c2a643cB8210c362BCbeBAe8082c19c1f95C4d",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 8,
+          "address": "axelar1s2j3f20ushkld6q42ujtq3gmywprn3tvy4289v8ss3q5kg540ulspujegc"
+        },
+        "lastUploadedCodeId": 8
+      },
+      "Gateway": {
+        "avalanche": {
+          "codeId": 9,
+          "address": "axelar1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgs0ssw84"
+        },
+        "lastUploadedCodeId": 9,
+        "sui": {
+          "codeId": 9,
+          "address": "axelar1xv6y5e7pcjn7d2xzq454u24nnrq3j3z04j0lmfkvq669n2zr2x6s5pe7rv"
+        }
+      },
+      "MultisigProver": {
+        "avalanche": {
+          "governanceAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+          "adminAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 10,
+          "domainSeparator": "0xc6339ff730f063ac7146cb1f8f88ccc23a68530e02f08330f16dfaccbe0a0835",
+          "address": "axelar19wfdqvt2rfhffpl0unulepjuwcgf0ycz3fu448u2v6f45j2c7fvqrhfvy2"
+        },
+        "lastUploadedCodeId": 10,
+        "sui": {
+          "governanceAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+          "adminAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 10,
+          "domainSeparator": "0xc6339ff730f063ac7146cb1f8f88ccc23a68530e02f08330f16dfaccbe0a0835",
+          "address": "axelar1fxqqhv9ushagx3903pfegpz0m369cr5fwajpm4yhlphl8anjzduqvaqzlw"
+        }
+      }
+    },
+    "id": "axelar",
+    "axelarId": "axelar",
+    "chainId": "devnet-euro-v1",
+    "rpc": "http://k8s-devneteu-coresent-090e8d8e31-2291a36dc76e304e.elb.us-east-2.amazonaws.com:26657",
+    "lcd": "http://k8s-devneteu-coresent-090e8d8e31-2291a36dc76e304e.elb.us-east-2.amazonaws.com:1317",
+    "grpc": "k8s-devneteu-coresent-090e8d8e31-2291a36dc76e304e.elb.us-east-2.amazonaws.com:9090",
+    "tokenSymbol": "EUROV",
+    "gasPrice": "0.00005ueurov",
+    "gasLimit": "auto"
+  },
+  "sui": {
+    "name": "Sui",
+    "axelarId": "sui",
+    "networkType": "testnet",
+    "tokenSymbol": "SUI",
+    "rpc": "https://fullnode.testnet.sui.io:443",
+    "contracts": {
+      "AxelarGateway": {
+        "address": "0xc6835bc6f92e56d4f1986c44845e27415e5e0a7b31b359a4b51799047c461cfd",
+        "objects": {
+          "Gateway": "0xe6424eed06c17f9fa254a169a514c1026f404f7492caadebefbb4cd7b71accc5",
+          "UpgradeCap": "0x211941dd929077ab26db93c3aa0d8d705592ef081c10154a2ac71fd2ce2436fe",
+          "Gatewayv0": "0xafdc7661f2a96e908e20e4b8e90c42be846d6cdbb54c4c2dac407b6677f5168d"
+        },
+        "domainSeparator": "0x1cd32bcc7235952bf17e175d9bd02ccfb6555d387d30156ca5741da5b5a3a372",
+        "operator": "0x09e0eaf3a1111f411b7aa488ed211820eb7a53a9b29741fd5ac92ea97ebea2a2",
+        "minimumRotationDelay": 0
+      },
+      "Utils": {
+        "address": "0xd57cdbe8e8ac938856ed4192515d21a1f4915d8ef5df4b445597eae9be26e4a0"
+      },
+      "VersionControl": {
+        "address": "0xf059f6326a555937d494f806ec8a21d4e1968ea0bbba77bb255860b79402d293"
+      },
+      "RelayerDiscovery": {
+        "address": "0x99820d82640e8b7828e56889b13e32314f502f2ff605fa8207f84e9fc91c14c4",
+        "objects": {
+          "RelayerDiscovery": "0xaa6bb01cd5800cadeb6124cbd37ff76e0bbf180784c8774f29ad42887ed198f8",
+          "RelayerDiscoveryv0": "0x20026b7da1889be66a0638c759a97fa7bcee47c509587fac4636b7660240aaea"
+        }
+      },
+      "GasService": {
+        "address": "0xb0c5e2c8053339446a7cfc9bf367dcff5de1fda272e06aa15bf8ce75c4c79de9",
+        "objects": {
+          "GasCollectorCap": "0x00a7413ed8944ebb671bbb28fff8e95bbd7f884884040d085590f3773fdb632b",
+          "GasService": "0xb9cf9ba3addbe83d0f76e4e98b03da698b2433ad1f83a4655f61acc471eb5a56",
+          "GasServicev0": "0x47c5847961171449bbf390d3165562327960750abd585e9432c9511fa4e36eb4"
+        }
+      },
+      "Abi": {
+        "address": "0xc650e32281d68945c45e9911832025386f0cb5c2a252447cadf54b89d5d1e24d"
+      },
+      "ITS": {
+        "address": "0xfcbda50554af9ce8e1c628c0f5754b344fa01a02ed195a152017b1424abc8658",
+        "objects": {
+          "ITS": "0xd4bb47d6e39bb18abead2a58ebd3228c6e34e9a7dbfe2eaba167b400147542b7",
+          "ITSv0": "0x8d06327e0a47d7edf799ecd0c37d075d9d698a35732d7464d3d7d72766ea0c67",
+          "ChannelId": "0x62920ce35534fa6e08beb29ca5e1859a7619ee091604cc562197758e757df59f",
+          "OwnerCap": "0x1515e1bfb37194ad985c103c74573dc92b7df5af672a04ee570fa53ed5bc67db"
+        }
+      },
+      "Example": {
+        "address": "0x720fe5b465b91e68b9b7c77e2c2127117bf74b0a8e28aed5290ae9de780c1e34",
+        "objects": {
+          "GmpSingleton": "0xacc619f6800a99e4815991fc63368e069b41f64d7852d994d38711dad9bed8c7",
+          "GmpChannelId": "0xc4955b15fc89f9e865522f12633a54537f94df7a2bb17b0fe5c9112956860f78",
+          "ItsSingleton": "0x9b84443d0eec14d7b1a63900b911fe95373c3ee0b9a0a319bed0d6d9b865e6c0",
+          "ItsChannelId": "0x3617ba3c1d296484f429a4ca90dcc162d87be56ee5b13839ae5da5bd77675b6f"
+        }
+      }
+    }
+  }
+}
