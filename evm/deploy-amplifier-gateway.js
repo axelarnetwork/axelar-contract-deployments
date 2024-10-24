@@ -282,17 +282,12 @@ async function deploy(config, chain, options) {
     contractConfig.domainSeparator = domainSeparator;
     contractConfig.minimumRotationDelay = minimumRotationDelay;
     contractConfig.connectionType = 'amplifier';
+    contractConfig.owner = owner;
     chain.chainType = 'evm';
 
     if (options.deployMethod !== 'create') {
         contractConfig.salt = salt;
     }
-
-    if (!chain.contracts.InterchainGovernance) {
-        chain.contracts.InterchainGovernance = {};
-    }
-
-    chain.contracts.InterchainGovernance.address = owner;
 
     printInfo('Deployment status', 'SUCCESS');
 
@@ -315,14 +310,7 @@ async function upgrade(_, chain, options) {
 
     const gateway = new Contract(contractConfig.address, AxelarAmplifierGateway.abi, wallet);
     let implementationCodehash = contractConfig.implementationCodehash;
-    const owner = options.owner || chain.contracts.InterchainGovernance?.address;
     const setupParams = '0x';
-
-    if (!chain.contracts.InterchainGovernance) {
-        chain.contracts.InterchainGovernance = {};
-    }
-
-    chain.contracts.InterchainGovernance.address = owner;
 
     if (!offline) {
         const codehash = await getBytecodeHash(contractConfig.implementation, chain.axelarId, provider);
@@ -349,7 +337,6 @@ async function upgrade(_, chain, options) {
 
     printInfo('Upgrading to implementation', contractConfig.implementation);
     printInfo('New Implementation codehash', implementationCodehash);
-    printInfo('Owner', owner);
     printInfo('Setup params', setupParams);
 
     const gasOptions = await getGasOptions(chain, options, contractName);

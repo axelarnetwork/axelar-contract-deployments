@@ -58,19 +58,19 @@ async function getSetupParams(governance, targetContractName, target, contracts,
                 printWarn(`Gateway governor ${currGovernance} does not match governance contract: ${governance.address}`);
             }
 
-            let newGovernance = options.newGovernance || contracts.InterchainGovernance?.address;
+            let newGovernance = options.newGovernance || contracts.InterchainGovernance?.address || AddressZero;
 
             if (newGovernance === currGovernance) {
                 newGovernance = AddressZero;
             }
 
-            let newMintLimiter = options.newMintLimiter || contracts.Multisig?.address;
+            let newMintLimiter = options.newMintLimiter || contracts.Multisig?.address || AddressZero;
 
-            if (newMintLimiter === `${currMintLimiter}`) {
+            if (newMintLimiter === currMintLimiter) {
                 newMintLimiter = AddressZero;
             }
 
-            if (newGovernance !== '0x' || newMintLimiter !== '0x') {
+            if (newGovernance !== AddressZero || newMintLimiter !== AddressZero) {
                 setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [newGovernance, newMintLimiter, '0x']);
             }
 
