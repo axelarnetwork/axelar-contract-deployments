@@ -3,7 +3,7 @@ const { getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require(
 const { toB64 } = require('@mysten/sui/utils');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
-const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator, loadConfig } = require('../common');
+const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -127,7 +127,7 @@ async function postDeployExample(published, keypair, client, config, chain, opti
     const [gmpSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
 
     // ITS Example Params
-    const itsObjectId = config.chains.sui.contracts.ITS?.objects?.ITS;
+    const itsObjectId = chain.contracts.ITS?.objects?.ITS;
     const [itsSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::Singleton`]);
 
     const tx = new Transaction();
@@ -332,9 +332,10 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
 async function mainProcessor(args, options, processor) {
     const config = loadConfig(options.env);
-    const [keypair, client] = getWallet(config.chains.sui, options);
-    await printWalletInfo(keypair, client, config.chains.sui, options);
-    await processor(keypair, client, ...args, config, config.chains.sui, options);
+    const sui = getChainConfig(config, 'sui');
+    const [keypair, client] = getWallet(sui, options);
+    await printWalletInfo(keypair, client, sui, options);
+    await processor(keypair, client, ...args, config, sui, options);
     saveConfig(config, options.env);
 
     if (options.offline) {
