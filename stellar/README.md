@@ -64,7 +64,7 @@ stellar contract build
 Deploy the gateway contract
 
 ```bash
-node stellar/deploy-contract.js --contract-name axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm --initialize
+node stellar/deploy-contract.js deploy axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm --initialize
 ```
 
 Provide `--estimate-cost` to show the gas costs for the initialize transaction instead of executing it.
@@ -72,7 +72,7 @@ Provide `--estimate-cost` to show the gas costs for the initialize transaction i
 ### Operators
 
 ```bash
-node stellar/deploy-contract.js --contract-name axelar_operators --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm --initialize
+node stellar/deploy-contract.js deploy axelar_operators --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm --initialize
 ```
 
 ## Generate bindings
@@ -99,7 +99,7 @@ To get help on the gateway commands, run:
 node stellar/gateway.js --help
 ```
 
-#### Call contract
+### Call contract
 
 ```bash
 node stellar/gateway.js call-contract [destination-chain] [dstination-address] [payload]
@@ -139,4 +139,12 @@ A signer rotation can be submitted to the gateway contract. Use `--current-nonce
 ```bash
 node stellar/gateway.js rotate --new-nonce test --signers wallet
 node stellar/gateway.js rotate --new-nonce test2 --current-nonce test --signers wallet
+```
+
+### Upgrade Gateway
+
+To upgrade the gateway, run the following command:
+
+```bash
+node stellar/deploy-contract.js upgrade axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm
 ```
