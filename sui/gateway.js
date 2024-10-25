@@ -250,14 +250,14 @@ async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
     const chain = getChainConfig(config, options.chainName);
-    const [keypair, client] = getWallet(suiConfig, options);
-    await printWalletInfo(keypair, client, suiConfig, options);
+    const [keypair, client] = getWallet(chain, options);
+    await printWalletInfo(keypair, client, chain, options);
 
-    if (!suiConfig.contracts?.AxelarGateway) {
+    if (!chain.contracts?.AxelarGateway) {
         throw new Error('Axelar Gateway package not found.');
     }
 
-    await processor(keypair, client, config, suiConfig, suiConfig.contracts.AxelarGateway, args, options);
+    await processor(keypair, client, config, chain, chain.contracts.AxelarGateway, args, options);
 
     saveConfig(config, options.env);
 }

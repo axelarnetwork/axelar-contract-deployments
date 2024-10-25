@@ -161,7 +161,7 @@ async function processCommand(command, chain, args, options) {
 async function mainProcessor(options, args, processor, command) {
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
-    await processor(command, suiConfig, args, options);
+    await processor(command, chain, args, options);
     saveConfig(config, options.env);
 }
 

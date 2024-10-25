@@ -315,7 +315,7 @@ async function processCommand(command, chain, args, options) {
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
-    await processor(command, suiConfig, args, options);
+    await processor(command, chain, args, options);
     saveConfig(config, options.env);
 }
 
@@ -387,7 +387,7 @@ if (require.main === module) {
         .action((name, symbol, decimals, options) => {
             const config = loadConfig(options.env);
             const chain = getChainConfig(config, options.chainName);
-            printReceiveDeploymentInfo(suiConfig.contracts, [name, symbol, decimals], options);
+            printReceiveDeploymentInfo(chain.contracts, [name, symbol, decimals], options);
         });
 
     const printReceiveTransferInfoProgram = new Command()
@@ -398,7 +398,7 @@ if (require.main === module) {
         .action((symbol, sourceAddress, amount, options) => {
             const config = loadConfig(options.env);
             const chain = getChainConfig(config, options.chainName);
-            printReceiveTransferInfo(suiConfig.contracts, [symbol, sourceAddress, amount], options);
+            printReceiveTransferInfo(chain.contracts, [symbol, sourceAddress, amount], options);
         });
 
     program.addCommand(sendTokenTransferProgram);
