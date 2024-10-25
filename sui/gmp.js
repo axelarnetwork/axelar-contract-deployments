@@ -81,12 +81,13 @@ async function execute(keypair, client, chains, args, options) {
     await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, 'Call Executed');
 }
 
-async function processCommand(command, chain, args, options) {
+async function processCommand(command, chains, args, options) {
+    const chain = chains.sui;
     const [keypair, client] = getWallet(chain, options);
 
     await printWalletInfo(keypair, client, chain, options);
 
-    await command(keypair, client, chain, args, options);
+    await command(keypair, client, chains, args, options);
 }
 
 async function mainProcessor(command, options, args, processor) {
