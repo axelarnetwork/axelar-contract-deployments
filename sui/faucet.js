@@ -1,7 +1,7 @@
 'use strict';
 
 const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui/faucet');
-const { saveConfig, loadConfig, printInfo, printWarn } = require('../common/utils');
+const { saveConfig, loadConfig, printInfo, printWarn, getChainConfig } = require('../common/utils');
 const { getWallet, printWalletInfo, addBaseOptions } = require('./utils');
 const { Command, Option } = require('commander');
 
@@ -28,7 +28,8 @@ async function processCommand(config, chain, options) {
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    await processor(config, config.chains.sui, options);
+    const suiConfig = getChainConfig(config, 'sui');
+    await processor(config, suiConfig, options);
     saveConfig(config, options.env);
 }
 

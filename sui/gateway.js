@@ -8,7 +8,7 @@ const {
     constants: { HashZero },
 } = ethers;
 
-const { saveConfig, printInfo, loadConfig, getMultisigProof } = require('../common/utils');
+const { saveConfig, printInfo, loadConfig, getMultisigProof, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -249,14 +249,15 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
-    const [keypair, client] = getWallet(config.chains.sui, options);
-    await printWalletInfo(keypair, client, config.chains.sui, options);
+    const suiConfig = getChainConfig(config, 'sui');
+    const [keypair, client] = getWallet(suiConfig, options);
+    await printWalletInfo(keypair, client, suiConfig, options);
 
-    if (!config.chains.sui.contracts?.AxelarGateway) {
+    if (!suiConfig.contracts?.AxelarGateway) {
         throw new Error('Axelar Gateway package not found.');
     }
 
-    await processor(keypair, client, config, config.chains.sui, config.chains.sui.contracts.AxelarGateway, args, options);
+    await processor(keypair, client, config, suiConfig, suiConfig.contracts.AxelarGateway, args, options);
 
     saveConfig(config, options.env);
 }

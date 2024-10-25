@@ -1,6 +1,6 @@
 const { Transaction } = require('@mysten/sui/transactions');
 const { Command } = require('commander');
-const { loadConfig, saveConfig, printInfo, printError } = require('../common/');
+const { loadConfig, saveConfig, printInfo, printError, getChainConfig } = require('../common/');
 const {
     addBaseOptions,
     parseSuiUnitAmount,
@@ -177,7 +177,8 @@ async function processListCommand(keypair, client, args, options) {
 
 async function mainProcessor(options, processor, args = {}) {
     const config = loadConfig(options.env);
-    const [keypair, client] = getWallet(config.chains.sui, options);
+    const suiConfig = getChainConfig(config, 'sui');
+    const [keypair, client] = getWallet(suiConfig, options);
     await processor(keypair, client, args, options);
     saveConfig(config, options.env);
 }

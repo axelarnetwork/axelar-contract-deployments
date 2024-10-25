@@ -1,6 +1,6 @@
 const { Transaction } = require('@mysten/sui/transactions');
 const { Command, Option } = require('commander');
-const { loadConfig, validateParameters } = require('../common/utils');
+const { loadConfig, validateParameters, getChainConfig } = require('../common/utils');
 const { getWallet, printWalletInfo, addExtendedOptions, broadcast } = require('./utils');
 
 async function processCommand(chain, options) {
@@ -43,7 +43,8 @@ async function processCommand(chain, options) {
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    await processor(config.chains.sui, options);
+    const suiConfig = getChainConfig(config, 'sui');
+    await processor(suiConfig, options);
 }
 
 if (require.main === module) {
