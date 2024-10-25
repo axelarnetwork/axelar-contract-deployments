@@ -43,7 +43,7 @@ async function processCommand(chain, options) {
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    await processor(config.sui, options);
+    await processor(config.chains[process.env.CHAINS], options);
 }
 
 if (require.main === module) {

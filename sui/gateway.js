@@ -249,14 +249,14 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
-    const [keypair, client] = getWallet(config.sui, options);
-    await printWalletInfo(keypair, client, config.sui, options);
+    const [keypair, client] = getWallet(config.chains[process.env.CHAINS], options);
+    await printWalletInfo(keypair, client, config.chains[process.env.CHAINS], options);
 
-    if (!config.sui.contracts?.AxelarGateway) {
+    if (!config.chains[process.env.CHAINS].contracts?.AxelarGateway) {
         throw new Error('Axelar Gateway package not found.');
     }
 
-    await processor(keypair, client, config, config.sui, config.sui.contracts.AxelarGateway, args, options);
+    await processor(keypair, client, config, config.chains[process.env.CHAINS], config.chains[process.env.CHAINS].contracts.AxelarGateway, args, options);
 
     saveConfig(config, options.env);
 }

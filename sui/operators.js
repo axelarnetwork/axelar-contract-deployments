@@ -158,8 +158,8 @@ async function removeOperator(keypair, client, gasServiceConfig, contractConfig,
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
-    const contractConfig = config.sui.contracts.Operators;
-    const gasServiceConfig = config.sui.contracts.GasService;
+    const contractConfig = config.chains[process.env.CHAINS].contracts.Operators;
+    const gasServiceConfig = config.chains[process.env.CHAINS].contracts.GasService;
 
     if (!contractConfig) {
         throw new Error('Operators package not found.');
@@ -169,8 +169,8 @@ async function mainProcessor(processor, args, options) {
         throw new Error('Gas service package not found.');
     }
 
-    const [keypair, client] = getWallet(config.sui, options);
-    await printWalletInfo(keypair, client, config.sui, options);
+    const [keypair, client] = getWallet(config.chains[process.env.CHAINS], options);
+    await printWalletInfo(keypair, client, config.chains[process.env.CHAINS], options);
     await processor(keypair, client, gasServiceConfig, contractConfig, args, options);
 }
 

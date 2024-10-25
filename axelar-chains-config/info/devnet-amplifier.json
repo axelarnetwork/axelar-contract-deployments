@@ -508,6 +508,68 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1
+    },
+    "sui-test": {
+      "name": "sui-test",
+      "axelarId": "sui-test",
+      "id": "sui-test",
+      "networkType": "testnet",
+      "tokenSymbol": "SUI",
+      "rpc": "https://fullnode.testnet.sui.io:443",
+      "contracts": {
+        "Utils": {
+          "address": "0xcb2c1c5e4b3f7315a860639beef7ce31f52e059b3f0c2cce4517d97924864b16"
+        },
+        "VersionControl": {
+          "address": "0x81ab64bdfb313b8272e5e719336f71ebde5c8c1700cc6d5507d475e8a9e01a15"
+        },
+        "AxelarGateway": {
+          "address": "0x5b4aa5b5a581f9353b74e94306e914ee2f6525a65b0ebd9df7339e9c3de809bf",
+          "objects": {
+            "Gateway": "0x28212063635843a98043f90ffc4b6c2e962bd93cce9568ecbe9ab9bee3f27118",
+            "UpgradeCap": "0x25a83934900666b0415c336fef84351046262ba1389a86f22cb85e34d2e0fb3e",
+            "Gatewayv0": "0x4ccdfec71b06df59fd401adc8b411fbb3c0d9095051f7c777f3af8b98fbd92bd"
+          },
+          "domainSeparator": "0x4902aec176976e5d3a3844ed1c37fa68ae5771f50546f24132f35c4178c09eb2",
+          "operator": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "minimumRotationDelay": 0
+        },
+        "RelayerDiscovery": {
+          "address": "0x60a053b8c6ac1cfd9fd34e7d52c4cc838f8dc167cd9d57b03a66a39a77215d18",
+          "objects": {
+            "RelayerDiscovery": "0xdb481a216855bf37a5fb8d3382ecd2e1f271b3f60ebb24d54a6d772bdebe8f0c",
+            "RelayerDiscoveryv0": "0xd633305a8d5db4d9017d8311265c38181f6406192d3ec24a809659e053831412"
+          }
+        },
+        "GasService": {
+          "address": "0x50e20d63cb9a99cf794ec8c6430cceab3c23500acd7e73485b4600e1ced3dc5b",
+          "objects": {
+            "GasCollectorCap": "0x527d849ad555e1495739887e44d3ea26eefe21e77b360d198d860c413164ab4a",
+            "GasService": "0x47cf11a85a002f26cc5d6447d9861c3ddc4ff4de1c524ded32920b932ec0c90b",
+            "GasServicev0": "0xa4df9e93b151a1547ee9f560161b9abf6f07c338db4ba09d679adc05fa3a2f77"
+          }
+        },
+        "Abi": {
+          "address": "0x46cc653637199744bf59d2b63171d7086812bb998af77d5d7b5479676f2715ab"
+        },
+        "ITS": {
+          "address": "0x99ae3d3d7389bc6b3119815a06fcd3391b50a5201f236fb99f599f002b580bcc",
+          "objects": {
+            "ITS": "0xf641c58310f35691ce01ed45b881182a7bae0c0eb70737030d7751ea3a34b6dc",
+            "ITSv0": "0xfa9534d2ca873e3af3aadd563e1bb749c457fd3ea004e96caa679a75986facea",
+            "ChannelId": "0x9a33250990aa2dcd6e36866b0a83b2725fb2e5ed49b58b043200f8beb0a6cb28"
+          }
+        },
+        "Example": {
+          "address": "0xa8ec72e3d6ee3866f94dcb7931d7286005e7ff8c62e20683baf61a9c0a74e28c",
+          "objects": {
+            "GmpSingleton": "0xc3e458d2e86f60d820b271177c93265403cfa12fb43954b79a23e436df9dc2c6",
+            "GmpChannelId": "0xd7ecb557138901f1d50b67d55923e31e130d4cad511dc83ddef31f89c9bf2030",
+            "ItsSingleton": "0xea3472c94c6a1fac406993d8d83993a95743bd2a15adbb9bfb25c03e1507b954",
+            "ItsChannelId": "0x8b4568b6cc332b4a89c421a0bd16e7eb27dffb70026fdf149e57890564b358b4"
+          }
+        }
+      }
     }
   },
   "stellar-test": {
@@ -632,7 +694,7 @@
           "codeId": 626,
           "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj"
         },
-        "lastUploadedCodeId": 626,
+        "lastUploadedCodeId": 784,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -690,6 +752,21 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "stellar",
           "address": "axelar1huyudq29jvepa04y7kaq6rwmx6d932wmdrvvdjathmkxc5wkpqqqz0c2h6"
+        },
+        "sui-test": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x5b4aa5b5a581f9353b74e94306e914ee2f6525a65b0ebd9df7339e9c3de809bf",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "base58_tx_digest_and_event_index",
+          "addressFormat": "sui",
+          "codeId": 784,
+          "address": "axelar1hxgp37tcyxm6ef0evj37c9muwxw8pxhn82h89ze49ncd49anyfkq9ah8ef"
         }
       },
       "Gateway": {
@@ -697,7 +774,7 @@
           "codeId": 616,
           "address": "axelar1agyunp32jwynnkrf92wuvac2xa7cvgthtk5yr3wh7jypg59zjjqqsqf36s"
         },
-        "lastUploadedCodeId": 752,
+        "lastUploadedCodeId": 785,
         "eth-sepolia": {
           "codeId": 616,
           "address": "axelar18zrymnzgdmutdjhqlfsslzy4yvzw8uylysjwqlq4uk4muq3qx30qde39qz"
@@ -711,6 +788,10 @@
         },
         "stellar-test": {
           "address": "axelar1vu96skmp99c3sxe85rah727e2ap92lsr4fk6zu7y7q3wjluwhmgs84ruhe"
+        },
+        "sui-test": {
+          "address": "axelar1yemuh5jq6l6g5xemjpqagklsndfnefuh3lf4u9taun45xx4cpmpq9cc6qj",
+          "codeId": 785
         }
       },
       "MultisigProver": {
@@ -730,7 +811,7 @@
           "codeId": 618,
           "address": "axelar1p22kz5jr7a9ruu8ypg40smual0uagl64dwvz5xt042vu8fa7l7dsl3wx8q"
         },
-        "lastUploadedCodeId": 618,
+        "lastUploadedCodeId": 786,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -791,6 +872,21 @@
           "keyType": "ed25519",
           "address": "axelar1njlpnavy7z942vylfhe7l8chz0dsd0xcupzywp03xe2p7t4n746qga80lw",
           "domainSeparator": "0x6edeaa190b323389a7ff6dc04abca058c9633d07b2579e20f82d2a0082d8c0d3"
+        },
+        "sui-test": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "bcs",
+          "keyType": "ecdsa",
+          "address": "axelar1v33yqgzy4sfs0lm7lu7qjxe30wdnssmecm445suyqy55a8mavvfs5y3nwq",
+          "codeId": 786,
+          "domainSeparator": "0x4902aec176976e5d3a3844ed1c37fa68ae5771f50546f24132f35c4178c09eb2"
         }
       }
     },

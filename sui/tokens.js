@@ -177,7 +177,7 @@ async function processListCommand(keypair, client, args, options) {
 
 async function mainProcessor(options, processor, args = {}) {
     const config = loadConfig(options.env);
-    const [keypair, client] = getWallet(config.sui, options);
+    const [keypair, client] = getWallet(config.chains[process.env.CHAINS], options);
     await processor(keypair, client, args, options);
     saveConfig(config, options.env);
 }
