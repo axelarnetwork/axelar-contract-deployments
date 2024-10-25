@@ -158,7 +158,7 @@ async function removeOperator(keypair, client, gasServiceConfig, contractConfig,
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
-    const suiConfig = getChainConfig(config, 'sui');
+    const suiConfig = getChainConfig(config, options.chainName);
     const contractConfig = suiConfig.contracts.Operators;
     const gasServiceConfig = suiConfig.contracts.GasService;
 

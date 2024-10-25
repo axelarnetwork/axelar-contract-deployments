@@ -249,7 +249,7 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
-    const suiConfig = getChainConfig(config, 'sui');
+    const suiConfig = getChainConfig(config, options.chainName);
     const [keypair, client] = getWallet(suiConfig, options);
     await printWalletInfo(keypair, client, suiConfig, options);
 

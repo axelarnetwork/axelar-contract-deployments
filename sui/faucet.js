@@ -28,7 +28,7 @@ async function processCommand(config, chain, options) {
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    const suiConfig = getChainConfig(config, 'sui');
+    const suiConfig = getChainConfig(config, options.chainName);
     await processor(config, suiConfig, options);
     saveConfig(config, options.env);
 }
