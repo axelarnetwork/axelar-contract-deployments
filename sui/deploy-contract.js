@@ -335,6 +335,7 @@ async function mainProcessor(args, options, processor) {
     const [keypair, client] = getWallet(config.sui, options);
 
     printInfo('Environment', options.env);
+    printInfo('Chain Name', options.chainName)
     await printWalletInfo(keypair, client, config.sui, options);
 
     await processor(keypair, client, ...args, config, config.sui, options);
