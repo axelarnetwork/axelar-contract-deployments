@@ -2496,6 +2496,7 @@
     "networkType": "testnet",
     "rpc": "https://fullnode.testnet.sui.io:443",
     "tokenSymbol": "SUI",
+    "chainType": "sui",
     "explorer": {
       "name": "Suiscan",
       "url": "https://suiscan.xyz"
