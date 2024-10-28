@@ -789,7 +789,7 @@
           "msgIdFormat": "base58_tx_digest_and_event_index",
           "addressFormat": "sui",
           "codeId": 784,
-          "address": "axelar1hxgp37tcyxm6ef0evj37c9muwxw8pxhn82h89ze49ncd49anyfkq9ah8ef"
+          "address": "axelar1hxgp37tcyxm6ef0evj37c9muwxw8pxhn82h89ze49ncd49anyfkq9ah8ef",
           "votingThreshold": [
             "6",
             "10"
