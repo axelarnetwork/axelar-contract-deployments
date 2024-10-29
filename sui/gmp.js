@@ -1,7 +1,7 @@
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { loadConfig, saveConfig } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -84,7 +84,8 @@ async function processCommand(command, chain, args, options) {
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
-    await processor(command, config.sui, args, options);
+    const chain = getChainConfig(config, options.chainName);
+    await processor(command, chain, args, options);
     saveConfig(config, options.env);
 }
 
