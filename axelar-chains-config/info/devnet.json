@@ -1,8 +1,8 @@
 {
   "chains": {
-    "sui": {
-      "axelarId": "sui",
-      "id": "sui"
+    "sui-test": {
+      "axelarId": "sui-test",
+      "id": "sui-test"
     },
     "avalanche": {
       "name": "avalanche",
@@ -173,20 +173,20 @@
           "codeId": 8,
           "address": "axelar1qum2tr7hh4y7ruzew68c64myjec0dq2s2njf6waja5t0w879lutqv062tl"
         },
-        "sui": {
+        "sui-test": {
           "governanceAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
           "serviceName": "validators",
-          "sourceGatewayAddress": "0x30c2a643cB8210c362BCbeBAe8082c19c1f95C4d",
+          "sourceGatewayAddress": "0xfbb60f42b49d177d03f3a15ffe057294d19683e551049e74f7abe5cb835d38e8",
           "votingThreshold": [
             "6",
             "10"
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
+          "msgIdFormat": "base58_tx_digest_and_event_index",
+          "addressFormat": "sui",
           "codeId": 8,
-          "address": "axelar1s2j3f20ushkld6q42ujtq3gmywprn3tvy4289v8ss3q5kg540ulspujegc"
+          "address": "axelar1jssp9jl522h0y87kvxqxl83g0nz9ae7zu0k3c2250shff0hxqjvqxsxv05"
         },
         "lastUploadedCodeId": 8
       },
@@ -196,9 +196,9 @@
           "address": "axelar1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgs0ssw84"
         },
         "lastUploadedCodeId": 9,
-        "sui": {
+        "sui-test": {
           "codeId": 9,
-          "address": "axelar1xv6y5e7pcjn7d2xzq454u24nnrq3j3z04j0lmfkvq669n2zr2x6s5pe7rv"
+          "address": "axelar1n85xr6wyz58nnz4edgmvzf9r375stt9xlr7gkjk6lct9cwrf2d4qwh9rat"
         }
       },
       "MultisigProver": {
@@ -218,7 +218,7 @@
           "address": "axelar19wfdqvt2rfhffpl0unulepjuwcgf0ycz3fu448u2v6f45j2c7fvqrhfvy2"
         },
         "lastUploadedCodeId": 10,
-        "sui": {
+        "sui-test": {
           "governanceAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
           "adminAddress": "axelar1zsx0kd32ter4fljqus8ce06h075w9qtcdph9k5",
           "signingThreshold": [
@@ -227,11 +227,11 @@
           ],
           "serviceName": "validators",
           "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
+          "encoder": "bcs",
           "keyType": "ecdsa",
           "codeId": 10,
-          "domainSeparator": "0xc6339ff730f063ac7146cb1f8f88ccc23a68530e02f08330f16dfaccbe0a0835",
-          "address": "axelar1fxqqhv9ushagx3903pfegpz0m369cr5fwajpm4yhlphl8anjzduqvaqzlw"
+          "domainSeparator": "0x12c85a7b1ebf6c158a1db48f134d5611f4c9a9cd985b3f6e4e51bcbb6a298b84",
+          "address": "axelar12nf6zj9ffh5w3mml98urr77wllm74gs6emwu32p9acundsgn0kuqm8gy4w"
         }
       }
     },
@@ -247,62 +247,62 @@
   },
   "sui": {
     "name": "Sui",
-    "axelarId": "sui",
+    "axelarId": "sui-test",
     "networkType": "testnet",
     "tokenSymbol": "SUI",
     "rpc": "https://fullnode.testnet.sui.io:443",
     "contracts": {
+      "Utils": {
+        "address": "0x74605ebbfc412011cbf95b50efa9838cc7da746dda31cd42a315e9f13ce5f7f7"
+      },
+      "VersionControl": {
+        "address": "0xf8930c1d85aa1def98f4cde3323b5840a01b773141fe5f8b931af8e8aea44d6a"
+      },
       "AxelarGateway": {
-        "address": "0xc6835bc6f92e56d4f1986c44845e27415e5e0a7b31b359a4b51799047c461cfd",
+        "address": "0xfbb60f42b49d177d03f3a15ffe057294d19683e551049e74f7abe5cb835d38e8",
         "objects": {
-          "Gateway": "0xe6424eed06c17f9fa254a169a514c1026f404f7492caadebefbb4cd7b71accc5",
-          "UpgradeCap": "0x211941dd929077ab26db93c3aa0d8d705592ef081c10154a2ac71fd2ce2436fe",
-          "Gatewayv0": "0xafdc7661f2a96e908e20e4b8e90c42be846d6cdbb54c4c2dac407b6677f5168d"
+          "Gateway": "0x67bd9e71144ca6f4bf7292c01a461bf3dc2d1546bd4579cb80915f2587164cc5",
+          "UpgradeCap": "0xe78f168f94f04f15c47e2826f5b8997574dd1fcf4d9647827dff29f71f9d0d4e",
+          "Gatewayv0": "0x974269cbf703b657ef76a748df86a1f9cae84a525bcc40f8e92b03b3a66baebf"
         },
-        "domainSeparator": "0x1cd32bcc7235952bf17e175d9bd02ccfb6555d387d30156ca5741da5b5a3a372",
+        "domainSeparator": "0x12c85a7b1ebf6c158a1db48f134d5611f4c9a9cd985b3f6e4e51bcbb6a298b84",
         "operator": "0x09e0eaf3a1111f411b7aa488ed211820eb7a53a9b29741fd5ac92ea97ebea2a2",
         "minimumRotationDelay": 0
       },
-      "Utils": {
-        "address": "0xd57cdbe8e8ac938856ed4192515d21a1f4915d8ef5df4b445597eae9be26e4a0"
-      },
-      "VersionControl": {
-        "address": "0xf059f6326a555937d494f806ec8a21d4e1968ea0bbba77bb255860b79402d293"
-      },
       "RelayerDiscovery": {
-        "address": "0x99820d82640e8b7828e56889b13e32314f502f2ff605fa8207f84e9fc91c14c4",
+        "address": "0x618ad679618672e79233efc1653c498e78bffc99c38b431c685a0341c4dc41b6",
         "objects": {
-          "RelayerDiscovery": "0xaa6bb01cd5800cadeb6124cbd37ff76e0bbf180784c8774f29ad42887ed198f8",
-          "RelayerDiscoveryv0": "0x20026b7da1889be66a0638c759a97fa7bcee47c509587fac4636b7660240aaea"
+          "RelayerDiscovery": "0x8e0925919ae41ca63d9d233d93fe8bf3084210373c4fd9031eed1eec3232efd3",
+          "RelayerDiscoveryv0": "0x0445dbb19a72bc9266aa431ddde1950b4997edd5efa4acb1be1a3999649d47a7"
         }
       },
       "GasService": {
-        "address": "0xb0c5e2c8053339446a7cfc9bf367dcff5de1fda272e06aa15bf8ce75c4c79de9",
+        "address": "0x1615f504a08fa5d88421a6d63ca67aee9b0238f7d5a2619c11eb8a7d24cd7994",
         "objects": {
-          "GasCollectorCap": "0x00a7413ed8944ebb671bbb28fff8e95bbd7f884884040d085590f3773fdb632b",
-          "GasService": "0xb9cf9ba3addbe83d0f76e4e98b03da698b2433ad1f83a4655f61acc471eb5a56",
-          "GasServicev0": "0x47c5847961171449bbf390d3165562327960750abd585e9432c9511fa4e36eb4"
+          "GasCollectorCap": "0x5f8962df851af6c580289df6c0d077e5b4604f3b93d6b17ad0c0e66d297dbcf9",
+          "GasService": "0x57652cca4732bbc619a0a6802bb72693ce8489ed0a5996ef8f0fb0452cc9c534",
+          "GasServicev0": "0xfde5e7a335bf22ae0a0ea3008b8215624bf2516d882221afa59398bcfec7be55"
         }
       },
       "Abi": {
-        "address": "0xc650e32281d68945c45e9911832025386f0cb5c2a252447cadf54b89d5d1e24d"
+        "address": "0xdb839a46923d10fe6b12d84740580ec6b528645f95c6675820a3a026634af6a3"
       },
       "ITS": {
-        "address": "0xfcbda50554af9ce8e1c628c0f5754b344fa01a02ed195a152017b1424abc8658",
+        "address": "0x7911a5429441428a6e9236991c135fc2ac21bdf7bf03c35f5f9d6ddca1290689",
         "objects": {
-          "ITS": "0xd4bb47d6e39bb18abead2a58ebd3228c6e34e9a7dbfe2eaba167b400147542b7",
-          "ITSv0": "0x8d06327e0a47d7edf799ecd0c37d075d9d698a35732d7464d3d7d72766ea0c67",
-          "ChannelId": "0x62920ce35534fa6e08beb29ca5e1859a7619ee091604cc562197758e757df59f",
-          "OwnerCap": "0x1515e1bfb37194ad985c103c74573dc92b7df5af672a04ee570fa53ed5bc67db"
+          "ITS": "0x802cd9812fcf3804efdb819e76759bdac41062b4c58b6d64a3edeb8d51cce809",
+          "ITSv0": "0x5d834df567d787483a7f36dcb2d14160c51c9bed5f033005bdca42271336d947",
+          "ChannelId": "0x3dbb03e7843b098db62e76dd0748636c88b370d6633f2ab54f8cf2ebf61bef16",
+          "OwnerCap": "0xdbcea02946b7b22cea7c2b234556c521378982566ac0197f7c87a05974550804"
         }
       },
       "Example": {
-        "address": "0x720fe5b465b91e68b9b7c77e2c2127117bf74b0a8e28aed5290ae9de780c1e34",
+        "address": "0x6f7ab7f703de75750fbf202370f144b6ee1d42731d0b98bbe5b37ee30ed7c6b4",
         "objects": {
-          "GmpSingleton": "0xacc619f6800a99e4815991fc63368e069b41f64d7852d994d38711dad9bed8c7",
-          "GmpChannelId": "0xc4955b15fc89f9e865522f12633a54537f94df7a2bb17b0fe5c9112956860f78",
-          "ItsSingleton": "0x9b84443d0eec14d7b1a63900b911fe95373c3ee0b9a0a319bed0d6d9b865e6c0",
-          "ItsChannelId": "0x3617ba3c1d296484f429a4ca90dcc162d87be56ee5b13839ae5da5bd77675b6f"
+          "GmpSingleton": "0xcfd4267f3bd37ead314b56e3ec4b2920ecb473349cb0fc2fce2e3eedf70ccaa7",
+          "GmpChannelId": "0xf8c3034d3f4be611432298a5d2cc09e85790e7e1cb70ef1b8ce791ff70e6d772",
+          "ItsSingleton": "0x7db9f927a17bc50772d154d678f0c2d8dccb2786d7991e7724cacaea9c2c2b35",
+          "ItsChannelId": "0x26c036d5d049cbff72b0c12732fe18a932129fcdd368d9233adde0f53110ccd4"
         }
       }
     }
