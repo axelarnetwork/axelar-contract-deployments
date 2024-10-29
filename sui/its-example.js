@@ -1,6 +1,6 @@
 const { Command, Option } = require('commander');
 const { ITSMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, printInfo } = require('../common/utils');
+const { loadConfig, saveConfig, printInfo, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -314,7 +314,8 @@ async function processCommand(command, chain, args, options) {
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
-    await processor(command, config.sui, args, options);
+    const chain = getChainConfig(config, options.chainName);
+    await processor(command, chain, args, options);
     saveConfig(config, options.env);
 }
 
@@ -385,7 +386,8 @@ if (require.main === module) {
         .addOption(new Option('--tokenId <tokenId>', 'Token ID').default(hexlify(randomBytes(32))))
         .action((name, symbol, decimals, options) => {
             const config = loadConfig(options.env);
-            printReceiveDeploymentInfo(config.sui.contracts, [name, symbol, decimals], options);
+            const chain = getChainConfig(config, options.chainName);
+            printReceiveDeploymentInfo(chain.contracts, [name, symbol, decimals], options);
         });
 
     const printReceiveTransferInfoProgram = new Command()
@@ -395,7 +397,8 @@ if (require.main === module) {
         .addOption(new Option('--itsBytes <itsBytes>', 'ITS Bytes').default(ethers.constants.HashZero))
         .action((symbol, sourceAddress, amount, options) => {
             const config = loadConfig(options.env);
-            printReceiveTransferInfo(config.sui.contracts, [symbol, sourceAddress, amount], options);
+            const chain = getChainConfig(config, options.chainName);
+            printReceiveTransferInfo(chain.contracts, [symbol, sourceAddress, amount], options);
         });
 
     program.addCommand(sendTokenTransferProgram);

@@ -248,17 +248,17 @@ const getTransactionList = async (client, discoveryObjectId) => {
     return tableResult.data;
 };
 
-const parseDiscoveryInfo = (suiConfig) => {
+const parseDiscoveryInfo = (chain) => {
     return {
-        discovery: suiConfig.RelayerDiscovery.objects.RelayerDiscovery,
-        packageId: suiConfig.RelayerDiscovery.address,
+        discovery: chain.RelayerDiscovery.objects.RelayerDiscovery,
+        packageId: chain.RelayerDiscovery.address,
     };
 };
 
-const parseGatewayInfo = (suiConfig) => {
+const parseGatewayInfo = (chain) => {
     return {
-        gateway: suiConfig.AxelarGateway.objects.Gateway,
-        packageId: suiConfig.AxelarGateway.address,
+        gateway: chain.AxelarGateway.objects.Gateway,
+        packageId: chain.AxelarGateway.address,
     };
 };
 
