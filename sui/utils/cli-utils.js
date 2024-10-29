@@ -10,6 +10,7 @@ const addBaseOptions = (program, options = {}) => {
     addEnvOption(program);
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
     program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
+    program.addOption(new Option('--chainName', 'chainName').default('sui'));
 
     if (!options.ignorePrivateKey) {
         program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
