@@ -5,15 +5,9 @@ edition = "2021"
 
 [dependencies]
 anyhow.workspace = true
-axelar-wasm-std.workspace = true
 borsh.workspace = true
 connection-router.workspace = true
-cosmwasm-std.workspace = true
-hex.workspace = true
 itertools.workspace = true
-libsecp256k1.workspace = true
-rand.workspace = true
-signature.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
 tokio.workspace = true

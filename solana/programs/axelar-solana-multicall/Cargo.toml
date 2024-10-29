@@ -19,7 +19,6 @@ axelar-executable.workspace = true
 axelar-message-primitives.workspace = true
 borsh.workspace = true
 gateway = { workspace = true, features = ["no-entrypoint"] }
-itertools.workspace = true
 solana-program.workspace = true
 
 [dev-dependencies]

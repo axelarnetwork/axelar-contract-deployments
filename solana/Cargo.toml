@@ -149,6 +149,9 @@ git = "https://github.com/axelarnetwork/axelar-amplifier"
 rev = "c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
 features = ["library"]
 
+[workspace.metadata.cargo-machete]
+ignored = ["num-traits"]
+
 [profile.release]
 overflow-checks = true
 lto = "fat"

@@ -15,9 +15,6 @@ test-sbf = []
 
 [dependencies]
 solana-program.workspace = true
-borsh.workspace = true
-axelar-executable = { workspace = true }
-gateway = { workspace = true, features = ["no-entrypoint"] }
 program-utils.workspace = true
 governance-gmp.workspace = true
 rkyv.workspace = true
