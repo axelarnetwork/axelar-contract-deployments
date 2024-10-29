@@ -101,6 +101,12 @@ impl From<U256> for bnum::types::U256 {
     }
 }
 
+impl From<U256> for alloy_primitives::U256 {
+    fn from(val: U256) -> Self {
+        alloy_primitives::U256::from_le_bytes(val.to_le_bytes())
+    }
+}
+
 impl Display for U256 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let as_bnum = bnum::types::U256::from_digits(self.0);

@@ -16,10 +16,22 @@ use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
 
+use super::LocalAction;
 use crate::instructions::Bumps;
 use crate::processor::token_manager as token_manager_processor;
 use crate::seed_prefixes;
 use crate::state::token_manager::TokenManager;
+
+impl LocalAction for InterchainTransfer {
+    fn process_local_action<'a>(
+        self,
+        payer: &AccountInfo<'a>,
+        accounts: &[AccountInfo<'a>],
+        bumps: Bumps,
+    ) -> ProgramResult {
+        process_transfer(payer, accounts, &self, bumps)
+    }
+}
 
 /// Processes an incoming [`InterchainTransfer`] GMP message.
 ///

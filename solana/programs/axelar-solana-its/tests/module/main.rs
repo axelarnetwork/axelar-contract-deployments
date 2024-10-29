@@ -7,6 +7,7 @@
 )]
 
 mod deploy_interchain_token;
+mod deploy_token_manager;
 mod from_solana_to_evm;
 mod initialize;
 mod its_gmp_payload;

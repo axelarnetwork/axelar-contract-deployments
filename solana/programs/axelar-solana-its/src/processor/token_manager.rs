@@ -7,13 +7,26 @@ use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::program_option::COption;
+use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
 use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions};
 use spl_token_2022::state::Mint;
 
+use super::LocalAction;
 use crate::instructions::Bumps;
 use crate::seed_prefixes;
 use crate::state::token_manager::{self, TokenManager};
+
+impl LocalAction for DeployTokenManager {
+    fn process_local_action<'a>(
+        self,
+        payer: &AccountInfo<'a>,
+        accounts: &[AccountInfo<'a>],
+        bumps: Bumps,
+    ) -> ProgramResult {
+        process_deploy(payer, accounts, &self, bumps)
+    }
+}
 
 /// Processes a [`DeployTokenManager`] GMP message.
 ///
@@ -40,7 +53,7 @@ pub fn process_deploy<'a>(
 
     let deploy_token_manager = DeployTokenManagerInternal::new(
         payload.token_manager_type.try_into()?,
-        PublicKey::new_ed25519(payload.token_id.0),
+        payload.token_id.0,
         operator,
         token_address,
         None,
@@ -58,18 +71,18 @@ pub(crate) struct DeployTokenManagerInternal<'a> {
 }
 
 impl<'a> DeployTokenManagerInternal<'a> {
-    pub(crate) const fn new(
+    pub(crate) fn new(
         token_manager_type: token_manager::Type,
-        token_id: PublicKey,
-        operator: Option<PublicKey>,
-        token_address: PublicKey,
+        token_id: [u8; 32],
+        operator: Option<Pubkey>,
+        token_address: Pubkey,
         additional_minter: Option<AccountInfo<'a>>,
     ) -> Self {
         Self {
             token_manager_type,
-            token_id,
-            operator,
-            token_address,
+            token_id: PublicKey::new_ed25519(token_id),
+            operator: operator.map(|op| PublicKey::new_ed25519(op.to_bytes())),
+            token_address: PublicKey::new_ed25519(token_address.to_bytes()),
             additional_minter,
         }
     }

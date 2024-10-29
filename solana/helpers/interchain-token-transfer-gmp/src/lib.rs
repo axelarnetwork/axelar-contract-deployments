@@ -112,6 +112,24 @@ impl GMPPayload {
     }
 }
 
+impl From<InterchainTransfer> for GMPPayload {
+    fn from(data: InterchainTransfer) -> Self {
+        GMPPayload::InterchainTransfer(data)
+    }
+}
+
+impl From<DeployInterchainToken> for GMPPayload {
+    fn from(data: DeployInterchainToken) -> Self {
+        GMPPayload::DeployInterchainToken(data)
+    }
+}
+
+impl From<DeployTokenManager> for GMPPayload {
+    fn from(data: DeployTokenManager) -> Self {
+        GMPPayload::DeployTokenManager(data)
+    }
+}
+
 #[cfg(test)]
 mod tests {
 

@@ -710,6 +710,7 @@ dependencies = [
 name = "axelar-message-primitives"
 version = "0.1.0"
 dependencies = [
+ "alloy-primitives",
  "alloy-sol-types",
  "bnum",
  "borsh 1.5.1",

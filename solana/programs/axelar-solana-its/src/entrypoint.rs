@@ -6,7 +6,7 @@ use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::pubkey::Pubkey;
 
-use crate::processor::Processor;
+use crate::processor;
 
 solana_program::entrypoint!(process_instruction);
 
@@ -15,5 +15,5 @@ fn process_instruction<'a: 'b, 'b>(
     accounts: &'a [AccountInfo<'b>],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    Processor::process_instruction(program_id, accounts, instruction_data)
+    processor::process_instruction(program_id, accounts, instruction_data)
 }

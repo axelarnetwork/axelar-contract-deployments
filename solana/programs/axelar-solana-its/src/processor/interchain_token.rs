@@ -1,11 +1,7 @@
 //! Module that handles the processing of the `InterchainToken` deployment.
 
 use alloy_primitives::hex;
-use alloy_sol_types::SolValue;
-use axelar_message_primitives::U256;
-use axelar_rkyv_encoding::types::PublicKey;
 use interchain_token_transfer_gmp::DeployInterchainToken;
-use program_utils::check_rkyv_initialized_pda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::{invoke, invoke_signed};
@@ -22,11 +18,23 @@ use spl_token_metadata_interface::instruction::{initialize as initialize_metadat
 use spl_token_metadata_interface::state::{Field, TokenMetadata};
 
 use super::token_manager::DeployTokenManagerInternal;
+use super::LocalAction;
 use crate::instructions::Bumps;
 use crate::seed_prefixes;
-use crate::state::{token_manager, InterchainTokenService};
+use crate::state::token_manager;
 
 const TOKEN_ID_KEY: &str = "token_id";
+
+impl LocalAction for DeployInterchainToken {
+    fn process_local_action<'a>(
+        self,
+        payer: &AccountInfo<'a>,
+        accounts: &[AccountInfo<'a>],
+        bumps: Bumps,
+    ) -> ProgramResult {
+        process_deploy(payer, accounts, self, bumps)
+    }
+}
 
 /// Processes a [`DeployInterchainToken`] GMP message.
 ///
@@ -51,14 +59,18 @@ pub fn process_deploy<'a>(
     let _rent_sysvar = next_account_info(accounts_iter)?;
     let additional_minter_account = next_account_info(accounts_iter).ok();
 
-    let token_id = PublicKey::new_ed25519(payload.token_id.0);
-
-    setup_mint(payer, accounts, bumps, payload.decimals, token_id)?;
+    setup_mint(
+        payer,
+        accounts,
+        bumps,
+        payload.decimals,
+        &payload.token_id.0,
+    )?;
     setup_metadata(
         payer,
         accounts,
         bumps,
-        token_id,
+        &payload.token_id.0,
         payload.name,
         payload.symbol,
         String::new(),
@@ -66,61 +78,13 @@ pub fn process_deploy<'a>(
 
     let deploy_token_manager = DeployTokenManagerInternal::new(
         token_manager::Type::NativeInterchainToken,
-        token_id,
-        Some(PublicKey::new_ed25519(token_manager_pda.key.to_bytes())),
-        PublicKey::Ed25519(token_mint.key.to_bytes()),
+        payload.token_id.0,
+        Some(*token_manager_pda.key),
+        *token_mint.key,
         additional_minter_account.cloned(),
     );
 
     super::token_manager::deploy(payer, accounts, bumps, deploy_token_manager)?;
-
-    Ok(())
-}
-
-/// Processes a request to [`DeployInterchainToken`] on a remote chain.
-///
-/// # Errors
-///
-/// An error occurred when processing the message. The reason can be derived
-/// from the logs.
-pub fn process_remote_deploy(
-    accounts: &[AccountInfo<'_>],
-    payload: &DeployInterchainToken,
-    destination_chain: String,
-    _gas_value: U256,
-) -> ProgramResult {
-    // TODO: Make sure destination chain is not solana, if it is, bail.
-    let accounts_iter = &mut accounts.iter();
-    let gateway_root_pda = next_account_info(accounts_iter)?;
-    let _gateway_program_id = next_account_info(accounts_iter)?;
-    let its_root_pda = next_account_info(accounts_iter)?;
-    let its_root_pda_data = its_root_pda.try_borrow_data()?;
-    let its_state = check_rkyv_initialized_pda::<InterchainTokenService>(
-        &crate::id(),
-        its_root_pda,
-        *its_root_pda_data,
-    )?;
-
-    // TODO: Get chain's trusted address.
-    let destination_address = String::new();
-
-    // TODO: Call gas service to pay gas fee.
-
-    invoke_signed(
-        &gateway::instructions::call_contract(
-            *gateway_root_pda.key,
-            *its_root_pda.key,
-            destination_chain,
-            destination_address,
-            payload.abi_encode_params(),
-        )?,
-        &[its_root_pda.clone(), gateway_root_pda.clone()],
-        &[&[
-            seed_prefixes::ITS_SEED,
-            gateway_root_pda.key.as_ref(),
-            &[its_state.bump],
-        ]],
-    )?;
 
     Ok(())
 }
@@ -130,7 +94,7 @@ fn setup_mint<'a>(
     accounts: &[AccountInfo<'a>],
     bumps: Bumps,
     decimals: u8,
-    token_id: PublicKey,
+    token_id: &[u8],
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let system_account = next_account_info(accounts_iter)?;
@@ -167,7 +131,7 @@ fn setup_mint<'a>(
         &[&[
             seed_prefixes::INTERCHAIN_TOKEN_SEED,
             its_root_pda.key.as_ref(),
-            token_id.as_ref(),
+            token_id,
             &[bumps.interchain_token_pda_bump],
         ]],
     )?;
@@ -205,7 +169,7 @@ fn setup_metadata<'a>(
     payer: &AccountInfo<'a>,
     accounts: &[AccountInfo<'a>],
     bumps: Bumps,
-    token_id: PublicKey,
+    token_id: &[u8],
     name: String,
     symbol: String,
     uri: String,
@@ -224,7 +188,7 @@ fn setup_metadata<'a>(
     let rent = Rent::get()?;
     let (interchain_token_pda, _) = crate::create_interchain_token_pda(
         its_root_pda.key,
-        token_id.as_ref(),
+        token_id,
         bumps.interchain_token_pda_bump,
     );
 
@@ -234,7 +198,7 @@ fn setup_metadata<'a>(
         symbol,
         uri,
         mint: *token_mint.key,
-        additional_metadata: vec![(TOKEN_ID_KEY.to_owned(), hex::encode(token_id.as_ref()))],
+        additional_metadata: vec![(TOKEN_ID_KEY.to_owned(), hex::encode(token_id))],
     };
 
     let mint_state =
@@ -279,7 +243,7 @@ fn setup_metadata<'a>(
             token_mint.key,
             token_manager_pda.key,
             Field::Key(TOKEN_ID_KEY.to_owned()),
-            hex::encode(token_id.as_ref()),
+            hex::encode(token_id),
         ),
         &[
             token_mint.clone(),

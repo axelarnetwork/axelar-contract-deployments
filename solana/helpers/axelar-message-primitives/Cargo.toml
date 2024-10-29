@@ -8,6 +8,7 @@ edition = "2021"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
+alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 bnum.workspace = true
 borsh.workspace = true

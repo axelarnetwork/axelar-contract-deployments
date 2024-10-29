@@ -6,7 +6,7 @@ use std::error::Error;
 use axelar_message_primitives::{DataPayload, DestinationProgramId, U256};
 use axelar_rkyv_encoding::types::{GmpMetadata, PublicKey};
 use gateway::hasher_impl;
-use interchain_token_transfer_gmp::GMPPayload;
+use interchain_token_transfer_gmp::{DeployInterchainToken, DeployTokenManager, GMPPayload};
 use rkyv::bytecheck::EnumCheckError;
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
@@ -80,6 +80,30 @@ pub enum InterchainTokenServiceInstruction {
         /// The deploy params containing token metadata as well as other
         /// required inputs.
         params: DeployInterchainTokenInputs,
+
+        /// The PDA bumps for the ITS accounts, required if deploying the token
+        /// on the local chain.
+        bumps: Option<Bumps>,
+    },
+
+    /// Deploys a token manager
+    ///
+    /// 0. [writeable,signer] The address of payer / sender
+    /// 1. [] Gateway root pda
+    /// 2. [] System program id if local deployment OR Gateway program if remote
+    ///    deployment
+    /// 3. [] ITS root pda
+    /// 4. [writeable] Token Manager PDA (if local deployment)
+    /// 5. [writeable] The mint account to be created (if local deployment)
+    /// 6. [writeable] The Token Manager ATA (if local deployment)
+    /// 7. [] Token program id (if local deployment)
+    /// 8. [] Associated token program id (if local deployment)
+    /// 9. [] Rent sysvar (if local deployment)
+    /// 10. [] The minter account (if local deployment)
+    DeployTokenManager {
+        /// The deploy params containing token metadata as well as other
+        /// required inputs.
+        params: DeployTokenManagerInputs,
 
         /// The PDA bumps for the ITS accounts, required if deploying the token
         /// on the local chain.
@@ -173,30 +197,65 @@ pub struct DeployInterchainTokenInputs {
     #[builder(setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
     pub(crate) payer: PublicKey,
 
-    ///(crate) The salt used to derive the tokenId associated with the token
+    /// The salt used to derive the tokenId associated with the token
     pub(crate) salt: [u8; 32],
 
-    ///(crate) The chain where the `InterchainToken` should be deployed.
+    /// The chain where the `InterchainToken` should be deployed.
     /// Deploys to (crate) Solana if `None`.
     #[builder(default, setter(strip_option))]
     pub(crate) destination_chain: Option<String>,
 
-    ///(crate) Token name
+    /// Token name
     pub(crate) name: String,
 
-    ///(crate) Token symbol
+    /// Token symbol
     pub(crate) symbol: String,
 
-    ///(crate) Token decimals
+    /// Token decimals
     pub(crate) decimals: u8,
 
-    ///(crate) The minter account
+    /// The minter account
     pub(crate) minter: Vec<u8>,
 
-    ///(crate) The gas value to be paid for the deploy transaction
-
+    /// The gas value to be paid for the deploy transaction
     #[builder(setter(transform = |x: u128| U256::from(x)))]
     pub(crate) gas_value: U256,
+}
+
+/// Parameters for `[InterchainTokenServiceInstruction::DeployTokenManager]`.
+///
+/// To construct this type, use its builder API.
+#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, TypedBuilder)]
+#[archive(compare(PartialEq))]
+#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+pub struct DeployTokenManagerInputs {
+    /// The payer account for this transaction
+    #[builder(setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
+    pub(crate) payer: PublicKey,
+
+    /// The salt used to derive the tokenId associated with the token
+    pub(crate) salt: [u8; 32],
+
+    /// The chain where the `TokenManager` should be deployed.
+    /// Deploys to Solana if `None`.
+    #[builder(default, setter(strip_option))]
+    pub(crate) destination_chain: Option<String>,
+
+    /// Token manager type
+    pub(crate) token_manager_type: token_manager::Type,
+
+    /// Chain specific params for the token manager
+    pub(crate) params: Vec<u8>,
+
+    /// The gas value to be paid for the deploy transaction
+    #[builder(setter(transform = |x: u128| U256::from(x)))]
+    pub(crate) gas_value: U256,
+
+    /// Required when deploying the [`TokenManager`] on Solana, this is the
+    /// token program that owns the mint account, either `spl_token::id()` or
+    /// `spl_token_2022::id()`.
+    #[builder(default, setter(transform = |key: Pubkey| Some(PublicKey::new_ed25519(key.to_bytes()))))]
+    pub(crate) token_program: Option<PublicKey>,
 }
 
 /// Bumps for the ITS PDA accounts.
@@ -342,6 +401,57 @@ pub fn deploy_interchain_token(
     })
 }
 
+/// Creates a [`InterchainTokenServiceInstruction::DeployTokenManager`]
+/// instruction.
+///
+/// # Errors
+///
+/// If serialization fails.
+pub fn deploy_token_manager(
+    payer: &Pubkey,
+    params: DeployTokenManagerInputs,
+) -> Result<Instruction, ProgramError> {
+    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let mut accounts = vec![
+        AccountMeta::new(*payer, true),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+    ];
+
+    let bumps = if params.destination_chain.is_none() {
+        let token_program = Pubkey::new_from_array(
+            params
+                .token_program
+                .ok_or(ProgramError::InvalidInstructionData)?
+                .as_ref()
+                .try_into()
+                .map_err(|_err| ProgramError::InvalidInstructionData)?,
+        );
+
+        let (mut its_accounts, bumps) =
+            derive_its_accounts(&gateway_root_pda, &params, token_program, None, None)?;
+
+        accounts.append(&mut its_accounts);
+
+        Some(bumps)
+    } else {
+        let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+
+        accounts.push(AccountMeta::new_readonly(gateway::id(), false));
+        accounts.push(AccountMeta::new_readonly(its_root_pda, false));
+
+        None
+    };
+
+    let data = InterchainTokenServiceInstruction::DeployTokenManager { params, bumps }
+        .to_bytes()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    Ok(Instruction {
+        program_id: crate::ID,
+        accounts,
+        data,
+    })
+}
 /// Creates a [`InterchainTokenServiceInstruction::ItsGmpPayload`] instruction.
 ///
 /// # Errors
@@ -537,6 +647,31 @@ fn derive_common_its_accounts(
     ]
 }
 
+pub(crate) trait OutboundInstruction {
+    fn destination_chain(&mut self) -> Option<String>;
+    fn gas_value(&self) -> U256;
+}
+
+impl OutboundInstruction for DeployInterchainTokenInputs {
+    fn destination_chain(&mut self) -> Option<String> {
+        self.destination_chain.take()
+    }
+
+    fn gas_value(&self) -> U256 {
+        self.gas_value
+    }
+}
+
+impl OutboundInstruction for DeployTokenManagerInputs {
+    fn destination_chain(&mut self) -> Option<String> {
+        self.destination_chain.take()
+    }
+
+    fn gas_value(&self) -> U256 {
+        self.gas_value
+    }
+}
+
 #[allow(dead_code)]
 pub(crate) enum ItsMessageRef<'a> {
     InterchainTransfer {
@@ -627,5 +762,96 @@ impl<'a> TryFrom<&'a DeployInterchainTokenInputs> for ItsMessageRef<'a> {
             decimals: value.decimals,
             minter: value.minter.as_ref(),
         })
+    }
+}
+
+impl<'a> TryFrom<&'a DeployTokenManagerInputs> for ItsMessageRef<'a> {
+    type Error = ProgramError;
+
+    fn try_from(value: &'a DeployTokenManagerInputs) -> Result<Self, Self::Error> {
+        let token_id = crate::interchain_token_id(
+            &Pubkey::new_from_array(
+                value
+                    .payer
+                    .as_ref()
+                    .try_into()
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?,
+            ),
+            &value.salt,
+        );
+
+        Ok(Self::DeployTokenManager {
+            token_id: Cow::Owned(token_id),
+            token_manager_type: value.token_manager_type,
+            params: value.params.as_ref(),
+        })
+    }
+}
+
+impl TryFrom<DeployInterchainTokenInputs> for DeployInterchainToken {
+    type Error = ProgramError;
+
+    fn try_from(value: DeployInterchainTokenInputs) -> Result<Self, Self::Error> {
+        let token_id = crate::interchain_token_id(
+            &Pubkey::new_from_array(
+                value
+                    .payer
+                    .as_ref()
+                    .try_into()
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?,
+            ),
+            value.salt.as_slice(),
+        );
+
+        Ok(Self {
+            selector: alloy_primitives::U256::from(1_u8),
+            token_id: token_id.into(),
+            name: value.name,
+            symbol: value.symbol,
+            decimals: value.decimals,
+            minter: value.minter.into(),
+        })
+    }
+}
+
+impl TryFrom<DeployTokenManagerInputs> for DeployTokenManager {
+    type Error = ProgramError;
+
+    fn try_from(value: DeployTokenManagerInputs) -> Result<Self, Self::Error> {
+        let token_id = crate::interchain_token_id(
+            &Pubkey::new_from_array(
+                value
+                    .payer
+                    .as_ref()
+                    .try_into()
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?,
+            ),
+            value.salt.as_slice(),
+        );
+
+        Ok(Self {
+            selector: alloy_primitives::U256::from(2_u8),
+            token_id: token_id.into(),
+            token_manager_type: value.token_manager_type.into(),
+            params: value.params.into(),
+        })
+    }
+}
+
+impl TryFrom<DeployInterchainTokenInputs> for GMPPayload {
+    type Error = ProgramError;
+
+    fn try_from(value: DeployInterchainTokenInputs) -> Result<Self, Self::Error> {
+        let inner = DeployInterchainToken::try_from(value)?;
+        Ok(inner.into())
+    }
+}
+
+impl TryFrom<DeployTokenManagerInputs> for GMPPayload {
+    type Error = ProgramError;
+
+    fn try_from(value: DeployTokenManagerInputs) -> Result<Self, Self::Error> {
+        let inner = DeployTokenManager::try_from(value)?;
+        Ok(inner.into())
     }
 }

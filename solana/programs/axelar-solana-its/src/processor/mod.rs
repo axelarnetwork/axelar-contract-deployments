@@ -3,69 +3,94 @@
 use alloy_primitives::U256;
 use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
 use axelar_rkyv_encoding::types::GmpMetadata;
-use interchain_token_transfer_gmp::{DeployInterchainToken, GMPPayload};
+use interchain_token_transfer_gmp::GMPPayload;
 use itertools::Itertools;
 use program_utils::{check_rkyv_initialized_pda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
 
-use crate::check_program_account;
 use crate::instructions::{
-    derive_its_accounts, its_account_indices, Bumps, DeployInterchainTokenInputs,
-    InterchainTokenServiceInstruction,
+    derive_its_accounts, its_account_indices, Bumps, InterchainTokenServiceInstruction,
+    OutboundInstruction,
 };
 use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
+use crate::{check_program_account, seed_prefixes};
 
 pub mod interchain_token;
 pub mod interchain_transfer;
 pub mod token_manager;
 
-/// Program state handler.
-pub struct Processor;
+pub(crate) trait LocalAction {
+    fn process_local_action<'a>(
+        self,
+        payer: &AccountInfo<'a>,
+        accounts: &[AccountInfo<'a>],
+        bumps: Bumps,
+    ) -> ProgramResult;
+}
 
-impl Processor {
-    /// Processes an instruction.
-    ///
-    /// # Errors
-    ///
-    /// A `ProgramError` containing the error that occurred is returned. Log
-    /// messages are also generated with more detailed information.
-    pub fn process_instruction(
-        program_id: &Pubkey,
-        accounts: &[AccountInfo<'_>],
-        instruction_data: &[u8],
+impl LocalAction for GMPPayload {
+    fn process_local_action<'a>(
+        self,
+        payer: &AccountInfo<'a>,
+        accounts: &[AccountInfo<'a>],
+        bumps: Bumps,
     ) -> ProgramResult {
-        check_program_account(*program_id)?;
-        let instruction = match InterchainTokenServiceInstruction::from_bytes(instruction_data) {
-            Ok(instruction) => instruction,
-            Err(err) => {
-                msg!("Failed to deserialize instruction: {:?}", err);
-                return Err(ProgramError::InvalidInstructionData);
+        match self {
+            Self::InterchainTransfer(inner) => inner.process_local_action(payer, accounts, bumps),
+            Self::DeployInterchainToken(inner) => {
+                inner.process_local_action(payer, accounts, bumps)
             }
-        };
-
-        match instruction {
-            InterchainTokenServiceInstruction::Initialize { pda_bump } => {
-                process_initialize(accounts, pda_bump)?;
-            }
-            InterchainTokenServiceInstruction::ItsGmpPayload {
-                abi_payload,
-                gmp_metadata,
-                bumps,
-            } => {
-                process_its_gmp_payload(accounts, gmp_metadata, &abi_payload, bumps)?;
-            }
-            InterchainTokenServiceInstruction::DeployInterchainToken { params, bumps } => {
-                process_deploy_interchain_token(accounts, params, bumps)?;
-            }
+            Self::DeployTokenManager(inner) => inner.process_local_action(payer, accounts, bumps),
         }
-
-        Ok(())
     }
+}
+
+/// Processes an instruction.
+///
+/// # Errors
+///
+/// A `ProgramError` containing the error that occurred is returned. Log
+/// messages are also generated with more detailed information.
+pub fn process_instruction(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo<'_>],
+    instruction_data: &[u8],
+) -> ProgramResult {
+    check_program_account(*program_id)?;
+    let instruction = match InterchainTokenServiceInstruction::from_bytes(instruction_data) {
+        Ok(instruction) => instruction,
+        Err(err) => {
+            msg!("Failed to deserialize instruction: {:?}", err);
+            return Err(ProgramError::InvalidInstructionData);
+        }
+    };
+
+    match instruction {
+        InterchainTokenServiceInstruction::Initialize { pda_bump } => {
+            process_initialize(accounts, pda_bump)?;
+        }
+        InterchainTokenServiceInstruction::ItsGmpPayload {
+            abi_payload,
+            gmp_metadata,
+            bumps,
+        } => {
+            process_inbound_its_gmp_payload(accounts, gmp_metadata, &abi_payload, bumps)?;
+        }
+        InterchainTokenServiceInstruction::DeployInterchainToken { params, bumps } => {
+            process_its_native(accounts, params, bumps)?;
+        }
+        InterchainTokenServiceInstruction::DeployTokenManager { params, bumps } => {
+            process_its_native(accounts, params, bumps)?;
+        }
+    }
+
+    Ok(())
 }
 
 fn process_initialize(accounts: &[AccountInfo<'_>], pda_bump: u8) -> ProgramResult {
@@ -102,7 +127,7 @@ fn process_initialize(accounts: &[AccountInfo<'_>], pda_bump: u8) -> ProgramResu
     Ok(())
 }
 
-fn process_its_gmp_payload(
+fn process_inbound_its_gmp_payload(
     accounts: &[AccountInfo<'_>],
     gmp_metadata: GmpMetadata,
     abi_payload: &[u8],
@@ -126,75 +151,92 @@ fn process_its_gmp_payload(
         GMPPayload::decode(abi_payload).map_err(|_err| ProgramError::InvalidInstructionData)?;
 
     validate_its_accounts(instruction_accounts, gateway_root_pda.key, &payload, bumps)?;
-
-    match payload {
-        GMPPayload::InterchainTransfer(interchain_token_transfer) => {
-            interchain_transfer::process_transfer(
-                payer,
-                instruction_accounts,
-                &interchain_token_transfer,
-                bumps,
-            )?;
-        }
-        GMPPayload::DeployInterchainToken(deploy_interchain_token) => {
-            interchain_token::process_deploy(
-                payer,
-                instruction_accounts,
-                deploy_interchain_token,
-                bumps,
-            )?;
-        }
-        GMPPayload::DeployTokenManager(deploy_token_manager) => {
-            token_manager::process_deploy(
-                payer,
-                instruction_accounts,
-                &deploy_token_manager,
-                bumps,
-            )?;
-        }
-    }
-    Ok(())
+    payload.process_local_action(payer, instruction_accounts, bumps)
 }
 
-fn process_deploy_interchain_token(
+fn process_its_native<T>(
     accounts: &[AccountInfo<'_>],
-    payload: DeployInterchainTokenInputs,
+    mut payload: T,
     bumps: Option<Bumps>,
-) -> ProgramResult {
+) -> ProgramResult
+where
+    T: TryInto<GMPPayload> + OutboundInstruction,
+{
     let (payer, other_accounts) = accounts
         .split_first()
         .ok_or(ProgramError::InvalidInstructionData)?;
-    let token_id = crate::interchain_token_id(payer.key, payload.salt.as_slice());
-    let deploy_message = DeployInterchainToken {
-        selector: U256::from(1_u8),
-        token_id: token_id.into(),
-        name: payload.name,
-        symbol: payload.symbol,
-        decimals: payload.decimals,
-        minter: payload.minter.into(),
-    };
 
-    match (payload.destination_chain, bumps) {
+    let gas_value = payload.gas_value();
+    let destination_chain = payload.destination_chain();
+
+    let payload: GMPPayload = payload
+        .try_into()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    match (destination_chain, bumps) {
         (Some(chain), _) => {
-            interchain_token::process_remote_deploy(
-                other_accounts,
-                &deploy_message,
-                chain,
-                payload.gas_value,
-            )?;
+            process_outbound_its_gmp_payload(other_accounts, &payload, chain, gas_value.into())?;
         }
         (None, Some(bumps)) => {
             let (_gateway_root_pda, other_accounts) = other_accounts
                 .split_first()
-                .ok_or(ProgramError::InvalidInstructionData)?;
+                .ok_or(ProgramError::Custom(1))?;
 
-            interchain_token::process_deploy(payer, other_accounts, deploy_message, bumps)?;
+            payload.process_local_action(payer, other_accounts, bumps)?;
         }
         (None, None) => {
             msg!("Missing ITS PDA bumps");
             return Err(ProgramError::InvalidInstructionData);
         }
     };
+
+    Ok(())
+}
+
+/// Processes an outgoing [`InterchainTransfer`], [`DeployInterchainToken`] or
+/// [`DeployTokenManager`].
+///
+/// # Errors
+///
+/// An error occurred when processing the message. The reason can be derived
+/// from the logs.
+fn process_outbound_its_gmp_payload(
+    accounts: &[AccountInfo<'_>],
+    payload: &GMPPayload,
+    destination_chain: String,
+    _gas_value: U256,
+) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let gateway_root_pda = next_account_info(accounts_iter)?;
+    let _gateway_program_id = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
+    let its_root_pda_data = its_root_pda.try_borrow_data()?;
+    let its_state = check_rkyv_initialized_pda::<InterchainTokenService>(
+        &crate::id(),
+        its_root_pda,
+        *its_root_pda_data,
+    )?;
+
+    // TODO: Get chain's trusted address.
+    let destination_address = String::new();
+
+    // TODO: Call gas service to pay gas fee.
+
+    invoke_signed(
+        &gateway::instructions::call_contract(
+            *gateway_root_pda.key,
+            *its_root_pda.key,
+            destination_chain,
+            destination_address,
+            payload.encode(),
+        )?,
+        &[its_root_pda.clone(), gateway_root_pda.clone()],
+        &[&[
+            seed_prefixes::ITS_SEED,
+            gateway_root_pda.key.as_ref(),
+            &[its_state.bump],
+        ]],
+    )?;
 
     Ok(())
 }
