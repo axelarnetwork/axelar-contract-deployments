@@ -333,8 +333,13 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 async function mainProcessor(args, options, processor) {
     const config = loadConfig(options.env);
     const [keypair, client] = getWallet(config.sui, options);
+
+    printInfo('Environment', options.env);
+    printInfo('Chain Name', options.chainName);
     await printWalletInfo(keypair, client, config.sui, options);
+
     await processor(keypair, client, ...args, config, config.sui, options);
+
     saveConfig(config, options.env);
 
     if (options.offline) {
