@@ -23,9 +23,9 @@
   },
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
-    "@axelar-network/axelar-cgp-solidity": "6.3.1",
-    "@axelar-network/axelar-cgp-sui": "^0.0.0-snapshot.c91e00c",
-    "@axelar-network/axelar-gmp-sdk-solidity": "5.10.0",
+    "@axelar-network/axelar-cgp-solidity": "6.4.0",
+    "@axelar-network/axelar-cgp-sui": "0.8.0",
+    "@axelar-network/axelar-gmp-sdk-solidity": "6.0.3",
     "@axelar-network/interchain-token-service": "0.0.0-snapshot.b4a6870",
     "@cosmjs/cosmwasm-stargate": "^0.32.1",
     "@ledgerhq/hw-app-eth": "6.32.2",

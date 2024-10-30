@@ -2,7 +2,7 @@
 
 const { Command, Option } = require('commander');
 const { addBaseOptions, generateKeypair, getRawPrivateKey } = require('./utils');
-const { saveConfig, loadConfig, printInfo } = require('../common/utils');
+const { saveConfig, loadConfig, printInfo, getChainConfig } = require('../common/utils');
 
 const { ethers } = require('hardhat');
 const { hexlify } = ethers.utils;
@@ -19,7 +19,8 @@ async function processCommand(config, chain, options) {
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    await processor(config, config.chains.sui, options);
+    const chain = getChainConfig(config, options.chainName);
+    await processor(config, chain, options);
     saveConfig(config, options.env);
 }
 

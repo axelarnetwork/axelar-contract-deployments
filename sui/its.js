@@ -1,6 +1,6 @@
 const { Command } = require('commander');
 const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder } = require('./utils');
 
 async function setupTrustedAddress(keypair, client, contracts, args, options) {
@@ -41,7 +41,8 @@ async function processCommand(command, chain, args, options) {
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
-    await processor(command, config.chains.sui, args, options);
+    const chain = getChainConfig(config, options.chainName);
+    await processor(command, chain, args, options);
     saveConfig(config, options.env);
 }
 

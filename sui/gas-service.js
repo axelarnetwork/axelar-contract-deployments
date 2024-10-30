@@ -6,7 +6,7 @@ const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify },
 } = ethers;
-const { saveConfig, loadConfig, printError } = require('../common/utils');
+const { saveConfig, loadConfig, printError, getChainConfig } = require('../common/utils');
 const {
     getWallet,
     printWalletInfo,
@@ -160,7 +160,8 @@ async function processCommand(command, chain, args, options) {
 
 async function mainProcessor(options, args, processor, command) {
     const config = loadConfig(options.env);
-    await processor(command, config.chains.sui, args, options);
+    const chain = getChainConfig(config, options.chainName);
+    await processor(command, chain, args, options);
     saveConfig(config, options.env);
 }
 
