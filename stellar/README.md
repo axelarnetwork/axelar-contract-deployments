@@ -75,6 +75,12 @@ Provide `--estimate-cost` to show the gas costs for the initialize transaction i
 node stellar/deploy-contract.js deploy axelar_operators --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm --initialize
 ```
 
+### Interchain Token Service
+```bash
+node stellar/deploy-contract.js deploy interchain_token_service --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm --initialize
+```
+
+
 ## Generate bindings
 
 Generate TypeScript bindings for the contract
@@ -99,7 +105,7 @@ To get help on the gateway commands, run:
 node stellar/gateway.js --help
 ```
 
-### Call contract
+#### Call contract
 
 ```bash
 node stellar/gateway.js call-contract [destination-chain] [dstination-address] [payload]
@@ -108,7 +114,7 @@ node stellar/gateway.js call-contract [destination-chain] [dstination-address] [
 node stellar/gateway.js call-contract avalanche 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 ```
 
-### Submit multisig prover proof
+#### Submit multisig prover proof
 
 Submit a proof constructed on Amplifier to the Stellar gateway contract.
 
@@ -116,7 +122,7 @@ Submit a proof constructed on Amplifier to the Stellar gateway contract.
 node stellar/gateway.js submit-proof [multisig-session-id]
 ```
 
-### Approve messages
+#### Approve messages
 
 A message approval can be submitted to the gateway contract for a test deployment where the wallet is the signer on the gateway. Setting `[destination-address]` to `wallet` will use the wallet address as the destination.
 
@@ -124,7 +130,7 @@ A message approval can be submitted to the gateway contract for a test deploymen
 node stellar/gateway.js approve [source-chain] [message-id] [source-address] [destination-address] [payload]
 ```
 
-### Validate messages
+#### Validate messages
 
 An approved message can be validated by the gateway contract for a test deployment as follows:
 
@@ -132,7 +138,7 @@ An approved message can be validated by the gateway contract for a test deployme
 node stellar/gateway.js validate-message [source-chain] [message-id] [source-address] [payload]
 ```
 
-### Rotate signers
+#### Rotate signers
 
 A signer rotation can be submitted to the gateway contract. Use `--current-nonce` to override the default current nonce set for subsequent rotations. Skip `--signers` to rotate to the Amplifier verifier set registered in the prover contract.
 
@@ -141,10 +147,23 @@ node stellar/gateway.js rotate --new-nonce test --signers wallet
 node stellar/gateway.js rotate --new-nonce test2 --current-nonce test --signers wallet
 ```
 
-### Upgrade Gateway
+#### Upgrade Gateway
 
 To upgrade the gateway, run the following command:
 
 ```bash
 node stellar/deploy-contract.js upgrade axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm
+```
+
+### Interchain Token Service
+
+#### Set Trusted Address
+
+```bash
+node stellar/its.js set-trusted-address [chain-name] [trusted-address]
+```
+
+#### Remove Trusted Address
+```bash
+node stellar/its.js remove-trusted-address [chain-name]
 ```

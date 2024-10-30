@@ -47,10 +47,22 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             };
         }
 
+        case 'interchain_token_service':
+            return { owner };
+
         case 'axelar_operators':
             return { operator };
         default:
             throw new Error(`Unknown contract: ${contractName}`);
+    }
+}
+
+function getIntializeFuncName(contractName) {
+    switch(contractName) {
+        case 'interchain_token_service':
+            return 'initialize_its';
+        default: 
+            return 'initialize';
     }
 }
 
@@ -92,7 +104,8 @@ async function deploy(options, config, chain, contractName) {
     chain.contracts[contractName].initializeArgs = serializedArgs;
 
     const contract = new Contract(contractAddress);
-    const operation = contract.call('initialize', ...Object.values(initializeArgs));
+    const initializeFuncName = getIntializeFuncName(contractName);
+    const operation = contract.call(initializeFuncName, ...Object.values(initializeArgs));
 
     printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
