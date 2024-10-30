@@ -337,7 +337,7 @@ async function mainProcessor(args, options, processor) {
 
     printInfo('Environment', options.env);
     printInfo('Chain Name', options.chainName);
-    await printWalletInfo(keypair, client, config.sui, options);
+    await printWalletInfo(keypair, client, sui, options);
 
     await processor(keypair, client, ...args, config, config.sui, options);
 
