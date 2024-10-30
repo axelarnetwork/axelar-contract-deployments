@@ -25,7 +25,7 @@ const {
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const IMultisig = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IMultisig.json');
-const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
+const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const IGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/interfaces/IInterchainTokenService.json');
 const ITokenManager = require('@axelar-network/interchain-token-service/interfaces/ITokenManager.json');
@@ -170,7 +170,7 @@ async function processCommand(_, chain, options) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
             }
 
-            const gateway = new Contract(multisigTarget, IGateway.abi, wallet);
+            const gateway = new Contract(multisigTarget, AxelarGateway.abi, wallet);
             const multisigCalldata = gateway.interface.encodeFunctionData('setTokenMintLimits', [symbolsArray, limitsArray]);
 
             printInfo('Rate limit tokens', symbolsArray);
@@ -203,7 +203,7 @@ async function processCommand(_, chain, options) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
             }
 
-            const gateway = new Contract(multisigTarget, IGateway.abi, wallet);
+            const gateway = new Contract(multisigTarget, AxelarGateway.abi, wallet);
             const multisigCalldata = gateway.interface.encodeFunctionData('transferMintLimiter', [mintLimiter]);
 
             if (!offline) {
