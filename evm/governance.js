@@ -31,7 +31,7 @@ const {
 const { addBaseOptions } = require('./cli-utils.js');
 const { getWallet } = require('./sign-utils.js');
 const IAxelarServiceGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
-const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
+const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 const ProposalType = {
     ScheduleTimelock: 0,
@@ -50,7 +50,7 @@ async function getSetupParams(governance, targetContractName, target, contracts,
 
     switch (targetContractName) {
         case 'AxelarGateway': {
-            const gateway = new Contract(target, IGateway.abi, wallet);
+            const gateway = new Contract(target, AxelarGateway.abi, wallet);
             const currGovernance = await gateway.governance();
             const currMintLimiter = await gateway.mintLimiter();
 
@@ -58,19 +58,19 @@ async function getSetupParams(governance, targetContractName, target, contracts,
                 printWarn(`Gateway governor ${currGovernance} does not match governance contract: ${governance.address}`);
             }
 
-            let newGovernance = options.newGovernance || contracts.InterchainGovernance?.address;
+            let newGovernance = options.newGovernance || contracts.InterchainGovernance?.address || AddressZero;
 
             if (newGovernance === currGovernance) {
                 newGovernance = AddressZero;
             }
 
-            let newMintLimiter = options.newMintLimiter || contracts.Multisig?.address;
+            let newMintLimiter = options.newMintLimiter || contracts.Multisig?.address || AddressZero;
 
-            if (newMintLimiter === `${currMintLimiter}`) {
+            if (newMintLimiter === currMintLimiter) {
                 newMintLimiter = AddressZero;
             }
 
-            if (newGovernance !== '0x' || newMintLimiter !== '0x') {
+            if (newGovernance !== AddressZero || newMintLimiter !== AddressZero) {
                 setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [newGovernance, newMintLimiter, '0x']);
             }
 
@@ -146,7 +146,7 @@ async function getProposalCalldata(governance, chain, wallet, options) {
                 throw new Error(`Invalid new gateway governance address: ${newGovernance}`);
             }
 
-            const gateway = new Contract(target, IGateway.abi, wallet);
+            const gateway = new Contract(target, AxelarGateway.abi, wallet);
             const currGovernance = await gateway.governance();
 
             printInfo('Current gateway governance', currGovernance);

@@ -249,9 +249,9 @@ async function deploy(config, chain, options) {
         const { signers: signerSets } = await getWeightedSigners(config, chain, options);
 
         for (let i = 0; i < signerSets.length; i++) {
-            const signerHash = keccak256(encodeWeightedSigners(signerSets[i]));
-            const epoch = (await gateway.epochBySignerHash(signerHash)).toNumber();
-            const signerHashByEpoch = await gateway.signerHashByEpoch(i + 1);
+            const signersHash = keccak256(encodeWeightedSigners(signerSets[i]));
+            const epoch = (await gateway.epochBySignersHash(signersHash)).toNumber();
+            const signersHashByEpoch = await gateway.signersHashByEpoch(i + 1);
 
             if (epoch !== i + 1) {
                 printError(`ERROR: Epoch mismatch for signer set ${i + 1}`);
@@ -260,10 +260,10 @@ async function deploy(config, chain, options) {
                 error = true;
             }
 
-            if (signerHashByEpoch !== signerHash) {
+            if (signersHashByEpoch !== signersHash) {
                 printError(`ERROR: Signer hash mismatch for signer set ${i + 1}`);
-                printError(`   Actual:   ${signerHashByEpoch}`);
-                printError(`   Expected: ${signerHash}`);
+                printError(`   Actual:   ${signersHashByEpoch}`);
+                printError(`   Expected: ${signersHash}`);
                 error = true;
             }
         }
@@ -282,17 +282,12 @@ async function deploy(config, chain, options) {
     contractConfig.domainSeparator = domainSeparator;
     contractConfig.minimumRotationDelay = minimumRotationDelay;
     contractConfig.connectionType = 'amplifier';
+    contractConfig.owner = owner;
     chain.chainType = 'evm';
 
     if (options.deployMethod !== 'create') {
         contractConfig.salt = salt;
     }
-
-    if (!chain.contracts.InterchainGovernance) {
-        chain.contracts.InterchainGovernance = {};
-    }
-
-    chain.contracts.InterchainGovernance.address = owner;
 
     printInfo('Deployment status', 'SUCCESS');
 
@@ -315,14 +310,7 @@ async function upgrade(_, chain, options) {
 
     const gateway = new Contract(contractConfig.address, AxelarAmplifierGateway.abi, wallet);
     let implementationCodehash = contractConfig.implementationCodehash;
-    const owner = options.owner || chain.contracts.InterchainGovernance?.address;
     const setupParams = '0x';
-
-    if (!chain.contracts.InterchainGovernance) {
-        chain.contracts.InterchainGovernance = {};
-    }
-
-    chain.contracts.InterchainGovernance.address = owner;
 
     if (!offline) {
         const codehash = await getBytecodeHash(contractConfig.implementation, chain.axelarId, provider);
@@ -349,7 +337,6 @@ async function upgrade(_, chain, options) {
 
     printInfo('Upgrading to implementation', contractConfig.implementation);
     printInfo('New Implementation codehash', implementationCodehash);
-    printInfo('Owner', owner);
     printInfo('Setup params', setupParams);
 
     const gasOptions = await getGasOptions(chain, options, contractName);

@@ -218,7 +218,7 @@ const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom }) => {
     return { governance_address: governanceAddress, rewards_denom: rewardsDenom };
 };
 
-const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGateway: { address: nexusGateway } }) => {
+const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { AxelarnetGateway: { address: axelarnetGateway } }) => {
     if (!validateAddress(adminAddress)) {
         throw new Error('Missing or invalid Router.adminAddress in axelar info');
     }
@@ -227,27 +227,11 @@ const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGa
         throw new Error('Missing or invalid Router.governanceAddress in axelar info');
     }
 
-    if (!validateAddress(nexusGateway)) {
-        throw new Error('Missing or invalid NexusGateway.address in axelar info');
-    }
-
-    return { admin_address: adminAddress, governance_address: governanceAddress, nexus_gateway: nexusGateway };
-};
-
-const makeNexusGatewayInstantiateMsg = ({ nexus }, { Router: { address: router }, AxelarnetGateway: { address: axelarnetGateway } }) => {
-    if (!validateAddress(nexus)) {
-        throw new Error('Missing or invalid NexusGateway.nexus in axelar info');
-    }
-
     if (!validateAddress(axelarnetGateway)) {
         throw new Error('Missing or invalid AxelarnetGateway.address in axelar info');
     }
 
-    if (!validateAddress(router)) {
-        throw new Error('Missing or invalid Router.address in axelar info');
-    }
-
-    return { nexus, axelarnet_gateway: axelarnetGateway, router };
+    return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway };
 };
 
 const makeVotingVerifierInstantiateMsg = (
@@ -554,14 +538,6 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
             }
 
             return makeRouterInstantiateMsg(contractConfig, contracts);
-        }
-
-        case 'NexusGateway': {
-            if (chainConfig) {
-                throw new Error('NexusGateway does not support chainName option');
-            }
-
-            return makeNexusGatewayInstantiateMsg(contractConfig, contracts);
         }
 
         case 'VotingVerifier': {

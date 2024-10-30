@@ -2374,9 +2374,6 @@
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "connectionType": "amplifier"
         },
-        "InterchainGovernance": {
-          "address": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
-        },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
@@ -2462,9 +2459,6 @@
           "connectionType": "amplifier",
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
-        "InterchainGovernance": {
-          "address": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
-        },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
@@ -2502,6 +2496,7 @@
     "networkType": "testnet",
     "rpc": "https://fullnode.testnet.sui.io:443",
     "tokenSymbol": "SUI",
+    "chainType": "sui",
     "explorer": {
       "name": "Suiscan",
       "url": "https://suiscan.xyz"
