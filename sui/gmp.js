@@ -18,14 +18,13 @@ const {
     utils: { arrayify },
 } = ethers;
 
-async function sendCommand(keypair, client, chains, args, options) {
+async function sendCommand(keypair, client, chains, chain, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
 
     if (!chains[destinationChain]) {
         printWarn(`Chain ${destinationChain} not found in the config`);
     }
 
-    const chain = chains.sui;
     const params = options.params;
     const gasServiceObjectId = chain.contracts.GasService.objects.GasService;
     const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
@@ -56,9 +55,8 @@ async function sendCommand(keypair, client, chains, args, options) {
     await broadcast(client, keypair, tx, 'Call Sent');
 }
 
-async function execute(keypair, client, chains, args, options) {
+async function execute(keypair, client, chains, chain, args, options) {
     const [sourceChain, messageId, sourceAddress, payload] = args;
-    const chain = chains.sui;
 
     const { Example } = chain.contracts;
 
@@ -81,19 +79,18 @@ async function execute(keypair, client, chains, args, options) {
     await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, 'Call Executed');
 }
 
-async function processCommand(command, chains, args, options) {
-    const chain = chains.sui;
+async function processCommand(command, config, args, options) {
+    const chain = getChainConfig(config, options.chainName);
     const [keypair, client] = getWallet(chain, options);
 
     await printWalletInfo(keypair, client, chain, options);
 
-    await command(keypair, client, chains, args, options);
+    await command(keypair, client, config.chains, chain, args, options);
 }
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
-    await processor(command, chain, args, options);
+    await processor(command, config, args, options);
     saveConfig(config, options.env);
 }
 
