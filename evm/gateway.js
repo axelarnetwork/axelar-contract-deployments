@@ -28,6 +28,7 @@ const {
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, signTransaction } = require('./sign-utils');
 
+const AmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const IAxelarExecutable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarExecutable.json');
 const IAuth = require('@axelar-network/axelar-cgp-solidity/interfaces/IAxelarAuthWeighted.json');
@@ -81,7 +82,8 @@ async function processCommand(config, chain, options) {
     printInfo('Contract name', contractName);
     printInfo('Contract address', gatewayAddress);
 
-    const gateway = new Contract(gatewayAddress, AxelarGateway.abi, wallet);
+    const gatewayAbi = contracts.AxelarGateway?.connectionType == 'amplifier' ? AmplifierGateway.abi : AxelarGateway.abi;
+    const gateway = new Contract(gatewayAddress, gatewayAbi, wallet);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
