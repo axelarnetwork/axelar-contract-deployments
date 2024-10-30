@@ -28,7 +28,7 @@ const {
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet, signTransaction } = require('./sign-utils');
 
-const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
+const IGateway = require('@axelar-network/axelar-cgp-solidity/interfaces/IAxelarGateway.json');
 const IAxelarExecutable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarExecutable.json');
 const IAuth = require('@axelar-network/axelar-cgp-solidity/interfaces/IAxelarAuthWeighted.json');
 const { getWeightedSignersProof, WEIGHTED_SIGNERS_TYPE } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
