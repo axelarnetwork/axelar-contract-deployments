@@ -1,6 +1,6 @@
 const { Command, Option } = require('commander');
 const { fromB64 } = require('@mysten/bcs');
-const { saveConfig } = require('../common/utils');
+const { saveConfig, getChainConfig } = require('../common/utils');
 const { loadConfig, printInfo, validateParameters, printWarn } = require('../common/utils');
 const { getSignedTx, storeSignedTx } = require('../evm/sign-utils');
 const { addBaseOptions, getWallet, getMultisig, signTransactionBlockBytes, broadcastSignature } = require('./utils');
@@ -206,7 +206,8 @@ async function processCommand(chain, options) {
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    await processor(config.chains[process.env.CHAINS], options);
+    const chain = getChainConfig(config, options.chainName);
+    await processor(chain, options);
     saveConfig(config, options.env);
 }
 

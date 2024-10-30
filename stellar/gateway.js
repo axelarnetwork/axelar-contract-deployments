@@ -43,7 +43,7 @@ function getProof(dataHash, wallet, chain, options) {
         ],
         threshold: 1,
     });
-    const signerHash = keccak256(signers.toXDR());
+    const signersHash = keccak256(signers.toXDR());
 
     const domainSeparator = chain.contracts.axelar_gateway?.initializeArgs?.domainSeparator;
 
@@ -51,7 +51,7 @@ function getProof(dataHash, wallet, chain, options) {
         throw new Error('Domain separator not found');
     }
 
-    const msg = '0x' + domainSeparator + signerHash.slice(2) + dataHash.slice(2);
+    const msg = '0x' + domainSeparator + signersHash.slice(2) + dataHash.slice(2);
     const messageHash = keccak256(msg);
     const signature = wallet.sign(arrayify(messageHash));
 

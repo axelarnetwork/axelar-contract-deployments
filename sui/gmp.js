@@ -1,7 +1,7 @@
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { loadConfig, saveConfig } = require('../common/utils');
+const { loadConfig, saveConfig, printWarn, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -18,8 +18,13 @@ const {
     utils: { arrayify },
 } = ethers;
 
-async function sendCommand(keypair, client, chain, args, options) {
+async function sendCommand(keypair, client, chains, chain, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
+
+    if (!chains[destinationChain]) {
+        printWarn(`Chain ${destinationChain} not found in the config`);
+    }
+
     const params = options.params;
     const gasServiceObjectId = chain.contracts.GasService.objects.GasService;
     const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
@@ -50,7 +55,7 @@ async function sendCommand(keypair, client, chain, args, options) {
     await broadcast(client, keypair, tx, 'Call Sent');
 }
 
-async function execute(keypair, client, chain, args, options) {
+async function execute(keypair, client, chains, chain, args, options) {
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
     const { Example } = chain.contracts;
@@ -74,17 +79,18 @@ async function execute(keypair, client, chain, args, options) {
     await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, 'Call Executed');
 }
 
-async function processCommand(command, chain, args, options) {
+async function processCommand(command, config, args, options) {
+    const chain = getChainConfig(config, options.chainName);
     const [keypair, client] = getWallet(chain, options);
 
     await printWalletInfo(keypair, client, chain, options);
 
-    await command(keypair, client, chain, args, options);
+    await command(keypair, client, config.chains, chain, args, options);
 }
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
-    await processor(command, config.chains[process.env.CHAINS], args, options);
+    await processor(command, config, args, options);
     saveConfig(config, options.env);
 }
 

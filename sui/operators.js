@@ -1,6 +1,6 @@
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
-const { printError, loadConfig } = require('../common/utils');
+const { printError, loadConfig, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -158,8 +158,9 @@ async function removeOperator(keypair, client, gasServiceConfig, contractConfig,
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
-    const contractConfig = config.chains[process.env.CHAINS].contracts.Operators;
-    const gasServiceConfig = config.chains[process.env.CHAINS].contracts.GasService;
+    const chain = getChainConfig(config, options.chainName);
+    const contractConfig = chain.contracts.Operators;
+    const gasServiceConfig = chain.contracts.GasService;
 
     if (!contractConfig) {
         throw new Error('Operators package not found.');
@@ -169,8 +170,8 @@ async function mainProcessor(processor, args, options) {
         throw new Error('Gas service package not found.');
     }
 
-    const [keypair, client] = getWallet(config.chains[process.env.CHAINS], options);
-    await printWalletInfo(keypair, client, config.chains[process.env.CHAINS], options);
+    const [keypair, client] = getWallet(chain, options);
+    await printWalletInfo(keypair, client, chain, options);
     await processor(keypair, client, gasServiceConfig, contractConfig, args, options);
 }
 
