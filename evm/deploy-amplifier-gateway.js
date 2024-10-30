@@ -249,9 +249,9 @@ async function deploy(config, chain, options) {
         const { signers: signerSets } = await getWeightedSigners(config, chain, options);
 
         for (let i = 0; i < signerSets.length; i++) {
-            const signerHash = keccak256(encodeWeightedSigners(signerSets[i]));
-            const epoch = (await gateway.epochBySignerHash(signerHash)).toNumber();
-            const signerHashByEpoch = await gateway.signerHashByEpoch(i + 1);
+            const signersHash = keccak256(encodeWeightedSigners(signerSets[i]));
+            const epoch = (await gateway.epochBySignersHash(signersHash)).toNumber();
+            const signersHashByEpoch = await gateway.signersHashByEpoch(i + 1);
 
             if (epoch !== i + 1) {
                 printError(`ERROR: Epoch mismatch for signer set ${i + 1}`);
@@ -260,10 +260,10 @@ async function deploy(config, chain, options) {
                 error = true;
             }
 
-            if (signerHashByEpoch !== signerHash) {
+            if (signersHashByEpoch !== signersHash) {
                 printError(`ERROR: Signer hash mismatch for signer set ${i + 1}`);
-                printError(`   Actual:   ${signerHashByEpoch}`);
-                printError(`   Expected: ${signerHash}`);
+                printError(`   Actual:   ${signersHashByEpoch}`);
+                printError(`   Expected: ${signersHash}`);
                 error = true;
             }
         }
