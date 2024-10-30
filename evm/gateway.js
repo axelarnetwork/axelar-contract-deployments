@@ -82,7 +82,7 @@ async function processCommand(config, chain, options) {
     printInfo('Contract name', contractName);
     printInfo('Contract address', gatewayAddress);
 
-    const gatewayAbi = contracts.AxelarGateway?.connectionType == 'amplifier' ? AmplifierGateway.abi : AxelarGateway.abi;
+    const gatewayAbi = contracts.AxelarGateway?.connectionType === 'amplifier' ? AmplifierGateway.abi : AxelarGateway.abi;
     const gateway = new Contract(gatewayAddress, gatewayAbi, wallet);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
