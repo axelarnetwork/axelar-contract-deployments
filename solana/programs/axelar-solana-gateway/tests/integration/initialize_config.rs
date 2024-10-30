@@ -11,8 +11,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 
 use crate::runner::TestRunner;
-
-const DOMAIN_SEPARATOR: [u8; 32] = [42; 32];
+use crate::setup::make_initialize_config;
 
 fn cmp_config(init: &InitializeConfig<VerifierSetHash>, created: &GatewayConfig) -> bool {
     let current_epoch: U256 = init.initial_signer_sets.len().into();
@@ -23,16 +22,6 @@ fn cmp_config(init: &InitializeConfig<VerifierSetHash>, created: &GatewayConfig)
         && created.auth_weighted.minimum_rotation_delay == init.minimum_rotation_delay
         // this just checks that the last rotation ts has been set to a non-zero value
         && created.auth_weighted.last_rotation_timestamp > 0
-}
-
-fn make_initialize_config<T>(init: T) -> InitializeConfig<T> {
-    InitializeConfig {
-        domain_separator: DOMAIN_SEPARATOR,
-        initial_signer_sets: vec![init],
-        minimum_rotation_delay: 0,
-        operator: Pubkey::new_unique(),
-        previous_signers_retention: 0u128.into(),
-    }
 }
 
 async fn assert_verifier_sets(
@@ -71,7 +60,7 @@ async fn test_successfylly_initialize_config_with_single_initial_signer() {
             .expect("expected a non-empty signer set");
 
     let initial_config: InitializeConfig<VerifierSetHash> =
-        make_initialize_config(initial_signer_set_root);
+        make_initialize_config(&[initial_signer_set_root]);
 
     let ix = axelar_solana_gateway::instructions::initialize_config(
         runner.payer.pubkey(),
@@ -120,7 +109,7 @@ async fn test_reverts_on_invalid_gateway_pda_pubkey() {
             .expect("expected a non-empty signer set");
 
     let initial_config: InitializeConfig<VerifierSetHash> =
-        make_initialize_config(initial_signer_set_root);
+        make_initialize_config(&[initial_signer_set_root]);
 
     let ix = axelar_solana_gateway::instructions::initialize_config(
         runner.payer.pubkey(),
@@ -138,7 +127,7 @@ async fn test_reverts_on_invalid_gateway_pda_pubkey() {
             .unwrap()
             .log_messages
             .into_iter()
-            .any(|x| x.contains("invalid gateway root pda")),
+            .any(|x| x.to_lowercase().contains("invalid gateway root pda")),
         "Expected error message not found!"
     );
 }
@@ -153,7 +142,7 @@ async fn test_reverts_on_already_initialized_gateway_pda() {
         Merkle::<NativeHasher>::calculate_merkle_root(&initial_signer_set)
             .expect("expected a non-empty signer set");
 
-    let initial_config = make_initialize_config(initial_signer_set_root);
+    let initial_config = make_initialize_config(&[initial_signer_set_root]);
 
     let gateway_config_pda = runner
         .initialize_gateway_config_account(initial_config.clone())

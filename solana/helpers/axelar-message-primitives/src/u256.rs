@@ -71,6 +71,20 @@ impl U256 {
     }
 }
 
+impl PartialOrd for U256 {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for U256 {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let lhs = bnum::types::U256::from_digits(self.0);
+        let rhs = bnum::types::U256::from_digits(other.0);
+        lhs.cmp(&rhs)
+    }
+}
+
 impl From<u8> for U256 {
     fn from(value: u8) -> Self {
         U256(bnum::types::U256::from(value).into())

@@ -2,15 +2,13 @@
 
 use std::borrow::Cow;
 
+use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
-use solana_program::program::invoke_signed;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::rent::Rent;
-use solana_program::sysvar::Sysvar;
-use solana_program::{msg, system_instruction, system_program};
 
 use crate::check_program_account;
 use crate::error::GatewayError;
@@ -20,10 +18,11 @@ mod approve_messages;
 mod call_contract;
 mod initialize_command;
 mod initialize_config;
-mod initialize_execute_data;
+mod initialize_payload_verification_session;
 mod rotate_signers;
 mod transfer_operatorship;
 mod validate_message;
+mod verify_signature;
 
 /// Program state handler.
 pub struct Processor;
@@ -67,57 +66,41 @@ impl Processor {
             }
 
             GatewayInstruction::InitializePayloadVerificationSession {
-                payload_merkle_root: _,
-                bump_seed: _,
-            } => todo!(),
+                payload_merkle_root,
+                bump_seed,
+            } => {
+                msg!("Instruction: Initialize Verification Session");
+                Self::process_initialize_payload_verification_session(
+                    program_id,
+                    accounts,
+                    payload_merkle_root,
+                    bump_seed,
+                )
+            }
 
             GatewayInstruction::VerifySignature {
-                verifier_set_leaf_node: _,
-                signer_merkle_proof: _,
+                payload_merkle_root,
+                verifier_set_leaf_node,
+                verifier_merkle_proof,
+                signature,
             } => {
                 msg!("Instruction: Verify Signature");
-                todo!()
+                // Convert proxy types
+                let verifier_merkle_proof: MerkleProof<SolanaSyscallHasher> =
+                    MerkleProof::from_bytes(&verifier_merkle_proof)
+                        .map_err(|_| ProgramError::InvalidArgument)?;
+
+                Self::process_verify_signature(
+                    program_id,
+                    accounts,
+                    payload_merkle_root,
+                    verifier_set_leaf_node.into(),
+                    verifier_merkle_proof,
+                    signature.into(),
+                )
             }
         }
     }
-}
-
-/// Initialize a Gateway PDA
-fn init_pda_with_dynamic_size<'a, 'b, T: ToBytes>(
-    payer: &'a AccountInfo<'b>,
-    new_account_pda: &'a AccountInfo<'b>,
-    seeds: &[&[u8]],
-    data: &T,
-) -> Result<(), ProgramError> {
-    let serialized_data = data.to_bytes()?;
-    let space = serialized_data.len();
-    let rent_sysvar = Rent::get()?;
-    let rent = rent_sysvar.minimum_balance(space);
-
-    assert!(payer.is_signer);
-    assert!(payer.is_writable);
-    // Note that `new_account_pda` is not a signer yet.
-    // This program will sign for it via `invoke_signed`.
-    assert!(!new_account_pda.is_signer);
-    assert!(new_account_pda.is_writable);
-    assert_eq!(new_account_pda.owner, &system_program::ID);
-
-    invoke_signed(
-        &system_instruction::create_account(
-            payer.key,
-            new_account_pda.key,
-            rent,
-            space
-                .try_into()
-                .map_err(|_| ProgramError::ArithmeticOverflow)?,
-            &crate::ID,
-        ),
-        &[payer.clone(), new_account_pda.clone()],
-        &[seeds],
-    )?;
-    let mut account_data = new_account_pda.try_borrow_mut_data()?;
-    account_data[..space].copy_from_slice(&serialized_data);
-    Ok(())
 }
 
 /// Trait for types that can representing themselves as a slice of bytes.

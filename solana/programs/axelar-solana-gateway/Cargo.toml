@@ -18,14 +18,13 @@ no-entrypoint = []
 test-sbf = []
 
 [dependencies]
-arrayref.workspace = true
 axelar-message-primitives.workspace = true
 axelar-rkyv-encoding.workspace = true
 base64.workspace = true
 bincode.workspace = true
-bitflags.workspace = true
 bitvec.workspace = true
 borsh.workspace = true
+bytemuck.workspace = true
 hex.workspace = true
 itertools.workspace = true
 libsecp256k1.workspace = true
@@ -34,6 +33,7 @@ num-traits.workspace = true
 program-utils.workspace = true
 rkyv.workspace = true
 solana-program.workspace = true
+static_assertions.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
@@ -44,5 +44,6 @@ solana-client.workspace = true
 solana-logger.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
+rand.workspace = true
 test-fixtures.workspace = true
 typed-builder.workspace = true

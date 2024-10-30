@@ -125,7 +125,7 @@ where
         };
 
         let hash = gateway_execute_data.hash_decoded_contents();
-        let (_pubkey, bump) = crate::get_execute_data_pda(gateway_root_pda, &hash);
+        let (_pubkey, bump) = crate::get_signature_verification_pda(gateway_root_pda, &hash);
         gateway_execute_data.bump = bump;
 
         Ok(gateway_execute_data)

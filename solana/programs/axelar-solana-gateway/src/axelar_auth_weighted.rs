@@ -158,6 +158,16 @@ impl AxelarAuthWeighted {
     pub fn current_epoch(&self) -> U256 {
         self.current_epoch
     }
+
+    /// Returns `true` if the current epoch is still considered valid given the
+    /// signer retention policies.
+    pub fn is_epoch_valid(&self, epoch: U256) -> Result<bool, AxelarAuthWeightedError> {
+        let earliest_valid_epoch = self
+            .current_epoch
+            .checked_sub(self.previous_signers_retention)
+            .ok_or(AxelarAuthWeightedError::EpochCalculationOverflow)?;
+        Ok(epoch >= earliest_valid_epoch)
+    }
 }
 
 fn validate_proof_for_message(

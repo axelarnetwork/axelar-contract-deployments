@@ -90,7 +90,8 @@ impl Processor {
         );
 
         // Check: Gateway Config account uses the canonical bump.
-        assert_valid_gateway_root_pda(config.bump, gateway_root_pda.key);
+        assert_valid_gateway_root_pda(config.bump, gateway_root_pda.key)?;
+
         // Check: Gateway Config account is not initialized.
         gateway_root_pda.check_uninitialized_pda()?;
 

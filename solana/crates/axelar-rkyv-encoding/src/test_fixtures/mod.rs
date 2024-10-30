@@ -66,11 +66,9 @@ pub fn random_message_with_destination_and_payload(
     message
 }
 
-pub fn random_valid_verifier_set() -> VerifierSet {
+pub fn random_valid_verifier_set_fixed_size(num_signers: usize) -> VerifierSet {
     let mut signers = BTreeMap::new();
     let mut total_weight = BnumU128::ZERO;
-
-    let num_signers = OsRng.gen_range(1..10);
     for _ in 0..num_signers {
         let pubkey = random_public_key();
         let weight = random_weight();
@@ -78,6 +76,11 @@ pub fn random_valid_verifier_set() -> VerifierSet {
         signers.insert(pubkey, weight);
     }
     VerifierSet::new(OsRng.gen(), signers, total_weight.into(), random_bytes())
+}
+
+pub fn random_valid_verifier_set() -> VerifierSet {
+    let num_signers = OsRng.gen_range(1..10);
+    random_valid_verifier_set_fixed_size(num_signers)
 }
 
 pub fn random_proof(message: &[u8]) -> Proof {
@@ -191,14 +194,13 @@ pub fn random_execute_data() -> ExecuteData {
     ExecuteData::new(payload, proof)
 }
 
-fn random_verifier_set_and_signing_keys(
+pub fn random_verifier_set_and_signing_keys_fixed_size(
+    num_signers: usize,
     domain_separator: [u8; 32],
 ) -> (VerifierSet, BTreeMap<PublicKey, TestSigningKey>) {
     let mut signers = BTreeMap::new();
     let mut signing_keys = BTreeMap::new();
     let mut total_weight = BnumU128::ZERO;
-
-    let num_signers = OsRng.gen_range(1..10);
     for _ in 0..num_signers {
         let (signing_key, public_key) = random_keypair();
         let weight = random_weight();
@@ -209,6 +211,13 @@ fn random_verifier_set_and_signing_keys(
     let verifier_set =
         VerifierSet::new(OsRng.gen(), signers, total_weight.into(), domain_separator);
     (verifier_set, signing_keys)
+}
+
+pub fn random_verifier_set_and_signing_keys(
+    domain_separator: [u8; 32],
+) -> (VerifierSet, BTreeMap<PublicKey, TestSigningKey>) {
+    let num_signers = OsRng.gen_range(1..10);
+    random_verifier_set_and_signing_keys_fixed_size(num_signers, domain_separator)
 }
 
 pub fn random_valid_execute_data_and_verifier_set_for_payload(

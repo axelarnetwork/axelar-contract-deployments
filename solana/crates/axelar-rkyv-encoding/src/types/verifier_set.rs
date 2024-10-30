@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::error::Error;
 use std::marker::PhantomData;
+use std::ops::Deref;
 
 use rkyv::bytecheck::{self, CheckBytes, StructCheckError};
 use rkyv::validation::validators::DefaultValidatorError;
@@ -88,6 +89,7 @@ impl VerifierSet {
                     signer_pubkey: *signer_pubkey,
                     signer_weight: (*signer_weight).into(),
                     position: position as u16,
+                    set_size: self.signers.len() as u16,
                 },
             )
     }
@@ -137,21 +139,34 @@ impl ArchivedVerifierSet {
 }
 
 /// A `VerifierSet` element.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct VerifierSetElement {
-    created_at: u64,
-    quorum: u128,
-    signer_pubkey: PublicKey,
-    signer_weight: u128,
-    domain_separator: [u8; 32],
-    position: u16,
+    pub created_at: u64,
+    pub quorum: u128,
+    pub signer_pubkey: PublicKey,
+    pub signer_weight: u128,
+    pub domain_separator: [u8; 32],
+    pub position: u16,
+    pub set_size: u16,
 }
+
 /// Wraps a [`VerifierSetElement`], is generic over the hashing context.
 ///
 /// This type is the leaf node of a [`VerifierSet`]'s Merkle tree.
+#[derive(Clone, Copy)]
 pub struct VerifierSetLeafNode<T: rs_merkle::Hasher<Hash = [u8; 32]>> {
     element: VerifierSetElement,
     hasher: PhantomData<T>,
 }
+
+impl<T: rs_merkle::Hasher<Hash = [u8; 32]>> Deref for VerifierSetLeafNode<T> {
+    type Target = VerifierSetElement;
+
+    fn deref(&self) -> &Self::Target {
+        &self.element
+    }
+}
+
 impl<'a, T> VerifierSetLeafNode<T>
 where
     T: rs_merkle::Hasher<Hash = [u8; 32]>,
@@ -175,6 +190,18 @@ where
         ));
         hasher.hash(bytemuck::cast_ref::<_, [u8; 2]>(&self.element.position));
         hasher.result().into()
+    }
+}
+
+impl<T> From<VerifierSetElement> for VerifierSetLeafNode<T>
+where
+    T: rs_merkle::Hasher<Hash = [u8; 32]>,
+{
+    fn from(element: VerifierSetElement) -> Self {
+        Self {
+            element,
+            hasher: PhantomData,
+        }
     }
 }
 

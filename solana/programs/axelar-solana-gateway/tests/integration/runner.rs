@@ -142,6 +142,21 @@ impl TestRunner {
 
         gateway_config_pda
     }
+
+    pub async fn initialize_payload_verification_session(
+        &mut self,
+        gateway_config_pda: Pubkey,
+        payload_merkle_root: [u8; 32],
+    ) {
+        let ix = axelar_solana_gateway::instructions::initialize_payload_verification_session(
+            self.payer.pubkey(),
+            gateway_config_pda,
+            payload_merkle_root,
+        )
+        .unwrap();
+        let tx_result = self.send_tx_with_metadata(&[ix]).await;
+        assert!(tx_result.result.is_ok());
+    }
 }
 
 impl Deref for TestRunner {

@@ -1,13 +1,18 @@
 //! Instruction types
 
+mod proxy_types;
+
 use std::fmt::Debug;
 
+use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
+use axelar_rkyv_encoding::types::{Signature, VerifierSetLeafNode};
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use itertools::Itertools;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+use self::proxy_types::{ProxySignature, ProxyVerifierSetLeafNode};
 use crate::axelar_auth_weighted::{RotationDelaySecs, SignerSetEpoch};
 use crate::state::verifier_set_tracker::VerifierSetHash;
 
@@ -80,21 +85,19 @@ pub enum GatewayInstruction {
     ///
     /// Accounts expected by this instruction:
     /// 0. [] Gateway Root Config PDA account
-    /// 1. [WRITE] Execute Data PDA buffer account
+    /// 1. [WRITE] Verification session PDA buffer account
+    /// 2. [] Verifier Setr Tracker PDA account (the one that signed the
+    ///    Payload's Merkle root)
     VerifySignature {
+        /// The Merkle root for the Payload being verified.
+        payload_merkle_root: [u8; 32],
         /// Contains all the required information for the
-        verifier_set_leaf_node: GatewayVerifierSetLeafNode,
-
+        verifier_set_leaf_node: ProxyVerifierSetLeafNode,
         /// The signer's proof of inclusion in the verifier set Merkle tree.
-        signer_merkle_proof: Vec<u8>,
+        verifier_merkle_proof: Vec<u8>,
+        /// The signer's digital signature over `payload_merkle_root`
+        signature: ProxySignature,
     },
-}
-
-/// Wrapper around `VerifierSetLeafNode<_>` which implement borsh traits.
-
-#[derive(BorshSerialize, BorshDeserialize, Eq, PartialEq, Debug)]
-pub struct GatewayVerifierSetLeafNode {
-    // TODO: implement this.
 }
 
 /// Configuration parameters for initializing the axelar-solana gateway
@@ -267,6 +270,67 @@ pub fn initialize_config(
     });
 
     let data = to_vec(&GatewayInstruction::InitializeConfig(config))?;
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Creates a [`GatewayInstruction::InitializePayloadVerificationSession`]
+/// instruction.
+pub fn initialize_payload_verification_session(
+    payer: Pubkey,
+    gateway_config_pda: Pubkey,
+    payload_merkle_root: [u8; 32],
+) -> Result<Instruction, ProgramError> {
+    let (verification_session_pda, bump_seed) =
+        crate::get_signature_verification_pda(&gateway_config_pda, &payload_merkle_root);
+
+    let accounts = vec![
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(gateway_config_pda, false),
+        AccountMeta::new(verification_session_pda, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    let data = to_vec(&GatewayInstruction::InitializePayloadVerificationSession {
+        payload_merkle_root,
+        bump_seed,
+    })?;
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Creates a [`GatewayInstruction::VerifySignature`] instruction.
+pub fn verify_signature(
+    gateway_config_pda: Pubkey,
+    verifier_set_tracker_pda: Pubkey,
+    payload_merkle_root: [u8; 32],
+    verifier_set_leaf_node: VerifierSetLeafNode<SolanaSyscallHasher>,
+    verifier_merkle_proof: MerkleProof<SolanaSyscallHasher>,
+    signature: Signature,
+) -> Result<Instruction, ProgramError> {
+    let (verification_session_pda, _bump) =
+        crate::get_signature_verification_pda(&gateway_config_pda, &payload_merkle_root);
+
+    let accounts = vec![
+        AccountMeta::new_readonly(gateway_config_pda, false),
+        AccountMeta::new(verification_session_pda, false),
+        AccountMeta::new_readonly(verifier_set_tracker_pda, false),
+    ];
+
+    let data = to_vec(&GatewayInstruction::VerifySignature {
+        payload_merkle_root,
+        verifier_set_leaf_node: verifier_set_leaf_node.into(),
+        verifier_merkle_proof: verifier_merkle_proof.to_bytes(),
+        signature: signature.into(),
+    })?;
+
     Ok(Instruction {
         program_id: crate::id(),
         accounts,
