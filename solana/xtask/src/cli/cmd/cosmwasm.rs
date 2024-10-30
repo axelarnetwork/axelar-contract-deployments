@@ -619,10 +619,8 @@ pub(crate) mod ampd {
                 // Container exists
                 let status_line = output.trim();
                 if status_line.contains("Up") {
-                    // Container is running, attach to it
+                    // Container is running
                     tracing::info!("Container {} is already running", container_name);
-                    let attach = sh.cmd("docker").args(["attach", container_name]);
-                    attach.run()?;
                 } else {
                     // Container is not running, start it
                     let start = sh.cmd("docker").args(["start", container_name]);
