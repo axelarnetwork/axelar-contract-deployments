@@ -58,10 +58,10 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 }
 
 const initializeFuncNames = {
-    'axelar_gateway' : 'initialize',
-    'axelar_operators' : 'initialize',
-    'interchain_token_service' : 'initialize_its',
-}
+    axelar_gateway: 'initialize',
+    axelar_operators: 'initialize',
+    interchain_token_service: 'initialize_its',
+};
 
 async function deploy(options, config, chain, contractName) {
     const { privateKey, wasmPath, yes } = options;
@@ -105,7 +105,7 @@ async function deploy(options, config, chain, contractName) {
 
     printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
-    await broadcast(operation, wallet, chain, 'Initialized contract', options);    
+    await broadcast(operation, wallet, chain, 'Initialized contract', options);
 }
 
 async function upgrade(options, _, chain, contractName) {

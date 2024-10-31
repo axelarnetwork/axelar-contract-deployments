@@ -1,5 +1,5 @@
 const { Command } = require('commander');
-const { Contract, nativeToScVal} = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 
 const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig } = require('../common');
 const { addBaseOptions, getWallet, broadcast } = require('./utils');
@@ -47,14 +47,14 @@ if (require.main === module) {
     const program = new Command();
 
     program.name('its').description('Interchain Token Service contract operations.');
-    
+
     program
         .command('set-trusted-address <chainName> <trustedAddress>')
         .description('set a trusted ITS address for a given chain')
         .action((chainName, trustedAddress, options) => {
             mainProcessor(setTrustedAddress, [chainName, trustedAddress], options);
-        })
-    
+        });
+        
     program
         .command('remove-trusted-address <chainName>')
         .description('remove a trusted ITS address for a given chain')
