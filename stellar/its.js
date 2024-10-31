@@ -3,6 +3,7 @@ const { Contract, nativeToScVal} = require('@stellar/stellar-sdk');
 
 const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig } = require('../common');
 const { addBaseOptions, getWallet, broadcast } = require('./utils');
+const { prompt } = require('../common/utils');
 
 async function setTrustedAddress(wallet, _, chain, contractConfig, args, options) {
     const contract = new Contract(contractConfig.address);
@@ -24,10 +25,14 @@ async function removeTrustedAddress(wallet, _, chain, contractConfig, arg, optio
 }
 
 async function mainProcessor(processor, args, options) {
+    const { action, yes } = options;
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
-
     const wallet = await getWallet(chain, options);
+
+    if (prompt(`Proceed with action ${processor.name}`, yes)) {
+        return;
+    }
 
     if (!chain.contracts?.interchain_token_service) {
         throw new Error('Interchain Token Service package not found.');
