@@ -25,7 +25,7 @@ async function removeTrustedAddress(wallet, _, chain, contractConfig, arg, optio
 }
 
 async function mainProcessor(processor, args, options) {
-    const { action, yes } = options;
+    const { yes } = options;
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
     const wallet = await getWallet(chain, options);
