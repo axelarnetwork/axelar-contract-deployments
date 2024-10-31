@@ -54,7 +54,7 @@ if (require.main === module) {
         .action((chainName, trustedAddress, options) => {
             mainProcessor(setTrustedAddress, [chainName, trustedAddress], options);
         });
-        
+
     program
         .command('remove-trusted-address <chainName>')
         .description('remove a trusted ITS address for a given chain')
