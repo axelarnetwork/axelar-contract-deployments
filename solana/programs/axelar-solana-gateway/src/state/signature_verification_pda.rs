@@ -9,6 +9,8 @@ use super::signature_verification::SignatureVerification;
 /// The data layout of a signature verification PDA
 ///
 /// This struct data layout should match the exact account data bytes.
+///
+/// Ideally, the payload merkle root should be a part of its seeds.
 #[repr(C)]
 #[derive(Zeroable, Pod, Copy, Clone)]
 pub struct SignatureVerificationSessionData {

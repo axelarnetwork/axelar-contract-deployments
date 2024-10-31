@@ -3,7 +3,9 @@
 use std::mem::size_of;
 
 use axelar_message_primitives::{BnumU256, U256};
-use axelar_rkyv_encoding::types::{ArchivedProof, ArchivedVerifierSet, MessageValidationError};
+use axelar_rkyv_encoding::types::{
+    ArchivedProof, ArchivedVerifierSet, Ed25519Pubkey, Ed25519Signature, MessageValidationError,
+};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::msg;
 use thiserror::Error;
@@ -174,14 +176,22 @@ fn validate_proof_for_message(
     proof: &ArchivedProof,
     message_hash: &[u8; 32],
 ) -> Result<(), AxelarAuthWeightedError> {
+    let verify_eddsa_signature = |_: &Ed25519Pubkey, _: &Ed25519Signature, _: &[u8; 32]| -> bool {
+        unimplemented!("ed25519 signature verification is not implemented")
+    };
+
     Ok(proof.validate_for_message_custom(
         message_hash,
         verify_ecdsa_signature,
         verify_eddsa_signature,
     )?)
 }
-
-fn verify_ecdsa_signature(
+/// Verifies an ECDSA signature against a given message and public key using the
+/// secp256k1 curve.
+///
+/// Returns `true` if the signature is valid and corresponds to the public key
+/// and message; otherwise, returns `false`.
+pub fn verify_ecdsa_signature(
     pubkey: &axelar_rkyv_encoding::types::Secp256k1Pubkey,
     signature: &axelar_rkyv_encoding::types::EcdsaRecoverableSignature,
     message: &[u8; 32],
@@ -222,12 +232,30 @@ fn verify_ecdsa_signature(
     recovered_uncompressed_pubkey.to_bytes() == full_pubkey
 }
 
-fn verify_eddsa_signature(
-    _pubkey: &axelar_rkyv_encoding::types::Ed25519Pubkey,
-    _signature: &axelar_rkyv_encoding::types::Ed25519Signature,
-    _message: &[u8; 32],
+/// Verifies an ECDSA signature against a given message and public key using the
+/// secp256k1 curve.
+///
+/// Returns `true` if the signature is valid and corresponds to the public key
+/// and message; otherwise, returns `false`.
+#[deprecated(note = "Trying to verify Ed25519 signatures on-chain will exhaust the compute budget")]
+pub fn verify_eddsa_signature(
+    pubkey: &axelar_rkyv_encoding::types::Ed25519Pubkey,
+    signature: &axelar_rkyv_encoding::types::Ed25519Signature,
+    message: &[u8; 32],
 ) -> bool {
-    unimplemented!("eddsa signature verification is unimplemented")
+    use ed25519_dalek::{Signature, Verifier, VerifyingKey};
+    let verifying_key = match VerifyingKey::from_bytes(pubkey) {
+        Ok(verifying_key) => verifying_key,
+        Err(error) => {
+            solana_program::msg!("Failed to parse signer public key: {}", error);
+            return false;
+        }
+    };
+    let signature = Signature::from_bytes(signature);
+    // The implementation of `verify` only returns an atomic variant
+    // `InternalError::Verify` in case of verification failure, so we can safely
+    // ignore the error value.
+    verifying_key.verify(message, &signature).is_ok()
 }
 
 impl BorshSerialize for AxelarAuthWeighted {

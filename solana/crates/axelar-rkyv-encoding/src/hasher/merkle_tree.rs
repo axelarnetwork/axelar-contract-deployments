@@ -3,6 +3,7 @@
 use arrayref::mut_array_refs;
 pub use rs_merkle::{MerkleProof, MerkleTree};
 use sha3::{Digest, Keccak256};
+#[cfg(any(test, feature = "test-fixtures", feature = "solana"))]
 use solana_program::keccak::hashv;
 
 /// Merkle Tree implementation that uses Solana's `hashv` syscall to merge

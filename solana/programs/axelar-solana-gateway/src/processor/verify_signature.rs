@@ -8,6 +8,7 @@ use solana_program::pubkey::Pubkey;
 use static_assertions::assert_eq_align;
 
 use super::Processor;
+use crate::axelar_auth_weighted::verify_ecdsa_signature;
 use crate::state::signature_verification::SignatureVerifier;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
@@ -97,7 +98,7 @@ impl Processor {
                 &verifier_set_tracker.verifier_set_hash,
                 &payload_merkle_root,
                 &signature,
-                &(GatewaySignatureVerifier {}),
+                &OnChainSignatureVerifier,
             )
             .map_err(|error| {
                 solana_program::msg!("Error: {}", error);
@@ -111,16 +112,29 @@ impl Processor {
     }
 }
 
-struct GatewaySignatureVerifier {}
-impl SignatureVerifier for GatewaySignatureVerifier {
+/// Performs elliptic curve calculations on chain to verify digital signatures.
+struct OnChainSignatureVerifier;
+
+impl SignatureVerifier for OnChainSignatureVerifier {
     fn verify_signature(
         &self,
-        _signature: &Signature,
-        _public_key: &PublicKey,
-        _message: &[u8; 32],
+        signature: &Signature,
+        public_key: &PublicKey,
+        message: &[u8; 32],
     ) -> bool {
-        // WARN: This will always verify the signature without looking at the inputs
-        // TODO: implement this.
-        true
+        match (signature, public_key) {
+            (Signature::EcdsaRecoverable(signature), PublicKey::Secp256k1(pubkey)) => {
+                verify_ecdsa_signature(pubkey, signature, message)
+            }
+            (Signature::Ed25519(_), PublicKey::Ed25519(_)) => {
+                unimplemented!("ed25519 signature verification is not implemented")
+            }
+            _ => {
+                solana_program::msg!(
+                    "Error: Invalid combination of Secp256k1 and Ed25519 signature and public key"
+                );
+                false
+            }
+        }
     }
 }

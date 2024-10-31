@@ -26,6 +26,10 @@ pub struct SignatureVerification {
     /// corresponding bit is flipped to one. This prevents the same signature
     /// from being verified more than once, avoiding deliberate attempts to
     /// decrement the remaining threshold.
+    ///
+    /// Currently supports 256 slots. If the signer set maximum size needs to be
+    /// increased in the future, this value must change to make roof for
+    /// them.
     signature_slots: [u8; 32],
 }
 
@@ -208,7 +212,7 @@ mod tests {
 
     use axelar_rkyv_encoding::hasher::merkle_trait::Merkle;
     use axelar_rkyv_encoding::test_fixtures::{
-        random_bytes, random_valid_verifier_set_fixed_size, random_valid_weighted_signature,
+        random_bytes, random_signature, random_valid_verifier_set_fixed_size,
     };
     use axelar_rkyv_encoding::types::VerifierSet;
     use rand::rngs::OsRng;
@@ -272,11 +276,6 @@ mod tests {
         let num_signers = OsRng.gen_range(40..120);
         let verifier_set = random_valid_verifier_set_fixed_size(num_signers);
         MerkleIter::new(&verifier_set)
-    }
-
-    fn random_signature() -> Signature {
-        let (_, signer) = random_valid_weighted_signature(&random_bytes::<32>());
-        signer.signature.unwrap()
     }
 
     #[test]

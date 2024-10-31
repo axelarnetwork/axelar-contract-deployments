@@ -42,6 +42,10 @@ pub enum GatewayInstruction {
     /// 4. [] System Program account
     /// 5. Optional: [SIGNER] `Operator` that's stored in the gateway config
     ///    PDA.
+    // TODO:
+    // 1. stop using the VerifierSet merkle root as a double for the Payload merkle root
+    // 2. with a verified payload, send a Payload proof with the new VerifierSet merkle root and
+    //    update our config.
     RotateSigners,
 
     /// Represents the `CallContract` Axelar event.

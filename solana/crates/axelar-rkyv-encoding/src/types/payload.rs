@@ -41,16 +41,17 @@ impl Payload {
 
     /// Iterates over [`Payload`] and yields [`PayloadElement`] values.
     pub fn element_iterator(&self) -> impl Iterator<Item = PayloadElement> + '_ {
-        let size = self.element_count() as u16;
+        let num_messages = self.element_count() as u16;
         let mut position = 0u16;
         iter::from_fn(move || {
-            if position == size {
+            if position == num_messages {
                 return None;
             }
             let element = match self {
                 Payload::Messages(messages) => PayloadElement::Message {
                     message: (messages[position as usize]).clone(),
                     position,
+                    num_messages,
                 },
                 Payload::VerifierSet(verifier_set) => {
                     PayloadElement::VerifierSet(verifier_set.clone())
@@ -84,7 +85,11 @@ impl TryFrom<Payload> for VerifierSet {
 
 /// A [`Payload`] element.
 pub enum PayloadElement {
-    Message { message: Message, position: u16 },
+    Message {
+        message: Message,
+        position: u16,
+        num_messages: u16,
+    },
     VerifierSet(VerifierSet),
 }
 
@@ -109,16 +114,28 @@ where
         H: AxelarRkyv256Hasher<'a>,
     {
         match &self.element {
-            PayloadElement::Message { message, position } => {
+            PayloadElement::Message {
+                message,
+                position,
+                num_messages,
+            } => {
                 let mut hasher = H::default();
                 hasher.hash(&[0]); // Leaf node discriminator
                 hasher.hash(b"message");
                 hasher.hash(bytemuck::cast_ref::<_, [u8; 2]>(position));
+                hasher.hash(bytemuck::cast_ref::<_, [u8; 2]>(num_messages));
                 message.hash(hasher)
             }
             PayloadElement::VerifierSet(verifier_set) => {
                 // When the Payload contains a verifier set, we use the Merkle root for that
                 // verifier set hash directly.
+                //
+                // NOTE: The benefits of this approach are negligible.
+                //
+                // WARN: This could be a potentia risk in case users submit Merkle roots for the
+                // messages variant.
+                //
+                // TODO: Hash the verifier set variant using an unique representation.
                 <VerifierSet as Merkle<T>>::calculate_merkle_root(verifier_set)
                     .expect("Can't use an empty verifier set")
             }

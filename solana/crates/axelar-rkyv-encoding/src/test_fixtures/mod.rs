@@ -152,6 +152,21 @@ pub fn random_valid_proof_message_and_verifier_set<const MESSAGE_LENGTH: usize>(
     (proof, message, verifier_set)
 }
 
+pub fn random_signature() -> Signature {
+    let (signing_key, _) = signing_key::random_keypair();
+    signing_key.sign(&random_bytes::<32>())
+}
+
+pub fn random_ecdsa_signature() -> Signature {
+    let (signing_key, _) = signing_key::random_ecdsa_keypair();
+    signing_key.sign(&random_bytes::<32>())
+}
+
+pub fn random_ed25519_signature() -> Signature {
+    let (signing_key, _) = signing_key::random_ed25519_keypair();
+    signing_key.sign(&random_bytes::<32>())
+}
+
 pub fn random_valid_weighted_signature(message: &[u8]) -> (PublicKey, WeightedSigner) {
     let weight = random_weight();
     let (signing_key, pubkey) = signing_key::random_keypair();

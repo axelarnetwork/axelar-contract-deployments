@@ -1,4 +1,5 @@
-use axelar_rkyv_encoding::test_fixtures::signing_key::{random_keypair, TestSigningKey};
+use axelar_rkyv_encoding::test_fixtures::random_ecdsa_keypair;
+use axelar_rkyv_encoding::test_fixtures::signing_key::TestSigningKey;
 use axelar_rkyv_encoding::types::{PublicKey, U128};
 
 #[derive(Clone, Debug)]
@@ -9,7 +10,7 @@ pub struct TestSigner {
 }
 
 pub fn create_signer_with_weight(weight: u128) -> TestSigner {
-    let (secret_key, public_key) = random_keypair();
+    let (secret_key, public_key) = random_ecdsa_keypair();
 
     TestSigner {
         public_key,

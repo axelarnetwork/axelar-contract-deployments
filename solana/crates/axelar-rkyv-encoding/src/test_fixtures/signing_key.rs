@@ -28,10 +28,11 @@ impl TestSigningKey {
 }
 
 pub fn random_keypair() -> (TestSigningKey, PublicKey) {
-    // todo: try out mixed keypairs after we add support for them on the gateway
-    random_ecdsa_keypair()
+    // NOTE: the Gateway can't process Ed25519 signatures yet, so this function will
+    // issue only ECDSA keypairs for now.
+    //
     // if OsRng.gen_bool(0.5) {
-    //     random_ecdsa_keypair()
+    random_ecdsa_keypair()
     // } else {
     //     random_ed25519_keypair()
     // }

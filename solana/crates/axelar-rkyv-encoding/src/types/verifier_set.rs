@@ -173,6 +173,8 @@ where
 {
     /// Converts this leaf node into bytes that will become the leaf nodes of a
     /// [`VerifierSet`]'s Merkle tree.
+    ///
+    /// Every field must be hashed.
     #[inline]
     pub fn leaf_hash<H>(&'a self) -> [u8; 32]
     where
@@ -181,14 +183,13 @@ where
         let mut hasher = H::default();
         hasher.hash(&[0]); // Leaf node discriminator
         hasher.hash(b"verifier-set");
-        hasher.hash(bytemuck::cast_ref::<_, [u8; 8]>(&self.element.created_at));
-        hasher.hash(bytemuck::cast_ref::<_, [u8; 16]>(&self.element.quorum));
-        hasher.hash(&self.element.domain_separator);
-        Visitor::visit_public_key(&mut hasher, &self.element.signer_pubkey);
-        hasher.hash(bytemuck::cast_ref::<_, [u8; 16]>(
-            &self.element.signer_weight,
-        ));
-        hasher.hash(bytemuck::cast_ref::<_, [u8; 2]>(&self.element.position));
+        hasher.hash(bytemuck::cast_ref::<_, [u8; 8]>(&self.created_at));
+        hasher.hash(bytemuck::cast_ref::<_, [u8; 16]>(&self.quorum));
+        hasher.hash(&self.domain_separator);
+        Visitor::visit_public_key(&mut hasher, &self.signer_pubkey);
+        hasher.hash(bytemuck::cast_ref::<_, [u8; 16]>(&self.signer_weight));
+        hasher.hash(bytemuck::cast_ref::<_, [u8; 2]>(&self.position));
+        hasher.hash(bytemuck::cast_ref::<_, [u8; 2]>(&self.set_size));
         hasher.result().into()
     }
 }
