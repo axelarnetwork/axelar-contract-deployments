@@ -57,13 +57,10 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
     }
 }
 
-function getIntializeFuncName(contractName) {
-    switch(contractName) {
-        case 'interchain_token_service':
-            return 'initialize_its';
-        default: 
-            return 'initialize';
-    }
+const initializeFuncNames = {
+    'axelar_gateway' : 'initialize',
+    'axelar_operators' : 'initialize',
+    'interchain_token_service' : 'initialize_its',
 }
 
 async function deploy(options, config, chain, contractName) {
@@ -104,12 +101,11 @@ async function deploy(options, config, chain, contractName) {
     chain.contracts[contractName].initializeArgs = serializedArgs;
 
     const contract = new Contract(contractAddress);
-    const initializeFuncName = getIntializeFuncName(contractName);
-    const operation = contract.call(initializeFuncName, ...Object.values(initializeArgs));
+    const operation = contract.call(initializeFuncNames[contractName], ...Object.values(initializeArgs));
 
     printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
-    await broadcast(operation, wallet, chain, 'Initialized contract', options);
+    await broadcast(operation, wallet, chain, 'Initialized contract', options);    
 }
 
 async function upgrade(options, _, chain, contractName) {

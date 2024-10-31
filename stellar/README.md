@@ -80,7 +80,6 @@ node stellar/deploy-contract.js deploy axelar_operators --wasm-path ../axelar-cg
 node stellar/deploy-contract.js deploy interchain_token_service --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm --initialize
 ```
 
-
 ## Generate bindings
 
 Generate TypeScript bindings for the contract
