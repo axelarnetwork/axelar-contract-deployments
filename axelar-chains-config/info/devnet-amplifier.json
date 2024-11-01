@@ -551,6 +551,20 @@
             "ITSv0": "0xedb957a8290ed450d5b77a8df9b4bb47e80f485ed5bc5919c3b25495eada7cab",
             "ChannelId": "0xc848bdd1dc546487c43f3d60ec089945644e17ffb52b0a667884dc884d6666a1",
             "OwnerCap": "0x881d33f52cc1c3dcc28af7f040a14cd5c5386f8214171f758b7e87521c3c7c3a"
+          },
+          "trustedAddresses": {
+            "eth-sepolia": [
+              "hub"
+            ],
+            "optimism-sepolia": [
+              "hub"
+            ],
+            "avalanche-fuji": [
+              "hub"
+            ],
+            "axelarnet": [
+              "axelar10jzzmv5m7da7dn2xsfac0yqe7zamy34uedx3e28laq0p6f3f8dzqp649fp"
+            ]
           }
         },
         "Example": {
