@@ -545,12 +545,12 @@
           "address": "0xb25d256e529286388228af86c5c56640f9ececc8ed102bc85b447ec821b5265c"
         },
         "ITS": {
-          "address": "0x88fe840b69137296aeec0199be07683b3cc3e7d845040f55d0b3ac156aa8c3f3",
+          "address": "0x76fb49dcce532b8659e06ee6472adcf62a29e0f06d48b99a0bbed0ecba11e54d",
           "objects": {
-            "ITS": "0xd234b8d9384c188bca8676861bc2bdf065e74a82973ae214436e925de29c21f5",
-            "ITSv0": "0x7d75d44a71b75d49c37a5451799c1cca7a3a6ce9ee0be6a4986fa22e4fdc1056",
-            "ChannelId": "0xd570fa5e6348ff6fa8ed2d5952dfd629ce4c4b870dc3311d82e8c005cb9dbd40",
-            "OwnerCap": "0x7d7f5a329fd875b894b982565d92070bc8ceed6eda9194ca3e4bbc057fa2bbef"
+            "ITS": "0x881c59ce68fae134cf38bd4a339951798f9d385c55eef6f5d571952d73eb6a26",
+            "ITSv0": "0xedb957a8290ed450d5b77a8df9b4bb47e80f485ed5bc5919c3b25495eada7cab",
+            "ChannelId": "0xc848bdd1dc546487c43f3d60ec089945644e17ffb52b0a667884dc884d6666a1",
+            "OwnerCap": "0x881d33f52cc1c3dcc28af7f040a14cd5c5386f8214171f758b7e87521c3c7c3a"
           }
         },
         "Example": {
