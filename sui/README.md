@@ -58,19 +58,19 @@ node sui/faucet.js
 
 The following packages need to be deployed in order because they are referenced by other packages.
 
-Deploy the Utils package:
+#### Utils
 
 ```bash
 node sui/deploy-contract.js deploy Utils
 ```
 
-Deploy the Version Control package:
+#### Version Control
 
 ```bash
 node sui/deploy-contract.js deploy VersionControl
 ```
 
-Deploy the Gateway package:
+#### AxelarGateway
 
 -   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
@@ -94,49 +94,49 @@ node sui/deploy-contract.js deploy AxelarGateway --signers wallet --nonce test
 node sui/deploy-contract.js deploy AxelarGateway -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
 ```
 
-Deploy the Gas Service package:
+#### Gas Service
 
 ```bash
 node sui/deploy-contract.js deploy GasService
 ```
 
-Deploy the Abi package:
+#### Abi
 
 ```bash
 node sui/deploy-contract.js deploy Abi
 ```
 
-Deploy the Operators package:
+#### Operators
 
 ```bash
 node sui/deploy-contract.js deploy Operators
 ```
 
-Deploy the Governance package:
+#### Governance
 
 ```bash
 node sui/deploy-contract.js deploy Governance
 ```
 
-Deploy the Relayer Discovery package:
+#### Relayer Discovery
 
 ```bash
 node sui/deploy-contract.js deploy RelayerDiscovery
 ```
 
-Deploy the ITS package:
+#### ITS
 
 ```bash
 node sui/deploy-contract.js deploy ITS
 ```
 
-Deploy the Squid package:
+#### Squid
 
 ```bash
 node sui/deploy-contract.js deploy Squid
 ```
 
-Deploy the Example package
+#### Example
 
 ```bash
 node sui/deploy-contract.js deploy Example
@@ -150,11 +150,6 @@ To allow the operator to collect or refund gas, the GasServiceCollector cap must
 
 ```bash
 node sui/operators.js storeCap
-```
-
-```bash
-# execute the following command from the owner account
-node sui/operators add <operator address>
 ```
 
 #### Assign `Operator` role to given address:
@@ -273,15 +268,15 @@ example for adding multisig info to chains config:
 }
 ```
 
-### Other Operations
+### Miscellaneous Operations
 
-Call Contract:
+#### Call Contract
 
 ```bash
 node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
-Pay for gas:
+#### Pay Gas
 
 The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
 
@@ -289,13 +284,13 @@ The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChai
 node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
-Collect gas:
+#### Collect Gas
 
 ```bash
 node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
 ```
 
-Approve messages:
+#### Approve Messages
 
 If the gateway was deployed using the wallet, you can submit a message approval with it
 
@@ -303,7 +298,7 @@ If the gateway was deployed using the wallet, you can submit a message approval 
 node sui/gateway.js approve --proof wallet --currentNonce test ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
 ```
 
-Rotate gateway signers:
+#### Rotate Gateway Signers
 
 If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
 
@@ -325,7 +320,7 @@ To submit a proof constructed on Amplifier, run the following with the multisig 
 node sui/gateway.js submitProof [multisig session id]
 ```
 
-## Transfer object
+#### Transfer Object
 
 Please note shared objects cannot be transferred via this script.
 
@@ -335,7 +330,7 @@ node sui/transfer-object.js --objectId <object id to be transferred> --recipient
 node sui/transfer-object.js --contractName <Can be checked from config> --objectName <picked from config> --recipient <recipient address>
 ```
 
-## Coins Management
+#### Coins Management
 
 List of coins in the wallet:
 
