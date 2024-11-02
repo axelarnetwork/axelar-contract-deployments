@@ -3,43 +3,11 @@
 ## Table of Contents
 
 [Prerequisites](#prerequisites)
-
 [Deployment](#deployment)
-
--   [Utils](#utils)
--   [Version Control](#version-control)
--   [AxelarGateway](#axelargateway)
--   [Gas Service](#gas-service)
--   [Abi](#abi)
--   [Operators](#operators)
--   [Governance](#governance)
--   [Relayer Discovery](#relayer-discovery)
--   [ITS](#its)
--   [Squid](#squid)
--   [Example](#example)
-
 [Post Deployment Setup](#post-deployment-setup)
-
--   [Gas Collector Configuration](#gas-collector-configuration)
--   [Operator Management](#operator-management)
-
 [Contract Management](#contract-management)
-
--   [Upgrade Procedures](#upgrade-procedures)
--   [Multisig Operations](#multisig-operations)
-
 [Operational Tasks](#operational-tasks)
-
--   [Call Contract](#call-contract)
--   [Pay Gas](#pay-gas)
--   [Collect Gas](#collect-gas)
--   [Approve Messages](#approve-messages)
--   [Rotate Gateway Signers](#rotate-gateway-signers)
--   [Transfer Object](#transfer-object)
--   [Coins Management](#coins-management)
-
 [Examples](#examples)
-
 [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
