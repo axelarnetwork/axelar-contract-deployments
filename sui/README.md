@@ -1,4 +1,46 @@
-# Sui deployment scripts
+# Sui Deployment Guide
+
+## Table of Contents
+
+[Prerequisites](#prerequisites)
+
+[Deployment](#deployment)
+
+-   [Utils](#utils)
+-   [Version Control](#version-control)
+-   [AxelarGateway](#axelargateway)
+-   [Gas Service](#gas-service)
+-   [Abi](#abi)
+-   [Operators](#operators)
+-   [Governance](#governance)
+-   [Relayer Discovery](#relayer-discovery)
+-   [ITS](#its)
+-   [Squid](#squid)
+-   [Example](#example)
+
+[Post Deployment Setup](#post-deployment-setup)
+
+-   [Gas Collector Configuration](#gas-collector-configuration)
+-   [Operator Management](#operator-management)
+
+[Contract Management](#contract-management)
+
+-   [Upgrade Procedures](#upgrade-procedures)
+-   [Multisig Operations](#multisig-operations)
+
+[Operational Tasks](#operational-tasks)
+
+-   [Call Contract](#call-contract)
+-   [Pay Gas](#pay-gas)
+-   [Collect Gas](#collect-gas)
+-   [Approve Messages](#approve-messages)
+-   [Rotate Gateway Signers](#rotate-gateway-signers)
+-   [Transfer Object](#transfer-object)
+-   [Coins Management](#coins-management)
+
+[Examples](#examples)
+
+[Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
@@ -46,15 +88,13 @@ If you want to run against a local Sui network, then create a `axelar-chains-con
 
 Use the `-e local` (or `ENV=local` in the `.env` config) flag with scripts to run against the local network.
 
-## Scripts
+## Deployment
 
 To get test SUI coins to your address via a faucet.
 
-```bash
+````bash
 node sui/faucet.js
-```
 
-### Deployment
 
 The following packages need to be deployed in order because they are referenced by other packages.
 
@@ -62,15 +102,15 @@ The following packages need to be deployed in order because they are referenced 
 
 ```bash
 node sui/deploy-contract.js deploy Utils
-```
+````
 
-#### Version Control
+### Version Control
 
 ```bash
 node sui/deploy-contract.js deploy VersionControl
 ```
 
-#### AxelarGateway
+### AxelarGateway
 
 -   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
@@ -94,75 +134,77 @@ node sui/deploy-contract.js deploy AxelarGateway --signers wallet --nonce test
 node sui/deploy-contract.js deploy AxelarGateway -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
 ```
 
-#### Gas Service
+### Gas Service
 
 ```bash
 node sui/deploy-contract.js deploy GasService
 ```
 
-#### Abi
+### Abi
 
 ```bash
 node sui/deploy-contract.js deploy Abi
 ```
 
-#### Operators
+### Operators
 
 ```bash
 node sui/deploy-contract.js deploy Operators
 ```
 
-#### Governance
+### Governance
 
 ```bash
 node sui/deploy-contract.js deploy Governance
 ```
 
-#### Relayer Discovery
+### Relayer Discovery
 
 ```bash
 node sui/deploy-contract.js deploy RelayerDiscovery
 ```
 
-#### ITS
+### ITS
 
 ```bash
 node sui/deploy-contract.js deploy ITS
 ```
 
-#### Squid
+### Squid
 
 ```bash
 node sui/deploy-contract.js deploy Squid
 ```
 
-#### Example
+### Example
 
 ```bash
 node sui/deploy-contract.js deploy Example
 ```
 
-### Post Deployment
+## Post Deployment Setup
 
-#### Store the `GasCollector` cap in the `Operators` contract:
+### Gas Collector Configuration
 
-To allow the operator to collect or refund gas, the GasServiceCollector cap must be stored in the Operators contract.
+To allow the operator to collect or refund gas, the `GasCollector` cap must be stored in the `Operators` contract:
 
 ```bash
 node sui/operators.js storeCap
 ```
 
-#### Assign `Operator` role to given address:
+### Operator Management
+
+Assign `Operator` role to given address:
 
 ```bash
 node sui/operators.js add <operator address>
 ```
 
-### Upgrade
+## Contract Management
 
-Upgrading Gateway:
+### Upgrade Procedures
 
-To update the gateway run the following command:
+For example, to update the gateway run the following command:
 
 ```bash
 node sui/deploy-contract.js upgrade AxelarGateway <policy>
@@ -176,7 +218,7 @@ policy should be one of the following:
 
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
-### Multisig
+### Multisig Operations
 
 To create a Multisig, follow the documentation [here](https://docs.sui.io/guides/developer/cryptography/multisig).
 
@@ -268,15 +310,15 @@ example for adding multisig info to chains config:
 }
 ```
 
-### Miscellaneous Operations
+## Operational Tasks
 
-#### Call Contract
+### Call Contract
 
 ```bash
 node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
-#### Pay Gas
+### Pay Gas
 
 The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
 
@@ -284,13 +326,13 @@ The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChai
 node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
-#### Collect Gas
+### Collect Gas
 
 ```bash
 node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
 ```
 
-#### Approve Messages
+### Approve Messages
 
 If the gateway was deployed using the wallet, you can submit a message approval with it
 
@@ -298,7 +340,7 @@ If the gateway was deployed using the wallet, you can submit a message approval 
 node sui/gateway.js approve --proof wallet --currentNonce test ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
 ```
 
-#### Rotate Gateway Signers
+### Rotate Gateway Signers
 
 If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
 
@@ -320,7 +362,7 @@ To submit a proof constructed on Amplifier, run the following with the multisig 
 node sui/gateway.js submitProof [multisig session id]
 ```
 
-#### Transfer Object
+### Transfer Object
 
 Please note shared objects cannot be transferred via this script.
 
@@ -330,7 +372,7 @@ node sui/transfer-object.js --objectId <object id to be transferred> --recipient
 node sui/transfer-object.js --contractName <Can be checked from config> --objectName <picked from config> --recipient <recipient address>
 ```
 
-#### Coins Management
+### Coins Management
 
 List of coins in the wallet:
 
