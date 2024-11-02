@@ -2,13 +2,13 @@
 
 ## Table of Contents
 
-[Prerequisites](#prerequisites)
-[Deployment](#deployment)
-[Post Deployment Setup](#post-deployment-setup)
-[Contract Management](#contract-management)
-[Operational Tasks](#operational-tasks)
-[Examples](#examples)
-[Troubleshooting](#troubleshooting)
+-   [Prerequisites](#prerequisites)
+-   [Deployment](#deployment)
+-   [Post Deployment Setup](#post-deployment-setup)
+-   [Contract Management](#contract-management)
+-   [Operational Tasks](#operational-tasks)
+-   [Examples](#examples)
+-   [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
