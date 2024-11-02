@@ -54,6 +54,8 @@ To get test SUI coins to your address via a faucet.
 node sui/faucet.js
 ```
 
+### Deployment
+
 Before deploying the gateway package:
 
 `Utils` and `VersionControl` contracts need to be deployed before `AxelarGateway` contract. Run the following commands to deploy both contracts:
@@ -149,70 +151,25 @@ Deploy the Squid package (requires `abi`, `axelar_gateway`, `goverannce` and `it
 node sui/deploy-contract.js deploy Squid
 ```
 
-Call Contract:
+### Post Deployment
+
+#### Store the `GasCollector` cap in the `Operators` contract:
+
+To allow the operator to collect or refund gas, the GasServiceCollector cap must be stored in the Operators contract.
 
 ```bash
-node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
-```
-
-Pay for gas:
-
-The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
-
-```bash
-node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
-```
-
-Collect gas:
-
-Conditions:
-
--   The `GasCollectorCap` object id is read from the chain config, under gas service objects.
-
-```bash
-# store GasCollectorCap to the Operators contract
 node sui/operators.js storeCap
 ```
-
--   The sender must be a whitelisted operator and hold the `OperatorCap` capability.
 
 ```bash
 # execute the following command from the owner account
 node sui/operators add <operator address>
 ```
 
-```bash
-node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
-```
-
-Approve messages:
-
-If the gateway was deployed using the wallet, you can submit a message approval with it
+#### Assign `Operator` role to given address:
 
 ```bash
-node sui/gateway.js approve --proof wallet --currentNonce test ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
-```
-
-Rotate gateway signers:
-
-If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
-
-```bash
-node sui/gateway.js rotate --proof wallet --currentNonce test
-```
-
-If you want to rotate to the wallet again but with a new nonce, do
-
-```bash
-node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test --newNonce test2
-```
-
-Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
-
-To submit a proof constructed on Amplifier, run the following with the multisig session id,
-
-```bash
-node sui/gateway.js submitProof [multisig session id]
+node sui/operators.js add <operator address>
 ```
 
 ### Multisig
@@ -307,16 +264,57 @@ example for adding multisig info to chains config:
 }
 ```
 
-## Examples
+### Other Operations
 
--   [GMP Example Guide](docs/gmp.md)
--   [ITS Example Guide](docs/its.md)
+Call Contract:
 
-## Troubleshooting
+```bash
+node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+```
 
-1. Move build error during the deployment step
+Pay for gas:
 
-Delete the `node_modules` folder and `package-lock.json` file and then run `npm install` again.
+The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
+
+```bash
+node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+```
+
+Collect gas:
+
+```bash
+node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
+```
+
+Approve messages:
+
+If the gateway was deployed using the wallet, you can submit a message approval with it
+
+```bash
+node sui/gateway.js approve --proof wallet --currentNonce test ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
+```
+
+Rotate gateway signers:
+
+If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
+
+```bash
+node sui/gateway.js rotate --proof wallet --currentNonce test
+```
+
+If you want to rotate to the wallet again but with a new nonce, do
+
+```bash
+node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test --newNonce test2
+```
+
+Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
+
+To submit a proof constructed on Amplifier, run the following with the multisig session id,
+
+```bash
+node sui/gateway.js submitProof [multisig session id]
+```
 
 ## Transfer object
 
@@ -354,3 +352,14 @@ Note:
 
 -   If coin type is not provided, it will split all the coins.
 -   If transfer address is not provided, it will split the coins in the same wallet. Otherwise, it will transfer the splitted coins to the provided address.
+
+## Examples
+
+-   [GMP Example Guide](docs/gmp.md)
+-   [ITS Example Guide](docs/its.md)
+
+## Troubleshooting
+
+1. Move build error during the deployment step
+
+Delete the `node_modules` folder and `package-lock.json` file and then run `npm install` again.
