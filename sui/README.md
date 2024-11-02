@@ -56,14 +56,21 @@ node sui/faucet.js
 
 ### Deployment
 
-Before deploying the gateway package:
+The following packages need to be deployed in order because they are referenced by other packages.
 
-`Utils` and `VersionControl` contracts need to be deployed before `AxelarGateway` contract. Run the following commands to deploy both contracts:
+Deploy the Utils package:
 
--   `node sui/deploy-contract.js deploy Utils`
--   `node sui/deploy-contract.js deploy VersionControl`
+```bash
+node sui/deploy-contract.js deploy Utils
+```
 
-Deploy the gateway package:
+Deploy the Version Control package:
+
+```bash
+node sui/deploy-contract.js deploy VersionControl
+```
+
+Deploy the Gateway package:
 
 -   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
@@ -87,44 +94,10 @@ node sui/deploy-contract.js deploy AxelarGateway --signers wallet --nonce test
 node sui/deploy-contract.js deploy AxelarGateway -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
 ```
 
-Upgrading Gateway:
-
-To update the gateway run the following command:
-
-```bash
-node sui/deploy-contract.js upgrade AxelarGateway <policy>
-```
-
-policy should be one of the following:
-
--   `any_upgrade`: Allow any upgrade.
--   `code_upgrade`: Upgrade policy to just add code. https://docs.sui.io/references/framework/sui-framework/package#function-only_additive_upgrades
--   `dep_upgrade`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
-
-Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
-
-Deploy the Utils package:
-
-```bash
-node sui/deploy-contract.js deploy Utils
-```
-
 Deploy the Gas Service package:
 
 ```bash
 node sui/deploy-contract.js deploy GasService
-```
-
-Deploy the test GMP package:
-
-```bash
-node sui/deploy-contract.js deploy Example
-```
-
-Deploy the Operators package:
-
-```bash
-node sui/deploy-contract.js deploy Operators
 ```
 
 Deploy the Abi package:
@@ -133,22 +106,40 @@ Deploy the Abi package:
 node sui/deploy-contract.js deploy Abi
 ```
 
-Deploy the Governance package (requires `abi` and `axelar_gateway`):
+Deploy the Operators package:
+
+```bash
+node sui/deploy-contract.js deploy Operators
+```
+
+Deploy the Governance package:
 
 ```bash
 node sui/deploy-contract.js deploy Governance
 ```
 
-Deploy the ITS package (requires `abi`, `axelar_gateway` and `goverannce`):
+Deploy the Relayer Discovery package:
+
+```bash
+node sui/deploy-contract.js deploy RelayerDiscovery
+```
+
+Deploy the ITS package:
 
 ```bash
 node sui/deploy-contract.js deploy ITS
 ```
 
-Deploy the Squid package (requires `abi`, `axelar_gateway`, `goverannce` and `its`):
+Deploy the Squid package:
 
 ```bash
 node sui/deploy-contract.js deploy Squid
+```
+
+Deploy the Example package
+
+```bash
+node sui/deploy-contract.js deploy Example
 ```
 
 ### Post Deployment
@@ -171,6 +162,24 @@ node sui/operators add <operator address>
 ```bash
 node sui/operators.js add <operator address>
 ```
+
+### Upgrade
+
+Upgrading Gateway:
+
+To update the gateway run the following command:
+
+```bash
+node sui/deploy-contract.js upgrade AxelarGateway <policy>
+```
+
+policy should be one of the following:
+
+-   `any_upgrade`: Allow any upgrade.
+-   `code_upgrade`: Upgrade policy to just add code. https://docs.sui.io/references/framework/sui-framework/package#function-only_additive_upgrades
+-   `dep_upgrade`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
+
+Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
 ### Multisig
 
