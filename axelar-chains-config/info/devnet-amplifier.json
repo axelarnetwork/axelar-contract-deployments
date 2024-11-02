@@ -568,12 +568,12 @@
           }
         },
         "Example": {
-          "address": "0xc71305a7b7e95559fdbcd58cebc69591cd355dbe29b22d751ce1541f8f2e785e",
+          "address": "0x36b38c261f0aeed4ab06c5312323c6a8b6883018f157ffb75906f09729b181aa",
           "objects": {
-            "GmpSingleton": "0x31c90cf02a0e4cee39e52c24b8e58b91b1c93203549e57ee89feca7db7a58b80",
-            "GmpChannelId": "0x328546dd361df44e84854cee52d699ed375ab2c13720d09b745503230a4a3f7c",
-            "ItsSingleton": "0x5c988ddf7977f4b8ee22c333861be2510db42bfc44ec5a0942c69c1a1ad987f3",
-            "ItsChannelId": "0xb0c4bf5a2cbd81112a0ae852a902ad3dd891a34094f4af02419184d9ec96a82a"
+            "GmpSingleton": "0xa555eb707da9e280f0b38cb0d7e0e75bfb576fae363d0a7a2fe341f68940e277",
+            "GmpChannelId": "0xbdab4917a6062e6b74023bbb2cfc27fc0a10661ef5b8b7d72950c24bb7e54c16",
+            "ItsSingleton": "0xbdd269f6eefe806b6929d0f9708fd1d0994db1ca2a77303f81dc130d2068a7b8",
+            "ItsChannelId": "0xddb468cbb25bfd292a6cc878fe8bf72fa320c17cd99bd5375d8f20a31e2649a3"
           }
         },
         "Operators": {
