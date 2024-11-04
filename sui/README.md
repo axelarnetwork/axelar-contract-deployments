@@ -60,9 +60,9 @@ Use the `-e local` (or `ENV=local` in the `.env` config) flag with scripts to ru
 
 To get test SUI coins to your address via a faucet.
 
-````bash
+```bash
 node sui/faucet.js
-
+```
 
 The following packages need to be deployed in order because they are referenced by other packages.
 
@@ -70,7 +70,7 @@ The following packages need to be deployed in order because they are referenced 
 
 ```bash
 node sui/deploy-contract.js deploy Utils
-````
+```
 
 ### Version Control
 
