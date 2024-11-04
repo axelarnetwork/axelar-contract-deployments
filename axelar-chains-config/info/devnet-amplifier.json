@@ -493,6 +493,90 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1
+    },
+    "sui-test2": {
+      "name": "sui-test2",
+      "axelarId": "sui-test2",
+      "id": "sui-test2",
+      "networkType": "testnet",
+      "tokenSymbol": "SUI",
+      "rpc": "https://fullnode.testnet.sui.io:443",
+      "contracts": {
+        "Utils": {
+          "address": "0xac843343c6f70ff29e782f5dd11aea5ba4874ce4f29bad6ce4a25f7837e8e950"
+        },
+        "VersionControl": {
+          "address": "0x812fdebd483384b56abddd57159707865687f742d0dc91d0057431f71c5f796f"
+        },
+        "AxelarGateway": {
+          "address": "0x3c28103ff11b67c4f07761ad87423b5afb470ab391b8fa735b16755a091aacfd",
+          "objects": {
+            "Gateway": "0x32100a9af641060281f61d95c9a93d4e0437dfe7dda34618d154e6fe321d55b5",
+            "UpgradeCap": "0xb73bfb2bf011a10169060c6ab11599e5fa4e10d217c0d8312538ad4accb22780",
+            "Gatewayv0": "0x5d53894cfd16c3b36d4412226b4a82abec29f29e71b9a9f98a031cddfae8dbf0"
+          },
+          "domainSeparator": "0x05b8831cd87c82fadd1e4967a45eb3401dfc6bf5f74b827d8f525992c09403ef",
+          "operator": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "minimumRotationDelay": 0
+        },
+        "RelayerDiscovery": {
+          "address": "0x7d51c9e5ae0616fb6c37d58449d06376f0ab0dc7f340406bdbe0c49f211013d1",
+          "objects": {
+            "RelayerDiscovery": "0xb4016df3ed41c9d18788f5c5fdaf03c1a88b3e6369d47c9ad81be268381e094f",
+            "RelayerDiscoveryv0": "0x85262593b3154097b1f538f2f9e7da19627d2fb183880e8e4bdba7de86bdfe8a"
+          }
+        },
+        "GasService": {
+          "address": "0x6ae06190270188566e36f7744c1c441bb44279b7f121f666d4ca281ed521b444",
+          "objects": {
+            "GasCollectorCap": "0x4ff137ea8a58e83b2e62ad143f541660412360d5b73b1f1bc4d673560e2b1244",
+            "GasService": "0x9e22d1435e1d22abb178440f9cc8d3be27fbf95960b5ad787057a0b1a4dce1a4",
+            "GasServicev0": "0xecbf2103ad3a7ac48ac8de12ca3de513b1dfd795bf5f6bbdc31b0513a57c6c4a"
+          }
+        },
+        "Abi": {
+          "address": "0xb25d256e529286388228af86c5c56640f9ececc8ed102bc85b447ec821b5265c"
+        },
+        "ITS": {
+          "address": "0x76fb49dcce532b8659e06ee6472adcf62a29e0f06d48b99a0bbed0ecba11e54d",
+          "objects": {
+            "ITS": "0x881c59ce68fae134cf38bd4a339951798f9d385c55eef6f5d571952d73eb6a26",
+            "ITSv0": "0xedb957a8290ed450d5b77a8df9b4bb47e80f485ed5bc5919c3b25495eada7cab",
+            "ChannelId": "0xc848bdd1dc546487c43f3d60ec089945644e17ffb52b0a667884dc884d6666a1",
+            "OwnerCap": "0x881d33f52cc1c3dcc28af7f040a14cd5c5386f8214171f758b7e87521c3c7c3a"
+          },
+          "trustedAddresses": {
+            "eth-sepolia": [
+              "hub"
+            ],
+            "optimism-sepolia": [
+              "hub"
+            ],
+            "avalanche-fuji": [
+              "hub"
+            ],
+            "axelarnet": [
+              "axelar10jzzmv5m7da7dn2xsfac0yqe7zamy34uedx3e28laq0p6f3f8dzqp649fp"
+            ]
+          }
+        },
+        "Example": {
+          "address": "0x36b38c261f0aeed4ab06c5312323c6a8b6883018f157ffb75906f09729b181aa",
+          "objects": {
+            "GmpSingleton": "0xa555eb707da9e280f0b38cb0d7e0e75bfb576fae363d0a7a2fe341f68940e277",
+            "GmpChannelId": "0xbdab4917a6062e6b74023bbb2cfc27fc0a10661ef5b8b7d72950c24bb7e54c16",
+            "ItsSingleton": "0xbdd269f6eefe806b6929d0f9708fd1d0994db1ca2a77303f81dc130d2068a7b8",
+            "ItsChannelId": "0xddb468cbb25bfd292a6cc878fe8bf72fa320c17cd99bd5375d8f20a31e2649a3"
+          }
+        },
+        "Operators": {
+          "address": "0x0b92f476bdb857de002e70eba31ebaa342c4d7d8550d7ab0e0219fe9501e19f8",
+          "objects": {
+            "Operators": "0xbf8fff27484701828c18b9d30ed249a77fe703535f978d1eeddb288dc5e7ae1f",
+            "OwnerCap": "0x2e9dc6979c7e41a7e13561628b3bc53cf237837ddf1e1f67984c59782e3f8cf3"
+          }
+        }
+      }
     }
   },
   "stellar-test2": {
@@ -609,7 +693,7 @@
           "codeId": 626,
           "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj"
         },
-        "lastUploadedCodeId": 780,
+        "lastUploadedCodeId": 784,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -654,20 +738,35 @@
           "addressFormat": "eip55",
           "address": "axelar1hn4hf23pqy2s2yacs4cuzjqe72hxn0rtxugy2vq485l7cngtcavqu9d0zq"
         },
-        "stellar-test2": {
+        "sui-test2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
-          "sourceGatewayAddress": "CBGNPCKNCKKKCI5AUOS2K6H4JDLGPFHHXNDNOEZBIA3VO2NBEZQXFAG5",
+          "sourceGatewayAddress": "0x3c28103ff11b67c4f07761ad87423b5afb470ab391b8fa735b16755a091aacfd",
+          "msgIdFormat": "base58_tx_digest_and_event_index",
+          "addressFormat": "sui",
           "votingThreshold": [
             "6",
             "10"
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
+          "codeId": 784,
+          "address": "axelar1pgzqdnnayxw0t73wea06amp4lpatg34q6wnlyplf2u2edt2veu0qygcpqe"
+        },
+        "stellar-test2": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "CBGNPCKNCKKKCI5AUOS2K6H4JDLGPFHHXNDNOEZBIA3VO2NBEZQXFAG5",
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "stellar",
           "address": "axelar1y00kk2j8pjx700hedhn3u7dyduy5q9kr37hgge6zxrl46ny0jr7qj046ey",
-          "codeId": 780
+          "codeId": 780,
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1
         }
       },
       "Gateway": {
@@ -675,7 +774,7 @@
           "codeId": 616,
           "address": "axelar1agyunp32jwynnkrf92wuvac2xa7cvgthtk5yr3wh7jypg59zjjqqsqf36s"
         },
-        "lastUploadedCodeId": 781,
+        "lastUploadedCodeId": 785,
         "eth-sepolia": {
           "codeId": 616,
           "address": "axelar18zrymnzgdmutdjhqlfsslzy4yvzw8uylysjwqlq4uk4muq3qx30qde39qz"
@@ -686,6 +785,10 @@
         },
         "flow": {
           "address": "axelar10w5sqgun0q3m0vkz29vh55ujug57m0t54cue04aesrg45rqcgf6sjv4wwh"
+        },
+        "sui-test2": {
+          "codeId": 785,
+          "address": "axelar126awlkwqhtvx60nekmnxd7z3slk0u9w7yuse89j9s9rj0053lh8q365zkz"
         },
         "stellar-test2": {
           "address": "axelar1yekgav0alr7ptakd9uhlengvcfwals6agjceszxzmj77af825y3qs5asgx",
@@ -709,7 +812,7 @@
           "codeId": 618,
           "address": "axelar1p22kz5jr7a9ruu8ypg40smual0uagl64dwvz5xt042vu8fa7l7dsl3wx8q"
         },
-        "lastUploadedCodeId": 782,
+        "lastUploadedCodeId": 786,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -756,6 +859,21 @@
           "keyType": "ecdsa",
           "domainSeparator": "0xcc0a47123f218b7f10d07212f499e418080c91cda74c46373c9a0e4aeec7332e",
           "address": "axelar19ukamzyhhaw4algkqch5relyg0h972smhj8zge2usjp8z7yaezrquc475f"
+        },
+        "sui-test2": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "bcs",
+          "keyType": "ecdsa",
+          "codeId": 786,
+          "domainSeparator": "0x05b8831cd87c82fadd1e4967a45eb3401dfc6bf5f74b827d8f525992c09403ef",
+          "address": "axelar1amvmsrszflf43lhfgzcq93a22usvy3w7kqrp25uqghnws3x04jyscutk0w"
         },
         "stellar-test2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
