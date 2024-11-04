@@ -2,7 +2,6 @@
   "chains": {
     "core-avalanche": {
       "name": "Avalanche Fuji",
-      "id": "core-avalanche",
       "axelarId": "core-avalanche",
       "chainId": 43113,
       "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
@@ -52,7 +51,6 @@
     },
     "core-ethereum": {
       "name": "Ethereum Sepolia",
-      "id": "core-ethereum",
       "axelarId": "core-ethereum",
       "chainId": 11155111,
       "rpc": "https://eth-sepolia-public.unifra.io",
@@ -102,7 +100,6 @@
     },
     "core-optimism": {
       "name": "Optimism Sepolia",
-      "id": "core-optimism",
       "axelarId": "core-optimism",
       "chainId": 11155420,
       "rpc": "https://sepolia.optimism.io",
@@ -152,7 +149,6 @@
     },
     "avalanche-fuji": {
       "name": "Avalanche Fuji",
-      "id": "avalanche-fuji",
       "axelarId": "avalanche-fuji",
       "chainId": 43113,
       "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
@@ -245,7 +241,6 @@
     },
     "eth-sepolia": {
       "name": "Ethereum Sepolia",
-      "id": "eth-sepolia",
       "axelarId": "eth-sepolia",
       "chainId": 11155111,
       "rpc": "https://1rpc.io/sepolia",
@@ -338,7 +333,6 @@
     },
     "optimism-sepolia": {
       "name": "Optimism Sepolia",
-      "id": "optimism-sepolia",
       "axelarId": "optimism-sepolia",
       "chainId": 11155420,
       "rpc": "https://sepolia.optimism.io",
@@ -431,7 +425,6 @@
     },
     "flow": {
       "name": "Flow",
-      "id": "flow",
       "axelarId": "flow",
       "chainId": 545,
       "rpc": "https://testnet.evm.nodes.onflow.org",
@@ -587,7 +580,6 @@
     }
   },
   "stellar-test2": {
-    "id": "stellar-test2",
     "axelarId": "stellar-test2",
     "rpc": "https://soroban-testnet.stellar.org",
     "horizonRpc": "https://horizon-testnet.stellar.org",
@@ -900,7 +892,6 @@
         }
       }
     },
-    "id": "axelarnet",
     "axelarId": "axelarnet",
     "chainId": "devnet-amplifier",
     "rpc": "http://devnet-amplifier.axelar.dev:26657",
