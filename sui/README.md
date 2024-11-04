@@ -168,7 +168,7 @@ Assign `Operator` role to given address:
 node sui/operators.js add <operator address>
 ```
 
-## Contract Management
+## Contract Upgrades
 
 ### Upgrade Procedures
 
