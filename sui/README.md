@@ -278,7 +278,7 @@ example for adding multisig info to chains config:
 }
 ```
 
-## Operational Tasks
+## Contract Interactions
 
 ### Call Contract
 
