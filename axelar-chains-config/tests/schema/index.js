@@ -2,7 +2,6 @@ const axelarSchema = {
     id: '/info.axelar',
     type: 'object',
     properties: {
-        id: { type: 'string' },
         axelarId: { type: 'string' },
         rpc: { type: 'string' },
         // Matches for "" "http://example.com:443" "https://example.com:443" "https://example.com" "http://example.com"
@@ -10,7 +9,7 @@ const axelarSchema = {
         grpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
     },
-    required: ['id', 'axelarId', 'rpc', 'lcd', 'grpc', 'tokenSymbol'],
+    required: ['axelarId', 'rpc', 'lcd', 'grpc', 'tokenSymbol'],
 };
 
 export const contractValueSchema = {
@@ -78,7 +77,7 @@ export const chainValueSchema = {
         approxFinalityWaitTime: { type: 'number' },
         timeout: { type: 'number' },
     },
-    required: ['name', 'id', 'axelarId', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
+    required: ['name', 'axelarId', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
 };
 
 export const chainsSchema = {
