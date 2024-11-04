@@ -4,9 +4,8 @@
 
 -   [Prerequisites](#prerequisites)
 -   [Deployment](#deployment)
--   [Post Deployment Setup](#post-deployment-setup)
--   [Contract Management](#contract-management)
--   [Operational Tasks](#operational-tasks)
+-   [Contract Upgrades](#contract-upgrades)
+-   [Contract Interactions](#contract-interactions)
 -   [Examples](#examples)
 -   [Troubleshooting](#troubleshooting)
 
@@ -120,6 +119,24 @@ node sui/deploy-contract.js deploy Abi
 node sui/deploy-contract.js deploy Operators
 ```
 
+#### Operators Post Deployment
+
+##### Gas Collector Configuration
+
+To allow the operator to collect or refund gas, the `GasCollector` cap must be stored in the `Operators` contract:
+
+```bash
+node sui/operators.js storeCap
+```
+
+##### Operator Management
+
+Assign `Operator` role to given address:
+
+```bash
+node sui/operators.js add <operator address>
+```
+
 ### Governance
 
 ```bash
@@ -148,24 +165,6 @@ node sui/deploy-contract.js deploy Squid
 
 ```bash
 node sui/deploy-contract.js deploy Example
-```
-
-## Post Deployment Setup
-
-### Gas Collector Configuration
-
-To allow the operator to collect or refund gas, the `GasCollector` cap must be stored in the `Operators` contract:
-
-```bash
-node sui/operators.js storeCap
-```
-
-### Operator Management
-
-Assign `Operator` role to given address:
-
-```bash
-node sui/operators.js add <operator address>
 ```
 
 ## Contract Upgrades
