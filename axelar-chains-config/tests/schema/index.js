@@ -66,7 +66,6 @@ export const chainValueSchema = {
     type: 'object',
     properties: {
         name: { type: 'string' },
-        id: { type: 'string' },
         axelarId: { type: 'string' },
         chainId: { type: 'number' },
         rpc: { type: 'string' },
