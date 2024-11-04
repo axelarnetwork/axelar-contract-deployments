@@ -1,5 +1,6 @@
 const { Command, Option } = require('commander');
 const { ITSMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
+const { bcs } = require('@mysten/sui/bcs');
 const { loadConfig, saveConfig, printInfo, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
@@ -73,7 +74,7 @@ async function sendToken(keypair, client, contracts, args, options) {
             TokenId,
             Coin,
             destinationChain,
-            destinationAddress,
+            bcs.string().serialize(destinationAddress).toBytes(),
             '0x', // its token metadata
             walletAddress,
             gas,
