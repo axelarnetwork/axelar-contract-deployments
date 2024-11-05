@@ -20,16 +20,16 @@ use super::LocalAction;
 use crate::instructions::Bumps;
 use crate::processor::token_manager as token_manager_processor;
 use crate::seed_prefixes;
-use crate::state::token_manager::TokenManager;
+use crate::state::token_manager::{self, TokenManager};
 
 impl LocalAction for InterchainTransfer {
     fn process_local_action<'a>(
         self,
-        payer: &AccountInfo<'a>,
-        accounts: &[AccountInfo<'a>],
+        payer: &'a AccountInfo<'a>,
+        accounts: &'a [AccountInfo<'a>],
         bumps: Bumps,
     ) -> ProgramResult {
-        process_transfer(payer, accounts, &self, bumps)
+        process_inbound_transfer(payer, accounts, &self, bumps)
     }
 }
 
@@ -61,9 +61,9 @@ impl LocalAction for InterchainTransfer {
 ///
 /// An error occurred when processing the message. The reason can be derived
 /// from the logs.
-pub fn process_transfer<'a>(
+pub fn process_inbound_transfer<'a>(
     payer: &AccountInfo<'a>,
-    accounts: &[AccountInfo<'a>],
+    accounts: &'a [AccountInfo<'a>],
     payload: &InterchainTransfer,
     bumps: Bumps,
 ) -> ProgramResult {
@@ -106,129 +106,279 @@ pub fn process_transfer<'a>(
     Ok(())
 }
 
-fn give_token<'a>(
-    payer: &AccountInfo<'a>,
-    accounts: &[AccountInfo<'a>],
+pub(crate) fn take_token<'a>(
+    accounts: &'a [AccountInfo<'a>],
     amount: u64,
     bumps: Bumps,
-) -> ProgramResult {
-    use crate::state::token_manager::Type::{
-        LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
-    };
+) -> Result<u64, ProgramError> {
+    let accounts = parse_take_token_accounts(accounts)?;
 
-    let accounts_iter = &mut accounts.iter();
-    let system_account = next_account_info(accounts_iter)?;
-    let its_root_pda = next_account_info(accounts_iter)?;
-    let token_manager_pda = next_account_info(accounts_iter)?;
-    let token_mint = next_account_info(accounts_iter)?;
-    let token_manager_ata = next_account_info(accounts_iter)?;
-    let token_program = next_account_info(accounts_iter)?;
-    let _ata_program = next_account_info(accounts_iter)?;
-    let destination_wallet = next_account_info(accounts_iter)?;
-    let destination_ata = next_account_info(accounts_iter)?;
-
-    // Limit the scope of the borrow on the token manager PDA as we need to pass it
-    // into the next CPI.
-    let (token_manager_type, interchain_token_pda) = {
-        let token_manager_pda_data = token_manager_pda.try_borrow_data()?;
-        let token_manager = check_rkyv_initialized_pda::<TokenManager>(
-            &crate::id(),
-            token_manager_pda,
-            token_manager_pda_data.as_ref(),
-        )?;
-
-        let (interchain_token_pda, _) = crate::create_interchain_token_pda(
-            its_root_pda.key,
-            token_manager.token_id.as_ref(),
-            bumps.interchain_token_pda_bump,
-        );
-
-        (token_manager.ty.into(), interchain_token_pda)
-    };
+    let (token_manager_type, _) = get_token_manager_info(accounts.token_manager_pda)?;
 
     token_manager_processor::validate_token_manager_type(
         token_manager_type,
-        token_mint,
-        token_manager_pda,
+        accounts.token_mint,
+        accounts.token_manager_pda,
+    )?;
+
+    handle_take_token_transfer(token_manager_type, &accounts, bumps, amount)
+}
+
+fn give_token<'a>(
+    payer: &AccountInfo<'a>,
+    accounts: &'a [AccountInfo<'a>],
+    amount: u64,
+    bumps: Bumps,
+) -> ProgramResult {
+    let accounts = parse_give_token_accounts(accounts)?;
+
+    let (token_manager_type, token_id) = get_token_manager_info(accounts.token_manager_pda)?;
+    let (interchain_token_pda, _) = crate::create_interchain_token_pda(
+        accounts.its_root_pda.key,
+        &token_id,
+        bumps.interchain_token_pda_bump,
+    );
+
+    token_manager_processor::validate_token_manager_type(
+        token_manager_type,
+        accounts.token_mint,
+        accounts.token_manager_pda,
     )?;
 
     crate::create_associated_token_account_idempotent(
         payer,
-        token_mint,
-        destination_ata,
-        destination_wallet,
-        system_account,
-        token_program,
+        accounts.token_mint,
+        accounts.destination_ata,
+        accounts.destination_wallet,
+        accounts.system_account,
+        accounts.token_program,
     )?;
 
-    // TODO: Add flow in
-
-    match token_manager_type {
-        NativeInterchainToken | MintBurn | MintBurnFrom => mint_to(
-            token_program,
-            token_mint,
-            destination_ata,
-            token_manager_pda,
-            interchain_token_pda.as_ref(),
-            bumps.token_manager_pda_bump,
-            amount,
-        )?,
-        LockUnlock => {
-            let decimals = {
-                let mint_data = token_mint.try_borrow_data()?;
-                let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data)?;
-
-                mint_state.base.decimals
-            };
-
-            let transfer_info = TransferInfo {
-                token_program,
-                token_mint,
-                destination_ata,
-                token_manager_pda,
-                token_manager_ata,
-                interchain_token_pda_bytes: interchain_token_pda.as_ref(),
-                token_manager_pda_bump: bumps.token_manager_pda_bump,
-                amount,
-                decimals,
-                fee: None,
-            };
-
-            transfer_to(&transfer_info)?;
-        }
-        LockUnlockFee => {
-            let (fee, decimals) = {
-                let mint_data = token_mint.try_borrow_data()?;
-                let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data)?;
-                let fee_config = mint_state.get_extension::<TransferFeeConfig>()?;
-                let epoch = Clock::get()?.epoch;
-
-                (
-                    fee_config
-                        .calculate_epoch_fee(epoch, amount)
-                        .ok_or(ProgramError::ArithmeticOverflow)?,
-                    mint_state.base.decimals,
-                )
-            };
-
-            let transfer_info = TransferInfo {
-                token_program,
-                token_mint,
-                destination_ata,
-                token_manager_pda,
-                token_manager_ata,
-                interchain_token_pda_bytes: interchain_token_pda.as_ref(),
-                token_manager_pda_bump: bumps.token_manager_pda_bump,
-                amount,
-                decimals,
-                fee: Some(fee),
-            };
-
-            transfer_with_fee_to(&transfer_info)?;
-        }
-    }
+    handle_give_token_transfer(
+        token_manager_type,
+        &accounts,
+        interchain_token_pda.as_ref(),
+        bumps,
+        amount,
+    )?;
 
     Ok(())
+}
+
+fn parse_take_token_accounts<'a>(
+    accounts: &'a [AccountInfo<'a>],
+) -> Result<TakeTokenAccounts<'a>, ProgramError> {
+    let accounts_iter = &mut accounts.iter();
+
+    Ok(TakeTokenAccounts {
+        authority: next_account_info(accounts_iter)?,
+        _gateway_root_pda: next_account_info(accounts_iter)?,
+        _gateway: next_account_info(accounts_iter)?,
+        _its_root_pda: next_account_info(accounts_iter)?,
+        interchain_token_pda: next_account_info(accounts_iter)?,
+        source_account: next_account_info(accounts_iter)?,
+        token_mint: next_account_info(accounts_iter)?,
+        token_manager_pda: next_account_info(accounts_iter)?,
+        token_manager_ata: next_account_info(accounts_iter)?,
+        token_program: next_account_info(accounts_iter)?,
+    })
+}
+
+fn parse_give_token_accounts<'a>(
+    accounts: &'a [AccountInfo<'a>],
+) -> Result<GiveTokenAccounts<'a>, ProgramError> {
+    let accounts_iter = &mut accounts.iter();
+
+    Ok(GiveTokenAccounts {
+        system_account: next_account_info(accounts_iter)?,
+        its_root_pda: next_account_info(accounts_iter)?,
+        token_manager_pda: next_account_info(accounts_iter)?,
+        token_mint: next_account_info(accounts_iter)?,
+        token_manager_ata: next_account_info(accounts_iter)?,
+        token_program: next_account_info(accounts_iter)?,
+        _ata_program: next_account_info(accounts_iter)?,
+        destination_wallet: next_account_info(accounts_iter)?,
+        destination_ata: next_account_info(accounts_iter)?,
+    })
+}
+
+fn get_token_manager_info(
+    token_manager_pda: &AccountInfo<'_>,
+) -> Result<(token_manager::Type, Vec<u8>), ProgramError> {
+    let token_manager_pda_data = token_manager_pda.try_borrow_data()?;
+    let token_manager = check_rkyv_initialized_pda::<TokenManager>(
+        &crate::id(),
+        token_manager_pda,
+        token_manager_pda_data.as_ref(),
+    )?;
+    Ok((token_manager.ty.into(), token_manager.token_id.to_bytes()))
+}
+
+fn handle_give_token_transfer(
+    token_manager_type: token_manager::Type,
+    accounts: &GiveTokenAccounts<'_>,
+    interchain_token_pda_bytes: &[u8],
+    bumps: Bumps,
+    amount: u64,
+) -> ProgramResult {
+    use token_manager::Type::{
+        LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
+    };
+
+    let signer_seeds = &[
+        seed_prefixes::TOKEN_MANAGER_SEED,
+        interchain_token_pda_bytes,
+        &[bumps.token_manager_pda_bump],
+    ];
+    match token_manager_type {
+        NativeInterchainToken | MintBurn | MintBurnFrom => mint_to(
+            accounts.token_program,
+            accounts.token_mint,
+            accounts.destination_ata,
+            accounts.token_manager_pda,
+            interchain_token_pda_bytes,
+            bumps.token_manager_pda_bump,
+            amount,
+        ),
+        LockUnlock => {
+            let decimals = get_mint_decimals(accounts.token_mint)?;
+            let transfer_info =
+                create_give_token_transfer_info(accounts, amount, decimals, None, signer_seeds);
+            transfer_to(&transfer_info)
+        }
+        LockUnlockFee => {
+            let (fee, decimals) = get_fee_and_decimals(accounts.token_mint, amount)?;
+            let transfer_info = create_give_token_transfer_info(
+                accounts,
+                amount,
+                decimals,
+                Some(fee),
+                signer_seeds,
+            );
+            transfer_with_fee_to(&transfer_info)
+        }
+    }
+}
+
+fn handle_take_token_transfer(
+    token_manager_type: token_manager::Type,
+    accounts: &TakeTokenAccounts<'_>,
+    bumps: Bumps,
+    amount: u64,
+) -> Result<u64, ProgramError> {
+    use token_manager::Type::{
+        LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
+    };
+
+    let token_manager_pda_seeds = &[
+        seed_prefixes::TOKEN_MANAGER_SEED,
+        accounts.interchain_token_pda.key.as_ref(),
+        &[bumps.token_manager_pda_bump],
+    ];
+
+    let signers_seeds: &[&[u8]] = if accounts.authority.key == accounts.token_manager_pda.key {
+        token_manager_pda_seeds
+    } else {
+        &[]
+    };
+
+    let transferred = match token_manager_type {
+        NativeInterchainToken | MintBurn | MintBurnFrom => {
+            burn(
+                accounts.authority,
+                accounts.token_program,
+                accounts.token_mint,
+                accounts.source_account,
+                amount,
+                signers_seeds,
+            )?;
+            amount
+        }
+        LockUnlock => {
+            let decimals = get_mint_decimals(accounts.token_mint)?;
+            let transfer_info =
+                create_take_token_transfer_info(accounts, amount, decimals, None, signers_seeds);
+            transfer_to(&transfer_info)?;
+            amount
+        }
+        LockUnlockFee => {
+            let (fee, decimals) = get_fee_and_decimals(accounts.token_mint, amount)?;
+            let transfer_info = create_take_token_transfer_info(
+                accounts,
+                amount,
+                decimals,
+                Some(fee),
+                signers_seeds,
+            );
+            transfer_with_fee_to(&transfer_info)?;
+            amount
+                .checked_sub(fee)
+                .ok_or(ProgramError::ArithmeticOverflow)?
+        }
+    };
+
+    Ok(transferred)
+}
+
+fn get_mint_decimals(token_mint: &AccountInfo<'_>) -> Result<u8, ProgramError> {
+    let mint_data = token_mint.try_borrow_data()?;
+    let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data)?;
+    Ok(mint_state.base.decimals)
+}
+
+fn get_fee_and_decimals(
+    token_mint: &AccountInfo<'_>,
+    amount: u64,
+) -> Result<(u64, u8), ProgramError> {
+    let mint_data = token_mint.try_borrow_data()?;
+    let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data)?;
+    let fee_config = mint_state.get_extension::<TransferFeeConfig>()?;
+    let epoch = Clock::get()?.epoch;
+
+    let fee = fee_config
+        .calculate_epoch_fee(epoch, amount)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    Ok((fee, mint_state.base.decimals))
+}
+
+const fn create_take_token_transfer_info<'a, 'b>(
+    accounts: &TakeTokenAccounts<'a>,
+    amount: u64,
+    decimals: u8,
+    fee: Option<u64>,
+    signers_seeds: &'b [&[u8]],
+) -> TransferInfo<'a, 'b> {
+    TransferInfo {
+        token_program: accounts.token_program,
+        token_mint: accounts.token_mint,
+        destination_ata: accounts.token_manager_ata,
+        authority: accounts.authority,
+        source_ata: accounts.source_account,
+        signers_seeds,
+        amount,
+        decimals,
+        fee,
+    }
+}
+
+const fn create_give_token_transfer_info<'a, 'b>(
+    accounts: &GiveTokenAccounts<'a>,
+    amount: u64,
+    decimals: u8,
+    fee: Option<u64>,
+    signers_seeds: &'b [&[u8]],
+) -> TransferInfo<'a, 'b> {
+    TransferInfo {
+        token_program: accounts.token_program,
+        token_mint: accounts.token_mint,
+        destination_ata: accounts.destination_ata,
+        authority: accounts.token_manager_pda,
+        source_ata: accounts.token_manager_ata,
+        signers_seeds,
+        amount,
+        decimals,
+        fee,
+    }
 }
 
 fn mint_to<'a>(
@@ -264,14 +414,40 @@ fn mint_to<'a>(
     Ok(())
 }
 
+fn burn<'a>(
+    authority: &AccountInfo<'a>,
+    token_program: &AccountInfo<'a>,
+    token_mint: &AccountInfo<'a>,
+    source_account: &AccountInfo<'a>,
+    amount: u64,
+    signer_seeds: &[&[u8]],
+) -> ProgramResult {
+    invoke_signed(
+        &spl_token_2022::instruction::burn(
+            token_program.key,
+            source_account.key,
+            token_mint.key,
+            authority.key,
+            &[],
+            amount,
+        )?,
+        &[
+            source_account.clone(),
+            token_mint.clone(),
+            authority.clone(),
+        ],
+        &[signer_seeds],
+    )?;
+    Ok(())
+}
+
 struct TransferInfo<'a, 'b> {
     token_program: &'b AccountInfo<'a>,
     token_mint: &'b AccountInfo<'a>,
     destination_ata: &'b AccountInfo<'a>,
-    token_manager_pda: &'b AccountInfo<'a>,
-    token_manager_ata: &'b AccountInfo<'a>,
-    interchain_token_pda_bytes: &'b [u8],
-    token_manager_pda_bump: u8,
+    authority: &'b AccountInfo<'a>,
+    source_ata: &'b AccountInfo<'a>,
+    signers_seeds: &'b [&'b [u8]],
     amount: u64,
     decimals: u8,
     fee: Option<u64>,
@@ -281,25 +457,21 @@ fn transfer_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
     invoke_signed(
         &spl_token_2022::instruction::transfer_checked(
             info.token_program.key,
-            info.token_manager_ata.key,
+            info.source_ata.key,
             info.token_mint.key,
             info.destination_ata.key,
-            info.token_manager_pda.key,
+            info.authority.key,
             &[],
             info.amount,
             info.decimals,
         )?,
         &[
             info.token_mint.clone(),
-            info.token_manager_ata.clone(),
-            info.token_manager_pda.clone(),
+            info.source_ata.clone(),
+            info.authority.clone(),
             info.destination_ata.clone(),
         ],
-        &[&[
-            seed_prefixes::TOKEN_MANAGER_SEED,
-            info.interchain_token_pda_bytes,
-            &[info.token_manager_pda_bump],
-        ]],
+        &[info.signers_seeds],
     )?;
     Ok(())
 }
@@ -308,10 +480,10 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
     invoke_signed(
         &spl_token_2022::extension::transfer_fee::instruction::transfer_checked_with_fee(
             info.token_program.key,
-            info.token_manager_ata.key,
+            info.source_ata.key,
             info.token_mint.key,
             info.destination_ata.key,
-            info.token_manager_pda.key,
+            info.authority.key,
             &[],
             info.amount,
             info.decimals,
@@ -319,15 +491,36 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
         )?,
         &[
             info.token_mint.clone(),
-            info.token_manager_ata.clone(),
-            info.token_manager_pda.clone(),
+            info.source_ata.clone(),
+            info.authority.clone(),
             info.destination_ata.clone(),
         ],
-        &[&[
-            seed_prefixes::TOKEN_MANAGER_SEED,
-            info.interchain_token_pda_bytes,
-            &[info.token_manager_pda_bump],
-        ]],
+        &[info.signers_seeds],
     )?;
     Ok(())
+}
+
+struct TakeTokenAccounts<'a> {
+    authority: &'a AccountInfo<'a>,
+    _gateway_root_pda: &'a AccountInfo<'a>,
+    _gateway: &'a AccountInfo<'a>,
+    _its_root_pda: &'a AccountInfo<'a>,
+    interchain_token_pda: &'a AccountInfo<'a>,
+    source_account: &'a AccountInfo<'a>,
+    token_mint: &'a AccountInfo<'a>,
+    token_manager_pda: &'a AccountInfo<'a>,
+    token_manager_ata: &'a AccountInfo<'a>,
+    token_program: &'a AccountInfo<'a>,
+}
+
+struct GiveTokenAccounts<'a> {
+    system_account: &'a AccountInfo<'a>,
+    its_root_pda: &'a AccountInfo<'a>,
+    token_manager_pda: &'a AccountInfo<'a>,
+    token_mint: &'a AccountInfo<'a>,
+    token_manager_ata: &'a AccountInfo<'a>,
+    token_program: &'a AccountInfo<'a>,
+    _ata_program: &'a AccountInfo<'a>,
+    destination_wallet: &'a AccountInfo<'a>,
+    destination_ata: &'a AccountInfo<'a>,
 }

@@ -19,7 +19,7 @@ async fn test_deploy_token_manager(#[case] token_program_id: Pubkey) {
 
     let mint = solana_chain
         .fixture
-        .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id)
+        .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id, 18)
         .await;
 
     let params = token_manager::encode_params(None, mint);
@@ -36,11 +36,9 @@ async fn test_deploy_token_manager(#[case] token_program_id: Pubkey) {
 
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::deploy_token_manager(
-            &solana_chain.fixture.payer.pubkey(),
-            deploy_instruction,
-        )
-        .unwrap()])
+        .send_tx(&[
+            axelar_solana_its::instructions::deploy_token_manager(deploy_instruction).unwrap(),
+        ])
         .await;
 
     let token_id = axelar_solana_its::interchain_token_id(

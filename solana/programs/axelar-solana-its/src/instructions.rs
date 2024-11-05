@@ -6,7 +6,9 @@ use std::error::Error;
 use axelar_message_primitives::{DataPayload, DestinationProgramId, U256};
 use axelar_rkyv_encoding::types::{GmpMetadata, PublicKey};
 use gateway::hasher_impl;
-use interchain_token_transfer_gmp::{DeployInterchainToken, DeployTokenManager, GMPPayload};
+use interchain_token_transfer_gmp::{
+    DeployInterchainToken, DeployTokenManager, GMPPayload, InterchainTransfer,
+};
 use rkyv::bytecheck::EnumCheckError;
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
@@ -86,7 +88,7 @@ pub enum InterchainTokenServiceInstruction {
         bumps: Option<Bumps>,
     },
 
-    /// Deploys a token manager
+    /// Deploys a token manager.
     ///
     /// 0. [writeable,signer] The address of payer / sender
     /// 1. [] Gateway root pda
@@ -110,6 +112,28 @@ pub enum InterchainTokenServiceInstruction {
         bumps: Option<Bumps>,
     },
 
+    /// Transfers interchain tokens.
+    ///
+    /// 0. [maybe signer] The address of the authority signing the transfer. In
+    ///    case it's the `TokenManager`, it shouldn't be set as signer as the
+    ///    signing happens on chain.
+    /// 1. [] Gateway root pda
+    /// 2. [] Gateway program id
+    /// 3. [] ITS root pda
+    /// 4. [writeable] Interchain token PDA
+    /// 5. [writeable] The account where the tokens are being transferred from
+    /// 5. [writeable] The mint account
+    /// 6. [writeable] The Token Manager PDA
+    /// 6. [writeable] The Token Manager ATA
+    /// 7. [] Token program id
+    InterchainTransfer {
+        /// The transfer parameters.
+        params: InterchainTransferInputs,
+
+        /// The PDA bumps for the ITS accounts.
+        bumps: Bumps,
+    },
+
     /// A GMP Interchain Token Service instruction.
     ///
     /// 0. [writeable,signer] The address of payer / sender
@@ -126,6 +150,21 @@ pub enum InterchainTokenServiceInstruction {
 
         /// The PDA bumps for the ITS accounts
         bumps: Bumps,
+    },
+
+    /// A proxy instruction to mint tokens whose mint authority is a
+    /// `TokenManager`. Only users with the `minter` role on the mint account
+    /// can mint tokens.
+    ///
+    /// 0. [writeable] The mint account
+    /// 1. [writeable] The account to mint tokens to
+    /// 2. [] The interchain token PDA associated with the mint
+    /// 3. [] The token manager PDA
+    /// 4. [signer] The minter account
+    /// 5. [] The token program id
+    MintTo {
+        /// The amount of tokens to mint
+        amount: u64,
     },
 }
 
@@ -258,6 +297,58 @@ pub struct DeployTokenManagerInputs {
     pub(crate) token_program: Option<PublicKey>,
 }
 
+/// Parameters for `[InterchainTokenServiceInstruction::InterchainTransfer]`.
+///
+/// To construct this type, use its builder API.
+#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, TypedBuilder)]
+#[archive(compare(PartialEq))]
+#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+pub struct InterchainTransferInputs {
+    /// The source account.
+    #[builder(setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
+    pub(crate) source_account: PublicKey,
+
+    /// The source account owner. In case of a transfer using a Mint/BurnFrom
+    /// `TokenManager`, this shouldn't be set as the authority will be the
+    /// `TokenManager`.
+    #[builder(default, setter(transform = |key: Pubkey| Some(PublicKey::new_ed25519(key.to_bytes()))))]
+    pub(crate) authority: Option<PublicKey>,
+
+    /// The token id associated with the token
+    pub(crate) token_id: [u8; 32],
+
+    /// The token mint account. **This should be set in case the token is not
+    /// ITS native**.
+    ///
+    /// When not set, the account is derived from the given `token_id`. The
+    /// derived account is invalid if the token is not an ITS native token (not
+    /// originally created/deployed by ITS).
+    #[builder(default, setter(transform = |key: Pubkey| Some(PublicKey::new_ed25519(key.to_bytes()))))]
+    pub(crate) mint: Option<PublicKey>,
+
+    /// The chain where the tokens are being transferred to.
+    #[builder(setter(strip_option))]
+    pub(crate) destination_chain: Option<String>,
+
+    /// The address on the destination chain to send the tokens to.
+    pub(crate) destination_address: Vec<u8>,
+
+    pub(crate) amount: u64,
+
+    /// Optional metadata for the call for additional effects (such as calling a
+    /// destination contract).
+    pub(crate) metadata: Vec<u8>,
+
+    /// The gas value to be paid for the deploy transaction
+    #[builder(setter(transform = |x: u128| U256::from(x)))]
+    pub(crate) gas_value: U256,
+
+    /// The token program that owns the mint account, either `spl_token::id()`
+    /// or `spl_token_2022::id()`. Assumes `spl_token_2022::id()` if not set.
+    #[builder(default = PublicKey::new_ed25519(spl_token_2022::id().to_bytes()), setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
+    pub(crate) token_program: PublicKey,
+}
+
 /// Bumps for the ITS PDA accounts.
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, Copy)]
 #[archive(compare(PartialEq))]
@@ -326,7 +417,7 @@ pub struct ItsGmpInstructionInputs {
     pub(crate) bumps: Option<Bumps>,
 }
 
-/// Creates a [`InterchainTokenServiceInstruction::Initialize`] instruction.
+/// Creates an [`InterchainTokenServiceInstruction::Initialize`] instruction.
 ///
 /// # Errors
 ///
@@ -358,19 +449,25 @@ pub fn initialize(
     })
 }
 
-/// Creates a [`InterchainTokenServiceInstruction::DeployInterchainToken`]
+/// Creates an [`InterchainTokenServiceInstruction::DeployInterchainToken`]
 /// instruction.
 ///
 /// # Errors
 ///
 /// If serialization fails.
 pub fn deploy_interchain_token(
-    payer: &Pubkey,
     params: DeployInterchainTokenInputs,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let payer = Pubkey::new_from_array(
+        params
+            .payer
+            .as_ref()
+            .try_into()
+            .map_err(|_err| ProgramError::InvalidInstructionData)?,
+    );
     let mut accounts = vec![
-        AccountMeta::new(*payer, true),
+        AccountMeta::new(payer, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
     ];
 
@@ -401,19 +498,23 @@ pub fn deploy_interchain_token(
     })
 }
 
-/// Creates a [`InterchainTokenServiceInstruction::DeployTokenManager`]
+/// Creates an [`InterchainTokenServiceInstruction::DeployTokenManager`]
 /// instruction.
 ///
 /// # Errors
 ///
 /// If serialization fails.
-pub fn deploy_token_manager(
-    payer: &Pubkey,
-    params: DeployTokenManagerInputs,
-) -> Result<Instruction, ProgramError> {
+pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let payer = Pubkey::new_from_array(
+        params
+            .payer
+            .as_ref()
+            .try_into()
+            .map_err(|_err| ProgramError::InvalidInstructionData)?,
+    );
     let mut accounts = vec![
-        AccountMeta::new(*payer, true),
+        AccountMeta::new(payer, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
     ];
 
@@ -452,7 +553,87 @@ pub fn deploy_token_manager(
         data,
     })
 }
-/// Creates a [`InterchainTokenServiceInstruction::ItsGmpPayload`] instruction.
+
+/// Creates an [`InterchainTokenServiceInstruction::InterchainTransfer`]
+/// instruction.
+///
+/// # Errors
+///
+/// If serialization fails.
+pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instruction, ProgramError> {
+    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (its_root_pda, its_root_pda_bump) = crate::find_its_root_pda(&gateway_root_pda);
+    let (interchain_token_pda, interchain_token_pda_bump) =
+        crate::find_interchain_token_pda(&its_root_pda, &params.token_id);
+    let (token_manager_pda, token_manager_pda_bump) =
+        crate::find_token_manager_pda(&interchain_token_pda);
+    let bumps = Bumps {
+        its_root_pda_bump,
+        interchain_token_pda_bump,
+        token_manager_pda_bump,
+    };
+    let (authority, signer) = match params.authority {
+        Some(key) => (
+            Pubkey::new_from_array(
+                key.as_ref()
+                    .try_into()
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?,
+            ),
+            true,
+        ),
+        None => (token_manager_pda, false),
+    };
+    let source_account = Pubkey::new_from_array(
+        params
+            .source_account
+            .as_ref()
+            .try_into()
+            .map_err(|_err| ProgramError::InvalidInstructionData)?,
+    );
+    let mint = match params.mint {
+        Some(key) => Pubkey::new_from_array(
+            key.as_ref()
+                .try_into()
+                .map_err(|_err| ProgramError::InvalidInstructionData)?,
+        ),
+        None => interchain_token_pda,
+    };
+    let token_program = Pubkey::new_from_array(
+        params
+            .token_program
+            .as_ref()
+            .try_into()
+            .map_err(|_err| ProgramError::InvalidInstructionData)?,
+    );
+
+    let token_manager_ata =
+        get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
+
+    let accounts = vec![
+        AccountMeta::new_readonly(authority, signer),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(gateway::id(), false),
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(interchain_token_pda, false),
+        AccountMeta::new(source_account, false),
+        AccountMeta::new(mint, false),
+        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new(token_manager_ata, false),
+        AccountMeta::new_readonly(token_program, false),
+    ];
+
+    let data = InterchainTokenServiceInstruction::InterchainTransfer { params, bumps }
+        .to_bytes()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    Ok(Instruction {
+        program_id: crate::ID,
+        accounts,
+        data,
+    })
+}
+
+/// Creates an [`InterchainTokenServiceInstruction::ItsGmpPayload`] instruction.
 ///
 /// # Errors
 ///
@@ -485,6 +666,43 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
     Ok(Instruction {
         program_id: crate::ID,
         accounts,
+        data,
+    })
+}
+
+/// Creates an [`InterchainTokenServiceInstruction::MintTo`] instruction.
+///
+/// # Errors
+/// If serialization fails.
+pub fn mint_to(
+    token_id: [u8; 32],
+    mint: Pubkey,
+    account: Pubkey,
+    minter: Pubkey,
+    token_program: Pubkey,
+    amount: u64,
+) -> Result<Instruction, ProgramError> {
+    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
+
+    let instruction = InterchainTokenServiceInstruction::MintTo { amount };
+
+    let data = instruction
+        .to_bytes()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    Ok(Instruction {
+        program_id: crate::ID,
+        accounts: vec![
+            AccountMeta::new(mint, false),
+            AccountMeta::new(account, false),
+            AccountMeta::new_readonly(interchain_token_pda, false),
+            AccountMeta::new_readonly(token_manager_pda, false),
+            AccountMeta::new_readonly(minter, true),
+            AccountMeta::new_readonly(token_program, false),
+        ],
         data,
     })
 }
@@ -672,6 +890,16 @@ impl OutboundInstruction for DeployTokenManagerInputs {
     }
 }
 
+impl OutboundInstruction for InterchainTransferInputs {
+    fn destination_chain(&mut self) -> Option<String> {
+        self.destination_chain.take()
+    }
+
+    fn gas_value(&self) -> U256 {
+        self.gas_value
+    }
+}
+
 #[allow(dead_code)]
 pub(crate) enum ItsMessageRef<'a> {
     InterchainTransfer {
@@ -788,6 +1016,20 @@ impl<'a> TryFrom<&'a DeployTokenManagerInputs> for ItsMessageRef<'a> {
     }
 }
 
+impl<'a> TryFrom<&'a InterchainTransferInputs> for ItsMessageRef<'a> {
+    type Error = ProgramError;
+
+    fn try_from(value: &'a InterchainTransferInputs) -> Result<Self, Self::Error> {
+        Ok(Self::InterchainTransfer {
+            token_id: Cow::Borrowed(&value.token_id),
+            source_address: value.source_account.as_ref(),
+            destination_address: value.destination_address.as_ref(),
+            amount: value.amount,
+            data: &value.metadata,
+        })
+    }
+}
+
 impl TryFrom<DeployInterchainTokenInputs> for DeployInterchainToken {
     type Error = ProgramError;
 
@@ -838,6 +1080,21 @@ impl TryFrom<DeployTokenManagerInputs> for DeployTokenManager {
     }
 }
 
+impl TryFrom<InterchainTransferInputs> for InterchainTransfer {
+    type Error = ProgramError;
+
+    fn try_from(value: InterchainTransferInputs) -> Result<Self, Self::Error> {
+        Ok(Self {
+            selector: alloy_primitives::U256::from(0_u8),
+            token_id: value.token_id.into(),
+            source_address: value.source_account.as_ref().to_vec().into(),
+            destination_address: value.destination_address.into(),
+            amount: alloy_primitives::U256::from(value.amount),
+            data: value.metadata.into(),
+        })
+    }
+}
+
 impl TryFrom<DeployInterchainTokenInputs> for GMPPayload {
     type Error = ProgramError;
 
@@ -852,6 +1109,15 @@ impl TryFrom<DeployTokenManagerInputs> for GMPPayload {
 
     fn try_from(value: DeployTokenManagerInputs) -> Result<Self, Self::Error> {
         let inner = DeployTokenManager::try_from(value)?;
+        Ok(inner.into())
+    }
+}
+
+impl TryFrom<InterchainTransferInputs> for GMPPayload {
+    type Error = ProgramError;
+
+    fn try_from(value: InterchainTransferInputs) -> Result<Self, Self::Error> {
+        let inner = InterchainTransfer::try_from(value)?;
         Ok(inner.into())
     }
 }

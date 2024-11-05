@@ -386,6 +386,7 @@ impl TestFixture {
         &mut self,
         mint_authority: Pubkey,
         token_program_id: Pubkey,
+        decimals: u8,
     ) -> Pubkey {
         let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
         let mint_account = Keypair::new();
@@ -405,7 +406,7 @@ impl TestFixture {
                     &mint_account.pubkey(),
                     &mint_authority,
                     None,
-                    0,
+                    decimals,
                 )
                 .unwrap(),
             ],
@@ -421,12 +422,14 @@ impl TestFixture {
         mint_account.pubkey()
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn init_new_mint_with_fee(
         &mut self,
         mint_authority: Pubkey,
         token_program_id: Pubkey,
         fee_basis_points: u16,
         maximum_fee: u64,
+        decimals: u8,
         transfer_fee_config_authority: Option<&Pubkey>,
         withdraw_withheld_authority: Option<&Pubkey>,
     ) -> Pubkey {
@@ -459,7 +462,7 @@ impl TestFixture {
                     &mint_account.pubkey(),
                     &mint_authority,
                     None,
-                    0,
+                    decimals
                 )
                 .unwrap(),
             ],

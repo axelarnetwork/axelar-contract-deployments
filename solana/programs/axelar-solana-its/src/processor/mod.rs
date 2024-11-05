@@ -28,8 +28,8 @@ pub mod token_manager;
 pub(crate) trait LocalAction {
     fn process_local_action<'a>(
         self,
-        payer: &AccountInfo<'a>,
-        accounts: &[AccountInfo<'a>],
+        payer: &'a AccountInfo<'a>,
+        accounts: &'a [AccountInfo<'a>],
         bumps: Bumps,
     ) -> ProgramResult;
 }
@@ -37,8 +37,8 @@ pub(crate) trait LocalAction {
 impl LocalAction for GMPPayload {
     fn process_local_action<'a>(
         self,
-        payer: &AccountInfo<'a>,
-        accounts: &[AccountInfo<'a>],
+        payer: &'a AccountInfo<'a>,
+        accounts: &'a [AccountInfo<'a>],
         bumps: Bumps,
     ) -> ProgramResult {
         match self {
@@ -57,9 +57,9 @@ impl LocalAction for GMPPayload {
 ///
 /// A `ProgramError` containing the error that occurred is returned. Log
 /// messages are also generated with more detailed information.
-pub fn process_instruction(
+pub fn process_instruction<'a>(
     program_id: &Pubkey,
-    accounts: &[AccountInfo<'_>],
+    accounts: &'a [AccountInfo<'a>],
     instruction_data: &[u8],
 ) -> ProgramResult {
     check_program_account(*program_id)?;
@@ -83,10 +83,38 @@ pub fn process_instruction(
             process_inbound_its_gmp_payload(accounts, gmp_metadata, &abi_payload, bumps)?;
         }
         InterchainTokenServiceInstruction::DeployInterchainToken { params, bumps } => {
-            process_its_native(accounts, params, bumps)?;
+            process_its_native_deploy_call(accounts, params, bumps)?;
         }
         InterchainTokenServiceInstruction::DeployTokenManager { params, bumps } => {
-            process_its_native(accounts, params, bumps)?;
+            process_its_native_deploy_call(accounts, params, bumps)?;
+        }
+        InterchainTokenServiceInstruction::InterchainTransfer { mut params, bumps } => {
+            let amount_minus_fees =
+                interchain_transfer::take_token(accounts, params.amount, bumps)?;
+            params.amount = amount_minus_fees;
+
+            let destination_chain = params
+                .destination_chain
+                .take()
+                .ok_or(ProgramError::InvalidInstructionData)?;
+            let gas_value = params.gas_value;
+            let payload = params
+                .try_into()
+                .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+            let (_owner, accounts_without_owner) = accounts
+                .split_first()
+                .ok_or(ProgramError::InvalidAccountData)?;
+
+            process_outbound_its_gmp_payload(
+                accounts_without_owner,
+                &payload,
+                destination_chain,
+                gas_value.into(),
+            )?;
+        }
+        InterchainTokenServiceInstruction::MintTo { amount } => {
+            process_mint_to(accounts, amount)?;
         }
     }
 
@@ -127,8 +155,8 @@ fn process_initialize(accounts: &[AccountInfo<'_>], pda_bump: u8) -> ProgramResu
     Ok(())
 }
 
-fn process_inbound_its_gmp_payload(
-    accounts: &[AccountInfo<'_>],
+fn process_inbound_its_gmp_payload<'a>(
+    accounts: &'a [AccountInfo<'a>],
     gmp_metadata: GmpMetadata,
     abi_payload: &[u8],
     bumps: Bumps,
@@ -154,8 +182,8 @@ fn process_inbound_its_gmp_payload(
     payload.process_local_action(payer, instruction_accounts, bumps)
 }
 
-fn process_its_native<T>(
-    accounts: &[AccountInfo<'_>],
+fn process_its_native_deploy_call<'a, T>(
+    accounts: &'a [AccountInfo<'a>],
     mut payload: T,
     bumps: Option<Bumps>,
 ) -> ProgramResult
@@ -180,7 +208,7 @@ where
         (None, Some(bumps)) => {
             let (_gateway_root_pda, other_accounts) = other_accounts
                 .split_first()
-                .ok_or(ProgramError::Custom(1))?;
+                .ok_or(ProgramError::InvalidInstructionData)?;
 
             payload.process_local_action(payer, other_accounts, bumps)?;
         }
@@ -238,6 +266,60 @@ fn process_outbound_its_gmp_payload(
         ]],
     )?;
 
+    Ok(())
+}
+
+fn process_mint_to(accounts: &[AccountInfo<'_>], amount: u64) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let mint = next_account_info(accounts_iter)?;
+    let destination_account = next_account_info(accounts_iter)?;
+    let interchain_token_pda = next_account_info(accounts_iter)?;
+    let token_manager_pda = next_account_info(accounts_iter)?;
+    let minter = next_account_info(accounts_iter)?;
+    let token_program = next_account_info(accounts_iter)?;
+
+    let token_manager_pda_data = token_manager_pda.try_borrow_data()?;
+    let token_manager = check_rkyv_initialized_pda::<TokenManager>(
+        &crate::id(),
+        token_manager_pda,
+        token_manager_pda_data.as_ref(),
+    )?;
+
+    if token_manager.token_address.as_ref() != mint.key.as_ref() {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    if mint.owner != token_program.key {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    if !minter.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // TODO: Check that `minter` is really a minter.
+
+    invoke_signed(
+        &spl_token_2022::instruction::mint_to(
+            token_program.key,
+            mint.key,
+            destination_account.key,
+            token_manager_pda.key,
+            &[],
+            amount,
+        )?,
+        &[
+            mint.clone(),
+            destination_account.clone(),
+            token_manager_pda.clone(),
+            token_program.clone(),
+        ],
+        &[&[
+            seed_prefixes::TOKEN_MANAGER_SEED,
+            interchain_token_pda.key.as_ref(),
+            &[token_manager.bump],
+        ]],
+    )?;
     Ok(())
 }
 

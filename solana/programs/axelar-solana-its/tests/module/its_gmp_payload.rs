@@ -50,7 +50,7 @@ async fn test_its_gmp_payload_deploy_token_manager(
     let mint_authority = axelar_solana_its::find_token_manager_pda(&interchain_token_pda).0;
     let mint = solana_chain
         .fixture
-        .init_new_mint(mint_authority, token_program_id)
+        .init_new_mint(mint_authority, token_program_id, 18)
         .await;
 
     let its_gmp_payload = GMPPayload::DeployTokenManager(DeployTokenManager {
@@ -123,11 +123,7 @@ async fn test_its_gmp_payload_deploy_interchain_token() {
 
     let token_id =
         Pubkey::create_with_seed(&its_root_pda, "test_token", &axelar_solana_its::id()).unwrap();
-    dbg!(&token_id);
     let mint = axelar_solana_its::find_interchain_token_pda(&its_root_pda, token_id.as_ref()).0;
-
-    dbg!(&token_id);
-
     let deploy_interchain_token = DeployInterchainToken {
         selector: alloy_primitives::Uint::<256, 4>::from(1_u128),
         token_id: token_id.to_bytes().into(),
@@ -227,7 +223,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
     let token_manager_pda = axelar_solana_its::find_token_manager_pda(&interchain_token_pda).0;
     let mint = solana_chain
         .fixture
-        .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id)
+        .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id, 18)
         .await;
 
     let its_gmp_payload = GMPPayload::DeployTokenManager(DeployTokenManager {
@@ -412,6 +408,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
             spl_token_2022::id(),
             fee_basis_points,
             maximum_fee,
+            0,
             None,
             None,
         )

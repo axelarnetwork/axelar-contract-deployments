@@ -30,11 +30,9 @@ async fn test_deploy_interchain_token() {
 
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::deploy_interchain_token(
-            &solana_chain.fixture.payer.pubkey(),
-            deploy_instruction,
-        )
-        .unwrap()])
+        .send_tx(&[
+            axelar_solana_its::instructions::deploy_interchain_token(deploy_instruction).unwrap(),
+        ])
         .await;
 
     let token_id = axelar_solana_its::interchain_token_id(
