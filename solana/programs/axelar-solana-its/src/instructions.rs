@@ -645,9 +645,22 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
         &inputs.gateway_root_pda,
         &inputs.gmp_metadata,
     );
+
+    let abi_payload = inputs.payload.encode();
+
+    let unwrapped_payload = match inputs.payload {
+        GMPPayload::InterchainTransfer(_)
+        | GMPPayload::DeployInterchainToken(_)
+        | GMPPayload::DeployTokenManager(_) => inputs.payload,
+        GMPPayload::SendToHub(inner) => GMPPayload::decode(&inner.payload)
+            .map_err(|_err| ProgramError::InvalidInstructionData)?,
+        GMPPayload::ReceiveFromHub(inner) => GMPPayload::decode(&inner.payload)
+            .map_err(|_err| ProgramError::InvalidInstructionData)?,
+    };
+
     let (mut its_accounts, bumps) = derive_its_accounts(
         &inputs.gateway_root_pda,
-        &inputs.payload,
+        &unwrapped_payload,
         inputs.token_program,
         inputs.mint,
         inputs.bumps,
@@ -656,7 +669,7 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
     accounts.append(&mut its_accounts);
 
     let data = InterchainTokenServiceInstruction::ItsGmpPayload {
-        abi_payload: inputs.payload.encode(),
+        abi_payload,
         gmp_metadata: inputs.gmp_metadata,
         bumps,
     }
@@ -955,7 +968,6 @@ impl<'a> TryFrom<&'a GMPPayload> for ItsMessageRef<'a> {
                 decimals: inner.decimals,
                 minter: inner.minter.as_ref(),
             },
-
             GMPPayload::DeployTokenManager(inner) => Self::DeployTokenManager {
                 token_id: Cow::Borrowed(&inner.token_id.0),
                 token_manager_type: inner
@@ -964,6 +976,9 @@ impl<'a> TryFrom<&'a GMPPayload> for ItsMessageRef<'a> {
                     .map_err(|_err| ProgramError::InvalidInstructionData)?,
                 params: inner.params.as_ref(),
             },
+            GMPPayload::SendToHub(_) | GMPPayload::ReceiveFromHub(_) => {
+                return Err(ProgramError::InvalidArgument)
+            }
         })
     }
 }

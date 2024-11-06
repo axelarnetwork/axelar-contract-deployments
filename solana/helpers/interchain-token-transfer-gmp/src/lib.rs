@@ -12,6 +12,8 @@ pub enum GMPPayload {
     InterchainTransfer(InterchainTransfer),
     DeployInterchainToken(DeployInterchainToken),
     DeployTokenManager(DeployTokenManager),
+    SendToHub(SendToHub),
+    ReceiveFromHub(ReceiveFromHub),
 }
 
 sol! {
@@ -73,6 +75,59 @@ sol! {
         /// The parameters for the token manager deployments, look [here](https://github.com/axelarnetwork/interchain-token-service/blob/92cbbf16569f5eb31587bc2ea12dd5c4b804efbf/contracts/token-manager/TokenManager.sol#L191) for details on EVM chain parameters.
         bytes params;
     }
+
+    /// This message is used to route an ITS message via the ITS Hub. The ITS Hub applies certain
+    /// security checks, and then routes it to the true destination chain. This mode is enabled if the
+    /// trusted address corresponding to the destination chain is set to the ITS Hub identifier.
+    #[derive(Debug, PartialEq)]
+    #[repr(C)]
+    struct SendToHub {
+        /// Should always have a value of 3
+        uint256 selector;
+
+        /// The true destination chain for the ITS call
+        string destination_chain;
+
+        /// The actual ITS message that's being routed through ITS Hub
+        bytes payload;
+    }
+
+    /// This message is used to receive an ITS message from the ITS Hub. The ITS Hub applies
+    /// certain security checks, and then routes it to the ITS contract. The message is accepted if the
+    /// trusted address corresponding to the original source chain is set to the ITS Hub identifier.
+    #[derive(Debug, PartialEq)]
+    #[repr(C)]
+    struct ReceiveFromHub {
+        /// Will always have a value of 4
+        uint256 selector;
+
+        /// The original source chain for the ITS call
+        string source_chain;
+
+        /// The actual ITS message that's being routed through ITS Hub
+        bytes payload;
+
+    }
+}
+
+impl InterchainTransfer {
+    const MESSAGE_TYPE_ID: u8 = 0;
+}
+
+impl DeployInterchainToken {
+    pub const MESSAGE_TYPE_ID: u8 = 1;
+}
+
+impl DeployTokenManager {
+    pub const MESSAGE_TYPE_ID: u8 = 2;
+}
+
+impl SendToHub {
+    pub const MESSAGE_TYPE_ID: u8 = 3;
+}
+
+impl ReceiveFromHub {
+    pub const MESSAGE_TYPE_ID: u8 = 4;
 }
 
 impl GMPPayload {
@@ -80,14 +135,20 @@ impl GMPPayload {
         let variant = alloy_primitives::U256::abi_decode(&bytes[0..32], true)?;
 
         match variant.byte(0) {
-            0 => Ok(GMPPayload::InterchainTransfer(
+            InterchainTransfer::MESSAGE_TYPE_ID => Ok(GMPPayload::InterchainTransfer(
                 InterchainTransfer::abi_decode_params(bytes, true)?,
             )),
-            1 => Ok(GMPPayload::DeployInterchainToken(
+            DeployInterchainToken::MESSAGE_TYPE_ID => Ok(GMPPayload::DeployInterchainToken(
                 DeployInterchainToken::abi_decode_params(bytes, true)?,
             )),
-            2 => Ok(GMPPayload::DeployTokenManager(
+            DeployTokenManager::MESSAGE_TYPE_ID => Ok(GMPPayload::DeployTokenManager(
                 DeployTokenManager::abi_decode_params(bytes, true)?,
+            )),
+            SendToHub::MESSAGE_TYPE_ID => Ok(GMPPayload::SendToHub(SendToHub::abi_decode_params(
+                bytes, true,
+            )?)),
+            ReceiveFromHub::MESSAGE_TYPE_ID => Ok(GMPPayload::ReceiveFromHub(
+                ReceiveFromHub::abi_decode_params(bytes, true)?,
             )),
             _ => Err(alloy_sol_types::Error::custom(
                 "Invalid selector for InterchainTokenService message",
@@ -100,14 +161,18 @@ impl GMPPayload {
             GMPPayload::InterchainTransfer(data) => data.abi_encode_params(),
             GMPPayload::DeployInterchainToken(data) => data.abi_encode_params(),
             GMPPayload::DeployTokenManager(data) => data.abi_encode_params(),
+            GMPPayload::SendToHub(data) => data.abi_encode_params(),
+            GMPPayload::ReceiveFromHub(data) => data.abi_encode_params(),
         }
     }
 
-    pub fn token_id(&self) -> &[u8; 32] {
+    pub fn token_id(&self) -> Result<[u8; 32], alloy_sol_types::Error> {
         match self {
-            GMPPayload::InterchainTransfer(data) => &data.token_id,
-            GMPPayload::DeployInterchainToken(data) => &data.token_id,
-            GMPPayload::DeployTokenManager(data) => &data.token_id,
+            GMPPayload::InterchainTransfer(data) => Ok(*data.token_id),
+            GMPPayload::DeployInterchainToken(data) => Ok(*data.token_id),
+            GMPPayload::DeployTokenManager(data) => Ok(*data.token_id),
+            GMPPayload::SendToHub(inner) => GMPPayload::decode(&inner.payload)?.token_id(),
+            GMPPayload::ReceiveFromHub(inner) => GMPPayload::decode(&inner.payload)?.token_id(),
         }
     }
 }

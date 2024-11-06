@@ -14,7 +14,7 @@ use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
 use spl_token_metadata_interface::state::TokenMetadata;
 
-use crate::program_test;
+use crate::{prepare_receive_from_hub, program_test};
 
 #[rstest::rstest]
 #[case(spl_token::id(), Some(Pubkey::new_unique()))]
@@ -53,12 +53,14 @@ async fn test_its_gmp_payload_deploy_token_manager(
         .init_new_mint(mint_authority, token_program_id, 18)
         .await;
 
-    let its_gmp_payload = GMPPayload::DeployTokenManager(DeployTokenManager {
+    let inner_payload = GMPPayload::DeployTokenManager(DeployTokenManager {
         selector: alloy_primitives::Uint::<256, 4>::from(2_u128),
         token_id: token_id.to_bytes().into(),
         token_manager_type: alloy_primitives::Uint::<256, 4>::from(4_u128),
         params: (operator.as_ref(), mint.to_bytes()).abi_encode().into(),
     });
+
+    let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
     let abi_payload = its_gmp_payload.encode();
     let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
     let message = random_message_with_destination_and_payload(
@@ -132,7 +134,8 @@ async fn test_its_gmp_payload_deploy_interchain_token() {
         decimals: 8,
         minter: Bytes::new(),
     };
-    let its_gmp_payload = GMPPayload::DeployInterchainToken(deploy_interchain_token.clone());
+    let inner_payload = GMPPayload::DeployInterchainToken(deploy_interchain_token.clone());
+    let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
     let abi_payload = its_gmp_payload.encode();
     let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
     let message = random_message_with_destination_and_payload(
@@ -226,13 +229,14 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
         .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id, 18)
         .await;
 
-    let its_gmp_payload = GMPPayload::DeployTokenManager(DeployTokenManager {
+    let inner_payload = GMPPayload::DeployTokenManager(DeployTokenManager {
         selector: alloy_primitives::Uint::<256, 4>::from(2_u128),
         token_id: token_id.to_bytes().into(),
         token_manager_type: token_manager::Type::LockUnlock.into(),
         params: (Bytes::default(), mint.to_bytes()).abi_encode().into(),
     });
 
+    let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
     let abi_payload = its_gmp_payload.encode();
     let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
     let message = random_message_with_destination_and_payload(
@@ -295,7 +299,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
         .await;
 
     let transferred_amount = 1234_u64;
-    let its_gmp_transfer_payload = GMPPayload::InterchainTransfer(InterchainTransfer {
+    let inner_transfer_payload = GMPPayload::InterchainTransfer(InterchainTransfer {
         selector: alloy_primitives::Uint::<256, 4>::from(0_u128),
         token_id: token_id.to_bytes().into(),
         source_address: token_id.to_bytes().into(), // Does't matter
@@ -304,6 +308,8 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
         data: Bytes::new(),
     });
 
+    let its_gmp_transfer_payload =
+        prepare_receive_from_hub(&inner_transfer_payload, "ethereum".to_owned());
     let transfer_abi_payload = its_gmp_transfer_payload.encode();
     let transfer_payload_hash = solana_sdk::keccak::hash(&transfer_abi_payload).to_bytes();
     let transfer_message = random_message_with_destination_and_payload(
@@ -414,13 +420,14 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
         )
         .await;
 
-    let its_gmp_payload = GMPPayload::DeployTokenManager(DeployTokenManager {
+    let inner_payload = GMPPayload::DeployTokenManager(DeployTokenManager {
         selector: alloy_primitives::Uint::<256, 4>::from(2_u128),
         token_id: token_id.to_bytes().into(),
         token_manager_type: token_manager::Type::LockUnlockFee.into(),
         params: (Bytes::default(), mint.to_bytes()).abi_encode().into(),
     });
 
+    let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
     let abi_payload = its_gmp_payload.encode();
     let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
     let message = random_message_with_destination_and_payload(
@@ -483,7 +490,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
         .await;
 
     let transferred_amount = 1234_u64;
-    let its_gmp_transfer_payload = GMPPayload::InterchainTransfer(InterchainTransfer {
+    let inner_transfer_payload = GMPPayload::InterchainTransfer(InterchainTransfer {
         selector: alloy_primitives::Uint::<256, 4>::from(0_u128),
         token_id: token_id.to_bytes().into(),
         source_address: token_id.to_bytes().into(), // Does't matter
@@ -492,6 +499,8 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
         data: Bytes::new(),
     });
 
+    let its_gmp_transfer_payload =
+        prepare_receive_from_hub(&inner_transfer_payload, "ethereum".to_owned());
     let transfer_abi_payload = its_gmp_transfer_payload.encode();
     let transfer_payload_hash = solana_sdk::keccak::hash(&transfer_abi_payload).to_bytes();
     let transfer_message = random_message_with_destination_and_payload(

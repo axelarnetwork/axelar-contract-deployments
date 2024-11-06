@@ -15,6 +15,7 @@ mod its_gmp_payload;
 use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::evm_weighted_signers::WeightedSigners;
 use evm_contracts_test_suite::{get_domain_separator, ItsContracts};
+use interchain_token_transfer_gmp::{GMPPayload, ReceiveFromHub};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use test_fixtures::test_setup::{SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata};
@@ -22,6 +23,7 @@ use test_fixtures::test_setup::{SolanaAxelarIntegration, SolanaAxelarIntegration
 mod from_evm_to_solana;
 
 const SOLANA_CHAIN_NAME: &str = "solana-localnet";
+const ITS_CHAIN_NAME: &str = "axelar";
 
 pub struct ItsProgramWrapper {
     pub solana_chain: SolanaAxelarIntegrationMetadata,
@@ -96,6 +98,27 @@ async fn axelar_solana_setup(with_memo: bool) -> ItsProgramWrapper {
     }
 }
 
+fn prepare_receive_from_hub(payload: &GMPPayload, source_chain: String) -> GMPPayload {
+    GMPPayload::ReceiveFromHub(ReceiveFromHub {
+        selector: ReceiveFromHub::MESSAGE_TYPE_ID.try_into().unwrap(),
+        source_chain,
+        payload: payload.encode().into(),
+    })
+}
+
+#[allow(clippy::panic)]
+fn route_its_hub(payload: GMPPayload, source_chain: String) -> GMPPayload {
+    let GMPPayload::SendToHub(inner) = payload else {
+        panic!("Expected SendToHub payload");
+    };
+
+    GMPPayload::ReceiveFromHub(ReceiveFromHub {
+        selector: ReceiveFromHub::MESSAGE_TYPE_ID.try_into().unwrap(),
+        payload: inner.payload,
+        source_chain,
+    })
+}
+
 async fn axelar_evm_setup() -> (
     TestBlockchain,
     evm_contracts_test_suite::EvmSigner,
@@ -119,6 +142,24 @@ async fn axelar_evm_setup() -> (
             &[operators1, operators2.clone()],
             [SOLANA_CHAIN_NAME.to_string()],
         )
+        .await
+        .unwrap();
+
+    its_contracts
+        .interchain_token_service
+        .set_trusted_address(SOLANA_CHAIN_NAME.to_owned(), "hub".to_owned())
+        .send()
+        .await
+        .unwrap()
+        .await
+        .unwrap();
+
+    its_contracts
+        .interchain_token_service
+        .set_trusted_address(ITS_CHAIN_NAME.to_owned(), "some address".to_owned())
+        .send()
+        .await
+        .unwrap()
         .await
         .unwrap();
 

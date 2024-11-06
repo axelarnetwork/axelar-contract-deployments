@@ -7,7 +7,7 @@ use evm_contracts_test_suite::ethers::signers::Signer;
 use evm_contracts_test_suite::ethers::types::{Address, Bytes};
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
 use evm_contracts_test_suite::ItsContracts;
-use interchain_token_transfer_gmp::GMPPayload;
+use interchain_token_transfer_gmp::{GMPPayload, ReceiveFromHub};
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer as _;
@@ -62,12 +62,24 @@ async fn setup_canonical_interchain_token(
     Ok((token_id, log.payload.as_ref().to_vec()))
 }
 
+#[allow(clippy::panic)]
 async fn relay_to_solana(
     payload: Vec<u8>,
     solana_chain: &mut SolanaAxelarIntegrationMetadata,
     maybe_mint: Option<Pubkey>,
 ) -> BanksTransactionResultWithMetadata {
-    let payload_hash = solana_sdk::keccak::hash(&payload).to_bytes();
+    let GMPPayload::SendToHub(inner) = GMPPayload::decode(&payload).unwrap() else {
+        panic!("unexpected payload type");
+    };
+
+    let inner_payload = inner.payload;
+    let solana_payload = GMPPayload::ReceiveFromHub(ReceiveFromHub {
+        selector: ReceiveFromHub::MESSAGE_TYPE_ID.try_into().unwrap(),
+        source_chain: "ethereum".to_owned(),
+        payload: inner_payload,
+    });
+
+    let payload_hash = solana_sdk::keccak::hash(&solana_payload.encode()).to_bytes();
     let axelar_message = random_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         payload_hash,
@@ -88,7 +100,7 @@ async fn relay_to_solana(
         .gateway_approved_message_pda(gateway_approved_command_pdas[0])
         .gateway_root_pda(solana_chain.gateway_root_pda)
         .gmp_metadata(axelar_message.into())
-        .payload(GMPPayload::decode(&payload).unwrap())
+        .payload(solana_payload)
         .token_program(spl_token_2022::id())
         .mint_opt(maybe_mint)
         .build();

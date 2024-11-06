@@ -18,7 +18,8 @@ use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gate
     Proof as EvmAxelarProof,
 };
 use evm_contracts_test_suite::{evm_weighted_signers, ContractMiddleware};
-use gateway::events::{ArchivedCallContract, ArchivedGatewayEvent, EventContainer, GatewayEvent};
+use gateway::events::{ArchivedGatewayEvent, EventContainer, GatewayEvent};
+use interchain_token_transfer_gmp::GMPPayload;
 use rstest::rstest;
 use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
@@ -34,7 +35,9 @@ use spl_token_2022::instruction::AuthorityType;
 use spl_token_2022::state::Mint;
 use test_fixtures::test_setup::TestFixture;
 
-use crate::{axelar_evm_setup, axelar_solana_setup, ItsProgramWrapper};
+use crate::{
+    axelar_evm_setup, axelar_solana_setup, route_its_hub, ItsProgramWrapper, ITS_CHAIN_NAME,
+};
 
 #[tokio::test]
 async fn test_send_deploy_interchain_token_from_solana_to_evm() {
@@ -42,12 +45,13 @@ async fn test_send_deploy_interchain_token_from_solana_to_evm() {
     // hence we only test spl-token-2022 here.
 
     let ItsProgramWrapper {
-        mut solana_chain, ..
+        mut solana_chain,
+        chain_name: solana_id,
+        ..
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
 
-    let solana_id = "solana-localnet";
     let destination_chain = "ethereum".to_string();
     let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
     let deploy = DeployInterchainTokenInputs::builder()
@@ -67,29 +71,37 @@ async fn test_send_deploy_interchain_token_from_solana_to_evm() {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
 
-    let (messages, proof) = prepare_evm_approve_contract_call(
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
         solana_id,
-        call_contract,
+    );
+    let encoded_payload = payload.encode();
+
+    let (messages, proof) = prepare_evm_approve_contract_call(
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
-    let message = messages[0].clone();
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
 
     call_evm(
         its_contracts
             .interchain_token_service
-            .set_trusted_address(message.source_chain.clone(), message.source_address.clone()),
+            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
     )
     .await;
 
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -112,7 +124,9 @@ async fn test_send_deploy_interchain_token_from_solana_to_evm() {
 #[tokio::test]
 async fn test_send_deploy_token_manager_from_solana_to_evm() {
     let ItsProgramWrapper {
-        mut solana_chain, ..
+        mut solana_chain,
+        chain_name: solana_id,
+        ..
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
@@ -128,7 +142,6 @@ async fn test_send_deploy_token_manager_from_solana_to_evm() {
         alloy_primitives::Address::from(test_its_canonical_token.address().to_fixed_bytes());
     let params = (Bytes::new(), token_address).abi_encode_params();
 
-    let solana_id = "solana-localnet";
     let destination_chain = "ethereum".to_string();
     let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
     let deploy = DeployTokenManagerInputs::builder()
@@ -140,34 +153,43 @@ async fn test_send_deploy_token_manager_from_solana_to_evm() {
         .params(params)
         .build();
 
-    let ix = axelar_solana_its::instructions::deploy_token_manager(deploy).unwrap();
+    let ix = axelar_solana_its::instructions::deploy_token_manager(deploy.clone()).unwrap();
     let gateway_event = call_solana_gateway(&mut solana_chain.fixture, ix).await;
     let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
 
-    let (messages, proof) = prepare_evm_approve_contract_call(
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
         solana_id,
-        call_contract,
+    );
+    let encoded_payload = payload.encode();
+
+    let (messages, proof) = prepare_evm_approve_contract_call(
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
-    let message = messages[0].clone();
+
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
 
     call_evm(
         its_contracts
             .interchain_token_service
-            .set_trusted_address(message.source_chain.clone(), message.source_address.clone()),
+            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
     )
     .await;
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -191,12 +213,13 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
     // hence we only test spl-token-2022 here.
 
     let ItsProgramWrapper {
-        mut solana_chain, ..
+        mut solana_chain,
+        chain_name: solana_id,
+        ..
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
 
-    let solana_id = "solana-localnet";
     let destination_chain = "ethereum".to_string();
     let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
     let deploy_local = DeployInterchainTokenInputs::builder()
@@ -224,36 +247,44 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
         .gas_value(0_u128)
         .build();
     let deploy_remote_ix =
-        axelar_solana_its::instructions::deploy_interchain_token(deploy_remote).unwrap();
+        axelar_solana_its::instructions::deploy_interchain_token(deploy_remote.clone()).unwrap();
     let gateway_event = call_solana_gateway(&mut solana_chain.fixture, deploy_remote_ix).await;
     let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
 
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
+        solana_id.clone(),
+    );
+    let encoded_payload = payload.encode();
+
     let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_id,
-        call_contract,
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
 
-    let message = messages[0].clone();
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
 
     call_evm(
         its_contracts
             .interchain_token_service
-            .set_trusted_address(message.source_chain.clone(), message.source_address.clone()),
+            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
     )
     .await;
 
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -318,28 +349,38 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
         .metadata(vec![])
         .build();
 
-    let transfer_ix = axelar_solana_its::instructions::interchain_transfer(transfer).unwrap();
+    let transfer_ix =
+        axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
     let gateway_event = call_solana_gateway(&mut solana_chain.fixture, transfer_ix).await;
     let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
 
-    let (messages, proof) = prepare_evm_approve_contract_call(
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
         solana_id,
-        call_contract,
+    );
+    let encoded_payload = payload.encode();
+
+    let (messages, proof) = prepare_evm_approve_contract_call(
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
-    let message = messages[0].clone();
 
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
+
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -361,12 +402,13 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
     #[case] token_program_id: Pubkey,
 ) {
     let ItsProgramWrapper {
-        mut solana_chain, ..
+        mut solana_chain,
+        chain_name: solana_id,
+        ..
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
 
-    let solana_id = "solana-localnet";
     let destination_chain = "ethereum".to_string();
     let token_name = "TestToken";
     let token_symbol = "TT";
@@ -430,34 +472,43 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
         .params(params)
         .build();
 
-    let ix = axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix).unwrap();
+    let ix =
+        axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
     let gateway_event = call_solana_gateway(&mut solana_chain.fixture, ix).await;
     let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
+        solana_id.clone(),
+    );
+    let encoded_payload = payload.encode();
 
     let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_id,
-        call_contract,
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
-    let message = messages[0].clone();
+
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
 
     call_evm(
         its_contracts
             .interchain_token_service
-            .set_trusted_address(message.source_chain.clone(), message.source_address.clone()),
+            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
     )
     .await;
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -525,28 +576,38 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
         .metadata(vec![])
         .build();
 
-    let transfer_ix = axelar_solana_its::instructions::interchain_transfer(transfer).unwrap();
+    let transfer_ix =
+        axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
     let gateway_event = call_solana_gateway(&mut solana_chain.fixture, transfer_ix).await;
     let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
 
-    let (messages, proof) = prepare_evm_approve_contract_call(
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
         solana_id,
-        call_contract,
+    );
+    let encoded_payload = payload.encode();
+
+    let (messages, proof) = prepare_evm_approve_contract_call(
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
-    let message = messages[0].clone();
 
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
+
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -575,12 +636,13 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
     #[case] token_program_id: Pubkey,
 ) {
     let ItsProgramWrapper {
-        mut solana_chain, ..
+        mut solana_chain,
+        chain_name: solana_id,
+        ..
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
 
-    let solana_id = "solana-localnet";
     let destination_chain = "ethereum".to_string();
     let token_name = "TestToken";
     let token_symbol = "TT";
@@ -644,34 +706,42 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         .params(params)
         .build();
 
-    let ix = axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix).unwrap();
+    let ix =
+        axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
     let gateway_event = call_solana_gateway(&mut solana_chain.fixture, ix).await;
     let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
+        solana_id.clone(),
+    );
+    let encoded_payload = payload.encode();
 
     let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_id,
-        call_contract,
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
-    let message = messages[0].clone();
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
 
     call_evm(
         its_contracts
             .interchain_token_service
-            .set_trusted_address(message.source_chain.clone(), message.source_address.clone()),
+            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
     )
     .await;
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -759,28 +829,37 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         .metadata(vec![])
         .build();
 
-    let transfer_ix = axelar_solana_its::instructions::interchain_transfer(transfer).unwrap();
+    let transfer_ix =
+        axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
     let gateway_event = call_solana_gateway(&mut solana_chain.fixture, transfer_ix).await;
     let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
 
-    let (messages, proof) = prepare_evm_approve_contract_call(
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
         solana_id,
-        call_contract,
+    );
+    let encoded_payload = payload.encode();
+
+    let (messages, proof) = prepare_evm_approve_contract_call(
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
-    let message = messages[0].clone();
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
 
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -811,12 +890,13 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
     #[case] token_program_id: Pubkey,
 ) {
     let ItsProgramWrapper {
-        mut solana_chain, ..
+        mut solana_chain,
+        chain_name: solana_id,
+        ..
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
 
-    let solana_id = "solana-localnet";
     let destination_chain = "ethereum".to_string();
     let token_name = "TestToken";
     let token_symbol = "TT";
@@ -866,34 +946,42 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
         .params(params)
         .build();
 
-    let ix = axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix).unwrap();
+    let ix =
+        axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
     let gateway_event = call_solana_gateway(&mut solana_chain.fixture, ix).await;
     let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
+        solana_id.clone(),
+    );
+    let encoded_payload = payload.encode();
 
     let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_id,
-        call_contract,
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
-    let message = messages[0].clone();
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
 
     call_evm(
         its_contracts
             .interchain_token_service
-            .set_trusted_address(message.source_chain.clone(), message.source_address.clone()),
+            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
     )
     .await;
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -962,28 +1050,37 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
         .metadata(vec![])
         .build();
 
-    let transfer_ix = axelar_solana_its::instructions::interchain_transfer(transfer).unwrap();
+    let transfer_ix =
+        axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
     let gateway_event = call_solana_gateway(&mut solana_chain.fixture, transfer_ix).await;
     let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
 
-    let (messages, proof) = prepare_evm_approve_contract_call(
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
         solana_id,
-        call_contract,
+    );
+    let encoded_payload = payload.encode();
+
+    let (messages, proof) = prepare_evm_approve_contract_call(
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
-    let message = messages[0].clone();
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
 
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -1018,12 +1115,13 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
 #[tokio::test]
 async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
     let ItsProgramWrapper {
-        mut solana_chain, ..
+        mut solana_chain,
+        chain_name: solana_id,
+        ..
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
 
-    let solana_id = "solana-localnet";
     let destination_chain = "ethereum".to_string();
     let token_name = "TestToken";
     let token_symbol = "TT";
@@ -1083,34 +1181,43 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
         .params(params)
         .build();
 
-    let ix = axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix).unwrap();
+    let ix =
+        axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
     let gateway_event = call_solana_gateway(&mut solana_chain.fixture, ix).await;
     let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
 
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
+        solana_id.clone(),
+    );
+    let encoded_payload = payload.encode();
+
     let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_id,
-        call_contract,
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
-    let message = messages[0].clone();
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
 
     call_evm(
         its_contracts
             .interchain_token_service
-            .set_trusted_address(message.source_chain.clone(), message.source_address.clone()),
+            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
     )
     .await;
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -1184,22 +1291,30 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
         panic!("Expected CallContract event, got {gateway_event:?}");
     };
 
-    let (messages, proof) = prepare_evm_approve_contract_call(
+    let payload = route_its_hub(
+        GMPPayload::decode(&call_contract.payload).unwrap(),
         solana_id,
-        call_contract,
+    );
+    let encoded_payload = payload.encode();
+
+    let (messages, proof) = prepare_evm_approve_contract_call(
+        solana_sdk::keccak::hash(&encoded_payload).0,
+        Pubkey::new_from_array(call_contract.sender),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
-    let message = messages[0].clone();
+    let mut message = messages[0].clone();
+    ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
 
-    let command_id = ensure_evm_gateway_approval(messages, proof, &its_contracts.gateway).await;
+    let command_id =
+        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
     call_evm(its_contracts.interchain_token_service.execute(
         command_id,
         message.source_chain,
         message.source_address,
-        call_contract.payload.to_vec().into(),
+        encoded_payload.into(),
     ))
     .await;
 
@@ -1286,17 +1401,15 @@ where
 }
 
 async fn ensure_evm_gateway_approval(
-    messages: Vec<EvmAxelarMessage>,
+    message: EvmAxelarMessage,
     proof: EvmAxelarProof,
     gateway: &EvmAxelarAmplifierGateway<ContractMiddleware>,
 ) -> [u8; 32] {
-    let message = messages[0].clone();
-
-    call_evm(gateway.approve_messages(messages, proof)).await;
+    call_evm(gateway.approve_messages(vec![message.clone()], proof)).await;
 
     let is_approved = gateway
         .is_message_approved(
-            message.source_chain.clone(),
+            ITS_CHAIN_NAME.to_owned(),
             message.message_id.clone(),
             message.source_address.clone(),
             message.contract_address,
@@ -1308,14 +1421,14 @@ async fn ensure_evm_gateway_approval(
     assert!(is_approved, "contract call was not approved");
 
     gateway
-        .message_to_command_id(message.source_chain.clone(), message.message_id.clone())
+        .message_to_command_id(ITS_CHAIN_NAME.to_owned(), message.message_id.clone())
         .await
         .unwrap()
 }
 
 fn prepare_evm_approve_contract_call(
-    solana_id: &str,
-    call_contract: &ArchivedCallContract,
+    payload_hash: [u8; 32],
+    sender: Pubkey,
     destination_address: Address,
     signer_set: &mut evm_weighted_signers::WeightedSigners,
     domain_separator: [u8; 32],
@@ -1323,11 +1436,11 @@ fn prepare_evm_approve_contract_call(
     // TODO: use address from the contract call once we have the trusted addresses
     // in place (the address is currently empty)
     let message = EvmAxelarMessage {
-        source_chain: solana_id.to_string(),
-        message_id: String::from_utf8_lossy(&call_contract.payload_hash).to_string(),
-        source_address: Pubkey::from(call_contract.sender).to_string(),
+        source_chain: ITS_CHAIN_NAME.to_owned(),
+        message_id: String::from_utf8_lossy(&payload_hash).to_string(),
+        source_address: sender.to_string(),
         contract_address: destination_address,
-        payload_hash: call_contract.payload_hash,
+        payload_hash,
     };
 
     let approve_contract_call_command =

@@ -30,7 +30,12 @@ where
     let payload = GMPPayload::decode(&abi_payload).map_err(|_err| ProgramError::InvalidArgument)?;
     let (its_root_pda, its_root_pda_bump) = axelar_solana_its::find_its_root_pda(&gateway_root_pda);
     let (interchain_token_pda, interchain_token_pda_bump) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, payload.token_id());
+        axelar_solana_its::find_interchain_token_pda(
+            &its_root_pda,
+            &payload
+                .token_id()
+                .map_err(|_err| ProgramError::InvalidArgument)?,
+        );
     let (token_manager_pda, token_manager_pda_bump) =
         axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
     let (mint, token_program) =
@@ -102,6 +107,16 @@ where
                 .owner;
 
             Ok((Some(token_mint), token_program))
+        }
+        GMPPayload::SendToHub(inner) => {
+            let inner_payload =
+                GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidArgument)?;
+            try_infer_mint_and_program(token_manager_pda, &inner_payload, rpc_client).await
+        }
+        GMPPayload::ReceiveFromHub(inner) => {
+            let inner_payload =
+                GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidArgument)?;
+            try_infer_mint_and_program(token_manager_pda, &inner_payload, rpc_client).await
         }
     }
 }

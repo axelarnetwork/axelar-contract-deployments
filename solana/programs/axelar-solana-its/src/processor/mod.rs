@@ -3,7 +3,7 @@
 use alloy_primitives::U256;
 use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
 use axelar_rkyv_encoding::types::GmpMetadata;
-use interchain_token_transfer_gmp::GMPPayload;
+use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::Itertools;
 use program_utils::{check_rkyv_initialized_pda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -24,6 +24,8 @@ use crate::{check_program_account, seed_prefixes};
 pub mod interchain_token;
 pub mod interchain_transfer;
 pub mod token_manager;
+
+const ITS_HUB_CHAIN_NAME: &str = "axelar";
 
 pub(crate) trait LocalAction {
     fn process_local_action<'a>(
@@ -47,6 +49,10 @@ impl LocalAction for GMPPayload {
                 inner.process_local_action(payer, accounts, bumps)
             }
             Self::DeployTokenManager(inner) => inner.process_local_action(payer, accounts, bumps),
+            Self::SendToHub(_) | Self::ReceiveFromHub(_) => {
+                msg!("Unsupported local action");
+                Err(ProgramError::InvalidInstructionData)
+            }
         }
     }
 }
@@ -175,8 +181,15 @@ fn process_inbound_its_gmp_payload<'a>(
     let gateway_root_pda = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
 
+    let GMPPayload::ReceiveFromHub(inner) =
+        GMPPayload::decode(abi_payload).map_err(|_err| ProgramError::InvalidInstructionData)?
+    else {
+        msg!("Unsupported GMP payload");
+        return Err(ProgramError::InvalidInstructionData);
+    };
+
     let payload =
-        GMPPayload::decode(abi_payload).map_err(|_err| ProgramError::InvalidInstructionData)?;
+        GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidInstructionData)?;
 
     validate_its_accounts(instruction_accounts, gateway_root_pda.key, &payload, bumps)?;
     payload.process_local_action(payer, instruction_accounts, bumps)
@@ -245,8 +258,15 @@ fn process_outbound_its_gmp_payload(
         *its_root_pda_data,
     )?;
 
-    // TODO: Get chain's trusted address.
+    // TODO: Get chain's trusted address. It should be ITS Hub address.
     let destination_address = String::new();
+    let hub_payload = GMPPayload::SendToHub(SendToHub {
+        selector: SendToHub::MESSAGE_TYPE_ID
+            .try_into()
+            .map_err(|_err| ProgramError::ArithmeticOverflow)?,
+        destination_chain,
+        payload: payload.encode().into(),
+    });
 
     // TODO: Call gas service to pay gas fee.
 
@@ -254,9 +274,9 @@ fn process_outbound_its_gmp_payload(
         &gateway::instructions::call_contract(
             *gateway_root_pda.key,
             *its_root_pda.key,
-            destination_chain,
+            ITS_HUB_CHAIN_NAME.to_owned(),
             destination_address,
-            payload.encode(),
+            hub_payload.encode(),
         )?,
         &[its_root_pda.clone(), gateway_root_pda.clone()],
         &[&[
