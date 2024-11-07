@@ -129,9 +129,6 @@ jobs:
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
 
-      # - name: Request SUI from faucet
-      #   run: node stellar/faucet.js
-
       ###### Compile Wasm Contracts   ######
 
       - name: Checkout axelar-cgp-soroban repo
