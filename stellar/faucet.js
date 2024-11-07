@@ -13,7 +13,7 @@ async function processCommand(chain, options) {
         balances.find((balance) => balance.asset_type === ASSET_TYPE_NATIVE),
     );
 
-    if (keyPair.publicKey().toLocaleLowerCase() !== options.recipient.toLocaleLowerCase()) {
+    if (keyPair.publicKey().toLowerCase() !== options?.recipient?.toLowerCase()) {
         printInfo(`Requesting funds for`, recipient);
     }
 
