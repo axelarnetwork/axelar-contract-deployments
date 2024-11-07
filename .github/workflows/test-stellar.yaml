@@ -32,6 +32,12 @@ jobs:
     if: ${{ needs.check-relevant-changes.outputs.run_tests == 'true' }}
     runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
+
+      # this sets up nested repos: https://github.com/actions/checkout?tab=readme-ov-file#checkout-multiple-repos-nested
+      # axelar-contract-deployments
+      #   - axelar-cgp-soroban
+      #
+      # future steps depend on this directory structure
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -56,6 +62,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.81.0
+          targets: wasm32-unknown-unknown
 
       # install binary to avoid lengthy compilation process
       - name: Install Stellar CLI
