@@ -37,6 +37,11 @@ jobs:
         with:
           path: '.'
 
+      - name: Checkout axelar-cgp-soroban repo
+        uses: actions/checkout@v4
+        with:
+          repository: axelarnetwork/axelar-cgp-soroban
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -71,9 +76,12 @@ jobs:
           # the cargo install defines these as aliases, so mimic that behaviour
           ln -s bin/soroban bin/stellar
 
-          echo "$GITHUB_WORKSPACE/bin" >> "${GITHUB_PATH}"
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/bin/stellar" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/bin/soroban" >> $GITHUB_PATH
 
       - name: Add as configured network
+        shell: bash
         run: |
           ls
           ls bin/
@@ -139,11 +147,6 @@ jobs:
         run: cat ./axelar-chains-config/info/local.json
 
       ###### Compile Wasm Contracts   ######
-
-      - name: Checkout axelar-cgp-soroban repo
-        uses: actions/checkout@v4
-        with:
-          repository: axelarnetwork/axelar-cgp-soroban
 
       - name: Compile WASM contracts
         run: |
