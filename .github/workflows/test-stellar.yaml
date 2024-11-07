@@ -91,6 +91,9 @@ jobs:
 
       - name: Add as configured network
         run: |
+          ls
+          echo $GITHUB_PATH
+          echo $PATH
           stellar network add local \
               --rpc-url "$RPC_URL" \
               --network-passphrase "$NETWORK_PASSPHRASE"
