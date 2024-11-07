@@ -180,8 +180,18 @@ async function getWallet(chain, options) {
 }
 
 async function getBalances(horizonServer, address) {
-    const { balances } = await horizonServer.accounts().accountId(address).call();
-    return balances;
+    const response = await horizonServer
+        .accounts()
+        .accountId(address)
+        .call()
+        .catch((error) => {
+            if (error?.response?.status === 404) {
+                return { balances: [] };
+            }
+
+            throw error;
+        });
+    return response.balances;
 }
 
 async function estimateCost(tx, server) {

@@ -13,7 +13,9 @@ async function processCommand(chain, options) {
         balances.find((balance) => balance.asset_type === ASSET_TYPE_NATIVE),
     );
 
-    printInfo(`Requesting funds for`, recipient);
+    if (keyPair.publicKey().toLocaleLowerCase() !== options.recipient.toLocaleLowerCase()) {
+        printInfo(`Requesting funds for`, recipient);
+    }
 
     if (Number(balance?.balance || '0') >= Number(options.minBalance)) {
         printWarn('Wallet balance above minimum, skipping faucet request');
