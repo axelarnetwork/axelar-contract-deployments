@@ -35,7 +35,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          path: "."
+          path: '.'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -57,7 +57,6 @@ jobs:
       - name: Install Stellar CLI
         shell: bash
         run: |
-          cargo binstall stellar-cli
           # query release page to find URL of the latest release of the soroban-cli tool
           URL=$(curl -s https://api.github.com/repos/stellar/stellar-cli/releases/latest | jq -r .assets[].browser_download_url | grep 'soroban.*x86_64-unknown-linux')
           wget -q $URL
