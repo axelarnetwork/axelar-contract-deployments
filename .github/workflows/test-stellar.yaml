@@ -162,7 +162,6 @@ jobs:
       #   run: |
       #     node stellar/gateway approve avalanche 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 wallet 0x1234
 
-
       - name: Gateway Call Contract
         run: node stellar/gateway.js call-contract avalanche 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 
@@ -196,7 +195,6 @@ jobs:
       # TODO: currently fails
       # - name: is_operator with estimate_cost
       #   run: node stellar/operators.js --action is_operator --args $STELLAR_ADDRESS --estimate-cost
-
 
       ###### Command: Generate Bindings #####
       - name: generate operators bindings
