@@ -109,14 +109,6 @@ jobs:
               }
           }' > ./axelar-chains-config/info/local.json
 
-      - name: Wait for Stellar network
-        uses: nev7n/wait_for_response@v1
-        with:
-          url: 'http://localhost:8000'
-          responseCode: 200
-          timeout: 60000
-          interval: 1000
-
       - name: Prepare .env
         run: |
           echo "PRIVATE_KEY=$STELLAR_PRIVATE_KEY" >> .env
