@@ -72,6 +72,8 @@ jobs:
 
           RPC_URL="http://localhost:8000"
           NETWORK_PASSPHRASE="Standalone Network ; February 2017"
+          echo "RPC_URL=${RPC_URL}" >> $GITHUB_ENV
+          echo "NETWORK_PASSPHRASE=${NETWORK_PASSPHRASE}" >> $GITHUB_ENV
 
       - name: Add as configured network
         run: |
