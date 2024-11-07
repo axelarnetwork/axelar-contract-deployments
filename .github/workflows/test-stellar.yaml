@@ -47,7 +47,7 @@ jobs:
         run: npm ci
 
       - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.81.0
 
