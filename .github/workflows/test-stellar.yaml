@@ -34,6 +34,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          path: "."
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -51,17 +53,24 @@ jobs:
         with:
           toolchain: 1.81.0
 
+      # install binary to save lengthy compilation time
       - name: Install Stellar CLI
         shell: bash
         run: |
-          cargo install --locked stellar-cli --features opt --version ~21
+          # query release page to find URL of the latest release of the soroban-cli tool
+          URL=$(curl -s https://api.github.com/repos/stellar/stellar-cli/releases/latest | jq -r .assets[].browser_download_url | grep 'soroban.*x86_64-unknown-linux')
+          wget $URL
+          tar -xzf $(basename $URL)
+          mkdir bin
+          mv soroban bin/
 
-      - name: Pull stellar/quickstart docker image
+          # the cargo install defines these as aliases, so mimic that behaviour
+          ln -s bin/soroban bin/stellar
+          PATH=$PATH:bin/
+
+      - name: Setup Stellar local network
         run: |
           docker pull stellar/quickstart
-
-      - name: Setup Stellar standalone network
-        run: |
           docker run -d --rm -it \
               -p 8000:8000 \
               --name stellar \
