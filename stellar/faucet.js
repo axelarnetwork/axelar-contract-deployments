@@ -1,5 +1,5 @@
 const { Command, Option } = require('commander');
-const { getWallet, addBaseOptions, getBalances } = require('./utils');
+const { ASSET_TYPE_NATIVE, getWallet, addBaseOptions, getBalances } = require('./utils');
 const { saveConfig, loadConfig, printInfo, printWarn, getChainConfig } = require('../common');
 const { Horizon } = require('@stellar/stellar-sdk');
 
@@ -10,8 +10,10 @@ async function processCommand(chain, options) {
     const recipient = options.recipient || keyPair.publicKey();
     const horizonServer = new Horizon.Server(chain.horizonRpc);
     const balance = await getBalances(horizonServer, recipient).then((balances) =>
-        balances.find((balance) => balance.asset_type === 'native'),
+        balances.find((balance) => balance.asset_type === ASSET_TYPE_NATIVE),
     );
+
+    printInfo(`Requesting funds for`, recipient);
 
     if (Number(balance?.balance || '0') >= Number(options.minBalance)) {
         printWarn('Wallet balance above minimum, skipping faucet request');
@@ -38,7 +40,7 @@ if (require.main === module) {
         .addOption(new Option('--recipient <recipient>', 'recipient to request funds for'))
         .addOption(
             new Option(
-                '--minBalance <amount>',
+                '--min-balance <amount>',
                 'tokens will only be requested from the faucet if recipient balance is below the amount provided',
             ).default('1'),
         )

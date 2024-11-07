@@ -20,6 +20,7 @@ const {
 } = ethers;
 
 const stellarCmd = 'stellar';
+const ASSET_TYPE_NATIVE = 'native';
 
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
@@ -269,6 +270,7 @@ function serializeValue(value) {
 
 module.exports = {
     stellarCmd,
+    ASSET_TYPE_NATIVE,
     buildTransaction,
     prepareTransaction,
     sendTransaction,
