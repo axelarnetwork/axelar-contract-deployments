@@ -152,6 +152,7 @@ jobs:
         run: |
           echo "PRIVATE_KEY = '$STELLAR_PRIVATE_KEY'" >> .env
           echo "ENV = 'local'" >> .env
+          echo "YES = 'true'"
 
       ###### Command: Deploy Contract ######
       - name: Deploy axelar_gateway
