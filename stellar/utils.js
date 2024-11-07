@@ -169,16 +169,18 @@ async function getWallet(chain, options) {
     const address = keypair.publicKey();
     const provider = new SorobanRpc.Server(chain.rpc);
     const horizonServer = new Horizon.Server(chain.horizonRpc);
+    const balances = await getBalances(horizonServer, address);
 
     printInfo('Wallet address', address);
-    const account = await provider.getAccount(address);
-
-    const { balances } = await horizonServer.accounts().accountId(address).call();
-    printInfo('Wallet Balances', balances.map((balance) => `${balance.balance} ${getAssetCode(balance, chain)}`).join('  '));
-
-    printInfo('Wallet sequence', account.sequenceNumber());
+    printInfo('Wallet balances', balances.map((balance) => `${balance.balance} ${getAssetCode(balance, chain)}`).join('  '));
+    printInfo('Wallet sequence', await provider.getAccount(address).then((account) => account.sequenceNumber()));
 
     return keypair;
+}
+
+async function getBalances(horizonServer, address) {
+    const { balances } = await horizonServer.accounts().accountId(address).call();
+    return balances;
 }
 
 async function estimateCost(tx, server) {
@@ -277,4 +279,5 @@ module.exports = {
     addBaseOptions,
     getAmplifierVerifiers,
     serializeValue,
+    getBalances,
 };
