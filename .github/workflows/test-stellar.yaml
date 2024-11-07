@@ -73,6 +73,22 @@ jobs:
 
           echo "$GITHUB_WORKSPACE/bin" >> "${GITHUB_PATH}"
 
+          # test if it works
+
+          stellar --version
+
+      - name: Add as configured network
+        run: |
+          ls
+          ls bin/
+          echo $GITHUB_PATH
+          echo $PATH
+          echo $PWD
+          echo $GITHUB_WORKSPACE
+          stellar network add local \
+              --rpc-url "$RPC_URL" \
+              --network-passphrase "$NETWORK_PASSPHRASE"
+
       - name: Setup Stellar local network
         run: |
           docker pull stellar/quickstart
@@ -89,14 +105,6 @@ jobs:
           echo "RPC_URL=${RPC_URL}" >> $GITHUB_ENV
           echo "NETWORK_PASSPHRASE=${NETWORK_PASSPHRASE}" >> $GITHUB_ENV
 
-      - name: Add as configured network
-        run: |
-          ls
-          echo $GITHUB_PATH
-          echo $PATH
-          stellar network add local \
-              --rpc-url "$RPC_URL" \
-              --network-passphrase "$NETWORK_PASSPHRASE"
 
       - name: Setup Stellar wallet
         run: |
