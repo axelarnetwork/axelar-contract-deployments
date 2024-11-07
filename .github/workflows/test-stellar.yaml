@@ -53,20 +53,21 @@ jobs:
         with:
           toolchain: 1.81.0
 
-      # install binary to save lengthy compilation time
+      # install binary to avoid lengthy compilation process
       - name: Install Stellar CLI
         shell: bash
         run: |
+          cargo binstall stellar-cli
           # query release page to find URL of the latest release of the soroban-cli tool
           URL=$(curl -s https://api.github.com/repos/stellar/stellar-cli/releases/latest | jq -r .assets[].browser_download_url | grep 'soroban.*x86_64-unknown-linux')
-          wget $URL
+          wget -q $URL
           tar -xzf $(basename $URL)
           mkdir bin
           mv soroban bin/
 
           # the cargo install defines these as aliases, so mimic that behaviour
           ln -s bin/soroban bin/stellar
-          PATH=$PATH:bin/
+          echo "bin" >> $GITHUB_PATH
 
       - name: Setup Stellar local network
         run: |
