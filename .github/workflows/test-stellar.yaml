@@ -79,19 +79,6 @@ jobs:
           echo "$GITHUB_WORKSPACE/bin/stellar" >> $GITHUB_PATH
           echo "$GITHUB_WORKSPACE/bin/soroban" >> $GITHUB_PATH
 
-      - name: Add as configured network
-        shell: bash
-        run: |
-          ls
-          ls bin/
-          echo $GITHUB_PATH
-          echo $PATH
-          echo $PWD
-          echo $GITHUB_WORKSPACE
-          stellar network add local \
-              --rpc-url "$RPC_URL" \
-              --network-passphrase "$NETWORK_PASSPHRASE"
-
       - name: Setup Stellar local network
         run: |
           docker pull stellar/quickstart
@@ -108,8 +95,17 @@ jobs:
           echo "RPC_URL=${RPC_URL}" >> $GITHUB_ENV
           echo "NETWORK_PASSPHRASE=${NETWORK_PASSPHRASE}" >> $GITHUB_ENV
 
+      - name: Add as configured network
+        shell: bash
+        run: |
+          PATH=$PATH:$PWD/bin/
+          stellar network add local \
+              --rpc-url "$RPC_URL" \
+              --network-passphrase "$NETWORK_PASSPHRASE"
+
       - name: Setup Stellar wallet
         run: |
+          PATH=$PATH:$PWD/bin/
           stellar keys generate test \
               --rpc-url "$RPC_URL" \
               --network-passphrase "$NETWORK_PASSPHRASE"
@@ -148,6 +144,7 @@ jobs:
 
       - name: Compile WASM contracts
         run: |
+          PATH=$PATH:$PWD/bin/
           stellar contract build --manifest-path=axelar-cgp-soroban/Cargo.toml
           cd axelar-cgp-soroban
           ./optimize.sh
@@ -159,11 +156,13 @@ jobs:
 
       - name: Deploy axelar_gateway
         run: |
+          PATH=$PATH:$PWD/bin/
           CONTRACT=axelar_gateway
           node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm --initialize
 
       - name: Deploy axelar_operators
         run: |
+          PATH=$PATH:$PWD/bin/
           CONTRACT=axelar_operators
           node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm --initialize
 
@@ -174,15 +173,19 @@ jobs:
       #     node stellar/gateway approve avalanche 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 wallet 0x1234
 
       - name: Gateway Call Contract
-        run: node stellar/gateway.js call-contract avalanche 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
+        run: |
+          PATH=$PATH:$PWD/bin/
+          node stellar/gateway.js call-contract avalanche 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 
       - name: Gateway Rotate Signers
         run: |
+          PATH=$PATH:$PWD/bin/
           node stellar/gateway rotate --new-nonce test --signers wallet
           node stellar/gateway rotate --new-nonce test2 --current-nonce test --signers wallet
 
       - name: Upgrade gateway contract
         run: |
+          PATH=$PATH:$PWD/bin/
           CONTRACT=axelar_gateway
           node stellar/deploy-contract.js upgrade $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm
 
