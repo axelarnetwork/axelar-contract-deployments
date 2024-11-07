@@ -19,7 +19,6 @@ jobs:
             common:
               - 'common/**'
             github:
-              # - '.github/actions/setup-stellar/**'
               - '.github/workflows/test-stellar.yaml'
       - name: Summarize Changes
         run: |
