@@ -158,6 +158,7 @@ jobs:
           node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm --initialize
 
       ###### Command: Gateway ######
+      # FIXME:
       # - name: Gateway Approve
       #   run: |
       #     node stellar/gateway approve avalanche 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 wallet 0x1234
@@ -178,20 +179,24 @@ jobs:
 
       ###### Command: Operators ######
 
-      - name: Store Capability Object in Operators
-        run: node sui/operators.js storeCap
+      - name: Execute is_operator action
+        run: node stellar/operators.js --action is_operator --args $STELLAR_ADDRESS
 
-      - name: Add Operator
-        run: node sui/operators.js add $SUI_ADDRESS
+      - name: Execute add_operator action
+        run: node stellar/operators.js --action add_operator --args $STELLAR_ADDRESS
 
-      - name: Collect Gas with Operator
-        run: node sui/operators.js collectGas --amount 1
+      - name: Execute remove_operator action
+        run: node stellar/operators.js --action remove_operator --args $STELLAR_ADDRESS
 
-      - name: Refund Gas with Operator
-        run: node sui/operators.js refund 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 --amount 1
+      - name: Execute refund action
+        run: node stellar/operators.js --action refund
 
-      - name: Remove Operator
-        run: node sui/operators.js remove $SUI_ADDRESS
+      - name: Execute execute action
+        run: node stellar/operators.js --action execute
+
+      # TODO: currently fails
+      # - name: is_operator with estimate_cost
+      #   run: node stellar/operators.js --action is_operator --args $STELLAR_ADDRESS --estimate-cost
 
       ###### Command: Generate Keypair ######
       - name: Generate Keypair
