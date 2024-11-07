@@ -1,6 +1,6 @@
 const { Command, Option } = require('commander');
 const { ASSET_TYPE_NATIVE, getWallet, addBaseOptions, getBalances } = require('./utils');
-const { saveConfig, loadConfig, printInfo, printWarn, getChainConfig } = require('../common');
+const { loadConfig, printInfo, printWarn, getChainConfig } = require('../common');
 const { Horizon } = require('@stellar/stellar-sdk');
 
 require('./cli-utils');
