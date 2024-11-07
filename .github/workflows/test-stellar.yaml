@@ -7,14 +7,14 @@ jobs:
     name: Check for Relevant Changes
     runs-on: blacksmith-2vcpu-ubuntu-2204
     outputs:
-      run_tests: ${{ steps.filter.outputs.sui == 'true' || steps.filter.outputs.common == 'true' || steps.filter.outputs.github == 'true' }}
+      run_tests: ${{ steps.filter.outputs.stellar == 'true' || steps.filter.outputs.common == 'true' || steps.filter.outputs.github == 'true' }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
-            sui:
+            stellar:
               - 'stellar/**'
             common:
               - 'common/**'
@@ -22,7 +22,7 @@ jobs:
               - '.github/workflows/test-stellar.yaml'
       - name: Summarize Changes
         run: |
-          echo "Changes in stellar: ${{ steps.filter.outputs.sui }}"
+          echo "Changes in stellar: ${{ steps.filter.outputs.stellar }}"
           echo "Changes in common: ${{ steps.filter.outputs.common }}"
           echo "Changes in github: ${{ steps.filter.outputs.github }}"
 
@@ -196,10 +196,6 @@ jobs:
       # TODO: currently fails
       # - name: is_operator with estimate_cost
       #   run: node stellar/operators.js --action is_operator --args $STELLAR_ADDRESS --estimate-cost
-
-      ###### Command: Generate Keypair ######
-      - name: Generate Keypair
-        run: node sui/generate-keypair.js
 
 
       ###### Command: Generate Bindings #####
