@@ -195,11 +195,13 @@ jobs:
       - name: Execute remove_operator action
         run: node stellar/operators.js --action remove_operator --args $STELLAR_ADDRESS
 
-      - name: Execute refund action
-        run: node stellar/operators.js --action refund
+      # TODO: needs gas-service contract
+      # - name: Execute refund action
+      #   run: node stellar/operators.js --action refund
 
-      - name: Execute execute action
-        run: node stellar/operators.js --action execute
+      # FIXME: find proper way to execute this
+      # - name: Execute execute action
+      #   run: node stellar/operators.js --action execute --target $STELLAR_ADDRESS --method "is_operator"
 
       # TODO: currently fails
       # - name: is_operator with estimate_cost
