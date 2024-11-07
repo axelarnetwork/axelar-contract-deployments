@@ -106,17 +106,6 @@ jobs:
               --rpc-url "$RPC_URL" \
               --network-passphrase "$NETWORK_PASSPHRASE"
 
-      - name: Setup Stellar wallet
-        run: |
-          stellar keys generate test \
-              --rpc-url "$RPC_URL" \
-              --network-passphrase "$NETWORK_PASSPHRASE"
-
-          STELLAR_PRIVATE_KEY=$(stellar keys show test)
-          STELLAR_ADDRESS=$(stellar keys address test)
-          echo "STELLAR_PRIVATE_KEY=${STELLAR_PRIVATE_KEY}" >> $GITHUB_ENV
-          echo "STELLAR_ADDRESS=${STELLAR_ADDRESS}" >> $GITHUB_ENV
-
       - name: Prepare local.json
         run: |
           echo '{
@@ -134,11 +123,6 @@ jobs:
               }
           }' > ./axelar-chains-config/info/local.json
 
-      - name: Prepare .env
-        run: |
-          echo "PRIVATE_KEY=$STELLAR_PRIVATE_KEY" >> .env
-          echo 'ENV=local' >> .env
-
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
 
@@ -152,10 +136,24 @@ jobs:
           cd ..
           WASM_DIR=axelar-cgp-soroban/target/wasm32-unknown-unknown/release
           echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
-          cat .env
+
+      - name: Setup Stellar wallet
+        run: |
+          stellar keys generate test \
+              --rpc-url "$RPC_URL" \
+              --network-passphrase "$NETWORK_PASSPHRASE"
+
+          STELLAR_PRIVATE_KEY=$(stellar keys show test)
+          STELLAR_ADDRESS=$(stellar keys address test)
+          echo "STELLAR_PRIVATE_KEY=${STELLAR_PRIVATE_KEY}" >> $GITHUB_ENV
+          echo "STELLAR_ADDRESS=${STELLAR_ADDRESS}" >> $GITHUB_ENV
+
+      - name: Prepare .env
+        run: |
+          echo "PRIVATE_KEY = '$STELLAR_PRIVATE_KEY'" >> .env
+          echo "ENV = 'local'" >> .env
 
       ###### Command: Deploy Contract ######
-
       - name: Deploy axelar_gateway
         run: |
           CONTRACT=axelar_gateway
