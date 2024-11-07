@@ -39,7 +39,11 @@ stellar keys show wallet
 
 Set `PRIVATE_KEY` in `.env` to the above value.
 
-Testnet funds can be obtained via a [faucet](https://ftl.ai/), and transferred to your wallet.
+Testnet funds can be obtained via [this link](https://ftl.ai/) or using the `faucet.js` script:
+
+```bash
+node stellar/faucet.js --recipient <address>
+```
 
 ## Deployments
 
