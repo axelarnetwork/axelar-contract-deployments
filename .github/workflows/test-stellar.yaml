@@ -70,14 +70,14 @@ jobs:
               --enable-soroban-rpc \
               --protocol-version 21
 
-          RPC_URL="http://localhost:8000"
+          RPC_URL="http://localhost:8000/soroban/rpc"
           NETWORK_PASSPHRASE="Standalone Network ; February 2017"
           echo "RPC_URL=${RPC_URL}" >> $GITHUB_ENV
           echo "NETWORK_PASSPHRASE=${NETWORK_PASSPHRASE}" >> $GITHUB_ENV
 
       - name: Add as configured network
         run: |
-          stellar network add standalone \
+          stellar network add local \
               --rpc-url "$RPC_URL" \
               --network-passphrase "$NETWORK_PASSPHRASE"
 
@@ -109,10 +109,6 @@ jobs:
               }
           }' > ./axelar-chains-config/info/local.json
 
-      - name: Start Stellar network
-        run: |
-          stellar network container start local
-
       - name: Wait for Stellar network
         uses: nev7n/wait_for_response@v1
         with:
@@ -121,7 +117,6 @@ jobs:
           timeout: 60000
           interval: 1000
 
-      # Create .env file with default hardhat private key that's prefunded
       - name: Prepare .env
         run: |
           echo "PRIVATE_KEY=$STELLAR_PRIVATE_KEY" >> .env
@@ -141,7 +136,7 @@ jobs:
         run: |
           stellar contract build --manifest-path=axelar-cgp-soroban/Cargo.toml
           cd axelar-cgp-soroban
-          ./optmize.sh
+          ./optimize.sh
           cd ..
           WASM_DIR=axelar-cgp-soroban/target/wasm32-unknown-unknown/release
           echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
