@@ -73,10 +73,6 @@ jobs:
 
           echo "$GITHUB_WORKSPACE/bin" >> "${GITHUB_PATH}"
 
-          # test if it works
-
-          stellar --version
-
       - name: Add as configured network
         run: |
           ls
