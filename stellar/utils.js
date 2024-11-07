@@ -24,7 +24,7 @@ const stellarCmd = 'stellar';
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
         case 'local':
-            return Networks.SANDBOX;
+            return Networks.STANDALONE;
         case 'futurenet':
             return Networks.FUTURENET;
         case 'testnet':
@@ -147,7 +147,7 @@ async function sendTransaction(tx, server, action, options = {}) {
 }
 
 async function broadcast(operation, wallet, chain, action, options = {}) {
-    const server = new SorobanRpc.Server(chain.rpc);
+    const server = new SorobanRpc.Server(chain.rpc, { allowHttp: true });
 
     if (options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
@@ -167,8 +167,10 @@ function getAssetCode(balance, chain) {
 async function getWallet(chain, options) {
     const keypair = Keypair.fromSecret(options.privateKey);
     const address = keypair.publicKey();
-    const provider = new SorobanRpc.Server(chain.rpc);
-    const horizonServer = new Horizon.Server(chain.horizonRpc);
+    const provider = new SorobanRpc.Server(chain.rpc, {
+        allowHttp: true,
+    });
+    const horizonServer = new Horizon.Server(chain.horizonRpc, { allowHttp: true });
 
     printInfo('Wallet address', address);
     const account = await provider.getAccount(address);
