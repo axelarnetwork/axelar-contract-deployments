@@ -57,16 +57,21 @@ jobs:
       - name: Install Stellar CLI
         shell: bash
         run: |
-          # query release page to find URL of the latest release of the soroban-cli tool
+          # Query latest release from official Stellar repo
           URL=$(curl -s https://api.github.com/repos/stellar/stellar-cli/releases/latest | jq -r .assets[].browser_download_url | grep 'soroban.*x86_64-unknown-linux')
+
+          # download + extract binary
           wget -q $URL
           tar -xzf $(basename $URL)
+
+          # setup bin/ directory
           mkdir bin
           mv soroban bin/
 
           # the cargo install defines these as aliases, so mimic that behaviour
           ln -s bin/soroban bin/stellar
-          echo "$PWD/bin" >> "$GITHUB_PATH"
+
+          echo "${PWD}/bin" >> "${GITHUB_PATH}"
 
       - name: Setup Stellar local network
         run: |
