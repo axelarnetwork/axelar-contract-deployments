@@ -102,9 +102,7 @@ jobs:
                       "tokenSymbol": "XLM",
                       "rpc": "http://127.0.0.1:8000",
                       "horizonRpc": "http://127.0.0.1:8000",
-                      "contracts": {
-                          "AxelarGateway": {}
-                      }
+                      "contracts": {}
                   }
               }
           }' > ./axelar-chains-config/info/local.json
