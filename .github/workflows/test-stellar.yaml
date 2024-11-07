@@ -34,13 +34,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          path: '.'
 
       - name: Checkout axelar-cgp-soroban repo
         uses: actions/checkout@v4
         with:
           repository: axelarnetwork/axelar-cgp-soroban
+          path: axelar-cgp-soroban
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -108,7 +107,6 @@ jobs:
           NETWORK_PASSPHRASE="Standalone Network ; February 2017"
           echo "RPC_URL=${RPC_URL}" >> $GITHUB_ENV
           echo "NETWORK_PASSPHRASE=${NETWORK_PASSPHRASE}" >> $GITHUB_ENV
-
 
       - name: Setup Stellar wallet
         run: |
