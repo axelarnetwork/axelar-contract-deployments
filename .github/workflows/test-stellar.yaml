@@ -32,7 +32,6 @@ jobs:
     if: ${{ needs.check-relevant-changes.outputs.run_tests == 'true' }}
     runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
-
       # this sets up nested repos: https://github.com/actions/checkout?tab=readme-ov-file#checkout-multiple-repos-nested
       # axelar-contract-deployments
       #   - axelar-cgp-soroban
@@ -153,6 +152,7 @@ jobs:
           cd ..
           WASM_DIR=axelar-cgp-soroban/target/wasm32-unknown-unknown/release
           echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
+          cat .env
 
       ###### Command: Deploy Contract ######
 
