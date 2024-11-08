@@ -487,7 +487,6 @@ const makeInterchainTokenServiceInstantiateMsg = (config, { adminAddress, govern
         governance_address: governanceAddress,
         admin_address: adminAddress,
         axelarnet_gateway_address: axelarnetGatewayAddress,
-        its_contracts: {},
     };
 };
 
