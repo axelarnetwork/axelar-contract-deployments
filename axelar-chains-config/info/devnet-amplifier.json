@@ -580,6 +580,7 @@
     }
   },
   "stellar-test2": {
+    "name": "Stellar",
     "axelarId": "stellar-test2",
     "rpc": "https://soroban-testnet.stellar.org",
     "horizonRpc": "https://horizon-testnet.stellar.org",
