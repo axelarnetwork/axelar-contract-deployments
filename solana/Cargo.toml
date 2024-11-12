@@ -129,6 +129,7 @@ interchain-token-transfer-gmp = { path = "helpers/interchain-token-transfer-gmp"
 its-instruction-builder = { path = "helpers/its-instruction-builder" }
 governance-gmp = { path = "helpers/governance-gmp" }
 program-utils = { path = "helpers/program-utils" }
+role-management = { path = "helpers/role-management" }
 test-fixtures = { path = "helpers/test-fixtures" }
 
 [workspace.dependencies.multisig]

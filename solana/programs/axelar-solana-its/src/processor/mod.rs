@@ -6,6 +6,7 @@ use axelar_rkyv_encoding::types::GmpMetadata;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::Itertools;
 use program_utils::{check_rkyv_initialized_pda, ValidPDA};
+use role_management::state::{Roles, UserRoles};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
@@ -78,8 +79,11 @@ pub fn process_instruction<'a>(
     };
 
     match instruction {
-        InterchainTokenServiceInstruction::Initialize { pda_bump } => {
-            process_initialize(accounts, pda_bump)?;
+        InterchainTokenServiceInstruction::Initialize {
+            its_root_pda_bump,
+            user_roles_pda_bump,
+        } => {
+            process_initialize(program_id, accounts, its_root_pda_bump, user_roles_pda_bump)?;
         }
         InterchainTokenServiceInstruction::ItsGmpPayload {
             abi_payload,
@@ -122,17 +126,27 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::MintTo { amount } => {
             process_mint_to(accounts, amount)?;
         }
+        InterchainTokenServiceInstruction::RoleManagement(role_management_instruction) => {
+            role_management::processor::process(program_id, accounts, role_management_instruction)?;
+        }
     }
 
     Ok(())
 }
 
-fn process_initialize(accounts: &[AccountInfo<'_>], pda_bump: u8) -> ProgramResult {
+fn process_initialize(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo<'_>],
+    its_root_pda_bump: u8,
+    user_roles_pda_bump: u8,
+) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let payer = next_account_info(account_info_iter)?;
     let gateway_root_pda = next_account_info(account_info_iter)?;
     let its_root_pda = next_account_info(account_info_iter)?;
     let system_account = next_account_info(account_info_iter)?;
+    let operator = next_account_info(account_info_iter)?;
+    let user_roles_account = next_account_info(account_info_iter)?;
 
     // Check: System Program Account
     if !system_program::check_id(system_account.key) {
@@ -142,8 +156,8 @@ fn process_initialize(accounts: &[AccountInfo<'_>], pda_bump: u8) -> ProgramResu
     its_root_pda.check_uninitialized_pda()?;
 
     // Check the bump seed is correct
-    crate::check_initialization_bump(pda_bump, its_root_pda.key, gateway_root_pda.key)?;
-    let data = InterchainTokenService::new(pda_bump);
+    crate::check_initialization_bump(its_root_pda_bump, its_root_pda.key, gateway_root_pda.key)?;
+    let data = InterchainTokenService::new(its_root_pda_bump);
 
     program_utils::init_rkyv_pda::<{ InterchainTokenService::LEN }, _>(
         payer,
@@ -154,8 +168,18 @@ fn process_initialize(accounts: &[AccountInfo<'_>], pda_bump: u8) -> ProgramResu
         &[
             crate::seed_prefixes::ITS_SEED,
             gateway_root_pda.key.as_ref(),
-            &[pda_bump],
+            &[its_root_pda_bump],
         ],
+    )?;
+
+    let operator_user_roles = UserRoles::new(Roles::OPERATOR, user_roles_pda_bump);
+    operator_user_roles.init(
+        program_id,
+        system_account,
+        payer,
+        its_root_pda,
+        operator,
+        user_roles_account,
     )?;
 
     Ok(())

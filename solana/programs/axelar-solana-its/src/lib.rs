@@ -23,6 +23,12 @@ pub mod seed_prefixes {
 
     /// The seed prefix for deriving the interchain token PDA
     pub const INTERCHAIN_TOKEN_SEED: &[u8] = b"interchain-token";
+
+    /// The seed prefix for deriving the user roles PDA
+    pub const USER_ROLES_SEED: &[u8] = b"user-roles";
+
+    /// The seed prefix for deriving the role proposal PDA
+    pub const ROLE_PROPOSAL_SEED: &[u8] = b"role-proposal";
 }
 
 /// Checks that the supplied program ID is the correct one

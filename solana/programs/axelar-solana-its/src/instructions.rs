@@ -12,6 +12,7 @@ use interchain_token_transfer_gmp::{
 use rkyv::bytecheck::EnumCheckError;
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
+use role_management::instructions::RoleManagementInstruction;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -59,9 +60,15 @@ pub enum InterchainTokenServiceInstruction {
     /// 1. [] gateway root pda
     /// 2. [writeable] ITS root pda
     /// 3. [] system program id
+    /// 4. [] The account that will become the operator of the ITS
+    /// 5. [writeable] The address of the PDA account that will store the roles
+    ///    of the operator account.
     Initialize {
         /// The pda bump for the ITS root PDA
-        pda_bump: u8,
+        its_root_pda_bump: u8,
+
+        /// The bump PDA used to store the operator role for the ITS
+        user_roles_pda_bump: u8,
     },
 
     /// Deploys an interchain token.
@@ -166,6 +173,16 @@ pub enum InterchainTokenServiceInstruction {
         /// The amount of tokens to mint
         amount: u64,
     },
+
+    /// Role management instruction, see inner type for list of available
+    /// instructions and required accounts.
+    RoleManagement(RoleManagementInstruction),
+}
+
+impl From<RoleManagementInstruction> for InterchainTokenServiceInstruction {
+    fn from(value: RoleManagementInstruction) -> Self {
+        Self::RoleManagement(value)
+    }
 }
 
 impl InterchainTokenServiceInstruction {
@@ -423,12 +440,17 @@ pub struct ItsGmpInstructionInputs {
 ///
 /// If serialization fails.
 pub fn initialize(
-    payer: &Pubkey,
-    gateway_root_pda: &Pubkey,
-    its_root_pda: &(Pubkey, u8),
+    payer: Pubkey,
+    gateway_root_pda: Pubkey,
+    operator: Pubkey,
 ) -> Result<Instruction, ProgramError> {
+    let (its_root_pda, its_root_pda_bump) = crate::find_its_root_pda(&gateway_root_pda);
+    let (user_roles_pda, user_roles_pda_bump) =
+        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &operator);
+
     let instruction = InterchainTokenServiceInstruction::Initialize {
-        pda_bump: its_root_pda.1,
+        its_root_pda_bump,
+        user_roles_pda_bump,
     };
 
     let data = instruction
@@ -436,10 +458,12 @@ pub fn initialize(
         .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
     let accounts = vec![
-        AccountMeta::new(*payer, true),
-        AccountMeta::new_readonly(*gateway_root_pda, false),
-        AccountMeta::new(its_root_pda.0, false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new_readonly(operator, false),
+        AccountMeta::new(user_roles_pda, false),
     ];
 
     Ok(Instruction {

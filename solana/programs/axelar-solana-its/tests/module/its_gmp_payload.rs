@@ -29,15 +29,14 @@ async fn test_its_gmp_payload_deploy_token_manager(
     use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 
     let mut solana_chain = program_test().await;
-    let (its_root_pda, its_root_pda_bump) =
-        axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
 
     solana_chain
         .fixture
         .send_tx(&[axelar_solana_its::instructions::initialize(
-            &solana_chain.fixture.payer.pubkey(),
-            &solana_chain.gateway_root_pda,
-            &(its_root_pda, its_root_pda_bump),
+            solana_chain.fixture.payer.pubkey(),
+            solana_chain.gateway_root_pda,
+            solana_chain.fixture.payer.pubkey(),
         )
         .unwrap()])
         .await;
@@ -110,15 +109,14 @@ async fn test_its_gmp_payload_deploy_interchain_token() {
     use interchain_token_transfer_gmp::DeployInterchainToken;
 
     let mut solana_chain = program_test().await;
-    let (its_root_pda, its_root_pda_bump) =
-        axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
 
     solana_chain
         .fixture
         .send_tx(&[axelar_solana_its::instructions::initialize(
-            &solana_chain.fixture.payer.pubkey(),
-            &solana_chain.gateway_root_pda,
-            &(its_root_pda, its_root_pda_bump),
+            solana_chain.fixture.payer.pubkey(),
+            solana_chain.gateway_root_pda,
+            solana_chain.fixture.payer.pubkey(),
         )
         .unwrap()])
         .await;
@@ -206,15 +204,14 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
     use interchain_token_transfer_gmp::InterchainTransfer;
 
     let mut solana_chain = program_test().await;
-    let (its_root_pda, its_root_pda_bump) =
-        axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
 
     solana_chain
         .fixture
         .send_tx(&[axelar_solana_its::instructions::initialize(
-            &solana_chain.fixture.payer.pubkey(),
-            &solana_chain.gateway_root_pda,
-            &(its_root_pda, its_root_pda_bump),
+            solana_chain.fixture.payer.pubkey(),
+            solana_chain.gateway_root_pda,
+            solana_chain.fixture.payer.pubkey(),
         )
         .unwrap()])
         .await;
@@ -387,15 +384,14 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
     use interchain_token_transfer_gmp::InterchainTransfer;
 
     let mut solana_chain = program_test().await;
-    let (its_root_pda, its_root_pda_bump) =
-        axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
 
     solana_chain
         .fixture
         .send_tx(&[axelar_solana_its::instructions::initialize(
-            &solana_chain.fixture.payer.pubkey(),
-            &solana_chain.gateway_root_pda,
-            &(its_root_pda, its_root_pda_bump),
+            solana_chain.fixture.payer.pubkey(),
+            solana_chain.gateway_root_pda,
+            solana_chain.fixture.payer.pubkey(),
         )
         .unwrap()])
         .await;

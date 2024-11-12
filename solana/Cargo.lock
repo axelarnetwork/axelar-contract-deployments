@@ -811,6 +811,7 @@ dependencies = [
  "itertools 0.12.1",
  "program-utils",
  "rkyv",
+ "role-management",
  "rstest",
  "solana-program",
  "solana-program-test",
@@ -6904,6 +6905,16 @@ checksum = "6bd13e55d6d7b8cd0ea569161127567cd587676c99f4472f779a0279aa60a7a7"
 dependencies = [
  "libc",
  "librocksdb-sys",
+]
+
+[[package]]
+name = "role-management"
+version = "0.1.0"
+dependencies = [
+ "bitflags 2.6.0",
+ "program-utils",
+ "rkyv",
+ "solana-program",
 ]
 
 [[package]]

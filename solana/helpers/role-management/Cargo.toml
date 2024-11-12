@@ -1,0 +1,15 @@
+[package]
+name = "role-management"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+bitflags.workspace = true
+program-utils.workspace = true
+rkyv = { workspace = true, features = ["validation"] }
+solana-program.workspace = true
+
+[dev-dependencies]

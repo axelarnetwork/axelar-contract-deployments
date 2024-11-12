@@ -24,6 +24,7 @@ gateway = { workspace = true, features = ["no-entrypoint"] }
 interchain-token-transfer-gmp.workspace = true
 itertools.workspace = true
 program-utils.workspace = true
+role-management.workspace = true
 rkyv.workspace = true
 solana-program.workspace = true
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }

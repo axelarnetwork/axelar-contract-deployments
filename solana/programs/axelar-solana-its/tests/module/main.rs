@@ -9,8 +9,8 @@
 mod deploy_interchain_token;
 mod deploy_token_manager;
 mod from_solana_to_evm;
-mod initialize;
 mod its_gmp_payload;
+mod role_management;
 
 use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::evm_weighted_signers::WeightedSigners;
@@ -79,14 +79,12 @@ async fn axelar_solana_setup(with_memo: bool) -> ItsProgramWrapper {
         None
     };
 
-    let (its_pda, its_pda_bump) =
-        axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
     solana_chain
         .fixture
         .send_tx(&[axelar_solana_its::instructions::initialize(
-            &solana_chain.fixture.payer.pubkey(),
-            &solana_chain.gateway_root_pda,
-            &(its_pda, its_pda_bump),
+            solana_chain.fixture.payer.pubkey(),
+            solana_chain.gateway_root_pda,
+            solana_chain.fixture.payer.pubkey(),
         )
         .unwrap()])
         .await;
