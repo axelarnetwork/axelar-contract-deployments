@@ -753,6 +753,7 @@ version = "0.1.0"
 dependencies = [
  "axelar-message-primitives",
  "axelar-rkyv-encoding",
+ "axelar-solana-gateway-test-fixtures",
  "base64 0.21.7",
  "bincode",
  "bitvec",
@@ -768,15 +769,28 @@ dependencies = [
  "program-utils",
  "rand 0.8.5",
  "rkyv",
+ "rstest",
  "sha3 0.10.8",
  "solana-client",
  "solana-logger",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
- "static_assertions",
- "test-fixtures",
  "thiserror",
+ "typed-builder",
+]
+
+[[package]]
+name = "axelar-solana-gateway-test-fixtures"
+version = "0.1.0"
+dependencies = [
+ "axelar-rkyv-encoding",
+ "axelar-solana-gateway",
+ "bincode",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "tokio",
  "typed-builder",
 ]
 

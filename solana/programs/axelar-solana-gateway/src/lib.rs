@@ -10,6 +10,7 @@ pub mod processor;
 pub mod state;
 
 use axelar_rkyv_encoding::hasher::solana::SolanaKeccak256Hasher;
+pub use bytemuck;
 // Export current sdk types for downstream users building with a different sdk
 // version.
 pub use solana_program;
@@ -72,12 +73,11 @@ pub fn assert_valid_gateway_root_pda(
 /// This is used to calculate the PDA for VerifierSetTracker.
 #[inline]
 pub fn get_verifier_set_tracker_pda(
-    program_id: &Pubkey,
     hash: crate::state::verifier_set_tracker::VerifierSetHash,
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[seed_prefixes::VERIFIER_SET_TRACKER_SEED, hash.as_slice()],
-        program_id,
+        &crate::id(),
     )
 }
 
@@ -86,7 +86,7 @@ pub fn get_verifier_set_tracker_pda(
 pub fn assert_valid_verifier_set_tracker_pda(
     tracker: &crate::state::verifier_set_tracker::VerifierSetTracker,
     expected_pubkey: &Pubkey,
-) {
+) -> Result<(), ProgramError> {
     let derived_pubkey = Pubkey::create_program_address(
         &[
             seed_prefixes::VERIFIER_SET_TRACKER_SEED,
@@ -96,21 +96,25 @@ pub fn assert_valid_verifier_set_tracker_pda(
         &crate::ID,
     )
     .expect("invalid bump for the root pda");
-
-    assert_eq!(&derived_pubkey, expected_pubkey, "invalid gateway root pda");
+    if &derived_pubkey != expected_pubkey {
+        solana_program::msg!("Error: Invalid Verifier Set Root PDA ");
+        Err(ProgramError::IncorrectProgramId)
+    } else {
+        Ok(())
+    }
 }
 
 /// Get the PDA and bump seed for a given payload hash.
 #[inline]
 pub fn get_signature_verification_pda(
     gateway_root_pda: &Pubkey,
-    hash: &crate::state::execute_data::ExecuteDataHash,
+    payload_merkle_root: &[u8; 32],
 ) -> (Pubkey, u8) {
     let (pubkey, bump) = Pubkey::find_program_address(
         &[
             seed_prefixes::SIGNATURE_VERIFICATION_SEED,
             gateway_root_pda.as_ref(),
-            hash,
+            payload_merkle_root,
         ],
         &crate::ID,
     );
@@ -121,14 +125,14 @@ pub fn get_signature_verification_pda(
 #[inline]
 pub fn create_signature_verification_pda(
     gateway_root_pda: &Pubkey,
-    hash: &crate::state::execute_data::ExecuteDataHash,
+    payload_merkle_root: &[u8; 32],
     bump: u8,
 ) -> Result<Pubkey, PubkeyError> {
     Pubkey::create_program_address(
         &[
             seed_prefixes::SIGNATURE_VERIFICATION_SEED,
             gateway_root_pda.as_ref(),
-            hash,
+            payload_merkle_root,
             &[bump],
         ],
         &crate::ID,

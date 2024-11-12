@@ -13,7 +13,7 @@ use super::Processor;
 use crate::axelar_auth_weighted::AxelarAuthWeighted;
 use crate::error::GatewayError;
 use crate::instructions::InitializeConfig;
-use crate::state::verifier_set_tracker::{VerifierSetHash, VerifierSetTracker};
+use crate::state::verifier_set_tracker::{VerifierSetTracker};
 use crate::state::GatewayConfig;
 use crate::{
     assert_valid_gateway_root_pda, assert_valid_verifier_set_tracker_pda,
@@ -25,7 +25,7 @@ impl Processor {
     pub fn process_initialize_config(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        init_config: InitializeConfig<(VerifierSetHash, u8)>,
+        init_config: InitializeConfig,
     ) -> ProgramResult {
         let (core_accounts, init_verifier_sets) = accounts.split_at(3);
 
@@ -58,7 +58,7 @@ impl Processor {
                 verifier_set_hash: *verifier_set_hash,
             };
             // check that everything has been derived correctly
-            assert_valid_verifier_set_tracker_pda(&tracker, verifier_set_pda.key);
+            assert_valid_verifier_set_tracker_pda(&tracker, verifier_set_pda.key)?;
             verifier_set_pda.check_uninitialized_pda()?;
             program_utils::init_pda(
                 payer,

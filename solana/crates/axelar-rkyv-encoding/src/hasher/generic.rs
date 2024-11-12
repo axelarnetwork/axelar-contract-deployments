@@ -40,6 +40,13 @@ impl<'a> AxelarRkyv256Hasher<'a> for Keccak256Hasher<'a> {
             self.hash(val);
         }
     }
+    fn hash_instant(vals: &[&[u8]]) -> Hash256 {
+        let mut hasher = Keccak256::new();
+        for val in vals {
+            hasher.update(val)
+        }
+        Hash256(hasher.finalize().into())
+    }
     fn result(self) -> Hash256 {
         Hash256(self.hasher.finalize().into())
     }

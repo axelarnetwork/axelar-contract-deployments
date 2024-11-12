@@ -42,9 +42,17 @@ impl Processor {
                 msg!("Instruction: Approve Messages");
                 Self::process_approve_messages(program_id, accounts)
             }
-            GatewayInstruction::RotateSigners {} => {
+            GatewayInstruction::RotateSigners {
+                new_verifier_set_merkle_root,
+                new_verifier_set_bump,
+            } => {
                 msg!("Instruction: Rotate Signers");
-                Self::process_rotate_signers(program_id, accounts)
+                Self::process_rotate_signers(
+                    program_id,
+                    accounts,
+                    new_verifier_set_merkle_root,
+                    new_verifier_set_bump,
+                )
             }
             GatewayInstruction::CallContract {
                 destination_chain,

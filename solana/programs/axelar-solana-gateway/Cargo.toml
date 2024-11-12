@@ -34,7 +34,6 @@ num-traits.workspace = true
 program-utils.workspace = true
 rkyv.workspace = true
 solana-program.workspace = true
-static_assertions.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
@@ -46,5 +45,6 @@ solana-logger.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
 rand.workspace = true
-test-fixtures.workspace = true
 typed-builder.workspace = true
+axelar-solana-gateway-test-fixtures.workspace = true
+rstest.workspace = true

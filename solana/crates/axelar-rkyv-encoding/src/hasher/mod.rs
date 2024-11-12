@@ -10,6 +10,7 @@ pub mod solana;
 pub trait AxelarRkyv256Hasher<'a>: Default + Visitor<'a> + ArchivedVisitor<'a> {
     fn hash(&mut self, val: &'a [u8]);
     fn hashv(&mut self, vals: &'a [&[u8]]);
+    fn hash_instant(vals: &[&[u8]]) -> Hash256;
     fn result(self) -> Hash256;
 }
 

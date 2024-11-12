@@ -35,6 +35,11 @@ impl<'a> AxelarRkyv256Hasher<'a> for SolanaKeccak256Hasher<'a> {
             self.hash(val);
         }
     }
+
+    fn hash_instant(vals: &[&[u8]]) -> Hash256 {
+        Hash256(solana_program::keccak::hashv(vals).to_bytes())
+    }
+
     fn result(self) -> Hash256 {
         Hash256(solana_program::keccak::hashv(&self.state).to_bytes())
     }

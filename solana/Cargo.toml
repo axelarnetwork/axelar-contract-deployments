@@ -43,6 +43,7 @@ single_call_fn = "allow"
 single_char_lifetime_names = "allow"
 std_instead_of_alloc = "allow"
 wildcard_imports = "allow"
+shadow_unrelated = "allow"
 
 [workspace.lints.rust]
 missing_docs = { level = "warn", priority = -1 }
@@ -115,13 +116,13 @@ axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program" }
 axelar-solana-multicall = { path = "programs/axelar-solana-multicall" }
 gas-service = { path = "programs/gas-service" }
 gateway = { path = "programs/gateway", package = "gmp-gateway" }
+axelar-solana-gateway = { path = "programs/axelar-solana-gateway" }
 
 # helper crates
 axelar-executable = { path = "helpers/axelar-executable" }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
-axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = [
-    "solana",
-] }
+axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = ["solana"] }
+axelar-solana-gateway-test-fixtures = { path = "crates/axelar-solana-gateway-test-fixtures" }
 evm-contracts-rs = { path = "helpers/evm-contracts-rs" }
 evm-contracts-test-suite = { path = "helpers/evm-contracts-test-suite" }
 interchain-token-transfer-gmp = { path = "helpers/interchain-token-transfer-gmp" }

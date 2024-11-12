@@ -7,9 +7,10 @@ use rkyv::{Archive, Deserialize, Serialize};
 use super::{HasheableMessageVec, Message};
 use crate::hasher::generic::Keccak256Hasher;
 use crate::hasher::merkle_trait::Merkle;
-use crate::hasher::merkle_tree::{NativeHasher, SolanaSyscallHasher};
-use crate::hasher::solana::SolanaKeccak256Hasher;
+use crate::hasher::merkle_tree::NativeHasher;
 use crate::hasher::AxelarRkyv256Hasher;
+#[cfg(any(test, feature = "test-fixtures", feature = "solana"))]
+use crate::hasher::{merkle_tree::SolanaSyscallHasher, solana::SolanaKeccak256Hasher};
 use crate::types::VerifierSet;
 
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
@@ -129,20 +130,18 @@ where
             PayloadElement::VerifierSet(verifier_set) => {
                 // When the Payload contains a verifier set, we use the Merkle root for that
                 // verifier set hash directly.
-                //
-                // NOTE: The benefits of this approach are negligible.
-                //
-                // WARN: This could be a potentia risk in case users submit Merkle roots for the
-                // messages variant.
-                //
-                // TODO: Hash the verifier set variant using an unique representation.
-                <VerifierSet as Merkle<T>>::calculate_merkle_root(verifier_set)
-                    .expect("Can't use an empty verifier set")
+                let verifier_set_merkle_root =
+                    <VerifierSet as Merkle<T>>::calculate_merkle_root(verifier_set)
+                        .expect("Can't use an empty verifier set");
+                let payload_element_leaf_hash =
+                    H::hash_instant(&[VerifierSet::HASH_PREFIX, &verifier_set_merkle_root]);
+                payload_element_leaf_hash.0
             }
         }
     }
 }
 
+#[cfg(any(test, feature = "test-fixtures", feature = "solana"))]
 impl From<PayloadLeafNode<SolanaSyscallHasher>> for [u8; 32] {
     fn from(payload_leaf_node: PayloadLeafNode<SolanaSyscallHasher>) -> Self {
         payload_leaf_node.leaf_hash::<SolanaKeccak256Hasher>()

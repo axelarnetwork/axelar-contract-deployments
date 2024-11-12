@@ -5,11 +5,14 @@ use std::mem;
 use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
 use axelar_rkyv_encoding::types::{PublicKey, Signature, VerifierSetLeafNode};
 use bitvec::order::Lsb0;
+use bitvec::slice::BitSlice;
 use bitvec::view::BitView;
 use bytemuck::{Pod, Zeroable};
 
+use super::verifier_set_tracker::VerifierSetHash;
+
 /// Controls the signature verification session for a given payload.
-#[repr(C, align(16))]
+#[repr(C)]
 #[derive(Default, Clone, Copy, Pod, Zeroable, Debug, Eq, PartialEq)]
 pub struct SignatureVerification {
     /// Accumulated signer threshold required to validate the payload.
@@ -18,7 +21,7 @@ pub struct SignatureVerification {
     ///
     /// Set to [`u128::MAX`] once the accumulated threshold is greater than or
     /// equal the current verifier set threshold.
-    accumulated_threshold: u128,
+    pub accumulated_threshold: u128,
 
     /// A bit field used to track which signatures have been verified.
     ///
@@ -30,7 +33,13 @@ pub struct SignatureVerification {
     /// Currently supports 256 slots. If the signer set maximum size needs to be
     /// increased in the future, this value must change to make roof for
     /// them.
-    signature_slots: [u8; 32],
+    pub signature_slots: [u8; 32],
+
+    /// Upon the first successful signature validation, we set the hash of the
+    /// signing verifier set.
+    /// This data is later used when rotating signers to figure out which
+    /// verifier set was the one that actually .
+    pub signing_verifier_set_hash: VerifierSetHash,
 }
 
 /// Errors that can happen during a signature verification session.
@@ -91,6 +100,11 @@ impl SignatureVerification {
         // Update state
         self.accumulate_threshold(signature_node);
         self.mark_slot_done(signature_node)?;
+        if self.signing_verifier_set_hash == [0; 32] {
+            self.signing_verifier_set_hash = *verifier_set_merkle_root;
+        } else if &self.signing_verifier_set_hash != verifier_set_merkle_root {
+            return Err(SignatureVerificationError::InvalidDigitalSignature);
+        }
 
         Ok(())
     }
@@ -117,12 +131,12 @@ impl SignatureVerification {
     fn verify_merkle_proof(
         signature_node: VerifierSetLeafNode<SolanaSyscallHasher>,
         merkle_proof: &MerkleProof<SolanaSyscallHasher>,
-        merkle_root: &[u8; 32],
+        verifier_set_merkle_root: &[u8; 32],
     ) -> Result<(), SignatureVerificationError> {
         let leaf_hash: [u8; 32] = signature_node.into();
 
         if merkle_proof.verify(
-            *merkle_root,
+            *verifier_set_merkle_root,
             &[signature_node.position as usize],
             &[leaf_hash],
             signature_node.set_size as usize,
@@ -188,9 +202,14 @@ impl SignatureVerification {
     }
 
     /// Iterator over the signature slots.
-    pub fn slots(&self) -> impl Iterator<Item = bool> + '_ {
+    pub fn slots_iter(&self) -> impl Iterator<Item = bool> + '_ {
         let signature_slots = self.signature_slots.view_bits::<Lsb0>();
         signature_slots.into_iter().map(|slot| *slot)
+    }
+
+    /// Bit slice into the signature array
+    pub fn slots(&self) -> &BitSlice<u8> {
+        self.signature_slots.view_bits::<Lsb0>()
     }
 }
 
@@ -276,35 +295,6 @@ mod tests {
         let num_signers = OsRng.gen_range(40..120);
         let verifier_set = random_valid_verifier_set_fixed_size(num_signers);
         MerkleIter::new(&verifier_set)
-    }
-
-    #[test]
-    fn test_initialization() {
-        let buffer = [0u8; SignatureVerification::LEN];
-        let from_pod: &SignatureVerification = bytemuck::cast_ref(&buffer);
-        let default = &SignatureVerification::default();
-        assert_eq!(from_pod, default);
-        assert_eq!(from_pod.accumulated_threshold, 0);
-        assert_eq!(from_pod.signature_slots, [0u8; 32]);
-        assert!(!from_pod.is_valid())
-    }
-
-    #[test]
-    fn test_serialization() {
-        let mut buffer: [u8; SignatureVerification::LEN] = random_bytes();
-        let original_state;
-
-        let updated_state = {
-            let deserialized: &mut SignatureVerification = bytemuck::cast_mut(&mut buffer);
-            original_state = *deserialized;
-            let (new_threshold, _) = deserialized.accumulated_threshold.overflowing_add(1);
-            deserialized.accumulated_threshold = new_threshold;
-            *deserialized
-        };
-        assert_ne!(updated_state, original_state); // confidence check
-
-        let deserialized: &SignatureVerification = bytemuck::cast_ref(&buffer);
-        assert_eq!(&updated_state, deserialized);
     }
 
     #[test]

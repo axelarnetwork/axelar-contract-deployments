@@ -7,12 +7,13 @@ use rkyv::bytecheck::{self, CheckBytes, StructCheckError};
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{Archive, Deserialize, Serialize};
 
-use super::HasheableSignersBTreeMap;
+use super::{HasheableSignersBTreeMap, Payload};
 use crate::hasher::generic::Keccak256Hasher;
 use crate::hasher::merkle_trait::Merkle;
-use crate::hasher::merkle_tree::{NativeHasher, SolanaSyscallHasher};
-use crate::hasher::solana::SolanaKeccak256Hasher;
+use crate::hasher::merkle_tree::NativeHasher;
 use crate::hasher::AxelarRkyv256Hasher;
+#[cfg(any(test, feature = "test-fixtures", feature = "solana"))]
+use crate::hasher::{merkle_tree::SolanaSyscallHasher, solana::SolanaKeccak256Hasher};
 use crate::types::{ArchivedPublicKey, ArchivedU128, PublicKey, U128};
 use crate::visitor::{ArchivedVisitor, Visitor};
 
@@ -30,6 +31,7 @@ pub struct VerifierSet {
 }
 
 impl VerifierSet {
+    pub const HASH_PREFIX: &'static [u8] = b"new verifier set";
     pub fn new(
         created_at: u64,
         signers: Signers,
@@ -93,6 +95,18 @@ impl VerifierSet {
                 },
             )
     }
+
+    pub fn hash_with_merkle(&self) -> [u8; 32] {
+        <VerifierSet as Merkle<NativeHasher>>::calculate_merkle_root(self)
+            .expect("Can't use an empty verifier set")
+    }
+
+    pub fn payload_hash(self) -> [u8; 32] {
+        let payload = Payload::VerifierSet(self);
+
+        Merkle::<NativeHasher>::calculate_merkle_root(&payload)
+            .expect("expected a non-empty signer set")
+    }
 }
 
 impl ArchivedVerifierSet {
@@ -153,10 +167,10 @@ pub struct VerifierSetElement {
 /// Wraps a [`VerifierSetElement`], is generic over the hashing context.
 ///
 /// This type is the leaf node of a [`VerifierSet`]'s Merkle tree.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct VerifierSetLeafNode<T: rs_merkle::Hasher<Hash = [u8; 32]>> {
-    element: VerifierSetElement,
-    hasher: PhantomData<T>,
+    pub element: VerifierSetElement,
+    pub hasher: PhantomData<T>,
 }
 
 impl<T: rs_merkle::Hasher<Hash = [u8; 32]>> Deref for VerifierSetLeafNode<T> {
@@ -206,6 +220,7 @@ where
     }
 }
 
+#[cfg(any(test, feature = "test-fixtures", feature = "solana"))]
 impl From<VerifierSetLeafNode<SolanaSyscallHasher>> for [u8; 32] {
     fn from(leaf_node: VerifierSetLeafNode<SolanaSyscallHasher>) -> Self {
         leaf_node.leaf_hash::<SolanaKeccak256Hasher>()

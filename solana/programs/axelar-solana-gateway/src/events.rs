@@ -66,9 +66,6 @@ pub struct RotateSignersEvent {
     pub new_epoch: crate::state::verifier_set_tracker::Epoch,
     /// the hash of the new signer set
     pub new_signers_hash: [u8; 32],
-    /// little-endian encoded Pubkey that points to the ExecuteData PDA, which
-    /// contains the full information about the latest signer set
-    pub execute_data_pda: [u8; 32],
 }
 
 /// Event that gets emitted when the operatorship has been transferred
@@ -180,7 +177,8 @@ impl GatewayEvent {
 /// Wrapper around the rkyv encoded [`GatewayEvent`]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EventContainer {
-    buffer: Vec<u8>,
+    /// The rkyv encoded event
+    pub buffer: Vec<u8>,
 }
 
 impl EventContainer {
@@ -224,7 +222,6 @@ mod tests {
         let rotate_signers_command = RotateSignersEvent {
             new_epoch: axelar_message_primitives::U256::from_u64(55),
             new_signers_hash: [42; 32],
-            execute_data_pda: [55; 32],
         };
         let message_approved = MessageApproved {
             command_id: [2; 32],

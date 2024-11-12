@@ -1,0 +1,17 @@
+[package]
+name = "axelar-solana-gateway-test-fixtures"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axelar-rkyv-encoding = { workspace = true, features = ["test-fixtures"] }
+tokio.workspace = true
+solana-program.workspace = true
+solana-program-test.workspace = true
+bincode.workspace = true
+axelar-solana-gateway.workspace = true
+typed-builder.workspace = true
+solana-sdk.workspace = true
+
+[lints]
+workspace = true

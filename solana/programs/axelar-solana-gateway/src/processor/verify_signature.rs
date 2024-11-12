@@ -1,3 +1,4 @@
+
 use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
 use axelar_rkyv_encoding::types::{PublicKey, Signature, VerifierSetLeafNode};
 use program_utils::ValidPDA;
@@ -5,7 +6,6 @@ use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use static_assertions::assert_eq_align;
 
 use super::Processor;
 use crate::axelar_auth_weighted::verify_ecdsa_signature;
@@ -13,15 +13,6 @@ use crate::state::signature_verification::SignatureVerifier;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::GatewayConfig;
-
-/// This a buffer array needs to have the same size and alignment as the
-/// signature verification session PDA, otherwise [`bytemuck`] will fail to cast
-/// the account data as our type.
-#[repr(C, align(16))]
-struct Aligned16 {
-    data: [u8; SignatureVerificationSessionData::LEN],
-}
-assert_eq_align!(SignatureVerificationSessionData, Aligned16);
 
 impl Processor {
     /// Handles the
@@ -44,17 +35,13 @@ impl Processor {
         // Check: Gateway Root PDA is initialized.
         let gateway_config = gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
 
-        // Access signature verification session data
-        if verification_session_account.data_len() != SignatureVerificationSessionData::LEN {
-            return Err(ProgramError::InvalidAccountData);
-        }
-
-        let mut buffer = Aligned16 {
-            data: [0u8; SignatureVerificationSessionData::LEN],
-        };
         let mut data = verification_session_account.try_borrow_mut_data()?;
-        buffer.data.copy_from_slice(&data);
-        let session: &mut SignatureVerificationSessionData = bytemuck::cast_mut(&mut buffer.data);
+        let data_bytes: &mut [u8; SignatureVerificationSessionData::LEN] =
+            (*data).try_into().map_err(|_err| {
+                solana_program::msg!("session account data is corrupt");
+                ProgramError::InvalidAccountData
+            })?;
+        let session: &mut SignatureVerificationSessionData = bytemuck::cast_mut(data_bytes);
 
         // Check: Verification PDA can be derived from seeds stored into the account
         // data itself.
@@ -104,9 +91,6 @@ impl Processor {
                 solana_program::msg!("Error: {}", error);
                 ProgramError::InvalidInstructionData
             })?;
-
-        // Write the bytes back into account data
-        data.copy_from_slice(&buffer.data);
 
         Ok(())
     }

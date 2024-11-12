@@ -33,7 +33,7 @@ async fn test_successfully_initialize_config() {
     let res = fixture.send_tx_with_metadata(&[ix]).await;
 
     // Assert
-    assert!(res.result.is_ok());
+    res.result.unwrap();
     let root_pda_data = fixture
         .get_rkyv_account::<governance::state::GovernanceConfig>(&config_pda, &governance::ID)
         .await;
@@ -62,7 +62,7 @@ async fn test_successfully_receives_gmp_command() {
     )
     .unwrap();
     let result = fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(result.result.is_ok());
+    result.result.unwrap();
 
     // Assert
     // todo check events emitted whenever implemented.

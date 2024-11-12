@@ -1,7 +1,7 @@
 //! Type definitions for the Merkle tree primitives used in this crate.
 
 use arrayref::mut_array_refs;
-pub use rs_merkle::{MerkleProof, MerkleTree};
+pub use rs_merkle::{Hasher, MerkleProof, MerkleTree};
 use sha3::{Digest, Keccak256};
 #[cfg(any(test, feature = "test-fixtures", feature = "solana"))]
 use solana_program::keccak::hashv;
@@ -67,8 +67,6 @@ fn concat_and_hash(
 #[cfg(test)]
 mod tests {
     use std::array;
-
-    use rs_merkle::Hasher;
 
     use super::*;
     use crate::test_fixtures::random_bytes;

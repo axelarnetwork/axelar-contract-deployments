@@ -2,16 +2,14 @@
 
 use std::mem::size_of;
 
-use axelar_message_primitives::{BnumU256, U256};
+use axelar_message_primitives::{U256};
 use axelar_rkyv_encoding::types::{
-    ArchivedProof, ArchivedVerifierSet, Ed25519Pubkey, Ed25519Signature, MessageValidationError,
+    MessageValidationError,
 };
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::msg;
 use thiserror::Error;
 
-use crate::state::verifier_set_tracker::VerifierSetTracker;
-use crate::{get_verifier_set_tracker_pda, hasher_impl};
 
 /// Errors that might happen when updating the signers and epochs set.
 #[derive(Error, Debug)]
@@ -88,74 +86,6 @@ impl AxelarAuthWeighted {
         }
     }
 
-    /// Ported code from [here](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/10b89fb19a44fe9e51989b618811ddd0e1a595f6/contracts/auth/AxelarAuthWeighted.sol#L30)
-    pub fn validate_proof(
-        &self,
-        message_hash: [u8; 32],
-        proof: &ArchivedProof,
-        verifier_set_tracker: &VerifierSetTracker,
-        domain_separator: &[u8; 32],
-    ) -> Result<SignerSetMetadata, AxelarAuthWeightedError> {
-        let proof_signer_set_hash = proof.signer_set_hash(hasher_impl(), domain_separator);
-        if verifier_set_tracker.verifier_set_hash != proof_signer_set_hash {
-            msg!(
-                "Provided verifier set tracker does match the derived one. Proof: {}, Registered: {}",
-                hex::encode(proof_signer_set_hash),
-                hex::encode(verifier_set_tracker.verifier_set_hash),
-            );
-            return Err(AxelarAuthWeightedError::InvalidSignerSet);
-        }
-
-        let epoch = self.current_epoch();
-        let elapsed: BnumU256 = epoch
-            .checked_sub(verifier_set_tracker.epoch)
-            .ok_or(AxelarAuthWeightedError::EpochCalculationOverflow)?
-            .into();
-        if elapsed >= self.previous_signers_retention.into() {
-            msg!("signing verifier set is too old");
-            return Err(AxelarAuthWeightedError::InvalidSignerSet);
-        }
-
-        validate_proof_for_message(proof, &message_hash)?;
-
-        // this indicates was it the latest known verifier set that signed this proof
-        if epoch == verifier_set_tracker.epoch {
-            Ok(SignerSetMetadata::Latest)
-        } else {
-            Ok(SignerSetMetadata::ValidOld)
-        }
-    }
-
-    /// Ported code from [here](https://github.com/axelarnetwork/cgp-spec/blob/c3010b9187ad9022dbba398525cf4ec35b75e7ae/solidity/contracts/auth/AxelarAuthWeighted.sol#L61)
-    pub fn rotate_signers(
-        &mut self,
-        new_verifier_set: &ArchivedVerifierSet,
-    ) -> Result<VerifierSetTracker, AxelarAuthWeightedError> {
-        // signers must be sorted binary or alphabetically in lower case
-        if new_verifier_set.is_empty() {
-            msg!("No signers in the new set");
-            return Err(AxelarAuthWeightedError::InvalidSignerSet);
-        }
-
-        if !matches!(new_verifier_set.sufficient_weight(), Some(true)) {
-            msg!("insufficient weight for the new verifier set");
-            return Err(AxelarAuthWeightedError::InvalidWeightThreshold);
-        }
-
-        let new_verifier_set_hash = new_verifier_set.hash(hasher_impl());
-        let (_, bump) = get_verifier_set_tracker_pda(&crate::id(), new_verifier_set_hash);
-
-        self.current_epoch = self
-            .current_epoch
-            .checked_add(U256::ONE)
-            .ok_or(AxelarAuthWeightedError::EpochCalculationOverflow)?;
-        Ok(VerifierSetTracker {
-            bump,
-            epoch: self.current_epoch,
-            verifier_set_hash: new_verifier_set_hash,
-        })
-    }
-
     /// Returns the current epoch.
     pub fn current_epoch(&self) -> U256 {
         self.current_epoch
@@ -164,28 +94,19 @@ impl AxelarAuthWeighted {
     /// Returns `true` if the current epoch is still considered valid given the
     /// signer retention policies.
     pub fn is_epoch_valid(&self, epoch: U256) -> Result<bool, AxelarAuthWeightedError> {
-        let earliest_valid_epoch = self
-            .current_epoch
-            .checked_sub(self.previous_signers_retention)
+        let current_epoch = self.current_epoch();
+        let elapsed = current_epoch
+            .checked_sub(epoch)
             .ok_or(AxelarAuthWeightedError::EpochCalculationOverflow)?;
-        Ok(epoch >= earliest_valid_epoch)
+
+        if elapsed >= self.previous_signers_retention {
+            msg!("signing verifier set is too old");
+            return Err(AxelarAuthWeightedError::InvalidSignerSet);
+        }
+        Ok(true)
     }
 }
 
-fn validate_proof_for_message(
-    proof: &ArchivedProof,
-    message_hash: &[u8; 32],
-) -> Result<(), AxelarAuthWeightedError> {
-    let verify_eddsa_signature = |_: &Ed25519Pubkey, _: &Ed25519Signature, _: &[u8; 32]| -> bool {
-        unimplemented!("ed25519 signature verification is not implemented")
-    };
-
-    Ok(proof.validate_for_message_custom(
-        message_hash,
-        verify_ecdsa_signature,
-        verify_eddsa_signature,
-    )?)
-}
 /// Verifies an ECDSA signature against a given message and public key using the
 /// secp256k1 curve.
 ///

@@ -1,48 +1,40 @@
 use axelar_message_primitives::U256;
-use axelar_rkyv_encoding::hasher::merkle_trait::Merkle;
-use axelar_rkyv_encoding::hasher::merkle_tree::NativeHasher;
-use axelar_rkyv_encoding::test_fixtures::random_valid_verifier_set;
-use axelar_solana_gateway::instructions::InitializeConfig;
-use axelar_solana_gateway::state::verifier_set_tracker::{VerifierSetHash, VerifierSetTracker};
+use axelar_solana_gateway::get_gateway_root_config_pda;
+use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway::state::GatewayConfig;
+use axelar_solana_gateway_test_fixtures::{
+    SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
+};
 use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 
-use crate::runner::TestRunner;
-use crate::setup::make_initialize_config;
-
-fn cmp_config(init: &InitializeConfig<VerifierSetHash>, created: &GatewayConfig) -> bool {
-    let current_epoch: U256 = init.initial_signer_sets.len().into();
-    created.operator == init.operator
+fn cmp_config(init: &SolanaAxelarIntegrationMetadata, created: &GatewayConfig) -> bool {
+    let current_epoch: U256 = U256::ONE;
+    let previous_signers_retention: U256 = init.previous_signers_retention.into();
+    created.operator == init.operator.pubkey()
         && created.domain_separator == init.domain_separator
         && created.auth_weighted.current_epoch == current_epoch
-        && created.auth_weighted.previous_signers_retention == init.previous_signers_retention
-        && created.auth_weighted.minimum_rotation_delay == init.minimum_rotation_delay
+        && created.auth_weighted.previous_signers_retention == previous_signers_retention
+        && created.auth_weighted.minimum_rotation_delay == init.minimum_rotate_signers_delay_seconds
         // this just checks that the last rotation ts has been set to a non-zero value
         && created.auth_weighted.last_rotation_timestamp > 0
 }
 
-async fn assert_verifier_sets(
-    init_config: InitializeConfig<VerifierSetHash>,
-    runner: &mut TestRunner,
-) {
-    let (cnf, pdas) = init_config.with_verifier_set_bump();
-    for (idx, ((pda, bump), (vs, bump2))) in
-        pdas.into_iter().zip(cnf.initial_signer_sets).enumerate()
-    {
-        assert_eq!(bump, bump2, "bumps don't match");
-        let vst = runner
-            .get_account::<VerifierSetTracker>(&pda, &axelar_solana_gateway::ID)
-            .await;
+async fn assert_verifier_sets(metadata: &mut SolanaAxelarIntegrationMetadata) {
+    let vs_data = metadata.init_gateway_config_verifier_set_data();
+    for (idx, (verifier_set_hash, pda, bump)) in vs_data.into_iter().enumerate() {
+        // assert_eq!(bump, bump2, "bumps don't match");
+        let vst = metadata.get_account(&pda, &axelar_solana_gateway::ID).await;
+        let vs_data = borsh::from_slice::<VerifierSetTracker>(&vst.data).unwrap();
         let epoch = U256::from_u64(idx as u64 + 1);
         assert_eq!(
-            vst,
+            vs_data,
             VerifierSetTracker {
                 bump,
                 epoch,
-                verifier_set_hash: vs
+                verifier_set_hash
             },
             "verifier set tracker not properly initialized"
         );
@@ -51,37 +43,36 @@ async fn assert_verifier_sets(
 
 #[tokio::test]
 async fn test_successfylly_initialize_config_with_single_initial_signer() {
-    let mut runner = TestRunner::new().await;
-    let (gateway_config_pda, _bump) = GatewayConfig::pda();
-
-    let initial_signer_set = random_valid_verifier_set();
-    let initial_signer_set_root =
-        Merkle::<NativeHasher>::calculate_merkle_root(&initial_signer_set)
-            .expect("expected a non-empty signer set");
-
-    let initial_config: InitializeConfig<VerifierSetHash> =
-        make_initialize_config(&[initial_signer_set_root]);
-
+    let mut metadata = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![42])
+        .build()
+        .setup_without_init_config()
+        .await;
+    let (gateway_config_pda, _bump) = get_gateway_root_config_pda();
+    let initial_sets = metadata.init_gateway_config_verifier_set_data();
     let ix = axelar_solana_gateway::instructions::initialize_config(
-        runner.payer.pubkey(),
-        initial_config.clone(),
+        metadata.fixture.payer.pubkey(),
+        metadata.domain_separator,
+        initial_sets,
+        metadata.minimum_rotate_signers_delay_seconds,
+        metadata.operator.pubkey(),
+        metadata.previous_signers_retention.into(),
         gateway_config_pda,
     )
     .unwrap();
 
-    runner.send_tx(&[ix]).await;
+    metadata.send_tx(&[ix]).await.unwrap();
 
     // Assert -- config derived correctly
-    let root_pda_data = runner
-        .get_account::<axelar_solana_gateway::state::GatewayConfig>(
-            &gateway_config_pda,
-            &axelar_solana_gateway::ID,
-        )
+    let root_pda_data = metadata
+        .fixture
+        .get_account(&gateway_config_pda, &axelar_solana_gateway::ID)
         .await;
-    assert!(cmp_config(&initial_config, &root_pda_data));
+    let root_pda_data = borsh::from_slice::<GatewayConfig>(&root_pda_data.data).unwrap();
+    assert!(cmp_config(&metadata, &root_pda_data));
 
     // Assert -- block timestamp updated
-    let clock = runner.banks_client.get_sysvar::<Clock>().await.unwrap();
+    let clock = metadata.banks_client.get_sysvar::<Clock>().await.unwrap();
     let block_timestamp = clock.unix_timestamp as u64;
     assert_eq!(
         root_pda_data.last_rotation_timestamp, block_timestamp,
@@ -93,35 +84,31 @@ async fn test_successfylly_initialize_config_with_single_initial_signer() {
     assert_eq!(root_pda_data.auth_weighted.current_epoch(), current_epoch);
 
     // Assert -- verifier set PDAs are initialized
-    assert_verifier_sets(initial_config, &mut runner).await;
+    assert_verifier_sets(&mut metadata).await;
 }
 
 #[tokio::test]
 async fn test_reverts_on_invalid_gateway_pda_pubkey() {
-    // Setup
-    let mut runner = TestRunner::new().await;
-    let initial_signer_set = random_valid_verifier_set();
-
-    let (_gateway_config_pda, _bump) = GatewayConfig::pda();
-
-    let initial_signer_set_root =
-        Merkle::<NativeHasher>::calculate_merkle_root(&initial_signer_set)
-            .expect("expected a non-empty signer set");
-
-    let initial_config: InitializeConfig<VerifierSetHash> =
-        make_initialize_config(&[initial_signer_set_root]);
-
+    let mut metadata = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![42])
+        .build()
+        .setup_without_init_config()
+        .await;
+    let initial_sets = metadata.init_gateway_config_verifier_set_data();
     let ix = axelar_solana_gateway::instructions::initialize_config(
-        runner.payer.pubkey(),
-        initial_config.clone(),
+        metadata.fixture.payer.pubkey(),
+        metadata.domain_separator,
+        initial_sets,
+        metadata.minimum_rotate_signers_delay_seconds,
+        metadata.operator.pubkey(),
+        metadata.previous_signers_retention.into(),
         Pubkey::new_unique(),
     )
     .unwrap();
 
-    let res = runner.send_tx_with_metadata(&[ix]).await;
+    let res = metadata.send_tx(&[ix]).await.expect_err("tx should fail");
 
     // Assert
-    assert!(res.result.is_err(), "Transaction should fail");
     assert!(
         res.metadata
             .unwrap()
@@ -134,31 +121,26 @@ async fn test_reverts_on_invalid_gateway_pda_pubkey() {
 
 #[tokio::test]
 async fn test_reverts_on_already_initialized_gateway_pda() {
-    // Setup
-    let mut runner = TestRunner::new().await;
-    let initial_signer_set = random_valid_verifier_set();
-
-    let initial_signer_set_root =
-        Merkle::<NativeHasher>::calculate_merkle_root(&initial_signer_set)
-            .expect("expected a non-empty signer set");
-
-    let initial_config = make_initialize_config(&[initial_signer_set_root]);
-
-    let gateway_config_pda = runner
-        .initialize_gateway_config_account(initial_config.clone())
+    let mut metadata = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![42])
+        .build()
+        .setup()
         .await;
-
-    // Action
+    let (gateway_config_pda, _bump) = get_gateway_root_config_pda();
+    let initial_sets = metadata.init_gateway_config_verifier_set_data();
     let ix = axelar_solana_gateway::instructions::initialize_config(
-        runner.payer.pubkey(),
-        initial_config,
+        metadata.fixture.payer.pubkey(),
+        metadata.domain_separator,
+        initial_sets,
+        metadata.minimum_rotate_signers_delay_seconds,
+        metadata.operator.pubkey(),
+        metadata.previous_signers_retention.into(),
         gateway_config_pda,
     )
     .unwrap();
-    let res = runner.send_tx_with_metadata(&[ix]).await;
+    let res = metadata.send_tx(&[ix]).await.expect_err("tx should fail");
 
     // Assert
-    assert!(res.result.is_err(), "Transaction should fail");
     assert!(
         res.metadata
             .unwrap()

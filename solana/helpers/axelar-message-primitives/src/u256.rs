@@ -91,6 +91,12 @@ impl From<u8> for U256 {
     }
 }
 
+impl From<u64> for U256 {
+    fn from(value: u64) -> Self {
+        U256(bnum::types::U256::from(value).into())
+    }
+}
+
 impl From<usize> for U256 {
     fn from(value: usize) -> Self {
         U256(bnum::types::U256::from(value).into())

@@ -33,20 +33,20 @@ pub enum GatewayInstruction {
 
     /// Rotate signers for the Gateway Root Config PDA account.
     ///
-    /// 0. [] Gateway ExecuteData PDA account
-    /// 1. [] Verifier Setr Tracker PDA account (the one that signed the
-    ///    ExecuteData)
-    /// 2. [WRITE, SIGNER] new uninitialized VerifierSetTracker PDA account (the
-    ///    one that needs to be initialized)
-    /// 3. [WRITE, SIGNER] Funding account for the new VerifierSetTracker PDA
-    /// 4. [] System Program account
-    /// 5. Optional: [SIGNER] `Operator` that's stored in the gateway config
-    ///    PDA.
-    // TODO:
-    // 1. stop using the VerifierSet merkle root as a double for the Payload merkle root
-    // 2. with a verified payload, send a Payload proof with the new VerifierSet merkle root and
-    //    update our config.
-    RotateSigners,
+    /// 0. [WRITE] Gateway Root Config PDA account
+    /// 1. [] Verificatoin Session PDA account (should be valid)
+    /// 2. [] The current verefier set tracker PDA (the one that signed the
+    ///    verification payload)
+    /// 3. [WRITE] The new verifier set tracker PDA (the one that needs to be
+    ///    instantiated)
+    /// 4. [WRITE, SIGNER] The payer for creating a new PAD
+    /// 5. [] The system program
+    RotateSigners {
+        /// The merkle root of the new verifier set
+        new_verifier_set_merkle_root: [u8; 32],
+        /// The bump for the new verifier set tracked PDA
+        new_verifier_set_bump: u8,
+    },
 
     /// Represents the `CallContract` Axelar event.
     ///
@@ -69,7 +69,7 @@ pub enum GatewayInstruction {
     /// 1. [WRITE] Gateway Root Config PDA account
     /// 2. [] System Program account
     /// 3..N [WRITE] uninitialized VerifierSetTracker PDA accounts
-    InitializeConfig(InitializeConfig<(VerifierSetHash, PdaBump)>),
+    InitializeConfig(InitializeConfig),
 
     /// Initializes a verification session for a given Payload root.
     ///
@@ -106,65 +106,20 @@ pub enum GatewayInstruction {
 
 /// Configuration parameters for initializing the axelar-solana gateway
 #[derive(Debug, Clone, Default, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
-pub struct InitializeConfig<T> {
+pub struct InitializeConfig {
     /// The domain separator, used as an input for hashing payloads.
     pub domain_separator: [u8; 32],
     /// initial signer sets
     /// The order is important:
     /// - first element == oldest entry
     /// - last element == latest entry
-    pub initial_signer_sets: Vec<T>,
+    pub initial_signer_sets: Vec<(VerifierSetHash, u8)>,
     /// the minimum delay required between rotations
     pub minimum_rotation_delay: RotationDelaySecs,
     /// The gateway operator.
     pub operator: Pubkey,
     /// how many n epochs do we consider valid
     pub previous_signers_retention: SignerSetEpoch,
-}
-
-type PdaBump = u8;
-type InitializeConfigTransformation = (
-    InitializeConfig<(VerifierSetHash, PdaBump)>,
-    Vec<(Pubkey, PdaBump)>,
-);
-
-impl InitializeConfig<VerifierSetHash> {
-    /// Convert  [`InitializeConfig`] to a type that can be submitted to the
-    /// gateway by calculating the PDAs for the initial signers.
-    pub fn with_verifier_set_bump(self) -> InitializeConfigTransformation {
-        let (pdas, bumps): (Vec<(Pubkey, PdaBump)>, Vec<PdaBump>) = self
-            .calculate_verifier_set_pdas()
-            .into_iter()
-            .map(|(pda, bump)| ((pda, bump), bump))
-            .unzip();
-        let initial_signer_sets = bumps
-            .into_iter()
-            .zip_eq(self.initial_signer_sets)
-            .map(|(bump, set)| (set, bump))
-            .collect_vec();
-        (
-            InitializeConfig {
-                domain_separator: self.domain_separator,
-                initial_signer_sets,
-                minimum_rotation_delay: self.minimum_rotation_delay,
-                operator: self.operator,
-                previous_signers_retention: self.previous_signers_retention,
-            },
-            pdas,
-        )
-    }
-
-    /// Calculate the PDAs and PDA bumps for the initial verifiers
-    pub fn calculate_verifier_set_pdas(&self) -> Vec<(Pubkey, PdaBump)> {
-        self.initial_signer_sets
-            .iter()
-            .map(|init_verifier_set_hash| {
-                let (pda, derived_bump) =
-                    crate::get_verifier_set_tracker_pda(&crate::id(), *init_verifier_set_hash);
-                (pda, derived_bump)
-            })
-            .collect_vec()
-    }
 }
 
 /// Creates a [`GatewayInstruction::ApproveMessages`] instruction.
@@ -197,19 +152,25 @@ pub fn approve_messages(
 }
 
 /// Creates a [`GatewayInstruction::RotateSigners`] instruction.
+#[allow(clippy::too_many_arguments)]
 pub fn rotate_signers(
-    execute_data_account: Pubkey,
     gateway_root_pda: Pubkey,
-    operator: Option<Pubkey>,
+    verification_session_account: Pubkey,
     current_verifier_set_tracker_pda: Pubkey,
     new_verifier_set_tracker_pda: Pubkey,
     payer: Pubkey,
+    operator: Option<Pubkey>,
+    new_verifier_set_merkle_root: [u8; 32],
+    new_verifier_set_bump: u8,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&GatewayInstruction::RotateSigners)?;
+    let data = to_vec(&GatewayInstruction::RotateSigners {
+        new_verifier_set_merkle_root,
+        new_verifier_set_bump,
+    })?;
 
     let mut accounts = vec![
         AccountMeta::new(gateway_root_pda, false),
-        AccountMeta::new_readonly(execute_data_account, false),
+        AccountMeta::new_readonly(verification_session_account, false),
         AccountMeta::new_readonly(current_verifier_set_tracker_pda, false),
         AccountMeta::new(new_verifier_set_tracker_pda, false),
         AccountMeta::new(payer, true),
@@ -256,7 +217,11 @@ pub fn call_contract(
 /// Creates a [`GatewayInstruction::InitializeConfig`] instruction.
 pub fn initialize_config(
     payer: Pubkey,
-    config: InitializeConfig<VerifierSetHash>,
+    domain_separator: [u8; 32],
+    initial_signer_sets: Vec<(VerifierSetHash, Pubkey, u8)>,
+    minimum_rotation_delay: RotationDelaySecs,
+    operator: Pubkey,
+    previous_signers_retention: SignerSetEpoch,
     gateway_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let mut accounts = vec![
@@ -264,16 +229,24 @@ pub fn initialize_config(
         AccountMeta::new(gateway_config_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
-    let (config, with_verifier_set_bump) = config.with_verifier_set_bump();
-    with_verifier_set_bump.into_iter().for_each(|(pda, _)| {
+    initial_signer_sets.iter().for_each(|(_hash, pda, _)| {
         accounts.push(AccountMeta {
-            pubkey: pda,
+            pubkey: *pda,
             is_signer: false,
             is_writable: true,
         })
     });
 
-    let data = to_vec(&GatewayInstruction::InitializeConfig(config))?;
+    let data = to_vec(&GatewayInstruction::InitializeConfig(InitializeConfig {
+        domain_separator,
+        initial_signer_sets: initial_signer_sets
+            .into_iter()
+            .map(|x| (x.0, x.2))
+            .collect_vec(),
+        minimum_rotation_delay,
+        operator,
+        previous_signers_retention,
+    }))?;
     Ok(Instruction {
         program_id: crate::id(),
         accounts,
@@ -350,7 +323,7 @@ pub mod tests {
     use solana_sdk::signer::Signer;
 
     use super::*;
-    use crate::state::GatewayConfig;
+    use crate::get_gateway_root_config_pda;
 
     #[test]
     fn round_trip_queue() {
@@ -364,7 +337,7 @@ pub mod tests {
     fn round_trip_queue_function() {
         let execute_data_account = Keypair::new().pubkey();
         let _payer = Keypair::new().pubkey();
-        let (gateway_root_pda, _) = GatewayConfig::pda();
+        let (gateway_root_pda, _) = get_gateway_root_config_pda();
         let approved_message_accounts = vec![Keypair::new().pubkey()];
         let verifier_set_tracker_pda = Pubkey::new_unique();
         let instruction = approve_messages(

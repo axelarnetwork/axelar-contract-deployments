@@ -54,11 +54,6 @@ impl GatewayConfig {
             domain_separator,
         }
     }
-
-    /// Returns the Pubkey and canonical bump for this account.
-    pub fn pda() -> (Pubkey, u8) {
-        crate::get_gateway_root_config_pda()
-    }
 }
 
 impl Sealed for GatewayConfig {}
