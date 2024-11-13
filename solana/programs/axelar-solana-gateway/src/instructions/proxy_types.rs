@@ -13,10 +13,76 @@
 
 use axelar_rkyv_encoding::hasher::merkle_tree::SolanaSyscallHasher;
 use axelar_rkyv_encoding::types::{
-    EcdsaRecoverableSignature, Ed25519Pubkey, Ed25519Signature, PublicKey, Secp256k1Pubkey,
-    Signature, VerifierSetElement, VerifierSetLeafNode,
+    CrossChainId, EcdsaRecoverableSignature, Ed25519Pubkey, Ed25519Signature, MessageElement, PublicKey, Secp256k1Pubkey, Signature, VerifierSetElement,
+    VerifierSetLeafNode,
 };
 use borsh::{BorshDeserialize, BorshSerialize};
+
+/// Proxy for [`VerifierSetLeafNode<SolanaSyscalHasher>`].
+///
+/// Necessary because internal types don't implement the required traits (mostly
+/// Borsh's) to be used as Gateway' instruction parameters.
+#[derive(Debug, Eq, PartialEq, BorshDeserialize, BorshSerialize)]
+pub struct ProxyMessageLeafNode {
+    chain: String,
+    id: String,
+    source_address: String,
+    destination_chain: String,
+    destination_address: String,
+    payload_hash: [u8; 32],
+    domain_separator: [u8; 32],
+    position: u16,
+    set_size: u16,
+}
+
+impl From<MessageElement> for ProxyMessageLeafNode {
+    fn from(leaf: MessageElement) -> Self {
+        let MessageElement {
+            message,
+            position,
+            num_messages,
+        } = leaf;
+        Self {
+            chain: message.cc_id.chain,
+            id: message.cc_id.id,
+            source_address: message.source_address,
+            destination_chain: message.destination_chain,
+            destination_address: message.destination_address,
+            payload_hash: message.payload_hash,
+            domain_separator: message.domain_separator,
+            position,
+            set_size: num_messages,
+        }
+    }
+}
+
+impl From<ProxyMessageLeafNode> for MessageElement {
+    fn from(leaf: ProxyMessageLeafNode) -> Self {
+        let ProxyMessageLeafNode {
+            chain,
+            id,
+            source_address,
+            destination_chain,
+            destination_address,
+            payload_hash,
+            domain_separator,
+            position,
+            set_size,
+        } = leaf;
+        Self {
+            message: axelar_rkyv_encoding::types::Message {
+                cc_id: CrossChainId::new(chain, id),
+                source_address,
+                destination_chain,
+                destination_address,
+                payload_hash,
+                domain_separator,
+            },
+            position,
+            num_messages: set_size,
+        }
+    }
+}
 
 /// Proxy for [`VerifierSetLeafNode<SolanaSyscalHasher>`].
 ///

@@ -1,15 +1,10 @@
 //! Types used for logging messages.
 
-use axelar_rkyv_encoding::types::{ArchivedMessage, Message};
 use base64::engine::general_purpose;
 use base64::Engine as _;
 use rkyv::bytecheck::{self, CheckBytes};
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
-use solana_program::pubkey::Pubkey;
-
-use crate::error::GatewayError;
-use crate::hasher_impl;
 
 /// Logged when the Gateway receives an outbound message.
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -46,13 +41,13 @@ pub struct MessageApproved {
     /// The command ID
     pub command_id: [u8; 32],
     /// Source chain.
-    pub source_chain: Vec<u8>,
+    pub source_chain: String,
     /// The message id
-    pub message_id: Vec<u8>,
+    pub message_id: String,
     /// Source address.
-    pub source_address: Vec<u8>,
+    pub source_address: String,
     /// Destination address on Solana.
-    pub destination_address: [u8; 32],
+    pub destination_address: String,
     /// The payload hash.
     pub payload_hash: [u8; 32],
 }
@@ -99,53 +94,6 @@ pub enum GatewayEvent {
     /// Emitted when a the operatorship has been transferred
     OperatorshipTransferred(OperatorshipTransferred),
 }
-
-impl TryFrom<Message> for MessageApproved {
-    type Error = GatewayError;
-
-    fn try_from(message: Message) -> Result<Self, Self::Error> {
-        let cc_id = message.cc_id();
-
-        let destination_address: [u8; 32] = message
-            .destination_address()
-            .parse::<Pubkey>()
-            .map(|pubkey| pubkey.to_bytes())
-            .map_err(|_| GatewayError::PublicKeyParseError)?;
-
-        Ok(MessageApproved {
-            command_id: cc_id.command_id(hasher_impl()),
-            message_id: cc_id.id().into(),
-            source_chain: cc_id.chain().into(),
-            source_address: message.source_address().into(),
-            destination_address,
-            payload_hash: message.payload_hash().to_owned(),
-        })
-    }
-}
-
-impl TryFrom<&ArchivedMessage> for MessageApproved {
-    type Error = GatewayError;
-
-    fn try_from(message: &ArchivedMessage) -> Result<Self, Self::Error> {
-        let cc_id = message.cc_id();
-
-        let destination_address: [u8; 32] = message
-            .destination_address()
-            .parse::<Pubkey>()
-            .map(|pubkey| pubkey.to_bytes())
-            .map_err(|_| GatewayError::PublicKeyParseError)?;
-
-        Ok(MessageApproved {
-            command_id: cc_id.command_id(hasher_impl()),
-            message_id: cc_id.id().into(),
-            source_chain: cc_id.chain().into(),
-            source_address: message.source_address().into(),
-            destination_address,
-            payload_hash: message.payload_hash().to_owned(),
-        })
-    }
-}
-
 impl GatewayEvent {
     /// Emits the log for this event.
     pub fn emit(&self) -> Result<(), ProgramError> {
@@ -207,6 +155,8 @@ fn decode_base64(input: &str) -> Option<Vec<u8>> {
 
 #[cfg(test)]
 mod tests {
+    use solana_sdk::pubkey::Pubkey;
+
     use super::*;
 
     #[test]
@@ -225,10 +175,10 @@ mod tests {
         };
         let message_approved = MessageApproved {
             command_id: [2; 32],
-            message_id: vec![2; 32],
-            source_chain: b"solana".to_vec(),
-            source_address: b"SourceAddress".to_vec(),
-            destination_address: [3; 32],
+            message_id: "aaaa-bbbb".to_string(),
+            source_chain: "solana".to_string(),
+            source_address: "SourceAddress".to_string(),
+            destination_address: "B3gam8xC15TDne4XtAVAvDDfqJFeSH6mv6sn6TanVJju".to_string(),
             payload_hash: [4; 32],
         };
         let transfer_operatorship = OperatorshipTransferred {

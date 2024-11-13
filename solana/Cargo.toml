@@ -109,6 +109,7 @@ tracing = "0.1"
 tracing-error = "0.2"
 typed-builder = "0.20"
 xshell = "0.2"
+pretty_assertions = "1"
 
 # solana programs
 axelar-solana-its = { path = "programs/axelar-solana-its" }

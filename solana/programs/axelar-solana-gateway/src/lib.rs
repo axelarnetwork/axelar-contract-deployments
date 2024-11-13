@@ -1,7 +1,6 @@
 //! Axelar Gateway program for the Solana blockchain
 
 pub mod axelar_auth_weighted;
-pub mod commands;
 pub mod entrypoint;
 pub mod error;
 pub mod events;
@@ -23,11 +22,13 @@ solana_program::declare_id!("gtwgM94UYHwBh3g7rWi1tcpkgELxHQRLPpPHsaECW57");
 /// Seed prefixes for different PDAs initialized by the Gateway
 pub mod seed_prefixes {
     /// The seed prefix for deriving Gateway Config PDA
-    pub const GATEWAY_SEED: &[u8; 7] = b"gateway";
+    pub const GATEWAY_SEED: &[u8] = b"gateway";
     /// The seed prefix for deriving VerifierSetTracker PDAs
-    pub const VERIFIER_SET_TRACKER_SEED: &[u8; 15] = b"ver-set-tracker";
+    pub const VERIFIER_SET_TRACKER_SEED: &[u8] = b"ver-set-tracker";
     /// The seed prefix for deriving signature verification PDAs
-    pub const SIGNATURE_VERIFICATION_SEED: &[u8; 13] = b"gtw-sig-verif";
+    pub const SIGNATURE_VERIFICATION_SEED: &[u8] = b"gtw-sig-verif";
+    /// The seed prefix for deriving incoming message PDAs
+    pub const INCOMING_MESSAGE_SEED: &[u8] = b"incoming message";
 }
 
 /// Checks that the supplied program ID is the correct one
@@ -63,6 +64,35 @@ pub fn assert_valid_gateway_root_pda(
             .expect("invalid bump for the root pda");
     if &derived_pubkey != expected_pubkey {
         solana_program::msg!("Error: Invalid Gateway Root PDA ");
+        Err(ProgramError::IncorrectProgramId)
+    } else {
+        Ok(())
+    }
+}
+
+/// Get the incomeng message PDA & bump
+#[inline]
+pub fn get_incoming_message_pda(command_id: &[u8]) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[seed_prefixes::INCOMING_MESSAGE_SEED, command_id],
+        &crate::id(),
+    )
+}
+
+/// Assert that the incomeing message PDA has been derived correctly
+#[inline]
+pub fn assert_valid_incoming_message_pda(
+    command_id: &[u8],
+    bump: u8,
+    expected_pubkey: &Pubkey,
+) -> Result<(), ProgramError> {
+    let derived_pubkey = Pubkey::create_program_address(
+        &[seed_prefixes::INCOMING_MESSAGE_SEED, command_id, &[bump]],
+        &crate::ID,
+    )
+    .expect("invalid bump for the root pda");
+    if &derived_pubkey != expected_pubkey {
+        solana_program::msg!("Error: Invalid incoming message PDA ");
         Err(ProgramError::IncorrectProgramId)
     } else {
         Ok(())

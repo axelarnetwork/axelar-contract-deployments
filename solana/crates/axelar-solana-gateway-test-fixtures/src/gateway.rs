@@ -3,13 +3,20 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use axelar_rkyv_encoding::hasher::merkle_trait::Merkle;
+use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
+use axelar_rkyv_encoding::test_fixtures::random_message;
 use axelar_rkyv_encoding::types::u128::U128;
-use axelar_rkyv_encoding::types::VerifierSet;
+use axelar_rkyv_encoding::types::{Message, Payload, PayloadElement, PayloadLeafNode, VerifierSet};
 use axelar_solana_gateway::events::{EventContainer, GatewayEvent};
+use axelar_solana_gateway::state::incoming_message::IncomingMessageWrapper;
 use axelar_solana_gateway::state::signature_verification_pda::SignatureVerificationSessionData;
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway::state::GatewayConfig;
-use axelar_solana_gateway::{bytemuck, get_gateway_root_config_pda};
+use axelar_solana_gateway::{
+    bytemuck, get_gateway_root_config_pda, get_incoming_message_pda, hasher_impl,
+};
+use itertools::*;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{BanksTransactionResultWithMetadata, ProgramTest};
 use solana_sdk::account::ReadableAccount;
@@ -163,6 +170,77 @@ impl SolanaAxelarIntegrationMetadata {
         Ok(verification_pda)
     }
 
+    /// Create a signing session and approve all the messages that have been
+    /// provided
+    #[allow(clippy::panic)]
+    pub async fn sign_session_and_approve_messages(
+        &mut self,
+        signers: &SigningVerifierSet,
+        messages: &[Message],
+    ) -> Result<(), BanksTransactionResultWithMetadata> {
+        let payload = Payload::new_messages(messages.to_vec());
+        let payload_merkle_root =
+            <Payload as Merkle<SolanaSyscallHasher>>::calculate_merkle_root(&payload).unwrap();
+        let verification_session_pda = self
+            .init_payload_session_and_sign(&signers.clone(), payload_merkle_root)
+            .await?;
+
+        let payload_leaves = <Payload as Merkle<SolanaSyscallHasher>>::merkle_leaves(&payload);
+        let proofs = <Payload as Merkle<SolanaSyscallHasher>>::merkle_proofs(&payload);
+        for (leave, proof) in payload_leaves.zip_eq(proofs) {
+            let PayloadElement::Message(message) = leave.element else {
+                panic!("invalid message type");
+            };
+            let command_id = message.message.cc_id().command_id(hasher_impl());
+            let (incoming_message_pda, incoming_message_pda_bump) =
+                get_incoming_message_pda(&command_id);
+
+            let ix = axelar_solana_gateway::instructions::approve_messages(
+                message,
+                &proof,
+                payload_merkle_root,
+                self.gateway_root_pda,
+                self.payer.pubkey(),
+                verification_session_pda,
+                incoming_message_pda,
+                incoming_message_pda_bump,
+            )
+            .unwrap();
+            let _tx_result = self.send_tx(&[ix]).await?;
+        }
+        Ok(())
+    }
+
+    /// Approve a single message on the Gateway
+    #[allow(clippy::panic)]
+    pub async fn approve_message(
+        &mut self,
+        payload_merkle_root: [u8; 32],
+        message: PayloadLeafNode<SolanaSyscallHasher>,
+        proof: MerkleProof<SolanaSyscallHasher>,
+        verification_session_pda: Pubkey,
+    ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
+        let PayloadElement::Message(message) = message.element else {
+            panic!("invalid message type");
+        };
+        let command_id = message.message.cc_id().command_id(hasher_impl());
+        let (incoming_message_pda, incoming_message_pda_bump) =
+            get_incoming_message_pda(&command_id);
+
+        let ix = axelar_solana_gateway::instructions::approve_messages(
+            message,
+            &proof,
+            payload_merkle_root,
+            self.gateway_root_pda,
+            self.payer.pubkey(),
+            verification_session_pda,
+            incoming_message_pda,
+            incoming_message_pda_bump,
+        )
+        .unwrap();
+        self.send_tx(&[ix]).await
+    }
+
     /// Start a new payload verification session for signer rotation, and rotate
     /// the signers.
     pub async fn sign_session_and_rotate_signers(
@@ -256,6 +334,30 @@ impl SolanaAxelarIntegrationMetadata {
             .get_account_data_with_borsh(verifiers_set_tracker_pda)
             .await
             .expect("could not get the account & deserialise it")
+    }
+
+    /// Get the verifier set tracker data
+    pub async fn incoming_message(
+        &mut self,
+        incoming_message_pda: Pubkey,
+    ) -> IncomingMessageWrapper {
+        let pda = self
+            .banks_client
+            .get_account(incoming_message_pda)
+            .await
+            .ok()
+            .flatten()
+            .expect("PDA account should exist");
+
+        assert_eq!(
+            pda.owner,
+            axelar_solana_gateway::ID,
+            "must be owned by the gateway"
+        );
+        let mut buffer = [0_u8; IncomingMessageWrapper::LEN];
+        buffer.copy_from_slice(pda.data());
+
+        bytemuck::cast(buffer)
     }
 }
 
@@ -396,4 +498,16 @@ pub fn make_verifiers_with_quorum(
     let signers = Arc::from(signers);
 
     SigningVerifierSet::new_with_quorum(signers, nonce, U128::from(quorum), domain_separator)
+}
+
+/// Make new random messages
+#[must_use]
+pub fn make_messages(num_messages: usize, domain_separator: [u8; 32]) -> Vec<Message> {
+    (0..num_messages)
+        .map(|_| {
+            let mut message = random_message();
+            message.domain_separator = domain_separator;
+            message
+        })
+        .collect()
 }

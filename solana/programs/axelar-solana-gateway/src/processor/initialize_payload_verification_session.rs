@@ -78,12 +78,14 @@ impl Processor {
         )?;
 
         // Set the account data
-        let mut buffer = [0u8; SignatureVerificationSessionData::LEN];
-        let session_data: &mut SignatureVerificationSessionData = bytemuck::cast_mut(&mut buffer);
-        session_data.bump = bump;
-
-        let mut account_data = verification_session_account.try_borrow_mut_data()?;
-        account_data.copy_from_slice(&buffer);
+        let mut data = verification_session_account.try_borrow_mut_data()?;
+        let data_bytes: &mut [u8; SignatureVerificationSessionData::LEN] =
+            (*data).try_into().map_err(|_err| {
+                solana_program::msg!("session account data is corrupt");
+                ProgramError::InvalidAccountData
+            })?;
+        let session: &mut SignatureVerificationSessionData = bytemuck::cast_mut(data_bytes);
+        session.bump = bump;
 
         Ok(())
     }

@@ -1,8 +1,10 @@
 //! Program state processor.
 
 use std::borrow::Cow;
+use std::marker::PhantomData;
 
 use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
+use axelar_rkyv_encoding::types::{PayloadElement, PayloadLeafNode};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
@@ -14,14 +16,12 @@ use crate::check_program_account;
 use crate::error::GatewayError;
 use crate::instructions::GatewayInstruction;
 
-mod approve_messages;
+mod approve_message;
 mod call_contract;
-mod initialize_command;
 mod initialize_config;
 mod initialize_payload_verification_session;
 mod rotate_signers;
 mod transfer_operatorship;
-mod validate_message;
 mod verify_signature;
 
 /// Program state handler.
@@ -38,9 +38,29 @@ impl Processor {
         check_program_account(*program_id)?;
 
         match instruction {
-            GatewayInstruction::ApproveMessages {} => {
+            GatewayInstruction::ApproveMessage {
+                message,
+                message_batch_merkle_root,
+                message_inclusion_merkle_proof,
+                incoming_message_pda_bump,
+            } => {
                 msg!("Instruction: Approve Messages");
-                Self::process_approve_messages(program_id, accounts)
+                // Convert proxy types
+                let message_inclusion_merkle_proof: MerkleProof<SolanaSyscallHasher> =
+                    MerkleProof::from_bytes(&message_inclusion_merkle_proof)
+                        .map_err(|_| ProgramError::InvalidArgument)?;
+
+                Self::process_approve_message(
+                    program_id,
+                    accounts,
+                    PayloadLeafNode {
+                        element: PayloadElement::Message(message.into()),
+                        hasher: PhantomData,
+                    },
+                    message_batch_merkle_root,
+                    message_inclusion_merkle_proof,
+                    incoming_message_pda_bump,
+                )
             }
             GatewayInstruction::RotateSigners {
                 new_verifier_set_merkle_root,

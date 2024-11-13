@@ -13,8 +13,8 @@ const COMMAND_ID_SEPARATOR: &str = "_";
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct CrossChainId {
-    pub(crate) chain: String,
-    pub(crate) id: String,
+    pub chain: String,
+    pub id: String,
 }
 
 impl CrossChainId {
@@ -70,12 +70,12 @@ impl ArchivedCrossChainId {
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct Message {
-    pub(crate) cc_id: CrossChainId,
-    pub(crate) source_address: String,
-    pub(crate) destination_chain: String,
-    pub(crate) destination_address: String,
-    pub(crate) payload_hash: [u8; 32],
-    pub(crate) domain_separator: [u8; 32],
+    pub cc_id: CrossChainId,
+    pub source_address: String,
+    pub destination_chain: String,
+    pub destination_address: String,
+    pub payload_hash: [u8; 32],
+    pub domain_separator: [u8; 32],
 }
 
 impl Message {

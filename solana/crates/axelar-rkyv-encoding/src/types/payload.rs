@@ -49,11 +49,11 @@ impl Payload {
                 return None;
             }
             let element = match self {
-                Payload::Messages(messages) => PayloadElement::Message {
+                Payload::Messages(messages) => PayloadElement::Message(MessageElement {
                     message: (messages[position as usize]).clone(),
                     position,
                     num_messages,
-                },
+                }),
                 Payload::VerifierSet(verifier_set) => {
                     PayloadElement::VerifierSet(verifier_set.clone())
                 }
@@ -84,22 +84,27 @@ impl TryFrom<Payload> for VerifierSet {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct MessageElement {
+    pub message: Message,
+    pub position: u16,
+    pub num_messages: u16,
+}
+
 /// A [`Payload`] element.
+#[derive(Debug, Clone)]
 pub enum PayloadElement {
-    Message {
-        message: Message,
-        position: u16,
-        num_messages: u16,
-    },
+    Message(MessageElement),
     VerifierSet(VerifierSet),
 }
 
 /// Wraps a [`PayloadElement`], is generic over the hashing context.
 ///
 /// This type is the leaf node of a [`Payload`]'s Merkle tree.
+#[derive(Debug, Clone)]
 pub struct PayloadLeafNode<T> {
-    element: PayloadElement,
-    hasher: PhantomData<T>,
+    pub element: PayloadElement,
+    pub hasher: PhantomData<T>,
 }
 
 impl<'a, T> PayloadLeafNode<T>
@@ -115,11 +120,11 @@ where
         H: AxelarRkyv256Hasher<'a>,
     {
         match &self.element {
-            PayloadElement::Message {
+            PayloadElement::Message(MessageElement {
                 message,
                 position,
                 num_messages,
-            } => {
+            }) => {
                 let mut hasher = H::default();
                 hasher.hash(&[0]); // Leaf node discriminator
                 hasher.hash(b"message");

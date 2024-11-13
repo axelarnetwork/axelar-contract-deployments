@@ -48,3 +48,4 @@ rand.workspace = true
 typed-builder.workspace = true
 axelar-solana-gateway-test-fixtures.workspace = true
 rstest.workspace = true
+pretty_assertions.workspace = true

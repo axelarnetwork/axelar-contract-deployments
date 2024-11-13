@@ -12,6 +12,7 @@ bincode.workspace = true
 axelar-solana-gateway.workspace = true
 typed-builder.workspace = true
 solana-sdk.workspace = true
+itertools.workspace = true
 
 [lints]
 workspace = true

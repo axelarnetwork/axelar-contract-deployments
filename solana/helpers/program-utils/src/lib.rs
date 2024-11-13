@@ -36,7 +36,7 @@ macro_rules! log_everywhere {
     }}
 }
 
-/// Initialize an associated account
+/// Initialize a PDA by writing borsh serialisable data to the buffer
 // TODO add constraint that the T: IsInitialized + Pack + BorshSerialize
 pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack>(
     funder_info: &'a AccountInfo<'b>,
@@ -65,6 +65,36 @@ pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack>(
     )?;
     let mut account_data = to_create.try_borrow_mut_data()?;
     T::pack(data, &mut account_data)?;
+    Ok(())
+}
+
+/// Initializes a PDA without writing anything to the data storage
+pub fn init_pda_raw<'a, 'b>(
+    funder_info: &'a AccountInfo<'b>,
+    to_create: &'a AccountInfo<'b>,
+    program_id: &Pubkey,
+    system_program_info: &'a AccountInfo<'b>,
+    data_len: u64,
+    signer_seeds: &[&[u8]],
+) -> Result<(), ProgramError> {
+    let rent = Rent::get()?;
+    let ix = &system_instruction::create_account(
+        funder_info.key,
+        to_create.key,
+        rent.minimum_balance(data_len.try_into().expect("u64 fits into sbf word size"))
+            .max(1),
+        data_len,
+        program_id,
+    );
+    invoke_signed(
+        ix,
+        &[
+            funder_info.clone(),
+            to_create.clone(),
+            system_program_info.clone(),
+        ],
+        &[signer_seeds],
+    )?;
     Ok(())
 }
 
