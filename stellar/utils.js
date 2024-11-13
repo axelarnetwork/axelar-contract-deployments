@@ -19,7 +19,7 @@ const {
     BigNumber,
 } = ethers;
 
-const stellarCmd = 'stellar';
+const stellarCmd = 'soroban';
 const ASSET_TYPE_NATIVE = 'native';
 
 function getNetworkPassphrase(networkType) {
