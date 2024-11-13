@@ -68,7 +68,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 const initializeFuncNames = {
     axelar_gateway: 'initialize',
     axelar_operators: 'initialize',
-    axelar_gas_service: 'initialize',
+    axelar_gas_service: 'initialize_gas_service',
     interchain_token_service: 'initialize_its',
 };
 
