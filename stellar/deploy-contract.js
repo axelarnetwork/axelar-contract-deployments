@@ -52,6 +52,14 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 
         case 'axelar_operators':
             return { operator };
+
+        case 'axelar_gas_service': {
+            const operatorsAddress = chain?.contracts?.axelar_operators?.address;
+            const gasCollector = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
+
+            return { gasCollector };
+        }
+
         default:
             throw new Error(`Unknown contract: ${contractName}`);
     }
@@ -60,6 +68,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 const initializeFuncNames = {
     axelar_gateway: 'initialize',
     axelar_operators: 'initialize',
+    axelar_gas_service: 'initialize_gas_service',
     interchain_token_service: 'initialize_its',
 };
 

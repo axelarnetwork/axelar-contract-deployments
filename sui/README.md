@@ -1,4 +1,13 @@
-# Sui deployment scripts
+# Sui Deployment Guide
+
+## Table of Contents
+
+-   [Prerequisites](#prerequisites)
+-   [Deployment](#deployment)
+-   [Contract Upgrades](#contract-upgrades)
+-   [Contract Interactions](#contract-interactions)
+-   [Examples](#examples)
+-   [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
@@ -46,7 +55,7 @@ If you want to run against a local Sui network, then create a `axelar-chains-con
 
 Use the `-e local` (or `ENV=local` in the `.env` config) flag with scripts to run against the local network.
 
-## Scripts
+## Deployment
 
 To get test SUI coins to your address via a faucet.
 
@@ -54,14 +63,21 @@ To get test SUI coins to your address via a faucet.
 node sui/faucet.js
 ```
 
-Before deploying the gateway package:
+The following packages need to be deployed in order because they are referenced by other packages.
 
-`Utils` and `VersionControl` contracts need to be deployed before `AxelarGateway` contract. Run the following commands to deploy both contracts:
+#### Utils
 
--   `node sui/deploy-contract.js deploy Utils`
--   `node sui/deploy-contract.js deploy VersionControl`
+```bash
+node sui/deploy-contract.js deploy Utils
+```
 
-Deploy the gateway package:
+### Version Control
+
+```bash
+node sui/deploy-contract.js deploy VersionControl
+```
+
+### AxelarGateway
 
 -   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
@@ -85,9 +101,77 @@ node sui/deploy-contract.js deploy AxelarGateway --signers wallet --nonce test
 node sui/deploy-contract.js deploy AxelarGateway -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
 ```
 
-Upgrading Gateway:
+### Gas Service
 
-To update the gateway run the following command:
+```bash
+node sui/deploy-contract.js deploy GasService
+```
+
+### Abi
+
+```bash
+node sui/deploy-contract.js deploy Abi
+```
+
+### Operators
+
+```bash
+node sui/deploy-contract.js deploy Operators
+```
+
+#### Operators Post Deployment
+
+##### Gas Collector Configuration
+
+To allow the operator to collect or refund gas, the `GasCollector` cap must be stored in the `Operators` contract:
+
+```bash
+node sui/operators.js storeCap
+```
+
+##### Operator Management
+
+Assign `Operator` role to given address:
+
+```bash
+node sui/operators.js add <operator address>
+```
+
+### Governance
+
+```bash
+node sui/deploy-contract.js deploy Governance
+```
+
+### Relayer Discovery
+
+```bash
+node sui/deploy-contract.js deploy RelayerDiscovery
+```
+
+### ITS
+
+```bash
+node sui/deploy-contract.js deploy ITS
+```
+
+### Squid
+
+```bash
+node sui/deploy-contract.js deploy Squid
+```
+
+### Example
+
+```bash
+node sui/deploy-contract.js deploy Example
+```
+
+## Contract Upgrades
+
+### Upgrade Procedures
+
+For example, to update the gateway run the following command:
 
 ```bash
 node sui/deploy-contract.js upgrade AxelarGateway <policy>
@@ -101,121 +185,7 @@ policy should be one of the following:
 
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
-Deploy the Utils package:
-
-```bash
-node sui/deploy-contract.js deploy Utils
-```
-
-Deploy the Gas Service package:
-
-```bash
-node sui/deploy-contract.js deploy GasService
-```
-
-Deploy the test GMP package:
-
-```bash
-node sui/deploy-contract.js deploy Example
-```
-
-Deploy the Operators package:
-
-```bash
-node sui/deploy-contract.js deploy Operators
-```
-
-Deploy the Abi package:
-
-```bash
-node sui/deploy-contract.js deploy Abi
-```
-
-Deploy the Governance package (requires `abi` and `axelar_gateway`):
-
-```bash
-node sui/deploy-contract.js deploy Governance
-```
-
-Deploy the ITS package (requires `abi`, `axelar_gateway` and `goverannce`):
-
-```bash
-node sui/deploy-contract.js deploy ITS
-```
-
-Deploy the Squid package (requires `abi`, `axelar_gateway`, `goverannce` and `its`):
-
-```bash
-node sui/deploy-contract.js deploy Squid
-```
-
-Call Contract:
-
-```bash
-node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
-```
-
-Pay for gas:
-
-The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
-
-```bash
-node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
-```
-
-Collect gas:
-
-Conditions:
-
--   The `GasCollectorCap` object id is read from the chain config, under gas service objects.
-
-```bash
-# store GasCollectorCap to the Operators contract
-node sui/operators.js storeCap
-```
-
--   The sender must be a whitelisted operator and hold the `OperatorCap` capability.
-
-```bash
-# execute the following command from the owner account
-node sui/operators add <operator address>
-```
-
-```bash
-node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
-```
-
-Approve messages:
-
-If the gateway was deployed using the wallet, you can submit a message approval with it
-
-```bash
-node sui/gateway.js approve --proof wallet --currentNonce test ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
-```
-
-Rotate gateway signers:
-
-If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
-
-```bash
-node sui/gateway.js rotate --proof wallet --currentNonce test
-```
-
-If you want to rotate to the wallet again but with a new nonce, do
-
-```bash
-node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test --newNonce test2
-```
-
-Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
-
-To submit a proof constructed on Amplifier, run the following with the multisig session id,
-
-```bash
-node sui/gateway.js submitProof [multisig session id]
-```
-
-### Multisig
+### Multisig Operations
 
 To create a Multisig, follow the documentation [here](https://docs.sui.io/guides/developer/cryptography/multisig).
 
@@ -307,18 +277,59 @@ example for adding multisig info to chains config:
 }
 ```
 
-## Examples
+## Contract Interactions
 
--   [GMP Example Guide](docs/gmp.md)
--   [ITS Example Guide](docs/its.md)
+### Call Contract
 
-## Troubleshooting
+```bash
+node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+```
 
-1. Move build error during the deployment step
+### Pay Gas
 
-Delete the `node_modules` folder and `package-lock.json` file and then run `npm install` again.
+The syntax is `node sui/gas-service.js payGas --amount <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
 
-## Transfer object
+```bash
+node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+```
+
+### Collect Gas
+
+```bash
+node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
+```
+
+### Approve Messages
+
+If the gateway was deployed using the wallet, you can submit a message approval with it
+
+```bash
+node sui/gateway.js approve --proof wallet --currentNonce test ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
+```
+
+### Rotate Gateway Signers
+
+If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
+
+```bash
+node sui/gateway.js rotate --proof wallet --currentNonce test
+```
+
+If you want to rotate to the wallet again but with a new nonce, do
+
+```bash
+node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test --newNonce test2
+```
+
+Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
+
+To submit a proof constructed on Amplifier, run the following with the multisig session id,
+
+```bash
+node sui/gateway.js submitProof [multisig session id]
+```
+
+### Transfer Object
 
 Please note shared objects cannot be transferred via this script.
 
@@ -328,7 +339,7 @@ node sui/transfer-object.js --objectId <object id to be transferred> --recipient
 node sui/transfer-object.js --contractName <Can be checked from config> --objectName <picked from config> --recipient <recipient address>
 ```
 
-## Coins Management
+### Coins Management
 
 List of coins in the wallet:
 
@@ -354,3 +365,14 @@ Note:
 
 -   If coin type is not provided, it will split all the coins.
 -   If transfer address is not provided, it will split the coins in the same wallet. Otherwise, it will transfer the splitted coins to the provided address.
+
+## Examples
+
+-   [GMP Example Guide](docs/gmp.md)
+-   [ITS Example Guide](docs/its.md)
+
+## Troubleshooting
+
+1. Move build error during the deployment step
+
+Delete the `node_modules` folder and `package-lock.json` file and then run `npm install` again.

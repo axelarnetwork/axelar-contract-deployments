@@ -2,7 +2,6 @@
   "chains": {
     "avalanche": {
       "name": "Avalanche",
-      "id": "Avalanche",
       "axelarId": "Avalanche",
       "chainId": 43113,
       "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
@@ -112,7 +111,6 @@
     },
     "fantom": {
       "name": "Fantom",
-      "id": "Fantom",
       "axelarId": "Fantom",
       "chainId": 4002,
       "rpc": "https://rpc.testnet.fantom.network",
@@ -222,7 +220,6 @@
     },
     "moonbeam": {
       "name": "Moonbeam",
-      "id": "Moonbeam",
       "axelarId": "Moonbeam",
       "chainId": 1287,
       "rpc": "https://moonbeam-alpha.api.onfinality.io/public",
@@ -335,7 +332,6 @@
     },
     "binance": {
       "name": "Binance",
-      "id": "binance",
       "axelarId": "binance",
       "chainId": 97,
       "rpc": "https://data-seed-prebsc-1-s1.binance.org:8545/",
@@ -376,7 +372,6 @@
     },
     "kava": {
       "name": "Kava",
-      "id": "kava",
       "axelarId": "kava",
       "chainId": 2221,
       "rpc": "https://evm.testnet.kava.io",
@@ -481,7 +476,6 @@
     },
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
-      "id": "ethereum-sepolia",
       "axelarId": "ethereum-sepolia",
       "chainId": 11155111,
       "rpc": "https://1rpc.io/sepolia",
@@ -592,7 +586,6 @@
     },
     "arbitrum-sepolia": {
       "name": "Arbitrum-Sepolia",
-      "id": "arbitrum-sepolia",
       "axelarId": "arbitrum-sepolia",
       "chainId": 421614,
       "rpc": "https://sepolia-rollup.arbitrum.io/rpc",
@@ -695,7 +688,6 @@
     },
     "centrifuge": {
       "name": "Centrifuge",
-      "id": "centrifuge",
       "axelarId": "centrifuge",
       "chainId": 2090,
       "rpc": "https://centrifuge-parachain.api.onfinality.io/rpc?apikey=66c3bd57-e1d5-4d22-bfc6-d63436b44a5a",
@@ -738,7 +730,6 @@
     },
     "linea-sepolia": {
       "name": "Linea-Sepolia",
-      "id": "linea-sepolia",
       "axelarId": "linea-sepolia",
       "chainId": 59141,
       "rpc": "https://rpc.sepolia.linea.build",
@@ -846,7 +837,6 @@
     },
     "polygon-sepolia": {
       "name": "Polygon-Sepolia",
-      "id": "polygon-sepolia",
       "axelarId": "polygon-sepolia",
       "chainId": 80002,
       "rpc": "https://rpc-amoy.polygon.technology",
@@ -954,7 +944,6 @@
     },
     "base-sepolia": {
       "name": "Base-Sepolia",
-      "id": "base-sepolia",
       "axelarId": "base-sepolia",
       "chainId": 84532,
       "rpc": "https://sepolia.base.org",
@@ -1066,7 +1055,6 @@
     },
     "blast-sepolia": {
       "name": "Blast-Sepolia",
-      "id": "blast-sepolia",
       "axelarId": "blast-sepolia",
       "chainId": 168587773,
       "rpc": "https://sepolia.blast.io/",
@@ -1178,7 +1166,6 @@
     },
     "fraxtal": {
       "name": "Fraxtal",
-      "id": "fraxtal",
       "axelarId": "fraxtal",
       "chainId": 2522,
       "rpc": "https://rpc.testnet.frax.com",
@@ -1289,7 +1276,6 @@
     },
     "mantle-sepolia": {
       "name": "Mantle-Sepolia",
-      "id": "mantle-sepolia",
       "axelarId": "mantle-sepolia",
       "chainId": 5003,
       "rpc": "https://rpc.sepolia.mantle.xyz",
@@ -1397,7 +1383,6 @@
     },
     "optimism-sepolia": {
       "name": "Optimism-Sepolia",
-      "id": "optimism-sepolia",
       "axelarId": "optimism-sepolia",
       "chainId": 11155420,
       "rpc": "https://sepolia.optimism.io",
@@ -1509,7 +1494,6 @@
     },
     "test-avalanche": {
       "name": "test-avalanche",
-      "id": "test-avalanche",
       "axelarId": "test-avalanche",
       "chainId": 43113,
       "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
@@ -1614,7 +1598,6 @@
     },
     "test-sepolia": {
       "name": "test-sepolia",
-      "id": "test-sepolia",
       "axelarId": "test-sepolia",
       "chainId": 11155111,
       "rpc": "https://rpc.ankr.com/eth_sepolia",
@@ -1726,7 +1709,6 @@
     },
     "flow": {
       "name": "Flow",
-      "id": "flow",
       "axelarId": "flow",
       "chainId": 545,
       "rpc": "https://testnet.evm.nodes.onflow.org",
@@ -1798,7 +1780,6 @@
     },
     "hedera": {
       "name": "Hedera",
-      "id": "hedera",
       "axelarId": "hedera",
       "skipRevertTests": true,
       "chainId": 296,
@@ -1919,7 +1900,7 @@
         },
         "storeCodeProposalId": "50",
         "storeCodeProposalCodeHash": "58bad05811e78e958da699aad49f39e6f3ad2502db3f494459208bb2d1f02bfa",
-        "codeId": 4,
+        "codeId": 16,
         "lastUploadedCodeId": 4,
         "address": "axelar1nyhmtdrzx77ynqgu8cug0u7eqz2kzfk9mctvaa4stqpekg4s9vnsgu54at"
       },
@@ -2107,7 +2088,6 @@
         "lastUploadedCodeId": 7
       }
     },
-    "id": "Axelarnet",
     "axelarId": "axelar",
     "chainId": "axelar-stagenet-724",
     "rpc": "http://k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:26657",
