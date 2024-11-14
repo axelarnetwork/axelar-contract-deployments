@@ -86,8 +86,15 @@ node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NA
 ```
 
 ### Interchain Token Service
+
 ```bash
 node stellar/deploy-contract.js deploy interchain_token_service --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm --initialize
+```
+
+### Example
+
+```bash
+node stellar/deploy-contract.js deploy example --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/example.optimized.wasm --initialize
 ```
 
 ## Generate bindings
@@ -173,6 +180,27 @@ node stellar/its.js set-trusted-address [chain-name] [trusted-address]
 ```
 
 #### Remove Trusted Address
+
 ```bash
 node stellar/its.js remove-trusted-address [chain-name]
+```
+
+### Example
+
+#### GMP - Send
+
+```bash
+node stellar/gmp.js send [destination-chain] [destination-address] [payload] [gas-token-address] [gas-fee-amount]
+
+# Example
+node stellar/gmp.js send avalanche 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234 CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC 1
+```
+
+#### GMP - Execute
+
+```bash
+node stellar/gmp.js [source-chain] [message-id] [source-address] [payload]
+
+# Example
+node stellar/gmp.js execute avalanche '0x0bcbbfc9b006db6958f3fce75f11fdc306b45e8e43396211f414f40d2d6db7c5-0' 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```

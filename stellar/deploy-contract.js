@@ -60,6 +60,13 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             return { gasCollector };
         }
 
+        case 'example': {
+            const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
+
+            return { gatewayAddress, gasServiceAddress };
+        }
+
         default:
             throw new Error(`Unknown contract: ${contractName}`);
     }
@@ -70,6 +77,7 @@ const initializeFuncNames = {
     axelar_operators: 'initialize',
     axelar_gas_service: 'initialize_gas_service',
     interchain_token_service: 'initialize_its',
+    example: 'initialize_gmp_example',
 };
 
 async function deploy(options, config, chain, contractName) {
