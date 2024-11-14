@@ -86,11 +86,6 @@ node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NA
 ```
 
 ### Interchain Token Service
-```bash
-node stellar/deploy-contract.js deploy interchain_token_service --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm --initialize
-```
-
-### Interchain Token Service
 
 ```bash
 node stellar/deploy-contract.js deploy interchain_token_service --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm --initialize
@@ -201,5 +196,5 @@ node stellar/ttl.js extend-instance [contract-name]
 Restore an archived contract instance
 
 ```bash
-node stellar/ttl.js restore-instance axelar_gateway
+node stellar/ttl.js restore-instance [contract-name]
 ```

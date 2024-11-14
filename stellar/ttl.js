@@ -12,12 +12,6 @@ require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-function checkContractName(chain, contractName) {
-    if (!chain.contracts?.[contractName]) {
-        throw new Error('Contract not found.');
-    }
-}
-
 async function getTtl(chain, contractName, _args, _options) {
     printInfo('get ttl', contractName);
     const ledgerEntry = await getLedgerEntry(chain, contractName);
@@ -33,8 +27,6 @@ async function getLedgerEntry(chain, contractName) {
 }
 
 async function extendInstance(chain, contractName, _args, options) {
-    checkContractName(chain, contractName);
-
     const { yes } = options;
     const { rpc, networkType } = chain;
 
@@ -70,8 +62,6 @@ async function extendInstance(chain, contractName, _args, options) {
 }
 
 async function restoreInstance(chain, contractName, _args, options) {
-    checkContractName(chain, contractName);
-
     const { yes } = options;
     const { rpc, networkType } = chain;
 
