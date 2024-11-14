@@ -76,6 +76,7 @@ node stellar/deploy-contract.js deploy axelar_operators --wasm-path ../axelar-cg
 ```
 
 ### Interchain Token Service
+
 ```bash
 node stellar/deploy-contract.js deploy interchain_token_service --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm --initialize
 ```
@@ -163,6 +164,27 @@ node stellar/its.js set-trusted-address [chain-name] [trusted-address]
 ```
 
 #### Remove Trusted Address
+
 ```bash
 node stellar/its.js remove-trusted-address [chain-name]
+```
+
+## TTL extension and state archival recovery
+
+Get the ttl of a contract instance:
+
+```bash
+node stellar/ttl.js get-ttl [contract-name]
+```
+
+Extend the ttl of a contract instance:
+
+```bash
+node stellar/ttl.js extend-instance [contract-name]
+```
+
+Restore an archived contract instance
+
+```bash
+node stellar/ttl.js restore-instance axelar_gateway
 ```
