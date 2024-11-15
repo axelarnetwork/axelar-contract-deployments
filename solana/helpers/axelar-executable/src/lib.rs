@@ -57,7 +57,7 @@ pub fn validate_message(
 }
 
 /// Perform CPI call to the Axelar Gateway to ensure that the given command
-/// (containing an ITS message) is approved
+/// (containing a GMP message) is approved
 ///
 /// Expected accounts:
 /// 0. `gateway_approved_message_pda` - GatewayApprovedMessage PDA

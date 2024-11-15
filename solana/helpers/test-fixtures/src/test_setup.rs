@@ -131,6 +131,18 @@ impl TestFixture {
         self.context.set_sysvar(&new_clock)
     }
 
+    pub async fn set_time(&mut self, time: i64) {
+        // get clock sysvar
+        let clock_sysvar: Clock = self.banks_client.get_sysvar().await.unwrap();
+
+        // update clock
+        let mut new_clock = clock_sysvar.clone();
+        new_clock.unix_timestamp = time;
+
+        // set clock
+        self.context.set_sysvar(&new_clock)
+    }
+
     pub async fn send_tx(&mut self, ixs: &[Instruction]) {
         self.send_tx_with_custom_signers(ixs, &[&self.payer.insecure_clone()])
             .await;
@@ -938,6 +950,23 @@ impl TestFixture {
         account.check_initialized_pda::<T>(expected_owner).unwrap()
     }
 
+    pub async fn get_account_raw_bytes(
+        &mut self,
+        account: &Pubkey,
+        expected_owner: &Pubkey,
+    ) -> Vec<u8> {
+        let account = self
+            .banks_client
+            .get_account(*account)
+            .await
+            .expect("get_account")
+            .expect("account not none");
+        let data = account
+            .check_initialized_pda_raw_bytes(expected_owner)
+            .unwrap();
+        data.to_owned()
+    }
+
     pub async fn get_rkyv_account<T>(&mut self, account: &Pubkey, expected_owner: &Pubkey) -> T
     where
         T: Archive,
@@ -1137,7 +1166,14 @@ impl SolanaAxelarIntegration {
 
     pub async fn setup(self) -> SolanaAxelarIntegrationMetadata {
         // Create a new ProgramTest instance
-        let mut fixture = TestFixture::new(ProgramTest::default()).await;
+        let fixture = TestFixture::new(ProgramTest::default()).await;
+        self.setup_with_fixture(fixture).await
+    }
+
+    pub async fn setup_with_fixture(
+        self,
+        mut fixture: TestFixture,
+    ) -> SolanaAxelarIntegrationMetadata {
         // Generate a new keypair for the upgrade authority
         let upgrade_authority = Keypair::new();
 

@@ -1,11 +1,14 @@
-//! # Multicall program
+//! # Governance program
+
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 pub mod entrypoint;
+pub mod events;
 pub mod instructions;
 pub mod processor;
+pub mod sol_types;
 pub mod state;
 
 solana_program::declare_id!("B3gam8xC15TDne4XtAVAvDDfqJFeSH6mv6sn6TanVJju");
@@ -27,5 +30,11 @@ pub fn check_program_account(program_id: Pubkey) -> ProgramResult {
 /// Seed prefixes for different PDAs initialized by the Governance program.
 pub mod seed_prefixes {
     /// The main config for the governance
-    pub const GOVERNANCE_CONFIG: &[u8; 10] = b"governance";
+    pub const GOVERNANCE_CONFIG: &[u8] = b"governance";
+    /// The seed that determines a proposal PDA
+    pub const PROPOSAL_PDA: &[u8] = b"proposal";
+    /// The seed that derives a PDA which holds a status that
+    /// signals an operator can operate a proposal (like executing it
+    /// regardless of the ETA).
+    pub const OPERATOR_MANAGED_PROPOSAL: &[u8] = b"operator-managed-proposal";
 }

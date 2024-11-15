@@ -15,11 +15,14 @@ test-sbf = []
 
 [dependencies]
 solana-program.workspace = true
+axelar-executable.workspace = true
 program-utils.workspace = true
 governance-gmp.workspace = true
 rkyv.workspace = true
 axelar-rkyv-encoding.workspace = true
 alloy-sol-types.workspace = true
+base64.workspace = true
+gateway = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
 solana-logger.workspace = true
@@ -28,3 +31,7 @@ solana-sdk.workspace = true
 test-fixtures.workspace = true
 ethers.workspace = true
 alloy-primitives.workspace = true
+axelar-executable.workspace = true
+borsh.workspace = true
+axelar-solana-memo-program = { workspace = true, features = ["no-entrypoint"] }
+uuid = { version = "1.11.0", features = ["v4"] }

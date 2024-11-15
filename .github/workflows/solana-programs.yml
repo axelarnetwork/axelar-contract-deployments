@@ -88,6 +88,13 @@ jobs:
         run: |
           curl -sSfL https://release.solana.com/${{ env.SOLANA_VERSION}}/install | sh
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      
+      # Needed because test helpers use interdependencies
+      - name: Build programs
+        run: |
+          for program in programs/*; do
+            cargo build-sbf --manifest-path $program/Cargo.toml
+          done
 
       - name: Run integration tests
         run: cargo make test

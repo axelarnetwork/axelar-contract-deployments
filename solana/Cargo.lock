@@ -3803,8 +3803,13 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
+ "axelar-executable",
  "axelar-rkyv-encoding",
+ "axelar-solana-memo-program",
+ "base64 0.21.7",
+ "borsh 1.5.1",
  "ethers",
+ "gmp-gateway",
  "governance-gmp",
  "program-utils",
  "rkyv",
@@ -3813,6 +3818,7 @@ dependencies = [
  "solana-program-test",
  "solana-sdk",
  "test-fixtures",
+ "uuid 1.11.0",
 ]
 
 [[package]]
@@ -6879,7 +6885,7 @@ dependencies = [
  "rkyv_derive",
  "seahash",
  "tinyvec",
- "uuid 1.10.0",
+ "uuid 1.11.0",
 ]
 
 [[package]]
@@ -10642,7 +10648,7 @@ dependencies = [
  "tokio",
  "tracing",
  "url 2.5.2",
- "uuid 1.10.0",
+ "uuid 1.11.0",
  "walkdir",
 ]
 
@@ -11441,9 +11447,12 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.10.0"
+version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81dfa00651efa65069b0b6b651f4aaa31ba9e3c3ce0137aaad053604ee7e0314"
+checksum = "f8c5f0a0af699448548ad1a2fbf920fb4bee257eae39953ba95cb84891a0446a"
+dependencies = [
+ "getrandom 0.2.15",
+]
 
 [[package]]
 name = "valuable"

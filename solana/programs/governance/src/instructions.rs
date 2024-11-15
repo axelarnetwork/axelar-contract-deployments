@@ -4,11 +4,8 @@ use std::error::Error;
 
 use axelar_rkyv_encoding::types::GmpMetadata;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
-use solana_program::instruction::{AccountMeta, Instruction};
-use solana_program::program_error::ProgramError;
-use solana_program::pubkey::Pubkey;
-use solana_program::{msg, system_program};
 
+use crate::state::proposal::ExecuteProposalData;
 use crate::state::GovernanceConfig;
 
 /// Instructions supported by the governance program.
@@ -18,23 +15,99 @@ use crate::state::GovernanceConfig;
 pub enum GovernanceInstruction {
     /// Initializes the governance configuration PDA account.
     ///
-    /// Accounts expected by this instruction:
-    /// 0. [WRITE, SIGNER] Funding account
-    /// 1. [WRITE] Governance Root Config PDA account
-    /// 2. [] System Program account
+    /// 0. [WRITE, SIGNER] Payer account
+    /// 1. [WRITE] Config PDA account
+    /// 2. [] System program account
     InitializeConfig(GovernanceConfig),
 
-    /// A GMP instruction.
+    /// A GMP instruction coming from the axelar network.
+    /// The very first accounts are the gateways accounts:  
     ///
-    /// 0. [signer] The address of payer / sender
-    /// 1. [] governance root pda
-    /// 2. [] ITS root pda
-    /// 3..N Accounts depend on the inner ITS instruction.
+    /// 0. [WRITE] Gateway Approved Message PDA account
+    /// 1. [] Signing PDA account
+    /// 2. [] Gateway Root Config PDA account
+    /// 3. [] Gateway program account
+    ///
+    /// Above accounts, are accompanied by GMP commands specific accounts:
+    ///
+    /// --> GMP Schedule time lock proposal
+    ///
+    /// 0. [] System program account
+    /// 1. [WRITE, SIGNER] Payer account
+    /// 2. [WRITE] Config PDA account
+    /// 3. [WRITE] Prop PDA account
+    ///
+    /// --> GMP Cancel time lock proposal
+    ///
+    /// 0. [] System program account
+    /// 1. [WRITE, SIGNER] Payer account
+    /// 2. [WRITE] Config PDA account
+    /// 3. [WRITE] Prop PDA account
+    ///
+    /// --> GMP Approve operator proposal
+    ///
+    /// 0. [] System program account
+    /// 1. [WRITE, SIGNER] Payer account
+    /// 2. [] Config PDA account
+    /// 3. [WRITE] Prop operator account
+    ///
+    /// --> GMP Cancel operator proposal
+    ///
+    /// 0. [] System program account
+    /// 1. [WRITE, SIGNER] Payer account
+    /// 2. [] Config PDA account
+    /// 3. [WRITE] Prop operator account
     GovernanceGmpPayload {
         /// The GMP message metadata
         metadata: GmpMetadata,
-        /// The GMP payload, abi encoded expected
+        /// The GMP payload, abi encoded. See
+        /// [`governance_gmp::GovernanceCommandPayload`].
         payload: Vec<u8>,
+    },
+
+    /// Execute a given proposal. Anyone from the Solana network can execute a
+    /// proposal.
+    ///
+    ///
+    /// 0. [] System program account
+    /// 1. [] Payer account
+    /// 2. [WRITE] Config PDA account
+    /// 3. [WRITE] Prop PDA account
+    ExecuteProposal(ExecuteProposalData),
+
+    /// Execute a given proposal as operator. Only the designed operator can
+    /// execute the proposal.
+    ///
+    ///
+    /// 0. [] System program account
+    /// 1. [] Payer account
+    /// 2. [WRITE] Config PDA account
+    /// 3. [WRITE] Prop PDA account
+    /// 4. [] Operator PDA account
+    /// 5. [WRITE] Prop operator account
+    ExecuteOperatorProposal(ExecuteProposalData),
+
+    /// Withdraw governing tokens from this program config account.
+    ///
+    /// 0. [] System program account
+    /// 1. [WRITE, SIGNER] Config PDA account
+    /// 2. [WRITE] Funds receiver account
+    /// 3. [] Program ID account
+    WithdrawTokens {
+        /// The amount to withdraw.
+        amount: u64,
+    },
+
+    /// Transfer the operatorship of the governance program. Only the current
+    /// operator or this contract via a CPI call can transfer the operatorship.
+    ///
+    /// 0. [] System program account
+    /// 1. [SIGNER] Payer account
+    /// 2. [SIGNER] Operator PDA account
+    /// 3. [WRITE] Config PDA account
+    TransferOperatorship {
+        /// The new operator pubkey bytes. See [`Pubkey::to_bytes`].
+        new_operator: [u8; 32],
     },
 }
 
@@ -63,58 +136,1013 @@ impl GovernanceInstruction {
     }
 }
 
-/// Creates a [`GovernanceInstruction::InitializeConfig`] instruction.
-/// # Errors
-///
-/// See [`ProgramError`] variants.
-pub fn initialize_config(
-    payer: &Pubkey,
-    config: &GovernanceConfig,
-    config_pda: &Pubkey,
-) -> Result<Instruction, ProgramError> {
-    let accounts: Vec<AccountMeta> = vec![
-        AccountMeta::new(*payer, true),
-        AccountMeta::new(*config_pda, false),
-        AccountMeta::new_readonly(system_program::ID, false),
-    ];
+#[allow(clippy::unwrap_used)] // All the unwraps are safe.
+#[allow(clippy::must_use_candidate)]
+#[allow(clippy::missing_panics_doc)] // It never will panic, as all the unwraps are safe.
+#[allow(clippy::new_without_default)]
+pub mod builder {
+    //! A module for facilitating the construction of governance instructions
+    //! from an user perspective, abstracting mundane, intermediate operations
+    //! for the sake of user experience.
+    //!
+    //! It provides a builder pattern to enforce the correct order of operations
+    //! with compile time safety. It also provide convenience getters in case
+    //! access to intermediate data is needed. The attributes of the builder
+    //! are public, so they can be accessed directly in execeptional cases,
+    //! like testing edge cases by manipulating the builder's state.
+    //!
+    //! # Design
+    //!
+    //! The builder is a state machine whose states are documented below. It
+    //! enforces a call tree that can be cloned at each stage, so the
+    //! calculations can be reused. It also exposes certain getters to
+    //! facilitate gathering the intermediate data like intermediate PDA
+    //! accounts, hashes, etc. This is normally useful for testing purposes.
+    //!
+    //! Most of the data operations are around the proposal itself. All the
+    //! intermediate PDA accounts, hashes, etc are not exposed to the user, so
+    //! the first thing to require is the proposal data in most cases, except on
+    //! very basic, first level instructions. From there, the builder can be
+    //! used to create the needed instructions related to the previous provided
+    //! proposal data. This is particularly useful, as the proposal data can
+    //! be reused in different instructions once provided.
+    //!
+    //! # Example
+    //!
+    //! The fluent api should be used to create the instructions. Feel free to
+    //! explore the [`self::test`] for more examples.
 
-    let data = GovernanceInstruction::InitializeConfig(config.clone())
-        .to_bytes()
-        .map_err(|err| {
-            msg!("unable to encode GovernanceInstruction {}", err.to_string());
-            ProgramError::InvalidArgument
-        })?;
+    use core::marker::PhantomData;
 
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data,
-    })
-}
+    use alloy_sol_types::SolValue;
+    use axelar_rkyv_encoding::types::GmpMetadata;
+    use governance_gmp::alloy_primitives::Uint;
+    use governance_gmp::{GovernanceCommand, GovernanceCommandPayload};
+    use program_utils::from_u64_to_u256_le_bytes;
+    use solana_program::instruction::{AccountMeta, Instruction};
+    use solana_program::pubkey::Pubkey;
+    use solana_program::system_program;
 
-/// Creates a [`GovernanceInstruction::GovernanceGmpPayload`] instruction.
-/// # Errors
-///
-/// See [`ProgramError`] variants.
-pub fn send_gmp_governance_message(
-    payer: &Pubkey,
-    config_pda: &Pubkey,
-    gov_instruction: &GovernanceInstruction,
-) -> Result<Instruction, ProgramError> {
-    let accounts: Vec<AccountMeta> = vec![
-        AccountMeta::new(*payer, true),
-        AccountMeta::new_readonly(*config_pda, false),
-        AccountMeta::new_readonly(system_program::ID, false),
-    ];
+    use super::GovernanceInstruction;
+    use crate::state::operator::derive_managed_proposal_pda;
+    use crate::state::proposal::{
+        ExecutableProposal, ExecuteProposalCallData, ExecuteProposalData,
+    };
+    use crate::state::GovernanceConfig;
 
-    let data = gov_instruction.to_bytes().map_err(|err| {
-        msg!("unable to encode GovernanceInstruction: {}", err);
-        ProgramError::InvalidArgument
-    })?;
+    /// The initial stage of the builder. This instantiates the builder itself
+    /// with all it's data set to None, which goes in cascade and its updated on
+    /// each stage accordingly. Through its associated functions, next
+    /// stages can be:
+    ///
+    /// * [`ProposalRelated`].
+    /// * [`TransferOperatorshipBuild`].
+    /// * [`ConfigBuild`].
+    #[derive(Clone, Debug)]
+    pub struct Init;
 
-    Ok(Instruction {
-        program_id: crate::id(),
-        accounts,
-        data,
-    })
+    /// After setting the proposal data, the next stage is to decide what do do
+    /// with that information. It also provides getters for getting the computed
+    /// information from proposal data calculations.
+    ///
+    ///  By using the builder's functions, the next stages can be:
+    /// * [`GmpMeta`].
+    /// * [`ExecuteOperatorProposalBuild`].
+    /// * [`ExecuteProposalBuild`].
+    #[derive(Clone, Debug)]
+    pub struct ProposalRelated;
+
+    /// At this stage of the builder, the metadata for the GMP instruction is
+    /// set. The next stage is to decide what to do with the GMP instruction.
+    /// This functions stage provide access to:
+    /// * [`GmpIx`].
+    #[derive(Clone, Debug)]
+    pub struct GmpMeta;
+
+    /// At this stage of the builder, the GMP instructions are built. Functions
+    /// of this stage provide access to:
+    /// * [`GmpBuild`].
+    #[derive(Clone, Debug)]
+    pub struct GmpIx;
+
+    /// Stage of the builder where the instruction for initializing the
+    /// governance config its built.
+    #[derive(Clone, Debug)]
+    pub struct ConfigBuild;
+
+    /// Stage of the builder where the instruction for a GMP command is built.
+    #[derive(Clone, Debug)]
+    pub struct GmpBuild;
+
+    /// Stage of the builder where the instruction for executing a proposal is
+    /// built.
+    #[derive(Clone, Debug)]
+    pub struct ExecuteProposalBuild;
+
+    /// Stage of the builder where the instruction for executing an operator
+    /// approved proposal is built.
+    #[derive(Clone, Debug)]
+    pub struct ExecuteOperatorProposalBuild;
+
+    /// Stage of the builder where the instruction for transferring the
+    /// operatorship is built.
+    #[derive(Clone, Debug)]
+    pub struct TransferOperatorshipBuild;
+
+    /// A builder for governance instructions.
+    #[allow(clippy::module_name_repetitions)]
+    #[derive(Clone, Debug)]
+    pub struct IxBuilder<Stage = Init> {
+        /// The accounts needed for the instruction.
+        pub accounts: Option<Vec<AccountMeta>>,
+        /// The governance config. Only used in the [`ConfigBuild`] stage.
+        pub config: Option<GovernanceConfig>,
+        /// The new operator pubkey. Only used in the
+        /// [`TransferOperatorshipBuild`] stage.
+        pub new_operator: Option<Pubkey>,
+        /// The stage of the builder.
+        pub stage: PhantomData<Stage>,
+        /// The GMP metadata. Only used in the [`GmpMeta`] stage.
+        pub gmp_metadata: Option<GmpMetadata>,
+        /// The GMP command. Only used in the [`GmpBuild`] stage.
+        pub gmp_command: Option<GovernanceCommand>,
+        /// The proposal target pubkey. Only used in the [`ProposalRelated`]
+        /// stage.
+        pub prop_target: Option<Pubkey>,
+        /// The proposal native value. Only used in the [`ProposalRelated`]
+        /// stage.
+        pub prop_native_value: Option<u64>,
+        /// The proposal ETA. Only used in the [`ProposalRelated`] stage.
+        pub prop_eta: Option<u64>,
+        /// The proposal PDA. Only used in the [`ProposalRelated`] stage.
+        pub prop_pda: Option<Pubkey>,
+        /// The proposal hash. Only used in the [`ProposalRelated`] stage.
+        pub prop_hash: Option<[u8; 32]>,
+        /// The proposal operator PDA. Only used in the [`ProposalRelated`]
+        /// stage.
+        pub prop_operator_pda: Option<Pubkey>,
+        /// The proposal call data. Only used in the [`ProposalRelated`] stage.
+        pub prop_call_data: Option<ExecuteProposalCallData>,
+    }
+
+    impl IxBuilder<Init> {
+        /// Creates a new builder.
+        pub const fn new() -> Self {
+            Self {
+                accounts: None,
+                config: None,
+                new_operator: None,
+                stage: PhantomData::<Init>,
+                gmp_command: None,
+                gmp_metadata: None,
+                prop_target: None,
+                prop_native_value: None,
+                prop_eta: None,
+                prop_pda: None,
+                prop_hash: None,
+                prop_operator_pda: None,
+                prop_call_data: None,
+            }
+        }
+        /// Sets the proposal data for the builder. All subsequent operations
+        /// for pdas and hashes calculations will be shared in next
+        /// stages. It provides access to next stage [`ProposalRelated`].
+        pub fn with_proposal_data(
+            self,
+            target: Pubkey,
+            native_value: u64,
+            eta: u64,
+            native_value_target_account: Option<AccountMeta>,
+            gmp_prop_target_accounts: &[AccountMeta],
+            data: Vec<u8>,
+        ) -> IxBuilder<ProposalRelated> {
+            let gmp_prop_target_accounts = gmp_prop_target_accounts
+                .iter()
+                .map(core::convert::Into::into)
+                .collect();
+
+            let gmp_prop_native_value_target_account =
+                native_value_target_account.map(core::convert::Into::into);
+
+            let mut call_data = ExecuteProposalCallData::new(
+                gmp_prop_target_accounts,
+                gmp_prop_native_value_target_account,
+                data,
+            );
+
+            let hash = ExecutableProposal::calculate_hash(
+                &target,
+                &call_data,
+                &from_u64_to_u256_le_bytes(native_value),
+            );
+            let (gov_proposal_pda, prop_bump) = ExecutableProposal::pda(&hash);
+            let (operator_proposal_managed_pda, managed_prop_bump) =
+                derive_managed_proposal_pda(&hash);
+
+            // Adding bumps to call data, so they can be checked in the processor.
+            call_data.add_bump(prop_bump);
+            call_data.add_bump(managed_prop_bump);
+
+            IxBuilder {
+                accounts: self.accounts,
+                config: self.config,
+                new_operator: self.new_operator,
+                stage: PhantomData::<ProposalRelated>,
+                gmp_command: None,
+                gmp_metadata: self.gmp_metadata,
+                prop_target: Some(target),
+                prop_native_value: Some(native_value),
+                prop_eta: Some(eta),
+                prop_pda: Some(gov_proposal_pda),
+                prop_hash: Some(hash),
+                prop_operator_pda: Some(operator_proposal_managed_pda),
+                prop_call_data: Some(call_data),
+            }
+        }
+        /// Creates a new instruction for the governance config initialization.
+        /// It provides access to next stage [`ConfigBuild`].
+        pub fn initialize_config(
+            self,
+            payer: &Pubkey,
+            config_pda: &Pubkey,
+            config: GovernanceConfig,
+        ) -> IxBuilder<ConfigBuild> {
+            let accounts = vec![
+                AccountMeta::new(*payer, true),
+                AccountMeta::new(*config_pda, false),
+                AccountMeta::new_readonly(system_program::ID, false),
+            ];
+
+            IxBuilder {
+                accounts: Some(accounts),
+                config: Some(config),
+                new_operator: self.new_operator,
+                stage: PhantomData::<ConfigBuild>,
+                gmp_command: None,
+                gmp_metadata: self.gmp_metadata,
+                prop_target: self.prop_target,
+                prop_native_value: self.prop_native_value,
+                prop_eta: self.prop_eta,
+                prop_pda: self.prop_pda,
+                prop_hash: self.prop_hash,
+                prop_operator_pda: self.prop_operator_pda,
+                prop_call_data: self.prop_call_data,
+            }
+        }
+        /// Creates a new instruction for transferring the operatorship of the
+        /// governance program. It provides access to next builder stage
+        /// [`TransferOperatorshipBuild`].
+        pub fn transfer_operatorship(
+            self,
+            payer: &Pubkey,
+            operator_pda: &Pubkey,
+            config_pda: &Pubkey,
+            new_operator: &Pubkey,
+        ) -> IxBuilder<TransferOperatorshipBuild> {
+            let accounts = vec![
+                AccountMeta::new_readonly(system_program::ID, false),
+                AccountMeta::new_readonly(*payer, true),
+                AccountMeta::new_readonly(*operator_pda, true),
+                AccountMeta::new(*config_pda, false),
+            ];
+
+            IxBuilder {
+                accounts: Some(accounts),
+                config: self.config,
+                new_operator: Some(*new_operator),
+                stage: PhantomData::<TransferOperatorshipBuild>,
+                gmp_command: self.gmp_command,
+                gmp_metadata: self.gmp_metadata,
+                prop_target: self.prop_target,
+                prop_native_value: self.prop_native_value,
+                prop_eta: self.prop_eta,
+                prop_pda: self.prop_pda,
+                prop_hash: self.prop_hash,
+                prop_operator_pda: self.prop_operator_pda,
+                prop_call_data: self.prop_call_data,
+            }
+        }
+
+        /// This is a builder of a builder. It loads into the builder a proposal
+        /// that targets the governance program itself for operatorship
+        /// transfer.
+        ///
+        /// It provides access to the next builder stage [`ProposalRelated`]. In
+        /// which a GMP instruction for scheduling the created proposal
+        /// can be built (among others).
+        pub fn builder_for_operatorship_transfership(
+            self,
+            payer: &Pubkey,
+            config_pda: &Pubkey,
+            operator_pda: &Pubkey,
+            new_operator_pda: &Pubkey,
+            eta: u64,
+        ) -> IxBuilder<ProposalRelated> {
+            let gmp_prop_target_accounts = &[
+                AccountMeta::new_readonly(system_program::ID, false),
+                AccountMeta::new_readonly(*payer, true),
+                AccountMeta::new_readonly(*operator_pda, false),
+                AccountMeta::new(*config_pda, true),
+                AccountMeta::new_readonly(crate::ID, false),
+            ];
+
+            let data = GovernanceInstruction::TransferOperatorship {
+                new_operator: new_operator_pda.to_bytes(),
+            }
+            .to_bytes()
+            .unwrap();
+
+            Self::new().with_proposal_data(crate::ID, 0, eta, None, gmp_prop_target_accounts, data)
+        }
+
+        /// This is a builder of a builder. It loads into the builder a proposal
+        /// that targets the governance program itself for funds withdrawal.
+        ///
+        /// It provides access to the next builder stage [`ProposalRelated`]. In
+        /// which a GMP instruction for scheduling the created proposal
+        /// can be built (among others).
+        pub fn builder_for_withdraw_tokens(
+            self,
+            config_pda: &Pubkey,
+            funds_receiver: &Pubkey,
+            amount: u64,
+            eta: u64,
+        ) -> IxBuilder<ProposalRelated> {
+            let target_accounts = &[
+                AccountMeta::new_readonly(system_program::ID, false),
+                AccountMeta::new(*config_pda, true),
+                AccountMeta::new(*funds_receiver, false),
+                AccountMeta::new_readonly(crate::ID, false),
+            ];
+
+            Self::new().with_proposal_data(
+                crate::ID,
+                0,
+                eta,
+                None,
+                target_accounts,
+                GovernanceInstruction::WithdrawTokens { amount }
+                    .to_bytes()
+                    .unwrap(),
+            )
+        }
+    }
+
+    impl IxBuilder<ProposalRelated> {
+        /// Creates a GMP instruction for the previously provided proposal.
+        ///
+        /// It provides access to the next builder stage [`GmpMeta`].
+        pub fn gmp_ix(self) -> IxBuilder<GmpMeta> {
+            IxBuilder {
+                accounts: self.accounts,
+                config: self.config,
+                new_operator: self.new_operator,
+                stage: PhantomData::<GmpMeta>,
+                gmp_command: None,
+                gmp_metadata: self.gmp_metadata,
+                prop_target: self.prop_target,
+                prop_native_value: self.prop_native_value,
+                prop_eta: self.prop_eta,
+                prop_pda: self.prop_pda,
+                prop_hash: self.prop_hash,
+                prop_operator_pda: self.prop_operator_pda,
+                prop_call_data: self.prop_call_data,
+            }
+        }
+
+        /// Creates an instruction for executing the previously provided
+        /// proposal.
+        pub fn execute_proposal(
+            self,
+            payer: &Pubkey,
+            config_pda: &Pubkey,
+        ) -> IxBuilder<ExecuteProposalBuild> {
+            let mut accounts = vec![
+                AccountMeta::new_readonly(system_program::ID, false),
+                AccountMeta::new_readonly(*payer, true),
+                AccountMeta::new(*config_pda, false),
+                AccountMeta::new(self.prop_pda.unwrap(), false),
+            ];
+
+            // Accounts needed for the target contract. Read them from the proposal data.
+            let call_data = self.prop_call_data.clone().unwrap();
+            let target_program_accounts: Vec<AccountMeta> = call_data
+                .solana_accounts
+                .iter()
+                .filter_map(|acc| {
+                    // Avoid a repeated config_pda account, that's normally specified in the
+                    // proposal data, for targeting the withdraw tokens instruction of
+                    // this contract. A CPI call to itself.
+                    if acc.pubkey == config_pda.to_bytes() {
+                        return None;
+                    }
+                    Some(AccountMeta::from(acc))
+                })
+                .collect();
+
+            accounts.extend(target_program_accounts);
+
+            // Add the account to receive the native value if it exists.
+            if let Some(ref fund_acc) = call_data.solana_native_value_receiver_account {
+                accounts.push(fund_acc.into());
+            }
+
+            IxBuilder {
+                accounts: Some(accounts),
+                config: self.config,
+                new_operator: self.new_operator,
+                stage: PhantomData::<ExecuteProposalBuild>,
+                gmp_command: None,
+                gmp_metadata: self.gmp_metadata,
+                prop_target: self.prop_target,
+                prop_native_value: self.prop_native_value,
+                prop_eta: self.prop_eta,
+                prop_pda: self.prop_pda,
+                prop_hash: self.prop_hash,
+                prop_operator_pda: self.prop_operator_pda,
+                prop_call_data: self.prop_call_data,
+            }
+        }
+
+        /// Creates an instruction for executing the previously provided
+        /// proposal, that was previously approved by the Axelar infrastructure
+        /// via GMP.
+        ///
+        /// It provides access to the next builder stage
+        /// [`ExecuteOperatorProposalBuild`].
+        pub fn execute_operator_proposal(
+            self,
+            payer: &Pubkey,
+            config_pda: &Pubkey,
+            operator_pda: &Pubkey,
+        ) -> IxBuilder<ExecuteOperatorProposalBuild> {
+            let mut accounts = vec![
+                AccountMeta::new_readonly(system_program::ID, false),
+                AccountMeta::new_readonly(*payer, true),
+                AccountMeta::new(*config_pda, false),
+                AccountMeta::new(self.prop_pda.unwrap(), false),
+                AccountMeta::new_readonly(*operator_pda, true),
+                AccountMeta::new(self.prop_operator_pda.unwrap(), false),
+            ];
+
+            // Accounts needed for the target contract. Read them from the proposal data.
+            let call_data = self.prop_call_data.clone().unwrap();
+            let target_program_accounts: Vec<AccountMeta> = call_data
+                .solana_accounts
+                .iter()
+                .filter_map(|acc| {
+                    // Avoid a repeated config_pda account, that's normally specified in the
+                    // proposal data, for targeting the withdraw tokens instruction of
+                    // this contract. A CPI call to itself.
+                    if acc.pubkey == config_pda.to_bytes() {
+                        return None;
+                    }
+                    Some(AccountMeta::from(acc))
+                })
+                .collect();
+
+            accounts.extend(target_program_accounts);
+
+            // Add the account to receive the native value if it exists.
+            if let Some(ref fund_acc) = call_data.solana_native_value_receiver_account {
+                accounts.push(fund_acc.into());
+            }
+
+            IxBuilder {
+                accounts: Some(accounts),
+                config: self.config,
+                new_operator: self.new_operator,
+                stage: PhantomData::<ExecuteOperatorProposalBuild>,
+                gmp_command: None,
+                gmp_metadata: self.gmp_metadata,
+                prop_target: self.prop_target,
+                prop_native_value: self.prop_native_value,
+                prop_eta: self.prop_eta,
+                prop_pda: self.prop_pda,
+                prop_hash: self.prop_hash,
+                prop_operator_pda: self.prop_operator_pda,
+                prop_call_data: self.prop_call_data,
+            }
+        }
+
+        /// The calculated proposal PDA.
+        pub fn proposal_pda(&self) -> Pubkey {
+            self.prop_pda.unwrap()
+        }
+        /// The calculated proposal operator marker PDA.
+        pub fn proposal_operator_marker_pda(&self) -> Pubkey {
+            self.prop_operator_pda.unwrap()
+        }
+        /// The calculated proposal hash.
+        pub fn proposal_hash(&self) -> [u8; 32] {
+            self.prop_hash.unwrap()
+        }
+        /// The proposal target pubkey.
+        pub fn proposal_target_address(&self) -> Pubkey {
+            self.prop_target.unwrap()
+        }
+        /// The proposal call data
+        pub fn proposal_call_data(&self) -> ExecuteProposalCallData {
+            self.prop_call_data.clone().unwrap()
+        }
+        /// The proposal native value. U256 le representation.
+        pub fn proposal_u256_le_native_value(&self) -> [u8; 32] {
+            from_u64_to_u256_le_bytes(self.prop_native_value.unwrap())
+        }
+        /// The proposal ETA. U256 le representation.
+        pub fn proposal_u256_le_eta(&self) -> [u8; 32] {
+            from_u64_to_u256_le_bytes(self.prop_eta.unwrap())
+        }
+    }
+
+    impl IxBuilder<GmpMeta> {
+        /// Introduces the gmp metadata for the subsequent GMP instruction.
+        ///
+        /// It provides access to the next builder stage [`GmpIx`].
+        pub fn with_metadata(self, gmp_metadata: GmpMetadata) -> IxBuilder<GmpIx> {
+            IxBuilder {
+                accounts: self.accounts,
+                config: self.config,
+                new_operator: self.new_operator,
+                stage: PhantomData::<GmpIx>,
+                gmp_command: self.gmp_command,
+                gmp_metadata: Some(gmp_metadata),
+                prop_target: self.prop_target,
+                prop_native_value: self.prop_native_value,
+                prop_eta: self.prop_eta,
+                prop_pda: self.prop_pda,
+                prop_hash: self.prop_hash,
+                prop_operator_pda: self.prop_operator_pda,
+                prop_call_data: self.prop_call_data,
+            }
+        }
+    }
+
+    impl IxBuilder<GmpIx> {
+        /// Builds the schedule time lock proposal instruction. It will take the
+        /// proposal data from previous stages of the builder.
+        ///
+        /// It provides access to the next builder stage [`GmpBuild`].
+        pub fn schedule_time_lock_proposal(
+            self,
+            payer: &Pubkey,
+            config_pda: &Pubkey,
+        ) -> IxBuilder<GmpBuild> {
+            let accounts = vec![
+                AccountMeta::new_readonly(system_program::ID, false),
+                AccountMeta::new(*payer, true),
+                AccountMeta::new(*config_pda, false),
+                AccountMeta::new(self.prop_pda.unwrap(), false),
+            ];
+            IxBuilder {
+                accounts: Some(accounts),
+                config: self.config,
+                new_operator: self.new_operator,
+                stage: PhantomData::<GmpBuild>,
+                gmp_command: Some(GovernanceCommand::ScheduleTimeLockProposal),
+                gmp_metadata: self.gmp_metadata,
+                prop_target: self.prop_target,
+                prop_native_value: self.prop_native_value,
+                prop_eta: self.prop_eta,
+                prop_pda: self.prop_pda,
+                prop_hash: self.prop_hash,
+                prop_operator_pda: self.prop_operator_pda,
+                prop_call_data: self.prop_call_data,
+            }
+        }
+
+        /// Builds the cancel time lock proposal instruction. It will take the
+        /// proposal data from previous stages of the builder.
+        ///
+        /// It provides access to the next builder stage [`GmpBuild`].
+        ///
+        /// # Panics
+        ///
+        /// If the builder data is not set. But this should never happen.
+        pub fn cancel_time_lock_proposal(
+            self,
+            payer: &Pubkey,
+            config_pda: &Pubkey,
+        ) -> IxBuilder<GmpBuild> {
+            let accounts = vec![
+                AccountMeta::new_readonly(system_program::ID, false),
+                AccountMeta::new(*payer, true),
+                AccountMeta::new(*config_pda, false),
+                AccountMeta::new(self.prop_pda.unwrap(), false),
+            ];
+
+            IxBuilder {
+                accounts: Some(accounts),
+                config: self.config,
+                new_operator: self.new_operator,
+                stage: PhantomData::<GmpBuild>,
+                gmp_command: Some(GovernanceCommand::CancelTimeLockProposal),
+                gmp_metadata: self.gmp_metadata,
+                prop_target: self.prop_target,
+                prop_native_value: self.prop_native_value,
+                prop_eta: self.prop_eta,
+                prop_pda: self.prop_pda,
+                prop_hash: self.prop_hash,
+                prop_operator_pda: self.prop_operator_pda,
+                prop_call_data: self.prop_call_data,
+            }
+        }
+
+        /// Builds the approve operator proposal instruction. It will take the
+        /// proposal data from previous stages of the builder.
+        ///
+        /// It provides access to the next builder stage [`GmpBuild`].
+        pub fn approve_operator_proposal(
+            self,
+            payer: &Pubkey,
+            config_pda: &Pubkey,
+        ) -> IxBuilder<GmpBuild> {
+            let accounts = vec![
+                AccountMeta::new_readonly(system_program::ID, false),
+                AccountMeta::new(*payer, true),
+                AccountMeta::new_readonly(*config_pda, false),
+                AccountMeta::new(self.prop_operator_pda.unwrap(), false),
+            ];
+
+            IxBuilder {
+                accounts: Some(accounts),
+                config: self.config,
+                new_operator: self.new_operator,
+                stage: PhantomData::<GmpBuild>,
+                gmp_command: Some(GovernanceCommand::ApproveOperatorProposal),
+                gmp_metadata: self.gmp_metadata,
+                prop_target: self.prop_target,
+                prop_native_value: self.prop_native_value,
+                prop_eta: self.prop_eta,
+                prop_pda: self.prop_pda,
+                prop_hash: self.prop_hash,
+                prop_operator_pda: self.prop_operator_pda,
+                prop_call_data: self.prop_call_data,
+            }
+        }
+
+        /// Builds the schedule time lock proposal instruction. It will take the
+        /// proposal data from previous stages of the builder.
+        ///
+        /// It provides access to the next builder stage [`GmpBuild`].
+        pub fn cancel_operator_proposal(
+            self,
+            payer: &Pubkey,
+            config_pda: &Pubkey,
+        ) -> IxBuilder<GmpBuild> {
+            let accounts = vec![
+                AccountMeta::new_readonly(system_program::ID, false),
+                AccountMeta::new(*payer, true),
+                AccountMeta::new(*config_pda, false),
+                AccountMeta::new(self.prop_operator_pda.unwrap(), false),
+            ];
+
+            IxBuilder {
+                accounts: Some(accounts),
+                config: self.config,
+                new_operator: self.new_operator,
+                stage: PhantomData::<GmpBuild>,
+                gmp_command: Some(GovernanceCommand::CancelOperatorApproval),
+                gmp_metadata: self.gmp_metadata,
+                prop_target: self.prop_target,
+                prop_native_value: self.prop_native_value,
+                prop_eta: self.prop_eta,
+                prop_pda: self.prop_pda,
+                prop_hash: self.prop_hash,
+                prop_operator_pda: self.prop_operator_pda,
+                prop_call_data: self.prop_call_data,
+            }
+        }
+    }
+
+    impl IxBuilder<ExecuteProposalBuild> {
+        /// Builds the instruction for executing the proposal. This is a final
+        /// builder stage.
+        pub fn build(self) -> Instruction {
+            let accounts = self.accounts.unwrap();
+            let target_address = self.prop_target.unwrap();
+            let call_data = self.prop_call_data.unwrap();
+            let native_value = from_u64_to_u256_le_bytes(self.prop_native_value.unwrap());
+
+            let gov_instruction = GovernanceInstruction::ExecuteProposal(ExecuteProposalData::new(
+                target_address.to_bytes(),
+                call_data,
+                native_value,
+            ));
+
+            let data = gov_instruction
+                .to_bytes()
+                .expect("Unable to encode GovernanceInstruction");
+
+            Instruction {
+                program_id: crate::id(),
+                accounts,
+                data,
+            }
+        }
+    }
+
+    impl IxBuilder<ExecuteOperatorProposalBuild> {
+        /// Builds the instruction for executing the operator approved proposal.
+        /// This is a final builder stage.
+        pub fn build(self) -> Instruction {
+            let accounts = self.accounts.unwrap();
+            let target_address = self.prop_target.unwrap();
+            let call_data = self.prop_call_data.unwrap();
+            let native_value = from_u64_to_u256_le_bytes(self.prop_native_value.unwrap());
+
+            let gov_instruction = GovernanceInstruction::ExecuteOperatorProposal(
+                ExecuteProposalData::new(target_address.to_bytes(), call_data, native_value),
+            );
+
+            let data = gov_instruction
+                .to_bytes()
+                .expect("Unable to encode GovernanceInstruction");
+
+            Instruction {
+                program_id: crate::id(),
+                accounts,
+                data,
+            }
+        }
+    }
+
+    impl IxBuilder<ConfigBuild> {
+        /// Builds the instruction for initializing the governance config. This
+        /// is a final builder stage.
+        pub fn build(self) -> Instruction {
+            let accounts = self.accounts.unwrap();
+            let config = self.config.unwrap();
+
+            let data = GovernanceInstruction::InitializeConfig(config)
+                .to_bytes()
+                .expect("Unable to encode GovernanceInstruction");
+
+            Instruction {
+                program_id: crate::id(),
+                accounts,
+                data,
+            }
+        }
+    }
+
+    impl IxBuilder<TransferOperatorshipBuild> {
+        /// Builds the instruction for transferring the operatorship. This is a
+        /// final builder stage.
+        pub fn build(self) -> Instruction {
+            let accounts = self.accounts.unwrap();
+            let new_operator = self.new_operator.unwrap();
+
+            let data = GovernanceInstruction::TransferOperatorship {
+                new_operator: new_operator.to_bytes(),
+            }
+            .to_bytes()
+            .expect("Unable to encode GovernanceInstruction");
+
+            Instruction {
+                program_id: crate::id(),
+                accounts,
+                data,
+            }
+        }
+    }
+
+    impl IxBuilder<GmpBuild> {
+        /// Builds the instruction for the GMP command. This is a final builder
+        /// stage.
+        pub fn build(self) -> Instruction {
+            let accounts = self.accounts.unwrap();
+            let gmp_metadata = self.gmp_metadata.unwrap();
+            let gmp_command = self.gmp_command.unwrap();
+            let gmp_prop_target = self.prop_target.unwrap();
+            let gmp_prop_native_value = self.prop_native_value.unwrap();
+            let gmp_prop_eta = self.prop_eta.unwrap();
+            let gmp_prop_call_data = self.prop_call_data.unwrap();
+
+            let governance_command = GovernanceCommandPayload {
+                command: gmp_command,
+                target: gmp_prop_target.to_bytes().into(),
+                call_data: gmp_prop_call_data.to_bytes().unwrap().into(),
+                native_value: Uint::from(gmp_prop_native_value),
+                eta: Uint::from(gmp_prop_eta),
+            };
+
+            let gov_instruction = GovernanceInstruction::GovernanceGmpPayload {
+                payload: governance_command.abi_encode(),
+                metadata: gmp_metadata,
+            };
+            let data = gov_instruction.to_bytes().unwrap();
+
+            Instruction {
+                program_id: crate::id(),
+                accounts,
+                data,
+            }
+        }
+    }
+
+    /// Prepends the gateway accounts to the instruction.
+    /// This is useful for instructions that require the gateway accounts for
+    /// message verification in GMP flows.
+    pub fn prepend_gateway_accounts_to_ix(
+        ix: &mut Instruction,
+        gateway_root_pda: Pubkey,
+        gateway_approved_message_pda: Pubkey,
+        signing_pda: Pubkey,
+    ) {
+        let mut new_accounts = vec![
+            AccountMeta::new(gateway_approved_message_pda, false),
+            AccountMeta::new_readonly(signing_pda, false),
+            AccountMeta::new_readonly(gateway_root_pda, false),
+            AccountMeta::new_readonly(gateway::id(), false),
+        ];
+        // Append the new accounts to the existing ones.
+        new_accounts.extend_from_slice(&ix.accounts);
+        ix.accounts = new_accounts;
+    }
+    #[cfg(test)]
+    #[allow(clippy::shadow_unrelated)]
+    mod test {
+        use axelar_rkyv_encoding::types::CrossChainId;
+
+        use super::*;
+
+        #[test]
+        fn simplest_use_case() {
+            let payer = Pubkey::new_unique();
+            let config_pda = Pubkey::new_unique();
+            let config = GovernanceConfig::new(
+                1,
+                [0_u8; 32],
+                [0_u8; 32],
+                1,
+                Pubkey::new_unique().to_bytes(),
+            );
+
+            let _ix = IxBuilder::new()
+                .initialize_config(&payer, &config_pda, config)
+                .build();
+
+            // send ix
+        }
+
+        #[test]
+        fn execute_proposal_use_case() {
+            let target = Pubkey::new_unique();
+            let native_value = 1;
+            let eta = 1;
+            let gmp_proposal_target_accounts = [];
+            let data = vec![];
+
+            let _ix = IxBuilder::new()
+                .with_proposal_data(
+                    target,
+                    native_value,
+                    eta,
+                    None,
+                    &gmp_proposal_target_accounts,
+                    data,
+                )
+                .execute_proposal(&Pubkey::new_unique(), &Pubkey::new_unique())
+                .build();
+            // Send ix
+        }
+
+        #[test]
+        fn sharing_building_stages_for_ix_chaining() {
+            // Proposal dummy data
+            let target = Pubkey::new_unique();
+            let native_value = 1;
+            let eta = 1;
+            let gmp_proposal_target_accounts = [];
+            let data = vec![];
+
+            // Create a base builder with proposal data.
+            let base_ix_builder = IxBuilder::new().with_proposal_data(
+                target,
+                native_value,
+                eta,
+                None,
+                &gmp_proposal_target_accounts,
+                data,
+            );
+
+            // Schedule the proposal via GMP
+            let payer = Pubkey::new_unique();
+            let config_pda = Pubkey::new_unique();
+            let _ix = base_ix_builder
+                .clone()
+                .gmp_ix()
+                .with_metadata(gmp_sample_metadata())
+                .schedule_time_lock_proposal(&payer, &config_pda);
+
+            // Send ix
+
+            // Execute the proposal, no need to replay the data.
+            let _ix = base_ix_builder
+                .execute_proposal(&Pubkey::new_unique(), &Pubkey::new_unique())
+                .build();
+        }
+
+        #[test]
+        fn using_builders_of_builders_for_creating_things_like_self_calling_complex_proposals() {
+            let config_pda = Pubkey::new_unique();
+            let funds_receiver = Pubkey::new_unique();
+            let eta = 1;
+
+            // This prepares a builder with a proposal that targets the governance module
+            // itself and that should be executed later following the
+            // traditional flow.
+            let base_ix_builder = IxBuilder::new().builder_for_withdraw_tokens(
+                &config_pda,
+                &funds_receiver,
+                eta,
+                500,
+            );
+
+            // Scheduling the proposal
+            let payer = Pubkey::new_unique();
+            let _ix = base_ix_builder
+                .clone()
+                .gmp_ix()
+                .with_metadata(gmp_sample_metadata())
+                .schedule_time_lock_proposal(&payer, &config_pda);
+            // Send ix
+
+            // Executing the proposal, no need to replay data.
+            let _ix = base_ix_builder
+                .execute_proposal(&Pubkey::new_unique(), &config_pda)
+                .build();
+            // Send ix
+        }
+
+        #[test]
+        fn builder_stages_can_have_convenient_getters_per_each_stage() {
+            let target = Pubkey::new_unique();
+            let native_value = 1;
+            let eta = 1;
+            let gmp_proposal_target_accounts = [];
+            let data = vec![];
+
+            let ix_builder = IxBuilder::new().with_proposal_data(
+                target,
+                native_value,
+                eta,
+                None,
+                &gmp_proposal_target_accounts,
+                data,
+            );
+
+            // Get the internally computed from proposal data operator marker PDA,
+            // used to mark a proposal as "managed by operator".
+            let _proposal_marker_pda = ix_builder.proposal_operator_marker_pda();
+
+            // Check with banks clients it exists ... (for example)
+        }
+
+        #[test]
+        fn builder_stages_are_strongly_typed_and_can_be_shared_with_other_funcs() {
+            let target = Pubkey::new_unique();
+            let native_value = 1;
+            let eta = 1;
+            let gmp_proposal_target_accounts = [];
+            let data = vec![];
+
+            let ix_builder = IxBuilder::new().with_proposal_data(
+                target,
+                native_value,
+                eta,
+                None,
+                &gmp_proposal_target_accounts,
+                data,
+            );
+            other_func(&ix_builder);
+        }
+
+        #[allow(clippy::use_debug)]
+        #[allow(clippy::print_stdout)]
+        fn other_func(ix_builder: &IxBuilder<ProposalRelated>) {
+            let _ix = ix_builder
+                .clone()
+                .execute_proposal(&Pubkey::new_unique(), &Pubkey::new_unique())
+                .build();
+
+            // Send ix
+
+            println!(
+                "Hello, just executed prop: {:x?}",
+                ix_builder.proposal_hash()
+            );
+        }
+
+        fn gmp_sample_metadata() -> GmpMetadata {
+            GmpMetadata {
+                cross_chain_id: CrossChainId::new("chain".to_owned(), "09af".to_owned()),
+                source_address: "0x0".to_owned(),
+                destination_address: "0x0".to_owned(),
+                destination_chain: "solana".to_owned(),
+                domain_separator: [0_u8; 32],
+            }
+        }
+    }
 }
