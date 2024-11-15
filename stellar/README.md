@@ -181,20 +181,25 @@ node stellar/its.js remove-trusted-address [chain-name]
 
 ## TTL extension and state archival recovery
 
+All Soroban storage entries, including contract instances, have a 'time to live' (`ttl`) after which entries will be archived and no longer accessible until restored. The following commands can be used to extend `ttl` or restore archived contract instances.
+
 Get the ttl of a contract instance:
 
 ```bash
-node stellar/ttl.js get-ttl [contract-name]
+node stellar/contract.js get-ttl [contract-name]
 ```
 
 Extend the ttl of a contract instance:
 
 ```bash
-node stellar/ttl.js extend-instance [contract-name]
+node stellar/contract.js extend-instance [contract-name]
+
+# Defaults to maximum extension amount. To specify the number of ledgers to extend:
+node stellar/contract.js extend-instance [contract-name] --extend-by [ledgers]
 ```
 
 Restore an archived contract instance
 
 ```bash
-node stellar/ttl.js restore-instance [contract-name]
+node stellar/contract.js restore-instance [contract-name]
 ```

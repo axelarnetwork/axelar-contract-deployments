@@ -1,7 +1,7 @@
 'use strict';
 
 const { Contract, SorobanRpc } = require('@stellar/stellar-sdk');
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const { stellarCmd, getNetworkPassphrase, addBaseOptions } = require('./utils');
@@ -12,10 +12,10 @@ require('./cli-utils');
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
 async function getTtl(chain, contractName, _args, _options) {
-    printInfo('get ttl', contractName);
+    printInfo('Contract TTL', contractName);
     const ledgerEntry = await getLedgerEntry(chain, contractName);
-    printInfo('latest ledger', ledgerEntry.latestLedger);
-    printInfo('live until ledger', ledgerEntry.entries[0].liveUntilLedgerSeq);
+    printInfo('Latest Ledger', ledgerEntry.latestLedger);
+    printInfo('Expiry Ledger', ledgerEntry.entries[0].liveUntilLedgerSeq);
 }
 
 async function getLedgerEntry(chain, contractName) {
@@ -33,10 +33,12 @@ async function extendInstance(chain, contractName, _args, options) {
         return;
     }
 
+    const ledgersToExtend = !options.extendBy ? MAX_INSTANCE_TTL_EXTENSION : options.extendBy;
+
     const networkPassphrase = getNetworkPassphrase(networkType);
     const contractId = chain.contracts[contractName].address;
 
-    const cmd = `${stellarCmd} contract extend --id ${contractId} --source-account wallet --network ${networkType} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}" --ledgers-to-extend ${MAX_INSTANCE_TTL_EXTENSION}`;
+    const cmd = `${stellarCmd} contract extend --id ${contractId} --source-account wallet --network ${networkType} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}" --ledgers-to-extend ${ledgersToExtend}`;
 
     execSync(cmd, { stdio: 'inherit' });
 }
@@ -73,7 +75,7 @@ async function mainProcessor(processor, contractName, args, options) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('ttl').description('Manage contract instance and storage `time to live`');
+    program.name('contract').description('Manage contract instance and storage `time to live`');
 
     program
         .command('get-ttl <contractName>')
@@ -85,6 +87,12 @@ if (require.main === module) {
     program
         .command('extend-instance <contractName>')
         .description('Extend the ttl for a contract instance and its wasm code')
+        .addOption(
+            new Option(
+                '--extend-by <extendBy>',
+                'Number of ledgers to extend by. If ommitted, will default to the maximum extension amount',
+            ),
+        )
         .action((contractName, options) => {
             mainProcessor(extendInstance, contractName, [], options);
         });
