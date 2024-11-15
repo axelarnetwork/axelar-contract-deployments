@@ -1,11 +1,10 @@
 'use strict';
 
-const { Contract, SorobanRpc, SorobanDataBuilder, TransactionBuilder, Operation } = require('@stellar/stellar-sdk');
-const { Server } = require('@stellar/stellar-sdk/rpc');
+const { Contract, SorobanRpc } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { stellarCmd, getNetworkPassphrase, getWallet, addBaseOptions } = require('./utils');
+const { stellarCmd, getNetworkPassphrase, addBaseOptions } = require('./utils');
 const { getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt } = require('../common/utils');
 require('./cli-utils');
@@ -34,31 +33,12 @@ async function extendInstance(chain, contractName, _args, options) {
         return;
     }
 
-    const server = new Server(rpc);
-    const wallet = await getWallet(chain, options);
+    const networkPassphrase = getNetworkPassphrase(networkType);
+    const contractId = chain.contracts[contractName].address;
 
-    const account = await server.getAccount(wallet.publicKey());
-    const fee = '200100'; // Base fee plus resource fee
+    const cmd = `${stellarCmd} contract extend --id ${contractId} --source-account wallet --network ${networkType} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}" --ledgers-to-extend ${MAX_INSTANCE_TTL_EXTENSION}`;
 
-    const contract = new Contract(chain.contracts[contractName].address);
-    const instance = contract.getFootprint();
-
-    const sorobanData = new SorobanDataBuilder().setResourceFee(200000).setReadOnly([instance]).build();
-    const transaction = new TransactionBuilder(account, {
-        fee,
-        networkPassphrase: getNetworkPassphrase(networkType),
-    })
-        .setSorobanData(sorobanData)
-        .addOperation(
-            Operation.extendFootprintTtl({
-                extendTo: MAX_INSTANCE_TTL_EXTENSION,
-            }),
-        )
-        .setTimeout(30)
-        .build();
-
-    transaction.sign(wallet);
-    await server.sendTransaction(transaction);
+    execSync(cmd, { stdio: 'inherit' });
 }
 
 async function restoreInstance(chain, contractName, _args, options) {
