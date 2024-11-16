@@ -32,7 +32,7 @@ async function sendToken(keypair, client, contracts, args, options) {
         throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
     }
 
-    checkTrustedAddresses(contracts.ITS.trustedAddresses, destinationChain);
+    checkTrustedAddresses(ITS.trustedAddresses, destinationChain);
 
     const decimals = ItsToken.decimals;
 
@@ -93,7 +93,7 @@ async function sendDeployment(keypair, client, contracts, args, options) {
     const Token = contracts[symbol.toUpperCase()];
     const feeUnitAmount = getUnitAmount(feeAmount);
 
-    checkTrustedAddresses(contracts.ITS.trustedAddresses, destinationChain);
+    checkTrustedAddresses(ITS.trustedAddresses, destinationChain);
 
     const txBuilder = new TxBuilder(client);
 
@@ -127,7 +127,7 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
     const { ITS } = contracts;
     const [sourceChain, messageId, sourceAddress, tokenSymbol, payload] = args;
 
-    checkTrustedAddresses(contracts.ITS.trustedAddresses, sourceChain);
+    checkTrustedAddresses(ITS.trustedAddresses, sourceChain);
 
     // Prepare Object Ids
     const symbol = tokenSymbol.toUpperCase();
