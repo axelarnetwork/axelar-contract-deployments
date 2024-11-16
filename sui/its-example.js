@@ -1,6 +1,5 @@
 const { Command, Option } = require('commander');
 const { ITSMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
-const { bcs } = require('@mysten/sui/bcs');
 const { loadConfig, saveConfig, printInfo, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
