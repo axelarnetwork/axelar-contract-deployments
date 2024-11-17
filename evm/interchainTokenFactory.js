@@ -160,10 +160,16 @@ async function processCommand(config, chain, options) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
-            const tx = await interchainTokenFactory.deployRemoteInterchainToken(deploymentSalt, minter, destinationChain, gasValue, {
-                value: gasValue,
-                ...gasOptions,
-            });
+            const tx = await interchainTokenFactory['deployRemoteInterchainToken(bytes32,address,string,uint256)'](
+                deploymentSalt,
+                minter,
+                destinationChain,
+                gasValue,
+                {
+                    value: gasValue,
+                    ...gasOptions,
+                },
+            );
             const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('tokenId', tokenId);
 
