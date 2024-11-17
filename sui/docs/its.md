@@ -112,7 +112,7 @@ node sui/its-example receive-token $sourceChain $transferMessageId $sourceAddres
 ### Send Token Deployment to Gateway
 
 ```bash
-node sui/its-example send-deployment $symbol $sourceChain $sourceAddress $fee
+node sui/its-example send-deployment $symbol $sourceChain $fee
 ```
 
 ### Receive Token Deployment

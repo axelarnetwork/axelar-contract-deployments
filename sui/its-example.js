@@ -1,6 +1,5 @@
 const { Command, Option } = require('commander');
 const { ITSMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
-const { bcs } = require('@mysten/sui/bcs');
 const { loadConfig, saveConfig, printInfo, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
@@ -32,7 +31,7 @@ async function sendToken(keypair, client, contracts, args, options) {
         throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
     }
 
-    checkTrustedAddresses(ITS.trustedAddresses, destinationChain, destinationAddress);
+    checkTrustedAddresses(ITS.trustedAddresses, destinationChain);
 
     const decimals = ItsToken.decimals;
 
@@ -74,7 +73,7 @@ async function sendToken(keypair, client, contracts, args, options) {
             TokenId,
             Coin,
             destinationChain,
-            bcs.string().serialize(destinationAddress).toBytes(),
+            destinationAddress,
             '0x', // its token metadata
             walletAddress,
             gas,
@@ -89,16 +88,16 @@ async function sendToken(keypair, client, contracts, args, options) {
 
 async function sendDeployment(keypair, client, contracts, args, options) {
     const { AxelarGateway, GasService, ITS, Example } = contracts;
-    const [symbol, destinationChain, destinationITSAddress, feeAmount] = args;
+    const [symbol, destinationChain, feeAmount] = args;
     const Token = contracts[symbol.toUpperCase()];
     const feeUnitAmount = getUnitAmount(feeAmount);
+
+    checkTrustedAddresses(ITS.trustedAddresses, destinationChain);
 
     const txBuilder = new TxBuilder(client);
 
     const tx = txBuilder.tx;
     const gas = tx.splitCoins(tx.gas, [feeUnitAmount]);
-
-    checkTrustedAddresses(ITS.trustedAddresses, destinationChain, destinationITSAddress);
 
     const TokenId = await txBuilder.moveCall({
         target: `${ITS.address}::token_id::from_u256`,
@@ -127,7 +126,7 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
     const { ITS } = contracts;
     const [sourceChain, messageId, sourceAddress, tokenSymbol, payload] = args;
 
-    checkTrustedAddresses(ITS.trustedAddresses, sourceChain, sourceAddress);
+    checkTrustedAddresses(ITS.trustedAddresses, sourceChain);
 
     // Prepare Object Ids
     const symbol = tokenSymbol.toUpperCase();
@@ -353,9 +352,9 @@ if (require.main === module) {
     const sendTokenDeploymentProgram = new Command()
         .name('send-deployment')
         .description('Send token deployment from Sui to other chain.')
-        .command('send-deployment <symbol> <destination-chain> <destination-address> <fee>')
-        .action((symbol, destinationChain, destinationITSAddress, fee, options) => {
-            mainProcessor(sendDeployment, options, [symbol, destinationChain, destinationITSAddress, fee], processCommand);
+        .command('send-deployment <symbol> <destination-chain> <fee>')
+        .action((symbol, destinationChain, fee, options) => {
+            mainProcessor(sendDeployment, options, [symbol, destinationChain, fee], processCommand);
         });
 
     // The token must be deployed on sui first before executing receive deployment command
