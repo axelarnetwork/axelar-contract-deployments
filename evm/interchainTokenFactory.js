@@ -156,15 +156,14 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
-            isValidDestinationChain(config, destinationChain);
+            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            }
 
-            const tx = await interchainTokenFactory.deployRemoteInterchainToken(
-                deploymentSalt,
-                minter,
-                destinationChain,
-                gasValue,
-                { value: gasValue, ...gasOptions },
-            );
+            const tx = await interchainTokenFactory.deployRemoteInterchainToken(deploymentSalt, minter, destinationChain, gasValue, {
+                value: gasValue,
+                ...gasOptions,
+            });
             const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('tokenId', tokenId);
 
