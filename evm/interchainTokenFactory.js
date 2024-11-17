@@ -5,6 +5,7 @@ const {
     getDefaultProvider,
     Contract,
     constants: { AddressZero },
+    BigNumber,
 } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
@@ -62,7 +63,10 @@ async function processCommand(config, chain, options) {
             validateParameters({ isValidAddress: { deployer } });
 
             const interchainTokenDeploySalt = await interchainTokenFactory.interchainTokenDeploySalt(deployer, deploymentSalt);
-            printInfo(`interchainTokenDeploySalt for deployer ${deployer} and deployment salt: ${deploymentSalt}`, interchainTokenDeploySalt);
+            printInfo(
+                `interchainTokenDeploySalt for deployer ${deployer} and deployment salt: ${deploymentSalt}`,
+                interchainTokenDeploySalt,
+            );
 
             break;
         }
@@ -132,7 +136,7 @@ async function processCommand(config, chain, options) {
                 name,
                 symbol,
                 decimals,
-                parseInt(initialSupply * 10 ** decimals),
+                BigNumber.from(10).pow(decimals).mul(parseInt(initialSupply)),
                 minter,
                 gasOptions,
             );
