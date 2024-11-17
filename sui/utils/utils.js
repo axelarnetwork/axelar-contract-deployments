@@ -262,10 +262,10 @@ const parseGatewayInfo = (chain) => {
     };
 };
 
-const checkTrustedAddresses = (trustedAddresses, destinationChain, destinationAddress) => {
-    if (!trustedAddresses[destinationChain] || !trustedAddresses[destinationChain].includes(destinationAddress)) {
+const checkTrustedAddresses = (trustedAddresses, destinationChain) => {
+    if (!trustedAddresses[destinationChain]) {
         throw new Error(
-            `Destination address ${destinationAddress} is not trusted on ${destinationChain}. Check if the given adress is trusted on ${destinationChain} or set trusted address with 'node sui/its-example.js setup-trusted-address <destination-chain> <destination-address>'`,
+            `${destinationChain} is not trusted. Run 'node sui/its-example.js setup-trusted-address <destination-chain> <destination-address>' to setup trusted address`,
         );
     }
 };
