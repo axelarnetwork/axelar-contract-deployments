@@ -233,7 +233,7 @@ async function deployAll(config, wallet, chain, options) {
                     deployMethod,
                     wallet,
                     getContractJSON('TokenHandler', artifactPath),
-                    [contracts.AxelarGateway.address],
+                    [],
                     deployOptions,
                     gasOptions,
                     verifyOptions,
