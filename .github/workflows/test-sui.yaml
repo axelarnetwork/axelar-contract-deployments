@@ -228,7 +228,7 @@ jobs:
 
       - name: Send Token Deployment to another chain
         run: |
-          node sui/its-example send-deployment $symbol $sourceChain $sourceAddress 0.1 10
+          node sui/its-example send-deployment $symbol $sourceChain 0.1 10
 
       - name: Receive Token Deployment from another chain
         run: |
