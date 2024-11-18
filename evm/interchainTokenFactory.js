@@ -5,6 +5,7 @@ const {
     getDefaultProvider,
     Contract,
     constants: { AddressZero },
+    BigNumber,
 } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
@@ -54,26 +55,29 @@ async function processCommand(config, chain, options) {
             break;
         }
 
-        case 'interchainTokenSalt': {
-            const { chainNameHash, deployer } = options;
+        case 'interchainTokenDeploySalt': {
+            const { deployer } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            validateParameters({ isValidAddress: { deployer }, isKeccak256Hash: { chainNameHash } });
+            validateParameters({ isValidAddress: { deployer } });
 
-            const interchainTokenSalt = await interchainTokenFactory.interchainTokenSalt(chainNameHash, deployer, deploymentSalt);
-            printInfo(`interchainTokenSalt for deployer ${deployer} and deployment salt: ${deploymentSalt}`, interchainTokenSalt);
+            const interchainTokenDeploySalt = await interchainTokenFactory.interchainTokenDeploySalt(deployer, deploymentSalt);
+            printInfo(
+                `interchainTokenDeploySalt for deployer ${deployer} and deployment salt: ${deploymentSalt}`,
+                interchainTokenDeploySalt,
+            );
 
             break;
         }
 
-        case 'canonicalInterchainTokenSalt': {
-            const { chainNameHash, tokenAddress } = options;
+        case 'canonicalinterchainTokenDeploySalt': {
+            const { tokenAddress } = options;
 
-            validateParameters({ isValidAddress: { tokenAddress }, isKeccak256Hash: { chainNameHash } });
+            validateParameters({ isValidAddress: { tokenAddress } });
 
-            const canonicalInterchainTokenSalt = await interchainTokenFactory.canonicalInterchainTokenSalt(chainNameHash, tokenAddress);
-            printInfo(`canonicalInterchainTokenSalt for token address: ${tokenAddress}`, canonicalInterchainTokenSalt);
+            const canonicalinterchainTokenDeploySalt = await interchainTokenFactory.canonicalinterchainTokenDeploySalt(tokenAddress);
+            printInfo(`canonicalinterchainTokenDeploySalt for token address: ${tokenAddress}`, canonicalinterchainTokenDeploySalt);
 
             break;
         }
@@ -132,7 +136,7 @@ async function processCommand(config, chain, options) {
                 name,
                 symbol,
                 decimals,
-                parseInt(initialSupply * 10 ** decimals),
+                BigNumber.from(10).pow(decimals).mul(parseInt(initialSupply)),
                 minter,
                 gasOptions,
             );
@@ -146,26 +150,29 @@ async function processCommand(config, chain, options) {
         }
 
         case 'deployRemoteInterchainToken': {
-            const { originalChain, minter, destinationChain, gasValue } = options;
+            const { minter, destinationChain, gasValue } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
-                isString: { originalChain },
                 isNonEmptyString: { destinationChain },
                 isAddress: { minter },
                 isValidNumber: { gasValue },
             });
 
-            isValidDestinationChain(config, destinationChain);
+            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            }
 
-            const tx = await interchainTokenFactory.deployRemoteInterchainToken(
-                originalChain,
+            const tx = await interchainTokenFactory['deployRemoteInterchainToken(bytes32,address,string,uint256)'](
                 deploymentSalt,
                 minter,
                 destinationChain,
                 gasValue,
-                { value: gasValue, ...gasOptions },
+                {
+                    value: gasValue,
+                    ...gasOptions,
+                },
             );
             const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('tokenId', tokenId);
@@ -239,8 +246,8 @@ if (require.main === module) {
         new Option('--action <action>', 'interchain token factory action')
             .choices([
                 'contractId',
-                'interchainTokenSalt',
-                'canonicalInterchainTokenSalt',
+                'interchainTokenDeploySalt',
+                'canonicalinterchainTokenDeploySalt',
                 'interchainTokenId',
                 'canonicalInterchainTokenId',
                 'interchainTokenAddress',
@@ -254,7 +261,6 @@ if (require.main === module) {
 
     program.addOption(new Option('--tokenId <tokenId>', 'ID of the token'));
     program.addOption(new Option('--sender <sender>', 'TokenManager deployer address'));
-    program.addOption(new Option('--chainNameHash <chainNameHash>', 'chain name hash'));
     program.addOption(new Option('--deployer <deployer>', 'deployer address'));
     program.addOption(new Option('--tokenAddress <tokenAddress>', 'token address'));
     program.addOption(new Option('--name <name>', 'token name'));
@@ -262,7 +268,6 @@ if (require.main === module) {
     program.addOption(new Option('--decimals <decimals>', 'token decimals'));
     program.addOption(new Option('--minter <minter>', 'token minter').default(AddressZero));
     program.addOption(new Option('--initialSupply <initialSupply>', 'initial supply').default(1e9));
-    program.addOption(new Option('--originalChain <originalChain>', 'original chain').default(''));
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
     program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
