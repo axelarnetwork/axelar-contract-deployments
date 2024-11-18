@@ -144,10 +144,12 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
 
     const contractLabel = getLabel(options);
 
+    console.log(contractConfig, 'the code id');
+
     const { contractAddress } = instantiate2
         ? await client.instantiate2(
               account.address,
-              contractConfig.codeId,
+              626, //   contractConfig.codeId,
               getSalt(salt, contractName, chainName),
               initMsg,
               contractLabel,
@@ -299,17 +301,16 @@ const makeVotingVerifierInstantiateMsg = (
     if (!isString(addressFormat)) {
         throw new Error(`Missing or invalid VotingVerifier[${axelarId}].addressFormat in axelar info`);
     }
-
     return {
-        service_registry_address: serviceRegistryAddress,
-        rewards_address: rewardsAddress,
         governance_address: governanceAddress,
+        service_registry_address: serviceRegistryAddress,
         service_name: serviceName,
         source_gateway_address: sourceGatewayAddress,
         voting_threshold: votingThreshold,
         block_expiry: toBigNumberString(blockExpiry),
         confirmation_height: confirmationHeight,
         source_chain: axelarId,
+        rewards_address: rewardsAddress,
         msg_id_format: msgIdFormat,
         address_format: addressFormat,
     };
@@ -589,6 +590,7 @@ const fetchCodeIdFromCodeHash = async (client, contractBaseConfig) => {
     }
 
     const codes = await client.getCodes(); // TODO: create custom function to retrieve codes more efficiently and with pagination
+    console.log(codes, 'the codes');
     let codeId;
 
     // most likely to be near the end, so we iterate backwards. We also get the latest if there are multiple

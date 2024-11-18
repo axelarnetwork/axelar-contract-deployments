@@ -39,6 +39,7 @@ const AxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/
 async function getSetupParams(config, chain, operator, options) {
     const { signers: signerSets, verifierSetId } = await getWeightedSigners(config, chain, options);
     printInfo('Setup params', JSON.stringify([operator, signerSets], null, 2));
+    console.log(signerSets, 'the signers')
     return { params: defaultAbiCoder.encode([`address`, `${WEIGHTED_SIGNERS_TYPE}[]`], [operator, signerSets]), verifierSetId };
 }
 
@@ -81,7 +82,7 @@ async function deploy(config, chain, options) {
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     const gatewayFactory = new ContractFactory(AxelarAmplifierGateway.abi, AxelarAmplifierGateway.bytecode, wallet);
-    const { deployerContract, salt } = getDeployOptions(options.deployMethod, options.salt || 'AxelarAmplifierGateway', chain);
+    const { deployerContract, salt } = getDeployOptions(options.deployMethod, options.salt || 'AxelarAmplifierGatewayNewer', chain);
 
     let gateway;
     let proxyAddress;
