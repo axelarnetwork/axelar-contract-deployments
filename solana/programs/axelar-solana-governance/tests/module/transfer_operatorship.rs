@@ -1,6 +1,6 @@
-use governance::events::GovernanceEvent;
-use governance::instructions::builder::IxBuilder;
-use governance::state::GovernanceConfig;
+use axelar_solana_governance::events::GovernanceEvent;
+use axelar_solana_governance::instructions::builder::IxBuilder;
+use axelar_solana_governance::state::GovernanceConfig;
 use rkyv::Deserialize;
 use solana_program_test::tokio;
 use solana_sdk::pubkey::Pubkey;
@@ -11,7 +11,8 @@ use test_fixtures::test_setup::TestFixture;
 
 use crate::fixtures::operator_keypair;
 use crate::helpers::{
-    approve_ix_at_gateway, assert_msg_present_in_logs, default_proposal_eta, events, gmp_sample_metadata, init_contract_with_operator, program_test, setup_programs
+    approve_ix_at_gateway, assert_msg_present_in_logs, default_proposal_eta, events,
+    gmp_sample_metadata, init_contract_with_operator, program_test, setup_programs,
 };
 
 #[tokio::test]
@@ -54,7 +55,7 @@ async fn test_operator_transfer_can_happen_being_operator_signer() {
         .unwrap()
         .unwrap();
     let config = config
-        .check_rkyv_initialized_pda::<GovernanceConfig>(&governance::id())
+        .check_rkyv_initialized_pda::<GovernanceConfig>(&axelar_solana_governance::id())
         .unwrap();
     assert_eq!(new_operator.to_bytes(), config.operator);
 
@@ -141,7 +142,10 @@ async fn test_can_change_operator_via_gmp_proposal() {
     assert!(res.result.is_ok());
 
     // Move time forward to the proposal ETA
-    sol_integration.fixture.set_time(default_proposal_eta() as i64).await;
+    sol_integration
+        .fixture
+        .set_time(default_proposal_eta() as i64)
+        .await;
 
     // Send the proposal execution instruction
 
@@ -153,14 +157,15 @@ async fn test_can_change_operator_via_gmp_proposal() {
     assert!(res.result.is_ok());
 
     // Check the new operator was properly set
-    let config = sol_integration.fixture
+    let config = sol_integration
+        .fixture
         .banks_client
         .get_account(config_pda)
         .await
         .unwrap()
         .unwrap();
     let config = config
-        .check_rkyv_initialized_pda::<GovernanceConfig>(&governance::id())
+        .check_rkyv_initialized_pda::<GovernanceConfig>(&axelar_solana_governance::id())
         .unwrap();
     assert_eq!(new_operator.to_bytes(), config.operator);
 }

@@ -1,5 +1,5 @@
-use governance::events::GovernanceEvent;
-use governance::instructions::builder::{IxBuilder, ProposalRelated};
+use axelar_solana_governance::events::GovernanceEvent;
+use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
 use rkyv::Deserialize;
 use solana_program_test::tokio;
 use solana_sdk::instruction::AccountMeta;

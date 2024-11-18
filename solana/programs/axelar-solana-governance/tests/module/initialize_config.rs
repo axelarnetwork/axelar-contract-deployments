@@ -1,5 +1,5 @@
-use governance::instructions::builder::IxBuilder;
-use governance::state::GovernanceConfig;
+use axelar_solana_governance::instructions::builder::IxBuilder;
+use axelar_solana_governance::state::GovernanceConfig;
 use solana_program_test::tokio;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
@@ -14,7 +14,7 @@ async fn test_successfully_initialize_config() {
     let mut fixture = TestFixture::new(program_test()).await;
     let (config_pda, bump) = GovernanceConfig::pda();
 
-    let config = governance::state::GovernanceConfig::new(
+    let config = axelar_solana_governance::state::GovernanceConfig::new(
         bump,
         [0_u8; 32],
         [0_u8; 32],
@@ -31,7 +31,10 @@ async fn test_successfully_initialize_config() {
     // Assert
     assert!(res.result.is_ok());
     let root_pda_data = fixture
-        .get_rkyv_account::<governance::state::GovernanceConfig>(&config_pda, &governance::ID)
+        .get_rkyv_account::<axelar_solana_governance::state::GovernanceConfig>(
+            &config_pda,
+            &axelar_solana_governance::ID,
+        )
         .await;
     assert_eq!(&config, &root_pda_data);
 }

@@ -1,6 +1,6 @@
-use governance::events::GovernanceEvent;
-use governance::instructions::builder::{IxBuilder, ProposalRelated};
-use governance::state::proposal::ExecutableProposal;
+use axelar_solana_governance::events::GovernanceEvent;
+use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
+use axelar_solana_governance::state::proposal::ExecutableProposal;
 use rkyv::Deserialize;
 use solana_program_test::tokio;
 use solana_sdk::signature::Signer;
@@ -31,9 +31,9 @@ async fn test_successfully_process_gmp_schedule_time_proposal() {
     // Assert account with correct proposal data was created
     let got_proposal = sol_integration
         .fixture
-        .get_rkyv_account::<governance::state::proposal::ExecutableProposal>(
+        .get_rkyv_account::<axelar_solana_governance::state::proposal::ExecutableProposal>(
             &ix_builder.proposal_pda(),
-            &governance::ID,
+            &axelar_solana_governance::ID,
         )
         .await;
 
@@ -89,9 +89,9 @@ async fn test_time_lock_default_is_enforced() {
 
     let got_proposal = sol_integration
         .fixture
-        .get_rkyv_account::<governance::state::proposal::ExecutableProposal>(
+        .get_rkyv_account::<axelar_solana_governance::state::proposal::ExecutableProposal>(
             &ix_builder.proposal_pda(),
-            &governance::ID,
+            &axelar_solana_governance::ID,
         )
         .await;
 

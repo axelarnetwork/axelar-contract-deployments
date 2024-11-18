@@ -1,10 +1,9 @@
-use governance::events::GovernanceEvent;
-use governance::instructions::builder::{IxBuilder, ProposalRelated};
-use rkyv::Deserialize;
+use axelar_solana_governance::{events::GovernanceEvent, instructions::builder::{IxBuilder, ProposalRelated}};
 use solana_program_test::tokio;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::native_token::LAMPORTS_PER_SOL;
 use solana_sdk::signature::Signer;
+use rkyv::Deserialize;
 
 use crate::helpers::{
     approve_ix_at_gateway, assert_msg_present_in_logs, default_proposal_eta, events,

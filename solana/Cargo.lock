@@ -797,6 +797,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "axelar-solana-governance"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "axelar-executable",
+ "axelar-rkyv-encoding",
+ "axelar-solana-memo-program",
+ "base64 0.21.7",
+ "borsh 1.5.1",
+ "ethers",
+ "gmp-gateway",
+ "governance-gmp",
+ "program-utils",
+ "rkyv",
+ "solana-logger",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "test-fixtures",
+ "uuid 1.11.0",
+]
+
+[[package]]
 name = "axelar-solana-its"
 version = "0.1.0"
 dependencies = [
@@ -3795,30 +3819,6 @@ dependencies = [
  "log",
  "plain",
  "scroll",
-]
-
-[[package]]
-name = "governance"
-version = "0.1.0"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "axelar-executable",
- "axelar-rkyv-encoding",
- "axelar-solana-memo-program",
- "base64 0.21.7",
- "borsh 1.5.1",
- "ethers",
- "gmp-gateway",
- "governance-gmp",
- "program-utils",
- "rkyv",
- "solana-logger",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "test-fixtures",
- "uuid 1.11.0",
 ]
 
 [[package]]

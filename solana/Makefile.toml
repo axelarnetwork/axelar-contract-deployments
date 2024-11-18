@@ -99,7 +99,7 @@ script = """
 cargo test-sbf --package gas-service
 cargo test-sbf --package gmp-gateway
 cargo test-sbf --package axelar-solana-gateway
-cargo test-sbf --package governance
+cargo test-sbf --package axelar-solana-governance
 cargo test-sbf --package axelar-solana-memo-program
 cargo test-sbf --package axelar-solana-multicall
 cargo test-sbf --package axelar-solana-its

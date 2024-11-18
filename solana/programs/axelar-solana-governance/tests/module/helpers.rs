@@ -3,12 +3,12 @@ use std::time::SystemTime;
 use axelar_executable::axelar_message_primitives::DestinationProgramId;
 use axelar_executable::AxelarCallableInstruction;
 use axelar_rkyv_encoding::types::{CrossChainId, GmpMetadata, Message};
+use axelar_solana_governance::events::{EventContainer, GovernanceEvent};
+use axelar_solana_governance::instructions::builder::{self, IxBuilder};
+use axelar_solana_governance::state::GovernanceConfig;
 use axelar_solana_memo_program::instruction::AxelarMemoInstruction;
 use borsh::{to_vec, BorshSerialize};
 use gateway::hasher_impl;
-use governance::events::{EventContainer, GovernanceEvent};
-use governance::instructions::builder::{self, IxBuilder};
-use governance::state::GovernanceConfig;
 use solana_program_test::{processor, BanksTransactionResultWithMetadata, ProgramTest};
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::program_error::ProgramError;
@@ -61,9 +61,9 @@ pub(crate) async fn setup_programs() -> (SolanaAxelarIntegrationMetadata, Pubkey
 
 pub(crate) fn program_test() -> ProgramTest {
     ProgramTest::new(
-        "governance",
-        governance::id(),
-        processor!(governance::processor::Processor::process_instruction),
+        "axelar_solana_governance",
+        axelar_solana_governance::id(),
+        processor!(axelar_solana_governance::processor::Processor::process_instruction),
     )
 }
 
@@ -73,7 +73,7 @@ pub(crate) async fn init_contract_with_operator(
 ) -> Result<(Pubkey, u8), ProgramError> {
     let (config_pda, bump) = GovernanceConfig::pda();
 
-    let config = governance::state::GovernanceConfig::new(
+    let config = axelar_solana_governance::state::GovernanceConfig::new(
         bump,
         SOURCE_CHAIN_NAME_KECCAK_HASH,
         SOURCE_CHAIN_ADDRESS_KECCAK_HASH,
@@ -104,14 +104,14 @@ pub(crate) fn gmp_sample_metadata() -> GmpMetadata {
             uuid::Uuid::new_v4().to_string(),
         ),
         source_address: SOURCE_CHAIN_ADDRESS.to_string(),
-        destination_address: governance::ID.to_string(),
+        destination_address: axelar_solana_governance::ID.to_string(),
         destination_chain: "solana".to_string(),
         domain_separator: [0_u8; 32],
     }
 }
 
 pub(crate) fn ix_builder_with_sample_proposal_data(
-) -> IxBuilder<governance::instructions::builder::ProposalRelated> {
+) -> IxBuilder<axelar_solana_governance::instructions::builder::ProposalRelated> {
     IxBuilder::new().with_proposal_data(
         Pubkey::new_from_array(fixtures::PROPOSAL_TARGET_ADDRESS),
         1,
@@ -132,7 +132,7 @@ pub(crate) fn ix_builder_with_memo_proposal_data(
     solana_accounts: &[AccountMeta],
     native_value: u64,
     native_target_value_account: Option<AccountMeta>,
-) -> IxBuilder<governance::instructions::builder::ProposalRelated> {
+) -> IxBuilder<axelar_solana_governance::instructions::builder::ProposalRelated> {
     let memo_instruction = AxelarCallableInstruction::Native(
         to_vec(&AxelarMemoInstruction::SendToGateway {
             memo: "\u{1f42a}\u{1f42a}\u{1f42a}\u{1f42a}".to_string(),
@@ -164,7 +164,7 @@ pub(crate) fn gmp_memo_metadata() -> GmpMetadata {
             uuid::Uuid::new_v4().to_string(),
         ),
         source_address: SOURCE_CHAIN_ADDRESS.to_string(),
-        destination_address: governance::ID.to_string(),
+        destination_address: axelar_solana_governance::ID.to_string(),
         destination_chain: "solana".to_string(),
         domain_separator: [0_u8; 32],
     }
@@ -200,7 +200,7 @@ pub(crate) async fn approve_ix_at_gateway(
 ) {
     let ((gateway_approved_message_pda, _, _), cmd_id) =
         approve_ix_data_at_gateway(meta, ix, sol_integration).await;
-    let signing_pda = DestinationProgramId(governance::id());
+    let signing_pda = DestinationProgramId(axelar_solana_governance::id());
     builder::prepend_gateway_accounts_to_ix(
         ix,
         sol_integration.gateway_root_pda,
