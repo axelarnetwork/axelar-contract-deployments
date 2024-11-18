@@ -64,10 +64,14 @@ function getWallet(chain, options) {
         }
     }
 
-    const url = chain.rpc || getFullnodeUrl(chain.networkType);
-    const client = new SuiClient({ url });
+    const client = getSuiClient(chain);
 
     return [keypair, client];
+}
+
+function getSuiClient(chain) {
+    const url = chain.rpc || getFullnodeUrl(chain.networkType);
+    return new SuiClient({ url });
 }
 
 async function printWalletInfo(wallet, client, chain, options) {
@@ -268,4 +272,5 @@ module.exports = {
     signTransactionBlockBytes,
     broadcastFromTxBuilder,
     broadcastExecuteApprovedMessage,
+    getSuiClient,
 };
