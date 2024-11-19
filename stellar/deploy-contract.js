@@ -106,7 +106,7 @@ async function deploy(options, config, chain, contractName) {
             `${rpc}`,
             '--network-passphrase',
             `${networkPassphrase}`,
-            '--',
+            '--', // constructor arguments are passed here
         ].concat(
             Object.entries(serializedArgs)
                 .map(([key, value]) => churn(key, value))
