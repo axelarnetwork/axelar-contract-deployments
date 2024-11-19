@@ -1,10 +1,10 @@
 'use strict';
 
-const { Contract, Address, nativeToScVal, scValToNative } = require('@stellar/stellar-sdk');
+const { Address, nativeToScVal, scValToNative } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { stellarCmd, getNetworkPassphrase, getWallet, broadcast, serializeValue, addBaseOptions } = require('./utils');
+const { stellarCmd, getNetworkPassphrase, getWallet, serializeValue, addBaseOptions } = require('./utils');
 const { getDomainSeparator, getChainConfig } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
@@ -40,37 +40,27 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             return {
                 owner,
                 operator,
-                domainSeparator,
-                minimumRotationDelay,
-                previousSignersRetention,
-                initialSigners,
+                domain_separator: domainSeparator,
+                minimum_rotation_delay: minimumRotationDelay,
+                previous_signers_retention: previousSignersRetention,
+                initial_signers: initialSigners,
             };
         }
 
         case 'interchain_token_service':
             return { owner };
-
         case 'axelar_operators':
-            return { operator };
-
+            return { owner };
         case 'axelar_gas_service': {
             const operatorsAddress = chain?.contracts?.axelar_operators?.address;
             const gasCollector = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
 
-            return { gasCollector };
+            return { gas_collector: gasCollector };
         }
-
         default:
             throw new Error(`Unknown contract: ${contractName}`);
     }
 }
-
-const initializeFuncNames = {
-    axelar_gateway: 'initialize',
-    axelar_operators: 'initialize',
-    axelar_gas_service: 'initialize_gas_service',
-    interchain_token_service: 'initialize_its',
-};
 
 async function deploy(options, config, chain, contractName) {
     const { privateKey, wasmPath, yes } = options;
@@ -81,25 +71,10 @@ async function deploy(options, config, chain, contractName) {
     if (prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
         return;
     }
-
-    const params = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
-    const cmd = `${stellarCmd} contract deploy --wasm ${wasmPath} ${params}`;
-
     let contractAddress = options.address;
 
-    if (!contractAddress) {
-        contractAddress = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
-        printInfo('Contract deployed successfully!', contractAddress);
-    } else {
-        printInfo('Using existing contract', contractAddress);
-    }
-
-    chain.contracts[contractName] = {
-        address: contractAddress,
-        deployer: wallet.publicKey(),
-    };
-
-    if (!options.initialize) {
+    if (contractAddress) {
+        printInfo('Contract already exists', contractAddress);
         return;
     }
 
@@ -107,14 +82,44 @@ async function deploy(options, config, chain, contractName) {
     const serializedArgs = Object.fromEntries(
         Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),
     );
-    chain.contracts[contractName].initializeArgs = serializedArgs;
-
-    const contract = new Contract(contractAddress);
-    const operation = contract.call(initializeFuncNames[contractName], ...Object.values(initializeArgs));
 
     printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
-    await broadcast(operation, wallet, chain, 'Initialized contract', options);
+    // construct arguments in this way to avoid encoding issues when passing arguments to the stellar CLI
+    function churn(key, value) {
+        if (typeof value === 'object') {
+            return [`--${key}`, JSON.stringify(value)];
+        } else {
+            return [`--${key}`, value];
+        }
+    }
+    const child = spawnSync(
+        stellarCmd,
+        [
+            'contract',
+            'deploy',
+            '--source',
+            `${privateKey}`,
+            '--wasm',
+            `${wasmPath}`,
+            '--rpc-url',
+            `${rpc}`,
+            '--network-passphrase',
+            `${networkPassphrase}`,
+            '--',
+        ].concat(
+            Object.entries(serializedArgs)
+                .map(([key, value]) => churn(key, value))
+                .flat(1),
+        ),
+    );
+    contractAddress = String(child.stdout);
+    printInfo('Contract deployed successfully!', contractAddress);
+
+    chain.contracts[contractName] = {
+        address: contractAddress,
+        deployer: wallet.publicKey(),
+    };
 }
 
 async function upgrade(options, _, chain, contractName) {
@@ -168,7 +173,6 @@ function main() {
         .argument('<contract-name>', 'contract name to deploy')
         .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file').makeOptionMandatory(true))
         .addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'))
-        .addOption(new Option('--initialize', 'initialize the contract'))
         .addOption(new Option('--domain-separator <domainSeparator>', 'domain separator (keccak256 hash or "offline")').default('offline'))
         .addOption(
             new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention')
