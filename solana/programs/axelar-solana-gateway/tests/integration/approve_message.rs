@@ -1,10 +1,12 @@
-use axelar_rkyv_encoding::hasher::merkle_trait::Merkle;
-use axelar_rkyv_encoding::hasher::merkle_tree::{SolanaSyscallHasher};
-use axelar_rkyv_encoding::types::{Payload, PayloadElement};
+use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, MerkleisedPayload};
+use axelar_solana_encoding::types::messages::{Messages};
+use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_gateway::events::{ArchivedGatewayEvent, MessageApproved};
+use axelar_solana_gateway::get_incoming_message_pda;
 use axelar_solana_gateway::instructions::approve_messages;
-use axelar_solana_gateway::state::incoming_message::{IncomingMessage, IncomingMessageWrapper};
-use axelar_solana_gateway::{get_incoming_message_pda, hasher_impl};
+use axelar_solana_gateway::state::incoming_message::{
+    command_id, IncomingMessage, IncomingMessageWrapper,
+};
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, make_messages, make_verifier_set,
 };
@@ -23,38 +25,37 @@ async fn successfully_approves_messages() {
         .setup()
         .await;
     let message_count = 10;
-    let messages = make_messages(message_count, metadata.domain_separator);
-    let payload = Payload::new_messages(messages.clone());
-    let payload_merkle_root =
-        <Payload as Merkle<SolanaSyscallHasher>>::calculate_merkle_root(&payload).unwrap();
+    let messages = make_messages(message_count);
+    let payload = Payload::Messages(Messages(messages.clone()));
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
     let verification_session_pda = metadata
-        .init_payload_session_and_sign(&metadata.signers.clone(), payload_merkle_root)
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap();
-    let payload_leaves = <Payload as Merkle<SolanaSyscallHasher>>::merkle_leaves(&payload);
-    let proofs = <Payload as Merkle<SolanaSyscallHasher>>::merkle_proofs(&payload);
     let mut counter = 0;
-    for (leave, proof) in payload_leaves.zip_eq(proofs) {
-        let PayloadElement::Message(message) = leave.element else {
-            panic!("invalid message type");
-        };
-        let payload_hash = message.message.payload_hash;
-        let command_id = message.message.cc_id().command_id(hasher_impl());
+    let MerkleisedPayload::NewMessages { messages } = execute_data.payload_items else {
+        unreachable!()
+    };
+    for message_info in messages {
+        let payload_hash = message_info.leaf.message.payload_hash;
+        let command_id = command_id(
+            &message_info.leaf.message.cc_id.chain,
+            &message_info.leaf.message.cc_id.id,
+        );
         let (incoming_message_pda, incoming_message_pda_bump) =
             get_incoming_message_pda(&command_id);
 
         let expected_event = MessageApproved {
             command_id,
-            source_chain: message.message.cc_id().chain().into(),
-            message_id: message.message.cc_id().id().into(),
-            source_address: message.message.source_address.clone(),
-            destination_address: message.message.destination_address.clone(),
+            source_chain: message_info.leaf.message.cc_id.chain.clone(),
+            message_id: message_info.leaf.message.cc_id.id.clone(),
+            source_address: message_info.leaf.message.source_address.clone(),
+            destination_address: message_info.leaf.message.destination_address.clone(),
             payload_hash,
         };
         let ix = approve_messages(
-            message,
-            &proof,
-            payload_merkle_root,
+            message_info,
+            execute_data.payload_merkle_root,
             metadata.gateway_root_pda,
             metadata.payer.pubkey(),
             verification_session_pda,
@@ -95,9 +96,9 @@ async fn successfully_idempotent_approvals_across_batches() {
         .setup()
         .await;
 
-    let messages_batch_one = make_messages(2, metadata.domain_separator);
+    let messages_batch_one = make_messages(2);
     let messages_batch_two = {
-        let mut new_messages = make_messages(3, metadata.domain_separator);
+        let mut new_messages = make_messages(3);
         new_messages.extend_from_slice(&messages_batch_one);
         new_messages
     };
@@ -109,32 +110,27 @@ async fn successfully_idempotent_approvals_across_batches() {
         .unwrap();
 
     // approve the second message batch
-    let payload = Payload::new_messages(messages_batch_two.to_vec());
-    let payload_merkle_root =
-        <Payload as Merkle<SolanaSyscallHasher>>::calculate_merkle_root(&payload).unwrap();
-    let payload_leaves = <Payload as Merkle<SolanaSyscallHasher>>::merkle_leaves(&payload);
-    let proofs = <Payload as Merkle<SolanaSyscallHasher>>::merkle_proofs(&payload);
+    let payload = Payload::Messages(Messages(messages_batch_two.clone()));
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
     let verification_session_pda = metadata
-        .init_payload_session_and_sign(&metadata.signers.clone(), payload_merkle_root)
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap();
+    let MerkleisedPayload::NewMessages { messages } = execute_data.payload_items else {
+        unreachable!()
+    };
     let mut events_counter = 0;
     let mut message_counter = 0;
-    for (message_leaf_node, message_proof) in payload_leaves.zip(proofs) {
+    for message_info in messages {
         let tx_result = metadata
             .approve_message(
-                payload_merkle_root,
-                message_leaf_node.clone(),
-                message_proof,
+                execute_data.payload_merkle_root,
+                message_info.clone(),
                 verification_session_pda,
             )
             .await
             .unwrap();
         message_counter += 1;
-
-        let PayloadElement::Message(message) = message_leaf_node.element else {
-            panic!("invalid message type");
-        };
 
         if let Some(emitted_event) = get_gateway_events(&tx_result).pop() {
             if let ArchivedGatewayEvent::MessageApproved(_) = emitted_event.parse() {
@@ -145,8 +141,11 @@ async fn successfully_idempotent_approvals_across_batches() {
         };
 
         // Assert PDA state for message approval
-        let payload_hash = message.message.payload_hash;
-        let command_id = message.message.cc_id().command_id(hasher_impl());
+        let payload_hash = message_info.leaf.message.payload_hash;
+        let command_id = command_id(
+            &message_info.leaf.message.cc_id.chain,
+            &message_info.leaf.message.cc_id.id,
+        );
         let (incoming_message_pda, incoming_message_pda_bump) =
             get_incoming_message_pda(&command_id);
 
@@ -182,33 +181,27 @@ async fn successfully_idempotent_approvals_many_times_same_batch() {
         .setup()
         .await;
 
-    let messages_batch_one = make_messages(2, metadata.domain_separator);
+    let messages = make_messages(2);
 
     // approve the batch
-    metadata
-        .sign_session_and_approve_messages(&metadata.signers.clone(), &messages_batch_one)
+    let payload = Payload::Messages(Messages(messages.clone()));
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
+    let verification_session_pda = metadata
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap();
 
     // approve the batch many times
     for _ in 0..3 {
-        let payload = Payload::new_messages(messages_batch_one.to_vec());
-        let payload_merkle_root =
-            <Payload as Merkle<SolanaSyscallHasher>>::calculate_merkle_root(&payload).unwrap();
-        let payload_leaves = <Payload as Merkle<SolanaSyscallHasher>>::merkle_leaves(&payload);
-        let proofs = <Payload as Merkle<SolanaSyscallHasher>>::merkle_proofs(&payload);
+        let MerkleisedPayload::NewMessages { messages } = execute_data.payload_items.clone() else {
+            unreachable!()
+        };
 
-        let (verification_session_pda, _bump) =
-            axelar_solana_gateway::get_signature_verification_pda(
-                &metadata.gateway_root_pda,
-                &payload_merkle_root,
-            );
-        for (message_leaf_node, message_proof) in payload_leaves.zip(proofs) {
+        for message_info in messages {
             metadata
                 .approve_message(
-                    payload_merkle_root,
-                    message_leaf_node.clone(),
-                    message_proof,
+                    execute_data.payload_merkle_root,
+                    message_info.clone(),
                     verification_session_pda,
                 )
                 .await
@@ -228,25 +221,40 @@ async fn fails_to_approve_message_not_in_payload() {
         .await;
 
     // Create a payload with a batch of messages
-    let payload = Payload::new_messages(make_messages(2, metadata.domain_separator));
-    let payload_merkle_root =
-        <Payload as Merkle<SolanaSyscallHasher>>::calculate_merkle_root(&payload).unwrap();
+    let payload = Payload::Messages(Messages(make_messages(2)));
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
+    let MerkleisedPayload::NewMessages {
+        messages: approved_messages,
+    } = execute_data.payload_items.clone()
+    else {
+        unreachable!();
+    };
+    let payload_merkle_root = execute_data.payload_merkle_root;
 
     // Initialize and sign the payload session
     let verification_session_pda = metadata
-        .init_payload_session_and_sign(&metadata.signers.clone(), payload_merkle_root)
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap();
 
     // Create a fake message that is not part of the payload
-    let fake_payload = Payload::new_messages(make_messages(1, metadata.domain_separator));
-    let fake_payload_merkle_root =
-        <Payload as Merkle<SolanaSyscallHasher>>::calculate_merkle_root(&fake_payload).unwrap();
+    let fake_payload = Payload::Messages(Messages(make_messages(1)));
+    let fake_execute_data =
+        metadata.construct_execute_data(&metadata.signers.clone(), fake_payload);
+    let MerkleisedPayload::NewMessages {
+        messages: fake_messages,
+    } = fake_execute_data.payload_items
+    else {
+        unreachable!();
+    };
+    let fake_payload_merkle_root = fake_execute_data.payload_merkle_root;
 
-    let fake_leaves = || <Payload as Merkle<SolanaSyscallHasher>>::merkle_leaves(&fake_payload);
-    let fake_proofs = || <Payload as Merkle<SolanaSyscallHasher>>::merkle_proofs(&fake_payload);
-    let valid_leaves = || <Payload as Merkle<SolanaSyscallHasher>>::merkle_leaves(&payload);
-    let valid_proofs = || <Payload as Merkle<SolanaSyscallHasher>>::merkle_proofs(&payload);
+    let fm = || fake_messages.clone().into_iter();
+    let fake_leaves = || fm().map(|x| x.leaf).collect_vec();
+    let fake_proofs = || fm().map(|x| x.proof).collect_vec();
+    let ap = || approved_messages.clone().into_iter();
+    let valid_leaves = || ap().map(|x| x.leaf).collect_vec();
+    let valid_proofs = || ap().map(|x| x.proof).collect_vec();
     for (idx, (merkle_root, leaves, proofs)) in [
         (fake_payload_merkle_root, fake_leaves(), fake_proofs()),
         (fake_payload_merkle_root, fake_leaves(), valid_proofs()),
@@ -258,15 +266,11 @@ async fn fails_to_approve_message_not_in_payload() {
     .into_iter()
     .enumerate()
     {
-        for (message_leaf_node, message_proof) in leaves.zip(proofs) {
+        for (leaf, proof) in leaves.into_iter().zip(proofs.into_iter()) {
             dbg!(idx);
+            let new_message_info = MerkleisedMessage { leaf, proof };
             metadata
-                .approve_message(
-                    merkle_root,
-                    message_leaf_node,
-                    message_proof,
-                    verification_session_pda,
-                )
+                .approve_message(merkle_root, new_message_info, verification_session_pda)
                 .await
                 .unwrap_err();
         }
@@ -285,43 +289,50 @@ async fn fails_to_approve_message_using_verifier_set_as_the_root() {
 
     // Create a payload with a batch of messages
     let new_verifier_set = make_verifier_set(&[500, 200], 1, metadata.domain_separator);
-    let new_verifier_set_payload_hash = new_verifier_set.verifier_set().payload_hash();
-    let payload = Payload::new_verifier_set(new_verifier_set.verifier_set());
+    let payload = Payload::NewVerifierSet(new_verifier_set.verifier_set());
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
 
     // Initialize and sign the payload session
     let verification_session_pda = metadata
-        .init_payload_session_and_sign(&metadata.signers.clone(), new_verifier_set_payload_hash)
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap();
+    let MerkleisedPayload::VerifierSetRotation {
+        new_verifier_set_merkle_root,
+    } = execute_data.payload_items
+    else {
+        unreachable!();
+    };
 
     // Create a fake message that is not part of the payload
-    let fake_payload = Payload::new_messages(make_messages(1, metadata.domain_separator));
-    let fake_payload_merkle_root =
-        <Payload as Merkle<SolanaSyscallHasher>>::calculate_merkle_root(&fake_payload).unwrap();
+    let fake_payload = Payload::Messages(Messages(make_messages(1)));
+    let fake_execute_data =
+        metadata.construct_execute_data(&metadata.signers.clone(), fake_payload);
+    let MerkleisedPayload::NewMessages {
+        messages: fake_messages,
+    } = fake_execute_data.payload_items
+    else {
+        unreachable!();
+    };
+    let fake_payload_merkle_root = fake_execute_data.payload_merkle_root;
 
-    let fake_leaves = || <Payload as Merkle<SolanaSyscallHasher>>::merkle_leaves(&fake_payload);
-    let fake_proofs = || <Payload as Merkle<SolanaSyscallHasher>>::merkle_proofs(&fake_payload);
-    let _valid_leaves = || <Payload as Merkle<SolanaSyscallHasher>>::merkle_leaves(&payload);
-    let valid_proofs = || <Payload as Merkle<SolanaSyscallHasher>>::merkle_proofs(&payload);
+    let fm = || fake_messages.clone().into_iter();
+    let fake_leaves = || fm().map(|x| x.leaf).collect_vec();
+    let fake_proofs = || fm().map(|x| x.proof).collect_vec();
+
+    // Create a fake message that is not part of the payload
     for (idx, (merkle_root, leaves, proofs)) in [
         (fake_payload_merkle_root, fake_leaves(), fake_proofs()),
-        (fake_payload_merkle_root, fake_leaves(), valid_proofs()),
-        (new_verifier_set_payload_hash, fake_leaves(), fake_proofs()),
-        (new_verifier_set_payload_hash, fake_leaves(), valid_proofs()),
-        // note: we don't test for `valid leaves` because we cannot derive a command id for it.
+        (new_verifier_set_merkle_root, fake_leaves(), fake_proofs()),
     ]
     .into_iter()
     .enumerate()
     {
-        for (message_leaf_node, message_proof) in leaves.zip(proofs) {
+        for (leaf, proof) in leaves.into_iter().zip(proofs.into_iter()) {
             dbg!(idx);
+            let new_message_info = MerkleisedMessage { leaf, proof };
             metadata
-                .approve_message(
-                    merkle_root,
-                    message_leaf_node,
-                    message_proof,
-                    verification_session_pda,
-                )
+                .approve_message(merkle_root, new_message_info, verification_session_pda)
                 .await
                 .unwrap_err();
         }

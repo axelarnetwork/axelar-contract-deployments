@@ -1,4 +1,6 @@
 //! Axelar Gateway program for the Solana blockchain
+#![allow(stable_features)] // solana uses an old Rust compiler
+#![feature(result_option_inspect)]
 
 pub mod axelar_auth_weighted;
 pub mod entrypoint;
@@ -8,7 +10,6 @@ pub mod instructions;
 pub mod processor;
 pub mod state;
 
-use axelar_rkyv_encoding::hasher::solana::SolanaKeccak256Hasher;
 pub use bytemuck;
 // Export current sdk types for downstream users building with a different sdk
 // version.
@@ -169,19 +170,13 @@ pub fn create_signature_verification_pda(
     )
 }
 
-/// Provides abstraction for the hashing mechanism.
-pub fn hasher_impl() -> SolanaKeccak256Hasher<'static> {
-    SolanaKeccak256Hasher::default()
-}
-
 /// Test that the bump from `get_signature_verification_pda` generates the same
 /// public key when used with the same hash by
 /// `create_signature_verification_pda`.
 #[test]
 fn test_get_and_create_signature_verification_pda_bump_reuse() {
-    use axelar_rkyv_encoding::test_fixtures::random_bytes;
     let gateway_root_pda = Pubkey::new_unique();
-    let random_bytes = random_bytes();
+    let random_bytes = [43; 32];
     let (found_pda, bump) = get_signature_verification_pda(&gateway_root_pda, &random_bytes);
     let created_pda =
         create_signature_verification_pda(&gateway_root_pda, &random_bytes, bump).unwrap();

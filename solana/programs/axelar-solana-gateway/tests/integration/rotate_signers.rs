@@ -1,9 +1,14 @@
 use axelar_message_primitives::U256;
-use axelar_rkyv_encoding::test_fixtures::random_bytes;
+use axelar_solana_encoding::hasher::NativeHasher;
+use axelar_solana_encoding::types::messages::Messages;
+use axelar_solana_encoding::types::payload::Payload;
+use axelar_solana_encoding::types::verifier_set::verifier_set_hash;
 use axelar_solana_gateway::events::{ArchivedGatewayEvent, RotateSignersEvent};
+use axelar_solana_gateway::get_verifier_set_tracker_pda;
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
-use axelar_solana_gateway::{get_gateway_root_config_pda, get_verifier_set_tracker_pda};
-use axelar_solana_gateway_test_fixtures::gateway::{get_gateway_events, make_verifier_set};
+use axelar_solana_gateway_test_fixtures::gateway::{
+    get_gateway_events, make_messages, make_verifier_set, random_bytes, random_message,
+};
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use solana_program_test::tokio;
 use solana_sdk::signature::Keypair;
@@ -19,16 +24,20 @@ async fn successfully_rotates_signers() {
         .setup()
         .await;
     let new_verifier_set = make_verifier_set(&[500, 200], 1, metadata.domain_separator);
-    let new_verifier_set_payload_hash = new_verifier_set.verifier_set().payload_hash();
-    let new_verifier_set_hash = new_verifier_set.verifier_set().hash_with_merkle();
-    let gateway_config_pda = get_gateway_root_config_pda().0;
+    let payload = Payload::NewVerifierSet(new_verifier_set.verifier_set());
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
+    let new_verifier_set_hash = verifier_set_hash::<NativeHasher>(
+        &new_verifier_set.verifier_set(),
+        &metadata.domain_separator,
+    )
+    .unwrap();
     let verification_session_account = metadata
-        .init_payload_session_and_sign(&metadata.signers.clone(), new_verifier_set_payload_hash)
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap();
 
     let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
-        gateway_config_pda,
+        metadata.gateway_root_pda,
         verification_session_account,
         metadata.signers.verifier_set_tracker().0,
         new_verifier_set.verifier_set_tracker().0,
@@ -61,7 +70,7 @@ async fn successfully_rotates_signers() {
     assert_eq!(*emitted_event, expected_event);
 
     // - signers have been updated
-    let root_pda_data = metadata.gateway_confg(gateway_config_pda).await;
+    let root_pda_data = metadata.gateway_confg(metadata.gateway_root_pda).await;
     assert_eq!(
         root_pda_data.auth_weighted.current_epoch(),
         new_epoch.clone()
@@ -88,17 +97,23 @@ async fn fail_when_approve_messages_payload_hash_is_used() {
         .build()
         .setup()
         .await;
-    let verifier_set_hash = random_bytes();
-    let (new_vs_tracker_pda, new_vs_tracker_bump) = get_verifier_set_tracker_pda(verifier_set_hash);
-
-    let gateway_config_pda = get_gateway_root_config_pda().0;
+    let messages = make_messages(1);
+    let payload = Payload::Messages(Messages(messages.clone()));
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
     let verification_session_account = metadata
-        .init_payload_session_and_sign(&metadata.signers.clone(), verifier_set_hash)
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap();
 
+    let verifier_set_hash = verifier_set_hash::<NativeHasher>(
+        &metadata.signers.verifier_set(),
+        &metadata.domain_separator,
+    )
+    .unwrap();
+    let (new_vs_tracker_pda, new_vs_tracker_bump) = get_verifier_set_tracker_pda(random_bytes());
+
     let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
-        gateway_config_pda,
+        metadata.gateway_root_pda,
         verification_session_account,
         metadata.signers.verifier_set_tracker().0,
         new_vs_tracker_pda,
@@ -208,19 +223,21 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
 
     // Action
     let new_verifier_set = make_verifier_set(&[500, 200], 2, metadata.domain_separator);
+    let payload = Payload::NewVerifierSet(new_verifier_set.verifier_set());
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
     let signing_session_pda = metadata
-        .init_payload_session_and_sign(
-            &metadata.signers.clone(),
-            new_verifier_set.verifier_set().payload_hash(),
-        )
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap();
-    let new_verifier_set_hash = new_verifier_set.verifier_set().hash_with_merkle();
-    let gateway_config_pda = get_gateway_root_config_pda().0;
+    let new_verifier_set_hash = verifier_set_hash::<NativeHasher>(
+        &new_verifier_set.verifier_set(),
+        &metadata.domain_separator,
+    )
+    .unwrap();
     let (new_vs_tracker_pda, new_vs_tracker_bump) =
         axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
     let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
-        gateway_config_pda,
+        metadata.gateway_root_pda,
         signing_session_pda,
         metadata.signers.verifier_set_tracker().0,
         new_vs_tracker_pda,
@@ -298,19 +315,21 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
     // Action
     let fake_operator = Keypair::new();
     let new_verifier_set = make_verifier_set(&[500, 200], 2, metadata.domain_separator);
+    let payload = Payload::NewVerifierSet(new_verifier_set.verifier_set());
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
     let signing_session_pda = metadata
-        .init_payload_session_and_sign(
-            &metadata.signers.clone(),
-            new_verifier_set.verifier_set().payload_hash(),
-        )
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap();
-    let new_verifier_set_hash = new_verifier_set.verifier_set().hash_with_merkle();
-    let gateway_config_pda = get_gateway_root_config_pda().0;
+    let new_verifier_set_hash = verifier_set_hash::<NativeHasher>(
+        &new_verifier_set.verifier_set(),
+        &metadata.domain_separator,
+    )
+    .unwrap();
     let (new_vs_tracker_pda, new_vs_tracker_bump) =
         axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
     let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
-        gateway_config_pda,
+        metadata.gateway_root_pda,
         signing_session_pda,
         metadata.signers.verifier_set_tracker().0,
         new_vs_tracker_pda,
@@ -366,19 +385,21 @@ async fn fail_if_operator_only_passed_but_not_actual_signer() {
 
     // Action
     let new_verifier_set = make_verifier_set(&[500, 200], 2, metadata.domain_separator);
+    let payload = Payload::NewVerifierSet(new_verifier_set.verifier_set());
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
     let signing_session_pda = metadata
-        .init_payload_session_and_sign(
-            &metadata.signers.clone(),
-            new_verifier_set.verifier_set().payload_hash(),
-        )
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap();
-    let new_verifier_set_hash = new_verifier_set.verifier_set().hash_with_merkle();
-    let gateway_config_pda = get_gateway_root_config_pda().0;
+    let new_verifier_set_hash = verifier_set_hash::<NativeHasher>(
+        &new_verifier_set.verifier_set(),
+        &metadata.domain_separator,
+    )
+    .unwrap();
     let (new_vs_tracker_pda, new_vs_tracker_bump) =
         axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
     let mut rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
-        gateway_config_pda,
+        metadata.gateway_root_pda,
         signing_session_pda,
         metadata.signers.verifier_set_tracker().0,
         new_vs_tracker_pda,
@@ -451,4 +472,60 @@ async fn fail_if_rotate_signers_signed_by_old_verifier_set() {
         .log_messages
         .into_iter()
         .any(|msg| { msg.contains("Proof is not signed by the latest signer set") }));
+}
+
+// new verifier set can approve messages
+#[tokio::test]
+async fn new_verifier_set_can_approve_messages_while_respecting_signer_retention() {
+    // Setup
+    let previous_signer_retention = 3;
+    let mut metadata = SolanaAxelarIntegration::builder()
+        .previous_signers_retention(previous_signer_retention)
+        .initial_signer_weights(vec![11, 42, 33])
+        .build()
+        .setup()
+        .await;
+
+    let mut new_signer_sets = vec![];
+    let mut previous = metadata.signers.clone();
+    for i in 0..previous_signer_retention {
+        // Action - rotate the signer set for the first time.
+        let new_verifier_set = make_verifier_set(&[1, 200], i, metadata.domain_separator);
+        new_signer_sets.push(new_verifier_set.clone());
+        metadata
+            .sign_session_and_rotate_signers(&previous, &new_verifier_set.verifier_set())
+            .await
+            .unwrap() // signing session succeeded
+            .1
+            .unwrap(); // signer rotation succeeded
+
+        // confidence check: can approve messages
+        metadata
+            .sign_session_and_approve_messages(&new_verifier_set, &[random_message()])
+            .await
+            .unwrap();
+
+        // store the last signer
+        previous = new_verifier_set;
+    }
+
+    assert_eq!(
+        new_signer_sets.len() as u64,
+        previous_signer_retention,
+        "new signer sets"
+    );
+
+    // Action: can still approve messages, except the initial one
+    for signer_set in new_signer_sets {
+        metadata
+            .sign_session_and_approve_messages(&signer_set, &[random_message()])
+            .await
+            .unwrap();
+    }
+
+    // Check: signer set that falls out of bounds cannot approve messages
+    metadata
+        .sign_session_and_approve_messages(&metadata.signers.clone(), &[random_message()])
+        .await
+        .unwrap_err();
 }

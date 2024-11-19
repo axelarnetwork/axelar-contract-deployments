@@ -1,18 +1,14 @@
 //! Instruction types
 
-mod proxy_types;
-
 use std::fmt::Debug;
 
-use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
-use axelar_rkyv_encoding::types::{MessageElement, Signature, VerifierSetLeafNode};
+use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, SigningVerifierSetInfo};
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use itertools::Itertools;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use self::proxy_types::{ProxyMessageLeafNode, ProxySignature, ProxyVerifierSetLeafNode};
 use crate::axelar_auth_weighted::{RotationDelaySecs, SignerSetEpoch};
 use crate::state::verifier_set_tracker::VerifierSetHash;
 
@@ -31,12 +27,9 @@ pub enum GatewayInstruction {
     ///         be `ApproveMessages`.
     ApproveMessage {
         /// The message that's to be approved
-        message: ProxyMessageLeafNode,
+        message: MerkleisedMessage,
         /// The merkle root of the new message batch
-        message_batch_merkle_root: [u8; 32],
-        /// Merkle proof associated with the message leaf node & the provided
-        /// merkle root
-        message_inclusion_merkle_proof: Vec<u8>,
+        payload_merkle_root: [u8; 32],
         /// Bump for the message pda
         incoming_message_pda_bump: u8,
     },
@@ -106,12 +99,8 @@ pub enum GatewayInstruction {
     VerifySignature {
         /// The Merkle root for the Payload being verified.
         payload_merkle_root: [u8; 32],
-        /// Contains all the required information for the
-        verifier_set_leaf_node: ProxyVerifierSetLeafNode,
-        /// The signer's proof of inclusion in the verifier set Merkle tree.
-        verifier_merkle_proof: Vec<u8>,
-        /// The signer's digital signature over `payload_merkle_root`
-        signature: ProxySignature,
+        /// Information about the merkelised verifier set entry + the signature
+        verifier_info: SigningVerifierSetInfo,
     },
 }
 
@@ -136,9 +125,8 @@ pub struct InitializeConfig {
 /// Creates a [`GatewayInstruction::ApproveMessages`] instruction.
 #[allow(clippy::too_many_arguments)]
 pub fn approve_messages(
-    message: MessageElement,
-    message_inclusion_merkle_proof: &MerkleProof<SolanaSyscallHasher>,
-    message_batch_merkle_root: [u8; 32],
+    message: MerkleisedMessage,
+    payload_merkle_root: [u8; 32],
     gateway_root_pda: Pubkey,
     payer: Pubkey,
     verification_session_pda: Pubkey,
@@ -146,9 +134,8 @@ pub fn approve_messages(
     incoming_message_pda_bump: u8,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&GatewayInstruction::ApproveMessage {
-        message: message.into(),
-        message_batch_merkle_root,
-        message_inclusion_merkle_proof: message_inclusion_merkle_proof.to_bytes(),
+        message,
+        payload_merkle_root,
         incoming_message_pda_bump,
     })?;
 
@@ -304,9 +291,7 @@ pub fn verify_signature(
     gateway_config_pda: Pubkey,
     verifier_set_tracker_pda: Pubkey,
     payload_merkle_root: [u8; 32],
-    verifier_set_leaf_node: VerifierSetLeafNode<SolanaSyscallHasher>,
-    verifier_merkle_proof: MerkleProof<SolanaSyscallHasher>,
-    signature: Signature,
+    verifier_info: SigningVerifierSetInfo,
 ) -> Result<Instruction, ProgramError> {
     let (verification_session_pda, _bump) =
         crate::get_signature_verification_pda(&gateway_config_pda, &payload_merkle_root);
@@ -319,9 +304,7 @@ pub fn verify_signature(
 
     let data = to_vec(&GatewayInstruction::VerifySignature {
         payload_merkle_root,
-        verifier_set_leaf_node: verifier_set_leaf_node.into(),
-        verifier_merkle_proof: verifier_merkle_proof.to_bytes(),
-        signature: signature.into(),
+        verifier_info,
     })?;
 
     Ok(Instruction {

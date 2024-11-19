@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axelar-rkyv-encoding = { workspace = true, features = ["test-fixtures"] }
+axelar-solana-encoding.workspace = true
 tokio.workspace = true
 solana-program.workspace = true
 solana-program-test.workspace = true
@@ -12,7 +12,10 @@ bincode.workspace = true
 axelar-solana-gateway.workspace = true
 typed-builder.workspace = true
 solana-sdk.workspace = true
-itertools.workspace = true
+ed25519-dalek = { workspace = true, features = ["rand_core", "digest"] }
+libsecp256k1.workspace = true
+rand.workspace = true
+libsecp-rand.workspace = true
 
 [lints]
 workspace = true

@@ -1,7 +1,7 @@
-use axelar_rkyv_encoding::test_fixtures::random_bytes;
 use axelar_solana_gateway::get_gateway_root_config_pda;
 use axelar_solana_gateway::state::signature_verification::SignatureVerification;
 use axelar_solana_gateway::state::signature_verification_pda::SignatureVerificationSessionData;
+use axelar_solana_gateway_test_fixtures::gateway::random_bytes;
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use bytemuck::Zeroable;
 use solana_program_test::tokio;

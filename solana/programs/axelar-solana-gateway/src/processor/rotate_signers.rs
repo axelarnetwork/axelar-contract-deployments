@@ -1,14 +1,13 @@
 use axelar_message_primitives::U256;
-use axelar_rkyv_encoding::hasher::merkle_tree::{Hasher, SolanaSyscallHasher};
-use axelar_rkyv_encoding::types::VerifierSet;
+use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
-use solana_program::{keccak, msg};
 
 use super::Processor;
 use crate::events::{GatewayEvent, RotateSignersEvent};
@@ -61,20 +60,19 @@ impl Processor {
         }
 
         // Check: new verifier set merkle root can be transformed into the payload hash
-        let verifier_set_leaf_node = keccak::hashv(&[
-            VerifierSet::HASH_PREFIX,
-            new_verifier_set_merkle_root.as_ref(),
-        ])
-        .0;
-        let expected_payload_merkle_root =
-            SolanaSyscallHasher::concat_and_hash(&verifier_set_leaf_node, None);
+        let signed_payload = axelar_solana_encoding::types::verifier_set::construct_payload_hash::<
+            SolanaSyscallHasher,
+        >(
+            new_verifier_set_merkle_root,
+            session.signature_verification.signing_verifier_set_hash,
+        );
 
         // Check: Verification PDA can be derived from seeds stored into the account
         // data itself.
         {
             let expected_pda = crate::create_signature_verification_pda(
                 gateway_root_pda.key,
-                &expected_payload_merkle_root,
+                &signed_payload,
                 session.bump,
             )?;
             if expected_pda != *verification_session_account.key {
@@ -85,9 +83,8 @@ impl Processor {
         // Obtain the active verifier set tracker.
         let verifier_set_tracker = verifier_set_tracker_account
             .check_initialized_pda::<VerifierSetTracker>(program_id)
-            .map_err(|error| {
+            .inspect_err(|_error| {
                 msg!("Invalid VerifierSetTracker PDA");
-                error
             })?;
 
         // Check: we got the expected verifier set

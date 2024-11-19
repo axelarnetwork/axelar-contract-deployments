@@ -1,6 +1,6 @@
-use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
-use axelar_rkyv_encoding::hasher::solana::SolanaKeccak256Hasher;
-use axelar_rkyv_encoding::types::PayloadLeafNode;
+use axelar_solana_encoding::hasher::SolanaSyscallHasher;
+use axelar_solana_encoding::types::execute_data::MerkleisedMessage;
+use axelar_solana_encoding::{rs_merkle, LeafHash};
 use program_utils::{init_pda_raw, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -9,10 +9,10 @@ use solana_program::pubkey::Pubkey;
 
 use super::Processor;
 use crate::events::{GatewayEvent, MessageApproved};
-use crate::state::incoming_message::{IncomingMessage, IncomingMessageWrapper};
+use crate::state::incoming_message::{command_id, IncomingMessage, IncomingMessageWrapper};
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::GatewayConfig;
-use crate::{assert_valid_incoming_message_pda, hasher_impl, seed_prefixes};
+use crate::{assert_valid_incoming_message_pda, seed_prefixes};
 
 impl Processor {
     /// Approves an array of messages, signed by the Axelar signers.
@@ -20,9 +20,8 @@ impl Processor {
     pub fn process_approve_message(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        message: PayloadLeafNode<SolanaSyscallHasher>,
-        message_batch_merkle_root: [u8; 32],
-        message_inclusion_merkle_proof: MerkleProof<SolanaSyscallHasher>,
+        message: MerkleisedMessage,
+        payload_merkle_root: [u8; 32],
         incoming_message_pda_bump: u8,
     ) -> ProgramResult {
         // Accounts
@@ -61,7 +60,7 @@ impl Processor {
         {
             let expected_pda = crate::create_signature_verification_pda(
                 gateway_root_pda.key,
-                &message_batch_merkle_root,
+                &payload_merkle_root,
                 session.bump,
             )?;
             if expected_pda != *verification_session_account.key {
@@ -69,33 +68,28 @@ impl Processor {
             }
         }
 
-        let leaf_hash = message.leaf_hash::<SolanaKeccak256Hasher<'_>>();
-        let message = {
-            use axelar_rkyv_encoding::types::PayloadElement::*;
-            match message.element {
-                Message(message) => message,
-                VerifierSet(_) => {
-                    solana_program::msg!("Only Message payload elements instructions are accepted");
-                    return Err(ProgramError::InvalidInstructionData);
-                }
-            }
-        };
+        let leaf_hash = message.leaf.hash::<SolanaSyscallHasher>();
+        let proof = rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&message.proof)
+            .inspect_err(|_err| {
+                solana_program::msg!("Could not decode message proof");
+            })
+            .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
         // Check: leaf node is part of the payload merkle root
-        if !message_inclusion_merkle_proof.verify(
-            message_batch_merkle_root,
-            &[message.position as usize],
+        if !proof.verify(
+            payload_merkle_root,
+            &[message.leaf.position as usize],
             &[leaf_hash],
-            message.num_messages as usize,
+            message.leaf.set_size as usize,
         ) {
             solana_program::msg!("Invalid Merkle Proof for the given message");
             return Err(ProgramError::InvalidInstructionData);
         }
 
         // crate a PDA where we write the message metadata contents
-        let message = message.message;
-        let cc_id = message.cc_id();
-        let command_id = cc_id.command_id(hasher_impl());
+        let message = message.leaf.message;
+        let cc_id = message.cc_id;
+        let command_id = command_id(&cc_id.chain, &cc_id.id);
 
         assert_valid_incoming_message_pda(
             &command_id,
@@ -132,9 +126,9 @@ impl Processor {
         // Emit event
         GatewayEvent::MessageApproved(MessageApproved {
             command_id,
-            source_chain: cc_id.chain().into(),
-            message_id: cc_id.id().into(),
-            source_address: message.source_address().into(),
+            source_chain: cc_id.chain,
+            message_id: cc_id.id,
+            source_address: message.source_address,
             destination_address: message.destination_address,
             payload_hash: message.payload_hash,
         })

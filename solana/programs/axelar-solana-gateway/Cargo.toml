@@ -19,7 +19,7 @@ test-sbf = []
 
 [dependencies]
 axelar-message-primitives.workspace = true
-axelar-rkyv-encoding.workspace = true
+axelar-solana-encoding = { workspace = true, features = ["solana"] }
 base64.workspace = true
 bincode.workspace = true
 bitvec.workspace = true

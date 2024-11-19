@@ -1,15 +1,11 @@
 //! Program state processor.
 
 use std::borrow::Cow;
-use std::marker::PhantomData;
 
-use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
-use axelar_rkyv_encoding::types::{PayloadElement, PayloadLeafNode};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
-use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use crate::check_program_account;
@@ -40,25 +36,16 @@ impl Processor {
         match instruction {
             GatewayInstruction::ApproveMessage {
                 message,
-                message_batch_merkle_root,
-                message_inclusion_merkle_proof,
+                payload_merkle_root,
                 incoming_message_pda_bump,
             } => {
                 msg!("Instruction: Approve Messages");
-                // Convert proxy types
-                let message_inclusion_merkle_proof: MerkleProof<SolanaSyscallHasher> =
-                    MerkleProof::from_bytes(&message_inclusion_merkle_proof)
-                        .map_err(|_| ProgramError::InvalidArgument)?;
 
                 Self::process_approve_message(
                     program_id,
                     accounts,
-                    PayloadLeafNode {
-                        element: PayloadElement::Message(message.into()),
-                        hasher: PhantomData,
-                    },
-                    message_batch_merkle_root,
-                    message_inclusion_merkle_proof,
+                    message,
+                    payload_merkle_root,
                     incoming_message_pda_bump,
                 )
             }
@@ -108,23 +95,14 @@ impl Processor {
 
             GatewayInstruction::VerifySignature {
                 payload_merkle_root,
-                verifier_set_leaf_node,
-                verifier_merkle_proof,
-                signature,
+                verifier_info,
             } => {
                 msg!("Instruction: Verify Signature");
-                // Convert proxy types
-                let verifier_merkle_proof: MerkleProof<SolanaSyscallHasher> =
-                    MerkleProof::from_bytes(&verifier_merkle_proof)
-                        .map_err(|_| ProgramError::InvalidArgument)?;
-
                 Self::process_verify_signature(
                     program_id,
                     accounts,
                     payload_merkle_root,
-                    verifier_set_leaf_node.into(),
-                    verifier_merkle_proof,
-                    signature.into(),
+                    verifier_info,
                 )
             }
         }

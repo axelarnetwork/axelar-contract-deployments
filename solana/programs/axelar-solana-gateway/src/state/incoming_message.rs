@@ -76,3 +76,12 @@ pub enum MessageStatus {
 }
 
 unsafe impl Pod for MessageStatus {}
+
+/// Consruct a new Command ID.
+/// The command id is used as a key for a message -- to prevent replay attacks.
+/// It points to the storage slot that holds all metadata for a message.
+///
+/// For more info read [here](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/gateway/INTEGRATION.md#replay-prevention).
+pub fn command_id(source_chain: &str, message_id: &str) -> [u8; 32] {
+    solana_program::keccak::hashv(&[source_chain.as_bytes(), b"-", message_id.as_bytes()]).0
+}

@@ -1,33 +1,35 @@
 //! Module that contains gateway specific utilities
 
+use core::fmt::Write as _;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use axelar_rkyv_encoding::hasher::merkle_trait::Merkle;
-use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
-use axelar_rkyv_encoding::test_fixtures::random_message;
-use axelar_rkyv_encoding::types::u128::U128;
-use axelar_rkyv_encoding::types::{Message, Payload, PayloadElement, PayloadLeafNode, VerifierSet};
+use axelar_solana_encoding::hasher::NativeHasher;
+use axelar_solana_encoding::types::execute_data::{
+    ExecuteData, MerkleisedMessage, MerkleisedPayload,
+};
+use axelar_solana_encoding::types::messages::{CrossChainId, Message, Messages};
+use axelar_solana_encoding::types::payload::Payload;
+use axelar_solana_encoding::types::verifier_set::{verifier_set_hash, VerifierSet};
+use axelar_solana_encoding::{borsh, hash_payload};
 use axelar_solana_gateway::events::{EventContainer, GatewayEvent};
-use axelar_solana_gateway::state::incoming_message::IncomingMessageWrapper;
+use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessageWrapper};
 use axelar_solana_gateway::state::signature_verification_pda::SignatureVerificationSessionData;
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway::state::GatewayConfig;
 use axelar_solana_gateway::{
-    bytemuck, get_gateway_root_config_pda, get_incoming_message_pda, hasher_impl,
+    bytemuck, get_gateway_root_config_pda, get_incoming_message_pda, get_verifier_set_tracker_pda,
 };
-use itertools::*;
+use rand::Rng as _;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{BanksTransactionResultWithMetadata, ProgramTest};
-use solana_sdk::account::ReadableAccount;
+use solana_sdk::account::ReadableAccount as _;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
+use solana_sdk::signer::Signer as _;
 
 use crate::base::{workspace_root_dir, TestFixture};
-use crate::test_signer::{
-    create_signer_with_weight, SignatureVerificationInput, SigningVerifierSet,
-};
+use crate::test_signer::{create_signer_with_weight, SigningVerifierSet};
 
 /// Contains metadata information about the initialised Gateway config
 pub struct SolanaAxelarIntegrationMetadata {
@@ -68,7 +70,9 @@ impl SolanaAxelarIntegrationMetadata {
     /// This is useful for building the instantiation message for the gateway
     #[must_use]
     pub fn init_gateway_config_verifier_set_data(&self) -> Vec<([u8; 32], Pubkey, u8)> {
-        let init_signers_hash = self.signers.verifier_set().hash_with_merkle();
+        let init_signers_hash =
+            verifier_set_hash::<NativeHasher>(&self.signers.verifier_set(), &self.domain_separator)
+                .unwrap();
         let (initial_signers_pda, initial_signers_bump) = self.signers.verifier_set_tracker();
         vec![(init_signers_hash, initial_signers_pda, initial_signers_bump)]
     }
@@ -111,13 +115,12 @@ impl SolanaAxelarIntegrationMetadata {
     /// Initialise a new payload verification session
     pub async fn initialize_payload_verification_session(
         &mut self,
-        gateway_config_pda: Pubkey,
-        payload_merkle_root: [u8; 32],
+        execute_data: &ExecuteData,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
         let ix = axelar_solana_gateway::instructions::initialize_payload_verification_session(
             self.payer.pubkey(),
-            gateway_config_pda,
-            payload_merkle_root,
+            self.gateway_root_pda,
+            execute_data.payload_merkle_root,
         )
         .unwrap();
         self.fixture.send_tx(&[ix]).await
@@ -125,32 +128,23 @@ impl SolanaAxelarIntegrationMetadata {
 
     /// Initialsie a new payload verification session and sign using the
     /// provided verifier set
-    pub async fn init_payload_session_and_sign(
+    pub async fn init_payload_session_and_verify(
         &mut self,
-        signers: &SigningVerifierSet,
-        payload_merkle_root: [u8; 32],
+        execute_data: &ExecuteData,
     ) -> Result<Pubkey, BanksTransactionResultWithMetadata> {
         let gateway_config_pda = get_gateway_root_config_pda().0;
-        self.initialize_payload_verification_session(gateway_config_pda, payload_merkle_root)
+        self.initialize_payload_verification_session(execute_data)
             .await?;
-        let verifier_set_tracker_pda = signers.verifier_set_tracker().0;
-        let vs_iterator = signers.init_signing_session(&signers.verifier_set());
-        let signer_verification_input = vs_iterator.for_payload_root(payload_merkle_root);
+        let (verifier_set_tracker_pda, _verifier_set_tracker_bump) =
+            get_verifier_set_tracker_pda(execute_data.signing_verifier_set_merkle_root);
 
-        for SignatureVerificationInput {
-            verifier_set_leaf,
-            verifier_set_proof,
-            signature,
-        } in signer_verification_input
-        {
+        for signature_leaves in &execute_data.signing_verifier_set_leaves {
             // Verify the signature
             let ix = axelar_solana_gateway::instructions::verify_signature(
                 gateway_config_pda,
                 verifier_set_tracker_pda,
-                payload_merkle_root,
-                verifier_set_leaf,
-                verifier_set_proof,
-                signature,
+                execute_data.payload_merkle_root,
+                signature_leaves.clone(),
             )
             .unwrap();
             let tx_result = self
@@ -165,71 +159,100 @@ impl SolanaAxelarIntegrationMetadata {
         // Check that the PDA contains the expected data
         let (verification_pda, _bump) = axelar_solana_gateway::get_signature_verification_pda(
             &gateway_config_pda,
-            &payload_merkle_root,
+            &execute_data.payload_merkle_root,
         );
         Ok(verification_pda)
     }
 
     /// Create a signing session and approve all the messages that have been
     /// provided
-    #[allow(clippy::panic)]
+    #[allow(clippy::unreachable)]
     pub async fn sign_session_and_approve_messages(
         &mut self,
         signers: &SigningVerifierSet,
         messages: &[Message],
     ) -> Result<(), BanksTransactionResultWithMetadata> {
-        let payload = Payload::new_messages(messages.to_vec());
-        let payload_merkle_root =
-            <Payload as Merkle<SolanaSyscallHasher>>::calculate_merkle_root(&payload).unwrap();
-        let verification_session_pda = self
-            .init_payload_session_and_sign(&signers.clone(), payload_merkle_root)
-            .await?;
+        let payload = Payload::Messages(Messages(messages.to_vec()));
+        let execute_data = self.construct_execute_data(signers, payload);
+        let verification_session_pda = self.init_payload_session_and_verify(&execute_data).await?;
 
-        let payload_leaves = <Payload as Merkle<SolanaSyscallHasher>>::merkle_leaves(&payload);
-        let proofs = <Payload as Merkle<SolanaSyscallHasher>>::merkle_proofs(&payload);
-        for (leave, proof) in payload_leaves.zip_eq(proofs) {
-            let PayloadElement::Message(message) = leave.element else {
-                panic!("invalid message type");
-            };
-            let command_id = message.message.cc_id().command_id(hasher_impl());
-            let (incoming_message_pda, incoming_message_pda_bump) =
-                get_incoming_message_pda(&command_id);
+        let MerkleisedPayload::NewMessages { messages } = execute_data.payload_items else {
+            unreachable!("we constructed a message batch");
+        };
 
-            let ix = axelar_solana_gateway::instructions::approve_messages(
-                message,
-                &proof,
-                payload_merkle_root,
-                self.gateway_root_pda,
-                self.payer.pubkey(),
+        for message_info in messages {
+            self.approve_message(
+                execute_data.payload_merkle_root,
+                message_info,
                 verification_session_pda,
-                incoming_message_pda,
-                incoming_message_pda_bump,
             )
-            .unwrap();
-            let _tx_result = self.send_tx(&[ix]).await?;
+            .await?;
         }
         Ok(())
     }
 
+    /// Construct new [`ExecuteData`] by signing the data and generading all the
+    /// stuff that needs to be encoded.
+    pub fn construct_execute_data(
+        &mut self,
+        signers: &SigningVerifierSet,
+        payload: Payload,
+    ) -> ExecuteData {
+        let vs = signers.verifier_set();
+        self.construct_execute_data_with_custom_verifier_set(signers, &vs, payload)
+    }
+
+    /// Construct new [`ExecuteData`] by signing the data and generading all the
+    /// stuff that needs to be encoded.
+    ///
+    /// The function will use the provided `verifier_set` for encoding, and the
+    /// `signers` for signing the data.
+    pub fn construct_execute_data_with_custom_verifier_set(
+        &mut self,
+        signers: &SigningVerifierSet,
+        verifier_set: &VerifierSet,
+        payload: Payload,
+    ) -> ExecuteData {
+        let payload_hash =
+            hash_payload(&self.domain_separator, verifier_set, payload.clone()).unwrap();
+        let signatures = {
+            signers
+                .signers
+                .iter()
+                .map(|signer| {
+                    let signature = signer.secret_key.sign(&payload_hash);
+                    (signer.public_key, signature)
+                })
+                .collect()
+        };
+        let execute_data = axelar_solana_encoding::encode(
+            verifier_set,
+            &signatures,
+            self.domain_separator,
+            payload,
+        )
+        .unwrap();
+
+        borsh::from_slice::<ExecuteData>(&execute_data).unwrap()
+    }
+
     /// Approve a single message on the Gateway
-    #[allow(clippy::panic)]
     pub async fn approve_message(
         &mut self,
         payload_merkle_root: [u8; 32],
-        message: PayloadLeafNode<SolanaSyscallHasher>,
-        proof: MerkleProof<SolanaSyscallHasher>,
+        message: MerkleisedMessage,
         verification_session_pda: Pubkey,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
-        let PayloadElement::Message(message) = message.element else {
-            panic!("invalid message type");
-        };
-        let command_id = message.message.cc_id().command_id(hasher_impl());
+        let command_id = command_id(
+            &message.leaf.message.cc_id.chain,
+            &message.leaf.message.cc_id.id,
+        );
+
         let (incoming_message_pda, incoming_message_pda_bump) =
             get_incoming_message_pda(&command_id);
 
         let ix = axelar_solana_gateway::instructions::approve_messages(
             message,
-            &proof,
             payload_merkle_root,
             self.gateway_root_pda,
             self.payer.pubkey(),
@@ -254,10 +277,10 @@ impl SolanaAxelarIntegrationMetadata {
         ),
         BanksTransactionResultWithMetadata,
     > {
-        let new_verifier_set_payload_hash = new_verifier_set.clone().payload_hash();
-        let verification_session_account = self
-            .init_payload_session_and_sign(&signers.clone(), new_verifier_set_payload_hash)
-            .await?;
+        let payload = Payload::NewVerifierSet(new_verifier_set.clone());
+        let execute_data = self.construct_execute_data(signers, payload);
+        let verification_session_account =
+            self.init_payload_session_and_verify(&execute_data).await?;
 
         let res = self
             .rotate_signers(signers, new_verifier_set, verification_session_account)
@@ -274,7 +297,8 @@ impl SolanaAxelarIntegrationMetadata {
         new_verifier_set: &VerifierSet,
         verification_session_account: Pubkey,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
-        let new_verifier_set_hash = new_verifier_set.hash_with_merkle();
+        let new_verifier_set_hash =
+            verifier_set_hash::<NativeHasher>(new_verifier_set, &self.domain_separator).unwrap();
         let gateway_config_pda = get_gateway_root_config_pda().0;
         let (new_vs_tracker_pda, new_vs_tracker_bump) =
             axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
@@ -497,17 +521,64 @@ pub fn make_verifiers_with_quorum(
         .collect::<Vec<_>>();
     let signers = Arc::from(signers);
 
-    SigningVerifierSet::new_with_quorum(signers, nonce, U128::from(quorum), domain_separator)
+    SigningVerifierSet::new_with_quorum(signers, nonce, quorum, domain_separator)
 }
 
 /// Make new random messages
 #[must_use]
-pub fn make_messages(num_messages: usize, domain_separator: [u8; 32]) -> Vec<Message> {
-    (0..num_messages)
-        .map(|_| {
-            let mut message = random_message();
-            message.domain_separator = domain_separator;
-            message
+pub fn make_messages(num_messages: usize) -> Vec<Message> {
+    (0..num_messages).map(|_| random_message()).collect()
+}
+
+/// Random GMP Message
+#[must_use]
+pub fn random_message() -> Message {
+    Message {
+        cc_id: CrossChainId {
+            chain: random_chain_name(),
+            id: random_string(20),
+        },
+        source_address: generate_random_hex_address(),
+        destination_chain: random_chain_name(),
+        destination_address: generate_random_hex_address(),
+        payload_hash: random_bytes::<32>(),
+    }
+}
+
+#[allow(clippy::indexing_slicing)]
+fn random_chain_name() -> String {
+    let chains = ["Ethereum", "Solana", "Polkadot", "Binance Smart Chain"];
+    let mut rng = rand::thread_rng();
+    chains[rng.gen_range(0..chains.len())].to_owned()
+}
+
+/// New random HEX address (e.g. ethereum address)
+/// It's not guaranteed to be a valid address
+#[must_use]
+#[allow(clippy::unwrap_used)]
+pub fn generate_random_hex_address() -> String {
+    let mut rng = rand::thread_rng();
+
+    (0..40) // 40 characters for a 20-byte address in hex
+        .fold(String::new(), |mut output, _| {
+            write!(&mut output, "{:x}", rng.gen_range(0..16_u8)).unwrap();
+            output
         })
+}
+
+/// Random bytes
+#[must_use]
+pub fn random_bytes<const N: usize>() -> [u8; N] {
+    let mut bytes = [0_u8; N];
+    rand::rngs::OsRng.fill(&mut bytes[..]);
+    bytes
+}
+
+/// Random string
+pub fn random_string(len: usize) -> String {
+    rand::rngs::OsRng
+        .sample_iter(&rand::distributions::Alphanumeric)
+        .take(len)
+        .map(char::from)
         .collect()
 }

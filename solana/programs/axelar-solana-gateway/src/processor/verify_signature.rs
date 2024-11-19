@@ -1,6 +1,5 @@
-
-use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
-use axelar_rkyv_encoding::types::{PublicKey, Signature, VerifierSetLeafNode};
+use axelar_solana_encoding::types::execute_data::SigningVerifierSetInfo;
+use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -22,9 +21,7 @@ impl Processor {
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
         payload_merkle_root: [u8; 32],
-        verifier_set_leaf_node: VerifierSetLeafNode<SolanaSyscallHasher>,
-        verifier_merkle_proof: MerkleProof<SolanaSyscallHasher>,
-        signature: Signature,
+        verifier_info: SigningVerifierSetInfo,
     ) -> ProgramResult {
         // Accounts
         let accounts_iter = &mut accounts.iter();
@@ -59,9 +56,8 @@ impl Processor {
         // Obtain the active verifier set tracker.
         let verifier_set_tracker = verifier_set_tracker_account
             .check_initialized_pda::<VerifierSetTracker>(program_id)
-            .map_err(|error| {
+            .inspect_err(|_error| {
                 solana_program::msg!("Invalid VerifierSetTracker PDA");
-                error
             })?;
 
         // Check: Verifier set isn't expired
@@ -80,11 +76,9 @@ impl Processor {
         session
             .signature_verification
             .process_signature(
-                verifier_set_leaf_node,
-                &verifier_merkle_proof,
+                verifier_info,
                 &verifier_set_tracker.verifier_set_hash,
                 &payload_merkle_root,
-                &signature,
                 &OnChainSignatureVerifier,
             )
             .map_err(|error| {

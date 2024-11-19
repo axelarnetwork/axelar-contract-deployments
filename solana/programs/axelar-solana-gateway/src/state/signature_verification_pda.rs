@@ -28,8 +28,6 @@ impl SignatureVerificationSessionData {
 
 #[cfg(test)]
 mod tests {
-    use axelar_rkyv_encoding::test_fixtures::random_bytes;
-
     use super::*;
 
     #[test]
@@ -45,7 +43,9 @@ mod tests {
 
     #[test]
     fn test_serialization() {
-        let mut buffer: [u8; SignatureVerificationSessionData::LEN] = random_bytes();
+        let mut buffer: [u8; SignatureVerificationSessionData::LEN] =
+            [42; SignatureVerificationSessionData::LEN];
+
         let original_state;
 
         let updated_state = {

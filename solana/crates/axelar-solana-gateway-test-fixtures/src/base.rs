@@ -5,16 +5,16 @@ use std::path::PathBuf;
 use solana_program::hash::Hash;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{
-    BanksClient, BanksTransactionResultWithMetadata, ProgramTest, ProgramTestBanksClientExt,
+    BanksClient, BanksTransactionResultWithMetadata, ProgramTest, ProgramTestBanksClientExt as _,
     ProgramTestContext,
 };
-use solana_sdk::account::{Account, AccountSharedData, WritableAccount};
-use solana_sdk::account_utils::StateMut;
+use solana_sdk::account::{Account, AccountSharedData, WritableAccount as _};
+use solana_sdk::account_utils::StateMut as _;
 use solana_sdk::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
 use solana_sdk::clock::Clock;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
+use solana_sdk::signer::Signer as _;
 use solana_sdk::signers::Signers;
 use solana_sdk::transaction::Transaction;
 
@@ -303,7 +303,7 @@ pub(crate) fn workspace_root_dir() -> PathBuf {
 #[cfg(test)]
 mod tests {
 
-    use solana_sdk::account::ReadableAccount;
+    use solana_sdk::account::ReadableAccount as _;
 
     use super::*;
 

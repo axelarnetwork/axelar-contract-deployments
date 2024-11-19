@@ -1,47 +1,47 @@
-use axelar_rkyv_encoding::test_fixtures::{
-    random_bytes, random_ecdsa_signature, random_ed25519_signature,
+use std::sync::Arc;
+
+use axelar_solana_encoding::types::messages::Messages;
+use axelar_solana_encoding::types::payload::Payload;
+use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
+use axelar_solana_gateway_test_fixtures::gateway::{
+    make_verifier_set, random_bytes, random_message,
 };
-use axelar_rkyv_encoding::types::PublicKey;
-use axelar_solana_gateway_test_fixtures::gateway::make_verifier_set;
-use axelar_solana_gateway_test_fixtures::test_signer::SignatureVerificationInput;
+use axelar_solana_gateway_test_fixtures::test_signer::{random_ecdsa_keypair, SigningVerifierSet};
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use solana_program_test::tokio;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 
 #[tokio::test]
 #[rstest::rstest]
-#[case(vec![42])]
-#[case(vec![42, 43])]
-async fn test_verify_one_signature(#[case] initial_signer_weights: Vec<u128>) {
+#[case(vec![42], Messages(vec![random_message()]))]
+#[case(vec![42, 43], Messages(vec![random_message()]))]
+async fn test_verify_one_signature(
+    #[case] initial_signer_weights: Vec<u128>,
+    #[case] messages: Messages,
+) {
     // Setup
-    let payload_merkle_root = random_bytes();
+
     let mut metadata = SolanaAxelarIntegration::builder()
         .initial_signer_weights(initial_signer_weights.clone())
         .build()
         .setup()
         .await;
 
+    let payload = Payload::Messages(messages);
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
     metadata
-        .initialize_payload_verification_session(metadata.gateway_root_pda, payload_merkle_root)
+        .initialize_payload_verification_session(&execute_data)
         .await
         .unwrap();
     let verifier_set_tracker_pda = metadata.signers.verifier_set_tracker().0;
-    let vs_iterator = metadata
-        .signers
-        .init_signing_session(&metadata.signers.verifier_set());
-    let mut signer_verification_input = vs_iterator.for_payload_root(payload_merkle_root);
-    let first_signer_verification_input = signer_verification_input
-        .next()
-        .expect("guaranteed to have 1 item");
+    let leaf_info = execute_data.signing_verifier_set_leaves.first().unwrap();
 
     // Verify the signature
     let ix = axelar_solana_gateway::instructions::verify_signature(
         metadata.gateway_root_pda,
         verifier_set_tracker_pda,
-        payload_merkle_root,
-        first_signer_verification_input.verifier_set_leaf,
-        first_signer_verification_input.verifier_set_proof,
-        first_signer_verification_input.signature,
+        execute_data.payload_merkle_root,
+        leaf_info.clone(),
     )
     .unwrap();
 
@@ -57,7 +57,7 @@ async fn test_verify_one_signature(#[case] initial_signer_weights: Vec<u128>) {
     // Check that the PDA contains the expected data
     let (verification_pda, bump) = axelar_solana_gateway::get_signature_verification_pda(
         &metadata.gateway_root_pda,
-        &payload_merkle_root,
+        &execute_data.payload_merkle_root,
     );
 
     let session = metadata
@@ -79,7 +79,8 @@ async fn test_verify_one_signature(#[case] initial_signer_weights: Vec<u128>) {
 #[tokio::test]
 async fn test_verify_all_signatures() {
     // Setup
-    let payload_merkle_root = random_bytes();
+    let messages = Messages(vec![random_message(); 5]);
+    let payload = Payload::Messages(messages);
     let amount_of_signers = 64;
     let init_signer_weights = vec![42; amount_of_signers];
     let mut metadata = SolanaAxelarIntegration::builder()
@@ -88,31 +89,21 @@ async fn test_verify_all_signatures() {
         .build()
         .setup()
         .await;
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
 
     metadata
-        .initialize_payload_verification_session(metadata.gateway_root_pda, payload_merkle_root)
+        .initialize_payload_verification_session(&execute_data)
         .await
         .unwrap();
     let verifier_set_tracker_pda = metadata.signers.verifier_set_tracker().0;
-    let vs_iterator = metadata
-        .signers
-        .init_signing_session(&metadata.signers.verifier_set());
-    let signer_verification_input = vs_iterator.for_payload_root(payload_merkle_root);
 
-    for SignatureVerificationInput {
-        verifier_set_leaf,
-        verifier_set_proof,
-        signature,
-    } in signer_verification_input
-    {
+    for verifier_set_leaf in execute_data.signing_verifier_set_leaves {
         // Verify the signature
         let ix = axelar_solana_gateway::instructions::verify_signature(
             metadata.gateway_root_pda,
             verifier_set_tracker_pda,
-            payload_merkle_root,
+            execute_data.payload_merkle_root,
             verifier_set_leaf,
-            verifier_set_proof,
-            signature,
         )
         .unwrap();
         metadata
@@ -127,7 +118,7 @@ async fn test_verify_all_signatures() {
     // Check that the PDA contains the expected data
     let (verification_pda, bump) = axelar_solana_gateway::get_signature_verification_pda(
         &metadata.gateway_root_pda,
-        &payload_merkle_root,
+        &execute_data.payload_merkle_root,
     );
 
     let session = metadata
@@ -150,41 +141,35 @@ async fn test_verify_all_signatures() {
 #[tokio::test]
 async fn test_fails_to_verify_bad_signature() {
     // Setup
-    let payload_merkle_root = random_bytes();
     let mut metadata = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![42; 10])
         .build()
         .setup()
         .await;
+    let payload = Payload::Messages(Messages(vec![random_message(); 5]));
+    let mut execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
 
     metadata
-        .initialize_payload_verification_session(metadata.gateway_root_pda, payload_merkle_root)
+        .initialize_payload_verification_session(&execute_data)
         .await
         .unwrap();
     let verifier_set_tracker_pda = metadata.signers.verifier_set_tracker().0;
-    let vs_iterator = metadata
-        .signers
-        .init_signing_session(&metadata.signers.verifier_set());
-    let mut signer_verification_input = vs_iterator.for_payload_root(payload_merkle_root);
-    let first_signer_verification_input = signer_verification_input
-        .next()
-        .expect("guaranteed to have 1 item");
-    let invalid_signature = match &first_signer_verification_input
-        .verifier_set_leaf
-        .signer_pubkey
-    {
-        PublicKey::Secp256k1(_) => random_ecdsa_signature(),
-        PublicKey::Ed25519(_) => random_ed25519_signature(),
+    let leaf_info = execute_data.signing_verifier_set_leaves.get_mut(0).unwrap();
+    match &mut leaf_info.signature {
+        Signature::EcdsaRecoverable(data) => {
+            *data = random_bytes();
+        }
+        Signature::Ed25519(data) => {
+            *data = random_bytes();
+        }
     };
 
     // Verify the signature
     let ix = axelar_solana_gateway::instructions::verify_signature(
         metadata.gateway_root_pda,
         verifier_set_tracker_pda,
-        payload_merkle_root,
-        first_signer_verification_input.verifier_set_leaf,
-        first_signer_verification_input.verifier_set_proof,
-        invalid_signature,
+        execute_data.payload_merkle_root,
+        leaf_info.clone(),
     )
     .unwrap();
     let tx_result = metadata
@@ -208,34 +193,26 @@ async fn test_fails_to_verify_bad_signature() {
 #[tokio::test]
 async fn test_fails_to_verify_signature_for_different_merkle_root() {
     // Setup
-    let payload_merkle_root = random_bytes();
     let mut metadata = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![42; 10])
         .build()
         .setup()
         .await;
-
+    let payload = Payload::Messages(Messages(vec![random_message(); 5]));
+    let mut execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
     metadata
-        .initialize_payload_verification_session(metadata.gateway_root_pda, payload_merkle_root)
+        .initialize_payload_verification_session(&execute_data)
         .await
         .unwrap();
+    let leaf_info = execute_data.signing_verifier_set_leaves.get_mut(0).unwrap();
     let verifier_set_tracker_pda = metadata.signers.verifier_set_tracker().0;
-    let vs_iterator = metadata
-        .signers
-        .init_signing_session(&metadata.signers.verifier_set());
-    let mut signer_verification_input = vs_iterator.for_payload_root(payload_merkle_root);
-    let first_signer_verification_input = signer_verification_input
-        .next()
-        .expect("guaranteed to have 1 item");
 
     // Verify the signature
     let ix = axelar_solana_gateway::instructions::verify_signature(
         metadata.gateway_root_pda,
         verifier_set_tracker_pda,
         random_bytes(), // <- this is the failure culprit
-        first_signer_verification_input.verifier_set_leaf,
-        first_signer_verification_input.verifier_set_proof,
-        first_signer_verification_input.signature,
+        leaf_info.clone(),
     )
     .unwrap();
     let tx_result = metadata
@@ -259,7 +236,6 @@ async fn test_fails_to_verify_signature_for_different_merkle_root() {
 #[tokio::test]
 async fn test_large_weight_will_validate_whole_batch() {
     // Setup
-    let payload_merkle_root = random_bytes();
     let large_weight = 100;
     let mut metadata = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![1, 1, large_weight])
@@ -267,29 +243,46 @@ async fn test_large_weight_will_validate_whole_batch() {
         .build()
         .setup()
         .await;
+    let payload = Payload::Messages(Messages(vec![random_message(); 5]));
+    let verifier_set = metadata.signers.verifier_set();
+    let signer_set_with_only_large_weight = {
+        let signer = metadata
+            .signers
+            .signers
+            .iter()
+            .find(|x| x.weight == large_weight)
+            .unwrap()
+            .clone();
+        SigningVerifierSet {
+            signers: Arc::from_iter([signer]),
+            nonce: verifier_set.nonce,
+            quorum: verifier_set.quorum,
+            domain_separator: metadata.domain_separator,
+        }
+    };
+    let execute_data = metadata.construct_execute_data_with_custom_verifier_set(
+        &signer_set_with_only_large_weight,
+        &verifier_set,
+        payload,
+    );
 
     metadata
-        .initialize_payload_verification_session(metadata.gateway_root_pda, payload_merkle_root)
+        .initialize_payload_verification_session(&execute_data)
         .await
         .unwrap();
     let verifier_set_tracker_pda = metadata.signers.verifier_set_tracker().0;
-    let vs_iterator = metadata
-        .signers
-        .init_signing_session(&metadata.signers.verifier_set());
-    let mut signer_verification_input = vs_iterator.for_payload_root(payload_merkle_root);
-    let large_weight_item = signer_verification_input
-        .find(|x| x.verifier_set_leaf.element.signer_weight == large_weight)
+    let large_wetight_leaf = execute_data
+        .signing_verifier_set_leaves
+        .iter()
+        .find(|x| x.leaf.signer_weight == large_weight)
         .expect("guaranteed to be in the set");
 
     // Verify the signature
-    dbg!(&large_weight_item.verifier_set_leaf.element);
     let ix = axelar_solana_gateway::instructions::verify_signature(
         metadata.gateway_root_pda,
         verifier_set_tracker_pda,
-        payload_merkle_root,
-        large_weight_item.verifier_set_leaf,
-        large_weight_item.verifier_set_proof,
-        large_weight_item.signature,
+        execute_data.payload_merkle_root,
+        large_wetight_leaf.clone(),
     )
     .unwrap();
 
@@ -305,7 +298,7 @@ async fn test_large_weight_will_validate_whole_batch() {
     // Check that the PDA contains the expected data
     let (verification_pda, bump) = axelar_solana_gateway::get_signature_verification_pda(
         &metadata.gateway_root_pda,
-        &payload_merkle_root,
+        &execute_data.payload_merkle_root,
     );
 
     let session = metadata
@@ -321,8 +314,8 @@ async fn test_large_weight_will_validate_whole_batch() {
     );
     let slots = session.signature_verification.slots();
     assert!(
-        slots[large_weight_item.verifier_set_leaf.element.position as usize],
-        "first slot should not be set"
+        slots[large_wetight_leaf.leaf.position as usize],
+        "large weight leaf should be set"
     );
 }
 
@@ -339,13 +332,13 @@ async fn fail_verification_if_non_registered_verifier_set_signed_batch() {
     let new_random_verifier_set = make_verifier_set(&[11], 1, metadata.domain_separator);
     let new_verifier_set = make_verifier_set(&[500, 200], 1, metadata.domain_separator);
 
-    // using `initial_singers` to sign the message which is the cause of the
-    // failure
+    // using `new_random_verifier_set` to sign the message which is the cause of the
+    // failure (should be metadata.signers)
+    let payload = Payload::NewVerifierSet(new_verifier_set.verifier_set());
+    let execute_data = metadata.construct_execute_data(&new_random_verifier_set, payload);
+
     let tx = metadata
-        .init_payload_session_and_sign(
-            &new_random_verifier_set.clone(),
-            new_verifier_set.verifier_set().payload_hash(),
-        )
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap_err();
 
@@ -370,17 +363,58 @@ async fn fail_signatures_if_quorum_not_met() {
         .setup()
         .await;
     let new_verifier_set = make_verifier_set(&[1, 1], 1, metadata.domain_separator);
+    let payload = Payload::NewVerifierSet(new_verifier_set.verifier_set());
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
 
     // Action
     let tx = metadata
-        .init_payload_session_and_sign(
-            &metadata.signers.clone(),
-            new_verifier_set.verifier_set().payload_hash(),
-        )
+        .init_payload_session_and_verify(&execute_data)
         .await
         .unwrap();
 
     // Assert
     let session = metadata.signature_verification_session(tx).await;
     assert!(!session.signature_verification.is_valid());
+}
+
+#[test]
+fn can_verify_signatures_with_ecrecover_recovery_id() {
+    let (keypair, pubkey) = random_ecdsa_keypair();
+    let message_hash = [42; 32];
+    let signature = keypair.sign(&message_hash);
+    let Signature::EcdsaRecoverable(mut signature) = signature else {
+        panic!("unexpected signature type");
+    };
+    signature[64] += 27;
+    let PublicKey::Secp256k1(pubkey) = pubkey else {
+        panic!("unexpected pubkey type");
+    };
+
+    let is_valid = axelar_solana_gateway::axelar_auth_weighted::verify_ecdsa_signature(
+        &pubkey,
+        &signature,
+        &message_hash,
+    );
+    assert!(is_valid);
+}
+
+#[test]
+fn can_verify_signatures_with_standard_recovery_id() {
+    let (keypair, pubkey) = random_ecdsa_keypair();
+    let message_hash = [42; 32];
+    let signature = keypair.sign(&message_hash);
+    let Signature::EcdsaRecoverable(signature) = signature else {
+        panic!("unexpected signature type");
+    };
+    assert!((0_u8..=3_u8).contains(&signature[64]));
+    let PublicKey::Secp256k1(pubkey) = pubkey else {
+        panic!("unexpected pubkey type");
+    };
+
+    let is_valid = axelar_solana_gateway::axelar_auth_weighted::verify_ecdsa_signature(
+        &pubkey,
+        &signature,
+        &message_hash,
+    );
+    assert!(is_valid);
 }

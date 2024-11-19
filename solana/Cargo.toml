@@ -44,6 +44,8 @@ single_char_lifetime_names = "allow"
 std_instead_of_alloc = "allow"
 wildcard_imports = "allow"
 shadow_unrelated = "allow"
+module_name_repetitions = "allow"
+semicolon_outside_block = "allow" # remove this after we update rust-toolchain.toml -- buggy lint
 
 [workspace.lints.rust]
 missing_docs = { level = "warn", priority = -1 }
@@ -77,6 +79,7 @@ lazy_static = "1.5.0"
 itertools = "0.12"
 k256 = { version = "0.13", features = ["ecdsa"] }
 libsecp256k1 = { version = "0.6", default-features = false }
+libsecp-rand = { package = "rand", version = "0.7" }
 num-derive = "0.4"
 num-traits = "0.2"
 rand = "0.8"
@@ -110,6 +113,7 @@ tracing-error = "0.2"
 typed-builder = "0.20"
 xshell = "0.2"
 pretty_assertions = "1"
+udigest = { version = "0.2", features = ["derive"] }
 
 # solana programs
 axelar-solana-its = { path = "programs/axelar-solana-its" }
@@ -120,6 +124,7 @@ gateway = { path = "programs/gateway", package = "gmp-gateway" }
 axelar-solana-gateway = { path = "programs/axelar-solana-gateway" }
 
 # helper crates
+axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
 axelar-executable = { path = "helpers/axelar-executable" }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
 axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = ["solana"] }

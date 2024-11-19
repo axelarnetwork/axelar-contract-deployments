@@ -2,8 +2,11 @@
 
 use std::mem;
 
-use axelar_rkyv_encoding::hasher::merkle_tree::{MerkleProof, SolanaSyscallHasher};
-use axelar_rkyv_encoding::types::{PublicKey, Signature, VerifierSetLeafNode};
+use axelar_solana_encoding::hasher::SolanaSyscallHasher;
+use axelar_solana_encoding::types::execute_data::SigningVerifierSetInfo;
+use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
+use axelar_solana_encoding::types::verifier_set::VerifierSetLeaf;
+use axelar_solana_encoding::{rs_merkle, LeafHash};
 use bitvec::order::Lsb0;
 use bitvec::slice::BitSlice;
 use bitvec::view::BitView;
@@ -76,30 +79,31 @@ impl SignatureVerification {
     /// Fully process a submitted signature.
     pub fn process_signature(
         &mut self,
-        signature_node: VerifierSetLeafNode<SolanaSyscallHasher>,
-        merkle_proof: &MerkleProof<SolanaSyscallHasher>,
+        verifier_info: SigningVerifierSetInfo,
         verifier_set_merkle_root: &[u8; 32],
         payload_merkle_root: &[u8; 32],
-        signature: &Signature,
         signature_verifier: &impl SignatureVerifier,
     ) -> Result<(), SignatureVerificationError> {
+        let merkle_proof =
+            rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&verifier_info.merkle_proof)
+                .unwrap();
         // Check: Slot is already verified
-        self.check_slot_is_done(signature_node)?;
+        self.check_slot_is_done(&verifier_info.leaf)?;
 
         // Check: Merkle proof
-        Self::verify_merkle_proof(signature_node, merkle_proof, verifier_set_merkle_root)?;
+        Self::verify_merkle_proof(verifier_info.leaf, &merkle_proof, verifier_set_merkle_root)?;
 
         // Check: Digital signature
         Self::verify_digital_signature(
-            &signature_node.signer_pubkey,
+            &verifier_info.leaf.signer_pubkey,
             payload_merkle_root,
-            signature,
+            &verifier_info.signature,
             signature_verifier,
         )?;
 
         // Update state
-        self.accumulate_threshold(signature_node);
-        self.mark_slot_done(signature_node)?;
+        self.accumulate_threshold(&verifier_info.leaf);
+        self.mark_slot_done(&verifier_info.leaf)?;
         if self.signing_verifier_set_hash == [0; 32] {
             self.signing_verifier_set_hash = *verifier_set_merkle_root;
         } else if &self.signing_verifier_set_hash != verifier_set_merkle_root {
@@ -112,7 +116,7 @@ impl SignatureVerification {
     #[inline]
     fn check_slot_is_done(
         &self,
-        signature_node: VerifierSetLeafNode<SolanaSyscallHasher>,
+        signature_node: &VerifierSetLeaf,
     ) -> Result<(), SignatureVerificationError> {
         let signature_slots = self.signature_slots.view_bits::<Lsb0>();
         let position = signature_node.position as usize;
@@ -129,11 +133,11 @@ impl SignatureVerification {
 
     #[inline]
     fn verify_merkle_proof(
-        signature_node: VerifierSetLeafNode<SolanaSyscallHasher>,
-        merkle_proof: &MerkleProof<SolanaSyscallHasher>,
+        signature_node: VerifierSetLeaf,
+        merkle_proof: &rs_merkle::MerkleProof<SolanaSyscallHasher>,
         verifier_set_merkle_root: &[u8; 32],
     ) -> Result<(), SignatureVerificationError> {
-        let leaf_hash: [u8; 32] = signature_node.into();
+        let leaf_hash = signature_node.hash::<SolanaSyscallHasher>();
 
         if merkle_proof.verify(
             *verifier_set_merkle_root,
@@ -162,7 +166,7 @@ impl SignatureVerification {
     }
 
     #[inline]
-    fn accumulate_threshold(&mut self, signature_node: VerifierSetLeafNode<SolanaSyscallHasher>) {
+    fn accumulate_threshold(&mut self, signature_node: &VerifierSetLeaf) {
         self.accumulated_threshold = self
             .accumulated_threshold
             .saturating_add(signature_node.signer_weight);
@@ -175,7 +179,7 @@ impl SignatureVerification {
     #[inline]
     fn mark_slot_done(
         &mut self,
-        signature_node: VerifierSetLeafNode<SolanaSyscallHasher>,
+        signature_node: &VerifierSetLeaf,
     ) -> Result<(), SignatureVerificationError> {
         let signature_slots = self.signature_slots.view_bits_mut::<Lsb0>();
         let position = signature_node.position as usize;
@@ -223,237 +227,4 @@ pub trait SignatureVerifier {
         public_key: &PublicKey,
         message: &[u8; 32],
     ) -> bool;
-}
-
-#[cfg(test)]
-mod tests {
-    use std::collections::VecDeque;
-
-    use axelar_rkyv_encoding::hasher::merkle_trait::Merkle;
-    use axelar_rkyv_encoding::test_fixtures::{
-        random_bytes, random_signature, random_valid_verifier_set_fixed_size,
-    };
-    use axelar_rkyv_encoding::types::VerifierSet;
-    use rand::rngs::OsRng;
-    use rand::Rng;
-
-    use super::*;
-
-    struct MockSignatureVerifier(bool);
-
-    impl SignatureVerifier for MockSignatureVerifier {
-        fn verify_signature(
-            &self,
-            _signature: &Signature,
-            _public_key: &PublicKey,
-            _message: &[u8; 32],
-        ) -> bool {
-            self.0
-        }
-    }
-
-    struct MerkleIter {
-        root: [u8; 32],
-        leaves: VecDeque<VerifierSetLeafNode<SolanaSyscallHasher>>,
-        proofs: VecDeque<MerkleProof<SolanaSyscallHasher>>,
-    }
-
-    impl MerkleIter {
-        fn new(verifier_set: &VerifierSet) -> Self {
-            let root = Merkle::<SolanaSyscallHasher>::calculate_merkle_root(verifier_set).unwrap();
-            let leaves = verifier_set.merkle_leaves().collect();
-            let proofs = verifier_set.merkle_proofs().collect();
-            Self {
-                root,
-                leaves,
-                proofs,
-            }
-        }
-    }
-
-    impl Iterator for MerkleIter {
-        type Item = MerkleItems;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            let leaf = self.leaves.pop_front()?;
-            let proof = self.proofs.pop_front()?;
-            Some(MerkleItems {
-                root: self.root,
-                leaf,
-                proof,
-            })
-        }
-    }
-
-    struct MerkleItems {
-        root: [u8; 32],
-        leaf: VerifierSetLeafNode<SolanaSyscallHasher>,
-        proof: MerkleProof<SolanaSyscallHasher>,
-    }
-
-    fn random_merkle_items() -> impl Iterator<Item = MerkleItems> {
-        let num_signers = OsRng.gen_range(40..120);
-        let verifier_set = random_valid_verifier_set_fixed_size(num_signers);
-        MerkleIter::new(&verifier_set)
-    }
-
-    #[test]
-    fn test_process_signature() {
-        // Setup
-        let mut session = SignatureVerification::default();
-        let MerkleItems { root, leaf, proof } = random_merkle_items().next().unwrap();
-        let mock = MockSignatureVerifier(true);
-
-        // confidence check
-        assert!(
-            !session.slot(leaf.position as usize).expect("existing slot"),
-            "uninitialized slot should be unset"
-        );
-
-        // verify
-        session
-            .process_signature(
-                leaf,
-                &proof,
-                &root,
-                &random_bytes(),
-                &random_signature(),
-                &mock,
-            )
-            .unwrap();
-
-        // check outcome
-        assert_eq!(session.accumulated_threshold, leaf.signer_weight);
-        assert!(session.slot(leaf.position as usize).unwrap())
-    }
-
-    #[test]
-    fn test_sufficient_threshold() {
-        // Setup
-        let mut session = SignatureVerification::default();
-        let mock = MockSignatureVerifier(true);
-        let mut real_accumulated_weight = 0u128;
-        let mut quorum: Option<u128> = None;
-
-        // verify
-        for MerkleItems { root, leaf, proof } in random_merkle_items() {
-            session
-                .process_signature(
-                    leaf,
-                    &proof,
-                    &root,
-                    &random_bytes(),
-                    &random_signature(),
-                    &mock,
-                )
-                .unwrap();
-            real_accumulated_weight += leaf.signer_weight;
-            quorum.get_or_insert(leaf.quorum);
-        }
-
-        // by now, this session should have obtained the required threshold.
-        assert_eq!(real_accumulated_weight, quorum.unwrap()); // confidence check
-        assert!(session.is_valid());
-        assert_eq!(session.accumulated_threshold, u128::MAX);
-    }
-
-    #[test]
-    fn test_repeated_signature() {
-        // setup
-        let mut session = SignatureVerification::default();
-        let MerkleItems { root, leaf, proof } = random_merkle_items().next().unwrap();
-        let mock = MockSignatureVerifier(true);
-
-        // run
-        session
-            .process_signature(
-                leaf,
-                &proof,
-                &root,
-                &random_bytes(),
-                &random_signature(),
-                &mock,
-            )
-            .unwrap();
-
-        // run twice
-        let err = session
-            .process_signature(
-                leaf,
-                &proof,
-                &root,
-                &random_bytes(),
-                &random_signature(),
-                &mock,
-            )
-            .expect_err("a repeated signature should result in a verification error");
-        assert!(matches!(
-            err,
-            SignatureVerificationError::SlotAlreadyVerified(0)
-        ));
-
-        // state should reflect just a single validation
-        assert_eq!(session.accumulated_threshold, leaf.signer_weight);
-        assert_eq!(session.slot(0), Some(true));
-        assert!(!session.is_valid())
-    }
-
-    #[test]
-    fn test_invalid_merkle_proof() {
-        // setup
-        let mut session = SignatureVerification::default();
-        let MerkleItems { leaf, proof, .. } = random_merkle_items().next().unwrap();
-        let invalid_root = random_bytes();
-        let mock = MockSignatureVerifier(true);
-
-        // run
-        let err = session
-            .process_signature(
-                leaf,
-                &proof,
-                &invalid_root,
-                &random_bytes(),
-                &random_signature(),
-                &mock,
-            )
-            .expect_err("an invalid root should result in a verification error");
-        assert!(matches!(
-            err,
-            SignatureVerificationError::InvalidMerkleProof
-        ));
-
-        // assert no state changes
-        assert_eq!(session.accumulated_threshold, 0);
-        assert_eq!(session.signature_slots, [0u8; 32]);
-        assert!(!session.is_valid())
-    }
-
-    #[test]
-    fn test_invalid_digital_signature() {
-        // setup
-        let mut session = SignatureVerification::default();
-        let MerkleItems { root, leaf, proof } = random_merkle_items().next().unwrap();
-        let mock = MockSignatureVerifier(false);
-
-        // run
-        let err = session
-            .process_signature(
-                leaf,
-                &proof,
-                &root,
-                &random_bytes(),
-                &random_signature(),
-                &mock,
-            )
-            .expect_err("an invalid signature should result in a verification error");
-        assert!(matches!(
-            err,
-            SignatureVerificationError::InvalidDigitalSignature
-        ));
-
-        // assert no state changes
-        assert_eq!(session.accumulated_threshold, 0);
-        assert_eq!(session.signature_slots, [0u8; 32]);
-        assert!(!session.is_valid())
-    }
 }

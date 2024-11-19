@@ -1,0 +1,26 @@
+[package]
+name = "axelar-solana-encoding"
+version = "0.1.0"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[dependencies]
+arrayref.workspace = true
+hex.workspace = true
+bs58.workspace = true
+rs_merkle.workspace = true
+sha3.workspace = true
+solana-program = { workspace = true, optional = true }
+thiserror.workspace = true
+udigest.workspace = true
+borsh.workspace = true
+
+[dev-dependencies]
+solana-program = { workspace = true }
+rand.workspace = true
+
+[features]
+default = []
+solana = ["dep:solana-program"]
