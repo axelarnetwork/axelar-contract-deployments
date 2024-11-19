@@ -2,7 +2,7 @@
 
 const {
     Keypair,
-    SorobanRpc,
+    rpc,
     Horizon,
     TransactionBuilder,
     Networks,
@@ -148,7 +148,7 @@ async function sendTransaction(tx, server, action, options = {}) {
 }
 
 async function broadcast(operation, wallet, chain, action, options = {}) {
-    const server = new SorobanRpc.Server(chain.rpc);
+    const server = new rpc.Server(chain.rpc);
 
     if (options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
@@ -168,7 +168,7 @@ function getAssetCode(balance, chain) {
 async function getWallet(chain, options) {
     const keypair = Keypair.fromSecret(options.privateKey);
     const address = keypair.publicKey();
-    const provider = new SorobanRpc.Server(chain.rpc);
+    const provider = new rpc.Server(chain.rpc);
     const horizonServer = new Horizon.Server(chain.horizonRpc);
     const balances = await getBalances(horizonServer, address);
 
