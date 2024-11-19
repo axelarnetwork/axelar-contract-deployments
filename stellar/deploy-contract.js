@@ -86,7 +86,7 @@ async function deploy(options, config, chain, contractName) {
     printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
     // construct arguments in this way to avoid encoding issues when passing arguments to the stellar CLI
-    function churn(key, value) {
+    function setupCLIParams(key, value) {
         if (typeof value === 'object') {
             return [`--${key}`, JSON.stringify(value)];
         } else {
@@ -109,7 +109,7 @@ async function deploy(options, config, chain, contractName) {
             '--', // constructor arguments are passed here
         ].concat(
             Object.entries(serializedArgs)
-                .map(([key, value]) => churn(key, value))
+                .map(([key, value]) => setupCLIParams(key, value))
                 .flat(1),
         ),
     );
