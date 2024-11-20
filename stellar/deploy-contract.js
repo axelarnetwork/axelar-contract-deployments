@@ -88,8 +88,8 @@ async function deploy(options, config, chain, contractName) {
     });
     printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
-    const responseDeploy = await broadcast(operation, wallet, chain, 'Initialized contract', options);
-    const contractAddress = StrKey.encodeContract(Address.fromScAddress(responseDeploy.address()).toBuffer());
+    const deployResponse = await broadcast(operation, wallet, chain, 'Initialized contract', options);
+    const contractAddress = StrKey.encodeContract(Address.fromScAddress(deployResponse.address()).toBuffer());
 
     printInfo('Contract initialized at address', contractAddress);
 
@@ -107,10 +107,9 @@ async function uploadWasm(filePath, wallet, chain) {
 }
 
 async function upgrade(options, _, chain, contractName) {
-    const { privateKey, wasmPath, yes } = options;
-    const { rpc, networkType } = chain;
-    const networkPassphrase = getNetworkPassphrase(networkType);
+    const { wasmPath, yes } = options;
     const contractAddress = chain.contracts[contractName].address;
+    const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with upgrade on ${chain.name}?`, yes)) {
         return;
@@ -120,18 +119,16 @@ async function upgrade(options, _, chain, contractName) {
         isNonEmptyString: { contractAddress },
     });
 
-    const params = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
+    const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
+    printInfo('New Wasm hash', serializeValue(newWasmHash));
 
-    let cmd = `${stellarCmd} contract install --wasm ${wasmPath} ${params}`;
-    const newWasmHash = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
-
-    printInfo('New Wasm hash', newWasmHash);
-
-    cmd = `${stellarCmd} contract invoke --id ${contractAddress} ${params} -- upgrade --new_wasm_hash ${newWasmHash}`;
-    execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
-
+    const operation = Operation.invokeContractFunction({
+        contract: contractAddress,
+        function: 'upgrade',
+        args: [nativeToScVal(newWasmHash)],
+    });
+    await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = newWasmHash;
-
     printInfo('Contract upgraded successfully!', contractAddress);
 }
 
