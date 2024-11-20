@@ -88,7 +88,7 @@ node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NA
 ### Interchain Token Service
 
 ```bash
-node stellar/deploy-contract.js deploy interchain_token_service --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm 
+node stellar/deploy-contract.js deploy interchain_token_service --wasm-path --chain-name <CHAIN_NAME> ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm 
 ```
 
 ## Generate bindings
