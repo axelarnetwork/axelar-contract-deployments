@@ -80,7 +80,7 @@ async function signTx(chain, options) {
 }
 
 async function executeCombinedSignature(chain, options) {
-    const client = getSuiClient(chain);
+    const client = getSuiClient(chain, options.rpc);
     const { combinedSignPath } = options;
 
     if (options.offline) {
@@ -223,6 +223,7 @@ if (require.main === module) {
     });
 
     executeCmd.addOption(new Option('--combinedSignPath <file>', 'combined signature file path'));
+    executeCmd.addOption(new Option('-r, --rpc <rpc>', 'The custom rpc'));
     executeCmd.action(async (options) => {
         await mainProcessor(options, executeCombinedSignature);
     });

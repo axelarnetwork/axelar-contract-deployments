@@ -64,13 +64,13 @@ function getWallet(chain, options) {
         }
     }
 
-    const client = getSuiClient(chain);
+    const client = getSuiClient(chain, options.rpc);
 
     return [keypair, client];
 }
 
-function getSuiClient(chain) {
-    const url = chain.rpc || getFullnodeUrl(chain.networkType);
+function getSuiClient(chain, rpc) {
+    const url = rpc || chain.rpc || getFullnodeUrl(chain.networkType);
     return new SuiClient({ url });
 }
 
