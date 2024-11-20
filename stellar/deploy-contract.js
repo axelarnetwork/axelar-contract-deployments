@@ -81,7 +81,7 @@ async function deploy(options, config, chain, contractName) {
     const wasmHash = await uploadWasm(wasmPath, wallet, chain);
 
     const operation = Operation.createCustomContract({
-        wasmHash: wasmHash,
+        wasmHash,
         address: Address.fromString(wallet.publicKey()),
         // requires that initializeArgs returns the parameters in the appropriate order
         constructorArgs: Object.values(initializeArgs),
