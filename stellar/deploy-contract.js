@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, Address, nativeToScVal, scValToNative } = require('@stellar/stellar-sdk');
+const { Address, nativeToScVal, scValToNative, Operation, StrKey } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
@@ -9,6 +9,7 @@ const { getDomainSeparator, getChainConfig } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
+const { readFileSync } = require('fs');
 const {
     utils: { arrayify, id },
 } = ethers;
@@ -65,41 +66,11 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
     }
 }
 
-const initializeFuncNames = {
-    axelar_gateway: 'initialize',
-    axelar_operators: 'initialize',
-    axelar_gas_service: 'initialize_gas_service',
-    interchain_token_service: 'initialize_its',
-};
-
 async function deploy(options, config, chain, contractName) {
-    const { privateKey, wasmPath, yes } = options;
-    const { rpc, networkType } = chain;
-    const networkPassphrase = getNetworkPassphrase(networkType);
+    const { wasmPath, yes } = options;
     const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
-        return;
-    }
-
-    const params = `--source ${privateKey} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
-    const cmd = `${stellarCmd} contract deploy --wasm ${wasmPath} ${params}`;
-
-    let contractAddress = options.address;
-
-    if (!contractAddress) {
-        contractAddress = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trimEnd();
-        printInfo('Contract deployed successfully!', contractAddress);
-    } else {
-        printInfo('Using existing contract', contractAddress);
-    }
-
-    chain.contracts[contractName] = {
-        address: contractAddress,
-        deployer: wallet.publicKey(),
-    };
-
-    if (!options.initialize) {
         return;
     }
 
@@ -107,14 +78,32 @@ async function deploy(options, config, chain, contractName) {
     const serializedArgs = Object.fromEntries(
         Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),
     );
-    chain.contracts[contractName].initializeArgs = serializedArgs;
+    const wasmHash = await uploadWasm(wasmPath, wallet, chain);
 
-    const contract = new Contract(contractAddress);
-    const operation = contract.call(initializeFuncNames[contractName], ...Object.values(initializeArgs));
-
+    const operation = Operation.createCustomContract({
+        wasmHash: wasmHash,
+        address: Address.fromString(wallet.publicKey()),
+        // requires that initializeArgs returns the parameters in the appropriate order
+        constructorArgs: Object.values(initializeArgs),
+    });
     printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
-    await broadcast(operation, wallet, chain, 'Initialized contract', options);
+    const responseDeploy = await broadcast(operation, wallet, chain, 'Initialized contract', options);
+    const contractAddress = StrKey.encodeContract(Address.fromScAddress(responseDeploy.address()).toBuffer());
+
+    printInfo('Contract initialized at address', contractAddress);
+
+    chain.contracts[contractName] = {
+        address: contractAddress,
+        deployer: wallet.publicKey(),
+    };
+}
+
+async function uploadWasm(filePath, wallet, chain) {
+    const bytecode = readFileSync(filePath);
+    const operation = Operation.uploadContractWasm({ wasm: bytecode });
+    const wasmResponse = await broadcast(operation, wallet, chain, 'Uploaded wasm');
+    return wasmResponse.value();
 }
 
 async function upgrade(options, _, chain, contractName) {
@@ -168,7 +157,6 @@ function main() {
         .argument('<contract-name>', 'contract name to deploy')
         .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file').makeOptionMandatory(true))
         .addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'))
-        .addOption(new Option('--initialize', 'initialize the contract'))
         .addOption(new Option('--domain-separator <domainSeparator>', 'domain separator (keccak256 hash or "offline")').default('offline'))
         .addOption(
             new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention')
