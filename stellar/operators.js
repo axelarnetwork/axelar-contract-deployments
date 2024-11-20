@@ -98,8 +98,8 @@ async function processCommand(options, _, chain) {
 
     const returnValue = await broadcast(operation, wallet, chain, `${options.action} performed`, options);
 
-    if (returnValue) {
-        printInfo('Return value', returnValue);
+    if (returnValue.value()) {
+        printInfo('Return value', returnValue.value());
     }
 }
 

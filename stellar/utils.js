@@ -139,8 +139,7 @@ async function sendTransaction(tx, server, action, options = {}) {
         if (options.verbose) {
             printInfo('Transaction result', returnValue.value());
         }
-
-        return returnValue.value();
+        return returnValue;
     } catch (err) {
         console.log('Sending transaction failed');
         throw err;
