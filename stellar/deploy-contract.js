@@ -51,7 +51,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             return { owner };
 
         case 'axelar_operators':
-            return { operator };
+            return { owner };
 
         case 'axelar_gas_service': {
             const operatorsAddress = chain?.contracts?.axelar_operators?.address;
