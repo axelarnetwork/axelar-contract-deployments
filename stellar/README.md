@@ -212,7 +212,7 @@ node stellar/contract.js restore-instance [contract-name]
 
 ### Example
 
-#### GMP - Send
+#### GMP - Send Command (Outgoing)
 
 ```bash
 node stellar/gmp.js send [destination-chain] [destination-address] [payload] [gas-token-address] [gas-fee-amount]
@@ -221,7 +221,9 @@ node stellar/gmp.js send [destination-chain] [destination-address] [payload] [ga
 node stellar/gmp.js send avalanche 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234 CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC 1
 ```
 
-#### GMP - Execute
+#### GMP - Execute Command (Incoming)
+
+Note that approving the incoming message from the gateway needs to be done to execute it.
 
 ```bash
 node stellar/gmp.js [source-chain] [message-id] [source-address] [payload]
