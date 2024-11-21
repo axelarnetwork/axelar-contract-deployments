@@ -95,6 +95,7 @@ async function deploy(options, config, chain, contractName) {
     chain.contracts[contractName] = {
         address: contractAddress,
         deployer: wallet.publicKey(),
+        initializeArgs: serializedArgs,
     };
 }
 
