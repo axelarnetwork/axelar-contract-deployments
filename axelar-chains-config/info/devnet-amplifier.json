@@ -16,6 +16,21 @@
         "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
       },
       "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "startingKeyIDs": [
+            "core-avalanche-genesis"
+          ],
+          "address": "0xb7879887ec7e85a5C757D7ccF5E3AB15007152e2",
+          "implementation": "0x56c9De44D10324Acf5EfE3a808aF9F2A49EE4958",
+          "implementationCodehash": "0xcc7160c968bc78c8be295b69fce8725ca9813669fc96bf460c5c5c1e13b2bf3d",
+          "authModule": "0x43ca3BC9947f41e2E96d627287C5252C70474E9F",
+          "tokenDeployer": "0x9E68de165a7d70aaaDC711C85E96F8fbcB064a77",
+          "deploymentMethod": "create",
+          "connectionType": "consensus",
+          "governance": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "mintLimiter": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB"
+        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
           "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
@@ -50,6 +65,21 @@
       }
     },
     "core-ethereum": {
+      "AxelarGateway": {
+        "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+        "startingKeyIDs": [
+          "core-ethereum-genesis"
+        ],
+        "address": "0x7C60aA56482c2e78D75Fd6B380e1AdC537B97319",
+        "implementation": "0x80b70F5f8c8018ff919AcfdcF1026cf28D2c81bc",
+        "implementationCodehash": "0xcc7160c968bc78c8be295b69fce8725ca9813669fc96bf460c5c5c1e13b2bf3d",
+        "authModule": "0x7a5746A207b86cA4d7F92B4F423403a60CB96D2d",
+        "tokenDeployer": "0x7619952e5edd593dd04ddb3208f430c7061f8bB0",
+        "deploymentMethod": "create",
+        "connectionType": "consensus",
+        "governance": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+        "mintLimiter": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB"
+      },
       "name": "Ethereum Sepolia",
       "axelarId": "core-ethereum",
       "chainId": 11155111,
@@ -114,6 +144,21 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 40,
       "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "startingKeyIDs": [
+            "core-optimism-genesis"
+          ],
+          "address": "0xdb6711cFc97e13E4aF6EEEe5f4923A9c2FBf0721",
+          "implementation": "0x6BB7937D233e3Ea48C231114cEc91739aAfa2021",
+          "implementationCodehash": "0xcc7160c968bc78c8be295b69fce8725ca9813669fc96bf460c5c5c1e13b2bf3d",
+          "authModule": "0xA5A5160F81dF7CfEb56D31E2321898318ddA448D",
+          "tokenDeployer": "0xF8715D878a73dBf5eB1505f646DF86188f0500B2",
+          "deploymentMethod": "create",
+          "connectionType": "consensus",
+          "governance": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "mintLimiter": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB"
+        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
           "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
