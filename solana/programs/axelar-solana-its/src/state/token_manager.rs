@@ -6,6 +6,7 @@ use core::mem::size_of;
 use alloy_primitives::{Bytes, FixedBytes, U256};
 use alloy_sol_types::SolValue;
 use axelar_rkyv_encoding::types::PublicKey;
+use program_utils::StorableArchive;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -139,12 +140,8 @@ pub struct TokenManager {
     /// The token manager PDA bump seed.
     pub bump: u8,
 
-    /// The list of operators that are allowed to manage the flow limiters.
-    pub operators: Vec<PublicKey>,
-
-    /// The list of accounts that are allowed to request the `TokenManager` to
-    /// mint tokens.
-    pub minters: Option<Vec<PublicKey>>,
+    /// The flow limit for the token manager
+    pub flow_limit: u64,
 }
 
 impl TokenManager {
@@ -163,8 +160,6 @@ impl TokenManager {
         token_address: PublicKey,
         associated_token_account: PublicKey,
         bump: u8,
-        operators: Vec<PublicKey>,
-        minters: Option<Vec<PublicKey>>,
     ) -> Self {
         Self {
             ty,
@@ -172,11 +167,12 @@ impl TokenManager {
             token_address,
             associated_token_account,
             bump,
-            operators,
-            minters,
+            flow_limit: 0,
         }
     }
 }
+
+impl StorableArchive<0> for TokenManager {}
 
 impl ArchivedTokenManager {
     /// Deserializes the `TokenManager` from the given bytes using `rkyv` for

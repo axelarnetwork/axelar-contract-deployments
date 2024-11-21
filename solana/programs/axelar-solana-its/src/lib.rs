@@ -24,11 +24,8 @@ pub mod seed_prefixes {
     /// The seed prefix for deriving the interchain token PDA
     pub const INTERCHAIN_TOKEN_SEED: &[u8] = b"interchain-token";
 
-    /// The seed prefix for deriving the user roles PDA
-    pub const USER_ROLES_SEED: &[u8] = b"user-roles";
-
-    /// The seed prefix for deriving the role proposal PDA
-    pub const ROLE_PROPOSAL_SEED: &[u8] = b"role-proposal";
+    /// The seed prefix for deriving the flow slot PDA
+    pub const FLOW_SLOT_SEED: &[u8] = b"flow-slot";
 }
 
 /// Checks that the supplied program ID is the correct one
@@ -175,6 +172,55 @@ pub fn interchain_token_pda(
                     seed_prefixes::INTERCHAIN_TOKEN_SEED,
                     its_root_pda.as_ref(),
                     token_id,
+                ],
+                &crate::id(),
+            )
+        })
+}
+
+/// Tries to create the PDA for a `FlowSlot` using the provided bump,
+/// falling back to `find_program_address` if the bump is invalid.
+#[inline]
+#[must_use]
+pub fn create_flow_slot_pda(token_manager_pda: &Pubkey, epoch: u64, bump: u8) -> (Pubkey, u8) {
+    flow_slot_pda(token_manager_pda, epoch, Some(bump))
+}
+
+/// Derives the PDA for a `FlowSlot`.
+#[inline]
+#[must_use]
+pub fn find_flow_slot_pda(token_manager_pda: &Pubkey, epoch: u64) -> (Pubkey, u8) {
+    flow_slot_pda(token_manager_pda, epoch, None)
+}
+
+/// Tries to create the PDA for a `FlowSlot` using the provided bump,
+/// falling back to `find_program_address` if the bump is `None` or invalid.
+#[must_use]
+pub fn flow_slot_pda(
+    token_manager_pda: &Pubkey,
+    epoch: u64,
+    maybe_bump: Option<u8>,
+) -> (Pubkey, u8) {
+    maybe_bump
+        .and_then(|bump| {
+            Pubkey::create_program_address(
+                &[
+                    seed_prefixes::FLOW_SLOT_SEED,
+                    token_manager_pda.as_ref(),
+                    &epoch.to_ne_bytes(),
+                    &[bump],
+                ],
+                &crate::id(),
+            )
+            .map(|pubkey| (pubkey, bump))
+            .ok()
+        })
+        .unwrap_or_else(|| {
+            Pubkey::find_program_address(
+                &[
+                    seed_prefixes::FLOW_SLOT_SEED,
+                    token_manager_pda.as_ref(),
+                    &epoch.to_ne_bytes(),
                 ],
                 &crate::id(),
             )

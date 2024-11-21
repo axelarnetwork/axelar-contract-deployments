@@ -8,17 +8,32 @@
 
 mod deploy_interchain_token;
 mod deploy_token_manager;
+mod flow_limits;
 mod from_solana_to_evm;
 mod its_gmp_payload;
-mod role_management;
 
 use evm_contracts_test_suite::chain::TestBlockchain;
+use evm_contracts_test_suite::ethers::abi::Detokenize;
+use evm_contracts_test_suite::ethers::contract::{ContractCall, EthLogDecode, Event as EvmEvent};
+use evm_contracts_test_suite::ethers::providers::Middleware;
+use evm_contracts_test_suite::ethers::types::{Address, TransactionReceipt};
+use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::{
+    AxelarAmplifierGateway as EvmAxelarAmplifierGateway, Message as EvmAxelarMessage,
+    Proof as EvmAxelarProof,
+};
 use evm_contracts_test_suite::evm_weighted_signers::WeightedSigners;
-use evm_contracts_test_suite::{get_domain_separator, ItsContracts};
+use evm_contracts_test_suite::{
+    evm_weighted_signers, get_domain_separator, ContractMiddleware, ItsContracts,
+};
+use gateway::events::{EventContainer, GatewayEvent};
 use interchain_token_transfer_gmp::{GMPPayload, ReceiveFromHub};
+use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
-use test_fixtures::test_setup::{SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata};
+use solana_sdk::transaction::Transaction;
+use test_fixtures::test_setup::{
+    SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata, TestFixture,
+};
 
 mod from_evm_to_solana;
 
@@ -168,4 +183,111 @@ async fn axelar_evm_setup() -> (
         operators2,
         get_domain_separator(),
     )
+}
+
+async fn retrieve_evm_log_with_filter<M, T>(filter: EvmEvent<std::sync::Arc<M>, M, T>) -> T
+where
+    M: Middleware,
+    T: EthLogDecode,
+{
+    filter
+        .from_block(0_u64)
+        .query()
+        .await
+        .unwrap()
+        .into_iter()
+        .next()
+        .expect("no logs found")
+}
+
+async fn call_evm<M, D>(contract_call: ContractCall<M, D>) -> TransactionReceipt
+where
+    M: Middleware,
+    D: Detokenize,
+{
+    contract_call.send().await.unwrap().await.unwrap().unwrap()
+}
+
+async fn ensure_evm_gateway_approval(
+    message: EvmAxelarMessage,
+    proof: EvmAxelarProof,
+    gateway: &EvmAxelarAmplifierGateway<ContractMiddleware>,
+) -> [u8; 32] {
+    call_evm(gateway.approve_messages(vec![message.clone()], proof)).await;
+
+    let is_approved = gateway
+        .is_message_approved(
+            ITS_CHAIN_NAME.to_owned(),
+            message.message_id.clone(),
+            message.source_address.clone(),
+            message.contract_address,
+            message.payload_hash,
+        )
+        .await
+        .unwrap();
+
+    assert!(is_approved, "contract call was not approved");
+
+    gateway
+        .message_to_command_id(ITS_CHAIN_NAME.to_owned(), message.message_id.clone())
+        .await
+        .unwrap()
+}
+
+fn prepare_evm_approve_contract_call(
+    payload_hash: [u8; 32],
+    sender: Pubkey,
+    destination_address: Address,
+    signer_set: &mut evm_weighted_signers::WeightedSigners,
+    domain_separator: [u8; 32],
+) -> (Vec<EvmAxelarMessage>, EvmAxelarProof) {
+    // TODO: use address from the contract call once we have the trusted addresses
+    // in place (the address is currently empty)
+    let message = EvmAxelarMessage {
+        source_chain: ITS_CHAIN_NAME.to_owned(),
+        message_id: String::from_utf8_lossy(&payload_hash).to_string(),
+        source_address: sender.to_string(),
+        contract_address: destination_address,
+        payload_hash,
+    };
+
+    let approve_contract_call_command =
+        evm_weighted_signers::get_approve_contract_call(message.clone());
+
+    // Build command batch
+    let signed_weighted_execute_input = evm_weighted_signers::get_weighted_signatures_proof(
+        &approve_contract_call_command,
+        signer_set,
+        domain_separator,
+    );
+
+    (vec![message], signed_weighted_execute_input)
+}
+
+async fn call_solana_gateway(solana_fixture: &mut TestFixture, ix: Instruction) -> EventContainer {
+    let transaction = Transaction::new_signed_with_payer(
+        &[ix],
+        Some(&solana_fixture.payer.pubkey()),
+        &[&solana_fixture.payer],
+        solana_fixture
+            .banks_client
+            .get_latest_blockhash()
+            .await
+            .unwrap(),
+    );
+    let tx = solana_fixture
+        .banks_client
+        .process_transaction_with_metadata(transaction)
+        .await
+        .unwrap();
+
+    assert!(tx.result.is_ok(), "transaction failed");
+
+    let log_msgs = tx.metadata.unwrap().log_messages;
+    let gateway_event = log_msgs
+        .iter()
+        .find_map(GatewayEvent::parse_log)
+        .expect("Gateway event was not emitted?");
+
+    gateway_event
 }

@@ -9,6 +9,7 @@ use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gate
 use evm_contracts_test_suite::ItsContracts;
 use interchain_token_transfer_gmp::{GMPPayload, ReceiveFromHub};
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
+use solana_sdk::clock::Clock;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer as _;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
@@ -95,6 +96,13 @@ async fn relay_to_solana(
         )
         .await;
 
+    let clock_sysvar: Clock = solana_chain
+        .fixture
+        .banks_client
+        .get_sysvar()
+        .await
+        .unwrap();
+
     let its_ix_inputs = ItsGmpInstructionInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .gateway_approved_message_pda(gateway_approved_command_pdas[0])
@@ -102,6 +110,7 @@ async fn relay_to_solana(
         .gmp_metadata(axelar_message.into())
         .payload(solana_payload)
         .token_program(spl_token_2022::id())
+        .timestamp(clock_sysvar.unix_timestamp)
         .mint_opt(maybe_mint)
         .build();
 

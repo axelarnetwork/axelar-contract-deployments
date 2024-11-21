@@ -4585,6 +4585,7 @@ version = "0.1.0"
 dependencies = [
  "axelar-rkyv-encoding",
  "axelar-solana-its",
+ "bincode",
  "interchain-token-transfer-gmp",
  "solana-client",
  "solana-sdk",

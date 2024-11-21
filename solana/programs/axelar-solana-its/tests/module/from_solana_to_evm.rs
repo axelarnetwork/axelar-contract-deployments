@@ -8,35 +8,26 @@ use axelar_solana_its::instructions::{
     DeployInterchainTokenInputs, DeployTokenManagerInputs, InterchainTransferInputs,
 };
 use axelar_solana_its::state::token_manager;
-use evm_contracts_test_suite::ethers::abi::Detokenize;
-use evm_contracts_test_suite::ethers::contract::{ContractCall, EthLogDecode, Event as EvmEvent};
-use evm_contracts_test_suite::ethers::providers::Middleware;
 use evm_contracts_test_suite::ethers::signers::Signer;
-use evm_contracts_test_suite::ethers::types::{Address, TransactionReceipt, U256};
-use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::{
-    AxelarAmplifierGateway as EvmAxelarAmplifierGateway, Message as EvmAxelarMessage,
-    Proof as EvmAxelarProof,
-};
-use evm_contracts_test_suite::{evm_weighted_signers, ContractMiddleware};
-use gateway::events::{ArchivedGatewayEvent, EventContainer, GatewayEvent};
+use evm_contracts_test_suite::ethers::types::U256;
+use gateway::events::ArchivedGatewayEvent;
 use interchain_token_transfer_gmp::GMPPayload;
 use rstest::rstest;
 use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
-use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer as SolanaSigner};
-use solana_sdk::transaction::Transaction;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::instruction::create_associated_token_account;
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::instruction::AuthorityType;
 use spl_token_2022::state::Mint;
-use test_fixtures::test_setup::TestFixture;
 
 use crate::{
-    axelar_evm_setup, axelar_solana_setup, route_its_hub, ItsProgramWrapper, ITS_CHAIN_NAME,
+    axelar_evm_setup, axelar_solana_setup, call_evm, call_solana_gateway,
+    ensure_evm_gateway_approval, prepare_evm_approve_contract_call, retrieve_evm_log_with_filter,
+    route_its_hub, ItsProgramWrapper, ITS_CHAIN_NAME,
 };
 
 #[tokio::test]
@@ -338,7 +329,15 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
 
     solana_chain.fixture.send_tx(&[mint_ix]).await;
 
+    let clock_sysvar: Clock = solana_chain
+        .fixture
+        .banks_client
+        .get_sysvar()
+        .await
+        .unwrap();
+
     let transfer = InterchainTransferInputs::builder()
+        .payer(solana_chain.fixture.payer.pubkey())
         .authority(solana_chain.fixture.payer.pubkey())
         .source_account(associated_account_address)
         .token_id(log.token_id)
@@ -346,6 +345,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
         .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
         .amount(323)
         .gas_value(0_u128)
+        .timestamp(clock_sysvar.unix_timestamp)
         .metadata(vec![])
         .build();
 
@@ -563,8 +563,16 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
     .unwrap();
     solana_chain.fixture.send_tx(&[mint_tokens_ix]).await;
 
+    let clock_sysvar: Clock = solana_chain
+        .fixture
+        .banks_client
+        .get_sysvar()
+        .await
+        .unwrap();
+
     let transfer = InterchainTransferInputs::builder()
         .mint(mint)
+        .payer(solana_chain.fixture.payer.pubkey())
         .authority(solana_chain.fixture.payer.pubkey())
         .source_account(ata)
         .token_id(log.token_id)
@@ -573,6 +581,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
         .amount(transfer_amount)
         .gas_value(0_u128)
         .token_program(token_program_id)
+        .timestamp(clock_sysvar.unix_timestamp)
         .metadata(vec![])
         .build();
 
@@ -817,8 +826,16 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         )
         .await;
 
+    let clock_sysvar: Clock = solana_chain
+        .fixture
+        .banks_client
+        .get_sysvar()
+        .await
+        .unwrap();
+
     let transfer = InterchainTransferInputs::builder()
         .mint(mint)
+        .payer(solana_chain.fixture.payer.pubkey())
         .source_account(bob_ata)
         .token_id(log.token_id)
         .destination_chain(destination_chain)
@@ -826,6 +843,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         .amount(transfer_amount)
         .gas_value(0_u128)
         .token_program(token_program_id)
+        .timestamp(clock_sysvar.unix_timestamp)
         .metadata(vec![])
         .build();
 
@@ -1037,8 +1055,16 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
         )
         .await;
 
+    let clock_sysvar: Clock = solana_chain
+        .fixture
+        .banks_client
+        .get_sysvar()
+        .await
+        .unwrap();
+
     let transfer = InterchainTransferInputs::builder()
         .authority(solana_chain.fixture.payer.pubkey())
+        .payer(solana_chain.fixture.payer.pubkey())
         .mint(mint)
         .source_account(ata)
         .token_id(log.token_id)
@@ -1046,6 +1072,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
         .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
         .amount(transfer_amount)
         .gas_value(0_u128)
+        .timestamp(clock_sysvar.unix_timestamp)
         .token_program(token_program_id)
         .metadata(vec![])
         .build();
@@ -1273,14 +1300,22 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
         )
         .await;
 
+    let clock_sysvar: Clock = solana_chain
+        .fixture
+        .banks_client
+        .get_sysvar()
+        .await
+        .unwrap();
     let transfer = InterchainTransferInputs::builder()
         .authority(solana_chain.fixture.payer.pubkey())
+        .payer(solana_chain.fixture.payer.pubkey())
         .mint(mint)
         .source_account(ata)
         .token_id(log.token_id)
         .destination_chain(destination_chain)
         .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
         .amount(transfer_amount)
+        .timestamp(clock_sysvar.unix_timestamp)
         .gas_value(0_u128)
         .metadata(vec![])
         .build();
@@ -1375,111 +1410,4 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
         token_manager_ata.amount,
         transfer_amount.checked_sub(fee).unwrap()
     );
-}
-
-async fn retrieve_evm_log_with_filter<M, T>(filter: EvmEvent<std::sync::Arc<M>, M, T>) -> T
-where
-    M: Middleware,
-    T: EthLogDecode,
-{
-    filter
-        .from_block(0_u64)
-        .query()
-        .await
-        .unwrap()
-        .into_iter()
-        .next()
-        .expect("no logs found")
-}
-
-async fn call_evm<M, D>(contract_call: ContractCall<M, D>) -> TransactionReceipt
-where
-    M: Middleware,
-    D: Detokenize,
-{
-    contract_call.send().await.unwrap().await.unwrap().unwrap()
-}
-
-async fn ensure_evm_gateway_approval(
-    message: EvmAxelarMessage,
-    proof: EvmAxelarProof,
-    gateway: &EvmAxelarAmplifierGateway<ContractMiddleware>,
-) -> [u8; 32] {
-    call_evm(gateway.approve_messages(vec![message.clone()], proof)).await;
-
-    let is_approved = gateway
-        .is_message_approved(
-            ITS_CHAIN_NAME.to_owned(),
-            message.message_id.clone(),
-            message.source_address.clone(),
-            message.contract_address,
-            message.payload_hash,
-        )
-        .await
-        .unwrap();
-
-    assert!(is_approved, "contract call was not approved");
-
-    gateway
-        .message_to_command_id(ITS_CHAIN_NAME.to_owned(), message.message_id.clone())
-        .await
-        .unwrap()
-}
-
-fn prepare_evm_approve_contract_call(
-    payload_hash: [u8; 32],
-    sender: Pubkey,
-    destination_address: Address,
-    signer_set: &mut evm_weighted_signers::WeightedSigners,
-    domain_separator: [u8; 32],
-) -> (Vec<EvmAxelarMessage>, EvmAxelarProof) {
-    // TODO: use address from the contract call once we have the trusted addresses
-    // in place (the address is currently empty)
-    let message = EvmAxelarMessage {
-        source_chain: ITS_CHAIN_NAME.to_owned(),
-        message_id: String::from_utf8_lossy(&payload_hash).to_string(),
-        source_address: sender.to_string(),
-        contract_address: destination_address,
-        payload_hash,
-    };
-
-    let approve_contract_call_command =
-        evm_weighted_signers::get_approve_contract_call(message.clone());
-
-    // Build command batch
-    let signed_weighted_execute_input = evm_weighted_signers::get_weighted_signatures_proof(
-        &approve_contract_call_command,
-        signer_set,
-        domain_separator,
-    );
-
-    (vec![message], signed_weighted_execute_input)
-}
-
-async fn call_solana_gateway(solana_fixture: &mut TestFixture, ix: Instruction) -> EventContainer {
-    let transaction = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&solana_fixture.payer.pubkey()),
-        &[&solana_fixture.payer],
-        solana_fixture
-            .banks_client
-            .get_latest_blockhash()
-            .await
-            .unwrap(),
-    );
-    let tx = solana_fixture
-        .banks_client
-        .process_transaction_with_metadata(transaction)
-        .await
-        .unwrap();
-
-    assert!(tx.result.is_ok(), "transaction failed");
-
-    let log_msgs = tx.metadata.unwrap().log_messages;
-    let gateway_event = log_msgs
-        .iter()
-        .find_map(GatewayEvent::parse_log)
-        .expect("Gateway event was not emitted?");
-
-    gateway_event
 }

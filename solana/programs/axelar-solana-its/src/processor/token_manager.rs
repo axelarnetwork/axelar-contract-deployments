@@ -2,7 +2,9 @@
 
 use axelar_rkyv_encoding::types::PublicKey;
 use interchain_token_transfer_gmp::DeployTokenManager;
-use program_utils::ValidPDA;
+use program_utils::{StorableArchive, ValidPDA};
+use role_management::processor::RoleManagementAccounts;
+use role_management::state::Roles;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
@@ -13,7 +15,7 @@ use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWit
 use spl_token_2022::state::Mint;
 
 use super::LocalAction;
-use crate::instructions::Bumps;
+use crate::instructions::{self, Bumps};
 use crate::seed_prefixes;
 use crate::state::token_manager::{self, TokenManager};
 
@@ -28,13 +30,56 @@ impl LocalAction for DeployTokenManager {
     }
 }
 
+#[allow(clippy::todo)]
+pub(crate) fn process_instruction<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    instruction: &instructions::token_manager::Instruction,
+) -> ProgramResult {
+    match instruction {
+        instructions::token_manager::Instruction::SetFlowLimit { flow_limit } => {
+            let instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
+            if !instruction_accounts.flow_limiter.is_signer {
+                return Err(ProgramError::MissingRequiredSignature);
+            }
+
+            set_flow_limit(&instruction_accounts, *flow_limit)
+        }
+        instructions::token_manager::Instruction::AddFlowLimiter(inputs) => {
+            if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
+                return Err(ProgramError::InvalidInstructionData);
+            }
+
+            let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
+            role_management::processor::add(
+                &crate::id(),
+                instruction_accounts,
+                inputs,
+                Roles::OPERATOR,
+            )
+        }
+        instructions::token_manager::Instruction::RemoveFlowLimiter(inputs) => {
+            if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
+                return Err(ProgramError::InvalidInstructionData);
+            }
+
+            let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
+            role_management::processor::remove(
+                &crate::id(),
+                instruction_accounts,
+                inputs,
+                Roles::OPERATOR,
+            )
+        }
+    }
+}
+
 /// Processes a [`DeployTokenManager`] GMP message.
 ///
 /// # Errors
 ///
 /// An error occurred when processing the message. The reason can be derived
 /// from the logs.
-pub fn process_deploy<'a>(
+pub(crate) fn process_deploy<'a>(
     payer: &AccountInfo<'a>,
     accounts: &[AccountInfo<'a>],
     payload: &DeployTokenManager,
@@ -59,15 +104,38 @@ pub fn process_deploy<'a>(
         None,
     );
 
-    deploy(payer, accounts, bumps, deploy_token_manager)
+    deploy(payer, accounts, bumps, &deploy_token_manager)
+}
+
+pub(crate) fn set_flow_limit(
+    accounts: &SetFlowLimitAccounts<'_>,
+    flow_limit: u64,
+) -> ProgramResult {
+    // TODO: Uncomment as soon as we're able to add flow limiters. Which is after we
+    // implement operator roles on TokenManager.
+    // ensure_roles(
+    //     &crate::id(),
+    //     accounts.token_manager_pda,
+    //     accounts.flow_limiter,
+    //     accounts.token_manager_user_roles_pda,
+    //     Roles::FLOW_LIMITER,
+    // )?;
+
+    let mut token_manager = TokenManager::load(&crate::id(), accounts.token_manager_pda)?;
+
+    token_manager.flow_limit = flow_limit;
+
+    token_manager.store(accounts.token_manager_pda)?;
+
+    Ok(())
 }
 
 pub(crate) struct DeployTokenManagerInternal<'a> {
     token_manager_type: token_manager::Type,
     token_id: PublicKey,
-    operator: Option<PublicKey>,
+    _operator: Option<PublicKey>,
     token_address: PublicKey,
-    additional_minter: Option<AccountInfo<'a>>,
+    _additional_minter: Option<AccountInfo<'a>>,
 }
 
 impl<'a> DeployTokenManagerInternal<'a> {
@@ -81,9 +149,9 @@ impl<'a> DeployTokenManagerInternal<'a> {
         Self {
             token_manager_type,
             token_id: PublicKey::new_ed25519(token_id),
-            operator: operator.map(|op| PublicKey::new_ed25519(op.to_bytes())),
+            _operator: operator.map(|op| PublicKey::new_ed25519(op.to_bytes())),
             token_address: PublicKey::new_ed25519(token_address.to_bytes()),
-            additional_minter,
+            _additional_minter: additional_minter,
         }
     }
 }
@@ -98,7 +166,7 @@ pub(crate) fn deploy<'a>(
     payer: &AccountInfo<'a>,
     accounts: &[AccountInfo<'a>],
     bumps: Bumps,
-    deploy_token_manager: DeployTokenManagerInternal<'a>,
+    deploy_token_manager: &DeployTokenManagerInternal<'a>,
 ) -> ProgramResult {
     check_accounts(accounts)?;
 
@@ -134,20 +202,25 @@ pub(crate) fn deploy<'a>(
     let (_token_manager_pda, bump) =
         crate::create_token_manager_pda(&interchain_token_pda, bumps.token_manager_pda_bump);
     let token_manager_ata = PublicKey::new_ed25519(token_manager_ata.key.to_bytes());
-    let mut operators = vec![PublicKey::new_ed25519(its_root_pda.key.to_bytes())];
 
-    if let Some(operator) = deploy_token_manager.operator {
-        operators.push(operator);
-    }
+    // TODO: USe the role management crate for this.
+    //
+    // let mut operators =
+    // vec![PublicKey::new_ed25519(its_root_pda.key.to_bytes())];
+    // if let Some(operator) = deploy_token_manager.operator {
+    //     operators.push(operator);
+    // }
 
-    let minters = match deploy_token_manager.token_manager_type {
-        token_manager::Type::NativeInterchainToken
-        | token_manager::Type::MintBurn
-        | token_manager::Type::MintBurnFrom => deploy_token_manager
-            .additional_minter
-            .map(|minter| vec![PublicKey::new_ed25519(minter.key.to_bytes())]),
-        token_manager::Type::LockUnlock | token_manager::Type::LockUnlockFee => None,
-    };
+    // TODO: Use the role management crate for this.
+    //
+    // let minters = match deploy_token_manager.token_manager_type {
+    //     token_manager::Type::NativeInterchainToken
+    //     | token_manager::Type::MintBurn
+    //     | token_manager::Type::MintBurnFrom => deploy_token_manager
+    //         .additional_minter
+    //         .map(|minter| vec![PublicKey::new_ed25519(minter.key.to_bytes())]),
+    //     token_manager::Type::LockUnlock | token_manager::Type::LockUnlockFee =>
+    // None, };
 
     let token_manager = TokenManager::new(
         deploy_token_manager.token_manager_type,
@@ -155,8 +228,6 @@ pub(crate) fn deploy<'a>(
         deploy_token_manager.token_address,
         token_manager_ata,
         bump,
-        operators,
-        minters,
     );
 
     program_utils::init_rkyv_pda::<{ TokenManager::LEN }, _>(
@@ -261,5 +332,31 @@ pub(crate) fn validate_token_manager_type(
             Err(ProgramError::InvalidAccountData)
         }
         _ => Ok(()),
+    }
+}
+
+// TODO: Remove this once we uncomment the ensure_roles call in set_flow_limit.
+#[allow(dead_code)]
+pub(crate) struct SetFlowLimitAccounts<'a> {
+    pub(crate) flow_limiter: &'a AccountInfo<'a>,
+    pub(crate) its_root_pda: &'a AccountInfo<'a>,
+    pub(crate) token_manager_pda: &'a AccountInfo<'a>,
+    pub(crate) its_user_roles_pda: &'a AccountInfo<'a>,
+    pub(crate) token_manager_user_roles_pda: &'a AccountInfo<'a>,
+}
+
+impl<'a> TryFrom<&'a [AccountInfo<'a>]> for SetFlowLimitAccounts<'a> {
+    type Error = ProgramError;
+
+    fn try_from(value: &'a [AccountInfo<'a>]) -> Result<Self, Self::Error> {
+        let accounts_iter = &mut value.iter();
+
+        Ok(Self {
+            flow_limiter: next_account_info(accounts_iter)?,
+            its_root_pda: next_account_info(accounts_iter)?,
+            token_manager_pda: next_account_info(accounts_iter)?,
+            its_user_roles_pda: next_account_info(accounts_iter)?,
+            token_manager_user_roles_pda: next_account_info(accounts_iter)?,
+        })
     }
 }

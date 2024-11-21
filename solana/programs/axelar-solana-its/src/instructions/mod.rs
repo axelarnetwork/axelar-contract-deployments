@@ -12,7 +12,6 @@ use interchain_token_transfer_gmp::{
 use rkyv::bytecheck::EnumCheckError;
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
-use role_management::instructions::RoleManagementInstruction;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -20,7 +19,9 @@ use solana_program::{system_program, sysvar};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use typed_builder::TypedBuilder;
 
-use crate::state::token_manager;
+use crate::state::{self, flow_limit};
+
+pub mod token_manager;
 
 /// Convenience module with the indices of the accounts passed in the
 /// [`ItsGmpPayload`] instruction (offset by the prefixed GMP accounts).
@@ -159,6 +160,12 @@ pub enum InterchainTokenServiceInstruction {
         bumps: Bumps,
     },
 
+    /// Sets the flow limit for an interchain token.
+    SetFlowLimit {
+        /// The new flow limit.
+        flow_limit: u64,
+    },
+
     /// A proxy instruction to mint tokens whose mint authority is a
     /// `TokenManager`. Only users with the `minter` role on the mint account
     /// can mint tokens.
@@ -174,15 +181,8 @@ pub enum InterchainTokenServiceInstruction {
         amount: u64,
     },
 
-    /// Role management instruction, see inner type for list of available
-    /// instructions and required accounts.
-    RoleManagement(RoleManagementInstruction),
-}
-
-impl From<RoleManagementInstruction> for InterchainTokenServiceInstruction {
-    fn from(value: RoleManagementInstruction) -> Self {
-        Self::RoleManagement(value)
-    }
+    /// Instructions operating on deployed [`TokenManager`] instances.
+    TokenManagerInstruction(token_manager::Instruction),
 }
 
 impl InterchainTokenServiceInstruction {
@@ -298,7 +298,7 @@ pub struct DeployTokenManagerInputs {
     pub(crate) destination_chain: Option<String>,
 
     /// Token manager type
-    pub(crate) token_manager_type: token_manager::Type,
+    pub(crate) token_manager_type: state::token_manager::Type,
 
     /// Chain specific params for the token manager
     pub(crate) params: Vec<u8>,
@@ -321,6 +321,10 @@ pub struct DeployTokenManagerInputs {
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct InterchainTransferInputs {
+    /// The payer account for this transaction.
+    #[builder(setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
+    pub(crate) payer: PublicKey,
+
     /// The source account.
     #[builder(setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
     pub(crate) source_account: PublicKey,
@@ -360,6 +364,9 @@ pub struct InterchainTransferInputs {
     #[builder(setter(transform = |x: u128| U256::from(x)))]
     pub(crate) gas_value: U256,
 
+    /// Current chain's unix timestamp.
+    pub(crate) timestamp: i64,
+
     /// The token program that owns the mint account, either `spl_token::id()`
     /// or `spl_token_2022::id()`. Assumes `spl_token_2022::id()` if not set.
     #[builder(default = PublicKey::new_ed25519(spl_token_2022::id().to_bytes()), setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
@@ -367,7 +374,7 @@ pub struct InterchainTransferInputs {
 }
 
 /// Bumps for the ITS PDA accounts.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, Copy, Default)]
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct Bumps {
@@ -379,6 +386,17 @@ pub struct Bumps {
 
     /// The bump for the token manager PDA.
     pub token_manager_pda_bump: u8,
+
+    /// The bump for the flow slot PDA.
+    pub flow_slot_pda_bump: Option<u8>,
+
+    /// The bump for the user roles PDA on ITS resource required for the
+    /// instruction, if any.
+    pub its_user_roles_pda_bump: Option<u8>,
+
+    /// The bump for the user roles PDA on the [`TokenManager`] required for the
+    /// instruction, if any.
+    pub token_manager_user_roles_pda_bump: Option<u8>,
 }
 
 /// Inputs for the [`its_gmp_payload`] function.
@@ -427,6 +445,10 @@ pub struct ItsGmpInstructionInputs {
     /// ignored by `DeployInterchainToken`.
     #[builder(default, setter(strip_option(fallback = mint_opt)))]
     pub(crate) mint: Option<Pubkey>,
+
+    /// The current approximate timestamp. Required for `InterchainTransfer`s.
+    #[builder(default, setter(strip_option(fallback = timestamp_opt)))]
+    pub(crate) timestamp: Option<i64>,
 
     /// Bumps used to derive the ITS accounts. If not set, the
     /// `find_program_address` is used which is more expensive.
@@ -496,8 +518,14 @@ pub fn deploy_interchain_token(
     ];
 
     let bumps = if params.destination_chain.is_none() {
-        let (mut its_accounts, bumps) =
-            derive_its_accounts(&gateway_root_pda, &params, spl_token_2022::id(), None, None)?;
+        let (mut its_accounts, bumps) = derive_its_accounts(
+            &gateway_root_pda,
+            &params,
+            spl_token_2022::id(),
+            None,
+            None,
+            None,
+        )?;
 
         accounts.append(&mut its_accounts);
 
@@ -553,7 +581,7 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
         );
 
         let (mut its_accounts, bumps) =
-            derive_its_accounts(&gateway_root_pda, &params, token_program, None, None)?;
+            derive_its_accounts(&gateway_root_pda, &params, token_program, None, None, None)?;
 
         accounts.append(&mut its_accounts);
 
@@ -591,10 +619,16 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
         crate::find_interchain_token_pda(&its_root_pda, &params.token_id);
     let (token_manager_pda, token_manager_pda_bump) =
         crate::find_token_manager_pda(&interchain_token_pda);
+    let flow_epoch = flow_limit::flow_epoch_with_timestamp(params.timestamp)?;
+    let (flow_slot_pda, flow_slot_pda_bump) =
+        crate::find_flow_slot_pda(&token_manager_pda, flow_epoch);
+
     let bumps = Bumps {
         its_root_pda_bump,
         interchain_token_pda_bump,
         token_manager_pda_bump,
+        flow_slot_pda_bump: Some(flow_slot_pda_bump),
+        ..Default::default()
     };
     let (authority, signer) = match params.authority {
         Some(key) => (
@@ -630,10 +664,20 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
             .map_err(|_err| ProgramError::InvalidInstructionData)?,
     );
 
+    let payer = Pubkey::new_from_array(
+        params
+            .payer
+            .as_ref()
+            .try_into()
+            .map_err(|_err| ProgramError::InvalidInstructionData)?,
+    );
+
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
 
     let accounts = vec![
+        AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(payer, true),
         AccountMeta::new_readonly(authority, signer),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gateway::id(), false),
@@ -644,6 +688,7 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new(token_manager_ata, false),
         AccountMeta::new_readonly(token_program, false),
+        AccountMeta::new(flow_slot_pda, false),
     ];
 
     let data = InterchainTokenServiceInstruction::InterchainTransfer { params, bumps }
@@ -652,6 +697,46 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
 
     Ok(Instruction {
         program_id: crate::ID,
+        accounts,
+        data,
+    })
+}
+
+/// Creates an [`InterchainTokenServiceInstruction::SetFlowLimit`].
+///
+/// # Errors
+///
+/// If serialization fails.
+pub fn set_flow_limit(
+    payer: Pubkey,
+    token_id: [u8; 32],
+    flow_limit: u64,
+) -> Result<Instruction, ProgramError> {
+    let (its_root_pda, _) = crate::find_its_root_pda(&gateway::get_gateway_root_config_pda().0);
+    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
+
+    let (its_user_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &payer);
+    let (token_manager_user_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &its_root_pda);
+
+    let instruction = InterchainTokenServiceInstruction::SetFlowLimit { flow_limit };
+
+    let data = instruction
+        .to_bytes()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    let accounts = vec![
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new(token_manager_pda, false),
+        AccountMeta::new_readonly(its_user_roles_pda, false),
+        AccountMeta::new_readonly(token_manager_user_roles_pda, false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::id(),
         accounts,
         data,
     })
@@ -687,6 +772,7 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
         &unwrapped_payload,
         inputs.token_program,
         inputs.mint,
+        inputs.timestamp,
         inputs.bumps,
     )?;
 
@@ -768,19 +854,25 @@ pub(crate) fn derive_its_accounts<'a, T>(
     payload: T,
     token_program: Pubkey,
     mint: Option<Pubkey>,
+    maybe_timestamp: Option<i64>,
     maybe_bumps: Option<Bumps>,
 ) -> Result<(Vec<AccountMeta>, Bumps), ProgramError>
 where
     T: TryInto<ItsMessageRef<'a>, Error = ProgramError>,
 {
-    let (maybe_its_root_pda_bump, maybe_interchain_token_pda_bump, maybe_token_manager_pda_bump) =
-        maybe_bumps.map_or((None, None, None), |bumps| {
-            (
-                Some(bumps.its_root_pda_bump),
-                Some(bumps.interchain_token_pda_bump),
-                Some(bumps.token_manager_pda_bump),
-            )
-        });
+    let (
+        maybe_its_root_pda_bump,
+        maybe_interchain_token_pda_bump,
+        maybe_token_manager_pda_bump,
+        mut maybe_flow_slot_pda_bump,
+    ) = maybe_bumps.map_or((None, None, None, None), |bumps| {
+        (
+            Some(bumps.its_root_pda_bump),
+            Some(bumps.interchain_token_pda_bump),
+            Some(bumps.token_manager_pda_bump),
+            bumps.flow_slot_pda_bump,
+        )
+    });
 
     let message: ItsMessageRef<'_> = payload.try_into()?;
 
@@ -818,9 +910,18 @@ where
                 &token_mint,
                 &token_program,
             );
+            let Some(timestamp) = maybe_timestamp else {
+                return Err(ProgramError::InvalidInstructionData);
+            };
+            let epoch = crate::state::flow_limit::flow_epoch_with_timestamp(timestamp)?;
+            let (flow_slot_pda, flow_slot_pda_bump) =
+                crate::flow_slot_pda(&token_manager_pda, epoch, maybe_flow_slot_pda_bump);
+
+            maybe_flow_slot_pda_bump = Some(flow_slot_pda_bump);
 
             accounts.push(AccountMeta::new(destination_wallet, false));
             accounts.push(AccountMeta::new(destination_ata, false));
+            accounts.push(AccountMeta::new(flow_slot_pda, false));
 
             if !data.is_empty() {
                 let execute_data = DataPayload::decode(data)
@@ -851,6 +952,8 @@ where
             its_root_pda_bump,
             interchain_token_pda_bump,
             token_manager_pda_bump,
+            flow_slot_pda_bump: maybe_flow_slot_pda_bump,
+            ..Default::default()
         },
     ))
 }
@@ -866,7 +969,7 @@ fn try_retrieve_mint(
 
     match payload {
         ItsMessageRef::DeployTokenManager { params, .. } => {
-            let token_mint = token_manager::decode_params(params)
+            let token_mint = state::token_manager::decode_params(params)
                 .map(|(_, token_mint)| Pubkey::try_from(token_mint.as_ref()))?
                 .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
@@ -955,7 +1058,7 @@ pub(crate) enum ItsMessageRef<'a> {
     },
     DeployTokenManager {
         token_id: Cow<'a, [u8; 32]>,
-        token_manager_type: token_manager::Type,
+        token_manager_type: state::token_manager::Type,
         params: &'a [u8],
     },
 }

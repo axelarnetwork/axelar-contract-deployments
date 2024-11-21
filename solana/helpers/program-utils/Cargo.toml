@@ -7,7 +7,7 @@ edition = "2021"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-rkyv.workspace = true
+rkyv = { workspace = true, features = ["validation"] }
 solana-program.workspace = true
 
 [dev-dependencies]

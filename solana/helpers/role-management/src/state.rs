@@ -1,24 +1,19 @@
-#![allow(clippy::missing_errors_doc)] // TODO: Remove this
-#![allow(missing_docs)] // TODO: Remove this
-
-use std::io::Write;
-
+//! State related to role management.
 use bitflags::bitflags;
-use program_utils::{check_rkyv_initialized_pda, init_rkyv_pda};
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Infallible, Serialize};
-use solana_program::account_info::AccountInfo;
-use solana_program::entrypoint::ProgramResult;
-use solana_program::msg;
-use solana_program::program_error::ProgramError;
-use solana_program::pubkey::Pubkey;
-
-use crate::seed_prefixes;
+use program_utils::StorableArchive;
+use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
 
 bitflags! {
+    /// Roles that can be assigned to a user.
     #[derive(Debug, Eq, PartialEq, Clone, Copy)]
     pub struct Roles: u8 {
+        /// Can mint new tokens.
         const MINTER = 0b0000_0001;
+
+        /// Can perform operations on the resource.
         const OPERATOR = 0b0000_0010;
+
+        /// Can change the limit to the flow of tokens.
         const FLOW_LIMITER = 0b0000_0100;
     }
 }
@@ -35,6 +30,7 @@ impl PartialEq<Roles> for u8 {
     }
 }
 
+/// Helper module to add rkyv support for [`Roles`].
 pub mod archive {
     use rkyv::ser::Serializer;
     use rkyv::with::{ArchiveWith, DeserializeWith, SerializeWith};
@@ -42,6 +38,7 @@ pub mod archive {
 
     use super::Roles;
 
+    /// A wrapper to add rkyv support for [`Roles`].
     pub struct ArchivableRoles;
 
     impl ArchiveWith<Roles> for ArchivableRoles {
@@ -74,6 +71,7 @@ pub mod archive {
     }
 }
 
+/// Roles assigned to a user on a specific resource.
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
@@ -84,79 +82,33 @@ pub struct UserRoles {
     bump: u8,
 }
 
+impl StorableArchive<0> for UserRoles {}
+
 impl UserRoles {
+    /// Creates a new instance of `UserRoles`.
     #[must_use]
     pub const fn new(roles: Roles, bump: u8) -> Self {
         Self { roles, bump }
     }
 
-    pub fn init<'a>(
-        &self,
-        program_id: &Pubkey,
-        system_account: &AccountInfo<'a>,
-        payer: &AccountInfo<'a>,
-        resource: &AccountInfo<'a>,
-        user: &AccountInfo<'a>,
-        into: &AccountInfo<'a>,
-    ) -> ProgramResult {
-        let (pda, _) = crate::create_user_roles_pda(program_id, resource.key, user.key, self.bump);
-
-        if pda != *into.key {
-            msg!("Invalid PDA account or internal bump");
-            return Err(ProgramError::InvalidArgument);
-        }
-
-        init_rkyv_pda::<0, Self>(
-            payer,
-            into,
-            program_id,
-            system_account,
-            self.clone(),
-            &[
-                seed_prefixes::USER_ROLES_SEED,
-                resource.key.as_ref(),
-                user.key.as_ref(),
-                &[self.bump],
-            ],
-        )
-    }
-
+    /// Checks if the user has the provided role.
     #[must_use]
     pub const fn contains(&self, role: Roles) -> bool {
         self.roles.contains(role)
     }
 
+    /// Adds a role to the user.
     pub fn add(&mut self, role: Roles) {
         self.roles.insert(role);
     }
 
+    /// Removes a role from the user.
     #[allow(clippy::arithmetic_side_effects)]
     pub fn remove(&mut self, role: Roles) {
         self.roles.remove(role);
     }
 
-    pub fn store(&self, destination: &AccountInfo<'_>) -> ProgramResult {
-        let mut account_data = destination.try_borrow_mut_data()?;
-        let data = rkyv::to_bytes::<_, 0>(self).map_err(|_err| ProgramError::InvalidAccountData)?;
-
-        account_data
-            .write_all(&data)
-            .map_err(|_err| ProgramError::InvalidAccountData)
-    }
-
-    pub fn load(
-        program_id: &Pubkey,
-        source_account: &AccountInfo<'_>,
-    ) -> Result<Self, ProgramError> {
-        let account_data = source_account.try_borrow_data()?;
-        let archived =
-            check_rkyv_initialized_pda::<Self>(program_id, source_account, &account_data)?;
-
-        archived
-            .deserialize(&mut Infallible)
-            .map_err(|_err| ProgramError::InvalidAccountData)
-    }
-
+    /// The bump associated with the PDA where this data is stored.
     #[must_use]
     pub const fn bump(&self) -> u8 {
         self.bump
@@ -164,6 +116,7 @@ impl UserRoles {
 }
 
 impl ArchivedUserRoles {
+    /// Checks if the user has the provided role.
     #[must_use]
     pub const fn contains(&self, role: Roles) -> bool {
         let roles = Roles::from_bits_truncate(self.roles);
@@ -171,6 +124,7 @@ impl ArchivedUserRoles {
         roles.contains(role)
     }
 
+    /// The bump associated with the PDA where this data is stored.
     #[must_use]
     pub const fn bump(&self) -> u8 {
         self.bump
@@ -186,36 +140,16 @@ impl From<&ArchivedUserRoles> for UserRoles {
     }
 }
 
+/// Proposal to transfer roles to a user.
 #[repr(transparent)]
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Copy, Clone)]
 pub struct RoleProposal {
+    /// The roles to be transferred.
     #[with(archive::ArchivableRoles)]
     pub roles: Roles,
 }
 
-impl RoleProposal {
-    pub fn store(&self, destination: &AccountInfo<'_>) -> ProgramResult {
-        let mut account_data = destination.try_borrow_mut_data()?;
-        let data = rkyv::to_bytes::<_, 0>(self).map_err(|_err| ProgramError::InvalidAccountData)?;
-
-        account_data
-            .write_all(&data)
-            .map_err(|_err| ProgramError::InvalidAccountData)
-    }
-
-    pub fn load(
-        program_id: &Pubkey,
-        source_account: &AccountInfo<'_>,
-    ) -> Result<Self, ProgramError> {
-        let account_data = source_account.try_borrow_data()?;
-        let archived =
-            check_rkyv_initialized_pda::<Self>(program_id, source_account, &account_data)?;
-
-        archived
-            .deserialize(&mut Infallible)
-            .map_err(|_err| ProgramError::InvalidAccountData)
-    }
-}
+impl StorableArchive<0> for RoleProposal {}
 
 #[cfg(test)]
 mod tests {
@@ -223,7 +157,7 @@ mod tests {
 
     use rkyv::ser::serializers::WriteSerializer;
     use rkyv::ser::Serializer;
-    use rkyv::{check_archived_value, AlignedVec};
+    use rkyv::{check_archived_value, AlignedVec, Infallible};
 
     use super::*;
 

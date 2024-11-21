@@ -1,3 +1,4 @@
+//! Instructions for role management.
 use std::error::Error;
 
 use rkyv::ser::serializers::AllocSerializer;
@@ -31,19 +32,25 @@ pub struct RoleManagementInstructionInputs {
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub enum RoleManagementInstruction {
-    /// Adds roles to a user. The signer theyself must have the role as to be
-    /// able to add it to other users.
+    /// Adds roles to a user.
     ///
     /// 0. [] System program id
     /// 1. [signer] The payer account
     /// 2. [] The resource for which the role is being added.
-    /// 3. [] The PDA containing the roles for the user who has the rights to
-    ///    add the role to other users.
+    /// 3. [] The account of the user to which the roles are going to be added.
     /// 4. [writeable] The PDA containing the roles for the user to which the
     ///    roles are going to be added.
-    /// 5. [signer] The account of the user that has the rights to add the role.
-    /// 6. [] The account of the user to which the roles are going to be added.
     AddRoles(RoleManagementInstructionInputs),
+
+    /// Removes roles from a user.
+    ///
+    /// 0. [] System program id
+    /// 1. [signer] The payer account
+    /// 2. [] The resource for which the role is being added.
+    /// 3. [] The account of the user to which the roles are going to be added.
+    /// 4. [writeable] The PDA containing the roles for the user from which the
+    ///    roles are going to be removed.
+    RemoveRoles(RoleManagementInstructionInputs),
 
     /// Transfers roles from one user to another.
     ///
@@ -118,23 +125,25 @@ impl RoleManagementInstruction {
 pub fn add_roles<I>(
     program_id: Pubkey,
     payer: Pubkey,
+    on: Pubkey,
     to: Pubkey,
     roles: Roles,
-    on: Pubkey,
 ) -> Result<Instruction, ProgramError>
 where
-    I: From<RoleManagementInstruction> + Archive + Serialize<AllocSerializer<0>>,
+    I: TryFrom<RoleManagementInstruction> + Archive + Serialize<AllocSerializer<0>>,
 {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &to);
-    let (role_holder_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
+    let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
     let inputs = RoleManagementInstructionInputs {
         roles,
         destination_roles_pda_bump,
         proposal_pda_bump: None,
     };
 
-    let instruction: I = RoleManagementInstruction::AddRoles(inputs).into();
+    let instruction: I = RoleManagementInstruction::AddRoles(inputs)
+        .try_into()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
     let data = rkyv::to_bytes::<_, 0>(&instruction)
         .map_err(|_err| ProgramError::InvalidInstructionData)?
@@ -143,11 +152,59 @@ where
     let accounts = vec![
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, true),
         AccountMeta::new_readonly(on, false),
-        AccountMeta::new_readonly(role_holder_pda, false),
+        AccountMeta::new_readonly(to, false),
+        AccountMeta::new(destination_roles_pda, false),
+    ];
+
+    Ok(Instruction {
+        program_id,
+        accounts,
+        data,
+    })
+}
+
+/// Creates an instruction to remove roles from a user.
+///
+/// # Errors
+/// If serialization fails.
+pub fn remove_roles<I>(
+    program_id: Pubkey,
+    payer: Pubkey,
+    on: Pubkey,
+    from: Pubkey,
+    roles: Roles,
+) -> Result<Instruction, ProgramError>
+where
+    I: TryFrom<RoleManagementInstruction> + Archive + Serialize<AllocSerializer<0>>,
+{
+    let (destination_roles_pda, destination_roles_pda_bump) =
+        crate::find_user_roles_pda(&program_id, &on, &from);
+    let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
+    let inputs = RoleManagementInstructionInputs {
+        roles,
+        destination_roles_pda_bump,
+        proposal_pda_bump: None,
+    };
+
+    let instruction: I = RoleManagementInstruction::AddRoles(inputs)
+        .try_into()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    let data = rkyv::to_bytes::<_, 0>(&instruction)
+        .map_err(|_err| ProgramError::InvalidInstructionData)?
+        .to_vec();
+
+    let accounts = vec![
+        AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new_readonly(on, false),
+        AccountMeta::new_readonly(from, false),
         AccountMeta::new(destination_roles_pda, false),
         AccountMeta::new_readonly(payer, true),
-        AccountMeta::new_readonly(to, false),
+        AccountMeta::new_readonly(payer_roles_pda, false),
     ];
 
     Ok(Instruction {
@@ -164,16 +221,18 @@ where
 pub fn transfer_roles<I>(
     program_id: Pubkey,
     payer: Pubkey,
+    on: Pubkey,
+    from: Pubkey,
     to: Pubkey,
     roles: Roles,
-    on: Pubkey,
 ) -> Result<Instruction, ProgramError>
 where
     I: From<RoleManagementInstruction> + Archive + Serialize<AllocSerializer<0>>,
 {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &to);
-    let (role_holder_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
+    let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
+    let (role_holder_pda, _) = crate::find_user_roles_pda(&program_id, &on, &from);
     let inputs = RoleManagementInstructionInputs {
         roles,
         destination_roles_pda_bump,
@@ -189,11 +248,12 @@ where
     let accounts = vec![
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
         AccountMeta::new_readonly(on, false),
-        AccountMeta::new(role_holder_pda, false),
+        AccountMeta::new_readonly(to, false),
         AccountMeta::new(destination_roles_pda, false),
         AccountMeta::new_readonly(payer, true),
-        AccountMeta::new_readonly(to, false),
+        AccountMeta::new(role_holder_pda, false),
     ];
 
     Ok(Instruction {
@@ -210,16 +270,18 @@ where
 pub fn propose_roles<I>(
     program_id: Pubkey,
     payer: Pubkey,
+    on: Pubkey,
+    from: Pubkey,
     to: Pubkey,
     roles: Roles,
-    on: Pubkey,
 ) -> Result<Instruction, ProgramError>
 where
     I: From<RoleManagementInstruction> + Archive + Serialize<AllocSerializer<0>>,
 {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &to);
-    let (role_holder_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
+    let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
+    let (role_holder_pda, _) = crate::find_user_roles_pda(&program_id, &on, &from);
     let (proposal_pda, proposal_pda_bump) =
         crate::find_roles_proposal_pda(&program_id, &on, &payer, &to);
 
@@ -238,11 +300,12 @@ where
     let accounts = vec![
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
         AccountMeta::new_readonly(on, false),
-        AccountMeta::new_readonly(role_holder_pda, false),
+        AccountMeta::new_readonly(to, false),
         AccountMeta::new_readonly(destination_roles_pda, false),
         AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(to, false),
+        AccountMeta::new_readonly(role_holder_pda, false),
         AccountMeta::new(proposal_pda, false),
     ];
 
@@ -259,16 +322,17 @@ where
 /// If serialization fails.
 pub fn accept_roles<I>(
     program_id: Pubkey,
-    from: Pubkey,
     payer: Pubkey,
-    roles: Roles,
     on: Pubkey,
+    from: Pubkey,
+    roles: Roles,
 ) -> Result<Instruction, ProgramError>
 where
     I: From<RoleManagementInstruction> + Archive + Serialize<AllocSerializer<0>>,
 {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &payer);
+    let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
     let (role_holder_pda, _) = crate::find_user_roles_pda(&program_id, &on, &from);
     let (proposal_pda, proposal_pda_bump) =
         crate::find_roles_proposal_pda(&program_id, &on, &from, &payer);
@@ -288,11 +352,12 @@ where
     let accounts = vec![
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
         AccountMeta::new_readonly(on, false),
-        AccountMeta::new(role_holder_pda, false),
+        AccountMeta::new(payer, true),
         AccountMeta::new(destination_roles_pda, false),
         AccountMeta::new(from, false),
-        AccountMeta::new(payer, true),
+        AccountMeta::new(role_holder_pda, false),
         AccountMeta::new(proposal_pda, false),
     ];
 

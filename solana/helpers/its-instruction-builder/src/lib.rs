@@ -7,9 +7,11 @@ use axelar_solana_its::instructions::{Bumps, ItsGmpInstructionInputs};
 use axelar_solana_its::state::token_manager::ArchivedTokenManager;
 use interchain_token_transfer_gmp::GMPPayload;
 use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::clock::Clock;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::sysvar::clock;
 
 /// Creates a [`InterchainTokenServiceInstruction::ItsGmpPayload`] instruction.
 ///
@@ -36,6 +38,15 @@ where
                 .token_id()
                 .map_err(|_err| ProgramError::InvalidArgument)?,
         );
+
+    let clock_account = rpc_client
+        .get_account(&clock::id())
+        .await
+        .map_err(|_err| ProgramError::InvalidAccountData)?;
+    let clock: Clock = bincode::deserialize(&clock_account.data)
+        .map_err(|_err| ProgramError::InvalidAccountData)?;
+    let timestamp = clock.unix_timestamp;
+
     let (token_manager_pda, token_manager_pda_bump) =
         axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
     let (mint, token_program) =
@@ -45,6 +56,7 @@ where
         its_root_pda_bump,
         interchain_token_pda_bump,
         token_manager_pda_bump,
+        ..Default::default()
     });
 
     let inputs = ItsGmpInstructionInputs::builder()
@@ -56,6 +68,7 @@ where
         .token_program(token_program)
         .mint_opt(mint)
         .bumps_opt(bumps)
+        .timestamp(timestamp)
         .build();
 
     axelar_solana_its::instructions::its_gmp_payload(inputs)

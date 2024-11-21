@@ -84,7 +84,7 @@ pub fn process_deploy<'a>(
         additional_minter_account.cloned(),
     );
 
-    super::token_manager::deploy(payer, accounts, bumps, deploy_token_manager)?;
+    super::token_manager::deploy(payer, accounts, bumps, &deploy_token_manager)?;
 
     Ok(())
 }

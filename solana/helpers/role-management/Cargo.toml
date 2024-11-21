@@ -6,6 +6,9 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "lib"]
 
+[lints]
+workspace = true
+
 [dependencies]
 bitflags.workspace = true
 program-utils.workspace = true

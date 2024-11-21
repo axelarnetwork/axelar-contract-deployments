@@ -324,6 +324,13 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
         )
         .await;
 
+    let clock_sysvar = solana_chain
+        .fixture
+        .banks_client
+        .get_sysvar::<Clock>()
+        .await
+        .unwrap();
+
     let transfer_its_ix_inputs = ItsGmpInstructionInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .gateway_approved_message_pda(transfer_gateway_approved_command_pdas[0])
@@ -331,6 +338,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
         .gmp_metadata(transfer_message.into())
         .payload(its_gmp_transfer_payload)
         .token_program(token_program_id)
+        .timestamp(clock_sysvar.unix_timestamp)
         .mint(mint)
         .build();
 
@@ -514,6 +522,12 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
         )
         .await;
 
+    let clock_sysvar = solana_chain
+        .fixture
+        .banks_client
+        .get_sysvar::<Clock>()
+        .await
+        .unwrap();
     let transfer_its_ix_inputs = ItsGmpInstructionInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .gateway_approved_message_pda(transfer_gateway_approved_command_pdas[0])
@@ -521,6 +535,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
         .gmp_metadata(transfer_message.into())
         .payload(its_gmp_transfer_payload)
         .token_program(spl_token_2022::id())
+        .timestamp(clock_sysvar.unix_timestamp)
         .mint(mint)
         .build();
 

@@ -12,6 +12,7 @@ workspace = true
 [dependencies]
 axelar-rkyv-encoding.workspace = true
 axelar-solana-its = { workspace = true, features = ["no-entrypoint"] }
+bincode.workspace = true
 interchain-token-transfer-gmp.workspace = true
 solana-client.workspace = true
 solana-sdk.workspace = true

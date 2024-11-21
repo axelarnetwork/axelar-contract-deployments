@@ -3,7 +3,7 @@
 use axelar_executable::AxelarCallableInstruction;
 use axelar_message_primitives::DataPayload;
 use interchain_token_transfer_gmp::InterchainTransfer;
-use program_utils::check_rkyv_initialized_pda;
+use program_utils::{check_rkyv_initialized_pda, StorableArchive};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -20,6 +20,7 @@ use super::LocalAction;
 use crate::instructions::Bumps;
 use crate::processor::token_manager as token_manager_processor;
 use crate::seed_prefixes;
+use crate::state::flow_limit::{self, FlowDirection, FlowSlot};
 use crate::state::token_manager::{self, TokenManager};
 
 impl LocalAction for InterchainTransfer {
@@ -62,7 +63,7 @@ impl LocalAction for InterchainTransfer {
 /// An error occurred when processing the message. The reason can be derived
 /// from the logs.
 pub fn process_inbound_transfer<'a>(
-    payer: &AccountInfo<'a>,
+    payer: &'a AccountInfo<'a>,
     accounts: &'a [AccountInfo<'a>],
     payload: &InterchainTransfer,
     bumps: Bumps,
@@ -113,7 +114,7 @@ pub(crate) fn take_token<'a>(
 ) -> Result<u64, ProgramError> {
     let accounts = parse_take_token_accounts(accounts)?;
 
-    let (token_manager_type, _) = get_token_manager_info(accounts.token_manager_pda)?;
+    let (token_manager_type, _, flow_limit) = get_token_manager_info(accounts.token_manager_pda)?;
 
     token_manager_processor::validate_token_manager_type(
         token_manager_type,
@@ -121,18 +122,19 @@ pub(crate) fn take_token<'a>(
         accounts.token_manager_pda,
     )?;
 
-    handle_take_token_transfer(token_manager_type, &accounts, bumps, amount)
+    handle_take_token_transfer(token_manager_type, &accounts, bumps, amount, flow_limit)
 }
 
 fn give_token<'a>(
-    payer: &AccountInfo<'a>,
+    payer: &'a AccountInfo<'a>,
     accounts: &'a [AccountInfo<'a>],
     amount: u64,
     bumps: Bumps,
 ) -> ProgramResult {
-    let accounts = parse_give_token_accounts(accounts)?;
+    let accounts = parse_give_token_accounts(payer, accounts)?;
 
-    let (token_manager_type, token_id) = get_token_manager_info(accounts.token_manager_pda)?;
+    let (token_manager_type, token_id, flow_limit) =
+        get_token_manager_info(accounts.token_manager_pda)?;
     let (interchain_token_pda, _) = crate::create_interchain_token_pda(
         accounts.its_root_pda.key,
         &token_id,
@@ -160,6 +162,7 @@ fn give_token<'a>(
         interchain_token_pda.as_ref(),
         bumps,
         amount,
+        flow_limit,
     )?;
 
     Ok(())
@@ -171,6 +174,8 @@ fn parse_take_token_accounts<'a>(
     let accounts_iter = &mut accounts.iter();
 
     Ok(TakeTokenAccounts {
+        system_account: next_account_info(accounts_iter)?,
+        payer: next_account_info(accounts_iter)?,
         authority: next_account_info(accounts_iter)?,
         _gateway_root_pda: next_account_info(accounts_iter)?,
         _gateway: next_account_info(accounts_iter)?,
@@ -181,15 +186,18 @@ fn parse_take_token_accounts<'a>(
         token_manager_pda: next_account_info(accounts_iter)?,
         token_manager_ata: next_account_info(accounts_iter)?,
         token_program: next_account_info(accounts_iter)?,
+        flow_slot_pda: next_account_info(accounts_iter)?,
     })
 }
 
 fn parse_give_token_accounts<'a>(
+    payer: &'a AccountInfo<'a>,
     accounts: &'a [AccountInfo<'a>],
 ) -> Result<GiveTokenAccounts<'a>, ProgramError> {
     let accounts_iter = &mut accounts.iter();
 
     Ok(GiveTokenAccounts {
+        payer,
         system_account: next_account_info(accounts_iter)?,
         its_root_pda: next_account_info(accounts_iter)?,
         token_manager_pda: next_account_info(accounts_iter)?,
@@ -199,19 +207,68 @@ fn parse_give_token_accounts<'a>(
         _ata_program: next_account_info(accounts_iter)?,
         destination_wallet: next_account_info(accounts_iter)?,
         destination_ata: next_account_info(accounts_iter)?,
+        flow_slot_pda: next_account_info(accounts_iter)?,
     })
 }
 
 fn get_token_manager_info(
     token_manager_pda: &AccountInfo<'_>,
-) -> Result<(token_manager::Type, Vec<u8>), ProgramError> {
+) -> Result<(token_manager::Type, Vec<u8>, u64), ProgramError> {
     let token_manager_pda_data = token_manager_pda.try_borrow_data()?;
     let token_manager = check_rkyv_initialized_pda::<TokenManager>(
         &crate::id(),
         token_manager_pda,
         token_manager_pda_data.as_ref(),
     )?;
-    Ok((token_manager.ty.into(), token_manager.token_id.to_bytes()))
+    Ok((
+        token_manager.ty.into(),
+        token_manager.token_id.to_bytes(),
+        token_manager.flow_limit,
+    ))
+}
+
+fn track_token_flow(
+    accounts: &FlowTrackingAccounts<'_>,
+    bumps: Bumps,
+    flow_limit: u64,
+    amount: u64,
+    direction: FlowDirection,
+) -> ProgramResult {
+    if flow_limit == 0 {
+        return Ok(());
+    }
+
+    let current_flow_epoch = flow_limit::current_flow_epoch()?;
+    let (flow_slot_key, flow_slot_pda_bump) = crate::flow_slot_pda(
+        accounts.token_manager_pda.key,
+        current_flow_epoch,
+        bumps.flow_slot_pda_bump,
+    );
+
+    if flow_slot_key != *accounts.flow_slot_pda.key {
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    if let Ok(mut flow_slot) = FlowSlot::load(&crate::id(), accounts.flow_slot_pda) {
+        flow_slot.add_flow(flow_limit, amount, direction)?;
+        flow_slot.store(accounts.flow_slot_pda)?;
+    } else {
+        let flow_slot = FlowSlot::new(flow_limit, 0, amount)?;
+        flow_slot.init(
+            &crate::id(),
+            accounts.system_account,
+            accounts.payer,
+            accounts.flow_slot_pda,
+            &[
+                seed_prefixes::FLOW_SLOT_SEED,
+                accounts.token_manager_pda.key.as_ref(),
+                &current_flow_epoch.to_ne_bytes(),
+                &[flow_slot_pda_bump],
+            ],
+        )?;
+    }
+
+    Ok(())
 }
 
 fn handle_give_token_transfer(
@@ -220,10 +277,19 @@ fn handle_give_token_transfer(
     interchain_token_pda_bytes: &[u8],
     bumps: Bumps,
     amount: u64,
+    flow_limit: u64,
 ) -> ProgramResult {
     use token_manager::Type::{
         LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
     };
+
+    track_token_flow(
+        &accounts.into(),
+        bumps,
+        flow_limit,
+        amount,
+        FlowDirection::In,
+    )?;
 
     let signer_seeds = &[
         seed_prefixes::TOKEN_MANAGER_SEED,
@@ -265,10 +331,19 @@ fn handle_take_token_transfer(
     accounts: &TakeTokenAccounts<'_>,
     bumps: Bumps,
     amount: u64,
+    flow_limit: u64,
 ) -> Result<u64, ProgramError> {
     use token_manager::Type::{
         LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
     };
+
+    track_token_flow(
+        &accounts.into(),
+        bumps,
+        flow_limit,
+        amount,
+        FlowDirection::Out,
+    )?;
 
     let token_manager_pda_seeds = &[
         seed_prefixes::TOKEN_MANAGER_SEED,
@@ -501,6 +576,8 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
 }
 
 struct TakeTokenAccounts<'a> {
+    system_account: &'a AccountInfo<'a>,
+    payer: &'a AccountInfo<'a>,
     authority: &'a AccountInfo<'a>,
     _gateway_root_pda: &'a AccountInfo<'a>,
     _gateway: &'a AccountInfo<'a>,
@@ -511,10 +588,12 @@ struct TakeTokenAccounts<'a> {
     token_manager_pda: &'a AccountInfo<'a>,
     token_manager_ata: &'a AccountInfo<'a>,
     token_program: &'a AccountInfo<'a>,
+    flow_slot_pda: &'a AccountInfo<'a>,
 }
 
 struct GiveTokenAccounts<'a> {
     system_account: &'a AccountInfo<'a>,
+    payer: &'a AccountInfo<'a>,
     its_root_pda: &'a AccountInfo<'a>,
     token_manager_pda: &'a AccountInfo<'a>,
     token_mint: &'a AccountInfo<'a>,
@@ -523,4 +602,34 @@ struct GiveTokenAccounts<'a> {
     _ata_program: &'a AccountInfo<'a>,
     destination_wallet: &'a AccountInfo<'a>,
     destination_ata: &'a AccountInfo<'a>,
+    flow_slot_pda: &'a AccountInfo<'a>,
+}
+
+struct FlowTrackingAccounts<'a> {
+    system_account: &'a AccountInfo<'a>,
+    payer: &'a AccountInfo<'a>,
+    token_manager_pda: &'a AccountInfo<'a>,
+    flow_slot_pda: &'a AccountInfo<'a>,
+}
+
+impl<'a> From<&TakeTokenAccounts<'a>> for FlowTrackingAccounts<'a> {
+    fn from(value: &TakeTokenAccounts<'a>) -> Self {
+        Self {
+            system_account: value.system_account,
+            payer: value.payer,
+            token_manager_pda: value.token_manager_pda,
+            flow_slot_pda: value.flow_slot_pda,
+        }
+    }
+}
+
+impl<'a> From<&GiveTokenAccounts<'a>> for FlowTrackingAccounts<'a> {
+    fn from(value: &GiveTokenAccounts<'a>) -> Self {
+        Self {
+            system_account: value.system_account,
+            payer: value.payer,
+            token_manager_pda: value.token_manager_pda,
+            flow_slot_pda: value.flow_slot_pda,
+        }
+    }
 }

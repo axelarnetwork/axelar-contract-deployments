@@ -3,12 +3,13 @@
 //! Program utility functions
 
 use std::borrow::Borrow;
+use std::cell::Ref;
 use std::io::Write;
 
 use rkyv::de::deserializers::SharedDeserializeMap;
 use rkyv::ser::serializers::AllocSerializer;
 use rkyv::validation::validators::DefaultValidator;
-use rkyv::{Archive, CheckBytes, Deserialize, Serialize};
+use rkyv::{Archive, CheckBytes, Deserialize, Infallible, Serialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -406,18 +407,125 @@ pub fn transfer_lamports(
     Ok(())
 }
 
+/// Convenience trait to store and load rkyv serialized data to/from an account.
+pub trait StorableArchive<const N: usize>: Archive + Serialize<AllocSerializer<N>>
+where
+    Self: Sized + Clone,
+    Self::Archived: Deserialize<Self, Infallible>,
+{
+    /// Initializes an account with the current object serialized data.
+    fn init<'a>(
+        &self,
+        program_id: &Pubkey,
+        system_account: &AccountInfo<'a>,
+        payer: &AccountInfo<'a>,
+        into: &AccountInfo<'a>,
+        signer_seeds: &[&[u8]],
+    ) -> ProgramResult {
+        init_rkyv_pda::<N, Self>(
+            payer,
+            into,
+            program_id,
+            system_account,
+            self.clone(),
+            signer_seeds,
+        )
+    }
+
+    /// Stores the current object serialized data into the destination account.
+    /// The account must have been initialized beforehand.
+    fn store(&self, destination: &AccountInfo<'_>) -> ProgramResult {
+        let mut account_data = destination.try_borrow_mut_data()?;
+        let data = rkyv::to_bytes::<_, N>(self).map_err(|_err| ProgramError::InvalidAccountData)?;
+
+        account_data.copy_from_slice(&data);
+
+        Ok(())
+    }
+
+    /// Loads the account data and deserializes it.
+    fn load(program_id: &Pubkey, source_account: &AccountInfo<'_>) -> Result<Self, ProgramError> {
+        let account_data = source_account.try_borrow_data()?;
+        let archived =
+            check_rkyv_initialized_pda::<Self>(program_id, source_account, &account_data)?;
+
+        archived
+            .deserialize(&mut Infallible)
+            .map_err(|_err| ProgramError::InvalidAccountData)
+    }
+
+    /// Loads the account data and returns a view on the non-desialized data.
+    fn load_readonly<'a>(
+        program_id: &Pubkey,
+        source_account: &'a AccountInfo<'a>,
+    ) -> Result<Ref<'a, <Self as rkyv::Archive>::Archived>, ProgramError> {
+        let data = source_account.try_borrow_data()?;
+
+        Ok(Ref::map(data, |inner| {
+            check_rkyv_initialized_pda::<Self>(program_id, source_account, inner)
+                .expect("Invalid PDA account")
+        }))
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::std_instead_of_core)]
 #[allow(clippy::legacy_numeric_constants)]
 mod tests {
     use std::u64;
 
+    use solana_program::clock::Epoch;
+
     use super::*;
+
+    #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
+    #[archive(compare(PartialEq))]
+    #[archive_attr(derive(Debug, PartialEq, Eq))]
+    #[repr(C)]
+    struct Test {
+        a: u32,
+        b: u64,
+    }
+
+    impl StorableArchive<0> for Test {}
 
     #[test]
     fn u_256_le_conversion_to_i64() {
         let u256_t = from_u64_to_u256_le_bytes(u64::MAX);
         let conv = checked_from_u256_le_bytes_to_u64(&u256_t).unwrap();
         assert_eq!(u64::MAX, conv);
+    }
+
+    #[test]
+    fn test_load_store() {
+        let existing_data = Test { a: 0, b: 0 };
+        let mut initialized_buffer = rkyv::to_bytes::<_, 1024>(&existing_data).unwrap();
+        let mut lamports = 100;
+        let pubkey = Pubkey::new_unique();
+        let owner = Pubkey::new_unique();
+        let acc = AccountInfo::new(
+            &pubkey,
+            false,
+            false,
+            &mut lamports,
+            &mut initialized_buffer,
+            &owner,
+            false,
+            Epoch::default(),
+        );
+
+        let test = Test { a: 32, b: u64::MAX };
+
+        test.store(&acc).unwrap();
+
+        let archived = Test::load_readonly(&owner, &acc).unwrap();
+
+        assert_eq!(archived.a, 32);
+        assert_eq!(archived.b, u64::MAX);
+
+        let deserialized = Test::load(&owner, &acc).unwrap();
+
+        assert_eq!(deserialized.a, 32);
+        assert_eq!(deserialized.b, u64::MAX);
     }
 }

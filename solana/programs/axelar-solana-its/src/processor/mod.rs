@@ -5,15 +5,19 @@ use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX
 use axelar_rkyv_encoding::types::GmpMetadata;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::Itertools;
-use program_utils::{check_rkyv_initialized_pda, ValidPDA};
+use program_utils::{check_rkyv_initialized_pda, StorableArchive, ValidPDA};
+use role_management::processor::ensure_signer_roles;
 use role_management::state::{Roles, UserRoles};
 use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_program};
 
+use self::token_manager::SetFlowLimitAccounts;
 use crate::instructions::{
     derive_its_accounts, its_account_indices, Bumps, InterchainTokenServiceInstruction,
     OutboundInstruction,
@@ -112,22 +116,33 @@ pub fn process_instruction<'a>(
                 .try_into()
                 .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
-            let (_owner, accounts_without_owner) = accounts
-                .split_first()
-                .ok_or(ProgramError::InvalidAccountData)?;
+            let (_other, outbound_message_accounts) = accounts.split_at(3);
 
             process_outbound_its_gmp_payload(
-                accounts_without_owner,
+                outbound_message_accounts,
                 &payload,
                 destination_chain,
                 gas_value.into(),
             )?;
         }
+        InterchainTokenServiceInstruction::SetFlowLimit { flow_limit } => {
+            let instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
+
+            ensure_signer_roles(
+                &crate::id(),
+                instruction_accounts.its_root_pda,
+                instruction_accounts.flow_limiter,
+                instruction_accounts.its_user_roles_pda,
+                Roles::OPERATOR,
+            )?;
+
+            token_manager::set_flow_limit(&instruction_accounts, flow_limit)?;
+        }
         InterchainTokenServiceInstruction::MintTo { amount } => {
             process_mint_to(accounts, amount)?;
         }
-        InterchainTokenServiceInstruction::RoleManagement(role_management_instruction) => {
-            role_management::processor::process(program_id, accounts, role_management_instruction)?;
+        InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
+            token_manager::process_instruction(accounts, &token_manager_instruction)?;
         }
     }
 
@@ -173,13 +188,20 @@ fn process_initialize(
     )?;
 
     let operator_user_roles = UserRoles::new(Roles::OPERATOR, user_roles_pda_bump);
+
+    let signer_seeds = &[
+        role_management::seed_prefixes::USER_ROLES_SEED,
+        its_root_pda.key.as_ref(),
+        operator.key.as_ref(),
+        &[user_roles_pda_bump],
+    ];
+
     operator_user_roles.init(
         program_id,
         system_account,
         payer,
-        its_root_pda,
-        operator,
         user_roles_account,
+        signer_seeds,
     )?;
 
     Ok(())
@@ -393,6 +415,7 @@ fn validate_its_accounts(
         payload,
         token_program,
         maybe_mint,
+        Some(Clock::get()?.unix_timestamp),
         Some(bumps),
     )?;
 
