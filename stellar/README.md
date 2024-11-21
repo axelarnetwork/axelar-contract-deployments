@@ -68,7 +68,7 @@ stellar contract build
 Deploy the gateway contract
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gateway --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm --initialize
+node stellar/deploy-contract.js deploy axelar_gateway --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm
 ```
 
 Provide `--estimate-cost` to show the gas costs for the initialize transaction instead of executing it.
@@ -76,19 +76,19 @@ Provide `--estimate-cost` to show the gas costs for the initialize transaction i
 ### Operators
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_operators --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm --initialize
+node stellar/deploy-contract.js deploy axelar_operators --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm 
 ```
 
 ### Gas Service
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gas_service.optimized.wasm --initialize
+node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gas_service.optimized.wasm 
 ```
 
 ### Interchain Token Service
 
 ```bash
-node stellar/deploy-contract.js deploy interchain_token_service --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm --initialize
+node stellar/deploy-contract.js deploy interchain_token_service --wasm-path --chain-name <CHAIN_NAME> ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm 
 ```
 
 ### Example
@@ -183,6 +183,31 @@ node stellar/its.js set-trusted-address [chain-name] [trusted-address]
 
 ```bash
 node stellar/its.js remove-trusted-address [chain-name]
+```
+
+## TTL extension and state archival recovery
+
+All Soroban storage entries, including contract instances, have a 'time to live' (`ttl`) after which entries will be archived and no longer accessible until restored. The following commands can be used to extend `ttl` or restore archived contract instances.
+
+Get the ttl of a contract instance:
+
+```bash
+node stellar/contract.js get-ttl [contract-name]
+```
+
+Extend the ttl of a contract instance:
+
+```bash
+node stellar/contract.js extend-instance [contract-name]
+
+# Defaults to maximum extension amount. To specify the number of ledgers to extend:
+node stellar/contract.js extend-instance [contract-name] --extend-by [ledgers]
+```
+
+Restore an archived contract instance
+
+```bash
+node stellar/contract.js restore-instance [contract-name]
 ```
 
 ### Example

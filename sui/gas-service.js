@@ -54,7 +54,7 @@ async function addGas(keypair, client, gasServiceConfig, args, options) {
 
     const gasServicePackageId = gasServiceConfig.address;
 
-    const { params } = options;
+    const params = options.params || '0x';
     const refundAddress = options.refundAddress || walletAddress;
 
     const [messageId] = args;

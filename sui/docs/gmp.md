@@ -31,7 +31,7 @@ node sui/deploy-contract deploy Example
 To simplify the process of obtaining necessary parameters, run the following script:
 
 ```bash
-sourceChain=Ethereum
+sourceChain=avalanche-fuji
 sourceAddress=0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5
 messageId=0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-10
 fee=0.1
