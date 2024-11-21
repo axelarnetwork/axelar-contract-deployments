@@ -1,7 +1,7 @@
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
-const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder } = require('./utils');
+const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
 
 async function setupTrustedAddress(keypair, client, contracts, args, options) {
     const [trustedChain, trustedAddress] = args;
@@ -22,13 +22,20 @@ async function setupTrustedAddress(keypair, client, contracts, args, options) {
         arguments: [ITS, OwnerCap, trustedAddressesObject],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
+    if (options.offline) {
+        const tx = txBuilder.tx;
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, `Set trusted address for ${trustedChain} to ${trustedAddress}`, client, options);
+    } else {
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
 
-    // Add trusted address to ITS config
-    if (!contracts.ITS.trustedAddresses) contracts.ITS.trustedAddresses = {};
-    if (!contracts.ITS.trustedAddresses[trustedChain]) contracts.ITS.trustedAddresses[trustedChain] = [];
+        // Add trusted address to ITS config
+        if (!contracts.ITS.trustedAddresses) contracts.ITS.trustedAddresses = {};
+        if (!contracts.ITS.trustedAddresses[trustedChain]) contracts.ITS.trustedAddresses[trustedChain] = [];
 
-    contracts.ITS.trustedAddresses[trustedChain].push(trustedAddress);
+        contracts.ITS.trustedAddresses[trustedChain].push(trustedAddress);
+    }
 }
 
 async function processCommand(command, chain, args, options) {
@@ -56,6 +63,9 @@ if (require.main === module) {
         .name('setup-trusted-address')
         .description('Setup trusted address')
         .command('setup-trusted-address <trusted-chain> <trusted-address>')
+        .addOption(new Option('--offline', 'store tx block for offline signing'))
+        .addOption(new Option('--sender <sender>', 'transaction sender'))
+        .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
         .action((trustedChain, trustedAddress, options) => {
             mainProcessor(setupTrustedAddress, options, [trustedChain, trustedAddress], processCommand);
         });

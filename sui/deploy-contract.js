@@ -1,9 +1,8 @@
 const { Command, Option } = require('commander');
 const { getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
-const { toB64 } = require('@mysten/sui/utils');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
-const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
+const { saveConfig, printInfo, validateParameters, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -342,16 +341,6 @@ async function mainProcessor(args, options, processor) {
     await processor(keypair, client, ...args, config, sui, options);
 
     saveConfig(config, options.env);
-
-    if (options.offline) {
-        const { txFilePath } = options;
-        validateParameters({ isNonEmptyString: { txFilePath } });
-
-        const txB64Bytes = toB64(options.txBytes);
-
-        writeJSON({ message: options.offlineMessage, status: 'PENDING', unsignedTx: txB64Bytes }, txFilePath);
-        printInfo(`Unsigned transaction`, txFilePath);
-    }
 }
 
 /**
