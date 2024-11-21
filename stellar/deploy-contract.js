@@ -51,13 +51,20 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             return { owner };
 
         case 'axelar_operators':
-            return { operator };
+            return { owner };
 
         case 'axelar_gas_service': {
             const operatorsAddress = chain?.contracts?.axelar_operators?.address;
             const gasCollector = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
 
             return { gasCollector };
+        }
+
+        case 'example': {
+            const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
+
+            return { gatewayAddress, gasServiceAddress };
         }
 
         default:
