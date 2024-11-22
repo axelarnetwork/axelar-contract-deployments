@@ -179,7 +179,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
     });
 
     const [ownerCap, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
-        `${packageId}::gateway::OwnerCap`,
+        `${packageId}::owner_cap::OwnerCap`,
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
