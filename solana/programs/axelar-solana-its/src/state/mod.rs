@@ -3,6 +3,7 @@
 
 use core::mem::size_of;
 
+use program_utils::StorableArchive;
 use rkyv::{Archive, Deserialize, Serialize};
 
 pub mod flow_limit;
@@ -29,13 +30,4 @@ impl InterchainTokenService {
     }
 }
 
-impl ArchivedInterchainTokenService {
-    /// Deserializes the `InterchainTokenService` from the given bytes using
-    /// `rkyv` for zero-copy deserialization.
-    #[must_use]
-    pub fn from_bytes(data: &[u8]) -> &Self {
-        // SAFETY: The data is assumed to be a valid archived `InterchainTokenService`.
-        // The `TokenManager` is always serialized as an archived struct.
-        unsafe { rkyv::archived_root::<InterchainTokenService>(data) }
-    }
-}
+impl StorableArchive<0> for InterchainTokenService {}

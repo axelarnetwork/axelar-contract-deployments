@@ -12,6 +12,7 @@ use interchain_token_transfer_gmp::{
 use rkyv::bytecheck::EnumCheckError;
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
+use role_management::instructions::RoleManagementInstruction;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -21,6 +22,7 @@ use typed_builder::TypedBuilder;
 
 use crate::state::{self, flow_limit};
 
+pub mod operator;
 pub mod token_manager;
 
 /// Convenience module with the indices of the accounts passed in the
@@ -57,12 +59,12 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// Accounts expected by this instruction:
     ///
-    /// 0. [writeable,signer] The address of payer / sender
+    /// 0. [writable,signer] The address of payer / sender
     /// 1. [] gateway root pda
-    /// 2. [writeable] ITS root pda
+    /// 2. [writable] ITS root pda
     /// 3. [] system program id
     /// 4. [] The account that will become the operator of the ITS
-    /// 5. [writeable] The address of the PDA account that will store the roles
+    /// 5. [writable] The address of the PDA account that will store the roles
     ///    of the operator account.
     Initialize {
         /// The pda bump for the ITS root PDA
@@ -74,14 +76,14 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Deploys an interchain token.
     ///
-    /// 0. [writeable,signer] The address of payer / sender
+    /// 0. [writable,signer] The address of payer / sender
     /// 1. [] Gateway root pda
     /// 2. [] System program id if local deployment OR Gateway program if remote
     ///    deployment
     /// 3. [] ITS root pda
-    /// 4. [writeable] Token Manager PDA (if local deployment)
-    /// 5. [writeable] The mint account to be created (if local deployment)
-    /// 6. [writeable] The Token Manager ATA (if local deployment)
+    /// 4. [writable] Token Manager PDA (if local deployment)
+    /// 5. [writable] The mint account to be created (if local deployment)
+    /// 6. [writable] The Token Manager ATA (if local deployment)
     /// 7. [] Token program id (if local deployment)
     /// 8. [] Associated token program id (if local deployment)
     /// 9. [] Rent sysvar (if local deployment)
@@ -98,14 +100,14 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Deploys a token manager.
     ///
-    /// 0. [writeable,signer] The address of payer / sender
+    /// 0. [writable,signer] The address of payer / sender
     /// 1. [] Gateway root pda
     /// 2. [] System program id if local deployment OR Gateway program if remote
     ///    deployment
     /// 3. [] ITS root pda
-    /// 4. [writeable] Token Manager PDA (if local deployment)
-    /// 5. [writeable] The mint account to be created (if local deployment)
-    /// 6. [writeable] The Token Manager ATA (if local deployment)
+    /// 4. [writable] Token Manager PDA (if local deployment)
+    /// 5. [writable] The mint account to be created (if local deployment)
+    /// 6. [writable] The Token Manager ATA (if local deployment)
     /// 7. [] Token program id (if local deployment)
     /// 8. [] Associated token program id (if local deployment)
     /// 9. [] Rent sysvar (if local deployment)
@@ -128,11 +130,11 @@ pub enum InterchainTokenServiceInstruction {
     /// 1. [] Gateway root pda
     /// 2. [] Gateway program id
     /// 3. [] ITS root pda
-    /// 4. [writeable] Interchain token PDA
-    /// 5. [writeable] The account where the tokens are being transferred from
-    /// 5. [writeable] The mint account
-    /// 6. [writeable] The Token Manager PDA
-    /// 6. [writeable] The Token Manager ATA
+    /// 4. [writable] Interchain token PDA
+    /// 5. [writable] The account where the tokens are being transferred from
+    /// 5. [writable] The mint account
+    /// 6. [writable] The Token Manager PDA
+    /// 6. [writable] The Token Manager ATA
     /// 7. [] Token program id
     InterchainTransfer {
         /// The transfer parameters.
@@ -144,7 +146,7 @@ pub enum InterchainTokenServiceInstruction {
 
     /// A GMP Interchain Token Service instruction.
     ///
-    /// 0. [writeable,signer] The address of payer / sender
+    /// 0. [writable,signer] The address of payer / sender
     /// 1. [] gateway root pda
     /// 2. [] ITS root pda
     ///
@@ -170,8 +172,8 @@ pub enum InterchainTokenServiceInstruction {
     /// `TokenManager`. Only users with the `minter` role on the mint account
     /// can mint tokens.
     ///
-    /// 0. [writeable] The mint account
-    /// 1. [writeable] The account to mint tokens to
+    /// 0. [writable] The mint account
+    /// 1. [writable] The account to mint tokens to
     /// 2. [] The interchain token PDA associated with the mint
     /// 3. [] The token manager PDA
     /// 4. [signer] The minter account
@@ -180,6 +182,13 @@ pub enum InterchainTokenServiceInstruction {
         /// The amount of tokens to mint
         amount: u64,
     },
+
+    /// ITS operator role management instructions.
+    ///
+    /// 0. [] Gateway root pda
+    /// 1..N [`operator::OperatorInstruction`] accounts, where the resource is
+    /// the ITS root PDA.
+    OperatorInstruction(operator::Instruction),
 
     /// Instructions operating on deployed [`TokenManager`] instances.
     TokenManagerInstruction(token_manager::Instruction),
@@ -830,6 +839,79 @@ pub fn mint_to(
     })
 }
 
+/// Creates an [`InterchainTokenServiceInstruction::OperatorInstruction`]
+/// instruction with the [`operator::Instruction::TransferOperatorship`]
+/// variant.
+///
+/// # Errors
+///
+/// If serialization fails.
+pub fn transfer_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, ProgramError> {
+    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
+    let (accounts, operator_instruction) =
+        operator::transfer_operatorship(payer, its_root_pda, to, Some(accounts))?;
+    let instruction = InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction);
+    let data = instruction
+        .to_bytes()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Creates an [`InterchainTokenServiceInstruction::OperatorInstruction`]
+/// instruction with the [`operator::Instruction::ProposeOperatorship`] variant.
+///
+/// # Errors
+///
+/// If serialization fails.
+pub fn propose_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, ProgramError> {
+    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
+    let (accounts, operator_instruction) =
+        operator::propose_operatorship(payer, its_root_pda, to, Some(accounts))?;
+    let instruction = InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction);
+    let data = instruction
+        .to_bytes()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Creates an [`InterchainTokenServiceInstruction::OperatorInstruction`]
+/// instruction with the [`operator::Instruction::AcceptOperatorship`] variant.
+///
+/// # Errors
+///
+/// If serialization fails.
+pub fn accept_operatorship(payer: Pubkey, from: Pubkey) -> Result<Instruction, ProgramError> {
+    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
+    let (accounts, operator_instruction) =
+        operator::accept_operatorship(payer, its_root_pda, from, Some(accounts))?;
+    let instruction = InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction);
+    let data = instruction
+        .to_bytes()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
 fn prefix_accounts(
     payer: &Pubkey,
     gateway_approved_message_pda: &Pubkey,
@@ -893,58 +975,16 @@ where
 
     let mut accounts =
         derive_common_its_accounts(its_root_pda, token_mint, token_manager_pda, token_program);
+    let mut message_specific_accounts = derive_specific_its_accounts(
+        token_mint,
+        token_manager_pda,
+        token_program,
+        &mut maybe_flow_slot_pda_bump,
+        maybe_timestamp,
+        &message,
+    )?;
 
-    match message {
-        ItsMessageRef::InterchainTransfer {
-            destination_address,
-            data,
-            ..
-        } => {
-            let destination_wallet = Pubkey::new_from_array(
-                destination_address
-                    .try_into()
-                    .map_err(|_err| ProgramError::InvalidInstructionData)?,
-            );
-            let destination_ata = get_associated_token_address_with_program_id(
-                &destination_wallet,
-                &token_mint,
-                &token_program,
-            );
-            let Some(timestamp) = maybe_timestamp else {
-                return Err(ProgramError::InvalidInstructionData);
-            };
-            let epoch = crate::state::flow_limit::flow_epoch_with_timestamp(timestamp)?;
-            let (flow_slot_pda, flow_slot_pda_bump) =
-                crate::flow_slot_pda(&token_manager_pda, epoch, maybe_flow_slot_pda_bump);
-
-            maybe_flow_slot_pda_bump = Some(flow_slot_pda_bump);
-
-            accounts.push(AccountMeta::new(destination_wallet, false));
-            accounts.push(AccountMeta::new(destination_ata, false));
-            accounts.push(AccountMeta::new(flow_slot_pda, false));
-
-            if !data.is_empty() {
-                let execute_data = DataPayload::decode(data)
-                    .map_err(|_err| ProgramError::InvalidInstructionData)?;
-
-                accounts.extend(execute_data.account_meta().iter().cloned());
-            }
-        }
-        ItsMessageRef::DeployInterchainToken { minter, .. } => {
-            accounts.push(AccountMeta::new_readonly(sysvar::rent::id(), false));
-            if minter.len() == axelar_rkyv_encoding::types::ED25519_PUBKEY_LEN {
-                accounts.push(AccountMeta::new_readonly(
-                    Pubkey::new_from_array(
-                        minter
-                            .try_into()
-                            .map_err(|_err| ProgramError::InvalidInstructionData)?,
-                    ),
-                    false,
-                ));
-            }
-        }
-        ItsMessageRef::DeployTokenManager { .. } => {}
-    };
+    accounts.append(&mut message_specific_accounts);
 
     Ok((
         accounts,
@@ -956,6 +996,88 @@ where
             ..Default::default()
         },
     ))
+}
+
+fn derive_specific_its_accounts(
+    mint_account: Pubkey,
+    token_manager_pda: Pubkey,
+    token_program: Pubkey,
+    maybe_flow_slot_pda_bump: &mut Option<u8>,
+    maybe_timestamp: Option<i64>,
+    message: &ItsMessageRef<'_>,
+) -> Result<Vec<AccountMeta>, ProgramError> {
+    let mut specific_accounts = Vec::new();
+
+    match message {
+        ItsMessageRef::InterchainTransfer {
+            destination_address,
+            data,
+            ..
+        } => {
+            let destination_wallet = Pubkey::new_from_array(
+                (*destination_address)
+                    .try_into()
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?,
+            );
+            let destination_ata = get_associated_token_address_with_program_id(
+                &destination_wallet,
+                &mint_account,
+                &token_program,
+            );
+            let Some(timestamp) = maybe_timestamp else {
+                return Err(ProgramError::InvalidInstructionData);
+            };
+            let epoch = crate::state::flow_limit::flow_epoch_with_timestamp(timestamp)?;
+            let (flow_slot_pda, flow_slot_pda_bump) =
+                crate::flow_slot_pda(&token_manager_pda, epoch, *maybe_flow_slot_pda_bump);
+
+            *maybe_flow_slot_pda_bump = Some(flow_slot_pda_bump);
+
+            specific_accounts.push(AccountMeta::new(destination_wallet, false));
+            specific_accounts.push(AccountMeta::new(destination_ata, false));
+            specific_accounts.push(AccountMeta::new(flow_slot_pda, false));
+
+            if !data.is_empty() {
+                let execute_data = DataPayload::decode(data)
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+                specific_accounts.extend(execute_data.account_meta().iter().cloned());
+            }
+        }
+        ItsMessageRef::DeployInterchainToken { minter, .. } => {
+            if minter.len() == axelar_rkyv_encoding::types::ED25519_PUBKEY_LEN {
+                let minter_key = Pubkey::new_from_array(
+                    (*minter)
+                        .try_into()
+                        .map_err(|_err| ProgramError::InvalidInstructionData)?,
+                );
+                let (minter_roles_pda, _) = role_management::find_user_roles_pda(
+                    &crate::id(),
+                    &token_manager_pda,
+                    &minter_key,
+                );
+
+                specific_accounts.push(AccountMeta::new_readonly(minter_key, false));
+                specific_accounts.push(AccountMeta::new(minter_roles_pda, false));
+            }
+        }
+        ItsMessageRef::DeployTokenManager { params, .. } => {
+            let (maybe_operator, _) = state::token_manager::decode_params(params)
+                .map_err(|_err| ProgramError::InvalidInstructionData)?;
+            if let Some(operator) = maybe_operator {
+                let (operator_roles_pda, _) = role_management::find_user_roles_pda(
+                    &crate::id(),
+                    &token_manager_pda,
+                    &operator,
+                );
+
+                specific_accounts.push(AccountMeta::new_readonly(operator, false));
+                specific_accounts.push(AccountMeta::new(operator_roles_pda, false));
+            }
+        }
+    };
+
+    Ok(specific_accounts)
 }
 
 fn try_retrieve_mint(
@@ -994,6 +1116,9 @@ fn derive_common_its_accounts(
         &token_program,
     );
 
+    let (its_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &its_root_pda);
+
     vec![
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
@@ -1002,6 +1127,8 @@ fn derive_common_its_accounts(
         AccountMeta::new(token_manager_ata, false),
         AccountMeta::new_readonly(token_program, false),
         AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+        AccountMeta::new(its_roles_pda, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
     ]
 }
 
@@ -1261,5 +1388,23 @@ impl TryFrom<InterchainTransferInputs> for GMPPayload {
     fn try_from(value: InterchainTransferInputs) -> Result<Self, Self::Error> {
         let inner = InterchainTransfer::try_from(value)?;
         Ok(inner.into())
+    }
+}
+
+impl TryFrom<RoleManagementInstruction> for InterchainTokenServiceInstruction {
+    type Error = ProgramError;
+
+    fn try_from(value: RoleManagementInstruction) -> Result<Self, Self::Error> {
+        match value {
+            // Adding and removing operators on the InterchainTokenService is not supported.
+            RoleManagementInstruction::AddRoles(_) | RoleManagementInstruction::RemoveRoles(_) => {
+                Err(ProgramError::InvalidInstructionData)
+            }
+            RoleManagementInstruction::TransferRoles(_)
+            | RoleManagementInstruction::ProposeRoles(_)
+            | RoleManagementInstruction::AcceptRoles(_) => {
+                Ok(Self::OperatorInstruction(value.try_into()?))
+            }
+        }
     }
 }

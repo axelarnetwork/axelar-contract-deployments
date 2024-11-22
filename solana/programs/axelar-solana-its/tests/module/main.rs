@@ -11,6 +11,7 @@ mod deploy_token_manager;
 mod flow_limits;
 mod from_solana_to_evm;
 mod its_gmp_payload;
+mod role_management;
 
 use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::ethers::abi::Detokenize;

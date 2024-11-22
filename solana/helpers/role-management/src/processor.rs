@@ -31,14 +31,6 @@ pub fn propose(
         required_payer_roles,
     )?;
 
-    ensure_signer_roles(
-        program_id,
-        transfer_accounts.resource,
-        transfer_accounts.payer,
-        transfer_accounts.payer_roles_account,
-        inputs.roles,
-    )?;
-
     ensure_roles(
         program_id,
         transfer_accounts.resource,
@@ -103,6 +95,7 @@ pub fn accept(
         transfer_accounts.destination_user_account.key,
         inputs.destination_roles_pda_bump,
     );
+
     if *transfer_accounts.destination_roles_account.key != derived_pda {
         msg!("Derived PDA doesn't match destination roles account");
         return Err(ProgramError::InvalidArgument);
@@ -174,6 +167,7 @@ fn transfer_roles(
             seed_prefixes::USER_ROLES_SEED,
             accounts.resource.key.as_ref(),
             accounts.destination_user_account.key.as_ref(),
+            &[destination_roles_pda_bump],
         ];
 
         UserRoles::new(roles, destination_roles_pda_bump).init(
@@ -249,6 +243,7 @@ pub fn add(
             seed_prefixes::USER_ROLES_SEED,
             add_accounts.resource.key.as_ref(),
             add_accounts.destination_user_account.key.as_ref(),
+            &[inputs.destination_roles_pda_bump],
         ];
 
         UserRoles::new(inputs.roles, inputs.destination_roles_pda_bump).init(
@@ -308,14 +303,24 @@ pub fn ensure_roles(
     roles_account: &AccountInfo<'_>,
     roles: Roles,
 ) -> ProgramResult {
-    let user_roles = UserRoles::load(program_id, roles_account)?;
+    let Ok(user_roles) = UserRoles::load(program_id, roles_account) else {
+        if roles.eq(&Roles::empty()) {
+            return Ok(());
+        }
+
+        msg!("User roles account not found");
+        return Err(ProgramError::InvalidArgument);
+    };
+
     if !user_roles.contains(roles) {
+        msg!("User doesn't have the required roles");
         return Err(ProgramError::InvalidArgument);
     }
     let (derived_pda, _) =
         crate::create_user_roles_pda(program_id, resource.key, user.key, user_roles.bump());
 
     if *roles_account.key != derived_pda {
+        msg!("Derived PDA doesn't match given roles account address");
         return Err(ProgramError::InvalidArgument);
     }
 
@@ -365,7 +370,7 @@ pub struct RoleManagementAccounts<'a> {
     pub origin_user_account: Option<&'a AccountInfo<'a>>,
 
     /// Origin roles account.
-    pub origin_roles_account: &'a AccountInfo<'a>,
+    pub origin_roles_account: Option<&'a AccountInfo<'a>>,
 
     /// Proposal account.
     pub proposal_account: Option<&'a AccountInfo<'a>>,
@@ -381,10 +386,10 @@ impl<'a> TryFrom<&'a [AccountInfo<'a>]> for RoleManagementAccounts<'a> {
             payer: next_account_info(account_iter)?,
             payer_roles_account: next_account_info(account_iter)?,
             resource: next_account_info(account_iter)?,
-            origin_roles_account: next_account_info(account_iter)?,
+            destination_user_account: next_account_info(account_iter).ok(),
             destination_roles_account: next_account_info(account_iter).ok(),
             origin_user_account: next_account_info(account_iter).ok(),
-            destination_user_account: next_account_info(account_iter).ok(),
+            origin_roles_account: next_account_info(account_iter).ok(),
             proposal_account: next_account_info(account_iter).ok(),
         })
     }
@@ -418,7 +423,9 @@ impl<'a> TryFrom<RoleManagementAccounts<'a>> for RoleTransferAccounts<'a> {
             origin_user_account: value
                 .origin_user_account
                 .ok_or(ProgramError::InvalidArgument)?,
-            origin_roles_account: value.origin_roles_account,
+            origin_roles_account: value
+                .origin_roles_account
+                .ok_or(ProgramError::InvalidArgument)?,
         })
     }
 }
@@ -453,7 +460,9 @@ impl<'a> TryFrom<RoleManagementAccounts<'a>> for RoleTransferWithProposalAccount
             origin_user_account: value
                 .origin_user_account
                 .ok_or(ProgramError::InvalidArgument)?,
-            origin_roles_account: value.origin_roles_account,
+            origin_roles_account: value
+                .origin_roles_account
+                .ok_or(ProgramError::InvalidArgument)?,
             proposal_account: value
                 .proposal_account
                 .ok_or(ProgramError::InvalidArgument)?,

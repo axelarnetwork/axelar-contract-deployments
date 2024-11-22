@@ -1,10 +1,8 @@
 //! Instructions for role management.
 use std::error::Error;
 
-use rkyv::ser::serializers::AllocSerializer;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
-use solana_program::instruction::{AccountMeta, Instruction};
-use solana_program::program_error::ProgramError;
+use solana_program::instruction::AccountMeta;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
 
@@ -34,60 +32,68 @@ pub struct RoleManagementInstructionInputs {
 pub enum RoleManagementInstruction {
     /// Adds roles to a user.
     ///
-    /// 0. [] System program id
-    /// 1. [signer] The payer account
-    /// 2. [] The resource for which the role is being added.
-    /// 3. [] The account of the user to which the roles are going to be added.
-    /// 4. [writeable] The PDA containing the roles for the user to which the
-    ///    roles are going to be added.
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA account for the payer roles on the resource.
+    /// 3. [] PDA account for the resource.
+    /// 4. [] Account to add roles to.
+    /// 5. [writable] PDA account with the roles on the resource, for the
+    ///    accounts the roles are being added to.
     AddRoles(RoleManagementInstructionInputs),
 
     /// Removes roles from a user.
     ///
-    /// 0. [] System program id
-    /// 1. [signer] The payer account
-    /// 2. [] The resource for which the role is being added.
-    /// 3. [] The account of the user to which the roles are going to be added.
-    /// 4. [writeable] The PDA containing the roles for the user from which the
-    ///    roles are going to be removed.
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA account for the payer roles on the resource.
+    /// 3. [] PDA account for the resource.
+    /// 4. [] Account to remove roles from.
+    /// 5. [writable] PDA account with the roles on the resource, for the
+    ///    accounts the roles are being removed from.
     RemoveRoles(RoleManagementInstructionInputs),
 
     /// Transfers roles from one user to another.
     ///
-    /// 0. [] System program id
-    /// 1. [signer] The payer account
-    /// 2. [] The resource for which the role is being added.
-    /// 3. [writeable] The PDA from which the roles being transferred.
-    /// 4. [writeable] The PDA containing the roles for the user to which the
-    ///    roles are going to be added.
-    /// 5. [signer] The account of the user whose roles are being transferred.
-    /// 6. [] The account of the user who's going to receive the roles.
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer roles to.
+    /// 5. [writable] PDA with the roles on the resource, for the accounts the
+    ///    roles are being transferred to.
+    /// 6. [] Account which the roles are being transferred from.
+    /// 7. [writable] PDA with the roles on the resource, for the account the
+    ///    roles are being transferred from.
     TransferRoles(RoleManagementInstructionInputs),
 
     /// Proposes roles to a user. Upon acceptance the roles are transferred.
     ///
-    /// 0. [] System program id
-    /// 1. [signer] The payer account
-    /// 2. [] The resource for which the role is being added.
-    /// 3. [writeable] The PDA from which the roles being transferred.
-    /// 4. [writeable] The PDA containing the roles for the user to which the
-    ///    roles are going to be added.
-    /// 5. [signer] The account of the user whose roles are being transferred.
-    /// 6. [] The account of the user who's going to receive the roles.
-    /// 7. [writeable] The PDA containing the proposal.
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer roles to.
+    /// 5. [] PDA with the roles on the resource, for the accounts the roles are
+    ///    being transferred to.
+    /// 6. [] Account which the roles are being transferred from.
+    /// 7. [] PDA with the roles on the resource, for the account the roles are
+    ///    being transferred from.
+    /// 8. [writable] The PDA account containing the proposal.
     ProposeRoles(RoleManagementInstructionInputs),
 
     /// Accepts proposed roles.
     ///
-    /// 0. [] System program id
-    /// 1. [signer] The payer account
-    /// 2. [] The resource for which the role is being added.
-    /// 3. [writeable] The PDA from which the roles being transferred.
-    /// 4. [writeable] The PDA containing the roles for the user to which the
-    ///    roles are going to be added.
-    /// 5. [] The account of the user whose roles are being transferred.
-    /// 6. [signer] The account of the user who's going to receive the roles.
-    /// 7. [writeable] The PDA containing the proposal.
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer roles to.
+    /// 5. [writable] PDA with the roles on the resource, for the accounts the
+    ///    roles are being transferred to.
+    /// 6. [] Account which the roles are being transferred from.
+    /// 7. [writable] PDA with the roles on the resource, for the account the
+    ///    roles are being transferred from.
+    /// 8. [writable] The PDA account containing the proposal.
     AcceptRoles(RoleManagementInstructionInputs),
 }
 
@@ -119,19 +125,15 @@ impl RoleManagementInstruction {
 }
 
 /// Creates an instruction to add roles to a user.
-///
-/// # Errors
-/// If serialization fails.
-pub fn add_roles<I>(
+#[must_use]
+pub fn add_roles(
     program_id: Pubkey,
     payer: Pubkey,
     on: Pubkey,
     to: Pubkey,
     roles: Roles,
-) -> Result<Instruction, ProgramError>
-where
-    I: TryFrom<RoleManagementInstruction> + Archive + Serialize<AllocSerializer<0>>,
-{
+    accounts_to_prepend: Option<Vec<AccountMeta>>,
+) -> (Vec<AccountMeta>, RoleManagementInstruction) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &to);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
@@ -141,44 +143,32 @@ where
         proposal_pda_bump: None,
     };
 
-    let instruction: I = RoleManagementInstruction::AddRoles(inputs)
-        .try_into()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let instruction = RoleManagementInstruction::AddRoles(inputs);
 
-    let data = rkyv::to_bytes::<_, 0>(&instruction)
-        .map_err(|_err| ProgramError::InvalidInstructionData)?
-        .to_vec();
+    let mut accounts = accounts_to_prepend.unwrap_or_default();
 
-    let accounts = vec![
+    accounts.append(&mut vec![
         AccountMeta::new_readonly(system_program::id(), false),
-        AccountMeta::new_readonly(payer, true),
-        AccountMeta::new_readonly(payer_roles_pda, true),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
         AccountMeta::new_readonly(on, false),
         AccountMeta::new_readonly(to, false),
         AccountMeta::new(destination_roles_pda, false),
-    ];
+    ]);
 
-    Ok(Instruction {
-        program_id,
-        accounts,
-        data,
-    })
+    (accounts, instruction)
 }
 
 /// Creates an instruction to remove roles from a user.
-///
-/// # Errors
-/// If serialization fails.
-pub fn remove_roles<I>(
+#[must_use]
+pub fn remove_roles(
     program_id: Pubkey,
     payer: Pubkey,
     on: Pubkey,
     from: Pubkey,
     roles: Roles,
-) -> Result<Instruction, ProgramError>
-where
-    I: TryFrom<RoleManagementInstruction> + Archive + Serialize<AllocSerializer<0>>,
-{
+    accounts_to_prepend: Option<Vec<AccountMeta>>,
+) -> (Vec<AccountMeta>, RoleManagementInstruction) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &from);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
@@ -188,47 +178,32 @@ where
         proposal_pda_bump: None,
     };
 
-    let instruction: I = RoleManagementInstruction::AddRoles(inputs)
-        .try_into()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let instruction = RoleManagementInstruction::RemoveRoles(inputs);
 
-    let data = rkyv::to_bytes::<_, 0>(&instruction)
-        .map_err(|_err| ProgramError::InvalidInstructionData)?
-        .to_vec();
-
-    let accounts = vec![
+    let mut accounts = accounts_to_prepend.unwrap_or_default();
+    accounts.append(&mut vec![
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(payer, true),
         AccountMeta::new_readonly(payer_roles_pda, false),
         AccountMeta::new_readonly(on, false),
         AccountMeta::new_readonly(from, false),
         AccountMeta::new(destination_roles_pda, false),
-        AccountMeta::new_readonly(payer, true),
-        AccountMeta::new_readonly(payer_roles_pda, false),
-    ];
+    ]);
 
-    Ok(Instruction {
-        program_id,
-        accounts,
-        data,
-    })
+    (accounts, instruction)
 }
 
 /// Creates an instruction to transfer roles between users.
-///
-/// # Errors
-/// If serialization fails.
-pub fn transfer_roles<I>(
+#[must_use]
+pub fn transfer_roles(
     program_id: Pubkey,
     payer: Pubkey,
     on: Pubkey,
     from: Pubkey,
     to: Pubkey,
     roles: Roles,
-) -> Result<Instruction, ProgramError>
-where
-    I: From<RoleManagementInstruction> + Archive + Serialize<AllocSerializer<0>>,
-{
+    accounts_to_prepend: Option<Vec<AccountMeta>>,
+) -> (Vec<AccountMeta>, RoleManagementInstruction) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &to);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
@@ -239,45 +214,34 @@ where
         proposal_pda_bump: None,
     };
 
-    let instruction: I = RoleManagementInstruction::TransferRoles(inputs).into();
+    let instruction = RoleManagementInstruction::TransferRoles(inputs);
 
-    let data = rkyv::to_bytes::<_, 0>(&instruction)
-        .map_err(|_err| ProgramError::InvalidInstructionData)?
-        .to_vec();
-
-    let accounts = vec![
+    let mut accounts = accounts_to_prepend.unwrap_or_default();
+    accounts.append(&mut vec![
         AccountMeta::new_readonly(system_program::id(), false),
-        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new(payer, true),
         AccountMeta::new_readonly(payer_roles_pda, false),
         AccountMeta::new_readonly(on, false),
         AccountMeta::new_readonly(to, false),
         AccountMeta::new(destination_roles_pda, false),
-        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(from, false),
         AccountMeta::new(role_holder_pda, false),
-    ];
+    ]);
 
-    Ok(Instruction {
-        program_id,
-        accounts,
-        data,
-    })
+    (accounts, instruction)
 }
 
 /// Creates an instruction to transfer roles between users.
-///
-/// # Errors
-/// If serialization fails.
-pub fn propose_roles<I>(
+#[must_use]
+pub fn propose_roles(
     program_id: Pubkey,
     payer: Pubkey,
     on: Pubkey,
     from: Pubkey,
     to: Pubkey,
     roles: Roles,
-) -> Result<Instruction, ProgramError>
-where
-    I: From<RoleManagementInstruction> + Archive + Serialize<AllocSerializer<0>>,
-{
+    accounts_to_prepend: Option<Vec<AccountMeta>>,
+) -> (Vec<AccountMeta>, RoleManagementInstruction) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &to);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
@@ -291,13 +255,10 @@ where
         proposal_pda_bump: Some(proposal_pda_bump),
     };
 
-    let instruction: I = RoleManagementInstruction::ProposeRoles(inputs).into();
+    let instruction = RoleManagementInstruction::ProposeRoles(inputs);
 
-    let data = rkyv::to_bytes::<_, 0>(&instruction)
-        .map_err(|_err| ProgramError::InvalidInstructionData)?
-        .to_vec();
-
-    let accounts = vec![
+    let mut accounts = accounts_to_prepend.unwrap_or_default();
+    accounts.append(&mut vec![
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(payer_roles_pda, false),
@@ -307,29 +268,21 @@ where
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(role_holder_pda, false),
         AccountMeta::new(proposal_pda, false),
-    ];
+    ]);
 
-    Ok(Instruction {
-        program_id,
-        accounts,
-        data,
-    })
+    (accounts, instruction)
 }
 
 /// Creates an instruction to transfer roles between users.
-///
-/// # Errors
-/// If serialization fails.
-pub fn accept_roles<I>(
+#[must_use]
+pub fn accept_roles(
     program_id: Pubkey,
     payer: Pubkey,
     on: Pubkey,
     from: Pubkey,
     roles: Roles,
-) -> Result<Instruction, ProgramError>
-where
-    I: From<RoleManagementInstruction> + Archive + Serialize<AllocSerializer<0>>,
-{
+    accounts_to_prepend: Option<Vec<AccountMeta>>,
+) -> (Vec<AccountMeta>, RoleManagementInstruction) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &payer);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
@@ -343,13 +296,10 @@ where
         proposal_pda_bump: Some(proposal_pda_bump),
     };
 
-    let instruction: I = RoleManagementInstruction::AcceptRoles(inputs).into();
+    let instruction = RoleManagementInstruction::AcceptRoles(inputs);
 
-    let data = rkyv::to_bytes::<_, 0>(&instruction)
-        .map_err(|_err| ProgramError::InvalidInstructionData)?
-        .to_vec();
-
-    let accounts = vec![
+    let mut accounts = accounts_to_prepend.unwrap_or_default();
+    accounts.append(&mut vec![
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(payer, true),
         AccountMeta::new_readonly(payer_roles_pda, false),
@@ -359,11 +309,7 @@ where
         AccountMeta::new(from, false),
         AccountMeta::new(role_holder_pda, false),
         AccountMeta::new(proposal_pda, false),
-    ];
+    ]);
 
-    Ok(Instruction {
-        program_id,
-        accounts,
-        data,
-    })
+    (accounts, instruction)
 }

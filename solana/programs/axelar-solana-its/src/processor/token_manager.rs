@@ -3,8 +3,8 @@
 use axelar_rkyv_encoding::types::PublicKey;
 use interchain_token_transfer_gmp::DeployTokenManager;
 use program_utils::{StorableArchive, ValidPDA};
-use role_management::processor::RoleManagementAccounts;
-use role_management::state::Roles;
+use role_management::processor::{ensure_roles, RoleManagementAccounts};
+use role_management::state::{Roles, UserRoles};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
@@ -33,7 +33,7 @@ impl LocalAction for DeployTokenManager {
 #[allow(clippy::todo)]
 pub(crate) fn process_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
-    instruction: &instructions::token_manager::Instruction,
+    instruction: instructions::token_manager::Instruction,
 ) -> ProgramResult {
     match instruction {
         instructions::token_manager::Instruction::SetFlowLimit { flow_limit } => {
@@ -42,7 +42,7 @@ pub(crate) fn process_instruction<'a>(
                 return Err(ProgramError::MissingRequiredSignature);
             }
 
-            set_flow_limit(&instruction_accounts, *flow_limit)
+            set_flow_limit(&instruction_accounts, flow_limit)
         }
         instructions::token_manager::Instruction::AddFlowLimiter(inputs) => {
             if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
@@ -53,7 +53,7 @@ pub(crate) fn process_instruction<'a>(
             role_management::processor::add(
                 &crate::id(),
                 instruction_accounts,
-                inputs,
+                &inputs,
                 Roles::OPERATOR,
             )
         }
@@ -66,9 +66,12 @@ pub(crate) fn process_instruction<'a>(
             role_management::processor::remove(
                 &crate::id(),
                 instruction_accounts,
-                inputs,
+                &inputs,
                 Roles::OPERATOR,
             )
+        }
+        instructions::token_manager::Instruction::OperatorInstruction(operator_instruction) => {
+            process_operator_instruction(accounts, operator_instruction)
         }
     }
 }
@@ -99,8 +102,8 @@ pub(crate) fn process_deploy<'a>(
     let deploy_token_manager = DeployTokenManagerInternal::new(
         payload.token_manager_type.try_into()?,
         payload.token_id.0,
-        operator,
         token_address,
+        operator,
         None,
     );
 
@@ -111,47 +114,44 @@ pub(crate) fn set_flow_limit(
     accounts: &SetFlowLimitAccounts<'_>,
     flow_limit: u64,
 ) -> ProgramResult {
-    // TODO: Uncomment as soon as we're able to add flow limiters. Which is after we
-    // implement operator roles on TokenManager.
-    // ensure_roles(
-    //     &crate::id(),
-    //     accounts.token_manager_pda,
-    //     accounts.flow_limiter,
-    //     accounts.token_manager_user_roles_pda,
-    //     Roles::FLOW_LIMITER,
-    // )?;
+    ensure_roles(
+        &crate::id(),
+        accounts.token_manager_pda,
+        accounts.flow_limiter,
+        accounts.token_manager_user_roles_pda,
+        Roles::FLOW_LIMITER,
+    )?;
 
     let mut token_manager = TokenManager::load(&crate::id(), accounts.token_manager_pda)?;
-
     token_manager.flow_limit = flow_limit;
-
     token_manager.store(accounts.token_manager_pda)?;
 
     Ok(())
 }
 
-pub(crate) struct DeployTokenManagerInternal<'a> {
-    token_manager_type: token_manager::Type,
+pub(crate) struct DeployTokenManagerInternal {
+    manager_type: token_manager::Type,
     token_id: PublicKey,
-    _operator: Option<PublicKey>,
     token_address: PublicKey,
-    _additional_minter: Option<AccountInfo<'a>>,
+    operator: Option<Pubkey>,
+    #[allow(dead_code)] // TODO: Remove this once we implement the minters logic.
+    minter: Option<Pubkey>,
 }
 
-impl<'a> DeployTokenManagerInternal<'a> {
+impl DeployTokenManagerInternal {
     pub(crate) fn new(
-        token_manager_type: token_manager::Type,
+        manager_type: token_manager::Type,
         token_id: [u8; 32],
-        operator: Option<Pubkey>,
         token_address: Pubkey,
-        additional_minter: Option<AccountInfo<'a>>,
+        operator: Option<Pubkey>,
+        minter: Option<Pubkey>,
     ) -> Self {
         Self {
-            token_manager_type,
+            manager_type,
             token_id: PublicKey::new_ed25519(token_id),
-            _operator: operator.map(|op| PublicKey::new_ed25519(op.to_bytes())),
             token_address: PublicKey::new_ed25519(token_address.to_bytes()),
-            _additional_minter: additional_minter,
+            operator,
+            minter,
         }
     }
 }
@@ -166,7 +166,7 @@ pub(crate) fn deploy<'a>(
     payer: &AccountInfo<'a>,
     accounts: &[AccountInfo<'a>],
     bumps: Bumps,
-    deploy_token_manager: &DeployTokenManagerInternal<'a>,
+    deploy_token_manager: &DeployTokenManagerInternal,
 ) -> ProgramResult {
     check_accounts(accounts)?;
 
@@ -178,9 +178,13 @@ pub(crate) fn deploy<'a>(
     let token_manager_ata = next_account_info(accounts_iter)?;
     let token_program = next_account_info(accounts_iter)?;
     let _ata_program = next_account_info(accounts_iter)?;
+    let its_roles_pda = next_account_info(accounts_iter)?;
+    let _rent_sysvar = next_account_info(accounts_iter)?;
+    let operator = next_account_info(accounts_iter).ok();
+    let operator_roles_pda = next_account_info(accounts_iter).ok();
 
     validate_token_manager_type(
-        deploy_token_manager.token_manager_type,
+        deploy_token_manager.manager_type,
         token_mint,
         token_manager_pda,
     )?;
@@ -203,13 +207,30 @@ pub(crate) fn deploy<'a>(
         crate::create_token_manager_pda(&interchain_token_pda, bumps.token_manager_pda_bump);
     let token_manager_ata = PublicKey::new_ed25519(token_manager_ata.key.to_bytes());
 
-    // TODO: USe the role management crate for this.
-    //
-    // let mut operators =
-    // vec![PublicKey::new_ed25519(its_root_pda.key.to_bytes())];
-    // if let Some(operator) = deploy_token_manager.operator {
-    //     operators.push(operator);
-    // }
+    if let (Some(operator), Some(operator_roles_pda), Some(encoded_operator)) =
+        (operator, operator_roles_pda, deploy_token_manager.operator)
+    {
+        if encoded_operator.ne(operator.key) {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        setup_roles(
+            payer,
+            token_manager_pda,
+            operator,
+            operator_roles_pda,
+            system_account,
+            Roles::OPERATOR | Roles::FLOW_LIMITER,
+        )?;
+    }
+    setup_roles(
+        payer,
+        token_manager_pda,
+        its_root_pda,
+        its_roles_pda,
+        system_account,
+        Roles::OPERATOR | Roles::FLOW_LIMITER,
+    )?;
 
     // TODO: Use the role management crate for this.
     //
@@ -223,7 +244,7 @@ pub(crate) fn deploy<'a>(
     // None, };
 
     let token_manager = TokenManager::new(
-        deploy_token_manager.token_manager_type,
+        deploy_token_manager.manager_type,
         deploy_token_manager.token_id,
         deploy_token_manager.token_address,
         token_manager_ata,
@@ -242,6 +263,84 @@ pub(crate) fn deploy<'a>(
             &[bump],
         ],
     )?;
+
+    Ok(())
+}
+
+fn setup_roles<'a>(
+    payer: &AccountInfo<'a>,
+    token_manager_pda: &AccountInfo<'a>,
+    user: &AccountInfo<'a>,
+    user_roles_pda: &AccountInfo<'a>,
+    system_account: &AccountInfo<'a>,
+    roles: Roles,
+) -> ProgramResult {
+    let (derived_operator_roles_pda, operator_roles_pda_bump) =
+        role_management::find_user_roles_pda(&crate::id(), token_manager_pda.key, user.key);
+
+    if derived_operator_roles_pda.ne(user_roles_pda.key) {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let operator_roles = UserRoles::new(roles, operator_roles_pda_bump);
+    operator_roles.init(
+        &crate::id(),
+        system_account,
+        payer,
+        user_roles_pda,
+        &[
+            role_management::seed_prefixes::USER_ROLES_SEED,
+            token_manager_pda.key.as_ref(),
+            user.key.as_ref(),
+            &[operator_roles_pda_bump],
+        ],
+    )?;
+
+    Ok(())
+}
+
+fn process_operator_instruction<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    instruction: instructions::operator::Instruction,
+) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let interchain_token_pda = next_account_info(accounts_iter)?;
+    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
+    let token_manager = TokenManager::load(&crate::id(), role_management_accounts.resource)?;
+    let (derived_token_manager_pda, _) =
+        crate::create_token_manager_pda(interchain_token_pda.key, token_manager.bump);
+
+    if derived_token_manager_pda.ne(role_management_accounts.resource.key) {
+        msg!("Invalid token manager PDA provided");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    match instruction {
+        instructions::operator::Instruction::TransferOperatorship(inputs) => {
+            role_management::processor::transfer(
+                &crate::id(),
+                role_management_accounts,
+                &inputs,
+                Roles::OPERATOR,
+            )?;
+        }
+        instructions::operator::Instruction::ProposeOperatorship(inputs) => {
+            role_management::processor::propose(
+                &crate::id(),
+                role_management_accounts,
+                &inputs,
+                Roles::OPERATOR,
+            )?;
+        }
+        instructions::operator::Instruction::AcceptOperatorship(inputs) => {
+            role_management::processor::accept(
+                &crate::id(),
+                role_management_accounts,
+                &inputs,
+                Roles::empty(),
+            )?;
+        }
+    }
 
     Ok(())
 }

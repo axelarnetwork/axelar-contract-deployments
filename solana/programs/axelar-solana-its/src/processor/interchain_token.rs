@@ -51,13 +51,15 @@ pub fn process_deploy<'a>(
     let accounts_iter = &mut accounts.iter();
     let _system_account = next_account_info(accounts_iter)?;
     let _its_root_pda = next_account_info(accounts_iter)?;
-    let token_manager_pda = next_account_info(accounts_iter)?;
+    let _token_manager_pda = next_account_info(accounts_iter)?;
     let token_mint = next_account_info(accounts_iter)?;
     let _token_manager_ata = next_account_info(accounts_iter)?;
     let _token_program = next_account_info(accounts_iter)?;
     let _ata_program = next_account_info(accounts_iter)?;
+    let _its_roles_pda = next_account_info(accounts_iter)?;
     let _rent_sysvar = next_account_info(accounts_iter)?;
-    let additional_minter_account = next_account_info(accounts_iter).ok();
+    let additional_minter = next_account_info(accounts_iter).ok();
+    let _additional_minter_roles_pda = next_account_info(accounts_iter).ok();
 
     setup_mint(
         payer,
@@ -76,12 +78,15 @@ pub fn process_deploy<'a>(
         String::new(),
     )?;
 
+    // The minter passed in the DeployInterchainToken call is used as the
+    // `TokenManager` operator as well, see:
+    // https://github.com/axelarnetwork/interchain-token-service/blob/v2.0.1/contracts/InterchainTokenService.sol#L758
     let deploy_token_manager = DeployTokenManagerInternal::new(
         token_manager::Type::NativeInterchainToken,
         payload.token_id.0,
-        Some(*token_manager_pda.key),
         *token_mint.key,
-        additional_minter_account.cloned(),
+        additional_minter.map(|account| *account.key),
+        additional_minter.map(|account| *account.key),
     );
 
     super::token_manager::deploy(payer, accounts, bumps, &deploy_token_manager)?;
@@ -104,8 +109,10 @@ fn setup_mint<'a>(
     let _token_manager_ata = next_account_info(accounts_iter)?;
     let token_program = next_account_info(accounts_iter)?;
     let _ata_program = next_account_info(accounts_iter)?;
+    let _its_roles_pda = next_account_info(accounts_iter)?;
     let rent_sysvar = next_account_info(accounts_iter)?;
     let _minter = next_account_info(accounts_iter).ok();
+    let _minter_roles_pda = next_account_info(accounts_iter).ok();
 
     let rent = Rent::get()?;
     let account_size =
@@ -182,8 +189,10 @@ fn setup_metadata<'a>(
     let _token_manager_ata = next_account_info(accounts_iter)?;
     let token_program = next_account_info(accounts_iter)?;
     let _ata_program = next_account_info(accounts_iter)?;
+    let _its_roles_pda = next_account_info(accounts_iter)?;
     let _rent_sysvar = next_account_info(accounts_iter)?;
     let _minter = next_account_info(accounts_iter).ok();
+    let _minter_roles_pda = next_account_info(accounts_iter).ok();
 
     let rent = Rent::get()?;
     let (interchain_token_pda, _) = crate::create_interchain_token_pda(

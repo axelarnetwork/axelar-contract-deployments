@@ -111,7 +111,7 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
     assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
     assert_eq!(mint.as_ref(), token_manager.token_address.as_ref());
 
-    let flow_limit_ix = axelar_solana_its::instructions::token_manager::set_flow_limit(
+    let flow_limit_ix = axelar_solana_its::instructions::set_flow_limit(
         solana_chain.fixture.payer.pubkey(),
         token_id.to_bytes(),
         flow_limit,
@@ -329,7 +329,7 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
 
     assert_eq!(log.token_id, expected_token_id, "token_id does not match");
 
-    let flow_limit_ix = axelar_solana_its::instructions::token_manager::set_flow_limit(
+    let flow_limit_ix = axelar_solana_its::instructions::set_flow_limit(
         solana_chain.fixture.payer.pubkey(),
         expected_token_id,
         flow_limit,

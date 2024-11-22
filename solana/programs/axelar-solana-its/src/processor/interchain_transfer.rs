@@ -76,6 +76,8 @@ pub fn process_inbound_transfer<'a>(
     let _token_manager_ata = next_account_info(accounts_iter)?;
     let _token_program = next_account_info(accounts_iter)?;
     let _ata_program = next_account_info(accounts_iter)?;
+    let _its_roles_pda = next_account_info(accounts_iter)?;
+    let _rent_sysvar = next_account_info(accounts_iter)?;
     let destination_wallet = next_account_info(accounts_iter)?;
     let _destination_ata = next_account_info(accounts_iter)?;
 
@@ -205,6 +207,8 @@ fn parse_give_token_accounts<'a>(
         token_manager_ata: next_account_info(accounts_iter)?,
         token_program: next_account_info(accounts_iter)?,
         _ata_program: next_account_info(accounts_iter)?,
+        _its_roles_pda: next_account_info(accounts_iter)?,
+        _rent_sysvar: next_account_info(accounts_iter)?,
         destination_wallet: next_account_info(accounts_iter)?,
         destination_ata: next_account_info(accounts_iter)?,
         flow_slot_pda: next_account_info(accounts_iter)?,
@@ -600,6 +604,8 @@ struct GiveTokenAccounts<'a> {
     token_manager_ata: &'a AccountInfo<'a>,
     token_program: &'a AccountInfo<'a>,
     _ata_program: &'a AccountInfo<'a>,
+    _its_roles_pda: &'a AccountInfo<'a>,
+    _rent_sysvar: &'a AccountInfo<'a>,
     destination_wallet: &'a AccountInfo<'a>,
     destination_ata: &'a AccountInfo<'a>,
     flow_slot_pda: &'a AccountInfo<'a>,

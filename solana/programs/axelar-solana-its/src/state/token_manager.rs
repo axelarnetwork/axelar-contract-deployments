@@ -137,11 +137,11 @@ pub struct TokenManager {
     /// The associated token account owned by the token manager.
     pub associated_token_account: PublicKey,
 
-    /// The token manager PDA bump seed.
-    pub bump: u8,
-
     /// The flow limit for the token manager
     pub flow_limit: u64,
+
+    /// The token manager PDA bump seed.
+    pub bump: u8,
 }
 
 impl TokenManager {

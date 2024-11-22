@@ -6,7 +6,7 @@ use axelar_rkyv_encoding::types::GmpMetadata;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::Itertools;
 use program_utils::{check_rkyv_initialized_pda, StorableArchive, ValidPDA};
-use role_management::processor::ensure_signer_roles;
+use role_management::processor::{ensure_signer_roles, RoleManagementAccounts};
 use role_management::state::{Roles, UserRoles};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
@@ -19,7 +19,7 @@ use solana_program::{msg, system_program};
 
 use self::token_manager::SetFlowLimitAccounts;
 use crate::instructions::{
-    derive_its_accounts, its_account_indices, Bumps, InterchainTokenServiceInstruction,
+    self, derive_its_accounts, its_account_indices, Bumps, InterchainTokenServiceInstruction,
     OutboundInstruction,
 };
 use crate::state::token_manager::TokenManager;
@@ -126,7 +126,7 @@ pub fn process_instruction<'a>(
             )?;
         }
         InterchainTokenServiceInstruction::SetFlowLimit { flow_limit } => {
-            let instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
+            let mut instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
 
             ensure_signer_roles(
                 &crate::id(),
@@ -136,13 +136,17 @@ pub fn process_instruction<'a>(
                 Roles::OPERATOR,
             )?;
 
+            instruction_accounts.flow_limiter = instruction_accounts.its_root_pda;
             token_manager::set_flow_limit(&instruction_accounts, flow_limit)?;
         }
         InterchainTokenServiceInstruction::MintTo { amount } => {
             process_mint_to(accounts, amount)?;
         }
+        InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction) => {
+            process_operator_instruction(accounts, operator_instruction)?;
+        }
         InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
-            token_manager::process_instruction(accounts, &token_manager_instruction)?;
+            token_manager::process_instruction(accounts, token_manager_instruction)?;
         }
     }
 
@@ -188,7 +192,6 @@ fn process_initialize(
     )?;
 
     let operator_user_roles = UserRoles::new(Roles::OPERATOR, user_roles_pda_bump);
-
     let signer_seeds = &[
         role_management::seed_prefixes::USER_ROLES_SEED,
         its_root_pda.key.as_ref(),
@@ -451,6 +454,61 @@ fn validate_its_accounts(
 
         if token_manager.token_address.as_ref() != mint.as_ref() {
             return Err(ProgramError::InvalidAccountData);
+        }
+    }
+
+    Ok(())
+}
+
+fn process_operator_instruction<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    instruction: instructions::operator::Instruction,
+) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let gateway_root_pda = next_account_info(accounts_iter)?;
+    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
+
+    let its_config = InterchainTokenService::load(&crate::id(), role_management_accounts.resource)?;
+    let (derived_its_root_pda, _) =
+        crate::create_its_root_pda(gateway_root_pda.key, its_config.bump);
+    if derived_its_root_pda.ne(role_management_accounts.resource.key) {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    match instruction {
+        instructions::operator::Instruction::TransferOperatorship(inputs) => {
+            if inputs.roles.ne(&Roles::OPERATOR) {
+                return Err(ProgramError::InvalidArgument);
+            }
+
+            role_management::processor::transfer(
+                &crate::id(),
+                role_management_accounts,
+                &inputs,
+                Roles::OPERATOR,
+            )?;
+        }
+        instructions::operator::Instruction::ProposeOperatorship(inputs) => {
+            if inputs.roles.ne(&Roles::OPERATOR) {
+                return Err(ProgramError::InvalidArgument);
+            }
+            role_management::processor::propose(
+                &crate::id(),
+                role_management_accounts,
+                &inputs,
+                Roles::OPERATOR,
+            )?;
+        }
+        instructions::operator::Instruction::AcceptOperatorship(inputs) => {
+            if inputs.roles.ne(&Roles::OPERATOR) {
+                return Err(ProgramError::InvalidArgument);
+            }
+            role_management::processor::accept(
+                &crate::id(),
+                role_management_accounts,
+                &inputs,
+                Roles::empty(),
+            )?;
         }
     }
 
