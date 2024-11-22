@@ -65,6 +65,8 @@ args = [
   "--package",
   "axelar-executable",
   "--package",
+  "axelar-executable-old",
+  "--package",
   "axelar-message-primitives",
   "--package",
   "evm-contracts-rs",
@@ -99,8 +101,9 @@ script = """
 cargo test-sbf --package gas-service
 cargo test-sbf --package gmp-gateway
 cargo test-sbf --package axelar-solana-gateway
-cargo test-sbf --package axelar-solana-governance
 cargo test-sbf --package axelar-solana-memo-program
+cargo test-sbf --package axelar-solana-memo-program-old
+cargo test-sbf --package axelar-solana-governance
 cargo test-sbf --package axelar-solana-multicall
 cargo test-sbf --package axelar-solana-its
 """

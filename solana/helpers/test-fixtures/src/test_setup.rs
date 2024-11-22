@@ -993,7 +993,7 @@ impl TestFixture {
         let OwnedCommand::ApproveMessage(approved_message) = gateway_decoded_command.clone() else {
             panic!("expected ApproveMessages command")
         };
-        let ix = axelar_executable::construct_axelar_executable_ix(
+        let ix = axelar_executable_old::construct_axelar_executable_ix(
             approved_message,
             decoded_payload.encode().unwrap(),
             *gateway_approved_command_pda,

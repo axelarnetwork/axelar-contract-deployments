@@ -57,13 +57,13 @@ async fn test_proposal_can_be_executed_and_reached_memo_program() {
     let (mut sol_integration, config_pda, _) = setup_programs().await;
 
     // Memo program solana accounts. gathered from
-    // `axelar_solana_memo_program::instruction::call_gateway_with_memo`
+    // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
 
     let memo_program_accounts = &[
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
     ];
 
     let ix_builder = ix_builder_with_memo_proposal_data(memo_program_accounts, 0, None);
@@ -166,13 +166,13 @@ async fn test_proposal_can_be_executed_and_reached_memo_program_transferring_fun
 
     // Gmp send the memo program instruction.
     // Memo program solana accounts. gathered from
-    // `axelar_solana_memo_program::instruction::call_gateway_with_memo`
+    // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
 
     let memo_program_accounts = &[
         AccountMeta::new(sol_integration.fixture.payer.pubkey(), true),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
     ];
     let memo_program_funds_receiver_account = AccountMeta::new(counter_pda, false);
     let ix_builder = ix_builder_with_memo_proposal_data(
@@ -225,13 +225,13 @@ async fn test_proposal_is_deleted_after_execution() {
     let (mut sol_integration, config_pda, _) = setup_programs().await;
 
     // Memo program solana accounts. gathered from
-    // `axelar_solana_memo_program::instruction::call_gateway_with_memo`
+    // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
 
     let memo_program_accounts = &[
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
     ];
 
     let ix_builder = ix_builder_with_memo_proposal_data(memo_program_accounts, 0, None);
@@ -279,13 +279,13 @@ async fn test_same_proposal_can_be_created_after_execution() {
     let (mut sol_integration, config_pda, _) = setup_programs().await;
 
     // Memo program solana accounts. gathered from
-    // `axelar_solana_memo_program::instruction::call_gateway_with_memo`
+    // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
 
     let memo_program_accounts = &[
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
     ];
 
     let ix_builder = ix_builder_with_memo_proposal_data(memo_program_accounts, 0, None);
@@ -335,13 +335,13 @@ async fn test_cannot_create_proposal_twice() {
     let (mut sol_integration, config_pda, _) = setup_programs().await;
 
     // Memo program solana accounts. gathered from
-    // `axelar_solana_memo_program::instruction::call_gateway_with_memo`
+    // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
 
     let memo_program_accounts = &[
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
     ];
 
     let ix_builder = ix_builder_with_memo_proposal_data(memo_program_accounts, 0, None);
@@ -372,6 +372,6 @@ async fn test_cannot_create_proposal_twice() {
 
     // We split the error message in two, as the error message contains addresses
     // that are changing in each test run.
-    assert_msg_present_in_logs(res.clone(), "Create Account: account Address"); 
+    assert_msg_present_in_logs(res.clone(), "Create Account: account Address");
     assert_msg_present_in_logs(res, "already in use");
 }

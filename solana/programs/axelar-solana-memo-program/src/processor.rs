@@ -3,14 +3,14 @@
 use std::str::from_utf8;
 
 use axelar_executable::{
-    validate_message, AxelarCallableInstruction, AxelarExecutablePayload,
+    validate_message, ArchivedAxelarExecutablePayload, MaybeAxelarPayload,
     PROGRAM_ACCOUNTS_START_INDEX,
 };
 use borsh::BorshDeserialize;
 use program_utils::{check_program_account, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::program::invoke;
+use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
@@ -19,6 +19,7 @@ use solana_program::{msg, system_program};
 use crate::assert_counter_pda_seeds;
 use crate::instruction::AxelarMemoInstruction;
 use crate::state::Counter;
+
 /// Instruction processor
 pub fn process_instruction(
     program_id: &Pubkey,
@@ -26,19 +27,17 @@ pub fn process_instruction(
     input: &[u8],
 ) -> ProgramResult {
     check_program_account(program_id, crate::check_id)?;
-
-    let payload = AxelarCallableInstruction::try_from_slice(input)?;
-
-    match payload {
-        AxelarCallableInstruction::AxelarExecute(payload) => {
+    match input.try_get_axelar_executable_payload() {
+        Some(Ok(payload)) => {
             msg!("Instruction: AxelarExecute");
-            process_message_from_axelar(program_id, accounts, &payload)
+            process_message_from_axelar(program_id, accounts, payload)
         }
-        AxelarCallableInstruction::Native(payload) => {
+        None => {
             msg!("Instruction: Native");
-            let instruction = AxelarMemoInstruction::try_from_slice(&payload)?;
+            let instruction = AxelarMemoInstruction::try_from_slice(input)?;
             process_native_ix(program_id, accounts, instruction)
         }
+        Some(Err(err)) => Err(err),
     }
 }
 
@@ -47,9 +46,9 @@ pub fn process_instruction(
 pub fn process_message_from_axelar(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    payload: &AxelarExecutablePayload,
+    payload: &ArchivedAxelarExecutablePayload,
 ) -> ProgramResult {
-    validate_message(program_id, accounts, payload)?;
+    validate_message(accounts, payload)?;
     let (_, accounts) = accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
 
     let memo = from_utf8(&payload.payload_without_accounts).map_err(|err| {
@@ -78,17 +77,22 @@ pub fn process_native_ix(
             destination_address,
         } => {
             msg!("Instruction: SendToGateway");
-            let sender = next_account_info(account_info_iter)?;
+            let counter_pda = next_account_info(account_info_iter)?;
             let gateway_root_pda = next_account_info(account_info_iter)?;
-            invoke(
-                &gateway::instructions::call_contract(
+            let gateway_program = next_account_info(account_info_iter)?;
+            let counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
+            assert_counter_pda_seeds(&counter_pda_account, counter_pda.key, gateway_root_pda.key);
+            invoke_signed(
+                &axelar_solana_gateway::instructions::call_contract(
+                    *gateway_program.key,
                     *gateway_root_pda.key,
-                    *sender.key,
+                    *counter_pda.key,
                     destination_chain,
                     destination_address,
                     memo.into_bytes(),
                 )?,
-                &[sender.clone(), gateway_root_pda.clone()],
+                &[counter_pda.clone(), gateway_root_pda.clone()],
+                &[&[gateway_root_pda.key.as_ref(), &[counter_pda_account.bump]]],
             )?;
         }
         AxelarMemoInstruction::Initialize { counter_pda_bump } => {

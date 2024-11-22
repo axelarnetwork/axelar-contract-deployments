@@ -1,5 +1,5 @@
 [package]
-name = "axelar-executable"
+name = "axelar-executable-old"
 description = "Defines helpers for easily integrating with the Solana Axelar Gateway"
 version = "0.1.0"
 edition = "2021"

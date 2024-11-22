@@ -268,6 +268,24 @@ impl TestFixture {
     }
 }
 
+/// Utility triat to find a specific log within the
+/// [`BanksTransactionResultWithMetadata`] type
+pub trait FindLog {
+    /// Find the desired log
+    fn find_log(&self, expected: &str) -> Option<&str>;
+}
+
+impl FindLog for BanksTransactionResultWithMetadata {
+    fn find_log(&self, expected: &str) -> Option<&str> {
+        self.metadata.as_ref().and_then(|x| {
+            x.log_messages
+                .iter()
+                .find(|log| log.contains(expected))
+                .map(std::string::String::as_str)
+        })
+    }
+}
+
 pub(crate) async fn add_upgradeable_loader_account(
     context: &mut ProgramTestContext,
     account_address: &Pubkey,

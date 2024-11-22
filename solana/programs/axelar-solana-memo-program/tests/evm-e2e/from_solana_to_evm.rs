@@ -1,10 +1,14 @@
 use std::str::FromStr;
 
+use axelar_solana_gateway::events::{
+    ArchivedCallContract, ArchivedGatewayEvent, EventContainer, GatewayEvent,
+};
+use axelar_solana_gateway_test_fixtures::base::TestFixture;
+use axelar_solana_memo_program::get_counter_pda;
 use axelar_solana_memo_program::instruction::call_gateway_with_memo;
 use ethers_core::utils::hex::ToHex;
 use ethers_core::utils::keccak256;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo::ReceivedMemoFilter;
-use gateway::events::{ArchivedCallContract, ArchivedGatewayEvent, EventContainer, GatewayEvent};
 use solana_program_test::tokio;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
@@ -154,20 +158,22 @@ fn evm_prepare_approve_contract_call(
 
 async fn call_solana_gateway(
     gateway_root_pda: &solana_sdk::pubkey::Pubkey,
-    solana_fixture: &mut test_fixtures::test_setup::TestFixture,
+    solana_fixture: &mut TestFixture,
     memo: &str,
     destination_chain: String,
     destination_address: &ethers_core::types::H160,
 ) -> EventContainer {
     let destination_address = destination_address.encode_hex();
     dbg!(&destination_address);
+    let (counter, ..) = get_counter_pda(gateway_root_pda);
     let transaction = Transaction::new_signed_with_payer(
         &[call_gateway_with_memo(
             gateway_root_pda,
-            &solana_fixture.payer.pubkey(),
+            &counter,
             memo.to_string(),
             destination_chain,
             destination_address,
+            &axelar_solana_gateway::ID,
         )
         .unwrap()],
         Some(&solana_fixture.payer.pubkey()),

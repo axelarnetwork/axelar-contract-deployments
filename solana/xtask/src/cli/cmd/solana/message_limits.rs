@@ -411,7 +411,7 @@ async fn do_memo_program_calls(
     for (message, data_payload, gateway_approved_command_pda) in
         izip!(messages, data_payloads, gateway_approved_command_pdas)
     {
-        let instruction = axelar_executable::construct_axelar_executable_ix(
+        let instruction = axelar_executable_old::construct_axelar_executable_ix(
             message,
             data_payload.encode()?,
             gateway_approved_command_pda,

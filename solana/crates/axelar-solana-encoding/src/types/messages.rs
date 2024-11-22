@@ -2,6 +2,7 @@
 //!
 //! This module defines the core structures and functions related to handling
 //! messages within Axelar cross-chain system
+use rkyv::bytecheck::{self, CheckBytes};
 
 use crate::error::EncodingError;
 use crate::LeafHash;
@@ -13,8 +14,19 @@ pub struct Messages(pub Vec<Message>);
 /// Identifies a specific blockchain and its unique identifier within that
 /// chain.
 #[derive(
-    Clone, PartialEq, Eq, Debug, udigest::Digestable, borsh::BorshDeserialize, borsh::BorshSerialize,
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    PartialEq,
+    Eq,
+    Debug,
+    udigest::Digestable,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
 )]
+#[archive(compare(PartialEq))]
+#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct CrossChainId {
     /// The name or identifier of the source blockchain.
     pub chain: String,
@@ -25,8 +37,19 @@ pub struct CrossChainId {
 
 /// Represents a message intended for cross-chain communication.
 #[derive(
-    Clone, PartialEq, Eq, Debug, udigest::Digestable, borsh::BorshDeserialize, borsh::BorshSerialize,
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    PartialEq,
+    Eq,
+    Debug,
+    udigest::Digestable,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
 )]
+#[archive(compare(PartialEq))]
+#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct Message {
     /// The cross-chain identifier of the message
     pub cc_id: CrossChainId,
@@ -43,6 +66,8 @@ pub struct Message {
     /// A 32-byte hash of the message payload, ensuring data integrity.
     pub payload_hash: [u8; 32],
 }
+
+impl LeafHash for Message {}
 
 /// Generates an iterator of `MessageLeaf` instances from a collection of
 /// messages.

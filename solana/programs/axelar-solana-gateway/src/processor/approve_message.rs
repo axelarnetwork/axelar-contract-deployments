@@ -69,6 +69,7 @@ impl Processor {
         }
 
         let leaf_hash = message.leaf.hash::<SolanaSyscallHasher>();
+        let message_hash = message.leaf.message.hash::<SolanaSyscallHasher>();
         let proof = rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&message.proof)
             .inspect_err(|_err| {
                 solana_program::msg!("Could not decode message proof");
@@ -121,7 +122,7 @@ impl Processor {
             })?;
         let incoming_message_data: &mut IncomingMessageWrapper = bytemuck::cast_mut(data_bytes);
         incoming_message_data.bump = incoming_message_pda_bump;
-        incoming_message_data.message = IncomingMessage::new(message.payload_hash);
+        incoming_message_data.message = IncomingMessage::new(message_hash);
 
         // Emit event
         GatewayEvent::MessageApproved(MessageApproved {

@@ -119,6 +119,7 @@ udigest = { version = "0.2", features = ["derive"] }
 # solana programs
 axelar-solana-its = { path = "programs/axelar-solana-its" }
 axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program" }
+axelar-solana-memo-program-old = { path = "programs/axelar-solana-memo-program-old" }
 axelar-solana-multicall = { path = "programs/axelar-solana-multicall" }
 gas-service = { path = "programs/gas-service" }
 gateway = { path = "programs/gateway", package = "gmp-gateway" }
@@ -126,7 +127,8 @@ axelar-solana-gateway = { path = "programs/axelar-solana-gateway" }
 
 # helper crates
 axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
-axelar-executable = { path = "helpers/axelar-executable" }
+axelar-executable = { path = "crates/axelar-executable" }
+axelar-executable-old = { path = "helpers/axelar-executable-old" }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
 axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = ["solana"] }
 axelar-solana-gateway-test-fixtures = { path = "crates/axelar-solana-gateway-test-fixtures" }

@@ -1,12 +1,12 @@
 use std::time::SystemTime;
 
-use axelar_executable::axelar_message_primitives::DestinationProgramId;
-use axelar_executable::AxelarCallableInstruction;
+use axelar_executable_old::axelar_message_primitives::DestinationProgramId;
+use axelar_executable_old::AxelarCallableInstruction;
 use axelar_rkyv_encoding::types::{CrossChainId, GmpMetadata, Message};
 use axelar_solana_governance::events::{EventContainer, GovernanceEvent};
 use axelar_solana_governance::instructions::builder::{self, IxBuilder};
 use axelar_solana_governance::state::GovernanceConfig;
-use axelar_solana_memo_program::instruction::AxelarMemoInstruction;
+use axelar_solana_memo_program_old::instruction::AxelarMemoInstruction;
 use borsh::{to_vec, BorshSerialize};
 use gateway::hasher_impl;
 use solana_program_test::{processor, BanksTransactionResultWithMetadata, ProgramTest};
@@ -29,8 +29,8 @@ pub(crate) async fn setup_programs() -> (SolanaAxelarIntegrationMetadata, Pubkey
     let mut sol_integration = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![555, 222])
         .programs_to_deploy(vec![(
-            "axelar_solana_memo_program.so".into(),
-            axelar_solana_memo_program::id(),
+            "axelar_solana_memo_program_old.so".into(),
+            axelar_solana_memo_program_old::id(),
         )])
         .build()
         .setup_with_fixture(fixture)
@@ -38,8 +38,8 @@ pub(crate) async fn setup_programs() -> (SolanaAxelarIntegrationMetadata, Pubkey
 
     // Init the memo program
     let memo_counter_pda =
-        axelar_solana_memo_program::get_counter_pda(&sol_integration.gateway_root_pda);
-    let ix = axelar_solana_memo_program::instruction::initialize(
+        axelar_solana_memo_program_old::get_counter_pda(&sol_integration.gateway_root_pda);
+    let ix = axelar_solana_memo_program_old::instruction::initialize(
         &sol_integration.fixture.payer.pubkey(),
         &sol_integration.gateway_root_pda,
         &memo_counter_pda,
@@ -148,7 +148,7 @@ pub(crate) fn ix_builder_with_memo_proposal_data(
         .unwrap();
 
     IxBuilder::new().with_proposal_data(
-        axelar_solana_memo_program::ID,
+        axelar_solana_memo_program_old::ID,
         native_value,
         default_proposal_eta(),
         native_target_value_account,

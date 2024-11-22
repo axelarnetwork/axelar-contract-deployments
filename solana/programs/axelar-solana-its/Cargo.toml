@@ -16,7 +16,7 @@ test-sbf = []
 [dependencies]
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
-axelar-executable.workspace = true
+axelar-executable-old = { workspace = true }
 axelar-message-primitives.workspace = true
 axelar-rkyv-encoding.workspace = true
 borsh.workspace = true

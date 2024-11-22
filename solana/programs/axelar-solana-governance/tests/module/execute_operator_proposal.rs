@@ -32,7 +32,7 @@ async fn test_full_flow_operator_proposal_execution() {
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
     ];
 
     // Send the proposal via GMP acting as Axelar governance infrastructure

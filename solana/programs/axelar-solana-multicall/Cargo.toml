@@ -15,7 +15,7 @@ test-sbf = []
 
 [dependencies]
 alloy-sol-types.workspace = true
-axelar-executable.workspace = true
+axelar-executable-old.workspace = true
 axelar-message-primitives.workspace = true
 borsh.workspace = true
 gateway = { workspace = true, features = ["no-entrypoint"] }
@@ -23,7 +23,7 @@ solana-program.workspace = true
 
 [dev-dependencies]
 axelar-rkyv-encoding.workspace = true
-axelar-solana-memo-program = { workspace = true, features = ["no-entrypoint"] }
+axelar-solana-memo-program-old = { workspace = true, features = ["no-entrypoint"] }
 ethers-core.workspace = true
 evm-contracts-test-suite.workspace = true
 itertools.workspace = true

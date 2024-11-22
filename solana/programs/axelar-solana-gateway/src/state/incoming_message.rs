@@ -32,13 +32,13 @@ pub struct IncomingMessage {
     pub status: MessageStatus, // 4 byte
     /// alignment padding
     pub _padding: [u8; 4], // 4 bytes to align to 16 bytes
-    /// Merkle root of the payload hash
-    pub payload_hash: [u8; 32], // 32 bytes
+    /// Hash of the whole message
+    pub message_hash: [u8; 32],
 }
 
 impl IncomingMessage {
     /// New default [`IncomingMessage`]
-    pub fn new(payload_hash: [u8; 32]) -> Self {
+    pub fn new(message_hash: [u8; 32]) -> Self {
         Self {
             data_len: 0,
             // pad the pointer to the beginning of the next chunk to write the data into
@@ -47,7 +47,7 @@ impl IncomingMessage {
                 .expect("valid u64"),
             status: MessageStatus::Approved,
             _padding: [0; 4],
-            payload_hash,
+            message_hash,
         }
     }
 }

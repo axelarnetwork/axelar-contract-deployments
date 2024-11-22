@@ -18,6 +18,7 @@ mod initialize_config;
 mod initialize_payload_verification_session;
 mod rotate_signers;
 mod transfer_operatorship;
+mod validate_message;
 mod verify_signature;
 
 /// Program state handler.
@@ -104,6 +105,13 @@ impl Processor {
                     payload_merkle_root,
                     verifier_info,
                 )
+            }
+            GatewayInstruction::ValidateMessage {
+                message,
+                signing_pda_bump,
+            } => {
+                msg!("Instruction: Validate Message");
+                Self::process_validate_message(program_id, accounts, message, signing_pda_bump)
             }
         }
     }

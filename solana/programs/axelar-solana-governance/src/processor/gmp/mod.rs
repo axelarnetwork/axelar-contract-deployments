@@ -17,7 +17,7 @@
 //! each GMP command processing logic.
 
 use alloy_sol_types::SolType;
-use axelar_executable::validate_with_gmp_metadata;
+use axelar_executable_old::validate_with_gmp_metadata;
 use axelar_rkyv_encoding::types::GmpMetadata;
 use governance_gmp::GovernanceCommand::{
     ApproveOperatorProposal, CancelOperatorApproval, CancelTimeLockProposal,

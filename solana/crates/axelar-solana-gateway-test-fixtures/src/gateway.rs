@@ -171,7 +171,7 @@ impl SolanaAxelarIntegrationMetadata {
         &mut self,
         signers: &SigningVerifierSet,
         messages: &[Message],
-    ) -> Result<(), BanksTransactionResultWithMetadata> {
+    ) -> Result<Vec<MerkleisedMessage>, BanksTransactionResultWithMetadata> {
         let payload = Payload::Messages(Messages(messages.to_vec()));
         let execute_data = self.construct_execute_data(signers, payload);
         let verification_session_pda = self.init_payload_session_and_verify(&execute_data).await?;
@@ -180,15 +180,15 @@ impl SolanaAxelarIntegrationMetadata {
             unreachable!("we constructed a message batch");
         };
 
-        for message_info in messages {
+        for message_info in &messages {
             self.approve_message(
                 execute_data.payload_merkle_root,
-                message_info,
+                message_info.clone(),
                 verification_session_pda,
             )
             .await?;
         }
-        Ok(())
+        Ok(messages)
     }
 
     /// Construct new [`ExecuteData`] by signing the data and generading all the
@@ -315,6 +315,23 @@ impl SolanaAxelarIntegrationMetadata {
         .unwrap();
 
         self.send_tx(&[rotate_signers_ix]).await
+    }
+
+    /// Call `execute` on an axelar-executable program
+    pub async fn execute_on_axelar_executable(
+        &mut self,
+        message: Message,
+        raw_payload: &[u8],
+    ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
+        let (incoming_message_pda, _bump) =
+            get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
+        let ix = axelar_executable::construct_axelar_executable_ix(
+            message,
+            raw_payload,
+            incoming_message_pda,
+        )
+        .unwrap();
+        self.send_tx(&[ix]).await
     }
 
     /// Get the signature verification session data (deserialised)

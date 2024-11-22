@@ -13,7 +13,7 @@ solana-sdk.workspace = true
 tokio.workspace = true
 typed-builder.workspace = true
 
-axelar-executable.workspace = true
+axelar-executable-old.workspace = true
 axelar-message-primitives.workspace = true
 axelar-rkyv-encoding = { workspace = true, features = ["test-fixtures"] }
 interchain-token-transfer-gmp = { workspace = true }

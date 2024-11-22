@@ -1,7 +1,7 @@
 //! Program state processor
 
 use alloy_primitives::U256;
-use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
+use axelar_executable_old::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
 use axelar_rkyv_encoding::types::GmpMetadata;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::Itertools;

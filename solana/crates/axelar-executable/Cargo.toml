@@ -1,0 +1,29 @@
+[package]
+name = "axelar-executable"
+description = "Defines helpers for easily integrating with the Solana Axelar Gateway"
+version = "0.1.0"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+axelar-solana-gateway.workspace = true
+borsh.workspace = true
+solana-program.workspace = true
+axelar-solana-encoding.workspace = true
+num-traits.workspace = true
+num-derive.workspace = true
+alloy-sol-types.workspace = true
+thiserror.workspace = true
+rkyv = { workspace = true, features = ["validation"] }
+
+[dev-dependencies]
+evm-contracts-rs.workspace = true
+evm-contracts-test-suite.workspace = true
+rstest.workspace = true
+test-log.workspace = true
+tokio.workspace = true

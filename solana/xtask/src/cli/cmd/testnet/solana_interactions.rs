@@ -33,6 +33,7 @@ pub(crate) fn send_memo_from_solana(
                 memo.to_string(),
                 destination_chain.id.clone(),
                 ethers::utils::to_checksum(&destination_memo_contract, None),
+                &gmp_gateway::ID,
             )?,
         ],
         Some(&solana_keypair.pubkey()),
@@ -101,7 +102,7 @@ pub(crate) fn solana_call_executable(
 ) -> eyre::Result<()> {
     tracing::info!(payload = ?decoded_payload, "call the destination program");
 
-    let ix = axelar_executable::construct_axelar_executable_ix(
+    let ix = axelar_executable_old::construct_axelar_executable_ix(
         message,
         decoded_payload.encode()?,
         gateway_approved_message_pda,

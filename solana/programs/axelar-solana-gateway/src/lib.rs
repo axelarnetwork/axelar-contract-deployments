@@ -170,6 +170,27 @@ pub fn create_signature_verification_pda(
     )
 }
 
+/// Create a new Signing PDA that is used for validating that a message has
+/// reached the destination program.
+#[inline]
+pub fn get_validate_message_signing_pda(
+    destination_address: Pubkey,
+    command_id: [u8; 32],
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(&[command_id.as_ref()], &destination_address)
+}
+
+/// Create a new Signing PDA that is used for validating that a message has
+/// reached the destination program.
+#[inline]
+pub fn create_validate_message_signing_pda(
+    destination_address: &Pubkey,
+    signing_pda_bump: u8,
+    command_id: &[u8; 32],
+) -> Result<Pubkey, PubkeyError> {
+    Pubkey::create_program_address(&[command_id, &[signing_pda_bump]], destination_address)
+}
+
 /// Test that the bump from `get_signature_verification_pda` generates the same
 /// public key when used with the same hash by
 /// `create_signature_verification_pda`.

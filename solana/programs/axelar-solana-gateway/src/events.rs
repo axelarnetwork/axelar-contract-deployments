@@ -30,6 +30,16 @@ pub struct CallContract {
 pub struct MessageExecuted {
     /// The command id of the given message
     pub command_id: [u8; 32],
+    /// Source chain.
+    pub source_chain: String,
+    /// The message id
+    pub message_id: String,
+    /// Source address.
+    pub source_address: String,
+    /// Destination address on Solana.
+    pub destination_address: String,
+    /// The payload hash.
+    pub payload_hash: [u8; 32],
 }
 
 /// Emitted for every approved message after the Gateway validates a command
@@ -186,6 +196,11 @@ mod tests {
         };
         let message_executed = MessageExecuted {
             command_id: [255; 32],
+            message_id: "aaaa-bbbb".to_string(),
+            source_chain: "solana".to_string(),
+            source_address: "SourceAddress".to_string(),
+            destination_address: "B3gam8xC15TDne4XtAVAvDDfqJFeSH6mv6sn6TanVJju".to_string(),
+            payload_hash: [4; 32],
         };
         let events = vec![
             GatewayEvent::CallContract(call_contract),

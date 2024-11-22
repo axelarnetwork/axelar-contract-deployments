@@ -13,16 +13,17 @@ no-entrypoint = []
 [dependencies]
 axelar-executable = { workspace = true }
 borsh.workspace = true
-gateway = { workspace = true, features = ["no-entrypoint"] }
+axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 program-utils = { workspace = true }
 solana-program.workspace = true
 
 [dev-dependencies]
-axelar-rkyv-encoding.workspace = true
 ethers-core.workspace = true
 evm-contracts-test-suite.workspace = true
 itertools.workspace = true
 rstest.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
-test-fixtures.workspace = true
+axelar-solana-gateway-test-fixtures.workspace = true
+pretty_assertions.workspace = true
+axelar-solana-encoding.workspace = true

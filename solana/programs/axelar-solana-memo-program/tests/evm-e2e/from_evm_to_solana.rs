@@ -1,17 +1,15 @@
-use std::str::FromStr;
-
-use axelar_executable::axelar_message_primitives::DataPayload;
-use axelar_rkyv_encoding::types::Message;
+use axelar_executable::AxelarMessagePayload;
+use axelar_solana_encoding::types::messages::{CrossChainId, Message};
 use axelar_solana_memo_program::state::Counter;
+use borsh::BorshDeserialize;
+use ethers_core::utils::hex::ToHexExt;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo::SolanaAccountRepr;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::{
     axelar_amplifier_gateway, axelar_memo,
 };
 use evm_contracts_test_suite::ContractMiddleware;
-use gateway::commands::OwnedCommand;
 use solana_program_test::tokio;
-use test_fixtures::axelar_message::custom_message;
 
 use crate::{axelar_evm_setup, axelar_solana_setup, MemoProgramWrapper};
 
@@ -52,28 +50,23 @@ async fn test_send_from_evm_to_solana() {
     // - Solana signers approve the message
     // - The relayer relays the message to the Solana gateway
     let (decoded_payload, msg_from_evm_axelar) = prase_evm_log_into_axelar_message(&log);
-    let (gateway_approved_command_pdas, _, _) = solana_chain
-        .fixture
-        .fully_approve_messages(
-            &solana_chain.gateway_root_pda,
-            vec![msg_from_evm_axelar.clone()],
-            &solana_chain.signers,
-            &solana_chain.domain_separator,
-        )
-        .await;
+    let merkelised_message = solana_chain
+        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[msg_from_evm_axelar])
+        .await
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
 
-    let approve_message_command = OwnedCommand::ApproveMessage(msg_from_evm_axelar);
     // - Relayer calls the Solana memo program with the memo payload coming from the
     //   EVM memo program
     let tx = solana_chain
-        .fixture
-        .call_execute_on_axelar_executable(
-            &approve_message_command,
-            &decoded_payload,
-            &gateway_approved_command_pdas[0],
-            &solana_chain.gateway_root_pda,
+        .execute_on_axelar_executable(
+            merkelised_message.leaf.message,
+            &decoded_payload.encode().unwrap(),
         )
-        .await;
+        .await
+        .unwrap();
 
     // Assert
     // We can get the memo from the logs
@@ -82,20 +75,29 @@ async fn test_send_from_evm_to_solana() {
         log_msgs.iter().any(|log| log.as_str().contains("🐪🐪🐪🐪")),
         "expected memo not found in logs"
     );
+
     let counter = solana_chain
-        .fixture
-        .get_account::<Counter>(&counter_pda, &axelar_solana_memo_program::ID)
+        .get_account(&counter_pda, &axelar_solana_memo_program::ID)
         .await;
+    let counter = Counter::try_from_slice(&counter.data).unwrap();
     assert_eq!(counter.counter, 1);
 }
 
-fn prase_evm_log_into_axelar_message(log: &ContractCallFilter) -> (DataPayload<'_>, Message) {
-    let decoded_payload = DataPayload::decode(log.payload.as_ref()).unwrap();
-    let msg_from_evm_axelar = custom_message(
-        solana_sdk::pubkey::Pubkey::from_str(log.destination_contract_address.as_str()).unwrap(),
-        &decoded_payload,
-    );
-    (decoded_payload, msg_from_evm_axelar)
+fn prase_evm_log_into_axelar_message(
+    log: &ContractCallFilter,
+) -> (AxelarMessagePayload<'_>, Message) {
+    let decoded_payload = AxelarMessagePayload::decode(log.payload.as_ref()).unwrap();
+    let message = Message {
+        cc_id: CrossChainId {
+            chain: "ethereum".to_string(),
+            id: "transaction-id-321".to_string(),
+        },
+        source_address: log.sender.encode_hex_with_prefix(),
+        destination_chain: log.destination_chain.clone(),
+        destination_address: log.destination_contract_address.clone(),
+        payload_hash: *decoded_payload.hash().unwrap().0,
+    };
+    (decoded_payload, message)
 }
 
 async fn call_evm_gateway(

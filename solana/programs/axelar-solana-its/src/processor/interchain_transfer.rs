@@ -1,6 +1,6 @@
 //! Module that handles the processing of the `InterchainTransfer` ITS
 //! instruction.
-use axelar_executable::AxelarCallableInstruction;
+use axelar_executable_old::AxelarCallableInstruction;
 use axelar_message_primitives::DataPayload;
 use interchain_token_transfer_gmp::InterchainTransfer;
 use program_utils::{check_rkyv_initialized_pda, StorableArchive};

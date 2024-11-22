@@ -16,7 +16,7 @@ unused_imports = "warn"
 unused_must_use = "deny"
 
 [dependencies]
-axelar-executable.workspace = true
+axelar-executable-old.workspace = true
 axelar-message-primitives = { path = "./../helpers/axelar-message-primitives" }
 axelar-rkyv-encoding.workspace = true
 axelar-solana-memo-program.workspace = true

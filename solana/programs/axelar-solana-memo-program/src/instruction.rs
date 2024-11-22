@@ -1,7 +1,6 @@
 //! Instruction module for the Axelar Memo program.
 
-use axelar_executable::axelar_message_primitives::DataPayload;
-use axelar_executable::AxelarCallableInstruction;
+use axelar_executable::AxelarMessagePayload;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 pub use solana_program;
 use solana_program::instruction::{AccountMeta, Instruction};
@@ -59,11 +58,9 @@ pub fn initialize(
     gateway_root_pda: &Pubkey,
     counter_pda: &(Pubkey, u8),
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarCallableInstruction::Native(to_vec(
-        &AxelarMemoInstruction::Initialize {
-            counter_pda_bump: counter_pda.1,
-        },
-    )?))?;
+    let data = to_vec(&AxelarMemoInstruction::Initialize {
+        counter_pda_bump: counter_pda.1,
+    })?;
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -84,32 +81,32 @@ pub fn initialize(
 /// to land on an external chain)
 pub fn call_gateway_with_memo(
     gateway_root_pda: &Pubkey,
-    sender: &Pubkey,
+    memo_counter_pda: &Pubkey,
     memo: String,
     destination_chain: String,
     destination_address: String,
+    gateway_program_id: &Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let instruction_data =
-        AxelarCallableInstruction::Native(to_vec(&AxelarMemoInstruction::SendToGateway {
-            memo,
-            destination_chain,
-            destination_address,
-        })?);
+    let data = to_vec(&AxelarMemoInstruction::SendToGateway {
+        memo,
+        destination_chain,
+        destination_address,
+    })?;
     let accounts = vec![
-        AccountMeta::new(*sender, true),
+        AccountMeta::new_readonly(*memo_counter_pda, false),
         AccountMeta::new_readonly(*gateway_root_pda, false),
-        AccountMeta::new_readonly(gateway::ID, false),
+        AccountMeta::new_readonly(*gateway_program_id, false),
     ];
     Ok(Instruction {
         program_id: crate::ID,
         accounts,
-        data: to_vec(&instruction_data)?,
+        data,
     })
 }
 
 /// Helper function to build a memo payload instruction
 pub mod from_axelar_to_solana {
-    use axelar_executable::axelar_message_primitives::EncodingScheme;
+    use axelar_executable::EncodingScheme;
 
     use super::*;
 
@@ -121,20 +118,20 @@ pub mod from_axelar_to_solana {
         // The pubkeys that are going to be used in the memo just for logging purposes
         pubkeys: &[&Pubkey],
         encoding_scheme: EncodingScheme,
-    ) -> DataPayload<'a> {
+    ) -> AxelarMessagePayload<'a> {
         let mut accounts = [counter_pda]
             .iter()
             .chain(pubkeys.iter())
             .map(|&pubkey| AccountMeta::new_readonly(*pubkey, false))
             .collect::<Vec<_>>();
         accounts[0].is_writable = true; // set the counter PDA to writable
-        DataPayload::new(memo, accounts.as_slice(), encoding_scheme)
+        AxelarMessagePayload::new(memo, accounts.as_slice(), encoding_scheme)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use axelar_executable::axelar_message_primitives::EncodingScheme;
+    use axelar_executable::EncodingScheme;
 
     use super::*;
 
@@ -150,7 +147,7 @@ mod tests {
             EncodingScheme::Borsh,
         );
         let payload = instruction.encode().unwrap();
-        let instruction_decoded = DataPayload::decode(&payload).unwrap();
+        let instruction_decoded = AxelarMessagePayload::decode(&payload).unwrap();
 
         assert_eq!(instruction, instruction_decoded);
     }

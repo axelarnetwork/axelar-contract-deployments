@@ -1,11 +1,11 @@
 //! Error types
 
-use num_derive::FromPrimitive;
+use num_derive::{FromPrimitive, ToPrimitive};
 use solana_program::program_error::ProgramError;
 use thiserror::Error;
 
 /// Errors that may be returned by the Token program.
-#[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
+#[derive(Clone, Debug, Eq, Error, FromPrimitive, ToPrimitive, PartialEq)]
 pub enum GatewayError {
     // 0
     /// Invalid instruction

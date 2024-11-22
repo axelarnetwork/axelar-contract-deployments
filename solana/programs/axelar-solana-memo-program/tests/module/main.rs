@@ -1,4 +1,6 @@
-use test_fixtures::test_setup::{SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata};
+use axelar_solana_gateway_test_fixtures::{
+    SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
+};
 
 mod initialize;
 mod send_to_gateway;

@@ -1,8 +1,8 @@
 use core::str::FromStr;
 
-use axelar_executable::axelar_message_primitives::DataPayload;
-use axelar_solana_memo_program::instruction::AxelarMemoInstruction;
-use axelar_solana_memo_program::state::Counter;
+use axelar_executable_old::axelar_message_primitives::DataPayload;
+use axelar_solana_memo_program_old::instruction::AxelarMemoInstruction;
+use axelar_solana_memo_program_old::state::Counter;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::{
     AxelarAmplifierGateway, ContractCallFilter,
 };
@@ -43,7 +43,7 @@ async fn test_send_from_evm_to_solana() {
     };
     for memo in &["Call A", "Call B", "Call C"] {
         calls.push(AxelarSolanaCall {
-            destination_program: axelar_solana_memo_program::id().to_bytes(),
+            destination_program: axelar_solana_memo_program_old::id().to_bytes(),
             payload: SolanaGatewayPayload {
                 execute_payload: borsh::to_vec(&AxelarMemoInstruction::ProcessMemo {
                     memo: (*memo).to_string(),
@@ -106,7 +106,10 @@ async fn test_send_from_evm_to_solana() {
 
     let counter = solana_chain
         .fixture
-        .get_account::<Counter>(&memo_program_counter_pda, &axelar_solana_memo_program::ID)
+        .get_account::<Counter>(
+            &memo_program_counter_pda,
+            &axelar_solana_memo_program_old::ID,
+        )
         .await;
     assert_eq!(counter.counter, 3);
 }

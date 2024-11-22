@@ -16,6 +16,7 @@ solana-program = { workspace = true, optional = true }
 thiserror.workspace = true
 udigest.workspace = true
 borsh.workspace = true
+rkyv = { workspace = true, features = ["validation"] }
 
 [dev-dependencies]
 solana-program = { workspace = true }

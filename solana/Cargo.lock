@@ -699,6 +699,26 @@ dependencies = [
 name = "axelar-executable"
 version = "0.1.0"
 dependencies = [
+ "alloy-sol-types",
+ "axelar-solana-encoding",
+ "axelar-solana-gateway",
+ "borsh 1.5.1",
+ "evm-contracts-rs",
+ "evm-contracts-test-suite",
+ "num-derive",
+ "num-traits",
+ "rkyv",
+ "rstest",
+ "solana-program",
+ "test-log",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "axelar-executable-old"
+version = "0.1.0"
+dependencies = [
  "axelar-message-primitives",
  "axelar-rkyv-encoding",
  "borsh 1.5.1",
@@ -756,6 +776,7 @@ dependencies = [
  "bs58",
  "hex",
  "rand 0.8.5",
+ "rkyv",
  "rs_merkle",
  "sha3 0.10.8",
  "solana-program",
@@ -801,6 +822,7 @@ dependencies = [
 name = "axelar-solana-gateway-test-fixtures"
 version = "0.1.0"
 dependencies = [
+ "axelar-executable",
  "axelar-solana-encoding",
  "axelar-solana-gateway",
  "bincode",
@@ -821,9 +843,9 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
- "axelar-executable",
+ "axelar-executable-old",
  "axelar-rkyv-encoding",
- "axelar-solana-memo-program",
+ "axelar-solana-memo-program-old",
  "base64 0.21.7",
  "borsh 1.5.1",
  "ethers",
@@ -845,7 +867,7 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
- "axelar-executable",
+ "axelar-executable-old",
  "axelar-message-primitives",
  "axelar-rkyv-encoding",
  "axelar-solana-memo-program",
@@ -875,6 +897,26 @@ name = "axelar-solana-memo-program"
 version = "0.1.0"
 dependencies = [
  "axelar-executable",
+ "axelar-solana-encoding",
+ "axelar-solana-gateway",
+ "axelar-solana-gateway-test-fixtures",
+ "borsh 1.5.1",
+ "ethers-core",
+ "evm-contracts-test-suite",
+ "itertools 0.12.1",
+ "pretty_assertions",
+ "program-utils",
+ "rstest",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+]
+
+[[package]]
+name = "axelar-solana-memo-program-old"
+version = "0.1.0"
+dependencies = [
+ "axelar-executable-old",
  "axelar-rkyv-encoding",
  "borsh 1.5.1",
  "ethers-core",
@@ -894,10 +936,10 @@ name = "axelar-solana-multicall"
 version = "0.1.0"
 dependencies = [
  "alloy-sol-types",
- "axelar-executable",
+ "axelar-executable-old",
  "axelar-message-primitives",
  "axelar-rkyv-encoding",
- "axelar-solana-memo-program",
+ "axelar-solana-memo-program-old",
  "borsh 1.5.1",
  "ethers-core",
  "evm-contracts-test-suite",
@@ -10703,7 +10745,7 @@ name = "test-fixtures"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "axelar-executable",
+ "axelar-executable-old",
  "axelar-message-primitives",
  "axelar-rkyv-encoding",
  "bincode",
@@ -12061,7 +12103,7 @@ checksum = "9d422e8e38ec76e2f06ee439ccc765e9c6a9638b9e7c9f2e8255e4d41e8bd852"
 name = "xtask"
 version = "0.1.0"
 dependencies = [
- "axelar-executable",
+ "axelar-executable-old",
  "axelar-message-primitives",
  "axelar-rkyv-encoding",
  "axelar-solana-memo-program",

@@ -3,6 +3,7 @@
 use std::fmt::Debug;
 
 use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, SigningVerifierSetInfo};
+use axelar_solana_encoding::types::messages::{Message};
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use itertools::Itertools;
 use solana_program::instruction::{AccountMeta, Instruction};
@@ -102,6 +103,26 @@ pub enum GatewayInstruction {
         /// Information about the merkelised verifier set entry + the signature
         verifier_info: SigningVerifierSetInfo,
     },
+
+    /// Validates message.
+    /// It is the responsibility of the destination program (contract) that
+    /// receives a message from Axelar to validate that the message has been
+    /// approved by the Gateway.
+    ///
+    /// Once the message has been validated, the command will no longer be valid
+    /// for future calls.
+    ///
+    /// Accounts expected by this instruction:
+    /// 1. [WRITE] Approved Message PDA account
+    /// 2. [] Gateway Root Config PDA account
+    /// 3. [SIGNER] PDA signer account (caller). Derived from the destination
+    ///    program id.
+    ValidateMessage {
+        /// The Message that we want to approve
+        message: Message,
+        /// The bump of the signing PDA
+        signing_pda_bump: u8,
+    },
 }
 
 /// Configuration parameters for initializing the axelar-solana gateway
@@ -193,6 +214,7 @@ pub fn rotate_signers(
 
 /// Creates a [`CallContract`] instruction.
 pub fn call_contract(
+    gateway_program_id: Pubkey,
     gateway_root_pda: Pubkey,
     sender: Pubkey,
     destination_chain: String,
@@ -211,7 +233,7 @@ pub fn call_contract(
     ];
 
     Ok(Instruction {
-        program_id: crate::id(),
+        program_id: gateway_program_id,
         accounts,
         data,
     })
@@ -305,6 +327,30 @@ pub fn verify_signature(
     let data = to_vec(&GatewayInstruction::VerifySignature {
         payload_merkle_root,
         verifier_info,
+    })?;
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Creates a [`GatewayInstructon::ValidateMessage`] instruction.
+pub fn validate_message(
+    incoming_message_pda: &Pubkey,
+    signing_pda: &Pubkey,
+    message: Message,
+    signing_pda_bump: u8,
+) -> Result<Instruction, ProgramError> {
+    let accounts = vec![
+        AccountMeta::new(*incoming_message_pda, false),
+        AccountMeta::new_readonly(*signing_pda, true),
+    ];
+
+    let data = borsh::to_vec(&GatewayInstruction::ValidateMessage {
+        message,
+        signing_pda_bump,
     })?;
 
     Ok(Instruction {

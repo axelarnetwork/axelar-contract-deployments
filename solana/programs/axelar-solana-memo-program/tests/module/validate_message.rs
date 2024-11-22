@@ -1,10 +1,13 @@
-use axelar_executable::axelar_message_primitives::EncodingScheme;
+use axelar_executable::EncodingScheme;
+use axelar_solana_gateway::events::MessageExecuted;
+use axelar_solana_gateway::get_incoming_message_pda;
+use axelar_solana_gateway::state::incoming_message::{command_id, MessageStatus};
+use axelar_solana_gateway_test_fixtures::base::FindLog;
+use axelar_solana_gateway_test_fixtures::gateway::random_message;
 use axelar_solana_memo_program::instruction::from_axelar_to_solana::build_memo;
-use gateway::commands::OwnedCommand;
-use gateway::state::GatewayApprovedCommand;
+use borsh::BorshDeserialize;
 use solana_program_test::tokio;
 use solana_sdk::signature::{Keypair, Signer};
-use test_fixtures::axelar_message::custom_message;
 
 use crate::program_test;
 
@@ -14,6 +17,11 @@ use crate::program_test;
 #[tokio::test]
 async fn test_successful_validate_message(#[case] encoding_scheme: EncodingScheme) {
     // Setup
+
+    use axelar_solana_gateway::events::ArchivedGatewayEvent;
+    use axelar_solana_gateway_test_fixtures::gateway::get_gateway_events;
+    use axelar_solana_memo_program::state::Counter;
+
     let mut solana_chain = program_test().await;
     let (counter_pda, counter_bump) =
         axelar_solana_memo_program::get_counter_pda(&solana_chain.gateway_root_pda);
@@ -25,7 +33,8 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
             &(counter_pda, counter_bump),
         )
         .unwrap()])
-        .await;
+        .await
+        .unwrap();
 
     // Test scoped constants
     let random_account_used_by_ix = Keypair::new();
@@ -39,79 +48,102 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
         &[&random_account_used_by_ix.pubkey()],
         encoding_scheme,
     );
-    let message_to_execute = custom_message(destination_program_id, &message_payload);
-    let other_message_in_the_batch = custom_message(destination_program_id, &message_payload);
+    let mut message_to_execute = random_message();
+    message_to_execute.destination_address = destination_program_id.to_string();
+    message_to_execute.payload_hash = *message_payload.hash().unwrap().0;
 
-    // Confidence check: `message_to_execute` and `message_payload` have the same
-    // hash.
-    assert_eq!(
-        *message_to_execute.payload_hash(),
-        *(message_payload.hash().unwrap().0)
-    );
+    let mut other_message_in_the_batch = random_message();
+    other_message_in_the_batch.destination_address = destination_program_id.to_string();
+    other_message_in_the_batch.payload_hash = *message_payload.hash().unwrap().0;
 
-    let messages = vec![message_to_execute.clone(), other_message_in_the_batch];
+    let messages = vec![
+        message_to_execute.clone(),
+        other_message_in_the_batch.clone(),
+    ];
     // Action: "Relayer" calls Gateway to approve messages
-    let (gateway_approved_command_pdas, _, _) = solana_chain
-        .fixture
-        .fully_approve_messages(
-            &solana_chain.gateway_root_pda,
-            messages.clone(),
-            &solana_chain.signers,
-            &solana_chain.domain_separator,
-        )
-        .await;
+    let message_from_multisig_prover = solana_chain
+        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &messages)
+        .await
+        .unwrap();
 
-    let approve_message_command = OwnedCommand::ApproveMessage(message_to_execute);
     // Action: set message status as executed by calling the destination program
+    let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id(
+        &message_to_execute.cc_id.chain,
+        &message_to_execute.cc_id.id,
+    ));
+    let merkelised_message = message_from_multisig_prover
+        .iter()
+        .find(|x| x.leaf.message.cc_id == message_to_execute.cc_id)
+        .unwrap()
+        .clone();
     let tx = solana_chain
-        .fixture
-        .call_execute_on_axelar_executable(
-            &approve_message_command,
-            &message_payload,
-            &gateway_approved_command_pdas[0],
-            &solana_chain.gateway_root_pda,
+        .execute_on_axelar_executable(
+            merkelised_message.leaf.message.clone(),
+            &message_payload.encode().unwrap(),
         )
-        .await;
+        .await
+        .unwrap();
 
-    assert!(tx.result.is_ok(), "transaction failed");
     // Assert
     // First message should be executed
-    let gateway_approved_message = solana_chain
-        .fixture
-        .get_account::<GatewayApprovedCommand>(&gateway_approved_command_pdas[0], &gateway::id())
-        .await;
-    assert!(gateway_approved_message.is_command_executed());
+    let gateway_approved_message = solana_chain.incoming_message(incoming_message_pda).await;
+    assert_eq!(
+        gateway_approved_message.message.status,
+        MessageStatus::Executed
+    );
 
     // The second message is still in Approved status
-    let gateway_approved_message = solana_chain
-        .fixture
-        .get_account::<GatewayApprovedCommand>(&gateway_approved_command_pdas[1], &gateway::id())
-        .await;
-    assert!(gateway_approved_message.is_command_approved());
+    let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id(
+        &other_message_in_the_batch.cc_id.chain,
+        &other_message_in_the_batch.cc_id.id,
+    ));
+    let gateway_approved_message = solana_chain.incoming_message(incoming_message_pda).await;
+    assert_eq!(
+        gateway_approved_message.message.status,
+        MessageStatus::Approved
+    );
 
     // We can get the memo from the logs
-    let log_msgs = tx.metadata.unwrap().log_messages;
     assert!(
-        log_msgs.iter().any(|log| log.as_str().contains("🐪🐪🐪🐪")),
+        tx.find_log("🐪🐪🐪🐪").is_some(),
         "expected memo not found in logs"
     );
     assert!(
-        log_msgs.iter().any(|log| log.as_str().contains(&format!(
+        tx.find_log(&format!(
             "{:?}-{}-{}",
             random_account_used_by_ix.pubkey(),
             false,
             false
-        ))),
+        ))
+        .is_some(),
         "expected memo not found in logs"
     );
 
     // The counter should have been incremented
     let counter_account = solana_chain
         .fixture
-        .get_account::<axelar_solana_memo_program::state::Counter>(
-            &counter_pda,
-            &axelar_solana_memo_program::id(),
-        )
+        .get_account(&counter_pda, &axelar_solana_memo_program::id())
         .await;
-    assert_eq!(counter_account.counter, 1);
+    let counter = Counter::try_from_slice(&counter_account.data).unwrap();
+    assert_eq!(counter.counter, 1);
+
+    // Event was logged
+    let emitted_event = get_gateway_events(&tx).pop().unwrap();
+    let ArchivedGatewayEvent::MessageExecuted(emitted_event) = emitted_event.parse() else {
+        panic!("unexpected event");
+    };
+    let command_id = command_id(
+        &merkelised_message.leaf.message.cc_id.chain,
+        &merkelised_message.leaf.message.cc_id.id,
+    );
+    let expected_event = MessageExecuted {
+        command_id,
+        source_chain: merkelised_message.leaf.message.cc_id.chain,
+        message_id: merkelised_message.leaf.message.cc_id.id,
+        source_address: merkelised_message.leaf.message.source_address,
+        destination_address: merkelised_message.leaf.message.destination_address,
+        payload_hash: merkelised_message.leaf.message.payload_hash,
+    };
+
+    assert_eq!(*emitted_event, expected_event);
 }

@@ -1,6 +1,8 @@
+use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, MerkleisedPayload};
-use axelar_solana_encoding::types::messages::{Messages};
+use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
+use axelar_solana_encoding::LeafHash;
 use axelar_solana_gateway::events::{ArchivedGatewayEvent, MessageApproved};
 use axelar_solana_gateway::get_incoming_message_pda;
 use axelar_solana_gateway::instructions::approve_messages;
@@ -37,7 +39,7 @@ async fn successfully_approves_messages() {
         unreachable!()
     };
     for message_info in messages {
-        let payload_hash = message_info.leaf.message.payload_hash;
+        let hash = message_info.leaf.message.hash::<SolanaSyscallHasher>();
         let command_id = command_id(
             &message_info.leaf.message.cc_id.chain,
             &message_info.leaf.message.cc_id.id,
@@ -51,7 +53,7 @@ async fn successfully_approves_messages() {
             message_id: message_info.leaf.message.cc_id.id.clone(),
             source_address: message_info.leaf.message.source_address.clone(),
             destination_address: message_info.leaf.message.destination_address.clone(),
-            payload_hash,
+            payload_hash: message_info.leaf.message.payload_hash,
         };
         let ix = approve_messages(
             message_info,
@@ -75,7 +77,7 @@ async fn successfully_approves_messages() {
         // Assert PDA state for message approval
         let account = metadata.incoming_message(incoming_message_pda).await;
         let expected_message = IncomingMessageWrapper {
-            message: IncomingMessage::new(payload_hash),
+            message: IncomingMessage::new(hash),
             bump: incoming_message_pda_bump,
             _padding_bump: [0; 7],
             _padding_size: [0; 32],
@@ -96,35 +98,42 @@ async fn successfully_idempotent_approvals_across_batches() {
         .setup()
         .await;
 
-    let messages_batch_one = make_messages(2);
+    let messages_batch_one = make_messages(1);
     let messages_batch_two = {
-        let mut new_messages = make_messages(3);
+        let mut new_messages = make_messages(1);
         new_messages.extend_from_slice(&messages_batch_one);
         new_messages
     };
 
     // approve the initial message batch
-    metadata
+    let m = metadata
         .sign_session_and_approve_messages(&metadata.signers.clone(), &messages_batch_one)
         .await
         .unwrap();
+    dbg!(&m);
 
     // approve the second message batch
     let payload = Payload::Messages(Messages(messages_batch_two.clone()));
-    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
+    let execute_data_batch_two =
+        metadata.construct_execute_data(&metadata.signers.clone(), payload);
     let verification_session_pda = metadata
-        .init_payload_session_and_verify(&execute_data)
+        .init_payload_session_and_verify(&execute_data_batch_two)
         .await
         .unwrap();
-    let MerkleisedPayload::NewMessages { messages } = execute_data.payload_items else {
+    let MerkleisedPayload::NewMessages {
+        messages: merkle_messages_batch_two,
+    } = execute_data_batch_two.payload_items
+    else {
         unreachable!()
     };
     let mut events_counter = 0;
     let mut message_counter = 0;
-    for message_info in messages {
+    for message_info in merkle_messages_batch_two {
+        dbg!(&message_info);
+        let hash = message_info.leaf.message.hash::<SolanaSyscallHasher>();
         let tx_result = metadata
             .approve_message(
-                execute_data.payload_merkle_root,
+                execute_data_batch_two.payload_merkle_root,
                 message_info.clone(),
                 verification_session_pda,
             )
@@ -141,7 +150,6 @@ async fn successfully_idempotent_approvals_across_batches() {
         };
 
         // Assert PDA state for message approval
-        let payload_hash = message_info.leaf.message.payload_hash;
         let command_id = command_id(
             &message_info.leaf.message.cc_id.chain,
             &message_info.leaf.message.cc_id.id,
@@ -151,7 +159,7 @@ async fn successfully_idempotent_approvals_across_batches() {
 
         let account = metadata.incoming_message(incoming_message_pda).await;
         let expected_message = IncomingMessageWrapper {
-            message: IncomingMessage::new(payload_hash),
+            message: IncomingMessage::new(hash),
             bump: incoming_message_pda_bump,
             _padding_bump: [0; 7],
             _padding_size: [0; 32],

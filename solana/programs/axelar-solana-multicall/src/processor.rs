@@ -1,6 +1,6 @@
 //! Program instructions processor.
 
-use axelar_executable::{
+use axelar_executable_old::{
     validate_message, AxelarCallableInstruction, PROGRAM_ACCOUNTS_START_INDEX,
 };
 use axelar_message_primitives::DataPayload;
