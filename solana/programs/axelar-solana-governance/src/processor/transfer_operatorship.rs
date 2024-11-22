@@ -16,7 +16,8 @@ use crate::events::GovernanceEvent;
 use crate::state::GovernanceConfig;
 
 /// Transfer the operatorship of the Governance from the current operator to a
-/// new operator by altering the operator field in the [`GovernanceConfig`] account.
+/// new operator by altering the operator field in the [`GovernanceConfig`]
+/// account.
 ///
 /// Only the current operator or the program root PDA via a scheduled proposal
 /// (self CPI call) can execute this command.

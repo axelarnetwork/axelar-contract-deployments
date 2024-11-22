@@ -15,6 +15,7 @@ use gateway::state::execute_data::{
     ApproveMessagesVariant, ArchivedGatewayExecuteData, ExecuteDataVariant, RotateSignersVariant,
 };
 use gateway::state::{GatewayApprovedCommand, GatewayExecuteData};
+pub use interchain_token_transfer_gmp;
 use itertools::Itertools;
 use solana_program::hash::Hash;
 use solana_program::program_pack::Pack;
@@ -36,7 +37,6 @@ use solana_sdk::signers::Signers;
 use solana_sdk::transaction::Transaction;
 use spl_token_2022::extension::ExtensionType;
 use spl_token_2022::state::Mint;
-pub use {connection_router, interchain_token_transfer_gmp};
 
 use crate::account::CheckValidPDAInTests;
 use crate::execute_data::prepare_execute_data;

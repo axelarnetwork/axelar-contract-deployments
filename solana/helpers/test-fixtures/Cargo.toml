@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 anyhow.workspace = true
 borsh.workspace = true
-connection-router.workspace = true
 itertools.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true

@@ -1,10 +1,5 @@
 name: "Setup Repo Action"
 description: "A reusable composite action that setups rust and other common tasks"
-inputs:
-  toolchain:
-    description: "Override the default (nightly) toolchain to install"
-    required: false
-    default: "nightly-2024-01-30"
 
 runs:
   using: "composite"
@@ -12,7 +7,7 @@ runs:
     - name: Install nightly
       uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: ${{ inputs.toolchain }}
+        toolchain: 1.79
 
     - uses: Swatinem/rust-cache@v2
       with:
@@ -21,15 +16,12 @@ runs:
         workspaces: |
           solana
 
-    - name: Install cargo-make
-      shell: bash
-      run: cargo install --debug cargo-make
-
     # we rely on foundry for some specific tests
     - name: Install Foundry
       uses: foundry-rs/foundry-toolchain@v1
       with:
         version: nightly
+
     - name: Run Forge build
       shell: bash
       run: |
@@ -38,7 +30,13 @@ runs:
         forge build --sizes
       id: build
 
-    - name: Install needed tooling
+    - name: Install Solana
+      shell: bash
+      run: |
+        curl -sSfL https://release.anza.xyz/stable/install | sh
+        echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+        
+    - name: Install needed tooling (needed for solana deps)
       shell: bash
       run: |
         sudo apt-get install protobuf-compiler

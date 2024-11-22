@@ -71,10 +71,10 @@ impl Processor {
         let leaf_hash = message.leaf.hash::<SolanaSyscallHasher>();
         let message_hash = message.leaf.message.hash::<SolanaSyscallHasher>();
         let proof = rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&message.proof)
-            .inspect_err(|_err| {
+            .map_err(|_err| {
                 solana_program::msg!("Could not decode message proof");
-            })
-            .map_err(|_err| ProgramError::InvalidInstructionData)?;
+                ProgramError::InvalidInstructionData
+            })?;
 
         // Check: leaf node is part of the payload merkle root
         if !proof.verify(

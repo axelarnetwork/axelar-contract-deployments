@@ -576,7 +576,7 @@ fn random_chain_name() -> String {
 pub fn generate_random_hex_address() -> String {
     let mut rng = rand::thread_rng();
 
-    (0..40) // 40 characters for a 20-byte address in hex
+    (0_u8..40_u8) // 40 characters for a 20-byte address in hex
         .fold(String::new(), |mut output, _| {
             write!(&mut output, "{:x}", rng.gen_range(0..16_u8)).unwrap();
             output

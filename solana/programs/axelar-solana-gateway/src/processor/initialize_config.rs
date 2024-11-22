@@ -13,7 +13,7 @@ use super::Processor;
 use crate::axelar_auth_weighted::AxelarAuthWeighted;
 use crate::error::GatewayError;
 use crate::instructions::InitializeConfig;
-use crate::state::verifier_set_tracker::{VerifierSetTracker};
+use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::GatewayConfig;
 use crate::{
     assert_valid_gateway_root_pda, assert_valid_verifier_set_tracker_pda,

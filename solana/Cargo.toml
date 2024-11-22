@@ -2,6 +2,14 @@
 members = ["programs/*", "helpers/*", "xtask", "crates/*"]
 resolver = "2"
 
+[workspace.package]
+version = "0.1.0"
+authors = []
+repository = "https://github.com/eigerco/solana-axelar"
+homepage = "https://github.com/eigerco/solana-axelar"
+license = "MIT/Apache-2.0"
+edition = "2021"
+
 [workspace.lints.clippy]
 cargo = { priority = -1, level = "deny" }
 complexity = { priority = -2, level = "deny" }
@@ -47,6 +55,7 @@ wildcard_imports = "allow"
 shadow_unrelated = "allow"
 module_name_repetitions = "allow"
 semicolon_outside_block = "allow" # remove this after we update rust-toolchain.toml -- buggy lint
+similar_names = "allow"
 
 [workspace.lints.rust]
 missing_docs = { level = "warn", priority = -1 }
@@ -94,12 +103,12 @@ serde_json = "1"
 sha3 = "0.10"
 signature = "2"
 simd-json = "0.13"
-solana-client = "2.0.1"
-solana-logger = "2.0.1"
-solana-program = "2.0.1"
-solana-program-test = "2.0.1"
-solana-sdk = "2.0.1"
-solana-test-validator = "2.0.1"
+solana-client = "=2.0.16"
+solana-logger = "=2.0.16"
+solana-program = "=2.0.16"
+solana-program-test = "=2.0.16"
+solana-sdk = "=2.0.16"
+solana-test-validator = "=2.0.16"
 spl-associated-token-account = "5.0.1"
 spl-pod = "0.4.0"
 spl-token = "6.0.0"
@@ -115,6 +124,7 @@ typed-builder = "0.20"
 xshell = "0.2"
 pretty_assertions = "1"
 udigest = { version = "0.2", features = ["derive"] }
+async-recursion = "1"
 
 # solana programs
 axelar-solana-its = { path = "programs/axelar-solana-its" }
@@ -140,26 +150,6 @@ governance-gmp = { path = "helpers/governance-gmp" }
 program-utils = { path = "helpers/program-utils" }
 role-management = { path = "helpers/role-management" }
 test-fixtures = { path = "helpers/test-fixtures" }
-
-[workspace.dependencies.multisig]
-git = "https://github.com/axelarnetwork/axelar-amplifier"
-rev = "c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
-features = ["library"]
-
-[workspace.dependencies.multisig-prover]
-git = "https://github.com/axelarnetwork/axelar-amplifier"
-rev = "c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
-features = ["library"]
-
-[workspace.dependencies.connection-router]
-git = "https://github.com/axelarnetwork/axelar-amplifier"
-rev = "c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
-features = ["library"]
-
-[workspace.dependencies.axelar-wasm-std]
-git = "https://github.com/axelarnetwork/axelar-amplifier"
-rev = "c0904e1c72c99a174a93b5f6c18b30f52d20b71f"
-features = ["library"]
 
 [workspace.metadata.cargo-machete]
 ignored = ["num-traits"]

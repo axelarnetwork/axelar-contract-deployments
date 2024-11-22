@@ -3,7 +3,7 @@
 use std::fmt::Debug;
 
 use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, SigningVerifierSetInfo};
-use axelar_solana_encoding::types::messages::{Message};
+use axelar_solana_encoding::types::messages::Message;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use itertools::Itertools;
 use solana_program::instruction::{AccountMeta, Instruction};

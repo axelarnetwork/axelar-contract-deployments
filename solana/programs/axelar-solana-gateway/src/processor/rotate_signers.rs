@@ -83,8 +83,9 @@ impl Processor {
         // Obtain the active verifier set tracker.
         let verifier_set_tracker = verifier_set_tracker_account
             .check_initialized_pda::<VerifierSetTracker>(program_id)
-            .inspect_err(|_error| {
+            .map_err(|error| {
                 msg!("Invalid VerifierSetTracker PDA");
+                error
             })?;
 
         // Check: we got the expected verifier set

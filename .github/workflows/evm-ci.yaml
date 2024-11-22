@@ -4,9 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
-    paths:
-      - "evm-contracts/**"
 
 env:
   FOUNDRY_PROFILE: ci
@@ -21,7 +18,7 @@ jobs:
       fail-fast: true
 
     name: Foundry project
-    runs-on: ubuntu-latest
+    runs-on: large-runner
     steps:
       - uses: actions/checkout@v4
         with:

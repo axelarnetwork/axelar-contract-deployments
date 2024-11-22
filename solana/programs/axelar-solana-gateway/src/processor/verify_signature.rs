@@ -56,8 +56,9 @@ impl Processor {
         // Obtain the active verifier set tracker.
         let verifier_set_tracker = verifier_set_tracker_account
             .check_initialized_pda::<VerifierSetTracker>(program_id)
-            .inspect_err(|_error| {
+            .map_err(|error| {
                 solana_program::msg!("Invalid VerifierSetTracker PDA");
+                error
             })?;
 
         // Check: Verifier set isn't expired

@@ -111,11 +111,11 @@ impl From<ArchivedType> for Type {
 impl From<Type> for U256 {
     fn from(value: Type) -> Self {
         match value {
-            Type::NativeInterchainToken => Self::from(0),
-            Type::MintBurnFrom => Self::from(1),
-            Type::LockUnlock => Self::from(2),
-            Type::LockUnlockFee => Self::from(3),
-            Type::MintBurn => Self::from(4),
+            Type::NativeInterchainToken => Self::from(0_u8),
+            Type::MintBurnFrom => Self::from(1_u8),
+            Type::LockUnlock => Self::from(2_u8),
+            Type::LockUnlockFee => Self::from(3_u8),
+            Type::MintBurn => Self::from(4_u8),
         }
     }
 }

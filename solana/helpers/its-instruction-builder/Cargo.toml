@@ -16,4 +16,5 @@ bincode.workspace = true
 interchain-token-transfer-gmp.workspace = true
 solana-client.workspace = true
 solana-sdk.workspace = true
+async-recursion.workspace = true
 spl-token-2022 = { workspace = true, features = ["no-entrypoint", "serde-traits"] }

@@ -16,10 +16,11 @@ pub fn derive_managed_proposal_pda(proposal_hash: &[u8; 32]) -> (Pubkey, u8) {
 }
 
 /// Ensures the provided PDA matches the proposal hash and bump.
-/// 
+///
 /// # Errors
-/// 
-/// Returns a [`ProgramError`] if the provided PDA does not match the derived one.
+///
+/// Returns a [`ProgramError`] if the provided PDA does not match the derived
+/// one.
 pub fn ensure_correct_managed_proposal_pda(
     pda: &Pubkey,
     proposal_hash: &[u8; 32],

@@ -63,7 +63,9 @@ impl Processor {
                 execute_operator_proposal::process(program_id, accounts, &execute_proposal_data)
             }
 
-            GovernanceInstruction::WithdrawTokens{amount} => withdraw_tokens::process(program_id, accounts, amount),
+            GovernanceInstruction::WithdrawTokens { amount } => {
+                withdraw_tokens::process(program_id, accounts, amount)
+            }
             GovernanceInstruction::TransferOperatorship { new_operator } => {
                 transfer_operatorship::process(program_id, accounts, new_operator)
             }

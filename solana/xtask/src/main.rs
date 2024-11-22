@@ -1,59 +1,145 @@
-//! Utility crate for managing tasks, common commands,
-//! deployments for the solana-axelar integration.
+use std::path::PathBuf;
+use std::str::FromStr;
 
-use std::sync::OnceLock;
+use clap::{Parser, Subcommand};
+use eyre::OptionExt;
+use itertools::Itertools;
+use xshell::{cmd, Shell};
 
-use clap::Parser;
-use tracing::level_filters::LevelFilter;
-use tracing_subscriber::layer::Layered;
-use tracing_subscriber::prelude::*;
-use tracing_subscriber::{fmt, reload, EnvFilter, Registry};
-
-mod cli;
-
-static LOG_FILTER_HANDLE: OnceLock<
-    reload::Handle<EnvFilter, Layered<fmt::Layer<Registry>, Registry>>,
-> = OnceLock::new();
-
-/// Change current subscriber log level
-///
-/// # Arguments
-/// * `level` - `[LevelFilter]` with the new log level
-///
-/// # Panics
-/// If reloading the log level filter fails
-pub fn change_log_level(level: LevelFilter) {
-    if let Some(handle) = crate::LOG_FILTER_HANDLE.get() {
-        let env_filter = EnvFilter::builder()
-            .with_default_directive(level.into())
-            .from_env_lossy();
-        handle
-            .reload(env_filter)
-            .expect("Error reloading log filter");
-    }
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[command(subcommand)]
+    command: Commands,
 }
 
-#[tokio::main]
-async fn main() -> eyre::Result<()> {
-    let cli = cli::Cli::try_parse()?;
+#[derive(Subcommand, Debug)]
+enum Commands {
+    Test {
+        /// Will test contracts by default using sbf-test.
+        /// This flag will ensure that we also run non-sbf tests
+        #[clap(short, long, default_value_t = false)]
+        only_sbf: bool,
+    },
+    Check,
+    Fmt,
+    UnusedDeps,
+    Typos,
+    Docs,
+}
 
+fn main() -> eyre::Result<()> {
     color_eyre::install()?;
-    let env_filter = EnvFilter::builder()
-        .with_default_directive(LevelFilter::INFO.into())
-        .from_env_lossy();
+    let sh = Shell::new()?;
+    let args = Args::parse();
 
-    let (filter_layer, handle) = reload::Layer::new(env_filter);
+    match args.command {
+        Commands::Test { only_sbf } => {
+            println!("cargo test");
+            let (solana_programs, auxiliary_crates) = workspace_crates_by_category(&sh)?;
 
-    tracing_subscriber::registry()
-        .with(fmt::layer())
-        .with(filter_layer)
-        // needed for colour eyre to give better error output
-        .with(tracing_error::ErrorLayer::default())
-        .init();
+            // build all solana programs (because they have internal inter-dependencies)
+            for (_program, path) in solana_programs.iter() {
+                let manifest_path = path.join("Cargo.toml");
+                cmd!(sh, "cargo build-sbf --manifest-path {manifest_path}").run()?;
+            }
 
-    LOG_FILTER_HANDLE
-        .set(handle)
-        .expect("Error storing reload handle");
+            // test solana programs using `test-sbf`
+            for (program, ..) in solana_programs.iter() {
+                cmd!(sh, "cargo test-sbf -p {program}").run()?;
+            }
+            if only_sbf {
+                return Ok(());
+            }
+            // test the other crates
+            for (normal_crate, ..) in auxiliary_crates {
+                cmd!(sh, "cargo test -p {normal_crate}").run()?;
+            }
+        }
 
-    cli.run().await
+        Commands::Check => {
+            println!("cargo check");
+            cmd!(
+                sh,
+                "cargo clippy --no-deps --all-targets --workspace --locked -- -D warnings"
+            )
+            .run()?;
+            cmd!(sh, "cargo fmt --all --check").run()?;
+        }
+        Commands::Fmt => {
+            println!("cargo fix");
+            cmd!(sh, "cargo fmt --all").run()?;
+            cmd!(
+                sh,
+                "cargo fix --allow-dirty --allow-staged --workspace --all-features --tests"
+            )
+            .run()?;
+            cmd!(
+                sh,
+                "cargo clippy --fix --allow-dirty --allow-staged --workspace --all-features --tests"
+            )
+            .run()?;
+        }
+        Commands::UnusedDeps => {
+            println!("unused deps");
+            cmd!(sh, "cargo install cargo-machete").run()?;
+            cmd!(sh, "cargo-machete").run()?;
+        }
+        Commands::Typos => {
+            println!("typos check");
+            cmd!(sh, "cargo install typos-cli").run()?;
+            cmd!(sh, "typos").run()?;
+        }
+        Commands::Docs => {
+            println!("cargo doc");
+            cmd!(sh, "cargo doc --workspace --no-deps --all-features").run()?;
+
+            if std::option_env!("CI").is_none() {
+                #[cfg(target_os = "macos")]
+                cmd!(sh, "open target/doc/relayer/index.html").run()?;
+
+                #[cfg(target_os = "linux")]
+                cmd!(sh, "xdg-open target/doc/relayer/index.html").run()?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+type WorkspaceCrateInfo<'a> = (&'a str, PathBuf);
+
+/// Return all crates in the workspace sorted by category:
+/// - (solana program crates, native crates)
+fn workspace_crates_by_category(
+    sh: &Shell,
+) -> Result<(Vec<WorkspaceCrateInfo>, Vec<WorkspaceCrateInfo>), eyre::Error> {
+    let crates_in_repo = cmd!(sh, "cargo tree --workspace --depth 0")
+        .output()
+        .map(|o| String::from_utf8(o.stdout))??
+        .leak(); // fine to leak as xtask is short lived
+    let all_crate_data = crates_in_repo.split_whitespace();
+    let all_crate_data = all_crate_data
+        .filter(|item| !item.starts_with('[')) // filters "[dev-dependencies]"
+        .tuples()
+        .group_by(|(_, _, path)| path.contains("solana/programs"));
+    let mut solana_programs = vec![];
+    let mut auxiliary_crates = vec![];
+    for (is_solana_program, group) in &all_crate_data {
+        for (crate_name, _crate_version, crate_path) in group {
+            let crate_path = crate_path
+                .strip_prefix('(')
+                .ok_or_eyre("expected prefix not there")?;
+            let crate_path = crate_path
+                .strip_suffix(')')
+                .ok_or_eyre("expected suffix not there")?;
+            let crate_path = PathBuf::from_str(crate_path)?;
+            if is_solana_program {
+                solana_programs.push((crate_name, crate_path))
+            } else {
+                auxiliary_crates.push((crate_name, crate_path))
+            }
+        }
+    }
+    Ok((solana_programs, auxiliary_crates))
 }

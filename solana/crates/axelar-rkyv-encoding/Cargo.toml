@@ -16,13 +16,13 @@ rand = { workspace = true, optional = true }
 rkyv = { workspace = true, features = ["validation"] }
 rs_merkle.workspace = true
 sha3.workspace = true
-solana-program = { workspace = true, optional = true}
+solana-program = { workspace = true, optional = true }
 thiserror.workspace = true
-
 
 [dev-dependencies]
 ed25519-dalek = { workspace = true, features = ["rand_core", "digest"] }
 libsecp-rand = { package = "rand", version = "0.7" }
+solana-program = { workspace = true }
 rand.workspace = true
 itertools.workspace = true
 

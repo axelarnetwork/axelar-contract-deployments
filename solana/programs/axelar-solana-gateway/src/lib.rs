@@ -1,7 +1,4 @@
 //! Axelar Gateway program for the Solana blockchain
-#![allow(stable_features)] // solana uses an old Rust compiler
-#![feature(result_option_inspect)]
-
 pub mod axelar_auth_weighted;
 pub mod entrypoint;
 pub mod error;

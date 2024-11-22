@@ -210,7 +210,7 @@ pub mod evm_weighted_signers {
     ///
     /// ported from the following TypeScript code:
     /// ```typescript
-    /// 
+    ///
     /// const WEIGHTED_SIGNERS_TYPE = 'tuple(tuple(address signer,uint128 weight)[] signers,uint128 threshold,bytes32 nonce)';
     /// const encodeWeightedSigners = (weightedSigners) => {
     ///     return defaultAbiCoder.encode([WEIGHTED_SIGNERS_TYPE], [weightedSigners]);

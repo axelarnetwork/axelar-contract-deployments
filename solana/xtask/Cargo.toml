@@ -1,85 +1,15 @@
 [package]
 name = "xtask"
-version = "0.1.0"
-edition = "2021"
-
-[lints.clippy]
-complexity = { priority = -1, level = "deny" }
-correctness = { priority = -1, level = "deny" }
-pedantic = { priority = -1, level = "deny" }
-
-[lints.rust]
-missing_docs = "warn"
-rust_2018_idioms = "deny"
-unreachable_pub = "warn"
-unused_imports = "warn"
-unused_must_use = "deny"
+version = { workspace = true }
+authors = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
 
 [dependencies]
-axelar-executable-old.workspace = true
-axelar-message-primitives = { path = "./../helpers/axelar-message-primitives" }
-axelar-rkyv-encoding.workspace = true
-axelar-solana-memo-program.workspace = true
-axelar-wasm-std = { path = "../../axelar-amplifier/packages/axelar-wasm-std" }
-base64.workspace = true
-bincode = "1.3"
-bip39 = { version = "2", features = ["rand"] }
-borsh.workspace = true
 clap = { version = "4", features = ["derive"] }
-color-eyre = "0.6"
-const_format = { version = "0.2", features = ["fmt"] }
-cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
-cosmwasm-schema.workspace = true
-csv-async = { version = "1.3.0", features = ["tokio"] }
-derive_builder = "0.20"
-ethers.workspace = true
-evm-contracts-test-suite.workspace = true
+xshell = "0.2"
 eyre = "0.6"
-flate2 = "1.0"
-futures.workspace = true
-gateway = { path = "../../axelar-amplifier/contracts/gateway", features = ["library"] }
-gateway-api = { path = "../../axelar-amplifier/packages/gateway-api" }
-gmp-gateway = { path = "./../programs/gateway" }
-hex.workspace = true
-inquire = "0.7.5"
+color-eyre = "0.6"
 itertools.workspace = true
-k256 = "0.13"
-multisig = { path = "../../axelar-amplifier/contracts/multisig", features = ["library"] }
-rand.workspace = true
-reqwest.workspace = true
-router-api = { path = "../../axelar-amplifier/packages/router-api" }
-rust_decimal = "1.34"
-rust_decimal_macros = "1.34"
-serde.workspace = true
-serde_json.workspace = true
-simd-json.workspace = true
-solana-cli-config = "2.0.1"
-solana-client = "2.0.1"
-solana-rpc = "2.0.1"
-solana-rpc-client-api = "2.0.1"
-solana-sdk.workspace = true
-solana-test-validator = "2.0.5"
-solana-transaction-status = "2.0.1"
-tar = "0.4"
-test-fixtures = { path = "./../helpers/test-fixtures" }
-thiserror.workspace = true
-tokio.workspace = true
-tracing-error.workspace = true
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tracing.workspace = true
-url = "2"
-voting-verifier = { path = "../../axelar-amplifier/contracts/voting-verifier", features = ["library"] }
-xshell.workspace = true
-
-[dev-dependencies]
-borsh.workspace = true
-hex.workspace = true
-solana-program.workspace = true
-solana-sdk.workspace = true
-solana-streamer = "2.0.1"
-tempfile = "3"
-
-[build-dependencies]
-proc-macro2 = "1"
-quote = "1"
-serde_json.workspace = true

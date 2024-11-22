@@ -74,6 +74,7 @@ where
     axelar_solana_its::instructions::its_gmp_payload(inputs)
 }
 
+#[async_recursion::async_recursion(?Send)]
 async fn try_infer_mint_and_program<C>(
     token_manager_pda: &Pubkey,
     payload: &GMPPayload,

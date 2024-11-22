@@ -470,10 +470,7 @@ where
 
 #[cfg(test)]
 #[allow(clippy::std_instead_of_core)]
-#[allow(clippy::legacy_numeric_constants)]
 mod tests {
-    use std::u64;
-
     use solana_program::clock::Epoch;
 
     use super::*;

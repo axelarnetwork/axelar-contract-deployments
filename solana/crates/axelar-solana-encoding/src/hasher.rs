@@ -12,11 +12,11 @@ impl udigest::encoding::Buffer for VecBuf {
 }
 
 /// A Merkle Tree hasher that utilizes Solana's `keccak` syscall to merge nodes.
-#[cfg(feature = "solana")]
+#[cfg(any(feature = "solana", test))]
 #[derive(Copy, Clone)]
 pub struct SolanaSyscallHasher;
 
-#[cfg(feature = "solana")]
+#[cfg(any(feature = "solana", test))]
 impl rs_merkle::Hasher for SolanaSyscallHasher {
     type Hash = [u8; 32];
 
@@ -29,7 +29,7 @@ impl rs_merkle::Hasher for SolanaSyscallHasher {
     }
 }
 
-#[cfg(feature = "solana")]
+#[cfg(any(feature = "solana", test))]
 impl HashvSupport for SolanaSyscallHasher {
     fn hashv(data: &[&[u8]]) -> [u8; 32] {
         solana_program::keccak::hashv(data).to_bytes()
