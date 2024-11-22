@@ -214,6 +214,40 @@ Example usage:
 node cosmwasm/submit-proposal.js execute -c Router -t "Proposal title" -d "Proposal description" --deposit 100000000 --msg '{"register_chain":{"chain":"avalanche","gateway_address":"axelar17cnq5hujmkf2lr2c5hatqmhzlvwm365rqc5ugryphxeftavjef9q89zxvp","msg_id_format":"hex_tx_hash_and_event_index"}}'
 ```
 
+### Register chain to ITS Hub through governance proposal
+
+To submit a governance proposal to register an ITS chain, use the `submit-proposal` script with the `register-its-chain` command. The `--chains` option must be used to pass a comma separated list of chains to register to ITS hub.
+
+**Prerequisites**: Chain configuration in json file must include the following attributes per chain:
+
+| Attribute                   | Description                                                                                | EVM | Sui |
+| --------------------------- | ------------------------------------------------------------------------------------------ | --- | --- |
+| `maxUintBits`               | Number of bits for the chain's maximum uint representation                                 | 256 | 64  |
+| `maxDecimalsWhenTruncating` | Maximum decimal places allowed when truncating ITS token amounts transferred to this chain | 255 | 6   |
+
+Example configuration:
+
+```
+"chains": {
+  "some-sui-chain": {
+    "axelarId": "some-sui-chain",
+    "maxUintBits": 64,
+    "maxDecimalsWhenTruncating": 6,
+  },
+  "some-evm-chain": {
+    "axelarId": "some-evm-chain",
+    "maxUintBits": 256,
+    "maxDecimalsWhenTruncating": 255,
+  }
+}
+```
+
+Example usage:
+
+```
+node cosmwasm/submit-proposal.js register-its-chain --chains avalanche-fuji,sui-test2 -t "Proposal title" -d "Proposal description" --deposit 100000000 -r $RUN_AS_ACCOUNT
+```
+
 ### Submit a proposal to change a parameter
 
 To submit a governance proposal to change a parameter, use the `submit-proposal` script with the `paramChange` command. The `--changes` option should be used to pass a JSON string representing an array of parameter changes.

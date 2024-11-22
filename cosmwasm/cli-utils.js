@@ -41,6 +41,10 @@ const addAmplifierOptions = (program, options) => {
         addExecuteProposalOptions(program);
     }
 
+    if (options.registerItsChainOptions) {
+        addRegisterItsChainOptions(program);
+    }
+
     if (options.paramChangeProposalOptions) {
         addParamChangeProposalOptions(program);
     }
@@ -119,6 +123,14 @@ const addInstantiateProposalOptions = (program) => {
 
 const addExecuteProposalOptions = (program) => {
     program.addOption(new Option('--msg <msg>', 'json encoded execute message').makeOptionMandatory(true));
+};
+
+const addRegisterItsChainOptions = (program) => {
+    program.addOption(
+        new Option('--chains <chains>', 'comma separated list of chains to register to ITS hub')
+            .argParser((val) => val.split(','))
+            .makeOptionMandatory(true),
+    );
 };
 
 const addParamChangeProposalOptions = (program) => {
