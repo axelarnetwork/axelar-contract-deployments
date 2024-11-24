@@ -546,7 +546,6 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
             if (!chainConfig) {
                 throw new Error('VotingVerifier requires chainName option');
             }
-
             return makeVotingVerifierInstantiateMsg(contractConfig, contracts, chainConfig);
         }
 

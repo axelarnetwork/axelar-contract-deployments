@@ -65,7 +65,6 @@ const instantiate = async (client, wallet, config, options) => {
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     await updateCodeId(client, config, options);
-
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
     const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
 
