@@ -307,20 +307,20 @@
           "deployer": "0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE",
           "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "proxyDeploymentArgs": [
-            "0xEAB24157DED6d19cB49bA56554A318ed3c3687C9",
+            "0x2EBe3a1c9C0f3B30Ed51e158150efCD0AB53f8e9",
             "0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE",
             "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a612330000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000002b8b47000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
           ],
           "initialVerifierSetId": "e5283a7b64fded588737f495421f8d0bf453f6a1deee353bcb9105551a01d4ea",
           "governance": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "address": "0x9F1829183D19AD64245A1BeCc7a532F8273EC657",
-          "implementation": "0xEAB24157DED6d19cB49bA56554A318ed3c3687C9",
-          "implementationCodehash": "0x6cc034477c9e2673c3bea6915dd785fe403fb989c205b9a1fac27ffc2588e315",
+          "address": "0x7B44D449B7FEB2298d76Bf6B7114C7a32E52Df8D",
+          "implementation": "0x2EBe3a1c9C0f3B30Ed51e158150efCD0AB53f8e9",
+          "implementationCodehash": "0x2af1d9a73df08db74d71bc6d977a2f739f00b9962f813d56d4c593db1466cfce",
           "deploymentMethod": "create3",
           "previousSignersRetention": 15,
           "domainSeparator": "0xc04aba7c8ccda4059d622ac3e17bb4ef1c1e2358f25bfea5902a44d3a34d616a",
           "minimumRotationDelay": 86400,
-          "salt": "AxelarAmplifierGatewaynewer",
+          "salt": "RamiThree",
           "connectionType": "amplifier",
           "owner": "0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE"
         },
@@ -652,7 +652,6 @@
             "OwnerCap": "0x2e9dc6979c7e41a7e13561628b3bc53cf237837ddf1e1f67984c59782e3f8cf3"
           }
         }
-      }
     },
     "stellar-test2": {
       "name": "Stellar",
@@ -797,8 +796,8 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
-          "codeId": 838,
-          "address": "axelar1xt2uvf5lpj5mu8r9sxlj8yv9c8u69plufaf8zegyysjsygqav0sq43rk9k"
+          "codeId": 626,
+          "address": "axelar1ekfhg30wk2ut76dnu3rk6v05can3ds5wj8fc3sxlh32p2kke3ydqyw6ke6"
         },
         "lastUploadedCodeId": 838,
         "eth-sepolia": {
@@ -814,7 +813,7 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 626,
-          "address": "axelar16swl5eh3vspnyzddwltuf93hc65nwju7498u0zyq33u4cj8rxy4sgxx30m"
+          "address": "axelar1qxxp2v2aum86qkw89wqmu72xwlhcjkh2f9wmqf0s26gqq7dwv3nsp8pvya"
         },
         "optimism-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -879,12 +878,12 @@
       "Gateway": {
         "avalanche-fuji": {
           "codeId": 616,
-          "address": "axelar1agyunp32jwynnkrf92wuvac2xa7cvgthtk5yr3wh7jypg59zjjqqsqf36s"
+          "address": "axelar17p9rsw63nzzfl5frp5lzvz09z3fu42nyj8unrx32ulp54e53hv3s0ywskm"
         },
         "lastUploadedCodeId": 785,
         "eth-sepolia": {
           "codeId": 616,
-          "address": "axelar18zrymnzgdmutdjhqlfsslzy4yvzw8uylysjwqlq4uk4muq3qx30qde39qz"
+          "address": "axelar1ldsw7lg0fqtvtzgd8uk4d54a0rd3fljzkcjreespmhk6jjq7rrhs6hy0ev"
         },
         "optimism-sepolia": {
           "codeId": 616,
@@ -917,7 +916,7 @@
           "keyType": "ecdsa",
           "domainSeparator": "0xfa2912a57d663fcffbcb3d4c56334eb8babe48008b4b7458f4332e0828a12f40",
           "codeId": 618,
-          "address": "axelar1p22kz5jr7a9ruu8ypg40smual0uagl64dwvz5xt042vu8fa7l7dsl3wx8q"
+          "address": "axelar1wudan5lxdmk576prqp2cgkd6zvtaduxncunldgekg93cur7v2yjqwupf3y"
         },
         "lastUploadedCodeId": 786,
         "eth-sepolia": {
@@ -934,7 +933,7 @@
           "keyType": "ecdsa",
           "domainSeparator": "0xc04aba7c8ccda4059d622ac3e17bb4ef1c1e2358f25bfea5902a44d3a34d616a",
           "codeId": 618,
-          "address": "axelar15ra7d5uvnmc6ety6sqxsvsfz4t34ud6lc5gmt39res0c5thkqp2qdwj4af"
+          "address": "axelar1tpcmsy5kmxcgp7j6vlky297n96yrmwywg9nhvknnj9wshhswal2q2hghlm"
         },
         "optimism-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",

@@ -124,3 +124,7 @@ const programHandler = () => {
 if (require.main === module) {
     programHandler();
 }
+
+module.exports  = {
+    main
+}

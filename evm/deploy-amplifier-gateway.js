@@ -39,7 +39,7 @@ const AxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/
 async function getSetupParams(config, chain, operator, options) {
     const { signers: signerSets, verifierSetId } = await getWeightedSigners(config, chain, options);
     printInfo('Setup params', JSON.stringify([operator, signerSets], null, 2));
-    console.log(signerSets, 'the signers')
+    console.log(signerSets, 'the signers');
     return { params: defaultAbiCoder.encode([`address`, `${WEIGHTED_SIGNERS_TYPE}[]`], [operator, signerSets]), verifierSetId };
 }
 
@@ -50,7 +50,6 @@ async function deploy(config, chain, options) {
 
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
-
     const wallet = new Wallet(privateKey).connect(provider);
     await printWalletInfo(wallet);
 
@@ -82,7 +81,8 @@ async function deploy(config, chain, options) {
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     const gatewayFactory = new ContractFactory(AxelarAmplifierGateway.abi, AxelarAmplifierGateway.bytecode, wallet);
-    const { deployerContract, salt } = getDeployOptions(options.deployMethod, options.salt || 'AxelarAmplifierGatewayNewer', chain);
+
+    const { deployerContract, salt } = getDeployOptions(options.deployMethod, options.salt || 'AxelarAmplifier', chain);
 
     let gateway;
     let proxyAddress;
@@ -101,7 +101,6 @@ async function deploy(config, chain, options) {
             // TODO: support create2 prediction
             printError('create2 prediction is not supported yet');
         }
-
         proxyAddress = await getDeployedAddress(wallet.address, options.deployMethod, {
             salt,
             deployerContract,
@@ -133,9 +132,8 @@ async function deploy(config, chain, options) {
     if (await isContract(proxyAddress, wallet.provider)) {
         printError(`Contract already deployed at predicted address "${proxyAddress}"!`);
     }
-
     if (predictOnly || prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
-        return;
+        return proxyAddress;
     }
 
     contractConfig.deployer = wallet.address;

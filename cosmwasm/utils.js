@@ -144,12 +144,10 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
 
     const contractLabel = getLabel(options);
 
-    console.log(contractConfig, 'the code id');
-
     const { contractAddress } = instantiate2
         ? await client.instantiate2(
               account.address,
-              626, //   contractConfig.codeId,
+              contractConfig.codeId,
               getSalt(salt, contractName, chainName),
               initMsg,
               contractLabel,
