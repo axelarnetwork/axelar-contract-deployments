@@ -69,7 +69,7 @@ jobs:
         shell: bash
         run: |
           # Query latest release from official Stellar repo
-          URL=$(curl -s https://api.github.com/repos/stellar/stellar-cli/releases/latest | jq -r .assets[].browser_download_url | grep 'soroban.*x86_64-unknown-linux')
+          URL=$(curl -s https://api.github.com/repos/stellar/stellar-cli/releases/latest | jq -r .assets[].browser_download_url | grep 'stellar.*x86_64-unknown-linux')
 
           # download + extract binary
           wget -q $URL
