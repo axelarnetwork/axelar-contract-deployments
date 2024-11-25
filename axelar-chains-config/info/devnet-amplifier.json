@@ -65,21 +65,6 @@
       }
     },
     "core-ethereum": {
-      "AxelarGateway": {
-        "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
-        "startingKeyIDs": [
-          "core-ethereum-genesis"
-        ],
-        "address": "0x7C60aA56482c2e78D75Fd6B380e1AdC537B97319",
-        "implementation": "0x80b70F5f8c8018ff919AcfdcF1026cf28D2c81bc",
-        "implementationCodehash": "0xa07791a112c34c715c6c883967223b5c56374a99fe71d91c465cfc0be3d7f03d",
-        "authModule": "0x7a5746A207b86cA4d7F92B4F423403a60CB96D2d",
-        "tokenDeployer": "0x7619952e5edd593dd04ddb3208f430c7061f8bB0",
-        "deploymentMethod": "create",
-        "connectionType": "consensus",
-        "governance": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
-        "mintLimiter": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB"
-      },
       "name": "Ethereum Sepolia",
       "axelarId": "core-ethereum",
       "chainId": 11155111,
@@ -95,6 +80,21 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 25,
       "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "startingKeyIDs": [
+            "core-ethereum-genesis"
+          ],
+          "address": "0x7C60aA56482c2e78D75Fd6B380e1AdC537B97319",
+          "implementation": "0x80b70F5f8c8018ff919AcfdcF1026cf28D2c81bc",
+          "implementationCodehash": "0xa07791a112c34c715c6c883967223b5c56374a99fe71d91c465cfc0be3d7f03d",
+          "authModule": "0x7a5746A207b86cA4d7F92B4F423403a60CB96D2d",
+          "tokenDeployer": "0x7619952e5edd593dd04ddb3208f430c7061f8bB0",
+          "deploymentMethod": "create",
+          "connectionType": "consensus",
+          "governance": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "mintLimiter": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB"
+        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
           "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
