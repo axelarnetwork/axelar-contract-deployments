@@ -270,14 +270,15 @@
           "initialVerifierSetId": "e5283a7b64fded588737f495421f8d0bf453f6a1deee353bcb9105551a01d4ea",
           "governance": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "address": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
-          "implementation": "0x3c19E701ed674350DE8cAEb0B85A388499246D2d",
-          "implementationCodehash": "0x547e0c45465a734b83b4670a395d33d2acb0caeaca5f11851d08811891fa56f1",
-          "deploymentMethod": "create3",
+          "implementation": "0xD981b4a8D46b7b80dCbE245c615432c4DeF2e817",
+          "implementationCodehash": "0xab88cd4cdbea4754ba49d2d73b11d5f1d173bccbd4c0de6352c1d1e3dfc9db64",
+          "deploymentMethod": "create2",
           "previousSignersRetention": 15,
           "domainSeparator": "0xc04aba7c8ccda4059d622ac3e17bb4ef1c1e2358f25bfea5902a44d3a34d616a",
           "minimumRotationDelay": 0,
-          "salt": "AxelarGateway devnet-amplifier",
-          "connectionType": "amplifier"
+          "salt": "v6.0.4",
+          "connectionType": "amplifier",
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -362,14 +363,15 @@
           "initialVerifierSetId": "371d01f95380c32d6077ec54b726a7cf65e536acc860d26a6399b879f71a8e42",
           "governance": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "address": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
-          "implementation": "0x3c19E701ed674350DE8cAEb0B85A388499246D2d",
-          "implementationCodehash": "0x6101dacb6747d4e231d9aa697b51da66f04b32296558b90d19463d4a416dc108",
-          "deploymentMethod": "create3",
+          "implementation": "0x4228956048615Db42709e69598A34E8Ff4cf5340",
+          "implementationCodehash": "0xb4c38d419801884ef56047516896faea7d01c4c6c8588176eece9da22acc674e",
+          "deploymentMethod": "create2",
           "previousSignersRetention": 15,
           "domainSeparator": "0xf865bf16595139bf568a034d575ffdbdd524dd2dbf8cce1de2ddaf7b964bf8e6",
           "minimumRotationDelay": 0,
-          "salt": "AxelarGateway devnet-amplifier",
-          "connectionType": "amplifier"
+          "salt": "v6.0.4",
+          "connectionType": "amplifier",
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -458,14 +460,15 @@
           "initialVerifierSetId": "2818a9d60cf13c06b0fc9584c60444a0b0e05a6d5adc58cd1a22f3b7a1f24d35",
           "governance": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "address": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
-          "implementation": "0x3c19E701ed674350DE8cAEb0B85A388499246D2d",
-          "implementationCodehash": "0x4e18f2497638773ed993af44d7ddcc300ed02bc70a1ca7937de933d070402855",
-          "deploymentMethod": "create3",
+          "implementation": "0x27f40113e84E26e9D23921BE30dD750675c5c723",
+          "implementationCodehash": "0x63a61947de125db1f7970df81581b6f4ccf704e991ac8f8ff9dddc1befe712b2",
+          "deploymentMethod": "create2",
           "previousSignersRetention": 15,
           "domainSeparator": "0xcc0a47123f218b7f10d07212f499e418080c91cda74c46373c9a0e4aeec7332e",
           "minimumRotationDelay": 0,
           "connectionType": "amplifier",
-          "salt": "AxelarGateway devnet-amplifier"
+          "salt": "v6.0.4",
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "Operators": {
           "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
