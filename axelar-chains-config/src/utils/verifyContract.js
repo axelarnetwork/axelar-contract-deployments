@@ -20,16 +20,24 @@ const verifyContract = (env, chain, contract, args, options = {}) => {
 
     const contractArg = options.contractPath ? `--contract ${options.contractPath}` : '';
     const dirPrefix = options.dir ? `cd ${options.dir};` : '';
-    const cmd = `${dirPrefix} ENV=${env} npx hardhat verify --network ${chain.toLowerCase()} ${contractArg} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
+    const normalizedChainName = chain.toLowerCase().replace(' ', '-');
+    const cmd = `${dirPrefix} ENV=${env} npx hardhat verify --network ${normalizedChainName} ${contractArg} --no-compile --constructor-args ${file} ${contract} --show-stack-traces`;
 
     writeFileSync(filePath, content, 'utf-8');
 
     console.log(`Verifying contract ${contract} with args '${stringArgs.join(',')}'`);
     console.log(cmd);
 
-    execSync(cmd, { stdio: 'inherit' });
-
-    console.log('Verified!');
+    try {
+        execSync(cmd, { stdio: ['inherit', 'pipe', 'pipe'] });
+        console.log('Verified!');
+    } catch (error) {
+        if (error.message.toLowerCase().includes('already verified')) {
+            console.log(`Contract ${contract} is already verified on ${normalizedChainName}.`);
+        } else {
+            throw new Error(`An error occurred while trying to verify ${contract} on ${normalizedChainName}:\n${error}`);
+        }
+    }
 };
 
 module.exports = {

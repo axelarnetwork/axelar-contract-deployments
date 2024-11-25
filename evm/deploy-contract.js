@@ -25,12 +25,14 @@ const {
     mainProcessor,
     isContract,
     getContractJSON,
+    getDeployOptions,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 
-async function getConstructorArgs(contractName, chain, wallet) {
-    const config = chain.contracts;
+async function getConstructorArgs(contractName, config, wallet, options) {
+    const args = options.args ? JSON.parse(options.args) : {};
     const contractConfig = config[contractName];
+    Object.assign(contractConfig, args);
 
     switch (contractName) {
         case 'AxelarServiceGovernance': {
@@ -106,7 +108,6 @@ async function getConstructorArgs(contractName, chain, wallet) {
             }
 
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
-            contractConfig.minimumTimeDelay = minimumTimeDelay;
 
             if (!isNumber(minimumTimeDelay)) {
                 throw new Error(`Missing InterchainGovernance.minimumTimeDelay in the chain info.`);
@@ -244,17 +245,12 @@ async function processCommand(config, chain, options) {
     const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
 
-    const constructorArgs = await getConstructorArgs(contractName, chain, wallet, options);
+    const constructorArgs = await getConstructorArgs(contractName, contracts, wallet, options);
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
 
-    const salt = options.salt || contractName;
-    let deployerContract = deployMethod === 'create3' ? contracts.Create3Deployer?.address : contracts.ConstAddressDeployer?.address;
-
-    if (deployMethod === 'create') {
-        deployerContract = null;
-    }
+    const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
 
     const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
         salt,
@@ -277,22 +273,28 @@ async function processCommand(config, chain, options) {
     printInfo('Deployer contract', deployerContract);
     printInfo(`${contractName} will be deployed to`, predictedAddress, chalk.cyan);
 
-    const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
+    let existingAddress, existingCodeHash;
+
+    for (const chainConfig of Object.values(config.chains)) {
+        existingAddress = chainConfig.contracts?.[contractName]?.address;
+        existingCodeHash = chainConfig.contracts?.[contractName]?.predeployCodehash;
+
+        if (existingAddress !== undefined) {
+            break;
+        }
+    }
 
     if (existingAddress !== undefined && predictedAddress !== existingAddress) {
-        printWarn(
-            `Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}.`,
-        );
-
-        const existingCodeHash = config.chains.ethereum.contracts[contractName].predeployCodehash;
+        printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} in chain configs.`);
 
         if (predeployCodehash !== existingCodeHash) {
             printWarn(
-                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${config.chains.ethereum.name}.`,
+                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} in chain configs.`,
             );
         }
 
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
+        printWarn('This is NOT required if the deployments are done by different integrators');
     }
 
     if (predictOnly || prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
@@ -339,7 +341,7 @@ if (require.main === module) {
 
     program.name('deploy-contract').description('Deploy contracts using create, create2, or create3');
 
-    addExtendedOptions(program, {
+    addEvmOptions(program, {
         artifactPath: true,
         contractName: true,
         salt: true,
@@ -352,6 +354,7 @@ if (require.main === module) {
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
     );
     program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
+    program.addOption(new Option('--args <args>', 'custom deployment args'));
 
     program.action((options) => {
         main(options);

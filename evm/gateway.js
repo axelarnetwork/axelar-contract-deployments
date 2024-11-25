@@ -5,6 +5,7 @@ const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
     utils: { keccak256, id, defaultAbiCoder, arrayify },
+    constants: { HashZero },
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
@@ -20,13 +21,18 @@ const {
     mainProcessor,
     printError,
     getGasOptions,
+    httpGet,
+    getContractJSON,
+    getMultisigProof,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getWallet } = require('./sign-utils');
+const { getWallet, signTransaction } = require('./sign-utils');
 
-const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
+const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
+const IAxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarAmplifierGateway.json');
 const IAxelarExecutable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarExecutable.json');
 const IAuth = require('@axelar-network/axelar-cgp-solidity/interfaces/IAxelarAuthWeighted.json');
+const { getWeightedSignersProof, WEIGHTED_SIGNERS_TYPE } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 
 const getApproveContractCall = (sourceChain, source, destination, payloadHash, sourceTxHash, sourceEventIndex) => {
     return defaultAbiCoder.encode(
@@ -76,7 +82,8 @@ async function processCommand(config, chain, options) {
     printInfo('Contract name', contractName);
     printInfo('Contract address', gatewayAddress);
 
-    const gateway = new Contract(gatewayAddress, IGateway.abi, wallet);
+    const gatewayAbi = contracts.AxelarGateway?.connectionType === 'amplifier' ? IAxelarAmplifierGateway.abi : AxelarGateway.abi;
+    const gateway = new Contract(gatewayAddress, gatewayAbi, wallet);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
@@ -86,7 +93,11 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const payload = options.payload || '0x';
+    let payload = options.payload || '0x';
+
+    if (!payload.startsWith('0x')) {
+        payload = '0x' + payload;
+    }
 
     if (!payload) {
         throw new Error('Missing GMP payload');
@@ -183,11 +194,57 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'approveWithBatch': {
+            const { batchID } = options;
+
+            if (!batchID) {
+                throw new Error('Batch ID is required for the approve action');
+            }
+
+            const batchId = batchID.startsWith('0x') ? batchID.substring(2) : batchID;
+            const apiUrl = `${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.axelarId}/${batchId}`;
+
+            let executeData, response;
+
+            try {
+                response = await httpGet(`${apiUrl}`);
+                executeData = '0x' + response.execute_data;
+            } catch (error) {
+                throw new Error(`Failed to fetch batch data: ${error.message}`);
+            }
+
+            if (response == null || !response.execute_data) {
+                throw new Error('Response does not contain execute_data');
+            }
+
+            if (response.status !== 'BATCHED_COMMANDS_STATUS_SIGNED') {
+                throw new Error('Data is not yet signed by operators');
+            }
+
+            const tx = {
+                to: gatewayAddress,
+                data: executeData,
+                ...gasOptions,
+            };
+
+            const txResponse = await wallet.sendTransaction(tx);
+            printInfo('Approve tx', txResponse.hash);
+
+            const receipt = await response.wait(chain.confirmations);
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'ContractCallApproved');
+
+            if (!eventEmitted) {
+                printWarn('Event not emitted in receipt.');
+            }
+
+            break;
+        }
+
         case 'approve':
 
         // eslint-disable-next-line no-fallthrough
         case 'approveAndExecute': {
-            const payloadHash = payload.startsWith('0x') ? keccak256(arrayify(payload)) : id(payload);
+            const payloadHash = keccak256(arrayify(payload));
 
             const commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
 
@@ -226,9 +283,17 @@ async function processCommand(config, chain, options) {
 
         // eslint-disable-next-line no-duplicate-case,no-fallthrough
         case 'approveAndExecute': {
-            const payloadHash = payload.startsWith('0x') ? keccak256(arrayify(payload)) : id(payload);
+            const payloadHash = keccak256(arrayify(payload));
+            const { sourceChain, sourceAddress } = options;
 
-            const commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+            let commandId;
+
+            if (options.messageId) {
+                // Derive commandId for Amplifier gateway
+                commandId = id(`${sourceChain}_${options.messageId}`);
+            } else {
+                commandId = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+            }
 
             if (!options.destination) {
                 throw new Error('Missing destination contract address');
@@ -237,22 +302,14 @@ async function processCommand(config, chain, options) {
             printInfo('Destination app contract', options.destination);
             printInfo('Payload Hash', payloadHash);
 
-            if (
-                !(await gateway.isContractCallApproved(
-                    commandID,
-                    'Axelarnet',
-                    'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj',
-                    options.destination,
-                    payloadHash,
-                ))
-            ) {
+            if (!(await gateway.isContractCallApproved(commandId, sourceChain, sourceAddress, options.destination, payloadHash))) {
                 printWarn('Contract call not approved at the gateway');
                 return;
             }
 
             const appContract = new Contract(options.destination, IAxelarExecutable.abi, wallet);
 
-            const tx = await appContract.execute(commandID, 'Axelarnet', 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj', payload);
+            const tx = await appContract.execute(commandId, sourceChain, sourceAddress, payload);
             printInfo('Execute tx', tx.hash);
             await tx.wait(chain.confirmations);
 
@@ -288,11 +345,7 @@ async function processCommand(config, chain, options) {
                 throw new Error('Event not emitted in receipt.');
             }
 
-            if (!chain.contracts.InterchainGovernance) {
-                chain.contracts.InterchainGovernance = {};
-            }
-
-            chain.contracts.InterchainGovernance.address = newGovernance;
+            chain.contracts.AxelarGateway.governance = newGovernance;
 
             break;
         }
@@ -336,11 +389,7 @@ async function processCommand(config, chain, options) {
                 throw new Error('Event not emitted in receipt.');
             }
 
-            if (!chain.contracts.Multisig) {
-                chain.contracts.Multisig = {};
-            }
-
-            chain.contracts.Multisig.address = newMintLimiter;
+            chain.contracts.AxelarGateway.mintLimiter = newMintLimiter;
 
             break;
         }
@@ -352,6 +401,65 @@ async function processCommand(config, chain, options) {
 
             printInfo(`Gateway mintLimit ${options.symbol}`, await gateway.tokenMintLimit(options.symbol));
             printInfo(`Gateway mint amount ${options.symbol}`, await gateway.tokenMintAmount(options.symbol));
+            break;
+        }
+
+        case 'rotateSigners': {
+            // TODO: use args for new signers
+            const gateway = new Contract(gatewayAddress, getContractJSON('AxelarAmplifierGateway').abi, wallet);
+
+            const weightedSigners = {
+                signers: [
+                    {
+                        signer: wallet.address,
+                        weight: 1,
+                    },
+                ],
+                threshold: 1,
+                nonce: HashZero,
+            };
+
+            const newSigners = {
+                ...weightedSigners,
+                nonce: id('1'),
+            };
+
+            const data = defaultAbiCoder.encode(['uint8', WEIGHTED_SIGNERS_TYPE], [1, newSigners]);
+            console.log(JSON.stringify(newSigners, null, 2));
+            const proof = await getWeightedSignersProof(data, HashZero, weightedSigners, [wallet]);
+            const tx = await gateway.rotateSigners(newSigners, proof, gasOptions);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'SignersRotated');
+
+            if (!eventEmitted) {
+                throw new Error('Event not emitted in receipt.');
+            }
+
+            break;
+        }
+
+        case 'submitProof': {
+            const { multisigSessionId } = options;
+
+            if (!multisigSessionId) {
+                throw new Error('Missing multisig session ID');
+            }
+
+            const { status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
+
+            if (!status.completed) {
+                throw new Error('Multisig session not completed');
+            }
+
+            const tx = {
+                to: gateway.address,
+                data: '0x' + status.completed.execute_data,
+            };
+
+            await signTransaction(wallet, chain, tx, options);
+
             break;
         }
 
@@ -389,16 +497,23 @@ if (require.main === module) {
                 'transferMintLimiter',
                 'mintLimit',
                 'params',
+                'approveWithBatch',
+                'rotateSigners',
+                'submitProof',
             ])
             .makeOptionMandatory(true),
     );
 
     program.addOption(new Option('--payload <payload>', 'gmp payload'));
     program.addOption(new Option('--commandID <commandID>', 'execute command ID'));
+    program.addOption(new Option('--messageId <messageId>', 'GMP call message ID'));
+    program.addOption(new Option('--sourceChain <sourceChain>', 'GMP source chain'));
+    program.addOption(new Option('--sourceAddress <sourceAddress>', 'GMP source address'));
     program.addOption(new Option('--destination <destination>', 'GMP destination address'));
     program.addOption(new Option('--destinationChain <destinationChain>', 'GMP destination chain'));
     program.addOption(new Option('--batchID <batchID>', 'EVM batch ID').default(''));
     program.addOption(new Option('--symbol <symbol>', 'EVM token symbol'));
+    program.addOption(new Option('--multisigSessionId <multisigSessionId>', 'Amplifier multisig proof session ID'));
 
     program.action((options) => {
         main(options);

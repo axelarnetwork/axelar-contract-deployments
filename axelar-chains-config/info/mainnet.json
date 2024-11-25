@@ -2,11 +2,11 @@
   "chains": {
     "ethereum": {
       "name": "Ethereum",
-      "id": "Ethereum",
       "axelarId": "Ethereum",
       "chainId": 1,
       "rpc": "https://mainnet.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x4F4495243837681061C4743b74B3eEdf548D56A5",
@@ -19,12 +19,13 @@
           "authModule": "0xE3B83f79Fbf01B25659f8A814945aB82186A8AD0",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
@@ -112,6 +113,16 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+        },
+        "AxelarTransceiver": {
+          "salt": "AXELAR_TRANSCEIVER v1.1.0",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "implementation": "0x87fc4b27385bb4e69a40027931229d74ef4d1943",
+          "address": "0x723AEAD29acee7E9281C32D11eA4ed0070c41B13",
+          "TransceiverStructs": "0xa12bc993d8144404a8c8c812816048275a066ced",
+          "wstETH token": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+          "NttManager": "0xb948a93827d68a82F6513Ad178964Da487fe2BD9",
+          "wormholeChainId": 2
         }
       },
       "explorer": {
@@ -131,11 +142,11 @@
     },
     "avalanche": {
       "name": "Avalanche",
-      "id": "Avalanche",
       "axelarId": "Avalanche",
       "chainId": 43114,
       "rpc": "https://api.avax.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x5029C0EFf6C34351a0CEc334542cDb22c7928f78",
@@ -148,12 +159,13 @@
           "salt": "AxelarGateway v6.2",
           "startingKeyIDs": [
             "evm-avalanche-9169969"
-          ]
+          ],
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
@@ -253,11 +265,11 @@
     },
     "fantom": {
       "name": "Fantom",
-      "id": "Fantom",
       "axelarId": "Fantom",
       "chainId": 250,
       "rpc": "https://rpc.ftm.tools",
       "tokenSymbol": "FTM",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
@@ -270,12 +282,13 @@
           "authModule": "0xFcf8b865177c45A86a4977e518B44a1eD90191bd",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
@@ -368,7 +381,7 @@
       },
       "gasOptions": {
         "gasLimit": 8000000,
-        "gasPriceAdjustment": 1.4
+        "gasPriceAdjustment": 1.8
       },
       "staticGasOptions": {
         "gasLimit": 3000000,
@@ -379,11 +392,11 @@
     },
     "polygon": {
       "name": "Polygon",
-      "id": "Polygon",
       "axelarId": "Polygon",
       "chainId": 137,
       "rpc": "https://polygon-rpc.com",
       "tokenSymbol": "MATIC",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x6f015F16De9fC8791b234eF68D486d2bF203FBA8",
@@ -396,12 +409,13 @@
           "authModule": "0xFcf8b865177c45A86a4977e518B44a1eD90191bd",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
@@ -504,11 +518,11 @@
     },
     "moonbeam": {
       "name": "Moonbeam",
-      "id": "Moonbeam",
       "axelarId": "Moonbeam",
       "chainId": 1284,
       "rpc": "https://rpc.api.moonbeam.network",
       "tokenSymbol": "GLMR",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x4F4495243837681061C4743b74B3eEdf548D56A5",
@@ -521,12 +535,13 @@
           "authModule": "0xE3B83f79Fbf01B25659f8A814945aB82186A8AD0",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
@@ -626,12 +641,12 @@
     },
     "binance": {
       "name": "Binance",
-      "id": "binance",
       "axelarId": "binance",
       "chainId": 56,
-      "rpc": "https://1rpc.io/bnb",
+      "rpc": "https://bscrpc.com",
       "tokenSymbol": "BNB",
       "wrappedSymbol": "WBNB",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
@@ -644,12 +659,13 @@
           "authModule": "0x242E937CE1B5894bf92c343e56eC63fAe522d627",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
         },
@@ -733,6 +749,16 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+        },
+        "AxelarTransceiver": {
+          "salt": "AXELAR_TRANSCEIVER v1.1.0",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "implementation": "0xa1ebb6a4b856df8bf6c3aca88a9115a9ab3b2e02",
+          "address": "0x723AEAD29acee7E9281C32D11eA4ed0070c41B13",
+          "TransceiverStructs": "0x27a3daf3b243104e9b0afae6b56026a416b852c9",
+          "wstETH token": "0x26c5e01524d2E6280A48F2c50fF6De7e52E9611C",
+          "NttManager": "0x6981F5621691CBfE3DdD524dE71076b79F0A0278",
+          "wormholeChainId": 4
         }
       },
       "explorer": {
@@ -753,11 +779,11 @@
     },
     "arbitrum": {
       "name": "Arbitrum",
-      "id": "arbitrum",
       "axelarId": "arbitrum",
       "chainId": 42161,
       "rpc": "https://arb1.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -770,13 +796,14 @@
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -867,6 +894,10 @@
         "api": "https://api.arbiscan.io/api"
       },
       "gasOptions": {},
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 3
+      },
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 2000000000
@@ -876,11 +907,11 @@
     },
     "celo": {
       "name": "Celo",
-      "id": "celo",
       "axelarId": "celo",
       "chainId": 42220,
       "rpc": "https://forno.celo.org",
       "tokenSymbol": "CELO",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -895,13 +926,14 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
           "governance": "0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0",
-          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1000,11 +1032,11 @@
     },
     "kava": {
       "name": "Kava",
-      "id": "kava",
       "axelarId": "kava",
       "chainId": 2222,
       "rpc": "https://evm.kava.io",
       "tokenSymbol": "KAVA",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -1017,13 +1049,14 @@
           "authModule": "0x96eEE595f0ACD7d232a9B1dE4FCc2a4b2F6b0f3a",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1122,11 +1155,11 @@
     },
     "filecoin": {
       "name": "Filecoin",
-      "id": "filecoin",
       "axelarId": "filecoin",
       "chainId": 314,
       "rpc": "https://rpc.ankr.com/filecoin",
       "tokenSymbol": "FIL",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -1139,13 +1172,14 @@
           ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1244,15 +1278,16 @@
         "maxFeePerGas": 1000000000
       },
       "finality": "120",
-      "approxFinalityWaitTime": 60
+      "approxFinalityWaitTime": 60,
+      "txTimeout": 180000
     },
     "optimism": {
       "name": "Optimism",
-      "id": "optimism",
       "axelarId": "optimism",
       "chainId": 10,
       "rpc": "https://optimism-mainnet.public.blastapi.io",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -1265,13 +1300,14 @@
           ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1364,25 +1400,26 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1,
+        "l1FeeScalar": 1368
+      },
       "confirmations": 3,
       "staticGasOptions": {
         "gasLimit": 3000000,
         "gasPrice": 10000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25,
-      "onchainGasEstimate": {
-        "l1ChainName": "ethereum",
-        "gasEstimationType": 1
-      }
+      "approxFinalityWaitTime": 25
     },
     "linea": {
       "name": "Linea",
-      "id": "linea",
       "axelarId": "linea",
       "chainId": 59144,
       "rpc": "https://rpc.linea.build",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -1395,13 +1432,14 @@
           ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1504,11 +1542,11 @@
     },
     "base": {
       "name": "Base",
-      "id": "base",
       "axelarId": "base",
       "chainId": 8453,
       "rpc": "https://developer-access-mainnet.base.org",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -1521,13 +1559,14 @@
           ],
           "implementationCodehash": "0x815c3711b7191c2598de8b4b7d977ac2d1903d20883bd25c26cf2c4a8ca37827",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1622,20 +1661,21 @@
         "gasLimit": 3000000,
         "gasPrice": 10000000000
       },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 30,
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
-        "gasEstimationType": 1
-      }
+        "gasEstimationType": 1,
+        "l1FeeScalar": 1101
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 30
     },
     "mantle": {
       "name": "Mantle",
-      "id": "mantle",
       "axelarId": "mantle",
       "chainId": 5000,
       "rpc": "https://rpc.mantle.xyz",
       "tokenSymbol": "MNT",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1648,13 +1688,14 @@
           ],
           "implementationCodehash": "0x44a3e78ebfbd139f4023ba77ffced61aeea29f0a20eec807d260e805e272c5c9",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1740,6 +1781,11 @@
         }
       },
       "confirmations": 2,
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 10000
+      },
       "explorer": {
         "name": "Mantle Explorer",
         "url": "https://mantlescan.xyz",
@@ -1750,16 +1796,19 @@
         "gasLimit": 3000000,
         "gasPrice": 25000000000
       },
+      "gasOptions": {
+        "gasPriceAdjustment": 1.8
+      },
       "finality": "9000",
       "approxFinalityWaitTime": 60
     },
     "scroll": {
       "name": "Scroll",
-      "id": "scroll",
       "axelarId": "scroll",
       "chainId": 534352,
       "rpc": "https://rpc.scroll.io",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1772,13 +1821,14 @@
             "evm-scroll-genesis"
           ],
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
@@ -1859,12 +1909,17 @@
       },
       "explorer": {
         "name": "Scroll Explorer",
-        "url": "https://blockscout.scroll.io",
-        "api": "https://blockscout.scroll.io/api"
+        "url": "https://scrollscan.com/",
+        "api": "https://api.scrollscan.com/api"
       },
       "confirmations": 2,
       "gasOptions": {
         "gasLimit": 8000000
+      },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 4,
+        "l1FeeScalar": 1050000000
       },
       "staticGasOptions": {
         "gasLimit": 3000000,
@@ -1875,12 +1930,12 @@
     },
     "centrifuge": {
       "name": "Centrifuge",
-      "id": "centrifuge",
       "axelarId": "centrifuge",
       "chainId": 2031,
       "rpc": "https://fullnode.parachain.centrifuge.io",
       "tokenSymbol": "CFG",
       "confirmations": 1,
+      "chainType": "evm",
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -1908,13 +1963,14 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x4Fe2d119873790cc9e15F6cC53cae1C2eb2039dC",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainGovernance": {
@@ -1974,11 +2030,11 @@
     },
     "immutable": {
       "name": "Immutable",
-      "id": "immutable",
       "axelarId": "immutable",
       "chainId": 13371,
       "rpc": "https://rpc.immutable.com/",
       "tokenSymbol": "IMX",
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
@@ -1991,17 +2047,15 @@
           "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
           "implementationCodehash": "0x9bdd7652536460a69d217dc4fd03669ef763ba66d1dcdf5068ef6e887b2c1ea8",
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
-          "tokenDeployer": "0x8A156bCA562FB75385c4d41ea6903E270A34B727"
+          "tokenDeployer": "0x8A156bCA562FB75385c4d41ea6903E270A34B727",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C",
           "salt": "AxelarGasService",
           "address": "0x24C2b56128fF8E7bFaD578ABefB0fc7Dfa9ba358",
-          "implementation": "0x42E0fBA4785D23643B9F596774b3b6CAc0d40640",
+          "implementation": "0x5aE753f0A558617133bd1ccd98374E222e015763",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
-        },
-        "InterchainTokenService": {
-          "skip": true
         },
         "InterchainGovernance": {
           "address": "0x35dFacdE7B4b80e156e69b1291D12EA51ce123BD",
@@ -2036,6 +2090,40 @@
           "deploymentMethod": "create",
           "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb"
+        },
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v1.2.4",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "proxySalt": "ITS v1.0.0",
+          "tokenManagerDeployer": "0x44dDBDD2c6CC9c5e0F4555620c06b1411F99Dc03",
+          "interchainToken": "0x2f8102DeA2caaee1Ec5Fe67754F828353C4c180F",
+          "interchainTokenDeployer": "0xCE014b2DCB26d77d4e8206A7EF5e33985E442d38",
+          "tokenManager": "0x81a0545091864617E7037171FdfcBbdCFE3aeb23",
+          "tokenHandler": "0x07715674F74c560200c7C95430673180812fCE73",
+          "implementation": "0x6d59D9360BDAe406614b7E61c53F43a03198A4ef",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS Factory v1.0.0",
+          "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       },
       "gasOptions": {
@@ -2052,7 +2140,6 @@
     },
     "fraxtal": {
       "name": "Fraxtal",
-      "id": "fraxtal",
       "axelarId": "fraxtal",
       "chainId": 252,
       "rpc": "https://rpc.frax.com",
@@ -2061,11 +2148,17 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 50000
+      },
       "explorer": {
         "name": "Fraxscan",
         "url": "https://fraxscan.com",
         "api": "https://api.fraxscan.com/api"
       },
+      "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
@@ -2078,13 +2171,14 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "AxelarGasService": {
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0x42E0fBA4785D23643B9F596774b3b6CAc0d40640",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "Multisig": {
@@ -2168,11 +2262,11 @@
     },
     "blast": {
       "name": "Blast",
-      "id": "blast",
       "axelarId": "blast",
       "chainId": 81457,
       "rpc": "https://rpc.blast.io",
       "tokenSymbol": "ETH",
+      "chainType": "evm",
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -2200,7 +2294,8 @@
           "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2"
+          "salt": "AxelarGateway v6.2",
+          "connectionType": "consensus"
         },
         "InterchainGovernance": {
           "minimumTimeDelay": 604800,
@@ -2243,7 +2338,7 @@
           "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
           "salt": "AxelarGasService",
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
-          "implementation": "0xE622B1D44F5061DB10ABa2594F1A8eb2DC1fC1d4",
+          "implementation": "0xcb5C784DCf8FF342625DbC53B356ed0Cbb0EBB9b",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenService": {
@@ -2269,6 +2364,11 @@
       "gasOptions": {
         "gasLimit": 8000000
       },
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 2,
+        "l1FeeScalar": 684000
+      },
       "confirmations": 2,
       "explorer": {
         "name": "Blastscan",
@@ -2281,6 +2381,79 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 25
+    },
+    "flow": {
+      "name": "Flow",
+      "axelarId": "flow",
+      "chainId": 747,
+      "rpc": "https://mainnet.evm.nodes.onflow.org",
+      "tokenSymbol": "FLOW",
+      "chainType": "evm",
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "AxelarGateway": {
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "operator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "proxyDeploymentArgs": [
+            "0x05823c334150a48ACD5D325fBA16147c21bA3653",
+            "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+            "0x000000000000000000000000b8cd93c83a974649d76b1c19f311f639e62272bc000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000e442e6000000000000000000000000000000000000000000000000000000000000001b00000000000000000000000013476c82ab76de288a1d2765cc113e83845fa9e4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000020c4ad615e3c5f0ee136c56adfc5296da94828c40000000000000000000000000000000000000000000000000000000000000001000000000000000000000000215fa9602f4991c665a3f8cfae301a15d597fda9000000000000000000000000000000000000000000000000000000000000000100000000000000000000000021861415ed4e9708fa5ccb0775da0bbb73e0847d000000000000000000000000000000000000000000000000000000000000000100000000000000000000000026962652554141b7555af409a0a5bf5db4504ad200000000000000000000000000000000000000000000000000000000000000010000000000000000000000002743a8844f399bb7a0d6d8535be417fde72a867e00000000000000000000000000000000000000000000000000000000000000010000000000000000000000003a5360b6231b2a44904a683915aaf8e33b760106000000000000000000000000000000000000000000000000000000000000000100000000000000000000000047e22383c384a92ece0e16908da432472efb7b4c00000000000000000000000000000000000000000000000000000000000000010000000000000000000000004d5955cba942a448052469a7b2c5c768bbf7b84100000000000000000000000000000000000000000000000000000000000000010000000000000000000000005aa28a502d8a9f9df24d6f45f6af5177a7faa6d000000000000000000000000000000000000000000000000000000000000000010000000000000000000000005d0cb24000b17585b118686d44d7792e4fdb329700000000000000000000000000000000000000000000000000000000000000010000000000000000000000007191523b52690a777820601d60d5523ca1481af90000000000000000000000000000000000000000000000000000000000000001000000000000000000000000743e91394fed80577cd893cbfc23fb78bb59ef22000000000000000000000000000000000000000000000000000000000000000100000000000000000000000076cbb8657e50b4d9636cce9372d95388c9aebe3900000000000000000000000000000000000000000000000000000000000000010000000000000000000000008b99555ad6d2c3c114037746f3582e2105ac8561000000000000000000000000000000000000000000000000000000000000000100000000000000000000000099f6753fa1330af12e262a94cbc297f1c7beb8900000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a86ea8fd27a607a437fe37107d8940c29a0adbd40000000000000000000000000000000000000000000000000000000000000001000000000000000000000000adda4a8627185c1d5558552868e45f514fd641720000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b18d3a3c404abda400b8f818ffaddf987ba088750000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cdb49d6d7167d71ddea024e0ce3da5fcceab37e30000000000000000000000000000000000000000000000000000000000000001000000000000000000000000d601001d8ce6b1ed0f6e688005600b346f01fb6b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000d88a2598600814e985a1fe19a5b350aaaf3245100000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e6e0dbe152a9754bba3c8ead8d44c2c4cb7e554b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000ef3350da91a1ca637fcc2c6d664551a7dd3171c40000000000000000000000000000000000000000000000000000000000000001000000000000000000000000f04636c843a8d38efb549b310c041f5052b6e0ca0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000f24bbd6f2e0e0b14f897b2c7980d1a4d99125f190000000000000000000000000000000000000000000000000000000000000001000000000000000000000000fe5f6b8dc944b5a8c259ef70f464c1da77f9e1720000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "cfcd6101b38099c6b05d621699c6ecb61673cc845581353d91b3026b649b0547",
+          "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
+          "implementationCodehash": "0x7da68e9180281f2c4c230a5d51c1b8a24dd81df20b3595849d59097bd5f7f7a5",
+          "deploymentMethod": "create",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x3c8c7d9e180f608dcf6fc9b1c3ef905ac295b1c4cb2fe8ca2c4fcde1b6e9a8c6",
+          "minimumRotationDelay": 86400,
+          "connectionType": "amplifier"
+        },
+        "InterchainGovernance": {
+          "address": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
+          "salt": "AxelarGasService",
+          "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
+          "implementation": "0xdC46f07661B673Fc262f61FC5b05B10A58a3b7fE",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        }
+      },
+      "explorer": {
+        "name": "Flowscan",
+        "url": "https://evm.flowscan.io/",
+        "api": "https://evm.flowscan.io/api"
+      },
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
     }
   },
   "stellar": {
@@ -2295,12 +2468,148 @@
     "tokenSymbol": "XLM"
   },
   "axelar": {
-    "id": "Axelarnet",
-    "axelarId": "Axelarnet",
-    "rpc": "https://rpc-axelar.imperator.co:443",
-    "lcd": "https://lcd-axelar.imperator.co:443",
-    "grpc": "grpc-axelar.imperator.co:2062",
+    "axelarId": "axelar",
+    "chainId": "axelar-dojo-1",
+    "rpc": "https://tm.axelar.lava.build:443",
+    "lcd": "https://rest.axelar.lava.build",
+    "grpc": "grpc.axelar.lava.build:443",
     "tokenSymbol": "AXL",
-    "axelarscanApi": "https://api.axelarscan.io"
+    "axelarscanApi": "https://api.axelarscan.io",
+    "gasPrice": "0.007uaxl",
+    "gasLimit": "auto",
+    "contracts": {
+      "ServiceRegistry": {
+        "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "227",
+        "storeCodeProposalCodeHash": "aa762ada72f295c0890c7beca089b13498b95d04f59262cea4bdf64b07d9edc7",
+        "codeId": 4,
+        "lastUploadedCodeId": 4,
+        "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m"
+      },
+      "Router": {
+        "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "234",
+        "storeCodeProposalCodeHash": "c89ad7b98afcafea866ff9b9064ade1dc865a0b4a257cbd0a80fae433c916eab",
+        "codeId": 11,
+        "address": "axelar1d9atnamjjhtc46zmzyc202llqs0rhtxnphs6mkjurekath3mkgtq7hsk93",
+        "executeProposalId": "242"
+      },
+      "NexusGateway": {
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
+        "storeCodeProposalId": "226",
+        "storeCodeProposalCodeHash": "3f0fd354823ec5d85f051a7c54bd020498a2e37866cbf480e0c107aceae1b84d",
+        "codeId": 3,
+        "lastUploadedCodeId": 3,
+        "address": "axelar14x5fqsezmzame904gkydguycsuqy5f8lp5knkzanccy8g8nz3yus65wveg"
+      },
+      "Rewards": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "rewardsDenom": "uaxl",
+        "params": {
+          "epoch_duration": "14400",
+          "rewards_per_epoch": "1500000000",
+          "participation_threshold": [
+            "8",
+            "10"
+          ]
+        },
+        "storeCodeProposalId": "246",
+        "storeCodeProposalCodeHash": "58bad05811e78e958da699aad49f39e6f3ad2502db3f494459208bb2d1f02bfa",
+        "codeId": 5,
+        "lastUploadedCodeId": 5,
+        "address": "axelar1harq5xe68lzl2kx4e5ch4k8840cgqnry567g0fgw7vt2atcuugrqfa7j5z"
+      },
+      "Coordinator": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "229",
+        "storeCodeProposalCodeHash": "1c058dec7e9c294f4e7401bd9611d2e811e0cf3a41917c4dd22766ea40b95fa2",
+        "codeId": 6,
+        "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx",
+        "executeProposalId": "245"
+      },
+      "Multisig": {
+        "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "blockExpiry": 10,
+        "storeCodeProposalId": "230",
+        "storeCodeProposalCodeHash": "a01cfc3c3a6e5fb22ea5818f2de8a453e0f37b9a54380d76eb4d4ea8d8b6de94",
+        "codeId": 7,
+        "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
+        "executeProposalId": "244"
+      },
+      "MultisigProver": {
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "domainSeparator": "0x3c8c7d9e180f608dcf6fc9b1c3ef905ac295b1c4cb2fe8ca2c4fcde1b6e9a8c6",
+          "address": "axelar1rsuejfntt4rs2y8dn4dd3acszs00zyg9wpnsc6fmhevcp6plu5qspzn7e0"
+        },
+        "hedera": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa"
+        },
+        "storeCodeProposalId": "235",
+        "storeCodeProposalCodeHash": "6c4d2f520d62bcd7edd4de772257e74b48a8dfba39f853a9c12ff51ca9ea1e83",
+        "codeId": 12
+      },
+      "Gateway": {
+        "flow": {
+          "address": "axelar1w8frw33jn0yx59845wdgk0yru6fxvgr6hlh4xfdtdf08y5jamcnsyu0z6u"
+        },
+        "hedera": {},
+        "storeCodeProposalId": "232",
+        "storeCodeProposalCodeHash": "eae97caf40ae6b5eea1e145eec27a59e73aa6f9de389fa9ca0cfc9354a3b68ac",
+        "codeId": 9
+      },
+      "VotingVerifier": {
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 10000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "address": "axelar1kkqdsqvwq9a7p9fj0w89wpx2m2t0vrxl782aslhq0kdw2xxd2aesv3un04"
+        },
+        "hedera": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 10000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55"
+        },
+        "storeCodeProposalId": "231",
+        "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b",
+        "codeId": 8
+      }
+    }
   }
 }

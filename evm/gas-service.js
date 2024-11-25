@@ -18,12 +18,12 @@ const {
     prompt,
     getContractJSON,
     getGasOptions,
-    wasEventEmitted,
     isValidAddress,
     validateParameters,
     httpPost,
     toBigNumberString,
     timeout,
+    relayTransaction,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
@@ -335,25 +335,16 @@ async function processCommand(config, chain, options) {
             }
 
             try {
-                const tx = await timeout(
-                    gasService.updateGasInfo(chainsToUpdate, gasInfoUpdates, gasOptions),
-                    chain.timeout || 60000,
-                    new Error(`Timeout updating gas info for ${chain.name}`),
+                await relayTransaction(
+                    options,
+                    chain,
+                    gasService,
+                    'updateGasInfo',
+                    [chainsToUpdate, gasInfoUpdates],
+                    0,
+                    gasOptions,
+                    'GasInfoUpdated',
                 );
-
-                printInfo('TX', tx.hash);
-
-                const receipt = await timeout(
-                    tx.wait(chain.confirmations),
-                    chain.timeout || 60000,
-                    new Error(`Timeout updating gas info for ${chain.name}`),
-                );
-
-                const eventEmitted = wasEventEmitted(receipt, gasService, 'GasInfoUpdated');
-
-                if (!eventEmitted) {
-                    printWarn('Event not emitted in receipt.');
-                }
             } catch (error) {
                 for (let i = 0; i < chainsToUpdate.length; i++) {
                     addFailedChainUpdate(chain.name, chainsToUpdate[i]);
@@ -559,6 +550,7 @@ if (require.main === module) {
 
     // options for updateGasInfo
     program.addOption(new Option('--chains <chains...>', 'Chain names'));
+    program.addOption(new Option('--relayerAPI <relayerAPI>', 'Relay the tx through an external relayer API').env('RELAYER_API'));
 
     // options for refund
     program.addOption(new Option('--token <token>', 'Refund token address').makeOptionMandatory(false));
@@ -584,3 +576,4 @@ if (require.main === module) {
 exports.getGasUpdates = getGasUpdates;
 exports.addFailedChainUpdate = addFailedChainUpdate;
 exports.printFailedChainUpdates = printFailedChainUpdates;
+exports.relayTransaction = relayTransaction;

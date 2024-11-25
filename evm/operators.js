@@ -2,7 +2,6 @@
 
 const { ethers } = require('hardhat');
 const {
-    Wallet,
     getDefaultProvider,
     utils: { isAddress, Interface },
     Contract,
@@ -12,10 +11,8 @@ const {
     printInfo,
     printError,
     printWalletInfo,
-    isNumber,
     isAddressArray,
     isNumberArray,
-    isKeccak256Hash,
     parseArgs,
     prompt,
     getGasOptions,
@@ -23,10 +20,10 @@ const {
     validateParameters,
     getContractJSON,
     printWarn,
-    timeout,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate } = require('./gas-service');
+const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTransaction } = require('./gas-service');
+const { getWallet } = require('./sign-utils');
 
 async function processCommand(config, chain, options) {
     const {
@@ -62,8 +59,8 @@ async function processCommand(config, chain, options) {
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
 
-    const wallet = new Wallet(privateKey, provider);
-    await printWalletInfo(wallet);
+    const wallet = await getWallet(privateKey, provider, options);
+    await printWalletInfo(wallet, options);
 
     printInfo('Contract name', contractName);
 
@@ -86,7 +83,7 @@ async function processCommand(config, chain, options) {
             }
 
             const isOperator = await operatorsContract.isOperator(operatorAddress);
-            printInfo(`Is ${operatorAddress} an operator?`, `${isOperator}`);
+            printInfo(`Is ${operatorAddress} an operator on ${chain.name}?`, `${isOperator}`);
 
             break;
         }
@@ -193,11 +190,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'refund': {
-            const txHash = argsArray[0];
-            const logIndex = argsArray[1];
-            const receiver = argsArray[2];
-            const token = argsArray[3];
-            const amount = argsArray[4];
+            const [txHash, logIndex, receiver, token, amount] = argsArray;
 
             const isOperator = await operatorsContract.isOperator(wallet.address);
 
@@ -205,31 +198,13 @@ async function processCommand(config, chain, options) {
                 throw new Error(`Caller ${wallet.address} is not an operator.`);
             }
 
-            if (!isKeccak256Hash(txHash)) {
-                throw new Error(`Invalid tx hash: ${txHash}`);
-            }
-
-            if (!isNumber(logIndex)) {
-                throw new Error(`Invalid log index: ${logIndex}`);
-            }
-
-            if (!isAddress(receiver)) {
-                throw new Error(`Invalid receiver address: ${receiver}`);
-            }
-
-            if (!isAddress(token)) {
-                throw new Error(`Invalid token address: ${token}`);
-            }
-
-            if (!isNumber(amount)) {
-                throw new Error(`Invalid token amount: ${amount}`);
-            }
-
             const target = chain.contracts.AxelarGasService?.address;
 
-            if (!isAddress(target)) {
-                throw new Error(`Missing AxelarGasService address in the chain info.`);
-            }
+            validateParameters({
+                isKeccak256Hash: { txHash },
+                isNumber: { logIndex, amount },
+                isAddress: { receiver, token, target },
+            });
 
             const gasServiceInterface = new Interface(getContractJSON('IAxelarGasService').abi);
             const refundCalldata = gasServiceInterface.encodeFunctionData('refund', [txHash, logIndex, receiver, token, amount]);
@@ -268,17 +243,14 @@ async function processCommand(config, chain, options) {
             const updateGasInfoCalldata = gasServiceInterface.encodeFunctionData('updateGasInfo', [chainsToUpdate, gasInfoUpdates]);
 
             try {
-                const tx = await timeout(
-                    operatorsContract.executeContract(target, updateGasInfoCalldata, 0, gasOptions),
-                    chain.timeout || 60000,
-                    new Error(`Timeout updating gas info for ${chain.name}`),
-                );
-                printInfo('TX', tx.hash);
-
-                await timeout(
-                    tx.wait(chain.confirmations),
-                    chain.timeout || 60000,
-                    new Error(`Timeout updating gas info for ${chain.name}`),
+                await relayTransaction(
+                    options,
+                    chain,
+                    operatorsContract,
+                    'executeContract',
+                    [target, updateGasInfoCalldata, 0],
+                    0,
+                    gasOptions,
                 );
             } catch (error) {
                 for (let i = 0; i < chainsToUpdate.length; i++) {
@@ -321,10 +293,13 @@ if (require.main === module) {
             'updateGasInfo',
         ]),
     );
+    program.addOption(new Option('--offline', 'run script in offline mode'));
     program.addOption(new Option('--args <args>', 'operator action arguments'));
 
     // options for updateGasInfo
     program.addOption(new Option('--chains <chains...>', 'Chain names'));
+    program.addOption(new Option('--relayerAPI <relayerAPI>', 'Relay the tx through an external relayer API').env('RELAYER_API'));
+    program.addOption(new Option('--ignoreError', 'Ignore errors and proceed to next chain'));
 
     program.action((options) => {
         main(options);

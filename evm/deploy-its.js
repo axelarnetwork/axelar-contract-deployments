@@ -24,8 +24,9 @@ const {
     getDeployOptions,
     getDeployedAddress,
     wasEventEmitted,
+    isConsensusChain,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
 
 /**
@@ -53,8 +54,23 @@ async function deployAll(config, wallet, chain, options) {
     const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
 
     const salt = options.salt ? `ITS ${options.salt}` : 'ITS';
-    const proxySalt = options.proxySalt || options.salt ? `ITS ${options.proxySalt || options.salt}` : 'ITS';
-    const factorySalt = options.proxySalt || options.salt ? `ITS Factory ${options.proxySalt || options.salt}` : 'ITS Factory';
+    let proxySalt, factorySalt;
+
+    // If reusing the proxy, then proxy salt is the existing value
+    if (options.reuseProxy) {
+        proxySalt = contractConfig.proxySalt;
+        factorySalt = itsFactoryContractConfig.salt;
+    } else if (options.proxySalt) {
+        proxySalt = `ITS ${options.proxySalt}`;
+        factorySalt = `ITS Factory ${options.proxySalt}`;
+    } else if (options.salt) {
+        proxySalt = `ITS ${options.salt}`;
+        factorySalt = `ITS Factory ${options.salt}`;
+    } else {
+        proxySalt = 'ITS';
+        factorySalt = 'ITS Factory';
+    }
+
     const implementationSalt = `${salt} Implementation`;
 
     contractConfig.salt = salt;
@@ -86,7 +102,11 @@ async function deployAll(config, wallet, chain, options) {
         throw new Error(`Invalid ITS address: ${interchainTokenService}`);
     }
 
-    printInfo('Interchain Token Service will be deployed to', interchainTokenService);
+    if (options.reuseProxy) {
+        printInfo('Reusing existing Interchain Token Service proxy', interchainTokenService);
+    } else {
+        printInfo('Interchain Token Service will be deployed to', interchainTokenService);
+    }
 
     const interchainTokenFactory = options.reuseProxy
         ? itsFactoryContractConfig.address
@@ -102,14 +122,44 @@ async function deployAll(config, wallet, chain, options) {
         throw new Error(`Invalid Interchain Token Factory address: ${interchainTokenFactory}`);
     }
 
-    printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
+    if (options.reuseProxy) {
+        printInfo('Reusing existing Interchain Token Factory proxy', interchainTokenFactory);
+    } else {
+        printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
+    }
 
-    // Register all chains that ITS is or will be deployed on.
+    const isCurrentChainConsensus = isConsensusChain(chain);
+
+    // Register all EVM chains that ITS is or will be deployed on.
     // Add a "skip": true under ITS key in the config if the chain will not have ITS.
-    const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
+    const itsChains = Object.values(config.chains).filter(
+        (chain) => chain.chainType === 'evm' && chain.contracts?.InterchainTokenService?.skip !== true,
+    );
     const trustedChains = itsChains.map((chain) => chain.axelarId);
-    const trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address || interchainTokenService);
-    printInfo('Trusted chains', trustedChains);
+    const trustedAddresses = itsChains.map((chain) =>
+        // If both current chain and remote chain are consensus chains, connect them in pairwise mode
+        isCurrentChainConsensus && isConsensusChain(chain)
+            ? chain.contracts?.InterchainTokenService?.address || interchainTokenService
+            : 'hub',
+    );
+
+    // If ITS Hub is deployed, register it as a trusted chain as well
+    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+
+    if (itsHubAddress) {
+        if (!config.axelar?.axelarId) {
+            throw new Error('Axelar ID for Axelar chain is not set');
+        }
+
+        trustedChains.push(config.axelar?.axelarId);
+        trustedAddresses.push(itsHubAddress);
+    }
+
+    // Trusted addresses are only used when deploying a new proxy
+    if (!options.reuseProxy) {
+        printInfo('Trusted chains', trustedChains);
+        printInfo('Trusted addresses', trustedAddresses);
+    }
 
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
 
@@ -214,6 +264,22 @@ async function deployAll(config, wallet, chain, options) {
                 );
             },
         },
+        gatewayCaller: {
+            name: 'Gateway Caller',
+            contractName: 'GatewayCaller',
+            async deploy() {
+                return await deployContract(
+                    deployMethod,
+                    wallet,
+                    getContractJSON('GatewayCaller', artifactPath),
+                    [contracts.AxelarGateway.address, contracts.AxelarGasService.address],
+                    deployOptions,
+                    gasOptions,
+                    verifyOptions,
+                    chain,
+                );
+            },
+        },
         implementation: {
             name: 'Interchain Token Service Implementation',
             contractName: 'InterchainTokenService',
@@ -227,6 +293,7 @@ async function deployAll(config, wallet, chain, options) {
                     chain.axelarId,
                     contractConfig.tokenManager,
                     contractConfig.tokenHandler,
+                    contractConfig.gatewayCaller,
                 ];
 
                 printInfo('ITS Implementation args', args);
@@ -314,7 +381,7 @@ async function deployAll(config, wallet, chain, options) {
 
         // When upgrading/reusing proxy, avoid re-deploying the proxy and the interchain token contract
         if (options.reuseProxy && ['InterchainToken', 'InterchainProxy'].includes(deployment.contractName)) {
-            printInfo(`Reusing ${deployment.name} deployment for contract ${deployment.contractName} at ${contractConfig[key]}`);
+            printInfo(`Reusing ${deployment.name} deployment`);
             continue;
         }
 
@@ -478,7 +545,7 @@ if (require.main === module) {
             .default('create3'),
     );
 
-    addExtendedOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true });
+    addEvmOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments'));
     program.addOption(new Option('--contractName <contractName>', 'contract name').default('InterchainTokenService')); // added for consistency
