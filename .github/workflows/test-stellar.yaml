@@ -132,9 +132,11 @@ jobs:
       - name: Compile WASM contracts
         run: |
           stellar contract build --manifest-path=axelar-cgp-soroban/Cargo.toml
+
           cd axelar-cgp-soroban
           ./optimize.sh
           cd ..
+
           WASM_DIR=axelar-cgp-soroban/target/wasm32-unknown-unknown/release
           echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
 
@@ -148,6 +150,9 @@ jobs:
           STELLAR_ADDRESS=$(stellar keys address test)
           echo "STELLAR_PRIVATE_KEY=${STELLAR_PRIVATE_KEY}" >> $GITHUB_ENV
           echo "STELLAR_ADDRESS=${STELLAR_ADDRESS}" >> $GITHUB_ENV
+
+      - name: Fund Stellar wallet
+        run: node stellar/faucet --recipient $STELLAR_ADDRESS
 
       - name: Prepare .env
         run: |
