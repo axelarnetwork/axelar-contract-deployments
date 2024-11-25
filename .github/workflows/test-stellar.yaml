@@ -33,6 +33,7 @@ jobs:
     runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       # this sets up nested repos: https://github.com/actions/checkout?tab=readme-ov-file#checkout-multiple-repos-nested
+      #
       # axelar-contract-deployments
       #   - axelar-cgp-soroban
       #
@@ -92,7 +93,7 @@ jobs:
               stellar/quickstart:testing \
               --local \
               --enable-soroban-rpc \
-              --protocol-version 21
+              --protocol-version 22
 
           RPC_URL="http://localhost:8000/soroban/rpc"
           NETWORK_PASSPHRASE="Standalone Network ; February 2017"
