@@ -312,23 +312,23 @@
           "salt": "Operators devnet-amplifier"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.0.0rc3 devnet-amplifier",
+          "salt": "ITS v2.0.1",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "proxySalt": "ITS v2.0.0 devnet-amplifier",
-          "tokenManagerDeployer": "0x4cE9EC3ECB34aD0284f77BF6AafdBef9d136bd24",
+          "tokenManagerDeployer": "0x2B078CC759492D1169a4d0c11E48B0388eef8C60",
           "interchainToken": "0x34c8C8d2E212E3D5eBECAdf4769388B2e36C4561",
-          "interchainTokenDeployer": "0x8Be3C8bbFAFeE70AEAC14406a5F5C6dCD4D4fCb0",
-          "tokenManager": "0x64291364740eb10aeC672f06eCD7c7a91ea5A752",
-          "tokenHandler": "0x445C50CC6085ff2d35364bcc3CDce8b3FE08b27d",
-          "gatewayCaller": "0xFE0144B9C5B487Ec0a6Db38F7f100E99125117b3",
-          "implementation": "0x110D33345f031b9b630366c8399838bE445fF22d",
+          "interchainTokenDeployer": "0x3fa7589c491fdbdc5bA7e20C7E36a4B401C26948",
+          "tokenManager": "0x81d4049814211645cA8238fad1AD7d955289b87b",
+          "tokenHandler": "0x1391457004C2647E85A2887D83609E72119eB967",
+          "gatewayCaller": "0xCF638A4aae010d0873b82866351064bCB6f6358a",
+          "implementation": "0x64B09264E7D54Fb665a0BaBf75D61466856a2c0b",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0x144c3d7A5f5198EF3B46A8258b35E903cf197A66"
         },
         "InterchainTokenFactory": {
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "salt": "ITS Factory v2.0.0 devnet-amplifier",
-          "implementation": "0x429E1bA4EF86B684741D04a97f18B25E78b8A8f1",
+          "implementation": "0x968BD32A558eB34EaB3480f95a58f24ef4B51920",
           "address": "0x6Ae8C8498d5FDA930e6ABeB0E15E5A00471702a7"
         }
       }
@@ -405,23 +405,23 @@
           "salt": "Operators devnet-amplifier"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.0.0rc3 devnet-amplifier",
+          "salt": "ITS v2.0.1",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "proxySalt": "ITS v2.0.0 devnet-amplifier",
-          "tokenManagerDeployer": "0x4cE9EC3ECB34aD0284f77BF6AafdBef9d136bd24",
+          "tokenManagerDeployer": "0x2B078CC759492D1169a4d0c11E48B0388eef8C60",
           "interchainToken": "0x34c8C8d2E212E3D5eBECAdf4769388B2e36C4561",
-          "interchainTokenDeployer": "0x8Be3C8bbFAFeE70AEAC14406a5F5C6dCD4D4fCb0",
-          "tokenManager": "0x64291364740eb10aeC672f06eCD7c7a91ea5A752",
-          "tokenHandler": "0x445C50CC6085ff2d35364bcc3CDce8b3FE08b27d",
-          "gatewayCaller": "0xFE0144B9C5B487Ec0a6Db38F7f100E99125117b3",
-          "implementation": "0x110D33345f031b9b630366c8399838bE445fF22d",
+          "interchainTokenDeployer": "0x3fa7589c491fdbdc5bA7e20C7E36a4B401C26948",
+          "tokenManager": "0x81d4049814211645cA8238fad1AD7d955289b87b",
+          "tokenHandler": "0x1391457004C2647E85A2887D83609E72119eB967",
+          "gatewayCaller": "0xCF638A4aae010d0873b82866351064bCB6f6358a",
+          "implementation": "0x64B09264E7D54Fb665a0BaBf75D61466856a2c0b",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0x144c3d7A5f5198EF3B46A8258b35E903cf197A66"
         },
         "InterchainTokenFactory": {
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "salt": "ITS Factory v2.0.0 devnet-amplifier",
-          "implementation": "0x429E1bA4EF86B684741D04a97f18B25E78b8A8f1",
+          "implementation": "0x968BD32A558eB34EaB3480f95a58f24ef4B51920",
           "address": "0x6Ae8C8498d5FDA930e6ABeB0E15E5A00471702a7"
         }
       }
@@ -713,8 +713,8 @@
       "InterchainTokenService": {
         "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-        "codeId": 738,
-        "address": "axelar10jzzmv5m7da7dn2xsfac0yqe7zamy34uedx3e28laq0p6f3f8dzqp649fp",
+        "codeId": 843,
+        "address": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4",
         "axelar": {
           "codeId": 843,
           "instantiateProposalId": "61"
