@@ -23,7 +23,7 @@
           ],
           "address": "0xb7879887ec7e85a5C757D7ccF5E3AB15007152e2",
           "implementation": "0x56c9De44D10324Acf5EfE3a808aF9F2A49EE4958",
-          "implementationCodehash": "0xcc7160c968bc78c8be295b69fce8725ca9813669fc96bf460c5c5c1e13b2bf3d",
+          "implementationCodehash": "0xe6100fc234ca2fac16c1b82b55efb20e03c230931bf9d0b66a7bcee99859f415",
           "authModule": "0x43ca3BC9947f41e2E96d627287C5252C70474E9F",
           "tokenDeployer": "0x9E68de165a7d70aaaDC711C85E96F8fbcB064a77",
           "deploymentMethod": "create",
