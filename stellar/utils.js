@@ -2,7 +2,7 @@
 
 const {
     Keypair,
-    SorobanRpc,
+    rpc,
     Horizon,
     TransactionBuilder,
     Networks,
@@ -19,7 +19,7 @@ const {
     BigNumber,
 } = ethers;
 
-const stellarCmd = 'stellar';
+const stellarCmd = 'soroban';
 const ASSET_TYPE_NATIVE = 'native';
 
 function getNetworkPassphrase(networkType) {
@@ -140,7 +140,7 @@ async function sendTransaction(tx, server, action, options = {}) {
             printInfo('Transaction result', returnValue.value());
         }
 
-        return returnValue.value();
+        return returnValue;
     } catch (err) {
         console.log('Sending transaction failed');
         throw err;
@@ -148,7 +148,7 @@ async function sendTransaction(tx, server, action, options = {}) {
 }
 
 async function broadcast(operation, wallet, chain, action, options = {}) {
-    const server = new SorobanRpc.Server(chain.rpc, { allowHttp: true });
+    const server = new rpc.Server(chain.rpc, { allowHttp: true });
 
     if (options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
@@ -168,7 +168,7 @@ function getAssetCode(balance, chain) {
 async function getWallet(chain, options) {
     const keypair = Keypair.fromSecret(options.privateKey);
     const address = keypair.publicKey();
-    const provider = new SorobanRpc.Server(chain.rpc, {
+    const provider = new rpc.Server(chain.rpc, {
         allowHttp: true,
     });
     const horizonServer = new Horizon.Server(chain.horizonRpc, { allowHttp: true });

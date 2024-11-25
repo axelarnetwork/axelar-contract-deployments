@@ -163,7 +163,7 @@ async function processCommand(config, chain, options) {
             printInfo(`TokenManager address for tokenId: ${tokenId}`, tokenManagerAddress);
 
             try {
-                await interchainTokenService.validTokenManagerAddress(tokenIdBytes32);
+                await interchainTokenService.deployedTokenManager(tokenIdBytes32);
                 printInfo(`TokenManager for tokenId: ${tokenId} exists at address:`, tokenManagerAddress);
             } catch (error) {
                 printInfo(`TokenManager for tokenId: ${tokenId} does not yet exist.`);
@@ -181,7 +181,7 @@ async function processCommand(config, chain, options) {
             printInfo(`InterchainToken address for tokenId: ${tokenId}`, interchainTokenAddress);
 
             try {
-                await interchainTokenService.validTokenAddress(tokenIdBytes32);
+                await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
                 printInfo(`Token for tokenId: ${tokenId} exists at address:`, interchainTokenAddress);
             } catch (error) {
                 printInfo(`Token for tokenId: ${tokenId} does not yet exist.`);
@@ -350,17 +350,19 @@ async function processCommand(config, chain, options) {
                 isValidCalldata: { metadata },
             });
 
-            isValidDestinationChain(config, destinationChain);
+            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            }
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const tokenManager = new Contract(
-                await interchainTokenService.validTokenManagerAddress(tokenIdBytes32),
+                await interchainTokenService.deployedTokenManager(tokenIdBytes32),
                 getContractJSON('ITokenManager').abi,
                 wallet,
             );
             const token = new Contract(
-                await interchainTokenService.validTokenAddress(tokenIdBytes32),
+                await interchainTokenService.registeredTokenAddress(tokenIdBytes32),
                 getContractJSON('InterchainToken').abi,
                 wallet,
             );
@@ -407,7 +409,9 @@ async function processCommand(config, chain, options) {
                 isValidCalldata: { data },
             });
 
-            isValidDestinationChain(config, destinationChain);
+            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            }
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 

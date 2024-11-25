@@ -24,6 +24,7 @@ const {
     getDeployOptions,
     getDeployedAddress,
     wasEventEmitted,
+    isConsensusChain,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
@@ -127,15 +128,37 @@ async function deployAll(config, wallet, chain, options) {
         printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
     }
 
-    // Register all chains that ITS is or will be deployed on.
+    const isCurrentChainConsensus = isConsensusChain(chain);
+
+    // Register all EVM chains that ITS is or will be deployed on.
     // Add a "skip": true under ITS key in the config if the chain will not have ITS.
-    const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
+    const itsChains = Object.values(config.chains).filter(
+        (chain) => chain.chainType === 'evm' && chain.contracts?.InterchainTokenService?.skip !== true,
+    );
     const trustedChains = itsChains.map((chain) => chain.axelarId);
-    const trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address || interchainTokenService);
+    const trustedAddresses = itsChains.map((chain) =>
+        // If both current chain and remote chain are consensus chains, connect them in pairwise mode
+        isCurrentChainConsensus && isConsensusChain(chain)
+            ? chain.contracts?.InterchainTokenService?.address || interchainTokenService
+            : 'hub',
+    );
+
+    // If ITS Hub is deployed, register it as a trusted chain as well
+    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+
+    if (itsHubAddress) {
+        if (!config.axelar?.axelarId) {
+            throw new Error('Axelar ID for Axelar chain is not set');
+        }
+
+        trustedChains.push(config.axelar?.axelarId);
+        trustedAddresses.push(itsHubAddress);
+    }
 
     // Trusted addresses are only used when deploying a new proxy
     if (!options.reuseProxy) {
         printInfo('Trusted chains', trustedChains);
+        printInfo('Trusted addresses', trustedAddresses);
     }
 
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
@@ -233,7 +256,7 @@ async function deployAll(config, wallet, chain, options) {
                     deployMethod,
                     wallet,
                     getContractJSON('TokenHandler', artifactPath),
-                    [contracts.AxelarGateway.address],
+                    [],
                     deployOptions,
                     gasOptions,
                     verifyOptions,
