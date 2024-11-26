@@ -72,6 +72,7 @@ async function getTrustedChainsAndAddresses(config, interchainTokenService) {
 
     // If ITS Hub is deployed, register it as a trusted chain as well
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+
     if (itsHubAddress) {
         if (!config.axelar?.axelarId) {
             throw new Error('Axelar ID for Axelar chain is not set');
@@ -79,6 +80,7 @@ async function getTrustedChainsAndAddresses(config, interchainTokenService) {
 
         allChains.push(config.axelar?.axelarId);
     }
+
     const trustedAddressesValues = await Promise.all(
         allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)),
     );
