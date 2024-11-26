@@ -24,7 +24,7 @@ const deployCosmWasmContract = async ({ contractName, chainName, salt, mnemonic,
     }
 };
 
-const deployEvmContract = async (config, chainName, { salt, env, yes, privateKey }) => {
+const deployEvmContract = async (config, chainName, { salt, env, yes, privateKey }, predict) => {
     try {
         console.log(`Starting deployment for Ext. Gateway on ${chainName.name}`);
         const gateway = await deployAmplifierGateway(config, chainName, {
@@ -35,7 +35,7 @@ const deployEvmContract = async (config, chainName, { salt, env, yes, privateKey
             deployMethod: 'create3',
             previousSignersRetention: 15,
             minimumRotationDelay: 86400,
-            predictOnly: true,
+            predictOnly: predict,
             deployMethod: 'create3',
         });
         console.log(`Deployment successful for Gateway on ${chainName.name}`);
@@ -78,11 +78,12 @@ async function processCommand(config, chainName, { salt, env, yes, privateKey, m
         codeId: 618, // Hardcoded Code ID for MultisigProver
     });
 
-    // CONTINUE HERE! TODO
-
     // UPDATE VERIFIER SET
+    
+
+
     // Deploy Gateway
-    // await deployEvmContract({ config, chainName, salt, env, yes, privateKey });
+    // await deployEvmContract({ config, chainName, salt, env, yes, privateKey }, false);
 }
 
 async function main(options) {
@@ -108,7 +109,7 @@ async function main(options) {
     const newChain = configNew.chains[newChainName];
 
     //PREDICT GATEWAY ADDRESS TO BE PASSED INTO NEWLY BUILT CHAIN NAME OBJ FOR INTEGRATION
-    const gateway = await deployEvmContract(configNew, newChain, { ...options });
+    const gateway = await deployEvmContract(configNew, newChain, { ...options }, true);
 
     configNew.chains[newChainName].contracts.AxelarGateway = {
         address: gateway,
