@@ -68,19 +68,16 @@ jobs:
       - name: Install Stellar CLI
         shell: bash
         run: |
+          # setup bin/ directory
+          mkdir bin
+          cd bin
+
           # Query latest release from official Stellar repo
           URL=$(curl -s https://api.github.com/repos/stellar/stellar-cli/releases/latest | jq -r .assets[].browser_download_url | grep 'stellar.*x86_64-unknown-linux')
 
           # download + extract binary
           wget -q $URL
           tar -xzf $(basename $URL)
-
-          # setup bin/ directory
-          mkdir bin
-          mv soroban bin/
-
-          # the cargo install defines these as aliases, so mimic that behaviour
-          ln -s $PWD/bin/soroban bin/stellar
 
           echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
 
