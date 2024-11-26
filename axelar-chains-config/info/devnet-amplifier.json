@@ -16,6 +16,21 @@
         "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
       },
       "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "startingKeyIDs": [
+            "core-avalanche-genesis"
+          ],
+          "address": "0xb7879887ec7e85a5C757D7ccF5E3AB15007152e2",
+          "implementation": "0x56c9De44D10324Acf5EfE3a808aF9F2A49EE4958",
+          "implementationCodehash": "0xe6100fc234ca2fac16c1b82b55efb20e03c230931bf9d0b66a7bcee99859f415",
+          "authModule": "0x43ca3BC9947f41e2E96d627287C5252C70474E9F",
+          "tokenDeployer": "0x9E68de165a7d70aaaDC711C85E96F8fbcB064a77",
+          "deploymentMethod": "create",
+          "connectionType": "consensus",
+          "governance": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "mintLimiter": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB"
+        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
           "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
@@ -65,6 +80,21 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 25,
       "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "startingKeyIDs": [
+            "core-ethereum-genesis"
+          ],
+          "address": "0x7C60aA56482c2e78D75Fd6B380e1AdC537B97319",
+          "implementation": "0x80b70F5f8c8018ff919AcfdcF1026cf28D2c81bc",
+          "implementationCodehash": "0xa07791a112c34c715c6c883967223b5c56374a99fe71d91c465cfc0be3d7f03d",
+          "authModule": "0x7a5746A207b86cA4d7F92B4F423403a60CB96D2d",
+          "tokenDeployer": "0x7619952e5edd593dd04ddb3208f430c7061f8bB0",
+          "deploymentMethod": "create",
+          "connectionType": "consensus",
+          "governance": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "mintLimiter": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB"
+        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
           "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
@@ -114,6 +144,21 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 40,
       "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "startingKeyIDs": [
+            "core-optimism-genesis"
+          ],
+          "address": "0xdb6711cFc97e13E4aF6EEEe5f4923A9c2FBf0721",
+          "implementation": "0x6BB7937D233e3Ea48C231114cEc91739aAfa2021",
+          "implementationCodehash": "0xfa1b1e1e8e971ce57ab86a74fbd8a92b15b3bd8832c300db0fae6e688a4c6a59",
+          "authModule": "0xA5A5160F81dF7CfEb56D31E2321898318ddA448D",
+          "tokenDeployer": "0xF8715D878a73dBf5eB1505f646DF86188f0500B2",
+          "deploymentMethod": "create",
+          "connectionType": "consensus",
+          "governance": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
+          "mintLimiter": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB"
+        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
           "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
@@ -577,48 +622,56 @@
           }
         }
       }
-    }
-  },
-  "stellar-test2": {
-    "name": "Stellar",
-    "axelarId": "stellar-test2",
-    "rpc": "https://soroban-testnet.stellar.org",
-    "horizonRpc": "https://horizon-testnet.stellar.org",
-    "networkType": "testnet",
-    "explorer": {
-      "name": "Soroban Nownodes",
-      "url": "https://soroban.nownodes.io/testnet"
     },
-    "tokenSymbol": "XLM",
-    "contracts": {
-      "axelar_gateway": {
-        "address": "CBGNPCKNCKKKCI5AUOS2K6H4JDLGPFHHXNDNOEZBIA3VO2NBEZQXFAG5",
-        "deployer": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
-        "initializeArgs": {
-          "owner": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
-          "operator": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
-          "domainSeparator": "e33a8ab3341e36bdcc552924ea42c85ef40dc2cfa41259eb166fb254bc3f036a",
-          "minimumRotationDelay": "0",
-          "previousSignersRetention": "15",
-          "initialSigners": [
-            {
-              "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
-              "signers": [
-                {
-                  "signer": "168983122cd64add01997a5ad115fbcb52fea5ed659a9702b83efbcb3a5e598e",
-                  "weight": "1"
-                }
-              ],
-              "threshold": "1"
-            }
-          ]
+    "stellar-test2": {
+      "name": "Stellar",
+      "axelarId": "stellar-test2",
+      "rpc": "https://soroban-testnet.stellar.org",
+      "horizonRpc": "https://horizon-testnet.stellar.org",
+      "networkType": "testnet",
+      "explorer": {
+        "name": "Soroban Nownodes",
+        "url": "https://soroban.nownodes.io/testnet"
+      },
+      "tokenSymbol": "XLM",
+      "contracts": {
+        "axelar_gateway": {
+          "address": "CBGNPCKNCKKKCI5AUOS2K6H4JDLGPFHHXNDNOEZBIA3VO2NBEZQXFAG5",
+          "deployer": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
+          "initializeArgs": {
+            "owner": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
+            "operator": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
+            "domainSeparator": "e33a8ab3341e36bdcc552924ea42c85ef40dc2cfa41259eb166fb254bc3f036a",
+            "minimumRotationDelay": "0",
+            "previousSignersRetention": "15",
+            "initialSigners": [
+              {
+                "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+                "signers": [
+                  {
+                    "signer": "168983122cd64add01997a5ad115fbcb52fea5ed659a9702b83efbcb3a5e598e",
+                    "weight": "1"
+                  }
+                ],
+                "threshold": "1"
+              }
+            ]
+          }
+        },
+        "axelar_gas_service": {
+          "address": "CAMI6IZJFE5CKR5BWUT5ADFKRZHFFB6QHN7GYU2THR7PW5OS6YVU2EQK",
+          "deployer": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
+          "initializeArgs": {
+            "gasCollector": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG"
+          }
         }
       },
-      "axelar_gas_service": {
-        "address": "CAMI6IZJFE5CKR5BWUT5ADFKRZHFFB6QHN7GYU2THR7PW5OS6YVU2EQK",
-        "deployer": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
+      "example": {
+        "address": "CDV63R2YDFEYWXM5S4C3MLW65SIOKZYAY67NUGJ4QOGJXK6LJOSZAWLJ",
+        "deployer": "GAS2LOTVLVQJ77TPY53QMQR5SAAKPVT5MY3M4UVVHZELQ6TXL4D5WR7A",
         "initializeArgs": {
-          "gasCollector": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG"
+          "gatewayAddress": "CBGNPCKNCKKKCI5AUOS2K6H4JDLGPFHHXNDNOEZBIA3VO2NBEZQXFAG5",
+          "gasServiceAddress": "CAMI6IZJFE5CKR5BWUT5ADFKRZHFFB6QHN7GYU2THR7PW5OS6YVU2EQK"
         }
       }
     }
@@ -900,7 +953,7 @@
         }
       }
     },
-    "axelarId": "axelarnet",
+    "axelarId": "axelar",
     "chainId": "devnet-amplifier",
     "rpc": "http://devnet-amplifier.axelar.dev:26657",
     "lcd": "http://devnet-amplifier.axelar.dev:1317",

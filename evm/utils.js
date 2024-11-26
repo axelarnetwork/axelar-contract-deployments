@@ -1036,6 +1036,8 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
     verifyContract(env, chain, contract, args, { ...options, contractPath: getQualifiedContractName(name) });
 };
 
+const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1076,4 +1078,5 @@ module.exports = {
     getWeightedSigners,
     getQualifiedContractName,
     verifyContractByName,
+    isConsensusChain,
 };
