@@ -1,5 +1,10 @@
 name: "Setup Repo Action"
 description: "A reusable composite action that setups rust and other common tasks"
+inputs:
+  rust-cache:
+    description: "which cache to use for Rust"
+    required: false
+    default: "github"
 
 runs:
   using: "composite"
@@ -13,6 +18,7 @@ runs:
       with:
         cache-all-crates: true
         cache-on-failure: true
+        cache-provider: ${{ inputs.rust-cache }}
         workspaces: |
           solana
 

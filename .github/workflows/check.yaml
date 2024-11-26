@@ -16,7 +16,7 @@ defaults:
 
 name: check
 jobs:
-  fmt:
+  check:
     runs-on: large-runner
     name: check
     steps:

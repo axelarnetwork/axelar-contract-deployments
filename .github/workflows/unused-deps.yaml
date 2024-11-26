@@ -18,8 +18,8 @@ defaults:
 
 name: unused-deps
 jobs:
-  coverage:
-    runs-on: ubuntu-22.04
+  unused-deps:
+    runs-on: large-runner
     name: unused-deps
     steps:
       - uses: actions/checkout@v4

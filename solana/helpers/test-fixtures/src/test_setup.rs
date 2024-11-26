@@ -171,21 +171,11 @@ impl TestFixture {
             signing_keypairs,
             hash,
         );
-        let tx = self
-            .banks_client
+
+        self.banks_client
             .process_transaction_with_metadata(tx)
             .await
-            .unwrap();
-
-        // make everything slower on CI to prevent flaky tests
-        if std::env::var("CI").is_ok() {
-            // sleep for 200 millis to allow the transaction to be processed. The solana
-            // test program otherwise can't keep up with the speed of the transactions for
-            // some more intense tests on weaker CI machines
-            tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
-        }
-
-        tx
+            .unwrap()
     }
 
     pub async fn send_tx_with_metadata(

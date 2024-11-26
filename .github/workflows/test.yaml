@@ -20,7 +20,7 @@ defaults:
 name: test
 jobs:
   test:
-    runs-on: large-runner
+    runs-on: self-hosted
     name: test
     steps:
       - uses: actions/checkout@v4
@@ -30,6 +30,8 @@ jobs:
 
       - name: Setup repo
         uses: ./.github/actions/setup-repo
+        with:
+          rust-cache: "buildjet"
 
       - name: cargo xtask test
         run: cargo xtask test
