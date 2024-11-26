@@ -41,15 +41,15 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const predictAndUpdateAddress = async (client, contractConfig, options) => {
+const predictAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
 
     const { checksum } = await client.getCodeDetails(contractConfig.codeId);
     const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainName), 'axelar');
 
-    contractConfig.address = contractAddress;
-
     printInfo(`Predicted address for ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
+
+    return contractAddress;
 };
 
 const printProposal = (proposal, proposalType) => {
@@ -119,8 +119,13 @@ const instantiate = async (client, wallet, config, options) => {
 
     await updateCodeId(client, config, options);
 
+    let contractAddress;
+
     if (predictOnly) {
-        return predictAndUpdateAddress(client, contractConfig, options);
+        contractAddress = await predictAddress(client, contractConfig, options);
+        contractConfig.address = contractAddress;
+
+        return;
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
@@ -131,9 +136,13 @@ const instantiate = async (client, wallet, config, options) => {
     if (instantiate2) {
         proposal = encodeInstantiate2Proposal(config, options, initMsg);
         proposalType = InstantiateContract2Proposal;
+
+        contractAddress = await predictAddress(client, contractConfig, options);
     } else {
         proposal = encodeInstantiateProposal(config, options, initMsg);
         proposalType = InstantiateContractProposal;
+
+        printInfo('Contract address cannot be predicted without using `--instantiate2` flag, address will not be saved in the config');
     }
 
     if (!confirmProposalSubmission(options, proposal, proposalType)) {
@@ -143,10 +152,7 @@ const instantiate = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractConfig.instantiateProposalId = proposalId;
-
-    if (instantiate2) {
-        return predictAndUpdateAddress(client, contractConfig, options);
-    }
+    if (instantiate2) contractConfig.address = contractAddress;
 };
 
 const execute = async (client, wallet, config, options) => {

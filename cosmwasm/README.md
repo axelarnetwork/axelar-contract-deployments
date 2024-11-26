@@ -176,6 +176,8 @@ Use the option `--fetchCodeId` to retrieve and update the code id from the netwo
 
 Note: The rules for chain name specification and the use of `--instantiate2` as described in the "Deploy the contracts" and "Constant Address Deployment" sections above also apply when instantiating through governance. Refer to those sections for details on omitting chain names for certain contracts and using `--instantiate2` for address prediction.
 
+Since the instantiation is not executed until the porposal passes, the contract address cannot be known in advance and therefore it cannot be saved in the config, unless the address is predicted using the `--instantiate2` flag.
+
 Order of execution to satisfy dependencies:
 
 1.  `node cosmwasm/submit-proposal.js instantiate -c Router -t "Router roposal title" -d "Router proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 --predictOnly`
@@ -194,7 +196,7 @@ Order of execution to satisfy dependencies:
 
 The command `storeInstantiate` from the `submit-proposal` script, allows uploading and instantiating in one step. However, there are a couple of caveats to be aware of:
 
-1. There is no support for `instantiate2` in this proposal type. This means that the contract address will not be known until the proposal is executed.
+1. There is no support for `instantiate2` using this proposal type. This means that the contract address will not be known until the proposal is executed and therefore it cannot be saved in the config.
 
 2. Since governance proposals are executed asynchronously, both the codeId and contract address are not immediately available. Querying the network for the correct values could be tricky if multiple proposals are executed together.
 
