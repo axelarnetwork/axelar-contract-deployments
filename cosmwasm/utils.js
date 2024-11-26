@@ -618,12 +618,12 @@ const getChainTruncationParams = (config, chainConfig) => {
     let maxDecimalsWhenTruncating = chainTruncationParams?.maxDecimalsWhenTruncating;
 
     // set EVM default values
-    if (chainConfig.chainType == 'evm') {
+    if (chainConfig.chainType === 'evm') {
         maxUintBits = maxUintBits || DEFAULT_MAX_UINT_BITS_EVM;
         maxDecimalsWhenTruncating = maxDecimalsWhenTruncating || DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM;
     }
 
-    validateParameters({ isValidNumber: { maxUintBits }, isValidNumber: { maxDecimalsWhenTruncating } });
+    validateParameters({ isValidNumber: { maxUintBits, maxDecimalsWhenTruncating } });
 
     return { maxUintBits, maxDecimalsWhenTruncating };
 };
