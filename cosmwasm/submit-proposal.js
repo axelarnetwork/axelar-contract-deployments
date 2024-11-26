@@ -16,6 +16,7 @@ const {
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     updateCodeId,
+    getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeStoreInstantiateProposal,
@@ -27,7 +28,7 @@ const {
     submitProposal,
     makeInstantiateMsg,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo, prompt, getChainConfig } = require('../common');
+const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, getItsEdgeContract } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -170,27 +171,16 @@ const execute = async (client, wallet, config, options) => {
 const registerItsChain = async (client, wallet, config, options) => {
     const chains = options.chains.map((chain) => {
         const chainConfig = getChainConfig(config, chain);
+        const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
 
-        if (!chainConfig.maxUintBits) {
-            throw new Error(`Missing maxUintBits for chain ${chain}`);
-        }
-
-        if (!chainConfig.maxDecimalsWhenTruncating) {
-            throw new Error(`Missing maxDecimalsWhenTruncating for chain ${chain}`);
-        }
-
-        const itsEdgeContract = chainConfig.contracts.InterchainTokenService?.address || chainConfig.contracts.ITS?.objects?.ChannelId;
-
-        if (!itsEdgeContract) {
-            throw new Error(`Missing ITS edge contract for chain ${chain}`);
-        }
+        const itsEdgeContract = getItsEdgeContract(chainConfig);
 
         return {
             chain: chainConfig.axelarId,
             its_edge_contract: itsEdgeContract,
             truncation: {
-                max_uint: (2n ** BigInt(chainConfig.maxUintBits) - 1n).toString(),
-                max_decimals_when_truncating: chainConfig.maxDecimalsWhenTruncating,
+                max_uint: (2n ** BigInt(maxUintBits) - 1n).toString(),
+                max_decimals_when_truncating: maxDecimalsWhenTruncating,
             },
         };
     });
@@ -298,9 +288,11 @@ const programHandler = () => {
     addAmplifierOptions(executeCmd, { contractOptions: true, executeProposalOptions: true, proposalOptions: true, runAs: true });
 
     const registerItsChainCmd = program
-        .command('register-its-chain')
+        .command('its-hub-register-chains')
         .description('Submit an execute wasm contract proposal to register an ITS chain')
-        .action((options) => {
+        .argument('<chains...>', 'list of chains to register on ITS hub')
+        .action((chains, options) => {
+            options.chains = chains;
             mainProcessor(registerItsChain, options);
         });
     addAmplifierOptions(registerItsChainCmd, { registerItsChainOptions: true, proposalOptions: true, runAs: true });
