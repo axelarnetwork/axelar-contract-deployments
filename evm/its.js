@@ -74,10 +74,6 @@ async function getTrustedChainsAndAddresses(config, interchainTokenService) {
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
 
     if (itsHubAddress) {
-        if (!config.axelar?.axelarId) {
-            throw new Error('Axelar ID for Axelar chain is not set');
-        }
-
         allChains.push(config.axelar?.axelarId);
     }
 
