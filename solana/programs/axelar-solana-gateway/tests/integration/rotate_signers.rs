@@ -8,6 +8,7 @@ use axelar_solana_gateway::processor::{GatewayEvent, VerifierSetRotated};
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, make_messages, make_verifier_set, random_bytes, random_message,
+    ProgramInvocationState,
 };
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use solana_program_test::tokio;
@@ -59,15 +60,18 @@ async fn successfully_rotates_signers() {
     let new_epoch: U256 = 2u128.into();
 
     // - expected events
-    let emitted_event = get_gateway_events(&tx_result).pop().unwrap();
-    let GatewayEvent::VerifierSetRotated(emitted_event) = emitted_event else {
-        panic!("unexpected event");
+    let emitted_events = get_gateway_events(&tx_result).pop().unwrap();
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+    let [(_, GatewayEvent::VerifierSetRotated(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
     let expected_event = VerifierSetRotated {
         epoch: new_epoch,
         verifier_set_hash: new_verifier_set_hash,
     };
-    assert_eq!(emitted_event, expected_event);
+    assert_eq!(emitted_event, &expected_event);
 
     // - signers have been updated
     let root_pda_data = metadata.gateway_confg(metadata.gateway_root_pda).await;
@@ -258,15 +262,18 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
     // Assert
     assert!(tx.result.is_ok());
     let new_epoch: U256 = 3_u128.into();
-    let emitted_event = get_gateway_events(&tx).pop().unwrap();
-    let GatewayEvent::VerifierSetRotated(emitted_event) = emitted_event else {
-        panic!("unexpected event");
+    let emitted_events = get_gateway_events(&tx).pop().unwrap();
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+    let [(_, GatewayEvent::VerifierSetRotated(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
     let expected_event = VerifierSetRotated {
         epoch: new_epoch,
         verifier_set_hash: new_verifier_set_hash,
     };
-    assert_eq!(emitted_event, expected_event);
+    assert_eq!(emitted_event, &expected_event);
 
     // - signers have been updated
     let root_pda_data = metadata.gateway_confg(metadata.gateway_root_pda).await;

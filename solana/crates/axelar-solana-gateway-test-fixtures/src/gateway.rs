@@ -20,8 +20,7 @@ use axelar_solana_gateway::state::GatewayConfig;
 use axelar_solana_gateway::{
     bytemuck, get_gateway_root_config_pda, get_incoming_message_pda, get_verifier_set_tracker_pda,
 };
-use base64::engine::general_purpose;
-use base64::Engine;
+pub use gateway_event_stack::{MatchContext, ProgramInvocationState};
 use rand::Rng as _;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{BanksTransactionResultWithMetadata, ProgramTest};
@@ -501,59 +500,13 @@ impl SolanaAxelarIntegration {
 #[must_use]
 pub fn get_gateway_events(
     tx: &solana_program_test::BanksTransactionResultWithMetadata,
-) -> Vec<GatewayEvent> {
-    tx.metadata
-        .as_ref()
-        .unwrap()
-        .log_messages
-        .iter()
-        .map(|log| {
-            log.trim()
-                .trim_start_matches("Program data:")
-                .split_whitespace()
-                .filter_map(decode_base64)
-        })
-        .filter_map(|mut raw_log| {
-            use axelar_solana_gateway::event_prefixes::*;
-            let disc = raw_log.next()?.try_into().ok()?;
-            match &disc {
-                CALL_CONTRACT => {
-                    let event =
-                        axelar_solana_gateway::processor::CallContractEvent::new(raw_log).ok()?;
-                    Some(GatewayEvent::CallContract(event))
-                }
-                MESSAGE_APPROVED => {
-                    let event =
-                        axelar_solana_gateway::processor::MessageEvent::new(raw_log).ok()?;
-                    Some(GatewayEvent::MessageApproved(event))
-                }
-                MESSAGE_EXECUTED => {
-                    let event =
-                        axelar_solana_gateway::processor::MessageEvent::new(raw_log).ok()?;
-                    Some(GatewayEvent::MessageExecuted(event))
-                }
-                OPERATORSHIP_TRANSFERRED => {
-                    let event =
-                        axelar_solana_gateway::processor::OperatorshipTransferredEvent::new(
-                            raw_log,
-                        )
-                        .ok()?;
-                    Some(GatewayEvent::OperatorshipTransferred(event))
-                }
-                SIGNERS_ROTATED => {
-                    let event =
-                        axelar_solana_gateway::processor::VerifierSetRotated::new(raw_log).ok()?;
-                    Some(GatewayEvent::VerifierSetRotated(event))
-                }
-                _ => None,
-            }
-        })
-        .collect::<Vec<_>>()
-}
-
-#[inline]
-fn decode_base64(input: &str) -> Option<Vec<u8>> {
-    general_purpose::STANDARD.decode(input).ok()
+) -> Vec<ProgramInvocationState<GatewayEvent>> {
+    let match_context = MatchContext::new(&axelar_solana_gateway::ID.to_string());
+    gateway_event_stack::build_program_event_stack(
+        &match_context,
+        tx.metadata.as_ref().unwrap().log_messages.as_slice(),
+        gateway_event_stack::parse_gateway_logs,
+    )
 }
 
 /// Create a new verifier set

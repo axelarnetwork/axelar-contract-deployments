@@ -1,7 +1,10 @@
 use std::str::FromStr;
 
 use axelar_solana_gateway::processor::{CallContractEvent, GatewayEvent};
-use axelar_solana_gateway_test_fixtures::{base::TestFixture, gateway::get_gateway_events};
+use axelar_solana_gateway_test_fixtures::{
+    base::TestFixture,
+    gateway::{get_gateway_events, ProgramInvocationState},
+};
 use axelar_solana_memo_program::get_counter_pda;
 use axelar_solana_memo_program::instruction::call_gateway_with_memo;
 use ethers_core::utils::hex::ToHex;
@@ -187,8 +190,11 @@ async fn call_solana_gateway(
 
     let event = get_gateway_events(&tx).into_iter().next().unwrap();
 
-    let GatewayEvent::CallContract(event) = event else {
+    let ProgramInvocationState::Succeeded(vec_events) = event else {
         panic!("unexpected event")
     };
-    event
+    let [(_, GatewayEvent::CallContract(event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
+    };
+    event.clone()
 }

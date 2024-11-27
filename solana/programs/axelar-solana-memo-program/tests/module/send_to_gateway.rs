@@ -1,5 +1,5 @@
 use axelar_solana_gateway::processor::{CallContractEvent, GatewayEvent};
-use axelar_solana_gateway_test_fixtures::gateway::get_gateway_events;
+use axelar_solana_gateway_test_fixtures::gateway::{get_gateway_events, ProgramInvocationState};
 use axelar_solana_memo_program::get_counter_pda;
 use axelar_solana_memo_program::instruction::call_gateway_with_memo;
 use ethers_core::abi::AbiEncode;
@@ -42,16 +42,22 @@ async fn test_successfully_send_to_gateway() {
 
     // Assert
     // We can get the memo from the logs
-    let gateway_event = get_gateway_events(&tx).into_iter().next().unwrap();
+    let emitted_events = get_gateway_events(&tx).pop().unwrap();
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
+    };
     assert_eq!(
-        gateway_event,
-        GatewayEvent::CallContract(CallContractEvent {
+        emitted_event,
+        &CallContractEvent {
             sender_key: counter_pda,
             destination_chain,
             destination_contract_address: destination_address,
             payload: memo.as_bytes().to_vec(),
             payload_hash: solana_sdk::keccak::hash(memo.as_bytes()).0
-        }),
+        },
         "Mismatched gateway event"
     );
 }

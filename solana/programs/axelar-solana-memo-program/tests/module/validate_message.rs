@@ -20,7 +20,9 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
 
     use axelar_solana_gateway::processor::GatewayEvent;
     // Setup
-    use axelar_solana_gateway_test_fixtures::gateway::get_gateway_events;
+    use axelar_solana_gateway_test_fixtures::gateway::{
+        get_gateway_events, ProgramInvocationState,
+    };
     use axelar_solana_memo_program::state::Counter;
     use solana_sdk::pubkey::Pubkey;
 
@@ -130,9 +132,12 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
     assert_eq!(counter.counter, 1);
 
     // Event was logged
-    let emitted_event = get_gateway_events(&tx).pop().unwrap();
-    let GatewayEvent::MessageExecuted(emitted_event) = emitted_event else {
-        panic!("unexpected event");
+    let emitted_events = get_gateway_events(&tx).pop().unwrap();
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+    let [(_, GatewayEvent::MessageExecuted(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
     let command_id = command_id(
         &merkelised_message.leaf.message.cc_id.chain,
@@ -149,5 +154,5 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
         destination_chain: merkelised_message.leaf.message.destination_chain,
     };
 
-    assert_eq!(emitted_event, expected_event);
+    assert_eq!(emitted_event, &expected_event);
 }

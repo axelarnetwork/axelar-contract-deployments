@@ -774,9 +774,9 @@ dependencies = [
  "axelar-executable",
  "axelar-solana-encoding",
  "axelar-solana-gateway",
- "base64 0.21.7",
  "bincode",
  "ed25519-dalek 2.1.1",
+ "gateway-event-stack",
  "libsecp256k1",
  "rand 0.7.3",
  "rand 0.8.5",
@@ -2901,6 +2901,18 @@ dependencies = [
  "solana-program-test",
  "solana-sdk",
  "thiserror",
+]
+
+[[package]]
+name = "gateway-event-stack"
+version = "0.1.0"
+dependencies = [
+ "axelar-solana-gateway",
+ "base64 0.21.7",
+ "pretty_assertions",
+ "solana-sdk",
+ "test-log",
+ "tracing",
 ]
 
 [[package]]

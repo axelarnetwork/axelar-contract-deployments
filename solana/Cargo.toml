@@ -136,6 +136,7 @@ gateway = { path = "programs/gateway", package = "gmp-gateway" }
 axelar-solana-gateway = { path = "programs/axelar-solana-gateway" }
 
 # helper crates
+gateway-event-stack = { path = "crates/gateway-event-stack" }
 axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
 axelar-executable = { path = "crates/axelar-executable" }
 axelar-executable-old = { path = "helpers/axelar-executable-old" }

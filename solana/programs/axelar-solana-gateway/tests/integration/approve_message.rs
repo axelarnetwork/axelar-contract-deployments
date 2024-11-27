@@ -12,7 +12,7 @@ use axelar_solana_gateway::state::incoming_message::{
     command_id, IncomingMessage, IncomingMessageWrapper,
 };
 use axelar_solana_gateway_test_fixtures::gateway::{
-    get_gateway_events, make_messages, make_verifier_set,
+    get_gateway_events, make_messages, make_verifier_set, ProgramInvocationState,
 };
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use itertools::Itertools;
@@ -61,7 +61,7 @@ async fn successfully_approves_messages() {
             incoming_message_pda_bump,
         )
         .unwrap();
-        let tx_result = metadata.send_tx(&[ix]).await.unwrap();
+        let tx = metadata.send_tx(&[ix]).await.unwrap();
 
         // Assert event
         let expected_event = axelar_solana_gateway::processor::MessageEvent {
@@ -73,11 +73,14 @@ async fn successfully_approves_messages() {
             payload_hash: message.payload_hash,
             destination_chain: message.destination_chain,
         };
-        let emitted_event = get_gateway_events(&tx_result).pop().unwrap();
-        let GatewayEvent::MessageApproved(emitted_event) = emitted_event else {
-            panic!("unexpected event");
+        let emitted_events = get_gateway_events(&tx).pop().unwrap();
+        let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+            panic!("unexpected event")
         };
-        assert_eq!(emitted_event, expected_event);
+        let [(_, GatewayEvent::MessageApproved(emitted_event))] = vec_events.as_slice() else {
+            panic!("unexpected event")
+        };
+        assert_eq!(emitted_event, &expected_event);
 
         // Assert PDA state for message approval
         let account = metadata.incoming_message(incoming_message_pda).await;
@@ -136,7 +139,7 @@ async fn successfully_idempotent_approvals_across_batches() {
     for message_info in merkle_messages_batch_two {
         dbg!(&message_info);
         let hash = message_info.leaf.message.hash::<SolanaSyscallHasher>();
-        let tx_result = metadata
+        let tx = metadata
             .approve_message(
                 execute_data_batch_two.payload_merkle_root,
                 message_info.clone(),
@@ -146,9 +149,11 @@ async fn successfully_idempotent_approvals_across_batches() {
             .unwrap();
         message_counter += 1;
 
-        if let Some(GatewayEvent::MessageApproved(_emitted_event)) =
-            get_gateway_events(&tx_result).pop()
-        {
+        let emitted_events = get_gateway_events(&tx).pop().unwrap();
+        let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+            panic!("unexpected event")
+        };
+        if let [(_, GatewayEvent::MessageApproved(_emitted_event))] = vec_events.as_slice() {
             events_counter += 1;
         };
 
