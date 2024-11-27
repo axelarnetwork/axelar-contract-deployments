@@ -29,8 +29,12 @@ const {
     getChainConfig,
     getSaltFromKey,
     calculateDomainSeparator,
+    validateParameters,
 } = require('../common');
 const { normalizeBech32 } = require('@cosmjs/encoding');
+
+const DEFAULT_MAX_UINT_BITS_EVM = 256;
+const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
@@ -606,6 +610,24 @@ const fetchCodeIdFromCodeHash = async (client, contractBaseConfig) => {
     return codeId;
 };
 
+const getChainTruncationParams = (config, chainConfig) => {
+    const key = chainConfig.axelarId.toLowerCase();
+    const chainTruncationParams = config.axelar.contracts.InterchainTokenService[key];
+
+    let maxUintBits = chainTruncationParams?.maxUintBits;
+    let maxDecimalsWhenTruncating = chainTruncationParams?.maxDecimalsWhenTruncating;
+
+    // set EVM default values
+    if (chainConfig.chainType === 'evm') {
+        maxUintBits = maxUintBits || DEFAULT_MAX_UINT_BITS_EVM;
+        maxDecimalsWhenTruncating = maxDecimalsWhenTruncating || DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM;
+    }
+
+    validateParameters({ isValidNumber: { maxUintBits, maxDecimalsWhenTruncating } });
+
+    return { maxUintBits, maxDecimalsWhenTruncating };
+};
+
 const getInstantiatePermission = (accessType, addresses) => {
     return {
         permission: accessType,
@@ -840,6 +862,7 @@ module.exports = {
     instantiateContract,
     makeInstantiateMsg,
     fetchCodeIdFromCodeHash,
+    getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeStoreInstantiateProposal,
