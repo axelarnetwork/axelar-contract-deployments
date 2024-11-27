@@ -1,17 +1,21 @@
+use std::convert::TryInto;
 use std::str::FromStr;
 
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_encoding::LeafHash;
 use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::log::sol_log_data;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+use super::event_utils::{read_array, read_string, EventParseError};
 use super::Processor;
-use crate::events::{GatewayEvent, MessageExecuted};
 use crate::state::incoming_message::{command_id, IncomingMessageWrapper, MessageStatus};
-use crate::{assert_valid_incoming_message_pda, create_validate_message_signing_pda};
+use crate::{
+    assert_valid_incoming_message_pda, create_validate_message_signing_pda, event_prefixes,
+};
 
 impl Processor {
     /// Validate a message approval, and mark it as used
@@ -73,16 +77,105 @@ impl Processor {
         incoming_message.message.status = MessageStatus::Executed;
 
         // Emit an event
-        GatewayEvent::MessageExecuted(MessageExecuted {
-            command_id,
-            source_chain: message.cc_id.chain,
-            message_id: message.cc_id.id,
-            source_address: message.source_address,
-            destination_address: message.destination_address,
-            payload_hash: message.payload_hash,
-        })
-        .emit()?;
+        sol_log_data(&[
+            event_prefixes::MESSAGE_EXECUTED,
+            &command_id,
+            &destination_address.to_bytes(),
+            &message.payload_hash,
+            message.cc_id.chain.as_bytes(),
+            message.cc_id.id.as_bytes(),
+            message.source_address.as_bytes(),
+            message.destination_chain.as_bytes(),
+        ]);
 
         Ok(())
+    }
+}
+
+/// Represents a message event.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct MessageEvent {
+    /// Command identifier, 32 bytes.
+    pub command_id: [u8; 32],
+
+    /// Destination address as a `Pubkey`.
+    pub destination_address: Pubkey,
+
+    /// Payload hash, 32 bytes.
+    pub payload_hash: [u8; 32],
+
+    /// CC ID chain as a `String`.
+    pub cc_id_chain: String,
+
+    /// CC ID ID as a `String`.
+    pub cc_id_id: String,
+
+    /// Source address as a `String`.
+    pub source_address: String,
+
+    /// Destination chain as a `String`.
+    pub destination_chain: String,
+}
+
+impl MessageEvent {
+    /// Constructs a new `MessageEvent` by parsing the provided data iterator.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - An iterator over `Vec<u8>` slices representing the event data.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `EventParseError` if any required data is missing or invalid.
+    pub fn new(mut data: impl Iterator<Item = Vec<u8>>) -> Result<Self, EventParseError> {
+        // Read known-size elements
+        let command_id_data = data
+            .next()
+            .ok_or(EventParseError::MissingData("command_id"))?;
+        let command_id = read_array::<32>("command_id", &command_id_data)?;
+
+        let destination_address_data = data
+            .next()
+            .ok_or(EventParseError::MissingData("destination_address"))?;
+        let destination_address = Pubkey::new_from_array(read_array::<32>(
+            "destination_address",
+            &destination_address_data,
+        )?);
+
+        let payload_hash_data = data
+            .next()
+            .ok_or(EventParseError::MissingData("payload_hash"))?;
+        let payload_hash = read_array::<32>("payload_hash", &payload_hash_data)?;
+
+        // Read dynamic-size elements
+        let cc_id_chain_data = data
+            .next()
+            .ok_or(EventParseError::MissingData("cc_id_chain"))?;
+        let cc_id_chain = read_string("cc_id_chain", cc_id_chain_data)?;
+
+        let cc_id_id_data = data
+            .next()
+            .ok_or(EventParseError::MissingData("cc_id_id"))?;
+        let cc_id_id = read_string("cc_id_id", cc_id_id_data)?;
+
+        let source_address_data = data
+            .next()
+            .ok_or(EventParseError::MissingData("source_address"))?;
+        let source_address = read_string("source_address", source_address_data)?;
+
+        let destination_chain_data = data
+            .next()
+            .ok_or(EventParseError::MissingData("destination_chain"))?;
+        let destination_chain = read_string("destination_chain", destination_chain_data)?;
+
+        Ok(Self {
+            command_id,
+            destination_address,
+            payload_hash,
+            cc_id_chain,
+            cc_id_id,
+            source_address,
+            destination_chain,
+        })
     }
 }

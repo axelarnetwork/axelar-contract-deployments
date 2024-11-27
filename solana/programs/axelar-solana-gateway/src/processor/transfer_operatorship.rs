@@ -2,13 +2,15 @@ use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::log::sol_log_data;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 
+use super::event_utils::{read_array, EventParseError};
 use super::Processor;
-use crate::events::GatewayEvent;
+use crate::event_prefixes;
 use crate::state::GatewayConfig;
 
 impl Processor {
@@ -85,11 +87,36 @@ impl Processor {
         gateway_config.pack_into_slice(&mut data);
 
         // Emit an event
-        GatewayEvent::OperatorshipTransferred(crate::events::OperatorshipTransferred {
-            operator: new_operator.key.to_bytes(),
-        })
-        .emit()?;
+        sol_log_data(&[
+            event_prefixes::OPERATORSHIP_TRANSFERRED,
+            &new_operator.key.to_bytes(),
+        ]);
 
         Ok(())
+    }
+}
+
+/// Event for the `TransferOperatorship` instruction
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct OperatorshipTransferredEvent {
+    /// The pubkey of the new operator
+    pub new_operator: Pubkey,
+}
+
+impl OperatorshipTransferredEvent {
+    /// Constructs a new `OperatorshipTransferredEvent` with the provided data slice.
+    pub fn new<I>(mut data: I) -> Result<Self, EventParseError>
+    where
+        I: Iterator<Item = Vec<u8>>,
+    {
+        // Read known-size elements
+        let new_operator = data
+            .next()
+            .ok_or(EventParseError::MissingData("new_operator"))?;
+        let new_operator = read_array("new_operator", &new_operator)?;
+
+        Ok(Self {
+            new_operator: Pubkey::new_from_array(new_operator),
+        })
     }
 }

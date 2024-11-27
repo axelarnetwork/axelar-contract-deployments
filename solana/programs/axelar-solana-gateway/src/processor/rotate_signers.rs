@@ -1,20 +1,23 @@
+use std::convert::TryInto;
+
 use axelar_message_primitives::U256;
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::log::sol_log_data;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
 
+use super::event_utils::{read_array, EventParseError};
 use super::Processor;
-use crate::events::{GatewayEvent, RotateSignersEvent};
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::GatewayConfig;
-use crate::{assert_valid_verifier_set_tracker_pda, seed_prefixes};
+use crate::{assert_valid_verifier_set_tracker_pda, event_prefixes, seed_prefixes};
 
 impl Processor {
     /// Rotate the weighted signers, signed off by the latest Axelar signers.
@@ -27,7 +30,7 @@ impl Processor {
     /// Rotation to duplicate signers is rejected.
     ///
     /// reference implementation: https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/9dae93af0b799e536005951ddc36284132813579/contracts/gateway/AxelarAmplifierGateway.sol#L94
-    pub fn process_rotate_signers(
+    pub fn process_rotate_verifier_set(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
         new_verifier_set_merkle_root: [u8; 32],
@@ -168,12 +171,14 @@ impl Processor {
             ],
         )?;
 
-        // Emit event if the signers were rotated
-        GatewayEvent::SignersRotated(RotateSignersEvent {
-            new_epoch: new_verifier_set_tracker.epoch,
-            new_signers_hash: new_verifier_set_tracker.verifier_set_hash,
-        })
-        .emit()?;
+        // Emit an event
+        sol_log_data(&[
+            event_prefixes::SIGNERS_ROTATED,
+            // u256 as LE [u8; 32]
+            &new_verifier_set_tracker.epoch.to_le_bytes(),
+            // [u8; 32]
+            &new_verifier_set_tracker.verifier_set_hash,
+        ]);
 
         // Store the gateway data back to the account.
         let mut data = gateway_root_pda.try_borrow_mut_data()?;
@@ -190,5 +195,36 @@ impl Processor {
             .checked_sub(config.auth_weighted.last_rotation_timestamp)
             .expect("Current time minus rotate signers last successful operation time should not underflow");
         Ok(secs_since_last_rotation >= config.auth_weighted.minimum_rotation_delay)
+    }
+}
+
+/// Represents a `SignersRotatedEvent`.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct VerifierSetRotated {
+    /// Epoch of the new verifier set
+    pub epoch: U256,
+    /// the hash of the new verifier set
+    pub verifier_set_hash: [u8; 32],
+}
+
+impl VerifierSetRotated {
+    /// Constructs a new `SignersRotatedEvent` with the provided data slice.
+    pub fn new(mut data: impl Iterator<Item = Vec<u8>>) -> Result<Self, EventParseError> {
+        let epoch = read_array::<32>(
+            "epoch",
+            &data.next().ok_or(EventParseError::MissingData("epoch"))?,
+        )?;
+        let epoch = U256::from_le_bytes(epoch);
+
+        let verifier_set_hash = read_array::<32>(
+            "verifier_set_hash",
+            &data
+                .next()
+                .ok_or(EventParseError::MissingData("verifier_set_hash"))?,
+        )?;
+        Ok(Self {
+            epoch,
+            verifier_set_hash,
+        })
     }
 }

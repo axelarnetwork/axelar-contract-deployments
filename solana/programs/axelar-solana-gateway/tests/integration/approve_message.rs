@@ -1,11 +1,13 @@
+use std::str::FromStr;
+
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, MerkleisedPayload};
 use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::LeafHash;
-use axelar_solana_gateway::events::{ArchivedGatewayEvent, MessageApproved};
 use axelar_solana_gateway::get_incoming_message_pda;
 use axelar_solana_gateway::instructions::approve_messages;
+use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{
     command_id, IncomingMessage, IncomingMessageWrapper,
 };
@@ -16,6 +18,7 @@ use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use itertools::Itertools;
 use pretty_assertions::assert_eq;
 use solana_program_test::tokio;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 
 #[tokio::test]
@@ -47,14 +50,7 @@ async fn successfully_approves_messages() {
         let (incoming_message_pda, incoming_message_pda_bump) =
             get_incoming_message_pda(&command_id);
 
-        let expected_event = MessageApproved {
-            command_id,
-            source_chain: message_info.leaf.message.cc_id.chain.clone(),
-            message_id: message_info.leaf.message.cc_id.id.clone(),
-            source_address: message_info.leaf.message.source_address.clone(),
-            destination_address: message_info.leaf.message.destination_address.clone(),
-            payload_hash: message_info.leaf.message.payload_hash,
-        };
+        let message = message_info.leaf.clone().message;
         let ix = approve_messages(
             message_info,
             execute_data.payload_merkle_root,
@@ -68,11 +64,20 @@ async fn successfully_approves_messages() {
         let tx_result = metadata.send_tx(&[ix]).await.unwrap();
 
         // Assert event
+        let expected_event = axelar_solana_gateway::processor::MessageEvent {
+            command_id,
+            cc_id_chain: message.cc_id.chain.clone(),
+            cc_id_id: message.cc_id.id.clone(),
+            source_address: message.source_address.clone(),
+            destination_address: Pubkey::from_str(&message.destination_address).unwrap(),
+            payload_hash: message.payload_hash,
+            destination_chain: message.destination_chain,
+        };
         let emitted_event = get_gateway_events(&tx_result).pop().unwrap();
-        let ArchivedGatewayEvent::MessageApproved(emitted_event) = emitted_event.parse() else {
+        let GatewayEvent::MessageApproved(emitted_event) = emitted_event else {
             panic!("unexpected event");
         };
-        assert_eq!(*emitted_event, expected_event);
+        assert_eq!(emitted_event, expected_event);
 
         // Assert PDA state for message approval
         let account = metadata.incoming_message(incoming_message_pda).await;
@@ -141,12 +146,10 @@ async fn successfully_idempotent_approvals_across_batches() {
             .unwrap();
         message_counter += 1;
 
-        if let Some(emitted_event) = get_gateway_events(&tx_result).pop() {
-            if let ArchivedGatewayEvent::MessageApproved(_) = emitted_event.parse() {
-                events_counter += 1;
-            } else {
-                panic!("should not end up here");
-            }
+        if let Some(GatewayEvent::MessageApproved(_emitted_event)) =
+            get_gateway_events(&tx_result).pop()
+        {
+            events_counter += 1;
         };
 
         // Assert PDA state for message approval

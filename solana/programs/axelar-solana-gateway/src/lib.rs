@@ -2,7 +2,6 @@
 pub mod axelar_auth_weighted;
 pub mod entrypoint;
 pub mod error;
-pub mod events;
 pub mod instructions;
 pub mod processor;
 pub mod state;
@@ -27,6 +26,23 @@ pub mod seed_prefixes {
     pub const SIGNATURE_VERIFICATION_SEED: &[u8] = b"gtw-sig-verif";
     /// The seed prefix for deriving incoming message PDAs
     pub const INCOMING_MESSAGE_SEED: &[u8] = b"incoming message";
+}
+
+/// Event discriminators for different types of events
+pub mod event_prefixes {
+    /// Event prefix / discrimintator size
+    pub type Disc = [u8; 16];
+
+    /// Event prefix for an event when a message gets executed
+    pub const MESSAGE_EXECUTED: &Disc = b"message executed";
+    /// Event prefix for an event when a message gets approved
+    pub const MESSAGE_APPROVED: &Disc = b"message approved";
+    /// Event prefix for an event when an outgoing GMP call gets emitted
+    pub const CALL_CONTRACT: &Disc = b"call contract___";
+    /// Event prefix for an event when signers rotate
+    pub const SIGNERS_ROTATED: &Disc = b"signers rotated_";
+    /// Event prefix for an event when operatorship was transferred
+    pub const OPERATORSHIP_TRANSFERRED: &Disc = b"operatorship trn";
 }
 
 /// Checks that the supplied program ID is the correct one

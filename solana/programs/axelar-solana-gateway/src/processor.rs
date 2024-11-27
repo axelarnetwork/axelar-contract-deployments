@@ -1,15 +1,13 @@
 //! Program state processor.
 
-use std::borrow::Cow;
-
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::BorshDeserialize;
+pub use event_utils::EventParseError;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::pubkey::Pubkey;
 
 use crate::check_program_account;
-use crate::error::GatewayError;
 use crate::instructions::GatewayInstruction;
 
 mod approve_message;
@@ -20,6 +18,11 @@ mod rotate_signers;
 mod transfer_operatorship;
 mod validate_message;
 mod verify_signature;
+
+pub use call_contract::CallContractEvent;
+pub use rotate_signers::VerifierSetRotated;
+pub use transfer_operatorship::OperatorshipTransferredEvent;
+pub use validate_message::MessageEvent;
 
 /// Program state handler.
 pub struct Processor;
@@ -55,7 +58,7 @@ impl Processor {
                 new_verifier_set_bump,
             } => {
                 msg!("Instruction: Rotate Signers");
-                Self::process_rotate_signers(
+                Self::process_rotate_verifier_set(
                     program_id,
                     accounts,
                     new_verifier_set_merkle_root,
@@ -117,22 +120,100 @@ impl Processor {
     }
 }
 
-/// Trait for types that can representing themselves as a slice of bytes.
+/// Represents the various events emitted by the Gateway.
 ///
-/// This trait allows for more flexible bounds on `init_pda_with_dynamic_size`,
-/// reducing its dependency on `borsh`.
-pub trait ToBytes {
-    /// Tries to serialize `self` into a slice of bytes.
-    fn to_bytes(&self) -> Result<Cow<'_, [u8]>, GatewayError>;
+/// The `GatewayEvent` enum encapsulates all possible events that can be emitted by the Gateway.
+/// Each variant corresponds to a specific event type and contains the relevant data associated with that event.
+///
+/// These events are crucial for monitoring the state and actions within the Gateway, such as contract calls,
+/// verifier set rotations, operatorship transfers, and message approvals and executions.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum GatewayEvent {
+    /// Represents a `CallContract` event.
+    ///
+    /// This event is emitted when a contract call is initiated to an external chain.
+    CallContract(CallContractEvent),
+
+    /// Represents a `VerifierSetRotated` event.
+    VerifierSetRotated(VerifierSetRotated),
+
+    /// Represents an `OperatorshipTransferred` event.
+    ///
+    /// This event is emitted when the operatorship is transferred to a new operator.
+    /// It includes the public key of the new operator.
+    OperatorshipTransferred(OperatorshipTransferredEvent),
+
+    /// Represents a `MessageApproved` event.
+    ///
+    /// This event is emitted when a message is approved for execution by the Gateway.
+    MessageApproved(MessageEvent),
+
+    /// Represents a `MessageExecuted` event.
+    ///
+    /// This event is emitted when a message has been received & execution has begun on the destination contract.
+    MessageExecuted(MessageEvent),
 }
 
-impl<T> ToBytes for T
-where
-    T: BorshSerialize,
-{
-    fn to_bytes(&self) -> Result<Cow<'_, [u8]>, GatewayError> {
-        borsh::to_vec(self)
-            .map_err(|_| GatewayError::ByteSerializationError)
-            .map(Cow::Owned)
+pub(crate) mod event_utils {
+
+    /// Errors that may occur while parsing a `MessageEvent`.
+    #[derive(Debug, thiserror::Error)]
+    pub enum EventParseError {
+        /// Occurs when a required field is missing in the event data.
+        #[error("Missing data: {0}")]
+        MissingData(&'static str),
+
+        /// Occurs when the length of a field does not match the expected length.
+        #[error("Invalid length for {field}: expected {expected}, got {actual}")]
+        InvalidLength {
+            /// the field that we're trying to parse
+            field: &'static str,
+            /// the desired length
+            expected: usize,
+            /// the actual length
+            actual: usize,
+        },
+
+        /// Occurs when a field contains invalid UTF-8 data.
+        #[error("Invalid UTF-8 in {field}: {source}")]
+        InvalidUtf8 {
+            /// the field we're trying to parse
+            field: &'static str,
+            /// underlying error
+            #[source]
+            source: std::string::FromUtf8Error,
+        },
+
+        /// Generic error for any other parsing issues.
+        #[error("Other error: {0}")]
+        Other(&'static str),
+    }
+
+    pub(crate) fn read_array<const N: usize>(
+        field: &'static str,
+        data: &[u8],
+    ) -> Result<[u8; N], EventParseError> {
+        if data.len() != N {
+            return Err(EventParseError::InvalidLength {
+                field,
+                expected: N,
+                actual: data.len(),
+            });
+        }
+        let array = data
+            .try_into()
+            .map_err(|_| EventParseError::InvalidLength {
+                field,
+                expected: N,
+                actual: data.len(),
+            })?;
+        Ok(array)
+    }
+
+    pub(crate) fn read_string(
+        field: &'static str,
+        data: Vec<u8>,
+    ) -> Result<String, EventParseError> {
+        String::from_utf8(data).map_err(|e| EventParseError::InvalidUtf8 { field, source: e })
     }
 }

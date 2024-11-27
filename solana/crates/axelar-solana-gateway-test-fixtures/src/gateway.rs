@@ -12,7 +12,7 @@ use axelar_solana_encoding::types::messages::{CrossChainId, Message, Messages};
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::{verifier_set_hash, VerifierSet};
 use axelar_solana_encoding::{borsh, hash_payload};
-use axelar_solana_gateway::events::{EventContainer, GatewayEvent};
+use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessageWrapper};
 use axelar_solana_gateway::state::signature_verification_pda::SignatureVerificationSessionData;
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
@@ -20,6 +20,8 @@ use axelar_solana_gateway::state::GatewayConfig;
 use axelar_solana_gateway::{
     bytemuck, get_gateway_root_config_pda, get_incoming_message_pda, get_verifier_set_tracker_pda,
 };
+use base64::engine::general_purpose;
+use base64::Engine;
 use rand::Rng as _;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{BanksTransactionResultWithMetadata, ProgramTest};
@@ -496,16 +498,62 @@ impl SolanaAxelarIntegration {
 }
 
 /// Get events emitted by the Gateway
+#[must_use]
 pub fn get_gateway_events(
     tx: &solana_program_test::BanksTransactionResultWithMetadata,
-) -> Vec<EventContainer> {
+) -> Vec<GatewayEvent> {
     tx.metadata
         .as_ref()
         .unwrap()
         .log_messages
         .iter()
-        .filter_map(GatewayEvent::parse_log)
+        .map(|log| {
+            log.trim()
+                .trim_start_matches("Program data:")
+                .split_whitespace()
+                .filter_map(decode_base64)
+        })
+        .filter_map(|mut raw_log| {
+            use axelar_solana_gateway::event_prefixes::*;
+            let disc = raw_log.next()?.try_into().ok()?;
+            match &disc {
+                CALL_CONTRACT => {
+                    let event =
+                        axelar_solana_gateway::processor::CallContractEvent::new(raw_log).ok()?;
+                    Some(GatewayEvent::CallContract(event))
+                }
+                MESSAGE_APPROVED => {
+                    let event =
+                        axelar_solana_gateway::processor::MessageEvent::new(raw_log).ok()?;
+                    Some(GatewayEvent::MessageApproved(event))
+                }
+                MESSAGE_EXECUTED => {
+                    let event =
+                        axelar_solana_gateway::processor::MessageEvent::new(raw_log).ok()?;
+                    Some(GatewayEvent::MessageExecuted(event))
+                }
+                OPERATORSHIP_TRANSFERRED => {
+                    let event =
+                        axelar_solana_gateway::processor::OperatorshipTransferredEvent::new(
+                            raw_log,
+                        )
+                        .ok()?;
+                    Some(GatewayEvent::OperatorshipTransferred(event))
+                }
+                SIGNERS_ROTATED => {
+                    let event =
+                        axelar_solana_gateway::processor::VerifierSetRotated::new(raw_log).ok()?;
+                    Some(GatewayEvent::VerifierSetRotated(event))
+                }
+                _ => None,
+            }
+        })
         .collect::<Vec<_>>()
+}
+
+#[inline]
+fn decode_base64(input: &str) -> Option<Vec<u8>> {
+    general_purpose::STANDARD.decode(input).ok()
 }
 
 /// Create a new verifier set
@@ -557,7 +605,7 @@ pub fn random_message() -> Message {
         },
         source_address: generate_random_hex_address(),
         destination_chain: random_chain_name(),
-        destination_address: generate_random_hex_address(),
+        destination_address: Pubkey::new_unique().to_string(),
         payload_hash: random_bytes::<32>(),
     }
 }

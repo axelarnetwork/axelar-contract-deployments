@@ -1,6 +1,6 @@
 use axelar_executable::EncodingScheme;
-use axelar_solana_gateway::events::MessageExecuted;
 use axelar_solana_gateway::get_incoming_message_pda;
+use axelar_solana_gateway::processor::MessageEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, MessageStatus};
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::random_message;
@@ -16,11 +16,13 @@ use crate::program_test;
 #[case(EncodingScheme::AbiEncoding)]
 #[tokio::test]
 async fn test_successful_validate_message(#[case] encoding_scheme: EncodingScheme) {
-    // Setup
+    use std::str::FromStr;
 
-    use axelar_solana_gateway::events::ArchivedGatewayEvent;
+    use axelar_solana_gateway::processor::GatewayEvent;
+    // Setup
     use axelar_solana_gateway_test_fixtures::gateway::get_gateway_events;
     use axelar_solana_memo_program::state::Counter;
+    use solana_sdk::pubkey::Pubkey;
 
     let mut solana_chain = program_test().await;
     let (counter_pda, counter_bump) =
@@ -129,21 +131,23 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
 
     // Event was logged
     let emitted_event = get_gateway_events(&tx).pop().unwrap();
-    let ArchivedGatewayEvent::MessageExecuted(emitted_event) = emitted_event.parse() else {
+    let GatewayEvent::MessageExecuted(emitted_event) = emitted_event else {
         panic!("unexpected event");
     };
     let command_id = command_id(
         &merkelised_message.leaf.message.cc_id.chain,
         &merkelised_message.leaf.message.cc_id.id,
     );
-    let expected_event = MessageExecuted {
+    let expected_event = MessageEvent {
         command_id,
-        source_chain: merkelised_message.leaf.message.cc_id.chain,
-        message_id: merkelised_message.leaf.message.cc_id.id,
+        cc_id_chain: merkelised_message.leaf.message.cc_id.chain,
+        cc_id_id: merkelised_message.leaf.message.cc_id.id,
         source_address: merkelised_message.leaf.message.source_address,
-        destination_address: merkelised_message.leaf.message.destination_address,
+        destination_address: Pubkey::from_str(&merkelised_message.leaf.message.destination_address)
+            .unwrap(),
         payload_hash: merkelised_message.leaf.message.payload_hash,
+        destination_chain: merkelised_message.leaf.message.destination_chain,
     };
 
-    assert_eq!(*emitted_event, expected_event);
+    assert_eq!(emitted_event, expected_event);
 }

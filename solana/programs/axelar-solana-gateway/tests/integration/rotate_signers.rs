@@ -3,8 +3,8 @@ use axelar_solana_encoding::hasher::NativeHasher;
 use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::verifier_set_hash;
-use axelar_solana_gateway::events::{ArchivedGatewayEvent, RotateSignersEvent};
 use axelar_solana_gateway::get_verifier_set_tracker_pda;
+use axelar_solana_gateway::processor::{GatewayEvent, VerifierSetRotated};
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, make_messages, make_verifier_set, random_bytes, random_message,
@@ -60,14 +60,14 @@ async fn successfully_rotates_signers() {
 
     // - expected events
     let emitted_event = get_gateway_events(&tx_result).pop().unwrap();
-    let ArchivedGatewayEvent::SignersRotated(emitted_event) = emitted_event.parse() else {
+    let GatewayEvent::VerifierSetRotated(emitted_event) = emitted_event else {
         panic!("unexpected event");
     };
-    let expected_event = RotateSignersEvent {
-        new_epoch,
-        new_signers_hash: new_verifier_set_hash,
+    let expected_event = VerifierSetRotated {
+        epoch: new_epoch,
+        verifier_set_hash: new_verifier_set_hash,
     };
-    assert_eq!(*emitted_event, expected_event);
+    assert_eq!(emitted_event, expected_event);
 
     // - signers have been updated
     let root_pda_data = metadata.gateway_confg(metadata.gateway_root_pda).await;
@@ -259,14 +259,15 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
     assert!(tx.result.is_ok());
     let new_epoch: U256 = 3_u128.into();
     let emitted_event = get_gateway_events(&tx).pop().unwrap();
-    let ArchivedGatewayEvent::SignersRotated(emitted_event) = emitted_event.parse() else {
+    let GatewayEvent::VerifierSetRotated(emitted_event) = emitted_event else {
         panic!("unexpected event");
     };
-    let expected_event = RotateSignersEvent {
-        new_epoch,
-        new_signers_hash: new_verifier_set_hash,
+    let expected_event = VerifierSetRotated {
+        epoch: new_epoch,
+        verifier_set_hash: new_verifier_set_hash,
     };
-    assert_eq!(*emitted_event, expected_event);
+    assert_eq!(emitted_event, expected_event);
+
     // - signers have been updated
     let root_pda_data = metadata.gateway_confg(metadata.gateway_root_pda).await;
     assert_eq!(

@@ -1,18 +1,20 @@
+use std::str::FromStr;
+
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::MerkleisedMessage;
 use axelar_solana_encoding::{rs_merkle, LeafHash};
 use program_utils::{init_pda_raw, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
-use crate::events::{GatewayEvent, MessageApproved};
 use crate::state::incoming_message::{command_id, IncomingMessage, IncomingMessageWrapper};
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::GatewayConfig;
-use crate::{assert_valid_incoming_message_pda, seed_prefixes};
+use crate::{assert_valid_incoming_message_pda, event_prefixes, seed_prefixes};
 
 impl Processor {
     /// Approves an array of messages, signed by the Axelar signers.
@@ -124,16 +126,23 @@ impl Processor {
         incoming_message_data.bump = incoming_message_pda_bump;
         incoming_message_data.message = IncomingMessage::new(message_hash);
 
-        // Emit event
-        GatewayEvent::MessageApproved(MessageApproved {
-            command_id,
-            source_chain: cc_id.chain,
-            message_id: cc_id.id,
-            source_address: message.source_address,
-            destination_address: message.destination_address,
-            payload_hash: message.payload_hash,
-        })
-        .emit()?;
+        let destination_address =
+            Pubkey::from_str(&message.destination_address).map_err(|_err| {
+                solana_program::msg!("Invalid destination address");
+                ProgramError::InvalidInstructionData
+            })?;
+
+        // Emit an event
+        sol_log_data(&[
+            event_prefixes::MESSAGE_APPROVED,
+            &command_id,
+            &destination_address.to_bytes(),
+            &message.payload_hash,
+            cc_id.chain.as_bytes(),
+            cc_id.id.as_bytes(),
+            message.source_address.as_bytes(),
+            message.destination_chain.as_bytes(),
+        ]);
 
         Ok(())
     }

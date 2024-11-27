@@ -1,4 +1,5 @@
-use axelar_solana_gateway::events::{CallContract, GatewayEvent};
+use axelar_solana_gateway::processor::{CallContractEvent, GatewayEvent};
+use axelar_solana_gateway_test_fixtures::gateway::get_gateway_events;
 use axelar_solana_memo_program::get_counter_pda;
 use axelar_solana_memo_program::instruction::call_gateway_with_memo;
 use ethers_core::abi::AbiEncode;
@@ -41,19 +42,13 @@ async fn test_successfully_send_to_gateway() {
 
     // Assert
     // We can get the memo from the logs
-    let log_msgs = dbg!(tx.metadata.unwrap().log_messages);
-
-    let gateway_event = log_msgs
-        .iter()
-        .find_map(GatewayEvent::parse_log)
-        .expect("Gateway event was not emitted?");
-    let gateway_event = gateway_event.parse();
+    let gateway_event = get_gateway_events(&tx).into_iter().next().unwrap();
     assert_eq!(
         gateway_event,
-        &GatewayEvent::CallContract(CallContract {
-            sender: counter_pda.to_bytes(),
+        GatewayEvent::CallContract(CallContractEvent {
+            sender_key: counter_pda,
             destination_chain,
-            destination_address,
+            destination_contract_address: destination_address,
             payload: memo.as_bytes().to_vec(),
             payload_hash: solana_sdk::keccak::hash(memo.as_bytes()).0
         }),
