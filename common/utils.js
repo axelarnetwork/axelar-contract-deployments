@@ -362,8 +362,13 @@ const getSaltFromKey = (key) => {
 const getAmplifierContractOnchainConfig = async (config, chain) => {
     const key = Buffer.from('config');
     const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
-    return JSON.parse(Buffer.from(value).toString('ascii'));
+    const prover = config.axelar.contracts.MultisigProver[chain].address
+    const value = await client.queryContractRaw(prover, key);
+    const parsedValue = JSON.parse(Buffer.from(value).toString('ascii'));
+    return {
+        ...parsedValue,
+        prover,
+    };
 };
 
 async function getDomainSeparator(config, chain, options) {

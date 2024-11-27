@@ -1,9 +1,10 @@
 const { Command } = require('commander');
 const { main: cosmwasmDeploy } = require('../cosmwasm/deploy-contract');
 const { deployAmplifierGateway } = require('../evm/deploy-amplifier-gateway');
-const { loadConfig } = require('../common/utils');
+const { loadConfig, getAmplifierContractOnchainConfig } = require('../common/utils');
+const { exec, execSync } = require('child_process');
 
-const { mainProcessor } = require('./utils');
+const { mainProcessor, printError, printInfo, printLog } = require('./utils');
 
 const deployCosmWasmContract = async ({ contractName, chainName, salt, mnemonic, env, yes, codeId }) => {
     try {
@@ -17,16 +18,16 @@ const deployCosmWasmContract = async ({ contractName, chainName, salt, mnemonic,
             yes,
             codeId,
         });
-        console.log(`Deployment successful for ${contractName} on ${chainName.name}`);
+        printInfo(`Deployment successful for ${contractName} on ${chainName.name}`);
     } catch (error) {
-        console.error(`Error deploying ${contractName} on ${chainName.name}:`, error);
+        printError(`Error deploying ${contractName} on ${chainName.name}:`, error);
         throw error;
     }
 };
 
 const deployEvmContract = async (config, chainName, { salt, env, yes, privateKey }, predict) => {
     try {
-        console.log(`Starting deployment for Ext. Gateway on ${chainName.name}`);
+        printLog(`Starting deployment for Ext. Gateway on ${chainName.name}`);
         const gateway = await deployAmplifierGateway(config, chainName, {
             salt,
             env,
@@ -38,49 +39,107 @@ const deployEvmContract = async (config, chainName, { salt, env, yes, privateKey
             predictOnly: predict,
             deployMethod: 'create3',
         });
-        console.log(`Deployment successful for Gateway on ${chainName.name}`);
+        printInfo(`Deployment successful for Gateway on ${chainName.name}`);
         return gateway;
     } catch (error) {
-        console.error(`Error deploying Gateway on ${chainName.name}:`, error);
+        printError(`Error deploying Gateway on ${chainName.name}:`, error);
         throw error;
     }
 };
 
-async function processCommand(config, chainName, { salt, env, yes, privateKey, mnemonic }) {
+const ensureAmpdRunning = async () => {
+    try {
+        execSync('pgrep ampd', { stdio: 'ignore' }); // Check if ampd is running
+        console.log('ampd is already running');
+    } catch {
+        console.log('Starting ampd...');
+        exec('ampd', { detached: true, stdio: 'ignore' }).unref(); // Start ampd as a detached background process
+        console.log('ampd started successfully');
+    }
+    const checkVerifierAddress = `ampd verifier-address`;
+    return new Promise((resolve, reject) => {
+        exec(checkVerifierAddress, (error, stdout, stderr) => {
+            if (error) {
+                reject(new Error(`Command failed: ${stderr || error.message}`));
+            } else {
+                resolve(stdout.trim().replace(/.*(axelar[a-z0-9]+)/, '$1'));
+            }
+        });
+    });
+};
+
+const registerChainSupport = async (chainName, verifierAddr) => {
+    try {
+        console.log(`Registering chain support for ${chainName}...`);
+        const registerChainSupportCommand = `ampd register-chain-support validators ${chainName}`;
+        return new Promise((resolve, reject) => {
+            exec(registerChainSupportCommand, (error, stdout, stderr) => {
+                if (error) {
+                    reject(new Error(`Command failed: ${stderr || error.message}`));
+                } else {
+                    resolve(stdout.trim());
+                    printInfo(`External verifier ${verifierAddr}, now supports registered: ${chainName}`);
+                }
+            });
+        });
+    } catch (error) {
+        console.error(`Failed to register chain support for ${chainName}: ${error.message}`);
+    }
+};
+
+async function processCommand(config, chainName, { salt, env, yes, privateKey, mnemonic, admin }) {
     // Deployment for Verifier
-    await deployCosmWasmContract({
-        contractName: 'VotingVerifier',
-        chainName,
-        salt,
-        mnemonic,
-        env,
-        yes,
-        codeId: 626, // Hardcoded Code ID for Gateway
-    });
-    // // Deployment for Gateway
-    await deployCosmWasmContract({
-        contractName: 'Gateway',
-        chainName,
-        salt,
-        mnemonic,
-        env,
-        yes,
-        codeId: 616, // Hardcoded Code ID for Gateway
-    });
-    // Deployment for MultisigProver
-    await deployCosmWasmContract({
-        contractName: 'MultisigProver',
-        chainName,
-        salt,
-        mnemonic,
-        env,
-        yes,
-        codeId: 618, // Hardcoded Code ID for MultisigProver
-    });
+    // await deployCosmWasmContract({
+    //     contractName: 'VotingVerifier',
+    //     chainName,
+    //     salt,
+    //     mnemonic,
+    //     env,
+    //     yes,
+    //     codeId: 626, // Hardcoded Code ID for Gateway
+    // });
+    // // // Deployment for Gateway
+    // await deployCosmWasmContract({
+    //     contractName: 'Gateway',
+    //     chainName,
+    //     salt,
+    //     mnemonic,
+    //     env,
+    //     yes,
+    //     codeId: 616, // Hardcoded Code ID for Gateway
+    // });
+    // // Deployment for MultisigProver
+    // await deployCosmWasmContract({
+    //     contractName: 'MultisigProver',
+    //     chainName,
+    //     salt,
+    //     mnemonic,
+    //     env,
+    //     yes,
+    //     codeId: 618, // Hardcoded Code ID for MultisigProver
+    // });
+
+    // const newChainContracts = await getAmplifierContractOnchainConfig(config, chainName.name);
+
+    // const chainName = 'ben-eth-five';
+    const verifierAddr = await ensureAmpdRunning();
+    await registerChainSupport(chainName.name, verifierAddr);
 
     // UPDATE VERIFIER SET
-    
+    // const updateVerifierCommand = `axelard tx wasm execute ${newChainContracts.prover} '"update_verifier_set"' --from ${admin} --gas auto --gas-adjustment 2`;
 
+    // printLog(`Updating verifier set on prover contract: ${newChainContracts.prover}`);
+
+    // return new Promise((resolve) => {
+    //     exec(updateVerifierCommand, (error, stdout) => {
+    //         if (error) {
+    //             printError(`Error while running script for ${chainName}`, error);
+    //         } else {
+    //             printInfo(`Successfully updated verifier set for ${newChainContracts.prover}`);
+    //         }
+    //         resolve();
+    //     });
+    // });
 
     // Deploy Gateway
     // await deployEvmContract({ config, chainName, salt, env, yes, privateKey }, false);
@@ -160,8 +219,8 @@ program
 program.action(async (options) => {
     try {
         await main(options);
-        console.log('All deployments completed successfully!');
-        console.log(
+        printLog('All deployments completed successfully!');
+        printInfo(
             'Submit the following form to get your contracts whitelisted on Axelar Devnet: https://docs.google.com/forms/d/e/1FAIpQLSchD7P1WfdSCQfaZAoqX7DyqJOqYKxXle47yrueTbOgkKQDiQ/viewform',
         );
     } catch (error) {
