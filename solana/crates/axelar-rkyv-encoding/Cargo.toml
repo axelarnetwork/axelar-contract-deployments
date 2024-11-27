@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 arrayref.workspace = true
+bitflags.workspace = true
 bnum.workspace = true
 bs58.workspace = true
 bytemuck.workspace = true

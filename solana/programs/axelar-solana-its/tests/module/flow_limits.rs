@@ -4,7 +4,6 @@
 #![allow(clippy::unwrap_used)]
 
 use alloy_primitives::Bytes;
-use alloy_sol_types::SolValue;
 use axelar_rkyv_encoding::test_fixtures::random_message_with_destination_and_payload;
 use axelar_solana_its::instructions::{DeployInterchainTokenInputs, InterchainTransferInputs};
 use axelar_solana_its::state::token_manager::TokenManager;
@@ -66,7 +65,12 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         selector: alloy_primitives::Uint::<256, 4>::from(2_u128),
         token_id: token_id.to_bytes().into(),
         token_manager_type: token_manager::Type::LockUnlock.into(),
-        params: (Bytes::default(), mint.to_bytes()).abi_encode().into(),
+        params: axelar_solana_its::state::token_manager::encode_params(
+            None,
+            Some(solana_chain.fixture.payer.pubkey()),
+            mint,
+        )
+        .into(),
     });
 
     let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
@@ -360,7 +364,7 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         .send_tx(&[create_token_account_ix])
         .await;
 
-    let mint_ix = axelar_solana_its::instructions::mint_to(
+    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
         expected_token_id,
         interchain_token_pda,
         associated_account_address,

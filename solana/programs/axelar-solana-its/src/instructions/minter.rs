@@ -1,4 +1,4 @@
-//! Instructions to manage the operator role.
+//! Instructions to manage the minter role.
 
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
 use role_management::instructions::{RoleManagementInstruction, RoleManagementInstructionInputs};
@@ -13,7 +13,7 @@ use crate::Roles;
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(CheckBytes))]
 pub enum Instruction {
-    /// Transfers operatorship to another account.
+    /// Transfers mintership to another account.
     ///
     /// 0. [] System program account.
     /// 1. [writable, signer] Payer account.
@@ -25,9 +25,9 @@ pub enum Instruction {
     /// 6. [] Account which the operatorship is being transferred from.
     /// 7. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
-    TransferOperatorship(RoleManagementInstructionInputs<Roles>),
+    TransferMintership(RoleManagementInstructionInputs<Roles>),
 
-    /// Proposes operatorship transfer to another account.
+    /// Proposes mintership transfer to another account.
     ///
     /// 0. [] System program account.
     /// 1. [writable, signer] Payer account.
@@ -40,9 +40,9 @@ pub enum Instruction {
     /// 7. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
     /// 8. [writable] PDA for the proposal
-    ProposeOperatorship(RoleManagementInstructionInputs<Roles>),
+    ProposeMintership(RoleManagementInstructionInputs<Roles>),
 
-    /// Accepts operatorship transfer from another account.
+    /// Accepts mintership transfer from another account.
     ///
     /// 0. [] System program account.
     /// 1. [writable, signer] Payer account.
@@ -55,7 +55,7 @@ pub enum Instruction {
     /// 7. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
     /// 8. [writable] PDA for the proposal
-    AcceptOperatorship(RoleManagementInstructionInputs<Roles>),
+    AcceptMintership(RoleManagementInstructionInputs<Roles>),
 }
 
 impl TryFrom<RoleManagementInstruction<Roles>> for Instruction {
@@ -63,12 +63,10 @@ impl TryFrom<RoleManagementInstruction<Roles>> for Instruction {
     fn try_from(value: RoleManagementInstruction<Roles>) -> Result<Self, Self::Error> {
         match value {
             RoleManagementInstruction::TransferRoles(inputs) => {
-                Ok(Self::TransferOperatorship(inputs))
+                Ok(Self::TransferMintership(inputs))
             }
-            RoleManagementInstruction::ProposeRoles(inputs) => {
-                Ok(Self::ProposeOperatorship(inputs))
-            }
-            RoleManagementInstruction::AcceptRoles(inputs) => Ok(Self::AcceptOperatorship(inputs)),
+            RoleManagementInstruction::ProposeRoles(inputs) => Ok(Self::ProposeMintership(inputs)),
+            RoleManagementInstruction::AcceptRoles(inputs) => Ok(Self::AcceptMintership(inputs)),
             RoleManagementInstruction::AddRoles(_) | RoleManagementInstruction::RemoveRoles(_) => {
                 Err(ProgramError::InvalidInstructionData)
             }
@@ -81,7 +79,7 @@ impl TryFrom<RoleManagementInstruction<Roles>> for Instruction {
 /// # Errors
 ///
 /// If serialization fails.
-pub(crate) fn transfer_operatorship(
+pub(crate) fn transfer_mintership(
     payer: Pubkey,
     on: Pubkey,
     to: Pubkey,
@@ -93,7 +91,7 @@ pub(crate) fn transfer_operatorship(
         on,
         payer,
         to,
-        Roles::OPERATOR,
+        Roles::MINTER,
         accounts_to_prepend,
     );
 
@@ -105,7 +103,7 @@ pub(crate) fn transfer_operatorship(
 /// # Errors
 ///
 /// If serialization fails.
-pub(crate) fn propose_operatorship(
+pub(crate) fn propose_mintership(
     payer: Pubkey,
     on: Pubkey,
     to: Pubkey,
@@ -117,7 +115,7 @@ pub(crate) fn propose_operatorship(
         on,
         payer,
         to,
-        Roles::OPERATOR,
+        Roles::MINTER,
         accounts_to_prepend,
     );
 
@@ -129,7 +127,7 @@ pub(crate) fn propose_operatorship(
 /// # Errors
 ///
 /// If serialization fails.
-pub(crate) fn accept_operatorship(
+pub(crate) fn accept_mintership(
     payer: Pubkey,
     on: Pubkey,
     from: Pubkey,
@@ -140,7 +138,7 @@ pub(crate) fn accept_operatorship(
         payer,
         on,
         from,
-        Roles::OPERATOR,
+        Roles::MINTER,
         accounts_to_prepend,
     );
 

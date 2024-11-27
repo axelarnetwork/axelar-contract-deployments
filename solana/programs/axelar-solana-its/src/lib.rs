@@ -1,4 +1,5 @@
 //! # `InterchainTokenService` program
+use bitflags::bitflags;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
@@ -13,6 +14,17 @@ pub mod state;
 
 solana_program::declare_id!("itswMJtRUe2vd46rb5kDmYzfBHHej4PyX4twgnbT1TG");
 
+pub(crate) trait FromAccountInfoSlice<'a> {
+    type Context;
+
+    fn from_account_info_slice(
+        accounts: &'a [AccountInfo<'a>],
+        context: &Self::Context,
+    ) -> Result<Self, ProgramError>
+    where
+        Self: Sized;
+}
+
 /// Seed prefixes for different PDAs initialized by the program
 pub mod seed_prefixes {
     /// The seed prefix for deriving the ITS root PDA
@@ -26,6 +38,33 @@ pub mod seed_prefixes {
 
     /// The seed prefix for deriving the flow slot PDA
     pub const FLOW_SLOT_SEED: &[u8] = b"flow-slot";
+}
+
+bitflags! {
+    /// Roles that can be assigned to a user.
+    #[derive(Debug, Eq, PartialEq, Clone, Copy)]
+    pub struct Roles: u8 {
+        /// Can mint new tokens.
+        const MINTER = 0b0000_0001;
+
+        /// Can perform operations on the resource.
+        const OPERATOR = 0b0000_0010;
+
+        /// Can change the limit to the flow of tokens.
+        const FLOW_LIMITER = 0b0000_0100;
+    }
+}
+
+impl PartialEq<u8> for Roles {
+    fn eq(&self, other: &u8) -> bool {
+        self.bits().eq(other)
+    }
+}
+
+impl PartialEq<Roles> for u8 {
+    fn eq(&self, other: &Roles) -> bool {
+        self.eq(&other.bits())
+    }
 }
 
 /// Checks that the supplied program ID is the correct one

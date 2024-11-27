@@ -22,7 +22,8 @@ async fn test_deploy_token_manager(#[case] token_program_id: Pubkey) {
         .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id, 18)
         .await;
 
-    let params = token_manager::encode_params(None, mint);
+    let params =
+        token_manager::encode_params(None, Some(solana_chain.fixture.payer.pubkey()), mint);
     let salt = keccak::hash(b"our cool token").0;
 
     let deploy_instruction = DeployTokenManagerInputs::builder()

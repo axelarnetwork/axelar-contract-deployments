@@ -19,13 +19,14 @@ alloy-sol-types.workspace = true
 axelar-executable-old = { workspace = true }
 axelar-message-primitives.workspace = true
 axelar-rkyv-encoding.workspace = true
+bitflags.workspace = true
 borsh.workspace = true
 gateway = { workspace = true, features = ["no-entrypoint"] }
 interchain-token-transfer-gmp.workspace = true
 itertools.workspace = true
 program-utils.workspace = true
-role-management.workspace = true
 rkyv.workspace = true
+role-management.workspace = true
 solana-program.workspace = true
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
 spl-pod.workspace = true
@@ -35,7 +36,7 @@ spl-token-metadata-interface = { workspace = true, features = ["serde-traits"] }
 typed-builder.workspace = true
 
 [dev-dependencies]
-axelar-solana-memo-program = { workspace = true, features = ["no-entrypoint"] }
+axelar-solana-memo-program-old = { workspace = true, features = ["no-entrypoint"] }
 evm-contracts-test-suite.workspace = true
 rstest.workspace = true
 solana-program-test.workspace = true

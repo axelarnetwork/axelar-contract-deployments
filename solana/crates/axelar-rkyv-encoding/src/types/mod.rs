@@ -1,4 +1,5 @@
 pub mod execute_data;
+pub mod flags;
 pub mod message;
 pub mod payload;
 pub mod proof;
@@ -10,6 +11,7 @@ pub mod weighted_signature;
 pub mod wrapper_types;
 
 pub use execute_data::*;
+pub use flags::*;
 pub use message::*;
 pub use payload::*;
 pub use proof::*;

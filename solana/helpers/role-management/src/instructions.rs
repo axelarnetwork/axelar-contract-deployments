@@ -1,22 +1,25 @@
 //! Instructions for role management.
 use std::error::Error;
 
+use axelar_rkyv_encoding::types::ArchivableFlags;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
 use solana_program::instruction::AccountMeta;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
 
-use crate::state::archive::ArchivableRoles;
-use crate::state::Roles;
+use crate::state::RolesFlags;
 
 /// Inputs for role management related instructions.
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
-pub struct RoleManagementInstructionInputs {
+#[archive_attr(derive(CheckBytes))]
+pub struct RoleManagementInstructionInputs<F>
+where
+    F: RolesFlags,
+{
     /// The roles to add or transfer.
-    #[with(ArchivableRoles)]
-    pub roles: Roles,
+    #[with(ArchivableFlags)]
+    pub roles: F,
 
     /// The bump for the destination roles PDA.
     pub destination_roles_pda_bump: u8,
@@ -28,8 +31,11 @@ pub struct RoleManagementInstructionInputs {
 /// Role management instructions.
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
-pub enum RoleManagementInstruction {
+#[archive_attr(derive(CheckBytes))]
+pub enum RoleManagementInstruction<F>
+where
+    F: RolesFlags,
+{
     /// Adds roles to a user.
     ///
     /// 0. [] System program account.
@@ -39,7 +45,7 @@ pub enum RoleManagementInstruction {
     /// 4. [] Account to add roles to.
     /// 5. [writable] PDA account with the roles on the resource, for the
     ///    accounts the roles are being added to.
-    AddRoles(RoleManagementInstructionInputs),
+    AddRoles(RoleManagementInstructionInputs<F>),
 
     /// Removes roles from a user.
     ///
@@ -50,7 +56,7 @@ pub enum RoleManagementInstruction {
     /// 4. [] Account to remove roles from.
     /// 5. [writable] PDA account with the roles on the resource, for the
     ///    accounts the roles are being removed from.
-    RemoveRoles(RoleManagementInstructionInputs),
+    RemoveRoles(RoleManagementInstructionInputs<F>),
 
     /// Transfers roles from one user to another.
     ///
@@ -64,7 +70,7 @@ pub enum RoleManagementInstruction {
     /// 6. [] Account which the roles are being transferred from.
     /// 7. [writable] PDA with the roles on the resource, for the account the
     ///    roles are being transferred from.
-    TransferRoles(RoleManagementInstructionInputs),
+    TransferRoles(RoleManagementInstructionInputs<F>),
 
     /// Proposes roles to a user. Upon acceptance the roles are transferred.
     ///
@@ -79,7 +85,7 @@ pub enum RoleManagementInstruction {
     /// 7. [] PDA with the roles on the resource, for the account the roles are
     ///    being transferred from.
     /// 8. [writable] The PDA account containing the proposal.
-    ProposeRoles(RoleManagementInstructionInputs),
+    ProposeRoles(RoleManagementInstructionInputs<F>),
 
     /// Accepts proposed roles.
     ///
@@ -94,10 +100,13 @@ pub enum RoleManagementInstruction {
     /// 7. [writable] PDA with the roles on the resource, for the account the
     ///    roles are being transferred from.
     /// 8. [writable] The PDA account containing the proposal.
-    AcceptRoles(RoleManagementInstructionInputs),
+    AcceptRoles(RoleManagementInstructionInputs<F>),
 }
 
-impl RoleManagementInstruction {
+impl<F> RoleManagementInstruction<F>
+where
+    F: RolesFlags,
+{
     /// Serializes the instruction into a byte array.
     ///
     /// # Errors
@@ -126,14 +135,14 @@ impl RoleManagementInstruction {
 
 /// Creates an instruction to add roles to a user.
 #[must_use]
-pub fn add_roles(
+pub fn add_roles<F: RolesFlags>(
     program_id: Pubkey,
     payer: Pubkey,
     on: Pubkey,
     to: Pubkey,
-    roles: Roles,
+    roles: F,
     accounts_to_prepend: Option<Vec<AccountMeta>>,
-) -> (Vec<AccountMeta>, RoleManagementInstruction) {
+) -> (Vec<AccountMeta>, RoleManagementInstruction<F>) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &to);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
@@ -161,14 +170,14 @@ pub fn add_roles(
 
 /// Creates an instruction to remove roles from a user.
 #[must_use]
-pub fn remove_roles(
+pub fn remove_roles<F: RolesFlags>(
     program_id: Pubkey,
     payer: Pubkey,
     on: Pubkey,
     from: Pubkey,
-    roles: Roles,
+    roles: F,
     accounts_to_prepend: Option<Vec<AccountMeta>>,
-) -> (Vec<AccountMeta>, RoleManagementInstruction) {
+) -> (Vec<AccountMeta>, RoleManagementInstruction<F>) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &from);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
@@ -195,15 +204,15 @@ pub fn remove_roles(
 
 /// Creates an instruction to transfer roles between users.
 #[must_use]
-pub fn transfer_roles(
+pub fn transfer_roles<F: RolesFlags>(
     program_id: Pubkey,
     payer: Pubkey,
     on: Pubkey,
     from: Pubkey,
     to: Pubkey,
-    roles: Roles,
+    roles: F,
     accounts_to_prepend: Option<Vec<AccountMeta>>,
-) -> (Vec<AccountMeta>, RoleManagementInstruction) {
+) -> (Vec<AccountMeta>, RoleManagementInstruction<F>) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &to);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
@@ -233,15 +242,15 @@ pub fn transfer_roles(
 
 /// Creates an instruction to transfer roles between users.
 #[must_use]
-pub fn propose_roles(
+pub fn propose_roles<F: RolesFlags>(
     program_id: Pubkey,
     payer: Pubkey,
     on: Pubkey,
     from: Pubkey,
     to: Pubkey,
-    roles: Roles,
+    roles: F,
     accounts_to_prepend: Option<Vec<AccountMeta>>,
-) -> (Vec<AccountMeta>, RoleManagementInstruction) {
+) -> (Vec<AccountMeta>, RoleManagementInstruction<F>) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &to);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
@@ -275,14 +284,14 @@ pub fn propose_roles(
 
 /// Creates an instruction to transfer roles between users.
 #[must_use]
-pub fn accept_roles(
+pub fn accept_roles<F: RolesFlags>(
     program_id: Pubkey,
     payer: Pubkey,
     on: Pubkey,
     from: Pubkey,
-    roles: Roles,
+    roles: F,
     accounts_to_prepend: Option<Vec<AccountMeta>>,
-) -> (Vec<AccountMeta>, RoleManagementInstruction) {
+) -> (Vec<AccountMeta>, RoleManagementInstruction<F>) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &payer);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);

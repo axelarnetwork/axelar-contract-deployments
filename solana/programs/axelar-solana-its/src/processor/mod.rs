@@ -7,7 +7,7 @@ use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::Itertools;
 use program_utils::{check_rkyv_initialized_pda, StorableArchive, ValidPDA};
 use role_management::processor::{ensure_signer_roles, RoleManagementAccounts};
-use role_management::state::{Roles, UserRoles};
+use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -17,14 +17,15 @@ use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_program};
 
+use self::interchain_transfer::TakeTokenAccounts;
 use self::token_manager::SetFlowLimitAccounts;
 use crate::instructions::{
     self, derive_its_accounts, its_account_indices, Bumps, InterchainTokenServiceInstruction,
-    OutboundInstruction,
+    OptionalAccountsFlags, OutboundInstruction,
 };
 use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
-use crate::{check_program_account, seed_prefixes};
+use crate::{check_program_account, seed_prefixes, FromAccountInfoSlice, Roles};
 
 pub mod interchain_token;
 pub mod interchain_transfer;
@@ -38,6 +39,7 @@ pub(crate) trait LocalAction {
         payer: &'a AccountInfo<'a>,
         accounts: &'a [AccountInfo<'a>],
         bumps: Bumps,
+        optional_accounts_flags: OptionalAccountsFlags,
     ) -> ProgramResult;
 }
 
@@ -47,13 +49,18 @@ impl LocalAction for GMPPayload {
         payer: &'a AccountInfo<'a>,
         accounts: &'a [AccountInfo<'a>],
         bumps: Bumps,
+        optional_accounts_flags: OptionalAccountsFlags,
     ) -> ProgramResult {
         match self {
-            Self::InterchainTransfer(inner) => inner.process_local_action(payer, accounts, bumps),
-            Self::DeployInterchainToken(inner) => {
-                inner.process_local_action(payer, accounts, bumps)
+            Self::InterchainTransfer(inner) => {
+                inner.process_local_action(payer, accounts, bumps, optional_accounts_flags)
             }
-            Self::DeployTokenManager(inner) => inner.process_local_action(payer, accounts, bumps),
+            Self::DeployInterchainToken(inner) => {
+                inner.process_local_action(payer, accounts, bumps, optional_accounts_flags)
+            }
+            Self::DeployTokenManager(inner) => {
+                inner.process_local_action(payer, accounts, bumps, optional_accounts_flags)
+            }
             Self::SendToHub(_) | Self::ReceiveFromHub(_) => {
                 msg!("Unsupported local action");
                 Err(ProgramError::InvalidInstructionData)
@@ -93,18 +100,35 @@ pub fn process_instruction<'a>(
             abi_payload,
             gmp_metadata,
             bumps,
+            optional_accounts_flags,
         } => {
-            process_inbound_its_gmp_payload(accounts, gmp_metadata, &abi_payload, bumps)?;
+            process_inbound_its_gmp_payload(
+                accounts,
+                gmp_metadata,
+                &abi_payload,
+                bumps,
+                optional_accounts_flags,
+            )?;
         }
         InterchainTokenServiceInstruction::DeployInterchainToken { params, bumps } => {
-            process_its_native_deploy_call(accounts, params, bumps)?;
+            process_its_native_deploy_call(
+                accounts,
+                params,
+                bumps,
+                OptionalAccountsFlags::empty(),
+            )?;
         }
-        InterchainTokenServiceInstruction::DeployTokenManager { params, bumps } => {
-            process_its_native_deploy_call(accounts, params, bumps)?;
+        InterchainTokenServiceInstruction::DeployTokenManager {
+            params,
+            bumps,
+            optional_accounts_mask,
+        } => {
+            process_its_native_deploy_call(accounts, params, bumps, optional_accounts_mask)?;
         }
         InterchainTokenServiceInstruction::InterchainTransfer { mut params, bumps } => {
+            let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
             let amount_minus_fees =
-                interchain_transfer::take_token(accounts, params.amount, bumps)?;
+                interchain_transfer::take_token(&take_token_accounts, params.amount, bumps)?;
             params.amount = amount_minus_fees;
 
             let destination_chain = params
@@ -139,14 +163,16 @@ pub fn process_instruction<'a>(
             instruction_accounts.flow_limiter = instruction_accounts.its_root_pda;
             token_manager::set_flow_limit(&instruction_accounts, flow_limit)?;
         }
-        InterchainTokenServiceInstruction::MintTo { amount } => {
-            process_mint_to(accounts, amount)?;
-        }
         InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction) => {
             process_operator_instruction(accounts, operator_instruction)?;
         }
         InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
             token_manager::process_instruction(accounts, token_manager_instruction)?;
+        }
+        InterchainTokenServiceInstruction::InterchainTokenInstruction(
+            interchain_token_instruction,
+        ) => {
+            interchain_token::process_instruction(accounts, interchain_token_instruction)?;
         }
     }
 
@@ -215,6 +241,7 @@ fn process_inbound_its_gmp_payload<'a>(
     gmp_metadata: GmpMetadata,
     abi_payload: &[u8],
     bumps: Bumps,
+    optional_accounts_flags: OptionalAccountsFlags,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
@@ -241,13 +268,14 @@ fn process_inbound_its_gmp_payload<'a>(
         GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidInstructionData)?;
 
     validate_its_accounts(instruction_accounts, gateway_root_pda.key, &payload, bumps)?;
-    payload.process_local_action(payer, instruction_accounts, bumps)
+    payload.process_local_action(payer, instruction_accounts, bumps, optional_accounts_flags)
 }
 
 fn process_its_native_deploy_call<'a, T>(
     accounts: &'a [AccountInfo<'a>],
     mut payload: T,
     bumps: Option<Bumps>,
+    optional_accounts_flags: OptionalAccountsFlags,
 ) -> ProgramResult
 where
     T: TryInto<GMPPayload> + OutboundInstruction,
@@ -272,7 +300,7 @@ where
                 .split_first()
                 .ok_or(ProgramError::InvalidInstructionData)?;
 
-            payload.process_local_action(payer, other_accounts, bumps)?;
+            payload.process_local_action(payer, other_accounts, bumps, optional_accounts_flags)?;
         }
         (None, None) => {
             msg!("Missing ITS PDA bumps");
@@ -338,60 +366,6 @@ fn process_outbound_its_gmp_payload(
     Ok(())
 }
 
-fn process_mint_to(accounts: &[AccountInfo<'_>], amount: u64) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let mint = next_account_info(accounts_iter)?;
-    let destination_account = next_account_info(accounts_iter)?;
-    let interchain_token_pda = next_account_info(accounts_iter)?;
-    let token_manager_pda = next_account_info(accounts_iter)?;
-    let minter = next_account_info(accounts_iter)?;
-    let token_program = next_account_info(accounts_iter)?;
-
-    let token_manager_pda_data = token_manager_pda.try_borrow_data()?;
-    let token_manager = check_rkyv_initialized_pda::<TokenManager>(
-        &crate::id(),
-        token_manager_pda,
-        token_manager_pda_data.as_ref(),
-    )?;
-
-    if token_manager.token_address.as_ref() != mint.key.as_ref() {
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    if mint.owner != token_program.key {
-        return Err(ProgramError::IncorrectProgramId);
-    }
-
-    if !minter.is_signer {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    // TODO: Check that `minter` is really a minter.
-
-    invoke_signed(
-        &spl_token_2022::instruction::mint_to(
-            token_program.key,
-            mint.key,
-            destination_account.key,
-            token_manager_pda.key,
-            &[],
-            amount,
-        )?,
-        &[
-            mint.clone(),
-            destination_account.clone(),
-            token_manager_pda.clone(),
-            token_program.clone(),
-        ],
-        &[&[
-            seed_prefixes::TOKEN_MANAGER_SEED,
-            interchain_token_pda.key.as_ref(),
-            &[token_manager.bump],
-        ]],
-    )?;
-    Ok(())
-}
-
 fn validate_its_accounts(
     accounts: &[AccountInfo<'_>],
     gateway_root_pda: &Pubkey,
@@ -413,7 +387,7 @@ fn validate_its_accounts(
         .map(|account| *account.key)
         .ok_or(ProgramError::InvalidAccountData)?;
 
-    let (derived_its_accounts, new_bumps) = derive_its_accounts(
+    let (derived_its_accounts, new_bumps, _) = derive_its_accounts(
         gateway_root_pda,
         payload,
         token_program,

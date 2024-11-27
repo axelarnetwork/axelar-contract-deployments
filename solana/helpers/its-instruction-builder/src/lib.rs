@@ -111,7 +111,7 @@ where
             let token_mint = axelar_solana_its::state::token_manager::decode_params(
                 deploy_payload.params.as_ref(),
             )
-            .map(|(_, token_mint)| Pubkey::try_from(token_mint.as_ref()))?
+            .map(|(_, _, token_mint)| Pubkey::try_from(token_mint.as_ref()))?
             .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
             let token_program = rpc_client

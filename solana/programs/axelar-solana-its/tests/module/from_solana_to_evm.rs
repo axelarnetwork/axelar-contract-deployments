@@ -21,7 +21,6 @@ use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::instruction::create_associated_token_account;
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
-use spl_token_2022::instruction::AuthorityType;
 use spl_token_2022::state::Mint;
 
 use crate::{
@@ -317,7 +316,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
         .send_tx(&[create_token_account_ix])
         .await;
 
-    let mint_ix = axelar_solana_its::instructions::mint_to(
+    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
         expected_token_id,
         interchain_token_pda,
         associated_account_address,
@@ -417,16 +416,16 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
         &solana_chain.fixture.payer.pubkey(),
         salt.as_slice(),
     );
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
 
     let mint = solana_chain
         .fixture
         .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id, 18)
         .await;
-    let params = axelar_solana_its::state::token_manager::encode_params(None, mint);
+    let params = axelar_solana_its::state::token_manager::encode_params(
+        None,
+        Some(solana_chain.fixture.payer.pubkey()),
+        mint,
+    );
     let deploy_local = DeployTokenManagerInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .salt(salt)
@@ -435,21 +434,6 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
         .params(params)
         .token_program(token_program_id)
         .build();
-
-    let transfer_mint_authority_ix = spl_token_2022::instruction::set_authority(
-        &token_program_id,
-        &mint,
-        Some(&token_manager_pda),
-        AuthorityType::MintTokens,
-        &solana_chain.fixture.payer.pubkey(),
-        &[],
-    )
-    .unwrap();
-
-    solana_chain
-        .fixture
-        .send_tx(&[transfer_mint_authority_ix])
-        .await;
 
     let deploy_local_ix =
         axelar_solana_its::instructions::deploy_token_manager(deploy_local).unwrap();
@@ -552,7 +536,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
     let initial_amount = 3000;
     let transfer_amount = 333;
 
-    let mint_tokens_ix = axelar_solana_its::instructions::mint_to(
+    let mint_tokens_ix = axelar_solana_its::instructions::interchain_token::mint(
         token_id,
         mint,
         ata,
@@ -669,7 +653,11 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         .fixture
         .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id, 18)
         .await;
-    let params = axelar_solana_its::state::token_manager::encode_params(None, mint);
+    let params = axelar_solana_its::state::token_manager::encode_params(
+        None,
+        Some(solana_chain.fixture.payer.pubkey()),
+        mint,
+    );
     let deploy_local = DeployTokenManagerInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .salt(salt)
@@ -678,21 +666,6 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         .params(params)
         .token_program(token_program_id)
         .build();
-
-    let transfer_mint_authority_ix = spl_token_2022::instruction::set_authority(
-        &token_program_id,
-        &mint,
-        Some(&token_manager_pda),
-        AuthorityType::MintTokens,
-        &solana_chain.fixture.payer.pubkey(),
-        &[],
-    )
-    .unwrap();
-
-    solana_chain
-        .fixture
-        .send_tx(&[transfer_mint_authority_ix])
-        .await;
 
     let deploy_local_ix =
         axelar_solana_its::instructions::deploy_token_manager(deploy_local).unwrap();
@@ -794,7 +767,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
     let delegated_amount = 800;
     let transfer_amount = 333;
 
-    let mint_tokens_ix = axelar_solana_its::instructions::mint_to(
+    let mint_tokens_ix = axelar_solana_its::instructions::interchain_token::mint(
         token_id,
         mint,
         bob_ata,
@@ -933,7 +906,11 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
         .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id, 18)
         .await;
 
-    let params = axelar_solana_its::state::token_manager::encode_params(None, mint);
+    let params = axelar_solana_its::state::token_manager::encode_params(
+        None,
+        Some(solana_chain.fixture.payer.pubkey()),
+        mint,
+    );
     let deploy_local = DeployTokenManagerInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .salt(salt)
@@ -1177,7 +1154,11 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
         )
         .await;
 
-    let params = axelar_solana_its::state::token_manager::encode_params(None, mint);
+    let params = axelar_solana_its::state::token_manager::encode_params(
+        None,
+        Some(solana_chain.fixture.payer.pubkey()),
+        mint,
+    );
     let deploy_local = DeployTokenManagerInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .salt(salt)

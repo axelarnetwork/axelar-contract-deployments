@@ -2,7 +2,7 @@ use axelar_message_primitives::{DataPayload, EncodingScheme, SolanaAccountRepr};
 use axelar_rkyv_encoding::test_fixtures::random_message_with_destination_and_payload;
 use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use axelar_solana_its::state::token_manager::TokenManager;
-use axelar_solana_memo_program::state::Counter;
+use axelar_solana_memo_program_old::state::Counter;
 use evm_contracts_test_suite::ethers::signers::Signer;
 use evm_contracts_test_suite::ethers::types::{Address, Bytes};
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
@@ -207,7 +207,7 @@ async fn test_send_from_evm_to_solana() {
         .unwrap();
 
     let memo_instruction =
-        axelar_solana_memo_program::instruction::AxelarMemoInstruction::ProcessMemo {
+        axelar_solana_memo_program_old::instruction::AxelarMemoInstruction::ProcessMemo {
             memo: "🐪🐪🐪🐪".to_owned(),
         };
     let transfer_amount = 500_000_u64;
@@ -234,7 +234,7 @@ async fn test_send_from_evm_to_solana() {
         .interchain_transfer(
             token_id,
             solana_chain_name.clone(),
-            axelar_solana_memo_program::id().to_bytes().into(),
+            axelar_solana_memo_program_old::id().to_bytes().into(),
             transfer_amount.into(),
             metadata,
             0_u128.into(),
@@ -260,7 +260,7 @@ async fn test_send_from_evm_to_solana() {
     let tx = relay_to_solana(transfer_payload, &mut solana_chain, Some(mint)).await;
 
     let ata = spl_associated_token_account::get_associated_token_address_with_program_id(
-        &axelar_solana_memo_program::id(),
+        &axelar_solana_memo_program_old::id(),
         &mint,
         &spl_token_2022::id(),
     );
@@ -273,7 +273,7 @@ async fn test_send_from_evm_to_solana() {
         .unwrap();
 
     assert_eq!(ata_account.mint, mint);
-    assert_eq!(ata_account.owner, axelar_solana_memo_program::id());
+    assert_eq!(ata_account.owner, axelar_solana_memo_program_old::id());
     assert_eq!(ata_account.amount, transfer_amount);
 
     let log_msgs = tx.metadata.unwrap().log_messages;
@@ -283,7 +283,7 @@ async fn test_send_from_evm_to_solana() {
     );
     let counter = solana_chain
         .fixture
-        .get_account::<Counter>(&counter_pda.unwrap(), &axelar_solana_memo_program::ID)
+        .get_account::<Counter>(&counter_pda.unwrap(), &axelar_solana_memo_program_old::ID)
         .await;
 
     assert_eq!(counter.counter, 1);

@@ -4,7 +4,8 @@ use std::borrow::Cow;
 use std::error::Error;
 
 use axelar_message_primitives::{DataPayload, DestinationProgramId, U256};
-use axelar_rkyv_encoding::types::{GmpMetadata, PublicKey};
+use axelar_rkyv_encoding::types::{ArchivableFlags, GmpMetadata, PublicKey};
+use bitflags::bitflags;
 use gateway::hasher_impl;
 use interchain_token_transfer_gmp::{
     DeployInterchainToken, DeployTokenManager, GMPPayload, InterchainTransfer,
@@ -21,7 +22,10 @@ use spl_associated_token_account::get_associated_token_address_with_program_id;
 use typed_builder::TypedBuilder;
 
 use crate::state::{self, flow_limit};
+use crate::Roles;
 
+pub mod interchain_token;
+pub mod minter;
 pub mod operator;
 pub mod token_manager;
 
@@ -50,10 +54,40 @@ pub mod its_account_indices {
     pub const SPL_ASSOCIATED_TOKEN_ACCOUNT_INDEX: usize = 6;
 }
 
+bitflags! {
+    /// Bitmask for the optional accounts passed in some of the instructions.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct OptionalAccountsFlags: u8 {
+        /// The minter account is being passed.
+        const MINTER = 0b0000_0001;
+
+        /// The minter roles account is being passed.
+        const MINTER_ROLES = 0b0000_0010;
+
+        /// The operator account is being passed.
+        const OPERATOR = 0b0000_0100;
+
+        /// The operator roles account is being passed.
+        const OPERATOR_ROLES = 0b0000_1000;
+    }
+}
+
+impl PartialEq<u8> for OptionalAccountsFlags {
+    fn eq(&self, other: &u8) -> bool {
+        self.bits().eq(other)
+    }
+}
+
+impl PartialEq<OptionalAccountsFlags> for u8 {
+    fn eq(&self, other: &OptionalAccountsFlags) -> bool {
+        self.eq(&other.bits())
+    }
+}
+
 /// Instructions supported by the multicall program.
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+#[archive_attr(derive(CheckBytes))]
 pub enum InterchainTokenServiceInstruction {
     /// Initializes the interchain token service program.
     ///
@@ -120,6 +154,10 @@ pub enum InterchainTokenServiceInstruction {
         /// The PDA bumps for the ITS accounts, required if deploying the token
         /// on the local chain.
         bumps: Option<Bumps>,
+
+        /// The optional accounts mask for the instruction.
+        #[with(ArchivableFlags)]
+        optional_accounts_mask: OptionalAccountsFlags,
     },
 
     /// Transfers interchain tokens.
@@ -158,6 +196,10 @@ pub enum InterchainTokenServiceInstruction {
         /// The GMP payload
         abi_payload: Vec<u8>,
 
+        /// The optional accounts flags for the instruction.
+        #[with(ArchivableFlags)]
+        optional_accounts_flags: OptionalAccountsFlags,
+
         /// The PDA bumps for the ITS accounts
         bumps: Bumps,
     },
@@ -166,21 +208,6 @@ pub enum InterchainTokenServiceInstruction {
     SetFlowLimit {
         /// The new flow limit.
         flow_limit: u64,
-    },
-
-    /// A proxy instruction to mint tokens whose mint authority is a
-    /// `TokenManager`. Only users with the `minter` role on the mint account
-    /// can mint tokens.
-    ///
-    /// 0. [writable] The mint account
-    /// 1. [writable] The account to mint tokens to
-    /// 2. [] The interchain token PDA associated with the mint
-    /// 3. [] The token manager PDA
-    /// 4. [signer] The minter account
-    /// 5. [] The token program id
-    MintTo {
-        /// The amount of tokens to mint
-        amount: u64,
     },
 
     /// ITS operator role management instructions.
@@ -192,6 +219,9 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Instructions operating on deployed [`TokenManager`] instances.
     TokenManagerInstruction(token_manager::Instruction),
+
+    /// Instructions operating in Interchain Tokens.
+    InterchainTokenInstruction(interchain_token::Instruction),
 }
 
 impl InterchainTokenServiceInstruction {
@@ -527,7 +557,7 @@ pub fn deploy_interchain_token(
     ];
 
     let bumps = if params.destination_chain.is_none() {
-        let (mut its_accounts, bumps) = derive_its_accounts(
+        let (mut its_accounts, bumps, _) = derive_its_accounts(
             &gateway_root_pda,
             &params,
             spl_token_2022::id(),
@@ -579,7 +609,7 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
         AccountMeta::new_readonly(gateway_root_pda, false),
     ];
 
-    let bumps = if params.destination_chain.is_none() {
+    let (bumps, optional_accounts_mask) = if params.destination_chain.is_none() {
         let token_program = Pubkey::new_from_array(
             params
                 .token_program
@@ -589,24 +619,28 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
                 .map_err(|_err| ProgramError::InvalidInstructionData)?,
         );
 
-        let (mut its_accounts, bumps) =
+        let (mut its_accounts, bumps, optional_accounts_mask) =
             derive_its_accounts(&gateway_root_pda, &params, token_program, None, None, None)?;
 
         accounts.append(&mut its_accounts);
 
-        Some(bumps)
+        (Some(bumps), optional_accounts_mask)
     } else {
         let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
 
         accounts.push(AccountMeta::new_readonly(gateway::id(), false));
         accounts.push(AccountMeta::new_readonly(its_root_pda, false));
 
-        None
+        (None, OptionalAccountsFlags::empty())
     };
 
-    let data = InterchainTokenServiceInstruction::DeployTokenManager { params, bumps }
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = InterchainTokenServiceInstruction::DeployTokenManager {
+        params,
+        bumps,
+        optional_accounts_mask,
+    }
+    .to_bytes()
+    .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -776,7 +810,7 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
             .map_err(|_err| ProgramError::InvalidInstructionData)?,
     };
 
-    let (mut its_accounts, bumps) = derive_its_accounts(
+    let (mut its_accounts, bumps, optional_accounts_mask) = derive_its_accounts(
         &inputs.gateway_root_pda,
         &unwrapped_payload,
         inputs.token_program,
@@ -790,6 +824,7 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
     let data = InterchainTokenServiceInstruction::ItsGmpPayload {
         abi_payload,
         gmp_metadata: inputs.gmp_metadata,
+        optional_accounts_flags: optional_accounts_mask,
         bumps,
     }
     .to_bytes()
@@ -798,43 +833,6 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
     Ok(Instruction {
         program_id: crate::ID,
         accounts,
-        data,
-    })
-}
-
-/// Creates an [`InterchainTokenServiceInstruction::MintTo`] instruction.
-///
-/// # Errors
-/// If serialization fails.
-pub fn mint_to(
-    token_id: [u8; 32],
-    mint: Pubkey,
-    account: Pubkey,
-    minter: Pubkey,
-    token_program: Pubkey,
-    amount: u64,
-) -> Result<Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
-    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
-
-    let instruction = InterchainTokenServiceInstruction::MintTo { amount };
-
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
-
-    Ok(Instruction {
-        program_id: crate::ID,
-        accounts: vec![
-            AccountMeta::new(mint, false),
-            AccountMeta::new(account, false),
-            AccountMeta::new_readonly(interchain_token_pda, false),
-            AccountMeta::new_readonly(token_manager_pda, false),
-            AccountMeta::new_readonly(minter, true),
-            AccountMeta::new_readonly(token_program, false),
-        ],
         data,
     })
 }
@@ -938,7 +936,7 @@ pub(crate) fn derive_its_accounts<'a, T>(
     mint: Option<Pubkey>,
     maybe_timestamp: Option<i64>,
     maybe_bumps: Option<Bumps>,
-) -> Result<(Vec<AccountMeta>, Bumps), ProgramError>
+) -> Result<(Vec<AccountMeta>, Bumps, OptionalAccountsFlags), ProgramError>
 where
     T: TryInto<ItsMessageRef<'a>, Error = ProgramError>,
 {
@@ -975,7 +973,7 @@ where
 
     let mut accounts =
         derive_common_its_accounts(its_root_pda, token_mint, token_manager_pda, token_program);
-    let mut message_specific_accounts = derive_specific_its_accounts(
+    let (mut message_specific_accounts, optional_accounts_mask) = derive_specific_its_accounts(
         token_mint,
         token_manager_pda,
         token_program,
@@ -995,6 +993,7 @@ where
             flow_slot_pda_bump: maybe_flow_slot_pda_bump,
             ..Default::default()
         },
+        optional_accounts_mask,
     ))
 }
 
@@ -1005,8 +1004,9 @@ fn derive_specific_its_accounts(
     maybe_flow_slot_pda_bump: &mut Option<u8>,
     maybe_timestamp: Option<i64>,
     message: &ItsMessageRef<'_>,
-) -> Result<Vec<AccountMeta>, ProgramError> {
+) -> Result<(Vec<AccountMeta>, OptionalAccountsFlags), ProgramError> {
     let mut specific_accounts = Vec::new();
+    let mut optional_accounts_mask = OptionalAccountsFlags::empty();
 
     match message {
         ItsMessageRef::InterchainTransfer {
@@ -1057,13 +1057,32 @@ fn derive_specific_its_accounts(
                     &minter_key,
                 );
 
+                optional_accounts_mask |=
+                    OptionalAccountsFlags::MINTER | OptionalAccountsFlags::MINTER_ROLES;
+
                 specific_accounts.push(AccountMeta::new_readonly(minter_key, false));
                 specific_accounts.push(AccountMeta::new(minter_roles_pda, false));
             }
         }
         ItsMessageRef::DeployTokenManager { params, .. } => {
-            let (maybe_operator, _) = state::token_manager::decode_params(params)
-                .map_err(|_err| ProgramError::InvalidInstructionData)?;
+            let (maybe_operator, maybe_mint_authority, _) =
+                state::token_manager::decode_params(params)
+                    .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+            if let Some(mint_authority) = maybe_mint_authority {
+                let (mint_authority_roles_pda, _) = role_management::find_user_roles_pda(
+                    &crate::id(),
+                    &token_manager_pda,
+                    &mint_authority,
+                );
+
+                optional_accounts_mask |=
+                    OptionalAccountsFlags::MINTER | OptionalAccountsFlags::MINTER_ROLES;
+
+                specific_accounts.push(AccountMeta::new_readonly(mint_authority, false));
+                specific_accounts.push(AccountMeta::new(mint_authority_roles_pda, false));
+            }
+
             if let Some(operator) = maybe_operator {
                 let (operator_roles_pda, _) = role_management::find_user_roles_pda(
                     &crate::id(),
@@ -1071,13 +1090,16 @@ fn derive_specific_its_accounts(
                     &operator,
                 );
 
+                optional_accounts_mask |=
+                    OptionalAccountsFlags::OPERATOR | OptionalAccountsFlags::OPERATOR_ROLES;
+
                 specific_accounts.push(AccountMeta::new_readonly(operator, false));
                 specific_accounts.push(AccountMeta::new(operator_roles_pda, false));
             }
         }
     };
 
-    Ok(specific_accounts)
+    Ok((specific_accounts, optional_accounts_mask))
 }
 
 fn try_retrieve_mint(
@@ -1092,7 +1114,7 @@ fn try_retrieve_mint(
     match payload {
         ItsMessageRef::DeployTokenManager { params, .. } => {
             let token_mint = state::token_manager::decode_params(params)
-                .map(|(_, token_mint)| Pubkey::try_from(token_mint.as_ref()))?
+                .map(|(_, _, token_mint)| Pubkey::try_from(token_mint.as_ref()))?
                 .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
             Ok(token_mint)
@@ -1391,10 +1413,10 @@ impl TryFrom<InterchainTransferInputs> for GMPPayload {
     }
 }
 
-impl TryFrom<RoleManagementInstruction> for InterchainTokenServiceInstruction {
+impl TryFrom<RoleManagementInstruction<Roles>> for InterchainTokenServiceInstruction {
     type Error = ProgramError;
 
-    fn try_from(value: RoleManagementInstruction) -> Result<Self, Self::Error> {
+    fn try_from(value: RoleManagementInstruction<Roles>) -> Result<Self, Self::Error> {
         match value {
             // Adding and removing operators on the InterchainTokenService is not supported.
             RoleManagementInstruction::AddRoles(_) | RoleManagementInstruction::RemoveRoles(_) => {

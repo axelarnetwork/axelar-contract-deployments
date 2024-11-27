@@ -63,8 +63,8 @@ async fn axelar_solana_setup(with_memo: bool) -> ItsProgramWrapper {
     let mut programs = vec![("axelar_solana_its.so".into(), axelar_solana_its::id())];
     if with_memo {
         programs.push((
-            "axelar_solana_memo_program.so".into(),
-            axelar_solana_memo_program::id(),
+            "axelar_solana_memo_program_old.so".into(),
+            axelar_solana_memo_program_old::id(),
         ));
     }
 
@@ -78,11 +78,11 @@ async fn axelar_solana_setup(with_memo: bool) -> ItsProgramWrapper {
     #[allow(clippy::if_then_some_else_none)] // bool.then() doesn´t allow async
     let counter_pda = if with_memo {
         let (counter_pda, counter_bump) =
-            axelar_solana_memo_program::get_counter_pda(&solana_chain.gateway_root_pda);
+            axelar_solana_memo_program_old::get_counter_pda(&solana_chain.gateway_root_pda);
 
         solana_chain
             .fixture
-            .send_tx(&[axelar_solana_memo_program::instruction::initialize(
+            .send_tx(&[axelar_solana_memo_program_old::instruction::initialize(
                 &solana_chain.fixture.payer.pubkey(),
                 &solana_chain.gateway_root_pda,
                 &(counter_pda, counter_bump),

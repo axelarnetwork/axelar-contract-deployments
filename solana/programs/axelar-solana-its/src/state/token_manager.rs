@@ -192,36 +192,59 @@ impl ArchivedTokenManager {
 /// # Errors
 ///
 /// If the data cannot be decoded.
-pub fn decode_params(data: &[u8]) -> Result<(Option<Pubkey>, Pubkey), ProgramError> {
-    let (operator_bytes, token_address) = <(Bytes, FixedBytes<32>)>::abi_decode(data, true)
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+pub fn decode_params(
+    data: &[u8],
+) -> Result<(Option<Pubkey>, Option<Pubkey>, Pubkey), ProgramError> {
+    let (operator_bytes, mint_authority_bytes, token_address) =
+        <(Bytes, Bytes, FixedBytes<32>)>::abi_decode(data, true)
+            .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
     let token_address = Pubkey::new_from_array(token_address.0);
 
-    if operator_bytes.is_empty() {
-        return Ok((None, token_address));
-    }
+    let operator = if operator_bytes.is_empty() {
+        None
+    } else {
+        let operator_byte_array: [u8; 32] = operator_bytes
+            .as_ref()
+            .try_into()
+            .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
-    let operator = operator_bytes
-        .as_ref()
-        .try_into()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+        Some(Pubkey::new_from_array(operator_byte_array))
+    };
 
-    Ok((Some(Pubkey::new_from_array(operator)), token_address))
+    let mint_authority = if mint_authority_bytes.is_empty() {
+        None
+    } else {
+        let mint_authority_byte_array: [u8; 32] = mint_authority_bytes
+            .as_ref()
+            .try_into()
+            .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+        Some(Pubkey::new_from_array(mint_authority_byte_array))
+    };
+
+    Ok((operator, mint_authority, token_address))
 }
 
-/// Encodes the operator and token address into a byte array.
+/// Encodes the operator, mint authority, and token address into a byte array.
 ///
 /// This encoding scheme is aimed at Solana ITS. If you're sending a
 /// `DeployTokenManager` message to a different chain, please make sure to
 /// encode the data as required by the destination chain.
 #[must_use]
-pub fn encode_params(maybe_operator: Option<Pubkey>, token_address: Pubkey) -> Vec<u8> {
+pub fn encode_params(
+    maybe_operator: Option<Pubkey>,
+    maybe_mint_authority: Option<Pubkey>,
+    token_address: Pubkey,
+) -> Vec<u8> {
     let operator_bytes = maybe_operator
         .map(|operator| Bytes::from(operator.to_bytes()))
         .unwrap_or_default();
+    let mint_authority_bytes = maybe_mint_authority
+        .map(|mint_authority| Bytes::from(mint_authority.to_bytes()))
+        .unwrap_or_default();
     let token_address_bytes = FixedBytes::<32>::from(token_address.to_bytes());
-    (operator_bytes, token_address_bytes).abi_encode()
+    (operator_bytes, mint_authority_bytes, token_address_bytes).abi_encode()
 }
 
 #[cfg(test)]
@@ -231,11 +254,14 @@ mod tests {
     #[test]
     fn test_encode_decode_params_roundtrip() {
         let operator = Pubkey::new_unique();
+        let mint_authority = Pubkey::new_unique();
         let token_address = Pubkey::new_unique();
-        let encoded = super::encode_params(Some(operator), token_address);
-        let (decoded_operator, decoded_token_address) = super::decode_params(&encoded).unwrap();
+        let encoded = super::encode_params(Some(operator), Some(mint_authority), token_address);
+        let (decoded_operator, decoded_mint_authority, decoded_token_address) =
+            super::decode_params(&encoded).unwrap();
 
         assert_eq!(Some(operator), decoded_operator);
+        assert_eq!(Some(mint_authority), decoded_mint_authority);
         assert_eq!(token_address, decoded_token_address);
     }
 }

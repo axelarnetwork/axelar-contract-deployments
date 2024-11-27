@@ -8,18 +8,18 @@ use solana_program::pubkey::Pubkey;
 
 use crate::instructions::RoleManagementInstructionInputs;
 use crate::seed_prefixes;
-use crate::state::{RoleProposal, Roles, UserRoles};
+use crate::state::{RoleProposal, RolesFlags, UserRoles};
 
 /// Propose a role transfer from one user to another.
 ///
 /// # Errors
 ///
 /// [`ProgramError`] is returned as a result of failed operations.
-pub fn propose(
+pub fn propose<F: RolesFlags>(
     program_id: &Pubkey,
     accounts: RoleManagementAccounts<'_>,
-    inputs: &RoleManagementInstructionInputs,
-    required_payer_roles: Roles,
+    inputs: &RoleManagementInstructionInputs<F>,
+    required_payer_roles: F,
 ) -> ProgramResult {
     let transfer_accounts = RoleTransferWithProposalAccounts::try_from(accounts)?;
 
@@ -69,11 +69,11 @@ pub fn propose(
 /// # Errors
 ///
 /// [`ProgramError`] is returned as a result of failed operations.
-pub fn accept(
+pub fn accept<F: RolesFlags>(
     program_id: &Pubkey,
     accounts: RoleManagementAccounts<'_>,
-    inputs: &RoleManagementInstructionInputs,
-    required_payer_roles: Roles,
+    inputs: &RoleManagementInstructionInputs<F>,
+    required_payer_roles: F,
 ) -> ProgramResult {
     let transfer_accounts = RoleTransferWithProposalAccounts::try_from(accounts)?;
 
@@ -118,7 +118,7 @@ pub fn accept(
         return Err(ProgramError::InvalidArgument);
     }
 
-    let proposal = RoleProposal::load(program_id, transfer_accounts.proposal_account)?;
+    let proposal = RoleProposal::<F>::load(program_id, transfer_accounts.proposal_account)?;
     if !proposal.roles.contains(inputs.roles) {
         msg!("Trying to accept a role that hasn't been proposed");
         return Err(ProgramError::InvalidArgument);
@@ -139,10 +139,10 @@ pub fn accept(
     Ok(())
 }
 
-fn transfer_roles(
+fn transfer_roles<F: RolesFlags>(
     program_id: &Pubkey,
     accounts: &RoleTransferAccounts<'_>,
-    roles: Roles,
+    roles: F,
     destination_roles_pda_bump: u8,
 ) -> ProgramResult {
     ensure_roles(
@@ -186,11 +186,11 @@ fn transfer_roles(
 /// # Errors
 ///
 /// [`ProgramError`] is returned as a result of failed operations.
-pub fn transfer(
+pub fn transfer<F: RolesFlags>(
     program_id: &Pubkey,
     accounts: RoleManagementAccounts<'_>,
-    inputs: &RoleManagementInstructionInputs,
-    required_payer_roles: Roles,
+    inputs: &RoleManagementInstructionInputs<F>,
+    required_payer_roles: F,
 ) -> ProgramResult {
     let transfer_accounts = RoleTransferAccounts::try_from(accounts)?;
 
@@ -217,11 +217,11 @@ pub fn transfer(
 /// # Errors
 ///
 /// [`ProgramError`] is returned as a result of failed operations.
-pub fn add(
+pub fn add<F: RolesFlags>(
     program_id: &Pubkey,
     accounts: RoleManagementAccounts<'_>,
-    inputs: &RoleManagementInstructionInputs,
-    required_payer_roles: Roles,
+    inputs: &RoleManagementInstructionInputs<F>,
+    required_payer_roles: F,
 ) -> ProgramResult {
     let add_accounts = RoleAddAccounts::try_from(accounts)?;
 
@@ -263,11 +263,11 @@ pub fn add(
 /// # Errors
 ///
 /// [`ProgramError`] is returned as a result of failed operations.
-pub fn remove(
+pub fn remove<F: RolesFlags>(
     program_id: &Pubkey,
     accounts: RoleManagementAccounts<'_>,
-    inputs: &RoleManagementInstructionInputs,
-    required_payer_roles: Roles,
+    inputs: &RoleManagementInstructionInputs<F>,
+    required_payer_roles: F,
 ) -> ProgramResult {
     let remove_accounts = RoleRemoveAccounds::try_from(accounts)?;
     ensure_signer_roles(
@@ -296,15 +296,15 @@ pub fn remove(
 /// # Errors
 ///
 /// [`ProgramError`] is returned as a result of failed operations.
-pub fn ensure_roles(
+pub fn ensure_roles<F: RolesFlags>(
     program_id: &Pubkey,
     resource: &AccountInfo<'_>,
     user: &AccountInfo<'_>,
     roles_account: &AccountInfo<'_>,
-    roles: Roles,
+    roles: F,
 ) -> ProgramResult {
     let Ok(user_roles) = UserRoles::load(program_id, roles_account) else {
-        if roles.eq(&Roles::empty()) {
+        if roles.eq(&F::empty()) {
             return Ok(());
         }
 
@@ -332,12 +332,12 @@ pub fn ensure_roles(
 /// # Errors
 ///
 /// [`ProgramError`] is returned as a result of failed operations.
-pub fn ensure_signer_roles(
+pub fn ensure_signer_roles<F: RolesFlags>(
     program_id: &Pubkey,
     resource: &AccountInfo<'_>,
     signer: &AccountInfo<'_>,
     roles_account: &AccountInfo<'_>,
-    roles: Roles,
+    roles: F,
 ) -> ProgramResult {
     if !signer.is_signer {
         return Err(ProgramError::MissingRequiredSignature);

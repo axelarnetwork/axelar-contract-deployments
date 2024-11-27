@@ -2,17 +2,17 @@
 
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
 use role_management::instructions::{RoleManagementInstruction, RoleManagementInstructionInputs};
-use role_management::state::Roles;
 use solana_program::instruction::AccountMeta;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::{operator, InterchainTokenServiceInstruction};
+use crate::Roles;
 
 /// Instructions operating on [`TokenManager`] instances.
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+#[archive_attr(derive(CheckBytes))]
 pub enum Instruction {
     /// Adds a flow limiter to a [`TokenManager`].
     ///
@@ -23,7 +23,7 @@ pub enum Instruction {
     /// 4. [] Account to add the Flow Limiter role to.
     /// 5. [writable] PDA account with the roles on the [`TokenManager`], for
     ///    the accounts the roles are being added to.
-    AddFlowLimiter(RoleManagementInstructionInputs),
+    AddFlowLimiter(RoleManagementInstructionInputs<Roles>),
 
     /// Removes a flow limiter from a [`TokenManager`].
     ///
@@ -34,7 +34,7 @@ pub enum Instruction {
     /// 4. [] Account to remove the Flow Limiter role from.
     /// 5. [writable] PDA account with the roles on the [`TokenManager`], for
     ///    the accounts the roles are being added to.
-    RemoveFlowLimiter(RoleManagementInstructionInputs),
+    RemoveFlowLimiter(RoleManagementInstructionInputs<Roles>),
 
     /// Sets the flow limit for an interchain token.
     ///
@@ -56,9 +56,9 @@ pub enum Instruction {
     OperatorInstruction(super::operator::Instruction),
 }
 
-impl TryFrom<RoleManagementInstruction> for Instruction {
+impl TryFrom<RoleManagementInstruction<Roles>> for Instruction {
     type Error = ProgramError;
-    fn try_from(value: RoleManagementInstruction) -> Result<Self, Self::Error> {
+    fn try_from(value: RoleManagementInstruction<Roles>) -> Result<Self, Self::Error> {
         match value {
             RoleManagementInstruction::AddRoles(inputs) => Ok(Self::AddFlowLimiter(inputs)),
             RoleManagementInstruction::RemoveRoles(inputs) => Ok(Self::RemoveFlowLimiter(inputs)),

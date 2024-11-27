@@ -17,11 +17,11 @@ use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
 
 use super::LocalAction;
-use crate::instructions::Bumps;
+use crate::instructions::{Bumps, OptionalAccountsFlags};
 use crate::processor::token_manager as token_manager_processor;
-use crate::seed_prefixes;
 use crate::state::flow_limit::{self, FlowDirection, FlowSlot};
 use crate::state::token_manager::{self, TokenManager};
+use crate::{seed_prefixes, FromAccountInfoSlice};
 
 impl LocalAction for InterchainTransfer {
     fn process_local_action<'a>(
@@ -29,6 +29,7 @@ impl LocalAction for InterchainTransfer {
         payer: &'a AccountInfo<'a>,
         accounts: &'a [AccountInfo<'a>],
         bumps: Bumps,
+        _optional_accounts_flags: OptionalAccountsFlags,
     ) -> ProgramResult {
         process_inbound_transfer(payer, accounts, &self, bumps)
     }
@@ -68,54 +69,42 @@ pub fn process_inbound_transfer<'a>(
     payload: &InterchainTransfer,
     bumps: Bumps,
 ) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let _system_account = next_account_info(accounts_iter)?;
-    let _its_root_pda = next_account_info(accounts_iter)?;
-    let _token_manager_pda = next_account_info(accounts_iter)?;
-    let _token_mint = next_account_info(accounts_iter)?;
-    let _token_manager_ata = next_account_info(accounts_iter)?;
-    let _token_program = next_account_info(accounts_iter)?;
-    let _ata_program = next_account_info(accounts_iter)?;
-    let _its_roles_pda = next_account_info(accounts_iter)?;
-    let _rent_sysvar = next_account_info(accounts_iter)?;
-    let destination_wallet = next_account_info(accounts_iter)?;
-    let _destination_ata = next_account_info(accounts_iter)?;
+    let parsed_accounts = GiveTokenAccounts::from_account_info_slice(accounts, &payer)?;
 
     let Ok(converted_amount) = payload.amount.try_into() else {
         msg!("Failed to convert amount");
         return Err(ProgramError::InvalidInstructionData);
     };
 
-    give_token(payer, accounts, converted_amount, bumps)?;
+    give_token(payer, &parsed_accounts, converted_amount, bumps)?;
 
     if !payload.data.is_empty() {
-        if !destination_wallet.executable {
+        if !parsed_accounts.destination_wallet.executable {
             return Err(ProgramError::InvalidInstructionData);
         }
 
         let program_payload = DataPayload::decode(&payload.data)?;
 
         let instruction = Instruction {
-            program_id: *destination_wallet.key,
+            program_id: *parsed_accounts.destination_wallet.key,
             accounts: program_payload.account_meta().to_vec(),
             data: borsh::to_vec(&AxelarCallableInstruction::Native(
                 program_payload.payload_without_accounts().to_vec(),
             ))?,
         };
 
+        let accounts_iter = &mut accounts.iter();
         invoke(&instruction, accounts_iter.as_slice())?;
     }
 
     Ok(())
 }
 
-pub(crate) fn take_token<'a>(
-    accounts: &'a [AccountInfo<'a>],
+pub(crate) fn take_token(
+    accounts: &TakeTokenAccounts<'_>,
     amount: u64,
     bumps: Bumps,
 ) -> Result<u64, ProgramError> {
-    let accounts = parse_take_token_accounts(accounts)?;
-
     let (token_manager_type, _, flow_limit) = get_token_manager_info(accounts.token_manager_pda)?;
 
     token_manager_processor::validate_token_manager_type(
@@ -124,17 +113,15 @@ pub(crate) fn take_token<'a>(
         accounts.token_manager_pda,
     )?;
 
-    handle_take_token_transfer(token_manager_type, &accounts, bumps, amount, flow_limit)
+    handle_take_token_transfer(token_manager_type, accounts, bumps, amount, flow_limit)
 }
 
 fn give_token<'a>(
     payer: &'a AccountInfo<'a>,
-    accounts: &'a [AccountInfo<'a>],
+    accounts: &GiveTokenAccounts<'a>,
     amount: u64,
     bumps: Bumps,
 ) -> ProgramResult {
-    let accounts = parse_give_token_accounts(payer, accounts)?;
-
     let (token_manager_type, token_id, flow_limit) =
         get_token_manager_info(accounts.token_manager_pda)?;
     let (interchain_token_pda, _) = crate::create_interchain_token_pda(
@@ -160,7 +147,7 @@ fn give_token<'a>(
 
     handle_give_token_transfer(
         token_manager_type,
-        &accounts,
+        accounts,
         interchain_token_pda.as_ref(),
         bumps,
         amount,
@@ -169,52 +156,6 @@ fn give_token<'a>(
 
     Ok(())
 }
-
-fn parse_take_token_accounts<'a>(
-    accounts: &'a [AccountInfo<'a>],
-) -> Result<TakeTokenAccounts<'a>, ProgramError> {
-    let accounts_iter = &mut accounts.iter();
-
-    Ok(TakeTokenAccounts {
-        system_account: next_account_info(accounts_iter)?,
-        payer: next_account_info(accounts_iter)?,
-        authority: next_account_info(accounts_iter)?,
-        _gateway_root_pda: next_account_info(accounts_iter)?,
-        _gateway: next_account_info(accounts_iter)?,
-        _its_root_pda: next_account_info(accounts_iter)?,
-        interchain_token_pda: next_account_info(accounts_iter)?,
-        source_account: next_account_info(accounts_iter)?,
-        token_mint: next_account_info(accounts_iter)?,
-        token_manager_pda: next_account_info(accounts_iter)?,
-        token_manager_ata: next_account_info(accounts_iter)?,
-        token_program: next_account_info(accounts_iter)?,
-        flow_slot_pda: next_account_info(accounts_iter)?,
-    })
-}
-
-fn parse_give_token_accounts<'a>(
-    payer: &'a AccountInfo<'a>,
-    accounts: &'a [AccountInfo<'a>],
-) -> Result<GiveTokenAccounts<'a>, ProgramError> {
-    let accounts_iter = &mut accounts.iter();
-
-    Ok(GiveTokenAccounts {
-        payer,
-        system_account: next_account_info(accounts_iter)?,
-        its_root_pda: next_account_info(accounts_iter)?,
-        token_manager_pda: next_account_info(accounts_iter)?,
-        token_mint: next_account_info(accounts_iter)?,
-        token_manager_ata: next_account_info(accounts_iter)?,
-        token_program: next_account_info(accounts_iter)?,
-        _ata_program: next_account_info(accounts_iter)?,
-        _its_roles_pda: next_account_info(accounts_iter)?,
-        _rent_sysvar: next_account_info(accounts_iter)?,
-        destination_wallet: next_account_info(accounts_iter)?,
-        destination_ata: next_account_info(accounts_iter)?,
-        flow_slot_pda: next_account_info(accounts_iter)?,
-    })
-}
-
 fn get_token_manager_info(
     token_manager_pda: &AccountInfo<'_>,
 ) -> Result<(token_manager::Type, Vec<u8>, u64), ProgramError> {
@@ -579,20 +520,46 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
     Ok(())
 }
 
-struct TakeTokenAccounts<'a> {
-    system_account: &'a AccountInfo<'a>,
-    payer: &'a AccountInfo<'a>,
-    authority: &'a AccountInfo<'a>,
-    _gateway_root_pda: &'a AccountInfo<'a>,
-    _gateway: &'a AccountInfo<'a>,
-    _its_root_pda: &'a AccountInfo<'a>,
-    interchain_token_pda: &'a AccountInfo<'a>,
-    source_account: &'a AccountInfo<'a>,
-    token_mint: &'a AccountInfo<'a>,
-    token_manager_pda: &'a AccountInfo<'a>,
-    token_manager_ata: &'a AccountInfo<'a>,
-    token_program: &'a AccountInfo<'a>,
-    flow_slot_pda: &'a AccountInfo<'a>,
+pub(crate) struct TakeTokenAccounts<'a> {
+    pub(crate) system_account: &'a AccountInfo<'a>,
+    pub(crate) payer: &'a AccountInfo<'a>,
+    pub(crate) authority: &'a AccountInfo<'a>,
+    pub(crate) _gateway_root_pda: &'a AccountInfo<'a>,
+    pub(crate) _gateway: &'a AccountInfo<'a>,
+    pub(crate) _its_root_pda: &'a AccountInfo<'a>,
+    pub(crate) interchain_token_pda: &'a AccountInfo<'a>,
+    pub(crate) source_account: &'a AccountInfo<'a>,
+    pub(crate) token_mint: &'a AccountInfo<'a>,
+    pub(crate) token_manager_pda: &'a AccountInfo<'a>,
+    pub(crate) token_manager_ata: &'a AccountInfo<'a>,
+    pub(crate) token_program: &'a AccountInfo<'a>,
+    pub(crate) flow_slot_pda: &'a AccountInfo<'a>,
+}
+
+impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
+    type Context = ();
+    fn from_account_info_slice(
+        accounts: &'a [AccountInfo<'a>],
+        _context: &Self::Context,
+    ) -> Result<Self, ProgramError> {
+        let accounts_iter = &mut accounts.iter();
+
+        Ok(TakeTokenAccounts {
+            system_account: next_account_info(accounts_iter)?,
+            payer: next_account_info(accounts_iter)?,
+            authority: next_account_info(accounts_iter)?,
+            _gateway_root_pda: next_account_info(accounts_iter)?,
+            _gateway: next_account_info(accounts_iter)?,
+            _its_root_pda: next_account_info(accounts_iter)?,
+            interchain_token_pda: next_account_info(accounts_iter)?,
+            source_account: next_account_info(accounts_iter)?,
+            token_mint: next_account_info(accounts_iter)?,
+            token_manager_pda: next_account_info(accounts_iter)?,
+            token_manager_ata: next_account_info(accounts_iter)?,
+            token_program: next_account_info(accounts_iter)?,
+            flow_slot_pda: next_account_info(accounts_iter)?,
+        })
+    }
 }
 
 struct GiveTokenAccounts<'a> {
@@ -609,6 +576,33 @@ struct GiveTokenAccounts<'a> {
     destination_wallet: &'a AccountInfo<'a>,
     destination_ata: &'a AccountInfo<'a>,
     flow_slot_pda: &'a AccountInfo<'a>,
+}
+
+impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
+    type Context = &'a AccountInfo<'a>;
+
+    fn from_account_info_slice(
+        accounts: &'a [AccountInfo<'a>],
+        payer: &Self::Context,
+    ) -> Result<Self, ProgramError> {
+        let accounts_iter = &mut accounts.iter();
+
+        Ok(GiveTokenAccounts {
+            payer,
+            system_account: next_account_info(accounts_iter)?,
+            its_root_pda: next_account_info(accounts_iter)?,
+            token_manager_pda: next_account_info(accounts_iter)?,
+            token_mint: next_account_info(accounts_iter)?,
+            token_manager_ata: next_account_info(accounts_iter)?,
+            token_program: next_account_info(accounts_iter)?,
+            _ata_program: next_account_info(accounts_iter)?,
+            _its_roles_pda: next_account_info(accounts_iter)?,
+            _rent_sysvar: next_account_info(accounts_iter)?,
+            destination_wallet: next_account_info(accounts_iter)?,
+            destination_ata: next_account_info(accounts_iter)?,
+            flow_slot_pda: next_account_info(accounts_iter)?,
+        })
+    }
 }
 
 struct FlowTrackingAccounts<'a> {
