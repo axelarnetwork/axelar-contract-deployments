@@ -393,7 +393,7 @@
         "InterchainTokenFactory": {
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "salt": "ITS Factory v1.0.0 devnet-amplifier2",
-          "implementation": "0x2269B93c8D8D4AfcE9786d2940F5Fcd4386Db7ff",
+          "implementation": "0x38a1DF03Ed0308fA545D60a458904Ad9416c8c65",
           "address": "0xdB7d6A5B8d37a4f34BC1e7ce0d0B8a9DDA124871"
         }
       }
