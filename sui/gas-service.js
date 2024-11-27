@@ -41,6 +41,7 @@ async function payGas(keypair, client, gasServiceConfig, args, options, contract
             arguments: [],
         });
     }
+
     const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
 
     const [messageTicket] = tx.moveCall({
@@ -66,10 +67,7 @@ async function payGas(keypair, client, gasServiceConfig, args, options, contract
 
     tx.moveCall({
         target: `${axelarGatewayPackageId}::gateway::send_message`,
-        arguments: [
-            tx.object(contracts.AxelarGateway.objects.Gateway),
-            messageTicket,
-        ],
+        arguments: [tx.object(contracts.AxelarGateway.objects.Gateway), messageTicket],
     });
 
     if (!options.channel) {
@@ -202,13 +200,7 @@ if (require.main === module) {
     const program = new Command();
 
     program.name('gas-service').description('Interact with the gas service contract.');
-    program
-        .command('call-contract <destinationChain> <destinationAddress> <payload>')
-        .description('Initiate sending a cross-chain message via the gateway')
-        
-        .action((destinationChain, destinationAddress, payload, options) => {
-            mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
-        });
+
     const payGasCmd = new Command()
         .command('payGas <destinationChain> <destinationAddress> <payload>')
         .description('Send a contract call with gas for it payed.')
