@@ -63,24 +63,24 @@
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.0.1 devnet-amplifier",
+          "salt": "ITS v2.0.1 consensus devnet-amplifier2",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "proxySalt": "ITS v1.0.0 devnet-amplifier",
-          "tokenManagerDeployer": "0xb518515e96Dd6379656C50347267949d4Ec23c43",
-          "interchainToken": "0x35C4ca0dB9BF62f9ed859bE45f323BE4c8FD6A81",
-          "interchainTokenDeployer": "0x3A499F60f8B7Fa0393855270b47db18796de28Fa",
-          "tokenManager": "0xbcE7bb10e201A20f1d35b5F15a7f5E1C9b4339F8",
-          "tokenHandler": "0x8435eE93110Ce6dEa0bFFAef8CF2DfcdCBfc8373",
-          "gatewayCaller": "0x324d9E8389d146Dea51ade37c1369daBD90A8B0d",
-          "implementation": "0x75C8F5519a25fBBd9f31a320C5bda8d1C7b1f946",
+          "proxySalt": "ITS v1.0.0 consensus devnet-amplifier2",
+          "tokenManagerDeployer": "0x280f2a1e9B56c4588C09510fBeC47aBdcC4bF09F",
+          "interchainToken": "0x32044b6b538EC9eA6E9e9B18dCE0E0FbdE5A40BF",
+          "interchainTokenDeployer": "0x3e3aE0aF17f95B46e4520E8b8AC251E7c5458eF9",
+          "tokenManager": "0xeB5ae4405E87a559FA4a9BDA42d8c9b14f68C285",
+          "tokenHandler": "0x27448668C270C590b6D05F35B1d7B8d6c532eEb2",
+          "gatewayCaller": "0x875eD7204a245E97b7074B4E4A32ed6a39cFFd65",
+          "implementation": "0x34fF4642393E3AA452348e61382EcC7fcC6A4389",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0x4FDE6E2ED0EF4642478F562f73D2F3Ff5648D55e"
+          "address": "0x77883201091c08570D55000AB32645b88cB96324"
         },
         "InterchainTokenFactory": {
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "ITS Factory v1.0.0 devnet-amplifier",
-          "implementation": "0x586f8136E0F55Cec74F454CCe7bEb03294721073",
-          "address": "0x1dc68354c38A00e48af46BA9DADB96Aaf58A893c"
+          "salt": "ITS Factory v1.0.0 consensus devnet-amplifier2",
+          "implementation": "0x3B1eD58362578040dd93FD978519aEcaF7129C5D",
+          "address": "0xD08cd727E13FAA39F4041C2f5d4D3FF89A519d5b"
         }
       }
     },
