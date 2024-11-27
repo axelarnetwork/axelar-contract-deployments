@@ -18,33 +18,66 @@ const {
     parseSuiUnitAmount,
 } = require('./utils');
 
-async function payGas(keypair, client, gasServiceConfig, args, options) {
+async function payGas(keypair, client, gasServiceConfig, args, options, contracts) {
     const walletAddress = keypair.toSuiAddress();
 
     const gasServicePackageId = gasServiceConfig.address;
+    const axelarGatewayPackageId = contracts.AxelarGateway.address;
 
     const { params } = options;
     const refundAddress = options.refundAddress || walletAddress;
 
-    const [destinationChain, destinationAddress, channelId, payload] = args;
+    const [destinationChain, destinationAddress, payload] = args;
     const unitAmount = options.amount;
 
+    let channel = options.channel;
+
     const tx = new Transaction();
+
+    // Create a temporary channel if one wasn't provided
+    if (!options.channel) {
+        [channel] = tx.moveCall({
+            target: `${axelarGatewayPackageId}::channel::new`,
+            arguments: [],
+        });
+    }
     const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
+
+    const [messageTicket] = tx.moveCall({
+        target: `${axelarGatewayPackageId}::gateway::prepare_message`,
+        arguments: [
+            channel,
+            tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
+            tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
+            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
+        ],
+    });
 
     tx.moveCall({
         target: `${gasServicePackageId}::gas_service::pay_gas`,
         arguments: [
             tx.object(gasServiceConfig.objects.GasService),
+            messageTicket,
             coin, // Coin<SUI>
-            tx.pure.address(channelId), // Channel address
-            tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
-            tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
-            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
             tx.pure.address(refundAddress), // Refund address
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
         ],
     });
+
+    tx.moveCall({
+        target: `${axelarGatewayPackageId}::gateway::send_message`,
+        arguments: [
+            tx.object(contracts.AxelarGateway.objects.Gateway),
+            messageTicket,
+        ],
+    });
+
+    if (!options.channel) {
+        tx.moveCall({
+            target: `${axelarGatewayPackageId}::channel::destroy`,
+            arguments: [channel],
+        });
+    }
 
     await broadcast(client, keypair, tx, 'Gas Paid');
 }
@@ -155,7 +188,7 @@ async function processCommand(command, chain, args, options) {
         throw new Error('GasService contract not found');
     }
 
-    await command(keypair, client, chain.contracts.GasService, args, options);
+    await command(keypair, client, chain.contracts.GasService, args, options, chain.contracts);
 }
 
 async function mainProcessor(options, args, processor, command) {
@@ -169,15 +202,22 @@ if (require.main === module) {
     const program = new Command();
 
     program.name('gas-service').description('Interact with the gas service contract.');
-
+    program
+        .command('call-contract <destinationChain> <destinationAddress> <payload>')
+        .description('Initiate sending a cross-chain message via the gateway')
+        
+        .action((destinationChain, destinationAddress, payload, options) => {
+            mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
+        });
     const payGasCmd = new Command()
-        .command('payGas <destinationChain> <destinationAddress> <channelId> <payload>')
-        .description('Pay gas for the new contract call.')
+        .command('payGas <destinationChain> <destinationAddress> <payload>')
+        .description('Send a contract call with gas for it payed.')
         .option('--refundAddress <refundAddress>', 'Refund address. Default is the sender address.')
         .requiredOption('--amount <amount>', 'Amount to pay gas', parseSuiUnitAmount)
+        .option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over')
         .option('--params <params>', 'Params. Default is empty.', '0x')
-        .action((destinationChain, destinationAddress, channelId, payload, options) => {
-            mainProcessor(options, [destinationChain, destinationAddress, channelId, payload], processCommand, payGas);
+        .action((destinationChain, destinationAddress, payload, options) => {
+            mainProcessor(options, [destinationChain, destinationAddress, payload], processCommand, payGas);
         });
 
     const addGasCmd = new Command()
