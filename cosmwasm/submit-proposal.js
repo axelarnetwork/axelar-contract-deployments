@@ -16,6 +16,7 @@ const {
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     updateCodeId,
+    getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeStoreInstantiateProposal,
@@ -27,7 +28,7 @@ const {
     submitProposal,
     makeInstantiateMsg,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo, prompt } = require('../common');
+const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, getItsEdgeContract } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -167,6 +168,30 @@ const execute = async (client, wallet, config, options) => {
     await callSubmitProposal(client, wallet, config, options, proposal);
 };
 
+const registerItsChain = async (client, wallet, config, options) => {
+    const chains = options.chains.map((chain) => {
+        const chainConfig = getChainConfig(config, chain);
+        const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
+
+        const itsEdgeContract = getItsEdgeContract(chainConfig);
+
+        return {
+            chain: chainConfig.axelarId,
+            its_edge_contract: itsEdgeContract,
+            truncation: {
+                max_uint: (2n ** BigInt(maxUintBits) - 1n).toString(),
+                max_decimals_when_truncating: maxDecimalsWhenTruncating,
+            },
+        };
+    });
+
+    await execute(client, wallet, config, {
+        ...options,
+        contractName: 'InterchainTokenService',
+        msg: `{ "register_chains": { "chains": ${JSON.stringify(chains)} } }`,
+    });
+};
+
 const paramChange = async (client, wallet, config, options) => {
     const proposal = encodeParameterChangeProposal(options);
 
@@ -256,11 +281,21 @@ const programHandler = () => {
 
     const executeCmd = program
         .command('execute')
-        .description('Submit a execute wasm contract proposal')
+        .description('Submit an execute wasm contract proposal')
         .action((options) => {
             mainProcessor(execute, options);
         });
     addAmplifierOptions(executeCmd, { contractOptions: true, executeProposalOptions: true, proposalOptions: true, runAs: true });
+
+    const registerItsChainCmd = program
+        .command('its-hub-register-chains')
+        .description('Submit an execute wasm contract proposal to register an ITS chain')
+        .argument('<chains...>', 'list of chains to register on ITS hub')
+        .action((chains, options) => {
+            options.chains = chains;
+            mainProcessor(registerItsChain, options);
+        });
+    addAmplifierOptions(registerItsChainCmd, { registerItsChainOptions: true, proposalOptions: true, runAs: true });
 
     const paramChangeCmd = program
         .command('paramChange')

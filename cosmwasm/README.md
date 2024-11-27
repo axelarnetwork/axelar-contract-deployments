@@ -216,6 +216,43 @@ Example usage:
 node cosmwasm/submit-proposal.js execute -c Router -t "Proposal title" -d "Proposal description" --deposit 100000000 --msg '{"register_chain":{"chain":"avalanche","gateway_address":"axelar17cnq5hujmkf2lr2c5hatqmhzlvwm365rqc5ugryphxeftavjef9q89zxvp","msg_id_format":"hex_tx_hash_and_event_index"}}'
 ```
 
+### Register chain on ITS Hub through governance proposal
+
+To submit a governance proposal to register an ITS chain, use the `submit-proposal` script with the `its-hub-register-chains <chains...>` command. The `chains` argument is used to pass a list of chains to register on ITS hub.
+
+**Prerequisites**: ITS hub contract configuration in json file must include the following attributes per chain:
+
+| Attribute                   | Description                                                                                | EVM | Sui |
+| --------------------------- | ------------------------------------------------------------------------------------------ | --- | --- |
+| `maxUintBits`               | Number of bits for the chain's maximum uint representation                                 | 256 | 64  |
+| `maxDecimalsWhenTruncating` | Maximum decimal places allowed when truncating ITS token amounts transferred to this chain | 255 | 6   |
+
+For EVM chains, the values above are used by default if not specified explicitly.
+
+Example configuration:
+
+```
+"axelar": {
+  "contracts": {
+    ...
+    "InterchainTokenService": {
+      ...
+      "some-sui-chain": {
+        "maxUintBits": 64,
+        "maxDecimalsWhenTruncating": 6,
+      }
+    }
+    ...
+  }
+}
+```
+
+Example usage:
+
+```
+node cosmwasm/submit-proposal.js its-hub-register-chains avalanche-fuji sui-test2 -t "Proposal title" -d "Proposal description" --deposit 100000000 -r $RUN_AS_ACCOUNT
+```
+
 ### Submit a proposal to change a parameter
 
 To submit a governance proposal to change a parameter, use the `submit-proposal` script with the `paramChange` command. The `--changes` option should be used to pass a JSON string representing an array of parameter changes.
