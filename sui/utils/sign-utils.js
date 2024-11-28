@@ -11,6 +11,7 @@ const { fromB64, fromHEX } = require('@mysten/bcs');
 const { execute } = require('@axelar-network/axelar-cgp-sui');
 const { printInfo } = require('../../common/utils');
 const { ethers } = require('hardhat');
+const { LedgerSigner } = require('../LedgerSigner');
 const {
     utils: { hexlify },
 } = ethers;
@@ -40,6 +41,14 @@ function getWallet(chain, options) {
         }
     }
 
+    const url = chain.rpc || getFullnodeUrl(chain.networkType);
+    const client = new SuiClient({ url });
+
+    if(options.privateKey === 'ledger') {
+        keypair = new LedgerSigner();
+        return [keypair, client]
+    }
+
     switch (options.privateKeyType) {
         case 'bech32': {
             const decodedKey = decodeSuiPrivateKey(options.privateKey);
@@ -59,13 +68,16 @@ function getWallet(chain, options) {
             break;
         }
 
+        case 'hex': {
+            const privKey = Buffer.from(options.privateKey, 'hex');
+            keypair = scheme.fromSecretKey(privKey);
+            break;
+        }
+
         default: {
             throw new Error(`Unsupported key type: ${options.privateKeyType}`);
         }
     }
-
-    const url = chain.rpc || getFullnodeUrl(chain.networkType);
-    const client = new SuiClient({ url });
 
     return [keypair, client];
 }

@@ -158,7 +158,7 @@ async function combineSignature(client, chain, options) {
 
 async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
-    printInfo('Wallet Address', keypair.toSuiAddress());
+    printInfo('Wallet Address', await keypair.toSuiAddress());
 
     let fileData;
 
