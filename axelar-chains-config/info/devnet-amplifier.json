@@ -784,9 +784,15 @@
         "url": "https://suiscan.xyz/testnet"
       },
       "contracts": {
-         "AxelarGateway": {}
-       }
-   }
+        "AxelarGateway": {},
+        "Utils": {
+          "address": "0xd937e31b88f0c35c65210e5a38b8222044bf0624227a220c0ee5ec48f86aa8e0"
+        },
+        "VersionControl": {
+          "address": "0x1faa10c04e3ccdd0c5f1dbe43a63704be46f00903032d44b4eb4b87c16a18276"
+        }
+      }
+    }
   },
   "axelar": {
     "contracts": {
