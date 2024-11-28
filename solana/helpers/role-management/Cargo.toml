@@ -11,6 +11,7 @@ workspace = true
 
 [dependencies]
 axelar-rkyv-encoding.workspace = true
+bincode.workspace = true
 bitflags.workspace = true
 program-utils.workspace = true
 rkyv = { workspace = true, features = ["validation"] }

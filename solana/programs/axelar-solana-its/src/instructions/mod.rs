@@ -14,6 +14,7 @@ use rkyv::bytecheck::EnumCheckError;
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
 use role_management::instructions::RoleManagementInstruction;
+use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -106,6 +107,18 @@ pub enum InterchainTokenServiceInstruction {
 
         /// The bump PDA used to store the operator role for the ITS
         user_roles_pda_bump: u8,
+    },
+
+    /// Pauses or unpauses the interchain token service.
+    ///
+    /// Accounts expected by this instruction:
+    ///
+    /// 0. [writable,signer] The ITS owner.
+    /// 1. [] The program data account.
+    /// 2. [writable] ITS root pda.
+    SetPauseStatus {
+        /// The new pause status.
+        paused: bool,
     },
 
     /// Deploys an interchain token.
@@ -525,6 +538,35 @@ pub fn initialize(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(operator, false),
         AccountMeta::new(user_roles_pda, false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::ID,
+        accounts,
+        data,
+    })
+}
+
+/// Creates an [`InterchainTokenServiceInstruction::SetPauseStatus`] instruction.
+///
+/// # Errors
+///
+/// If serialization fails.
+pub fn set_pause_status(payer: Pubkey, paused: bool) -> Result<Instruction, ProgramError> {
+    let (its_root_pda, _) = crate::find_its_root_pda(&gateway::get_gateway_root_config_pda().0);
+    let (program_data_address, _) =
+        Pubkey::find_program_address(&[crate::id().as_ref()], &bpf_loader_upgradeable::id());
+
+    let instruction = InterchainTokenServiceInstruction::SetPauseStatus { paused };
+
+    let data = instruction
+        .to_bytes()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    let accounts = vec![
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(program_data_address, false),
+        AccountMeta::new(its_root_pda, false),
     ];
 
     Ok(Instruction {

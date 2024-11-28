@@ -14,6 +14,9 @@ pub mod token_manager;
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq))]
 pub struct InterchainTokenService {
+    /// Whether the ITS is paused.
+    pub paused: bool,
+
     /// Bump used to derive the ITS PDA.
     pub bump: u8,
 }
@@ -26,7 +29,26 @@ impl InterchainTokenService {
     /// Create a new `InterchainTokenService` instance.
     #[must_use]
     pub const fn new(bump: u8) -> Self {
-        Self { bump }
+        Self {
+            paused: false,
+            bump,
+        }
+    }
+
+    /// Pauses the Interchain Token Service.
+    pub fn pause(&mut self) {
+        self.paused = true;
+    }
+
+    /// Unpauses the Interchain Token Service.
+    pub fn unpause(&mut self) {
+        self.paused = false;
+    }
+
+    /// Returns the bump used to derive the ITS PDA.
+    #[must_use]
+    pub const fn bump(&self) -> u8 {
+        self.bump
     }
 }
 

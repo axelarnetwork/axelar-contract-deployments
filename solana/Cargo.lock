@@ -5305,6 +5305,7 @@ name = "role-management"
 version = "0.1.0"
 dependencies = [
  "axelar-rkyv-encoding",
+ "bincode",
  "bitflags 2.6.0",
  "program-utils",
  "rkyv",

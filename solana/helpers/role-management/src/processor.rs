@@ -1,10 +1,11 @@
 //! This module provides logic to handle user role management instructions.
 use program_utils::{close_pda, StorableArchive};
 use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::bpf_loader_upgradeable::UpgradeableLoaderState;
 use solana_program::entrypoint::ProgramResult;
-use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::{bpf_loader_upgradeable, msg};
 
 use crate::instructions::RoleManagementInstructionInputs;
 use crate::seed_prefixes;
@@ -344,6 +345,60 @@ pub fn ensure_signer_roles<F: RolesFlags>(
     }
 
     ensure_roles(program_id, resource, signer, roles_account, roles)
+}
+
+/// Ensure the given account is the upgrade authority of the program.
+///
+/// This is the Solana equivalent of a contract owner.
+///
+/// # Errors
+///
+/// If a deserilization error occurs, the program account is invalid, or the given account is not the owner of the program.
+pub fn ensure_upgrade_authority(
+    program_id: &Pubkey,
+    authority: &AccountInfo<'_>,
+    program_data: &AccountInfo<'_>,
+) -> ProgramResult {
+    if !authority.is_signer {
+        msg!("Authority must be a signer");
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    let (program_account_key, _) =
+        Pubkey::find_program_address(&[program_id.as_ref()], &bpf_loader_upgradeable::id());
+
+    if program_data.key.ne(&program_account_key) {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let program_data = program_data.try_borrow_data()?;
+    let Some(program_bytes) =
+        program_data.get(0..UpgradeableLoaderState::size_of_programdata_metadata())
+    else {
+        return Err(ProgramError::InvalidAccountData);
+    };
+
+    let loader_state =
+        bincode::deserialize::<UpgradeableLoaderState>(program_bytes).map_err(|err| {
+            msg!("UpgradeableLoaderState deserialization error: {:?}", err);
+            ProgramError::InvalidAccountData
+        })?;
+
+    let UpgradeableLoaderState::ProgramData {
+        upgrade_authority_address: Some(upgrade_authority_address),
+        ..
+    } = loader_state
+    else {
+        msg!("Unable to get upgrade authority address. Program data is invalid");
+        return Err(ProgramError::InvalidAccountData);
+    };
+
+    if upgrade_authority_address.ne(authority.key) {
+        msg!("Given authority is not the program upgrade authority");
+        return Err(ProgramError::InvalidAccountOwner);
+    }
+
+    Ok(())
 }
 
 /// Accounts used by role management instructions.

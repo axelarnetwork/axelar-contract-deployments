@@ -6,7 +6,9 @@ use axelar_rkyv_encoding::types::GmpMetadata;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::Itertools;
 use program_utils::{check_rkyv_initialized_pda, StorableArchive, ValidPDA};
-use role_management::processor::{ensure_signer_roles, RoleManagementAccounts};
+use role_management::processor::{
+    ensure_signer_roles, ensure_upgrade_authority, RoleManagementAccounts,
+};
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
@@ -95,6 +97,9 @@ pub fn process_instruction<'a>(
             user_roles_pda_bump,
         } => {
             process_initialize(program_id, accounts, its_root_pda_bump, user_roles_pda_bump)?;
+        }
+        InterchainTokenServiceInstruction::SetPauseStatus { paused } => {
+            process_set_pause_status(accounts, paused)?;
         }
         InterchainTokenServiceInstruction::ItsGmpPayload {
             abi_payload,
@@ -256,6 +261,13 @@ fn process_inbound_its_gmp_payload<'a>(
     let _signing_pda = next_account_info(accounts_iter)?;
     let gateway_root_pda = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
+    let _system_program = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
+    let its_root_config = InterchainTokenService::load(&crate::id(), its_root_pda)?;
+    if its_root_config.paused {
+        msg!("The Interchain Token Service is currently paused.");
+        return Err(ProgramError::Immutable);
+    }
 
     let GMPPayload::ReceiveFromHub(inner) =
         GMPPayload::decode(abi_payload).map_err(|_err| ProgramError::InvalidInstructionData)?
@@ -283,6 +295,9 @@ where
     let (payer, other_accounts) = accounts
         .split_first()
         .ok_or(ProgramError::InvalidInstructionData)?;
+
+    let other_accounts_iter = &mut other_accounts.iter();
+    let _gateway_root_pda = next_account_info(other_accounts_iter)?;
 
     let gas_value = payload.gas_value();
     let destination_chain = payload.destination_chain();
@@ -328,12 +343,11 @@ fn process_outbound_its_gmp_payload(
     let gateway_root_pda = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
-    let its_root_pda_data = its_root_pda.try_borrow_data()?;
-    let its_state = check_rkyv_initialized_pda::<InterchainTokenService>(
-        &crate::id(),
-        its_root_pda,
-        *its_root_pda_data,
-    )?;
+    let its_root_config = InterchainTokenService::load(&crate::id(), its_root_pda)?;
+    if its_root_config.paused {
+        msg!("The Interchain Token Service is currently paused.");
+        return Err(ProgramError::Immutable);
+    }
 
     // TODO: Get chain's trusted address. It should be ITS Hub address.
     let destination_address = String::new();
@@ -359,7 +373,7 @@ fn process_outbound_its_gmp_payload(
         &[&[
             seed_prefixes::ITS_SEED,
             gateway_root_pda.key.as_ref(),
-            &[its_state.bump],
+            &[its_root_config.bump],
         ]],
     )?;
 
@@ -485,6 +499,20 @@ fn process_operator_instruction<'a>(
             )?;
         }
     }
+
+    Ok(())
+}
+
+fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let payer = next_account_info(accounts_iter)?;
+    let program_data_account = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
+
+    ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
+    let mut its_root_config = InterchainTokenService::load(&crate::id(), its_root_pda)?;
+    its_root_config.paused = paused;
+    its_root_config.store(its_root_pda)?;
 
     Ok(())
 }
