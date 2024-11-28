@@ -1,59 +1,19 @@
 const { Command } = require('commander');
-const { main: cosmwasmDeploy } = require('../cosmwasm/deploy-contract');
-const { deployAmplifierGateway } = require('../evm/deploy-amplifier-gateway');
-const { loadConfig, getAmplifierContractOnchainConfig } = require('../common/utils');
+const { loadConfig, getAmplifierContractOnchainConfig } = require('../../common/utils');
 const { exec, execSync } = require('child_process');
 
-const { mainProcessor, printError, printInfo, printLog } = require('./utils');
+const { mainProcessor, printInfo, printLog } = require('../utils');
 
-const deployCosmWasmContract = async ({ contractName, chainName, salt, mnemonic, env, yes, codeId }) => {
-    try {
-        console.log(`Starting deployment for ${contractName} on ${chainName.name}`);
-        await cosmwasmDeploy({
-            contractName,
-            chainName: chainName.axelarId,
-            salt,
-            mnemonic,
-            env,
-            yes,
-            codeId,
-        });
-        printInfo(`Deployment successful for ${contractName} on ${chainName.name}`);
-    } catch (error) {
-        printError(`Error deploying ${contractName} on ${chainName.name}:`, error);
-        throw error;
-    }
-};
+const { deployCosmWasmContract, deployEvmContract } = require('./deployContracts');
+const { runCliCommand } = require('./utils');
 
-const deployEvmContract = async (config, chainName, { salt, env, yes, privateKey }, predict) => {
+const runAmpd = async () => {
     try {
-        printLog(`Starting deployment for Ext. Gateway on ${chainName.name}`);
-        const gateway = await deployAmplifierGateway(config, chainName, {
-            salt,
-            env,
-            yes,
-            privateKey,
-            deployMethod: 'create3',
-            previousSignersRetention: 15,
-            minimumRotationDelay: 86400,
-            predictOnly: predict,
-            deployMethod: 'create3',
-        });
-        printInfo(`Deployment successful for Gateway on ${chainName.name}`);
-        return gateway;
-    } catch (error) {
-        printError(`Error deploying Gateway on ${chainName.name}:`, error);
-        throw error;
-    }
-};
-
-const ensureAmpdRunning = async () => {
-    try {
-        execSync('pgrep ampd', { stdio: 'ignore' }); // Check if ampd is running
+        execSync('pgrep ampd', { stdio: 'ignore' });
         console.log('ampd is already running');
     } catch {
         console.log('Starting ampd...');
-        exec('ampd', { detached: true, stdio: 'ignore' }).unref(); // Start ampd as a detached background process
+        exec('ampd', { detached: true, stdio: 'ignore' }).unref();
         console.log('ampd started successfully');
     }
     const checkVerifierAddrCommand = `ampd verifier-address`;
@@ -75,7 +35,6 @@ async function processCommand(
     chainName,
     { salt, env, yes, privateKey, mnemonic, admin, amplifierNode, amplifierChainId, keyringBackend },
 ) {
-    
     // Deployment for Verifier
     await deployCosmWasmContract({
         contractName: 'VotingVerifier',
@@ -111,7 +70,7 @@ async function processCommand(
     const newChainContracts = await getAmplifierContractOnchainConfig(config, chainName.name);
 
     // Run ampd and get verifier
-    const verifierAddr = await ensureAmpdRunning();
+    const verifierAddr = await runAmpd();
     const verifierAddrParsed = verifierAddr.trim().replace(/.*(axelar[a-z0-9]+)/, '$1');
 
     // Register verifier supoprt for new chain
@@ -127,18 +86,6 @@ async function processCommand(
     // Deploy Gateway
     await deployEvmContract(config, chainName, { salt, env, yes, privateKey }, false);
 }
-
-const runCliCommand = (command) => {
-    return new Promise((resolve, reject) => {
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                reject(new Error(`Command failed: ${stderr || error.message}`));
-            } else {
-                resolve(stdout);
-            }
-        });
-    });
-};
 
 async function main(options) {
     //Create new chain in config
@@ -231,4 +178,4 @@ program.parse(process.argv);
 
 //WORKING COMMAND
 //tofnd
-//node evm/amplifier-quickstart.js --chainNames "ben-eth-twelve" --salt "twelve"  --mnemonic "hint pause black nerve govern embody fade gesture fluid arrange soldier outdoor front risk scorpion narrow flower modify boat social theory real pluck lunch" --env devnet-amplifier --yes yes --privateKey "fca3e021285060f5918c19d475de4357b7be82281958a2401058d2b30759b92d" --chainType evm --rpc "https://1rpc.io/sepolia" --create3Deployer "0x6513Aedb4D1593BA12e50644401D976aebDc90d8" --admin axelar199g24qmzg4znysvnwfknqrmlupazxmfxjq7vsf --amplifierNode  http://devnet-amplifier.axelar.dev:26657 --amplifierChainId devnet-amplifier --keyringBackend test
+//node evm/amplifier/amplifier-quickstart.js --chainNames "chain-name" --salt "salt-value"  --mnemonic "mnemonic-value" --env devnet-amplifier --yes yes --privateKey "private-key" --chainType evm --rpc "rpc-value" --create3Deployer "0x6513Aedb4D1593BA12e50644401D976aebDc90d8" --admin "admin-address" --amplifierNode  http://devnet-amplifier.axelar.dev:26657 --amplifierChainId devnet-amplifier --keyringBackend test
