@@ -35,55 +35,41 @@ async function processCommand(
     chainName,
     { salt, env, yes, privateKey, mnemonic, admin, amplifierNode, amplifierChainId, keyringBackend },
 ) {
-    // Deployment for Verifier
-    await deployCosmWasmContract({
-        contractName: 'VotingVerifier',
-        chainName,
-        salt,
-        mnemonic,
-        env,
-        yes,
-        codeId: 626, // Hardcoded Code ID for Gateway
-    });
-    // // Deployment for Gateway
-    await deployCosmWasmContract({
-        contractName: 'Gateway',
-        chainName,
-        salt,
-        mnemonic,
-        env,
-        yes,
-        codeId: 616, // Hardcoded Code ID for Gateway
-    });
-    // Deployment for MultisigProver
-    await deployCosmWasmContract({
-        contractName: 'MultisigProver',
-        chainName,
-        salt,
-        mnemonic,
-        env,
-        yes,
-        codeId: 618, // Hardcoded Code ID for MultisigProver
-    });
+    // Deploy CosmWasm contracts
+    const contracts = [
+        { name: 'VotingVerifier', codeId: 626 }, // Hardcoded Code ID
+        { name: 'Gateway', codeId: 616 }, // Hardcoded Code ID
+        { name: 'MultisigProver', codeId: 618 }, // Hardcoded Code ID
+    ];
 
-    // Get contracts for new chain integration
+    for (const { name, codeId } of contracts) {
+        await deployCosmWasmContract({
+            contractName: name,
+            chainName,
+            salt,
+            mnemonic,
+            env,
+            yes,
+            codeId,
+        });
+    }
+
+    // Fetch new chain integration contracts
     const newChainContracts = await getAmplifierContractOnchainConfig(config, chainName.name);
 
-    // Run ampd and get verifier
-    const verifierAddr = await runAmpd();
-    const verifierAddrParsed = verifierAddr.trim().replace(/.*(axelar[a-z0-9]+)/, '$1');
+    // Run ampd and extract Verifier address
+    const verifierAddr = (await runAmpd()).trim().replace(/.*(axelar[a-z0-9]+)/, '$1');
 
-    // Register verifier supoprt for new chain
-    await registerChainSupport(chainName.name, verifierAddrParsed);
+    // Register Verifier support for the new chain
+    await registerChainSupport(chainName.name, verifierAddr);
 
-    // UPDATE VERIFIER SET
+    // Update Verifier set on Prover contract
     const updateVerifierSetCommand = `axelard tx wasm execute ${newChainContracts.prover} '"update_verifier_set"' --from ${admin} --gas auto --gas-adjustment 2 --node ${amplifierNode} --chain-id ${amplifierChainId} --gas-prices 1uamplifier --keyring-backend ${keyringBackend}`;
 
     printLog(`Updating verifier set on prover contract: ${newChainContracts.prover}`);
-
     runCliCommand(updateVerifierSetCommand);
 
-    // Deploy Gateway
+    // Deploy EVM Gateway contract
     await deployEvmContract(config, chainName, { salt, env, yes, privateKey }, false);
 }
 

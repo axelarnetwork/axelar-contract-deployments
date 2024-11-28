@@ -1,6 +1,6 @@
 const { main: cosmwasmDeploy } = require('../../cosmwasm/deploy-contract');
 const { deployAmplifierGateway } = require('../deploy-amplifier-gateway');
-const { mainProcessor, printInfo, printError, printLog } = require('../utils');
+const { printInfo, printError, printLog } = require('../utils');
 
 const deployCosmWasmContract = async ({ contractName, chainName, salt, mnemonic, env, yes, codeId }) => {
     try {
