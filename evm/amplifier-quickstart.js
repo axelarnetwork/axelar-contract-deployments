@@ -75,6 +75,7 @@ async function processCommand(
     chainName,
     { salt, env, yes, privateKey, mnemonic, admin, amplifierNode, amplifierChainId, keyringBackend },
 ) {
+    
     // Deployment for Verifier
     await deployCosmWasmContract({
         contractName: 'VotingVerifier',
@@ -124,7 +125,7 @@ async function processCommand(
     runCliCommand(updateVerifierSetCommand);
 
     // Deploy Gateway
-    // await deployEvmContract({ config, chainName, salt, env, yes, privateKey }, false);
+    await deployEvmContract(config, chainName, { salt, env, yes, privateKey }, false);
 }
 
 const runCliCommand = (command) => {

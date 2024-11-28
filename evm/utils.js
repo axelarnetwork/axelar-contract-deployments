@@ -492,6 +492,7 @@ const getEVMAddresses = async (config, chain, options = {}) => {
 
 const getAmplifierKeyAddresses = async (config, chain) => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
+
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
         config.axelar.contracts.MultisigProver[chain].address,
         'current_verifier_set',
