@@ -47,8 +47,12 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             };
         }
 
-        case 'interchain_token_service':
-            return { owner };
+        case 'interchain_token_service': {
+            const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
+
+            return { owner, gatewayAddress, gasServiceAddress };
+        }
 
         case 'axelar_operators':
             return { owner };
