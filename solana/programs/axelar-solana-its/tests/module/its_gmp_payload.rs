@@ -1,6 +1,5 @@
 #![cfg(test)]
 use alloy_primitives::Bytes;
-use axelar_rkyv_encoding::test_fixtures::random_message_with_destination_and_payload;
 use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use axelar_solana_its::state::token_manager::TokenManager;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
@@ -13,7 +12,9 @@ use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
 use spl_token_metadata_interface::state::TokenMetadata;
 
-use crate::{prepare_receive_from_hub, program_test};
+use crate::{
+    prepare_receive_from_hub, program_test, random_hub_message_with_destination_and_payload,
+};
 
 #[rstest::rstest]
 #[case(spl_token::id(), Some(Pubkey::new_unique()))]
@@ -65,7 +66,7 @@ async fn test_its_gmp_payload_deploy_token_manager(
     let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
     let abi_payload = its_gmp_payload.encode();
     let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_message_with_destination_and_payload(
+    let message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         payload_hash,
     );
@@ -139,7 +140,7 @@ async fn test_its_gmp_payload_deploy_interchain_token() {
     let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
     let abi_payload = its_gmp_payload.encode();
     let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_message_with_destination_and_payload(
+    let message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         payload_hash,
     );
@@ -239,7 +240,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
     let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
     let abi_payload = its_gmp_payload.encode();
     let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_message_with_destination_and_payload(
+    let message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         payload_hash,
     );
@@ -312,7 +313,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
         prepare_receive_from_hub(&inner_transfer_payload, "ethereum".to_owned());
     let transfer_abi_payload = its_gmp_transfer_payload.encode();
     let transfer_payload_hash = solana_sdk::keccak::hash(&transfer_abi_payload).to_bytes();
-    let transfer_message = random_message_with_destination_and_payload(
+    let transfer_message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         transfer_payload_hash,
     );
@@ -437,7 +438,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
     let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
     let abi_payload = its_gmp_payload.encode();
     let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_message_with_destination_and_payload(
+    let message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         payload_hash,
     );
@@ -510,7 +511,7 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
         prepare_receive_from_hub(&inner_transfer_payload, "ethereum".to_owned());
     let transfer_abi_payload = its_gmp_transfer_payload.encode();
     let transfer_payload_hash = solana_sdk::keccak::hash(&transfer_abi_payload).to_bytes();
-    let transfer_message = random_message_with_destination_and_payload(
+    let transfer_message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         transfer_payload_hash,
     );

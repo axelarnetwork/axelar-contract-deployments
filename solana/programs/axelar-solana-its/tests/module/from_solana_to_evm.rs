@@ -29,6 +29,8 @@ use crate::{
     route_its_hub, ItsProgramWrapper, ITS_CHAIN_NAME,
 };
 
+const ITS_HUB_SOURCE_ADDRESS: &str = "hub";
+
 #[tokio::test]
 async fn test_send_deploy_interchain_token_from_solana_to_evm() {
     // InterchainTokens deployed through ITS are always spl-token-2022 programs,
@@ -69,20 +71,13 @@ async fn test_send_deploy_interchain_token_from_solana_to_evm() {
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
     let mut message = messages[0].clone();
     ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    call_evm(
-        its_contracts
-            .interchain_token_service
-            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
-    )
-    .await;
 
     let command_id =
         ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
@@ -157,7 +152,7 @@ async fn test_send_deploy_token_manager_from_solana_to_evm() {
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
@@ -165,13 +160,6 @@ async fn test_send_deploy_token_manager_from_solana_to_evm() {
 
     let mut message = messages[0].clone();
     ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    call_evm(
-        its_contracts
-            .interchain_token_service
-            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
-    )
-    .await;
     let command_id =
         ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
@@ -251,7 +239,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
@@ -259,13 +247,6 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
 
     let mut message = messages[0].clone();
     ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    call_evm(
-        its_contracts
-            .interchain_token_service
-            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
-    )
-    .await;
 
     let command_id =
         ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
@@ -363,7 +344,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
@@ -470,7 +451,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
@@ -478,13 +459,6 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
 
     let mut message = messages[0].clone();
     ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    call_evm(
-        its_contracts
-            .interchain_token_service
-            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
-    )
-    .await;
     let command_id =
         ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
@@ -584,7 +558,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
@@ -702,20 +676,13 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
     let mut message = messages[0].clone();
     ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    call_evm(
-        its_contracts
-            .interchain_token_service
-            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
-    )
-    .await;
     let command_id =
         ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
@@ -835,7 +802,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
@@ -955,20 +922,13 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
     let mut message = messages[0].clone();
     ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    call_evm(
-        its_contracts
-            .interchain_token_service
-            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
-    )
-    .await;
     let command_id =
         ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
@@ -1069,7 +1029,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
@@ -1204,20 +1164,13 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,
     );
     let mut message = messages[0].clone();
     ITS_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    call_evm(
-        its_contracts
-            .interchain_token_service
-            .set_trusted_address(ITS_CHAIN_NAME.to_owned(), message.source_address.clone()),
-    )
-    .await;
     let command_id =
         ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
 
@@ -1315,7 +1268,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
 
     let (messages, proof) = prepare_evm_approve_contract_call(
         solana_sdk::keccak::hash(&encoded_payload).0,
-        Pubkey::new_from_array(call_contract.sender),
+        ITS_HUB_SOURCE_ADDRESS.to_string(),
         its_contracts.interchain_token_service.address(),
         &mut weighted_signers,
         domain_separator,

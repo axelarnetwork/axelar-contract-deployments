@@ -1,6 +1,5 @@
 #![allow(clippy::should_panic_without_expect)]
 
-use axelar_rkyv_encoding::test_fixtures::random_message_with_destination_and_payload;
 use axelar_solana_its::instructions::DeployInterchainTokenInputs;
 use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use axelar_solana_its::Roles;
@@ -12,7 +11,7 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::{keccak, system_instruction};
 
-use crate::prepare_receive_from_hub;
+use crate::{prepare_receive_from_hub, random_hub_message_with_destination_and_payload};
 use spl_associated_token_account::{
     get_associated_token_address_with_program_id, instruction::create_associated_token_account,
 };
@@ -821,7 +820,7 @@ async fn test_fail_mint_without_minter_role(#[case] token_program_id: Pubkey) {
     let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
     let abi_payload = its_gmp_payload.encode();
     let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_message_with_destination_and_payload(
+    let message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         payload_hash,
     );
@@ -922,7 +921,7 @@ async fn test_successful_mint_with_minter_role(#[case] token_program_id: Pubkey)
     let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
     let abi_payload = its_gmp_payload.encode();
     let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_message_with_destination_and_payload(
+    let message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         payload_hash,
     );

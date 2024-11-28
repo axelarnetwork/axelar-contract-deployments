@@ -1,14 +1,15 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::should_panic_without_expect)]
 use alloy_sol_types::SolValue;
-use axelar_rkyv_encoding::test_fixtures::random_message_with_destination_and_payload;
 use axelar_solana_its::{instructions::DeployTokenManagerInputs, state::token_manager};
 use evm_contracts_test_suite::ethers::abi::Bytes;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program_test::tokio;
 use solana_sdk::{pubkey::Pubkey, signer::Signer};
 
-use crate::{prepare_receive_from_hub, program_test};
+use crate::{
+    prepare_receive_from_hub, program_test, random_hub_message_with_destination_and_payload,
+};
 
 #[tokio::test]
 #[should_panic]
@@ -69,7 +70,7 @@ async fn test_its_gmp_payload_fail_when_paused() {
     let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
     let abi_payload = its_gmp_payload.encode();
     let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_message_with_destination_and_payload(
+    let message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         payload_hash,
     );

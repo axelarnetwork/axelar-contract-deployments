@@ -1,5 +1,4 @@
 use axelar_message_primitives::{DataPayload, EncodingScheme, SolanaAccountRepr};
-use axelar_rkyv_encoding::test_fixtures::random_message_with_destination_and_payload;
 use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use axelar_solana_its::state::token_manager::TokenManager;
 use axelar_solana_memo_program_old::state::Counter;
@@ -17,7 +16,10 @@ use spl_token_2022::state::Mint;
 use spl_token_metadata_interface::state::TokenMetadata;
 use test_fixtures::test_setup::SolanaAxelarIntegrationMetadata;
 
-use crate::{axelar_evm_setup, axelar_solana_setup, ItsProgramWrapper};
+use crate::{
+    axelar_evm_setup, axelar_solana_setup, random_hub_message_with_destination_and_payload,
+    ItsProgramWrapper,
+};
 
 async fn setup_canonical_interchain_token(
     its_contracts: &ItsContracts,
@@ -81,7 +83,7 @@ async fn relay_to_solana(
     });
 
     let payload_hash = solana_sdk::keccak::hash(&solana_payload.encode()).to_bytes();
-    let axelar_message = random_message_with_destination_and_payload(
+    let axelar_message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         payload_hash,
     );

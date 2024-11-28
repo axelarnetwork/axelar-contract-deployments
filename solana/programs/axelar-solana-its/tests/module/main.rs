@@ -14,6 +14,8 @@ mod its_gmp_payload;
 mod pause_unpause;
 mod role_management;
 
+use axelar_rkyv_encoding::test_fixtures::random_message;
+use axelar_rkyv_encoding::types::Message;
 use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::ethers::abi::Detokenize;
 use evm_contracts_test_suite::ethers::contract::{ContractCall, EthLogDecode, Event as EvmEvent};
@@ -113,6 +115,18 @@ async fn axelar_solana_setup(with_memo: bool) -> ItsProgramWrapper {
     }
 }
 
+#[must_use]
+pub fn random_hub_message_with_destination_and_payload(
+    destination_address: String,
+    payload_hash: [u8; 32],
+) -> Message {
+    let mut message = random_message();
+    message.destination_address = destination_address;
+    message.payload_hash = payload_hash;
+    message.source_address = "hub".to_string();
+    message
+}
+
 fn prepare_receive_from_hub(payload: &GMPPayload, source_chain: String) -> GMPPayload {
     GMPPayload::ReceiveFromHub(ReceiveFromHub {
         selector: ReceiveFromHub::MESSAGE_TYPE_ID.try_into().unwrap(),
@@ -171,7 +185,7 @@ async fn axelar_evm_setup() -> (
 
     its_contracts
         .interchain_token_service
-        .set_trusted_address(ITS_CHAIN_NAME.to_owned(), "some address".to_owned())
+        .set_trusted_address(ITS_CHAIN_NAME.to_owned(), "hub".to_owned())
         .send()
         .await
         .unwrap()
@@ -238,7 +252,7 @@ async fn ensure_evm_gateway_approval(
 
 fn prepare_evm_approve_contract_call(
     payload_hash: [u8; 32],
-    sender: Pubkey,
+    sender: String,
     destination_address: Address,
     signer_set: &mut evm_weighted_signers::WeightedSigners,
     domain_separator: [u8; 32],
@@ -248,7 +262,7 @@ fn prepare_evm_approve_contract_call(
     let message = EvmAxelarMessage {
         source_chain: ITS_CHAIN_NAME.to_owned(),
         message_id: String::from_utf8_lossy(&payload_hash).to_string(),
-        source_address: sender.to_string(),
+        source_address: sender,
         contract_address: destination_address,
         payload_hash,
     };

@@ -34,6 +34,7 @@ pub mod interchain_transfer;
 pub mod token_manager;
 
 const ITS_HUB_CHAIN_NAME: &str = "axelar";
+const ITS_HUB_ROUTING_IDENTIFIER: &str = "hub";
 
 pub(crate) trait LocalAction {
     fn process_local_action<'a>(
@@ -255,6 +256,11 @@ fn process_inbound_its_gmp_payload<'a>(
         .as_slice()
         .split_at(PROGRAM_ACCOUNTS_START_INDEX);
 
+    if gmp_metadata.source_address != ITS_HUB_ROUTING_IDENTIFIER {
+        msg!("Untrusted source address: {}", gmp_metadata.source_address);
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
     validate_with_gmp_metadata(&crate::id(), gateway_accounts, gmp_metadata, abi_payload)?;
 
     let _gateway_approved_message_pda = next_account_info(accounts_iter)?;
@@ -349,8 +355,6 @@ fn process_outbound_its_gmp_payload(
         return Err(ProgramError::Immutable);
     }
 
-    // TODO: Get chain's trusted address. It should be ITS Hub address.
-    let destination_address = String::new();
     let hub_payload = GMPPayload::SendToHub(SendToHub {
         selector: SendToHub::MESSAGE_TYPE_ID
             .try_into()
@@ -366,7 +370,7 @@ fn process_outbound_its_gmp_payload(
             *gateway_root_pda.key,
             *its_root_pda.key,
             ITS_HUB_CHAIN_NAME.to_owned(),
-            destination_address,
+            ITS_HUB_ROUTING_IDENTIFIER.to_owned(),
             hub_payload.encode(),
         )?,
         &[its_root_pda.clone(), gateway_root_pda.clone()],
