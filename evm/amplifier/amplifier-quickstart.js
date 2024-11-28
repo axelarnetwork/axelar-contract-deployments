@@ -95,7 +95,6 @@ async function main(options) {
 
     const newChain = configNew.chains[newChainName];
 
-    //PREDICT GATEWAY ADDRESS TO BE PASSED INTO NEWLY BUILT CHAIN NAME OBJ FOR INTEGRATION
     const gateway = await deployEvmContract(configNew, newChain, { ...options }, true);
 
     configNew.chains[newChainName].contracts.AxelarGateway = {
