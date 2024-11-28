@@ -56,94 +56,88 @@ const ensureAmpdRunning = async () => {
         exec('ampd', { detached: true, stdio: 'ignore' }).unref(); // Start ampd as a detached background process
         console.log('ampd started successfully');
     }
-    const checkVerifierAddress = `ampd verifier-address`;
-    return new Promise((resolve, reject) => {
-        exec(checkVerifierAddress, (error, stdout, stderr) => {
-            if (error) {
-                reject(new Error(`Command failed: ${stderr || error.message}`));
-            } else {
-                resolve(stdout.trim().replace(/.*(axelar[a-z0-9]+)/, '$1'));
-            }
-        });
-    });
+    const checkVerifierAddrCommand = `ampd verifier-address`;
+    return await runCliCommand(checkVerifierAddrCommand);
 };
 
-const registerChainSupport = async (chainName, verifierAddr) => {
+const registerChainSupport = async (chainName) => {
     try {
         console.log(`Registering chain support for ${chainName}...`);
         const registerChainSupportCommand = `ampd register-chain-support validators ${chainName}`;
-        return new Promise((resolve, reject) => {
-            exec(registerChainSupportCommand, (error, stdout, stderr) => {
-                if (error) {
-                    reject(new Error(`Command failed: ${stderr || error.message}`));
-                } else {
-                    resolve(stdout.trim());
-                    printInfo(`External verifier ${verifierAddr}, now supports registered: ${chainName}`);
-                }
-            });
-        });
+        await runCliCommand(registerChainSupportCommand);
     } catch (error) {
         console.error(`Failed to register chain support for ${chainName}: ${error.message}`);
     }
 };
 
-async function processCommand(config, chainName, { salt, env, yes, privateKey, mnemonic, admin }) {
+async function processCommand(
+    config,
+    chainName,
+    { salt, env, yes, privateKey, mnemonic, admin, amplifierNode, amplifierChainId, keyringBackend },
+) {
     // Deployment for Verifier
-    // await deployCosmWasmContract({
-    //     contractName: 'VotingVerifier',
-    //     chainName,
-    //     salt,
-    //     mnemonic,
-    //     env,
-    //     yes,
-    //     codeId: 626, // Hardcoded Code ID for Gateway
-    // });
-    // // // Deployment for Gateway
-    // await deployCosmWasmContract({
-    //     contractName: 'Gateway',
-    //     chainName,
-    //     salt,
-    //     mnemonic,
-    //     env,
-    //     yes,
-    //     codeId: 616, // Hardcoded Code ID for Gateway
-    // });
-    // // Deployment for MultisigProver
-    // await deployCosmWasmContract({
-    //     contractName: 'MultisigProver',
-    //     chainName,
-    //     salt,
-    //     mnemonic,
-    //     env,
-    //     yes,
-    //     codeId: 618, // Hardcoded Code ID for MultisigProver
-    // });
+    await deployCosmWasmContract({
+        contractName: 'VotingVerifier',
+        chainName,
+        salt,
+        mnemonic,
+        env,
+        yes,
+        codeId: 626, // Hardcoded Code ID for Gateway
+    });
+    // // Deployment for Gateway
+    await deployCosmWasmContract({
+        contractName: 'Gateway',
+        chainName,
+        salt,
+        mnemonic,
+        env,
+        yes,
+        codeId: 616, // Hardcoded Code ID for Gateway
+    });
+    // Deployment for MultisigProver
+    await deployCosmWasmContract({
+        contractName: 'MultisigProver',
+        chainName,
+        salt,
+        mnemonic,
+        env,
+        yes,
+        codeId: 618, // Hardcoded Code ID for MultisigProver
+    });
 
-    // const newChainContracts = await getAmplifierContractOnchainConfig(config, chainName.name);
+    // Get contracts for new chain integration
+    const newChainContracts = await getAmplifierContractOnchainConfig(config, chainName.name);
 
-    // const chainName = 'ben-eth-five';
+    // Run ampd and get verifier
     const verifierAddr = await ensureAmpdRunning();
-    await registerChainSupport(chainName.name, verifierAddr);
+    const verifierAddrParsed = verifierAddr.trim().replace(/.*(axelar[a-z0-9]+)/, '$1');
+
+    // Register verifier supoprt for new chain
+    await registerChainSupport(chainName.name, verifierAddrParsed);
 
     // UPDATE VERIFIER SET
-    // const updateVerifierCommand = `axelard tx wasm execute ${newChainContracts.prover} '"update_verifier_set"' --from ${admin} --gas auto --gas-adjustment 2`;
+    const updateVerifierSetCommand = `axelard tx wasm execute ${newChainContracts.prover} '"update_verifier_set"' --from ${admin} --gas auto --gas-adjustment 2 --node ${amplifierNode} --chain-id ${amplifierChainId} --gas-prices 1uamplifier --keyring-backend ${keyringBackend}`;
 
-    // printLog(`Updating verifier set on prover contract: ${newChainContracts.prover}`);
+    printLog(`Updating verifier set on prover contract: ${newChainContracts.prover}`);
 
-    // return new Promise((resolve) => {
-    //     exec(updateVerifierCommand, (error, stdout) => {
-    //         if (error) {
-    //             printError(`Error while running script for ${chainName}`, error);
-    //         } else {
-    //             printInfo(`Successfully updated verifier set for ${newChainContracts.prover}`);
-    //         }
-    //         resolve();
-    //     });
-    // });
+    runCliCommand(updateVerifierSetCommand);
 
     // Deploy Gateway
     // await deployEvmContract({ config, chainName, salt, env, yes, privateKey }, false);
 }
+
+const runCliCommand = (command) => {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                reject(new Error(`Command failed: ${stderr || error.message}`));
+            } else {
+                resolve(stdout);
+            }
+        });
+    });
+};
 
 async function main(options) {
     //Create new chain in config
@@ -214,7 +208,10 @@ program
     .option('-y, --yes <yes>', 'Auto-confirm actions without prompt', false)
     .option('-r, --rpc <rpc>, RPC for new chain')
     .option('-cd --create3Deployer <create3Deployer>', 'Create3 Deployer')
-    .option('-a --admin <admin>', 'Admin address');
+    .option('-a --admin <admin>', 'Admin address')
+    .option('-n --amplifierNode <amplifierNode>', 'Amplifier node')
+    .option('-chid --amplifierChainId <amplifierChainId>', 'Amplifier chainId')
+    .option('-kb  --keyringBackend <keyringBackend>', 'Wallet keyring');
 
 program.action(async (options) => {
     try {
@@ -232,4 +229,5 @@ program.action(async (options) => {
 program.parse(process.argv);
 
 //WORKING COMMAND
-//node evm/amplifier-quickstart.js --chainNames "ben-eth" --salt f  --mnemonic "hint pause black nerve govern embody fade gesture fluid arrange soldier outdoor front risk scorpion narrow flower modify boat social theory real pluck lunch" --env devnet-amplifier --yes yes --privateKey "fca3e021285060f5918c19d475de4357b7be82281958a2401058d2b30759b92d" --chainType evm --rpc "https://1rpc.io/sepolia" --create3Deployer "0x6513Aedb4D1593BA12e50644401D976aebDc90d8" --admin axelar199g24qmzg4znysvnwfknqrmlupazxmfxjq7vsf
+//tofnd
+//node evm/amplifier-quickstart.js --chainNames "ben-eth-twelve" --salt "twelve"  --mnemonic "hint pause black nerve govern embody fade gesture fluid arrange soldier outdoor front risk scorpion narrow flower modify boat social theory real pluck lunch" --env devnet-amplifier --yes yes --privateKey "fca3e021285060f5918c19d475de4357b7be82281958a2401058d2b30759b92d" --chainType evm --rpc "https://1rpc.io/sepolia" --create3Deployer "0x6513Aedb4D1593BA12e50644401D976aebDc90d8" --admin axelar199g24qmzg4znysvnwfknqrmlupazxmfxjq7vsf --amplifierNode  http://devnet-amplifier.axelar.dev:26657 --amplifierChainId devnet-amplifier --keyringBackend test
