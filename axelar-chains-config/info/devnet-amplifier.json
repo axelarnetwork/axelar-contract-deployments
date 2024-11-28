@@ -626,7 +626,6 @@
     "sui-test2": {
       "name": "sui-test2",
       "axelarId": "sui-test2",
-      "id": "sui-test2",
       "networkType": "testnet",
       "tokenSymbol": "SUI",
       "rpc": "https://fullnode.testnet.sui.io:443",
@@ -773,7 +772,21 @@
           "gasServiceAddress": "CAMI6IZJFE5CKR5BWUT5ADFKRZHFFB6QHN7GYU2THR7PW5OS6YVU2EQK"
         }
       }
-    }
+    },
+    "sui": {
+      "name": "Sui",
+      "axelarId": "sui",
+      "networkType": "testnet",
+      "rpc": "https://sui-testnet-rpc.publicnode.com:443",
+      "tokenSymbol": "SUI",
+      "explorer": {
+        "name": "Suiscan",
+        "url": "https://suiscan.xyz/testnet"
+      },
+      "contracts": {
+         "AxelarGateway": {}
+       }
+   }
   },
   "axelar": {
     "contracts": {
