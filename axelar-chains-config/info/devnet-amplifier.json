@@ -759,6 +759,13 @@
             "ItsSingleton": "0xf6c5a78b45dbf65d7c57b41fcdf47b04967c88c2844a1f7b4a366f4be0fa7860",
             "ItsChannelId": "0x8bd7f12ccc0e1b97cf0cfaf4c1630200541acdad6e7eeabf0ec9c43290f494d0"
           }
+        },
+        "Operators": {
+          "address": "0x1eea2d0a5dfbbaddfae9342e130fd2b532c1c9aae2d0a6b07b77f0bec5698009",
+          "objects": {
+            "Operators": "0x5c087edad849aae5aabfd103d137bfa12ac2007935ea396da14f213e79a2a772",
+            "OwnerCap": "0x0bb15280c13559e68673f4e4019d87e9e14af90ad7708a3b6f67660a2d1eb152"
+          }
         }
       }
     }
