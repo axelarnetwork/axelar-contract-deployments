@@ -829,7 +829,8 @@
           },
           "trustedAddresses": {
             "axelar": [
-              "axelar10jzzmv5m7da7dn2xsfac0yqe7zamy34uedx3e28laq0p6f3f8dzqp649fp"
+              "axelar10jzzmv5m7da7dn2xsfac0yqe7zamy34uedx3e28laq0p6f3f8dzqp649fp",
+              "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
             ]
           }
         },
@@ -1014,6 +1015,21 @@
           "codeId": 854,
           "address": "axelar1pgzqdnnayxw0t73wea06amp4lpatg34q6wnlyplf2u2edt2veu0qygcpqe"
         },
+        "sui": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x936c1f0714a06fac58edc57bb95276bb0ad1e6ae930e5c232fdfec4a18f65818",
+          "msgIdFormat": "base58_tx_digest_and_event_index",
+          "addressFormat": "sui",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "codeId": 854,
+          "address": "axelar1ac43p98m4pfv7zxrce3e99gwy5nf2crnwg3mu5rmxs09zvy2py9sxrgm8m"
+        },
         "stellar-test2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -1057,6 +1073,10 @@
         "stellar-test2": {
           "address": "axelar1yekgav0alr7ptakd9uhlengvcfwals6agjceszxzmj77af825y3qs5asgx",
           "codeId": 848
+        },
+        "sui": {
+          "codeId": 848,
+          "address": "axelar152hkx77822ukgynf333snz5y9p3y9c8jgljlqguze4f4km4sfkfsmfl3na"
         },
         "storeCodeProposalId": "64",
         "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f"
@@ -1141,6 +1161,21 @@
           "codeId": 855,
           "domainSeparator": "0x05b8831cd87c82fadd1e4967a45eb3401dfc6bf5f74b827d8f525992c09403ef",
           "address": "axelar1amvmsrszflf43lhfgzcq93a22usvy3w7kqrp25uqghnws3x04jyscutk0w"
+        },
+        "sui": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "bcs",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x8a4b7c0ae3e02feb8a34711648ee44a4c9fc56ac90b41b74619a75e75de13c37",
+          "address": "axelar1lnu9xwpmfzh47876tawjqm5nelevra4v6gmhqchd2tezjwqu2d6stlz4r8"
         },
         "stellar-test2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
