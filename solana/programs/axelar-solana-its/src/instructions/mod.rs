@@ -4,9 +4,10 @@ use std::borrow::Cow;
 use std::error::Error;
 
 use axelar_message_primitives::{DataPayload, DestinationProgramId, U256};
-use axelar_rkyv_encoding::types::{ArchivableFlags, GmpMetadata, PublicKey};
+use axelar_rkyv_encoding::types::{ArchivableFlags, PublicKey};
+use axelar_solana_encoding::types::messages::Message;
+use axelar_solana_gateway::state::incoming_message::command_id;
 use bitflags::bitflags;
-use gateway::hasher_impl;
 use interchain_token_transfer_gmp::{
     DeployInterchainToken, DeployTokenManager, GMPPayload, InterchainTransfer,
 };
@@ -204,7 +205,7 @@ pub enum InterchainTokenServiceInstruction {
     /// 3..N Accounts depend on the inner ITS instruction.
     ItsGmpPayload {
         /// The GMP metadata
-        gmp_metadata: GmpMetadata,
+        message: Message,
 
         /// The GMP payload
         abi_payload: Vec<u8>,
@@ -439,6 +440,9 @@ pub struct Bumps {
     /// The bump for the token manager PDA.
     pub token_manager_pda_bump: u8,
 
+    /// The bump for the sining PDA used for GMP message validation.
+    pub signing_pda_bump: Option<u8>,
+
     /// The bump for the flow slot PDA.
     pub flow_slot_pda_bump: Option<u8>,
 
@@ -462,9 +466,8 @@ pub struct Bumps {
 ///
 /// let inputs = ItsGmpInstructionInputs::builder()
 ///   .payer(payer_pubkey)
-///   .gateway_approved_message_pda(gateway_approved_message_pda)
-///   .gateway_root_pda(gateway_root_pda)
-///   .gmp_metadata(metadata)
+///   .incoming_message_pda(gateway_approved_message_pda)
+///   .message(message)
 ///   .payload(payload)
 ///   .token_program(spl_token_2022::id())
 ///   .mint(mint_pubkey)
@@ -476,14 +479,11 @@ pub struct ItsGmpInstructionInputs {
     /// The payer account.
     pub(crate) payer: Pubkey,
 
-    /// The PDA that tracks the approval of this message by the gateway program.
-    pub(crate) gateway_approved_message_pda: Pubkey,
-
-    /// The root PDA for the gateway program.
-    pub(crate) gateway_root_pda: Pubkey,
+    /// The PDA used to track the message status by the gateway program.
+    pub(crate) incoming_message_pda: Pubkey,
 
     /// The Axelar GMP metadata.
-    pub(crate) gmp_metadata: GmpMetadata,
+    pub(crate) message: Message,
 
     /// The ITS GMP payload.
     pub(crate) payload: GMPPayload,
@@ -553,7 +553,8 @@ pub fn initialize(
 ///
 /// If serialization fails.
 pub fn set_pause_status(payer: Pubkey, paused: bool) -> Result<Instruction, ProgramError> {
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway::get_gateway_root_config_pda().0);
+    let (its_root_pda, _) =
+        crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
     let (program_data_address, _) =
         Pubkey::find_program_address(&[crate::id().as_ref()], &bpf_loader_upgradeable::id());
 
@@ -585,7 +586,7 @@ pub fn set_pause_status(payer: Pubkey, paused: bool) -> Result<Instruction, Prog
 pub fn deploy_interchain_token(
     params: DeployInterchainTokenInputs,
 ) -> Result<Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let payer = Pubkey::new_from_array(
         params
             .payer
@@ -599,14 +600,8 @@ pub fn deploy_interchain_token(
     ];
 
     let bumps = if params.destination_chain.is_none() {
-        let (mut its_accounts, bumps, _) = derive_its_accounts(
-            &gateway_root_pda,
-            &params,
-            spl_token_2022::id(),
-            None,
-            None,
-            None,
-        )?;
+        let (mut its_accounts, bumps, _) =
+            derive_its_accounts(&params, spl_token_2022::id(), None, None, None, None)?;
 
         accounts.append(&mut its_accounts);
 
@@ -614,7 +609,10 @@ pub fn deploy_interchain_token(
     } else {
         let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
 
-        accounts.push(AccountMeta::new_readonly(gateway::id(), false));
+        accounts.push(AccountMeta::new_readonly(
+            axelar_solana_gateway::id(),
+            false,
+        ));
         accounts.push(AccountMeta::new_readonly(its_root_pda, false));
 
         None
@@ -638,7 +636,7 @@ pub fn deploy_interchain_token(
 ///
 /// If serialization fails.
 pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let payer = Pubkey::new_from_array(
         params
             .payer
@@ -662,7 +660,7 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
         );
 
         let (mut its_accounts, bumps, optional_accounts_mask) =
-            derive_its_accounts(&gateway_root_pda, &params, token_program, None, None, None)?;
+            derive_its_accounts(&params, token_program, None, None, None, None)?;
 
         accounts.append(&mut its_accounts);
 
@@ -670,7 +668,10 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
     } else {
         let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
 
-        accounts.push(AccountMeta::new_readonly(gateway::id(), false));
+        accounts.push(AccountMeta::new_readonly(
+            axelar_solana_gateway::id(),
+            false,
+        ));
         accounts.push(AccountMeta::new_readonly(its_root_pda, false));
 
         (None, OptionalAccountsFlags::empty())
@@ -698,7 +699,7 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
 ///
 /// If serialization fails.
 pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, its_root_pda_bump) = crate::find_its_root_pda(&gateway_root_pda);
     let (interchain_token_pda, interchain_token_pda_bump) =
         crate::find_interchain_token_pda(&its_root_pda, &params.token_id);
@@ -765,7 +766,7 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
         AccountMeta::new_readonly(payer, true),
         AccountMeta::new_readonly(authority, signer),
         AccountMeta::new_readonly(gateway_root_pda, false),
-        AccountMeta::new_readonly(gateway::id(), false),
+        AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(interchain_token_pda, false),
         AccountMeta::new(source_account, false),
@@ -797,7 +798,8 @@ pub fn set_flow_limit(
     token_id: [u8; 32],
     flow_limit: u64,
 ) -> Result<Instruction, ProgramError> {
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway::get_gateway_root_config_pda().0);
+    let (its_root_pda, _) =
+        crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
     let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
 
@@ -833,12 +835,8 @@ pub fn set_flow_limit(
 ///
 /// If serialization fails.
 pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, ProgramError> {
-    let mut accounts = prefix_accounts(
-        &inputs.payer,
-        &inputs.gateway_approved_message_pda,
-        &inputs.gateway_root_pda,
-        &inputs.gmp_metadata,
-    );
+    let (mut accounts, signing_pda_bump) =
+        prefix_accounts(&inputs.payer, &inputs.incoming_message_pda, &inputs.message);
 
     let abi_payload = inputs.payload.encode();
 
@@ -853,9 +851,9 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
     };
 
     let (mut its_accounts, bumps, optional_accounts_mask) = derive_its_accounts(
-        &inputs.gateway_root_pda,
         &unwrapped_payload,
         inputs.token_program,
+        Some(signing_pda_bump),
         inputs.mint,
         inputs.timestamp,
         inputs.bumps,
@@ -865,7 +863,7 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
 
     let data = InterchainTokenServiceInstruction::ItsGmpPayload {
         abi_payload,
-        gmp_metadata: inputs.gmp_metadata,
+        message: inputs.message,
         optional_accounts_flags: optional_accounts_mask,
         bumps,
     }
@@ -887,7 +885,7 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
 ///
 /// If serialization fails.
 pub fn transfer_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
@@ -911,7 +909,7 @@ pub fn transfer_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, P
 ///
 /// If serialization fails.
 pub fn propose_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
@@ -935,7 +933,7 @@ pub fn propose_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, Pr
 ///
 /// If serialization fails.
 pub fn accept_operatorship(payer: Pubkey, from: Pubkey) -> Result<Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
@@ -955,97 +953,70 @@ pub fn accept_operatorship(payer: Pubkey, from: Pubkey) -> Result<Instruction, P
 fn prefix_accounts(
     payer: &Pubkey,
     gateway_approved_message_pda: &Pubkey,
-    gateway_root_pda: &Pubkey,
-    gmp_metadata: &GmpMetadata,
-) -> Vec<AccountMeta> {
-    let command_id = gmp_metadata.cross_chain_id.command_id(hasher_impl());
+    message: &Message,
+) -> (Vec<AccountMeta>, u8) {
+    let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
     let destination_program = DestinationProgramId(crate::id());
-    let (gateway_approved_message_signing_pda, _) = destination_program.signing_pda(&command_id);
+    let (gateway_approved_message_signing_pda, signing_pda_bump) =
+        destination_program.signing_pda(&command_id);
 
-    vec![
-        AccountMeta::new(*payer, true),
-        AccountMeta::new(*gateway_approved_message_pda, false),
-        AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),
-        AccountMeta::new_readonly(*gateway_root_pda, false),
-        AccountMeta::new_readonly(gateway::id(), false),
-    ]
+    (
+        vec![
+            AccountMeta::new(*payer, true),
+            AccountMeta::new(*gateway_approved_message_pda, false),
+            AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),
+            AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+        ],
+        signing_pda_bump,
+    )
 }
 
 pub(crate) fn derive_its_accounts<'a, T>(
-    gateway_root_pda: &Pubkey,
     payload: T,
     token_program: Pubkey,
-    mint: Option<Pubkey>,
+    signing_pda_bump: Option<u8>,
+    maybe_mint: Option<Pubkey>,
     maybe_timestamp: Option<i64>,
     maybe_bumps: Option<Bumps>,
 ) -> Result<(Vec<AccountMeta>, Bumps, OptionalAccountsFlags), ProgramError>
 where
     T: TryInto<ItsMessageRef<'a>, Error = ProgramError>,
 {
-    let (
-        maybe_its_root_pda_bump,
-        maybe_interchain_token_pda_bump,
-        maybe_token_manager_pda_bump,
-        mut maybe_flow_slot_pda_bump,
-    ) = maybe_bumps.map_or((None, None, None, None), |bumps| {
-        (
-            Some(bumps.its_root_pda_bump),
-            Some(bumps.interchain_token_pda_bump),
-            Some(bumps.token_manager_pda_bump),
-            bumps.flow_slot_pda_bump,
-        )
-    });
-
     let message: ItsMessageRef<'_> = payload.try_into()?;
-
-    let token_id = message.token_id();
-    let (its_root_pda, its_root_pda_bump) =
-        crate::its_root_pda(gateway_root_pda, maybe_its_root_pda_bump);
-    let (interchain_token_pda, interchain_token_pda_bump) =
-        crate::interchain_token_pda(&its_root_pda, token_id, maybe_interchain_token_pda_bump);
-    let (token_manager_pda, token_manager_pda_bump) =
-        crate::token_manager_pda(&interchain_token_pda, maybe_token_manager_pda_bump);
-    let token_mint = try_retrieve_mint(&interchain_token_pda, &message, mint)?;
-
     if let ItsMessageRef::DeployInterchainToken { .. } = message {
         if token_program != spl_token_2022::id() {
             return Err(ProgramError::InvalidInstructionData);
         }
     }
 
-    let mut accounts =
-        derive_common_its_accounts(its_root_pda, token_mint, token_manager_pda, token_program);
+    let (mut accounts, mint, token_manager_pda, mut bumps) = derive_common_its_accounts(
+        token_program,
+        &message,
+        signing_pda_bump,
+        maybe_mint,
+        maybe_bumps,
+    )?;
     let (mut message_specific_accounts, optional_accounts_mask) = derive_specific_its_accounts(
-        token_mint,
+        &message,
+        mint,
         token_manager_pda,
         token_program,
-        &mut maybe_flow_slot_pda_bump,
+        &mut bumps,
         maybe_timestamp,
-        &message,
     )?;
 
     accounts.append(&mut message_specific_accounts);
 
-    Ok((
-        accounts,
-        Bumps {
-            its_root_pda_bump,
-            interchain_token_pda_bump,
-            token_manager_pda_bump,
-            flow_slot_pda_bump: maybe_flow_slot_pda_bump,
-            ..Default::default()
-        },
-        optional_accounts_mask,
-    ))
+    Ok((accounts, bumps, optional_accounts_mask))
 }
 
 fn derive_specific_its_accounts(
+    message: &ItsMessageRef<'_>,
     mint_account: Pubkey,
     token_manager_pda: Pubkey,
     token_program: Pubkey,
-    maybe_flow_slot_pda_bump: &mut Option<u8>,
+    bumps: &mut Bumps,
     maybe_timestamp: Option<i64>,
-    message: &ItsMessageRef<'_>,
 ) -> Result<(Vec<AccountMeta>, OptionalAccountsFlags), ProgramError> {
     let mut specific_accounts = Vec::new();
     let mut optional_accounts_mask = OptionalAccountsFlags::empty();
@@ -1071,9 +1042,9 @@ fn derive_specific_its_accounts(
             };
             let epoch = crate::state::flow_limit::flow_epoch_with_timestamp(timestamp)?;
             let (flow_slot_pda, flow_slot_pda_bump) =
-                crate::flow_slot_pda(&token_manager_pda, epoch, *maybe_flow_slot_pda_bump);
+                crate::flow_slot_pda(&token_manager_pda, epoch, bumps.flow_slot_pda_bump);
 
-            *maybe_flow_slot_pda_bump = Some(flow_slot_pda_bump);
+            bumps.flow_slot_pda_bump = Some(flow_slot_pda_bump);
 
             specific_accounts.push(AccountMeta::new(destination_wallet, false));
             specific_accounts.push(AccountMeta::new(destination_ata, false));
@@ -1169,31 +1140,60 @@ fn try_retrieve_mint(
 }
 
 fn derive_common_its_accounts(
-    its_root_pda: Pubkey,
-    mint_account: Pubkey,
-    token_manager_pda: Pubkey,
     token_program: Pubkey,
-) -> Vec<AccountMeta> {
+    message: &ItsMessageRef<'_>,
+    maybe_signing_pda_bump: Option<u8>,
+    maybe_mint: Option<Pubkey>,
+    maybe_bumps: Option<Bumps>,
+) -> Result<(Vec<AccountMeta>, Pubkey, Pubkey, Bumps), ProgramError> {
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
+    let (its_root_pda, its_root_pda_bump) = crate::its_root_pda(
+        &gateway_root_pda,
+        maybe_bumps.map(|bumps| bumps.its_root_pda_bump),
+    );
+    let (interchain_token_pda, interchain_token_pda_bump) = crate::interchain_token_pda(
+        &its_root_pda,
+        message.token_id(),
+        maybe_bumps.map(|bumps| bumps.interchain_token_pda_bump),
+    );
+    let (token_manager_pda, token_manager_pda_bump) = crate::token_manager_pda(
+        &interchain_token_pda,
+        maybe_bumps.map(|bumps| bumps.token_manager_pda_bump),
+    );
+    let token_mint = try_retrieve_mint(&interchain_token_pda, message, maybe_mint)?;
+
     let token_manager_ata = get_associated_token_address_with_program_id(
         &token_manager_pda,
-        &mint_account,
+        &token_mint,
         &token_program,
     );
 
-    let (its_roles_pda, _) =
+    let (its_user_roles_pda, its_user_roles_pda_bump) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &its_root_pda);
 
-    vec![
-        AccountMeta::new_readonly(system_program::ID, false),
-        AccountMeta::new_readonly(its_root_pda, false),
-        AccountMeta::new(token_manager_pda, false),
-        AccountMeta::new(mint_account, false),
-        AccountMeta::new(token_manager_ata, false),
-        AccountMeta::new_readonly(token_program, false),
-        AccountMeta::new_readonly(spl_associated_token_account::id(), false),
-        AccountMeta::new(its_roles_pda, false),
-        AccountMeta::new_readonly(sysvar::rent::id(), false),
-    ]
+    Ok((
+        vec![
+            AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new_readonly(its_root_pda, false),
+            AccountMeta::new(token_manager_pda, false),
+            AccountMeta::new(token_mint, false),
+            AccountMeta::new(token_manager_ata, false),
+            AccountMeta::new_readonly(token_program, false),
+            AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+            AccountMeta::new(its_user_roles_pda, false),
+            AccountMeta::new_readonly(sysvar::rent::id(), false),
+        ],
+        token_mint,
+        token_manager_pda,
+        Bumps {
+            its_root_pda_bump,
+            interchain_token_pda_bump,
+            token_manager_pda_bump,
+            signing_pda_bump: maybe_signing_pda_bump,
+            its_user_roles_pda_bump: Some(its_user_roles_pda_bump),
+            ..Default::default()
+        },
+    ))
 }
 
 pub(crate) trait OutboundInstruction {

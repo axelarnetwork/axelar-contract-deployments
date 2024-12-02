@@ -1,8 +1,8 @@
 //! Program state processor
 
 use alloy_primitives::U256;
-use axelar_executable_old::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
-use axelar_rkyv_encoding::types::GmpMetadata;
+use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
+use axelar_solana_encoding::types::messages::Message;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::Itertools;
 use program_utils::{check_rkyv_initialized_pda, StorableArchive, ValidPDA};
@@ -104,13 +104,13 @@ pub fn process_instruction<'a>(
         }
         InterchainTokenServiceInstruction::ItsGmpPayload {
             abi_payload,
-            gmp_metadata,
+            message,
             bumps,
             optional_accounts_flags,
         } => {
             process_inbound_its_gmp_payload(
                 accounts,
-                gmp_metadata,
+                &message,
                 &abi_payload,
                 bumps,
                 optional_accounts_flags,
@@ -244,7 +244,7 @@ fn process_initialize(
 
 fn process_inbound_its_gmp_payload<'a>(
     accounts: &'a [AccountInfo<'a>],
-    gmp_metadata: GmpMetadata,
+    message: &Message,
     abi_payload: &[u8],
     bumps: Bumps,
     optional_accounts_flags: OptionalAccountsFlags,
@@ -256,19 +256,23 @@ fn process_inbound_its_gmp_payload<'a>(
         .as_slice()
         .split_at(PROGRAM_ACCOUNTS_START_INDEX);
 
-    if gmp_metadata.source_address != ITS_HUB_ROUTING_IDENTIFIER {
-        msg!("Untrusted source address: {}", gmp_metadata.source_address);
+    if message.source_address != ITS_HUB_ROUTING_IDENTIFIER {
+        msg!("Untrusted source address: {}", message.source_address);
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    validate_with_gmp_metadata(&crate::id(), gateway_accounts, gmp_metadata, abi_payload)?;
+    let Some(sining_pda_bump) = bumps.signing_pda_bump else {
+        msg!("Missing signing PDA bump");
+        return Err(ProgramError::InvalidInstructionData);
+    };
+    validate_with_gmp_metadata(gateway_accounts, message, abi_payload, sining_pda_bump)?;
 
     let _gateway_approved_message_pda = next_account_info(accounts_iter)?;
     let _signing_pda = next_account_info(accounts_iter)?;
-    let gateway_root_pda = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
     let _system_program = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
+
     let its_root_config = InterchainTokenService::load(&crate::id(), its_root_pda)?;
     if its_root_config.paused {
         msg!("The Interchain Token Service is currently paused.");
@@ -285,7 +289,7 @@ fn process_inbound_its_gmp_payload<'a>(
     let payload =
         GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidInstructionData)?;
 
-    validate_its_accounts(instruction_accounts, gateway_root_pda.key, &payload, bumps)?;
+    validate_its_accounts(instruction_accounts, &payload, bumps)?;
     payload.process_local_action(payer, instruction_accounts, bumps, optional_accounts_flags)
 }
 
@@ -366,7 +370,8 @@ fn process_outbound_its_gmp_payload(
     // TODO: Call gas service to pay gas fee.
 
     invoke_signed(
-        &gateway::instructions::call_contract(
+        &axelar_solana_gateway::instructions::call_contract(
+            axelar_solana_gateway::id(),
             *gateway_root_pda.key,
             *its_root_pda.key,
             ITS_HUB_CHAIN_NAME.to_owned(),
@@ -386,7 +391,6 @@ fn process_outbound_its_gmp_payload(
 
 fn validate_its_accounts(
     accounts: &[AccountInfo<'_>],
-    gateway_root_pda: &Pubkey,
     payload: &GMPPayload,
     bumps: Bumps,
 ) -> ProgramResult {
@@ -405,14 +409,17 @@ fn validate_its_accounts(
         .map(|account| *account.key)
         .ok_or(ProgramError::InvalidAccountData)?;
 
-    let (derived_its_accounts, new_bumps, _) = derive_its_accounts(
-        gateway_root_pda,
+    let (derived_its_accounts, mut new_bumps, _) = derive_its_accounts(
         payload,
         token_program,
+        bumps.signing_pda_bump,
         maybe_mint,
         Some(Clock::get()?.unix_timestamp),
         Some(bumps),
     )?;
+
+    // Sigining PDA is not derived within `derive_its_accounts`.
+    new_bumps.signing_pda_bump = bumps.signing_pda_bump;
 
     if new_bumps != bumps {
         return Err(ProgramError::InvalidAccountData);
@@ -426,7 +433,7 @@ fn validate_its_accounts(
                 }
             }
             itertools::EitherOrBoth::Left(_) | itertools::EitherOrBoth::Right(_) => {
-                return Err(ProgramError::InvalidAccountData)
+                return Err(ProgramError::InvalidAccountData);
             }
         }
     }

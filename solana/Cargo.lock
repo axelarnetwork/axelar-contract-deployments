@@ -817,14 +817,16 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
- "axelar-executable-old",
+ "axelar-executable",
  "axelar-message-primitives",
  "axelar-rkyv-encoding",
- "axelar-solana-memo-program-old",
+ "axelar-solana-encoding",
+ "axelar-solana-gateway",
+ "axelar-solana-gateway-test-fixtures",
+ "axelar-solana-memo-program",
  "bitflags 2.6.0",
  "borsh 1.5.3",
  "evm-contracts-test-suite",
- "gmp-gateway",
  "interchain-token-transfer-gmp",
  "itertools 0.12.1",
  "program-utils",
@@ -839,7 +841,6 @@ dependencies = [
  "spl-token",
  "spl-token-2022 5.0.2",
  "spl-token-metadata-interface 0.5.1",
- "test-fixtures",
  "typed-builder",
 ]
 
@@ -3644,7 +3645,7 @@ name = "its-instruction-builder"
 version = "0.1.0"
 dependencies = [
  "async-recursion",
- "axelar-rkyv-encoding",
+ "axelar-solana-encoding",
  "axelar-solana-its",
  "bincode",
  "interchain-token-transfer-gmp",

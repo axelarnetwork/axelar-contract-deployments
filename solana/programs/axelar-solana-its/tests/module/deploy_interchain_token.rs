@@ -1,7 +1,7 @@
 use axelar_solana_its::instructions::DeployInterchainTokenInputs;
 use solana_program_test::tokio;
 use solana_sdk::keccak;
-use solana_sdk::signature::Signer;
+use solana_sdk::signer::Signer;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
 use spl_token_metadata_interface::state::TokenMetadata;

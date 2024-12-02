@@ -48,7 +48,7 @@ pub fn mint(
     token_program: Pubkey,
     amount: u64,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
@@ -87,7 +87,7 @@ pub fn transfer_mintership(
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
@@ -119,7 +119,7 @@ pub fn propose_mintership(
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
@@ -151,7 +151,7 @@ pub fn accept_mintership(
     token_id: [u8; 32],
     from: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);

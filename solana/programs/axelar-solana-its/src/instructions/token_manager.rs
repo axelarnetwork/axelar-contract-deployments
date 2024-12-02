@@ -82,7 +82,8 @@ pub fn set_flow_limit(
     token_id: [u8; 32],
     flow_limit: u64,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway::get_gateway_root_config_pda().0);
+    let (its_root_pda, _) =
+        crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
     let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
     let (token_manager_user_roles_pda, _) =
@@ -124,7 +125,8 @@ pub fn add_flow_limiter(
     token_id: [u8; 32],
     flow_limiter: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway::get_gateway_root_config_pda().0);
+    let (its_root_pda, _) =
+        crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
     let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
 
@@ -161,7 +163,8 @@ pub fn remove_flow_limiter(
     token_id: [u8; 32],
     flow_limiter: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway::get_gateway_root_config_pda().0);
+    let (its_root_pda, _) =
+        crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
     let (interchain_token_pdas, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pdas);
 
@@ -199,7 +202,7 @@ pub fn transfer_operatorship(
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
@@ -231,7 +234,7 @@ pub fn propose_operatorship(
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
@@ -263,7 +266,7 @@ pub fn accept_operatorship(
     token_id: [u8; 32],
     from: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = gateway::get_gateway_root_config_pda();
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);

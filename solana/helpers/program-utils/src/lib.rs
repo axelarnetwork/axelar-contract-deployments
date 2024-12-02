@@ -446,8 +446,12 @@ where
     /// Loads the account data and deserializes it.
     fn load(program_id: &Pubkey, source_account: &AccountInfo<'_>) -> Result<Self, ProgramError> {
         let account_data = source_account.try_borrow_data()?;
-        let archived =
-            check_rkyv_initialized_pda::<Self>(program_id, source_account, &account_data)?;
+        let Ok(archived) =
+            check_rkyv_initialized_pda::<Self>(program_id, source_account, &account_data)
+        else {
+            msg!("Account not initialized or not the correct owner");
+            return Err(ProgramError::UninitializedAccount);
+        };
 
         archived
             .deserialize(&mut Infallible)

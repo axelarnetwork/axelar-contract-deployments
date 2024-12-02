@@ -2,7 +2,7 @@
 
 use core::ops::Deref;
 
-use axelar_rkyv_encoding::types::GmpMetadata;
+use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_its::instructions::{Bumps, ItsGmpInstructionInputs};
 use axelar_solana_its::state::token_manager::ArchivedTokenManager;
 use interchain_token_transfer_gmp::GMPPayload;
@@ -22,7 +22,7 @@ pub async fn build_its_gmp_instruction<C>(
     payer: Pubkey,
     gateway_approved_message_pda: Pubkey,
     gateway_root_pda: Pubkey,
-    gmp_metadata: GmpMetadata,
+    message: Message,
     abi_payload: Vec<u8>,
     rpc_client: C,
 ) -> Result<Instruction, ProgramError>
@@ -61,9 +61,8 @@ where
 
     let inputs = ItsGmpInstructionInputs::builder()
         .payer(payer)
-        .gateway_approved_message_pda(gateway_approved_message_pda)
-        .gateway_root_pda(gateway_root_pda)
-        .gmp_metadata(gmp_metadata)
+        .incoming_message_pda(gateway_approved_message_pda)
+        .message(message)
         .payload(payload)
         .token_program(token_program)
         .mint_opt(mint)

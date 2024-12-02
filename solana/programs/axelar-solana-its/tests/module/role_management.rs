@@ -1,5 +1,7 @@
 #![allow(clippy::should_panic_without_expect)]
 
+use axelar_solana_gateway::{get_incoming_message_pda, state::incoming_message::command_id};
+use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_its::instructions::DeployInterchainTokenInputs;
 use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use axelar_solana_its::Roles;
@@ -11,12 +13,13 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::{keccak, system_instruction};
 
+use crate::StorableArchiveAccount;
 use crate::{prepare_receive_from_hub, random_hub_message_with_destination_and_payload};
 use spl_associated_token_account::{
     get_associated_token_address_with_program_id, instruction::create_associated_token_account,
 };
 
-use crate::{axelar_solana_setup, program_test, ItsProgramWrapper};
+use crate::{axelar_solana_setup, program_test, ItsProgramWrapper, TokenUtils};
 
 #[tokio::test]
 async fn test_successful_operator_transfer() {
@@ -48,10 +51,12 @@ async fn test_successful_operator_transfer() {
         &its_root_pda,
         &bob.pubkey(),
     );
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     assert!(bob_roles.contains(Roles::OPERATOR));
 
@@ -60,16 +65,17 @@ async fn test_successful_operator_transfer() {
         &its_root_pda,
         &solana_chain.fixture.payer.pubkey(),
     );
-    let alice_roles = solana_chain
+    let alice_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&alice_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&alice_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&alice_roles_pda)
+        .unwrap();
 
     assert!(!alice_roles.contains(Roles::OPERATOR));
 }
 
 #[tokio::test]
-#[should_panic(expected = "assertion failed: tx.result.is_ok()")]
 async fn test_fail_transfer_when_not_holder() {
     let mut solana_chain = program_test().await;
 
@@ -92,7 +98,14 @@ async fn test_fail_transfer_when_not_holder() {
     )
     .unwrap();
 
-    solana_chain.fixture.send_tx(&[transfer_role_ix]).await;
+    let tx_metadata = solana_chain
+        .fixture
+        .send_tx(&[transfer_role_ix])
+        .await
+        .unwrap_err();
+    assert!(tx_metadata
+        .find_log("User roles account not found")
+        .is_some());
 }
 
 #[tokio::test]
@@ -126,10 +139,12 @@ async fn test_successful_proposal_acceptance() {
         &its_root_pda,
         &solana_chain.fixture.payer.pubkey(),
     );
-    let alice_roles = solana_chain
+    let alice_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&alice_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&alice_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&alice_roles_pda)
+        .unwrap();
 
     // Alice should still have the roles
     assert!(alice_roles.contains(roles_to_transfer));
@@ -158,10 +173,12 @@ async fn test_successful_proposal_acceptance() {
         )
         .await;
 
-    let new_alice_roles = solana_chain
+    let new_alice_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&alice_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&alice_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&alice_roles_pda)
+        .unwrap();
 
     // Alice should not have the roles anymore
     assert!(!new_alice_roles.contains(roles_to_transfer));
@@ -171,10 +188,12 @@ async fn test_successful_proposal_acceptance() {
         &its_root_pda,
         &bob.pubkey(),
     );
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     // Bob should have the roles now
     assert!(bob_roles.contains(roles_to_transfer));
@@ -303,10 +322,12 @@ async fn test_successful_token_manager_operator_transfer() {
         &bob.pubkey(),
     );
 
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     assert!(bob_roles.contains(Roles::OPERATOR));
 
@@ -329,20 +350,24 @@ async fn test_successful_token_manager_operator_transfer() {
         )
         .await;
 
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     let (alice_roles_pda, _) = role_management::find_user_roles_pda(
         &axelar_solana_its::id(),
         &token_manager_pda,
         &alice.pubkey(),
     );
-    let alice_roles = solana_chain
+    let alice_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&alice_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&alice_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&alice_roles_pda)
+        .unwrap();
 
     assert!(!bob_roles.contains(Roles::OPERATOR));
     assert!(alice_roles.contains(Roles::OPERATOR));
@@ -396,10 +421,12 @@ async fn test_successful_token_manager_operator_proposal_acceptance() {
         &bob.pubkey(),
     );
 
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     assert!(bob_roles.contains(Roles::OPERATOR));
 
@@ -422,10 +449,12 @@ async fn test_successful_token_manager_operator_proposal_acceptance() {
         )
         .await;
 
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     assert!(bob_roles.contains(Roles::OPERATOR));
 
@@ -455,10 +484,12 @@ async fn test_successful_token_manager_operator_proposal_acceptance() {
         )
         .await;
 
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     let (alice_roles_pda, _) = role_management::find_user_roles_pda(
         &axelar_solana_its::id(),
@@ -466,10 +497,12 @@ async fn test_successful_token_manager_operator_proposal_acceptance() {
         &alice.pubkey(),
     );
 
-    let alice_roles = solana_chain
+    let alice_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&alice_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&alice_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&alice_roles_pda)
+        .unwrap();
 
     assert!(!bob_roles.contains(Roles::OPERATOR));
     assert!(alice_roles.contains(Roles::OPERATOR));
@@ -523,10 +556,12 @@ async fn test_successful_token_manager_minter_transfer() {
         &bob.pubkey(),
     );
 
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     assert!(bob_roles.contains(Roles::MINTER));
 
@@ -549,20 +584,24 @@ async fn test_successful_token_manager_minter_transfer() {
         )
         .await;
 
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     let (alice_roles_pda, _) = role_management::find_user_roles_pda(
         &axelar_solana_its::id(),
         &token_manager_pda,
         &alice.pubkey(),
     );
-    let alice_roles = solana_chain
+    let alice_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&alice_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&alice_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&alice_roles_pda)
+        .unwrap();
 
     assert!(!bob_roles.contains(Roles::MINTER));
     assert!(alice_roles.contains(Roles::MINTER));
@@ -616,10 +655,12 @@ async fn test_successful_token_manager_minter_proposal_acceptance() {
         &bob.pubkey(),
     );
 
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     assert!(bob_roles.contains(Roles::MINTER));
 
@@ -642,10 +683,12 @@ async fn test_successful_token_manager_minter_proposal_acceptance() {
         )
         .await;
 
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     assert!(bob_roles.contains(Roles::MINTER));
 
@@ -675,10 +718,12 @@ async fn test_successful_token_manager_minter_proposal_acceptance() {
         )
         .await;
 
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     let (alice_roles_pda, _) = role_management::find_user_roles_pda(
         &axelar_solana_its::id(),
@@ -686,17 +731,18 @@ async fn test_successful_token_manager_minter_proposal_acceptance() {
         &alice.pubkey(),
     );
 
-    let alice_roles = solana_chain
+    let alice_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&alice_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&alice_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&alice_roles_pda)
+        .unwrap();
 
     assert!(!bob_roles.contains(Roles::MINTER));
     assert!(alice_roles.contains(Roles::MINTER));
 }
 
 #[allow(clippy::too_many_lines)]
-#[should_panic]
 #[tokio::test]
 async fn test_fail_token_manager_minter_proposal_acceptance() {
     let ItsProgramWrapper {
@@ -716,6 +762,24 @@ async fn test_fail_token_manager_minter_proposal_acceptance() {
     let (interchain_token_pda, _) =
         axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
     let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+
+    solana_chain
+        .fixture
+        .send_tx(&[
+            system_instruction::transfer(
+                &solana_chain.fixture.payer.pubkey(),
+                &bob.pubkey(),
+                u32::MAX.into(),
+            ),
+            system_instruction::transfer(
+                &solana_chain.fixture.payer.pubkey(),
+                &alice.pubkey(),
+                u32::MAX.into(),
+            ),
+        ])
+        .await
+        .unwrap();
+
     let deploy_instruction = DeployInterchainTokenInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .name(token_name.to_owned())
@@ -729,14 +793,10 @@ async fn test_fail_token_manager_minter_proposal_acceptance() {
     solana_chain
         .fixture
         .send_tx(&[
-            system_instruction::transfer(
-                &solana_chain.fixture.payer.pubkey(),
-                &bob.pubkey(),
-                u32::MAX.into(),
-            ),
             axelar_solana_its::instructions::deploy_interchain_token(deploy_instruction).unwrap(),
         ])
-        .await;
+        .await
+        .unwrap();
 
     let (bob_roles_pda, _) = role_management::find_user_roles_pda(
         &axelar_solana_its::id(),
@@ -744,13 +804,14 @@ async fn test_fail_token_manager_minter_proposal_acceptance() {
         &bob.pubkey(),
     );
 
-    let bob_roles = solana_chain
+    let bob_roles: UserRoles<Roles> = solana_chain
         .fixture
-        .get_rkyv_account::<UserRoles<Roles>>(&bob_roles_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&bob_roles_pda)
+        .unwrap();
 
     assert!(bob_roles.contains(Roles::MINTER));
-
     // Trying to accept role that wasn't proposed should fail
     let accept_mintership_ix =
         axelar_solana_its::instructions::interchain_token::accept_mintership(
@@ -760,30 +821,26 @@ async fn test_fail_token_manager_minter_proposal_acceptance() {
         )
         .unwrap();
 
-    dbg!("Try to accept_mintership");
-    solana_chain
+    let tx_metadata = solana_chain
         .fixture
         .send_tx_with_custom_signers(
-            &[
-                system_instruction::transfer(
-                    &solana_chain.fixture.payer.pubkey(),
-                    &alice.pubkey(),
-                    u32::MAX.into(),
-                ),
-                accept_mintership_ix,
-            ],
+            &[accept_mintership_ix],
             &[
                 &alice.insecure_clone(),
                 &solana_chain.fixture.payer.insecure_clone(),
             ],
         )
-        .await;
+        .await
+        .unwrap_err();
+
+    assert!(tx_metadata
+        .find_log("Account not initialized or not the correct owner")
+        .is_some());
 }
 
 #[rstest::rstest]
 #[case(spl_token::id())]
 #[case(spl_token_2022::id())]
-#[should_panic]
 #[tokio::test]
 #[allow(clippy::unwrap_used)]
 async fn test_fail_mint_without_minter_role(#[case] token_program_id: Pubkey) {
@@ -825,30 +882,32 @@ async fn test_fail_mint_without_minter_role(#[case] token_program_id: Pubkey) {
         payload_hash,
     );
 
-    let (gateway_approved_command_pdas, _, _) = solana_chain
-        .fixture
-        .fully_approve_messages(
-            &solana_chain.gateway_root_pda,
-            vec![message.clone()],
-            &solana_chain.signers,
-            &solana_chain.domain_separator,
-        )
-        .await;
+    let message_from_multisig_prover = solana_chain
+        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
+        .await
+        .unwrap();
+
+    // Action: set message status as executed by calling the destination program
+    let (incoming_message_pda, ..) =
+        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
+
+    let merkelised_message = message_from_multisig_prover
+        .iter()
+        .find(|x| x.leaf.message.cc_id == message.cc_id)
+        .unwrap()
+        .clone();
 
     let its_ix_inputs = ItsGmpInstructionInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
-        .gateway_approved_message_pda(gateway_approved_command_pdas[0])
-        .gateway_root_pda(solana_chain.gateway_root_pda)
-        .gmp_metadata(message.into())
+        .incoming_message_pda(incoming_message_pda)
+        .message(merkelised_message.leaf.message)
         .payload(its_gmp_payload)
         .token_program(token_program_id)
         .build();
 
     solana_chain
         .fixture
-        .send_tx_with_metadata(&[
-            axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap(),
-        ])
+        .send_tx(&[axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap()])
         .await;
 
     let ata = get_associated_token_address_with_program_id(
@@ -879,7 +938,11 @@ async fn test_fail_mint_without_minter_role(#[case] token_program_id: Pubkey) {
     )
     .unwrap();
 
-    solana_chain.fixture.send_tx(&[mint_ix]).await;
+    let tx_metadata = solana_chain.fixture.send_tx(&[mint_ix]).await.unwrap_err();
+
+    assert!(tx_metadata
+        .find_log("Account not initialized or not the correct owner")
+        .is_some());
 }
 
 #[rstest::rstest]
@@ -926,30 +989,32 @@ async fn test_successful_mint_with_minter_role(#[case] token_program_id: Pubkey)
         payload_hash,
     );
 
-    let (gateway_approved_command_pdas, _, _) = solana_chain
-        .fixture
-        .fully_approve_messages(
-            &solana_chain.gateway_root_pda,
-            vec![message.clone()],
-            &solana_chain.signers,
-            &solana_chain.domain_separator,
-        )
-        .await;
+    let message_from_multisig_prover = solana_chain
+        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
+        .await
+        .unwrap();
+
+    // Action: set message status as executed by calling the destination program
+    let (incoming_message_pda, ..) =
+        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
+
+    let merkelised_message = message_from_multisig_prover
+        .iter()
+        .find(|x| x.leaf.message.cc_id == message.cc_id)
+        .unwrap()
+        .clone();
 
     let its_ix_inputs = ItsGmpInstructionInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
-        .gateway_approved_message_pda(gateway_approved_command_pdas[0])
-        .gateway_root_pda(solana_chain.gateway_root_pda)
-        .gmp_metadata(message.into())
+        .incoming_message_pda(incoming_message_pda)
+        .message(merkelised_message.leaf.message)
         .payload(its_gmp_payload)
         .token_program(token_program_id)
         .build();
 
     solana_chain
         .fixture
-        .send_tx_with_metadata(&[
-            axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap(),
-        ])
+        .send_tx(&[axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap()])
         .await;
 
     let ata = get_associated_token_address_with_program_id(

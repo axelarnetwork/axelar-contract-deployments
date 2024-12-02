@@ -4,13 +4,14 @@
 
 use alloy_primitives::Bytes;
 use alloy_sol_types::SolValue;
+use axelar_solana_gateway::processor::GatewayEvent;
+use axelar_solana_gateway_test_fixtures::gateway::ProgramInvocationState;
 use axelar_solana_its::instructions::{
     DeployInterchainTokenInputs, DeployTokenManagerInputs, InterchainTransferInputs,
 };
 use axelar_solana_its::state::token_manager;
 use evm_contracts_test_suite::ethers::signers::Signer;
 use evm_contracts_test_suite::ethers::types::U256;
-use gateway::events::ArchivedGatewayEvent;
 use interchain_token_transfer_gmp::GMPPayload;
 use rstest::rstest;
 use solana_program_test::tokio;
@@ -26,7 +27,7 @@ use spl_token_2022::state::Mint;
 use crate::{
     axelar_evm_setup, axelar_solana_setup, call_evm, call_solana_gateway,
     ensure_evm_gateway_approval, prepare_evm_approve_contract_call, retrieve_evm_log_with_filter,
-    route_its_hub, ItsProgramWrapper, ITS_CHAIN_NAME,
+    route_its_hub, ItsProgramWrapper, TokenUtils, ITS_CHAIN_NAME,
 };
 
 const ITS_HUB_SOURCE_ADDRESS: &str = "hub";
@@ -58,13 +59,21 @@ async fn test_send_deploy_interchain_token_from_solana_to_evm() {
         .build();
 
     let ix = axelar_solana_its::instructions::deploy_interchain_token(deploy).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
 
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id,
     );
     let encoded_payload = payload.encode();
@@ -139,13 +148,21 @@ async fn test_send_deploy_token_manager_from_solana_to_evm() {
         .build();
 
     let ix = axelar_solana_its::instructions::deploy_token_manager(deploy.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
 
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id,
     );
     let encoded_payload = payload.encode();
@@ -224,15 +241,23 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
         .minter(evm_signer.wallet.address().as_bytes().to_vec())
         .gas_value(0_u128)
         .build();
-    let deploy_remote_ix =
+    let ix =
         axelar_solana_its::instructions::deploy_interchain_token(deploy_remote.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, deploy_remote_ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
 
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id.clone(),
     );
     let encoded_payload = payload.encode();
@@ -329,15 +354,22 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
         .metadata(vec![])
         .build();
 
-    let transfer_ix =
-        axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, transfer_ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let ix = axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
 
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id,
     );
     let encoded_payload = payload.encode();
@@ -439,12 +471,21 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
 
     let ix =
         axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
     };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
+    };
+
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id.clone(),
     );
     let encoded_payload = payload.encode();
@@ -543,15 +584,22 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
         .metadata(vec![])
         .build();
 
-    let transfer_ix =
-        axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, transfer_ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let ix = axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
 
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id,
     );
     let encoded_payload = payload.encode();
@@ -664,12 +712,21 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
 
     let ix =
         axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
     };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
+    };
+
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id.clone(),
     );
     let encoded_payload = payload.encode();
@@ -787,16 +844,23 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         .metadata(vec![])
         .build();
 
-    let transfer_ix =
-        axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, transfer_ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let ix = axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
 
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
-        solana_id,
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
+        solana_id.clone(),
     );
     let encoded_payload = payload.encode();
 
@@ -910,12 +974,21 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
 
     let ix =
         axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
     };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
+    };
+
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id.clone(),
     );
     let encoded_payload = payload.encode();
@@ -1014,16 +1087,23 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
         .metadata(vec![])
         .build();
 
-    let transfer_ix =
-        axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, transfer_ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let ix = axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
 
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
-        solana_id,
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
+        solana_id.clone(),
     );
     let encoded_payload = payload.encode();
 
@@ -1151,13 +1231,21 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
 
     let ix =
         axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
 
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id.clone(),
     );
     let encoded_payload = payload.encode();
@@ -1254,14 +1342,22 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
         .metadata(vec![])
         .build();
 
-    let transfer_ix = axelar_solana_its::instructions::interchain_transfer(transfer).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, transfer_ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let ix = axelar_solana_its::instructions::interchain_transfer(transfer).unwrap();
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
 
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id,
     );
     let encoded_payload = payload.encode();

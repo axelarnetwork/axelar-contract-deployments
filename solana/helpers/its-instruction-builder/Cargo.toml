@@ -10,11 +10,11 @@ crate-type = ["cdylib", "lib"]
 workspace = true
 
 [dependencies]
-axelar-rkyv-encoding.workspace = true
+async-recursion.workspace = true
+axelar-solana-encoding.workspace = true
 axelar-solana-its = { workspace = true, features = ["no-entrypoint"] }
 bincode.workspace = true
 interchain-token-transfer-gmp.workspace = true
 solana-client.workspace = true
 solana-sdk.workspace = true
-async-recursion.workspace = true
 spl-token-2022 = { workspace = true, features = ["no-entrypoint", "serde-traits"] }

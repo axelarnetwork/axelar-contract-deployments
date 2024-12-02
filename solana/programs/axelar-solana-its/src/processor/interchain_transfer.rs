@@ -1,6 +1,5 @@
 //! Module that handles the processing of the `InterchainTransfer` ITS
 //! instruction.
-use axelar_executable_old::AxelarCallableInstruction;
 use axelar_message_primitives::DataPayload;
 use interchain_token_transfer_gmp::InterchainTransfer;
 use program_utils::{check_rkyv_initialized_pda, StorableArchive};
@@ -88,9 +87,7 @@ pub fn process_inbound_transfer<'a>(
         let instruction = Instruction {
             program_id: *parsed_accounts.destination_wallet.key,
             accounts: program_payload.account_meta().to_vec(),
-            data: borsh::to_vec(&AxelarCallableInstruction::Native(
-                program_payload.payload_without_accounts().to_vec(),
-            ))?,
+            data: program_payload.payload_without_accounts().to_vec(),
         };
 
         let accounts_iter = &mut accounts.iter();

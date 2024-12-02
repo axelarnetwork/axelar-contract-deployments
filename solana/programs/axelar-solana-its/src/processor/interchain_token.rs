@@ -106,7 +106,7 @@ impl<'a> From<DeployInterchainTokenAccounts<'a>> for DeployTokenManagerAccounts<
             ata_program: value.ata_program,
             its_roles_pda: value.its_roles_pda,
             _rent_sysvar: value.rent_sysvar,
-            _minter: value.minter,
+            minter: value.minter,
             minter_roles_pda: value.minter_roles_pda,
             operator: value.minter,
             operator_roles_pda: value.minter_roles_pda,

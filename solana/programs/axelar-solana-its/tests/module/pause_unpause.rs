@@ -1,7 +1,10 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::should_panic_without_expect)]
 use alloy_sol_types::SolValue;
-use axelar_solana_its::{instructions::DeployTokenManagerInputs, state::token_manager};
+use axelar_solana_gateway::{get_incoming_message_pda, state::incoming_message::command_id};
+use axelar_solana_gateway_test_fixtures::base::FindLog;
+use axelar_solana_its::instructions::{DeployTokenManagerInputs, ItsGmpInstructionInputs};
+use axelar_solana_its::state::token_manager;
 use evm_contracts_test_suite::ethers::abi::Bytes;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program_test::tokio;
@@ -9,13 +12,11 @@ use solana_sdk::{pubkey::Pubkey, signer::Signer};
 
 use crate::{
     prepare_receive_from_hub, program_test, random_hub_message_with_destination_and_payload,
+    TokenUtils,
 };
 
 #[tokio::test]
-#[should_panic]
 async fn test_its_gmp_payload_fail_when_paused() {
-    use axelar_solana_its::instructions::ItsGmpInstructionInputs;
-
     let mut solana_chain = program_test().await;
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
 
@@ -74,34 +75,41 @@ async fn test_its_gmp_payload_fail_when_paused() {
         axelar_solana_its::id().to_string(),
         payload_hash,
     );
-    // Action: "Relayer" calls Gateway to approve messages
-    let (gateway_approved_command_pdas, _, _) = solana_chain
-        .fixture
-        .fully_approve_messages(
-            &solana_chain.gateway_root_pda,
-            vec![message.clone()],
-            &solana_chain.signers,
-            &solana_chain.domain_separator,
-        )
-        .await;
+    let message_from_multisig_prover = solana_chain
+        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
+        .await
+        .unwrap();
+
+    // Action: set message status as executed by calling the destination program
+    let (incoming_message_pda, ..) =
+        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
+
+    let merkelised_message = message_from_multisig_prover
+        .iter()
+        .find(|x| x.leaf.message.cc_id == message.cc_id)
+        .unwrap()
+        .clone();
 
     let its_ix_inputs = ItsGmpInstructionInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
-        .gateway_approved_message_pda(gateway_approved_command_pdas[0])
-        .gateway_root_pda(solana_chain.gateway_root_pda)
-        .gmp_metadata(message.into())
+        .incoming_message_pda(incoming_message_pda)
+        .message(merkelised_message.leaf.message)
         .payload(its_gmp_payload)
         .token_program(token_program_id)
         .build();
 
-    solana_chain
+    let tx_metadata = solana_chain
         .fixture
         .send_tx(&[axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap()])
-        .await;
+        .await
+        .unwrap_err();
+
+    assert!(tx_metadata
+        .find_log("The Interchain Token Service is currently paused.")
+        .is_some());
 }
 
 #[tokio::test]
-#[should_panic]
 async fn test_outbound_deployment_fails_when_paused() {
     let mut solana_chain = program_test().await;
     solana_chain
@@ -144,11 +152,14 @@ async fn test_outbound_deployment_fails_when_paused() {
         .build();
 
     let ix = axelar_solana_its::instructions::deploy_token_manager(deploy.clone()).unwrap();
-    solana_chain.fixture.send_tx(&[ix]).await;
+    let tx_metadata = solana_chain.fixture.send_tx(&[ix]).await.unwrap_err();
+
+    assert!(tx_metadata
+        .find_log("The Interchain Token Service is currently paused.")
+        .is_some());
 }
 
 #[tokio::test]
-#[should_panic]
 async fn test_fail_to_pause_not_being_owner() {
     let mut solana_chain = program_test().await;
     solana_chain
@@ -161,7 +172,7 @@ async fn test_fail_to_pause_not_being_owner() {
         .unwrap()])
         .await;
 
-    solana_chain
+    let tx_metadata = solana_chain
         .fixture
         .send_tx_with_custom_signers(
             &[axelar_solana_its::instructions::set_pause_status(
@@ -171,5 +182,10 @@ async fn test_fail_to_pause_not_being_owner() {
             .unwrap()],
             &[solana_chain.fixture.payer.insecure_clone()],
         )
-        .await;
+        .await
+        .unwrap_err();
+
+    assert!(tx_metadata
+        .find_log("Given authority is not the program upgrade authority")
+        .is_some());
 }

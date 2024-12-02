@@ -3,12 +3,16 @@
 #![allow(clippy::panic)]
 #![allow(clippy::unwrap_used)]
 
+use crate::StorableArchiveAccount;
 use alloy_primitives::Bytes;
+use axelar_solana_gateway::get_incoming_message_pda;
+use axelar_solana_gateway::state::incoming_message::{command_id, MessageStatus};
 use axelar_solana_its::instructions::{DeployInterchainTokenInputs, InterchainTransferInputs};
+use axelar_solana_its::state::token_manager;
 use axelar_solana_its::state::token_manager::TokenManager;
 use evm_contracts_test_suite::ethers::signers::Signer as EvmSigner;
 use evm_contracts_test_suite::ethers::types::U256;
-use gateway::events::ArchivedGatewayEvent;
+use interchain_token_transfer_gmp::InterchainTransfer;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
@@ -21,7 +25,7 @@ use crate::{
     axelar_evm_setup, axelar_solana_setup, call_evm, call_solana_gateway,
     ensure_evm_gateway_approval, prepare_evm_approve_contract_call, prepare_receive_from_hub,
     program_test, random_hub_message_with_destination_and_payload, retrieve_evm_log_with_filter,
-    route_its_hub, ItsProgramWrapper, ITS_CHAIN_NAME,
+    route_its_hub, ItsProgramWrapper, TokenUtils, ITS_CHAIN_NAME,
 };
 
 // Test that the flow limit is enforced for incoming interchain transfers.
@@ -34,8 +38,6 @@ use crate::{
 #[tokio::test]
 async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
     use axelar_solana_its::instructions::ItsGmpInstructionInputs;
-    use axelar_solana_its::state::token_manager;
-    use interchain_token_transfer_gmp::InterchainTransfer;
 
     let mut solana_chain = program_test().await;
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
@@ -74,43 +76,54 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
     });
 
     let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
-    let abi_payload = its_gmp_payload.encode();
-    let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
+    let payload_hash = solana_sdk::keccak::hash(&its_gmp_payload.encode()).to_bytes();
     let message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
         payload_hash,
     );
-    // Action: "Relayer" calls Gateway to approve messages
-    let (gateway_approved_command_pdas, _, _) = solana_chain
-        .fixture
-        .fully_approve_messages(
-            &solana_chain.gateway_root_pda,
-            vec![message.clone()],
-            &solana_chain.signers,
-            &solana_chain.domain_separator,
-        )
-        .await;
+
+    let message_from_multisig_prover = solana_chain
+        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
+        .await
+        .unwrap();
+
+    // Action: set message status as executed by calling the destination program
+    let (incoming_message_pda, ..) =
+        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
+
+    let merkelised_message = message_from_multisig_prover
+        .iter()
+        .find(|x| x.leaf.message.cc_id == message.cc_id)
+        .unwrap()
+        .clone();
 
     let its_ix_inputs = ItsGmpInstructionInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
-        .gateway_approved_message_pda(gateway_approved_command_pdas[0])
-        .gateway_root_pda(solana_chain.gateway_root_pda)
-        .gmp_metadata(message.into())
+        .incoming_message_pda(incoming_message_pda)
+        .message(merkelised_message.leaf.message)
         .payload(its_gmp_payload)
-        .token_program(token_program_id)
+        .token_program(spl_token_2022::id())
         .build();
 
-    solana_chain
-        .fixture
-        .send_tx_with_metadata(&[
-            axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap(),
-        ])
-        .await;
+    let instruction = axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs)
+        .expect("failed to create instruction");
 
-    let token_manager = solana_chain
+    solana_chain.fixture.send_tx(&[instruction]).await.unwrap();
+
+    // Assert
+    // Message should be executed
+    let gateway_approved_message = solana_chain.incoming_message(incoming_message_pda).await;
+    assert_eq!(
+        gateway_approved_message.message.status,
+        MessageStatus::Executed
+    );
+
+    let token_manager: TokenManager = solana_chain
         .fixture
-        .get_rkyv_account::<TokenManager>(&token_manager_pda, &axelar_solana_its::id())
-        .await;
+        .get_account(&token_manager_pda, &axelar_solana_its::id())
+        .await
+        .unarchive(&token_manager_pda)
+        .unwrap();
 
     assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
     assert_eq!(mint.as_ref(), token_manager.token_address.as_ref());
@@ -154,24 +167,27 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         data: Bytes::new(),
     });
 
-    let its_gmp_transfer_payload =
-        prepare_receive_from_hub(&inner_transfer_payload, "ethereum".to_owned());
-    let transfer_abi_payload = its_gmp_transfer_payload.encode();
-    let transfer_payload_hash = solana_sdk::keccak::hash(&transfer_abi_payload).to_bytes();
-    let transfer_message = random_hub_message_with_destination_and_payload(
+    let its_gmp_payload = prepare_receive_from_hub(&inner_transfer_payload, "ethereum".to_owned());
+    let payload_hash = solana_sdk::keccak::hash(&its_gmp_payload.encode()).to_bytes();
+    let message = random_hub_message_with_destination_and_payload(
         axelar_solana_its::id().to_string(),
-        transfer_payload_hash,
+        payload_hash,
     );
-    // Action: "Relayer" calls Gateway to approve messages
-    let (transfer_gateway_approved_command_pdas, _, _) = solana_chain
-        .fixture
-        .fully_approve_messages(
-            &solana_chain.gateway_root_pda,
-            vec![transfer_message.clone()],
-            &solana_chain.signers,
-            &solana_chain.domain_separator,
-        )
-        .await;
+
+    let message_from_multisig_prover = solana_chain
+        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
+        .await
+        .unwrap();
+
+    // Action: set message status as executed by calling the destination program
+    let (incoming_message_pda, ..) =
+        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
+
+    let merkelised_message = message_from_multisig_prover
+        .iter()
+        .find(|x| x.leaf.message.cc_id == message.cc_id)
+        .unwrap()
+        .clone();
 
     let clock_sysvar = solana_chain
         .fixture
@@ -180,24 +196,28 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         .await
         .unwrap();
 
-    let transfer_its_ix_inputs = ItsGmpInstructionInputs::builder()
+    let its_ix_inputs = ItsGmpInstructionInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
-        .gateway_approved_message_pda(transfer_gateway_approved_command_pdas[0])
-        .gateway_root_pda(solana_chain.gateway_root_pda)
-        .gmp_metadata(transfer_message.into())
-        .payload(its_gmp_transfer_payload)
-        .token_program(token_program_id)
+        .incoming_message_pda(incoming_message_pda)
+        .message(merkelised_message.leaf.message)
+        .payload(its_gmp_payload)
         .timestamp(clock_sysvar.unix_timestamp)
+        .token_program(token_program_id)
         .mint(mint)
         .build();
 
-    solana_chain
-        .fixture
-        .send_tx_with_metadata(&[axelar_solana_its::instructions::its_gmp_payload(
-            transfer_its_ix_inputs,
-        )
-        .unwrap()])
-        .await;
+    let instruction = axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs)
+        .expect("failed to create instruction");
+
+    solana_chain.fixture.send_tx(&[instruction]).await.unwrap();
+
+    // Assert
+    // Message should be executed
+    let gateway_approved_message = solana_chain.incoming_message(incoming_message_pda).await;
+    assert_eq!(
+        gateway_approved_message.message.status,
+        MessageStatus::Executed
+    );
 
     let token_manager_ata_account = solana_chain
         .fixture
@@ -233,14 +253,16 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
 }
 
 // Test that the flow limit is enforced for outgoing interchain transfers.
-// The limit is set to 800, we test that a transfer with 500 tokens is
-// successful and a transfer with 1000 tokens fails.
+// We try to transfer 800 tokens with two different limits: 1000 and 500. The latter should fail.
 #[rstest::rstest]
 #[case(1000_u64)]
 #[should_panic]
 #[case(500_u64)]
 #[tokio::test]
 async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
+    use axelar_solana_gateway::processor::GatewayEvent;
+    use axelar_solana_gateway_test_fixtures::gateway::ProgramInvocationState;
+
     let ItsProgramWrapper {
         mut solana_chain,
         chain_name: solana_id,
@@ -275,15 +297,25 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         .minter(evm_signer.wallet.address().as_bytes().to_vec())
         .gas_value(0_u128)
         .build();
+
     let deploy_remote_ix =
         axelar_solana_its::instructions::deploy_interchain_token(deploy_remote.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, deploy_remote_ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, deploy_remote_ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
 
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id.clone(),
     );
     let encoded_payload = payload.encode();
@@ -391,13 +423,21 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
 
     let transfer_ix =
         axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
-    let gateway_event = call_solana_gateway(&mut solana_chain.fixture, transfer_ix).await;
-    let ArchivedGatewayEvent::CallContract(call_contract) = gateway_event.parse() else {
-        panic!("Expected CallContract event, got {gateway_event:?}");
+    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, transfer_ix)
+        .await
+        .pop()
+        .unwrap();
+
+    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
+        panic!("unexpected event")
+    };
+
+    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
+        panic!("unexpected event")
     };
 
     let payload = route_its_hub(
-        GMPPayload::decode(&call_contract.payload).unwrap(),
+        GMPPayload::decode(&emitted_event.payload).unwrap(),
         solana_id,
     );
     let encoded_payload = payload.encode();

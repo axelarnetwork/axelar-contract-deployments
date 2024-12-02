@@ -212,11 +212,19 @@ pub(crate) fn deploy<'a>(
         crate::create_token_manager_pda(&interchain_token_pda, bumps.token_manager_pda_bump);
     let token_manager_ata = PublicKey::new_ed25519(accounts.token_manager_ata.key.to_bytes());
 
-    if let (Some(operator), Some(operator_roles_pda), Some(operator_from_message)) = (
-        accounts.operator,
-        accounts.operator_roles_pda,
-        deploy_token_manager.operator,
-    ) {
+    if let Some(operator_from_message) = deploy_token_manager.operator {
+        let (operator, operator_roles_pda) = if let (Some(operator), Some(operator_roles_pda)) =
+            (accounts.operator, accounts.operator_roles_pda)
+        {
+            (operator, operator_roles_pda)
+        } else if let (Some(minter), Some(minter_roles_pda)) =
+            (accounts.minter, accounts.minter_roles_pda)
+        {
+            (minter, minter_roles_pda)
+        } else {
+            return Err(ProgramError::InvalidArgument);
+        };
+
         if operator_from_message.ne(operator.key) {
             msg!("Invalid operator provided");
             return Err(ProgramError::InvalidAccountData);
@@ -286,19 +294,24 @@ fn setup_roles<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let user_roles = UserRoles::new(roles, user_roles_pda_bump);
-    user_roles.init(
-        &crate::id(),
-        system_account,
-        payer,
-        user_roles_pda,
-        &[
-            role_management::seed_prefixes::USER_ROLES_SEED,
-            token_manager_pda.key.as_ref(),
-            user.as_ref(),
-            &[user_roles_pda_bump],
-        ],
-    )?;
+    if let Ok(mut existing_roles) = UserRoles::<Roles>::load(&crate::id(), user_roles_pda) {
+        existing_roles.add(roles);
+        existing_roles.store(user_roles_pda)?;
+    } else {
+        let user_roles = UserRoles::new(roles, user_roles_pda_bump);
+        user_roles.init(
+            &crate::id(),
+            system_account,
+            payer,
+            user_roles_pda,
+            &[
+                role_management::seed_prefixes::USER_ROLES_SEED,
+                token_manager_pda.key.as_ref(),
+                user.as_ref(),
+                &[user_roles_pda_bump],
+            ],
+        )?;
+    }
 
     Ok(())
 }
@@ -527,7 +540,7 @@ pub(crate) struct DeployTokenManagerAccounts<'a> {
     pub(crate) ata_program: &'a AccountInfo<'a>,
     pub(crate) its_roles_pda: &'a AccountInfo<'a>,
     pub(crate) _rent_sysvar: &'a AccountInfo<'a>,
-    pub(crate) _minter: Option<&'a AccountInfo<'a>>,
+    pub(crate) minter: Option<&'a AccountInfo<'a>>,
     pub(crate) minter_roles_pda: Option<&'a AccountInfo<'a>>,
     pub(crate) operator: Option<&'a AccountInfo<'a>>,
     pub(crate) operator_roles_pda: Option<&'a AccountInfo<'a>>,
@@ -554,7 +567,7 @@ impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
             ata_program: next_account_info(accounts_iter)?,
             its_roles_pda: next_account_info(accounts_iter)?,
             _rent_sysvar: next_account_info(accounts_iter)?,
-            _minter: context
+            minter: context
                 .contains(OptionalAccountsFlags::MINTER)
                 .then(|| next_account_info(accounts_iter))
                 .transpose()?,
