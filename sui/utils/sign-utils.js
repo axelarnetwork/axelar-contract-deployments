@@ -164,13 +164,12 @@ async function broadcastSignature(client, txBytes, signature, actionName) {
 
 async function signTransactionBlockBytes(keypair, client, txBytes, options) {
     const serializedSignature = (await keypair.signTransaction(txBytes)).signature;
+
     let publicKey;
 
-    try {
-        publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
-    } catch {
-        throw new Error(`Cannot verify tx signature`);
-    }
+    console.log("serialized signature: ", serializedSignature);
+
+    publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
 
     if (publicKey.toSuiAddress() !== keypair.toSuiAddress()) {
         throw new Error(`Verification failed for address ${keypair.toSuiAddress()}`);
