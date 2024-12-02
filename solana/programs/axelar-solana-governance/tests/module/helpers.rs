@@ -24,8 +24,15 @@ use crate::fixtures::{
 };
 
 pub(crate) async fn setup_programs() -> (SolanaAxelarIntegrationMetadata, Pubkey, Pubkey) {
-    let fixture = TestFixture::new(program_test()).await;
+    let mut fixture = TestFixture::new(program_test()).await;
 
+    // Setup gov module (initialize contract)
+    let (gov_config_pda, _) =
+        init_contract_with_operator(&mut fixture, operator_keypair().pubkey().to_bytes())
+            .await
+            .unwrap();
+
+    // Setup gateway
     let mut sol_integration = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![555, 222])
         .programs_to_deploy(vec![(
@@ -33,7 +40,7 @@ pub(crate) async fn setup_programs() -> (SolanaAxelarIntegrationMetadata, Pubkey
             axelar_solana_memo_program_old::id(),
         )])
         .build()
-        .setup_with_fixture(fixture)
+        .setup_with_fixture_and_authority(fixture, gov_config_pda)
         .await;
 
     // Init the memo program
@@ -45,16 +52,9 @@ pub(crate) async fn setup_programs() -> (SolanaAxelarIntegrationMetadata, Pubkey
         &memo_counter_pda,
     )
     .unwrap();
+
     let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
     assert!(res.result.is_ok());
-
-    // Setup gov module (initialize contract)
-    let (gov_config_pda, _) = init_contract_with_operator(
-        &mut sol_integration.fixture,
-        operator_keypair().pubkey().to_bytes(),
-    )
-    .await
-    .unwrap();
 
     (sol_integration, gov_config_pda, memo_counter_pda.0)
 }

@@ -69,15 +69,15 @@ async fn successfully_transfer_operatorship_when_signer_is_operator() {
 #[tokio::test]
 async fn successfully_transfer_operatorship_when_signer_is_upgrade_authority() {
     // Setup
+    let upgrade_authority = Keypair::new();
     let SolanaAxelarIntegrationMetadata {
         mut fixture,
         gateway_root_pda,
-        upgrade_authority,
         ..
     } = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![11, 42, 33])
         .build()
-        .setup()
+        .setup_with_upgrade_authority(upgrade_authority.pubkey())
         .await;
     let original_config = fixture
         .get_account::<GatewayConfig>(&gateway_root_pda, &gmp_gateway::ID)
@@ -208,15 +208,15 @@ async fn fail_if_operator_or_owner_is_not_signer() {
 // programdata account
 #[tokio::test]
 async fn fail_if_invalid_program_id() {
+    let upgrade_authority = Keypair::new();
     let SolanaAxelarIntegrationMetadata {
         mut fixture,
         gateway_root_pda,
-        upgrade_authority,
         ..
     } = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![11, 42, 33])
         .build()
-        .setup()
+        .setup_with_upgrade_authority(upgrade_authority.pubkey())
         .await;
 
     // Action - we provide an invalid program id that is used for deriving the

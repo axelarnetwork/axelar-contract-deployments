@@ -17,6 +17,7 @@
 mod execute_operator_proposal;
 mod execute_proposal;
 mod fixtures;
+mod gateway_upgrade;
 mod gmp;
 mod helpers;
 mod initialize_config;

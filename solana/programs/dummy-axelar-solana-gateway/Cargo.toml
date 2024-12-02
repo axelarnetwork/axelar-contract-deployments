@@ -1,0 +1,24 @@
+[package]
+name = "dummy-axelar-solana-gateway"
+version = "0.1.0"
+edition = "2021"
+
+[lints.rust]
+missing_docs = "warn"
+rust_2018_idioms = "deny"
+unreachable_pub = "warn"
+unused_imports = "warn"
+unused_must_use = "deny"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+test-sbf = []
+
+[dependencies]
+solana-program.workspace = true
+borsh.workspace = true
+
+[dev-dependencies]

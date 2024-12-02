@@ -1125,7 +1125,7 @@ pub struct SolanaAxelarIntegrationMetadata {
     pub signers: SigningVerifierSet,
     pub gateway_root_pda: Pubkey,
     pub operator: Keypair,
-    pub upgrade_authority: Keypair,
+    pub upgrade_authority: Pubkey,
     pub domain_separator: [u8; 32],
 }
 
@@ -1160,13 +1160,28 @@ impl SolanaAxelarIntegration {
         self.setup_with_fixture(fixture).await
     }
 
-    pub async fn setup_with_fixture(
+    pub async fn setup_with_upgrade_authority(
         self,
-        mut fixture: TestFixture,
+        upgrade_authority: Pubkey,
     ) -> SolanaAxelarIntegrationMetadata {
+        // Create a new ProgramTest instance
+        let fixture = TestFixture::new(ProgramTest::default()).await;
+        self.setup_with_fixture_and_authority(fixture, upgrade_authority)
+            .await
+    }
+
+    pub async fn setup_with_fixture(self, fixture: TestFixture) -> SolanaAxelarIntegrationMetadata {
         // Generate a new keypair for the upgrade authority
         let upgrade_authority = Keypair::new();
+        self.setup_with_fixture_and_authority(fixture, upgrade_authority.pubkey())
+            .await
+    }
 
+    pub async fn setup_with_fixture_and_authority(
+        self,
+        mut fixture: TestFixture,
+        upgrade_authority: Pubkey,
+    ) -> SolanaAxelarIntegrationMetadata {
         // deploy non-gateway programs
         for (program_name, program_id) in self.programs_to_deploy {
             let program_bytecode_path = workspace_root_dir()
@@ -1176,11 +1191,7 @@ impl SolanaAxelarIntegration {
             dbg!(&program_bytecode_path);
             let program_bytecode = tokio::fs::read(&program_bytecode_path).await.unwrap();
             fixture
-                .register_upgradeable_program(
-                    &program_bytecode,
-                    &upgrade_authority.pubkey(),
-                    &program_id,
-                )
+                .register_upgradeable_program(&program_bytecode, &upgrade_authority, &program_id)
                 .await;
         }
 
@@ -1191,7 +1202,7 @@ impl SolanaAxelarIntegration {
         fixture
             .register_upgradeable_program(
                 &gateway_program_bytecode,
-                &upgrade_authority.pubkey(),
+                &upgrade_authority,
                 &gateway::id(),
             )
             .await;

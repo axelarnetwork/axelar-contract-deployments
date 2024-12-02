@@ -33,4 +33,6 @@ ethers.workspace = true
 alloy-primitives.workspace = true
 borsh.workspace = true
 axelar-solana-memo-program-old = { workspace = true, features = ["no-entrypoint"] }
+dummy-axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 uuid = { version = "1.11.0", features = ["v4"] }
+serde.workspace = true

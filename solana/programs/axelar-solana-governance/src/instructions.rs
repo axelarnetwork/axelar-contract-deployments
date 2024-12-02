@@ -181,7 +181,7 @@ pub mod builder {
     use program_utils::from_u64_to_u256_le_bytes;
     use solana_program::instruction::{AccountMeta, Instruction};
     use solana_program::pubkey::Pubkey;
-    use solana_program::system_program;
+    use solana_program::{bpf_loader_upgradeable, system_program};
 
     use super::GovernanceInstruction;
     use crate::state::operator::derive_managed_proposal_pda;
@@ -421,6 +421,36 @@ pub mod builder {
                 prop_operator_pda: self.prop_operator_pda,
                 prop_call_data: self.prop_call_data,
             }
+        }
+
+        /// Prepares the builder for sending an scheduled time lock proposal
+        /// that targets the `bpf_loader_upgradeable` program for upgrade.
+        pub fn builder_for_program_upgrade(
+            target_program: &Pubkey,
+            buffer_address: &Pubkey,
+            authority_address: &Pubkey,
+            spill_address: &Pubkey,
+            proposal_eta: u64,
+        ) -> IxBuilder<ProposalRelated> {
+            let Instruction {
+                mut accounts, data, ..
+            } = solana_program::bpf_loader_upgradeable::upgrade(
+                target_program,
+                buffer_address,
+                authority_address,
+                spill_address,
+            );
+            accounts.push(AccountMeta::new_readonly(bpf_loader_upgradeable::ID, false));
+
+            Self::new().with_proposal_data(
+                // The proposal execution processor should target the bpf_loader_upgradeable::ID .
+                bpf_loader_upgradeable::ID,
+                0,
+                proposal_eta,
+                None,
+                &accounts,
+                data,
+            )
         }
 
         /// This is a builder of a builder. It loads into the builder a proposal
