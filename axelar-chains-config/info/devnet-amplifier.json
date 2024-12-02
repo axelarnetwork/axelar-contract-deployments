@@ -789,11 +789,15 @@
         "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "codeId": 850,
-        "lastUploadedCodeId": 850,
+        "lastUploadedCodeId": 888,
         "address": "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y",
         "executeProposalId": "54",
-        "storeCodeProposalId": "71",
-        "storeCodeProposalCodeHash": "6dcf6bad5ec0e90272a015651b491e8a4e099740bdeede813ec7c947a24a9737"
+        "storeCodeProposalId": "101",
+        "storeCodeProposalCodeHash": "7368e7507f29ae9236c9c41fc1fbe5456260fb91acf1e2ff07d677bdcbca7e9f",
+        "axelar": {
+          "codeId": 888,
+          "address": "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y"
+        }
       },
       "Multisig": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
