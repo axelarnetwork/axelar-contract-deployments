@@ -47,17 +47,28 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             };
         }
 
-        case 'interchain_token_service':
-            return { owner };
+        case 'interchain_token_service': {
+            const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
+
+            return { owner, gatewayAddress, gasServiceAddress };
+        }
 
         case 'axelar_operators':
-            return { operator };
+            return { owner };
 
         case 'axelar_gas_service': {
             const operatorsAddress = chain?.contracts?.axelar_operators?.address;
             const gasCollector = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
 
-            return { gasCollector };
+            return { owner, gasCollector };
+        }
+
+        case 'example': {
+            const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
+
+            return { gatewayAddress, gasServiceAddress };
         }
 
         default:
@@ -95,6 +106,7 @@ async function deploy(options, config, chain, contractName) {
     chain.contracts[contractName] = {
         address: contractAddress,
         deployer: wallet.publicKey(),
+        initializeArgs: serializedArgs,
     };
 }
 
@@ -127,7 +139,7 @@ async function upgrade(options, _, chain, contractName) {
         args: [nativeToScVal(newWasmHash)],
     });
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
-    chain.contracts[contractName].wasmHash = newWasmHash;
+    chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
     printInfo('Contract upgraded successfully!', contractAddress);
 }
 

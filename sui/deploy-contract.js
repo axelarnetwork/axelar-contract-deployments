@@ -177,8 +177,8 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         isValidNumber: { minimumRotationDelay },
     });
 
-    const [creatorCap, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
-        `${packageId}::gateway::CreatorCap`,
+    const [ownerCap, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
+        `${packageId}::owner_cap::OwnerCap`,
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
@@ -192,7 +192,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
     tx.moveCall({
         target: `${packageId}::gateway::setup`,
         arguments: [
-            tx.object(creatorCap),
+            tx.object(ownerCap),
             tx.pure.address(operator),
             tx.pure.address(domainSeparator),
             tx.pure.u64(minimumRotationDelay),
