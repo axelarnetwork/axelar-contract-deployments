@@ -256,7 +256,7 @@
       "name": "Avalanche Fuji",
       "axelarId": "avalanche-fuji",
       "chainId": 43113,
-      "rpc": "https://red-divine-dream.avalanche-testnet.quiknode.pro/fe8a71d7e75a6fce0f2232361b795745ae818f6a/ext/bc/C/rpc",
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
       "tokenSymbol": "AVAX",
       "confirmations": 1,
       "chainType": "evm",
