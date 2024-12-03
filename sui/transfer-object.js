@@ -1,7 +1,7 @@
 const { Transaction } = require('@mysten/sui/transactions');
 const { Command, Option } = require('commander');
 const { loadConfig, validateParameters, getChainConfig } = require('../common/utils');
-const { getWallet, printWalletInfo, addExtendedOptions, broadcast } = require('./utils');
+const { getWallet, printWalletInfo, addExtendedOptions, broadcast, saveGeneratedTx } = require('./utils');
 
 async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
@@ -38,7 +38,13 @@ async function processCommand(chain, options) {
     const tx = new Transaction();
     tx.transferObjects([`${objectId}`], tx.pure.address(recipient));
 
-    await broadcast(client, keypair, tx, 'Transferred Object');
+    if (options.offline) {
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, 'Transferred Object', client, options);
+    } else {
+        await broadcast(client, keypair, tx, 'Transferred Object');
+    }
 }
 
 async function mainProcessor(options, processor) {
@@ -57,6 +63,9 @@ if (require.main === module) {
     program.addOption(new Option('--objectId <objectId>', 'object id to be transferred'));
     program.addOption(new Option('--objectName <objectName>', 'object name to be transferred'));
     program.addOption(new Option('--recipient <recipient>', 'recipient to transfer object to').makeOptionMandatory(true));
+    program.addOption(new Option('--sender <sender>', 'transaction sender'));
+    program.addOption(new Option('--offline', 'store tx block for sign'));
+    program.addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'));
 
     program.action(async (options) => {
         mainProcessor(options, processCommand);
