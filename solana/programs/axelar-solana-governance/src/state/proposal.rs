@@ -9,6 +9,8 @@
 
 use std::error::Error;
 
+use crate::sol_types::SolanaAccountMetadata;
+use crate::{seed_prefixes, ID};
 use program_utils::{
     check_rkyv_initialized_pda, checked_from_u256_le_bytes_to_u64, current_time, transfer_lamports,
 };
@@ -16,12 +18,9 @@ use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::keccak::hashv;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::{bpf_loader_upgradeable, msg};
-
-use crate::sol_types::SolanaAccountMetadata;
-use crate::{seed_prefixes, ID};
 
 type Uint256 = [u8; 32];
 type Hash = [u8; 32];
@@ -294,16 +293,6 @@ impl ArchivedExecutableProposal {
             transfer_lamports(config_pda, target_native_value_account_info, native_value)?;
         }
 
-        // Only sign the CPI if the target program is the governance program itself or,
-        // the BPF loader upgradeable. This emulates the onlySelf modifier from [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/InterchainGovernance.sol#L69).
-        let signing_seeds: &[&[&[u8]]] = &[&[seed_prefixes::GOVERNANCE_CONFIG, &[config_pda_bump]]];
-        let signer_seeds =
-            if target_address == crate::ID || target_address == bpf_loader_upgradeable::ID {
-                signing_seeds
-            } else {
-                &[]
-            };
-
         let accounts = call_data
             .solana_accounts
             .iter()
@@ -318,7 +307,7 @@ impl ArchivedExecutableProposal {
                 data: call_data.call_data,
             },
             target_program_accounts,
-            signer_seeds,
+            &[&[seed_prefixes::GOVERNANCE_CONFIG, &[config_pda_bump]]],
         )
     }
 
