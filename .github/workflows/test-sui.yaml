@@ -150,7 +150,7 @@ jobs:
       ###### Command: Gas Service ######
 
       - name: Pay Gas
-        run: node sui/gas-service.js payGas --amount 100 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+        run: node sui/gas-service.js payGas --amount 100 ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 
       - name: Refund Gas
         run: node sui/gas-service.js refund 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 --amount 1

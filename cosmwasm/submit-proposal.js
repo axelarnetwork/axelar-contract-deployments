@@ -16,6 +16,7 @@ const {
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     updateCodeId,
+    getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
     encodeStoreInstantiateProposal,
@@ -27,7 +28,7 @@ const {
     submitProposal,
     makeInstantiateMsg,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo, prompt } = require('../common');
+const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, getItsEdgeContract } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -41,15 +42,15 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const predictAndUpdateAddress = async (client, contractConfig, options) => {
+const predictAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
 
     const { checksum } = await client.getCodeDetails(contractConfig.codeId);
     const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainName), 'axelar');
 
-    contractConfig.address = contractAddress;
-
     printInfo(`Predicted address for ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
+
+    return contractAddress;
 };
 
 const printProposal = (proposal, proposalType) => {
@@ -119,8 +120,13 @@ const instantiate = async (client, wallet, config, options) => {
 
     await updateCodeId(client, config, options);
 
+    let contractAddress;
+
     if (predictOnly) {
-        return predictAndUpdateAddress(client, contractConfig, options);
+        contractAddress = await predictAddress(client, contractConfig, options);
+        contractConfig.address = contractAddress;
+
+        return;
     }
 
     const initMsg = makeInstantiateMsg(contractName, chainName, config);
@@ -131,9 +137,13 @@ const instantiate = async (client, wallet, config, options) => {
     if (instantiate2) {
         proposal = encodeInstantiate2Proposal(config, options, initMsg);
         proposalType = InstantiateContract2Proposal;
+
+        contractAddress = await predictAddress(client, contractConfig, options);
     } else {
         proposal = encodeInstantiateProposal(config, options, initMsg);
         proposalType = InstantiateContractProposal;
+
+        printInfo('Contract address cannot be predicted without using `--instantiate2` flag, address will not be saved in the config');
     }
 
     if (!confirmProposalSubmission(options, proposal, proposalType)) {
@@ -143,10 +153,7 @@ const instantiate = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractConfig.instantiateProposalId = proposalId;
-
-    if (instantiate2) {
-        return predictAndUpdateAddress(client, contractConfig, options);
-    }
+    if (instantiate2) contractConfig.address = contractAddress;
 };
 
 const execute = async (client, wallet, config, options) => {
@@ -159,6 +166,30 @@ const execute = async (client, wallet, config, options) => {
     }
 
     await callSubmitProposal(client, wallet, config, options, proposal);
+};
+
+const registerItsChain = async (client, wallet, config, options) => {
+    const chains = options.chains.map((chain) => {
+        const chainConfig = getChainConfig(config, chain);
+        const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
+
+        const itsEdgeContract = getItsEdgeContract(chainConfig);
+
+        return {
+            chain: chainConfig.axelarId,
+            its_edge_contract: itsEdgeContract,
+            truncation: {
+                max_uint: (2n ** BigInt(maxUintBits) - 1n).toString(),
+                max_decimals_when_truncating: maxDecimalsWhenTruncating,
+            },
+        };
+    });
+
+    await execute(client, wallet, config, {
+        ...options,
+        contractName: 'InterchainTokenService',
+        msg: `{ "register_chains": { "chains": ${JSON.stringify(chains)} } }`,
+    });
 };
 
 const paramChange = async (client, wallet, config, options) => {
@@ -250,11 +281,21 @@ const programHandler = () => {
 
     const executeCmd = program
         .command('execute')
-        .description('Submit a execute wasm contract proposal')
+        .description('Submit an execute wasm contract proposal')
         .action((options) => {
             mainProcessor(execute, options);
         });
     addAmplifierOptions(executeCmd, { contractOptions: true, executeProposalOptions: true, proposalOptions: true, runAs: true });
+
+    const registerItsChainCmd = program
+        .command('its-hub-register-chains')
+        .description('Submit an execute wasm contract proposal to register an ITS chain')
+        .argument('<chains...>', 'list of chains to register on ITS hub')
+        .action((chains, options) => {
+            options.chains = chains;
+            mainProcessor(registerItsChain, options);
+        });
+    addAmplifierOptions(registerItsChainCmd, { registerItsChainOptions: true, proposalOptions: true, runAs: true });
 
     const paramChangeCmd = program
         .command('paramChange')
