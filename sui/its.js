@@ -1,4 +1,4 @@
-const { Command, Option } = require('commander');
+const { Command } = require('commander');
 const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
@@ -63,16 +63,13 @@ if (require.main === module) {
         .name('setup-trusted-address')
         .description('Setup trusted address')
         .command('setup-trusted-address <trusted-chain> <trusted-address>')
-        .addOption(new Option('--offline', 'store tx block for offline signing'))
-        .addOption(new Option('--sender <sender>', 'transaction sender'))
-        .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
         .action((trustedChain, trustedAddress, options) => {
             mainProcessor(setupTrustedAddress, options, [trustedChain, trustedAddress], processCommand);
         });
 
     program.addCommand(setupTrustedAddressProgram);
 
-    addOptionsToCommands(program, addBaseOptions);
+    addOptionsToCommands(program, addBaseOptions, { offline: true });
 
     program.parse();
 }

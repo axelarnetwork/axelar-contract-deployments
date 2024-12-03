@@ -209,9 +209,6 @@ if (require.main === module) {
             .command('add <newOperatorAddress>')
             .description('Add an operator')
             .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
-            .addOption(new Option('--sender <sender>', 'transaction sender'))
-            .addOption(new Option('--offline', 'store tx block for sign'))
-            .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
             .action((newOperatorAddress, options) => mainProcessor(addOperator, [newOperatorAddress], options)),
     );
 
@@ -220,9 +217,6 @@ if (require.main === module) {
             .command('remove <operatorAddress>')
             .description('Remove an operator')
             .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
-            .addOption(new Option('--sender <sender>', 'transaction sender'))
-            .addOption(new Option('--offline', 'store tx block for sign'))
-            .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
             .action((operatorAddress, options) => mainProcessor(removeOperator, [operatorAddress], options)),
     );
 
@@ -231,9 +225,6 @@ if (require.main === module) {
             .command('collectGas')
             .description('Collect gas from the gas service')
             .addOption(new Option('--receiver <receiver>', 'Address of the receiver'))
-            .addOption(new Option('--sender <sender>', 'transaction sender'))
-            .addOption(new Option('--offline', 'store tx block for sign'))
-            .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
             .requiredOption('--amount <amount>', 'Amount to add gas', parseSuiUnitAmount)
             .action((options) => mainProcessor(collectGas, [options.amount], options)),
     );
@@ -243,9 +234,6 @@ if (require.main === module) {
             .command('storeCap')
             .description('Store a capability')
             .addOption(new Option('--capId <capId>', 'ID of the capability to store'))
-            .addOption(new Option('--sender <sender>', 'transaction sender'))
-            .addOption(new Option('--offline', 'store tx block for sign'))
-            .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
             .action((options) => mainProcessor(storeCap, [], options)),
     );
 
@@ -255,9 +243,6 @@ if (require.main === module) {
             .description('Remove a capability')
             .addOption(new Option('--ownerCap <ownerCapId>', 'ID of the owner capability'))
             .addOption(new Option('--receiver <receiver>', 'The removed cap receiver address'))
-            .addOption(new Option('--sender <sender>', 'transaction sender'))
-            .addOption(new Option('--offline', 'store tx block for sign'))
-            .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
             .action((capId, options) => mainProcessor(removeCap, [capId], options)),
     );
 
@@ -267,13 +252,10 @@ if (require.main === module) {
             .description('Refund gas from the gas service')
             .addOption(new Option('--receiver <receiver>', 'Address of the receiver'))
             .requiredOption('--amount <amount>', 'Amount to refund', parseSuiUnitAmount)
-            .addOption(new Option('--sender <sender>', 'transaction sender'))
-            .addOption(new Option('--offline', 'store tx block for sign'))
-            .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
             .action((messageId, options) => mainProcessor(refund, [messageId], options)),
     );
 
-    addOptionsToCommands(program, addBaseOptions);
+    addOptionsToCommands(program, addBaseOptions, { offline: true });
 
     program.parse();
 }

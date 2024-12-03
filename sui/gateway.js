@@ -295,9 +295,6 @@ if (require.main === module) {
         .addOption(new Option('--proof <proof>', 'JSON of the proof'))
         .addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'))
         .addOption(new Option('--newNonce <newNonce>', 'nonce of the new signers (useful for test rotations)'))
-        .addOption(new Option('--sender <sender>', 'transaction sender'))
-        .addOption(new Option('--offline', 'store tx block for sign'))
-        .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
         .action((options) => {
             mainProcessor(rotate, [], options);
         });
@@ -307,9 +304,6 @@ if (require.main === module) {
         .description('Approve messages at the gateway contract')
         .addOption(new Option('--proof <proof>', 'JSON of the proof'))
         .addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'))
-        .addOption(new Option('--sender <sender>', 'transaction sender'))
-        .addOption(new Option('--offline', 'store tx block for sign'))
-        .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
         .action((sourceChain, messageId, sourceAddress, destinationId, payloadHash, options) => {
             mainProcessor(approve, [sourceChain, messageId, sourceAddress, destinationId, payloadHash], options);
         });
@@ -317,9 +311,6 @@ if (require.main === module) {
     program
         .command('submitProof <multisigSessionId>')
         .description('Submit proof for the provided amplifier multisig session id')
-        .addOption(new Option('--sender <sender>', 'transaction sender'))
-        .addOption(new Option('--offline', 'store tx block for sign'))
-        .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
         .action((multisigSessionId, options) => {
             mainProcessor(submitProof, [multisigSessionId], options);
         });
@@ -328,14 +319,11 @@ if (require.main === module) {
         .command('call-contract <destinationChain> <destinationAddress> <payload>')
         .description('Initiate sending a cross-chain message via the gateway')
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
-        .addOption(new Option('--sender <sender>', 'transaction sender'))
-        .addOption(new Option('--offline', 'store tx block for sign'))
-        .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
         .action((destinationChain, destinationAddress, payload, options) => {
             mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
         });
 
-    addOptionsToCommands(program, addBaseOptions);
+    addOptionsToCommands(program, addBaseOptions, { offline: true });
 
     program.parse();
 }
