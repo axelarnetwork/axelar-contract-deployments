@@ -279,7 +279,7 @@ const getStructs = async (client, packageId) => {
     }
 
     return structs;
-}
+};
 
 const saveGeneratedTx = async (tx, message, client, options) => {
     const { txFilePath } = options;
