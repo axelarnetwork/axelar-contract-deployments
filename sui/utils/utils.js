@@ -85,7 +85,7 @@ const checkSuiVersionMatch = () => {
         printWarn('Version mismatch detected:');
         printWarn(`- Installed SUI version: ${installedVersion}`);
         printWarn(`- Version used for tests: ${definedVersion}`);
-        printWarn(`Download the correct version (${definedVersion}) from https://github.com/MystenLabs/sui/releases`);
+        printWarn(`Please download the correct version (${definedVersion}) from https://github.com/MystenLabs/sui/releases`);
     }
 };
 
