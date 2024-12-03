@@ -81,8 +81,10 @@ async function printWalletInfo(wallet, client, chain, options) {
             : wallet;
     printInfo('Wallet address', owner);
 
-    const coins = await client.getBalance({ owner });
-    printInfo('Wallet balance', `${coins.totalBalance / 1e9} ${chain.tokenSymbol || coins.coinType}`);
+    if (!options.offline) {
+        const coins = await client.getBalance({ owner });
+        printInfo('Wallet balance', `${coins.totalBalance / 1e9} ${chain.tokenSymbol || coins.coinType}`);
+    }
 }
 
 async function generateKeypair(options) {

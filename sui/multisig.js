@@ -3,7 +3,15 @@ const { fromB64 } = require('@mysten/bcs');
 const { saveConfig, getChainConfig } = require('../common/utils');
 const { loadConfig, printInfo, validateParameters, printWarn } = require('../common/utils');
 const { getSignedTx, storeSignedTx } = require('../evm/sign-utils');
-const { addBaseOptions, getWallet, getMultisig, signTransactionBlockBytes, broadcastSignature, getSuiClient } = require('./utils');
+const {
+    addBaseOptions,
+    getWallet,
+    getMultisig,
+    signTransactionBlockBytes,
+    broadcastSignature,
+    getSuiClient,
+    printWalletInfo,
+} = require('./utils');
 
 async function initMultisigConfig(chain, options) {
     const { base64PublicKeys, threshold } = options;
@@ -61,7 +69,7 @@ async function initMultisigConfig(chain, options) {
 async function signTx(chain, options) {
     const [keypair, client] = getWallet(chain, options);
 
-    printInfo('Wallet Address', keypair.toSuiAddress());
+    printWalletInfo(keypair, client, chain, options);
 
     const txFileData = getSignedTx(options.txBlockPath);
     const txData = txFileData?.unsignedTx;
