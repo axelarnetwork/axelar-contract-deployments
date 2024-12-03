@@ -74,7 +74,7 @@ function getSuiClient(chain, rpc) {
     return new SuiClient({ url });
 }
 
-async function printWalletInfo(wallet, client, chain, options) {
+async function printWalletInfo(wallet, client, chain, options = {}) {
     const owner =
         wallet instanceof Ed25519Keypair || wallet instanceof Secp256k1Keypair || wallet instanceof Secp256r1Keypair
             ? wallet.toSuiAddress()
