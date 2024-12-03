@@ -31,6 +31,35 @@ async function setupTrustedAddress(keypair, client, contracts, args, options) {
     contracts.ITS.trustedAddresses[trustedChain].push(trustedAddress);
 }
 
+async function removeTrustedAddress(keypair, client, contracts, args, options) {
+    const [trustedChain, trustedAddress] = args;
+
+    const trustedAddressesObject = contracts.ITS.trustedAddresses;
+
+    if (!trustedAddressesObject) throw new Error('No trusted addresses found');
+
+    const chainNames = trustedChain.split(',');
+
+    if (chainNames.length === 0) throw new Error('No chain names provided');
+
+    const txBuilder = new TxBuilder(client);
+
+    for (const chainName of chainNames) {
+        if (!trustedAddressesObject[chainName]) throw new Error(`No trusted addresses found for chain ${trustedChain}`);
+    }
+
+    await txBuilder.moveCall({
+        target: `${contracts.ITS.address}::its::remove_trusted_addresses`,
+        arguments: [contracts.ITS.objects.ITS, contracts.ITS.objects.OwnerCap, chainNames],
+    });
+
+    for (const chainName of chainNames) {
+        delete contracts.ITS.trustedAddresses[chainName];
+    }
+
+    await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Address');
+}
+
 async function processCommand(command, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -60,7 +89,16 @@ if (require.main === module) {
             mainProcessor(setupTrustedAddress, options, [trustedChain, trustedAddress], processCommand);
         });
 
+    const removeTrustedAddressProgram = new Command()
+        .name('remove-trusted-address')
+        .description('Remove trusted address')
+        .command('remove-trusted-address <trusted-chain>')
+        .action((trustedChain, options) => {
+            mainProcessor(removeTrustedAddress, options, [trustedChain], processCommand);
+        });
+
     program.addCommand(setupTrustedAddressProgram);
+    program.addCommand(removeTrustedAddressProgram);
 
     addOptionsToCommands(program, addBaseOptions);
 
