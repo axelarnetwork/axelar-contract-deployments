@@ -32,7 +32,7 @@ async function setupTrustedAddress(keypair, client, contracts, args, options) {
 }
 
 async function removeTrustedAddress(keypair, client, contracts, args, options) {
-    const [trustedChain, trustedAddress] = args;
+    const [trustedChain] = args;
 
     const trustedAddressesObject = contracts.ITS.trustedAddresses;
 
