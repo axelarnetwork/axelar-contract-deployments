@@ -246,7 +246,13 @@ async function postDeployIts(published, keypair, client, config, chain, options)
 
     const channelId = await getItsChannelId(client, itsv0ObjectId);
 
-    chain.contracts.ITS.objects = { ITS: itsObjectId, ITSv0: itsv0ObjectId, ChannelId: channelId, OwnerCap: ownerCapObjectId, UpgradeCap: upgradeCap };
+    chain.contracts.ITS.objects = {
+        ITS: itsObjectId,
+        ITSv0: itsv0ObjectId,
+        ChannelId: channelId,
+        OwnerCap: ownerCapObjectId,
+        UpgradeCap: upgradeCap,
+    };
 
     const tx = new Transaction();
     tx.moveCall({
