@@ -329,11 +329,13 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     }
 
     const builder = new TxBuilder(client);
-    const { packageId } = await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
+    const result = await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
 
-    // The new upgraded package takes a bit of time to register, so we wait.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    chain.contracts[packageName].structs = await getStructs(client, packageId);
+    if (!options.offline) {
+        // The new upgraded package takes a bit of time to register, so we wait.
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        chain.contracts[packageName].structs = await getStructs(client, result.packageId);
+    }
 }
 
 async function mainProcessor(args, options, processor) {
