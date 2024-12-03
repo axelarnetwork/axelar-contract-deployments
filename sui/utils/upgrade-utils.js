@@ -2,6 +2,7 @@ const { bcs } = require('@mysten/bcs');
 const { fromB64 } = require('@mysten/bcs');
 const { printInfo, validateParameters } = require('../../common/utils');
 const { getObjectIdsByObjectTypes, suiPackageAddress, moveDir } = require('./utils');
+const { copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
 const UPGRADE_POLICIES = {
     code_upgrade: 'only_additive_upgrades',
     dependency_upgrade: 'only_dep_upgrades',
@@ -21,6 +22,7 @@ function getUpgradePolicyId(policy) {
 }
 
 async function upgradePackage(client, keypair, packageToUpgrade, contractConfig, builder, options) {
+    copyMovePackage(packageToUpgrade.packageDir, null, moveDir);
     const { packageDir, packageName } = packageToUpgrade;
     const { modules, dependencies, digest } = await builder.getContractBuild(packageDir, moveDir);
     const { offline } = options;
@@ -75,6 +77,8 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
 
         printInfo('Transaction Digest', JSON.stringify(result.digest, null, 2));
         printInfo(`${packageName} Upgraded Address`, packageId);
+
+        return { upgraded: result, packageId };
     }
 }
 
