@@ -44,9 +44,9 @@ function getWallet(chain, options) {
     const url = chain.rpc || getFullnodeUrl(chain.networkType);
     const client = new SuiClient({ url });
 
-    if(options.privateKey === 'ledger') {
+    if (options.privateKey === 'ledger') {
         keypair = new LedgerSigner();
-        return [keypair, client]
+        return [keypair, client];
     }
 
     switch (options.privateKeyType) {
@@ -59,12 +59,6 @@ function getWallet(chain, options) {
 
         case 'mnemonic': {
             keypair = scheme.deriveKeypair(options.privateKey);
-            break;
-        }
-
-        case 'hex': {
-            const privKey = Buffer.from(options.privateKey, 'hex');
-            keypair = scheme.fromSecretKey(privKey);
             break;
         }
 
@@ -165,13 +159,9 @@ async function broadcastSignature(client, txBytes, signature, actionName) {
 async function signTransactionBlockBytes(keypair, client, txBytes, options) {
     const serializedSignature = (await keypair.signTransaction(txBytes)).signature;
 
-    let publicKey;
+    const publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
 
-    console.log("serialized signature: ", serializedSignature);
-
-    publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
-
-    if (publicKey.toSuiAddress() !== keypair.toSuiAddress()) {
+    if (publicKey.toSuiAddress() !== (await keypair.toSuiAddress())) {
         throw new Error(`Verification failed for address ${keypair.toSuiAddress()}`);
     }
 
