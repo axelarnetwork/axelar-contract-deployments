@@ -270,6 +270,17 @@ const checkTrustedAddresses = (trustedAddresses, destinationChain) => {
     }
 };
 
+const getStructs = async (client, packageId) => {
+    const packageData = await client.getObject({ id: packageId, options: { showBcs: true } });
+    const structs = {};
+
+    for (const type of packageData.data.bcs.typeOriginTable) {
+        structs[type.datatype_name] = `${type.package}::${type.moduleName}::${type.datatype_name}`;
+    }
+
+    return structs;
+};
+
 const saveGeneratedTx = async (tx, message, client, options) => {
     const { txFilePath } = options;
     validateParameters({ isNonEmptyString: { txFilePath } });
@@ -305,5 +316,6 @@ module.exports = {
     checkTrustedAddresses,
     parseDiscoveryInfo,
     parseGatewayInfo,
+    getStructs,
     saveGeneratedTx,
 };

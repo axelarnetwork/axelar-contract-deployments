@@ -22,6 +22,7 @@ const {
     getSquidChannelId,
     checkSuiVersionMatch,
     moveDir,
+    getStructs,
 } = require('./utils');
 
 /**
@@ -295,6 +296,8 @@ async function deploy(keypair, client, supportedContract, config, chain, options
         address: published.packageId,
     };
 
+    chain.contracts[packageName].structs = await getStructs(client, published.packageId);
+
     // Execute post-deployment function
     const executePostDeploymentFn = PACKAGE_CONFIGS.postDeployFunctions[packageName];
 
@@ -326,7 +329,13 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     }
 
     const builder = new TxBuilder(client);
-    await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
+    const result = await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
+
+    if (!options.offline) {
+        // The new upgraded package takes a bit of time to register, so we wait.
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        chain.contracts[packageName].structs = await getStructs(client, result.packageId);
+    }
 }
 
 async function mainProcessor(args, options, processor) {
