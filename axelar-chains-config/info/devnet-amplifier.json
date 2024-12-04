@@ -863,10 +863,6 @@
           "codeId": 843,
           "instantiateProposalId": "61"
         },
-        "sui-test2": {
-          "maxUintBits": 64,
-          "maxDecimalsWhenTruncating": 6
-        },
         "sui": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 8
