@@ -863,10 +863,6 @@
           "codeId": 843,
           "instantiateProposalId": "61"
         },
-        "sui-test2": {
-          "maxUintBits": 64,
-          "maxDecimalsWhenTruncating": 6
-        },
         "storeCodeProposalId": "58",
         "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d",
         "lastUploadedCodeId": 843
