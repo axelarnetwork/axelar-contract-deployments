@@ -867,6 +867,18 @@
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 8
         },
+        "avalanche-fuji": {
+          "maxUintBits": 256,
+          "maxDecimalsWhenTruncating": 255
+        },
+        "optimism-sepolia": {
+          "maxUintBits": 256,
+          "maxDecimalsWhenTruncating": 255
+        },
+        "eth-sepolia": {
+          "maxUintBits": 256,
+          "maxDecimalsWhenTruncating": 255
+        },
         "storeCodeProposalId": "58",
         "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d",
         "lastUploadedCodeId": 843
@@ -1093,7 +1105,8 @@
         },
         "storeCodeProposalId": "82",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
-      }
+      },
+      "undefined": {}
     },
     "axelarId": "axelar",
     "chainId": "devnet-amplifier",
