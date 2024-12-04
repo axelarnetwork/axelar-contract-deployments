@@ -748,6 +748,15 @@
             "axelar": [
               "axelar10jzzmv5m7da7dn2xsfac0yqe7zamy34uedx3e28laq0p6f3f8dzqp649fp",
               "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
+            ],
+            "eth-sepolia": [
+              "hub"
+            ],
+            "optimism-sepolia": [
+              "hub"
+            ],
+            "avalanche-fuji": [
+              "hub"
             ]
           }
         },
@@ -857,6 +866,10 @@
         "sui-test2": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
+        },
+        "sui": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 8
         },
         "storeCodeProposalId": "58",
         "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d",
