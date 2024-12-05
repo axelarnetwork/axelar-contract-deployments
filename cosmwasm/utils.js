@@ -43,7 +43,6 @@ const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.from
 const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
     await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
 
-const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
 
 
