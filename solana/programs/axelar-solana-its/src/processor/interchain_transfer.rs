@@ -1,25 +1,31 @@
 //! Module that handles the processing of the `InterchainTransfer` ITS
 //! instruction.
-use axelar_message_primitives::DataPayload;
+use axelar_executable::AxelarMessagePayload;
+use axelar_solana_encoding::types::messages::Message;
+use axelar_solana_gateway::state::incoming_message::command_id;
 use interchain_token_transfer_gmp::InterchainTransfer;
 use program_utils::{check_rkyv_initialized_pda, StorableArchive};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
+use solana_program::instruction::AccountMeta;
 use solana_program::instruction::Instruction;
 use solana_program::msg;
-use solana_program::program::{invoke, invoke_signed};
+use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
+use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
 
 use super::LocalAction;
-use crate::instructions::{Bumps, OptionalAccountsFlags};
+use crate::executable::{AxelarInterchainTokenExecutablePayload, AXELAR_INTERCHAIN_TOKEN_EXECUTE};
+use crate::instructions::{Bumps, InterchainTransferInputs, OptionalAccountsFlags};
 use crate::processor::token_manager as token_manager_processor;
 use crate::state::flow_limit::{self, FlowDirection, FlowSlot};
 use crate::state::token_manager::{self, TokenManager};
+use crate::state::InterchainTokenService;
 use crate::{seed_prefixes, FromAccountInfoSlice};
 
 impl LocalAction for InterchainTransfer {
@@ -29,8 +35,10 @@ impl LocalAction for InterchainTransfer {
         accounts: &'a [AccountInfo<'a>],
         bumps: Bumps,
         _optional_accounts_flags: OptionalAccountsFlags,
+        message: Option<Message>,
     ) -> ProgramResult {
-        process_inbound_transfer(payer, accounts, &self, bumps)
+        let message = message.ok_or(ProgramError::InvalidArgument)?;
+        process_inbound_transfer(message, payer, accounts, &self, bumps)
     }
 }
 
@@ -63,6 +71,7 @@ impl LocalAction for InterchainTransfer {
 /// An error occurred when processing the message. The reason can be derived
 /// from the logs.
 pub fn process_inbound_transfer<'a>(
+    message: Message,
     payer: &'a AccountInfo<'a>,
     accounts: &'a [AccountInfo<'a>],
     payload: &InterchainTransfer,
@@ -75,26 +84,132 @@ pub fn process_inbound_transfer<'a>(
         return Err(ProgramError::InvalidInstructionData);
     };
 
-    give_token(payer, &parsed_accounts, converted_amount, bumps)?;
+    give_token(&parsed_accounts, converted_amount, bumps)?;
 
     if !payload.data.is_empty() {
-        if !parsed_accounts.destination_wallet.executable {
+        let program_account = parsed_accounts.destination_wallet;
+        if !program_account.executable {
             return Err(ProgramError::InvalidInstructionData);
         }
 
-        let program_payload = DataPayload::decode(&payload.data)?;
+        let destination_payload = AxelarMessagePayload::decode(payload.data.as_ref())?;
+        let destination_accounts = destination_payload.account_meta();
+        let axelar_executable_accounts =
+            AxelarInterchainTokenExecutableAccounts::from_account_info_slice(
+                accounts,
+                &(parsed_accounts, destination_accounts.len()),
+            )?;
 
-        let instruction = Instruction {
-            program_id: *parsed_accounts.destination_wallet.key,
-            accounts: program_payload.account_meta().to_vec(),
-            data: program_payload.payload_without_accounts().to_vec(),
-        };
+        let account_infos = [
+            &[
+                axelar_executable_accounts.gateway_root_pda.clone(),
+                axelar_executable_accounts.its_root_pda.clone(),
+                axelar_executable_accounts.token_program.clone(),
+                axelar_executable_accounts.token_mint.clone(),
+                axelar_executable_accounts.program_ata.clone(),
+            ],
+            axelar_executable_accounts.destination_program_accounts,
+        ]
+        .concat();
 
-        let accounts_iter = &mut accounts.iter();
-        invoke(&instruction, accounts_iter.as_slice())?;
+        let its_execute_instruction = build_axelar_interchain_token_execute(
+            message,
+            &axelar_executable_accounts,
+            *program_account.key,
+            destination_payload.account_meta(),
+            destination_payload.payload_without_accounts().to_vec(),
+            payload.token_id.0,
+            converted_amount,
+        )?;
+        let its_root_bump =
+            InterchainTokenService::load(&crate::id(), axelar_executable_accounts.its_root_pda)?
+                .bump;
+
+        invoke_signed(
+            &its_execute_instruction,
+            &account_infos,
+            &[&[
+                seed_prefixes::ITS_SEED,
+                axelar_executable_accounts.gateway_root_pda.key.as_ref(),
+                &[its_root_bump],
+            ]],
+        )?;
     }
 
     Ok(())
+}
+
+fn build_axelar_interchain_token_execute(
+    message: Message,
+    axelar_its_executable_accounts: &AxelarInterchainTokenExecutableAccounts<'_>,
+    program_id: Pubkey,
+    mut program_accounts: Vec<AccountMeta>,
+    data: Vec<u8>,
+    token_id: [u8; 32],
+    amount: u64,
+) -> Result<Instruction, ProgramError> {
+    let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
+    let source_address = message.source_address;
+    let source_chain = message.cc_id.chain;
+    let token = axelar_its_executable_accounts.token_mint.key.to_bytes();
+
+    let mut accounts = vec![
+        AccountMeta::new_readonly(*axelar_its_executable_accounts.gateway_root_pda.key, false),
+        AccountMeta::new_readonly(*axelar_its_executable_accounts.its_root_pda.key, true),
+        AccountMeta::new_readonly(*axelar_its_executable_accounts.token_program.key, false),
+        AccountMeta::new(*axelar_its_executable_accounts.token_mint.key, false),
+        AccountMeta::new(*axelar_its_executable_accounts.program_ata.key, false),
+    ];
+    accounts.append(&mut program_accounts);
+
+    let executable_payload = AxelarInterchainTokenExecutablePayload {
+        command_id,
+        source_chain,
+        source_address,
+        data,
+        token_id,
+        token,
+        amount,
+    };
+
+    let mut data = AXELAR_INTERCHAIN_TOKEN_EXECUTE.to_vec();
+    let bytes = rkyv::to_bytes::<_, 0>(&executable_payload)
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    data.extend_from_slice(&bytes);
+
+    Ok(Instruction {
+        program_id,
+        accounts,
+        data,
+    })
+}
+
+pub(crate) fn process_outbound_transfer<'a>(
+    mut inputs: InterchainTransferInputs,
+    accounts: &'a [AccountInfo<'a>],
+    bumps: Bumps,
+) -> ProgramResult {
+    let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
+    let amount_minus_fees = take_token(&take_token_accounts, inputs.amount, bumps)?;
+    inputs.amount = amount_minus_fees;
+
+    let destination_chain = inputs
+        .destination_chain
+        .take()
+        .ok_or(ProgramError::InvalidInstructionData)?;
+    let gas_value = inputs.gas_value;
+    let payload = inputs
+        .try_into()
+        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+
+    let (_other, outbound_message_accounts) = accounts.split_at(3);
+
+    crate::processor::process_outbound_its_gmp_payload(
+        outbound_message_accounts,
+        &payload,
+        destination_chain,
+        gas_value.into(),
+    )
 }
 
 pub(crate) fn take_token(
@@ -113,12 +228,7 @@ pub(crate) fn take_token(
     handle_take_token_transfer(token_manager_type, accounts, bumps, amount, flow_limit)
 }
 
-fn give_token<'a>(
-    payer: &'a AccountInfo<'a>,
-    accounts: &GiveTokenAccounts<'a>,
-    amount: u64,
-    bumps: Bumps,
-) -> ProgramResult {
+fn give_token(accounts: &GiveTokenAccounts<'_>, amount: u64, bumps: Bumps) -> ProgramResult {
     let (token_manager_type, token_id, flow_limit) =
         get_token_manager_info(accounts.token_manager_pda)?;
     let (interchain_token_pda, _) = crate::create_interchain_token_pda(
@@ -134,7 +244,7 @@ fn give_token<'a>(
     )?;
 
     crate::create_associated_token_account_idempotent(
-        payer,
+        accounts.payer,
         accounts.token_mint,
         accounts.destination_ata,
         accounts.destination_wallet,
@@ -560,8 +670,9 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
 }
 
 struct GiveTokenAccounts<'a> {
-    system_account: &'a AccountInfo<'a>,
     payer: &'a AccountInfo<'a>,
+    gateway_root_pda: &'a AccountInfo<'a>,
+    system_account: &'a AccountInfo<'a>,
     its_root_pda: &'a AccountInfo<'a>,
     token_manager_pda: &'a AccountInfo<'a>,
     token_mint: &'a AccountInfo<'a>,
@@ -586,6 +697,7 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
 
         Ok(GiveTokenAccounts {
             payer,
+            gateway_root_pda: next_account_info(accounts_iter)?,
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
@@ -598,6 +710,47 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
             destination_wallet: next_account_info(accounts_iter)?,
             destination_ata: next_account_info(accounts_iter)?,
             flow_slot_pda: next_account_info(accounts_iter)?,
+        })
+    }
+}
+
+struct AxelarInterchainTokenExecutableAccounts<'a> {
+    gateway_root_pda: &'a AccountInfo<'a>,
+    its_root_pda: &'a AccountInfo<'a>,
+    token_program: &'a AccountInfo<'a>,
+    token_mint: &'a AccountInfo<'a>,
+    program_ata: &'a AccountInfo<'a>,
+    destination_program_accounts: &'a [AccountInfo<'a>],
+}
+
+impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a> {
+    type Context = (GiveTokenAccounts<'a>, usize);
+
+    fn from_account_info_slice(
+        accounts: &'a [AccountInfo<'a>],
+        context: &Self::Context,
+    ) -> Result<Self, ProgramError>
+    where
+        Self: Sized,
+    {
+        let give_token_accounts = &context.0;
+        let destination_accounts_len = context.1;
+        let destination_accounts_index = accounts
+            .len()
+            .checked_sub(destination_accounts_len)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        let destination_program_accounts = accounts
+            .get(destination_accounts_index..)
+            .ok_or(ProgramError::InvalidAccountData)?;
+
+        Ok(Self {
+            gateway_root_pda: give_token_accounts.gateway_root_pda,
+            its_root_pda: give_token_accounts.its_root_pda,
+            token_program: give_token_accounts.token_program,
+            token_mint: give_token_accounts.token_mint,
+            program_ata: give_token_accounts.destination_ata,
+            destination_program_accounts,
         })
     }
 }

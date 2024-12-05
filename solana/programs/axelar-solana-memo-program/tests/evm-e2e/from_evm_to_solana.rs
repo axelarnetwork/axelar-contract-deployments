@@ -24,7 +24,7 @@ async fn test_send_from_evm_to_solana() {
     let (_evm_chain, evm_signer, evm_gateway, _weighted_signers, _domain_separator) =
         axelar_evm_setup().await;
     let evm_memo = evm_signer
-        .deploy_axelar_memo(evm_gateway.clone())
+        .deploy_axelar_memo(evm_gateway.clone(), None)
         .await
         .unwrap();
 

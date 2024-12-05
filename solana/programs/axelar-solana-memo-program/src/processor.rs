@@ -6,6 +6,10 @@ use axelar_executable::{
     validate_message, ArchivedAxelarExecutablePayload, MaybeAxelarPayload,
     PROGRAM_ACCOUNTS_START_INDEX,
 };
+use axelar_solana_its::executable::{
+    ArchivedAxelarInterchainTokenExecutablePayload, MaybeAxelarInterchainTokenExecutablePayload,
+};
+use axelar_solana_its::validate_interchain_token_execute_call;
 use borsh::BorshDeserialize;
 use program_utils::{check_program_account, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -15,6 +19,9 @@ use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
+use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
+use spl_token_2022::state::Mint;
+use spl_token_metadata_interface::state::TokenMetadata;
 
 use crate::assert_counter_pda_seeds;
 use crate::instruction::AxelarMemoInstruction;
@@ -32,13 +39,57 @@ pub fn process_instruction(
             msg!("Instruction: AxelarExecute");
             process_message_from_axelar(program_id, accounts, payload)
         }
-        None => {
-            msg!("Instruction: Native");
-            let instruction = AxelarMemoInstruction::try_from_slice(input)?;
-            process_native_ix(program_id, accounts, instruction)
-        }
         Some(Err(err)) => Err(err),
+        None => match input.try_get_axelar_interchain_token_executable_payload() {
+            Some(Ok(payload)) => {
+                msg!("Instruction: AxelarInterchainTokenExecute");
+                process_message_from_axelar_with_token(program_id, accounts, payload)
+            }
+            Some(Err(err)) => Err(err),
+            None => {
+                msg!("Instruction: Native");
+                let instruction = AxelarMemoInstruction::try_from_slice(input)?;
+                process_native_ix(program_id, accounts, instruction)
+            }
+        },
     }
+}
+
+/// Process a message submitted by the relayer which originates from the Axelar
+/// network
+pub fn process_message_from_axelar_with_token(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo<'_>],
+    payload: &ArchivedAxelarInterchainTokenExecutablePayload,
+) -> ProgramResult {
+    validate_interchain_token_execute_call(accounts)?;
+    let accounts_iter = &mut accounts.iter();
+    let _gateway_root_pda = next_account_info(accounts_iter)?;
+    let _its_root_pda = next_account_info(accounts_iter)?;
+    let _token_program = next_account_info(accounts_iter)?;
+    let token_mint = next_account_info(accounts_iter)?;
+    let ata_account = next_account_info(accounts_iter)?;
+
+    msg!("Processing memo with tokens:");
+    msg!("amount: {}", payload.amount);
+
+    if *ata_account.owner == spl_token_2022::id() {
+        let account_data = token_mint.try_borrow_data()?;
+        let mint_state = StateWithExtensions::<Mint>::unpack(&account_data)?;
+        let token_metadata = mint_state.get_variable_len_extension::<TokenMetadata>()?;
+
+        msg!("symbol: {}", token_metadata.symbol);
+        msg!("name: {}", token_metadata.name);
+    }
+
+    let memo = from_utf8(&payload.data).map_err(|err| {
+        msg!("Invalid UTF-8, from byte {}", err.valid_up_to());
+        ProgramError::InvalidInstructionData
+    })?;
+
+    process_memo(program_id, accounts_iter.as_slice(), memo)?;
+
+    Ok(())
 }
 
 /// Process a message submitted by the relayer which originates from the Axelar

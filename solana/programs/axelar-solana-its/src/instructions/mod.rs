@@ -34,26 +34,29 @@ pub mod token_manager;
 /// Convenience module with the indices of the accounts passed in the
 /// [`ItsGmpPayload`] instruction (offset by the prefixed GMP accounts).
 pub mod its_account_indices {
+    /// The index of the gateway root PDA account.
+    pub const GATEWAY_ROOT_PDA_INDEX: usize = 0;
+
     /// The index of the system program account.
-    pub const SYSTEM_PROGRAM_INDEX: usize = 0;
+    pub const SYSTEM_PROGRAM_INDEX: usize = 1;
 
     /// The index of the ITS root PDA account.
-    pub const ITS_ROOT_PDA_INDEX: usize = 1;
+    pub const ITS_ROOT_PDA_INDEX: usize = 2;
 
     /// The index of the token manager PDA account.
-    pub const TOKEN_MANAGER_PDA_INDEX: usize = 2;
+    pub const TOKEN_MANAGER_PDA_INDEX: usize = 3;
 
     /// The index of the token mint account.
-    pub const TOKEN_MINT_INDEX: usize = 3;
+    pub const TOKEN_MINT_INDEX: usize = 4;
 
     /// The index of the token manager ATA account.
-    pub const TOKEN_MANAGER_ATA_INDEX: usize = 4;
+    pub const TOKEN_MANAGER_ATA_INDEX: usize = 5;
 
     /// The index of the token program account.
-    pub const TOKEN_PROGRAM_INDEX: usize = 5;
+    pub const TOKEN_PROGRAM_INDEX: usize = 6;
 
     /// The index of the associated token program account.
-    pub const SPL_ASSOCIATED_TOKEN_ACCOUNT_INDEX: usize = 6;
+    pub const SPL_ASSOCIATED_TOKEN_ACCOUNT_INDEX: usize = 7;
 }
 
 bitflags! {
@@ -191,6 +194,30 @@ pub enum InterchainTokenServiceInstruction {
     InterchainTransfer {
         /// The transfer parameters.
         params: InterchainTransferInputs,
+
+        /// The PDA bumps for the ITS accounts.
+        bumps: Bumps,
+    },
+
+    /// Transfers tokens to a contract on the destination chain and call the give instruction on
+    /// it. This instruction is is the same as [`InterchainTransfer`], but will fail if call data
+    /// is empty.
+    ///
+    /// 0. [maybe signer] The address of the authority signing the transfer. In
+    ///    case it's the `TokenManager`, it shouldn't be set as signer as the
+    ///    signing happens on chain.
+    /// 1. [] Gateway root pda
+    /// 2. [] Gateway program id
+    /// 3. [] ITS root pda
+    /// 4. [writable] Interchain token PDA
+    /// 5. [writable] The account where the tokens are being transferred from
+    /// 5. [writable] The mint account
+    /// 6. [writable] The Token Manager PDA
+    /// 6. [writable] The Token Manager ATA
+    /// 7. [] Token program id
+    CallContractWithInterchainToken {
+        /// The instruction inputs.
+        params: CallContractWithInterchainTokenInputs,
 
         /// The PDA bumps for the ITS accounts.
         bumps: Bumps,
@@ -409,9 +436,9 @@ pub struct InterchainTransferInputs {
 
     pub(crate) amount: u64,
 
-    /// Optional metadata for the call for additional effects (such as calling a
+    /// Optional data for the call for additional effects (such as calling a
     /// destination contract).
-    pub(crate) metadata: Vec<u8>,
+    pub(crate) data: Vec<u8>,
 
     /// The gas value to be paid for the deploy transaction
     #[builder(setter(transform = |x: u128| U256::from(x)))]
@@ -425,6 +452,9 @@ pub struct InterchainTransferInputs {
     #[builder(default = PublicKey::new_ed25519(spl_token_2022::id().to_bytes()), setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
     pub(crate) token_program: PublicKey,
 }
+
+/// Inputs for the `[InterchainTokenServiceInstruction::CallContractWithInterchainToken]`
+pub type CallContractWithInterchainTokenInputs = InterchainTransferInputs;
 
 /// Bumps for the ITS PDA accounts.
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, Copy, Default)]
@@ -594,14 +624,19 @@ pub fn deploy_interchain_token(
             .try_into()
             .map_err(|_err| ProgramError::InvalidInstructionData)?,
     );
-    let mut accounts = vec![
-        AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(gateway_root_pda, false),
-    ];
+
+    let mut accounts = vec![AccountMeta::new(payer, true)];
 
     let bumps = if params.destination_chain.is_none() {
-        let (mut its_accounts, bumps, _) =
-            derive_its_accounts(&params, spl_token_2022::id(), None, None, None, None)?;
+        let (mut its_accounts, bumps, _) = derive_its_accounts(
+            &params,
+            gateway_root_pda,
+            spl_token_2022::id(),
+            None,
+            None,
+            None,
+            None,
+        )?;
 
         accounts.append(&mut its_accounts);
 
@@ -609,6 +644,7 @@ pub fn deploy_interchain_token(
     } else {
         let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
 
+        accounts.push(AccountMeta::new_readonly(gateway_root_pda, false));
         accounts.push(AccountMeta::new_readonly(
             axelar_solana_gateway::id(),
             false,
@@ -644,10 +680,7 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
             .try_into()
             .map_err(|_err| ProgramError::InvalidInstructionData)?,
     );
-    let mut accounts = vec![
-        AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(gateway_root_pda, false),
-    ];
+    let mut accounts = vec![AccountMeta::new(payer, true)];
 
     let (bumps, optional_accounts_mask) = if params.destination_chain.is_none() {
         let token_program = Pubkey::new_from_array(
@@ -659,8 +692,15 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
                 .map_err(|_err| ProgramError::InvalidInstructionData)?,
         );
 
-        let (mut its_accounts, bumps, optional_accounts_mask) =
-            derive_its_accounts(&params, token_program, None, None, None, None)?;
+        let (mut its_accounts, bumps, optional_accounts_mask) = derive_its_accounts(
+            &params,
+            gateway_root_pda,
+            token_program,
+            None,
+            None,
+            None,
+            None,
+        )?;
 
         accounts.append(&mut its_accounts);
 
@@ -668,6 +708,7 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
     } else {
         let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
 
+        accounts.push(AccountMeta::new_readonly(gateway_root_pda, false));
         accounts.push(AccountMeta::new_readonly(
             axelar_solana_gateway::id(),
             false,
@@ -837,6 +878,7 @@ pub fn set_flow_limit(
 pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, ProgramError> {
     let (mut accounts, signing_pda_bump) =
         prefix_accounts(&inputs.payer, &inputs.incoming_message_pda, &inputs.message);
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
 
     let abi_payload = inputs.payload.encode();
 
@@ -852,6 +894,7 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
 
     let (mut its_accounts, bumps, optional_accounts_mask) = derive_its_accounts(
         &unwrapped_payload,
+        gateway_root_pda,
         inputs.token_program,
         Some(signing_pda_bump),
         inputs.mint,
@@ -973,6 +1016,7 @@ fn prefix_accounts(
 
 pub(crate) fn derive_its_accounts<'a, T>(
     payload: T,
+    gateway_root_pda: Pubkey,
     token_program: Pubkey,
     signing_pda_bump: Option<u8>,
     maybe_mint: Option<Pubkey>,
@@ -990,6 +1034,7 @@ where
     }
 
     let (mut accounts, mint, token_manager_pda, mut bumps) = derive_common_its_accounts(
+        gateway_root_pda,
         token_program,
         &message,
         signing_pda_bump,
@@ -1140,13 +1185,13 @@ fn try_retrieve_mint(
 }
 
 fn derive_common_its_accounts(
+    gateway_root_pda: Pubkey,
     token_program: Pubkey,
     message: &ItsMessageRef<'_>,
     maybe_signing_pda_bump: Option<u8>,
     maybe_mint: Option<Pubkey>,
     maybe_bumps: Option<Bumps>,
 ) -> Result<(Vec<AccountMeta>, Pubkey, Pubkey, Bumps), ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, its_root_pda_bump) = crate::its_root_pda(
         &gateway_root_pda,
         maybe_bumps.map(|bumps| bumps.its_root_pda_bump),
@@ -1173,6 +1218,7 @@ fn derive_common_its_accounts(
 
     Ok((
         vec![
+            AccountMeta::new_readonly(gateway_root_pda, false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new_readonly(its_root_pda, false),
             AccountMeta::new(token_manager_pda, false),
@@ -1196,12 +1242,12 @@ fn derive_common_its_accounts(
     ))
 }
 
-pub(crate) trait OutboundInstruction {
+pub(crate) trait OutboundInstructionInputs {
     fn destination_chain(&mut self) -> Option<String>;
     fn gas_value(&self) -> U256;
 }
 
-impl OutboundInstruction for DeployInterchainTokenInputs {
+impl OutboundInstructionInputs for DeployInterchainTokenInputs {
     fn destination_chain(&mut self) -> Option<String> {
         self.destination_chain.take()
     }
@@ -1211,17 +1257,7 @@ impl OutboundInstruction for DeployInterchainTokenInputs {
     }
 }
 
-impl OutboundInstruction for DeployTokenManagerInputs {
-    fn destination_chain(&mut self) -> Option<String> {
-        self.destination_chain.take()
-    }
-
-    fn gas_value(&self) -> U256 {
-        self.gas_value
-    }
-}
-
-impl OutboundInstruction for InterchainTransferInputs {
+impl OutboundInstructionInputs for DeployTokenManagerInputs {
     fn destination_chain(&mut self) -> Option<String> {
         self.destination_chain.take()
     }
@@ -1358,7 +1394,7 @@ impl<'a> TryFrom<&'a InterchainTransferInputs> for ItsMessageRef<'a> {
             source_address: value.source_account.as_ref(),
             destination_address: value.destination_address.as_ref(),
             amount: value.amount,
-            data: &value.metadata,
+            data: &value.data,
         })
     }
 }
@@ -1423,7 +1459,7 @@ impl TryFrom<InterchainTransferInputs> for InterchainTransfer {
             source_address: value.source_account.as_ref().to_vec().into(),
             destination_address: value.destination_address.into(),
             amount: alloy_primitives::U256::from(value.amount),
-            data: value.metadata.into(),
+            data: value.data.into(),
         })
     }
 }

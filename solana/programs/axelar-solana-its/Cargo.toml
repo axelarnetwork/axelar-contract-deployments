@@ -16,11 +16,11 @@ test-sbf = []
 [dependencies]
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
-axelar-executable = { workspace = true }
+axelar-executable.workspace = true
 axelar-message-primitives.workspace = true
 axelar-rkyv-encoding.workspace = true
-axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 axelar-solana-encoding.workspace = true
+axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 bitflags.workspace = true
 borsh.workspace = true
 interchain-token-transfer-gmp.workspace = true

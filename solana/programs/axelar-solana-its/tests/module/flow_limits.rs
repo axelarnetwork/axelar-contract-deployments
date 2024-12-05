@@ -418,7 +418,7 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         .amount(800)
         .gas_value(0_u128)
         .timestamp(clock_sysvar.unix_timestamp)
-        .metadata(vec![])
+        .data(vec![])
         .build();
 
     let transfer_ix =

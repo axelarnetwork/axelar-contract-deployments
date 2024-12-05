@@ -522,13 +522,17 @@ impl crate::EvmSigner {
     pub async fn deploy_axelar_memo(
         &self,
         gateway: axelar_amplifier_gateway::AxelarAmplifierGateway<ContractMiddleware>,
+        its: Option<interchain_token_service::InterchainTokenService<ContractMiddleware>>,
     ) -> anyhow::Result<axelar_memo::AxelarMemo<ContractMiddleware>> {
         let factory = ContractFactory::new(
             axelar_memo::AXELARMEMO_ABI.clone(),
             axelar_memo::AXELARMEMO_BYTECODE.clone(),
             self.signer.clone(),
         );
-        let deployer = factory.deploy(gateway.address())?;
+        let deployer = factory.deploy((
+            gateway.address(),
+            its.map(|c| c.address()).unwrap_or(Address::zero()),
+        ))?;
         let contract = self.deploy_custom_poll(deployer.tx).await?;
         Ok(axelar_memo::AxelarMemo::<ContractMiddleware>::new(
             contract,
@@ -654,6 +658,6 @@ mod tests {
             .await
             .unwrap();
         // Action
-        let _contract = alice.deploy_axelar_memo(gateway).await.unwrap();
+        let _contract = alice.deploy_axelar_memo(gateway, None).await.unwrap();
     }
 }

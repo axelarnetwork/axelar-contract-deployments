@@ -1,6 +1,7 @@
 //! Module that handles the processing of the `InterchainToken` deployment.
 
 use alloy_primitives::hex;
+use axelar_solana_encoding::types::messages::Message;
 use interchain_token_transfer_gmp::DeployInterchainToken;
 use program_utils::StorableArchive;
 use role_management::processor::{ensure_signer_roles, RoleManagementAccounts};
@@ -34,6 +35,7 @@ impl LocalAction for DeployInterchainToken {
         accounts: &'a [AccountInfo<'a>],
         bumps: Bumps,
         _optional_accounts_flags: OptionalAccountsFlags,
+        _message: Option<Message>,
     ) -> ProgramResult {
         process_deploy(payer, accounts, self, bumps)
     }
@@ -55,6 +57,7 @@ pub(crate) fn process_instruction<'a>(
 }
 
 pub(crate) struct DeployInterchainTokenAccounts<'a> {
+    pub(crate) gateway_root_pda: &'a AccountInfo<'a>,
     pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -79,6 +82,7 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
     {
         let accounts_iter = &mut accounts.iter();
         Ok(Self {
+            gateway_root_pda: next_account_info(accounts_iter)?,
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
@@ -97,6 +101,7 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
 impl<'a> From<DeployInterchainTokenAccounts<'a>> for DeployTokenManagerAccounts<'a> {
     fn from(value: DeployInterchainTokenAccounts<'a>) -> Self {
         Self {
+            _gateway_root_pda: value.gateway_root_pda,
             system_account: value.system_account,
             its_root_pda: value.its_root_pda,
             token_manager_pda: value.token_manager_pda,

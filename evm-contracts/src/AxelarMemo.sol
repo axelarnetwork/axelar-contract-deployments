@@ -3,10 +3,11 @@ pragma solidity 0.8.19;
 
 import {AbiSolanaGatewayPayload, SolanaGatewayPayload, SolanaAccountRepr} from "./SolanaGatewayPayload.sol";
 import {AxelarExecutable} from "axelar-gmp-sdk-solidity/executable/AxelarExecutable.sol";
+import {InterchainTokenExecutable} from "interchain-token-service/contracts/executable/InterchainTokenExecutable.sol";
 
 /// @title Axelar Memo Contract
 /// @dev This contract provides functionalities to send and receive a memo message to Solana using Axelar Gateway
-contract AxelarMemo is AxelarExecutable {
+contract AxelarMemo is AxelarExecutable, InterchainTokenExecutable {
     /// @dev The number of messages received
     uint256 public MESSAGES_RECEIVED;
 
@@ -14,7 +15,23 @@ contract AxelarMemo is AxelarExecutable {
     /// @param memoMessage The memo message received
     event ReceivedMemo(string memoMessage);
 
-    constructor(address gateway_) AxelarExecutable(gateway_) {
+    event ReceivedMemoWithToken(
+        bytes32 commandId,
+        string sourceChain,
+        bytes sourceAddress,
+        bytes32 tokenId,
+        address token,
+        uint256 amount,
+        string memoMessage
+    );
+
+    constructor(
+        address gateway_,
+        address interchainTokenService_
+    )
+        AxelarExecutable(gateway_)
+        InterchainTokenExecutable(interchainTokenService_)
+    {
         MESSAGES_RECEIVED = 0;
     }
 
@@ -68,5 +85,29 @@ contract AxelarMemo is AxelarExecutable {
         MESSAGES_RECEIVED += 1;
 
         emit ReceivedMemo(converted);
+    }
+
+    function _executeWithInterchainToken(
+        bytes32 commandId,
+        string calldata sourceChain,
+        bytes calldata sourceAddress,
+        bytes calldata data,
+        bytes32 tokenId,
+        address token,
+        uint256 amount
+    ) internal override {
+        string memory converted = string(data);
+
+        MESSAGES_RECEIVED += 1;
+
+        emit ReceivedMemoWithToken(
+            commandId,
+            sourceChain,
+            sourceAddress,
+            tokenId,
+            token,
+            amount,
+            converted
+        );
     }
 }

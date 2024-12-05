@@ -28,6 +28,7 @@ impl LocalAction for DeployTokenManager {
         accounts: &'a [AccountInfo<'a>],
         bumps: Bumps,
         optional_accounts_flags: OptionalAccountsFlags,
+        _message: Option<axelar_solana_encoding::types::messages::Message>,
     ) -> ProgramResult {
         process_deploy(payer, accounts, &self, bumps, optional_accounts_flags)
     }
@@ -531,6 +532,7 @@ fn handle_mintership<'a>(
 }
 
 pub(crate) struct DeployTokenManagerAccounts<'a> {
+    pub(crate) _gateway_root_pda: &'a AccountInfo<'a>,
     pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -558,6 +560,7 @@ impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
     {
         let accounts_iter = &mut accounts.iter();
         Ok(Self {
+            _gateway_root_pda: next_account_info(accounts_iter)?,
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
