@@ -2086,6 +2086,10 @@
         "storeCodeProposalId": "9",
         "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b",
         "lastUploadedCodeId": 7
+      },
+      "InterchainTokenService": {
+        "storeCodeProposalId": "65",
+        "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d"
       }
     },
     "axelarId": "axelar",
