@@ -707,6 +707,9 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "AxelarGateway": {},
+        "InterchainTokenService": {
+          "skip": true
+        },
         "InterchainGovernance": {},
         "Multisig": {
           "threshold": 2,
@@ -1590,6 +1593,9 @@
           "deploymentMethod": "create",
           "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
           "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "InterchainTokenService": {
+          "skip": true
         },
         "Create3Deployer": {
           "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
