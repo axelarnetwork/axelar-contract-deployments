@@ -1,17 +1,16 @@
+use std::mem::size_of;
+
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::rent::Rent;
-use solana_program::sysvar::Sysvar;
-use solana_program::{system_instruction, system_program};
+use solana_program::system_program;
 
 use super::Processor;
-use crate::seed_prefixes;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
-use crate::state::GatewayConfig;
+use crate::state::{BytemuckedPda, GatewayConfig};
+use crate::{assert_valid_gateway_root_pda, seed_prefixes};
 
 impl Processor {
     /// Handles the
@@ -21,7 +20,6 @@ impl Processor {
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
         merkle_root: [u8; 32],
-        bump: u8,
     ) -> ProgramResult {
         // Accounts
         let accounts_iter = &mut accounts.iter();
@@ -38,24 +36,18 @@ impl Processor {
         assert!(system_program::check_id(system_program.key));
 
         // Check: Gateway Root PDA is initialized.
-        gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
+        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+        let data = gateway_root_pda.try_borrow_data()?;
+        let gateway_config = GatewayConfig::read(&data)?;
+        assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
         // Check: Verification PDA can be derived from provided seeds.
-        let verification_session_pda =
-            crate::create_signature_verification_pda(gateway_root_pda.key, &merkle_root, bump)?;
+        // using canonical bump for the session account
+        let (verification_session_pda, bump) =
+            crate::get_signature_verification_pda(gateway_root_pda.key, &merkle_root);
         if verification_session_pda != *verification_session_account.key {
             return Err(ProgramError::InvalidAccountData);
         }
-
-        // Prepare the `create_account` instruction
-        let lamports_required = Rent::get()?.minimum_balance(SignatureVerificationSessionData::LEN);
-        let create_pda_account_ix = system_instruction::create_account(
-            payer.key,
-            verification_session_account.key,
-            lamports_required,
-            SignatureVerificationSessionData::LEN as u64,
-            program_id,
-        );
 
         // Use the same seeds as `[crate::get_signature_verification_pda]`, plus the
         // bump seed.
@@ -66,25 +58,17 @@ impl Processor {
             &[bump],
         ];
 
-        // Create the empty verification account.
-        invoke_signed(
-            &create_pda_account_ix,
-            &[
-                payer.clone(),
-                verification_session_account.clone(),
-                system_program.clone(),
-            ],
-            &[signers_seeds],
+        // Prepare the `create_account` instruction
+        program_utils::init_pda_raw(
+            payer,
+            verification_session_account,
+            program_id,
+            system_program,
+            size_of::<SignatureVerificationSessionData>() as u64,
+            signers_seeds,
         )?;
-
-        // Set the account data
         let mut data = verification_session_account.try_borrow_mut_data()?;
-        let data_bytes: &mut [u8; SignatureVerificationSessionData::LEN] =
-            (*data).try_into().map_err(|_err| {
-                solana_program::msg!("session account data is corrupt");
-                ProgramError::InvalidAccountData
-            })?;
-        let session: &mut SignatureVerificationSessionData = bytemuck::cast_mut(data_bytes);
+        let session = SignatureVerificationSessionData::read_mut(&mut data)?;
         session.bump = bump;
 
         Ok(())

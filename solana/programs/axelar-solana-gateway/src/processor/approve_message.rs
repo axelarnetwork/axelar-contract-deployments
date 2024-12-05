@@ -1,9 +1,10 @@
+use std::mem::size_of;
 use std::str::FromStr;
 
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::MerkleisedMessage;
 use axelar_solana_encoding::{rs_merkle, LeafHash};
-use program_utils::{init_pda_raw, ValidPDA};
+use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
@@ -13,8 +14,11 @@ use solana_program::pubkey::Pubkey;
 use super::Processor;
 use crate::state::incoming_message::{command_id, IncomingMessage, IncomingMessageWrapper};
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
-use crate::state::GatewayConfig;
-use crate::{assert_valid_incoming_message_pda, event_prefixes, seed_prefixes};
+use crate::state::BytemuckedPda;
+use crate::{
+    assert_valid_incoming_message_pda, assert_valid_signature_verification_pda, event_prefixes,
+    get_incoming_message_pda, get_validate_message_signing_pda, seed_prefixes,
+};
 
 impl Processor {
     /// Approves an array of messages, signed by the Axelar signers.
@@ -24,7 +28,6 @@ impl Processor {
         accounts: &[AccountInfo<'_>],
         message: MerkleisedMessage,
         payload_merkle_root: [u8; 32],
-        incoming_message_pda_bump: u8,
     ) -> ProgramResult {
         // Accounts
         let accounts_iter = &mut accounts.iter();
@@ -34,40 +37,31 @@ impl Processor {
         let incoming_message_pda = next_account_info(accounts_iter)?;
         let system_program = next_account_info(accounts_iter)?;
 
+        // Check: Gateway Root PDA is initialized.
+        // No need to check the bump because that would already be implied by a valid `verification_session_account`
+        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+
+        // Check: Verification session PDA is initialized.
+        verification_session_account.check_initialized_pda_without_deserialization(program_id)?;
+        let data = verification_session_account.try_borrow_data()?;
+        let session = SignatureVerificationSessionData::read(&data)?;
+        assert_valid_signature_verification_pda(
+            gateway_root_pda.key,
+            &payload_merkle_root,
+            session.bump,
+            verification_session_account.key,
+        )?;
+
         // Check: the incoming message PDA already approved
         if incoming_message_pda.check_uninitialized_pda().is_err() {
             solana_program::msg!("Message already approved");
             return Ok(());
         }
 
-        // Check: Gateway Root PDA is initialized.
-        let _gateway_config =
-            gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
-
         // Check: signature verification session is complete
-        let mut data = verification_session_account.try_borrow_mut_data()?;
-        let data_bytes: &mut [u8; SignatureVerificationSessionData::LEN] =
-            (*data).try_into().map_err(|_err| {
-                solana_program::msg!("session account data is corrupt");
-                ProgramError::InvalidAccountData
-            })?;
-        let session = bytemuck::cast_mut::<_, SignatureVerificationSessionData>(data_bytes);
         if !session.signature_verification.is_valid() {
             solana_program::msg!("signing session is not complete");
             return Err(ProgramError::InvalidAccountData);
-        }
-
-        // Check: Verification PDA can be derived from seeds stored into the account
-        // data itself.
-        {
-            let expected_pda = crate::create_signature_verification_pda(
-                gateway_root_pda.key,
-                &payload_merkle_root,
-                session.bump,
-            )?;
-            if expected_pda != *verification_session_account.key {
-                return Err(ProgramError::InvalidSeeds);
-            }
         }
 
         let leaf_hash = message.leaf.hash::<SolanaSyscallHasher>();
@@ -94,6 +88,7 @@ impl Processor {
         let cc_id = message.cc_id;
         let command_id = command_id(&cc_id.chain, &cc_id.id);
 
+        let (_, incoming_message_pda_bump) = get_incoming_message_pda(&command_id);
         assert_valid_incoming_message_pda(
             &command_id,
             incoming_message_pda_bump,
@@ -105,32 +100,29 @@ impl Processor {
             &command_id,
             &[incoming_message_pda_bump],
         ];
-        // todo assert that the PDA is valid
-        init_pda_raw(
+        program_utils::init_pda_raw(
             funder,
             incoming_message_pda,
-            &crate::id(),
+            program_id,
             system_program,
-            IncomingMessageWrapper::LEN
-                .try_into()
-                .expect("usize is valid u64 on sbf"),
+            size_of::<IncomingMessageWrapper>() as u64,
             seeds,
         )?;
         let mut data = incoming_message_pda.try_borrow_mut_data()?;
-        let data_bytes: &mut [u8; IncomingMessageWrapper::LEN] =
-            (*data).try_into().map_err(|_err| {
-                solana_program::msg!("session account data is corrupt");
-                ProgramError::InvalidAccountData
-            })?;
-        let incoming_message_data: &mut IncomingMessageWrapper = bytemuck::cast_mut(data_bytes);
-        incoming_message_data.bump = incoming_message_pda_bump;
-        incoming_message_data.message = IncomingMessage::new(message_hash);
+        let incoming_message_data = IncomingMessageWrapper::read_mut(&mut data)?;
 
         let destination_address =
             Pubkey::from_str(&message.destination_address).map_err(|_err| {
                 solana_program::msg!("Invalid destination address");
                 ProgramError::InvalidInstructionData
             })?;
+
+        let (_, signing_pda_bump) =
+            get_validate_message_signing_pda(destination_address, command_id);
+
+        incoming_message_data.bump = incoming_message_pda_bump;
+        incoming_message_data.signing_pda_bump = signing_pda_bump;
+        incoming_message_data.message = IncomingMessage::new(message_hash);
 
         // Emit an event
         sol_log_data(&[

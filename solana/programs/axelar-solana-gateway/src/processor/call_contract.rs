@@ -6,8 +6,8 @@ use solana_program::pubkey::Pubkey;
 
 use super::event_utils::{read_array, read_string, EventParseError};
 use super::Processor;
-use crate::event_prefixes;
-use crate::state::GatewayConfig;
+use crate::state::{BytemuckedPda, GatewayConfig};
+use crate::{assert_valid_gateway_root_pda, event_prefixes};
 
 impl Processor {
     /// This function is used to initialize the program.
@@ -21,10 +21,17 @@ impl Processor {
         let accounts_iter = &mut accounts.iter();
         let sender = next_account_info(accounts_iter)?;
         let gateway_root_pda = next_account_info(accounts_iter)?;
-        let _ = gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
 
+        // Check: Gateway Root PDA is initialized.
+        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+        let data = gateway_root_pda.try_borrow_data()?;
+        let gateway_config = GatewayConfig::read(&data)?;
+        assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
+
+        // compute the payload hash
         let payload_hash = solana_program::keccak::hash(&payload).to_bytes();
 
+        // Check: sender is signer
         assert!(sender.is_signer, "Sender must be a signer");
 
         // Emit an event

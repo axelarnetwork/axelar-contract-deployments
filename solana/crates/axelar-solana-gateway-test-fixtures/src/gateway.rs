@@ -16,9 +16,9 @@ use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessageWrapper};
 use axelar_solana_gateway::state::signature_verification_pda::SignatureVerificationSessionData;
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
-use axelar_solana_gateway::state::GatewayConfig;
+use axelar_solana_gateway::state::{BytemuckedPda, GatewayConfig};
 use axelar_solana_gateway::{
-    bytemuck, get_gateway_root_config_pda, get_incoming_message_pda, get_verifier_set_tracker_pda,
+    get_gateway_root_config_pda, get_incoming_message_pda, get_verifier_set_tracker_pda,
 };
 pub use gateway_event_stack::{MatchContext, ProgramInvocationState};
 use rand::Rng as _;
@@ -70,12 +70,12 @@ impl SolanaAxelarIntegrationMetadata {
     /// Get the gateway init verifier set data.
     /// This is useful for building the instantiation message for the gateway
     #[must_use]
-    pub fn init_gateway_config_verifier_set_data(&self) -> Vec<([u8; 32], Pubkey, u8)> {
+    pub fn init_gateway_config_verifier_set_data(&self) -> Vec<([u8; 32], Pubkey)> {
         let init_signers_hash =
             verifier_set_hash::<NativeHasher>(&self.signers.verifier_set(), &self.domain_separator)
                 .unwrap();
-        let (initial_signers_pda, initial_signers_bump) = self.signers.verifier_set_tracker();
-        vec![(init_signers_hash, initial_signers_pda, initial_signers_bump)]
+        let (initial_signers_pda, _initial_signers_bump) = self.signers.verifier_set_tracker();
+        vec![(init_signers_hash, initial_signers_pda)]
     }
 
     /// Initialise the gateway root config
@@ -249,7 +249,7 @@ impl SolanaAxelarIntegrationMetadata {
             &message.leaf.message.cc_id.id,
         );
 
-        let (incoming_message_pda, incoming_message_pda_bump) =
+        let (incoming_message_pda, _incoming_message_pda_bump) =
             get_incoming_message_pda(&command_id);
 
         let ix = axelar_solana_gateway::instructions::approve_messages(
@@ -259,7 +259,6 @@ impl SolanaAxelarIntegrationMetadata {
             self.payer.pubkey(),
             verification_session_pda,
             incoming_message_pda,
-            incoming_message_pda_bump,
         )
         .unwrap();
         self.send_tx(&[ix]).await
@@ -301,7 +300,7 @@ impl SolanaAxelarIntegrationMetadata {
         let new_verifier_set_hash =
             verifier_set_hash::<NativeHasher>(new_verifier_set, &self.domain_separator).unwrap();
         let gateway_config_pda = get_gateway_root_config_pda().0;
-        let (new_vs_tracker_pda, new_vs_tracker_bump) =
+        let (new_vs_tracker_pda, _new_vs_tracker_bump) =
             axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
         let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
             gateway_config_pda,
@@ -311,7 +310,6 @@ impl SolanaAxelarIntegrationMetadata {
             self.payer.pubkey(),
             None,
             new_verifier_set_hash,
-            new_vs_tracker_bump,
         )
         .unwrap();
 
@@ -353,18 +351,29 @@ impl SolanaAxelarIntegrationMetadata {
             axelar_solana_gateway::ID,
             "verification session must be owned by the gateway"
         );
-        let mut buffer = [0_u8; SignatureVerificationSessionData::LEN];
-        buffer.copy_from_slice(verification_session_account.data());
-
-        bytemuck::cast(buffer)
+        let res =
+            *SignatureVerificationSessionData::read(verification_session_account.data()).unwrap();
+        res
     }
 
     /// Get the gateway root config data
     pub async fn gateway_confg(&mut self, gateway_root_pda: Pubkey) -> GatewayConfig {
-        self.banks_client
-            .get_account_data_with_borsh(gateway_root_pda)
+        let gateway_root_pda_account = self
+            .banks_client
+            .get_account(gateway_root_pda)
             .await
-            .unwrap()
+            .ok()
+            .flatten()
+            .expect("Gateway account should exist");
+
+        assert_eq!(
+            gateway_root_pda_account.owner,
+            axelar_solana_gateway::ID,
+            "must be owned by the gateway"
+        );
+        let res = *GatewayConfig::read(gateway_root_pda_account.data()).unwrap();
+
+        res
     }
 
     /// Get the verifier set tracker data
@@ -383,23 +392,22 @@ impl SolanaAxelarIntegrationMetadata {
         &mut self,
         incoming_message_pda: Pubkey,
     ) -> IncomingMessageWrapper {
-        let pda = self
+        let gateway_root_pda_account = self
             .banks_client
             .get_account(incoming_message_pda)
             .await
             .ok()
             .flatten()
-            .expect("PDA account should exist");
+            .expect("Gateway account should exist");
 
         assert_eq!(
-            pda.owner,
+            gateway_root_pda_account.owner,
             axelar_solana_gateway::ID,
             "must be owned by the gateway"
         );
-        let mut buffer = [0_u8; IncomingMessageWrapper::LEN];
-        buffer.copy_from_slice(pda.data());
+        let res = *IncomingMessageWrapper::read(gateway_root_pda_account.data()).unwrap();
 
-        bytemuck::cast(buffer)
+        res
     }
 }
 

@@ -1,3 +1,5 @@
+use std::mem::size_of;
+
 use axelar_message_primitives::U256;
 use itertools::Itertools;
 use program_utils::ValidPDA;
@@ -6,18 +8,16 @@ use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::system_program;
 use solana_program::sysvar::Sysvar;
-use solana_program::{msg, system_program};
 
 use super::Processor;
-use crate::axelar_auth_weighted::AxelarAuthWeighted;
-use crate::error::GatewayError;
 use crate::instructions::InitializeConfig;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
-use crate::state::GatewayConfig;
+use crate::state::{BytemuckedPda, GatewayConfig};
 use crate::{
     assert_valid_gateway_root_pda, assert_valid_verifier_set_tracker_pda,
-    get_gateway_root_config_internal, seed_prefixes,
+    get_gateway_root_config_internal, get_verifier_set_tracker_pda, seed_prefixes,
 };
 
 impl Processor {
@@ -37,7 +37,7 @@ impl Processor {
 
         // Check: System Program Account
         if !system_program::check_id(system_account.key) {
-            return Err(GatewayError::InvalidSystemAccount.into());
+            return Err(ProgramError::InvalidInstructionData);
         }
         let verifier_sets = init_config
             .initial_signer_sets
@@ -46,14 +46,14 @@ impl Processor {
         let current_epochs: u64 = verifier_sets.len().try_into().unwrap();
         let current_epochs = U256::from_u64(current_epochs);
 
-        for (idx, ((verifier_set_hash, pda_bump), verifier_set_pda)) in verifier_sets.enumerate() {
-            let idx: u64 = idx.try_into().map_err(|_| {
-                msg!("could not transform idx");
-                ProgramError::InvalidInstructionData
-            })?;
+        for (idx, (verifier_set_hash, verifier_set_pda)) in verifier_sets.enumerate() {
+            let idx: u64 = idx
+                .try_into()
+                .map_err(|_| ProgramError::InvalidInstructionData)?;
             let epoch = U256::from_u64(idx + 1);
+            let (_, pda_bump) = get_verifier_set_tracker_pda(*verifier_set_hash);
             let tracker = VerifierSetTracker {
-                bump: *pda_bump,
+                bump: pda_bump,
                 epoch,
                 verifier_set_hash: *verifier_set_hash,
             };
@@ -69,40 +69,41 @@ impl Processor {
                 &[
                     seed_prefixes::VERIFIER_SET_TRACKER_SEED,
                     verifier_set_hash.as_slice(),
-                    &[*pda_bump],
+                    &[pda_bump],
                 ],
             )?;
         }
-        let clock = Clock::get()?;
-        let current_timestamp = clock.unix_timestamp.try_into().expect("invalid timestamp");
-        let auth_weighted = AxelarAuthWeighted::new(
-            init_config.previous_signers_retention,
-            init_config.minimum_rotation_delay,
-            current_epochs,
-            current_timestamp,
-        );
+
         let (_, bump) = get_gateway_root_config_internal(program_id);
-        let config = GatewayConfig::new(
-            bump,
-            auth_weighted,
-            init_config.operator,
-            init_config.domain_separator,
-        );
 
         // Check: Gateway Config account uses the canonical bump.
-        assert_valid_gateway_root_pda(config.bump, gateway_root_pda.key)?;
+        assert_valid_gateway_root_pda(bump, gateway_root_pda.key)?;
 
-        // Check: Gateway Config account is not initialized.
-        gateway_root_pda.check_uninitialized_pda()?;
-
-        let bump = config.bump;
-        program_utils::init_pda(
+        // Initialize the account
+        program_utils::init_pda_raw(
             payer,
             gateway_root_pda,
             program_id,
             system_account,
-            config,
+            size_of::<GatewayConfig>() as u64,
             &[seed_prefixes::GATEWAY_SEED, &[bump]],
-        )
+        )?;
+        let mut data = gateway_root_pda.try_borrow_mut_data()?;
+        let gateway_config = GatewayConfig::read_mut(&mut data)?;
+
+        let clock = Clock::get()?;
+        let current_timestamp = clock.unix_timestamp.try_into().expect("invalid timestamp");
+        *gateway_config = GatewayConfig {
+            bump,
+            operator: init_config.operator,
+            domain_separator: init_config.domain_separator,
+            current_epoch: current_epochs,
+            previous_verifier_set_retention: init_config.previous_verifier_retention,
+            minimum_rotation_delay: init_config.minimum_rotation_delay,
+            last_rotation_timestamp: current_timestamp,
+            _padding: [0; 7],
+        };
+
+        Ok(())
     }
 }

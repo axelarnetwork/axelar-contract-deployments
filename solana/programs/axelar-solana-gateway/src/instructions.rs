@@ -10,7 +10,7 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use crate::axelar_auth_weighted::{RotationDelaySecs, SignerSetEpoch};
+use crate::state::config::{RotationDelaySecs, VerifierSetEpoch};
 use crate::state::verifier_set_tracker::VerifierSetHash;
 
 /// Instructions supported by the gateway program.
@@ -31,11 +31,8 @@ pub enum GatewayInstruction {
         message: MerkleisedMessage,
         /// The merkle root of the new message batch
         payload_merkle_root: [u8; 32],
-        /// Bump for the message pda
-        incoming_message_pda_bump: u8,
     },
-    // todo ix for writing message contents into the PDA
-    //--
+
     /// Rotate signers for the Gateway Root Config PDA account.
     ///
     /// 0. [WRITE] Gateway Root Config PDA account
@@ -49,8 +46,6 @@ pub enum GatewayInstruction {
     RotateSigners {
         /// The merkle root of the new verifier set
         new_verifier_set_merkle_root: [u8; 32],
-        /// The bump for the new verifier set tracked PDA
-        new_verifier_set_bump: u8,
     },
 
     /// Represents the `CallContract` Axelar event.
@@ -86,8 +81,6 @@ pub enum GatewayInstruction {
     InitializePayloadVerificationSession {
         /// The Merkle root for the Payload being verified.
         payload_merkle_root: [u8; 32],
-        /// Buffer account PDA bump seed
-        bump_seed: u8,
     },
 
     /// Verifies a signature within a Payload verification session
@@ -120,8 +113,6 @@ pub enum GatewayInstruction {
     ValidateMessage {
         /// The Message that we want to approve
         message: Message,
-        /// The bump of the signing PDA
-        signing_pda_bump: u8,
     },
 }
 
@@ -134,13 +125,13 @@ pub struct InitializeConfig {
     /// The order is important:
     /// - first element == oldest entry
     /// - last element == latest entry
-    pub initial_signer_sets: Vec<(VerifierSetHash, u8)>,
+    pub initial_signer_sets: Vec<VerifierSetHash>,
     /// the minimum delay required between rotations
     pub minimum_rotation_delay: RotationDelaySecs,
     /// The gateway operator.
     pub operator: Pubkey,
     /// how many n epochs do we consider valid
-    pub previous_signers_retention: SignerSetEpoch,
+    pub previous_verifier_retention: VerifierSetEpoch,
 }
 
 /// Creates a [`GatewayInstruction::ApproveMessages`] instruction.
@@ -152,12 +143,10 @@ pub fn approve_messages(
     payer: Pubkey,
     verification_session_pda: Pubkey,
     incoming_message_pda: Pubkey,
-    incoming_message_pda_bump: u8,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&GatewayInstruction::ApproveMessage {
         message,
         payload_merkle_root,
-        incoming_message_pda_bump,
     })?;
 
     let accounts = vec![
@@ -185,11 +174,9 @@ pub fn rotate_signers(
     payer: Pubkey,
     operator: Option<Pubkey>,
     new_verifier_set_merkle_root: [u8; 32],
-    new_verifier_set_bump: u8,
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&GatewayInstruction::RotateSigners {
         new_verifier_set_merkle_root,
-        new_verifier_set_bump,
     })?;
 
     let mut accounts = vec![
@@ -243,10 +230,10 @@ pub fn call_contract(
 pub fn initialize_config(
     payer: Pubkey,
     domain_separator: [u8; 32],
-    initial_signer_sets: Vec<(VerifierSetHash, Pubkey, u8)>,
+    initial_signer_sets: Vec<(VerifierSetHash, Pubkey)>,
     minimum_rotation_delay: RotationDelaySecs,
     operator: Pubkey,
-    previous_signers_retention: SignerSetEpoch,
+    previous_verifier_retention: VerifierSetEpoch,
     gateway_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let mut accounts = vec![
@@ -254,7 +241,7 @@ pub fn initialize_config(
         AccountMeta::new(gateway_config_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
-    initial_signer_sets.iter().for_each(|(_hash, pda, _)| {
+    initial_signer_sets.iter().for_each(|(_hash, pda)| {
         accounts.push(AccountMeta {
             pubkey: *pda,
             is_signer: false,
@@ -264,13 +251,10 @@ pub fn initialize_config(
 
     let data = to_vec(&GatewayInstruction::InitializeConfig(InitializeConfig {
         domain_separator,
-        initial_signer_sets: initial_signer_sets
-            .into_iter()
-            .map(|x| (x.0, x.2))
-            .collect_vec(),
+        initial_signer_sets: initial_signer_sets.into_iter().map(|x| (x.0)).collect_vec(),
         minimum_rotation_delay,
         operator,
-        previous_signers_retention,
+        previous_verifier_retention,
     }))?;
     Ok(Instruction {
         program_id: crate::id(),
@@ -286,7 +270,7 @@ pub fn initialize_payload_verification_session(
     gateway_config_pda: Pubkey,
     payload_merkle_root: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    let (verification_session_pda, bump_seed) =
+    let (verification_session_pda, _) =
         crate::get_signature_verification_pda(&gateway_config_pda, &payload_merkle_root);
 
     let accounts = vec![
@@ -298,7 +282,6 @@ pub fn initialize_payload_verification_session(
 
     let data = to_vec(&GatewayInstruction::InitializePayloadVerificationSession {
         payload_merkle_root,
-        bump_seed,
     })?;
 
     Ok(Instruction {
@@ -341,17 +324,13 @@ pub fn validate_message(
     incoming_message_pda: &Pubkey,
     signing_pda: &Pubkey,
     message: Message,
-    signing_pda_bump: u8,
 ) -> Result<Instruction, ProgramError> {
     let accounts = vec![
         AccountMeta::new(*incoming_message_pda, false),
         AccountMeta::new_readonly(*signing_pda, true),
     ];
 
-    let data = borsh::to_vec(&GatewayInstruction::ValidateMessage {
-        message,
-        signing_pda_bump,
-    })?;
+    let data = borsh::to_vec(&GatewayInstruction::ValidateMessage { message })?;
 
     Ok(Instruction {
         program_id: crate::id(),

@@ -41,28 +41,19 @@ impl Processor {
             GatewayInstruction::ApproveMessage {
                 message,
                 payload_merkle_root,
-                incoming_message_pda_bump,
             } => {
                 msg!("Instruction: Approve Messages");
 
-                Self::process_approve_message(
-                    program_id,
-                    accounts,
-                    message,
-                    payload_merkle_root,
-                    incoming_message_pda_bump,
-                )
+                Self::process_approve_message(program_id, accounts, message, payload_merkle_root)
             }
             GatewayInstruction::RotateSigners {
                 new_verifier_set_merkle_root,
-                new_verifier_set_bump,
             } => {
                 msg!("Instruction: Rotate Signers");
                 Self::process_rotate_verifier_set(
                     program_id,
                     accounts,
                     new_verifier_set_merkle_root,
-                    new_verifier_set_bump,
                 )
             }
             GatewayInstruction::CallContract {
@@ -86,14 +77,12 @@ impl Processor {
 
             GatewayInstruction::InitializePayloadVerificationSession {
                 payload_merkle_root,
-                bump_seed,
             } => {
                 msg!("Instruction: Initialize Verification Session");
                 Self::process_initialize_payload_verification_session(
                     program_id,
                     accounts,
                     payload_merkle_root,
-                    bump_seed,
                 )
             }
 
@@ -109,12 +98,9 @@ impl Processor {
                     verifier_info,
                 )
             }
-            GatewayInstruction::ValidateMessage {
-                message,
-                signing_pda_bump,
-            } => {
+            GatewayInstruction::ValidateMessage { message } => {
                 msg!("Instruction: Validate Message");
-                Self::process_validate_message(program_id, accounts, message, signing_pda_bump)
+                Self::process_validate_message(program_id, accounts, message)
             }
         }
     }

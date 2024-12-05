@@ -8,7 +8,6 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
-use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
 
@@ -16,8 +15,12 @@ use super::event_utils::{read_array, EventParseError};
 use super::Processor;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
-use crate::state::GatewayConfig;
-use crate::{assert_valid_verifier_set_tracker_pda, event_prefixes, seed_prefixes};
+use crate::state::{BytemuckedPda, GatewayConfig};
+use crate::{
+    assert_valid_gateway_root_pda, assert_valid_signature_verification_pda,
+    assert_valid_verifier_set_tracker_pda, event_prefixes, get_verifier_set_tracker_pda,
+    seed_prefixes,
+};
 
 impl Processor {
     /// Rotate the weighted signers, signed off by the latest Axelar signers.
@@ -34,7 +37,6 @@ impl Processor {
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
         new_verifier_set_merkle_root: [u8; 32],
-        new_verifier_set_bump: u8,
     ) -> ProgramResult {
         // Accounts
         let accounts_iter = &mut accounts.iter();
@@ -47,40 +49,37 @@ impl Processor {
         let operator = next_account_info(accounts_iter);
 
         // Check: Gateway Root PDA is initialized.
-        let mut gateway_config =
-            gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
+        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+        let mut data = gateway_root_pda.try_borrow_mut_data()?;
+        let gateway_config = GatewayConfig::read_mut(&mut data)?;
+        assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
+        // Check: Verification session PDA is initialized.
+        verification_session_account.check_initialized_pda_without_deserialization(program_id)?;
         let mut data = verification_session_account.try_borrow_mut_data()?;
-        let data_bytes: &mut [u8; SignatureVerificationSessionData::LEN] =
-            (*data).try_into().map_err(|_err| {
-                msg!("session account data is corrupt");
-                ProgramError::InvalidAccountData
-            })?;
-        let session = bytemuck::cast_mut::<_, SignatureVerificationSessionData>(data_bytes);
-        if !session.signature_verification.is_valid() {
-            msg!("signing session is not complete");
-            return Err(ProgramError::InvalidAccountData);
-        }
+        let session = SignatureVerificationSessionData::read_mut(&mut data)?;
 
-        // Check: new verifier set merkle root can be transformed into the payload hash
-        let signed_payload = axelar_solana_encoding::types::verifier_set::construct_payload_hash::<
-            SolanaSyscallHasher,
-        >(
-            new_verifier_set_merkle_root,
-            session.signature_verification.signing_verifier_set_hash,
-        );
+        // New verifier set merkle root can be transformed into the payload hash
+        let payload_merkle_root =
+            axelar_solana_encoding::types::verifier_set::construct_payload_hash::<
+                SolanaSyscallHasher,
+            >(
+                new_verifier_set_merkle_root,
+                session.signature_verification.signing_verifier_set_hash,
+            );
 
         // Check: Verification PDA can be derived from seeds stored into the account
         // data itself.
-        {
-            let expected_pda = crate::create_signature_verification_pda(
-                gateway_root_pda.key,
-                &signed_payload,
-                session.bump,
-            )?;
-            if expected_pda != *verification_session_account.key {
-                return Err(ProgramError::InvalidSeeds);
-            }
+        assert_valid_signature_verification_pda(
+            gateway_root_pda.key,
+            &payload_merkle_root,
+            session.bump,
+            verification_session_account.key,
+        )?;
+
+        if !session.signature_verification.is_valid() {
+            msg!("signing session is not complete");
+            return Err(ProgramError::InvalidAccountData);
         }
 
         // Obtain the active verifier set tracker.
@@ -133,20 +132,20 @@ impl Processor {
             .unix_timestamp
             .try_into()
             .expect("received negative timestamp");
-        if enforce_rotation_delay
-            && !Self::enough_time_till_next_rotation(current_time, &gateway_config)?
+        if enforce_rotation_delay && !enough_time_till_next_rotation(current_time, gateway_config)?
         {
             msg!("Command needs more time before being executed again");
             return Err(ProgramError::InvalidArgument);
         }
 
-        gateway_config.auth_weighted.last_rotation_timestamp = current_time;
+        gateway_config.last_rotation_timestamp = current_time;
 
         // Rotate the signers
         gateway_config.current_epoch = gateway_config
             .current_epoch
             .checked_add(U256::ONE)
             .ok_or(ProgramError::ArithmeticOverflow)?;
+        let (_, new_verifier_set_bump) = get_verifier_set_tracker_pda(new_verifier_set_merkle_root);
         let new_verifier_set_tracker = VerifierSetTracker {
             bump: new_verifier_set_bump,
             epoch: gateway_config.current_epoch,
@@ -180,22 +179,20 @@ impl Processor {
             &new_verifier_set_tracker.verifier_set_hash,
         ]);
 
-        // Store the gateway data back to the account.
-        let mut data = gateway_root_pda.try_borrow_mut_data()?;
-        gateway_config.pack_into_slice(&mut data);
-
         Ok(())
     }
+}
 
-    fn enough_time_till_next_rotation(
-        current_time: u64,
-        config: &GatewayConfig,
-    ) -> Result<bool, ProgramError> {
-        let secs_since_last_rotation = current_time
-            .checked_sub(config.auth_weighted.last_rotation_timestamp)
-            .expect("Current time minus rotate signers last successful operation time should not underflow");
-        Ok(secs_since_last_rotation >= config.auth_weighted.minimum_rotation_delay)
-    }
+fn enough_time_till_next_rotation(
+    current_time: u64,
+    config: &GatewayConfig,
+) -> Result<bool, ProgramError> {
+    let secs_since_last_rotation = current_time
+        .checked_sub(config.last_rotation_timestamp)
+        .expect(
+            "Current time minus rotate signers last successful operation time should not underflow",
+        );
+    Ok(secs_since_last_rotation >= config.minimum_rotation_delay)
 }
 
 /// Represents a `SignersRotatedEvent`.

@@ -45,7 +45,6 @@ async fn successfully_rotates_signers() {
         metadata.payer.pubkey(),
         None,
         new_verifier_set_hash,
-        new_verifier_set.verifier_set_tracker().1,
     )
     .unwrap();
 
@@ -75,10 +74,7 @@ async fn successfully_rotates_signers() {
 
     // - signers have been updated
     let root_pda_data = metadata.gateway_confg(metadata.gateway_root_pda).await;
-    assert_eq!(
-        root_pda_data.auth_weighted.current_epoch(),
-        new_epoch.clone()
-    );
+    assert_eq!(root_pda_data.current_epoch, new_epoch.clone());
     // assert that the signer tracker pda has been initialized
     let verifier_set_tracker_data = metadata
         .verifier_set_tracker(new_verifier_set.verifier_set_tracker().0)
@@ -114,7 +110,7 @@ async fn fail_when_approve_messages_payload_hash_is_used() {
         &metadata.domain_separator,
     )
     .unwrap();
-    let (new_vs_tracker_pda, new_vs_tracker_bump) = get_verifier_set_tracker_pda(random_bytes());
+    let (new_vs_tracker_pda, _new_vs_tracker_bump) = get_verifier_set_tracker_pda(random_bytes());
 
     let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
         metadata.gateway_root_pda,
@@ -124,7 +120,6 @@ async fn fail_when_approve_messages_payload_hash_is_used() {
         metadata.payer.pubkey(),
         None,
         verifier_set_hash,
-        new_vs_tracker_bump,
     )
     .unwrap();
 
@@ -248,7 +243,6 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
         metadata.payer.pubkey(),
         Some(metadata.operator.pubkey()),
         new_verifier_set_hash,
-        new_vs_tracker_bump,
     )
     .unwrap();
 
@@ -277,10 +271,7 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
 
     // - signers have been updated
     let root_pda_data = metadata.gateway_confg(metadata.gateway_root_pda).await;
-    assert_eq!(
-        root_pda_data.auth_weighted.current_epoch(),
-        new_epoch.clone()
-    );
+    assert_eq!(root_pda_data.current_epoch, new_epoch.clone());
     let vs_tracker = metadata.verifier_set_tracker(new_vs_tracker_pda).await;
     assert_eq!(
         vs_tracker,
@@ -334,7 +325,7 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
         &metadata.domain_separator,
     )
     .unwrap();
-    let (new_vs_tracker_pda, new_vs_tracker_bump) =
+    let (new_vs_tracker_pda, _new_vs_tracker_bump) =
         axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
     let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
         metadata.gateway_root_pda,
@@ -344,7 +335,6 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
         metadata.payer.pubkey(),
         Some(fake_operator.pubkey()),
         new_verifier_set_hash,
-        new_vs_tracker_bump,
     )
     .unwrap();
 
@@ -404,7 +394,7 @@ async fn fail_if_operator_only_passed_but_not_actual_signer() {
         &metadata.domain_separator,
     )
     .unwrap();
-    let (new_vs_tracker_pda, new_vs_tracker_bump) =
+    let (new_vs_tracker_pda, _new_vs_tracker_bump) =
         axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
     let mut rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
         metadata.gateway_root_pda,
@@ -414,7 +404,6 @@ async fn fail_if_operator_only_passed_but_not_actual_signer() {
         metadata.payer.pubkey(),
         Some(metadata.operator.pubkey()),
         new_verifier_set_hash,
-        new_vs_tracker_bump,
     )
     .unwrap();
     // set the 'operator' as non-signer to get the tx in, otherwise Solana will

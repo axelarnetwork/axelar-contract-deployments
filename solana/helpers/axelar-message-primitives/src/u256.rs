@@ -4,6 +4,7 @@ use std::fmt::Display;
 
 pub use bnum::types::U256 as BnumU256;
 use borsh::{BorshDeserialize, BorshSerialize};
+use bytemuck::{Pod, Zeroable};
 use rkyv::bytecheck::{self, CheckBytes};
 
 /// [U256] represents uint256.
@@ -19,6 +20,8 @@ use rkyv::bytecheck::{self, CheckBytes};
     Eq,
     Copy,
     Default,
+    Pod,
+    Zeroable,
 )]
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]

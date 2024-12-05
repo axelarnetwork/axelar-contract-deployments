@@ -1,11 +1,9 @@
 use axelar_solana_gateway::get_gateway_root_config_pda;
 use axelar_solana_gateway::state::signature_verification::SignatureVerification;
-use axelar_solana_gateway::state::signature_verification_pda::SignatureVerificationSessionData;
 use axelar_solana_gateway_test_fixtures::gateway::random_bytes;
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use bytemuck::Zeroable;
 use solana_program_test::tokio;
-use solana_sdk::account::ReadableAccount;
 use solana_sdk::signer::Signer;
 
 #[tokio::test]
@@ -48,9 +46,9 @@ async fn test_initialize_payload_verification_session() {
         axelar_solana_gateway::ID
     );
 
-    let mut buffer = [0u8; SignatureVerificationSessionData::LEN];
-    buffer.copy_from_slice(verification_session_account.data());
-    let session: SignatureVerificationSessionData = bytemuck::cast(buffer);
+    let session = metadata
+        .signature_verification_session(verification_pda)
+        .await;
 
     assert_eq!(session.bump, bump);
     assert_eq!(

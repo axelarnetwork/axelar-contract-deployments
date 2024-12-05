@@ -273,10 +273,12 @@ impl<'a> ValidPDA for &AccountInfo<'a> {
     ) -> Result<(), ProgramError> {
         let has_lamports = **self.try_borrow_lamports()? > 0;
         if !has_lamports {
+            msg!("account does not have enough lamports");
             return Err(ProgramError::InsufficientFunds);
         }
         let has_correct_owner = self.owner == expected_owner_program_id;
         if !has_correct_owner {
+            msg!("account does not have the expected owner");
             return Err(ProgramError::IllegalOwner);
         }
 

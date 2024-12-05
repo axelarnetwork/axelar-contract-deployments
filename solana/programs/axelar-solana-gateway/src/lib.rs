@@ -1,5 +1,4 @@
 //! Axelar Gateway program for the Solana blockchain
-pub mod axelar_auth_weighted;
 pub mod entrypoint;
 pub mod error;
 pub mod instructions;
@@ -104,7 +103,7 @@ pub fn assert_valid_incoming_message_pda(
         &[seed_prefixes::INCOMING_MESSAGE_SEED, command_id, &[bump]],
         &crate::ID,
     )
-    .expect("invalid bump for the root pda");
+    .expect("invalid bump for the incoming message PDA");
     if &derived_pubkey != expected_pubkey {
         solana_program::msg!("Error: Invalid incoming message PDA ");
         Err(ProgramError::IncorrectProgramId)
@@ -163,6 +162,32 @@ pub fn get_signature_verification_pda(
         &crate::ID,
     );
     (pubkey, bump)
+}
+
+/// Assert that the signature verification PDA has been derived correctly
+#[inline]
+pub fn assert_valid_signature_verification_pda(
+    gateway_root_pda: &Pubkey,
+    payload_merkle_root: &[u8; 32],
+    bump: u8,
+    expected_pubkey: &Pubkey,
+) -> Result<(), ProgramError> {
+    let derived_pubkey = Pubkey::create_program_address(
+        &[
+            seed_prefixes::SIGNATURE_VERIFICATION_SEED,
+            gateway_root_pda.as_ref(),
+            payload_merkle_root,
+            &[bump],
+        ],
+        &crate::ID,
+    )
+    .expect("invalid bump for the pda");
+    if &derived_pubkey != expected_pubkey {
+        solana_program::msg!("Error: Invalid Verifier Set Root PDA ");
+        Err(ProgramError::IncorrectProgramId)
+    } else {
+        Ok(())
+    }
 }
 
 /// Create the PDA for a given payload hash and bump.

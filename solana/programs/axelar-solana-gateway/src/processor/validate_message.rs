@@ -1,9 +1,9 @@
-use std::convert::TryInto;
 use std::str::FromStr;
 
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_encoding::LeafHash;
+use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::log::sol_log_data;
 use solana_program::msg;
@@ -13,6 +13,7 @@ use solana_program::pubkey::Pubkey;
 use super::event_utils::{read_array, read_string, EventParseError};
 use super::Processor;
 use crate::state::incoming_message::{command_id, IncomingMessageWrapper, MessageStatus};
+use crate::state::BytemuckedPda;
 use crate::{
     assert_valid_incoming_message_pda, create_validate_message_signing_pda, event_prefixes,
 };
@@ -20,39 +21,39 @@ use crate::{
 impl Processor {
     /// Validate a message approval, and mark it as used
     pub fn process_validate_message(
-        _program_id: &Pubkey,
+        program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
         message: Message,
-        signing_pda_bump: u8,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
         let incoming_message_pda = next_account_info(accounts_iter)?;
         let caller = next_account_info(accounts_iter)?;
 
+        // compute the message hash
         let message_hash = message.hash::<SolanaSyscallHasher>();
+        // compute the command id
         let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
 
-        // check that message is approved
+        // Check: Gateway Root PDA is initialized.
+        incoming_message_pda.check_initialized_pda_without_deserialization(program_id)?;
         let mut data = incoming_message_pda.try_borrow_mut_data()?;
-        let data_bytes: &mut [u8; IncomingMessageWrapper::LEN] =
-            (*data).try_into().map_err(|_err| {
-                solana_program::msg!("incoming message account data is corrupt");
-                ProgramError::InvalidAccountData
-            })?;
-        let incoming_message = bytemuck::cast_mut::<_, IncomingMessageWrapper>(data_bytes);
-        if incoming_message.message.status != MessageStatus::Approved {
-            msg!("message not approved");
-            return Err(ProgramError::InvalidAccountData);
-        }
-        if incoming_message.message.message_hash != message_hash {
-            msg!("message has been tampered with");
-            return Err(ProgramError::InvalidInstructionData);
-        }
+        let incoming_message = IncomingMessageWrapper::read_mut(&mut data)?;
         assert_valid_incoming_message_pda(
             &command_id,
             incoming_message.bump,
             incoming_message_pda.key,
         )?;
+
+        // Check: message is approved
+        if incoming_message.message.status != MessageStatus::Approved {
+            msg!("message not approved");
+            return Err(ProgramError::InvalidAccountData);
+        }
+        // Check: message hashes match
+        if incoming_message.message.message_hash != message_hash {
+            msg!("message has been tampered with");
+            return Err(ProgramError::InvalidInstructionData);
+        }
         let destination_address =
             Pubkey::from_str(&message.destination_address).map_err(|_err| {
                 msg!("Destination address is not a valid Pubkey");
@@ -62,7 +63,7 @@ impl Processor {
         // check that caller ir valid signing PDA
         let expected_signing_pda = create_validate_message_signing_pda(
             &destination_address,
-            signing_pda_bump,
+            incoming_message.signing_pda_bump,
             &command_id,
         )?;
         if &expected_signing_pda != caller.key {

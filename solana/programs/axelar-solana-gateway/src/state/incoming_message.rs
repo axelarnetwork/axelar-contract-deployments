@@ -1,8 +1,8 @@
 //! Module for the IncomingMessage account type.
 
-use std::mem::{self, size_of};
-
 use bytemuck::{Pod, Zeroable};
+
+use super::BytemuckedPda;
 
 /// Incoming message from Axelar -> Solana
 #[repr(C)]
@@ -12,22 +12,16 @@ pub struct IncomingMessageWrapper {
     pub message: IncomingMessage,
     /// The bump that was used to create the PDA
     pub bump: u8,
+    /// The bump for the signing PDA
+    pub signing_pda_bump: u8,
     /// padding to align the bump
-    pub _padding_bump: [u8; 7],
-    /// padding to make struct size be 256 bytes
-    pub _padding_size: [u8; 32],
-    // .. the rest of the data on the PDA is the raw payload (not yet implemented)
+    pub _padding_bump: [u8; 6],
 }
 
 /// Incoming message from Axelar -> Solana.
 #[repr(C)]
 #[derive(Zeroable, Pod, Clone, Copy, PartialEq, Eq, Debug)]
 pub struct IncomingMessage {
-    /// Length of the raw data
-    pub data_len: u64, // 8 bytes
-    /// Whilst writing the raw payload, this points to the beginning of next
-    /// empty chunk
-    pub data_pointer: u64, // 8 bytes
     /// Status of the message
     pub status: MessageStatus, // 4 byte
     /// alignment padding
@@ -40,11 +34,6 @@ impl IncomingMessage {
     /// New default [`IncomingMessage`]
     pub fn new(message_hash: [u8; 32]) -> Self {
         Self {
-            data_len: 0,
-            // pad the pointer to the beginning of the next chunk to write the data into
-            data_pointer: (size_of::<Self>() + size_of::<u8>())
-                .try_into()
-                .expect("valid u64"),
             status: MessageStatus::Approved,
             _padding: [0; 4],
             message_hash,
@@ -52,12 +41,9 @@ impl IncomingMessage {
     }
 }
 
-impl IncomingMessageWrapper {
-    /// Size, in bytes, to represent a value of this type.
-    pub const LEN: usize = mem::size_of::<Self>();
-}
+impl BytemuckedPda for IncomingMessageWrapper {}
 
-/// After the command itself is marked as `Approved`, the command can be used
+/// ABytemuckedUtilsitself is marked as `Approved`, the command can be used
 /// for CPI [`GatewayInstructon::ValidateMessage`] instruction.
 /// This maps to [these lines in the Solidity Gateway](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/78fde453094074ca93ef7eea1e1395fba65ba4f6/contracts/AxelarGateway.sol#L636-L648)
 #[repr(C)]

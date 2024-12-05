@@ -38,20 +38,15 @@ async fn fail_if_message_pda_does_not_exist() {
     let (incoming_message_pda, ..) = get_incoming_message_pda(&fake_command_id);
 
     // action
-    let (signing_pda, signing_pda_bump) =
+    let (signing_pda, _signing_pda_bump) =
         get_validate_message_signing_pda(destination_address, fake_command_id);
-    let ix = validate_message_for_tests(
-        &incoming_message_pda,
-        &signing_pda,
-        message_leaf.message,
-        signing_pda_bump,
-    )
-    .unwrap();
+    let ix = validate_message_for_tests(&incoming_message_pda, &signing_pda, message_leaf.message)
+        .unwrap();
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
 
     // assert
     assert!(err
-        .find_log("incoming message account data is corrupt")
+        .find_log("account does not have enough lamports")
         .is_some());
 }
 
@@ -87,15 +82,10 @@ async fn fail_if_message_already_executed() {
         .await;
 
     // action
-    let (signing_pda, signing_pda_bump) =
+    let (signing_pda, _signing_pda_bump) =
         get_validate_message_signing_pda(destination_address, command_id);
-    let ix = validate_message_for_tests(
-        &incoming_message_pda,
-        &signing_pda,
-        message_leaf.message,
-        signing_pda_bump,
-    )
-    .unwrap();
+    let ix = validate_message_for_tests(&incoming_message_pda, &signing_pda, message_leaf.message)
+        .unwrap();
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
 
     // assert
@@ -131,15 +121,10 @@ async fn fail_if_message_has_been_tampered_with() {
     let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id);
 
     // action
-    let (signing_pda, signing_pda_bump) =
+    let (signing_pda, _signing_pda_bump) =
         get_validate_message_signing_pda(destination_address, command_id);
-    let ix = validate_message_for_tests(
-        &incoming_message_pda,
-        &signing_pda,
-        message_leaf.message,
-        signing_pda_bump,
-    )
-    .unwrap();
+    let ix = validate_message_for_tests(&incoming_message_pda, &signing_pda, message_leaf.message)
+        .unwrap();
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
 
     // assert
@@ -174,15 +159,10 @@ async fn fail_if_invalid_signing_pda_seeds() {
     let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id);
 
     // action
-    let (signing_pda, signing_pda_bump) =
+    let (signing_pda, _signing_pda_bump) =
         get_validate_message_signing_pda(destination_address, [42; 32]); // source of error, invalid command id
-    let ix = validate_message_for_tests(
-        &incoming_message_pda,
-        &signing_pda,
-        message_leaf.message,
-        signing_pda_bump,
-    )
-    .unwrap();
+    let ix = validate_message_for_tests(&incoming_message_pda, &signing_pda, message_leaf.message)
+        .unwrap();
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
 
     // assert
@@ -209,7 +189,7 @@ async fn fail_if_another_valid_message_pda_provided() {
     messages
         .iter_mut()
         .for_each(|x| x.destination_address = destination_address.to_string());
-    let (message_leaf_one, message_leaf_two) = metadata
+    let (message_leaf_one, _message_leaf_two) = metadata
         .sign_session_and_approve_messages(&metadata.signers.clone(), &messages)
         .await
         .unwrap()
@@ -221,20 +201,19 @@ async fn fail_if_another_valid_message_pda_provided() {
         &message_leaf_one.message.cc_id.chain,
         &message_leaf_one.message.cc_id.id,
     );
-    let command_id_leaf_two = command_id(
-        &message_leaf_two.message.cc_id.chain,
-        &message_leaf_two.message.cc_id.id,
-    );
-    let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id_leaf_two);
+    let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id_leaf_one);
 
     // action
-    let (signing_pda, signing_pda_bump) =
+    let (signing_pda, _signing_pda_bump) =
         get_validate_message_signing_pda(destination_address, command_id_leaf_one);
     let ix = validate_message_for_tests(
-        &incoming_message_pda, // pda of second message
+        &incoming_message_pda,
         &signing_pda,
-        message_leaf_one.message, // fisrst message
-        signing_pda_bump,         // signing pda of first message
+        // tamper with the message
+        Message {
+            payload_hash: [123; 32],
+            ..message_leaf_one.message
+        },
     )
     .unwrap();
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
@@ -266,9 +245,8 @@ fn validate_message_for_tests(
     incoming_message_pda: &Pubkey,
     signing_pda: &Pubkey,
     message: Message,
-    signing_pda_bump: u8,
 ) -> Result<Instruction, ProgramError> {
-    let mut res = validate_message(incoming_message_pda, signing_pda, message, signing_pda_bump)?;
+    let mut res = validate_message(incoming_message_pda, signing_pda, message)?;
     // needed because we cannot sign with a PDA without creating a real on-chain
     // program
     res.accounts[1].is_signer = false;

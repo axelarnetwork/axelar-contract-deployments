@@ -1,10 +1,8 @@
 //! Module for the signature verification session PDA data layout type.
 
-use std::mem;
-
 use bytemuck::{Pod, Zeroable};
 
-use super::signature_verification::SignatureVerification;
+use super::{signature_verification::SignatureVerification, BytemuckedPda};
 
 /// The data layout of a signature verification PDA
 ///
@@ -21,18 +19,17 @@ pub struct SignatureVerificationSessionData {
     _pad: [u8; 15],
 }
 
-impl SignatureVerificationSessionData {
-    /// Size, in bytes, to represent a value of this type.
-    pub const LEN: usize = mem::size_of::<Self>();
-}
+impl BytemuckedPda for SignatureVerificationSessionData {}
 
 #[cfg(test)]
 mod tests {
+    use std::mem::size_of;
+
     use super::*;
 
     #[test]
     fn test_initialization() {
-        let buffer = [0u8; SignatureVerificationSessionData::LEN];
+        let buffer = [0u8; size_of::<SignatureVerificationSessionData>()];
         let from_pod: &SignatureVerificationSessionData = bytemuck::cast_ref(&buffer);
         let default = &SignatureVerificationSessionData::default();
         assert_eq!(from_pod, default);
@@ -43,8 +40,8 @@ mod tests {
 
     #[test]
     fn test_serialization() {
-        let mut buffer: [u8; SignatureVerificationSessionData::LEN] =
-            [42; SignatureVerificationSessionData::LEN];
+        let mut buffer: [u8; size_of::<SignatureVerificationSessionData>()] =
+            [42; size_of::<SignatureVerificationSessionData>()];
 
         let original_state;
 

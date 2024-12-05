@@ -3,6 +3,7 @@ use std::sync::Arc;
 use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
+use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::{
     make_verifier_set, random_bytes, random_message,
 };
@@ -207,30 +208,35 @@ async fn test_fails_to_verify_signature_for_different_merkle_root() {
     let leaf_info = execute_data.signing_verifier_set_leaves.get_mut(0).unwrap();
     let verifier_set_tracker_pda = metadata.signers.verifier_set_tracker().0;
 
+    let random_valid_merkle_root = {
+        let payload = Payload::Messages(Messages(vec![random_message(); 5]));
+        let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
+        metadata
+            .initialize_payload_verification_session(&execute_data)
+            .await
+            .unwrap();
+        execute_data.payload_merkle_root
+    };
+
     // Verify the signature
     let ix = axelar_solana_gateway::instructions::verify_signature(
         metadata.gateway_root_pda,
         verifier_set_tracker_pda,
-        random_bytes(), // <- this is the failure culprit
+        random_valid_merkle_root, // <- this is the failure culprit
         leaf_info.clone(),
     )
     .unwrap();
     let tx_result = metadata
         .send_tx(&[
-            ComputeBudgetInstruction::set_compute_unit_limit(250_000),
+            ComputeBudgetInstruction::set_compute_unit_limit(1_250_000),
             ix,
         ])
         .await
         .unwrap_err();
+
     assert!(tx_result
-        .metadata
-        .expect("transaction should've returned with metadata")
-        .log_messages
-        .iter()
-        .any(|log| {
-            log.to_lowercase()
-                .contains("session account data is corrupt")
-        }));
+        .find_log("Digital signature verification failed")
+        .is_some());
 }
 
 #[tokio::test]
@@ -390,7 +396,7 @@ fn can_verify_signatures_with_ecrecover_recovery_id() {
         panic!("unexpected pubkey type");
     };
 
-    let is_valid = axelar_solana_gateway::axelar_auth_weighted::verify_ecdsa_signature(
+    let is_valid = axelar_solana_gateway::state::config::verify_ecdsa_signature(
         &pubkey,
         &signature,
         &message_hash,
@@ -411,7 +417,7 @@ fn can_verify_signatures_with_standard_recovery_id() {
         panic!("unexpected pubkey type");
     };
 
-    let is_valid = axelar_solana_gateway::axelar_auth_weighted::verify_ecdsa_signature(
+    let is_valid = axelar_solana_gateway::state::config::verify_ecdsa_signature(
         &pubkey,
         &signature,
         &message_hash,

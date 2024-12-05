@@ -7,11 +7,12 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
-use crate::axelar_auth_weighted::verify_ecdsa_signature;
+use crate::state::config::verify_ecdsa_signature;
 use crate::state::signature_verification::SignatureVerifier;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
-use crate::state::GatewayConfig;
+use crate::state::{BytemuckedPda, GatewayConfig};
+use crate::{assert_valid_gateway_root_pda, assert_valid_signature_verification_pda};
 
 impl Processor {
     /// Handles the
@@ -30,28 +31,21 @@ impl Processor {
         let verifier_set_tracker_account = next_account_info(accounts_iter)?;
 
         // Check: Gateway Root PDA is initialized.
-        let gateway_config = gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
+        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+        let data = gateway_root_pda.try_borrow_data()?;
+        let gateway_config = GatewayConfig::read(&data)?;
+        assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
+        // Check: Verification session PDA is initialized.
+        verification_session_account.check_initialized_pda_without_deserialization(program_id)?;
         let mut data = verification_session_account.try_borrow_mut_data()?;
-        let data_bytes: &mut [u8; SignatureVerificationSessionData::LEN] =
-            (*data).try_into().map_err(|_err| {
-                solana_program::msg!("session account data is corrupt");
-                ProgramError::InvalidAccountData
-            })?;
-        let session: &mut SignatureVerificationSessionData = bytemuck::cast_mut(data_bytes);
-
-        // Check: Verification PDA can be derived from seeds stored into the account
-        // data itself.
-        {
-            let expected_pda = crate::create_signature_verification_pda(
-                gateway_root_pda.key,
-                &payload_merkle_root,
-                session.bump,
-            )?;
-            if expected_pda != *verification_session_account.key {
-                return Err(ProgramError::InvalidSeeds);
-            }
-        }
+        let session = SignatureVerificationSessionData::read_mut(&mut data)?;
+        assert_valid_signature_verification_pda(
+            gateway_root_pda.key,
+            &payload_merkle_root,
+            session.bump,
+            verification_session_account.key,
+        )?;
 
         // Obtain the active verifier set tracker.
         let verifier_set_tracker = verifier_set_tracker_account
@@ -105,8 +99,8 @@ impl SignatureVerifier for OnChainSignatureVerifier {
             (Signature::EcdsaRecoverable(signature), PublicKey::Secp256k1(pubkey)) => {
                 verify_ecdsa_signature(pubkey, signature, message)
             }
-            (Signature::Ed25519(_), PublicKey::Ed25519(_)) => {
-                unimplemented!("ed25519 signature verification is not implemented")
+            (Signature::Ed25519(_signature), PublicKey::Ed25519(_pubkey)) => {
+                unimplemented!()
             }
             _ => {
                 solana_program::msg!(

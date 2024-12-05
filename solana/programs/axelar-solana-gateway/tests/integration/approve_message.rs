@@ -5,12 +5,12 @@ use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, MerkleisedP
 use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::LeafHash;
-use axelar_solana_gateway::get_incoming_message_pda;
 use axelar_solana_gateway::instructions::approve_messages;
 use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{
     command_id, IncomingMessage, IncomingMessageWrapper,
 };
+use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda};
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, make_messages, make_verifier_set, ProgramInvocationState,
 };
@@ -58,7 +58,6 @@ async fn successfully_approves_messages() {
             metadata.payer.pubkey(),
             verification_session_pda,
             incoming_message_pda,
-            incoming_message_pda_bump,
         )
         .unwrap();
         let tx = metadata.send_tx(&[ix]).await.unwrap();
@@ -82,13 +81,16 @@ async fn successfully_approves_messages() {
         };
         assert_eq!(emitted_event, &expected_event);
 
+        let (_, signing_pda_bump) =
+            get_validate_message_signing_pda(expected_event.destination_address, command_id);
+
         // Assert PDA state for message approval
         let account = metadata.incoming_message(incoming_message_pda).await;
         let expected_message = IncomingMessageWrapper {
             message: IncomingMessage::new(hash),
             bump: incoming_message_pda_bump,
-            _padding_bump: [0; 7],
-            _padding_size: [0; 32],
+            signing_pda_bump,
+            _padding_bump: [0; 6],
         };
         assert_eq!(account, expected_message);
         counter += 1;
@@ -149,6 +151,9 @@ async fn successfully_idempotent_approvals_across_batches() {
             .unwrap();
         message_counter += 1;
 
+        let destination_address =
+            Pubkey::from_str(&message_info.leaf.message.destination_address).unwrap();
+
         let emitted_events = get_gateway_events(&tx).pop().unwrap();
         let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
             panic!("unexpected event")
@@ -164,13 +169,15 @@ async fn successfully_idempotent_approvals_across_batches() {
         );
         let (incoming_message_pda, incoming_message_pda_bump) =
             get_incoming_message_pda(&command_id);
+        let (_, signing_pda_bump) =
+            get_validate_message_signing_pda(destination_address, command_id);
 
         let account = metadata.incoming_message(incoming_message_pda).await;
         let expected_message = IncomingMessageWrapper {
             message: IncomingMessage::new(hash),
             bump: incoming_message_pda_bump,
-            _padding_bump: [0; 7],
-            _padding_size: [0; 32],
+            signing_pda_bump,
+            _padding_bump: [0; 6],
         };
         assert_eq!(account, expected_message);
     }

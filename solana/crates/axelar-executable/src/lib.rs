@@ -5,7 +5,8 @@ use core::str::FromStr;
 
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::get_validate_message_signing_pda;
-use axelar_solana_gateway::state::incoming_message::command_id;
+use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessageWrapper};
+use axelar_solana_gateway::state::BytemuckedPda;
 use num_traits::{FromPrimitive, ToPrimitive};
 use rkyv::bytecheck::{self, CheckBytes};
 use rkyv::{Deserialize, Infallible};
@@ -47,8 +48,17 @@ pub fn validate_message(
     accounts: &[AccountInfo<'_>],
     data: &ArchivedAxelarExecutablePayload,
 ) -> ProgramResult {
-    let (_relayer_prepended_accs, origin_chain_provided_accs) =
+    let (relayer_prepended_accs, origin_chain_provided_accs) =
         accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
+
+    let signing_pda_bump = {
+        // scope to release the account after reading the data we want
+        let accounts_iter = &mut relayer_prepended_accs.iter();
+        let incoming_message_pda = next_account_info(accounts_iter)?;
+        let incoming_message_data = incoming_message_pda.try_borrow_data()?;
+        let incoming_message = IncomingMessageWrapper::read(&incoming_message_data)?;
+        incoming_message.signing_pda_bump
+    };
 
     let axelar_payload = AxelarMessagePayload::new(
         data.payload_without_accounts.as_slice(),
@@ -63,7 +73,7 @@ pub fn validate_message(
             .deserialize(&mut Infallible)
             .map_err(|_err| ProgramError::InvalidArgument)?,
         axelar_payload.hash()?.0.borrow(),
-        data.signing_pda_bump,
+        signing_pda_bump,
     )
 }
 
@@ -122,7 +132,6 @@ fn validate_message_internal(
             gateway_incoming_message.key,
             signing_pda.key,
             message.clone(),
-            signing_pda_derived_bump,
         )?,
         &[gateway_incoming_message.clone(), signing_pda.clone()],
         &[&[&command_id, &[signing_pda_derived_bump]]],
@@ -164,8 +173,7 @@ pub fn construct_axelar_executable_ix(
         .map_err(|_er| ProgramError::InvalidAccountData)?;
 
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
-    let (signing_pda, signing_pda_bump) =
-        get_validate_message_signing_pda(destination_address, command_id);
+    let (signing_pda, _) = get_validate_message_signing_pda(destination_address, command_id);
 
     let payload = AxelarExecutablePayload {
         payload_without_accounts,
@@ -174,7 +182,6 @@ pub fn construct_axelar_executable_ix(
             .encoding_scheme()
             .to_u8()
             .ok_or(ProgramError::InvalidArgument)?,
-        signing_pda_bump,
     };
     let encoded_payload = rkyv::to_bytes::<_, 0>(&payload)
         .map_err(|_err| ProgramError::InvalidArgument)?
@@ -216,9 +223,6 @@ pub struct AxelarExecutablePayload {
 
     /// The encoding scheme used to encode this payload.
     pub encoding_scheme: u8,
-
-    /// The bump for the signing PDA
-    pub signing_pda_bump: u8,
 }
 
 /// Axelar executable command prefix

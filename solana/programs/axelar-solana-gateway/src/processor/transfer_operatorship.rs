@@ -5,13 +5,12 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
-use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 
 use super::event_utils::{read_array, EventParseError};
 use super::Processor;
-use crate::event_prefixes;
-use crate::state::GatewayConfig;
+use crate::state::{BytemuckedPda, GatewayConfig};
+use crate::{assert_valid_gateway_root_pda, event_prefixes};
 
 impl Processor {
     /// Transfer operatorship of the Gateway to a new address.
@@ -26,10 +25,11 @@ impl Processor {
         let programdata_account = next_account_info(&mut accounts_iter)?;
         let new_operator = next_account_info(&mut accounts_iter)?;
 
-        // Check: Config account uses the canonical bump.
-        // Unpack Gateway configuration data.
-        let mut gateway_config =
-            gateway_root_pda.check_initialized_pda::<GatewayConfig>(program_id)?;
+        // Check: Gateway Root PDA is initialized.
+        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+        let mut data = gateway_root_pda.try_borrow_mut_data()?;
+        let gateway_config = GatewayConfig::read_mut(&mut data)?;
+        assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
         // Check: programdata account derived correctly (it holds the upgrade authority
         // information)
@@ -77,14 +77,6 @@ impl Processor {
 
         // Update the opreatorship field
         gateway_config.operator = *new_operator.key;
-        msg!(
-            "Operatorship transferred to: {:?}",
-            new_operator.key.to_string()
-        );
-
-        // Store the gateway data back to the account.
-        let mut data = gateway_root_pda.try_borrow_mut_data()?;
-        gateway_config.pack_into_slice(&mut data);
 
         // Emit an event
         sol_log_data(&[
