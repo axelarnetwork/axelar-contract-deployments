@@ -1,14 +1,11 @@
 //! # `InterchainTokenService` program
 use bitflags::bitflags;
-use program_utils::StorableArchive;
-use solana_program::account_info::next_account_info;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use state::InterchainTokenService;
 
 mod entrypoint;
 pub mod executable;
@@ -367,34 +364,4 @@ pub(crate) fn create_associated_token_account_idempotent<'a>(
 #[must_use]
 pub fn interchain_token_id(deployer: &Pubkey, salt: &[u8]) -> [u8; 32] {
     solana_program::keccak::hashv(&[deployer.as_ref(), salt]).to_bytes()
-}
-
-/// Used to validate that the caller is the Interchain Token Service
-///
-/// # Errors
-///
-/// If the caller is not the Interchain Token Service
-pub fn validate_interchain_token_execute_call(accounts: &[AccountInfo<'_>]) -> ProgramResult {
-    let account_iter = &mut accounts.iter();
-    let gateway_root_account = next_account_info(account_iter)?;
-    let signing_pda_account = next_account_info(account_iter)?;
-    msg!("Validating interchain token execute call");
-
-    if !signing_pda_account.is_signer {
-        msg!(
-            "Signing PDA account must be a signer: {}",
-            signing_pda_account.key
-        );
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    let its_root_config = InterchainTokenService::load(&id(), signing_pda_account)?;
-    let (expected_signing_pda, _) =
-        create_its_root_pda(gateway_root_account.key, its_root_config.bump);
-
-    if expected_signing_pda.ne(signing_pda_account.key) {
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    Ok(())
 }
