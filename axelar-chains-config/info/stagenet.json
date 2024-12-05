@@ -1514,13 +1514,15 @@
           "initialVerifierSetId": "c7483b242156a8149fe6c4efcf62184d9fbf6b1be5530872f80a472d33070cf6",
           "governance": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
-          "implementation": "0xC5578b1c63CE803B9f7f185652CC1E14Af887b8f",
-          "implementationCodehash": "0x3bd2a46c04ccf59a0e454ef828232d66a71c5a9b8004e0ea516257a7ad0aa21c",
-          "deploymentMethod": "create",
+          "implementation": "0x97eE3BfaD32ff53eC13071fBE65CeBA062eCC99d",
+          "implementationCodehash": "0x3c16450323c6b2aae8627b39f48b231e591db5e1274a45081eae6cc9775e59c3",
+          "deploymentMethod": "create2",
           "previousSignersRetention": 15,
           "domainSeparator": "0x3dad2b901117c30d4f601c3b9e9ee89cec4371e79e9908122e8e1da1904347ee",
           "minimumRotationDelay": 300,
-          "connectionType": "amplifier"
+          "connectionType": "amplifier",
+          "owner": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "salt": "v6.0.4"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
