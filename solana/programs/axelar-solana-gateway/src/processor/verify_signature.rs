@@ -1,5 +1,4 @@
 use axelar_solana_encoding::types::execute_data::SigningVerifierSetInfo;
-use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -7,12 +6,13 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
-use crate::state::config::verify_ecdsa_signature;
-use crate::state::signature_verification::SignatureVerifier;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::{BytemuckedPda, GatewayConfig};
-use crate::{assert_valid_gateway_root_pda, assert_valid_signature_verification_pda};
+use crate::{
+    assert_valid_gateway_root_pda, assert_valid_signature_verification_pda,
+    assert_valid_verifier_set_tracker_pda,
+};
 
 impl Processor {
     /// Handles the
@@ -47,13 +47,14 @@ impl Processor {
             verification_session_account.key,
         )?;
 
-        // Obtain the active verifier set tracker.
-        let verifier_set_tracker = verifier_set_tracker_account
-            .check_initialized_pda::<VerifierSetTracker>(program_id)
-            .map_err(|error| {
-                solana_program::msg!("Invalid VerifierSetTracker PDA");
-                error
-            })?;
+        // Check: Active verifier set tracker PDA is initialized.
+        verifier_set_tracker_account.check_initialized_pda_without_deserialization(program_id)?;
+        let data = verifier_set_tracker_account.try_borrow_data()?;
+        let verifier_set_tracker = VerifierSetTracker::read(&data)?;
+        assert_valid_verifier_set_tracker_pda(
+            verifier_set_tracker,
+            verifier_set_tracker_account.key,
+        )?;
 
         // Check: Verifier set isn't expired
         let is_epoch_valid = gateway_config
@@ -74,7 +75,6 @@ impl Processor {
                 verifier_info,
                 &verifier_set_tracker.verifier_set_hash,
                 &payload_merkle_root,
-                &OnChainSignatureVerifier,
             )
             .map_err(|error| {
                 solana_program::msg!("Error: {}", error);
@@ -82,32 +82,5 @@ impl Processor {
             })?;
 
         Ok(())
-    }
-}
-
-/// Performs elliptic curve calculations on chain to verify digital signatures.
-struct OnChainSignatureVerifier;
-
-impl SignatureVerifier for OnChainSignatureVerifier {
-    fn verify_signature(
-        &self,
-        signature: &Signature,
-        public_key: &PublicKey,
-        message: &[u8; 32],
-    ) -> bool {
-        match (signature, public_key) {
-            (Signature::EcdsaRecoverable(signature), PublicKey::Secp256k1(pubkey)) => {
-                verify_ecdsa_signature(pubkey, signature, message)
-            }
-            (Signature::Ed25519(_signature), PublicKey::Ed25519(_pubkey)) => {
-                unimplemented!()
-            }
-            _ => {
-                solana_program::msg!(
-                    "Error: Invalid combination of Secp256k1 and Ed25519 signature and public key"
-                );
-                false
-            }
-        }
     }
 }

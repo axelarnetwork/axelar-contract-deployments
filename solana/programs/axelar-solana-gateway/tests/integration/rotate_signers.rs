@@ -83,6 +83,7 @@ async fn successfully_rotates_signers() {
         verifier_set_tracker_data,
         VerifierSetTracker {
             bump: new_verifier_set.verifier_set_tracker().1,
+            _padding: [0; 7],
             epoch: new_epoch,
             verifier_set_hash: new_verifier_set_hash
         }
@@ -277,8 +278,9 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
         vs_tracker,
         VerifierSetTracker {
             bump: new_vs_tracker_bump,
+            _padding: [0; 7],
             epoch: new_epoch,
-            verifier_set_hash: new_verifier_set_hash
+            verifier_set_hash: new_verifier_set_hash,
         }
     );
 }

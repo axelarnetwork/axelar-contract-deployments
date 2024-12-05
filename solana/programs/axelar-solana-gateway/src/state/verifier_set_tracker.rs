@@ -1,11 +1,9 @@
 //! Module for the `VerifierSetTracker` account type.
-use std::mem::size_of;
 
 use axelar_message_primitives::U256;
-use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::msg;
-use solana_program::program_error::ProgramError;
-use solana_program::program_pack::{Pack, Sealed};
+use bytemuck::{Pod, Zeroable};
+
+use super::BytemuckedPda;
 
 /// Ever-incrementing counter for keeping track of the sequence of signer sets
 pub type Epoch = U256;
@@ -15,16 +13,20 @@ pub type VerifierSetHash = [u8; 32];
 /// PDA that keeps track of core information about the verifier set.
 /// We keep the track of the hash + epoch (sequential order of which verifier
 /// set this is)
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Eq, Clone)]
+#[derive(Zeroable, Pod, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct VerifierSetTracker {
     /// The canonical bump for this account.
     pub bump: u8,
+    /// Padding for the bump
+    pub _padding: [u8; 7],
     /// The epoch associated with this verifier set
     pub epoch: Epoch,
     /// The verifier set hash
     pub verifier_set_hash: VerifierSetHash,
 }
+
+impl BytemuckedPda for VerifierSetTracker {}
 
 impl std::fmt::Debug for VerifierSetTracker {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -33,23 +35,5 @@ impl std::fmt::Debug for VerifierSetTracker {
             .field("epoch", &self.epoch)
             .field("verifier_set_hash", &hex::encode(self.verifier_set_hash))
             .finish()
-    }
-}
-
-impl Sealed for VerifierSetTracker {}
-
-impl Pack for VerifierSetTracker {
-    const LEN: usize = { size_of::<u8>() + size_of::<Epoch>() + size_of::<VerifierSetHash>() };
-
-    fn pack_into_slice(&self, mut dst: &mut [u8]) {
-        self.serialize(&mut dst).unwrap();
-    }
-
-    fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
-        let mut mut_src: &[u8] = src;
-        Self::deserialize(&mut mut_src).map_err(|err| {
-            msg!("Error: failed to deserialize account: {}", err);
-            ProgramError::InvalidAccountData
-        })
     }
 }

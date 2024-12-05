@@ -1,4 +1,5 @@
 use std::convert::TryInto;
+use std::mem::size_of;
 
 use axelar_message_primitives::U256;
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
@@ -82,13 +83,14 @@ impl Processor {
             return Err(ProgramError::InvalidAccountData);
         }
 
-        // Obtain the active verifier set tracker.
-        let verifier_set_tracker = verifier_set_tracker_account
-            .check_initialized_pda::<VerifierSetTracker>(program_id)
-            .map_err(|error| {
-                msg!("Invalid VerifierSetTracker PDA");
-                error
-            })?;
+        // Check: Active verifier set tracker PDA is initialized.
+        verifier_set_tracker_account.check_initialized_pda_without_deserialization(program_id)?;
+        let data = verifier_set_tracker_account.try_borrow_data()?;
+        let verifier_set_tracker = VerifierSetTracker::read(&data)?;
+        assert_valid_verifier_set_tracker_pda(
+            verifier_set_tracker,
+            verifier_set_tracker_account.key,
+        )?;
 
         // Check: we got the expected verifier set
         if verifier_set_tracker.verifier_set_hash
@@ -145,29 +147,38 @@ impl Processor {
             .current_epoch
             .checked_add(U256::ONE)
             .ok_or(ProgramError::ArithmeticOverflow)?;
+
         let (_, new_verifier_set_bump) = get_verifier_set_tracker_pda(new_verifier_set_merkle_root);
-        let new_verifier_set_tracker = VerifierSetTracker {
-            bump: new_verifier_set_bump,
-            epoch: gateway_config.current_epoch,
-            verifier_set_hash: new_verifier_set_merkle_root,
-        };
+        new_empty_verifier_set.check_uninitialized_pda()?;
 
-        assert_valid_verifier_set_tracker_pda(
-            &new_verifier_set_tracker,
-            new_empty_verifier_set.key,
-        )?;
-
-        program_utils::init_pda(
+        // Initialize the tracker account
+        program_utils::init_pda_raw(
             payer,
             new_empty_verifier_set,
             program_id,
             system_account,
-            new_verifier_set_tracker.clone(),
+            size_of::<VerifierSetTracker>() as u64,
             &[
                 seed_prefixes::VERIFIER_SET_TRACKER_SEED,
-                new_verifier_set_tracker.verifier_set_hash.as_slice(),
-                &[new_verifier_set_tracker.bump],
+                new_verifier_set_merkle_root.as_slice(),
+                &[new_verifier_set_bump],
             ],
+        )?;
+
+        // store account data
+        let mut data = new_empty_verifier_set.try_borrow_mut_data()?;
+        let new_verifier_set_tracker = VerifierSetTracker::read_mut(&mut data)?;
+        *new_verifier_set_tracker = VerifierSetTracker {
+            bump: new_verifier_set_bump,
+            _padding: [0; 7],
+            epoch: gateway_config.current_epoch,
+            verifier_set_hash: new_verifier_set_merkle_root,
+        };
+
+        // check that everything has been derived correctly
+        assert_valid_verifier_set_tracker_pda(
+            new_verifier_set_tracker,
+            new_empty_verifier_set.key,
         )?;
 
         // Emit an event

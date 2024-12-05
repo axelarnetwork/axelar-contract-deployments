@@ -381,10 +381,22 @@ impl SolanaAxelarIntegrationMetadata {
         &mut self,
         verifiers_set_tracker_pda: Pubkey,
     ) -> VerifierSetTracker {
-        self.banks_client
-            .get_account_data_with_borsh(verifiers_set_tracker_pda)
+        let verifiers_set_tracker_pda_account = self
+            .banks_client
+            .get_account(verifiers_set_tracker_pda)
             .await
-            .expect("could not get the account & deserialise it")
+            .ok()
+            .flatten()
+            .expect("Gateway account should exist");
+
+        assert_eq!(
+            verifiers_set_tracker_pda_account.owner,
+            axelar_solana_gateway::ID,
+            "must be owned by the gateway"
+        );
+        let res = *VerifierSetTracker::read(verifiers_set_tracker_pda_account.data()).unwrap();
+
+        res
     }
 
     /// Get the verifier set tracker data

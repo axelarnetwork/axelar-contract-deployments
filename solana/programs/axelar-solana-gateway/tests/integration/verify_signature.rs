@@ -3,6 +3,7 @@ use std::sync::Arc;
 use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
+use axelar_solana_gateway::state::signature_verification::verify_ecdsa_signature;
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::{
     make_verifier_set, random_bytes, random_message,
@@ -49,7 +50,7 @@ async fn test_verify_one_signature(
     metadata
         .send_tx(&[
             // native digital signature verification won't work without bumping the compute budget.
-            ComputeBudgetInstruction::set_compute_unit_limit(250_000),
+            ComputeBudgetInstruction::set_compute_unit_limit(260_000),
             ix,
         ])
         .await
@@ -109,7 +110,7 @@ async fn test_verify_all_signatures() {
         .unwrap();
         metadata
             .send_tx(&[
-                ComputeBudgetInstruction::set_compute_unit_limit(250_000),
+                ComputeBudgetInstruction::set_compute_unit_limit(260_000),
                 ix,
             ])
             .await
@@ -175,7 +176,7 @@ async fn test_fails_to_verify_bad_signature() {
     .unwrap();
     let tx_result = metadata
         .send_tx(&[
-            ComputeBudgetInstruction::set_compute_unit_limit(250_000),
+            ComputeBudgetInstruction::set_compute_unit_limit(260_000),
             ix,
         ])
         .await
@@ -228,7 +229,7 @@ async fn test_fails_to_verify_signature_for_different_merkle_root() {
     .unwrap();
     let tx_result = metadata
         .send_tx(&[
-            ComputeBudgetInstruction::set_compute_unit_limit(1_250_000),
+            ComputeBudgetInstruction::set_compute_unit_limit(260_000),
             ix,
         ])
         .await
@@ -295,7 +296,7 @@ async fn test_large_weight_will_validate_whole_batch() {
     let _tx_result = metadata
         .send_tx(&[
             // native digital signature verification won't work without bumping the compute budget.
-            ComputeBudgetInstruction::set_compute_unit_limit(250_000),
+            ComputeBudgetInstruction::set_compute_unit_limit(260_000),
             ix,
         ])
         .await
@@ -355,7 +356,7 @@ async fn fail_verification_if_non_registered_verifier_set_signed_batch() {
         .unwrap()
         .log_messages
         .into_iter()
-        .any(|msg| { msg.contains("Invalid VerifierSetTracker PDA") }));
+        .any(|msg| { msg.contains("account does not have enough lamports") }));
 }
 
 #[tokio::test]
@@ -396,11 +397,7 @@ fn can_verify_signatures_with_ecrecover_recovery_id() {
         panic!("unexpected pubkey type");
     };
 
-    let is_valid = axelar_solana_gateway::state::config::verify_ecdsa_signature(
-        &pubkey,
-        &signature,
-        &message_hash,
-    );
+    let is_valid = verify_ecdsa_signature(&pubkey, &signature, &message_hash);
     assert!(is_valid);
 }
 
@@ -417,10 +414,6 @@ fn can_verify_signatures_with_standard_recovery_id() {
         panic!("unexpected pubkey type");
     };
 
-    let is_valid = axelar_solana_gateway::state::config::verify_ecdsa_signature(
-        &pubkey,
-        &signature,
-        &message_hash,
-    );
+    let is_valid = verify_ecdsa_signature(&pubkey, &signature, &message_hash);
     assert!(is_valid);
 }

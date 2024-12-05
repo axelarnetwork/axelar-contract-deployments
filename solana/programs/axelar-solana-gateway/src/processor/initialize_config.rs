@@ -51,27 +51,36 @@ impl Processor {
                 .try_into()
                 .map_err(|_| ProgramError::InvalidInstructionData)?;
             let epoch = U256::from_u64(idx + 1);
+
             let (_, pda_bump) = get_verifier_set_tracker_pda(*verifier_set_hash);
-            let tracker = VerifierSetTracker {
-                bump: pda_bump,
-                epoch,
-                verifier_set_hash: *verifier_set_hash,
-            };
-            // check that everything has been derived correctly
-            assert_valid_verifier_set_tracker_pda(&tracker, verifier_set_pda.key)?;
             verifier_set_pda.check_uninitialized_pda()?;
-            program_utils::init_pda(
+
+            // Initialize the tracker account
+            program_utils::init_pda_raw(
                 payer,
                 verifier_set_pda,
                 program_id,
                 system_account,
-                tracker,
+                size_of::<VerifierSetTracker>() as u64,
                 &[
                     seed_prefixes::VERIFIER_SET_TRACKER_SEED,
                     verifier_set_hash.as_slice(),
                     &[pda_bump],
                 ],
             )?;
+
+            // store account data
+            let mut data = verifier_set_pda.try_borrow_mut_data()?;
+            let tracker = VerifierSetTracker::read_mut(&mut data)?;
+            *tracker = VerifierSetTracker {
+                bump: pda_bump,
+                _padding: [0; 7],
+                epoch,
+                verifier_set_hash: *verifier_set_hash,
+            };
+
+            // check that everything has been derived correctly
+            assert_valid_verifier_set_tracker_pda(tracker, verifier_set_pda.key)?;
         }
 
         let (_, bump) = get_gateway_root_config_internal(program_id);

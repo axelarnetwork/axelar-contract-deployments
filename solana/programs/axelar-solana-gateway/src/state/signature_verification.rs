@@ -1,7 +1,5 @@
 //! Multi-step signature verification.
 
-use std::mem;
-
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::SigningVerifierSetInfo;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
@@ -13,10 +11,11 @@ use bitvec::view::BitView;
 use bytemuck::{Pod, Zeroable};
 
 use super::verifier_set_tracker::VerifierSetHash;
+use super::BytemuckedPda;
 
 /// Controls the signature verification session for a given payload.
 #[repr(C)]
-#[derive(Default, Clone, Copy, Pod, Zeroable, Debug, Eq, PartialEq)]
+#[derive(Zeroable, Pod, Clone, Default, Copy, PartialEq, Eq, Debug)]
 pub struct SignatureVerification {
     /// Accumulated signer threshold required to validate the payload.
     ///
@@ -45,6 +44,8 @@ pub struct SignatureVerification {
     pub signing_verifier_set_hash: VerifierSetHash,
 }
 
+impl BytemuckedPda for SignatureVerification {}
+
 /// Errors that can happen during a signature verification session.
 #[derive(Debug, thiserror::Error)]
 pub enum SignatureVerificationError {
@@ -68,9 +69,6 @@ pub enum SignatureVerificationError {
 }
 
 impl SignatureVerification {
-    /// The length, in bytes, of the serialized representation for this type.
-    pub const LEN: usize = mem::size_of::<Self>();
-
     /// Returns `true` if a sufficient number of signatures have been verified.
     pub fn is_valid(&self) -> bool {
         self.accumulated_threshold == u128::MAX
@@ -82,7 +80,6 @@ impl SignatureVerification {
         verifier_info: SigningVerifierSetInfo,
         verifier_set_merkle_root: &[u8; 32],
         payload_merkle_root: &[u8; 32],
-        signature_verifier: &impl SignatureVerifier,
     ) -> Result<(), SignatureVerificationError> {
         let merkle_proof =
             rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&verifier_info.merkle_proof)
@@ -98,7 +95,6 @@ impl SignatureVerification {
             &verifier_info.leaf.signer_pubkey,
             payload_merkle_root,
             &verifier_info.signature,
-            signature_verifier,
         )?;
 
         // Update state
@@ -156,13 +152,26 @@ impl SignatureVerification {
         public_key: &PublicKey,
         message: &[u8; 32],
         signature: &Signature,
-        signature_verifier: &impl SignatureVerifier,
     ) -> Result<(), SignatureVerificationError> {
-        if signature_verifier.verify_signature(signature, public_key, message) {
-            Ok(())
-        } else {
-            Err(SignatureVerificationError::InvalidDigitalSignature)
+        let is_valid = match (signature, public_key) {
+            (Signature::EcdsaRecoverable(signature), PublicKey::Secp256k1(pubkey)) => {
+                verify_ecdsa_signature(pubkey, signature, message)
+            }
+            (Signature::Ed25519(_signature), PublicKey::Ed25519(_pubkey)) => {
+                unimplemented!()
+            }
+            _ => {
+                solana_program::msg!(
+                    "Error: Invalid combination of Secp256k1 and Ed25519 signature and public key"
+                );
+                false
+            }
+        };
+        if is_valid {
+            return Ok(());
         }
+
+        Err(SignatureVerificationError::InvalidDigitalSignature)
     }
 
     #[inline]
@@ -217,14 +226,74 @@ impl SignatureVerification {
     }
 }
 
-/// A trait for types that can verify digital signatures.
-pub trait SignatureVerifier {
-    /// Verifies if the `signature` was created using the `public_key` for the
-    /// given `message`.
-    fn verify_signature(
-        &self,
-        signature: &Signature,
-        public_key: &PublicKey,
-        message: &[u8; 32],
-    ) -> bool;
+/// Verifies an ECDSA signature against a given message and public key using the
+/// secp256k1 curve.
+///
+/// Returns `true` if the signature is valid and corresponds to the public key
+/// and message; otherwise, returns `false`.
+pub fn verify_ecdsa_signature(
+    pubkey: &axelar_solana_encoding::types::pubkey::Secp256k1Pubkey,
+    signature: &axelar_solana_encoding::types::pubkey::EcdsaRecoverableSignature,
+    message: &[u8; 32],
+) -> bool {
+    // The recovery bit in the signature's bytes is placed at the end, as per the
+    // 'multisig-prover' contract by Axelar. Unwrap: we know the 'signature'
+    // slice exact size, and it isn't empty.
+    let (signature, recovery_id) = match signature {
+        [first_64 @ .., recovery_id] => (first_64, recovery_id),
+    };
+
+    // Transform from Ethereum recovery_id (27, 28) to a range accepted by
+    // secp256k1_recover (0, 1, 2, 3)
+    let recovery_id = if *recovery_id >= 27 {
+        recovery_id - 27
+    } else {
+        *recovery_id
+    };
+
+    // This is results in a Solana syscall.
+    let secp256k1_recover =
+        solana_program::secp256k1_recover::secp256k1_recover(message, recovery_id, signature);
+    let Ok(recovered_uncompressed_pubkey) = secp256k1_recover else {
+        solana_program::msg!("Failed to recover ECDSA signature");
+        return false;
+    };
+
+    // unwrap: provided pukey is guaranteed to be secp256k1 key
+    let pubkey = libsecp256k1::PublicKey::parse_compressed(pubkey)
+        .unwrap()
+        .serialize();
+
+    // we drop the const prefix byte that indicates that this is an uncompressed
+    // pubkey
+    let full_pubkey = match pubkey {
+        [_tag, pubkey @ ..] => pubkey,
+    };
+    recovered_uncompressed_pubkey.to_bytes() == full_pubkey
+}
+
+/// Verifies an ECDSA signature against a given message and public key using the
+/// secp256k1 curve.
+///
+/// Returns `true` if the signature is valid and corresponds to the public key
+/// and message; otherwise, returns `false`.
+#[deprecated(note = "Trying to verify Ed25519 signatures on-chain will exhaust the compute budget")]
+pub fn verify_eddsa_signature(
+    pubkey: &axelar_solana_encoding::types::pubkey::Ed25519Pubkey,
+    signature: &axelar_solana_encoding::types::pubkey::Ed25519Signature,
+    message: &[u8; 32],
+) -> bool {
+    use ed25519_dalek::{Signature, Verifier, VerifyingKey};
+    let verifying_key = match VerifyingKey::from_bytes(pubkey) {
+        Ok(verifying_key) => verifying_key,
+        Err(error) => {
+            solana_program::msg!("Failed to parse signer public key: {}", error);
+            return false;
+        }
+    };
+    let signature = Signature::from_bytes(signature);
+    // The implementation of `verify` only returns an atomic variant
+    // `InternalError::Verify` in case of verification failure, so we can safely
+    // ignore the error value.
+    verifying_key.verify(message, &signature).is_ok()
 }

@@ -1,6 +1,5 @@
 use axelar_message_primitives::U256;
 use axelar_solana_gateway::get_gateway_root_config_pda;
-use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway::state::GatewayConfig;
 use axelar_solana_gateway_test_fixtures::{
     SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
@@ -25,9 +24,7 @@ fn cmp_config(init: &SolanaAxelarIntegrationMetadata, created: &GatewayConfig) -
 async fn assert_verifier_sets(metadata: &mut SolanaAxelarIntegrationMetadata) {
     let vs_data = metadata.init_gateway_config_verifier_set_data();
     for (idx, (verifier_set_hash, pda)) in vs_data.into_iter().enumerate() {
-        // assert_eq!(bump, bump2, "bumps don't match");
-        let vst = metadata.get_account(&pda, &axelar_solana_gateway::ID).await;
-        let vs_data = borsh::from_slice::<VerifierSetTracker>(&vst.data).unwrap();
+        let vs_data = metadata.verifier_set_tracker(pda).await;
         let epoch = U256::from_u64(idx as u64 + 1);
 
         assert_eq!(
