@@ -1188,7 +1188,6 @@ impl SolanaAxelarIntegration {
                 .join("target")
                 .join("deploy")
                 .join(program_name);
-            dbg!(&program_bytecode_path);
             let program_bytecode = tokio::fs::read(&program_bytecode_path).await.unwrap();
             fixture
                 .register_upgradeable_program(&program_bytecode, &upgrade_authority, &program_id)

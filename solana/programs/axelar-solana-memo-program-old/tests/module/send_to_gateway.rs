@@ -46,7 +46,7 @@ async fn test_successfully_send_to_gateway() {
 
     // Assert
     // We can get the memo from the logs
-    let log_msgs = dbg!(tx.metadata.unwrap().log_messages);
+    let log_msgs = tx.metadata.unwrap().log_messages;
 
     let gateway_event = log_msgs
         .iter()

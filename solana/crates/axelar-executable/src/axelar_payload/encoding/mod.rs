@@ -171,7 +171,6 @@ mod tests {
 
             // Action
             let axelar_payload_encoded = payload.encode().unwrap();
-            dbg!(&axelar_payload_encoded);
             let axelar_payload_decoded =
                 AxelarMessagePayload::decode(&axelar_payload_encoded).unwrap();
 

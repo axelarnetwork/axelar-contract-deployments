@@ -311,7 +311,6 @@ async fn test_large_weight_will_validate_whole_batch() {
     let session = metadata
         .signature_verification_session(verification_pda)
         .await;
-    dbg!(&session);
 
     assert_eq!(session.bump, bump);
 

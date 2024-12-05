@@ -178,7 +178,6 @@ mod tests {
 
             // Action
             let axelar_payload_encoded = payload.encode().unwrap();
-            dbg!(&axelar_payload_encoded);
             let axelar_payload_decoded = DataPayload::decode(&axelar_payload_encoded).unwrap();
 
             // Assert

@@ -162,7 +162,7 @@ async fn call_solana_gateway(
     destination_address: &ethers_core::types::H160,
 ) -> CallContractEvent {
     let destination_address = destination_address.encode_hex();
-    dbg!(&destination_address);
+
     let (counter, ..) = get_counter_pda(gateway_root_pda);
     let transaction = Transaction::new_signed_with_payer(
         &[call_gateway_with_memo(

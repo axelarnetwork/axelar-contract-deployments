@@ -116,11 +116,10 @@ async fn successfully_idempotent_approvals_across_batches() {
     };
 
     // approve the initial message batch
-    let m = metadata
+    let _m = metadata
         .sign_session_and_approve_messages(&metadata.signers.clone(), &messages_batch_one)
         .await
         .unwrap();
-    dbg!(&m);
 
     // approve the second message batch
     let payload = Payload::Messages(Messages(messages_batch_two.clone()));
@@ -139,7 +138,6 @@ async fn successfully_idempotent_approvals_across_batches() {
     let mut events_counter = 0;
     let mut message_counter = 0;
     for message_info in merkle_messages_batch_two {
-        dbg!(&message_info);
         let hash = message_info.leaf.message.hash::<SolanaSyscallHasher>();
         let tx = metadata
             .approve_message(
@@ -278,7 +276,7 @@ async fn fails_to_approve_message_not_in_payload() {
     let ap = || approved_messages.clone().into_iter();
     let valid_leaves = || ap().map(|x| x.leaf).collect_vec();
     let valid_proofs = || ap().map(|x| x.proof).collect_vec();
-    for (idx, (merkle_root, leaves, proofs)) in [
+    for (merkle_root, leaves, proofs) in [
         (fake_payload_merkle_root, fake_leaves(), fake_proofs()),
         (fake_payload_merkle_root, fake_leaves(), valid_proofs()),
         (fake_payload_merkle_root, valid_leaves(), valid_proofs()),
@@ -287,10 +285,8 @@ async fn fails_to_approve_message_not_in_payload() {
         (payload_merkle_root, valid_leaves(), fake_proofs()),
     ]
     .into_iter()
-    .enumerate()
     {
         for (leaf, proof) in leaves.into_iter().zip(proofs.into_iter()) {
-            dbg!(idx);
             let new_message_info = MerkleisedMessage { leaf, proof };
             metadata
                 .approve_message(merkle_root, new_message_info, verification_session_pda)
@@ -344,15 +340,13 @@ async fn fails_to_approve_message_using_verifier_set_as_the_root() {
     let fake_proofs = || fm().map(|x| x.proof).collect_vec();
 
     // Create a fake message that is not part of the payload
-    for (idx, (merkle_root, leaves, proofs)) in [
+    for (merkle_root, leaves, proofs) in [
         (fake_payload_merkle_root, fake_leaves(), fake_proofs()),
         (new_verifier_set_merkle_root, fake_leaves(), fake_proofs()),
     ]
     .into_iter()
-    .enumerate()
     {
         for (leaf, proof) in leaves.into_iter().zip(proofs.into_iter()) {
-            dbg!(idx);
             let new_message_info = MerkleisedMessage { leaf, proof };
             metadata
                 .approve_message(merkle_root, new_message_info, verification_session_pda)
