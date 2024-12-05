@@ -2089,11 +2089,16 @@
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "65",
-        "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d"
+        "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky"
+
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "68",
-        "storeCodeProposalCodeHash": "c7286d0f59276b794641bdfbb4f96fafcee3553b67f3397d662a4683968f525b"
+        "storeCodeProposalCodeHash": "c7286d0f59276b794641bdfbb4f96fafcee3553b67f3397d662a4683968f525b",
+        "chainName": "axelar",
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r"
       }
     },
     "axelarId": "axelar",
