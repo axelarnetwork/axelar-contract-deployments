@@ -35,6 +35,12 @@ const addBaseOptions = (program, options = {}) => {
         program.addOption(new Option('--address <address>', 'override contract address'));
     }
 
+    if (options.offline) {
+        program.addOption(new Option('--sender <sender>', 'transaction sender'));
+        program.addOption(new Option('--offline', 'store tx block for sign'));
+        program.addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'));
+    }
+
     return program;
 };
 
