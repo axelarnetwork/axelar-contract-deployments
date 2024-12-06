@@ -875,18 +875,6 @@
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 8
         },
-        "avalanche-fuji": {
-          "maxUintBits": 256,
-          "maxDecimalsWhenTruncating": 255
-        },
-        "optimism-sepolia": {
-          "maxUintBits": 256,
-          "maxDecimalsWhenTruncating": 255
-        },
-        "eth-sepolia": {
-          "maxUintBits": 256,
-          "maxDecimalsWhenTruncating": 255
-        },
         "storeCodeProposalId": "58",
         "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d",
         "lastUploadedCodeId": 843
