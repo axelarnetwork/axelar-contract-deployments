@@ -629,6 +629,7 @@
       "rpc": "https://soroban-testnet.stellar.org",
       "horizonRpc": "https://horizon-testnet.stellar.org",
       "networkType": "testnet",
+      "chainType": "stellar",
       "explorer": {
         "name": "Soroban Nownodes",
         "url": "https://soroban.nownodes.io/testnet"
@@ -688,6 +689,7 @@
       "networkType": "testnet",
       "rpc": "https://sui-testnet-rpc.publicnode.com:443",
       "tokenSymbol": "SUI",
+      "chainType": "sui",
       "explorer": {
         "name": "Suiscan",
         "url": "https://suiscan.xyz/testnet"
