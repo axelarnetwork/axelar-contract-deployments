@@ -1841,6 +1841,7 @@
           "codeId": 17,
           "address": "axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk"
         },
+        "address": "axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk",
         "lastUploadedCodeId": 17
       },
       "AxelarnetGateway": {
@@ -1855,7 +1856,8 @@
           "address": "axelar1s9amtxejrdlsunwdf0cclhjtezdp6wmurxxnh45gfvtpa2jrsusqv934n6"
         },
         "lastUploadedCodeId": 20
-      }
+      },
+      "undefined": {}
     },
     "axelarId": "axelar",
     "chainId": "axelar-stagenet-724",
