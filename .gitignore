@@ -118,3 +118,4 @@ sui/move
 
 # VSCode
 .vscode
+.DS_Store
