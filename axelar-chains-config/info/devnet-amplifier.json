@@ -749,6 +749,18 @@
             ],
             "avalanche-fuji": [
               "hub"
+            ],
+            "core-avalanche": [
+              "hub"
+            ],
+            "flow": [
+              "hub"
+            ],
+            "core-ethereum": [
+              "hub"
+            ],
+            "core-optimism": [
+              "hub"
             ]
           }
         },
