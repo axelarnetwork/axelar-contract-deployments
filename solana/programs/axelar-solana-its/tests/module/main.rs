@@ -57,7 +57,9 @@ use spl_token_2022::extension::ExtensionType;
 use spl_token_2022::state::Mint;
 
 const SOLANA_CHAIN_NAME: &str = "solana-localnet";
-const ITS_CHAIN_NAME: &str = "axelar";
+const ITS_HUB_TRUSTED_CHAIN_NAME: &str = "axelar";
+const ITS_HUB_TRUSTED_CONTRACT_ADDRESS: &str =
+    "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4";
 
 pub struct ItsProgramWrapper {
     pub solana_chain: SolanaAxelarIntegrationMetadata,
@@ -138,7 +140,7 @@ pub fn random_hub_message_with_destination_and_payload(
     let mut message = random_message();
     message.destination_address = destination_address;
     message.payload_hash = payload_hash;
-    message.source_address = "hub".to_string();
+    message.source_address = ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_string();
     message
 }
 
@@ -200,7 +202,10 @@ async fn axelar_evm_setup() -> (
 
     its_contracts
         .interchain_token_service
-        .set_trusted_address(ITS_CHAIN_NAME.to_owned(), "hub".to_owned())
+        .set_trusted_address(
+            ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
+            ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
+        )
         .send()
         .await
         .unwrap()
@@ -248,7 +253,7 @@ async fn ensure_evm_gateway_approval(
 
     let is_approved = gateway
         .is_message_approved(
-            ITS_CHAIN_NAME.to_owned(),
+            ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
             message.message_id.clone(),
             message.source_address.clone(),
             message.contract_address,
@@ -260,14 +265,16 @@ async fn ensure_evm_gateway_approval(
     assert!(is_approved, "contract call was not approved");
 
     gateway
-        .message_to_command_id(ITS_CHAIN_NAME.to_owned(), message.message_id.clone())
+        .message_to_command_id(
+            ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
+            message.message_id.clone(),
+        )
         .await
         .unwrap()
 }
 
 fn prepare_evm_approve_contract_call(
     payload_hash: [u8; 32],
-    sender: String,
     destination_address: Address,
     signer_set: &mut evm_weighted_signers::WeightedSigners,
     domain_separator: [u8; 32],
@@ -275,9 +282,9 @@ fn prepare_evm_approve_contract_call(
     // TODO: use address from the contract call once we have the trusted addresses
     // in place (the address is currently empty)
     let message = EvmAxelarMessage {
-        source_chain: ITS_CHAIN_NAME.to_owned(),
+        source_chain: ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
         message_id: String::from_utf8_lossy(&payload_hash).to_string(),
-        source_address: sender,
+        source_address: ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_string(),
         contract_address: destination_address,
         payload_hash,
     };

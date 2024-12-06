@@ -28,8 +28,9 @@ pub mod interchain_token;
 pub mod interchain_transfer;
 pub mod token_manager;
 
-const ITS_HUB_CHAIN_NAME: &str = "axelar";
-const ITS_HUB_ROUTING_IDENTIFIER: &str = "hub";
+const ITS_HUB_TRUSTED_CHAIN_NAME: &str = "axelar";
+const ITS_HUB_TRUSTED_CONTRACT_ADDRESS: &str =
+    "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4";
 
 pub(crate) trait LocalAction {
     fn process_local_action<'a>(
@@ -228,7 +229,7 @@ fn process_inbound_its_gmp_payload<'a>(
         .as_slice()
         .split_at(PROGRAM_ACCOUNTS_START_INDEX);
 
-    if message.source_address != ITS_HUB_ROUTING_IDENTIFIER {
+    if message.source_address != ITS_HUB_TRUSTED_CONTRACT_ADDRESS {
         msg!("Untrusted source address: {}", message.source_address);
         return Err(ProgramError::InvalidInstructionData);
     }
@@ -343,8 +344,8 @@ fn process_outbound_its_gmp_payload<'a>(
             axelar_solana_gateway::id(),
             *gateway_root_pda.key,
             *its_root_pda.key,
-            ITS_HUB_CHAIN_NAME.to_owned(),
-            ITS_HUB_ROUTING_IDENTIFIER.to_owned(),
+            ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
+            ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
             hub_payload.encode(),
         )?,
         &[its_root_pda.clone(), gateway_root_pda.clone()],
