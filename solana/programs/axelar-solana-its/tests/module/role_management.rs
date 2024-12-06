@@ -290,9 +290,8 @@ async fn test_successful_token_manager_operator_transfer() {
         salt.as_slice(),
     );
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
     let deploy_instruction = DeployInterchainTokenInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .name(token_name.to_owned())
@@ -390,9 +389,8 @@ async fn test_successful_token_manager_operator_proposal_acceptance() {
         salt.as_slice(),
     );
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
     let deploy_instruction = DeployInterchainTokenInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .name(token_name.to_owned())
@@ -524,9 +522,8 @@ async fn test_successful_token_manager_minter_transfer() {
         salt.as_slice(),
     );
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
     let deploy_instruction = DeployInterchainTokenInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .name(token_name.to_owned())
@@ -624,9 +621,8 @@ async fn test_successful_token_manager_minter_proposal_acceptance() {
         salt.as_slice(),
     );
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
     let deploy_instruction = DeployInterchainTokenInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .name(token_name.to_owned())
@@ -759,9 +755,8 @@ async fn test_fail_token_manager_minter_proposal_acceptance() {
         salt.as_slice(),
     );
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
     solana_chain
         .fixture
@@ -859,9 +854,7 @@ async fn test_fail_mint_without_minter_role(#[case] token_program_id: Pubkey) {
 
     let token_id =
         axelar_solana_its::interchain_token_id(&solana_chain.fixture.payer.pubkey(), b"salt");
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, token_id.as_ref());
-    let mint_authority = axelar_solana_its::find_token_manager_pda(&interchain_token_pda).0;
+    let (mint_authority, _) = axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
     let mint = solana_chain
         .fixture
         .init_new_mint(mint_authority, token_program_id, 18)

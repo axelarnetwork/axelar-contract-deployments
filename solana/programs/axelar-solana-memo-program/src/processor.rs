@@ -28,9 +28,9 @@ use crate::instruction::AxelarMemoInstruction;
 use crate::state::Counter;
 
 /// Instruction processor
-pub fn process_instruction(
+pub fn process_instruction<'a>(
     program_id: &Pubkey,
-    accounts: &[AccountInfo<'_>],
+    accounts: &'a [AccountInfo<'a>],
     input: &[u8],
 ) -> ProgramResult {
     check_program_account(program_id, crate::check_id)?;
@@ -57,9 +57,9 @@ pub fn process_instruction(
 
 /// Process a message submitted by the relayer which originates from the Axelar
 /// network
-pub fn process_message_from_axelar_with_token(
+pub fn process_message_from_axelar_with_token<'a>(
     program_id: &Pubkey,
-    accounts: &[AccountInfo<'_>],
+    accounts: &'a [AccountInfo<'a>],
     payload: &ArchivedAxelarInterchainTokenExecutablePayload,
 ) -> ProgramResult {
     validate_interchain_token_execute_call(accounts)?;

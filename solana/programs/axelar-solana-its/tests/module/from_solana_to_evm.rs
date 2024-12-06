@@ -668,9 +668,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         salt.as_slice(),
     );
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
     let mint = solana_chain
         .fixture
@@ -929,9 +928,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
         salt.as_slice(),
     );
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
     let mint = solana_chain
         .fixture
@@ -1176,9 +1174,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
         salt.as_slice(),
     );
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
     let fee_basis_points = 50_u16;
     let maximum_fee = u64::MAX;

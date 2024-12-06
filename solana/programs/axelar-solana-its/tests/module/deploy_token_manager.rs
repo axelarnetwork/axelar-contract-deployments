@@ -47,9 +47,8 @@ async fn test_deploy_token_manager(#[case] token_program_id: Pubkey) {
         salt.as_slice(),
     );
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
     let token_manager: TokenManager = solana_chain
         .fixture

@@ -22,9 +22,13 @@ use spl_token_metadata_interface::state::{Field, TokenMetadata};
 
 use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInternal};
 use super::LocalAction;
-use crate::instructions::{self, Bumps, OptionalAccountsFlags};
+use crate::instructions::{self, OptionalAccountsFlags};
 use crate::state::token_manager::{self, TokenManager};
-use crate::{seed_prefixes, FromAccountInfoSlice, Roles};
+use crate::state::InterchainTokenService;
+use crate::{
+    assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
+    Roles,
+};
 
 const TOKEN_ID_KEY: &str = "token_id";
 
@@ -33,11 +37,10 @@ impl LocalAction for DeployInterchainToken {
         self,
         payer: &'a AccountInfo<'a>,
         accounts: &'a [AccountInfo<'a>],
-        bumps: Bumps,
         _optional_accounts_flags: OptionalAccountsFlags,
         _message: Option<Message>,
     ) -> ProgramResult {
-        process_deploy(payer, accounts, self, bumps)
+        process_deploy(payer, accounts, self)
     }
 }
 
@@ -101,7 +104,7 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
 impl<'a> From<DeployInterchainTokenAccounts<'a>> for DeployTokenManagerAccounts<'a> {
     fn from(value: DeployInterchainTokenAccounts<'a>) -> Self {
         Self {
-            _gateway_root_pda: value.gateway_root_pda,
+            gateway_root_pda: value.gateway_root_pda,
             system_account: value.system_account,
             its_root_pda: value.its_root_pda,
             token_manager_pda: value.token_manager_pda,
@@ -129,25 +132,47 @@ pub fn process_deploy<'a>(
     payer: &'a AccountInfo<'a>,
     accounts: &'a [AccountInfo<'a>],
     payload: DeployInterchainToken,
-    bumps: Bumps,
 ) -> ProgramResult {
     let parsed_accounts = DeployInterchainTokenAccounts::from_account_info_slice(accounts, &())?;
+    let its_root_pda_bump =
+        InterchainTokenService::load_readonly(&crate::id(), parsed_accounts.its_root_pda)?.bump;
+    assert_valid_its_root_pda(
+        parsed_accounts.its_root_pda,
+        parsed_accounts.gateway_root_pda.key,
+        its_root_pda_bump,
+    )?;
+
+    let (interchain_token_pda, interchain_token_pda_bump) = crate::find_interchain_token_pda(
+        parsed_accounts.its_root_pda.key,
+        payload.token_id.as_ref(),
+    );
+    if interchain_token_pda.ne(parsed_accounts.token_mint.key) {
+        msg!("Invalid mint account provided");
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    let (token_manager_pda, token_manager_pda_bump) =
+        crate::find_token_manager_pda(parsed_accounts.its_root_pda.key, &payload.token_id);
+    if token_manager_pda.ne(parsed_accounts.token_manager_pda.key) {
+        msg!("Invalid TokenManager account provided");
+        return Err(ProgramError::InvalidArgument);
+    }
 
     setup_mint(
         payer,
         &parsed_accounts,
-        bumps,
         payload.decimals,
         &payload.token_id.0,
+        interchain_token_pda_bump,
     )?;
     setup_metadata(
         payer,
         &parsed_accounts,
-        bumps,
         &payload.token_id.0,
         payload.name,
         payload.symbol,
         String::new(),
+        token_manager_pda_bump,
     )?;
 
     // The minter passed in the DeployInterchainToken call is used as the
@@ -165,8 +190,8 @@ pub fn process_deploy<'a>(
     super::token_manager::deploy(
         payer,
         &deploy_token_manager_accounts,
-        bumps,
         &deploy_token_manager,
+        token_manager_pda_bump,
     )?;
 
     Ok(())
@@ -176,13 +201,19 @@ fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> ProgramResu
     let accounts_iter = &mut accounts.iter();
     let mint = next_account_info(accounts_iter)?;
     let destination_account = next_account_info(accounts_iter)?;
-    let interchain_token_pda = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
     let token_manager_pda = next_account_info(accounts_iter)?;
     let minter = next_account_info(accounts_iter)?;
     let minter_roles_pda = next_account_info(accounts_iter)?;
     let token_program = next_account_info(accounts_iter)?;
 
     let token_manager = TokenManager::load_readonly(&crate::id(), token_manager_pda)?;
+    assert_valid_token_manager_pda(
+        token_manager_pda,
+        its_root_pda.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
 
     if token_manager.token_address.as_ref() != mint.key.as_ref() {
         return Err(ProgramError::InvalidAccountData);
@@ -216,7 +247,8 @@ fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> ProgramResu
         ],
         &[&[
             seed_prefixes::TOKEN_MANAGER_SEED,
-            interchain_token_pda.key.as_ref(),
+            its_root_pda.key.as_ref(),
+            token_manager.token_id.as_ref(),
             &[token_manager.bump],
         ]],
     )?;
@@ -226,9 +258,9 @@ fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> ProgramResu
 fn setup_mint<'a>(
     payer: &AccountInfo<'a>,
     accounts: &DeployInterchainTokenAccounts<'a>,
-    bumps: Bumps,
     decimals: u8,
     token_id: &[u8],
+    interchain_token_pda_bump: u8,
 ) -> ProgramResult {
     let rent = Rent::get()?;
     let account_size =
@@ -255,7 +287,7 @@ fn setup_mint<'a>(
             seed_prefixes::INTERCHAIN_TOKEN_SEED,
             accounts.its_root_pda.key.as_ref(),
             token_id,
-            &[bumps.interchain_token_pda_bump],
+            &[interchain_token_pda_bump],
         ]],
     )?;
 
@@ -295,19 +327,13 @@ fn setup_mint<'a>(
 fn setup_metadata<'a>(
     payer: &AccountInfo<'a>,
     accounts: &DeployInterchainTokenAccounts<'a>,
-    bumps: Bumps,
     token_id: &[u8],
     name: String,
     symbol: String,
     uri: String,
+    token_manager_pda_bump: u8,
 ) -> ProgramResult {
     let rent = Rent::get()?;
-    let (interchain_token_pda, _) = crate::create_interchain_token_pda(
-        accounts.its_root_pda.key,
-        token_id,
-        bumps.interchain_token_pda_bump,
-    );
-
     let token_metadata = TokenMetadata {
         update_authority: OptionalNonZeroPubkey(*accounts.token_manager_pda.key),
         name,
@@ -352,8 +378,9 @@ fn setup_metadata<'a>(
         ],
         &[&[
             seed_prefixes::TOKEN_MANAGER_SEED,
-            interchain_token_pda.as_ref(),
-            &[bumps.token_manager_pda_bump],
+            accounts.its_root_pda.key.as_ref(),
+            token_id,
+            &[token_manager_pda_bump],
         ]],
     )?;
 
@@ -372,8 +399,9 @@ fn setup_metadata<'a>(
         ],
         &[&[
             seed_prefixes::TOKEN_MANAGER_SEED,
-            interchain_token_pda.as_ref(),
-            &[bumps.token_manager_pda_bump],
+            accounts.its_root_pda.key.as_ref(),
+            token_id,
+            &[token_manager_pda_bump],
         ]],
     )?;
 
@@ -385,16 +413,16 @@ fn process_minter_instruction<'a>(
     instruction: instructions::minter::Instruction,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let interchain_token_pda = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
     let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
-    let token_manager = TokenManager::load(&crate::id(), role_management_accounts.resource)?;
-    let (derived_token_manager_pda, _) =
-        crate::create_token_manager_pda(interchain_token_pda.key, token_manager.bump);
-
-    if derived_token_manager_pda.ne(role_management_accounts.resource.key) {
-        msg!("Invalid token manager PDA provided");
-        return Err(ProgramError::InvalidAccountData);
-    }
+    let token_manager =
+        TokenManager::load_readonly(&crate::id(), role_management_accounts.resource)?;
+    assert_valid_token_manager_pda(
+        role_management_accounts.resource,
+        its_root_pda.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
 
     match instruction {
         instructions::minter::Instruction::TransferMintership(inputs) => {

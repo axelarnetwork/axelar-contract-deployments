@@ -4,7 +4,7 @@ use axelar_executable::AxelarMessagePayload;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use interchain_token_transfer_gmp::InterchainTransfer;
-use program_utils::{check_rkyv_initialized_pda, StorableArchive};
+use program_utils::StorableArchive;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -21,24 +21,25 @@ use spl_token_2022::state::Mint;
 
 use super::LocalAction;
 use crate::executable::{AxelarInterchainTokenExecutablePayload, AXELAR_INTERCHAIN_TOKEN_EXECUTE};
-use crate::instructions::{Bumps, InterchainTransferInputs, OptionalAccountsFlags};
+use crate::instructions::{InterchainTransferInputs, OptionalAccountsFlags};
 use crate::processor::token_manager as token_manager_processor;
 use crate::state::flow_limit::{self, FlowDirection, FlowSlot};
-use crate::state::token_manager::{self, TokenManager};
+use crate::state::token_manager::{self, ArchivedTokenManager, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{seed_prefixes, FromAccountInfoSlice};
+use crate::{
+    assert_valid_flow_slot_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
+};
 
 impl LocalAction for InterchainTransfer {
     fn process_local_action<'a>(
         self,
         payer: &'a AccountInfo<'a>,
         accounts: &'a [AccountInfo<'a>],
-        bumps: Bumps,
         _optional_accounts_flags: OptionalAccountsFlags,
         message: Option<Message>,
     ) -> ProgramResult {
         let message = message.ok_or(ProgramError::InvalidArgument)?;
-        process_inbound_transfer(message, payer, accounts, &self, bumps)
+        process_inbound_transfer(message, payer, accounts, &self)
     }
 }
 
@@ -75,16 +76,23 @@ pub fn process_inbound_transfer<'a>(
     payer: &'a AccountInfo<'a>,
     accounts: &'a [AccountInfo<'a>],
     payload: &InterchainTransfer,
-    bumps: Bumps,
 ) -> ProgramResult {
     let parsed_accounts = GiveTokenAccounts::from_account_info_slice(accounts, &payer)?;
+    let token_manager =
+        TokenManager::load_readonly(&crate::id(), parsed_accounts.token_manager_pda)?;
+    assert_valid_token_manager_pda(
+        parsed_accounts.token_manager_pda,
+        parsed_accounts.its_root_pda.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
 
     let Ok(converted_amount) = payload.amount.try_into() else {
         msg!("Failed to convert amount");
         return Err(ProgramError::InvalidInstructionData);
     };
 
-    give_token(&parsed_accounts, converted_amount, bumps)?;
+    give_token(&parsed_accounts, &token_manager, converted_amount)?;
 
     if !payload.data.is_empty() {
         let program_account = parsed_accounts.destination_wallet;
@@ -121,9 +129,11 @@ pub fn process_inbound_transfer<'a>(
             payload.token_id.0,
             converted_amount,
         )?;
-        let its_root_bump =
-            InterchainTokenService::load(&crate::id(), axelar_executable_accounts.its_root_pda)?
-                .bump;
+        let its_root_bump = InterchainTokenService::load_readonly(
+            &crate::id(),
+            axelar_executable_accounts.its_root_pda,
+        )?
+        .bump;
 
         invoke_signed(
             &its_execute_instruction,
@@ -187,10 +197,18 @@ fn build_axelar_interchain_token_execute(
 pub(crate) fn process_outbound_transfer<'a>(
     mut inputs: InterchainTransferInputs,
     accounts: &'a [AccountInfo<'a>],
-    bumps: Bumps,
 ) -> ProgramResult {
     let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
-    let amount_minus_fees = take_token(&take_token_accounts, inputs.amount, bumps)?;
+    let token_manager =
+        TokenManager::load_readonly(&crate::id(), take_token_accounts.token_manager_pda)?;
+    assert_valid_token_manager_pda(
+        take_token_accounts.token_manager_pda,
+        take_token_accounts.its_root_pda.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
+
+    let amount_minus_fees = take_token(&take_token_accounts, &token_manager, inputs.amount)?;
     inputs.amount = amount_minus_fees;
 
     let destination_chain = inputs
@@ -214,31 +232,25 @@ pub(crate) fn process_outbound_transfer<'a>(
 
 pub(crate) fn take_token(
     accounts: &TakeTokenAccounts<'_>,
+    token_manager: &ArchivedTokenManager,
     amount: u64,
-    bumps: Bumps,
 ) -> Result<u64, ProgramError> {
-    let (token_manager_type, _, flow_limit) = get_token_manager_info(accounts.token_manager_pda)?;
-
     token_manager_processor::validate_token_manager_type(
-        token_manager_type,
+        token_manager.ty.into(),
         accounts.token_mint,
         accounts.token_manager_pda,
     )?;
 
-    handle_take_token_transfer(token_manager_type, accounts, bumps, amount, flow_limit)
+    handle_take_token_transfer(accounts, token_manager, amount)
 }
 
-fn give_token(accounts: &GiveTokenAccounts<'_>, amount: u64, bumps: Bumps) -> ProgramResult {
-    let (token_manager_type, token_id, flow_limit) =
-        get_token_manager_info(accounts.token_manager_pda)?;
-    let (interchain_token_pda, _) = crate::create_interchain_token_pda(
-        accounts.its_root_pda.key,
-        &token_id,
-        bumps.interchain_token_pda_bump,
-    );
-
+fn give_token(
+    accounts: &GiveTokenAccounts<'_>,
+    token_manager: &ArchivedTokenManager,
+    amount: u64,
+) -> ProgramResult {
     token_manager_processor::validate_token_manager_type(
-        token_manager_type,
+        token_manager.ty.into(),
         accounts.token_mint,
         accounts.token_manager_pda,
     )?;
@@ -252,36 +264,13 @@ fn give_token(accounts: &GiveTokenAccounts<'_>, amount: u64, bumps: Bumps) -> Pr
         accounts.token_program,
     )?;
 
-    handle_give_token_transfer(
-        token_manager_type,
-        accounts,
-        interchain_token_pda.as_ref(),
-        bumps,
-        amount,
-        flow_limit,
-    )?;
+    handle_give_token_transfer(accounts, token_manager, amount)?;
 
     Ok(())
-}
-fn get_token_manager_info(
-    token_manager_pda: &AccountInfo<'_>,
-) -> Result<(token_manager::Type, Vec<u8>, u64), ProgramError> {
-    let token_manager_pda_data = token_manager_pda.try_borrow_data()?;
-    let token_manager = check_rkyv_initialized_pda::<TokenManager>(
-        &crate::id(),
-        token_manager_pda,
-        token_manager_pda_data.as_ref(),
-    )?;
-    Ok((
-        token_manager.ty.into(),
-        token_manager.token_id.to_bytes(),
-        token_manager.flow_limit,
-    ))
 }
 
 fn track_token_flow(
     accounts: &FlowTrackingAccounts<'_>,
-    bumps: Bumps,
     flow_limit: u64,
     amount: u64,
     direction: FlowDirection,
@@ -291,21 +280,26 @@ fn track_token_flow(
     }
 
     let current_flow_epoch = flow_limit::current_flow_epoch()?;
-    let (flow_slot_key, flow_slot_pda_bump) = crate::flow_slot_pda(
-        accounts.token_manager_pda.key,
-        current_flow_epoch,
-        bumps.flow_slot_pda_bump,
-    );
-
-    if flow_slot_key != *accounts.flow_slot_pda.key {
-        return Err(ProgramError::InvalidArgument);
-    }
-
     if let Ok(mut flow_slot) = FlowSlot::load(&crate::id(), accounts.flow_slot_pda) {
+        assert_valid_flow_slot_pda(
+            accounts.flow_slot_pda,
+            accounts.token_manager_pda.key,
+            current_flow_epoch,
+            flow_slot.bump,
+        )?;
+
         flow_slot.add_flow(flow_limit, amount, direction)?;
         flow_slot.store(accounts.flow_slot_pda)?;
     } else {
-        let flow_slot = FlowSlot::new(flow_limit, 0, amount)?;
+        let (flow_slot_pda, flow_slot_pda_bump) =
+            crate::find_flow_slot_pda(accounts.token_manager_pda.key, current_flow_epoch);
+
+        if flow_slot_pda.ne(accounts.flow_slot_pda.key) {
+            msg!("Invalid flow slot PDA provided");
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        let flow_slot = FlowSlot::new(flow_limit, 0, amount, flow_slot_pda_bump)?;
         flow_slot.init(
             &crate::id(),
             accounts.system_account,
@@ -324,38 +318,37 @@ fn track_token_flow(
 }
 
 fn handle_give_token_transfer(
-    token_manager_type: token_manager::Type,
     accounts: &GiveTokenAccounts<'_>,
-    interchain_token_pda_bytes: &[u8],
-    bumps: Bumps,
+    token_manager: &ArchivedTokenManager,
     amount: u64,
-    flow_limit: u64,
 ) -> ProgramResult {
-    use token_manager::Type::{
+    use token_manager::ArchivedType::{
         LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
     };
 
     track_token_flow(
         &accounts.into(),
-        bumps,
-        flow_limit,
+        token_manager.flow_limit,
         amount,
         FlowDirection::In,
     )?;
+    let token_id = token_manager.token_id;
+    let token_manager_pda_bump = token_manager.bump;
 
     let signer_seeds = &[
         seed_prefixes::TOKEN_MANAGER_SEED,
-        interchain_token_pda_bytes,
-        &[bumps.token_manager_pda_bump],
+        accounts.its_root_pda.key.as_ref(),
+        &token_id,
+        &[token_manager_pda_bump],
     ];
-    match token_manager_type {
+    match token_manager.ty {
         NativeInterchainToken | MintBurn | MintBurnFrom => mint_to(
+            accounts.its_root_pda,
             accounts.token_program,
             accounts.token_mint,
             accounts.destination_ata,
             accounts.token_manager_pda,
-            interchain_token_pda_bytes,
-            bumps.token_manager_pda_bump,
+            token_manager,
             amount,
         ),
         LockUnlock => {
@@ -379,28 +372,28 @@ fn handle_give_token_transfer(
 }
 
 fn handle_take_token_transfer(
-    token_manager_type: token_manager::Type,
     accounts: &TakeTokenAccounts<'_>,
-    bumps: Bumps,
+    token_manager: &ArchivedTokenManager,
     amount: u64,
-    flow_limit: u64,
 ) -> Result<u64, ProgramError> {
-    use token_manager::Type::{
+    use token_manager::ArchivedType::{
         LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
     };
 
     track_token_flow(
         &accounts.into(),
-        bumps,
-        flow_limit,
+        token_manager.flow_limit,
         amount,
         FlowDirection::Out,
     )?;
+    let token_id = token_manager.token_id;
+    let token_manager_pda_bump = token_manager.bump;
 
     let token_manager_pda_seeds = &[
         seed_prefixes::TOKEN_MANAGER_SEED,
-        accounts.interchain_token_pda.key.as_ref(),
-        &[bumps.token_manager_pda_bump],
+        accounts.its_root_pda.key.as_ref(),
+        &token_id,
+        &[token_manager_pda_bump],
     ];
 
     let signers_seeds: &[&[u8]] = if accounts.authority.key == accounts.token_manager_pda.key {
@@ -409,7 +402,7 @@ fn handle_take_token_transfer(
         &[]
     };
 
-    let transferred = match token_manager_type {
+    let transferred = match token_manager.ty {
         NativeInterchainToken | MintBurn | MintBurnFrom => {
             burn(
                 accounts.authority,
@@ -509,12 +502,12 @@ const fn create_give_token_transfer_info<'a, 'b>(
 }
 
 fn mint_to<'a>(
+    its_root_pda: &AccountInfo<'a>,
     token_program: &AccountInfo<'a>,
     token_mint: &AccountInfo<'a>,
     destination_ata: &AccountInfo<'a>,
     token_manager_pda: &AccountInfo<'a>,
-    interchain_token_pda_bytes: &[u8],
-    token_manager_pda_bump: u8,
+    token_manager: &ArchivedTokenManager,
     amount: u64,
 ) -> ProgramResult {
     invoke_signed(
@@ -533,8 +526,9 @@ fn mint_to<'a>(
         ],
         &[&[
             seed_prefixes::TOKEN_MANAGER_SEED,
-            interchain_token_pda_bytes,
-            &[token_manager_pda_bump],
+            its_root_pda.key.as_ref(),
+            &token_manager.token_id,
+            &[token_manager.bump],
         ]],
     )?;
 
@@ -633,8 +627,7 @@ pub(crate) struct TakeTokenAccounts<'a> {
     pub(crate) authority: &'a AccountInfo<'a>,
     pub(crate) _gateway_root_pda: &'a AccountInfo<'a>,
     pub(crate) _gateway: &'a AccountInfo<'a>,
-    pub(crate) _its_root_pda: &'a AccountInfo<'a>,
-    pub(crate) interchain_token_pda: &'a AccountInfo<'a>,
+    pub(crate) its_root_pda: &'a AccountInfo<'a>,
     pub(crate) source_account: &'a AccountInfo<'a>,
     pub(crate) token_mint: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -657,8 +650,7 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
             authority: next_account_info(accounts_iter)?,
             _gateway_root_pda: next_account_info(accounts_iter)?,
             _gateway: next_account_info(accounts_iter)?,
-            _its_root_pda: next_account_info(accounts_iter)?,
-            interchain_token_pda: next_account_info(accounts_iter)?,
+            its_root_pda: next_account_info(accounts_iter)?,
             source_account: next_account_info(accounts_iter)?,
             token_mint: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,

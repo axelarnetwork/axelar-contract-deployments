@@ -24,7 +24,6 @@ axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 bitflags.workspace = true
 borsh.workspace = true
 interchain-token-transfer-gmp.workspace = true
-itertools.workspace = true
 program-utils.workspace = true
 rkyv.workspace = true
 role-management.workspace = true

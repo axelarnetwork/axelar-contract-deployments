@@ -20,13 +20,19 @@ const EPOCH_TIME: Duration = Duration::from_secs(6 * 60 * 60);
 pub(crate) struct FlowSlot {
     flow_in: u64,
     flow_out: u64,
+    pub(crate) bump: u8,
 }
 
 impl StorableArchive<0> for FlowSlot {}
 
 /// Module for handling flow limits on interchain tokens.
 impl FlowSlot {
-    pub(crate) fn new(flow_limit: u64, flow_in: u64, flow_out: u64) -> Result<Self, ProgramError> {
+    pub(crate) fn new(
+        flow_limit: u64,
+        flow_in: u64,
+        flow_out: u64,
+        bump: u8,
+    ) -> Result<Self, ProgramError> {
         // There's no need to track anything when the limit is 0 and tracking only
         // starts after the limit is set above 0, thus let's not allow
         // the PDA creation and error out if anyone tries it.
@@ -39,7 +45,11 @@ impl FlowSlot {
             return Err(ProgramError::InvalidArgument);
         }
 
-        Ok(Self { flow_in, flow_out })
+        Ok(Self {
+            flow_in,
+            flow_out,
+            bump,
+        })
     }
 
     pub(crate) fn add_flow(
@@ -128,7 +138,7 @@ mod tests {
         let flow_in = 50;
         let flow_out = 30;
 
-        let slot = FlowSlot::new(flow_limit, flow_in, flow_out).unwrap();
+        let slot = FlowSlot::new(flow_limit, flow_in, flow_out, 0).unwrap();
         assert_eq!(slot.flow_in, flow_in);
         assert_eq!(slot.flow_out, flow_out);
     }
@@ -140,7 +150,7 @@ mod tests {
         let flow_in = 10;
         let flow_out = 10;
 
-        let result = FlowSlot::new(flow_limit, flow_in, flow_out);
+        let result = FlowSlot::new(flow_limit, flow_in, flow_out, 0);
         assert_eq!(result, Err(ProgramError::InvalidArgument));
     }
 
@@ -151,7 +161,7 @@ mod tests {
         let flow_in = 150; // Exceeds flow_limit
         let flow_out = 50;
 
-        let result = FlowSlot::new(flow_limit, flow_in, flow_out);
+        let result = FlowSlot::new(flow_limit, flow_in, flow_out, 0);
         assert_eq!(result, Err(ProgramError::InvalidArgument));
     }
 
@@ -162,7 +172,7 @@ mod tests {
         let flow_in = 50;
         let flow_out = 150; // Exceeds flow_limit
 
-        let result = FlowSlot::new(flow_limit, flow_in, flow_out);
+        let result = FlowSlot::new(flow_limit, flow_in, flow_out, 0);
         assert_eq!(result, Err(ProgramError::InvalidArgument));
     }
 
@@ -170,7 +180,7 @@ mod tests {
     fn test_add_flow_in_valid() {
         // Test adding flow_in within limits
         let flow_limit = 100;
-        let mut slot = FlowSlot::new(flow_limit, 20, 30).unwrap();
+        let mut slot = FlowSlot::new(flow_limit, 20, 30, 0).unwrap();
         let amount = 40;
 
         let result = slot.add_flow(flow_limit, amount, FlowDirection::In);
@@ -182,7 +192,7 @@ mod tests {
     fn test_add_flow_in_exceeds_limit() {
         // Test adding flow_in that exceeds limit should fail
         let flow_limit = 100;
-        let mut slot = FlowSlot::new(flow_limit, 80, 0).unwrap();
+        let mut slot = FlowSlot::new(flow_limit, 80, 0, 0).unwrap();
         let amount = 30; // This would make flow_in 110, exceeding the limit
 
         let result = slot.add_flow(flow_limit, amount, FlowDirection::In);
@@ -194,7 +204,7 @@ mod tests {
     fn test_add_flow_out_valid() {
         // Test adding flow_out within limits
         let flow_limit = 100;
-        let mut slot = FlowSlot::new(flow_limit, 30, 20).unwrap();
+        let mut slot = FlowSlot::new(flow_limit, 30, 20, 0).unwrap();
         let amount = 50;
 
         let result = slot.add_flow(flow_limit, amount, FlowDirection::Out);
@@ -206,7 +216,7 @@ mod tests {
     fn test_add_flow_out_exceeds_limit() {
         // Test adding flow_out that exceeds limit should fail
         let flow_limit = 100;
-        let mut slot = FlowSlot::new(flow_limit, 0, 90).unwrap();
+        let mut slot = FlowSlot::new(flow_limit, 0, 90, 0).unwrap();
         let amount = 20; // This would make flow_out 110, exceeding the limit
 
         let result = slot.add_flow(flow_limit, amount, FlowDirection::Out);
@@ -218,7 +228,7 @@ mod tests {
     fn test_add_flow_in_overflow() {
         // Test arithmetic overflow in add_flow_in
         let flow_limit = u64::MAX;
-        let mut slot = FlowSlot::new(flow_limit, u64::MAX - 10, 0).unwrap();
+        let mut slot = FlowSlot::new(flow_limit, u64::MAX - 10, 0, 0).unwrap();
         let amount = 20;
 
         let result = slot.add_flow(flow_limit, amount, FlowDirection::In);
@@ -231,7 +241,7 @@ mod tests {
     fn test_add_flow_out_overflow() {
         // Test arithmetic overflow in add_flow_out
         let flow_limit = u64::MAX;
-        let mut slot = FlowSlot::new(flow_limit, 0, u64::MAX - 10).unwrap();
+        let mut slot = FlowSlot::new(flow_limit, 0, u64::MAX - 10, 0).unwrap();
         let amount = 20;
 
         let result = slot.add_flow(flow_limit, amount, FlowDirection::Out);
@@ -244,7 +254,7 @@ mod tests {
     fn test_add_flow_zero_flow_limit() {
         // Test behavior when flow_limit is zero in add_flow methods
         let flow_limit = 0;
-        let mut slot = FlowSlot::new(1, 0, 0).unwrap(); // Initial flow_limit must be non-zero
+        let mut slot = FlowSlot::new(1, 0, 0, 0).unwrap(); // Initial flow_limit must be non-zero
 
         let result_in = slot.add_flow(flow_limit, 10, FlowDirection::In);
         let result_out = slot.add_flow(flow_limit, 10, FlowDirection::Out);
@@ -261,7 +271,7 @@ mod tests {
     fn test_add_flow_amount_exceeds_flow_limit() {
         // Test when amount exceeds flow_limit in add_flow methods
         let flow_limit = 50;
-        let mut slot = FlowSlot::new(flow_limit, 0, 0).unwrap();
+        let mut slot = FlowSlot::new(flow_limit, 0, 0, 0).unwrap();
         let amount = 60; // Exceeds flow_limit
 
         let result_in = slot.add_flow(flow_limit, amount, FlowDirection::In);
@@ -277,7 +287,7 @@ mod tests {
     fn test_add_flow_new_total_exceeds_max_allowed_flow() {
         // Test when new_total exceeds max_allowed_flow in add_flow methods
         let flow_limit = 100;
-        let mut slot = FlowSlot::new(flow_limit, 80, 50).unwrap();
+        let mut slot = FlowSlot::new(flow_limit, 80, 50, 0).unwrap();
         let amount = 80; // This would make flow_in 160, which exceeds max_allowed_flow (flow_out +
                          // flow_limit = 150)
 
@@ -291,7 +301,7 @@ mod tests {
     fn test_add_flow_new_total_exceeds_max_allowed_flow_over_multiple_updates() {
         // Test when new_total exceeds max_allowed_flow in add_flow methods
         let flow_limit = 100;
-        let mut slot = FlowSlot::new(flow_limit, 80, 50).unwrap();
+        let mut slot = FlowSlot::new(flow_limit, 80, 50, 0).unwrap();
         let amount = 20; // This would make flow_in 100, which does not exceed max_allowed_flow (flow_out
                          // + flow_limit = 150)
 

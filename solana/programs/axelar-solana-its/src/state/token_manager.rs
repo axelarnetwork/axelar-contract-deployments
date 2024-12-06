@@ -129,13 +129,13 @@ pub struct TokenManager {
     pub ty: Type,
 
     /// The interchain token id.
-    pub token_id: PublicKey,
+    pub token_id: [u8; 32],
 
     /// The token address within the Solana chain.
-    pub token_address: PublicKey,
+    pub token_address: [u8; 32],
 
     /// The associated token account owned by the token manager.
-    pub associated_token_account: PublicKey,
+    pub associated_token_account: [u8; 32],
 
     /// The flow limit for the token manager
     pub flow_limit: u64,
@@ -156,9 +156,9 @@ impl TokenManager {
     #[must_use]
     pub const fn new(
         ty: Type,
-        token_id: PublicKey,
-        token_address: PublicKey,
-        associated_token_account: PublicKey,
+        token_id: [u8; 32],
+        token_address: [u8; 32],
+        associated_token_account: [u8; 32],
         bump: u8,
     ) -> Self {
         Self {
@@ -166,8 +166,8 @@ impl TokenManager {
             token_id,
             token_address,
             associated_token_account,
-            bump,
             flow_limit: 0,
+            bump,
         }
     }
 }

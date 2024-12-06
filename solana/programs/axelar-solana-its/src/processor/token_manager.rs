@@ -1,6 +1,5 @@
 //! Processor for [`TokenManager`] related requests.
 
-use axelar_rkyv_encoding::types::PublicKey;
 use interchain_token_transfer_gmp::DeployTokenManager;
 use program_utils::{StorableArchive, ValidPDA};
 use role_management::processor::{ensure_roles, RoleManagementAccounts};
@@ -17,20 +16,23 @@ use spl_token_2022::instruction::AuthorityType;
 use spl_token_2022::state::Mint;
 
 use super::LocalAction;
-use crate::instructions::{self, Bumps, OptionalAccountsFlags};
+use crate::instructions::{self, OptionalAccountsFlags};
 use crate::state::token_manager::{self, TokenManager};
-use crate::{seed_prefixes, FromAccountInfoSlice, Roles};
+use crate::state::InterchainTokenService;
+use crate::{
+    assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
+    Roles,
+};
 
 impl LocalAction for DeployTokenManager {
     fn process_local_action<'a>(
         self,
         payer: &'a AccountInfo<'a>,
         accounts: &'a [AccountInfo<'a>],
-        bumps: Bumps,
         optional_accounts_flags: OptionalAccountsFlags,
         _message: Option<axelar_solana_encoding::types::messages::Message>,
     ) -> ProgramResult {
-        process_deploy(payer, accounts, &self, bumps, optional_accounts_flags)
+        process_deploy(payer, accounts, &self, optional_accounts_flags)
     }
 }
 
@@ -89,7 +91,6 @@ pub(crate) fn process_deploy<'a>(
     payer: &'a AccountInfo<'a>,
     accounts: &'a [AccountInfo<'a>],
     payload: &DeployTokenManager,
-    bumps: Bumps,
     optional_accounts_flags: OptionalAccountsFlags,
 ) -> ProgramResult {
     let token_manager_type: token_manager::Type = payload.token_manager_type.try_into()?;
@@ -114,7 +115,28 @@ pub(crate) fn process_deploy<'a>(
 
     let parsed_accounts =
         DeployTokenManagerAccounts::from_account_info_slice(accounts, &optional_accounts_flags)?;
-    deploy(payer, &parsed_accounts, bumps, &deploy_token_manager)
+    let its_root_pda_bump =
+        InterchainTokenService::load_readonly(&crate::id(), parsed_accounts.its_root_pda)?.bump;
+
+    assert_valid_its_root_pda(
+        parsed_accounts.its_root_pda,
+        parsed_accounts.gateway_root_pda.key,
+        its_root_pda_bump,
+    )?;
+
+    let (token_manager_pda, token_manager_pda_bump) =
+        crate::find_token_manager_pda(parsed_accounts.its_root_pda.key, payload.token_id.as_ref());
+    if token_manager_pda.ne(parsed_accounts.token_manager_pda.key) {
+        msg!("Invalid TokenManager account provided");
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    deploy(
+        payer,
+        &parsed_accounts,
+        &deploy_token_manager,
+        token_manager_pda_bump,
+    )
 }
 
 pub(crate) fn set_flow_limit(
@@ -138,14 +160,14 @@ pub(crate) fn set_flow_limit(
 
 pub(crate) struct DeployTokenManagerInternal {
     manager_type: token_manager::Type,
-    token_id: PublicKey,
-    token_address: PublicKey,
+    token_id: [u8; 32],
+    token_address: [u8; 32],
     operator: Option<Pubkey>,
     minter: Option<Pubkey>,
 }
 
 impl DeployTokenManagerInternal {
-    pub(crate) fn new(
+    pub(crate) const fn new(
         manager_type: token_manager::Type,
         token_id: [u8; 32],
         token_address: Pubkey,
@@ -154,8 +176,8 @@ impl DeployTokenManagerInternal {
     ) -> Self {
         Self {
             manager_type,
-            token_id: PublicKey::new_ed25519(token_id),
-            token_address: PublicKey::new_ed25519(token_address.to_bytes()),
+            token_id,
+            token_address: token_address.to_bytes(),
             operator,
             minter,
         }
@@ -171,8 +193,8 @@ impl DeployTokenManagerInternal {
 pub(crate) fn deploy<'a>(
     payer: &'a AccountInfo<'a>,
     accounts: &DeployTokenManagerAccounts<'a>,
-    bumps: Bumps,
     deploy_token_manager: &DeployTokenManagerInternal,
+    token_manager_pda_bump: u8,
 ) -> ProgramResult {
     check_accounts(accounts)?;
 
@@ -203,15 +225,6 @@ pub(crate) fn deploy<'a>(
         accounts.system_account,
         accounts.token_program,
     )?;
-
-    let (interchain_token_pda, _) = crate::create_interchain_token_pda(
-        accounts.its_root_pda.key,
-        deploy_token_manager.token_id.as_ref(),
-        bumps.interchain_token_pda_bump,
-    );
-    let (_token_manager_pda, bump) =
-        crate::create_token_manager_pda(&interchain_token_pda, bumps.token_manager_pda_bump);
-    let token_manager_ata = PublicKey::new_ed25519(accounts.token_manager_ata.key.to_bytes());
 
     if let Some(operator_from_message) = deploy_token_manager.operator {
         let (operator, operator_roles_pda) = if let (Some(operator), Some(operator_roles_pda)) =
@@ -261,8 +274,8 @@ pub(crate) fn deploy<'a>(
         deploy_token_manager.manager_type,
         deploy_token_manager.token_id,
         deploy_token_manager.token_address,
-        token_manager_ata,
-        bump,
+        accounts.token_manager_ata.key.to_bytes(),
+        token_manager_pda_bump,
     );
     token_manager.init(
         &crate::id(),
@@ -271,8 +284,9 @@ pub(crate) fn deploy<'a>(
         accounts.token_manager_pda,
         &[
             seed_prefixes::TOKEN_MANAGER_SEED,
-            interchain_token_pda.as_ref(),
-            &[bump],
+            accounts.its_root_pda.key.as_ref(),
+            &token_manager.token_id,
+            &[token_manager.bump],
         ],
     )?;
 
@@ -322,16 +336,16 @@ fn process_operator_instruction<'a>(
     instruction: instructions::operator::Instruction,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let interchain_token_pda = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
     let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
-    let token_manager = TokenManager::load(&crate::id(), role_management_accounts.resource)?;
-    let (derived_token_manager_pda, _) =
-        crate::create_token_manager_pda(interchain_token_pda.key, token_manager.bump);
-
-    if derived_token_manager_pda.ne(role_management_accounts.resource.key) {
-        msg!("Invalid token manager PDA provided");
-        return Err(ProgramError::InvalidAccountData);
-    }
+    let token_manager =
+        TokenManager::load_readonly(&crate::id(), role_management_accounts.resource)?;
+    assert_valid_token_manager_pda(
+        role_management_accounts.resource,
+        its_root_pda.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
 
     match instruction {
         instructions::operator::Instruction::TransferOperatorship(inputs) => {
@@ -370,15 +384,6 @@ fn check_accounts(accounts: &DeployTokenManagerAccounts<'_>) -> ProgramResult {
     }
 
     if accounts
-        .its_root_pda
-        .check_initialized_pda_without_deserialization(&crate::id())
-        .is_err()
-    {
-        msg!("ITS root PDA is not initialized");
-        return Err(ProgramError::UninitializedAccount);
-    }
-
-    if accounts
         .token_manager_pda
         .check_uninitialized_pda()
         .is_err()
@@ -413,10 +418,6 @@ pub(crate) fn validate_token_manager_type(
     let mint_data = token_mint.try_borrow_data()?;
     let mint = StateWithExtensions::<Mint>::unpack(&mint_data)?;
 
-    // TODO: There's more logic required here, possibly some check on
-    // the TokenManager being the delegate of some account, etc. It's still not
-    // clear to me and I think it will become clearer when we start working on the
-    // deployment of the token itself and the the transfers.
     match (mint.base.mint_authority, ty) {
         (
             COption::None,
@@ -532,7 +533,7 @@ fn handle_mintership<'a>(
 }
 
 pub(crate) struct DeployTokenManagerAccounts<'a> {
-    pub(crate) _gateway_root_pda: &'a AccountInfo<'a>,
+    pub(crate) gateway_root_pda: &'a AccountInfo<'a>,
     pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -560,7 +561,7 @@ impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
     {
         let accounts_iter = &mut accounts.iter();
         Ok(Self {
-            _gateway_root_pda: next_account_info(accounts_iter)?,
+            gateway_root_pda: next_account_info(accounts_iter)?,
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,

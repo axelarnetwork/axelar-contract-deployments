@@ -7,6 +7,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 
+use crate::assert_valid_its_root_pda;
 use crate::state::InterchainTokenService;
 
 /// The index of the first account that is expected to be passed to the
@@ -81,11 +82,12 @@ impl MaybeAxelarInterchainTokenExecutablePayload for &[u8] {
 /// # Errors
 ///
 /// If the caller is not the Interchain Token Service
-pub fn validate_interchain_token_execute_call(accounts: &[AccountInfo<'_>]) -> ProgramResult {
+pub fn validate_interchain_token_execute_call<'a>(
+    accounts: &'a [AccountInfo<'a>],
+) -> ProgramResult {
     let account_iter = &mut accounts.iter();
     let gateway_root_account = next_account_info(account_iter)?;
     let signing_pda_account = next_account_info(account_iter)?;
-    msg!("Validating interchain token execute call");
 
     if !signing_pda_account.is_signer {
         msg!(
@@ -95,13 +97,12 @@ pub fn validate_interchain_token_execute_call(accounts: &[AccountInfo<'_>]) -> P
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let its_root_config = InterchainTokenService::load(&crate::id(), signing_pda_account)?;
-    let (expected_signing_pda, _) =
-        crate::create_its_root_pda(gateway_root_account.key, its_root_config.bump);
-
-    if expected_signing_pda.ne(signing_pda_account.key) {
-        return Err(ProgramError::InvalidAccountData);
-    }
+    let its_root_config = InterchainTokenService::load_readonly(&crate::id(), signing_pda_account)?;
+    assert_valid_its_root_pda(
+        signing_pda_account,
+        gateway_root_account.key,
+        its_root_config.bump,
+    )?;
 
     Ok(())
 }

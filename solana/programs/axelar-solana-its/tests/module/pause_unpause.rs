@@ -46,11 +46,10 @@ async fn test_its_gmp_payload_fail_when_paused() {
         .await;
 
     let token_program_id = spl_token_2022::id();
-    let token_id =
-        Pubkey::create_with_seed(&its_root_pda, "test_token", &axelar_solana_its::id()).unwrap();
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, token_id.as_ref());
-    let mint_authority = axelar_solana_its::find_token_manager_pda(&interchain_token_pda).0;
+    let token_id = Pubkey::create_with_seed(&its_root_pda, "test_token", &axelar_solana_its::id())
+        .unwrap()
+        .to_bytes();
+    let (mint_authority, _) = axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
     let mint = solana_chain
         .fixture
         .init_new_mint(mint_authority, token_program_id, 18)
@@ -58,7 +57,7 @@ async fn test_its_gmp_payload_fail_when_paused() {
 
     let inner_payload = GMPPayload::DeployTokenManager(DeployTokenManager {
         selector: alloy_primitives::Uint::<256, 4>::from(2_u128),
-        token_id: token_id.to_bytes().into(),
+        token_id: token_id.into(),
         token_manager_type: alloy_primitives::Uint::<256, 4>::from(4_u128),
         params: axelar_solana_its::state::token_manager::encode_params(
             None,

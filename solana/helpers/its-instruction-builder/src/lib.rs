@@ -3,7 +3,7 @@
 use core::ops::Deref;
 
 use axelar_solana_encoding::types::messages::Message;
-use axelar_solana_its::instructions::{Bumps, ItsGmpInstructionInputs};
+use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use axelar_solana_its::state::token_manager::ArchivedTokenManager;
 use interchain_token_transfer_gmp::GMPPayload;
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -30,14 +30,13 @@ where
     C: Deref<Target = RpcClient>,
 {
     let payload = GMPPayload::decode(&abi_payload).map_err(|_err| ProgramError::InvalidArgument)?;
-    let (its_root_pda, its_root_pda_bump) = axelar_solana_its::find_its_root_pda(&gateway_root_pda);
-    let (interchain_token_pda, interchain_token_pda_bump) =
-        axelar_solana_its::find_interchain_token_pda(
-            &its_root_pda,
-            &payload
-                .token_id()
-                .map_err(|_err| ProgramError::InvalidArgument)?,
-        );
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&gateway_root_pda);
+    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(
+        &its_root_pda,
+        &payload
+            .token_id()
+            .map_err(|_err| ProgramError::InvalidArgument)?,
+    );
 
     let clock_account = rpc_client
         .get_account(&clock::id())
@@ -47,17 +46,8 @@ where
         .map_err(|_err| ProgramError::InvalidAccountData)?;
     let timestamp = clock.unix_timestamp;
 
-    let (token_manager_pda, token_manager_pda_bump) =
-        axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
     let (mint, token_program) =
         try_infer_mint_and_program(&token_manager_pda, &payload, rpc_client).await?;
-
-    let bumps = Some(Bumps {
-        its_root_pda_bump,
-        interchain_token_pda_bump,
-        token_manager_pda_bump,
-        ..Default::default()
-    });
 
     let inputs = ItsGmpInstructionInputs::builder()
         .payer(payer)
@@ -66,7 +56,6 @@ where
         .payload(payload)
         .token_program(token_program)
         .mint_opt(mint)
-        .bumps_opt(bumps)
         .timestamp(timestamp)
         .build();
 

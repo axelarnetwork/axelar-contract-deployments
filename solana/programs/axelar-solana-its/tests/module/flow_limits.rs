@@ -53,11 +53,10 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         .unwrap()])
         .await;
 
-    let token_id =
-        Pubkey::create_with_seed(&its_root_pda, "test_token", &axelar_solana_its::id()).unwrap();
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, token_id.as_ref());
-    let token_manager_pda = axelar_solana_its::find_token_manager_pda(&interchain_token_pda).0;
+    let token_id = Pubkey::create_with_seed(&its_root_pda, "test_token", &axelar_solana_its::id())
+        .unwrap()
+        .to_bytes();
+    let token_manager_pda = axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id).0;
     let mint = solana_chain
         .fixture
         .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id, 18)
@@ -65,7 +64,7 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
 
     let inner_payload = GMPPayload::DeployTokenManager(DeployTokenManager {
         selector: alloy_primitives::Uint::<256, 4>::from(2_u128),
-        token_id: token_id.to_bytes().into(),
+        token_id: token_id.into(),
         token_manager_type: token_manager::Type::LockUnlock.into(),
         params: axelar_solana_its::state::token_manager::encode_params(
             None,
@@ -130,7 +129,7 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
 
     let flow_limit_ix = axelar_solana_its::instructions::set_flow_limit(
         solana_chain.fixture.payer.pubkey(),
-        token_id.to_bytes(),
+        token_id,
         flow_limit,
     )
     .unwrap();
@@ -160,8 +159,8 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
     let transferred_amount = 800_u64;
     let inner_transfer_payload = GMPPayload::InterchainTransfer(InterchainTransfer {
         selector: alloy_primitives::Uint::<256, 4>::from(0_u128),
-        token_id: token_id.to_bytes().into(),
-        source_address: token_id.to_bytes().into(), // Does't matter
+        token_id: token_id.into(),
+        source_address: token_id.into(), // Does't matter
         destination_address: solana_chain.fixture.payer.pubkey().to_bytes().into(),
         amount: alloy_primitives::Uint::<256, 4>::from(transferred_amount),
         data: Bytes::new(),

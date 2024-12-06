@@ -179,10 +179,8 @@ async fn test_send_from_evm_to_solana() {
     assert_eq!(token_name, token_metadata.name);
     assert_eq!(token_symbol, token_metadata.symbol);
 
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, token_id.as_ref());
     let (token_manager_pda, _bump) =
-        axelar_solana_its::find_token_manager_pda(&interchain_token_pda);
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
     let token_manager: TokenManager = solana_chain
         .fixture

@@ -100,10 +100,18 @@ pub fn validate_with_gmp_metadata(
     accounts: &[AccountInfo<'_>],
     message: &Message,
     payload: &[u8],
-    signing_pda_derived_bump: u8,
 ) -> ProgramResult {
+    let signing_pda_bump = {
+        // scope to release the account after reading the data we want
+        let accounts_iter = &mut accounts.iter();
+        let incoming_message_pda = next_account_info(accounts_iter)?;
+        let incoming_message_data = incoming_message_pda.try_borrow_data()?;
+        let incoming_message = IncomingMessageWrapper::read(&incoming_message_data)?;
+        incoming_message.signing_pda_bump
+    };
+
     let payload_hash = solana_program::keccak::hash(payload).to_bytes();
-    validate_message_internal(accounts, message, &payload_hash, signing_pda_derived_bump)
+    validate_message_internal(accounts, message, &payload_hash, signing_pda_bump)
 }
 
 fn validate_message_internal(

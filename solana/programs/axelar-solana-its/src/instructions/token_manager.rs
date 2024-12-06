@@ -84,8 +84,7 @@ pub fn set_flow_limit(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) =
         crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
-    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (token_manager_user_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
     let (its_user_roles_pda, _) =
@@ -127,9 +126,7 @@ pub fn add_flow_limiter(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) =
         crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
-    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
-
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (accounts, role_management_instruction) = role_management::instructions::add_roles(
         crate::id(),
         payer,
@@ -165,9 +162,7 @@ pub fn remove_flow_limiter(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) =
         crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
-    let (interchain_token_pdas, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pdas);
-
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (accounts, role_management_instruction) = role_management::instructions::remove_roles(
         crate::id(),
         payer,
@@ -204,9 +199,8 @@ pub fn transfer_operatorship(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
-    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
-    let accounts = vec![AccountMeta::new_readonly(interchain_token_pda, false)];
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::transfer_operatorship(payer, token_manager_pda, to, Some(accounts))?;
     let instruction = InterchainTokenServiceInstruction::TokenManagerInstruction(
@@ -236,9 +230,8 @@ pub fn propose_operatorship(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
-    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
-    let accounts = vec![AccountMeta::new_readonly(interchain_token_pda, false)];
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::propose_operatorship(payer, token_manager_pda, to, Some(accounts))?;
     let instruction = InterchainTokenServiceInstruction::TokenManagerInstruction(
@@ -268,9 +261,8 @@ pub fn accept_operatorship(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
-    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
-    let accounts = vec![AccountMeta::new_readonly(interchain_token_pda, false)];
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::accept_operatorship(payer, token_manager_pda, from, Some(accounts))?;
     let instruction = InterchainTokenServiceInstruction::TokenManagerInstruction(

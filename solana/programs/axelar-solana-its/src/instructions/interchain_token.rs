@@ -50,8 +50,7 @@ pub fn mint(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
-    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (minter_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &minter);
     let instruction =
@@ -65,7 +64,7 @@ pub fn mint(
         accounts: vec![
             AccountMeta::new(mint, false),
             AccountMeta::new(to, false),
-            AccountMeta::new_readonly(interchain_token_pda, false),
+            AccountMeta::new_readonly(its_root_pda, false),
             AccountMeta::new_readonly(token_manager_pda, false),
             AccountMeta::new_readonly(minter, true),
             AccountMeta::new_readonly(minter_roles_pda, false),
@@ -89,9 +88,8 @@ pub fn transfer_mintership(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
-    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
-    let accounts = vec![AccountMeta::new_readonly(interchain_token_pda, false)];
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =
         minter::transfer_mintership(payer, token_manager_pda, to, Some(accounts))?;
     let instruction = InterchainTokenServiceInstruction::InterchainTokenInstruction(
@@ -121,9 +119,8 @@ pub fn propose_mintership(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
-    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
-    let accounts = vec![AccountMeta::new_readonly(interchain_token_pda, false)];
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =
         minter::propose_mintership(payer, token_manager_pda, to, Some(accounts))?;
     let instruction = InterchainTokenServiceInstruction::InterchainTokenInstruction(
@@ -153,9 +150,8 @@ pub fn accept_mintership(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
-    let (interchain_token_pda, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&interchain_token_pda);
-    let accounts = vec![AccountMeta::new_readonly(interchain_token_pda, false)];
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =
         minter::accept_mintership(payer, token_manager_pda, from, Some(accounts))?;
     let instruction = InterchainTokenServiceInstruction::InterchainTokenInstruction(
