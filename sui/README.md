@@ -366,6 +366,26 @@ Note:
 -   If coin type is not provided, it will split all the coins.
 -   If transfer address is not provided, it will split the coins in the same wallet. Otherwise, it will transfer the splitted coins to the provided address.
 
+## Setup Trusted Addresses
+
+Add trusted address
+
+```bash
+node sui/its.js setup-trusted-address <sourceChain>,<sourceChain2>,... <sourceAddress>
+```
+
+or Add all evm chains that have ITS contract deployed
+
+```bash
+node sui/its.js setup-trusted-address all-evm <sourceAddress>
+```
+
+Remove trusted address
+
+```bash
+node sui/its.js remove-trusted-address <sourceChain>,<sourceChain2>,...
+```
+
 ## Examples
 
 -   [GMP Example Guide](docs/gmp.md)
