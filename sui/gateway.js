@@ -183,6 +183,25 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
     };
 }
 
+async function migrate(keypair, client, config, chain, contractConfig, args, options) {
+    const packageId = contractConfig.address;
+
+    const tx = new Transaction();
+
+    tx.moveCall({
+        target: `${packageId}::gateway::migrate`,
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+        ],
+    });
+
+    return {
+        tx,
+        message: 'Migrate',
+    };
+}
+
+
 async function submitProof(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
     const [multisigSessionId] = args;
@@ -306,6 +325,13 @@ if (require.main === module) {
         .addOption(new Option('--currentNonce <currentNonce>', 'nonce of the existing signers'))
         .action((sourceChain, messageId, sourceAddress, destinationId, payloadHash, options) => {
             mainProcessor(approve, [sourceChain, messageId, sourceAddress, destinationId, payloadHash], options);
+        });
+
+    program
+        .command('migrate')
+        .description('Migrate the gateway after upgrade')
+        .action((options) => {
+            mainProcessor(migrate, null, options);
         });
 
     program
