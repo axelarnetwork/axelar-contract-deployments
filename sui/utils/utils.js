@@ -2,14 +2,14 @@
 
 const { ethers } = require('hardhat');
 const toml = require('toml');
-const { printInfo, printError, printWarn } = require('../../common/utils');
+const { printInfo, printError, printWarn, validateParameters, writeJSON } = require('../../common/utils');
 const {
     BigNumber,
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
     constants: { HashZero },
 } = ethers;
 const fs = require('fs');
-const { fromB64 } = require('@mysten/bcs');
+const { fromB64, toB64 } = require('@mysten/bcs');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const {
     updateMoveToml,
@@ -271,6 +271,28 @@ const checkTrustedAddresses = (trustedAddresses, destinationChain) => {
     }
 };
 
+const getStructs = async (client, packageId) => {
+    const packageData = await client.getObject({ id: packageId, options: { showBcs: true } });
+    const structs = {};
+
+    for (const type of packageData.data.bcs.typeOriginTable) {
+        structs[type.datatype_name] = `${type.package}::${type.moduleName}::${type.datatype_name}`;
+    }
+
+    return structs;
+};
+
+const saveGeneratedTx = async (tx, message, client, options) => {
+    const { txFilePath } = options;
+    validateParameters({ isNonEmptyString: { txFilePath } });
+
+    const txBytes = await tx.build({ client });
+    const txB64Bytes = toB64(txBytes);
+
+    writeJSON({ message, status: 'PENDING', unsignedTx: txB64Bytes }, txFilePath);
+    printInfo(`Unsigned transaction`, txFilePath);
+};
+
 module.exports = {
     suiCoinId,
     getAmplifierSigners,
@@ -295,4 +317,6 @@ module.exports = {
     checkTrustedAddresses,
     parseDiscoveryInfo,
     parseGatewayInfo,
+    getStructs,
+    saveGeneratedTx,
 };
