@@ -740,7 +740,6 @@
           },
           "trustedAddresses": {
             "axelar": [
-              "axelar10jzzmv5m7da7dn2xsfac0yqe7zamy34uedx3e28laq0p6f3f8dzqp649fp",
               "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
             ],
             "eth-sepolia": [

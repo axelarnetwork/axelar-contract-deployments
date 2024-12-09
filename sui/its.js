@@ -32,9 +32,8 @@ async function setupTrustedAddress(keypair, client, contracts, args, options) {
 
         // Add trusted address to ITS config
         if (!contracts.ITS.trustedAddresses) contracts.ITS.trustedAddresses = {};
-        if (!contracts.ITS.trustedAddresses[trustedChain]) contracts.ITS.trustedAddresses[trustedChain] = [];
 
-        contracts.ITS.trustedAddresses[trustedChain].push(trustedAddress);
+        contracts.ITS.trustedAddresses[trustedChain] = trustedAddress;
     }
 }
 
